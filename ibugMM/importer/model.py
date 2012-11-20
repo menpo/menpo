@@ -1,9 +1,9 @@
 import sys
 import os.path
 import Image
-from face import Face
+from ..face import Face
 
-class Importer(object):
+class ModelImporter(object):
   def __init__(self,pathToFile):
     self.pathToFile = os.path.abspath(pathToFile)
     self._fileHandle = open(self.pathToFile)
@@ -28,10 +28,9 @@ class Importer(object):
       kwargs['texture']            = self.texture
       return Face(**kwargs)
 
-
-class OBJImporter(Importer):
+class OBJImporter(ModelImporter):
   def __init__(self,pathToFile):
-    Importer.__init__(self,pathToFile)
+    ModelImporter.__init__(self,pathToFile)
 
   def importGeometry(self):
     coordsStr          = self._extractDataType('v')
@@ -66,10 +65,10 @@ class OBJImporter(Importer):
     return [[float(x) for x in line.split(' ')] for line in lines]
 
 
-class WRLImporter(Importer):
+class WRLImporter(ModelImporter):
 
   def __init__(self,pathToFile):
-    Importer.__init__(self,pathToFile)
+    ModelImporter.__init__(self,pathToFile)
 
   def importGeometry(self):
     self._sectionEnds  = [i for i,line in enumerate(self.lines) 
