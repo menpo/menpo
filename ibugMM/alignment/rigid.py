@@ -1,56 +1,50 @@
 import numpy as np
+from . import Alignment
 from scipy import linalg
-__all__ = ["Procrustes"]
-
-class Alignment(object):
-
-  def __init__(self, sources, **kwargs):
-    """ sources - a list of numpy arrays of landmarks which will be aligned
-                    e.g. [landmarks1, landmakrks2,...landmarksn] where 
-                    landmarksi is an ndarray of dimension [dim x n_landmarks]
-
-        target  - a single numpy array (of the same dimension of sources) which
-                  every instance of source will be aligned to
-    """
-    target = kwargs.get('target',None)
-    n_sources    = len(sources)
-    n_landmarks  = sources[0].shape[1]
-    n_dimensions = sources[0].shape[0]
-    self.sources = np.zeros([n_dimensions,n_landmarks,n_sources])
-    for i, source in enumerate(sources):
-      assert n_dimensions,n_landmarks == source.shape
-      self.sources[:,:,i] = source
-    if target is None:
-      # set the target to the mean source position
-      self.target = self.sources.mean(2)[...,np.newaxis]
-    else:
-      assert n_dimensions,n_landmarks == target.shape
-      self.target = target[...,np.newaxis]
-
-  @property
-  def n_dimensions(self):
-    return self.sources.shape[0]
-
-  @property
-  def n_landmarks(self):
-    return self.sources.shape[1]
-
-  @property
-  def n_sources(self):
-    return self.sources.shape[2]
   
 class RigidAlignment(Alignment):
+  """ Abstract class specializing in rigid alignments. As all such alignments
+      are affine, a 'transformationMatix' list is present, storing a homogeneous
+      transformation matrix for each source specifying the transform it has 
+      undergone to match target.
+  """
   def __init__(self, sources, **kwargs):
     Alignment.__init__(self,sources, **kwargs)
+    self.transformation_matrices = []
 
-  def buildHomoTranslationMatrix(self,translationVector):
-    return buildHomoTranslationMatrix(translationVector,dim=self.n_dimensions) 
+  def h_translation_matrix(self,translationVector):
+    return h_translation_matrix(translationVector,dim=self.n_dimensions) 
   
-  def buildHomoScaleMatrix(self,scaleVector):
-    return buildHomoScaleMatrix(scaleVector,dim=self.n_dimensions)
+  def h_scale_matrix(self,scaleVector):
+    return h_scale_matrix(scaleVector,dim=self.n_dimensions)
   
-  def buildHomoRotationMatrix(self,rotationMatrix):
-    return buildHomoRotationMatrix(rotationMatrix,dim=self.n_dimensions)
+  def h_rotation_matrix(self,rotationMatrix):
+    return h_rotation_matrix(rotationMatrix,dim=self.n_dimensions)
+
+  @property
+  def scale_rotation_matrices(self):
+    """ Returns a list of scaleRotationMatrices, each of shape 
+        (n_dimensions,n_dimensions) which can be applied to each source frame
+        to rigidly align to the target frame. Needs to be used in conjunction 
+        with translationVectors. (scaleRotatation*source + translation -> target)
+    """
+    return [matrix[:-1,:-1] for matrix in self.transformation_matrices]
+
+  @property
+  def translation_vectors(self):
+    """ Returns a list of translation vectors, each of shape (n_dimensions,) 
+        which can be applied to each source frame to rigidly align to the
+        target frame (scaleRotatation*source + translation -> target)
+    """
+    return [matrix[:-1,-1] for matrix in self.transformation_matrices]
+    pass
+
+  def _normalise_transformation_matrices(self):
+    """ Ensures that the transformation matrix has a unit z scale, 
+        and is affine (e.g. bottom row = [0,0,0,1] for dim = 3)
+    """
+    pass
+
 
 class Procrustes(RigidAlignment):
 
@@ -62,25 +56,31 @@ class Procrustes(RigidAlignment):
   def generalProcrusesAlignment(self):
     error = 999999999
     while error > 0.0001:
-      self.procrustesStep()
-      oldTarget = self.target
+      self.procrustes_step()
+      old_target = self.target
       self.target = self.sources.mean(-1)[...,np.newaxis]
-      error = np.sum((self.target - oldTarget)**2)
-    self.transform = []
+      # compare the oldSource to the new - if the difference is sufficiently
+      # small, stop. Else, call again.
+      error = np.sum((self.target - old_target)**2)
     for i in range(self.n_sources):
-      self.transform.append(np.eye(self.n_dimensions+1))
+      self.transformation_matrices.append(np.eye(self.n_dimensions+1))
     for ops in reversed(self.operations):
       for i in range(self.n_sources):
-        t = self.buildHomoTranslationMatrix(ops['translate'][:,:,i].flatten())
-        s = self.buildHomoScaleMatrix(ops['rescale'][:,:,i].flatten())
-        r = self.buildHomoRotationMatrix(ops['rotation'][i])
-        self.transform[i] = np.dot(r,np.dot(s,np.dot(t,self.transform[i])))
+        t = self.h_translation_matrix(ops['translate'][:,:,i].flatten())
+        s = self.h_scale_matrix(ops['rescale'][:,:,i].flatten())
+        r = self.h_rotation_matrix(ops['rotation'][i])
+        self.transformation_matrices[i] = np.dot(r, 
+                                          np.dot(s,
+                                          np.dot(t, 
+                                                 self.transformation_matrices[i]
+                                                )))
+    self._normalise_transformation_matrices()
 
-  def procrustesAlignment(self):
-    self.procrustesStep()
+  def procrustes_alignment(self):
+    self.procrustes_step()
 
-  def procrustesStep(self):
-    print 'taking ProcrustesStep'
+  def procrustes_step(self):
+    print 'taking Procrustes step'
     ops = {}
     # calculate the translation required for each source to align the sources'
     # centre of mass to the the target centre of mass
@@ -89,12 +89,12 @@ class Procrustes(RigidAlignment):
     self.sources += translation
     ops['translate'] = translation
     # calcuate the frobenious norm of each shape as our metric
-    scaleSources = np.sqrt(np.apply_over_axes(np.sum,
+    scale_sources = np.sqrt(np.apply_over_axes(np.sum,
       (self.sources - self.sources.mean(1)[:,np.newaxis,:])**2,
                            [0,1]))
-    scaleTarget = np.sqrt(np.sum((self.target - 
+    scale_target = np.sqrt(np.sum((self.target - 
                                   self.target.mean(1)[:,np.newaxis,:])**2))
-    rescale = scaleTarget/scaleSources
+    rescale = scale_target/scale_sources
     self.sources = self.sources*rescale
     ops['rescale'] = rescale
     rotations = []
@@ -110,30 +110,23 @@ class Procrustes(RigidAlignment):
       self.sources[...,i] = np.dot(rotation,self.sources[...,i])
     ops['rotation'] = rotations
     self.operations.append(ops)
-    # compare the oldSource to the new - if the difference is sufficiently 
-    # small, stop. Else, call again.
 
-
-  def buildOperation(self):
-    for operation in operations:
-      pass
-
-def buildHomoTranslationMatrix(translationVector, **kwargs):
+def h_translation_matrix(translation_vector, **kwargs):
   dim = kwargs.get('dim',3)
   matrix = np.eye(dim+1)
-  matrix[:-1,-1] = translationVector
+  matrix[:-1,-1] = translation_vector
   return matrix
 
-def buildHomoScaleMatrix(scaleVector, **kwargs):
+def h_scale_matrix(scale_vector, **kwargs):
   dim = kwargs.get('dim',3)
   matrix = np.eye(dim+1)
-  np.fill_diagonal(matrix,scaleVector)
+  np.fill_diagonal(matrix,scale_vector)
   # set the corner value back to 1
   matrix[-1,-1] = 1
   return matrix
 
-def buildHomoRotationMatrix(rotationMatrix, **kwargs):
+def h_rotation_matrix(rotation_matrix, **kwargs):
   dim = kwargs.get('dim',3)
   matrix = np.eye(dim+1)
-  matrix[:-1,:-1] = rotationMatrix
+  matrix[:-1,:-1] = rotation_matrix
   return matrix
