@@ -1,7 +1,7 @@
 import sys
 import os.path
 import Image
-from ..face import Face
+from ..mesh.face import Face
 
 class ModelImporter(object):
   def __init__(self,pathToFile):
