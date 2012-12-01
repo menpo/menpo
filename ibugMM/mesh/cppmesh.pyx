@@ -1,5 +1,6 @@
 # distutils: language = c++
-# distutils: sources = mesh.cpp vertex.cpp halfedge.cpp vec3.cpp triangle.cpp
+# distutils: sources = ./ibugMM/mesh/mesh.cpp ./ibugMM/mesh/vertex.cpp ./ibugMM/mesh/halfedge.cpp ./ibugMM/mesh/vec3.cpp ./ibugMM/mesh/triangle.cpp
+
 
 import numpy as np
 cimport numpy as np
