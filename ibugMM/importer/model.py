@@ -2,6 +2,7 @@ import sys
 import os.path
 import Image
 from ..mesh.face import Face
+import numpy as np
 
 class ModelImporter(object):
   def __init__(self,pathToFile):
@@ -19,10 +20,10 @@ class ModelImporter(object):
     raise NotImplimentedException()
 
   def generateFace(self, **kwargs):
-      kwargs['coords']             = self.coords
+      kwargs['coords']             = np.array(self.coords)
       kwargs['textureCoords']      = self.textureCoords
       kwargs['normals']            = self.normals
-      kwargs['coordsIndex']        = self.coordsIndex
+      kwargs['coordsIndex']        = np.array(self.coordsIndex,dtype=np.uint32)
       kwargs['normalsIndex']       = self.normalsIndex
       kwargs['textureCoordsIndex'] = self.textureCoordsIndex
       kwargs['texture']            = self.texture

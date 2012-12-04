@@ -46,15 +46,15 @@ double Triangle::area()
 Vec3 Triangle::gradient()
 {
   Vec3 u0(*v0);
-  Vec3 u1(*v1);
-  Vec3 u2(*v2);
-  Vec3 e0v = e0->differenceVec3();
-  Vec3 e1v = e0->differenceVec3();
-  Vec3 e2v = e0->differenceVec3();
-  Vec3 N = normal();
-  N.normalize();
+  //Vec3 u1(*v1);
+  //Vec3 u2(*v2);
+  //Vec3 e0v = e0->differenceVec3();
+  //Vec3 e1v = e0->differenceVec3();
+  //Vec3 e2v = e0->differenceVec3();
+  //Vec3 N = normal();
+  //N.normalize();
 
-  return u2;
+  return u0;
 }
 
 double* Triangle::triangleScalar()
@@ -64,5 +64,5 @@ double* Triangle::triangleScalar()
 
 double* Triangle::triangleVec3()
 {
-  return &(mesh->triangleScalar[id*3]);
+  return &(mesh->triangleVec3[id*3]);
 }

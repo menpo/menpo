@@ -1,5 +1,6 @@
 #pragma once
 #include <set>
+#include <ostream>
 #include "mesh.h"
 
 class Triangle;
@@ -9,6 +10,7 @@ class Vec3;
 
 class Vertex : public MeshAttribute
 {
+  friend std::ostream& operator<<(std::ostream& out, const Vertex& vertex);
   public:
 	Vertex(Mesh* mesh, unsigned id, double* coords);
 	double *coords;
@@ -24,10 +26,12 @@ class Vertex : public MeshAttribute
 	void addTriangle(Triangle* triangle);
 	void addVertex(Vertex* vertex);
 	HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle);
+  void calculateLaplacianOfScalar();
 	~Vertex();
 	// a pointer to a structure identical to 
 	double* vertexScalar();
 	double* vertexVec3();
+  HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
 
 	// utility methods
 	HalfEdge* getHalfEdgeTo(Vertex* vertex);

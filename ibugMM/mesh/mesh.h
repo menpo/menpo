@@ -29,36 +29,42 @@ class Mesh
 {
   public:
     Mesh(double   *coords,      unsigned n_coords,
-	       unsigned *coordsIndex, unsigned n_triangles);
-	~Mesh();
-	// pointer to an array dim(n_coordsx3) containing the coordinates
-	// for each vertex of the mesh
-	double* coords;
-	// pointer to an array dim(n_coordsx3) containing the coordinates
-	// for each vertex of the mesh
-	unsigned* coordsIndex;
-	unsigned n_coords;
-	unsigned n_triangles;
-	// storage for the c++ objects for each triangle and vertex
-	std::vector<Triangle*> triangles;
-	std::vector<Vertex*> vertices;
-	// pointer to the start of an array dim(n_coords) containing a single
-	// value for each vertex.
-	double* vertexScalar;
-	// pointer to the start of an array dim(n_coords X 3) containing a vec3 
-	// value for each vertex.
-	double* vertexVec3;
-	// pointer to the start of an array dim(n_triangles) containing a single 
-	// value for each triangle.
-	double* triangleScalar;
-	// pointer to the start of an array dim(n_triangles X 3) containing a vec3 
-	// value for each triangle.
-	double* triangleVec3;
+        unsigned *coordsIndex, unsigned n_triangles);
+    ~Mesh();
+    // pointer to an array dim(n_coordsx3) containing the coordinates
+    // for each vertex of the mesh
+    double* coords;
+    // pointer to an array dim(n_coordsx3) containing the coordinates
+    // for each vertex of the mesh
+    unsigned* coordsIndex;
+    unsigned n_coords;
+    unsigned n_triangles;
+    // storage for the c++ objects for each triangle and vertex
+    std::vector<Triangle*> triangles;
+    std::vector<Vertex*> vertices;
+    // pointer to the start of an array dim(n_coords) containing a single
+    // value for each vertex.
+    double* vertexScalar;
+    // pointer to the start of an array dim(n_coords X 3) containing a vec3 
+    // value for each vertex.
+    double* vertexVec3;
+    // pointer to the start of an array dim(n_triangles) containing a single 
+    // value for each triangle.
+    double* triangleScalar;
+    // pointer to the start of an array dim(n_triangles X 3) containing a vec3 
+    // value for each triangle.
+    double* triangleVec3;
+
+    // prints the first and last vector and scalar values for triangle 
+    // and vectices respectfully
+    void verifyAttachements();
+
+    void calculateLaplacianOfScalar();
 };
 
 class MeshAttribute
 {
   public:
-	Mesh *mesh;
-	MeshAttribute(Mesh* mesh);
+    Mesh *mesh;
+    MeshAttribute(Mesh* mesh);
 };
