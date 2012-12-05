@@ -3,6 +3,7 @@
 #include "vec3.h"
 #include <iostream>
 #include <ostream>
+#include "triangle.h"
 
 Vertex::Vertex(Mesh* meshIn, unsigned vertid, double* coordsIn): MeshAttribute(meshIn)
 {
@@ -75,24 +76,6 @@ double* Vertex::vertexVec3()
   return &(mesh->vertexVec3[id*3]);
 }
 
-void Vertex::calculateLaplacianOfScalar()
-{
-  std::set<HalfEdge*>::iterator he;
-  for(he = halfedges.begin(); he != halfedges.end(); he++)
-  {
-    if((*he)->partOfFullEdge())
-    {
-      std::cout << *this << " fulledge to " << *((*he)->v1) << std::endl;
-      double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
-      std::cout << "u_i - u_j = " << u_diff << std::endl;
-      std::cout << "COS(theta) = " << (*he)->gammaAngle();
-      (*he)->halfedge->gammaAngle();
-    }
-    else
-      std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
-  }
-}
-
 std::ostream& operator<<(std::ostream& out, const Vertex& v)
 {
   out << "V:" << v.id << " (" << v.coords[0] << "," 
@@ -114,3 +97,43 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
   return NULL;
   //std::cout << "V:" << this << " does not have a HE to V:" << vertex << std::endl;
 }
+
+void Vertex::calculateLaplacianOperator()
+{
+  //double *mat = mesh->vertexSquareMatrix;
+  unsigned m = mesh->n_coords;
+  unsigned i = id;
+  double vertexArea = 0.;
+  std::set<HalfEdge*>::iterator he;
+	SparseMatrix s;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+    if((*he)->partOfFullEdge())
+    {
+      unsigned j = (*he)->v1->id;
+      //std::cout << *this << " fulledge to " << *((*he)->v1) << std::endl;
+      //double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
+      //std::cout << "u_i - u_j = " << u_diff << std::endl;
+      //std::cout << "theta = " << (*he)->gammaAngle();
+      double cotOp = cotOfAngle((*he)->gammaAngle()) + 
+                     cotOfAngle((*he)->halfedge->gammaAngle());
+      // write out to the i'th row of the vertexSquarematrix: 
+      // -= cotOp to the i'th position 
+	   s.i = i;
+	   s.j = i;
+	   s.value = -cotOp;
+	   mesh->vertexMatrix.push_back(s);
+     // += cotOp to the j'th position 
+     s.j = j;
+	   s.value = cotOp;
+     mesh->vertexMatrix.push_back(s);
+     // mat[m*i+i] -= cotOp;
+     // mat[m*i+j] += cotOp;
+     vertexArea += (*he)->triangle->area();
+    }
+    //else
+      //std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
+  }
+  (*vertexScalar()) = (vertexArea*2.0)/3.0; 
+}
+

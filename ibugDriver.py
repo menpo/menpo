@@ -18,7 +18,7 @@ print 'Face generated'
 #print c
 #
 #testMesh = Face(coords=np.zeros_like(c),coordsIndex=cI)
-oFace.calculateLaplacianOfScalar()
+#c, A = oFace.laplacian_operator()
 
 
 

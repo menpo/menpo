@@ -2,6 +2,8 @@
 #include "vec3.h"
 #include "halfedge.h"
 #include "vertex.h"
+#include <cmath>
+
 
 HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In, 
 	               Triangle* triangleIn) : MeshAttribute(meshIn)
@@ -63,13 +65,3 @@ double HalfEdge::gammaAngle()
   return angleBetweenVerticies(A,B,C);
 }
 
-double HalfEdge::angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C)
-{
-  //std::cout << "Angle for A = " << *A << " B = " << *B << " C = " << *C << std::endl;
-  Vec3 a = *A - *B;
-  Vec3 b = *C - *B;
-  //std::cout << a << "   " << b << std::cout;
-  a.normalize();
-  b.normalize();
-  return a.dot(b);
-}

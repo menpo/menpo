@@ -25,6 +25,13 @@ class Vertex;
 // All these arrays are accessable from the appropriate C++ classes
 // e.g. Vertex->vertexScalar() on the i'th vertex will always point 
 // to the correct point in the vertexScalar array attached to mesh
+//
+
+struct SparseMatrix {
+  unsigned i,j;
+  double value;
+};
+
 class Mesh
 {
   public:
@@ -42,6 +49,7 @@ class Mesh
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
+	std::vector<SparseMatrix> vertexMatrix;
     // pointer to the start of an array dim(n_coords) containing a single
     // value for each vertex.
     double* vertexScalar;
@@ -55,12 +63,17 @@ class Mesh
     // value for each triangle.
     double* triangleVec3;
 
+    // pointer to the start of an array dim(n_coords X n_coords) containing a single 
+    // value for each vertex-vertex pairing.
+	double* vertexSquareMatrix;
+
     // prints the first and last vector and scalar values for triangle 
     // and vectices respectfully
     void verifyAttachements();
 
-    void calculateLaplacianOfScalar();
+    void calculateLaplacianOperator();
 };
+
 
 class MeshAttribute
 {
@@ -68,3 +81,6 @@ class MeshAttribute
     Mesh *mesh;
     MeshAttribute(Mesh* mesh);
 };
+
+double angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C);
+double cotOfAngle(double angle);

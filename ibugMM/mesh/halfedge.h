@@ -17,5 +17,4 @@ class HalfEdge : public MeshAttribute
   double alphaAngle();
   double betaAngle();
   double gammaAngle();
-  double angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C);
 };

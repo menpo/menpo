@@ -5,7 +5,9 @@
 #include "triangle.h"
 #include "vertex.h"
 #include "vec3.h"
+#include <cmath>
 
+const double PI_2 = 2.0*atan(1.0);
 
 Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
 	         unsigned *coordsIndexIn, unsigned n_trianglesIn)
@@ -14,6 +16,7 @@ Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
   n_coords = n_coordsIn;
   coordsIndex = coordsIndexIn;
   n_triangles = n_trianglesIn;
+  vertexMatrix.reserve(n_coords*12);
   // build a Vertex object for each coord set passed in
   for(unsigned i = 0; i < n_coords; i++)
 	vertices.push_back(new Vertex(this, i,  &coords[i*3]));
@@ -52,9 +55,12 @@ void Mesh::verifyAttachements()
   std::cout << "trin: vector = " << Vec3(triangles[t]->triangleVec3())   << std::endl;
 }
 
-void Mesh::calculateLaplacianOfScalar()
+void Mesh::calculateLaplacianOperator()
 {
-  vertices[0]->calculateLaplacianOfScalar();
+  std::vector<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
+	(*v)->calculateLaplacianOperator();
+	//vertices[0]->calculateLaplacianOperator();
 
 }
 
@@ -63,3 +69,18 @@ MeshAttribute::MeshAttribute(Mesh* meshIn)
   mesh = meshIn;
 }
 
+double angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C)
+{
+  //std::cout << "Angle for A = " << *A << " B = " << *B << " C = " << *C << std::endl;
+  Vec3 a = *A - *B;
+  Vec3 b = *C - *B;
+  //std::cout << a << "   " << b << std::cout;
+  a.normalize();
+  b.normalize();
+  return std::acos(a.dot(b));
+}
+
+double cotOfAngle(double theta)
+{
+  return std::tan(PI_2 - theta);
+}

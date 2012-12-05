@@ -31,7 +31,7 @@ int main()
 	//std::cout << (*it)->normal() << std::endl;
   //}
   
-  mesh->calculateLaplacianOfScalar();
+  mesh->calculateLaplacianOperator();
   //mesh->verifyAttachements();
   delete mesh;
 
