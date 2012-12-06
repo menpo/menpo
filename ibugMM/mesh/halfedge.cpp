@@ -17,6 +17,7 @@ HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In,
 	  //std::cout << "Opposite half edge exists!" << std::endl;
     //std::cout << "setting opposite half edge to me" << std::endl;
     halfedge->halfedge = this;
+	mesh->n_full_edges++;
     
   }
 //else

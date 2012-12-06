@@ -10,13 +10,16 @@
 const double PI_2 = 2.0*atan(1.0);
 
 Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
-	         unsigned *coordsIndexIn, unsigned n_trianglesIn)
+	       unsigned *coordsIndexIn, unsigned n_trianglesIn)
 {
   coords   = coordsIn;
   n_coords = n_coordsIn;
   coordsIndex = coordsIndexIn;
   n_triangles = n_trianglesIn;
-  vertexMatrix.reserve(n_coords*12);
+  // set the no. of full edges to 0
+  // (on creation halfedge pairs will increment this)
+  n_full_edges = 0;
+  //vertexMatrix.reserve(n_coords*12);
   // build a Vertex object for each coord set passed in
   for(unsigned i = 0; i < n_coords; i++)
 	vertices.push_back(new Vertex(this, i,  &coords[i*3]));
@@ -31,6 +34,7 @@ Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
 	// connect them)
 	triangles.push_back(new Triangle(this, i, vertices[l],vertices[m],vertices[n]));
   }
+  std::cout << "n_full_edges = " << n_full_edges << std::endl;
 }
 
 Mesh::~Mesh()
@@ -57,11 +61,27 @@ void Mesh::verifyAttachements()
 
 void Mesh::calculateLaplacianOperator()
 {
+  // we expect that the attachments at i_sparse, j_sparse
+  // and v_sparse have already been set to the correct 
+  // dimentions before this call 
+  // (each should be of length n_coords + 2*n_full_edges)
+  // the first n_coord entries are the diagonals. -> the i'th
+  // value of both i_sparse and j_sparse is just i
+  for(unsigned int i = 0; i < n_coords; i++)
+  {
+	i_sparse[i] = i;
+	j_sparse[i] = i;
+  }
+  // set the sparse_pointer to the end of the diagonal elements
+  unsigned sparse_pointer = n_coords;
+  // now loop through each vertex and call the laplacian method.
+  // This method will populate the sparse matrix arrays with the
+  // position and value that should be assiged to the matrix
   std::vector<Vertex*>::iterator v;
   for(v = vertices.begin(); v != vertices.end(); v++)
-	(*v)->calculateLaplacianOperator();
-	//vertices[0]->calculateLaplacianOperator();
-
+	(*v)->calculateLaplacianOperator(sparse_pointer);
+  //vertices[0]->calculateLaplacianOperator();
+  std::cout << "After laplacian, sparse pointer at " << sparse_pointer << std::endl;
 }
 
 MeshAttribute::MeshAttribute(Mesh* meshIn)

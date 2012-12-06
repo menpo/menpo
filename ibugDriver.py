@@ -16,9 +16,10 @@ print 'Face generated'
 #cI[cI==32839] = 6
 #print cI
 #print c
-#
+
 #testMesh = Face(coords=np.zeros_like(c),coordsIndex=cI)
-#c, A = oFace.laplacian_operator()
+#oFace.laplacian_operator()
+#sparse = oFace.construct_sparse_vertex_matrix()
 
 
 

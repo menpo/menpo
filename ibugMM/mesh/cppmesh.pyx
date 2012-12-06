@@ -5,8 +5,9 @@
 from libcpp.vector cimport vector
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
-from scipy.sparse import lil_matrix
+from scipy.sparse import coo_matrix
 cimport numpy as np
+cimport cython
 
 cdef extern from "mesh.h":
   cdef cppclass Mesh:
@@ -19,13 +20,12 @@ cdef extern from "mesh.h":
     double* vertexVec3
     double* triangleScalar
     double* triangleVec3
-    double* vertexSquareMatrix
-    vector[SparseMatrix] vertexMatrix
+    double n_full_edges
+    double* v_sparse
+    unsigned* i_sparse
+    unsigned* j_sparse
+    unsigned n_full_edges
 
-  cdef struct SparseMatrix:
-    unsigned i
-    unsigned j
-    double value
 
 cdef class CppMesh:
   cdef Mesh* thisptr
@@ -33,7 +33,9 @@ cdef class CppMesh:
   cdef np.ndarray vertex_vector
   cdef np.ndarray triangle_scalar
   cdef np.ndarray triangle_vector
-  cdef public np.ndarray vertex_square_matrix
+  cdef public np.ndarray i_sparse
+  cdef public np.ndarray j_sparse
+  cdef public np.ndarray v_sparse
 
   def __cinit__(self, np.ndarray[double,   ndim=2, mode="c"] coords      not None, 
                       np.ndarray[unsigned, ndim=2, mode="c"] coordsIndex not None, **kwargs):
@@ -44,16 +46,22 @@ cdef class CppMesh:
                             &coordsIndex[0,0], coordsIndex.shape[0])
 
   def __init__(self, **kwargs):
+    print 'init called now'
+    self.i_sparse = np.zeros([self.thisptr.n_full_edges*2 + self.thisptr.n_coords],dtype=np.uint32)
+    self.j_sparse = np.zeros([self.thisptr.n_full_edges*2 + self.thisptr.n_coords],dtype=np.uint32)
+    self.v_sparse = np.zeros([self.thisptr.n_full_edges*2 + self.thisptr.n_coords])
+    self._set_i_sparse(self.i_sparse)
+    self._set_j_sparse(self.j_sparse)
+    self._set_v_sparse(self.v_sparse)
+
     self.vertex_scalar = np.zeros([self.n_coords])
     self.vertex_vector = np.zeros([self.n_coords,3])
     self.triangle_scalar = np.zeros([self.n_triangles])
     self.triangle_vector = np.zeros([self.n_triangles,3])
-    #self.vertex_square_matrix = np.zeros([self.n_coords,self.n_coords])
     self._set_vertex_scalar(self.vertex_scalar)
     self._set_vertex_vector(self.vertex_vector)
     self._set_triangle_scalar(self.triangle_scalar)
     self._set_triangle_vector(self.triangle_vector)
-    #self._set_vertex_square_matrix(self.vertex_square_matrix)
 
   def __dealloc__(self):
     del self.thisptr
@@ -65,10 +73,14 @@ cdef class CppMesh:
   @property
   def n_triangles(self):
     return self.thisptr.n_triangles
+  @property
+  def n_full_edges(self):
+    return self.thisptr.n_full_edges
 
 
   def laplacian_operator(self):
     self.thisptr.calculateLaplacianOperator()
+    return self.construct_sparse_vertex_matrix()
     #return self.construct_sparce_vertex_matrix()
     # we know this leaves vertex_square_matrix as Lc
     # and vertex_scalar as 2/3 vertex areas
@@ -78,26 +90,12 @@ cdef class CppMesh:
     #np.fill_diagonal(A,self.vertex_scalar)
     #return Lc, csc_matrix(A)
 
-  def construct_sparce_vertex_matrix(self):
+
+  cdef construct_sparse_vertex_matrix(self):
     """ Takes the sparse matrix instructions from 
         the Mesh class and returns a sparse matrix built from them
     """
-    pass
-    cdef vector[SparseMatrix].iterator it  = self.thisptr.vertexMatrix.begin()
-    cdef int i_p
-    cdef int j_p
-    cdef int k = 0
-    cdef double v
-    cdef sparse = lil_matrix((self.n_coords, self.n_coords))
-    while it != self.thisptr.vertexMatrix.end():
-      i = deref(it).i
-      j =  deref(it).j
-      if i > self.n_coords or j > self.n_coords:
-        print 'error'
-      v =  deref(it).value
-      sparse[i,j] += v
-      inc(it)
-    return sparse
+    return coo_matrix((self.v_sparse, (self.i_sparse, self.j_sparse)))
 
  
   def _set_vertex_scalar(self, np.ndarray[double, ndim=1, mode="c"] 
@@ -128,13 +126,17 @@ cdef class CppMesh:
     else:
       self.thisptr.triangleVec3 = &triangle_vector[0,0]
 
-  def _set_vertex_square_matrix(self, np.ndarray[double, ndim=2, mode="c"] 
-                               vertex_square_matrix not None):
-    if (vertex_square_matrix.shape[0] != self.n_coords or 
-        vertex_square_matrix.shape[1] != self.n_coords):
-      raise Exception('trying to attach a triangle vector of incorrect dimensionality')
-    else:
-      self.thisptr.vertexSquareMatrix = &vertex_square_matrix[0,0]
+  def _set_i_sparse(self, np.ndarray[unsigned, ndim=1, mode="c"] 
+                               i_sparse not None):
+    self.thisptr.i_sparse = &i_sparse[0]
+
+  def _set_j_sparse(self, np.ndarray[unsigned, ndim=1, mode="c"] 
+                               j_sparse not None):
+    self.thisptr.j_sparse = &j_sparse[0]
+
+  def _set_v_sparse(self, np.ndarray[double, ndim=1, mode="c"] 
+                               v_sparse not None):
+    self.thisptr.v_sparse = &v_sparse[0]
 
   def verify_attachments(self):
     self.thisptr.verifyAttachements()

@@ -46,6 +46,10 @@ class Mesh
     unsigned* coordsIndex;
     unsigned n_coords;
     unsigned n_triangles;
+	unsigned n_full_edges;
+	unsigned* i_sparse;
+	unsigned* j_sparse;
+	double*   v_sparse;
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
