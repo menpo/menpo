@@ -27,11 +27,6 @@ class Vertex;
 // to the correct point in the vertexScalar array attached to mesh
 //
 
-struct SparseMatrix {
-  unsigned i,j;
-  double value;
-};
-
 class Mesh
 {
   public:
@@ -47,13 +42,9 @@ class Mesh
     unsigned n_coords;
     unsigned n_triangles;
 	unsigned n_full_edges;
-	unsigned* i_sparse;
-	unsigned* j_sparse;
-	double*   v_sparse;
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
-	std::vector<SparseMatrix> vertexMatrix;
     // pointer to the start of an array dim(n_coords) containing a single
     // value for each vertex.
     double* vertexScalar;
@@ -66,16 +57,21 @@ class Mesh
     // pointer to the start of an array dim(n_triangles X 3) containing a vec3 
     // value for each triangle.
     double* triangleVec3;
-
-    // pointer to the start of an array dim(n_coords X n_coords) containing a single 
-    // value for each vertex-vertex pairing.
-	double* vertexSquareMatrix;
+	
+	// pointers to structures used to define a sparse matrix of doubles
+	// where the k'th value of each array is treated to mean:
+	// sparse_matrix[i_sparse[k]][j_sparse[k]] = v_sparse[k]
+	unsigned* i_sparse;
+	unsigned* j_sparse;
+	double*   v_sparse;
 
     // prints the first and last vector and scalar values for triangle 
     // and vectices respectfully
     void verifyAttachements();
 
     void calculateLaplacianOperator();
+    void calculateGradient();
+    void calculateDivergence();
 };
 
 

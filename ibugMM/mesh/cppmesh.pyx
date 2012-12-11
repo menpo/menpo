@@ -16,6 +16,8 @@ cdef extern from "mesh.h":
     unsigned n_triangles, n_coords
     void verifyAttachements()
     void calculateLaplacianOperator()
+    void calculateGradient()
+    void calculateDivergence()
     double* vertexScalar
     double* vertexVec3
     double* triangleScalar
@@ -77,23 +79,66 @@ cdef class CppMesh:
   def n_full_edges(self):
     return self.thisptr.n_full_edges
 
+  def zero_attachments(self):
+    """Sets all the attachments to 0
+    """
+    self.vertex_scalar[:]     = 0
+    self.vertex_vector[:,:]   = 0
+    self.triangle_scalar[:]   = 0
+    self.triangle_scalar[:,:] = 0
+
 
   def laplacian_operator(self):
     self.thisptr.calculateLaplacianOperator()
-    return self.construct_sparse_vertex_matrix()
-    #return self.construct_sparce_vertex_matrix()
-    # we know this leaves vertex_square_matrix as Lc
+    # we know this leaves sparse_matrix as Lc
     # and vertex_scalar as 2/3 vertex areas
-    #Lc = csc_matrix(self.vertex_square_matrix)
-    #del self.vertex_square_matrix
-    #A = np.zeros([self.n_coords,self.n_coords])
-    #np.fill_diagonal(A,self.vertex_scalar)
-    #return Lc, csc_matrix(A)
+    L_c = self.construct_sparse_vertex_matrix()
+    A_vals = self.vertex_scalar
+    A_i = np.arange(self.n_coords)
+    A = coo_matrix((A_vals, (A_i,A_i)))
+    return L_c, A
+
+  def gradient(self, np.ndarray[double, ndim=1, mode="c"] s_field not None):
+    """
+    Return the gradient (per face) of the per vertex scalar field 
+
+    C++ effects:
+    vertex_scalar   - the scalar field value (per vertex) that we are taking
+                      the gradient of.
+    triangle_vector - the resulting gradient (per triangle)
+    :param s_field: scalar field value per vertex
+    :type s_field: ndarray[1,n_coords]
+    :return: Gradient evaluated over each triangle
+    :rtype: ndarray[float]
+   
+    """
+    self._set_vertex_scalar(s_field)
+    self.thisptr.calculateGradient()
+    return self.triangle_vector.copy()
+
+  def divergence(self, np.ndarray[double, ndim=2, mode="c"] v_field not None):
+    """
+    Return the divergence (per vertex) of the field stored in triangle_vector.
+
+    C++ effects:
+    triangle_vector - input
+    vertex_scalar   - result storage
+
+    :return: Gradient evaluated over each triangle
+    :rtype: ndarray[float]
+   
+    """
+    self._set_triangle_vector(v_field)
+    self.thisptr.calculateDivergence()
+    return self.vertex_scalar.copy()
 
 
   cdef construct_sparse_vertex_matrix(self):
-    """ Takes the sparse matrix instructions from 
-        the Mesh class and returns a sparse matrix built from them
+    """Takes the sparse matrix instructions from 
+       the Mesh class and returns a sparse matrix built from them.
+       Note that unlike the other attachments, changing this field 
+       will not trigger a change in the C++ relm.
+       TODO: wipe the sparse matrix clean in c++
     """
     return coo_matrix((self.v_sparse, (self.i_sparse, self.j_sparse)))
 

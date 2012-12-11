@@ -15,6 +15,8 @@ class Vec3
 	Vec3(double x, double y, double z);
 	// or coersion from a vector object (such as in assignment)
 	Vec3(Vertex& v);
+  // write out to a double array at position given
+  void writeOutTo(double* array);
 	// internally, values stored in three doubles
 	double x,y,z;
 	// * == ELEMENT product
@@ -22,6 +24,7 @@ class Vec3
 	// ^ == CROSS product
 	double dot(Vec3 v2);
 	Vec3 operator-(Vec3 v2);
+	Vec3 operator+(Vec3 v2);
 	Vec3 operator^(Vec3 v2);
 	Vec3 operator*(double scale);
 	Vec3 operator/(double scale);

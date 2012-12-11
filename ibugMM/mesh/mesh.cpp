@@ -84,6 +84,21 @@ void Mesh::calculateLaplacianOperator()
   std::cout << "After laplacian, sparse pointer at " << sparse_pointer << std::endl;
 }
 
+void Mesh::calculateGradient()
+{
+  std::vector<Triangle*>::iterator t;
+  for(t = triangles.begin(); t != triangles.end(); t++)
+	((*t)->gradient()).writeOutTo((*t)->triangleVec3());
+}
+
+void Mesh::calculateDivergence()
+{
+//  std::vector<Vertex*>::iterator v;
+//  for(v = vertices.begin(); v != vertices.end(); v++)
+//	(*v)->divergence();
+  vertices[0]->divergence();
+}
+
 MeshAttribute::MeshAttribute(Mesh* meshIn)
 {
   mesh = meshIn;

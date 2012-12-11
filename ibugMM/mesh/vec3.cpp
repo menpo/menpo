@@ -33,6 +33,14 @@ Vec3 Vec3::operator-(Vec3 v2)
   return Vec3(xOut,yOut,zOut);
 }
 
+Vec3 Vec3::operator+(Vec3 v2)
+{
+  double xOut = x + v2.x;
+  double yOut = y + v2.y;
+  double zOut = z + v2.z;
+  return Vec3(xOut,yOut,zOut);
+}
+
 // dot product
 Vec3 Vec3::operator*(Vec3 v2)
 {
@@ -106,5 +114,13 @@ std::ostream& operator<<(std::ostream& out, const Vec3& vec)
 {
   out << "(" << vec.x << "," << vec.y << "," << vec.z << ")";
   return out;
+
+}
+
+void Vec3::writeOutTo(double* array)
+{
+  array[0] = x;
+  array[1] = y;
+  array[2] = z;
 
 }

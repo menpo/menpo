@@ -27,8 +27,9 @@ class Vertex : public MeshAttribute
 	void addVertex(Vertex* vertex);
 	HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle);
   void calculateLaplacianOperator(unsigned& sparse_pointer);
+  void divergence();
 	~Vertex();
-	// a pointer to a structure identical to 
+	// returns a pointer to the position in the vertex scalar
 	double* vertexScalar();
 	double* vertexVec3();
   HalfEdge* halfEdgeOnTriangle(Triangle* triangle);

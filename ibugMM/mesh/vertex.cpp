@@ -100,14 +100,11 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
 
 void Vertex::calculateLaplacianOperator(unsigned& sparse_pointer)
 {
-  //double *mat = mesh->vertexSquareMatrix;
-  unsigned m = mesh->n_coords;
+  // sparse_pointer points into how far into the sparse_matrix structures
+  // we should be recording results for this vertex
   unsigned i = id;
   double vertexArea = 0.;
   std::set<HalfEdge*>::iterator he;
-  SparseMatrix s;
-  // start the pointer after the first n_coord values (the diagonals of the sparse
-  // matrix
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
 	if((*he)->partOfFullEdge())
@@ -135,6 +132,27 @@ void Vertex::calculateLaplacianOperator(unsigned& sparse_pointer)
 	//else
 	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
   }
+  // the most natural place to store out the area is to the vertex scalar attachment
   (*vertexScalar()) = (vertexArea*2.0)/3.0; 
 }
 
+void Vertex::divergence()
+{
+  // calculates the divergence of the vector field (with values stored per triangle
+  // in triangle->triangleVec3()) at each vertex (result stored in vertexScalar)
+  std::set<HalfEdge*>::iterator he;
+  double divergence = 0;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+	Vec3 field((*he)->triangle->triangleVec3());
+	std::cout << "field = " << field << std::endl;
+	Vec3 e1 = (*he)->differenceVec3();
+	Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->halfedge->differenceVec3();
+	double cottheta2 = cotOfAngle((*he)->betaAngle());
+	double cottheta1 = cotOfAngle((*he)->gammaAngle());
+	std::cout << "cottheta = " << cottheta1 << " " << cottheta2 << std::endl;
+	divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
+  }
+  std::cout << "divergence is " << divergence/2.0 << std::endl;
+  *vertexScalar() = divergence/2.0;
+}
