@@ -8,6 +8,9 @@ objPath = '/home/jab08/testData/ioannis_001/exports/ioannis_001_022.obj'
 oimporter = OBJImporter(objPath)
 print 'Importer ready'
 oFace = oimporter.generateFace()
+A,B = oFace.laplacian_operator()
+C = oFace.gradient()
+div = oFace.divergence()
 print 'Face generated'
 #cI = oFace.coordsIndex[np.where(oFace.coordsIndex==0)[0]]
 #c = oFace.coords[np.unique(cI)]
