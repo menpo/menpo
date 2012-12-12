@@ -20,6 +20,7 @@ cdef extern from "mesh.h":
                                     double* v_sparse,   double* vertex_areas)
     void calculateGradient(double* v_scalar_field, double* t_vector_gradient)
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
+    void verifyMesh()
     double   n_full_edges
     unsigned n_full_edges
 
@@ -47,6 +48,9 @@ cdef class CppMesh:
   @property
   def n_full_edges(self):
     return self.thisptr.n_full_edges
+
+  def verify_mesh(self):
+    self.thisptr.verifyMesh()
 
   def geodesic(self):
     cdef np.ndarray[double, ndim=1, mode='c'] u_0 = np.zeros(self.n_coords)

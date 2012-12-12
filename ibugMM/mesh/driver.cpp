@@ -32,7 +32,7 @@ int main()
 	//std::cout << (*it)->normal() << std::endl;
   //}
   
-  mesh->calculateLaplacianOperator(vertex_areas);
+  //mesh->calculateLaplacianOperator(vertex_areas);
   //mesh->verifyAttachements();
   delete mesh;
 

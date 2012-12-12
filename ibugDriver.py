@@ -9,7 +9,7 @@ oimporter = OBJImporter(objPath)
 print 'Importer ready'
 oFace = oimporter.generateFace()
 print 'Face generated'
-L_c, A, grad_u, div_grad_u = oFace.geodesic()
+#L_c, A, grad_u, div_grad_u = oFace.geodesic()
 print 'All calcuated'
 #cI = oFace.coordsIndex[np.where(oFace.coordsIndex==0)[0]]
 #c = oFace.coords[np.unique(cI)]

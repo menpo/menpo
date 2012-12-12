@@ -1,8 +1,9 @@
+#include <iostream>
+#include <ostream>
+#include <assert.h>
 #include "vertex.h"
 #include "halfedge.h"
 #include "vec3.h"
-#include <iostream>
-#include <ostream>
 #include "triangle.h"
 
 Vertex::Vertex(Mesh* meshIn, unsigned vertid, double* coordsIn): MeshAttribute(meshIn)
@@ -99,8 +100,8 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
 }
 
 void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-	                                    double* v_sparse, unsigned& sparse_pointer, 
-								        double* vertex_areas)
+	double* v_sparse, unsigned& sparse_pointer, 
+	double* vertex_areas)
 {
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
@@ -140,19 +141,50 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 
 void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
 {
+  //std::cout << "Calculating diergence for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
   std::set<HalfEdge*>::iterator he;
   double divergence = 0;
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
-	Vec3 field(&t_vector_field[((*he)->triangle->id)*3]);
-	std::cout << "field = " << field << std::endl;
-	Vec3 e1 = (*he)->differenceVec3();
-	Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->halfedge->differenceVec3();
-	double cottheta2 = cotOfAngle((*he)->betaAngle());
-	double cottheta1 = cotOfAngle((*he)->gammaAngle());
-	std::cout << "cottheta = " << cottheta1 << " " << cottheta2 << std::endl;
-	divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
+	if((*he)->partOfFullEdge())
+	{
+	  Vec3 field(&t_vector_field[((*he)->triangle->id)*3]);
+	  //std::cout << "field = " << field << std::endl;
+	  Vec3 e1 = (*he)->differenceVec3();
+	  //std::cout << "Got diff vec!" << std::endl;
+	  // *-1 as we want to reverse the direction
+	  Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->differenceVec3()*-1;
+	  //std::cout << "Got other diff vec!" << std::endl;
+	  double cottheta2 = cotOfAngle((*he)->betaAngle());
+	  double cottheta1 = cotOfAngle((*he)->gammaAngle());
+	  //std::cout << "cottheta1 = " << cottheta1 << " cottheta2 = " << cottheta2 << std::endl;
+	  divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
+	}
   }
-  std::cout << "divergence is " << divergence/2.0 << std::endl;
+  //std::cout << "       divergence is " << divergence/2.0 << std::endl << std::endl;
   v_scalar_divergence[id] = divergence/2.0;
 }
+
+void Vertex::verifyHalfEdgeConnectivity()
+{
+  std::set<HalfEdge*>::iterator he;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+	Triangle* triangle = (*he)->triangle;
+	Vertex* t_v0 = triangle->v0;
+	Vertex* t_v1 = triangle->v1;
+	Vertex* t_v2 = triangle->v2;
+	if(t_v0 != this && t_v1 != this && t_v2 != this)
+	  std::cout << "this halfedge does not live on it's triangle!" << std::endl;
+	if((*he)->v0 != this)
+	  std::cout << "half edge errornously connected" << std::endl;
+	if((*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->v1 != (*he)->v0)
+	  std::cout << "cannie spin raarnd the triangle like man!" << std::endl;
+	if((*he)->partOfFullEdge())
+	{
+	  if((*he)->halfedge->v0 != (*he)->v1 || (*he)->halfedge->v1 != (*he)->v0)
+		std::cout << "some half edges aren't paired up with there buddies!" << std::endl;
+	}
+  }
+}
+

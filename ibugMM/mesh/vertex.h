@@ -39,6 +39,7 @@ class Vertex : public MeshAttribute
 
   // utility methods
   HalfEdge* getHalfEdgeTo(Vertex* vertex);
+  void verifyHalfEdgeConnectivity();
   double getArea();
   Vec3 operator-(Vertex v);
   Vec3 operator*(Vertex v);

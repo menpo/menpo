@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include "mesh.h"
 // MeshAttributes
 #include "triangle.h"
 #include "vertex.h"
 #include "vec3.h"
-#include <cmath>
+#include "halfedge.h"
 
 const double PI_2 = 2.0*atan(1.0);
 
@@ -99,10 +100,17 @@ void Mesh::calculateGradient(double* v_scalar_field, double* t_vector_gradient)
 
 void Mesh::calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
 {
-//  std::vector<Vertex*>::iterator v;
-//  for(v = vertices.begin(); v != vertices.end(); v++)
-//	(*v)->divergence();
-  vertices[0]->divergence(t_vector_field, v_scalar_divergence);
+  std::vector<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
+	(*v)->divergence(t_vector_field, v_scalar_divergence);
+  //vertices[0]->divergence(t_vector_field, v_scalar_divergence);
+}
+
+void Mesh::verifyMesh()
+{
+  std::vector<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
+	(*v)->verifyHalfEdgeConnectivity();
 }
 
 MeshAttribute::MeshAttribute(Mesh* meshIn)
