@@ -66,15 +66,15 @@ Vec3 Vertex::operator-(Vertex v)
   return a - b;
 }
 
-double* Vertex::vertexScalar()
-{
-  return &(mesh->vertexScalar[id]);
-}
-
-double* Vertex::vertexVec3()
-{
-  return &(mesh->vertexVec3[id*3]);
-}
+//double* Vertex::vertexScalar()
+//{
+//  return &(mesh->vertexScalar[id]);
+//}
+//
+//double* Vertex::vertexVec3()
+//{
+//  return &(mesh->vertexVec3[id*3]);
+//}
 
 std::ostream& operator<<(std::ostream& out, const Vertex& v)
 {
@@ -98,7 +98,9 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
   //std::cout << "V:" << this << " does not have a HE to V:" << vertex << std::endl;
 }
 
-void Vertex::calculateLaplacianOperator(unsigned& sparse_pointer)
+void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
+	                                    double* v_sparse, unsigned& sparse_pointer, 
+								        double* vertex_areas)
 {
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
@@ -118,33 +120,31 @@ void Vertex::calculateLaplacianOperator(unsigned& sparse_pointer)
 		cotOfAngle((*he)->halfedge->gammaAngle());
 	  // write out to the i'th row of the vertexSquarematrix: 
 	  // += cotOp to the j'th position 
-	  mesh->i_sparse[sparse_pointer] = i;
-	  mesh->j_sparse[sparse_pointer] = j;
-	  mesh->v_sparse[sparse_pointer] = cotOp;
+	  i_sparse[sparse_pointer] = i;
+	  j_sparse[sparse_pointer] = j;
+	  v_sparse[sparse_pointer] = cotOp;
 	  // increment the pointer
 	  sparse_pointer++;
 	  // -= cotOp to the i'th position 
-	  mesh->i_sparse[i] = i;
-	  mesh->j_sparse[j] = j;
-	  mesh->v_sparse[i] = -cotOp;
+	  i_sparse[i] = i;
+	  j_sparse[j] = j;
+	  v_sparse[i] = -cotOp;
 	  vertexArea += (*he)->triangle->area();
 	}
 	//else
 	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
   }
-  // the most natural place to store out the area is to the vertex scalar attachment
-  (*vertexScalar()) = (vertexArea*2.0)/3.0; 
+  // store the areas in the array that is passed in
+  vertex_areas[id] = (vertexArea*2.0)/3.0; 
 }
 
-void Vertex::divergence()
+void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
 {
-  // calculates the divergence of the vector field (with values stored per triangle
-  // in triangle->triangleVec3()) at each vertex (result stored in vertexScalar)
   std::set<HalfEdge*>::iterator he;
   double divergence = 0;
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
-	Vec3 field((*he)->triangle->triangleVec3());
+	Vec3 field(&t_vector_field[((*he)->triangle->id)*3]);
 	std::cout << "field = " << field << std::endl;
 	Vec3 e1 = (*he)->differenceVec3();
 	Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->halfedge->differenceVec3();
@@ -154,5 +154,5 @@ void Vertex::divergence()
 	divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
   }
   std::cout << "divergence is " << divergence/2.0 << std::endl;
-  *vertexScalar() = divergence/2.0;
+  v_scalar_divergence[id] = divergence/2.0;
 }

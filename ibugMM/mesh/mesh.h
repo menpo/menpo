@@ -10,21 +10,30 @@ class Vertex;
 // containing pointers to neighbours. This allows for algorithms to be written
 // in C++/Cython that can be quick while for looping over vertices. The actual 
 // organisation of the data itself is not delt with by this framework - it
-// simply works on pointers to C style arrays. This makes it very easy to 
-// efficiently interface to this framework from python/matlab without having
-// to perform copies everytime we want to run an algorithm.
-// The C arrays that can be used are:
+// simply works on pointers to C style arrays passed into the methods defined
+// on this class. This makes it very easy to efficiently interface to this 
+// framework from python/matlab without having to perform copies everytime 
+// we want to run an algorithm.
 //
-//   doub* coords - raw position info (can be modified safely)
-//   uint* coordsIndex - triangle list (CANNOT be modified)
-//   doub* vertexScalar - an array containing a scalar for each vert
-//   doub* vertexVec3  - an array containing a 3-vector for each vert
-//   doub* triangleScalar - an array containing a scalar for each tri
-//   doub* triangleVec3 - an array containing a 3-vector for each tri
+// Triangles and vertices both have an unsigned 'id' field that can be safely
+// used to index into arrays. Array arguments follow a structure to identify
+// their required size:
+//    double* t_vector_field 
+//            ^   ^
+//    one entry    3 values (x,y,z) per entry
+//    per Tri
+//                                                => shape = [n_triangles, 3]
 //
-// All these arrays are accessable from the appropriate C++ classes
-// e.g. Vertex->vertexScalar() on the i'th vertex will always point 
-// to the correct point in the vertexScalar array attached to mesh
+// and on the 342'nd Triangle, this.id = 342, so
+//   
+//   x = t_vector_field[this.id*3 + 0] 
+//   y = t_vector_field[this.id*3 + 1] 
+//   z = t_vector_field[this.id*3 + 2] 
+//
+// are the relevent entries in the array.
+//
+// Note that this framework expects all arrays to be allocated to the 
+// correct size before method invocation!
 //
 
 class Mesh
@@ -45,33 +54,11 @@ class Mesh
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
-    // pointer to the start of an array dim(n_coords) containing a single
-    // value for each vertex.
-    double* vertexScalar;
-    // pointer to the start of an array dim(n_coords X 3) containing a vec3 
-    // value for each vertex.
-    double* vertexVec3;
-    // pointer to the start of an array dim(n_triangles) containing a single 
-    // value for each triangle.
-    double* triangleScalar;
-    // pointer to the start of an array dim(n_triangles X 3) containing a vec3 
-    // value for each triangle.
-    double* triangleVec3;
-	
-	// pointers to structures used to define a sparse matrix of doubles
-	// where the k'th value of each array is treated to mean:
-	// sparse_matrix[i_sparse[k]][j_sparse[k]] = v_sparse[k]
-	unsigned* i_sparse;
-	unsigned* j_sparse;
-	double*   v_sparse;
 
-    // prints the first and last vector and scalar values for triangle 
-    // and vectices respectfully
-    void verifyAttachements();
-
-    void calculateLaplacianOperator();
-    void calculateGradient();
-    void calculateDivergence();
+    void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse, 
+		                            double*   v_sparse, double*   vertex_areas);
+    void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
+    void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
 };
 
 

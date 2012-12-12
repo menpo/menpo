@@ -20,6 +20,7 @@ int main()
                              0,6,4,
                              6,0,3,
                              1,0,5};
+  double vertex_areas [] = {0.,0.,0.,0.,0.,0.,0.,0.};
   unsigned n_coords = 7;
   unsigned n_triangles = 6;
   std::cout << "before construct" << std::endl;
@@ -31,7 +32,7 @@ int main()
 	//std::cout << (*it)->normal() << std::endl;
   //}
   
-  mesh->calculateLaplacianOperator();
+  mesh->calculateLaplacianOperator(vertex_areas);
   //mesh->verifyAttachements();
   delete mesh;
 

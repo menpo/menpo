@@ -45,22 +45,27 @@ Mesh::~Mesh()
   vertices.clear();
 }
 
-void Mesh::verifyAttachements()
-{
-  unsigned v = n_coords - 1;
-  unsigned t = n_triangles - 1;
-  std::cout << "ver0: scalar = " <<    *(vertices[0]->vertexScalar()) << std::endl;
-  std::cout << "ver0: vector = " << Vec3(vertices[0]->vertexVec3())   << std::endl;
-  std::cout << "vern: scalar = " <<    *(vertices[v]->vertexScalar()) << std::endl;
-  std::cout << "vern: vector = " << Vec3(vertices[v]->vertexVec3())   << std::endl;
-  std::cout << "tri0: scalar = " <<    *(triangles[0]->triangleScalar()) << std::endl;
-  std::cout << "tri0: vector = " << Vec3(triangles[0]->triangleVec3())   << std::endl;
-  std::cout << "trin: scalar = " <<    *(triangles[t]->triangleScalar()) << std::endl;
-  std::cout << "trin: vector = " << Vec3(triangles[t]->triangleVec3())   << std::endl;
-}
+//void Mesh::verifyAttachements()
+//{
+//  unsigned v = n_coords - 1;
+//  unsigned t = n_triangles - 1;
+//  std::cout << "ver0: scalar = " <<    *(vertices[0]->vertexScalar()) << std::endl;
+//  std::cout << "ver0: vector = " << Vec3(vertices[0]->vertexVec3())   << std::endl;
+//  std::cout << "vern: scalar = " <<    *(vertices[v]->vertexScalar()) << std::endl;
+//  std::cout << "vern: vector = " << Vec3(vertices[v]->vertexVec3())   << std::endl;
+//  std::cout << "tri0: scalar = " <<    *(triangles[0]->triangleScalar()) << std::endl;
+//  std::cout << "tri0: vector = " << Vec3(triangles[0]->triangleVec3())   << std::endl;
+//  std::cout << "trin: scalar = " <<    *(triangles[t]->triangleScalar()) << std::endl;
+//  std::cout << "trin: vector = " << Vec3(triangles[t]->triangleVec3())   << std::endl;
+//}
 
-void Mesh::calculateLaplacianOperator()
+void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
+                                      double*   v_sparse, double* vertex_areas)
 {
+	// pointers to structures used to define a sparse matrix of doubles
+	// where the k'th value of each array is treated to mean:
+	// sparse_matrix[i_sparse[k]][j_sparse[k]] = v_sparse[k]
+
   // we expect that the attachments at i_sparse, j_sparse
   // and v_sparse have already been set to the correct 
   // dimentions before this call 
@@ -79,24 +84,25 @@ void Mesh::calculateLaplacianOperator()
   // position and value that should be assiged to the matrix
   std::vector<Vertex*>::iterator v;
   for(v = vertices.begin(); v != vertices.end(); v++)
-	(*v)->calculateLaplacianOperator(sparse_pointer);
+	(*v)->calculateLaplacianOperator(i_sparse, j_sparse, v_sparse, 
+		                             sparse_pointer, vertex_areas);
   //vertices[0]->calculateLaplacianOperator();
   std::cout << "After laplacian, sparse pointer at " << sparse_pointer << std::endl;
 }
 
-void Mesh::calculateGradient()
+void Mesh::calculateGradient(double* v_scalar_field, double* t_vector_gradient)
 {
   std::vector<Triangle*>::iterator t;
   for(t = triangles.begin(); t != triangles.end(); t++)
-	((*t)->gradient()).writeOutTo((*t)->triangleVec3());
+	((*t)->gradient(v_scalar_field)).writeOutTo(&t_vector_gradient[((*t)->id)*3]);
 }
 
-void Mesh::calculateDivergence()
+void Mesh::calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
 {
 //  std::vector<Vertex*>::iterator v;
 //  for(v = vertices.begin(); v != vertices.end(); v++)
 //	(*v)->divergence();
-  vertices[0]->divergence();
+  vertices[0]->divergence(t_vector_field, v_scalar_divergence);
 }
 
 MeshAttribute::MeshAttribute(Mesh* meshIn)

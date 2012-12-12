@@ -16,8 +16,8 @@ class Triangle : public MeshAttribute
 	HalfEdge* e0;
 	HalfEdge* e1;
 	HalfEdge* e2;
-	double* triangleScalar();
-	double* triangleVec3();
+	//double* triangleScalar();
+	//double* triangleVec3();
 	// the 'number' of the triangle. Used to point into data matrices at
 	// the correct point.
 	unsigned id;
@@ -25,5 +25,5 @@ class Triangle : public MeshAttribute
 	~Triangle();
 	Vec3 normal();
 	double area();
-	Vec3 gradient();
+	Vec3 gradient(double* scalar_field);
 };
