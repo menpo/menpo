@@ -50,7 +50,8 @@ class Mesh
     unsigned* coordsIndex;
     unsigned n_coords;
     unsigned n_triangles;
-	unsigned n_full_edges;
+    unsigned n_full_edges;
+    unsigned n_half_edges;
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
@@ -72,3 +73,4 @@ class MeshAttribute
 
 double angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C);
 double cotOfAngle(double angle);
+

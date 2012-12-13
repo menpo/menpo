@@ -67,16 +67,6 @@ Vec3 Vertex::operator-(Vertex v)
   return a - b;
 }
 
-//double* Vertex::vertexScalar()
-//{
-//  return &(mesh->vertexScalar[id]);
-//}
-//
-//double* Vertex::vertexVec3()
-//{
-//  return &(mesh->vertexVec3[id*3]);
-//}
-
 std::ostream& operator<<(std::ostream& out, const Vertex& v)
 {
   out << "V:" << v.id << " (" << v.coords[0] << "," 
@@ -105,38 +95,42 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 {
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
+  bool has_a_full_edge = false;
   unsigned i = id;
   double vertexArea = 0.;
   std::set<HalfEdge*>::iterator he;
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
+	unsigned j = (*he)->v1->id;
+	//std::cout << *this << " fulledge to " << *((*he)->v1) << std::endl;
+	//double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
+	//std::cout << "u_i - u_j = " << u_diff << std::endl;
+	//std::cout << "theta = " << (*he)->gammaAngle();
+	double cotOp = cotOfAngle((*he)->gammaAngle());
 	if((*he)->partOfFullEdge())
 	{
-	  unsigned j = (*he)->v1->id;
-	  //std::cout << *this << " fulledge to " << *((*he)->v1) << std::endl;
-	  //double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
-	  //std::cout << "u_i - u_j = " << u_diff << std::endl;
-	  //std::cout << "theta = " << (*he)->gammaAngle();
-	  double cotOp = cotOfAngle((*he)->gammaAngle()) + 
-		cotOfAngle((*he)->halfedge->gammaAngle());
-	  // write out to the i'th row of the vertexSquarematrix: 
-	  // += cotOp to the j'th position 
-	  i_sparse[sparse_pointer] = i;
-	  j_sparse[sparse_pointer] = j;
-	  v_sparse[sparse_pointer] = cotOp;
-	  // increment the pointer
-	  sparse_pointer++;
-	  // -= cotOp to the i'th position 
-	  i_sparse[i] = i;
-	  j_sparse[j] = j;
-	  v_sparse[i] = -cotOp;
-	  vertexArea += (*he)->triangle->area();
+	  has_a_full_edge = true;
+	  cotOp += cotOfAngle((*he)->halfedge->gammaAngle());
 	}
+	// write out to the i'th row of the vertexSquarematrix: 
+	// += cotOp to the j'th position 
+	i_sparse[sparse_pointer] = i;
+	j_sparse[sparse_pointer] = j;
+	//if(v_sparse[sparse_pointer] != 0)
+	//  std::cout << "this matrix value is already taken?" << std::endl;
+	v_sparse[sparse_pointer] = cotOp/2.0;
+	// increment the pointer
+	sparse_pointer++;
+	// -= cotOp to the i'th position 
+	v_sparse[i] -= cotOp/2.0;
+	vertexArea += (*he)->triangle->area();
 	//else
 	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
   }
   // store the areas in the array that is passed in
-  vertex_areas[id] = (vertexArea*2.0)/3.0; 
+  vertex_areas[id] = vertexArea/3.0; 
+  if(!has_a_full_edge)
+	std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
 }
 
 void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
@@ -188,3 +182,21 @@ void Vertex::verifyHalfEdgeConnectivity()
   }
 }
 
+void Vertex::printStatus()
+{
+  std::cout << "V" << id << std::endl;
+  std::set<HalfEdge*>::iterator he;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+	std::cout << "|" ;
+	if((*he)->partOfFullEdge())
+	  std::cout << "=";
+	else
+	  std::cout << "-";
+	std::cout << "V" << (*he)->v1->id;
+	std::cout << " (T" << (*he)->triangle->id; 
+	if((*he)->partOfFullEdge())
+	  std::cout << "=T" << (*he)->halfedge->triangle->id;
+	std::cout << ")" << std::endl;
+  }
+}

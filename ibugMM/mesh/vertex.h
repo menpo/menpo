@@ -44,5 +44,6 @@ class Vertex : public MeshAttribute
   Vec3 operator-(Vertex v);
   Vec3 operator*(Vertex v);
   Vec3 operator^(Vertex v);
+  void printStatus();
 };
 

@@ -1,3 +1,5 @@
+#include <iostream>
+#include <iomanip>
 #include "triangle.h"
 #include "vertex.h"
 #include "vec3.h"
@@ -43,30 +45,6 @@ double Triangle::area()
   return 0.5*(normal().mag());
 }
 
-//void Triangle::gradient()
-//{
-//  Vec3 u0(*v0);
-//  //Vec3 u1(*v1);
-//  //Vec3 u2(*v2);
-//  //Vec3 e0v = e0->differenceVec3();
-//  //Vec3 e1v = e0->differenceVec3();
-//  //Vec3 e2v = e0->differenceVec3();
-//  //Vec3 N = normal();
-//  //N.normalize();
-//
-//  return u0;
-//}
-
-//double* Triangle::triangleScalar()
-//{
-//  return &(mesh->triangleScalar[id]);
-//}
-//
-//double* Triangle::triangleVec3()
-//{
-//  return &(mesh->triangleVec3[id*3]);
-//}
-
 Vec3 Triangle::gradient(double* v_scalar_field)
 {
   Vec3 N = normal();
@@ -79,3 +57,47 @@ Vec3 Triangle::gradient(double* v_scalar_field)
           (N^e1_v)*v_scalar_field[v0->id] + 
           (N^e2_v)*v_scalar_field[v1->id])/(2*areaFace);
 }
+
+void Triangle::printStatus()
+{
+  std::cout << "    TRIANGLE " << id << "        " << std::endl; 
+  HalfEdge* h01 = v0->halfEdgeOnTriangle(this);
+  HalfEdge* h12 = v1->halfEdgeOnTriangle(this);
+  HalfEdge* h20 = v2->halfEdgeOnTriangle(this);
+  unsigned width = 12;
+  std::cout  << std::setw(width) << "V0(" << v0->id << ")";
+  if(h01->partOfFullEdge())
+    std::cout << "============";
+  else
+    std::cout << "------------";
+  std::cout  << std::setw(width) << "V1(" << v1->id << ")";
+  if(h12->partOfFullEdge())
+    std::cout << "============";
+  else
+    std::cout << "------------";
+  std::cout  << std::setw(width) << "V2(" << v2->id << ")";
+  if(h20->partOfFullEdge())
+    std::cout << "============";
+  else
+    std::cout << "------------";
+  std::cout << std::setw(width) << "V0(" << v0->id << ")" << std::endl;
+
+  std::cout  << std::setw(width) << " ";
+  if(h01->partOfFullEdge())
+    std::cout  << std::setw(width) << h01->halfedge->triangle->id;
+  else
+    std::cout << " -- ";
+  std::cout  << std::setw(width) << " ";
+  if(h12->partOfFullEdge())
+    std::cout << std::setw(width) << h01->halfedge->triangle->id;
+  else
+    std::cout << " -- ";
+  std::cout  << std::setw(width) << " ";
+  if(h20->partOfFullEdge())
+    std::cout << std::setw(width) << h01->halfedge->triangle->id;
+  else
+    std::cout << " -- ";
+  std::cout  << std::setw(width) << "V0(" << v0->id << ")" << std::endl;
+
+}
+

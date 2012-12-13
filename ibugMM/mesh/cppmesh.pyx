@@ -3,6 +3,7 @@
 
 
 from libcpp.vector cimport vector
+from libcpp.set    cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -21,9 +22,23 @@ cdef extern from "mesh.h":
     void calculateGradient(double* v_scalar_field, double* t_vector_gradient)
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
     void verifyMesh()
-    double   n_full_edges
+    unsigned n_half_edges
     unsigned n_full_edges
+    vector[Vertex*] vertices
+    vector[Triangle*] triangles 
 
+cdef extern from "vertex.h":
+  cdef cppclass Vertex:
+    set[HalfEdge*] halfedges
+    void printStatus()
+
+cdef extern from "triangle.h":
+  cdef cppclass Triangle:
+    void printStatus()
+
+cdef extern from "halfedge.h":
+  cdef cppclass HalfEdge:
+    pass
 
 cdef class CppMesh:
   cdef Mesh* thisptr
@@ -54,19 +69,28 @@ cdef class CppMesh:
 
   def geodesic(self):
     cdef np.ndarray[double, ndim=1, mode='c'] u_0 = np.zeros(self.n_coords)
+    u_0[3000] = 1
     cdef np.ndarray[double, ndim=1, mode='c'] u_t = np.zeros(self.n_coords)
     L_c,A = self.laplacian_operator()
     grad_u = self.gradient(u_0)
     div    = self.divergence(grad_u)
     return L_c, A, grad_u, div
 
+  def vertex_status(self, n_vertex):
+    assert n_vertex >= 0 and n_vertex < self.n_coords
+    deref(self.thisptr.vertices[n_vertex]).printStatus()
+
+  def triangle_status(self, n_triangle):
+    assert n_triangle >= 0 and n_triangle < self.n_triangles
+    deref(self.thisptr.triangles[n_triangle]).printStatus()
+
   def laplacian_operator(self):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
-        [self.thisptr.n_full_edges*2 + self.thisptr.n_coords],dtype=np.uint32)
+        [self.thisptr.n_half_edges + self.thisptr.n_coords],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
-        [self.thisptr.n_full_edges*2 + self.thisptr.n_coords],dtype=np.uint32)
+        [self.thisptr.n_half_edges + self.thisptr.n_coords],dtype=np.uint32)
     cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
-        [self.thisptr.n_full_edges*2 + self.thisptr.n_coords])
+        [self.thisptr.n_half_edges + self.thisptr.n_coords])
     cdef np.ndarray[double, ndim=1, mode='c'] vertex_areas = np.zeros(self.n_coords)
     self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0], &vertex_areas[0])
     L_c = coo_matrix((v_sparse, (i_sparse, j_sparse)))

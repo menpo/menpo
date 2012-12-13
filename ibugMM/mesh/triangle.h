@@ -26,4 +26,5 @@ class Triangle : public MeshAttribute
 	Vec3 normal();
 	double area();
 	Vec3 gradient(double* scalar_field);
+  void printStatus();
 };

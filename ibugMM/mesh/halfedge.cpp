@@ -8,6 +8,7 @@
 HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In, 
 	               Triangle* triangleIn) : MeshAttribute(meshIn)
 {
+	mesh->n_half_edges++;
   v0 = v0In;
   v1 = v1In;
   triangle = triangleIn;
