@@ -3,7 +3,7 @@ from ibugMM.mesh.cppmesh import CppMesh
 from ibugMM.importer.model import OBJImporter
 import numpy as np
 from scipy.sparse import csc_matrix
-from scipy.sparse.linalg import spsolve
+from scipy.sparse import linalg 
 import matplotlib.pyplot as plt
 
 def hist(A):
@@ -59,6 +59,28 @@ cI = np.array([[0, 4, 1],
                [3, 0, 2],
                [1, 2, 0],
                [0, 3, 4]], dtype=np.uint32)
+
+#c  = np.array([[ 0., 0., 0.],
+#               [ 1., 0., 0.],
+#               [ 1., 1., 0.],
+#               [ 0., 1., 0.],
+#               [ 0., 0., 1.],
+#               [ 1., 0., 1.],
+#               [ 1., 1., 1.],
+#               [ 0., 1., 1.]])
+#
+#cI = np.array([[0, 3, 1],
+#               [1, 3, 2],
+#               [1, 2, 5],
+#               [6, 5, 2],
+#               [2, 3, 6],
+#               [6, 3, 7],
+#               [3, 0, 4],
+#               [3, 4, 7],
+#               [0, 1, 4],
+#               [5, 4, 1],
+#               [4, 5, 6],
+#               [6, 7, 4]], dtype=np.uint32)
 print cI
 print c
 
@@ -71,7 +93,7 @@ print 'Calculated Laplacian'
 A = csc_matrix(A)
 L_c = csc_matrix(L_c)
 t = 1.4371
-u_t = spsolve(A - (L_c), u_0)
+u_t = linalg.spsolve(A - (L_c), u_0)
 print 'Solved for u_t'
 grad_u_t = testMesh.gradient(u_t)
 print 'Solved for grad_u_t'
@@ -83,8 +105,10 @@ X[grad_u_t_mag == 0] = 0
 print 'Generated X'
 div_X = testMesh.divergence(X)
 print 'Generated div_X'
-phi = spsolve(L_c, div_X)
+phi = linalg.spsolve(L_c, div_X)
+phi = phi - np.min(phi)
 print 'Generated distances'
+print phi
 
 
 
