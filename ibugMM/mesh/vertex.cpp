@@ -140,20 +140,17 @@ void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
   double divergence = 0;
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
-	if((*he)->partOfFullEdge())
-	{
-	  Vec3 field(&t_vector_field[((*he)->triangle->id)*3]);
-	  //std::cout << "field = " << field << std::endl;
-	  Vec3 e1 = (*he)->differenceVec3();
-	  //std::cout << "Got diff vec!" << std::endl;
-	  // *-1 as we want to reverse the direction
-	  Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->differenceVec3()*-1;
-	  //std::cout << "Got other diff vec!" << std::endl;
-	  double cottheta2 = cotOfAngle((*he)->betaAngle());
-	  double cottheta1 = cotOfAngle((*he)->gammaAngle());
-	  //std::cout << "cottheta1 = " << cottheta1 << " cottheta2 = " << cottheta2 << std::endl;
-	  divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
-	}
+	Vec3 field(&t_vector_field[((*he)->triangle->id)*3]);
+	//std::cout << "field = " << field << std::endl;
+	Vec3 e1 = (*he)->differenceVec3();
+	//std::cout << "Got diff vec!" << std::endl;
+	// *-1 as we want to reverse the direction
+	Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->differenceVec3()*-1;
+	//std::cout << "Got other diff vec!" << std::endl;
+	double cottheta2 = cotOfAngle((*he)->betaAngle());
+	double cottheta1 = cotOfAngle((*he)->gammaAngle());
+	//std::cout << "cottheta1 = " << cottheta1 << " cottheta2 = " << cottheta2 << std::endl;
+	divergence += cottheta1*(e1.dot(field)) + cottheta2*(e2.dot(field));
   }
   //std::cout << "       divergence is " << divergence/2.0 << std::endl << std::endl;
   v_scalar_divergence[id] = divergence/2.0;
