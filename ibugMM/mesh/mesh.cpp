@@ -120,3 +120,17 @@ double cotOfAngle(double theta)
 {
   return std::tan(PI_2 - theta);
 }
+
+double Mesh::meanEdgeLength()
+{
+  double edge_length = 0;
+  std::vector<Vertex*>::iterator v;
+  std::set<HalfEdge*>::iterator he;
+  for(v = vertices.begin(); v != vertices.end(); v++)
+    for(he = (*v)->halfedges.begin(); he != (*v)->halfedges.end(); he++)
+      if((*he)->partOfFullEdge())
+        edge_length += 0.5*(*he)->length();
+      else
+        edge_length += (*he)->length();
+  return edge_length/(n_half_edges - n_full_edges);
+}

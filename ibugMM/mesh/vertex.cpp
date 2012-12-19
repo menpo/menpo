@@ -93,7 +93,7 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 	double* v_sparse, unsigned& sparse_pointer, 
 	double* vertex_areas)
 {
-  std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
+ // std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
   bool has_a_full_edge = false;
@@ -103,21 +103,23 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
 	unsigned j = (*he)->v1->id;
-	std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
+	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
 	//double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
 	//std::cout << "u_i - u_j = " << u_diff << std::endl;
 	//std::cout << "theta = " << (*he)->gammaAngle();
 	double cotOp = cotOfAngle((*he)->gammaAngle());
-	std::cout << "cot of first angle is " << cotOp << std::endl;
+	//std::cout << "cot of first angle is " << cotOp << std::endl;
 	if((*he)->partOfFullEdge())
 	{
 	  has_a_full_edge = true;
 	  cotOp += cotOfAngle((*he)->halfedge->gammaAngle());
-	  std::cout << *this << " is a fulledge! After adding second cot, cot of both is " << cotOp << std::endl;
+	  //std::cout << *this << " is a fulledge! After adding second cot, cot of both is " << cotOp << std::endl;
 	}
+  else
+	  std::cout << *this << " is a halfedge!" << std::endl;
 	// write out to the i'th row of the vertexSquarematrix: 
 	// += cotOp to the j'th position 
-	std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
+	//std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
 	i_sparse[sparse_pointer] = i;
 	j_sparse[sparse_pointer] = j;
 	//if(v_sparse[sparse_pointer] != 0)

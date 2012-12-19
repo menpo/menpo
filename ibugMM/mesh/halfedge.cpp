@@ -30,6 +30,11 @@ Vec3 HalfEdge::differenceVec3()
   return *v1 - *v0;
 }
 
+double HalfEdge::length()
+{
+  return differenceVec3().mag();
+}
+
 bool HalfEdge::partOfFullEdge()
 {
   if(halfedge != NULL)

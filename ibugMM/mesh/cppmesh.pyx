@@ -24,6 +24,7 @@ cdef extern from "mesh.h":
     void verifyMesh()
     unsigned n_half_edges
     unsigned n_full_edges
+    double meanEdgeLength()
     vector[Vertex*] vertices
     vector[Triangle*] triangles 
 
@@ -58,11 +59,20 @@ cdef class CppMesh:
     return self.thisptr.n_coords
 
   @property
+  def mean_edge_length(self):
+    return self.thisptr.meanEdgeLength()
+
+  @property
   def n_triangles(self):
     return self.thisptr.n_triangles
+
   @property
   def n_full_edges(self):
     return self.thisptr.n_full_edges
+
+  @property
+  def n_half_edges(self):
+    return self.thisptr.n_half_edges
 
   def verify_mesh(self):
     self.thisptr.verifyMesh()

@@ -3,10 +3,26 @@ import os.path
 import Image
 from ..mesh.face import Face
 import numpy as np
+import sys
+import os
+
+def ModelImporterFactory(pathToFile):
+  ext = os.path.splitext(pathToFile)[-1]
+  print sys.executable
+
+  if ext == '.off':
+    return OFFImporter(pathToFile)
+  elif ext == '.wrl':
+    return WRLImporter(pathToFile)
+  elif ext == '.obj':
+    return OBJImporter(pathToFile)
+  else:
+    raise Exception("I don't understand the file type " + `ext`)
 
 class ModelImporter(object):
   def __init__(self,pathToFile):
-    self.pathToFile = os.path.abspath(pathToFile)
+    self.pathToFile = os.path.abspath(
+                      os.path.expanduser(pathToFile))
     self._fileHandle = open(self.pathToFile)
     self.lines = self._fileHandle.readlines()
     self._fileHandle.close()
@@ -104,3 +120,26 @@ class WRLImporter(ModelImporter):
     pathToTexture = os.path.dirname(self.pathToFile) + '/' + self.imageName 
     self.texture = Image.open(pathToTexture)
 
+
+class OFFImporter(ModelImporter):
+
+  def __init__(self,pathToFile):
+    ModelImporter.__init__(self,pathToFile)
+    #.off files only have geometry info - all other fields None 
+    self.textureCoords      = None
+    self.normals            = None
+    self.normalsIndex       = None
+    self.textureCoordsIndex = None
+    self.texture            = None
+
+  def importGeometry(self):
+    lines = [l.rstrip() for l in self.lines]
+    self.n_coords = int(lines[1].split(' ')[0])
+    x = self.n_coords + 2
+    coord_lines = lines[2:x]
+    coord_index_lines = lines[x:]
+    self.coords = [[float(x) for x in l.split(' ')] for l in coord_lines]
+    self.coordsIndex = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines]
+
+  def importTexture(self):
+    pass
