@@ -8,6 +8,8 @@
 #include "vec3.h"
 #include "halfedge.h"
 
+
+
 const double PI_2 = 2.0*atan(1.0);
 
 Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
@@ -72,9 +74,11 @@ void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   // This method will populate the sparse matrix arrays with the
   // position and value that should be assiged to the matrix
   std::vector<Vertex*>::iterator v;
+  LaplacianWeightType weight_type = cotangent;
   for(v = vertices.begin(); v != vertices.end(); v++)
     (*v)->calculateLaplacianOperator(i_sparse, j_sparse, v_sparse, 
-                                     sparse_pointer, vertex_areas);
+                                     sparse_pointer, vertex_areas, 
+                                     weight_type);
   //std::cout << "After laplacian, sparse pointer at " << sparse_pointer << std::endl;
 }
 

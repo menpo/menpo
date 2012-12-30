@@ -90,53 +90,82 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
 }
 
 void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-	double* v_sparse, unsigned& sparse_pointer, 
-	double* vertex_areas)
+	double* w_sparse, unsigned& sparse_pointer, 
+	double* inv_d_ij_array, LaplacianWeightType weight_type)
 {
- // std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
+  // std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
   bool has_a_full_edge = false;
   unsigned i = id;
-  double vertexArea = 0.;
+  // the normalisation factor that will be built as we iterate over each half edge
+  double inv_d_ij = 0.;
   std::set<HalfEdge*>::iterator he;
   for(he = halfedges.begin(); he != halfedges.end(); he++)
   {
 	unsigned j = (*he)->v1->id;
 	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
-	//double u_diff = *((*he)->v1->vertexScalar()) - *vertexScalar();
-	//std::cout << "u_i - u_j = " << u_diff << std::endl;
-	//std::cout << "theta = " << (*he)->gammaAngle();
-	double cotOp = cotOfAngle((*he)->gammaAngle());
-	//std::cout << "cot of first angle is " << cotOp << std::endl;
-	if((*he)->partOfFullEdge())
-	{
-	  has_a_full_edge = true;
-	  cotOp += cotOfAngle((*he)->halfedge->gammaAngle());
-	  //std::cout << *this << " is a fulledge! After adding second cot, cot of both is " << cotOp << std::endl;
-	}
-  else
-	  std::cout << *this << " is a halfedge!" << std::endl;
-	// write out to the i'th row of the vertexSquarematrix: 
-	// += cotOp to the j'th position 
+
+  double w_ij;
+  switch(weight_type)
+  {
+    case cotangent:
+      w_ij = cotWeight(*he);
+      break;
+    case distance:
+      w_ij = distanceWeight(*he);
+      break;
+    case combinatorial:
+      w_ij = combinatorialWeight(*he)
+        break;
+    default:
+      std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
+  }
 	//std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
+	// - cotOp to the i,j'th position 
 	i_sparse[sparse_pointer] = i;
 	j_sparse[sparse_pointer] = j;
-	//if(v_sparse[sparse_pointer] != 0)
+	w_sparse[sparse_pointer] = -w_ij;
+  // should be only entry here...
+	//if(w_sparse[sparse_pointer] != 0)
 	//  std::cout << "this matrix value is already taken?" << std::endl;
-	v_sparse[sparse_pointer] = cotOp/2.0;
-	// increment the pointer
 	sparse_pointer++;
-	// -= cotOp to the i'th position 
-	v_sparse[i] -= cotOp/2.0;
-	vertexArea += (*he)->triangle->area();
-	//else
-	//std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
+  
+	// += cotOp to the i'th\'th position 
+	w_sparse[i] += w_ij;
+
+	inv_d_ij += (*he)->triangle->area();
+	if((*he)->partOfFullEdge())
+	  has_a_full_edge = true;
   }
   // store the areas in the array that is passed in
-  vertex_areas[id] = vertexArea/3.0; 
+  inv_d_ij_array[id] = inv_d_ij/3.0; 
   if(!has_a_full_edge)
 	std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
+}
+
+double Vertex::cotWeight(HalfEdge* he)
+{
+  //std::cout << "theta = " << he->gammaAngle();
+  double cotOp = cotOfAngle(he->gammaAngle());
+  //std::cout << "cot of first angle is " << cotOp << std::endl;
+  if(he->partOfFullEdge())
+  {
+	cotOp += cotOfAngle(he->halfedge->gammaAngle());
+	//std::cout << *this << " is a fulledge! After adding second cot, cot of both is " << cotOp << std::endl;
+  }
+  return cotOp/2.0;
+}
+
+double Vertex::distanceWeight(HalfEdge* he)
+{
+  double length = he->length();
+  return 1.0/(length*length);
+}
+
+double combinatorialWeight(HalfEdge* he)
+{
+  return 1;
 }
 
 void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)

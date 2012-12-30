@@ -5,6 +5,8 @@
 class Triangle;
 class Vertex;
 
+enum LaplacianWeightType {cotangent, combinatorial, distance};
+
 // C++ class layer built on top of simple C data arrays. Mesh is composed 
 // of triangles, halfedges, and vertices, each of which is a light C++
 // containing pointers to neighbours. This allows for algorithms to be written

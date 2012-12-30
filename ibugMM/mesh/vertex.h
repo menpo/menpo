@@ -28,7 +28,7 @@ class Vertex : public MeshAttribute
   HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle);
   void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 	                              double* v_sparse, unsigned& sparse_pointer, 
-								  double* vertex_areas);
+								  double* vertex_areas, LaplacianWeightType weight_type);
 
   void divergence(double* t_vector_field, double* v_scalar_divergence);
   ~Vertex();
@@ -36,6 +36,9 @@ class Vertex : public MeshAttribute
   //double* vertexScalar();
   //double* vertexVec3();
   HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
+  // calculates the cotangent Laplacian weighting 
+  double cotWeight(HalfEdge* he);
+  double distanceWeight(HalfEdge* he);
 
   // utility methods
   HalfEdge* getHalfEdgeTo(Vertex* vertex);

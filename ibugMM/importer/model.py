@@ -135,11 +135,14 @@ class OFFImporter(ModelImporter):
   def importGeometry(self):
     lines = [l.rstrip() for l in self.lines]
     self.n_coords = int(lines[1].split(' ')[0])
-    x = self.n_coords + 2
-    coord_lines = lines[2:x]
+    offset = 2
+    while lines[offset] == '':
+      offset += 1
+    x = self.n_coords + offset
+    coord_lines = lines[offset:x]
     coord_index_lines = lines[x:]
     self.coords = [[float(x) for x in l.split(' ')] for l in coord_lines]
-    self.coordsIndex = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines]
+    self.coordsIndex = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
 
   def importTexture(self):
     pass

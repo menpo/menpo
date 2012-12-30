@@ -16,7 +16,7 @@ def hist(A):
 def geodesics(mesh, u_0):
   L_c, A = mesh.laplacian_operator()
   A = csc_matrix(A)
-  L_c = csc_matrix(L_c)
+  L_c = -1.0*csc_matrix(L_c)
   print 'Calculated Laplacian and Area matrix'
   t = mesh.mean_edge_length
   u_t = linalg.spsolve(A - t*(L_c), u_0)
@@ -91,19 +91,16 @@ print 'Imports done.'
 #               [5, 4, 1],
 #               [4, 5, 6],
 #               [6, 7, 4]], dtype=np.uint32)
-
+#
 #print cI
 #print c
 #testMesh = Face(coords=c,coordsIndex=cI)
 
 
-bunnyImp = ModelImporterFactory('~/Dropbox/meshes/bunny.off')
+bunnyImp = ModelImporterFactory('~/Dropbox/meshes/elephant-50kv.off')
 testMesh = bunnyImp.generateFace()
 
 u_0 = np.zeros(testMesh.n_coords)
 u_0[0] = 1
 phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X = geodesics(testMesh, u_0)
-
-
-
 
