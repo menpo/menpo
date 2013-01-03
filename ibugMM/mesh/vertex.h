@@ -39,6 +39,7 @@ class Vertex : public MeshAttribute
   // calculates the cotangent Laplacian weighting 
   double cotWeight(HalfEdge* he);
   double distanceWeight(HalfEdge* he);
+  double combinatorialWeight(HalfEdge* he);
 
   // utility methods
   HalfEdge* getHalfEdgeTo(Vertex* vertex);

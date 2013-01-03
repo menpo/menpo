@@ -116,8 +116,8 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
       w_ij = distanceWeight(*he);
       break;
     case combinatorial:
-      w_ij = combinatorialWeight(*he)
-        break;
+      w_ij = combinatorialWeight(*he);
+	  break;
     default:
       std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
   }
@@ -163,7 +163,7 @@ double Vertex::distanceWeight(HalfEdge* he)
   return 1.0/(length*length);
 }
 
-double combinatorialWeight(HalfEdge* he)
+double Vertex::combinatorialWeight(HalfEdge* he)
 {
   return 1;
 }
