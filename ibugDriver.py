@@ -14,8 +14,10 @@ def hist(A):
   plt.show()
 
 def geodesics(mesh, u_0):
+  # calculate the POSITIVE semidefinite laplacian operator
   L_c, A = mesh.laplacian_operator()
   A = csc_matrix(A)
+  # calculate the NEGITIVE semidefinite laplacian operator
   L_c = -1.0*csc_matrix(L_c)
   print 'Calculated Laplacian and Area matrix'
   t = mesh.mean_edge_length
@@ -56,18 +58,6 @@ print 'Imports done.'
 
 
 
-# flat square
-#c  = np.array([[ 0., 0., 0.],
-#               [ 1., 0., 0.],
-#               [ 0., 1., 0.],
-#               [-1., 0., 0.],
-#               [ 0.,-1., 0.]])
-#
-#cI = np.array([[0, 4, 1],
-#               [3, 0, 2],
-#               [1, 2, 0],
-#               [0, 3, 4]], dtype=np.uint32)
-#
 
 # unit cube 
 #c  = np.array([[ 0., 0., 0.],
@@ -103,4 +93,11 @@ testMesh = bunnyImp.generateFace()
 u_0 = np.zeros(testMesh.n_coords)
 u_0[0] = 1
 phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X = geodesics(testMesh, u_0)
+
+#L_c_mag = np.dot(L_c.T, L_c)
+#print 'dotted the L_c'
+#b  = (L_c.T).dot(div_X)
+#print 'dotted the L_c and the div_X'
+#phi2 = linalg.spsolve(L_c_mag, b)
+#print 'solved!'
 
