@@ -61,18 +61,32 @@ class OBJImporter(ModelImporter):
     for indexLine in indexStr:
       cI,tI,nI = [],[],[]
       for indexStr in indexLine.split(' '):
-        cIn,nIn,tIn =  [int(x) for x in indexStr.split('/')]
+        #cIn,nIn,tIn =  [int(x) for x in indexStr.split('/')]
+        coord_normal_texture_i =  [int(x) for x in indexStr.split('/')]
         # take 1 off as we expect indexing to be 0 based
-        cI.append(cIn-1)
-        tI.append(tIn-1)
-        nI.append(nIn-1)
+        cI.append(coord_normal_texture_i[0]-1)
+        if len(coord_normal_texture_i) > 1:
+          # there is normal data as well
+          nI.append(coord_normal_texture_i[1]-1)
+        if len(coord_normal_texture_i) > 2:
+          # there is texture data as well
+          tI.append(coord_normal_texture_i[2]-1)
       self.coordsIndex.append(cI)
       self.normalsIndex.append(nI)
       self.textureCoordsIndex.append(tI)
 
   def importTexture(self):
     pathToJpg = os.path.splitext(self.pathToFile)[0] + '.jpg'
-    self.texture = Image.open(pathToJpg)
+    try:
+      Image.open(pathToJpg)
+      self.texture = Image.open(pathToJpg)
+    except IOError:
+      print 'Warning, no texture found'
+      if self.textureCoords != []:
+        raise Exception('why do we have texture coords but no texture?')
+      else:
+        print '(there are no texture coordinates anyway so this is expected)'
+        self.texture = []
 
   def _extractDataType(self,signiture):
     headerLength = len(signiture) + 1

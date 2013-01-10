@@ -38,8 +38,8 @@ Mesh::Mesh(double   *coordsIn,      unsigned n_coordsIn,
     // connect them)
     triangles.push_back(new Triangle(this, i, vertices[l],vertices[m],vertices[n]));
   }
-  std::cout << "n_full_edges = " << n_full_edges << std::endl;
-  std::cout << "n_half_edges = " << n_half_edges << std::endl;
+  //std::cout << "n_full_edges = " << n_full_edges << std::endl;
+  //std::cout << "n_half_edges = " << n_half_edges << std::endl;
 }
 
 Mesh::~Mesh()
@@ -60,7 +60,7 @@ void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   // we expect that the attachments at i_sparse, j_sparse
   // and v_sparse have already been set to the correct 
   // dimentions before this call 
-  // (each should be of length n_coords + 2*n_full_edges)
+  // (each should be of length 2*n_half_edges)
   // the first n_coord entries are the diagonals. -> the i'th
   // value of both i_sparse and j_sparse is just i
   for(unsigned int i = 0; i < n_coords; i++)
@@ -79,7 +79,8 @@ void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
     (*v)->calculateLaplacianOperator(i_sparse, j_sparse, v_sparse, 
                                      sparse_pointer, vertex_areas, 
                                      weight_type);
-  //std::cout << "After laplacian, sparse pointer at " << sparse_pointer << std::endl;
+
+  //std::cout << "After looping, sparse pointer at " << sparse_pointer << std::endl;
 }
 
 void Mesh::calculateGradient(double* v_scalar_field, double* t_vector_gradient)

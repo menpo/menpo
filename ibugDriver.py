@@ -82,13 +82,26 @@ print 'Imports done.'
 #               [4, 5, 6],
 #               [6, 7, 4]], dtype=np.uint32)
 #
-#print cI
-#print c
+c  = np.array([[ 0., 0., 0.],
+               [ 1., 0., 0.],
+               [ 0., 1., 0.],
+               [-2., 0., 0.],
+               [ 0.,-1., 0.]])
+cI = np.array([[0, 4, 1],
+               [3, 0, 2],
+               [1, 2, 0],
+               [0, 3, 4]], dtype=np.uint32)
+
+print cI
+print c
 #testMesh = Face(coords=c,coordsIndex=cI)
 
 
-bunnyImp = ModelImporterFactory('~/Dropbox/meshes/elephant-50kv.off')
-testMesh = bunnyImp.generateFace()
+#bunnyImp = ModelImporterFactory('~/Dropbox/meshes/elephant-50kv.off')
+#testMesh = bunnyImp.generateFace()
+
+sphereImp = ModelImporterFactory('~/sphere.obj')
+testMesh  = sphereImp.generateFace()
 
 u_0 = np.zeros(testMesh.n_coords)
 u_0[0] = 1

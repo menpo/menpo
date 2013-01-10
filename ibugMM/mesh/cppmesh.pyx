@@ -6,7 +6,7 @@ from libcpp.vector cimport vector
 from libcpp.set    cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, csc_matrix
 cimport numpy as np
 import cython
 cimport cython
@@ -96,17 +96,17 @@ cdef class CppMesh:
 
   def laplacian_operator(self):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
-        [self.thisptr.n_half_edges + self.thisptr.n_coords],dtype=np.uint32)
+        [self.thisptr.n_half_edges*2],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
-        [self.thisptr.n_half_edges + self.thisptr.n_coords],dtype=np.uint32)
+        [self.thisptr.n_half_edges*2],dtype=np.uint32)
     cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
-        [self.thisptr.n_half_edges + self.thisptr.n_coords])
+        [self.thisptr.n_half_edges*2])
     cdef np.ndarray[double, ndim=1, mode='c'] vertex_areas = np.zeros(self.n_coords)
     self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0], &vertex_areas[0])
     L_c = coo_matrix((v_sparse, (i_sparse, j_sparse)))
     A_i = np.arange(self.n_coords)
     A = coo_matrix((vertex_areas, (A_i,A_i)))
-    return L_c, A
+    return L_c, csc_matrix(A)
 
   def gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
     """
