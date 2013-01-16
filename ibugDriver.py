@@ -13,51 +13,29 @@ def hist(A):
   plt.bar(center, h, align='center', width = width)
   plt.show()
 
-def geodesics(mesh, u_0):
-  # calculate the POSITIVE semidefinite laplacian operator
-  L_c, A = mesh.laplacian_operator()
-  A = csc_matrix(A)
-  # calculate the NEGITIVE semidefinite laplacian operator
-  L_c = -1.0*csc_matrix(L_c)
-  print 'Calculated Laplacian and Area matrix'
-  t = mesh.mean_edge_length
-  u_t = linalg.spsolve(A - t*(L_c), u_0)
-  print 'Solved for u_t'
-  grad_u_t = testMesh.gradient(u_t)
-  print 'Solved for grad_u_t'
-  grad_u_t_mag  = np.sqrt(np.sum(grad_u_t**2, axis=1))
-  X = -1.0*grad_u_t/(grad_u_t_mag).reshape([-1,1])
-  # some of the vectors may have been zero length - ensure this
-  # is true before and after
-  X[grad_u_t_mag == 0] = 0
-  print 'Generated X'
-  div_X = testMesh.divergence(X)
-  print 'Generated div_X'
-  phi = linalg.spsolve(L_c, div_X)
-  phi = phi - phi[10476]
-  print 'Generated distances'
-  print phi
-  return phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X
-
 print 'Imports done.'
 
 ## ioannis face
 objPath = '/home/jab08/testData/ioannis.obj'
 oimporter = ModelImporterFactory(objPath)
-##print 'Importer ready'
+print 'Importer ready'
 testMesh = oimporter.generateFace()
 print 'Face generated'
-u_0 = np.zeros(testMesh.n_coords)
-u_0[10476] = 1
+testMesh.calculate_geodesics(10476)
+
+
+#L_c_mag = np.dot(L_c.T, L_c)
+#print 'dotted the L_c'
+#b  = (L_c.T).dot(div_X)
+#print 'dotted the L_c and the div_X'
+#phi2 = linalg.spsolve(L_c_mag, b)
+#print 'solved!'
 
 #cI = oFace.coordsIndex[np.where(oFace.coordsIndex==0)[0]]
 #c = oFace.coords[np.unique(cI)]
 #cI[cI==32179] = 4
 #cI[cI==35717] = 5
 #cI[cI==32839] = 6
-
-
-
 
 # unit cube 
 #c  = np.array([[ 0., 0., 0.],
@@ -105,12 +83,3 @@ u_0[10476] = 1
 #
 #u_0 = np.zeros(testMesh.n_coords)
 #u_0[0] = 1
-phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X = geodesics(testMesh, u_0)
-
-#L_c_mag = np.dot(L_c.T, L_c)
-#print 'dotted the L_c'
-#b  = (L_c.T).dot(div_X)
-#print 'dotted the L_c and the div_X'
-#phi2 = linalg.spsolve(L_c_mag, b)
-#print 'solved!'
-
