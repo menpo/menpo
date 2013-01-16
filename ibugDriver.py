@@ -34,21 +34,21 @@ def geodesics(mesh, u_0):
   div_X = testMesh.divergence(X)
   print 'Generated div_X'
   phi = linalg.spsolve(L_c, div_X)
-  phi = phi - np.min(phi)
+  phi = phi - phi[10476]
   print 'Generated distances'
   print phi
   return phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X
 
 print 'Imports done.'
 
-# ioannis face
-#objPath = '/home/jab08/testData/ioannis_001/exports/ioannis_001_022.obj'
-#oimporter = ModelImporterFactory(objPath)
-#print 'Importer ready'
-#oFace = oimporter.generateFace()
-#print 'Face generated'
-#u_0 = np.zeros(oFace.n_coords)
-#u_0[3000] = 1
+## ioannis face
+objPath = '/home/jab08/testData/ioannis.obj'
+oimporter = ModelImporterFactory(objPath)
+##print 'Importer ready'
+testMesh = oimporter.generateFace()
+print 'Face generated'
+u_0 = np.zeros(testMesh.n_coords)
+u_0[10476] = 1
 
 #cI = oFace.coordsIndex[np.where(oFace.coordsIndex==0)[0]]
 #c = oFace.coords[np.unique(cI)]
@@ -82,29 +82,29 @@ print 'Imports done.'
 #               [4, 5, 6],
 #               [6, 7, 4]], dtype=np.uint32)
 #
-c  = np.array([[ 0., 0., 0.],
-               [ 1., 0., 0.],
-               [ 0., 1., 0.],
-               [-2., 0., 0.],
-               [ 0.,-1., 0.]])
-cI = np.array([[0, 4, 1],
-               [3, 0, 2],
-               [1, 2, 0],
-               [0, 3, 4]], dtype=np.uint32)
-
-print cI
-print c
+#c  = np.array([[ 0., 0., 0.],
+#               [ 1., 0., 0.],
+#               [ 0., 1., 0.],
+#               [-2., 0., 0.],
+#               [ 0.,-1., 0.]])
+#cI = np.array([[0, 4, 1],
+#               [3, 0, 2],
+#               [1, 2, 0],
+#               [0, 3, 4]], dtype=np.uint32)
+#
+#print cI
+#print c
 #testMesh = Face(coords=c,coordsIndex=cI)
 
 
 #bunnyImp = ModelImporterFactory('~/Dropbox/meshes/elephant-50kv.off')
 #testMesh = bunnyImp.generateFace()
 
-sphereImp = ModelImporterFactory('~/sphere.obj')
-testMesh  = sphereImp.generateFace()
-
-u_0 = np.zeros(testMesh.n_coords)
-u_0[0] = 1
+#sphereImp = ModelImporterFactory('~/sphere-160k.obj')
+#testMesh  = sphereImp.generateFace()
+#
+#u_0 = np.zeros(testMesh.n_coords)
+#u_0[0] = 1
 phi, L_c, A, u_t, grad_u_t, grad_u_t_mag, X, div_X = geodesics(testMesh, u_0)
 
 #L_c_mag = np.dot(L_c.T, L_c)

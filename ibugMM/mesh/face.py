@@ -1,6 +1,6 @@
 import numpy as np
 # expensive to import mlab - leave it for now
-#from mayavi import mlab
+from mayavi import mlab
 from cppmesh import CppMesh
 
 class Face(CppMesh):
