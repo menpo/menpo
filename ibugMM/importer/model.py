@@ -5,6 +5,8 @@ from ..mesh.face import Face
 import numpy as np
 import sys
 import os
+import commands
+import tempfile
 
 def ModelImporterFactory(pathToFile):
   ext = os.path.splitext(pathToFile)[-1]
@@ -47,7 +49,8 @@ class ModelImporter(object):
 
 class OBJImporter(ModelImporter):
   def __init__(self,pathToFile):
-    ModelImporter.__init__(self,pathToFile)
+    tmp_file = self.clean_up_mesh_on_path(pathToFile)
+    ModelImporter.__init__(self,tmp_file)
 
   def importGeometry(self):
     coordsStr          = self._extractDataType('v')
@@ -75,18 +78,30 @@ class OBJImporter(ModelImporter):
       self.normalsIndex.append(nI)
       self.textureCoordsIndex.append(tI)
 
+  def clean_up_mesh_on_path(self, path_to_file):
+    clean_up_path = os.path.join(os.path.split(os.path.abspath(__file__))[0],'cleanup.mlx')
+    tmp_path = tempfile.gettempdir()
+    output_file_name = ''
+    file_name = os.path.split(path_to_file)[-1]
+    output_path = os.path.join(tmp_path, file_name)
+    command = 'meshlabserver -i ' + path_to_file + ' -o ' + \
+              output_path + ' -s ' + clean_up_path + ' -om wt'
+    commands.getoutput(command)
+    print 'importing cleaned version of mesh from tmp'
+    return output_path
+
   def importTexture(self):
     pathToJpg = os.path.splitext(self.pathToFile)[0] + '.jpg'
-    try:
-      Image.open(pathToJpg)
-      self.texture = Image.open(pathToJpg)
-    except IOError:
-      print 'Warning, no texture found'
-      if self.textureCoords != []:
-        raise Exception('why do we have texture coords but no texture?')
-      else:
-        print '(there are no texture coordinates anyway so this is expected)'
-        self.texture = []
+    #try:
+    #  Image.open(pathToJpg)
+    #  self.texture = Image.open(pathToJpg)
+    #except IOError:
+    #  print 'Warning, no texture found'
+    #  if self.textureCoords != []:
+    #    raise Exception('why do we have texture coords but no texture?')
+    #  else:
+    #    print '(there are no texture coordinates anyway so this is expected)'
+    #    self.texture = []
 
   def _extractDataType(self,signiture):
     headerLength = len(signiture) + 1

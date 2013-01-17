@@ -19,9 +19,14 @@ print 'Imports done.'
 objPath = '/home/jab08/testData/ioannis.obj'
 oimporter = ModelImporterFactory(objPath)
 print 'Importer ready'
-testMesh = oimporter.generateFace()
-print 'Face generated'
-testMesh.calculate_geodesics(10476)
+#testMesh = oimporter.generateFace()
+#print 'Face generated'
+## nose, l_eye, r_eye
+#nose  = [10476]
+#l_eye = [40526]
+#r_eye = [40615]
+#mouth = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+#phi = testMesh.calculate_geodesics(mouth)
 
 
 #L_c_mag = np.dot(L_c.T, L_c)
