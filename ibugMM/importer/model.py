@@ -92,16 +92,17 @@ class OBJImporter(ModelImporter):
 
   def importTexture(self):
     pathToJpg = os.path.splitext(self.pathToFile)[0] + '.jpg'
-    #try:
-    #  Image.open(pathToJpg)
-    #  self.texture = Image.open(pathToJpg)
-    #except IOError:
-    #  print 'Warning, no texture found'
-    #  if self.textureCoords != []:
-    #    raise Exception('why do we have texture coords but no texture?')
-    #  else:
-    #    print '(there are no texture coordinates anyway so this is expected)'
-    #    self.texture = []
+    print pathToJpg
+    try:
+      Image.open(pathToJpg)
+      self.texture = Image.open(pathToJpg)
+    except IOError:
+      print 'Warning, no texture found'
+      if self.textureCoords != []:
+        raise Exception('why do we have texture coords but no texture?')
+      else:
+        print '(there are no texture coordinates anyway so this is expected)'
+        self.texture = []
 
   def _extractDataType(self,signiture):
     headerLength = len(signiture) + 1
