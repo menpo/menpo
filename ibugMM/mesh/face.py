@@ -15,6 +15,7 @@ class Face(CppMesh):
     self.A = None
     self.calculated_geodesics = {}
     self.last_key = None
+    self.landmarks = {}
     # some file types include normals - if they are not none, import them
     #if kwargs['normals']:
     #self.normals            = np.array(kwargs.get(['normals']))
@@ -23,14 +24,32 @@ class Face(CppMesh):
     #  self.normals, self.normalsIndex = None, None
 
   def view(self):
-    s = mlab.triangular_mesh(self.coords[:,0],self.coords[:,1],
-                             self.coords[:,2],self.coordsIndex) 
+    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
+                             self.coords[:,2], self.coordsIndex, 
+                             color=(0.5,0.5,0.5)) 
+    mlab.show()
+
+  @property
+  def number_of_landmarks(self):
+    return len(self.landmarks)
+
+  def view_with_landmarks(self):
+    self.view()
+    num_landmarks = self.number_of_landmarks
+    for num, key in enumerate(self.landmarks):
+      i = self.landmarks[key]
+      colors = np.ones_like(i)*((num*1.0+0.1)/num_landmarks)
+      print 'key: ' + `key` + ' color: ' + `colors`
+      s = mlab.points3d(self.coords[i,0], self.coords[i,1],
+                        self.coords[i,2], 
+                        colors, scale_factor=5.0,
+                        vmax=1.0, vmin=0.0) 
     mlab.show()
 
   def view_geodesic_contours(self, phi):
     rings = np.mod(phi,20)
-    s = mlab.triangular_mesh(self.coords[:,0],self.coords[:,1],
-                             self.coords[:,2],self.coordsIndex, 
+    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
+                             self.coords[:,2], self.coordsIndex, 
                              scalars=rings) 
     mlab.show()
 
@@ -82,5 +101,5 @@ class Face(CppMesh):
       self.calculated_geodesics[key] = geodesic
       self.last_key = key
       print 'Generated distances'
-      return phi, geodesic
+      return phi
 

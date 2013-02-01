@@ -8,16 +8,14 @@ import os
 import commands
 import tempfile
 
-def ModelImporterFactory(pathToFile):
+def ModelImporterFactory(pathToFile, **kwargs):
   ext = os.path.splitext(pathToFile)[-1]
-  print sys.executable
-
   if ext == '.off':
-    return OFFImporter(pathToFile)
+    return OFFImporter(pathToFile, **kwargs)
   elif ext == '.wrl':
-    return WRLImporter(pathToFile)
+    return WRLImporter(pathToFile, **kwargs)
   elif ext == '.obj':
-    return OBJImporter(pathToFile)
+    return OBJImporter(pathToFile, **kwargs)
   else:
     raise Exception("I don't understand the file type " + `ext`)
 
@@ -48,9 +46,13 @@ class ModelImporter(object):
       return Face(**kwargs)
 
 class OBJImporter(ModelImporter):
-  def __init__(self,pathToFile):
-    tmp_file = self.clean_up_mesh_on_path(pathToFile)
-    ModelImporter.__init__(self,tmp_file)
+  def __init__(self, path_to_file, **kwargs):
+    clean_up = kwargs.get('clean_up')
+    if clean_up:
+      print 'clean up of mesh requested'
+      path_to_file = self.clean_up_mesh_on_path(path_to_file)
+    print 'importing without cleanup'
+    ModelImporter.__init__(self, path_to_file)
 
   def importGeometry(self):
     coordsStr          = self._extractDataType('v')
