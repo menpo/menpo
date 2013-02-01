@@ -59,6 +59,10 @@ class Face(CppMesh):
     else:
       print "No geodesics have been calculated for this face"
 
+  def calculate_geodesics_for_all_landmarks(self):
+    for key in self.landmarks:
+      self.calculate_geodesics(self.landmarks[key])
+
   def calculate_geodesics(self, source_vertex):
     key = tuple(sorted(set(source_vertex)))
     geodesic = self.calculated_geodesics.get(key)
