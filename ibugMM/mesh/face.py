@@ -24,10 +24,15 @@ class Face(CppMesh):
     #  self.normals, self.normalsIndex = None, None
 
   def view(self):
+    figure = mlab.gcf()
+    mlab.clf()
+    self._render_face()
+    mlab.show()
+
+  def _render_face(self):
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.coordsIndex, 
                              color=(0.5,0.5,0.5)) 
-    mlab.show()
 
   @property
   def number_of_landmarks(self):
@@ -44,6 +49,13 @@ class Face(CppMesh):
                         self.coords[i,2], 
                         colors, scale_factor=5.0,
                         vmax=1.0, vmin=0.0) 
+    mlab.show()
+
+  def view_location_of_vertex(self, i):
+    self.view()
+    s = mlab.points3d(self.coords[i,0], self.coords[i,1],
+                      self.coords[i,2], 
+                      color=(1,1,1), scale_factor=5.0) 
     mlab.show()
 
   def view_geodesic_contours(self, phi):

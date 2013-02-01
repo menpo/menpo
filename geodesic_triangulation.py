@@ -35,22 +35,22 @@ ioannis_2 = importer.generateFace()
 # store the landmarks 
 # note, l_eye is THEIR l_eye (right as we look at it)
 ioannis_1.landmarks['nose']  = [46731]
-ioannis_1.landmarks['l_eye'] = [1594]
-ioannis_1.landmarks['r_eye'] = [5695]
+ioannis_1.landmarks['l_eye'] = [5695]
+ioannis_1.landmarks['r_eye'] = [5495]
 ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
 
 ioannis_2.landmarks['nose']  = [10476]
-ioannis_2.landmarks['l_eye'] = [40526]
-ioannis_2.landmarks['r_eye'] = [40615]
+ioannis_2.landmarks['l_eye'] = [40615]
+ioannis_2.landmarks['r_eye'] = [40526]
 ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
 
 # store the ground truth equivielent positions
 ioannis_1_gt = 752
 ioannis_2_gt = 32294 
 
-phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-distances= = distance.cdist(phi_1, phi_2)
+#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
+#distances= = distance.cdist(phi_1, phi_2)
 
 
 
