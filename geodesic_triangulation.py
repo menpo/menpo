@@ -48,11 +48,23 @@ ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 
 ioannis_1_gt = 752
 ioannis_2_gt = 32294 
 
-#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-#distances= = distance.cdist(phi_1, phi_2)
+# generate the geodesic vectors for face 1 and 2
+phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
+delta_phi = np.abs(phi_2 - phi_1[ioannis_1_gt])
+# L2 norm distances for all
+distances = np.sum(delta_phi**2,1)
+
+# L2 distances ignoring the far point (r_eye)
+distances_only_r = np.sum(delta_phi[:,[0,1,3]]**2,1)
 
 
+
+def l2_using_only(indexes):
+  if len(indexes) > 1:
+    return np.sum(delta_phi[:,indexes]**2,1)
+  else:
+    return delta_phi[:,indexes]**2
 
 #phi_coords_2 = gen_phi_coords(ioannis_2, landmarks_2)
 #for i in range(1,5):

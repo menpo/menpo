@@ -26,11 +26,12 @@ class Face(CppMesh):
   def view(self):
     figure = mlab.gcf()
     mlab.clf()
-    self._render_face()
+    s = self._render_face()
     mlab.show()
+    return s
 
   def _render_face(self):
-    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
+    return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.coordsIndex, 
                              color=(0.5,0.5,0.5)) 
 
