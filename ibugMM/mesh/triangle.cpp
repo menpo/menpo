@@ -89,15 +89,14 @@ void Triangle::printStatus()
     std::cout << " -- ";
   std::cout  << std::setw(width) << " ";
   if(h12->partOfFullEdge())
-    std::cout << std::setw(width) << h01->halfedge->triangle->id;
+    std::cout << std::setw(width) << h12->halfedge->triangle->id;
   else
     std::cout << " -- ";
   std::cout  << std::setw(width) << " ";
   if(h20->partOfFullEdge())
-    std::cout << std::setw(width) << h01->halfedge->triangle->id;
+    std::cout << std::setw(width) << h20->halfedge->triangle->id;
   else
     std::cout << " -- ";
-  std::cout  << std::setw(width) << "V0(" << v0->id << ")" << std::endl;
 
 }
 

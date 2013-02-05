@@ -48,15 +48,35 @@ ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 
 ioannis_1_gt = 752
 ioannis_2_gt = 32294 
 
-# generate the geodesic vectors for face 1 and 2
-phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-delta_phi = np.abs(phi_2 - phi_1[ioannis_1_gt])
-# L2 norm distances for all
-distances = np.sum(delta_phi**2,1)
+## generate the geodesic vectors for face 1 and 2
+#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
+##delta_phi = np.abs(phi_2 - phi_1[ioannis_1_gt])
+## L2 norm distances for all
+##distances = np.sum(delta_phi**2,1)
+#
+## L2 distances ignoring the far point (r_eye)
+##distances_only_r = np.sum(delta_phi[:,[0,1,3]]**2,1)
+#
+## find all vertices with a distance less than 100 from the nose (this cuts out noisy fringe data)
+#mask_i_1 = np.where(phi_1[:,2] < 100)[0]
+#mask_i_2 = np.where(phi_2[:,2] < 100)[0]
+## find the original index posiions of these points
+#index_map_1 = np.arange(ioannis_1.n_coords)[mask_i_1]
+#index_map_2 = np.arange(ioannis_2.n_coords)[mask_i_2]
+#
+## find all distances between these two masked point sets
+#distances = distance.cdist(phi_1[mask_i_1], phi_2[mask_i_2])
+#
+## now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
+#mins_2_to_1 = np.argmin(distances, axis=1)
+#mins_1_to_2 = np.argmin(distances, axis=0)
+#
+## and count how many times each vertex is mapped from
+#count_1_to_2 = np.bincount(mins_1_to_2)
+#count_2_to_1 = np.bincount(mins_2_to_1)
 
-# L2 distances ignoring the far point (r_eye)
-distances_only_r = np.sum(delta_phi[:,[0,1,3]]**2,1)
+
 
 
 
