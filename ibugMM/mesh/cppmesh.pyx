@@ -1,16 +1,16 @@
 # distutils: language = c++
 # distutils: sources = ./ibugMM/mesh/mesh.cpp ./ibugMM/mesh/vertex.cpp ./ibugMM/mesh/halfedge.cpp ./ibugMM/mesh/vec3.cpp ./ibugMM/mesh/triangle.cpp
 
-
 from libcpp.vector cimport vector
 from libcpp.set    cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix
+from scipy.sparse import coo_matrix, csc_matrix, linalg
 cimport numpy as np
 import cython
 cimport cython
 
+# externally declare the C++ Mesh, Vertex, Triangle and HalfEdge classes 
 cdef extern from "mesh.h":
   cdef cppclass Mesh:
     Mesh(double   *coords,      unsigned n_coords,
@@ -41,6 +41,7 @@ cdef extern from "halfedge.h":
   cdef cppclass HalfEdge:
     pass
 
+# Wrap the Mesh class to produce CppMesh
 cdef class CppMesh:
   cdef Mesh* thisptr
 
@@ -50,6 +51,12 @@ cdef class CppMesh:
     self.coordsIndex = coordsIndex
     self.thisptr = new Mesh(     &coords[0,0],      coords.shape[0], 
                             &coordsIndex[0,0], coordsIndex.shape[0])
+    # cached values
+    self._mean_edge_length = None
+    self._lagrangian_c = None
+    self._area_matrix  = None
+    self.u_t_solver = None
+    self.phi_solver = None
 
   def __dealloc__(self):
     del self.thisptr
@@ -60,7 +67,9 @@ cdef class CppMesh:
 
   @property
   def mean_edge_length(self):
-    return self.thisptr.meanEdgeLength()
+    if self._mean_edge_length is None:
+      self._mean_edge_length = self.thisptr.meanEdgeLength()
+    return self._mean_edge_length
 
   @property
   def n_triangles(self):
@@ -94,7 +103,24 @@ cdef class CppMesh:
     assert n_triangle >= 0 and n_triangle < self.n_triangles
     deref(self.thisptr.triangles[n_triangle]).printStatus()
 
-  def laplacian_operator(self):
+  @property
+  def neg_sd_lagrangian_c(self):
+    self._regenerate_neg_sd_laplacian_c_and_area_matrix()
+    return self._lagrangian_c
+
+  @property
+  def area_matrix(self):
+    self._regenerate_neg_sd_laplacian_c_and_area_matrix()
+    return self._area_matrix
+
+  def _regenerate_neg_sd_laplacian_c_and_area_matrix(self):
+    if self._lagrangian_c is None or self._area_matrix is None:
+      L_c, A = self._pos_sd_laplacian_c_and_area_matrix()
+      # calculate the NEGITIVE semidefinite laplacian operator
+      self._lagrangian_c = -1.0*L_c
+      self._area_matrix = A
+
+  def _pos_sd_laplacian_c_and_area_matrix(self):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
         [self.thisptr.n_half_edges*2],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
@@ -106,7 +132,7 @@ cdef class CppMesh:
     L_c = coo_matrix((v_sparse, (i_sparse, j_sparse)))
     A_i = np.arange(self.n_coords)
     A = coo_matrix((vertex_areas, (A_i,A_i)))
-    return L_c, csc_matrix(A)
+    return csc_matrix(L_c), csc_matrix(A)
 
   def gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
     """
@@ -143,46 +169,40 @@ cdef class CppMesh:
     self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
     return v_scalar_divergence
 
-  #def _set_vertex_scalar(self, np.ndarray[double, ndim=1, mode="c"] 
-  #                             vertex_scalar not None):
-  #  if vertex_scalar.shape[0] != self.n_coords:
-  #    raise Exception('trying to attach a vertex scalar of incorrect dimensionality')
-  #  else:
-  #    self.thisptr.vertexScalar = &vertex_scalar[0]
-
-  #def _set_vertex_vector(self, np.ndarray[double, ndim=2, mode="c"] 
-  #                             vertex_vector not None):
-  #  if vertex_vector.shape[0] != self.n_coords or vertex_vector.shape[1] != 3:
-  #    raise Exception('trying to attach a vertex vector of incorrect dimensionality')
-  #  else:
-  #    self.thisptr.vertexVec3 = &vertex_vector[0,0]
-
-  #def _set_triangle_scalar(self, np.ndarray[double, ndim=1, mode="c"] 
-  #                             triangle_scalar not None):
-  #  if triangle_scalar.shape[0] != self.n_triangles:
-  #    raise Exception('trying to attach a triangle scalar of incorrect dimensionality')
-  #  else:
-  #    self.thisptr.triangleScalar = &triangle_scalar[0]
-
-  #def _set_triangle_vector(self, np.ndarray[double, ndim=2, mode="c"] 
-  #                             triangle_vector not None):
-  #  if triangle_vector.shape[0] != self.n_triangles or triangle_vector.shape[1] != 3:
-  #    raise Exception('trying to attach a triangle vector of incorrect dimensionality')
-  #  else:
-  #    self.thisptr.triangleVec3 = &triangle_vector[0,0]
-#
-#  def _set_i_sparse(self, np.ndarray[unsigned, ndim=1, mode="c"] 
-#                               i_sparse not None):
-#    self.thisptr.i_sparse = &i_sparse[0]
-#
-#  def _set_j_sparse(self, np.ndarray[unsigned, ndim=1, mode="c"] 
-#                               j_sparse not None):
-#    self.thisptr.j_sparse = &j_sparse[0]
-#
-#  def _set_v_sparse(self, np.ndarray[double, ndim=1, mode="c"] 
-#                               v_sparse not None):
-#    self.thisptr.v_sparse = &v_sparse[0]
-
-  #def verify_attachments(self):
-  #  self.thisptr.verifyAttachements()
+  def heat_geodesics(self, source_vertices):
+    A   = self.area_matrix
+    L_c = self.neg_sd_lagrangian_c
+    t   = self.mean_edge_length
+    u_0 = np.zeros(self.n_coords)
+    u_0[source_vertices] = 1.0
+    if self.u_t_solver is None:
+      print 'solving for the first time'
+      self.u_t_solver = linalg.factorized(A - t*L_c)
+    u_t = self.u_t_solver(u_0)
+    print 'Solved for u_t'
+    grad_u_t = self.gradient(u_t)
+    print 'Solved for grad_u_t'
+    grad_u_t_mag  = np.sqrt(np.sum(grad_u_t**2, axis=1))
+    X = -1.0*grad_u_t/(grad_u_t_mag).reshape([-1,1])
+    # some of the vectors may have been zero length - ensure this
+    # is true before and after
+    X[grad_u_t_mag == 0] = 0
+    print 'Generated X'
+    div_X = self.divergence(X)
+    print 'Generated div_X'
+    if self.phi_solver is None:
+      print 'solving phi for the first time'
+      self.phi_solver = linalg.factorized(L_c)
+    phi = self.phi_solver(div_X)
+    print 'variance in source vertex distances is ' + `np.var(phi[source_vertices])`
+    phi = phi - phi[source_vertices[0]]
+    geodesic = {}
+    geodesic['u_0']          = u_0
+    geodesic['u_t']          = u_t
+    geodesic['grad_u_t']     = grad_u_t
+    geodesic['grad_u_t_mag'] = grad_u_t_mag
+    geodesic['X']            = X
+    geodesic['div_X']        = div_X
+    geodesic['phi']          = phi
+    return geodesic
 

@@ -1,4 +1,5 @@
 from ibugMM.importer.model import ModelImporterFactory
+from ibugMM.mesh.face import Face
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
@@ -18,63 +19,56 @@ def print_geodesic_patterns(phi_coords, i):
   fig.savefig('near0_' + `i` + '.pdf')
 
 def gen_phi_coords(face, landmarks):
-  phi_m = face.calculate_geodesics(landmarks['mouth'])
-  phi_n = face.calculate_geodesics(landmarks['nose'])
-  phi_l = face.calculate_geodesics(landmarks['l_eye'])
-  phi_r = face.calculate_geodesics(landmarks['r_eye'])
+  phi_m = face.calculate_geodesics(landmarks['mouth'])['phi']
+  phi_n = face.calculate_geodesics(landmarks['nose'])['phi']
+  phi_l = face.calculate_geodesics(landmarks['l_eye'])['phi']
+  phi_r = face.calculate_geodesics(landmarks['r_eye'])['phi']
   # ph_coords s.t. phi_coords[0] is the geodesic vector for the first ordinate
   return np.vstack((phi_m, phi_n, phi_l, phi_r)).T
 
 ## ioannis face
 ioannis_path_1 = '/home/jab08/Dropbox/testData/ioannis_1.obj'
 importer = ModelImporterFactory(ioannis_path_1)
-ioannis_1 = importer.generateFace()
+o_ioannis_1 = importer.generateFace()
 ioannis_path_2 = '/home/jab08/Dropbox/testData/ioannis_2.obj'
 importer = ModelImporterFactory(ioannis_path_2)
-ioannis_2 = importer.generateFace()
+o_ioannis_2 = importer.generateFace()
 # store the landmarks 
 # note, l_eye is THEIR l_eye (right as we look at it)
-ioannis_1.landmarks['nose']  = [46731]
-ioannis_1.landmarks['l_eye'] = [5695]
-ioannis_1.landmarks['r_eye'] = [5495]
-ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
+o_ioannis_1.landmarks['nose']  = [46731]
+o_ioannis_1.landmarks['l_eye'] = [5695]
+o_ioannis_1.landmarks['r_eye'] = [5495]
+o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
+o_ioannis_1.landmarks['cheek_freckle'] = [752]
 
-ioannis_2.landmarks['nose']  = [10476]
-ioannis_2.landmarks['l_eye'] = [40615]
-ioannis_2.landmarks['r_eye'] = [40526]
-ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+o_ioannis_2.landmarks['nose']  = [10476]
+o_ioannis_2.landmarks['l_eye'] = [40615]
+o_ioannis_2.landmarks['r_eye'] = [40526]
+o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+o_ioannis_1.landmarks['cheek_freckle'] = [32294]
+ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
+ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
 
-# store the ground truth equivielent positions
-ioannis_1_gt = 752
-ioannis_2_gt = 32294 
+# generate the geodesic vectors for face 1 and 2
+phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
 
-## generate the geodesic vectors for face 1 and 2
-#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-##delta_phi = np.abs(phi_2 - phi_1[ioannis_1_gt])
-## L2 norm distances for all
-##distances = np.sum(delta_phi**2,1)
-#
-## L2 distances ignoring the far point (r_eye)
-##distances_only_r = np.sum(delta_phi[:,[0,1,3]]**2,1)
-#
-## find all vertices with a distance less than 100 from the nose (this cuts out noisy fringe data)
-#mask_i_1 = np.where(phi_1[:,2] < 100)[0]
-#mask_i_2 = np.where(phi_2[:,2] < 100)[0]
-## find the original index posiions of these points
-#index_map_1 = np.arange(ioannis_1.n_coords)[mask_i_1]
-#index_map_2 = np.arange(ioannis_2.n_coords)[mask_i_2]
-#
-## find all distances between these two masked point sets
-#distances = distance.cdist(phi_1[mask_i_1], phi_2[mask_i_2])
-#
-## now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
-#mins_2_to_1 = np.argmin(distances, axis=1)
-#mins_1_to_2 = np.argmin(distances, axis=0)
-#
-## and count how many times each vertex is mapped from
-#count_1_to_2 = np.bincount(mins_1_to_2)
-#count_2_to_1 = np.bincount(mins_2_to_1)
+# find all distances between the two phi's
+distances = distance.cdist(phi_1, phi_2)
+
+# now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
+mins_2_to_1 = np.argmin(distances, axis=1)
+mins_1_to_2 = np.argmin(distances, axis=0)
+
+# and count how many times each vertex is mapped from
+count_1_to_2 = np.bincount(mins_1_to_2)
+count_2_to_1 = np.bincount(mins_2_to_1)
+
+# calculate the mapping and build a new face using it
+full_ioannis_2_coords = np.copy(ioannis_1.coords)
+full_ioannis_2_coords[index_map_1] = ioannis_2.coords[mins_2_to_1]
+
+newFace = Face(coords=full_ioannis_2_coords,coordsIndex=ioannis_1.coordsIndex)
 
 
 
