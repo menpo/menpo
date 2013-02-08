@@ -3,36 +3,35 @@ from mayavi import mlab
 from cppmesh import CppMesh
 from scipy.sparse import coo_matrix, csc_matrix
 from scipy.sparse import linalg 
-
-
-class CorrespondingFaces(object):
-
-  def __init__(self, template_face):
-    self.template_face = template_face
+from tvtk.api import tvtk
 
 class Face(CppMesh):
 
-  def __init__(self, **kwargs):
-    CppMesh.__init__(self)
-    self.textureCoords      = kwargs.get('textureCoords')
-    self.textureCoordsIndex = kwargs.get('textureCoordsIndex')
+  def __init__(self, coords, coords_index, **kwargs):
+    CppMesh.__init__(self, coords, coords_index)
+    self.textureCoords      = kwargs.get('texture_coords')
     self.texture            = kwargs.get('texture')
     self.calculated_geodesics = {}
     self.landmarks = {}
     self.last_key = None
-    # some file types include normals - if they are not none, import them
-    #if kwargs['normals']:
-    #self.normals            = np.array(kwargs.get(['normals']))
-    #self.normalsIndex       = np.array(kwargs.get)['normalsIndex']))
-    #else:
-    #  self.normals, self.normalsIndex = None, None
 
   def view(self):
     figure = mlab.gcf()
     mlab.clf()
     s = self._render_face()
-    mlab.show()
-    return s
+    #s.parent.parent.outputs[0].point_data.t_coords = self.textureCoords
+    s.mlab_source.dataset.point_data.t_coords = self.textureCoords
+    #image = tvtk.JPEGReader()
+    #image.file_name = self.texture.filename
+    self.image = np.array(self.texture)
+    image = image_from_array(self.image)
+    texture = tvtk.Texture(input=image, interpolate=1)
+    s.actor.texture = texture
+    s.actor.enable_texture = True
+    #engine = mlab.get_engine()
+
+    #mlab.show()
+    #return s
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
@@ -112,6 +111,7 @@ class Face(CppMesh):
       new_landmarks[feature] = number_conversion[new_landmarks[feature]]
     face = Face(coords=new_coords, coordsIndex=new_coord_index.astype(np.uint32))
     face.landmarks = new_landmarks
+    #TODO deal with texture coordinates here
     return face
 
   def new_face_masked_from_nose_landmark(self, **kwargs):
@@ -123,3 +123,40 @@ class Face(CppMesh):
     return self.new_face_from_vertex_mask(phi < 100)
 
 
+def image_from_array(ary):
+    """ Create a VTK image object that references the data in ary.
+        The array is either 2D or 3D with.  The last dimension
+        is always the number of channels.  It is only tested
+        with 3 (RGB) or 4 (RGBA) channel images.
+        
+        Note: This works no matter what the ary type is (accept 
+        probably complex...).  uint8 gives results that make since 
+        to me.  Int32 and Float types give colors that I am not
+        so sure about.  Need to look into this...
+    """
+       
+    sz = ary.shape
+    dims = len(sz)
+    # create the vtk image data
+    img = tvtk.ImageData()
+    
+    if dims == 2:
+        # 1D array of pixels.
+        img.whole_extent = (0, sz[0]-1, 0, 0, 0, 0)
+        img.dimensions = sz[0], 1, 1        
+        img.point_data.scalars = ary
+        
+    elif dims == 3:
+        # 2D array of pixels.
+        img.whole_extent = (0, sz[0]-1, 0, sz[1]-1, 0, 0)
+        img.dimensions = sz[0], sz[1], 1
+        
+        # create a 2d view of the array
+        ary_2d = ary[:]    
+        ary_2d.shape = sz[0]*sz[1],sz[2]
+        img.point_data.scalars = ary_2d
+        
+    else:
+        raise ValueError, "ary must be 3 dimensional."
+        
+    return img

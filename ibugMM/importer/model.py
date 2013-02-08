@@ -36,14 +36,14 @@ class ModelImporter(object):
     raise NotImplimentedException()
 
   def generateFace(self, **kwargs):
-      kwargs['coords']             = np.array(self.coords)
-      kwargs['textureCoords']      = self.textureCoords
-      kwargs['normals']            = self.normals
-      kwargs['coordsIndex']        = np.array(self.coordsIndex,dtype=np.uint32)
-      kwargs['normalsIndex']       = self.normalsIndex
-      kwargs['textureCoordsIndex'] = self.textureCoordsIndex
-      kwargs['texture']            = self.texture
-      return Face(**kwargs)
+      coords         = np.array(self.coords)
+      coords_index   = np.array(self.coordsIndex,dtype=np.uint32)
+      kwargs['texture_coords'] = self.textureCoords
+      kwargs['texture']        = self.texture
+      #kwargs['normals']            = self.normals
+      #kwargs['normalsIndex']       = self.normalsIndex
+      #kwargs['textureCoordsIndex'] = self.textureCoordsIndex
+      return Face(coords, coords_index, **kwargs)
 
 class OBJImporter(ModelImporter):
   def __init__(self, path_to_file, **kwargs):

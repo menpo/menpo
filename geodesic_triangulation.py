@@ -33,42 +33,39 @@ o_ioannis_1 = importer.generateFace()
 ioannis_path_2 = '/home/jab08/Dropbox/testData/ioannis_2.obj'
 importer = ModelImporterFactory(ioannis_path_2)
 o_ioannis_2 = importer.generateFace()
-# store the landmarks 
-# note, l_eye is THEIR l_eye (right as we look at it)
-o_ioannis_1.landmarks['nose']  = [46731]
-o_ioannis_1.landmarks['l_eye'] = [5695]
-o_ioannis_1.landmarks['r_eye'] = [5495]
-o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
-o_ioannis_1.landmarks['cheek_freckle'] = [752]
-
-o_ioannis_2.landmarks['nose']  = [10476]
-o_ioannis_2.landmarks['l_eye'] = [40615]
-o_ioannis_2.landmarks['r_eye'] = [40526]
-o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
-o_ioannis_1.landmarks['cheek_freckle'] = [32294]
-ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
-ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
-
-# generate the geodesic vectors for face 1 and 2
-phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-
-# find all distances between the two phi's
-distances = distance.cdist(phi_1, phi_2)
-
-# now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
-mins_2_to_1 = np.argmin(distances, axis=1)
-mins_1_to_2 = np.argmin(distances, axis=0)
-
-# and count how many times each vertex is mapped from
-count_1_to_2 = np.bincount(mins_1_to_2)
-count_2_to_1 = np.bincount(mins_2_to_1)
-
-# calculate the mapping and build a new face using it
-full_ioannis_2_coords = np.copy(ioannis_1.coords)
-full_ioannis_2_coords[index_map_1] = ioannis_2.coords[mins_2_to_1]
-
-newFace = Face(coords=full_ioannis_2_coords,coordsIndex=ioannis_1.coordsIndex)
+## store the landmarks 
+## note, l_eye is THEIR l_eye (right as we look at it)
+#o_ioannis_1.landmarks['nose']  = [46731]
+#o_ioannis_1.landmarks['l_eye'] = [5695]
+#o_ioannis_1.landmarks['r_eye'] = [5495]
+#o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
+#o_ioannis_1.landmarks['cheek_freckle'] = [752]
+#
+#o_ioannis_2.landmarks['nose']  = [10476]
+#o_ioannis_2.landmarks['l_eye'] = [40615]
+#o_ioannis_2.landmarks['r_eye'] = [40526]
+#o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+#o_ioannis_1.landmarks['cheek_freckle'] = [32294]
+#ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
+#ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
+#
+## generate the geodesic vectors for face 1 and 2
+#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
+#
+## find all distances between the two phi's
+#distances = distance.cdist(phi_1, phi_2)
+#
+## now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
+#mins_2_to_1 = np.argmin(distances, axis=1)
+#mins_1_to_2 = np.argmin(distances, axis=0)
+#
+## and count how many times each vertex is mapped from
+#count_1_to_2 = np.bincount(mins_1_to_2)
+#count_2_to_1 = np.bincount(mins_2_to_1)
+#
+## calculate the mapping and build a new face using it
+#newFace = Face(coords = ioannis_2.coords[mins_2_to_1], coordsIndex = ioannis_1.coordsIndex)
 
 
 
