@@ -22,17 +22,3 @@ phi_n = ioannis_2.calculate_geodesics(ioannis_2.landmarks['nose'])['phi']
 
 mask = phi_n > -100000000
 mask[53058] = False
-self = ioannis_2
-original_vertex_index = np.arange(self.n_coords)
-kept_vertices = original_vertex_index[mask]
-bool_coord_index_mask = \
-  np.in1d(self.coordsIndex, kept_vertices).reshape(self.coordsIndex.shape)
-kept_triangles_orig_index = self.coordsIndex[np.all(bool_coord_index_mask, axis = 1)]
-# some additional vertices will have to be removed as they no longer 
-# form part of a triangle
-kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
-number_conversion = np.zeros_like(original_vertex_index)
-new_vertex_numbering = np.arange(kept_vertices_orig_index.shape[0])
-number_conversion[kept_vertices_orig_index] = new_vertex_numbering
-new_coord_index = number_conversion[kept_triangles_orig_index].astype(np.uint32)
-new_coords = self.coords[kept_vertices_orig_index]

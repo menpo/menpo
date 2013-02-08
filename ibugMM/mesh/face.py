@@ -9,8 +9,9 @@ class Face(CppMesh):
 
   def __init__(self, coords, coords_index, **kwargs):
     CppMesh.__init__(self, coords, coords_index)
-    self.textureCoords      = kwargs.get('texture_coords')
-    self.texture            = kwargs.get('texture')
+    self.textureCoords        = kwargs.get('texture_coords')
+    self.texture_coords_index = kwargs.get('texture_coords_index')
+    self.texture              = kwargs.get('texture')
     self.calculated_geodesics = {}
     self.landmarks = {}
     self.last_key = None
@@ -109,7 +110,7 @@ class Face(CppMesh):
     new_landmarks = self.landmarks.copy()
     for feature in new_landmarks:
       new_landmarks[feature] = number_conversion[new_landmarks[feature]]
-    face = Face(coords=new_coords, coordsIndex=new_coord_index.astype(np.uint32))
+    face = Face(new_coords, new_coord_index.astype(np.uint32))
     face.landmarks = new_landmarks
     #TODO deal with texture coordinates here
     return face

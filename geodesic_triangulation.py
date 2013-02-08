@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 from mayavi import mlab
 plt.interactive(True)
+from tvtk.api import tvtk
+from tvtk.tools import ivtk
+
 
 def print_geodesic_patterns(phi_coords, i):
   distances = distance.pdist(phi_coords[:,0:i], 'cityblock')
@@ -33,32 +36,53 @@ o_ioannis_1 = importer.generateFace()
 ioannis_path_2 = '/home/jab08/Dropbox/testData/ioannis_2.obj'
 importer = ModelImporterFactory(ioannis_path_2)
 o_ioannis_2 = importer.generateFace()
+
+#self = o_ioannis_1
+#pd = tvtk.PolyData()
+#pd.points = self.coords
+#pd.polys = self.coordsIndex
+#tc = self.textureCoords.copy()
+##tc[:,1] = 1 - tc[:,1]
+#pd.cell_data.t_coords = tc[self.texture_coords_index].flatten().reshape([-1,6])[:,:2]
+#mapper = tvtk.PolyDataMapper(input=pd)
+#actor = tvtk.Actor(mapper=mapper)
+##get out texture as a np arrage and arrange it for inclusion with a tvtk ImageData class
+#np_texture = np.array(self.texture)
+#image_data = np.flipud(np_texture).flatten().reshape([-1,3]).astype(np.uint8)
+#image = tvtk.ImageData()
+#image.point_data.scalars = image_data
+#image.dimensions = np_texture.shape[1], np_texture.shape[0], 1
+#texture = tvtk.Texture(input=image)
+#actor.texture = texture
+#v = ivtk.IVTK(size=(700,700))
+#v.open()
+#v.scene.add_actors(actor)
 ## store the landmarks 
 ## note, l_eye is THEIR l_eye (right as we look at it)
-#o_ioannis_1.landmarks['nose']  = [46731]
-#o_ioannis_1.landmarks['l_eye'] = [5695]
-#o_ioannis_1.landmarks['r_eye'] = [5495]
-#o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
-#o_ioannis_1.landmarks['cheek_freckle'] = [752]
-#
-#o_ioannis_2.landmarks['nose']  = [10476]
-#o_ioannis_2.landmarks['l_eye'] = [40615]
-#o_ioannis_2.landmarks['r_eye'] = [40526]
-#o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
-#o_ioannis_1.landmarks['cheek_freckle'] = [32294]
-#ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
-#ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
+o_ioannis_1.landmarks['nose']  = [46731]
+o_ioannis_1.landmarks['l_eye'] = [5695]
+o_ioannis_1.landmarks['r_eye'] = [5495]
+o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
+o_ioannis_1.landmarks['cheek_freckle'] = [752]
+
+o_ioannis_2.landmarks['nose']  = [10476]
+o_ioannis_2.landmarks['l_eye'] = [40615]
+o_ioannis_2.landmarks['r_eye'] = [40526]
+o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+o_ioannis_1.landmarks['cheek_freckle'] = [32294]
+ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
+ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
 #
 ## generate the geodesic vectors for face 1 and 2
-#phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
-#phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
+phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
+phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
 #
 ## find all distances between the two phi's
-#distances = distance.cdist(phi_1, phi_2)
+distances = distance.cdist(phi_1, phi_2)
 #
 ## now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
-#mins_2_to_1 = np.argmin(distances, axis=1)
-#mins_1_to_2 = np.argmin(distances, axis=0)
+mins_2_to_1 = np.argmin(distances, axis=1)
+mins_1_to_2 = np.argmin(distances, axis=0)
 #
 ## and count how many times each vertex is mapped from
 #count_1_to_2 = np.bincount(mins_1_to_2)

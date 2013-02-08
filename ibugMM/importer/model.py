@@ -38,11 +38,11 @@ class ModelImporter(object):
   def generateFace(self, **kwargs):
       coords         = np.array(self.coords)
       coords_index   = np.array(self.coordsIndex,dtype=np.uint32)
-      kwargs['texture_coords'] = self.textureCoords
+      kwargs['texture_coords'] = np.array(self.textureCoords)
       kwargs['texture']        = self.texture
       #kwargs['normals']            = self.normals
       #kwargs['normalsIndex']       = self.normalsIndex
-      #kwargs['textureCoordsIndex'] = self.textureCoordsIndex
+      kwargs['texture_coords_index'] = np.array(self.textureCoordsIndex, dtype=np.uint32)
       return Face(coords, coords_index, **kwargs)
 
 class OBJImporter(ModelImporter):
@@ -71,11 +71,11 @@ class OBJImporter(ModelImporter):
         # take 1 off as we expect indexing to be 0 based
         cI.append(coord_normal_texture_i[0]-1)
         if len(coord_normal_texture_i) > 1:
-          # there is normal data as well
-          nI.append(coord_normal_texture_i[1]-1)
-        if len(coord_normal_texture_i) > 2:
           # there is texture data as well
-          tI.append(coord_normal_texture_i[2]-1)
+          tI.append(coord_normal_texture_i[1]-1)
+        if len(coord_normal_texture_i) > 2:
+          # there is normal data as well
+          nI.append(coord_normal_texture_i[2]-1)
       self.coordsIndex.append(cI)
       self.normalsIndex.append(nI)
       self.textureCoordsIndex.append(tI)
