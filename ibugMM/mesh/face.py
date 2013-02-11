@@ -30,8 +30,8 @@ class Face(CppMesh):
       else:
         message += ', texture_coords'
         if tci_in is not None:
-          message += ', and a texture_coord_index ->'
-          message += '  assuming per face texturing'
+          message += ', and texture_coord_index ->'
+          message += ' assuming per face texturing'
           message += ' (texture_coords per vertex will be generated)'
           self.texture_coords_per_vertex = _per_vertex_texture_coords(
               coords_index, tci_in, tc_in)
@@ -146,7 +146,6 @@ class Face(CppMesh):
     for key in self.landmarks:
       self.calculate_geodesics(self.landmarks[key])
 
-
   def calculate_geodesics(self, source_vertices):
     key = tuple(sorted(set(source_vertices)))
     geodesic = self.calculated_geodesics.get(key)
@@ -197,7 +196,7 @@ class Face(CppMesh):
     face = Face(new_coords, new_coord_index, texture=self.texture, 
                 texture_coords =new_tc, texture_coords_index=new_tci)
     face.landmarks = new_landmarks
-    return face, kept_tc_orig_index
+    return face
 
   def new_face_masked_from_nose_landmark(self, **kwargs):
     """Returns a face containing only vertices within distance of the nose lm

@@ -96,7 +96,7 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   //std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
   // sparse_pointer points into how far into the sparse_matrix structures
   // we should be recording results for this vertex
-  bool has_a_full_edge = false;
+  //bool has_a_full_edge = false;
   unsigned i = id;
   // the normalisation factor that will be built as we iterate over each half edge
   double inv_d_ij = 0.;
@@ -108,8 +108,8 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 
     // always calculate the area for this vertex
     inv_d_ij += (*he)->triangle->area();
-    if((*he)->partOfFullEdge())
-      has_a_full_edge = true;
+    //if((*he)->partOfFullEdge())
+    //  has_a_full_edge = true;
     //std::cout << *this << " halfedge to " << *((*he)->v1) << std::endl;
 
     if(i < j)
@@ -156,8 +156,8 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   }    
   // now we've looped through store the areas in the array that is passed in
   inv_d_ij_array[id] = inv_d_ij/3.0; 
-  if(!has_a_full_edge)
-    std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
+  //if(!has_a_full_edge)
+  //  std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
 }
 
 double Vertex::cotWeight(HalfEdge* he)
