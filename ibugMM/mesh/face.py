@@ -1,27 +1,58 @@
 import numpy as np
-from mayavi import mlab
 from cppmesh import CppMesh
 from scipy.sparse import coo_matrix, csc_matrix
 from scipy.sparse import linalg 
 from tvtk.api import tvtk
+from tvtk.tools import ivtk
+from mayavi import mlab
 
 class Face(CppMesh):
 
   def __init__(self, coords, coords_index, **kwargs):
     CppMesh.__init__(self, coords, coords_index)
-    self.textureCoords        = kwargs.get('texture_coords')
+    self.texture_coords        = kwargs.get('texture_coords')
     self.texture_coords_index = kwargs.get('texture_coords_index')
     self.texture              = kwargs.get('texture')
     self.calculated_geodesics = {}
     self.landmarks = {}
     self.last_key = None
+    self._generate_per_vertex_texture_coords()
+
+  def _generate_per_vertex_texture_coords(self):
+    # need to change the per-face tc to per-vertex. obviously
+    # this means we loose data (and some faces will have fugly
+    # textures) but on the whole it will work.
+    u_ci, ind_of_u_ci = np.unique(self.coords_index, return_index=True)
+    # grab these positions from the texture_coord_index to find an instance
+    # of a tc at each vertex
+    per_vertex_tci = self.texture_coords_index.flatten()[ind_of_u_ci]
+    self.texture_coords_per_vertex = self.texture_coords[per_vertex_tci]
+
+  def view_textured(self):
+    pd = tvtk.PolyData()
+    pd.points = self.coords
+    pd.polys = self.coords_index
+    pd.point_data.t_coords = self.texture_coords_per_vertex
+    mapper = tvtk.PolyDataMapper(input=pd)
+    actor = tvtk.Actor(mapper=mapper)
+    #get out texture as a np arrage and arrange it for inclusion with a tvtk ImageData class
+    np_texture = np.array(self.texture)
+    image_data = np.flipud(np_texture).flatten().reshape([-1,3]).astype(np.uint8)
+    image = tvtk.ImageData()
+    image.point_data.scalars = image_data
+    image.dimensions = np_texture.shape[1], np_texture.shape[0], 1
+    texture = tvtk.Texture(input=image)
+    actor.texture = texture
+    v = ivtk.IVTK(size=(700,700))
+    v.open()
+    v.scene.add_actors(actor)
 
   def view(self):
     figure = mlab.gcf()
     mlab.clf()
     s = self._render_face()
-    #s.parent.parent.outputs[0].point_data.t_coords = self.textureCoords
-    s.mlab_source.dataset.point_data.t_coords = self.textureCoords
+    #s.parent.parent.outputs[0].point_data.t_coords = self.texture_coords
+    s.mlab_source.dataset.point_data.t_coords = self.texture_coords
     #image = tvtk.JPEGReader()
     #image.file_name = self.texture.filename
     self.image = np.array(self.texture)
@@ -36,7 +67,7 @@ class Face(CppMesh):
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.coordsIndex, 
+                             self.coords[:,2], self.coords_index, 
                              color=(0.5,0.5,0.5)) 
 
   @property
@@ -66,7 +97,7 @@ class Face(CppMesh):
   def view_geodesic_contours(self, phi):
     rings = np.mod(phi,20)
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.coordsIndex, 
+                             self.coords[:,2], self.coords_index, 
                              scalars=rings) 
     mlab.show()
 
@@ -97,8 +128,8 @@ class Face(CppMesh):
     original_vertex_index = np.arange(self.n_coords)
     kept_vertices = original_vertex_index[vertex_mask]
     bool_coord_index_mask = \
-      np.in1d(self.coordsIndex, kept_vertices).reshape(self.coordsIndex.shape)
-    kept_triangles_orig_index = self.coordsIndex[np.all(bool_coord_index_mask, axis = 1)]
+      np.in1d(self.coords_index, kept_vertices).reshape(self.coords_index.shape)
+    kept_triangles_orig_index = self.coords_index[np.all(bool_coord_index_mask, axis = 1)]
     # some additional vertices will have to be removed as they no longer 
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)

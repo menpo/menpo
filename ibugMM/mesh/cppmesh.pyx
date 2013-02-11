@@ -48,7 +48,7 @@ cdef class CppMesh:
   def __cinit__(self, np.ndarray[double,   ndim=2, mode="c"] coords      not None, 
                       np.ndarray[unsigned, ndim=2, mode="c"] coordsIndex not None, **kwargs):
     self.coords = coords;
-    self.coordsIndex = coordsIndex
+    self.coords_index = coordsIndex
     self.thisptr = new Mesh(     &coords[0,0],      coords.shape[0], 
                             &coordsIndex[0,0], coordsIndex.shape[0])
     # cached values
