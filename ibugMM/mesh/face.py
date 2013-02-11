@@ -164,22 +164,40 @@ class Face(CppMesh):
     kept_vertices = original_vertex_index[vertex_mask]
     bool_coord_index_mask = \
       np.in1d(self.coords_index, kept_vertices).reshape(self.coords_index.shape)
+    # remove any triangle missing any number of vertices
     kept_triangles_orig_index = self.coords_index[np.all(bool_coord_index_mask, axis = 1)]
     # some additional vertices will have to be removed as they no longer 
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
-    number_conversion = np.zeros_like(original_vertex_index)
+    ci_map = np.zeros_like(original_vertex_index)
     new_vertex_numbering = np.arange(kept_vertices_orig_index.shape[0])
-    number_conversion[kept_vertices_orig_index] = new_vertex_numbering
-    new_coord_index = number_conversion[kept_triangles_orig_index]
+    ci_map[kept_vertices_orig_index] = new_vertex_numbering
+    new_coord_index = ci_map[kept_triangles_orig_index].astype(np.uint32)
     new_coords = self.coords[kept_vertices_orig_index]
     new_landmarks = self.landmarks.copy()
     for feature in new_landmarks:
-      new_landmarks[feature] = number_conversion[new_landmarks[feature]]
-    face = Face(new_coords, new_coord_index.astype(np.uint32))
+      new_landmarks[feature] = ci_map[new_landmarks[feature]]
+    # now map across texture coordinates
+    new_tc, new_tci = None, None
+    if self.texture_coords_index is not None:
+      # have per-face texturing. Provide new_tc/new_tci -> new Face will
+      # generate tc_per_verex automatically
+      kept_tci_orig_index = self.texture_coords_index[
+          np.all(bool_coord_index_mask, axis = 1)]
+      kept_tc_orig_index = np.unique(kept_tci_orig_index)
+      tci_map = np.zeros(self.texture_coords.shape[0])
+      new_tc_numbering = np.arange(kept_tc_orig_index.shape[0])
+      tci_map[kept_tc_orig_index] = new_tc_numbering
+      new_tci = tci_map[kept_tci_orig_index].astype(np.uint32)
+      new_tc  = self.texture_coords[kept_tc_orig_index]
+    elif texture is not None:
+      # have per-verex texturing only. just generate new_tc and submit
+      new_tc = self.texture_coords_per_vertex[kept_vertices_orig_index]
+
+    face = Face(new_coords, new_coord_index, texture=self.texture, 
+                texture_coords =new_tc, texture_coords_index=new_tci)
     face.landmarks = new_landmarks
-    #TODO deal with texture coordinates here
-    return face
+    return face, kept_tc_orig_index
 
   def new_face_masked_from_nose_landmark(self, **kwargs):
     """Returns a face containing only vertices within distance of the nose lm
