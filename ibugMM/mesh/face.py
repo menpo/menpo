@@ -8,26 +8,62 @@ from mayavi import mlab
 
 class Face(CppMesh):
 
-  def __init__(self, coords, coords_index, **kwargs):
+  def __init__(self, coords, coords_index, texture=None, texture_coords=None,
+               texture_coords_index=None):
     CppMesh.__init__(self, coords, coords_index)
-    self.texture_coords        = kwargs.get('texture_coords')
-    self.texture_coords_index = kwargs.get('texture_coords_index')
-    self.texture              = kwargs.get('texture')
+    t_in, tc_in, tci_in = texture, texture_coords, texture_coords_index
+    message = 'Building new face'
+    self.texture_coords_per_vertex = None
+    if t_in is None:
+      message += ' with no texture'
+      if tc_in is not None or tci_in is not None:
+        message += ', yet you supplied texture_coords or a texture_coord_index'
+        message += ' (these will be ignored)'
+        tc_in = None
+        tci_in = None
+    else:
+      message += ' with a texture'
+      if tc_in is None:
+        message += ' but no texture_coords! (the texture will be ignored)'
+        t_in = None
+        tci_in = None
+      else:
+        message += ', texture_coords'
+        if tci_in is not None:
+          message += ', and a texture_coord_index ->'
+          message += '  assuming per face texturing'
+          message += ' (texture_coords per vertex will be generated)'
+          self.texture_coords_per_vertex = _per_vertex_texture_coords(
+              coords_index, tci_in, tc_in)
+        else:
+          message += ' but without a texture_coord_index ->'
+          message += ' assuming per vertex texturing'
+          if tc_in.shape[0] != coords.shape[0]:
+            message += "..but I can't! there isn't a 1to1 mapping"
+            message += " of texture_coords to coords. All texturing ignored"
+            t_in = None
+            tc_in = None
+          else:
+            self.texture_coords_per_vertex = tc_in.copy()
+            tc_in = None
+    print message
+    self.texture = t_in
+    self.texture_coords = tc_in
+    self.texture_coords_index = tci_in
     self.calculated_geodesics = {}
     self.landmarks = {}
     self.last_key = None
-    self._generate_per_vertex_texture_coords()
 
-  def _generate_per_vertex_texture_coords(self):
-    # need to change the per-face tc to per-vertex. obviously
-    # this means we loose data (and some faces will have fugly
-    # textures) but on the whole it will work.
-    u_ci, ind_of_u_ci = np.unique(self.coords_index, return_index=True)
-    # grab these positions from the texture_coord_index to find an instance
-    # of a tc at each vertex
-    per_vertex_tci = self.texture_coords_index.flatten()[ind_of_u_ci]
-    self.texture_coords_per_vertex = self.texture_coords[per_vertex_tci]
+  def _requires_texture(func):
+    def check_texture(self):
+      if self.texture is not None:
+        func(self)
+      else:
+        print 'This face has no texture associated with it'
+    return check_texture
 
+
+  @_requires_texture
   def view_textured(self):
     pd = tvtk.PolyData()
     pd.points = self.coords
@@ -51,16 +87,15 @@ class Face(CppMesh):
     figure = mlab.gcf()
     mlab.clf()
     s = self._render_face()
-    #s.parent.parent.outputs[0].point_data.t_coords = self.texture_coords
-    s.mlab_source.dataset.point_data.t_coords = self.texture_coords
-    #image = tvtk.JPEGReader()
-    #image.file_name = self.texture.filename
-    self.image = np.array(self.texture)
-    image = image_from_array(self.image)
-    texture = tvtk.Texture(input=image, interpolate=1)
-    s.actor.texture = texture
-    s.actor.enable_texture = True
-    #engine = mlab.get_engine()
+    ##s.parent.parent.outputs[0].point_data.t_coords = self.texture_coords
+    #s.mlab_source.dataset.point_data.t_coords = self.texture_coords
+    ##image = tvtk.JPEGReader()
+    ##image.file_name = self.texture.filename
+    #self.image = np.array(self.texture)
+    #texture = tvtk.Texture(input=image, interpolate=1)
+    #s.actor.texture = texture
+    #s.actor.enable_texture = True
+    ##engine = mlab.get_engine()
 
     #mlab.show()
     #return s
@@ -155,40 +190,12 @@ class Face(CppMesh):
     return self.new_face_from_vertex_mask(phi < 100)
 
 
-def image_from_array(ary):
-    """ Create a VTK image object that references the data in ary.
-        The array is either 2D or 3D with.  The last dimension
-        is always the number of channels.  It is only tested
-        with 3 (RGB) or 4 (RGBA) channel images.
-        
-        Note: This works no matter what the ary type is (accept 
-        probably complex...).  uint8 gives results that make since 
-        to me.  Int32 and Float types give colors that I am not
-        so sure about.  Need to look into this...
-    """
-       
-    sz = ary.shape
-    dims = len(sz)
-    # create the vtk image data
-    img = tvtk.ImageData()
-    
-    if dims == 2:
-        # 1D array of pixels.
-        img.whole_extent = (0, sz[0]-1, 0, 0, 0, 0)
-        img.dimensions = sz[0], 1, 1        
-        img.point_data.scalars = ary
-        
-    elif dims == 3:
-        # 2D array of pixels.
-        img.whole_extent = (0, sz[0]-1, 0, sz[1]-1, 0, 0)
-        img.dimensions = sz[0], sz[1], 1
-        
-        # create a 2d view of the array
-        ary_2d = ary[:]    
-        ary_2d.shape = sz[0]*sz[1],sz[2]
-        img.point_data.scalars = ary_2d
-        
-    else:
-        raise ValueError, "ary must be 3 dimensional."
-        
-    return img
+def _per_vertex_texture_coords(coords_index, texture_coords_index, texture_coords):
+  # need to change the per-face tc to per-vertex. obviously
+  # this means we loose data (and some faces will have fugly
+  # textures) but on the whole it will work.
+  u_ci, ind_of_u_ci = np.unique(coords_index, return_index=True)
+  # grab these positions from the texture_coord_index to find an instance
+  # of a tc at each vertex
+  per_vertex_tci = texture_coords_index.flatten()[ind_of_u_ci]
+  return texture_coords[per_vertex_tci]
