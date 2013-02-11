@@ -22,10 +22,10 @@ def print_geodesic_patterns(phi_coords, i):
   fig.savefig('near0_' + `i` + '.pdf')
 
 def gen_phi_coords(face, landmarks):
-  phi_m = face.calculate_geodesics(landmarks['mouth'])['phi']
-  phi_n = face.calculate_geodesics(landmarks['nose'])['phi']
-  phi_l = face.calculate_geodesics(landmarks['l_eye'])['phi']
-  phi_r = face.calculate_geodesics(landmarks['r_eye'])['phi']
+  phi_m = face.geodesics_about_vertices(landmarks['mouth'])['phi']
+  phi_n = face.geodesics_about_vertices(landmarks['nose'])['phi']
+  phi_l = face.geodesics_about_vertices(landmarks['l_eye'])['phi']
+  phi_r = face.geodesics_about_vertices(landmarks['r_eye'])['phi']
   # ph_coords s.t. phi_coords[0] is the geodesic vector for the first ordinate
   return np.vstack((phi_m, phi_n, phi_l, phi_r)).T
 
@@ -55,13 +55,31 @@ ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
 ## generate the geodesic vectors for face 1 and 2
 phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)
 phi_2 = gen_phi_coords(ioannis_2, ioannis_2.landmarks)
-##
-### find all distances between the two phi's
+
+# find all distances between the two phi's
 distances = distance.cdist(phi_1, phi_2)
-##
-### now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
+
+# interpolate the phi_vectors to the centre of each triangle
+phi_1_tri = np.mean(phi_1[ioannis_1.coords_index], axis=1)
+phi_2_tri = np.mean(phi_2[ioannis_2.coords_index], axis=1)
+
+# and also find the coordinates at the centre of each triangle
+tri_coords = np.mean(ioannis_2.coords[ioannis_2.coords_index], axis=1)
+
+distances_1_v_to_2_tri = distance.cdist(phi_1, phi_2_tri)
+
+# now find the minimum mapping indicies, both for 2 onto 1 and 1 onto 2
 mins_2_to_1 = np.argmin(distances, axis=1)
 mins_1_to_2 = np.argmin(distances, axis=0)
+
+
+# and find the minimum mapping of 2 onto 1 from tri to vert
+mins_2_tri_to_1 = np.argmin(distances_1_v_to_2_tri, axis=1)
+
+
+using_tris = np.where(mins_2_tri_to_1 < mins_2_to_1)[0]
+new_c = ioannis_2.coords[mins_2_to_1]
+new_c[using_tris] = tri_coords[mins_2_tri_to_1[using_tris]]
 ##
 ### and count how many times each vertex is mapped from
 ##count_1_to_2 = np.bincount(mins_1_to_2)
@@ -72,12 +90,22 @@ face2_on1 = Face(ioannis_2.coords[mins_2_to_1], ioannis_1.coords_index,
                  texture=ioannis_1.texture, texture_coords=ioannis_1.texture_coords, 
                  texture_coords_index=ioannis_1.texture_coords_index)
 
+face2_on1_inc_tris = Face(new_c, ioannis_1.coords_index,
+                          texture=ioannis_1.texture, texture_coords=ioannis_1.texture_coords, 
+                          texture_coords_index=ioannis_1.texture_coords_index)
+
 face1_on2 = Face(ioannis_1.coords[mins_1_to_2], ioannis_2.coords_index,
                  texture=ioannis_2.texture, texture_coords=ioannis_2.texture_coords, 
                  texture_coords_index=ioannis_2.texture_coords_index)
+
+
 #
 #
 #
+def min_tri_and_min_vertex_location(i):
+  ioannis_2.view_location_of_vertices(mins_2_to_1[i])
+  mlab.figure()
+  ioannis_2.view_location_of_triangles(mins_2_tri_to_1[i])
 
 
 def l2_using_only(indexes):

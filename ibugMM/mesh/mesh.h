@@ -1,21 +1,23 @@
 #pragma once
 
 #include <vector>
+#include <set>
 
 class Triangle;
 class Vertex;
+class HalfEdge;
 
 enum LaplacianWeightType {cotangent, combinatorial, distance};
 
 // C++ class layer built on top of simple C data arrays. Mesh is composed 
-// of triangles, halfedges, and vertices, each of which is a light C++
+// of triangles, halfedges, and vertices, each of which is a light C++ class
 // containing pointers to neighbours. This allows for algorithms to be written
-// in C++/Cython that can be quick while for looping over vertices. The actual 
-// organisation of the data itself is not delt with by this framework - it
-// simply works on pointers to C style arrays passed into the methods defined
-// on this class. This makes it very easy to efficiently interface to this 
-// framework from python/matlab without having to perform copies everytime 
-// we want to run an algorithm.
+// in C++/Cython that can efficiently loop over the triangle structure. The 
+// actual organisation of the data itself is not delt with by this framework 
+// - it simply works on pointers to C style arrays passed into the methods 
+// defined on this class. This makes it very easy to efficiently interface 
+// to this framework from python/matlab without having to perform copies 
+// everytime we want to run an algorithm.
 //
 // Triangles and vertices both have an unsigned 'id' field that can be safely
 // used to index into arrays. Array arguments follow a structure to identify
@@ -26,7 +28,7 @@ enum LaplacianWeightType {cotangent, combinatorial, distance};
 //    per Tri
 //                                                => shape = [n_triangles, 3]
 //
-// and on the 342'nd Triangle, this.id = 342, so
+// and on the 342'nd Triangle, this.id = 341, so
 //   
 //   x = t_vector_field[this.id*3 + 0] 
 //   y = t_vector_field[this.id*3 + 1] 
@@ -57,13 +59,16 @@ class Mesh
     // storage for the c++ objects for each triangle and vertex
     std::vector<Triangle*> triangles;
     std::vector<Vertex*> vertices;
+    std::set<HalfEdge*> edges;
+
+    void addEdge(HalfEdge* halfedge);
 
     void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse, 
 		                            double*   v_sparse, double*   vertex_areas);
     void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
 	void verifyMesh();
-  double meanEdgeLength();
+    double meanEdgeLength();
 };
 
 

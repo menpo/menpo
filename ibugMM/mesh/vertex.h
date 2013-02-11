@@ -14,7 +14,6 @@ class Vertex : public MeshAttribute
   public:
   Vertex(Mesh* mesh, unsigned id, double* coords);
   double *coords;
-  // see triangle id
   unsigned id;
   // triangles attached to this vertex
   std::set<Triangle*> triangles;
@@ -26,22 +25,20 @@ class Vertex : public MeshAttribute
   void addTriangle(Triangle* triangle);
   void addVertex(Vertex* vertex);
   HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle);
+  
+  // algorithms
+  void divergence(double* t_vector_field, double* v_scalar_divergence);
+  ~Vertex();
   void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 	                              double* v_sparse, unsigned& sparse_pointer, 
 								  double* vertex_areas, LaplacianWeightType weight_type);
-
-  void divergence(double* t_vector_field, double* v_scalar_divergence);
-  ~Vertex();
-  // returns a pointer to the position in the vertex scalar
-  //double* vertexScalar();
-  //double* vertexVec3();
-  HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
-  // calculates the cotangent Laplacian weighting 
+  // different Laplacian weightings
   double cotWeight(HalfEdge* he);
   double distanceWeight(HalfEdge* he);
   double combinatorialWeight(HalfEdge* he);
 
   // utility methods
+  HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
   HalfEdge* getHalfEdgeTo(Vertex* vertex);
   void verifyHalfEdgeConnectivity();
   double getArea();

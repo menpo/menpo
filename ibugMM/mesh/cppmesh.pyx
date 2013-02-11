@@ -86,15 +86,6 @@ cdef class CppMesh:
   def verify_mesh(self):
     self.thisptr.verifyMesh()
 
-  def geodesic(self):
-    cdef np.ndarray[double, ndim=1, mode='c'] u_0 = np.zeros(self.n_coords)
-    u_0[3000] = 1
-    cdef np.ndarray[double, ndim=1, mode='c'] u_t = np.zeros(self.n_coords)
-    L_c,A = self.laplacian_operator()
-    grad_u = self.gradient(u_0)
-    div    = self.divergence(grad_u)
-    return L_c, A, grad_u, div
-
   def vertex_status(self, n_vertex):
     assert n_vertex >= 0 and n_vertex < self.n_coords
     deref(self.thisptr.vertices[n_vertex]).printStatus()

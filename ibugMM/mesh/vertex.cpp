@@ -28,7 +28,7 @@ HalfEdge* Vertex::addHalfEdgeTo(Vertex* vertex, Triangle* triangle)
 {
   if(getHalfEdgeTo(vertex) == NULL)
   {
-    HalfEdge* halfedge = new HalfEdge(this->mesh,this,vertex,triangle);
+    HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle);
     halfedges.insert(halfedge);
     //std::cout << "V:" << this << " is now connected to HE:" << halfedge << std::endl;
     return halfedge;

@@ -122,12 +122,16 @@ class Face(CppMesh):
                         vmax=1.0, vmin=0.0) 
     mlab.show()
 
-  def view_location_of_vertex(self, i):
+  def view_location_of_vertices(self, i):
     self.view()
     s = mlab.points3d(self.coords[i,0], self.coords[i,1],
                       self.coords[i,2], 
                       color=(1,1,1), scale_factor=5.0) 
     mlab.show()
+
+  def view_location_of_triangles(self, i):
+    self.view_location_of_vertices(np.unique(self.coords_index[i]))
+
 
   def view_geodesic_contours(self, phi):
     rings = np.mod(phi,20)
@@ -146,7 +150,7 @@ class Face(CppMesh):
     for key in self.landmarks:
       self.calculate_geodesics(self.landmarks[key])
 
-  def calculate_geodesics(self, source_vertices):
+  def geodesics_about_vertices(self, source_vertices):
     key = tuple(sorted(set(source_vertices)))
     geodesic = self.calculated_geodesics.get(key)
     if geodesic is not None:
@@ -202,7 +206,7 @@ class Face(CppMesh):
     """Returns a face containing only vertices within distance of the nose lm
     """
     distance = kwargs.get('distance', 100)
-    phi = self.calculate_geodesics(self.landmarks['nose'])['phi']
+    phi = self.geodesics_about_vertices(self.landmarks['nose'])['phi']
     mask = np.logical_and(phi < 100, phi >= 0)
     return self.new_face_from_vertex_mask(phi < 100)
 
