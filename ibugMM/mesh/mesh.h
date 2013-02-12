@@ -71,6 +71,9 @@ class Mesh
     double meanEdgeLength();
 	void generateEdgeIndex(unsigned* edgeIndex);
 	void triangleAreas(double* areas);
+	void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar);
+	void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+
 };
 
 

@@ -148,7 +148,7 @@ class Face(CppMesh):
 
   def store_geodesics_for_all_landmarks(self):
     for key in self.landmarks:
-      self.calculate_geodesics(self.landmarks[key])
+      self.geodesics_about_vertices(self.landmarks[key])
 
   def geodesics_about_vertices(self, source_vertices):
     key = tuple(sorted(set(source_vertices)))

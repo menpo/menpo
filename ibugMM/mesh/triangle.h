@@ -27,4 +27,6 @@ class Triangle : public MeshAttribute
 	double area();
 	Vec3 gradient(double* scalar_field);
   void printStatus();
+  void reduceScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+  void reduceScalarToVertices(double* triangle_scalar, double* vertex_scalar);
 };

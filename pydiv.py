@@ -19,7 +19,15 @@ face.landmarks['cheek_freckle'] = [752]
 
 X = face.geodesics_about_vertices(face.landmarks['nose'])['X']
 
-c_tri = face.coords[face.tri_index]
+#tri = np.array([0,1,2],dtype=np.uint32).reshape(1,3)
+#vert = np.array([0.0,0,0,1,0,0,0,1,0]).reshape(3,3)
+#face = Face(vert,tri)
+#X = np.array([0.0,0,0])
+
+self = face
+c_tri = self.coords[face.tri_index]
+
+# build edges in counter-clockwise manner
 e_01 = c_tri[:,1,:] - c_tri[:,0,:]
 e_12 = c_tri[:,2,:] - c_tri[:,1,:]
 e_20 = c_tri[:,0,:] - c_tri[:,2,:]
@@ -40,15 +48,14 @@ cross_0 = -1.0 * np.cross(unit_e_01, unit_e_20)
 cross_1 = -1.0 * np.cross(unit_e_12, unit_e_01)
 cross_2 = -1.0 * np.cross(unit_e_20, unit_e_12)
 
-sin_0 = np.sum(cross_0 * cross_0, axis=1)
-sin_1 = np.sum(cross_1 * cross_1, axis=1)
-sin_2 = np.sum(cross_2 * cross_2, axis=1)
+sin_0 = np.sqrt(np.sum(cross_0 * cross_0, axis=1))
+sin_1 = np.sqrt(np.sum(cross_1 * cross_1, axis=1))
+sin_2 = np.sqrt(np.sum(cross_2 * cross_2, axis=1))
 
 cot_0 = cos_0/sin_0
 cot_1 = cos_1/sin_1
 cot_2 = cos_2/sin_2
 
-self = face
 
 def divergence(X):
   X_dot_e_01 = np.sum(X*e_01, axis=1)

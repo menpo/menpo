@@ -154,3 +154,21 @@ void Mesh::triangleAreas(double* areas)
   for(t = triangles.begin(); t != triangles.end(); t++)
 	areas[(*t)->id] = (*t)->area();
 }
+
+void Mesh::reduceTriangleScalarPerVertexToVertices(
+    double* triangle_scalar_per_vertex, double* vertex_scalar)
+{
+  // this one is for when we have a scalar value defined at each vertex of each triangle
+  std::vector<Triangle*>::iterator t;
+  for(t = triangles.begin(); t != triangles.end(); t++)
+	(*t)->reduceScalarPerVertexToVertices(triangle_scalar_per_vertex, vertex_scalar);
+}
+
+void Mesh::reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar)
+{
+  // this one is for when we have a scalar value defined at each triangle and needs to be
+  // applied to each vertex
+  std::vector<Triangle*>::iterator t;
+  for(t = triangles.begin(); t != triangles.end(); t++)
+	(*t)->reduceScalarToVertices(triangle_scalar, vertex_scalar);
+}

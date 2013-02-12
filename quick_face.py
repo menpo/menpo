@@ -17,3 +17,5 @@ face.landmarks['r_eye'] = [5495]
 face.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
 face.landmarks['cheek_freckle'] = [752]
 
+#geo = face.geodesics_about_vertices(face.landmarks['nose'])
+#u_t = geo['u_t']

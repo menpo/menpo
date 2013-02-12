@@ -100,3 +100,21 @@ void Triangle::printStatus()
 
 }
 
+void Triangle::reduceScalarToVertices(double* triangle_scalar, double* vertex_scalar)
+{
+  vertex_scalar[v0->id] += triangle_scalar[id];
+  vertex_scalar[v1->id] += triangle_scalar[id + 1];
+  vertex_scalar[v2->id] += triangle_scalar[id + 2];
+}
+
+void Triangle::reduceScalarPerVertexToVertices(
+    double* triangle_scalar_per_vertex, double* vertex_scalar)
+{
+  //std::cout << "Triangle no " << id << " has values " << triangle_scalar[id*3] << " " 
+  //  << triangle_scalar[(id*3)+1] << " " << triangle_scalar[(id*3)+2] << std::endl;
+  //std::cout << "Writing these out to id's " << v0->id << " " << v1->id << " " << v2->id << std::endl;
+  vertex_scalar[v0->id] += triangle_scalar_per_vertex[(id * 3)];
+  vertex_scalar[v1->id] += triangle_scalar_per_vertex[(id * 3) + 1];
+  vertex_scalar[v2->id] += triangle_scalar_per_vertex[(id * 3) + 2];
+}
+
