@@ -21,42 +21,43 @@ X = face.geodesics_about_vertices(face.landmarks['nose'])['X']
 
 c_tri = face.coords[face.tri_index]
 e_01 = c_tri[:,1,:] - c_tri[:,0,:]
-e_02 = c_tri[:,2,:] - c_tri[:,0,:]
 e_12 = c_tri[:,2,:] - c_tri[:,1,:]
+e_20 = c_tri[:,0,:] - c_tri[:,2,:]
 
-mod_e_01 = np.sqrt(np.sum(e_01*e_01, axis=1))
-mod_e_02 = np.sqrt(np.sum(e_02*e_02, axis=1))
-mod_e_12 = np.sqrt(np.sum(e_12*e_12, axis=1))
+mag_e_01 = np.sqrt(np.sum(e_01 * e_01, axis=1))
+mag_e_12 = np.sqrt(np.sum(e_12 * e_12, axis=1))
+mag_e_20 = np.sqrt(np.sum(e_20 * e_20, axis=1))
 
-normed_e_01 = e_01/(mod_e_01[...,np.newaxis])
-normed_e_02 = e_02/(mod_e_02[...,np.newaxis])
-normed_e_12 = e_12/(mod_e_12[...,np.newaxis])
+unit_e_01 = e_01 / (mag_e_01[...,np.newaxis])
+unit_e_12 = e_12 / (mag_e_12[...,np.newaxis])
+unit_e_20 = e_20 / (mag_e_20[...,np.newaxis])
 
-cos_0 = np.sum(normed_e_01*normed_e_02, axis=1)
-cos_1 = -1.0 * np.sum(normed_e_12*normed_e_02, axis=1)
-cos_2 = np.sum(normed_e_12*normed_e_02, axis=1)
+cos_0 = -1.0 * np.sum(unit_e_01 * unit_e_20, axis=1)
+cos_1 = -1.0 * np.sum(unit_e_01 * unit_e_12, axis=1)
+cos_2 = -1.0 * np.sum(unit_e_12 * unit_e_20, axis=1)
 
-cross_0 = np.cross(normed_e_01, normed_e_02)
-cross_1 = -1.0 * np.cross(normed_e_12, normed_e_02)
-cross_2 = np.cross(normed_e_12, normed_e_02)
+cross_0 = -1.0 * np.cross(unit_e_01, unit_e_20)
+cross_1 = -1.0 * np.cross(unit_e_12, unit_e_01)
+cross_2 = -1.0 * np.cross(unit_e_20, unit_e_12)
 
-sin_0 = np.sum(cross_0*cross_0, axis=1)
-sin_1 = np.sum(cross_1*cross_1, axis=1)
-sin_2 = np.sum(cross_2*cross_2, axis=1)
+sin_0 = np.sum(cross_0 * cross_0, axis=1)
+sin_1 = np.sum(cross_1 * cross_1, axis=1)
+sin_2 = np.sum(cross_2 * cross_2, axis=1)
 
-cot_0 = cos_0/(np.sqrt(1-(cos_0*cos_0)))
-cot_1 = cos_1/(np.sqrt(1-(cos_1*cos_1)))
-cot_2 = cos_2/(np.sqrt(1-(cos_2*cos_2)))
+cot_0 = cos_0/sin_0
+cot_1 = cos_1/sin_1
+cot_2 = cos_2/sin_2
 
-cot_0_a = cos_0/sin_0
-cot_1_a = cos_1/sin_1
-cot_2_a = cos_2/sin_2
+self = face
 
-Xdot_01 = np.sum(X*e_01, axis=1)
-Xdot_02 = np.sum(X*e_02, axis=1)
-Xdot_12 = np.sum(X*e_12, axis=1)
+def divergence(X):
+  X_dot_e_01 = np.sum(X*e_01, axis=1)
+  X_dot_e_12 = np.sum(X*e_12, axis=1)
+  X_dot_e_20 = np.sum(X*e_20, axis=1)
+  div_X_tri = np.zeros_like(self.tri_index, dtype=np.float)  
+  div_X_tri[:,0] = (cot_2 * X_dot_e_01) - (cot_1 * X_dot_e_20)
+  div_X_tri[:,1] = (cot_0 * X_dot_e_12) - (cot_2 * X_dot_e_01)
+  div_X_tri[:,2] = (cot_1 * X_dot_e_20) - (cot_0 * X_dot_e_12)
+  return div_X_tri
 
-
-divX_at_0 =       cot_1*Xdot_02 + cot_2*Xdot_01
-divX_at_1 =  -1.0*cot_2*Xdot_02 + cot_0*Xdot_12
-divX_at_2 = -1.0*(cot_0*Xdot_12 + cot_1*Xdot_02)
+div_X_tri = divergence(X)
