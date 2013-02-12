@@ -8,35 +8,36 @@ from mayavi import mlab
 
 class Face(CppMesh):
 
-  def __init__(self, coords, coords_index, texture=None, texture_coords=None,
-               texture_coords_index=None):
-    CppMesh.__init__(self, coords, coords_index)
-    t_in, tc_in, tci_in = texture, texture_coords, texture_coords_index
+  def __init__(self, coords, tri_index, texture=None, texture_coords=None,
+               texture_tri_index=None, landmarks = {}):
+    CppMesh.__init__(self, coords, tri_index)
+    self.landmarks = landmarks
+    t_in, tc_in, tti_in = texture, texture_coords, texture_tri_index
     message = 'Building new face'
     self.texture_coords_per_vertex = None
     if t_in is None:
       message += ' with no texture'
-      if tc_in is not None or tci_in is not None:
-        message += ', yet you supplied texture_coords or a texture_coord_index'
+      if tc_in is not None or tti_in is not None:
+        message += ', yet you supplied texture_coords or a texture_tri_index'
         message += ' (these will be ignored)'
         tc_in = None
-        tci_in = None
+        tti_in = None
     else:
       message += ' with a texture'
       if tc_in is None:
         message += ' but no texture_coords! (the texture will be ignored)'
         t_in = None
-        tci_in = None
+        tti_in = None
       else:
         message += ', texture_coords'
-        if tci_in is not None:
-          message += ', and texture_coord_index ->'
-          message += ' assuming per face texturing'
+        if tti_in is not None:
+          message += ', and texture_tri_index ->'
+          message += ' assuming per-triangle texturing'
           message += ' (texture_coords per vertex will be generated)'
           self.texture_coords_per_vertex = _per_vertex_texture_coords(
-              coords_index, tci_in, tc_in)
+              tri_index, tti_in, tc_in)
         else:
-          message += ' but without a texture_coord_index ->'
+          message += ' but without a texture_tri_index ->'
           message += ' assuming per vertex texturing'
           if tc_in.shape[0] != coords.shape[0]:
             message += "..but I can't! there isn't a 1to1 mapping"
@@ -49,9 +50,8 @@ class Face(CppMesh):
     print message
     self.texture = t_in
     self.texture_coords = tc_in
-    self.texture_coords_index = tci_in
+    self.texture_tri_index = tti_in
     self.calculated_geodesics = {}
-    self.landmarks = {}
     self.last_key = None
 
   def _requires_texture(func):
@@ -67,7 +67,7 @@ class Face(CppMesh):
   def view_textured(self):
     pd = tvtk.PolyData()
     pd.points = self.coords
-    pd.polys = self.coords_index
+    pd.polys = self.tri_index
     pd.point_data.t_coords = self.texture_coords_per_vertex
     mapper = tvtk.PolyDataMapper(input=pd)
     actor = tvtk.Actor(mapper=mapper)
@@ -102,16 +102,16 @@ class Face(CppMesh):
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.coords_index, 
+                             self.coords[:,2], self.tri_index, 
                              color=(0.5,0.5,0.5)) 
 
   @property
-  def number_of_landmarks(self):
+  def n_landmarks(self):
     return len(self.landmarks)
 
   def view_with_landmarks(self):
     self.view()
-    num_landmarks = self.number_of_landmarks
+    num_landmarks = self.n_landmarks
     for num, key in enumerate(self.landmarks):
       i = self.landmarks[key]
       colors = np.ones_like(i)*((num*1.0+0.1)/num_landmarks)
@@ -130,13 +130,13 @@ class Face(CppMesh):
     mlab.show()
 
   def view_location_of_triangles(self, i):
-    self.view_location_of_vertices(np.unique(self.coords_index[i]))
+    self.view_location_of_vertices(np.unique(self.tri_index[i]))
 
 
   def view_geodesic_contours(self, phi):
     rings = np.mod(phi,20)
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.coords_index, 
+                             self.coords[:,2], self.tri_index, 
                              scalars=rings) 
     mlab.show()
 
@@ -146,7 +146,7 @@ class Face(CppMesh):
     else:
       print "No geodesics have been calculated for this face"
 
-  def calculate_geodesics_for_all_landmarks(self):
+  def store_geodesics_for_all_landmarks(self):
     for key in self.landmarks:
       self.calculate_geodesics(self.landmarks[key])
 
@@ -163,12 +163,12 @@ class Face(CppMesh):
       return geodesic
 
   def new_face_from_vertex_mask(self, vertex_mask):
-    original_vertex_index = np.arange(self.n_coords)
+    original_vertex_index = np.arange(self.n_vertices)
     kept_vertices = original_vertex_index[vertex_mask]
     bool_coord_index_mask = \
-      np.in1d(self.coords_index, kept_vertices).reshape(self.coords_index.shape)
+      np.in1d(self.tri_index, kept_vertices).reshape(self.tri_index.shape)
     # remove any triangle missing any number of vertices
-    kept_triangles_orig_index = self.coords_index[np.all(bool_coord_index_mask, axis = 1)]
+    kept_triangles_orig_index = self.tri_index[np.all(bool_coord_index_mask, axis = 1)]
     # some additional vertices will have to be removed as they no longer 
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
@@ -182,10 +182,10 @@ class Face(CppMesh):
       new_landmarks[feature] = ci_map[new_landmarks[feature]]
     # now map across texture coordinates
     new_tc, new_tci = None, None
-    if self.texture_coords_index is not None:
+    if self.texture_tri_index is not None:
       # have per-face texturing. Provide new_tc/new_tci -> new Face will
       # generate tc_per_verex automatically
-      kept_tci_orig_index = self.texture_coords_index[
+      kept_tci_orig_index = self.texture_tri_index[
           np.all(bool_coord_index_mask, axis = 1)]
       kept_tc_orig_index = np.unique(kept_tci_orig_index)
       tci_map = np.zeros(self.texture_coords.shape[0])
@@ -198,25 +198,24 @@ class Face(CppMesh):
       new_tc = self.texture_coords_per_vertex[kept_vertices_orig_index]
 
     face = Face(new_coords, new_coord_index, texture=self.texture, 
-                texture_coords =new_tc, texture_coords_index=new_tci)
+                texture_coords =new_tc, texture_tri_index=new_tci)
     face.landmarks = new_landmarks
     return face
 
-  def new_face_masked_from_nose_landmark(self, **kwargs):
+  def new_face_masked_from_lm(self, lm_key, distance=100):
     """Returns a face containing only vertices within distance of the nose lm
     """
-    distance = kwargs.get('distance', 100)
-    phi = self.geodesics_about_vertices(self.landmarks['nose'])['phi']
-    mask = np.logical_and(phi < 100, phi >= 0)
-    return self.new_face_from_vertex_mask(phi < 100)
+    phi = self.geodesics_about_vertices(self.landmarks[lm_key])['phi']
+    mask = np.logical_and(phi < distance, phi >= 0)
+    return self.new_face_from_vertex_mask(mask)
 
 
-def _per_vertex_texture_coords(coords_index, texture_coords_index, texture_coords):
+def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
   # need to change the per-face tc to per-vertex. obviously
   # this means we loose data (and some faces will have fugly
   # textures) but on the whole it will work.
-  u_ci, ind_of_u_ci = np.unique(coords_index, return_index=True)
+  u_ci, ind_of_u_ci = np.unique(tri_index, return_index=True)
   # grab these positions from the texture_coord_index to find an instance
   # of a tc at each vertex
-  per_vertex_tci = texture_coords_index.flatten()[ind_of_u_ci]
+  per_vertex_tci = texture_tri_index.flatten()[ind_of_u_ci]
   return texture_coords[per_vertex_tci]

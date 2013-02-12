@@ -25,6 +25,8 @@ cdef extern from "mesh.h":
     unsigned n_half_edges
     unsigned n_full_edges
     double meanEdgeLength()
+    void generateEdgeIndex(unsigned* edgeIndex)
+    void triangleAreas(double* areas)
     vector[Vertex*] vertices
     vector[Triangle*] triangles 
 
@@ -48,80 +50,110 @@ cdef class CppMesh:
   def __cinit__(self, np.ndarray[double,   ndim=2, mode="c"] coords      not None, 
                       np.ndarray[unsigned, ndim=2, mode="c"] coordsIndex not None, **kwargs):
     self.coords = coords;
-    self.coords_index = coordsIndex
+    self.tri_index = coordsIndex
     self.thisptr = new Mesh(     &coords[0,0],      coords.shape[0], 
                             &coordsIndex[0,0], coordsIndex.shape[0])
+    self.edge_index = self._calculate_edge_index()
     # cached values
-    self._mean_edge_length = None
-    self._lagrangian_c = None
-    self._area_matrix  = None
-    self.u_t_solver = None
-    self.phi_solver = None
+    self._cache = {}
+    self._cache['mean_edge_length'] = None
+    self._cache['laplacian_c'] = None
+    self._cache['area_matrix'] = None
+    self._cache['u_t_solver'] = None
+    self._cache['phi_solver'] = None
+    self._cache['tri_areas'] = None
 
   def __dealloc__(self):
     del self.thisptr
 
   @property
-  def n_coords(self):
+  def n_vertices(self):
     return self.thisptr.n_coords
 
   @property
   def mean_edge_length(self):
-    if self._mean_edge_length is None:
-      self._mean_edge_length = self.thisptr.meanEdgeLength()
-    return self._mean_edge_length
+    if self._cache['mean_edge_length'] is None:
+      self._cache['mean_edge_length'] = self.thisptr.meanEdgeLength()
+    return self._cache['mean_edge_length']
 
   @property
   def n_triangles(self):
     return self.thisptr.n_triangles
 
   @property
-  def n_full_edges(self):
+  def n_fulledges(self):
     return self.thisptr.n_full_edges
 
   @property
-  def n_half_edges(self):
+  def n_halfedges(self):
     return self.thisptr.n_half_edges
+
+  @property
+  def n_edges(self):
+    return self.thisptr.n_half_edges - self.thisptr.n_full_edges
+
+  def _calculate_tri_areas(self):
+    cdef np.ndarray[double, ndim=1, mode='c'] areas = np.zeros(
+        [self.n_triangles])
+    self.thisptr.triangleAreas(&areas[0])
+    return areas
+
+  @property
+  def tri_areas(self):
+    if self._cache['tri_areas'] is None:
+      self._cache['tri_areas'] = self._calculate_tri_areas()
+    return self._cache['tri_areas'].copy()
+
 
   def verify_mesh(self):
     self.thisptr.verifyMesh()
 
   def vertex_status(self, n_vertex):
-    assert n_vertex >= 0 and n_vertex < self.n_coords
+    assert n_vertex >= 0 and n_vertex < self.n_vertices
     deref(self.thisptr.vertices[n_vertex]).printStatus()
 
-  def triangle_status(self, n_triangle):
+  def tri_status(self, n_triangle):
     assert n_triangle >= 0 and n_triangle < self.n_triangles
     deref(self.thisptr.triangles[n_triangle]).printStatus()
 
-  @property
-  def neg_sd_lagrangian_c(self):
-    self._regenerate_neg_sd_laplacian_c_and_area_matrix()
-    return self._lagrangian_c
+  def laplacian(self, weighting='cotangent'):
+    """ Calculates the NEGITIVATE SEMI-DEFINITE Laplacian Operator for this mesh.
+
+    A number of different weightings can be used to construct the laplacian - 
+    by default, the cotangent method is used (although this can be changed by
+    passing in the appropriate weighting arugment)
+    """
+    self._regenerate_neg_sd_laplacian_and_area_matrix(weighting)
+    #if weighting == 'cotangent':
+    return self._cache['laplacian_c'].copy()
+    #elif weighting == 'distance':
+    #  return self._cache['laplacian_d'].copy()
 
   @property
   def area_matrix(self):
-    self._regenerate_neg_sd_laplacian_c_and_area_matrix()
-    return self._area_matrix
+    self._regenerate_neg_sd_laplacian_and_area_matrix()
+    return self._cache['area_matrix'].copy()
 
-  def _regenerate_neg_sd_laplacian_c_and_area_matrix(self):
-    if self._lagrangian_c is None or self._area_matrix is None:
-      L_c, A = self._pos_sd_laplacian_c_and_area_matrix()
-      # calculate the NEGITIVE semidefinite laplacian operator
-      self._lagrangian_c = -1.0*L_c
-      self._area_matrix = A
+  def _regenerate_neg_sd_laplacian_and_area_matrix(self, weighting='cotangent'):
+    #if self._cache['area_matrix'] is None:
+    #  laplacian, A = self._pos_sd_laplacian_and_area_matrix(weighting)
+    #if weighting == 'cotangent' and self._cache['laplacian_c'] is None:
+    L_c, A = self._pos_sd_laplacian_and_area_matrix(weighting)
+    # calculate the NEGITIVE semidefinite laplacian operator
+    self._cache['laplacian_c'] = -1.0*L_c
+    self._cache['area_matrix'] = A
 
-  def _pos_sd_laplacian_c_and_area_matrix(self):
+  def _pos_sd_laplacian_and_area_matrix(self, weighting='cotangent'):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
-        [self.thisptr.n_half_edges*2],dtype=np.uint32)
+        [self.n_halfedges*2],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
-        [self.thisptr.n_half_edges*2],dtype=np.uint32)
+        [self.n_halfedges*2],dtype=np.uint32)
     cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
-        [self.thisptr.n_half_edges*2])
-    cdef np.ndarray[double, ndim=1, mode='c'] vertex_areas = np.zeros(self.n_coords)
+        [self.n_halfedges*2])
+    cdef np.ndarray[double, ndim=1, mode='c'] vertex_areas = np.zeros(self.n_vertices)
     self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0], &vertex_areas[0])
     L_c = coo_matrix((v_sparse, (i_sparse, j_sparse)))
-    A_i = np.arange(self.n_coords)
+    A_i = np.arange(self.n_vertices)
     A = coo_matrix((vertex_areas, (A_i,A_i)))
     return csc_matrix(L_c), csc_matrix(A)
 
@@ -134,7 +166,7 @@ cdef class CppMesh:
                       the gradient of.
     triangle_vector - the resulting gradient (per triangle)
     :param s_field: scalar field value per vertex
-    :type s_field: ndarray[1,n_coords]
+    :type s_field: ndarray[1,n_vertices]
     :return: Gradient evaluated over each triangle
     :rtype: ndarray[float]
    
@@ -156,20 +188,21 @@ cdef class CppMesh:
     :rtype: ndarray[float]
    
     """
-    cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_coords)
+    cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_vertices)
     self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
     return v_scalar_divergence
 
   def heat_geodesics(self, source_vertices):
     A   = self.area_matrix
-    L_c = self.neg_sd_lagrangian_c
+    L_c = self.laplacian()
     t   = self.mean_edge_length
-    u_0 = np.zeros(self.n_coords)
+    u_0 = np.zeros(self.n_vertices)
     u_0[source_vertices] = 1.0
-    if self.u_t_solver is None:
+    if self._cache['u_t_solver'] is None:
       print 'solving for the first time'
-      self.u_t_solver = linalg.factorized(A - t*L_c)
-    u_t = self.u_t_solver(u_0)
+      self._cache['u_t_solver'] = linalg.factorized(A - t*L_c)
+    u_t_solver = self._cache['u_t_solver']
+    u_t = u_t_solver(u_0)
     print 'Solved for u_t'
     grad_u_t = self.gradient(u_t)
     print 'Solved for grad_u_t'
@@ -181,10 +214,11 @@ cdef class CppMesh:
     print 'Generated X'
     div_X = self.divergence(X)
     print 'Generated div_X'
-    if self.phi_solver is None:
+    if self._cache['phi_solver'] is None:
       print 'solving phi for the first time'
-      self.phi_solver = linalg.factorized(L_c)
-    phi = self.phi_solver(div_X)
+      self._cache['phi_solver'] = linalg.factorized(L_c)
+    phi_solver = self._cache['phi_solver']
+    phi = phi_solver(div_X)
     print 'variance in source vertex distances is ' + `np.var(phi[source_vertices])`
     phi = phi - phi[source_vertices[0]]
     geodesic = {}
@@ -196,4 +230,11 @@ cdef class CppMesh:
     geodesic['div_X']        = div_X
     geodesic['phi']          = phi
     return geodesic
+
+  def _calculate_edge_index(self):
+    cdef np.ndarray[unsigned, ndim=2, mode='c'] edge_index = np.zeros(
+        [self.n_edges, 2], dtype=np.uint32)
+    self.thisptr.generateEdgeIndex(&edge_index[0,0])
+    return edge_index
+
 

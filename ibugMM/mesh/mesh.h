@@ -69,6 +69,8 @@ class Mesh
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
 	void verifyMesh();
     double meanEdgeLength();
+	void generateEdgeIndex(unsigned* edgeIndex);
+	void triangleAreas(double* areas);
 };
 
 

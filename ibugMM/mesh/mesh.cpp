@@ -136,3 +136,21 @@ double Mesh::meanEdgeLength()
   	edge_length += (*he)->length();
   return edge_length/(n_half_edges - n_full_edges);
 }
+
+void Mesh::generateEdgeIndex(unsigned* edgeIndex)
+{
+  std::set<HalfEdge*>::iterator he;
+  unsigned count = 0;
+  for(he = edges.begin(); he != edges.end(); he++, count++)
+  {
+	edgeIndex[count*2]   = (*he)->v0->id;
+	edgeIndex[count*2+1] = (*he)->v1->id;
+  }
+}
+
+void Mesh::triangleAreas(double* areas)
+{
+  std::vector<Triangle*>::iterator t;
+  for(t = triangles.begin(); t != triangles.end(); t++)
+	areas[(*t)->id] = (*t)->area();
+}

@@ -38,19 +38,21 @@ importer = ModelImporterFactory(ioannis_path_2)
 o_ioannis_2 = importer.generateFace()
 
 ## note, l_eye is THEIR l_eye (right as we look at it)
-o_ioannis_1.landmarks['nose']  = [46731]
-o_ioannis_1.landmarks['l_eye'] = [5695]
-o_ioannis_1.landmarks['r_eye'] = [5495]
-o_ioannis_1.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
-o_ioannis_1.landmarks['cheek_freckle'] = [752]
+landmarks_1['nose']  = [46731]
+landmarks_1['l_eye'] = [5695]
+landmarks_1['r_eye'] = [5495]
+landmarks_1['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
+landmarks_1['cheek_freckle'] = [752]
+o_ioannis_1.landmarks = landmarks_1
 
-o_ioannis_2.landmarks['nose']  = [10476]
-o_ioannis_2.landmarks['l_eye'] = [40615]
-o_ioannis_2.landmarks['r_eye'] = [40526]
-o_ioannis_2.landmarks['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
-o_ioannis_1.landmarks['cheek_freckle'] = [32294]
-ioannis_1  = o_ioannis_1.new_face_masked_from_nose_landmark()
-ioannis_2  = o_ioannis_2.new_face_masked_from_nose_landmark()
+landmarks_2['nose']  = [10476]
+landmarks_2['l_eye'] = [40615]
+landmarks_2['r_eye'] = [40526]
+landmarks_2['mouth'] = [41366, 28560, 36719, 17657, 13955, 26988, 6327, 8229]
+landmarks_2['cheek_freckle'] = [32294]
+o_ioannis_2.landmarks = landmarks_2
+ioannis_1  = o_ioannis_1.new_face_masked_from_lm('nose')
+ioannis_2  = o_ioannis_2.new_face_masked_from_lm('nose')
 #
 ## generate the geodesic vectors for face 1 and 2
 phi_1 = gen_phi_coords(ioannis_1, ioannis_1.landmarks)

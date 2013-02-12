@@ -37,13 +37,13 @@ class ModelImporter(object):
 
   def generateFace(self, **kwargs):
       coords         = np.array(self.coords)
-      coords_index   = np.array(self.coordsIndex,dtype=np.uint32)
+      tri_index   = np.array(self.coordsIndex,dtype=np.uint32)
       kwargs['texture_coords'] = np.array(self.textureCoords)
       kwargs['texture']        = self.texture
       #kwargs['normals']            = self.normals
       #kwargs['normalsIndex']       = self.normalsIndex
-      kwargs['texture_coords_index'] = np.array(self.textureCoordsIndex, dtype=np.uint32)
-      return Face(coords, coords_index, **kwargs)
+      kwargs['texture_tri_index'] = np.array(self.textureCoordsIndex, dtype=np.uint32)
+      return Face(coords, tri_index, **kwargs)
 
 class OBJImporter(ModelImporter):
   def __init__(self, path_to_file, **kwargs):
