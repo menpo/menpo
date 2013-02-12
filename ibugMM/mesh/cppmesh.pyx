@@ -5,7 +5,7 @@ from libcpp.vector cimport vector
 from libcpp.set    cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
-from scipy.sparse import dia_matrix, coo_matrix, csc_matrix, linalg
+import scipy.sparse as sparse
 cimport numpy as np
 import cython
 cimport cython
@@ -18,17 +18,18 @@ cdef extern from "mesh.h":
     unsigned n_triangles, n_coords
     void verifyAttachements()
     void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-                                    double* v_sparse,   double* vertex_areas)
-    void calculateGradient(double* v_scalar_field, double* t_vector_gradient)
-    void calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
+                                    double* v_sparse)
     void verifyMesh()
     unsigned n_half_edges
     unsigned n_full_edges
-    double meanEdgeLength()
     void generateEdgeIndex(unsigned* edgeIndex)
-    void triangleAreas(double* areas)
     void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar)
-    void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar)
+    void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_p_vert,
+                                                 double* vertex_scalar)
+    #void calculateGradient(double* v_scalar_field, double* t_vector_gradient)
+    #void calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
+    #double meanEdgeLength()
+    #void triangleAreas(double* areas)
     vector[Vertex*] vertices
     vector[Triangle*] triangles 
 
@@ -56,9 +57,8 @@ cdef class CppMesh:
     self.thisptr = new Mesh(     &coords[0,0],      coords.shape[0], 
                             &coordsIndex[0,0], coordsIndex.shape[0])
     self.edge_index = self._calculate_edge_index()
-    # cached values
     self._initialize_cache()
-    print 'after construction, cache size is ' + "%0.2f" % self.cache_size + 'MB.'
+    print 'after construction, CppMesh cache size is ' + "%0.2f" % self.cache_size + 'MB.'
 
   def __dealloc__(self):
     del self.thisptr
@@ -104,9 +104,11 @@ cdef class CppMesh:
     """Returns the current memory usage of the cache in MB
     """
     mem = 0
-    for key in self._cache:
-      if type(self._cache[key]) is np.ndarray:
-        mem+= self._cache[key].nbytes
+    for v in self._cache.values():
+      if type(v) is np.ndarray:
+        mem+= v.nbytes
+      elif type(v) is sparse.csc_matrix:
+        mem+= v.data.nbytes
     return (1.0*mem)/(2**20)
 
   def verify_mesh(self):
@@ -120,32 +122,32 @@ cdef class CppMesh:
     assert n_triangle >= 0 and n_triangle < self.n_triangles
     deref(self.thisptr.triangles[n_triangle]).printStatus()
 
-
   def heat_geodesics(self, source_vertices):
-    L_c = self.laplacian()
-    t   = self.mean_edge_length
     u_0 = np.zeros(self.n_vertices)
     u_0[source_vertices] = 1.0
-    if self._cache['u_t_solver'] is None:
-      print 'solving for the first time'
+    if self._cache.get('u_t_solver') is None:
+      print 'solving u_t for the first time'
       A = self.voronoi_vertex_area_matrix
-      self._cache['u_t_solver'] = linalg.factorized(A - t*L_c)
+      L_c = self.laplacian()
+      t   = self.mean_edge_length
+      self._cache['u_t_solver'] = sparse.linalg.factorized(A - t*L_c)
     u_t_solver = self._cache['u_t_solver']
     u_t = u_t_solver(u_0)
-    print 'Solved for u_t'
+    #print 'Solved for u_t'
     grad_u_t = self.gradient(u_t)
-    print 'Solved for grad_u_t'
-    grad_u_t_mag  = np.sqrt(np.sum(grad_u_t**2, axis=1))
-    X = -1.0*grad_u_t/(grad_u_t_mag).reshape([-1,1])
+    #print 'Solved for grad_u_t'
+    grad_u_t_mag  = np.sqrt(np.sum(grad_u_t * grad_u_t, axis=1))
     # some of the vectors may have been zero length - ensure this
     # is true before and after
-    X[grad_u_t_mag == 0] = 0
-    print 'Generated X'
+    grad_u_t[grad_u_t_mag == 0] = 0
+    X = -1.0*grad_u_t/grad_u_t_mag[:,np.newaxis]
+    #print 'Generated X'
     div_X = self.divergence(X)
-    print 'Generated div_X'
+    #print 'Generated div_X'
     if self._cache['phi_solver'] is None:
       print 'solving phi for the first time'
-      self._cache['phi_solver'] = linalg.factorized(L_c)
+      L_c = self.laplacian()
+      self._cache['phi_solver'] = sparse.linalg.factorized(L_c)
     phi_solver = self._cache['phi_solver']
     phi = phi_solver(div_X)
     print 'variance in source vertex distances is ' + `np.var(phi[source_vertices])`
@@ -197,9 +199,10 @@ cdef class CppMesh:
     by default, the cotangent method is used (although this can be changed by
     passing in the appropriate weighting arugment)
     """
-    if self._cache['laplacian_c'] is None:
-      self._regenerate_neg_sd_laplacian_and_area_matrix(weighting)
-    return self._cache['laplacian_c']
+    cache_key = 'laplacian_' + weighting
+    if self._cache.get(cache_key) is None:
+      self._cache[cache_key] = self._neg_sd_laplacian(weighting)
+    return self._cache[cache_key]
 
   def reduce_tri_scalar_per_vertex_to_vertices(self, 
       np.ndarray[double, ndim=2, mode="c"] triangle_scalar not None):
@@ -213,24 +216,25 @@ cdef class CppMesh:
     self.thisptr.reduceTriangleScalarToVertices(&triangle_scalar[0], &vertex_scalar[0])
     return vertex_scalar
 
-  def _regenerate_neg_sd_laplacian_and_area_matrix(self, weighting='cotangent'):
-    L_c = self._pos_sd_laplacian_and_area_matrix(weighting)
-    # calculate the NEGITIVE semidefinite laplacian operator
-    self._cache['laplacian_c'] = -1.0*L_c
+  # --- HELPER ROUTINES for generating cached values ----- #
 
-  def _pos_sd_laplacian_and_area_matrix(self, weighting='cotangent'):
+  def _neg_sd_laplacian(self, weighting='cotangent'):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
         [self.n_halfedges*2],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
         [self.n_halfedges*2],dtype=np.uint32)
     cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
         [self.n_halfedges*2])
-    cdef np.ndarray[double, ndim=1, mode='c'] vertex_areas = np.zeros(self.n_vertices)
-    self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0], &vertex_areas[0])
-    L_c = coo_matrix((v_sparse, (i_sparse, j_sparse)))
-    #A_i = np.arange(self.n_vertices)
-    #A = coo_matrix((vertex_areas, (A_i,A_i)))
-    return csc_matrix(L_c)
+    self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0])
+    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
+    # we return the negitive -> switch
+    return -1.0*sparse.csc_matrix(L_c)
+
+  def _calculate_edge_index(self):
+    cdef np.ndarray[unsigned, ndim=2, mode='c'] edge_index = np.zeros(
+        [self.n_edges, 2], dtype=np.uint32)
+    self.thisptr.generateEdgeIndex(&edge_index[0,0])
+    return edge_index
 
   def _retrieve_from_cache(self, value):
     if self._cache.get(value) is None:
@@ -239,14 +243,14 @@ cdef class CppMesh:
 
   def _initialize_cache(self):
     self._cache = {}
-    self._cache['laplacian_c'] = None
     self._cache['u_t_solver'] = None
     self._cache['phi_solver'] = None
 
     # find mean edge length
     c_edge = self.coords[self.edge_index]
     edge_vectors = c_edge[:,1,:] - c_edge[:,0,:]
-    self._cache['mean_edge_length'] = np.mean(np.sqrt(np.sum(edge_vectors * edge_vectors, axis=1)))
+    self._cache['mean_edge_length'] = np.mean(
+        np.sqrt(np.sum(edge_vectors * edge_vectors, axis=1)))
 
     c_tri = self.coords[self.tri_index]
 
@@ -279,9 +283,8 @@ cdef class CppMesh:
     tri_area = 0.5*np.sqrt(np.sum(area_cross*area_cross, axis=1))
     voronoi_vertex_area = self.reduce_tri_scalar_to_vertices(tri_area)/3.0
     A_i = np.arange(self.n_vertices)
-    Acoo = coo_matrix((voronoi_vertex_area, (A_i,A_i)))
-    self.Acoo = Acoo
-    self._cache['voronoi_vertex_area_matrix'] = csc_matrix(Acoo)
+    Acoo = sparse.coo_matrix((voronoi_vertex_area, (A_i,A_i)))
+    self._cache['voronoi_vertex_area_matrix'] = sparse.csc_matrix(Acoo)
 
     cot_0 = cos_0/sin_0
     cot_1 = cos_1/sin_1
@@ -317,46 +320,40 @@ cdef class CppMesh:
     self._cache['N_x_e12'] = np.cross(unit_tri_normal, e_12)
     self._cache['N_x_e20'] = np.cross(unit_tri_normal, e_20)
 
-  def _calculate_edge_index(self):
-    cdef np.ndarray[unsigned, ndim=2, mode='c'] edge_index = np.zeros(
-        [self.n_edges, 2], dtype=np.uint32)
-    self.thisptr.generateEdgeIndex(&edge_index[0,0])
-    return edge_index
+  #def _old_gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
+  #  """
+  #  Return the gradient (per face) of the per vertex scalar field 
 
-  def _old_gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
-    """
-    Return the gradient (per face) of the per vertex scalar field 
+  #  C++ effects:
+  #  vertex_scalar   - the scalar field value (per vertex) that we are taking
+  #                    the gradient of.
+  #  triangle_vector - the resulting gradient (per triangle)
+  #  :param s_field: scalar field value per vertex
+  #  :type s_field: ndarray[1,n_vertices]
+  #  :return: Gradient evaluated over each triangle
+  #  :rtype: ndarray[float]
+  # 
+  #  """
+  #  cdef np.ndarray[double, ndim=2,mode ='c'] t_vector_gradient = np.zeros(
+  #      [self.n_triangles,3])
+  #  self.thisptr.calculateGradient(&v_scalar_field[0], &t_vector_gradient[0,0])
+  #  return t_vector_gradient
 
-    C++ effects:
-    vertex_scalar   - the scalar field value (per vertex) that we are taking
-                      the gradient of.
-    triangle_vector - the resulting gradient (per triangle)
-    :param s_field: scalar field value per vertex
-    :type s_field: ndarray[1,n_vertices]
-    :return: Gradient evaluated over each triangle
-    :rtype: ndarray[float]
-   
-    """
-    cdef np.ndarray[double, ndim=2,mode ='c'] t_vector_gradient = np.zeros(
-        [self.n_triangles,3])
-    self.thisptr.calculateGradient(&v_scalar_field[0], &t_vector_gradient[0,0])
-    return t_vector_gradient
+  #def _old_divergence(self, np.ndarray[double, ndim=2, mode="c"] t_vector_field not None):
+  #  """
+  #  Return the divergence (per vertex) of the field stored in triangle_vector.
 
-  def _old_divergence(self, np.ndarray[double, ndim=2, mode="c"] t_vector_field not None):
-    """
-    Return the divergence (per vertex) of the field stored in triangle_vector.
+  #  C++ effects:
+  #  triangle_vector - input
+  #  vertex_scalar   - result storage
 
-    C++ effects:
-    triangle_vector - input
-    vertex_scalar   - result storage
-
-    :return: Gradient evaluated over each triangle
-    :rtype: ndarray[float]
-   
-    """
-    cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_vertices)
-    self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
-    return v_scalar_divergence
+  #  :return: Gradient evaluated over each triangle
+  #  :rtype: ndarray[float]
+  # 
+  #  """
+  #  cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_vertices)
+  #  self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
+  #  return v_scalar_divergence
 
 
 

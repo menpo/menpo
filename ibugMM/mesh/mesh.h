@@ -64,15 +64,15 @@ class Mesh
     void addEdge(HalfEdge* halfedge);
 
     void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse, 
-		                            double*   v_sparse, double*   vertex_areas);
+        double*   v_sparse);
     void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
-	void verifyMesh();
+    void verifyMesh();
     double meanEdgeLength();
-	void generateEdgeIndex(unsigned* edgeIndex);
-	void triangleAreas(double* areas);
-	void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar);
-	void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+    void generateEdgeIndex(unsigned* edgeIndex);
+    void triangleAreas(double* areas);
+    void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar);
+    void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
 
 };
 

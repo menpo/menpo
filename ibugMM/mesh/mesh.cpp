@@ -48,7 +48,7 @@ Mesh::~Mesh()
 }
 
 void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-	double*   v_sparse, double* vertex_areas)
+	double*   v_sparse)
 {
   // pointers to structures used to define a sparse matrix of doubles
   // where the k'th value of each array is treated to mean:
@@ -74,7 +74,7 @@ void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   LaplacianWeightType weight_type = cotangent;
   for(v = vertices.begin(); v != vertices.end(); v++)
 	(*v)->calculateLaplacianOperator(i_sparse, j_sparse, v_sparse, 
-		sparse_pointer, vertex_areas, 
+		sparse_pointer,
 		weight_type);
 
   //std::cout << "After looping, sparse pointer at " << sparse_pointer << std::endl;

@@ -30,8 +30,8 @@ class Vertex : public MeshAttribute
   void divergence(double* t_vector_field, double* v_scalar_divergence);
   ~Vertex();
   void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-	                              double* v_sparse, unsigned& sparse_pointer, 
-								  double* vertex_areas, LaplacianWeightType weight_type);
+	                                double* v_sparse, unsigned& sparse_pointer, 
+								                  LaplacianWeightType weight_type);
   // different Laplacian weightings
   double cotWeight(HalfEdge* he);
   double distanceWeight(HalfEdge* he);
