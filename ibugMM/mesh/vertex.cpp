@@ -98,30 +98,37 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
   // we should be recording results for this vertex
   //bool has_a_full_edge = false;
   unsigned i = id;
-  std::set<HalfEdge*>::iterator he;
-  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  //std::set<HalfEdge*>::iterator he;
+  //for(he = halfedges.begin(); he != halfedges.end(); he++)
+  std::set<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
   {
-    unsigned j = (*he)->v1->id;
-    if(i < j)
-    {
+    unsigned j = (*v)->id;
+    //if(i < j)
+    //{
+	  HalfEdge* he = getHalfEdgeTo(*v);
+	  if (he == NULL)
+		he = (*v)->getHalfEdgeTo(this);
+	  if (he == NULL)
+		std::cout << "That be fucked." << std::endl;
       //std::cout << "Not breaking as " << i << " >=  " << j << std::endl;
-      double w_ij;
-      switch(weight_type)
-      {
-        case cotangent:
-          w_ij = cotWeight(*he);
-          break;
-        case distance:
-          w_ij = distanceWeight(*he);
-          break;
-        case combinatorial:
-          w_ij = combinatorialWeight(*he);
-          break;
-        default:
-          std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
-      }
+      //switch(weight_type)
+      //{
+      //  case cotangent:
+      //    w_ij = cotWeight(*he);
+      //    break;
+      //  case distance:
+      //    w_ij = distanceWeight(*he);
+      //    break;
+      //  case combinatorial:
+      //    w_ij = combinatorialWeight(*he);
+      //    break;
+      //  default:
+      //    std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
+      //}
       //std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
       // - cotOp to the i,j'th position 
+      double w_ij = combinatorialWeight(he);
       i_sparse[sparse_pointer] = i;
       j_sparse[sparse_pointer] = j;
       w_sparse[sparse_pointer] = -w_ij;
@@ -131,14 +138,14 @@ void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
       //
       // and record the other way for free (Laplacian is symmetrical)
       sparse_pointer++;
-      j_sparse[sparse_pointer] = i;
-      i_sparse[sparse_pointer] = j;
-      w_sparse[sparse_pointer] = -w_ij;
-      sparse_pointer++;
+      //i_sparse[sparse_pointer] = j;
+      //j_sparse[sparse_pointer] = i;
+      //w_sparse[sparse_pointer] = -w_ij;
+      //sparse_pointer++;
       // += cotOp to the i'th\'th position twice (for both times)
       w_sparse[i] += w_ij;
-      w_sparse[j] += w_ij;
-    }
+      //w_sparse[j] += w_ij;
+    //}
     // else:no point calculating this point - as we know the Laplacian is symmetrical 
   }    
   // now we've looped through store the areas in the array that is passed in
@@ -214,6 +221,17 @@ void Vertex::verifyHalfEdgeConnectivity()
         std::cout << "some half edges aren't paired up with there buddies!" << std::endl;
     }
   }
+}
+
+int Vertex::verticesAndHalfEdges()
+{
+  if(halfedges.size() != vertices.size())
+  {
+	std::cout << "V" << id << " has " << halfedges.size() << " HE's and " 
+	  << vertices.size() << " V's" << std::endl;
+	return 1;
+  }
+  return 0;
 }
 
 void Vertex::printStatus()

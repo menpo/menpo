@@ -98,8 +98,13 @@ void Mesh::calculateDivergence(double* t_vector_field, double* v_scalar_divergen
 void Mesh::verifyMesh()
 {
   std::vector<Vertex*>::iterator v;
+  int count = 0;
   for(v = vertices.begin(); v != vertices.end(); v++)
+  {
 	(*v)->verifyHalfEdgeConnectivity();
+	count += (*v)->verticesAndHalfEdges();
+  }
+  std::cout << count << " verticies are effected by this." << std::endl;
 }
 
 MeshAttribute::MeshAttribute(Mesh* meshIn)

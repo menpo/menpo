@@ -41,6 +41,7 @@ class Vertex : public MeshAttribute
   HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
   HalfEdge* getHalfEdgeTo(Vertex* vertex);
   void verifyHalfEdgeConnectivity();
+  int verticesAndHalfEdges();
   double getArea();
   Vec3 operator-(Vertex v);
   Vec3 operator*(Vertex v);
