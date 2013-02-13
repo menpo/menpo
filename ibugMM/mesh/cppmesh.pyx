@@ -63,6 +63,21 @@ cdef class CppMesh:
   def __dealloc__(self):
     del self.thisptr
 
+  def check_for_unrefereced_vertices(self):
+    # minus one as 0 indexed
+    diff_in_max_index = self.n_vertices - 1 - np.max(self.tri_index) 
+    if diff_in_max_index == 0:
+      pass
+    elif diff_in_max_index < 0:
+      print 'tri_index refers to a non existant vertex'
+    else:
+      print 'tri_index does not refer to every vertex'
+    set_diff = np.setdiff1d(np.arange(self.n_vertices, dtype=np.uint32), 
+                            np.unique(self.tri_index))
+    if set_diff.size != 0:
+      print 'the following vertices are unreferenced:'
+      print set_diff
+
   @property
   def n_vertices(self):
     return self.thisptr.n_coords
