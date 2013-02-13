@@ -24,9 +24,9 @@ Triangle::Triangle(Mesh* meshIn, unsigned triId,
   v2->addVertex(v0);
   v2->addVertex(v1);
   // add the half edges
-  e0 = v0->addHalfEdgeTo(v1,this);
-  e1 = v1->addHalfEdgeTo(v2,this);
-  e2 = v2->addHalfEdgeTo(v0,this);
+  e0 = v0->addHalfEdgeTo(v1, this, 0);
+  e1 = v1->addHalfEdgeTo(v2, this, 1);
+  e2 = v2->addHalfEdgeTo(v0, this, 2);
 }
 
 Triangle::~Triangle()
@@ -118,3 +118,15 @@ void Triangle::reduceScalarPerVertexToVertices(
   vertex_scalar[v2->id] += triangle_scalar_per_vertex[(id * 3) + 2];
 }
 
+int Triangle::vertex_index_number(Vertex* vertex)
+{
+  if(v0->id == vertex->id)
+    return 0;
+  else if(v1->id == vertex->id)
+    return 1;
+  else if(v2->id == vertex->id)
+    return 2;
+  else
+	  std::cout << "ERROR: cannot find vertex on this tri!" << std::endl;
+  return 4;
+}

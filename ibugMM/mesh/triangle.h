@@ -29,4 +29,5 @@ class Triangle : public MeshAttribute
   void printStatus();
   void reduceScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
   void reduceScalarToVertices(double* triangle_scalar, double* vertex_scalar);
+  int vertex_index_number(Vertex* vertex);
 };

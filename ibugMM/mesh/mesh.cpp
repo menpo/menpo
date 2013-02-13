@@ -47,6 +47,21 @@ Mesh::~Mesh()
   vertices.clear();
 }
 
+void Mesh::cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse, 
+                             double*   v_sparse, double* cotangents_per_vertex)
+{
+  for(unsigned int i = 0; i < n_coords; i++){
+	i_sparse[i] = i;
+	j_sparse[i] = i;
+  }
+  unsigned sparse_pointer = n_coords;
+  std::vector<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++){
+	(*v)->cotangent_laplacian(i_sparse, j_sparse, v_sparse, 
+		sparse_pointer, cotangents_per_vertex);
+  }
+}
+
 void Mesh::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 	double*   v_sparse)
 {
@@ -98,8 +113,13 @@ void Mesh::calculateDivergence(double* t_vector_field, double* v_scalar_divergen
 void Mesh::verifyMesh()
 {
   std::vector<Vertex*>::iterator v;
+  int count = 0;
   for(v = vertices.begin(); v != vertices.end(); v++)
+  {
 	(*v)->verifyHalfEdgeConnectivity();
+	count += (*v)->verticesAndHalfEdges();
+  }
+  std::cout << count << " verticies are effected by this." << std::endl;
 }
 
 MeshAttribute::MeshAttribute(Mesh* meshIn)

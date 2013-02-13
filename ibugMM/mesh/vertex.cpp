@@ -24,11 +24,11 @@ void Vertex::addVertex(Vertex* vertex)
 }
 
 // returns the created half edge so it can be attached to the triangle if so desired
-HalfEdge* Vertex::addHalfEdgeTo(Vertex* vertex, Triangle* triangle)
+HalfEdge* Vertex::addHalfEdgeTo(Vertex* vertex, Triangle* triangle, unsigned id_on_tri_of_v0)
 {
   if(getHalfEdgeTo(vertex) == NULL)
   {
-    HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle);
+    HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle, id_on_tri_of_v0);
     halfedges.insert(halfedge);
     //std::cout << "V:" << this << " is now connected to HE:" << halfedge << std::endl;
     return halfedge;
@@ -53,6 +53,22 @@ HalfEdge* Vertex::getHalfEdgeTo(Vertex* vertex)
   }
   //std::cout << "V:" << this << " does not have a HE to V:" << vertex << std::endl;
   return NULL;
+}
+
+HalfEdge* Vertex::getHalfEdgeToOrFrom(Vertex* vertex)
+{
+  HalfEdge* he = getHalfEdgeTo(vertex);
+  if (he != NULL)
+    return he;
+  else
+	he = vertex->getHalfEdgeTo(this);
+  if (he != NULL)
+    return he;
+  else
+  {
+	std::cout << "Warning - could not find a half edge to or from" << std::endl;
+    return NULL;
+  }
 }
 
 Vertex::~Vertex()
@@ -89,61 +105,81 @@ HalfEdge* Vertex::halfEdgeOnTriangle(Triangle* triangle)
   //std::cout << "V:" << this << " does not have a HE to V:" << vertex << std::endl;
 }
 
-void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
+
+void Vertex::cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
     double* w_sparse, unsigned& sparse_pointer, 
-    LaplacianWeightType weight_type)
+    double* cotangents_per_vertex)
 {
-  //std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
-  // sparse_pointer points into how far into the sparse_matrix structures
-  // we should be recording results for this vertex
-  //bool has_a_full_edge = false;
   unsigned i = id;
-  std::set<HalfEdge*>::iterator he;
-  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  std::set<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
   {
-    unsigned j = (*he)->v1->id;
-    if(i < j)
-    {
-      //std::cout << "Not breaking as " << i << " >=  " << j << std::endl;
-      double w_ij;
-      switch(weight_type)
-      {
-        case cotangent:
-          w_ij = cotWeight(*he);
-          break;
-        case distance:
-          w_ij = distanceWeight(*he);
-          break;
-        case combinatorial:
-          w_ij = combinatorialWeight(*he);
-          break;
-        default:
-          std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
-      }
-      //std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
-      // - cotOp to the i,j'th position 
+    unsigned j = (*v)->id;
+	  HalfEdge* he = getHalfEdgeToOrFrom(*v);
+	  double w_ij = cotangents_per_vertex[(he->triangle->id*3) + he->v2_tri_i];
+	  if(he->partOfFullEdge()){
+		w_ij += cotangents_per_vertex[(he->halfedge->triangle->id*3) + he->halfedge->v2_tri_i];
+	  }
       i_sparse[sparse_pointer] = i;
       j_sparse[sparse_pointer] = j;
       w_sparse[sparse_pointer] = -w_ij;
-      // should be only entry here...
-      //if(w_sparse[sparse_pointer] != 0)
-      //  std::cout << "this matrix value is already taken?" << std::endl;
-      //
-      // and record the other way for free (Laplacian is symmetrical)
       sparse_pointer++;
-      j_sparse[sparse_pointer] = i;
-      i_sparse[sparse_pointer] = j;
-      w_sparse[sparse_pointer] = -w_ij;
-      sparse_pointer++;
-      // += cotOp to the i'th\'th position twice (for both times)
       w_sparse[i] += w_ij;
-      w_sparse[j] += w_ij;
-    }
-    // else:no point calculating this point - as we know the Laplacian is symmetrical 
   }    
-  // now we've looped through store the areas in the array that is passed in
-  //if(!has_a_full_edge)
-  //  std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
+}
+
+
+void Vertex::verifyHalfEdgeConnectivity()
+{
+  std::set<HalfEdge*>::iterator he;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+    Triangle* triangle = (*he)->triangle;
+    Vertex* t_v0 = triangle->v0;
+    Vertex* t_v1 = triangle->v1;
+    Vertex* t_v2 = triangle->v2;
+    if(t_v0 != this && t_v1 != this && t_v2 != this)
+      std::cout << "this halfedge does not live on it's triangle!" << std::endl;
+    if((*he)->v0 != this)
+      std::cout << "half edge errornously connected" << std::endl;
+    if((*he)->counterclockwiseAroundTriangle()->counterclockwiseAroundTriangle()->v1 != (*he)->v0)
+      std::cout << "cannie spin raarnd the triangle like man!" << std::endl;
+    if((*he)->partOfFullEdge())
+    {
+      if((*he)->halfedge->v0 != (*he)->v1 || (*he)->halfedge->v1 != (*he)->v0)
+        std::cout << "some half edges aren't paired up with there buddies!" << std::endl;
+    }
+  }
+}
+
+int Vertex::verticesAndHalfEdges()
+{
+  if(halfedges.size() != vertices.size())
+  {
+	std::cout << "V" << id << " has " << halfedges.size() << " HE's and " 
+	  << vertices.size() << " V's" << std::endl;
+	return 1;
+  }
+  return 0;
+}
+
+void Vertex::printStatus()
+{
+  std::cout << "V" << id << std::endl;
+  std::set<HalfEdge*>::iterator he;
+  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  {
+    std::cout << "|" ;
+    if((*he)->partOfFullEdge())
+      std::cout << "=";
+    else
+      std::cout << "-";
+    std::cout << "V" << (*he)->v1->id;
+    std::cout << " (T" << (*he)->triangle->id; 
+    if((*he)->partOfFullEdge())
+      std::cout << "=T" << (*he)->halfedge->triangle->id;
+    std::cout << ")" << std::endl;
+  }
 }
 
 double Vertex::cotWeight(HalfEdge* he)
@@ -182,7 +218,7 @@ void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
     Vec3 e1 = (*he)->differenceVec3();
     //std::cout << "Got diff vec!" << std::endl;
     // *-1 as we want to reverse the direction
-    Vec3 e2 = (*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->differenceVec3()*-1;
+    Vec3 e2 = (*he)->counterclockwiseAroundTriangle()->counterclockwiseAroundTriangle()->differenceVec3()*-1;
     //std::cout << "Got other diff vec!" << std::endl;
     double cottheta2 = cotOfAngle((*he)->betaAngle());
     double cottheta1 = cotOfAngle((*he)->gammaAngle());
@@ -193,44 +229,66 @@ void Vertex::divergence(double* t_vector_field, double* v_scalar_divergence)
   v_scalar_divergence[id] = divergence/2.0;
 }
 
-void Vertex::verifyHalfEdgeConnectivity()
+void Vertex::calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
+    double* w_sparse, unsigned& sparse_pointer, 
+    LaplacianWeightType weight_type)
 {
-  std::set<HalfEdge*>::iterator he;
-  for(he = halfedges.begin(); he != halfedges.end(); he++)
+  //std::cout << "Calculating Laplacian for vertex no. " << id << "(" << halfedges.size() << " halfedges)" << std::endl ;
+  // sparse_pointer points into how far into the sparse_matrix structures
+  // we should be recording results for this vertex
+  //bool has_a_full_edge = false;
+  unsigned i = id;
+  //std::set<HalfEdge*>::iterator he;
+  //for(he = halfedges.begin(); he != halfedges.end(); he++)
+  std::set<Vertex*>::iterator v;
+  for(v = vertices.begin(); v != vertices.end(); v++)
   {
-    Triangle* triangle = (*he)->triangle;
-    Vertex* t_v0 = triangle->v0;
-    Vertex* t_v1 = triangle->v1;
-    Vertex* t_v2 = triangle->v2;
-    if(t_v0 != this && t_v1 != this && t_v2 != this)
-      std::cout << "this halfedge does not live on it's triangle!" << std::endl;
-    if((*he)->v0 != this)
-      std::cout << "half edge errornously connected" << std::endl;
-    if((*he)->clockwiseAroundTriangle()->clockwiseAroundTriangle()->v1 != (*he)->v0)
-      std::cout << "cannie spin raarnd the triangle like man!" << std::endl;
-    if((*he)->partOfFullEdge())
-    {
-      if((*he)->halfedge->v0 != (*he)->v1 || (*he)->halfedge->v1 != (*he)->v0)
-        std::cout << "some half edges aren't paired up with there buddies!" << std::endl;
-    }
-  }
-}
-
-void Vertex::printStatus()
-{
-  std::cout << "V" << id << std::endl;
-  std::set<HalfEdge*>::iterator he;
-  for(he = halfedges.begin(); he != halfedges.end(); he++)
-  {
-    std::cout << "|" ;
-    if((*he)->partOfFullEdge())
-      std::cout << "=";
-    else
-      std::cout << "-";
-    std::cout << "V" << (*he)->v1->id;
-    std::cout << " (T" << (*he)->triangle->id; 
-    if((*he)->partOfFullEdge())
-      std::cout << "=T" << (*he)->halfedge->triangle->id;
-    std::cout << ")" << std::endl;
-  }
+    unsigned j = (*v)->id;
+    //if(i < j)
+    //{
+	  HalfEdge* he = getHalfEdgeTo(*v);
+	  if (he == NULL)
+		he = (*v)->getHalfEdgeTo(this);
+	  if (he == NULL)
+		std::cout << "That be fucked." << std::endl;
+      //std::cout << "Not breaking as " << i << " >=  " << j << std::endl;
+      //switch(weight_type)
+      //{
+      //  case cotangent:
+      //    w_ij = cotWeight(*he);
+      //    break;
+      //  case distance:
+      //    w_ij = distanceWeight(*he);
+      //    break;
+      //  case combinatorial:
+      //    w_ij = combinatorialWeight(*he);
+      //    break;
+      //  default:
+      //    std::cout << "I don't know how to calcuate Laplacian weights of this type! " << std::endl;
+      //}
+      //std::cout << "writing out to i:" << i << " j:" << j << " (sparseP=" << sparse_pointer << ")" << std::endl << std::endl;
+      // - cotOp to the i,j'th position 
+      double w_ij = cotWeight(he);
+      i_sparse[sparse_pointer] = i;
+      j_sparse[sparse_pointer] = j;
+      w_sparse[sparse_pointer] = -w_ij;
+      // should be only entry here...
+      //if(w_sparse[sparse_pointer] != 0)
+      //  std::cout << "this matrix value is already taken?" << std::endl;
+      //
+      // and record the other way for free (Laplacian is symmetrical)
+      sparse_pointer++;
+      //i_sparse[sparse_pointer] = j;
+      //j_sparse[sparse_pointer] = i;
+      //w_sparse[sparse_pointer] = -w_ij;
+      //sparse_pointer++;
+      // += cotOp to the i'th\'th position twice (for both times)
+      w_sparse[i] += w_ij;
+      //w_sparse[j] += w_ij;
+    //}
+    // else:no point calculating this point - as we know the Laplacian is symmetrical 
+  }    
+  // now we've looped through store the areas in the array that is passed in
+  //if(!has_a_full_edge)
+  //  std::cout << "Vertex " << id << " does not have any full edges around it (" << halfedges.size() << " halfedges around it)" << std::endl;
 }
