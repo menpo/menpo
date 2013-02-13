@@ -220,7 +220,7 @@ cdef class CppMesh:
 
   # --- HELPER ROUTINES for generating cached values ----- #
 
-  def _neg_sd_laplacian(self, weighting='cotangent'):
+  def _neg_sd_laplacian2(self, weighting='cotangent'):
     cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
         [self.n_halfedges*2],dtype=np.uint32)
     cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
@@ -232,7 +232,7 @@ cdef class CppMesh:
     # we return the negitive -> switch
     return -1.0*sparse.csc_matrix(L_c)
 
-  def _neg_sd_laplacian2(self, weighting='cotangent'):
+  def _neg_sd_laplacian(self, weighting='cotangent'):
     cot_0 = self._retrieve_from_cache('cot_0')
     cot_1 = self._retrieve_from_cache('cot_1')
     cot_2 = self._retrieve_from_cache('cot_2')

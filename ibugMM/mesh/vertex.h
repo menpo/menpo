@@ -24,7 +24,7 @@ class Vertex : public MeshAttribute
   // Mesh construction methods
   void addTriangle(Triangle* triangle);
   void addVertex(Vertex* vertex);
-  HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle);
+  HalfEdge* addHalfEdgeTo(Vertex* vertex, Triangle* triangle, unsigned id_on_tri_of_v0);
   
   // algorithms
   void divergence(double* t_vector_field, double* v_scalar_divergence);
@@ -34,7 +34,7 @@ class Vertex : public MeshAttribute
 								                  LaplacianWeightType weight_type);
   void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
                            double* w_sparse, unsigned& sparse_pointer, 
-                           double* cotangents_per_vertex);
+                           double* cot_per_tri_vertex);
   // different Laplacian weightings
   double cotWeight(HalfEdge* he);
   double distanceWeight(HalfEdge* he);

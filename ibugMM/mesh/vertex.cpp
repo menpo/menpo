@@ -24,11 +24,11 @@ void Vertex::addVertex(Vertex* vertex)
 }
 
 // returns the created half edge so it can be attached to the triangle if so desired
-HalfEdge* Vertex::addHalfEdgeTo(Vertex* vertex, Triangle* triangle)
+HalfEdge* Vertex::addHalfEdgeTo(Vertex* vertex, Triangle* triangle, unsigned id_on_tri_of_v0)
 {
   if(getHalfEdgeTo(vertex) == NULL)
   {
-    HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle);
+    HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle, id_on_tri_of_v0);
     halfedges.insert(halfedge);
     //std::cout << "V:" << this << " is now connected to HE:" << halfedge << std::endl;
     return halfedge;

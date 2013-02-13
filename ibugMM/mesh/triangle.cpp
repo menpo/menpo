@@ -24,9 +24,9 @@ Triangle::Triangle(Mesh* meshIn, unsigned triId,
   v2->addVertex(v0);
   v2->addVertex(v1);
   // add the half edges
-  e0 = v0->addHalfEdgeTo(v1,this);
-  e1 = v1->addHalfEdgeTo(v2,this);
-  e2 = v2->addHalfEdgeTo(v0,this);
+  e0 = v0->addHalfEdgeTo(v1, this, 0);
+  e1 = v1->addHalfEdgeTo(v2, this, 1);
+  e2 = v2->addHalfEdgeTo(v0, this, 2);
 }
 
 Triangle::~Triangle()

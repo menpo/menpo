@@ -7,18 +7,34 @@
 
 
 HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In, 
-	               Triangle* triangleIn) : MeshAttribute(meshIn)
+	               Triangle* triangleIn, unsigned id_on_tri_of_v0) : MeshAttribute(meshIn)
 {
 	mesh->n_half_edges++;
   v0 = v0In;
   v1 = v1In;
   triangle = triangleIn;
   halfedge = v1->getHalfEdgeTo(v0);
-  // v2 is thus always the opposite vertex to this half edge
-  v2 = counterclockwiseAroundTriangle()->v1;
-  v0_tri_i = triangle->vertex_index_number(v0);
-  v1_tri_i = triangle->vertex_index_number(v1);
-  v2_tri_i = triangle->vertex_index_number(v2);
+  switch (id_on_tri_of_v0)
+  {
+	case 0:
+      v0_tri_i = 0;
+      v1_tri_i = 1;
+      v2_tri_i = 2;
+	  v2 = triangle->v2;
+	  break;
+	case 1:
+      v0_tri_i = 1;
+      v1_tri_i = 2;
+      v2_tri_i = 0;
+	  v2 = triangle->v0;
+	  break;
+	case 2:
+      v0_tri_i = 2;
+      v1_tri_i = 0;
+      v2_tri_i = 1;
+	  v2 = triangle->v1;
+	  break;
+  }
   if(halfedge != NULL)
   {
 	  //std::cout << "Opposite half edge exists!" << std::endl;
