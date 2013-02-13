@@ -44,9 +44,11 @@ class ModelImporter(object):
   def generate_face(self, **kwargs):
       coords = np.array(self.coords)
       tri_index = np.array(self.tri_index, dtype=np.uint32)
-      kwargs['texture_coords'] = np.array(self.texture_coords)
       kwargs['texture'] = self.texture
-      kwargs['texture_tri_index'] = np.array(self.texture_tri_index, dtype=np.uint32)
+      if self.texture_coords is not None:
+        kwargs['texture_coords'] = np.array(self.texture_coords)
+      if self.texture_tri_index is not None:
+        kwargs['texture_tri_index'] = np.array(self.texture_tri_index, dtype=np.uint32)
       return Face(coords, tri_index, **kwargs)
 
 class OBJImporter(ModelImporter):
@@ -58,19 +60,19 @@ class OBJImporter(ModelImporter):
     ModelImporter.__init__(self, path_to_file)
 
   def parse_geometry(self):
-    coordsStr          = self._extract_data_type('v')
-    texture_coordsStr   = self._extract_data_type('vt')
-    normalsStr         = self._extract_data_type('vn')
-    indexStr           = self._extract_data_type('f')
-    self.coords        = self._strings_to_floats(coordsStr)
-    self.texture_coords = self._strings_to_floats(texture_coordsStr)
-    self.normals       = self._strings_to_floats(normalsStr)
+    coords_str = self._extract_data_type('v')
+    texture_coords_str = self._extract_data_type('vt')
+    normals_str = self._extract_data_type('vn')
+    index_str = self._extract_data_type('f')
+    self.coords = self._strings_to_floats(coords_str)
+    self.texture_coords = self._strings_to_floats(texture_coords_str)
+    self.normals = self._strings_to_floats(normals_str)
     self.tri_index, self.normalsIndex, self.texture_tri_index = [],[],[]
-    for indexLine in indexStr:
+    for indexLine in index_str:
       cI,tI,nI = [],[],[]
-      for indexStr in indexLine.split(' '):
-        #cIn,nIn,tIn =  [int(x) for x in indexStr.split('/')]
-        coord_normal_texture_i =  [int(x) for x in indexStr.split('/')]
+      for index_str in indexLine.split(' '):
+        #cIn,nIn,tIn =  [int(x) for x in index_str.split('/')]
+        coord_normal_texture_i =  [int(x) for x in index_str.split('/')]
         # take 1 off as we expect indexing to be 0 based
         cI.append(coord_normal_texture_i[0]-1)
         if len(coord_normal_texture_i) > 1:
@@ -109,7 +111,7 @@ class OBJImporter(ModelImporter):
         raise Exception('why do we have texture coords but no texture?')
       else:
         print '(there are no texture coordinates anyway so this is expected)'
-        self.texture = []
+        self.texture = None
 
   def _extract_data_type(self,signiture):
     header_length = len(signiture) + 1
