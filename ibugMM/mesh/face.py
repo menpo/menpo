@@ -133,16 +133,17 @@ class Face(CppMesh):
     self.view_location_of_vertices(np.unique(self.tri_index[i]))
 
 
-  def view_geodesic_contours(self, phi):
-    rings = np.mod(phi,20)
+  def view_geodesic_contours(self, phi, periodicity=20):
+    print 'viewing geodesics with periodicity ' + `periodicity`
+    rings = np.mod(phi, periodicity)
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.tri_index, 
                              scalars=rings) 
     mlab.show()
 
-  def view_last_geodesic_contours(self):
+  def view_last_geodesic_contours(self, periodicity=20):
     if self.last_key:
-      self.view_geodesic_contours(self.calculated_geodesics[self.last_key]['phi'])
+      self.view_geodesic_contours(self.calculated_geodesics[self.last_key]['phi'], periodicity)
     else:
       print "No geodesics have been calculated for this face"
 

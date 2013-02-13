@@ -8,13 +8,11 @@ plt.interactive(True)
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
 
-ioannis_path_1 = '/home/jab08/Dropbox/testData/ioannis_1.obj'
-face = import_face(ioannis_path_1)
-face.landmarks['nose']  = [46731]
-face.landmarks['l_eye'] = [5695]
-face.landmarks['r_eye'] = [5495]
-face.landmarks['mouth'] = [15461, 18940, 12249, 17473, 36642, 2889, 11560, 10125]
-face.landmarks['cheek_freckle'] = [752]
+bunny = import_face('~/Downloads/bunny.obj')
+bunny.landmarks = {}
+bunny.landmarks['back'] = [784]
+bunny.store_geodesics_for_all_landmarks()
+bunny.view_last_geodesic_contours(periodicity=5)
 
 #geo = face.geodesics_about_vertices(face.landmarks['nose'])
 #u_t = geo['u_t']

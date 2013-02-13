@@ -10,7 +10,7 @@ from tvtk.tools import ivtk
 
 ioannis_path_1 = '/home/jab08/Dropbox/testData/ioannis_1.obj'
 importer = ModelImporterFactory(ioannis_path_1)
-face = importer.generateFace()
+face = importer.generate_face()
 face.landmarks['nose']  = [46731]
 face.landmarks['l_eye'] = [5695]
 face.landmarks['r_eye'] = [5495]
