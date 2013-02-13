@@ -1,4 +1,4 @@
-from ibugMM.importer.model import ModelImporterFactory
+from ibugMM.importer.model import import_face 
 from ibugMM.mesh.face import Face
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,11 +31,9 @@ def gen_phi_coords(face, landmarks):
 
 ## ioannis face
 ioannis_path_1 = '/home/jab08/Dropbox/testData/ioannis_1.obj'
-importer = ModelImporterFactory(ioannis_path_1)
-o_ioannis_1 = importer.generateFace()
+o_ioannis_1 = import_face(ioannis_path_1)
 ioannis_path_2 = '/home/jab08/Dropbox/testData/ioannis_2.obj'
-importer = ModelImporterFactory(ioannis_path_2)
-o_ioannis_2 = importer.generateFace()
+o_ioannis_2 = import_face(ioannis_path_2)
 
 ## note, l_eye is THEIR l_eye (right as we look at it)
 landmarks_1['nose']  = [46731]

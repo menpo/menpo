@@ -1,4 +1,4 @@
-from ibugMM.importer.model import ModelImporterFactory
+from ibugMM.importer.model import import_face 
 from ibugMM.mesh.face import Face
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,8 +9,7 @@ from tvtk.api import tvtk
 from tvtk.tools import ivtk
 
 ioannis_path_1 = '/home/jab08/Dropbox/testData/ioannis_1.obj'
-importer = ModelImporterFactory(ioannis_path_1)
-face = importer.generateFace()
+face = import_face(ioannis_path_1)
 face.landmarks['nose']  = [46731]
 face.landmarks['l_eye'] = [5695]
 face.landmarks['r_eye'] = [5495]

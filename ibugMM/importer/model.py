@@ -8,61 +8,64 @@ import os
 import commands
 import tempfile
 
-def ModelImporterFactory(pathToFile, **kwargs):
-  ext = os.path.splitext(pathToFile)[-1]
+def import_face(path_to_file, **kwargs):
+  ext = os.path.splitext(path_to_file)[-1]
   if ext == '.off':
-    return OFFImporter(pathToFile, **kwargs)
+    importer = OFFImporter(path_to_file, **kwargs)
   elif ext == '.wrl':
-    return WRLImporter(pathToFile, **kwargs)
+    importer = WRLImporter(path_to_file, **kwargs)
   elif ext == '.obj':
-    return OBJImporter(pathToFile, **kwargs)
+    importer = OBJImporter(path_to_file, **kwargs)
   else:
     raise Exception("I don't understand the file type " + `ext`)
+    return None
+  face = importer.generate_face()
+  if kwargs.get('keep_importer', False):
+    print 'attaching the importer at face.importer'
+    face.importer = importer
+  return face
 
 class ModelImporter(object):
-  def __init__(self,pathToFile):
-    self.pathToFile = os.path.abspath(
-                      os.path.expanduser(pathToFile))
-    self._fileHandle = open(self.pathToFile)
-    self.lines = self._fileHandle.readlines()
-    self._fileHandle.close()
-    self.importGeometry()
-    self.importTexture()
+  def __init__(self,path_to_file):
+    self.path_to_file = os.path.abspath(
+                      os.path.expanduser(path_to_file))
+    self._file_handle = open(self.path_to_file)
+    self.lines = self._file_handle.readlines()
+    self._file_handle.close()
+    self.parse_geometry()
+    self.import_texture()
 
-  def importGeometry(self):
+  def parse_geometry(self):
     raise NotImplimentedException()
 
-  def importTexture(self):
+  def import_texture(self):
     raise NotImplimentedException()
 
-  def generateFace(self, **kwargs):
-      coords         = np.array(self.coords)
-      tri_index   = np.array(self.coordsIndex,dtype=np.uint32)
-      kwargs['texture_coords'] = np.array(self.textureCoords)
-      kwargs['texture']        = self.texture
-      #kwargs['normals']            = self.normals
-      #kwargs['normalsIndex']       = self.normalsIndex
-      kwargs['texture_tri_index'] = np.array(self.textureCoordsIndex, dtype=np.uint32)
+  def generate_face(self, **kwargs):
+      coords = np.array(self.coords)
+      tri_index = np.array(self.tri_index, dtype=np.uint32)
+      kwargs['texture_coords'] = np.array(self.texture_coords)
+      kwargs['texture'] = self.texture
+      kwargs['texture_tri_index'] = np.array(self.texture_tri_index, dtype=np.uint32)
       return Face(coords, tri_index, **kwargs)
 
 class OBJImporter(ModelImporter):
   def __init__(self, path_to_file, **kwargs):
-    clean_up = kwargs.get('clean_up')
-    if clean_up:
+    if kwargs.get('clean_up', False):
       print 'clean up of mesh requested'
       path_to_file = self.clean_up_mesh_on_path(path_to_file)
     print 'importing without cleanup'
     ModelImporter.__init__(self, path_to_file)
 
-  def importGeometry(self):
-    coordsStr          = self._extractDataType('v')
-    textureCoordsStr   = self._extractDataType('vt')
-    normalsStr         = self._extractDataType('vn')
-    indexStr           = self._extractDataType('f')
-    self.coords        = self._stringsToFloats(coordsStr)
-    self.textureCoords = self._stringsToFloats(textureCoordsStr)
-    self.normals       = self._stringsToFloats(normalsStr)
-    self.coordsIndex, self.normalsIndex, self.textureCoordsIndex = [],[],[]
+  def parse_geometry(self):
+    coordsStr          = self._extract_data_type('v')
+    texture_coordsStr   = self._extract_data_type('vt')
+    normalsStr         = self._extract_data_type('vn')
+    indexStr           = self._extract_data_type('f')
+    self.coords        = self._strings_to_floats(coordsStr)
+    self.texture_coords = self._strings_to_floats(texture_coordsStr)
+    self.normals       = self._strings_to_floats(normalsStr)
+    self.tri_index, self.normalsIndex, self.texture_tri_index = [],[],[]
     for indexLine in indexStr:
       cI,tI,nI = [],[],[]
       for indexStr in indexLine.split(' '):
@@ -76,9 +79,9 @@ class OBJImporter(ModelImporter):
         if len(coord_normal_texture_i) > 2:
           # there is normal data as well
           nI.append(coord_normal_texture_i[2]-1)
-      self.coordsIndex.append(cI)
+      self.tri_index.append(cI)
       self.normalsIndex.append(nI)
-      self.textureCoordsIndex.append(tI)
+      self.texture_tri_index.append(tI)
 
   def clean_up_mesh_on_path(self, path_to_file):
     clean_up_path = os.path.join(os.path.split(os.path.abspath(__file__))[0],'cleanup.mlx')
@@ -92,42 +95,45 @@ class OBJImporter(ModelImporter):
     print 'importing cleaned version of mesh from tmp'
     return output_path
 
-  def importTexture(self):
-    pathToJpg = os.path.splitext(self.pathToFile)[0] + '.jpg'
+  def import_texture(self):
+    # TODO: make this more intelligent in locating the texture
+    # (i.e. from the materials file, this can be second guess)
+    pathToJpg = os.path.splitext(self.path_to_file)[0] + '.jpg'
     print pathToJpg
     try:
       Image.open(pathToJpg)
       self.texture = Image.open(pathToJpg)
     except IOError:
       print 'Warning, no texture found'
-      if self.textureCoords != []:
+      if self.texture_coords != []:
         raise Exception('why do we have texture coords but no texture?')
       else:
         print '(there are no texture coordinates anyway so this is expected)'
         self.texture = []
 
-  def _extractDataType(self,signiture):
-    headerLength = len(signiture) + 1
-    return [line[headerLength:-1] for line in self.lines 
+  def _extract_data_type(self,signiture):
+    header_length = len(signiture) + 1
+    return [line[header_length:-1] for line in self.lines 
                                     if line.startswith(signiture + ' ')]
-  def _stringsToFloats(self, lines):
+
+  def _strings_to_floats(self, lines):
     return [[float(x) for x in line.split(' ')] for line in lines]
 
 
 class WRLImporter(ModelImporter):
 
-  def __init__(self,pathToFile):
-    ModelImporter.__init__(self,pathToFile)
+  def __init__(self,path_to_file):
+    ModelImporter.__init__(self,path_to_file)
 
-  def importGeometry(self):
+  def parse_geometry(self):
     self._sectionEnds  = [i for i,line in enumerate(self.lines) 
                               if ']' in line]
     self.coords        = self._getFloatDataForString(' Coordinate')
-    self.textureCoords = self._getFloatDataForString('TextureCoordinate')
-    textureCoordsIndex = self._getFloatDataForString(
+    self.texture_coords = self._getFloatDataForString('TextureCoordinate')
+    texture_tri_index = self._getFloatDataForString(
                                   'texCoordIndex',seperator=', ',cast=int)
-    self.textureCoordsIndex = [x[:-1] for x in textureCoordsIndex]
-    self.coordsIndex  = self.textureCoordsIndex
+    self.texture_tri_index = [x[:-1] for x in texture_tri_index]
+    self.tri_index  = self.texture_tri_index
     self.normalsIndex = None 
     self.normals      = None
 
@@ -146,25 +152,25 @@ class WRLImporter(ModelImporter):
   def _findNextSectionEnd(self,beginningIndex):
     return [i for i in self._sectionEnds if i > beginningIndex][0]
 
-  def importTexture(self):
+  def import_texture(self):
     imageIndex = self._findIndexOfFirstInstanceOfString('ImageTexture') + 1
     self.imageName = self.lines[imageIndex].split('"')[1]
-    pathToTexture = os.path.dirname(self.pathToFile) + '/' + self.imageName 
+    pathToTexture = os.path.dirname(self.path_to_file) + '/' + self.imageName 
     self.texture = Image.open(pathToTexture)
 
 
 class OFFImporter(ModelImporter):
 
-  def __init__(self,pathToFile):
-    ModelImporter.__init__(self,pathToFile)
+  def __init__(self,path_to_file):
+    ModelImporter.__init__(self,path_to_file)
     #.off files only have geometry info - all other fields None 
-    self.textureCoords      = None
+    self.texture_coords      = None
     self.normals            = None
     self.normalsIndex       = None
-    self.textureCoordsIndex = None
+    self.texture_tri_index = None
     self.texture            = None
 
-  def importGeometry(self):
+  def parse_geometry(self):
     lines = [l.rstrip() for l in self.lines]
     self.n_coords = int(lines[1].split(' ')[0])
     offset = 2
@@ -174,7 +180,7 @@ class OFFImporter(ModelImporter):
     coord_lines = lines[offset:x]
     coord_index_lines = lines[x:]
     self.coords = [[float(x) for x in l.split(' ')] for l in coord_lines]
-    self.coordsIndex = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
+    self.tri_index = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
 
-  def importTexture(self):
+  def import_texture(self):
     pass
