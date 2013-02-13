@@ -118,3 +118,15 @@ void Triangle::reduceScalarPerVertexToVertices(
   vertex_scalar[v2->id] += triangle_scalar_per_vertex[(id * 3) + 2];
 }
 
+int Triangle::vertex_index_number(Vertex* vertex)
+{
+  if(v0->id == vertex->id)
+    return 0;
+  else if(v1->id == vertex->id)
+    return 1;
+  else if(v2->id == vertex->id)
+    return 2;
+  else
+	  std::cout << "ERROR: cannot find vertex on this tri!" << std::endl;
+  return 4;
+}

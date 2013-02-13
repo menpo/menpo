@@ -65,6 +65,8 @@ class Mesh
 
     void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse, 
         double*   v_sparse);
+    void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse, 
+                             double*   v_sparse, double* cotangents_per_vertex);
     void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
     void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
     void verifyMesh();

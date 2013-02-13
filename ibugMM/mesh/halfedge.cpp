@@ -2,6 +2,7 @@
 #include "vec3.h"
 #include "halfedge.h"
 #include "vertex.h"
+#include "triangle.h"
 #include <cmath>
 
 
@@ -13,6 +14,11 @@ HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In,
   v1 = v1In;
   triangle = triangleIn;
   halfedge = v1->getHalfEdgeTo(v0);
+  // v2 is thus always the opposite vertex to this half edge
+  v2 = counterclockwiseAroundTriangle()->v1;
+  v0_tri_i = triangle->vertex_index_number(v0);
+  v1_tri_i = triangle->vertex_index_number(v1);
+  v2_tri_i = triangle->vertex_index_number(v2);
   if(halfedge != NULL)
   {
 	  //std::cout << "Opposite half edge exists!" << std::endl;
@@ -43,14 +49,27 @@ bool HalfEdge::partOfFullEdge()
     return false;
 }
 
-HalfEdge* HalfEdge::clockwiseAroundTriangle()
+HalfEdge* HalfEdge::counterclockwiseAroundTriangle()
 {
-  return v1->halfEdgeOnTriangle(triangle);
+  HalfEdge* he_new;
+  if(v1->id == triangle->v0->id)
+	  he_new = triangle->e0;
+  else if(v1->id == triangle->v1->id)
+	  he_new = triangle->e1;
+  else if(v1->id == triangle->v2->id)
+	  he_new = triangle->e2;
+  else
+	  std::cout << "ERROR: cannot find HE!" << std::endl;
+
+//  HalfEdge* he_old = v1->halfEdgeOnTriangle(triangle);
+//  if (he_old != he_new)
+//	std::cout << "Disagreement in methods!" << std::endl;
+  return he_new;
 }
 
 double HalfEdge::alphaAngle()
 {
-  Vertex* A = clockwiseAroundTriangle()->v1;
+  Vertex* A = counterclockwiseAroundTriangle()->v1;
   Vertex* B = v0;
   Vertex* C = v1;
   return angleBetweenVerticies(A,B,C);
@@ -60,14 +79,14 @@ double HalfEdge::betaAngle()
 {
   Vertex* A = v0;
   Vertex* B = v1;
-  Vertex* C = clockwiseAroundTriangle()->v1;
+  Vertex* C = counterclockwiseAroundTriangle()->v1;
   return angleBetweenVerticies(A,B,C);
 }
 
 double HalfEdge::gammaAngle()
 {
   Vertex* A = v1;
-  Vertex* B = clockwiseAroundTriangle()->v1;
+  Vertex* B = counterclockwiseAroundTriangle()->v1;
   Vertex* C = v0;
   return angleBetweenVerticies(A,B,C);
 }

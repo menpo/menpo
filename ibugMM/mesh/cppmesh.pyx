@@ -19,6 +19,8 @@ cdef extern from "mesh.h":
     void verifyAttachements()
     void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
                                     double* v_sparse)
+    void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
+                                    double* v_sparse, double* cotangent_weights)
     void verifyMesh()
     unsigned n_half_edges
     unsigned n_full_edges
@@ -226,6 +228,26 @@ cdef class CppMesh:
     cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
         [self.n_halfedges*2])
     self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0])
+    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
+    # we return the negitive -> switch
+    return -1.0*sparse.csc_matrix(L_c)
+
+  def _neg_sd_laplacian2(self, weighting='cotangent'):
+    cot_0 = self._retrieve_from_cache('cot_0')
+    cot_1 = self._retrieve_from_cache('cot_1')
+    cot_2 = self._retrieve_from_cache('cot_2')
+    cots = np.vstack([cot_0, cot_1, cot_2]).T.copy()
+    return self._neg_sd_laplacian2_helper(cots)
+
+  def _neg_sd_laplacian2_helper(self, 
+      np.ndarray[double, ndim=2, mode="c"] cotangents not None):
+    cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
+        [self.n_halfedges*2],dtype=np.uint32)
+    cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
+        [self.n_halfedges*2],dtype=np.uint32)
+    cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
+        [self.n_halfedges*2])
+    self.thisptr.cotangent_laplacian(&i_sparse[0], &j_sparse[0], &v_sparse[0], &cotangents[0,0])
     L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
     # we return the negitive -> switch
     return -1.0*sparse.csc_matrix(L_c)

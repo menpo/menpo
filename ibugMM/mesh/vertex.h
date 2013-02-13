@@ -15,9 +15,9 @@ class Vertex : public MeshAttribute
   Vertex(Mesh* mesh, unsigned id, double* coords);
   double *coords;
   unsigned id;
-  // triangles attached to this vertex
+  // ALL triangles attached to this vertex
   std::set<Triangle*> triangles;
-  // other vertices attached to this vertex
+  // ALL other vertices attached to this vertex
   std::set<Vertex*> vertices;
   // half edges STARTING from this vertex 
   std::set<HalfEdge*> halfedges;
@@ -32,6 +32,9 @@ class Vertex : public MeshAttribute
   void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
 	                                double* v_sparse, unsigned& sparse_pointer, 
 								                  LaplacianWeightType weight_type);
+  void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
+                           double* w_sparse, unsigned& sparse_pointer, 
+                           double* cotangents_per_vertex);
   // different Laplacian weightings
   double cotWeight(HalfEdge* he);
   double distanceWeight(HalfEdge* he);
@@ -40,6 +43,7 @@ class Vertex : public MeshAttribute
   // utility methods
   HalfEdge* halfEdgeOnTriangle(Triangle* triangle);
   HalfEdge* getHalfEdgeTo(Vertex* vertex);
+  HalfEdge* getHalfEdgeToOrFrom(Vertex* vertex);
   void verifyHalfEdgeConnectivity();
   int verticesAndHalfEdges();
   double getArea();
