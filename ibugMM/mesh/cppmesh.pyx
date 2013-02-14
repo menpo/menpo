@@ -6,6 +6,7 @@ from libcpp.set    cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
 import scipy.sparse as sparse
+from scikits.sparse.cholmod import cholesky
 cimport numpy as np
 import cython
 cimport cython
@@ -151,7 +152,7 @@ cdef class CppMesh:
     if self._cache.get('u_t_solver') is None:
       print 'solving u_t for the first time'
       A = self.voronoi_vertex_area_matrix
-      L_c = self.laplacian()
+      L_c = self.laplacian(weighting='cotangent')
       t   = self.mean_edge_length
       self._cache['u_t_solver'] = sparse.linalg.factorized(A - t*L_c)
     u_t_solver = self._cache['u_t_solver']
@@ -284,8 +285,6 @@ cdef class CppMesh:
 
   def _initialize_cache(self):
     self._cache = {}
-    self._cache['u_t_solver'] = None
-    self._cache['phi_solver'] = None
 
     # find mean edge length
     c_edge = self.coords[self.edge_index]
