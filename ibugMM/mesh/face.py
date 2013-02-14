@@ -1,7 +1,7 @@
 import numpy as np
 from cppmesh import CppMesh
 from scipy.sparse import coo_matrix, csc_matrix
-from scipy.sparse import linalg 
+from scipy.sparse import linalg
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
 from mayavi import mlab
@@ -102,8 +102,8 @@ class Face(CppMesh):
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.tri_index, 
-                             color=(0.5,0.5,0.5)) 
+                             self.coords[:,2], self.tri_index,
+                             color=(0.5,0.5,0.5))
 
   @property
   def n_landmarks(self):
@@ -117,16 +117,16 @@ class Face(CppMesh):
       colors = np.ones_like(i)*((num*1.0+0.1)/num_landmarks)
       print 'key: ' + `key` + ' color: ' + `colors`
       s = mlab.points3d(self.coords[i,0], self.coords[i,1],
-                        self.coords[i,2], 
+                        self.coords[i,2],
                         colors, scale_factor=5.0,
-                        vmax=1.0, vmin=0.0) 
+                        vmax=1.0, vmin=0.0)
     mlab.show()
 
   def view_location_of_vertices(self, i):
     self.view()
     s = mlab.points3d(self.coords[i,0], self.coords[i,1],
-                      self.coords[i,2], 
-                      color=(1,1,1), scale_factor=5.0) 
+                      self.coords[i,2],
+                      color=(1,1,1), scale_factor=5.0)
     mlab.show()
 
   def view_location_of_triangles(self, i):
@@ -137,8 +137,8 @@ class Face(CppMesh):
     print 'viewing geodesics with periodicity ' + `periodicity`
     rings = np.mod(phi, periodicity)
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.tri_index, 
-                             scalars=rings) 
+                             self.coords[:,2], self.tri_index,
+                             scalars=rings)
     mlab.show()
 
   def view_geodesic_contours_about_lm(self, landmark_key, periodicity=20):
@@ -167,7 +167,7 @@ class Face(CppMesh):
       np.in1d(self.tri_index, kept_vertices).reshape(self.tri_index.shape)
     # remove any triangle missing any number of vertices
     kept_triangles_orig_index = self.tri_index[np.all(bool_coord_index_mask, axis = 1)]
-    # some additional vertices will have to be removed as they no longer 
+    # some additional vertices will have to be removed as they no longer
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
     ci_map = np.zeros_like(original_vertex_index)
@@ -195,7 +195,7 @@ class Face(CppMesh):
       # have per-verex texturing only. just generate new_tc and submit
       new_tc = self.texture_coords_per_vertex[kept_vertices_orig_index]
 
-    face = Face(new_coords, new_coord_index, texture=self.texture, 
+    face = Face(new_coords, new_coord_index, texture=self.texture,
                 texture_coords =new_tc, texture_tri_index=new_tci)
     face.landmarks = new_landmarks
     return face

@@ -1,104 +1,80 @@
 #include <iostream>
-#include "vec3.h"
-#include "halfedge.h"
-#include "vertex.h"
-#include "triangle.h"
 #include <cmath>
+#include "halfedge.h"
+#include "triangle.h"
+#include "vertex.h"
 
 
-HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In, 
-	               Triangle* triangleIn, unsigned id_on_tri_of_v0) : MeshAttribute(meshIn) {
-	mesh->n_half_edges++;
-  v0 = v0In;
-  v1 = v1In;
-  triangle = triangleIn;
-  halfedge = v1->halfedge_to_vertex(v0);
-  switch (id_on_tri_of_v0)
-  {
-	case 0:
-      v0_tri_i = 0;
-      v1_tri_i = 1;
-      v2_tri_i = 2;
-	  v2 = triangle->v2;
-	  break;
-	case 1:
-      v0_tri_i = 1;
-      v1_tri_i = 2;
-      v2_tri_i = 0;
-	  v2 = triangle->v0;
-	  break;
-	case 2:
-      v0_tri_i = 2;
-      v1_tri_i = 0;
-      v2_tri_i = 1;
-	  v2 = triangle->v1;
-	  break;
-  }
-  if(halfedge != NULL)
-  {
-	  //std::cout << "Opposite half edge exists!" << std::endl;
-    //std::cout << "setting opposite half edge to me" << std::endl;
-    halfedge->halfedge = this;
-	  mesh->n_full_edges++;
-  }
-  else
-    // first time weve encountered this -> add to the mesh set of edges
-    meshIn->addEdge(this);
+HalfEdge::HalfEdge(Mesh* mesh_in, Vertex* v0_in, Vertex* v1_in,
+        Triangle* triangle_in,
+        unsigned id_on_tri_of_v0) : MeshAttribute( mesh_in, id_on_tri_of_v0) {
+    mesh->n_half_edges++;
+    v0 = v0_in;
+    v1 = v1_in;
+    triangle = triangle_in;
+    halfedge = v1->halfedge_to_vertex(v0);
+    switch (id_on_tri_of_v0) {
+        case 0:
+            v0_tri_i = 0;
+            v1_tri_i = 1;
+            v2_tri_i = 2;
+            v2 = triangle->v2;
+            break;
+        case 1:
+            v0_tri_i = 1;
+            v1_tri_i = 2;
+            v2_tri_i = 0;
+            v2 = triangle->v0;
+            break;
+        case 2:
+            v0_tri_i = 2;
+            v1_tri_i = 0;
+            v2_tri_i = 1;
+            v2 = triangle->v1;
+            break;
+    }
+    if (halfedge != NULL) {
+        // setting opposite halfedge to me
+        halfedge->halfedge = this;
+        mesh->n_full_edges++;
+    }
+    else {
+        // first time weve encountered this
+        mesh_in->add_edge(this);
+    }
 }
 
-Vec3 HalfEdge::differenceVec3()
-{
-  return *v1 - *v0;
+HalfEdge::~HalfEdge(){}
+
+bool HalfEdge::part_of_fulledge() {
+    if (halfedge != NULL) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
-double HalfEdge::length()
-{
-  return differenceVec3().mag();
+HalfEdge* HalfEdge::ccw_around_tri() {
+    HalfEdge* he;
+    if (v1->id == triangle->v0->id) {
+        he = triangle->e0;
+    }
+    else if (v1->id == triangle->v1->id) {
+        he = triangle->e1;
+    }
+    else if (v1->id == triangle->v2->id) {
+        he = triangle->e2;
+    }
+    else {
+        std::cout << "ERROR: cannot find HE!" << std::endl;
+    }
+    return he;
 }
 
-bool HalfEdge::partOfFullEdge()
-{
-  if(halfedge != NULL)
-    return true;
-  else
-    return false;
-}
-
-HalfEdge* HalfEdge::counterclockwiseAroundTriangle()
-{
-  HalfEdge* he;
-  if(v1->id == triangle->v0->id)
-	  he = triangle->e0;
-  else if(v1->id == triangle->v1->id)
-	  he = triangle->e1;
-  else if(v1->id == triangle->v2->id)
-	  he = triangle->e2;
-  else
-	  std::cout << "ERROR: cannot find HE!" << std::endl;
-  return he;
-}
-
-double HalfEdge::alphaAngle()
-{
-  Vertex* A = counterclockwiseAroundTriangle()->v1;
-  Vertex* B = v0;
-  Vertex* C = v1;
-  return angleBetweenVerticies(A,B,C);
-}
-
-double HalfEdge::betaAngle()
-{
-  Vertex* A = v0;
-  Vertex* B = v1;
-  Vertex* C = counterclockwiseAroundTriangle()->v1;
-  return angleBetweenVerticies(A,B,C);
-}
-
-double HalfEdge::gammaAngle()
-{
-  Vertex* A = v1;
-  Vertex* B = counterclockwiseAroundTriangle()->v1;
-  Vertex* C = v0;
-  return angleBetweenVerticies(A,B,C);
+double HalfEdge::length() {
+    // TODO actually calcuate this
+    std::cout << "This isn't actually calculating the length" << std::endl;
+    return 1.0;
 }
 
