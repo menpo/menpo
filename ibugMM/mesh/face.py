@@ -51,7 +51,7 @@ class Face(CppMesh):
     self.texture = t_in
     self.texture_coords = tc_in
     self.texture_tri_index = tti_in
-    self.calculated_geodesics = {}
+    self._cached_geodesics = {}
     self.last_key = None
 
   def _requires_texture(func):
@@ -132,8 +132,8 @@ class Face(CppMesh):
   def view_location_of_triangles(self, i):
     self.view_location_of_vertices(np.unique(self.tri_index[i]))
 
-
-  def view_geodesic_contours(self, phi, periodicity=20):
+  def view_geodesic_contours_about_vertices(self, vertices, periodicity=20):
+    phi = self.geodesics_about_vertices(vertices)['phi']
     print 'viewing geodesics with periodicity ' + `periodicity`
     rings = np.mod(phi, periodicity)
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
@@ -141,11 +141,9 @@ class Face(CppMesh):
                              scalars=rings) 
     mlab.show()
 
-  def view_last_geodesic_contours(self, periodicity=20):
-    if self.last_key:
-      self.view_geodesic_contours(self.calculated_geodesics[self.last_key]['phi'], periodicity)
-    else:
-      print "No geodesics have been calculated for this face"
+  def view_geodesic_contours_about_lm(self, landmark_key, periodicity=20):
+    self.view_geodesic_contours_about_vertices(
+        self.landmarks[landmark_key], periodicity)
 
   def store_geodesics_for_all_landmarks(self):
     for key in self.landmarks:
@@ -153,14 +151,13 @@ class Face(CppMesh):
 
   def geodesics_about_vertices(self, source_vertices):
     key = tuple(sorted(set(source_vertices)))
-    geodesic = self.calculated_geodesics.get(key)
+    geodesic = self._cached_geodesics.get(key)
     if geodesic is not None:
       print 'already calculated this geodesic, returning it'
       return geodesic
     else:
       geodesic = self.heat_geodesics(source_vertices)
-      self.calculated_geodesics[key] = geodesic
-      self.last_key = key
+      self._cached_geodesics[key] = geodesic
       return geodesic
 
   def new_face_from_vertex_mask(self, vertex_mask):

@@ -13,27 +13,28 @@ cimport cython
 # externally declare the C++ Mesh, Vertex, Triangle and HalfEdge classes 
 cdef extern from "mesh.h":
   cdef cppclass Mesh:
-    Mesh(double   *coords,      unsigned n_coords,
-         unsigned *coordsIndex, unsigned n_triangles) except +
-    unsigned n_triangles, n_coords
-    void verifyAttachements()
-    void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse,
-                                    double* v_sparse)
-    void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
-                                    double* v_sparse, double* cotangent_weights)
-    void verifyMesh()
+    Mesh(double   *coords,      unsigned n_vertices,
+         unsigned *tri_index, unsigned n_triangles) except +
+    unsigned n_vertices
+    unsigned n_triangles
     unsigned n_half_edges
     unsigned n_full_edges
-    void generateEdgeIndex(unsigned* edgeIndex)
-    void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar)
-    void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_p_vert,
+    void laplacian(unsigned* i_sparse, unsigned* j_sparse,
+                   double* v_sparse)
+    void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
+                                    double* v_sparse, double* cotangent_weights)
+    void verifyAttachements()
+    void verifyMesh()
+    void generate_edge_index(unsigned* edgeIndex)
+    void reduce_tri_scalar_to_vertices(double* triangle_scalar, double* vertex_scalar)
+    void reduce_tri_scalar_per_vertex_to_vertices(double* triangle_scalar_p_vert,
                                                  double* vertex_scalar)
-    #void calculateGradient(double* v_scalar_field, double* t_vector_gradient)
-    #void calculateDivergence(double* t_vector_field, double* v_scalar_divergence)
-    #double meanEdgeLength()
-    #void triangleAreas(double* areas)
     vector[Vertex*] vertices
     vector[Triangle*] triangles 
+  
+  cdef enum LaplacianWeightType:
+    combinatorial
+    distance
 
 cdef extern from "vertex.h":
   cdef cppclass Vertex:
@@ -53,36 +54,22 @@ cdef class CppMesh:
   cdef Mesh* thisptr
 
   def __cinit__(self, np.ndarray[double,   ndim=2, mode="c"] coords      not None, 
-                      np.ndarray[unsigned, ndim=2, mode="c"] coordsIndex not None, **kwargs):
+                      np.ndarray[unsigned, ndim=2, mode="c"] tri_index not None, **kwargs):
     self.coords = coords;
-    self.tri_index = coordsIndex
+    self.tri_index = tri_index
     self.thisptr = new Mesh(     &coords[0,0],      coords.shape[0], 
-                            &coordsIndex[0,0], coordsIndex.shape[0])
+                            &tri_index[0,0], tri_index.shape[0])
     self.edge_index = self._calculate_edge_index()
     self._initialize_cache()
+    self._check_for_unreferenced_vertices()
     print 'after construction, CppMesh cache size is ' + "%0.2f" % self.cache_size + 'MB.'
 
   def __dealloc__(self):
     del self.thisptr
 
-  def check_for_unrefereced_vertices(self):
-    # minus one as 0 indexed
-    diff_in_max_index = self.n_vertices - 1 - np.max(self.tri_index) 
-    if diff_in_max_index == 0:
-      pass
-    elif diff_in_max_index < 0:
-      print 'tri_index refers to a non existant vertex'
-    else:
-      print 'tri_index does not refer to every vertex'
-    set_diff = np.setdiff1d(np.arange(self.n_vertices, dtype=np.uint32), 
-                            np.unique(self.tri_index))
-    if set_diff.size != 0:
-      print 'the following vertices are unreferenced:'
-      print set_diff
-
   @property
   def n_vertices(self):
-    return self.thisptr.n_coords
+    return self.thisptr.n_vertices
 
   @property
   def n_triangles(self):
@@ -139,6 +126,25 @@ cdef class CppMesh:
     assert n_triangle >= 0 and n_triangle < self.n_triangles
     deref(self.thisptr.triangles[n_triangle]).printStatus()
 
+  def _check_for_unreferenced_vertices(self):
+    """Prints message if any coord is unaccounted for in tri_index
+    """
+    set_diff = np.setdiff1d(np.arange(self.n_vertices, dtype=np.uint32), 
+                            np.unique(self.tri_index))
+    if set_diff.size == 0:
+      return
+    else:
+      print 'the following vertices are unreferenced:'
+      print set_diff
+      diff_in_max_index = self.n_vertices - 1 - np.max(self.tri_index) 
+      if diff_in_max_index == 0:
+        pass
+      elif diff_in_max_index < 0:
+        print '(tri_index refers to a non-existant vertex)'
+      else:
+        print '(tri_index does not refer to every vertex)'
+
+
   def heat_geodesics(self, source_vertices):
     u_0 = np.zeros(self.n_vertices)
     u_0[source_vertices] = 1.0
@@ -156,7 +162,7 @@ cdef class CppMesh:
     grad_u_t_mag  = np.sqrt(np.sum(grad_u_t * grad_u_t, axis=1))
     # some of the vectors may have been zero length - ensure this
     # is true before and after
-    grad_u_t[grad_u_t_mag == 0] = 0
+    #grad_u_t[grad_u_t_mag == 0] = 0
     X = -1.0*grad_u_t/grad_u_t_mag[:,np.newaxis]
     #print 'Generated X'
     div_X = self.divergence(X)
@@ -179,7 +185,7 @@ cdef class CppMesh:
     geodesic['phi']          = phi
     return geodesic
 
-  def divergence(self, t_vector_field):
+  def divergence(self, t_vector_field not None):
     """
     """
     e_01  = self._retrieve_from_cache('e_01')
@@ -218,59 +224,57 @@ cdef class CppMesh:
     """
     cache_key = 'laplacian_' + weighting
     if self._cache.get(cache_key) is None:
-      self._cache[cache_key] = self._neg_sd_laplacian(weighting)
+      self._cache[cache_key] = self._laplacian(weighting)
     return self._cache[cache_key]
+
+  def _laplacian(self, weighting='cotangent'):
+    if weighting == 'cotangent':
+      return self._cot_laplacian()
+    else:
+      print "Don't know how to process a laplacian of type " + `weighting`
+
+  def _cot_laplacian(self):
+    """A specific routine for calculating the Cotangent Laplacian.
+
+    Evaluating the cotangent of every angle is fairly inefficiant in serial in 
+    C++. It's much faster to compute all cotangent angles in numpy and then 
+    pass the results into C++, so the only role that C++ plays is in looping
+    around it's pointer structure.
+    """
+    cot_0 = self._retrieve_from_cache('cot_0')
+    cot_1 = self._retrieve_from_cache('cot_1')
+    cot_2 = self._retrieve_from_cache('cot_2')
+    cdef np.ndarray[double,   ndim=2, mode='c'] cots = np.ascontiguousarray(
+        np.vstack([cot_0, cot_1, cot_2]).T)
+    cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
+        [self.n_halfedges*2],dtype=np.uint32)
+    cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
+        [self.n_halfedges*2],dtype=np.uint32)
+    cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
+        [self.n_halfedges*2])
+    self.thisptr.cotangent_laplacian(&i_sparse[0], &j_sparse[0], &v_sparse[0], &cots[0,0])
+    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
+    # we return the negitive -> switch
+    return -0.5*sparse.csc_matrix(L_c)
 
   def reduce_tri_scalar_per_vertex_to_vertices(self, 
       np.ndarray[double, ndim=2, mode="c"] triangle_scalar not None):
     cdef np.ndarray[double, ndim=1, mode='c'] vertex_scalar = np.zeros(self.n_vertices)
-    self.thisptr.reduceTriangleScalarPerVertexToVertices(&triangle_scalar[0,0], &vertex_scalar[0])
+    self.thisptr.reduce_tri_scalar_per_vertex_to_vertices(&triangle_scalar[0,0], &vertex_scalar[0])
     return vertex_scalar
 
   def reduce_tri_scalar_to_vertices(self, 
       np.ndarray[double, ndim=1, mode="c"] triangle_scalar not None):
     cdef np.ndarray[double, ndim=1, mode='c'] vertex_scalar = np.zeros(self.n_vertices)
-    self.thisptr.reduceTriangleScalarToVertices(&triangle_scalar[0], &vertex_scalar[0])
+    self.thisptr.reduce_tri_scalar_to_vertices(&triangle_scalar[0], &vertex_scalar[0])
     return vertex_scalar
 
   # --- HELPER ROUTINES for generating cached values ----- #
 
-  def _neg_sd_laplacian2(self, weighting='cotangent'):
-    cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
-        [self.n_halfedges*2],dtype=np.uint32)
-    cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
-        [self.n_halfedges*2],dtype=np.uint32)
-    cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
-        [self.n_halfedges*2])
-    self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0])
-    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
-    # we return the negitive -> switch
-    return -1.0*sparse.csc_matrix(L_c)
-
-  def _neg_sd_laplacian(self, weighting='cotangent'):
-    cot_0 = self._retrieve_from_cache('cot_0')
-    cot_1 = self._retrieve_from_cache('cot_1')
-    cot_2 = self._retrieve_from_cache('cot_2')
-    cots = np.vstack([cot_0, cot_1, cot_2]).T.copy()
-    return self._neg_sd_laplacian2_helper(cots)
-
-  def _neg_sd_laplacian2_helper(self, 
-      np.ndarray[double, ndim=2, mode="c"] cotangents not None):
-    cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
-        [self.n_halfedges*2],dtype=np.uint32)
-    cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
-        [self.n_halfedges*2],dtype=np.uint32)
-    cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
-        [self.n_halfedges*2])
-    self.thisptr.cotangent_laplacian(&i_sparse[0], &j_sparse[0], &v_sparse[0], &cotangents[0,0])
-    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
-    # we return the negitive -> switch
-    return -1.0*sparse.csc_matrix(L_c)
-
   def _calculate_edge_index(self):
     cdef np.ndarray[unsigned, ndim=2, mode='c'] edge_index = np.zeros(
         [self.n_edges, 2], dtype=np.uint32)
-    self.thisptr.generateEdgeIndex(&edge_index[0,0])
+    self.thisptr.generate_edge_index(&edge_index[0,0])
     return edge_index
 
   def _retrieve_from_cache(self, value):
@@ -357,40 +361,50 @@ cdef class CppMesh:
     self._cache['N_x_e12'] = np.cross(unit_tri_normal, e_12)
     self._cache['N_x_e20'] = np.cross(unit_tri_normal, e_20)
 
-  #def _old_gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
-  #  """
-  #  Return the gradient (per face) of the per vertex scalar field 
+#def _old_gradient(self, np.ndarray[double, ndim=1, mode="c"] v_scalar_field not None):
+#  """
+#  Return the gradient (per face) of the per vertex scalar field 
 
-  #  C++ effects:
-  #  vertex_scalar   - the scalar field value (per vertex) that we are taking
-  #                    the gradient of.
-  #  triangle_vector - the resulting gradient (per triangle)
-  #  :param s_field: scalar field value per vertex
-  #  :type s_field: ndarray[1,n_vertices]
-  #  :return: Gradient evaluated over each triangle
-  #  :rtype: ndarray[float]
-  # 
-  #  """
-  #  cdef np.ndarray[double, ndim=2,mode ='c'] t_vector_gradient = np.zeros(
-  #      [self.n_triangles,3])
-  #  self.thisptr.calculateGradient(&v_scalar_field[0], &t_vector_gradient[0,0])
-  #  return t_vector_gradient
+#  C++ effects:
+#  vertex_scalar   - the scalar field value (per vertex) that we are taking
+#                    the gradient of.
+#  triangle_vector - the resulting gradient (per triangle)
+#  :param s_field: scalar field value per vertex
+#  :type s_field: ndarray[1,n_vertices]
+#  :return: Gradient evaluated over each triangle
+#  :rtype: ndarray[float]
+# 
+#  """
+#  cdef np.ndarray[double, ndim=2,mode ='c'] t_vector_gradient = np.zeros(
+#      [self.n_triangles,3])
+#  self.thisptr.calculateGradient(&v_scalar_field[0], &t_vector_gradient[0,0])
+#  return t_vector_gradient
 
-  #def _old_divergence(self, np.ndarray[double, ndim=2, mode="c"] t_vector_field not None):
-  #  """
-  #  Return the divergence (per vertex) of the field stored in triangle_vector.
+#def _old_divergence(self, np.ndarray[double, ndim=2, mode="c"] t_vector_field not None):
+#  """
+#  Return the divergence (per vertex) of the field stored in triangle_vector.
 
-  #  C++ effects:
-  #  triangle_vector - input
-  #  vertex_scalar   - result storage
+#  C++ effects:
+#  triangle_vector - input
+#  vertex_scalar   - result storage
 
-  #  :return: Gradient evaluated over each triangle
-  #  :rtype: ndarray[float]
-  # 
-  #  """
-  #  cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_vertices)
-  #  self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
-  #  return v_scalar_divergence
+#  :return: Gradient evaluated over each triangle
+#  :rtype: ndarray[float]
+# 
+#  """
+#  cdef np.ndarray[double, ndim=1, mode='c'] v_scalar_divergence = np.zeros(self.n_vertices)
+#  self.thisptr.calculateDivergence(&t_vector_field[0,0], &v_scalar_divergence[0])
+#  return v_scalar_divergence
 
-
-
+#  def _old_neg_sd_laplacian(self, weighting='cotangent'):
+#    cdef np.ndarray[unsigned, ndim=1, mode='c'] i_sparse = np.zeros(
+#        [self.n_halfedges*2],dtype=np.uint32)
+#    cdef np.ndarray[unsigned, ndim=1, mode='c'] j_sparse = np.zeros(
+#        [self.n_halfedges*2],dtype=np.uint32)
+#    cdef np.ndarray[double,   ndim=1, mode='c'] v_sparse = np.zeros(
+#        [self.n_halfedges*2])
+#    self.thisptr.calculateLaplacianOperator(&i_sparse[0], &j_sparse[0], &v_sparse[0])
+#    L_c = sparse.coo_matrix((v_sparse, (i_sparse, j_sparse)))
+#    # we return the negitive -> switch
+#    return -1.0*sparse.csc_matrix(L_c)
+#

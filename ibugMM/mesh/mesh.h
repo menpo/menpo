@@ -7,7 +7,7 @@ class Triangle;
 class Vertex;
 class HalfEdge;
 
-enum LaplacianWeightType {cotangent, combinatorial, distance};
+enum LaplacianWeightType {combinatorial, distance};
 
 // C++ class layer built on top of simple C data arrays. Mesh is composed 
 // of triangles, halfedges, and vertices, each of which is a light C++ class
@@ -42,48 +42,48 @@ enum LaplacianWeightType {cotangent, combinatorial, distance};
 
 class Mesh
 {
-  public:
-    Mesh(double   *coords,      unsigned n_coords,
-        unsigned *coordsIndex, unsigned n_triangles);
-    ~Mesh();
-    // pointer to an array dim(n_coordsx3) containing the coordinates
-    // for each vertex of the mesh
-    double* coords;
-    // pointer to an array dim(n_coordsx3) containing the coordinates
-    // for each vertex of the mesh
-    unsigned* coordsIndex;
-    unsigned n_coords;
-    unsigned n_triangles;
-    unsigned n_full_edges;
-    unsigned n_half_edges;
-    // storage for the c++ objects for each triangle and vertex
-    std::vector<Triangle*> triangles;
-    std::vector<Vertex*> vertices;
-    std::set<HalfEdge*> edges;
+    public:
+        Mesh(double   *coords,      unsigned n_vertices,
+                unsigned *tri_index, unsigned n_triangles);
+        ~Mesh();
+        // pointer to an array dim(n_verticesx3) containing the coordinates
+        // for each vertex of the mesh
+        double* coords;
+        // pointer to an array dim(n_verticesx3) containing the coordinates
+        // for each vertex of the mesh
+        unsigned* tri_index;
+        unsigned n_vertices;
+        unsigned n_triangles;
+        unsigned n_full_edges;
+        unsigned n_half_edges;
+        // storage for the c++ objects for each triangle and vertex
+        std::vector<Triangle*> triangles;
+        std::vector<Vertex*> vertices;
+        std::set<HalfEdge*> edges;
 
-    void addEdge(HalfEdge* halfedge);
+        void addEdge(HalfEdge* halfedge);
+        void generate_edge_index(unsigned* edgeIndex);
 
-    void calculateLaplacianOperator(unsigned* i_sparse, unsigned* j_sparse, 
-        double*   v_sparse);
-    void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse, 
-                             double*   v_sparse, double* cotangents_per_vertex);
-    void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
-    void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
-    void verifyMesh();
-    double meanEdgeLength();
-    void generateEdgeIndex(unsigned* edgeIndex);
-    void triangleAreas(double* areas);
-    void reduceTriangleScalarToVertices(double* triangle_scalar, double* vertex_scalar);
-    void reduceTriangleScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+        void laplacian(unsigned* i_sparse, unsigned* j_sparse, 
+                double*   v_sparse, LaplacianWeightType weight_type);
+        void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse, 
+                double*   v_sparse, double* cotangents_per_vertex);
+        void verifyMesh();
+        double meanEdgeLength();
+        void triangleAreas(double* areas);
+        void reduce_tri_scalar_to_vertices(double* triangle_scalar, double* vertex_scalar);
+        void reduce_tri_scalar_per_vertex_to_vertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+        void calculateGradient(double* v_scalar_field, double* t_vector_gradient);
+        void calculateDivergence(double* t_vector_field, double* v_scalar_divergence);
 
 };
 
 
 class MeshAttribute
 {
-  public:
-    Mesh *mesh;
-    MeshAttribute(Mesh* mesh);
+    public:
+        Mesh *mesh;
+        MeshAttribute(Mesh* mesh);
 };
 
 double angleBetweenVerticies(Vertex* A, Vertex* B, Vertex* C);

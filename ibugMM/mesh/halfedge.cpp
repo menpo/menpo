@@ -7,13 +7,12 @@
 
 
 HalfEdge::HalfEdge(Mesh* meshIn, Vertex* v0In, Vertex* v1In, 
-	               Triangle* triangleIn, unsigned id_on_tri_of_v0) : MeshAttribute(meshIn)
-{
+	               Triangle* triangleIn, unsigned id_on_tri_of_v0) : MeshAttribute(meshIn) {
 	mesh->n_half_edges++;
   v0 = v0In;
   v1 = v1In;
   triangle = triangleIn;
-  halfedge = v1->getHalfEdgeTo(v0);
+  halfedge = v1->halfedge_to_vertex(v0);
   switch (id_on_tri_of_v0)
   {
 	case 0:
@@ -67,20 +66,16 @@ bool HalfEdge::partOfFullEdge()
 
 HalfEdge* HalfEdge::counterclockwiseAroundTriangle()
 {
-  HalfEdge* he_new;
+  HalfEdge* he;
   if(v1->id == triangle->v0->id)
-	  he_new = triangle->e0;
+	  he = triangle->e0;
   else if(v1->id == triangle->v1->id)
-	  he_new = triangle->e1;
+	  he = triangle->e1;
   else if(v1->id == triangle->v2->id)
-	  he_new = triangle->e2;
+	  he = triangle->e2;
   else
 	  std::cout << "ERROR: cannot find HE!" << std::endl;
-
-//  HalfEdge* he_old = v1->halfEdgeOnTriangle(triangle);
-//  if (he_old != he_new)
-//	std::cout << "Disagreement in methods!" << std::endl;
-  return he_new;
+  return he;
 }
 
 double HalfEdge::alphaAngle()

@@ -5,8 +5,7 @@ class Vertex;
 class Vec3;
 class HalfEdge;
 
-class Triangle : public MeshAttribute
-{
+class Triangle : public MeshAttribute {
   public:
 	Vertex* v0;
 	Vertex* v1;
@@ -27,7 +26,6 @@ class Triangle : public MeshAttribute
 	double area();
 	Vec3 gradient(double* scalar_field);
   void printStatus();
-  void reduceScalarPerVertexToVertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
-  void reduceScalarToVertices(double* triangle_scalar, double* vertex_scalar);
-  int vertex_index_number(Vertex* vertex);
+  void reduce_scalar_per_vertex_to_vertices(double* triangle_scalar_per_vertex, double* vertex_scalar);
+  void reduce_scalar_to_vertices(double* triangle_scalar, double* vertex_scalar);
 };
