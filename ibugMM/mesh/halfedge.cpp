@@ -8,7 +8,7 @@
 HalfEdge::HalfEdge(Mesh* mesh_in, Vertex* v0_in, Vertex* v1_in,
         Triangle* triangle_in,
         unsigned id_on_tri_of_v0) : MeshAttribute( mesh_in, id_on_tri_of_v0) {
-    mesh->n_half_edges++;
+    mesh->n_halfedges++;
     v0 = v0_in;
     v1 = v1_in;
     triangle = triangle_in;
@@ -36,7 +36,7 @@ HalfEdge::HalfEdge(Mesh* mesh_in, Vertex* v0_in, Vertex* v1_in,
     if (halfedge != NULL) {
         // setting opposite halfedge to me
         halfedge->halfedge = this;
-        mesh->n_full_edges++;
+        mesh->n_fulledges++;
     }
     else {
         // first time weve encountered this

@@ -53,8 +53,8 @@ class Mesh
         unsigned* tri_index;
         unsigned n_vertices;
         unsigned n_triangles;
-        unsigned n_full_edges;
-        unsigned n_half_edges;
+        unsigned n_fulledges;
+        unsigned n_halfedges;
         // storage for the c++ objects for each triangle and vertex
         std::vector<Triangle*> triangles;
         std::vector<Vertex*> vertices;
@@ -67,11 +67,15 @@ class Mesh
                 double*   v_sparse, LaplacianWeightType weight_type);
         void cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
                 double*   v_sparse, double* cotangents_per_vertex);
-        void verify_mesh();
         void reduce_tri_scalar_to_vertices(double* triangle_scalar,
                 double* vertex_scalar);
         void reduce_tri_scalar_per_vertex_to_vertices(
                 double* triangle_scalar_per_vertex, double* vertex_scalar);
+
+        // utilities
+        void verify_mesh();
+        void test_contiguous();
+        void test_chiral_consistency();
 };
 
 

@@ -1,7 +1,6 @@
 import numpy as np
 from cppmesh import CppMesh
-from scipy.sparse import coo_matrix, csc_matrix
-from scipy.sparse import linalg
+import scipy.sparse.linalg as sparse_linalg
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
 from mayavi import mlab
@@ -141,6 +140,14 @@ class Face(CppMesh):
                              scalars=rings)
     mlab.show()
 
+  def view_phi(self, phi, periodicity=20):
+    print 'viewing geodesics with periodicity ' + `periodicity`
+    rings = np.mod(phi, periodicity)
+    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
+                             self.coords[:,2], self.tri_index,
+                             scalars=rings)
+    mlab.show()
+
   def view_geodesic_contours_about_lm(self, landmark_key, periodicity=20):
     self.view_geodesic_contours_about_vertices(
         self.landmarks[landmark_key], periodicity)
@@ -159,6 +166,18 @@ class Face(CppMesh):
       geodesic = self.heat_geodesics(source_vertices)
       self._cached_geodesics[key] = geodesic
       return geodesic
+
+  def geodesics_about_lm(self, landmark_key):
+    return self.geodesics_about_vertices(self.landmarks[landmark_key])
+
+  def lsqr_phi_about_lm(self, landmark_key):
+    geo = self.geodesics_about_lm(landmark_key)
+    div_X = geo['div_X']
+    L_c = self._cache['laplacian_cotangent']
+    lsqr_solution = sparse_linalg.lsqr(L_c, div_X, show=True)
+    phi_lsqr = lsqr_solution[0]
+    phi_lsqr = phi_lsqr - phi_lsqr[self.landmarks[landmark_key]]
+    return phi_lsqr
 
   def new_face_from_vertex_mask(self, vertex_mask):
     original_vertex_index = np.arange(self.n_vertices)

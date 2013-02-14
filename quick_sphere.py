@@ -8,8 +8,7 @@ plt.interactive(True)
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
 
-bunny = import_face('~/Dropbox/testData/bunny.obj')
-bunny.landmarks = {}
-bunny.landmarks['back'] = [784]
-bunny.store_geodesics_for_all_landmarks()
+sphere = import_face('~/Dropbox/testData/sphere-160k.obj')
+sphere.landmarks['x'] = [1]
+sphere.store_geodesics_for_all_landmarks()
 

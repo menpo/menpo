@@ -18,15 +18,25 @@ HalfEdge* Vertex::add_halfedge_to(Vertex* vertex, Triangle* triangle,
         unsigned id_on_tri_of_v0) {
     // returns the created half edge so it can be attached to the triangle if
     // so desired
-    if(halfedge_to_vertex(vertex) == NULL) {
+    HalfEdge* he = halfedge_to_vertex(vertex);
+    if(he == NULL) {
         HalfEdge* halfedge = new HalfEdge(this->mesh, this, vertex, triangle,
                 id_on_tri_of_v0);
         halfedges.insert(halfedge);
         return halfedge;
     }
     else {
-        std::cout << "ERROR:This vertex seems to already be connected!"
+        std::cout << "CHIRAL CONSISTENCY: FAIL"
             << std::endl;
+        std::cout << "    V" << id << " already has a half edge to V" <<
+            vertex->id << " on triangle T" << he->triangle->id <<
+            " yet triangle T" << triangle->id <<
+            " is trying to create another one." << std::endl;
+        std::cout << "    This means that one of the two triangles listed ";
+        std::cout << "above has flipped normals, or the two triangles";
+        std::cout << " are \n    a repeat of each other." << std::endl;
+        std::cout << "    This repeated halfedge will not be created so ";
+        std::cout << "expect segfaults if you try to continue." << std::endl;
         return NULL;
     }
 }
@@ -130,9 +140,12 @@ void Vertex::cotangent_laplacian(unsigned* i_sparse, unsigned* j_sparse,
         unsigned j = (*v)->id;
         HalfEdge* he = halfedge_to_or_from_vertex(*v);
         double w_ij = cot_per_tri_vertex[(he->triangle->id*3) + he->v2_tri_i];
-        if(he->part_of_fulledge()){
+        if (he->part_of_fulledge()) {
             w_ij += cot_per_tri_vertex[(he->halfedge->triangle->id*3) +
                 he->halfedge->v2_tri_i];
+        }
+        else {
+            //w_ij += w_ij;
         }
         i_sparse[sparse_pointer] = i;
         j_sparse[sparse_pointer] = j;
@@ -184,6 +197,16 @@ void Vertex::status() {
         std::cout << ")" << std::endl;
     }
 }
+
+void Vertex::test_contiguous(std::set<Vertex*>* vertices_visited){
+    std::set<Vertex*>::iterator v;
+    for (v = vertices.begin(); v != vertices.end(); v++) {
+        if (vertices_visited->erase(*v)) {
+            (*v)->test_contiguous(vertices_visited);
+        }
+    }
+}
+
 
 std::ostream& operator<<(std::ostream& out, const Vertex& v) {
     out << "V:" << v.id << " (" << v.coords[0] << ","

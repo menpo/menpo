@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <set>
 #include "mesh.h"
 #include "triangle.h"
 #include "vertex.h"
@@ -14,8 +15,8 @@ Mesh::Mesh(double *coords_in, unsigned n_vertices_in,
     n_triangles = n_triangles_in;
     // set the no. of full/half edges to 0
     // (on creation halfedges pairs will increment these as suitable)
-    n_full_edges = 0;
-    n_half_edges = 0;
+    n_fulledges = 0;
+    n_halfedges = 0;
     // build a Vertex object for each coord set passed in
     for(unsigned i = 0; i < n_vertices; i++) {
         vertices.push_back(new Vertex(this, i, &coords[i*3]));
@@ -57,9 +58,82 @@ Mesh::~Mesh() {
 void Mesh::verify_mesh() {
     std::vector<Vertex*>::iterator v;
     for(v = vertices.begin(); v != vertices.end(); v++) {
-        // TODO add more verificaton stages here
         (*v)->verify_halfedge_connectivity();
     }
+    test_contiguous();
+    test_chiral_consistency();
+}
+
+void Mesh::test_chiral_consistency() {
+    std::cout << "CHIRALCONSISTENCY: ";
+    std::set<HalfEdge*>::iterator edge;
+    bool pass = true;
+    int fulledges_encountered = 0;
+    int halfedges_encountered = 0;
+    for (edge = edges.begin(); edge != edges.end(); edge++) {
+        halfedges_encountered++;
+        if ((*edge)->part_of_fulledge()) {
+            fulledges_encountered++;
+            halfedges_encountered++;
+            if ((*edge)->halfedge->v1 != (*edge)->v0 ||
+                    (*edge)->halfedge->v0 != (*edge)->v1) {
+                pass = false;
+            }
+        }
+    }
+    if (pass) {
+        std::cout << "PASS" << std::endl;
+    }
+    else {
+        std::cout << "FAIL" << std::endl;
+    }
+    std::cout << "EDGECOUNT: ";
+    if (fulledges_encountered == n_fulledges &&
+            halfedges_encountered == n_halfedges) {
+        std::cout << "PASS" << std::endl;
+    }
+    else {
+        std::cout << "FAIL" << std::endl;
+    }
+}
+
+void Mesh::test_contiguous() {
+    std::cout << "CONTIGUOUS: ";
+    std::set<Vertex*>* vertices_visited = new std::set<Vertex*>(
+            vertices.begin(), vertices.end());
+    std::vector<Vertex*>::iterator v;
+    v = vertices.begin();
+    vertices_visited->erase(*v);
+    (*v)->test_contiguous(vertices_visited);
+    if (vertices_visited->empty()) {
+        std::cout << "PASS" << std::endl;
+    }
+    else {
+        std::cout << "FAIL" << std::endl;
+        int num_unvisited = vertices_visited->size();
+        std::cout << "  The following " << num_unvisited <<
+            " vertices are not joined to V" << (*v)->id << ":";
+        std::set<Vertex*>::iterator unref_v;
+        int nl_count = 0;
+        for (unref_v = vertices_visited->begin();
+                unref_v != vertices_visited->end(); unref_v++, nl_count++) {
+            if (!(nl_count % 8)) {
+                std::cout << std::endl << "  ";
+            }
+            std::cout << "  V" << (*unref_v)->id << "   ";
+        }
+        std::cout << std::endl;
+        int regions_count = 0;
+        while (!vertices_visited->empty()) {
+            regions_count++;
+            unref_v = vertices_visited->begin();
+            vertices_visited->erase(*unref_v);
+            (*unref_v)->test_contiguous(vertices_visited);
+        }
+        std::cout << "  These unjoined vertices are grouped into " <<
+            regions_count << " contiguous regions." << std::endl;
+    }
+    delete vertices_visited;
 }
 
 void Mesh::laplacian(unsigned* i_sparse, unsigned* j_sparse,
@@ -71,7 +145,7 @@ void Mesh::laplacian(unsigned* i_sparse, unsigned* j_sparse,
     // we expect that the attachments at i_sparse, j_sparse
     // and v_sparse have already been set to the correct
     // dimentions before this call
-    // (each should be of length 2*n_half_edges)
+    // (each should be of length 2*n_halfedges)
     // the first n_coord entries are the diagonals. => the i'th
     // value of both i_sparse and j_sparse is just i
     for(unsigned int i = 0; i < n_vertices; i++) {

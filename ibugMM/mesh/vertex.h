@@ -39,6 +39,7 @@ class Vertex : public MeshAttribute
         // utility methods
         void status();
         void verify_halfedge_connectivity();
+        void test_contiguous(std::set<Vertex*>* vertices_visited);
         friend std::ostream& operator<<(std::ostream& out, const Vertex& vertex);
 };
 

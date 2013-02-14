@@ -18,8 +18,8 @@ cdef extern from "mesh.h":
          unsigned *tri_index, unsigned n_triangles) except +
     unsigned n_vertices
     unsigned n_triangles
-    unsigned n_half_edges
-    unsigned n_full_edges
+    unsigned n_halfedges
+    unsigned n_fulledges
     vector[Vertex*] vertices
     vector[Triangle*] triangles
     vector[HalfEdge*] halfedges
@@ -78,15 +78,15 @@ cdef class CppMesh:
 
   @property
   def n_fulledges(self):
-    return self.thisptr.n_full_edges
+    return self.thisptr.n_fulledges
 
   @property
   def n_halfedges(self):
-    return self.thisptr.n_half_edges
+    return self.thisptr.n_halfedges
 
   @property
   def n_edges(self):
-    return self.thisptr.n_half_edges - self.thisptr.n_full_edges
+    return self.thisptr.n_halfedges - self.thisptr.n_fulledges
 
   @property
   def mean_edge_length(self):
@@ -285,6 +285,8 @@ cdef class CppMesh:
 
   def _initialize_cache(self):
     self._cache = {}
+    self._cache['u_t_solver'] = None
+    self._cache['phi_solver'] = None
 
     # find mean edge length
     c_edge = self.coords[self.edge_index]
