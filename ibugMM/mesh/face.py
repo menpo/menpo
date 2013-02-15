@@ -5,7 +5,7 @@ from tvtk.api import tvtk
 from tvtk.tools import ivtk
 from mayavi import mlab
 
-class Model(CppMesh):
+class Face(CppMesh):
 
   def __init__(self, coords, tri_index, texture=None, texture_coords=None,
                texture_tri_index=None, landmarks = {}):
