@@ -55,6 +55,12 @@ ioannis_2  = o_ioannis_2.new_face_masked_from_lm('nose', method='exact')
 #    .                 .
 #        .   .   .
 #
+m_l = 10706
+m_r = 29522
+m_t = 16243
+m_b = 14945
+:e i
+james_smile.landmarks['mouth'] = [m_l, m_r, m_mt, m_mb]
 
 
 
