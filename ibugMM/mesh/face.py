@@ -5,7 +5,7 @@ from tvtk.api import tvtk
 from tvtk.tools import ivtk
 from mayavi import mlab
 
-class Face(CppMesh):
+class Model(CppMesh):
 
   def __init__(self, coords, tri_index, texture=None, texture_coords=None,
                texture_tri_index=None, landmarks = {}):
@@ -131,15 +131,6 @@ class Face(CppMesh):
   def view_location_of_triangles(self, i):
     self.view_location_of_vertices(np.unique(self.tri_index[i]))
 
-  def view_geodesic_contours_about_vertices(self, vertices, periodicity=20):
-    phi = self.geodesics_about_vertices(vertices)['phi']
-    print 'viewing geodesics with periodicity ' + `periodicity`
-    rings = np.mod(phi, periodicity)
-    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
-                             self.coords[:,2], self.tri_index,
-                             scalars=rings)
-    mlab.show()
-
   def view_phi(self, phi, periodicity=20):
     print 'viewing geodesics with periodicity ' + `periodicity`
     rings = np.mod(phi, periodicity)
@@ -148,30 +139,36 @@ class Face(CppMesh):
                              scalars=rings)
     mlab.show()
 
-  def view_geodesic_contours_about_lm(self, landmark_key, periodicity=20):
+  def view_geodesic_contours_about_vertices(self, vertices,
+      periodicity=20, method='heat'):
+    phi = self.geodesics_about_vertices(vertices, method)['phi']
+    self.view_phi(phi, periodicity)
+
+  def view_geodesic_contours_about_lm(self, landmark_key,
+      periodicity=20, method='heat'):
     self.view_geodesic_contours_about_vertices(
-        self.landmarks[landmark_key], periodicity)
+        self.landmarks[landmark_key], periodicity, method)
 
-  def store_geodesics_for_all_landmarks(self):
+  def store_geodesics_for_all_landmarks(self, method='heat'):
     for key in self.landmarks:
-      self.geodesics_about_vertices(self.landmarks[key])
+      self.geodesics_about_vertices(self.landmarks[key], method)
 
-  def geodesics_about_vertices(self, source_vertices):
-    key = tuple(sorted(set(source_vertices)))
+  def geodesics_about_vertices(self, source_vertices, method='heat'):
+    key = tuple([method] + sorted(set(source_vertices)))
     geodesic = self._cached_geodesics.get(key)
     if geodesic is not None:
       print 'already calculated this geodesic, returning it'
       return geodesic
     else:
-      geodesic = self.heat_geodesics(source_vertices)
+      geodesic = self.geodesics(source_vertices, method)
       self._cached_geodesics[key] = geodesic
       return geodesic
 
-  def geodesics_about_lm(self, landmark_key):
-    return self.geodesics_about_vertices(self.landmarks[landmark_key])
+  def geodesics_about_lm(self, landmark_key, method='heat'):
+    return self.geodesics_about_vertices(self.landmarks[landmark_key], method)
 
-  def lsqr_phi_about_lm(self, landmark_key):
-    geo = self.geodesics_about_lm(landmark_key)
+  def lsqr_heat_phi_about_lm(self, landmark_key):
+    geo = self.geodesics_about_lm(landmark_key, method='heat')
     div_X = geo['div_X']
     L_c = self._cache['laplacian_cotangent']
     lsqr_solution = sparse_linalg.lsqr(L_c, div_X, show=True)
