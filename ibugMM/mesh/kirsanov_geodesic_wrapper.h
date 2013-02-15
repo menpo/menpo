@@ -3,7 +3,7 @@
 #include<vector>
 //#include "geodesic_algorithm_dijkstra.h"
 //#include "geodesic_algorithm_subdivision.h"
-#include "geodesic_algorithm_exact.h"
+#include "kirsanov/geodesic_algorithm_exact.h"
 
 class KirsanovGeodesicWrapper {
     public:

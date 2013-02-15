@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./ibugMM/mesh/mesh.cpp ./ibugMM/mesh/vertex.cpp ./ibugMM/mesh/halfedge.cpp ./ibugMM/mesh/vec3.cpp ./ibugMM/mesh/triangle.cpp ./ibugMM/mesh/kirsanov/kirsanov_geodesic_wrapper.cpp
+# distutils: sources = ./ibugMM/mesh/mesh.cpp ./ibugMM/mesh/vertex.cpp ./ibugMM/mesh/halfedge.cpp ./ibugMM/mesh/vec3.cpp ./ibugMM/mesh/triangle.cpp ./ibugMM/mesh/kirsanov_geodesic_wrapper.cpp
 
 from libcpp.vector cimport vector
 from libcpp.set    cimport set
@@ -51,7 +51,7 @@ cdef extern from "halfedge.h":
     pass
 
 # externally declare the exact geodesic code
-cdef extern from "kirsanov/kirsanov_geodesic_wrapper.h":
+cdef extern from "kirsanov_geodesic_wrapper.h":
   cdef cppclass KirsanovGeodesicWrapper:
     KirsanovGeodesicWrapper(double* coords, unsigned n_vertices,
         unsigned* tri_index, unsigned n_triangles) except +
