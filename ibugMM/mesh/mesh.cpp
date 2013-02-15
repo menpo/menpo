@@ -68,8 +68,8 @@ void Mesh::test_chiral_consistency() {
     std::cout << "CHIRALCONSISTENCY: ";
     std::set<HalfEdge*>::iterator edge;
     bool pass = true;
-    int fulledges_encountered = 0;
-    int halfedges_encountered = 0;
+    unsigned fulledges_encountered = 0;
+    unsigned halfedges_encountered = 0;
     for (edge = edges.begin(); edge != edges.end(); edge++) {
         halfedges_encountered++;
         if ((*edge)->part_of_fulledge()) {

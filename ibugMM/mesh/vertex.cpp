@@ -100,7 +100,7 @@ void Vertex::laplacian(unsigned* i_sparse, unsigned* j_sparse,
         //if(i < j)
         //{
         HalfEdge* he = halfedge_to_or_from_vertex(*v);
-        double w_ij;
+        double w_ij = 0;
         switch(weight_type) {
             case distance:
                 w_ij = laplacian_distance_weight(he);

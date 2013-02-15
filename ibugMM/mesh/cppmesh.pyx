@@ -185,6 +185,10 @@ cdef class CppMesh:
     #elif method == 'subdivision':
     #  self.kirsanovptr.all_subdivision_geodesics_from_source_vertices(
     #      &np_sources[0], np_sources.size, &phi[0], &best_source[0], 3)
+    else:
+      print "The '" + `method` + "' method for calculating geodesics \
+          is not understood"
+      return None
     geodesic = {}
     geodesic['phi'] = phi
     geodesic['best_source'] = best_source

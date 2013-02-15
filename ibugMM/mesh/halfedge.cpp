@@ -56,7 +56,7 @@ bool HalfEdge::part_of_fulledge() {
 }
 
 HalfEdge* HalfEdge::ccw_around_tri() {
-    HalfEdge* he;
+    HalfEdge* he = NULL;
     if (v1->id == triangle->v0->id) {
         he = triangle->e0;
     }
