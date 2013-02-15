@@ -57,13 +57,13 @@ cdef extern from "kirsanov/kirsanov_geodesic_wrapper.h":
         unsigned* tri_index, unsigned n_triangles) except +
     void all_exact_geodesics_from_source_vertices(unsigned* source_vertices,
         unsigned n_sources, double* phi, unsigned* best_source)
-    void all_dijkstra_geodesics_from_source_vertices(
-        unsigned* source_vertices, unsigned n_sources, double* phi,
-        unsigned* best_source)
-    void all_subdivision_geodesics_from_source_vertices(
-        unsigned* source_vertices, unsigned n_sources,
-        double* phi, unsigned* best_source,
-        unsigned subdivision_level)
+    #void all_dijkstra_geodesics_from_source_vertices(
+    #    unsigned* source_vertices, unsigned n_sources, double* phi,
+    #    unsigned* best_source)
+    #void all_subdivision_geodesics_from_source_vertices(
+    #    unsigned* source_vertices, unsigned n_sources,
+    #    double* phi, unsigned* best_source,
+    #    unsigned subdivision_level)
 
 # Wrap the Mesh class to produce CppMesh
 cdef class CppMesh:
@@ -179,12 +179,12 @@ cdef class CppMesh:
     if method == 'exact':
       self.kirsanovptr.all_exact_geodesics_from_source_vertices(&np_sources[0],
           np_sources.size, &phi[0], &best_source[0])
-    elif method == 'dijkstra':
-      self.kirsanovptr.all_dijkstra_geodesics_from_source_vertices(&np_sources[0],
-          np_sources.size, &phi[0], &best_source[0])
-    elif method == 'subdivision':
-      self.kirsanovptr.all_subdivision_geodesics_from_source_vertices(
-          &np_sources[0], np_sources.size, &phi[0], &best_source[0], 3)
+    #elif method == 'dijkstra':
+    #  self.kirsanovptr.all_dijkstra_geodesics_from_source_vertices(&np_sources[0],
+    #      np_sources.size, &phi[0], &best_source[0])
+    #elif method == 'subdivision':
+    #  self.kirsanovptr.all_subdivision_geodesics_from_source_vertices(
+    #      &np_sources[0], np_sources.size, &phi[0], &best_source[0], 3)
     geodesic = {}
     geodesic['phi'] = phi
     geodesic['best_source'] = best_source
