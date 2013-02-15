@@ -10,7 +10,7 @@ class Face(CppMesh):
   def __init__(self, coords, tri_index, texture=None, texture_coords=None,
                texture_tri_index=None, landmarks = {}):
     CppMesh.__init__(self, coords, tri_index)
-    self.landmarks = landmarks
+    self.landmarks = landmarks.copy()
     t_in, tc_in, tti_in = texture, texture_coords, texture_tri_index
     message = 'Building new face'
     self.texture_coords_per_vertex = None
@@ -216,10 +216,10 @@ class Face(CppMesh):
     face.landmarks = new_landmarks
     return face
 
-  def new_face_masked_from_lm(self, lm_key, distance=100):
+  def new_face_masked_from_lm(self, lm_key, distance=100, method='heat'):
     """Returns a face containing only vertices within distance of the nose lm
     """
-    phi = self.geodesics_about_vertices(self.landmarks[lm_key])['phi']
+    phi = self.geodesics_about_lm(lm_key, method)['phi']
     mask = np.logical_and(phi < distance, phi >= 0)
     return self.new_face_from_vertex_mask(mask)
 
