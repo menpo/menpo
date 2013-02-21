@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
-#include <cmath>
 #include <set>
+#include <algorithm>
+#include <cmath>
 #include "mesh.h"
 #include "triangle.h"
 #include "vertex.h"
@@ -98,42 +99,49 @@ void Mesh::test_chiral_consistency() {
 }
 
 void Mesh::test_contiguous() {
-    std::cout << "CONTIGUOUS: ";
-    std::set<Vertex*>* vertices_visited = new std::set<Vertex*>(
+    std::vector< std::set<Vertex*> > vertices_per_region = contiguous_regions();
+    size_t regions_count = vertices_per_region.size();
+    std::cout << "Vertices are grouped into " <<
+        regions_count << " contiguous region(s)." << std::endl;
+    if (regions_count > 1) {
+        size_t largest_region = (*vertices_per_region.begin()).size();
+        int region_pc= int((100.0 * largest_region) / n_vertices);
+        std::cout << "The largest contiguous region acounts for approximatey "
+            << region_pc << "\% of the mesh." << std::endl;
+    }
+}
+
+bool sort_sets_by_size(const std::set<Vertex*> &a,
+        const std::set<Vertex*> &b) {
+    return a.size() > b.size();
+}
+
+std::vector< std::set<Vertex*> > Mesh::contiguous_regions() {
+    /* Returns a vector of set's of vertex pointers where each set contains
+     * vertices that are joined by triangles into a contiguous whole. The
+     * vector is sorted s.t. the largest contiguous region is the first.
+     * Note: a set of size one impies that the vertex is not used in any
+     * triangle.
+     */
+    std::set<Vertex*> vertices_not_visited(
             vertices.begin(), vertices.end());
-    std::vector<Vertex*>::iterator v;
-    v = vertices.begin();
-    vertices_visited->erase(*v);
-    (*v)->test_contiguous(vertices_visited);
-    if (vertices_visited->empty()) {
-        std::cout << "PASS" << std::endl;
+    std::vector< std::set<Vertex*> > vertices_per_region;
+    std::set<Vertex*>::iterator v;
+    while (!vertices_not_visited.empty()) {
+        std::set<Vertex*> vertices_not_visited_before = vertices_not_visited;
+        v = vertices_not_visited.begin();
+        vertices_not_visited.erase(*v);
+        (*v)->test_contiguous(&vertices_not_visited);
+        std::set<Vertex*> vertices_visited;
+        std::set_difference(vertices_not_visited_before.begin(),
+                vertices_not_visited_before.end(),
+                vertices_not_visited.begin(), vertices_not_visited.end(),
+                std::inserter(vertices_visited, vertices_visited.end()));
+        vertices_per_region.push_back(vertices_visited);
     }
-    else {
-        std::cout << "FAIL" << std::endl;
-        int num_unvisited = vertices_visited->size();
-        std::cout << "  The following " << num_unvisited <<
-            " vertices are not joined to V" << (*v)->id << ":";
-        std::set<Vertex*>::iterator unref_v;
-        int nl_count = 0;
-        for (unref_v = vertices_visited->begin();
-                unref_v != vertices_visited->end(); unref_v++, nl_count++) {
-            if (!(nl_count % 8)) {
-                std::cout << std::endl << "  ";
-            }
-            std::cout << "  V" << (*unref_v)->id << "   ";
-        }
-        std::cout << std::endl;
-        int regions_count = 0;
-        while (!vertices_visited->empty()) {
-            regions_count++;
-            unref_v = vertices_visited->begin();
-            vertices_visited->erase(*unref_v);
-            (*unref_v)->test_contiguous(vertices_visited);
-        }
-        std::cout << "  These unjoined vertices are grouped into " <<
-            regions_count << " contiguous regions." << std::endl;
-    }
-    delete vertices_visited;
+    std::sort(vertices_per_region.begin(), vertices_per_region.end(),
+            sort_sets_by_size);
+    return vertices_per_region;
 }
 
 void Mesh::laplacian(unsigned* i_sparse, unsigned* j_sparse,

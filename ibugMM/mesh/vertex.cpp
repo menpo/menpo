@@ -198,11 +198,11 @@ void Vertex::status() {
     }
 }
 
-void Vertex::test_contiguous(std::set<Vertex*>* vertices_visited){
+void Vertex::test_contiguous(std::set<Vertex*>* vertices_not_visited){
     std::set<Vertex*>::iterator v;
     for (v = vertices.begin(); v != vertices.end(); v++) {
-        if (vertices_visited->erase(*v)) {
-            (*v)->test_contiguous(vertices_visited);
+        if (vertices_not_visited->erase(*v)) {
+            (*v)->test_contiguous(vertices_not_visited);
         }
     }
 }

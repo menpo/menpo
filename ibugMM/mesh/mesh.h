@@ -75,6 +75,7 @@ class Mesh
         // utilities
         void verify_mesh();
         void test_contiguous();
+        std::vector< std::set<Vertex*> > contiguous_regions();
         void test_chiral_consistency();
 };
 
