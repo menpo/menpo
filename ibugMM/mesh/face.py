@@ -3,6 +3,7 @@ from cppmesh import CppMesh
 import scipy.sparse.linalg as sparse_linalg
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
+from tvtk.pyface import picker
 from mayavi import mlab
 
 class Face(CppMesh):
@@ -56,7 +57,7 @@ class Face(CppMesh):
   def _requires_texture(func):
     def check_texture(self):
       if self.texture is not None:
-        func(self)
+        return func(self)
       else:
         print 'This face has no texture associated with it'
     return check_texture
@@ -81,11 +82,25 @@ class Face(CppMesh):
     v = ivtk.IVTK(size=(700,700))
     v.open()
     v.scene.add_actors(actor)
+    my_pick_handle = MyPickHandler(v, self)
+    v.scene.picker.pick_handler = my_pick_handle
+    v.scene.picker.edit_traits()
+    v.scene.picker.show_gui = False
+
+    return v
 
   def view(self):
     figure = mlab.gcf()
     mlab.clf()
     s = self._render_face()
+    #s.actor.mapper.input.point_data.t_coords = self.texture_coords_per_vertex
+    #np_texture = np.array(self.texture)
+    #image_data = np.flipud(np_texture).flatten().reshape([-1,3]).astype(np.uint8)
+    #image = tvtk.ImageData()
+    #image.point_data.scalars = image_data
+    #image.dimensions = np_texture.shape[1], np_texture.shape[0], 1
+    #texture = tvtk.Texture(input=image)
+    #s.actor.texture = texture
     ##s.parent.parent.outputs[0].point_data.t_coords = self.texture_coords
     #s.mlab_source.dataset.point_data.t_coords = self.texture_coords
     ##image = tvtk.JPEGReader()
@@ -97,7 +112,7 @@ class Face(CppMesh):
     ##engine = mlab.get_engine()
 
     #mlab.show()
-    #return s
+    return s, texture
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
@@ -233,3 +248,28 @@ def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
   # of a tc at each vertex
   per_vertex_tci = texture_tri_index.flatten()[ind_of_u_ci]
   return texture_coords[per_vertex_tci]
+
+
+#class MyInteractorStyle(tvtk.InteractorStyleTrackballCamera):
+#  def __init__(self, parent=None):
+#    self.add_observer("MiddleButtonPressEvent", self.middleB
+
+
+class MyPickHandler(picker.PickHandler):
+
+  def __init__(self, scene, face):
+    picker.PickHandler.__init__(self)
+    self.scene = scene
+    self.face = face
+    self.count = 0
+    face.captured_landmarks = []
+
+  def handle_pick(self, data):
+    print `self.count` + ': ' + `data.point_id`
+    self.count += 1
+    self.face.captured_landmarks.append(data.point_id)
+    if self.count >= 32:
+      print 'landmarking complete - closing'
+      self.scene.close()
+
+

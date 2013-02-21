@@ -71,6 +71,7 @@ phi_2 = gen_phi_coords(ioannis_2, method='exact')
 # find all distances between the two phi's
 distances = distance.cdist(phi_1, phi_2)
 
+
 # interpolate the phi_vectors to the centre of each triangle
 phi_1_tri = np.mean(phi_1[ioannis_1.tri_index], axis=1)
 phi_2_tri = np.mean(phi_2[ioannis_2.tri_index], axis=1)
