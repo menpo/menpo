@@ -86,7 +86,6 @@ class Face(CppMesh):
     v.scene.picker.pick_handler = my_pick_handle
     v.scene.picker.edit_traits()
     v.scene.picker.show_gui = False
-
     return v
 
   def view(self):
@@ -110,9 +109,7 @@ class Face(CppMesh):
     #s.actor.texture = texture
     #s.actor.enable_texture = True
     ##engine = mlab.get_engine()
-
     #mlab.show()
-    return s, texture
 
   def _render_face(self):
     return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
@@ -122,6 +119,17 @@ class Face(CppMesh):
   @property
   def n_landmarks(self):
     return len(self.landmarks)
+
+  @property
+  def all_landmarks(self):
+    all_landmarks = []
+    for l in self.landmarks.itervalues():
+      all_landmarks += l
+    return all_landmarks
+
+  @property
+  def n_landmark_vertices(self):
+    return len(self.all_landmarks)
 
   def view_with_landmarks(self):
     self.view()
@@ -208,7 +216,7 @@ class Face(CppMesh):
     new_coords = self.coords[kept_vertices_orig_index]
     new_landmarks = self.landmarks.copy()
     for feature in new_landmarks:
-      new_landmarks[feature] = ci_map[new_landmarks[feature]]
+      new_landmarks[feature] = list(ci_map[new_landmarks[feature]])
     # now map across texture coordinates
     new_tc, new_tci = None, None
     if self.texture_tri_index is not None:
