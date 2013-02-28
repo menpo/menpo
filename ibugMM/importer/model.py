@@ -61,8 +61,10 @@ class ModelImporter(object):
     path_to_lm = self.path_and_filename + '.landmarks'
     try:
       f = open(path_to_lm, 'r')
+      print 'found landmarks! Importing them'
       self.landmarks = pickle.load(f)
     except IOError:
+      print 'no landmarks found'
       self.landmarks = {}
 
 class OBJImporter(ModelImporter):
