@@ -5,13 +5,15 @@ from tvtk.api import tvtk
 from tvtk.tools import ivtk
 from tvtk.pyface import picker
 from mayavi import mlab
+import pickle
 
 class Face(CppMesh):
 
-  def __init__(self, coords, tri_index, texture=None, texture_coords=None,
+  def __init__(self, coords, tri_index, file_path_no_ext=None, texture=None, texture_coords=None,
                texture_tri_index=None, landmarks = {}):
     CppMesh.__init__(self, coords, tri_index)
     self.landmarks = landmarks.copy()
+    self.file_path_no_ext = file_path_no_ext
     t_in, tc_in, tti_in = texture, texture_coords, texture_tri_index
     message = 'Building new face'
     self.texture_coords_per_vertex = None
@@ -55,16 +57,16 @@ class Face(CppMesh):
     self.last_key = None
 
   def _requires_texture(func):
-    def check_texture(self):
+    def check_texture(self, **kwargs):
       if self.texture is not None:
-        return func(self)
+        return func(self, **kwargs)
       else:
         print 'This face has no texture associated with it'
     return check_texture
 
 
-  @_requires_texture
-  def view_textured(self):
+  #@_requires_texture
+  def view_textured(self, mode='select'):
     pd = tvtk.PolyData()
     pd.points = self.coords
     pd.polys = self.tri_index
@@ -82,9 +84,11 @@ class Face(CppMesh):
     v = ivtk.IVTK(size=(700,700))
     v.open()
     v.scene.add_actors(actor)
-    my_pick_handle = MyPickHandler(v, self)
-    v.scene.picker.pick_handler = my_pick_handle
-    v.scene.picker.edit_traits()
+    if mode == 'select':
+      pick_handler = FaceSelectPickHandler(v, self)
+    elif mode == 'landmark':
+      pick_handler = FaceLandmarkPickHandler(v, self)
+    v.scene.picker.pick_handler = pick_handler
     v.scene.picker.show_gui = False
     return v
 
@@ -246,6 +250,29 @@ class Face(CppMesh):
     mask = np.logical_and(phi < distance, phi >= 0)
     return self.new_face_from_vertex_mask(mask)
 
+  def save_landmarks(self, captured=True, path=None):
+    if self.file_path_no_ext == None and path == None:
+      raise Exception("face has no knowledge of it's file path, and you didn't\
+          provide one")
+    elif path == None:
+      path = self.file_path_no_ext + '.landmarks'
+    f = open(path, 'w')
+    if captured:
+      print 'saving out the captured landmarks to ' + `path`
+      pickle.dump(self.captured_landmarks, f)
+    else:
+      print 'saving out the landmarks to ' + `path`
+      pickle.dump(self.landmarks, f)
+
+  def load_landmarks(self, path=None):
+    if self.file_path_no_ext == None and path == None:
+      raise Exception("face has no knowledge of it's file path, and you didn't\
+          provide one")
+    elif path == None:
+      path = self.file_path_no_ext + '.landmarks'
+    f = open(path, 'r')
+    self.landmarks = pickle.load(f)
+    print 'loaded landmarks from ' + `path`
 
 def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
   # need to change the per-face tc to per-vertex. obviously
@@ -263,21 +290,56 @@ def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
 #    self.add_observer("MiddleButtonPressEvent", self.middleB
 
 
-class MyPickHandler(picker.PickHandler):
+class FaceSelectPickHandler(picker.PickHandler):
+
+  def __init__(self, scene, face):
+    picker.PickHandler.__init__(self)
+    self.count = 0
+
+  def handle_pick(self, data):
+    print `self.count` + ': ' + `data.point_id`
+    self.count += 1
+
+
+class FaceLandmarkPickHandler(picker.PickHandler):
 
   def __init__(self, scene, face):
     picker.PickHandler.__init__(self)
     self.scene = scene
     self.face = face
-    self.count = 0
+    self.i = 0
+    self.j = 0
     face.captured_landmarks = []
+    self.landmark_titles = ['mouth', 'nose', 'l_brow', 'bridge', 'r_brow', 'l_eye', 'r_eye']
+    self.landmark_counts = [8, 1, 3, 1, 3, 8, 8]
+    self.landmarks = []
+    self.landmarks.append(self._create_lm_dict('mouth' , 8))
+    self.landmarks.append(self._create_lm_dict('nose'  , 1))
+    self.landmarks.append(self._create_lm_dict('l_brow', 3))
+    self.landmarks.append(self._create_lm_dict('bridge', 1))
+    self.landmarks.append(self._create_lm_dict('r_brow', 3))
+    self.landmarks.append(self._create_lm_dict('l_eye' , 8))
+    self.landmarks.append(self._create_lm_dict('r_eye' , 8))
+
+  def _create_lm_dict(self, title, count):
+    landmark = {} 
+    landmark['title'] = title
+    landmark['count'] = count
+    landmark['landmarks'] = []
+    return landmark
 
   def handle_pick(self, data):
-    print `self.count` + ': ' + `data.point_id`
-    self.count += 1
-    self.face.captured_landmarks.append(data.point_id)
-    if self.count >= 32:
-      print 'landmarking complete - closing'
-      self.scene.close()
-
+    print `self.landmarks[self.i]['title']` + '_' + `self.j` + ': ' + `data.point_id`
+    self.landmarks[self.i]['landmarks'].append(data.point_id)
+    self.j += 1
+    if self.j == self.landmarks[self.i]['count']:
+      self.i += 1
+      self.j = 0
+      if self.i == len(self.landmarks):
+        print 'saving landmarks'
+        face_landmarks = {}
+        for lm in self.landmarks:
+          face_landmarks[lm['title']] = lm['landmarks']
+        self.face.captured_landmarks = face_landmarks
+        self.scene.close()
 
