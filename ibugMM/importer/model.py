@@ -7,6 +7,8 @@ import sys
 import os
 import commands
 import tempfile
+import pickle
+
 
 def import_face(path_to_file, **kwargs):
   ext = os.path.splitext(path_to_file)[-1]
@@ -29,11 +31,13 @@ class ModelImporter(object):
   def __init__(self,path_to_file):
     self.path_to_file = os.path.abspath(
                       os.path.expanduser(path_to_file))
+    self.path_and_filename = os.path.splitext(self.path_to_file)[0]
     self._file_handle = open(self.path_to_file)
     self.lines = self._file_handle.readlines()
     self._file_handle.close()
     self.parse_geometry()
     self.import_texture()
+    self.import_landmarks()
 
   def parse_geometry(self):
     raise NotImplimentedException()
@@ -49,7 +53,17 @@ class ModelImporter(object):
         kwargs['texture_coords'] = np.array(self.texture_coords)
       if self.texture_tri_index is not None:
         kwargs['texture_tri_index'] = np.array(self.texture_tri_index, dtype=np.uint32)
+      kwargs['landmarks'] = self.landmarks
+      kwargs['file_path_no_ext'] = self.path_and_filename
       return Face(coords, tri_index, **kwargs)
+
+  def import_landmarks(self):
+    path_to_lm = self.path_and_filename + '.landmarks'
+    try:
+      f = open(path_to_lm, 'r')
+      self.landmarks = pickle.load(f)
+    except IOError:
+      self.landmarks = {}
 
 class OBJImporter(ModelImporter):
   def __init__(self, path_to_file, **kwargs):
@@ -115,7 +129,7 @@ class OBJImporter(ModelImporter):
 
   def _extract_data_type(self,signiture):
     header_length = len(signiture) + 1
-    return [line[header_length:-1] for line in self.lines 
+    return [line[header_length:-1] for line in self.lines
                                     if line.startswith(signiture + ' ')]
 
   def _strings_to_floats(self, lines):
@@ -128,7 +142,7 @@ class WRLImporter(ModelImporter):
     ModelImporter.__init__(self,path_to_file)
 
   def parse_geometry(self):
-    self._sectionEnds  = [i for i,line in enumerate(self.lines) 
+    self._sectionEnds  = [i for i,line in enumerate(self.lines)
                               if ']' in line]
     self.coords        = self._getFloatDataForString(' Coordinate')
     self.texture_coords = self._getFloatDataForString('TextureCoordinate')
@@ -136,7 +150,7 @@ class WRLImporter(ModelImporter):
                                   'texCoordIndex',seperator=', ',cast=int)
     self.texture_tri_index = [x[:-1] for x in texture_tri_index]
     self.tri_index  = self.texture_tri_index
-    self.normalsIndex = None 
+    self.normalsIndex = None
     self.normals      = None
 
   def _getFloatDataForString(self, string, **kwargs):
@@ -148,7 +162,7 @@ class WRLImporter(ModelImporter):
     return [[cast(x) for x in line[5:-3].split(sep)] for line in floatLines]
 
   def _findIndexOfFirstInstanceOfString(self,string):
-    return [i for i,line in enumerate(self.lines) 
+    return [i for i,line in enumerate(self.lines)
                           if string in line][0]
 
   def _findNextSectionEnd(self,beginningIndex):
@@ -157,7 +171,7 @@ class WRLImporter(ModelImporter):
   def import_texture(self):
     imageIndex = self._findIndexOfFirstInstanceOfString('ImageTexture') + 1
     self.imageName = self.lines[imageIndex].split('"')[1]
-    pathToTexture = os.path.dirname(self.path_to_file) + '/' + self.imageName 
+    pathToTexture = os.path.dirname(self.path_to_file) + '/' + self.imageName
     self.texture = Image.open(pathToTexture)
 
 
@@ -165,7 +179,7 @@ class OFFImporter(ModelImporter):
 
   def __init__(self,path_to_file):
     ModelImporter.__init__(self,path_to_file)
-    #.off files only have geometry info - all other fields None 
+    #.off files only have geometry info - all other fields None
     self.texture_coords      = None
     self.normals            = None
     self.normalsIndex       = None
