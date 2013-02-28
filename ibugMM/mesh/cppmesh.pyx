@@ -74,8 +74,11 @@ cdef class CppMesh:
                       np.ndarray[unsigned, ndim=2, mode="c"] tri_index not None, **kwargs):
     self.coords = coords;
     self.tri_index = tri_index
+    #print &coords[0,0]
     self.thisptr = new Mesh(&coords[0,0], coords.shape[0],
         &tri_index[0,0], tri_index.shape[0])
+    #self._translate_to_origin()
+    #self._rescale_to_unit_mean_length()
     self.kirsanovptr = new KirsanovGeodesicWrapper(&coords[0,0], coords.shape[0],
         &tri_index[0,0], tri_index.shape[0])
     self.edge_index = self._calculate_edge_index()
@@ -85,6 +88,12 @@ cdef class CppMesh:
 
   def __dealloc__(self):
     del self.thisptr
+
+  def _translate_to_origin(self):
+    self.coords = np.subtract(self.coords, np.mean(self.coords, axis=0), out=self.coords)
+
+  def _rescale_to_unit_mean_length(self):
+    self.coords = np.divide(self.coords, np.mean(np.sqrt(np.sum((self.coords**2), axis=1))), out=self.coords)
 
   @property
   def n_vertices(self):
