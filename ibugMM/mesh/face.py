@@ -246,8 +246,17 @@ class Face(CppMesh):
   def new_face_masked_from_lm(self, lm_key, distance=100, method='heat'):
     """Returns a face containing only vertices within distance of the nose lm
     """
-    phi = self.geodesics_about_lm(lm_key, method)['phi']
-    mask = np.logical_and(phi < distance, phi >= 0)
+    return self.new_face_masked_from_lms([lm_key], [distance], method)
+
+  def new_face_masked_from_lms(self, lm_keys, distances, method='heat'):
+    phi = np.zeros(self.n_vertices)
+    mask = phi != 0
+    print mask
+    for lm_key, distance in zip(lm_keys, distances):
+      phi = self.geodesics_about_lm(lm_key, method)['phi']
+      new_mask = np.logical_and(phi < distance, phi >= 0)
+      mask = np.logical_or(mask, new_mask)
+      print mask
     return self.new_face_from_vertex_mask(mask)
 
   def save_landmarks(self, captured=True, path=None):
