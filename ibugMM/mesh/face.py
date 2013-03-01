@@ -161,9 +161,13 @@ class Face(CppMesh):
   def view_phi(self, phi, periodicity=20):
     print 'viewing geodesics with periodicity ' + `periodicity`
     rings = np.mod(phi, periodicity)
+    self.view_scalar_per_vertex(rings)
+
+
+  def view_scalar_per_vertex(self, scalar):
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.tri_index,
-                             scalars=rings)
+                             scalars=scalar)
     mlab.show()
 
   def view_geodesic_contours_about_vertices(self, vertices,
@@ -249,14 +253,15 @@ class Face(CppMesh):
     return self.new_face_masked_from_lms([lm_key], [distance], method)
 
   def new_face_masked_from_lms(self, lm_keys, distances, method='heat'):
+    # create a mask that is all false
     phi = np.zeros(self.n_vertices)
     mask = phi != 0
-    print mask
     for lm_key, distance in zip(lm_keys, distances):
       phi = self.geodesics_about_lm(lm_key, method)['phi']
       new_mask = np.logical_and(phi < distance, phi >= 0)
+      # OR with the mask (e.g. for one lm_key, this is a no op.
+      # for multiple lm keys this OR's all the masks together
       mask = np.logical_or(mask, new_mask)
-      print mask
     return self.new_face_from_vertex_mask(mask)
 
   def save_landmarks(self, captured=True, path=None):
