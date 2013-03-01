@@ -54,7 +54,6 @@ class Face(CppMesh):
     self.texture_coords = tc_in
     self.texture_tri_index = tti_in
     self._cached_geodesics = {}
-    self.last_key = None
 
   def _requires_texture(func):
     def check_texture(self, **kwargs):
@@ -64,9 +63,36 @@ class Face(CppMesh):
         print 'This face has no texture associated with it'
     return check_texture
 
+  def view(self, mode=None, picker='select'):
+    """View the model. By default, model's with textures are viewed textured,
+    if not just a monochrome model rendering is shown. This function serves 
+    dual purpose as a basic landmarker
+    """
+    # by default view with texture if we have one, else just model
+    if mode == None:
+      if self.texture is not None:
+        mode = 'texture'
+      else:
+        mode = 'model'
 
-  #@_requires_texture
-  def view_textured(self, mode='select'):
+    if mode == 'model':
+      scene = self._render_model()
+    elif mode == 'texture':
+      scene = self._render_textured()
+    else:
+      raise Exception('dont understand display mode')
+    if picker == 'select':
+      pick_handler = FaceSelectPickHandler(self)
+    elif picker == 'landmark':
+      pick_handler = FaceLandmarkPickHandler(self)
+    scene.picker.pick_handler = pick_handler
+    scene.picker.show_gui = False
+    return scene
+
+  @_requires_texture
+  def _render_textured(self):
+    """View a textured version of the model.
+    """
     pd = tvtk.PolyData()
     pd.points = self.coords
     pd.polys = self.tri_index
@@ -84,41 +110,15 @@ class Face(CppMesh):
     v = ivtk.IVTK(size=(700,700))
     v.open()
     v.scene.add_actors(actor)
-    if mode == 'select':
-      pick_handler = FaceSelectPickHandler(v, self)
-    elif mode == 'landmark':
-      pick_handler = FaceLandmarkPickHandler(v, self)
-    v.scene.picker.pick_handler = pick_handler
-    v.scene.picker.show_gui = False
-    return v
+    return v.scene
 
-  def view(self):
+  def _render_model(self):
     figure = mlab.gcf()
     mlab.clf()
-    s = self._render_face()
-    #s.actor.mapper.input.point_data.t_coords = self.texture_coords_per_vertex
-    #np_texture = np.array(self.texture)
-    #image_data = np.flipud(np_texture).flatten().reshape([-1,3]).astype(np.uint8)
-    #image = tvtk.ImageData()
-    #image.point_data.scalars = image_data
-    #image.dimensions = np_texture.shape[1], np_texture.shape[0], 1
-    #texture = tvtk.Texture(input=image)
-    #s.actor.texture = texture
-    ##s.parent.parent.outputs[0].point_data.t_coords = self.texture_coords
-    #s.mlab_source.dataset.point_data.t_coords = self.texture_coords
-    ##image = tvtk.JPEGReader()
-    ##image.file_name = self.texture.filename
-    #self.image = np.array(self.texture)
-    #texture = tvtk.Texture(input=image, interpolate=1)
-    #s.actor.texture = texture
-    #s.actor.enable_texture = True
-    ##engine = mlab.get_engine()
-    #mlab.show()
-
-  def _render_face(self):
-    return mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
+    s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.tri_index,
                              color=(0.5,0.5,0.5))
+    return s.scene
 
   @property
   def n_landmarks(self):
@@ -164,10 +164,11 @@ class Face(CppMesh):
     self.view_scalar_per_vertex(rings)
 
 
-  def view_scalar_per_vertex(self, scalar):
+  def view_scalar_per_vertex(self, scalar, **kwargs):
+    colormap = kwargs.get('colormap', 'jet')
     s = mlab.triangular_mesh(self.coords[:,0], self.coords[:,1],
                              self.coords[:,2], self.tri_index,
-                             scalars=scalar)
+                             scalars=scalar, colormap=colormap)
     mlab.show()
 
   def view_geodesic_contours_about_vertices(self, vertices,
@@ -306,7 +307,7 @@ def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
 
 class FaceSelectPickHandler(picker.PickHandler):
 
-  def __init__(self, scene, face):
+  def __init__(self, face):
     picker.PickHandler.__init__(self)
     self.count = 0
 
@@ -317,9 +318,8 @@ class FaceSelectPickHandler(picker.PickHandler):
 
 class FaceLandmarkPickHandler(picker.PickHandler):
 
-  def __init__(self, scene, face):
+  def __init__(self, face):
     picker.PickHandler.__init__(self)
-    self.scene = scene
     self.face = face
     self.i = 0
     self.j = 0
@@ -334,6 +334,7 @@ class FaceLandmarkPickHandler(picker.PickHandler):
     self.landmarks.append(self._create_lm_dict('r_brow', 3))
     self.landmarks.append(self._create_lm_dict('l_eye' , 8))
     self.landmarks.append(self._create_lm_dict('r_eye' , 8))
+    self.landmarking_done = False
 
   def _create_lm_dict(self, title, count):
     landmark = {} 
@@ -343,6 +344,8 @@ class FaceLandmarkPickHandler(picker.PickHandler):
     return landmark
 
   def handle_pick(self, data):
+    if self.landmarking_done:
+      return
     print `self.landmarks[self.i]['title']` + '_' + `self.j` + ': ' + `data.point_id`
     self.landmarks[self.i]['landmarks'].append(data.point_id)
     self.j += 1
@@ -355,5 +358,5 @@ class FaceLandmarkPickHandler(picker.PickHandler):
         for lm in self.landmarks:
           face_landmarks[lm['title']] = lm['landmarks']
         self.face.captured_landmarks = face_landmarks
-        self.scene.close()
+        self.landmarking_done = True
 

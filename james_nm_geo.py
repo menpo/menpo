@@ -15,3 +15,4 @@ james_mid_n = james_n.new_face_masked_from_lms(['nose', 'mouth'], [120.0, 50], m
 
 geodesic_mapper = GeodesicMapping(james_mid_h, james_mid_n)
 
+phi = geodesic_mapper.gsig_1

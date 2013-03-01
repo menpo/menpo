@@ -122,7 +122,6 @@ def new_face_from_mapping(face_a, face_b, min_b_to_a, transfer_texture=False):
 
 
 def unique_closest_n(phi, n):
-  np.argsort(phi, axis=1)
   ranking = np.argsort(phi, axis=1)
   top_n = ranking[:,:n]
   sort_order = np.lexsort(top_n.T)
@@ -130,8 +129,12 @@ def unique_closest_n(phi, n):
   top_n_diff = np.diff(top_n_ordered, axis=0)
   ui = np.ones(len(top_n), 'bool')
   ui[1:] = (top_n_diff != 0).any(axis=1)
-  unique_top_n = top_n_ordered[ui]
-  return unique_top_n
+  classes = top_n_ordered[ui]
+  ui[0] = False
+  classes_index_sorted = np.cumsum(ui)
+  class_index = np.zeros_like(sort_order)
+  class_index[sort_order] = classes_index_sorted
+  return classes, class_index
 
 #def geodesic_mapping(face_1, face_2, method='exact'):
 #  phi_1 = gen_phi_coords_per_lm_vertex(face_1, method)
