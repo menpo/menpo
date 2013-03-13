@@ -29,11 +29,11 @@ class Alignment(object):
       self.target = target[...,np.newaxis]
 
   @property
-  def n_dimensions(self):
+  def n_landmarks(self):
     return self.sources.shape[0]
 
   @property
-  def n_landmarks(self):
+  def n_dimensions(self):
     return self.sources.shape[1]
 
   @property
