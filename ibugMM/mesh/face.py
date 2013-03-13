@@ -85,6 +85,8 @@ class Face(CppMesh):
       pick_handler = FaceSelectPickHandler(self)
     elif picker == 'landmark':
       pick_handler = FaceLandmarkPickHandler(self)
+    elif type(picker) != str:
+      pick_handler = picker
     scene.picker.pick_handler = pick_handler
     scene.picker.show_gui = False
     return scene
@@ -127,13 +129,15 @@ class Face(CppMesh):
   @property
   def all_landmarks(self):
     all_landmarks = []
-    for l in self.landmarks.itervalues():
-      all_landmarks += l
-    return all_landmarks
+    landmark_source = []
+    for k,v in self.landmarks.iteritems():
+      all_landmarks += v
+      landmark_source += [k]*len(v)
+    return all_landmarks, landmark_source
 
   @property
   def n_landmark_vertices(self):
-    return len(self.all_landmarks)
+    return len(self.all_landmarks[0])
 
   def view_with_landmarks(self):
     self.view()
