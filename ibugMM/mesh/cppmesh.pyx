@@ -79,11 +79,11 @@ cdef class CppMesh:
         &tri_index[0,0], tri_index.shape[0])
     #self._translate_to_origin()
     #self._rescale_to_unit_mean_length()
-    self.kirsanovptr = new KirsanovGeodesicWrapper(&coords[0,0], coords.shape[0],
-        &tri_index[0,0], tri_index.shape[0])
-    self.edge_index = self._calculate_edge_index()
-    self._initialize_cache()
-    self._check_for_unreferenced_vertices()
+    #self.kirsanovptr = new KirsanovGeodesicWrapper(&coords[0,0], coords.shape[0],
+    #    &tri_index[0,0], tri_index.shape[0])
+    #self.edge_index = self._calculate_edge_index()
+    #self._initialize_cache()
+    #self._check_for_unreferenced_vertices()
     print 'after construction, CppMesh cache size is ' + "%0.2f" % self.cache_size + 'MB.'
 
   def __dealloc__(self):
