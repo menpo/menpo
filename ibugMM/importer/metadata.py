@@ -1,5 +1,5 @@
 import scipy.io
-import numpy
+import numpy as np
 
 def msc_bu4d_landmarks(path):
   """ A function to import BU4D landmarks in the format used for my MSc 
@@ -39,5 +39,5 @@ def msc_bu4d_landmarks(path):
 
 def medical_landmarks(path):
   with open(path, 'rb') as f:
-    landmarks = np.fromfile(f, dtype=no.float32[3:].reshape([-1.3]))
+    landmarks = np.fromfile(f, dtype=np.float32)[3:].reshape([-1,3])
     return landmarks.astype(np.double)

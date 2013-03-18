@@ -32,10 +32,11 @@ def import_face(path_to_file, **kwargs):
     face.importer = importer
   return face
 
-def _process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
+def process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
     output_filetype=None, export_flags=None):
   """ Interface to meshlabserver to perform preprocessing on meshes before 
-  import. Returns a path to the result of the meshlabserver call. 
+  import. Returns a path to the result of the meshlabserver call, ready for 
+  import as usual.
   Kwargs:
    * script_path: if specified this script will be run on the input mesh.
    * output_dir: if None provided, set to the users tmp directory.
@@ -59,9 +60,7 @@ def _process_with_meshlabserver(file_path, output_dir=None, script_path=None,
     command += ' -s ' + script_path 
   if export_flags != None:
     command +=  ' -om ' + export_flags
-  print command
   commands.getoutput(command)
-  print 'importing cleaned version of mesh from tmp'
   return output_path
 
 class ModelImporter(object):
