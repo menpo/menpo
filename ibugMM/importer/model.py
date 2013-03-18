@@ -11,6 +11,11 @@ import pickle
 
 
 def import_face(path_to_file, **kwargs):
+  """ Smart model importer. Chooses an appropriate importer based on the
+  file extension of the model past in. pass keep_importer=True as a kwarg
+  if you want the actual importer object attached to the returned face object
+  at face.importer.
+  """
   ext = os.path.splitext(path_to_file)[-1]
   if ext == '.off':
     importer = OFFImporter(path_to_file, **kwargs)
@@ -26,6 +31,37 @@ def import_face(path_to_file, **kwargs):
     print 'attaching the importer at face.importer'
     face.importer = importer
   return face
+
+def _process_with_meshlabserver(file_path, script_path=None, 
+    output_filetype=None, export_flags=None):
+  """ Interface to meshlabserver to perform preprocessing on meshes before 
+  import. Returns a path to the result of the meshlabserver call (stored in 
+  the users temp directory).
+  Kwargs:
+   * script_path: if specified this script will be run on the input mesh.
+   * output_filetype: the output desired from meshlabserver. If not provided
+       the output type will be the same as the input.
+   * export_flags: flags passed to the -om parameter. Allows for choosing what
+       aspects of the model will be exported (normals, texture coords etc)
+  """
+  tmp_path = tempfile.gettempdir()
+  filename = os.path.split(file_path)[-1]
+  if output_filetype != None:
+    file_root = os.path.splitext(filename)[0]
+    output_filename = file_root + '.' + output_filetype
+  else:
+    output_filename = filename
+  output_path = os.path.join(tmp_path, output_filename)
+  command = 'meshlabserver -i ' + file_path + ' -o ' + \
+            output_path 
+  if script_path != None:
+    command += ' -s ' + script_path 
+  if export_flags != None:
+    command +=  ' -om ' + export_flags
+  print command
+  commands.getoutput(command)
+  print 'importing cleaned version of mesh from tmp'
+  return output_path
 
 class ModelImporter(object):
   def __init__(self,path_to_file):
