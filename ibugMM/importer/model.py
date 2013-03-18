@@ -32,26 +32,27 @@ def import_face(path_to_file, **kwargs):
     face.importer = importer
   return face
 
-def _process_with_meshlabserver(file_path, script_path=None, 
+def _process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
     output_filetype=None, export_flags=None):
   """ Interface to meshlabserver to perform preprocessing on meshes before 
-  import. Returns a path to the result of the meshlabserver call (stored in 
-  the users temp directory).
+  import. Returns a path to the result of the meshlabserver call. 
   Kwargs:
    * script_path: if specified this script will be run on the input mesh.
+   * output_dir: if None provided, set to the users tmp directory.
    * output_filetype: the output desired from meshlabserver. If not provided
        the output type will be the same as the input.
    * export_flags: flags passed to the -om parameter. Allows for choosing what
        aspects of the model will be exported (normals, texture coords etc)
   """
-  tmp_path = tempfile.gettempdir()
+  if output_dir == None:
+    output_dir = tempfile.gettempdir()
   filename = os.path.split(file_path)[-1]
   if output_filetype != None:
     file_root = os.path.splitext(filename)[0]
     output_filename = file_root + '.' + output_filetype
   else:
     output_filename = filename
-  output_path = os.path.join(tmp_path, output_filename)
+  output_path = os.path.join(output_dir, output_filename)
   command = 'meshlabserver -i ' + file_path + ' -o ' + \
             output_path 
   if script_path != None:
