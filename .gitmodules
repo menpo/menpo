@@ -1,3 +1,0 @@
-[submodule "ibugMM/mesh/exactgeodesic"]
-	path = ibugMM/mesh/exactgeodesic
-	url = git@github.com:jabooth/exactgeodesic
