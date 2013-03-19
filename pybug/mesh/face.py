@@ -297,7 +297,7 @@ class Face(CppTriangleMesh):
     self.landmarks = pickle.load(f)
     print 'loaded landmarks from ' + `path`
 
-  def apply_homogeneous_transform(self, matrix):
+  def apply_homogeneous_transform(self, h_transform):
     """ Applies a homogenous transform matrix to the geometry of the face.
     Note that as coordinates are of shape (n_vertices, 3), the transform is
     applied on a homogeneous version of the coordinates:
@@ -306,7 +306,15 @@ class Face(CppTriangleMesh):
     the new_coords are automatically de-homogeneized and then replace the
     original coords.
     """
-    h_coords = np.concatinate(self.coords, np.ones([self.n_vertices, 1]), axis=0)
+    h_coords = np.concatenate(self.coords, np.ones([self.n_vertices, 1]), axis=1)
+    h_lm = np.concatenate(self.lm, np.ones([self.lm.shape[0], 1]), axis=1)
+    new_h_coords = np.dot(h_coords, h_transform)
+    new_h_lm = np.dot(h_lm, h_transform)
+    # by assigning to the index we assure that we are overwriting the current
+    # memory positions rather than assigning to a new value
+    self.coords[:] = new_h_coords[:,:-1]/new_h_coords[:,-1][:, np.newaxis]
+    self.lm = new_h_lm[:,:-1]
+
 
 def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
   # need to change the per-face tc to per-vertex. obviously

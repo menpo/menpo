@@ -8,6 +8,7 @@ import os
 import commands
 import tempfile
 import pickle
+import re
 
 
 def import_face(path_to_file, **kwargs):
@@ -68,9 +69,12 @@ class ModelImporter(object):
     self.path_to_file = os.path.abspath(
                       os.path.expanduser(path_to_file))
     self.path_and_filename = os.path.splitext(self.path_to_file)[0]
+    # depreciate this once the other parsers are regexp
     self._file_handle = open(self.path_to_file)
     self.lines = self._file_handle.readlines()
     self._file_handle.close()
+    with open(self.path_to_file) as f:
+      self.text = f.read()
     self.parse_geometry()
     self.import_texture()
     self.import_landmarks()
@@ -82,16 +86,14 @@ class ModelImporter(object):
     raise NotImplimentedException()
 
   def generate_face(self, **kwargs):
-      coords = np.array(self.coords)
-      tri_index = np.array(self.tri_index, dtype=np.uint32)
       kwargs['texture'] = self.texture
-      if self.texture_coords is not None:
-        kwargs['texture_coords'] = np.array(self.texture_coords)
-      if self.texture_tri_index is not None:
-        kwargs['texture_tri_index'] = np.array(self.texture_tri_index, dtype=np.uint32)
+      if self.texture_coords != None or self.texture_coords.size != 0:
+        kwargs['texture_coords'] = self.texture_coords
+      if self.texture_tri_index != None or self.texture_tri_index.size != 0:
+        kwargs['texture_tri_index'] = self.texture_tri_index
       kwargs['landmarks'] = self.landmarks
       kwargs['file_path_no_ext'] = self.path_and_filename
-      return Face(coords, tri_index, **kwargs)
+      return Face(self.coords, self.tri_index, **kwargs)
 
   def import_landmarks(self):
     path_to_lm = self.path_and_filename + '.landmarks'
@@ -112,42 +114,18 @@ class OBJImporter(ModelImporter):
     ModelImporter.__init__(self, path_to_file)
 
   def parse_geometry(self):
-    coords_str = self._extract_data_type('v')
-    texture_coords_str = self._extract_data_type('vt')
-    normals_str = self._extract_data_type('vn')
-    index_str = self._extract_data_type('f')
-    self.coords = self._strings_to_floats(coords_str)
-    self.texture_coords = self._strings_to_floats(texture_coords_str)
-    self.normals = self._strings_to_floats(normals_str)
-    self.tri_index, self.normalsIndex, self.texture_tri_index = [],[],[]
-    for indexLine in index_str:
-      cI,tI,nI = [],[],[]
-      for index_str in indexLine.split(' '):
-        #cIn,nIn,tIn =  [int(x) for x in index_str.split('/')]
-        coord_normal_texture_i =  [int(x) for x in index_str.split('/')]
-        # take 1 off as we expect indexing to be 0 based
-        cI.append(coord_normal_texture_i[0]-1)
-        if len(coord_normal_texture_i) > 1:
-          # there is texture data as well
-          tI.append(coord_normal_texture_i[1]-1)
-        if len(coord_normal_texture_i) > 2:
-          # there is normal data as well
-          nI.append(coord_normal_texture_i[2]-1)
-      self.tri_index.append(cI)
-      self.normalsIndex.append(nI)
-      self.texture_tri_index.append(tI)
-
-  def clean_up_mesh_on_path(self, path_to_file):
-    clean_up_path = os.path.join(os.path.split(os.path.abspath(__file__))[0],'cleanup.mlx')
-    tmp_path = tempfile.gettempdir()
-    output_file_name = ''
-    file_name = os.path.split(path_to_file)[-1]
-    output_path = os.path.join(tmp_path, file_name)
-    command = 'meshlabserver -i ' + path_to_file + ' -o ' + \
-              output_path + ' -s ' + clean_up_path + ' -om wt'
-    commands.getoutput(command)
-    print 'importing cleaned version of mesh from tmp'
-    return output_path
+    re_v = re.compile(u'v ([-.\d]+) ([-.\d]+) ([-.\d]+)')
+    re_vn = re.compile(u'vn ([-.\d]+) ([-.\d]+) ([-.\d]+)')
+    re_tc = re.compile(u'vt ([-.\d]+) ([-.\d]+)')
+    re_ti = re.compile(u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
+    re_tcti = re.compile(u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
+    re_vnti = re.compile(u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
+    self.coords = np.array(re_v.findall(self.text), dtype=np.float)
+    self.normals = np.array(re_vn.findall(self.text), dtype=np.float)
+    self.texture_coords = np.array(re_tc.findall(self.text), dtype=np.float)
+    self.tri_index = np.array(re_ti.findall(self.text), dtype=np.uint32) - 1
+    self.texture_tri_index = np.array(re_tcti.findall(self.text), dtype=np.uint32) - 1
+    self.normals_tri_index = np.array(re_vnti.findall(self.text), dtype=np.uint32) - 1
 
   def import_texture(self):
     # TODO: make this more intelligent in locating the texture
@@ -164,14 +142,6 @@ class OBJImporter(ModelImporter):
       else:
         print '(there are no texture coordinates anyway so this is expected)'
         self.texture = None
-
-  def _extract_data_type(self,signiture):
-    header_length = len(signiture) + 1
-    return [line[header_length:-1] for line in self.lines
-                                    if line.startswith(signiture + ' ')]
-
-  def _strings_to_floats(self, lines):
-    return [[float(x) for x in line.split(' ')] for line in lines]
 
 
 class WRLImporter(ModelImporter):
