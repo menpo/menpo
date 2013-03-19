@@ -39,5 +39,5 @@ def msc_bu4d_landmarks(path):
 
 def medical_landmarks(path):
   with open(path, 'rb') as f:
-    landmarks = np.fromfile(f, dtype=np.float32)[3:].reshape([-1,3])
+    landmarks = np.fromfile(f, dtype=np.float32)[3:].reshape([-1, 3])
     return landmarks.astype(np.double)

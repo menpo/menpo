@@ -8,7 +8,9 @@ class RigidAlignment(Alignment):
       transformation matrix for each source specifying the transform it has
       undergone to match target.
   """
-  transformation_matrices = []
+  def __init__(self, sources, **kwargs):
+    Alignment.__init__(self, sources, **kwargs)
+    self.transformation_matrices = []
 
   def h_translation_matrix(self, translation_v):
     return h_translation_matrix(translation_v ,dim=self.n_dimensions)
@@ -46,40 +48,42 @@ class RigidAlignment(Alignment):
 
 class Procrustes(RigidAlignment):
 
-  operations = []
+  def __init__(self, sources, **kwargs):
+    RigidAlignment.__init__(self, sources, **kwargs)
+    self.operations = []
 
-  def generalProcrusesAlignment(self):
+  def general_alignment(self):
     error = 999999999
     while error > 0.0001:
-      self.procrustes_step()
+      self._procrustes_step()
       old_target = self.target
-      self.target = self.sources.mean(-1)[...,np.newaxis]
+      self.target = self.sources.mean(axis=-1)[...,np.newaxis]
       # compare the oldSource to the new - if the difference is sufficiently
       # small, stop. Else, call again.
       error = np.sum((self.target - old_target)**2)
+      print 'error is ' + `error`
+    self.transformation_matrices = []
     for i in range(self.n_sources):
       self.transformation_matrices.append(np.eye(self.n_dimensions+1))
-    for ops in reversed(self.operations):
+    for ops in self.operations:
       for i in range(self.n_sources):
-        t = self.h_translation_matrix(ops['translate'][:,:,i].flatten())
-        s = self.h_scale_matrix(ops['rescale'][:,:,i].flatten())
+        t = self.h_translation_matrix(ops['translate'][..., i].flatten())
+        s = self.h_scale_matrix(ops['rescale'][..., i].flatten())
         r = self.h_rotation_matrix(ops['rotation'][i])
-        self.transformation_matrices[i] = np.dot(r,
+        self.transformation_matrices[i] = np.dot(t,
                                           np.dot(s,
-                                          np.dot(t,
+                                          np.dot(r,
                                                  self.transformation_matrices[i]
                                                 )))
     self._normalise_transformation_matrices()
 
-  def procrustes_alignment(self):
-    self.procrustes_step()
-
-  def procrustes_step(self):
+  def _procrustes_step(self):
     print 'taking Procrustes step'
     ops = {}
     # calculate the translation required for each source to align the sources'
     # centre of mass to the the target centre of mass
-    translation = self.target.mean(axis=0) - self.sources.mean(axis=0)
+    translation = (self.target.mean(axis=0) - 
+        self.sources.mean(axis=0))[np.newaxis, ...]
     # apply the translation to each source respectively
     self.sources += translation
     ops['translate'] = translation
@@ -96,13 +100,13 @@ class Procrustes(RigidAlignment):
     #for each source
     for i in range(self.n_sources):
       # calculate the correlation along each dimension
-      correlation = np.dot(self.sources[...,i],self.target[...,0].T)
+      correlation = np.dot(self.sources[...,i].T, self.target[...,0])
       U,D,Vt = np.linalg.svd(correlation)
       # find the optimal rotation to minimise rotational differences
-      rotation = np.dot(Vt.T,U.T)
+      rotation = np.dot(U, Vt)
       rotations.append(rotation)
       # apply the rotation
-      self.sources[...,i] = np.dot(rotation,self.sources[...,i])
+      self.sources[...,i] = np.dot(self.sources[...,i], rotation)
     ops['rotation'] = rotations
     self.operations.append(ops)
 

@@ -9,8 +9,8 @@ import pickle
 
 class Face(CppMesh):
 
-  def __init__(self, coords, tri_index, file_path_no_ext=None, texture=None, texture_coords=None,
-               texture_tri_index=None, landmarks = {}):
+  def __init__(self, coords, tri_index, file_path_no_ext=None, texture=None, 
+      texture_coords=None, texture_tri_index=None, landmarks = {}):
     CppMesh.__init__(self, coords, tri_index)
     self.landmarks = landmarks.copy()
     self.file_path_no_ext = file_path_no_ext
@@ -152,15 +152,18 @@ class Face(CppMesh):
                         vmax=1.0, vmin=0.0)
     mlab.show()
 
-  def view_location_of_vertices(self, i):
+  def view_location_of_vertex_indices(self, i):
+    self.view_location_of_vertices(self.coords[i])
+
+  def view_location_of_vertices(self, coords):
     self.view()
-    s = mlab.points3d(self.coords[i,0], self.coords[i,1],
-                      self.coords[i,2],
+    s = mlab.points3d(coords[:,0], coords[:,1],
+                      coords[:,2],
                       color=(1,1,1), scale_factor=5.0)
     mlab.show()
 
   def view_location_of_triangles(self, i):
-    self.view_location_of_vertices(np.unique(self.tri_index[i]))
+    self.view_location_of_vertex_indices(np.unique(self.tri_index[i]))
 
   def view_phi(self, phi, periodicity=20):
     print 'viewing geodesics with periodicity ' + `periodicity`
@@ -218,7 +221,8 @@ class Face(CppMesh):
     bool_coord_index_mask = \
       np.in1d(self.tri_index, kept_vertices).reshape(self.tri_index.shape)
     # remove any triangle missing any number of vertices
-    kept_triangles_orig_index = self.tri_index[np.all(bool_coord_index_mask, axis = 1)]
+    kept_triangles_orig_index = self.tri_index[np.all(bool_coord_index_mask, 
+      axis = 1)]
     # some additional vertices will have to be removed as they no longer
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
@@ -328,7 +332,8 @@ class FaceLandmarkPickHandler(picker.PickHandler):
     self.i = 0
     self.j = 0
     face.captured_landmarks = []
-    self.landmark_titles = ['mouth', 'nose', 'l_brow', 'bridge', 'r_brow', 'l_eye', 'r_eye']
+    self.landmark_titles = ['mouth', 'nose', 'l_brow', 'bridge', 'r_brow', 
+        'l_eye', 'r_eye']
     self.landmark_counts = [8, 1, 3, 1, 3, 8, 8]
     self.landmarks = []
     self.landmarks.append(self._create_lm_dict('mouth' , 8))
