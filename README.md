@@ -1,8 +1,7 @@
-iBUG4DMM
-========
+pybug
+=====
 
-PhD codebase. A flexible python framework for constructing, visualising and 
-testing 3D and 4D Morphable Models.
+A flexible python framework for working with 3D and 4D facial data.
 
 DEPENDENCIES
 ============

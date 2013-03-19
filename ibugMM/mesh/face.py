@@ -1,5 +1,5 @@
 import numpy as np
-from cppmesh import CppMesh
+from cpptrianglemesh import CppTriangleMesh
 import scipy.sparse.linalg as sparse_linalg
 from tvtk.api import tvtk
 from tvtk.tools import ivtk
@@ -7,11 +7,11 @@ from tvtk.pyface import picker
 from mayavi import mlab
 import pickle
 
-class Face(CppMesh):
+class Face(CppTriangleMesh):
 
   def __init__(self, coords, tri_index, file_path_no_ext=None, texture=None, 
       texture_coords=None, texture_tri_index=None, landmarks = {}):
-    CppMesh.__init__(self, coords, tri_index)
+    CppTriangleMesh.__init__(self, coords, tri_index)
     self.landmarks = landmarks.copy()
     self.file_path_no_ext = file_path_no_ext
     t_in, tc_in, tti_in = texture, texture_coords, texture_tri_index
@@ -296,6 +296,17 @@ class Face(CppMesh):
     f = open(path, 'r')
     self.landmarks = pickle.load(f)
     print 'loaded landmarks from ' + `path`
+
+  def apply_homogeneous_transform(self, matrix):
+    """ Applies a homogenous transform matrix to the geometry of the face.
+    Note that as coordinates are of shape (n_vertices, 3), the transform is
+    applied on a homogeneous version of the coordinates:
+      h_coords * transform = (n_vertices, 4) (4, 4) = new_h_coords
+
+    the new_coords are automatically de-homogeneized and then replace the
+    original coords.
+    """
+    h_coords = np.concatinate(self.coords, np.ones([self.n_vertices, 1]), axis=0)
 
 def _per_vertex_texture_coords(tri_index, texture_tri_index, texture_coords):
   # need to change the per-face tc to per-vertex. obviously
