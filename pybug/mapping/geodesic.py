@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import distance
 import matplotlib.pyplot as plt
 from mayavi import mlab
-from ibugMM.mesh.face import Face
+from pybug.mesh.face import Face
 from scipy.stats import norm
 from tvtk.pyface import picker
 plt.interactive(True)

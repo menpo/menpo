@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.spatial import distance
-from ibugMM.importer.model import import_face
+from pybug.importer.model import import_face
 import matplotlib.pyplot as plt
 from mayavi import mlab
-from ibugMM.mesh.face import Face
+from pybug.mesh.face import Face
 plt.interactive(True)
 
 def print_geodesic_patterns(phi_coords, i):

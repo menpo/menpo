@@ -1,4 +1,4 @@
-from ibugMM.alignment.rigid import Procrustes
+from pybug.alignment.rigid import Procrustes
 import numpy as np
 import unittest
 import doctest

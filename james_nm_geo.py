@@ -1,9 +1,9 @@
 import numpy as np
-from ibugMM.mapping.geodesic import GeodesicMapping
+from pybug.mapping.geodesic import GeodesicMapping
 import matplotlib.pyplot as plt
 from mayavi import mlab
 plt.interactive(True)
-from ibugMM.importer.model import import_face
+from pybug.importer.model import import_face
 
 james_n_path = '/home/jab08/Dropbox/testData/james_n_no_mouth.obj'
 james_h_path = '/home/jab08/Dropbox/testData/james_h_no_mouth.obj'
