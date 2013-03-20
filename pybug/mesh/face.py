@@ -159,7 +159,7 @@ class Face(CppTriangleMesh):
     self.view()
     s = mlab.points3d(coords[:,0], coords[:,1],
                       coords[:,2],
-                      color=(1,1,1), scale_factor=5.0)
+                      color=(1,1,1), mode='axes')
     mlab.show()
 
   def view_location_of_triangles(self, i):
