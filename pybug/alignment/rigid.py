@@ -1,43 +1,42 @@
 import numpy as np
-from . import Alignment
+from . import Alignment, _numpy_hash
 from scipy import linalg
 
 class RigidAlignment(Alignment):
   """ Abstract class specializing in rigid alignments. As all such alignments
-      are affine, a 'transformationMatix' list is present, storing a homogeneous
+      are affine, a 'h_transforms' list is present, storing a homogeneous
       transformation matrix for each source specifying the transform it has
-      undergone to match target.
+      undergone to match the target.
   """
   def __init__(self, sources, **kwargs):
     Alignment.__init__(self, sources, **kwargs)
-    self.transformation_matrices = []
-
-  def h_translation_matrix(self, translation_v):
-    return h_translation_matrix(translation_v ,dim=self.n_dimensions)
-
-  def h_scale_matrix(self, scaleVector):
-    return h_scale_matrix(scaleVector,dim=self.n_dimensions)
-
-  def h_rotation_matrix(self,rotationMatrix):
-    return h_rotation_matrix(rotationMatrix,dim=self.n_dimensions)
+    self.h_transforms = []
 
   @property
-  def scale_rotation_matrices(self):
-    """ Returns a list of scaleRotationMatrices, each of shape
+  def scalerotation_matrices(self):
+    """ Returns a list of 2 dimensional numpy arrays, each of shape
         (n_dimensions,n_dimensions) which can be applied to each source frame
         to rigidly align to the target frame. Needs to be used in conjunction
-        with translationVectors. (scaleRotatation*source + translation -> target)
+        with translation_vectors. (source*scalerotatation + translation -> target)
     """
-    return [matrix[:-1,:-1] for matrix in self.transformation_matrices]
+    return [matrix[:-1,:-1] for matrix in self.h_transforms]
 
   @property
   def translation_vectors(self):
     """ Returns a list of translation vectors, each of shape (n_dimensions,)
         which can be applied to each source frame to rigidly align to the
-        target frame (scaleRotatation*source + translation -> target)
+        target frame (source*scalerotatation + translation -> target)
     """
-    return [matrix[:-1,-1] for matrix in self.transformation_matrices]
+    return [matrix[-1,:-1] for matrix in self.h_transforms]
     pass
+
+  def h_transform_for_source(self, source):
+    i = self._lookup[_numpy_hash(source)]
+    return self.h_transforms[i]
+
+  def scalerotation_translation_for_source(self, source):
+    i = self._lookup[_numpy_hash(source)]
+    return self.scalerotation_matrices[i], self.translation_vectors[i]
 
   def _normalise_transformation_matrices(self):
     """ Ensures that the transformation matrix has a unit z scale,
@@ -50,69 +49,65 @@ class Procrustes(RigidAlignment):
 
   def __init__(self, sources, **kwargs):
     RigidAlignment.__init__(self, sources, **kwargs)
-    self.operations = []
 
   def general_alignment(self):
+    # stores the items used in each procrustes step
+    self.operations = []
     error = 999999999
     while error > 0.0001:
       self._procrustes_step()
       old_target = self.target
-      self.target = self.sources.mean(axis=-1)[...,np.newaxis]
-      # compare the oldSource to the new - if the difference is sufficiently
-      # small, stop. Else, call again.
+      self.target = self.aligned_sources.mean(axis=-1)[...,np.newaxis]
       error = np.sum((self.target - old_target)**2)
       print 'error is ' + `error`
-    self.transformation_matrices = []
+    self.h_transforms = []
     for i in range(self.n_sources):
-      self.transformation_matrices.append(np.eye(self.n_dimensions+1))
-    for ops in self.operations:
-      for i in range(self.n_sources):
-        t = self.h_translation_matrix(ops['translate'][..., i].flatten())
-        s = self.h_scale_matrix(ops['rescale'][..., i].flatten())
-        r = self.h_rotation_matrix(ops['rotation'][i])
-        self.transformation_matrices[i] = np.dot(t,
-                                          np.dot(s,
-                                          np.dot(r,
-                                                 self.transformation_matrices[i]
-                                                )))
-    self._normalise_transformation_matrices()
+      self.h_transforms.append(np.eye(self.n_dimensions+1))
+      for ops in self.operations:
+        t = h_translation_matrix(ops['translate'][..., i].flatten(), dim=self.n_dimensions)
+        s = h_scale_matrix(ops['rescale'][..., i].flatten(), dim=self.n_dimensions)
+        r = h_rotation_matrix(ops['rotation'][i], dim=self.n_dimensions)
+        self.h_transforms[i] = np.dot(self.h_transforms[i],
+                               np.dot(t,
+                               np.dot(s,
+                                      r)))
 
   def _procrustes_step(self):
     print 'taking Procrustes step'
     ops = {}
     # calculate the translation required for each source to align the sources'
     # centre of mass to the the target centre of mass
-    translation = (self.target.mean(axis=0) - 
-        self.sources.mean(axis=0))[np.newaxis, ...]
+    translation = (self.target.mean(axis=0) -
+        self.aligned_sources.mean(axis=0))[np.newaxis, ...]
     # apply the translation to each source respectively
-    self.sources += translation
+    self.aligned_sources += translation
     ops['translate'] = translation
     # calcuate the frobenious norm of each shape as our metric
     scale_sources = np.sqrt(np.apply_over_axes(np.sum,
-      (self.sources - self.sources.mean(axis=0))**2,
+      (self.aligned_sources - self.aligned_sources.mean(axis=0))**2,
                            [0,1]))
     scale_target = np.sqrt(np.sum((self.target -
                                   self.target.mean(axis=0))**2))
     rescale = scale_target/scale_sources
-    self.sources = self.sources*rescale
+    self.aligned_sources = self.aligned_sources*rescale
     ops['rescale'] = rescale
     rotations = []
     #for each source
     for i in range(self.n_sources):
       # calculate the correlation along each dimension
-      correlation = np.dot(self.sources[...,i].T, self.target[...,0])
+      correlation = np.dot(self.aligned_sources[...,i].T, self.target[...,0])
       U,D,Vt = np.linalg.svd(correlation)
       # find the optimal rotation to minimise rotational differences
       rotation = np.dot(U, Vt)
       rotations.append(rotation)
       # apply the rotation
-      self.sources[...,i] = np.dot(self.sources[...,i], rotation)
+      self.aligned_sources[...,i] = np.dot(self.aligned_sources[...,i], rotation)
     ops['rotation'] = rotations
     self.operations.append(ops)
 
 def h_translation_matrix(translation_vector, dim=3):
   matrix = np.eye(dim + 1)
-  matrix[:-1, -1] = translation_vector
+  matrix[-1, :-1] = translation_vector
   return matrix
 
 def h_scale_matrix(scale_vector, dim=3):
