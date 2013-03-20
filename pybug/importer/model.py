@@ -114,9 +114,9 @@ class OBJImporter(ModelImporter):
     ModelImporter.__init__(self, path_to_file)
 
   def parse_geometry(self):
-    re_v = re.compile(u'v ([-.\d]+) ([-.\d]+) ([-.\d]+)')
-    re_vn = re.compile(u'vn ([-.\d]+) ([-.\d]+) ([-.\d]+)')
-    re_tc = re.compile(u'vt ([-.\d]+) ([-.\d]+)')
+    re_v = re.compile(u'v ([^\s]+) ([^\s]+) ([^\s]+)')
+    re_vn = re.compile(u'vn ([^\s]+) ([^\s]+) ([^\s]+)')
+    re_tc = re.compile(u'vt ([^\s]+) ([^\s]+)')
     re_ti = re.compile(u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
     re_tcti = re.compile(u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
     re_vnti = re.compile(u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')

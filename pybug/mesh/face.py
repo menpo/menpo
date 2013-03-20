@@ -306,8 +306,8 @@ class Face(CppTriangleMesh):
     the new_coords are automatically de-homogeneized and then replace the
     original coords.
     """
-    h_coords = np.concatenate(self.coords, np.ones([self.n_vertices, 1]), axis=1)
-    h_lm = np.concatenate(self.lm, np.ones([self.lm.shape[0], 1]), axis=1)
+    h_coords = np.concatenate([self.coords, np.ones([self.n_vertices, 1])], axis=1)
+    h_lm = np.concatenate([self.lm, np.ones([self.lm.shape[0], 1])], axis=1)
     new_h_coords = np.dot(h_coords, h_transform)
     new_h_lm = np.dot(h_lm, h_transform)
     # by assigning to the index we assure that we are overwriting the current
