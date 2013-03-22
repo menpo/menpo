@@ -42,7 +42,7 @@ class TPS(NonRigidAlignment):
      for i in range(self.n_sources):
        self.coeff[..., i] = np.linalg.solve(self.L[..., i], self.Y.T)
 
-  def calculateMapping(self, coords):
+  def mapping(self, coords):
     """ TPS transform of input coords (f) and the affine-free
      TPS transform of the input coords (f_afree)
     """
@@ -65,8 +65,32 @@ class TPS(NonRigidAlignment):
     c_afree = self.coeff[:-3]
     # the affine free warp component
     f_afree = np.sum(c_afree[:,np.newaxis, ...] *
-                     kernel_dist[..., np.newaxis], axis=0)
+        kernel_dist[..., np.newaxis, :], axis=0)
     return f_affine + f_afree, f_afree
+
+  def indiv_mapping_broken(self, coords, i):
+    """ TPS transform of input coords (f) and the affine-free
+     TPS transform of the input coords (f_afree)
+    """
+    x = coords[..., 0][:, np.newaxis]
+    y = coords[..., 1][:, np.newaxis]
+    # calculate the affine coefficients of the warp
+    # (C = Constant component, then X, Y respectively)
+    c_affine_C = self.coeff[-3, :, i]
+    c_affine_X = self.coeff[-2, :, i]
+    c_affine_Y = self.coeff[-1, :, i]
+    # the affine warp component
+    f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
+    # calculate a disance matrix (for L2 Norm) between every source
+    # and the target
+    dist = distance.cdist(self.sources[..., i], coords)
+    kernel_dist = tps_kernel_function(dist)
+    # grab the affine free components of the warp
+    c_afree = self.coeff[:-3, :, i]
+    # the affine free warp component
+    f_afree = np.sum(c_afree[..., np.newaxis] *
+        kernel_dist[:, np.newaxis, :], axis=0)
+    return f_affine + f_afree.T, f_afree.T
 
 def tps_kernel_function(r):
   #TPS_KERNEL_FUNCTION Returns a matrix of evaluations of radial distances
