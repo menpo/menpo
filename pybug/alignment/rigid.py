@@ -64,9 +64,9 @@ class Procrustes(RigidAlignment):
     for i in range(self.n_sources):
       self.h_transforms.append(np.eye(self.n_dimensions+1))
       for ops in self.operations:
-        t = h_translation_matrix(ops['translate'][..., i].flatten(), dim=self.n_dimensions)
+        t = h_translation_matrix(ops['translate'][..., i].flatten())
         s = h_scale_matrix(ops['rescale'][..., i].flatten(), dim=self.n_dimensions)
-        r = h_rotation_matrix(ops['rotation'][i], dim=self.n_dimensions)
+        r = h_rotation_matrix(ops['rotation'][i])
         self.h_transforms[i] = np.dot(self.h_transforms[i],
                                np.dot(t,
                                np.dot(s,
@@ -105,19 +105,24 @@ class Procrustes(RigidAlignment):
     ops['rotation'] = rotations
     self.operations.append(ops)
 
-def h_translation_matrix(translation_vector, dim=3):
+def h_translation_matrix(translation_vector):
+  dim = translation_vector.size
   matrix = np.eye(dim + 1)
   matrix[-1, :-1] = translation_vector
   return matrix
 
-def h_scale_matrix(scale_vector, dim=3):
+def h_scale_matrix(scale_vector, dim=None):
+  if dim == None:
+    dim = scale_vector.size
   matrix = np.eye(dim + 1)
   np.fill_diagonal(matrix,scale_vector)
   # set the corner value back to 1
   matrix[-1, -1] = 1
   return matrix
 
-def h_rotation_matrix(rotation_matrix, dim=3):
+def h_rotation_matrix(rotation_matrix):
+  dim =  rotation_matrix.shape[0]
   matrix = np.eye(dim + 1)
   matrix[:-1, :-1] = rotation_matrix
   return matrix
+
