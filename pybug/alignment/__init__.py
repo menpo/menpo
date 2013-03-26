@@ -1,5 +1,6 @@
 import numpy as np
 import hashlib
+from matplotlib import pyplot
 
 """
 This package contains methods for aligning a number of source objects
@@ -44,6 +45,42 @@ class Alignment(object):
           ' - must have shape (n_landmarks, n_dim)')
     assert self.n_dim, self.n_landmarks == target.shape
     self.target = target
+
+
+  def _view_2d(self):
+    """ Visualize how points are affected by the warp in 2 dimensions.
+    """
+    # a factor by which the minimum and maximum x and y values of the warp will 
+    # be increased by.
+    x_margin_factor, y_margin_factor = 0.5, 0.5
+    # the number of x and y samples to take
+    n_x, n_y = 50, 50
+    # {x y}_{min max} is the actual bounds on either source or target landmarks 
+    x_min, y_min = np.vstack([self.target.min(0), self.source.min(0)]).min(0)
+    x_max, y_max = np.vstack([self.target.max(0), self.source.max(0)]).max(0)
+    x_margin = x_margin_factor * (x_max - x_min)
+    y_margin = y_margin_factor * (y_max - y_min)
+    # {x y}_{min max}_m is the bound once it has been grown by the factor of the
+    # spead in that dimension
+    x_min_m = x_min - x_margin
+    x_max_m = x_max + x_margin
+    y_min_m = y_min - y_margin
+    y_max_m = y_max + y_margin
+    # build sample points for the selected reigon
+    x = np.linspace(x_min_m, x_max_m, n_x)
+    y = np.linspace(y_min_m, y_max_m, n_y)
+    xx, yy = np.meshgrid(x, y)
+    sample_coords = np.concatenate([xx.reshape([-1,1]), yy.reshape([-1,1])], axis=1)
+    warped_coords = self.mapping(sample_coords)
+    delta = warped_coords - sample_coords
+    # plot the sample points result
+    pyplot.quiver(sample_coords[:,0], sample_coords[:,1], delta[:,0], delta[:,1])
+    delta = self.target - self.source 
+    # plot how the landmarks move from src to target
+    pyplot.quiver(self.source[:,0], self.source[:,1], delta[:,0], delta[:,1])
+    # rescale to the bounds
+    pyplot.xlim((x_min_m, x_max_m));
+    pyplot.ylim((y_min_m, y_max_m));
 
 
 class ParallelAlignment(object):

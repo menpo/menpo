@@ -155,6 +155,9 @@ class TPS(NonRigidAlignment):
     else:
       return f_affine + f_afree
 
+  def view(self):
+    self._view_2d()
+
 def tps_kernel_function(r):
   #TPS_KERNEL_FUNCTION Returns a matrix of evaluations of radial distances
   # store all singularity positions
