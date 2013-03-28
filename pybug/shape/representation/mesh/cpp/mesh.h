@@ -42,15 +42,10 @@ enum LaplacianWeightType {combinatorial, distance};
 class Mesh
 {
     public:
-        Mesh(double *coords, unsigned n_vertices, unsigned *tri_index,
-                unsigned n_triangles);
+        Mesh(unsigned *tri_index, unsigned n_triangles, unsigned n_vertices);
         ~Mesh();
         // pointer to an array dim(n_verticesx3) containing the coordinates
         // for each vertex of the mesh
-        double* coords;
-        // pointer to an array dim(n_verticesx3) containing the coordinates
-        // for each vertex of the mesh
-        unsigned* tri_index;
         unsigned n_vertices;
         unsigned n_triangles;
         unsigned n_fulledges;

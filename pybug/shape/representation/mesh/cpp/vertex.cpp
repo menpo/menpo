@@ -5,9 +5,7 @@
 #include "halfedge.h"
 #include "triangle.h"
 
-Vertex::Vertex(Mesh* mesh_in, unsigned vertex_id,
-        double* coords_in): MeshAttribute(mesh_in, vertex_id) {
-    coords = coords_in;
+Vertex::Vertex(Mesh* mesh_in, unsigned vertex_id): MeshAttribute(mesh_in, vertex_id) {
 }
 
 Vertex::~Vertex() {
@@ -205,12 +203,5 @@ void Vertex::test_contiguous(std::set<Vertex*>* vertices_not_visited){
             (*v)->test_contiguous(vertices_not_visited);
         }
     }
-}
-
-
-std::ostream& operator<<(std::ostream& out, const Vertex& v) {
-    out << "V:" << v.id << " (" << v.coords[0] << ","
-        << v.coords[1] << "," << v.coords[2] << ")";
-    return out;
 }
 

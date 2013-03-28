@@ -8,19 +8,15 @@
 #include "vertex.h"
 #include "halfedge.h"
 
-Mesh::Mesh(double *coords_in, unsigned n_vertices_in,
-        unsigned *tri_index_in, unsigned n_triangles_in) {
-    coords = coords_in;
+Mesh::Mesh(unsigned *tri_index, unsigned n_tris_in, unsigned n_vertices_in){
     n_vertices = n_vertices_in;
-    tri_index = tri_index_in;
-    n_triangles = n_triangles_in;
+    n_triangles = n_tris_in;
     // set the no. of full/half edges to 0
     // (on creation halfedges pairs will increment these as suitable)
     n_fulledges = 0;
     n_halfedges = 0;
-    // build a Vertex object for each coord set passed in
     for(unsigned i = 0; i < n_vertices; i++) {
-        vertices.push_back(new Vertex(this, i, &coords[i*3]));
+        vertices.push_back(new Vertex(this, i));
     }
     for(unsigned i = 0; i < n_triangles; i++) {
         // get the index into the vertex positions

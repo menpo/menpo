@@ -10,11 +10,10 @@ class Vertex;
 class Vertex : public MeshAttribute
 {
     public:
-        double* coords;
         std::set<HalfEdge*> halfedges; //halfedges STARTING from this vertex
         std::set<Triangle*> triangles; //ALL triangles attached to this vertex
         std::set<Vertex*> vertices; //ALL other vertices attached to this vertex
-        Vertex(Mesh* mesh, unsigned id, double* coords);
+        Vertex(Mesh* mesh, unsigned id);
         ~Vertex();
 
         // mesh construction methods
