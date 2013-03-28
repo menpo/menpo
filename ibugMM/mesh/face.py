@@ -215,6 +215,9 @@ class Face(CppMesh):
   def new_face_from_vertex_mask(self, vertex_mask):
     original_vertex_index = np.arange(self.n_vertices)
     kept_vertices = original_vertex_index[vertex_mask]
+    return self.new_face_from_vertex_list(kept_vertices)
+
+  def new_face_from_vertex_list(self, kept_vertices):
     bool_coord_index_mask = \
       np.in1d(self.tri_index, kept_vertices).reshape(self.tri_index.shape)
     # remove any triangle missing any number of vertices
@@ -222,7 +225,7 @@ class Face(CppMesh):
     # some additional vertices will have to be removed as they no longer
     # form part of a triangle
     kept_vertices_orig_index = np.unique(kept_triangles_orig_index)
-    ci_map = np.zeros_like(original_vertex_index)
+    ci_map = np.zeros(self.n_vertices)
     new_vertex_numbering = np.arange(kept_vertices_orig_index.shape[0])
     ci_map[kept_vertices_orig_index] = new_vertex_numbering
     new_coord_index = ci_map[kept_triangles_orig_index].astype(np.uint32)
