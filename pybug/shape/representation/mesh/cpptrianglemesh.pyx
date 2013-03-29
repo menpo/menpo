@@ -88,3 +88,19 @@ cdef class CppTriangleMesh:
         assert n_triangle >= 0 and n_triangle < self.thisptr.n_triangles
         deref(self.thisptr.triangles[n_triangle]).status()
 
+    def reduce_tri_scalar_per_vertex_to_vertices(self,
+            np.ndarray[double, ndim=2, mode="c"] tri_s not None):
+        cdef np.ndarray[double, ndim=1, mode='c'] vert_s = \
+            np.zeros(self.thisptr.n_vertices)
+        self.thisptr.reduce_tri_scalar_per_vertex_to_vertices(
+            &tri_s[0,0], &vert_s[0])
+        return vert_s
+
+    def reduce_tri_scalar_to_vertices(self,
+            np.ndarray[double, ndim=1, mode="c"] triangle_scalar not None):
+        cdef np.ndarray[double, ndim=1, mode='c'] vertex_scalar = \
+            np.zeros(self.thisptr.n_vertices)
+        self.thisptr.reduce_tri_scalar_to_vertices(&triangle_scalar[0], 
+            &vertex_scalar[0])
+        return vertex_scalar
+
