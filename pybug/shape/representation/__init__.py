@@ -99,6 +99,9 @@ class PointCloud3d(PointCloud):
         viewer = PointCloudViewer3d(self.points)
         return viewer.view()
 
+    def attach_landmarks(self, landmarks_dict):
+        self.landmarks = Landmarks(self, landmarks_dict)
+
 class Landmarks(object):
     """Class for storing and manipulating Landmarks associated with a shape.
     Landmarks index into the points and metapoints of the associated 
@@ -107,21 +110,22 @@ class Landmarks(object):
     would be composed entirely of points. This class can handle any arbitrary
     mixture of the two.
     """
-    def __init__(self, pointcloud, landmark_dict):
+    def __init__(self, pointcloud, landmarks_dict):
         """ pointcloud - the shape whose these landmarks apply to
         landmark_dict - keys - landmark classes (e.g. 'mouth')
-                        values - ordered list of landmark indices into pointcloud._allpoints
+                        values - ordered list of landmark indices into 
+                        pointcloud._allpoints
         """
         self.pc = pointcloud
         # indexes are the indexes into the points and metapoints of self.pc.
         # note that the labels are always sorted when stored.
-        self.indexes = OrderedDict(sorted(landmark_dict.iteritems()))
+        self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
 
     def all(self, withlabels=False):
         """return all the landmark indexes. The order is always guaranteed to
-        be the same for a given landmark configuration - specifically, the points
-        will be returned by sorted label, and always in the order that each point 
-        the landmark was construted in.
+        be the same for a given landmark configuration - specifically, the 
+        points will be returned by sorted label, and always in the order that 
+        each point the landmark was construted in.
         """
         all_lm = []
         labels = []
@@ -131,6 +135,9 @@ class Landmarks(object):
         if withlabels:
            return all_lm, labels
         return all_lm
+
+    def __getitem__(self, label):
+        return self.pc._allpoints[self.indexes[label]]
 
     @property
     def config(self):

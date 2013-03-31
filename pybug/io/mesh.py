@@ -1,13 +1,11 @@
 import numpy as np
 import sys
 import os
-#import os.path
 import Image
 import commands
 import tempfile
-# needs to become JSON for local stored landmarks
-import pickle
 import re
+from . import metadata
 from  pybug.shape.representation.mesh import TriMesh
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
@@ -64,22 +62,19 @@ class MeshImporter(object):
         raise NotImplimentedException()
 
     def import_landmarks(self):
-        path_to_lm = self.path_and_filename + '.landmarks'
         try:
-            f = open(path_to_lm, 'r')
-            print 'found landmarks! Importing them'
-            self.landmarks = pickle.load(f)
-        except IOError:
-            print 'no landmarks found'
-            self.landmarks = {}
+            self.landmarks = metadata.json_pybug_landmarks(self.path_and_filename)
+        except metadata.MissingLandmarksError:
+            self.landmarks = None
 
     def build(self, **kwargs):
         mesh = TriMesh(self.points, self.trilist)
         if self.texture != None:
             mesh.attach_texture(self.texture, self.tcoords, 
                     tcoords_trilist=self.tcoords_trilist)
+        if self.landmarks != None:
+            mesh.attach_landmarks(self.landmarks)
         mesh.legacy = {}
-        mesh.legacy['landmarks'] = self.landmarks
         mesh.legacy['path_and_filename'] = self.path_and_filename
         return mesh
 
