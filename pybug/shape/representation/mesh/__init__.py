@@ -1,37 +1,48 @@
 import numpy as np
-from .. import PointCloud
+from .. import PointCloud3d, FieldError
 from cpptrianglemesh import CppTriangleMesh
+from pybug.visualization import TriMeshViewer3d
 
 
-class MeshConstructionError(Exception):
+class TriFieldError(FieldError):
     pass
 
-class PolyMesh(PointCloud):
+class PolyMesh(PointCloud3d):
     """A 3D shape which has a notion of a manifold built from piecewise planar
     polyhedrons with vertices indexed from points.
     """
     def __init__(self, points, polylist):
-        PointCloud.__init__(self, points)
+        PointCloud3d.__init__(self, points)
         self.polylist = polylist
 
     @property
     def n_polys(self):
         return len(self.polylist)
 
-class TriMesh(PointCloud):
-    """A 3D shape which has a notion of a manifold built from piecewise planar
-    triangles with vertices indexed from points.
+class TriMesh(PointCloud3d):
+    """A peicewise planar 3D manifold composed from triangles with vertices 
+    indexed from points.
     """
     def __init__(self, points, trilist):
-        PointCloud.__init__(self, points)
+        PointCloud3d.__init__(self, points)
         self.trilist = trilist
-        if self.n_dims != 3:
-            raise MeshConstructionError("A Mesh shape can only be in 3 "\
-                    " dimensions (attemping with " + str(self.n_dims) + ")")
+        self.trifields = {}
 
     @property
     def n_tris(self):
-        return len(self.polylist)
+        return len(self.trilist)
+
+    def add_trifield(self, name, field):
+        if field.shape[0] != self.n_tris:
+            raise TriFieldError("Trying to add a field with " +
+                    `field.shape[0]` + " values (need one field value per " +
+                    "tri => " + `self.n_tris` + " values required")
+        else:
+            self.pointfields[name] = field
+
+    def view(self):
+        viewer = TriMeshViewer3d(self.points, self.trilist)
+        return viewer.view()
 
 
 class FastTriMesh(TriMesh, CppTriangleMesh):
@@ -39,3 +50,4 @@ class FastTriMesh(TriMesh, CppTriangleMesh):
     def __init__(self, points, trilist):
         CppTriangleMesh.__init__(self, points, trilist)
         TriMesh.__init__(self, points, trilist)
+

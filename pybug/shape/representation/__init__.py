@@ -1,27 +1,40 @@
 import numpy as np
 from mayavi import mlab
 from collections import OrderedDict
+from pybug.visualization import PointCloudViewer3d
 
-class PointFieldError(Exception):
+
+class FieldError(Exception):
+    pass
+
+class PointFieldError(FieldError):
+    pass
+
+class SpatialDataConstructionError(Exception):
     pass
 
 
-class Shape(object):
-    """ Abstract representation of a n-dimentional shape. This could be simply
-    be a set of vectors in an n-dimentional shape. Optionally, all shapes can
-    have associated with them a Landmarks object containing annotations about
-    the object in the space.
+class SpatialData(object):
+    """ Abstract representation of a n-dimentional piece of spatial data.
+    This could be simply be a set of vectors in an n-dimentional space,
+    or a structed surface or mesh. At this level of abstraction we only
+    define basic metadata that can be attached to all kinds of spatial
+    data
     """
     def __init__(self):
         pass
 
 
-class PointCloud(Shape):
+class PointCloud(SpatialData):
     """n-dimensional point cloud. Can be coerced to a PCL Point Cloud Object
-    for using their library methods.
+    for using their library methods (TODO). Handles the addition of spatial
+    metadata (most commonly landmarks) by storing all such 'metapoints'
+    (points which aren't part of the shape) and normal points together into
+    a joint field (_allpoints). This is masked from the end user by the use
+    of properties.
     """
     def __init__(self, points, n_metapoints=0):
-        Shape.__init__(self)
+        SpatialData.__init__(self)
         self.n_points, n_dims  = points.shape
         self.n_metapoints = n_metapoints
         self._allpoints = np.empty([self.n_points + self.n_metapoints, n_dims])
@@ -60,6 +73,9 @@ class PointCloud(Shape):
 
 
     def add_pointfield(self, name, field):
+        """Add another set of field values (of arbitrary dimention) to each
+        point.
+        """
         if field.shape[0] != self.n_points:
             raise PointFieldError("Trying to add a field with " +
                     `field.shape[0]` + " values (need one field value per " +
@@ -68,15 +84,20 @@ class PointCloud(Shape):
             self.pointfields[name] = field
 
     def view(self):
-        if self.n_dims == 3:
-            f =mlab.figure()
-            f.scene.background = (1,1,1)
-            mlab.points3d(self.points[:,0], self.points[:,1], self.points[:,2],
-                    mode='sphere', color=(0,0,0), figure=f)
-            return f
-        else:
-            print 'only 3D PointCloud rendering is supported at this time.'
+            print 'arbitrary dimensional PointCloud rendering is not supported.'
 
+class PointCloud3d(PointCloud):
+
+    def __init__(self, points, n_metapoints=0):
+        PointCloud.__init__(self, points, n_metapoints)
+        if self.n_dims != 3:
+            raise SpatialDataConstructionError(
+                    'Trying to build a 3D Point Cloud with from ' +
+                    str(self.n_dims) + ' data')
+
+    def view(self):
+        viewer = PointCloudViewer3d(self.points)
+        return viewer.view()
 
 class Landmarks(object):
     """Class for storing and manipulating Landmarks associated with a shape.
