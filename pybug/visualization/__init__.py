@@ -2,3 +2,4 @@ import viewmayavi
 
 PointCloudViewer3d = viewmayavi.MayaviPointCloudViewer3d
 TriMeshViewer3d = viewmayavi.MayaviTriMeshViewer3d
+TexturedTriMeshViewer3d = viewmayavi.MayaviTexturedTriMeshViewer3d

@@ -34,36 +34,32 @@ class PointCloudViewer3d(Viewer3d):
 
 class TriMeshViewer3d(Viewer3d):
 
-    def __init__(self, points, trilist):
+    def __init__(self, points, trilist, **kwargs):
         Viewer3d.__init__(self, points)
         self.trilist = trilist
+        self.color_per_tri = kwargs.get('color_per_tri')
+        self.color_per_point = kwargs.get('color_per_point')
 
 class TexturedTriMeshViewer3d(TriMeshViewer3d):
 
-    def __init__(self, points, trilist, tcoords, texture, texture_trilist=None):
-        TriMeshViewer3d.__init__(self, points)
-        self._raw_tcoords, self.texture = tcoords, texture
-        n_tcoords = tcoords.shape[0]
-        if n_t_coords == points.shape[0]:
-            self.tcoords_per_point = self._raw_tcoords
-            # texture coords are per point
-        elif n_t_coords == trilist.shape[0]:
-            # texture coords are per triangle
-            self.tcoords_per_tri = self._raw_tcoords
-            self.texture_trilist = texture_trilist
-            self.tcoords_per_point = self.tc_per_tri_to_tc_per_point(
-                    self.trilist, self.texture_trilist, self.tcoords_per_tri)
-        else:
-            raise TCoordsViewerError("tcoords need to be one per-point" +\
+    def __init__(self, points, trilist, texture, **kwargs):
+        TriMeshViewer3d.__init__(self, points, trilist)
+        self.texture = texture
+        self.tcoords_per_tri = kwargs.get('tcoords_per_tri')
+        self.tcoords_per_point = kwargs.get('tcoords_per_point')
+        if self.tcoords_per_tri == None and self.tcoords_per_point == None:
+            raise TCoordsViewerError("tcoords need to be provided per-point" +\
                     "or per-triangle")
+        if self.tcoords_per_tri != None:
+            # for now we don't render these well, and just convert to a tcoord
+            # per point representation.
+            self.tcoords_per_point = self.tc_per_tri_to_tc_per_point(
+                    self.trilist, self.tcoords_per_tri)
 
-    def tc_per_tri_to_tc_per_point(self, trilist, texture_trilist, tc):
+    def tc_per_tri_to_tc_per_point(self, trilist, tcoords):
         """Generates per-point tc from per-tri tc. Obviously
          this means we loose data (some triangles will have fugly
          textures) but allows for quick and dirty visualization of textures.
         """
         u_ci, ind_of_u_ci = np.unique(trilist, return_index=True)
-        # grab these positions from the texture_coord_index to find an instance
-        # of a tc at each vertex
-        per_vertex_tci = texture_trilist.flatten()[ind_of_u_ci]
-        return tc[per_vertex_tci]
+        return tcoords.reshape([-1,2])[ind_of_u_ci]

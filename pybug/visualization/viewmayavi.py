@@ -17,8 +17,8 @@ class MayaviPointCloudViewer3d(view3d.PointCloudViewer3d):
 
 class MayaviTriMeshViewer3d(view3d.TriMeshViewer3d):
 
-    def __init__(self, points, trilist):
-        view3d.TriMeshViewer3d.__init__(self, points, trilist)
+    def __init__(self, points, trilist, **kwargs):
+        view3d.TriMeshViewer3d.__init__(self, points, trilist, **kwargs)
 
     def view(self):
         self.currentfig = mlab.triangular_mesh(self.points[:,0], 
@@ -28,9 +28,9 @@ class MayaviTriMeshViewer3d(view3d.TriMeshViewer3d):
 
 class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d):
 
-    def __init__(self, points, trilist, tcoords, texture):
+    def __init__(self, points, trilist, texture, **kwargs):
         view3d.TexturedTriMeshViewer3d.__init__(self, points, 
-                trilist, tcoords, texture)
+                trilist, texture, **kwargs)
 
     def view(self):
         pd = tvtk.PolyData()
