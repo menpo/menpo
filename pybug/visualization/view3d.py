@@ -15,6 +15,12 @@ class Viewer(object):
     def __init__(self):
         self.currentfig = None
 
+    def view(self, **kwargs):
+        figure = kwargs.get('on_figure')
+        if figure == None:
+            figure = self.newfigure()
+        return self._viewonfigure(figure, **kwargs)
+
 class Viewer3d(Viewer):
 
     def __init__(self, points):
@@ -63,3 +69,4 @@ class TexturedTriMeshViewer3d(TriMeshViewer3d):
         """
         u_ci, ind_of_u_ci = np.unique(trilist, return_index=True)
         return tcoords.reshape([-1,2])[ind_of_u_ci]
+

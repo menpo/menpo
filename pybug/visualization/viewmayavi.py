@@ -4,35 +4,42 @@ from tvtk.tools import ivtk
 import numpy as np
 import view3d
 
-class MayaviPointCloudViewer3d(view3d.PointCloudViewer3d):
+class MayaviViewer(object):
+
+    def newfigure(self):
+        return mlab.figure()
+
+
+class MayaviPointCloudViewer3d(view3d.PointCloudViewer3d, MayaviViewer):
 
     def __init__(self, points):
         view3d.PointCloudViewer3d.__init__(self, points)
 
-
-    def view(self):
+    def _viewonfigure(self, figure, **kwargs):
         self.currentfig = mlab.points3d(
-                self.points[:,0], self.points[:,1], self.points[:,2])
+                self.points[:,0], self.points[:,1], self.points[:,2], 
+                figure=figure)
         return self
 
-class MayaviTriMeshViewer3d(view3d.TriMeshViewer3d):
+class MayaviTriMeshViewer3d(view3d.TriMeshViewer3d, MayaviViewer):
 
     def __init__(self, points, trilist, **kwargs):
         view3d.TriMeshViewer3d.__init__(self, points, trilist, **kwargs)
 
-    def view(self):
+    def _viewonfigure(self, figure, **kwargs):
         self.currentfig = mlab.triangular_mesh(self.points[:,0], 
                 self.points[:,1], self.points[:,2], self.trilist, 
-                color=(0.5,0.5,0.5))
+                color=(0.5,0.5,0.5), figure=figure)
         return self
 
-class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d):
+class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d,
+        MayaviViewer):
 
     def __init__(self, points, trilist, texture, **kwargs):
         view3d.TexturedTriMeshViewer3d.__init__(self, points, 
                 trilist, texture, **kwargs)
 
-    def view(self):
+    def _viewonfigure(self, figure, **kwargs):
         pd = tvtk.PolyData()
         pd.points = self.points
         pd.polys = self.trilist
@@ -52,6 +59,6 @@ class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d):
         v = ivtk.IVTK(size=(700,700))
         v.open()
         v.scene.add_actors(actor)
-        currentfig = v.scene
+        self.currentfig = v
         return self
 

@@ -8,28 +8,7 @@ import tempfile
 # needs to become JSON for local stored landmarks
 import pickle
 import re
-
-def smartimport(filepath, **kwargs):
-    """ Smart data importer. Chooses an appropriate importer based on the
-    file extension of the data file past in. pass keepimporter=True as a kwarg
-    if you want the actual importer object attached to the returned face object
-    at face.importer.
-    """
-    ext = os.path.splitext(filepath)[-1]
-    if ext == '.off':
-        importer = OFFImporter(filepath, **kwargs)
-    elif ext == '.wrl':
-        importer = WRLImporter(filepath, **kwargs)
-    elif ext == '.obj':
-        importer = OBJImporter(filepath, **kwargs)
-    else:
-       raise Exception("I don't understand the file type " + `ext`)
-       return None
-    face = importer.generate_face()
-    if kwargs.get('keepimporter', False):
-       print 'attaching the importer at face.importer'
-       face.importer = importer
-    return face
+from  pybug.shape.representation.mesh import TriMesh
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
         output_filetype=None, export_flags=None):
@@ -94,24 +73,20 @@ class MeshImporter(object):
             print 'no landmarks found'
             self.landmarks = {}
 
-    def generate_model(self, **kwargs):
-            kwargs['texture'] = self.texture
-            if self.texture_coords != None or self.texture_coords.size != 0:
-                kwargs['texture_coords'] = self.texture_coords
-            if self.texture_tri_index != None or self.texture_tri_index.size != 0:
-                kwargs['texture_tri_index'] = self.texture_tri_index
-            kwargs['landmarks'] = self.landmarks
-            kwargs['file_path_no_ext'] = self.path_and_filename
-            return Face(self.coords, self.tri_index, **kwargs)
+    def build(self, **kwargs):
+        mesh = TriMesh(self.points, self.trilist)
+        if self.texture != None:
+            mesh.attach_texture(self.texture, self.tcoords, 
+                    tcoords_trilist=self.tcoords_trilist)
+        mesh.legacy = {}
+        mesh.legacy['landmarks'] = self.landmarks
+        mesh.legacy['path_and_filename'] = self.path_and_filename
+        return mesh
 
 
 class OBJImporter(MeshImporter):
 
-    def __init__(self, filepath, **kwargs):
-        if kwargs.get('cleanup', False):
-            print 'clean up of mesh requested'
-            filepath = self.clean_up_mesh_on_path(filepath)
-        print 'importing without cleanup'
+    def __init__(self, filepath):
         MeshImporter.__init__(self, filepath)
 
     def parse_geometry(self):
@@ -119,17 +94,24 @@ class OBJImporter(MeshImporter):
         re_v = re.compile(u'v ([^\s]+) ([^\s]+) ([^\s]+)')
         #vn 1.345 2134.234 1e015
         re_vn = re.compile(u'vn ([^\s]+) ([^\s]+) ([^\s]+)')
-        #tc 0.0025 0.502
+        #vt 0.0025 0.502
         re_tc = re.compile(u'vt ([^\s]+) ([^\s]+)')
-        re_ti = re.compile(u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
-        re_tcti = re.compile(u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
-        re_vnti = re.compile(u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
-        self.coords = np.array(re_v.findall(self.text), dtype=np.float)
+        # now we just grab the three possible values that can be given
+        # to each face grouping.
+        re_ti = re.compile(
+                u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
+        re_tcti = re.compile(
+                u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
+        re_vnti = re.compile(
+                u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
+        self.points = np.array(re_v.findall(self.text), dtype=np.float)
         self.normals = np.array(re_vn.findall(self.text), dtype=np.float)
-        self.texture_coords = np.array(re_tc.findall(self.text), dtype=np.float)
-        self.tri_index = np.array(re_ti.findall(self.text), dtype=np.uint32) - 1
-        self.texture_tri_index = np.array(re_tcti.findall(self.text), dtype=np.uint32) - 1
-        self.normals_tri_index = np.array(re_vnti.findall(self.text), dtype=np.uint32) - 1
+        self.tcoords = np.array(re_tc.findall(self.text), dtype=np.float)
+        self.trilist = np.array(re_ti.findall(self.text), dtype=np.uint32) - 1
+        self.tcoords_trilist = np.array(
+                re_tcti.findall(self.text), dtype=np.uint32) - 1
+        self.normals_trilist = np.array(
+                re_vnti.findall(self.text), dtype=np.uint32) - 1
 
     def import_texture(self):
         # TODO: make this more intelligent in locating the texture
@@ -141,7 +123,7 @@ class OBJImporter(MeshImporter):
             self.texture = Image.open(pathToJpg)
         except IOError:
             print 'Warning, no texture found'
-            if self.texture_coords != []:
+            if self.tcoords != []:
                 raise Exception('why do we have texture coords but no texture?')
             else:
                 print '(there are no texture coordinates anyway so this is expected)'
@@ -149,6 +131,9 @@ class OBJImporter(MeshImporter):
 
 
 class WRLImporter(MeshImporter):
+    """ WARNING - this class may need to be restructured to work correctly
+    (see OBJImporter for an exemplary MeshImporter subclass)
+    """
 
     def __init__(self,filepath):
         MeshImporter.__init__(self,filepath)
@@ -156,12 +141,12 @@ class WRLImporter(MeshImporter):
     def parse_geometry(self):
         self._sectionEnds = [i for i,line in enumerate(self.lines) 
                 if ']' in line]
-        self.coords = self._getFloatDataForString(' Coordinate')
-        self.texture_coords = self._getFloatDataForString('TextureCoordinate')
-        texture_tri_index = self._getFloatDataForString('texCoordIndex', 
+        self.points = self._getFloatDataForString(' Coordinate')
+        self.tcoords = self._getFloatDataForString('TextureCoordinate')
+        tcoords_trilist = self._getFloatDataForString('texCoordIndex', 
                 seperator=', ', cast=int)
-        self.texture_tri_index = [x[:-1] for x in texture_tri_index]
-        self.tri_index = self.texture_tri_index
+        self.tcoords_trilist = [x[:-1] for x in tcoords_trilist]
+        self.trilist = self.tcoords_trilist
         self.normalsIndex = None
         self.normals = None
 
@@ -187,27 +172,30 @@ class WRLImporter(MeshImporter):
 
 
 class OFFImporter(MeshImporter):
+    """ WARNING - this class may need to be restructured to work correctly
+    (see OBJImporter for an exemplary MeshImporter subclass)
+    """
 
     def __init__(self, filepath):
         MeshImporter.__init__(self, filepath)
         #.off files only have geometry info - all other fields None
-        self.texture_coords = None
+        self.tcoords = None
         self.normals = None
         self.normalsIndex = None
-        self.texture_tri_index = None
+        self.tcoords_trilist = None
         self.texture = None
 
     def parse_geometry(self):
         lines = [l.rstrip() for l in self.lines]
-        self.n_coords = int(lines[1].split(' ')[0])
+        self.n_points = int(lines[1].split(' ')[0])
         offset = 2
         while lines[offset] == '':
             offset += 1
-        x = self.n_coords + offset
+        x = self.n_points + offset
         coord_lines = lines[offset:x]
         coord_index_lines = lines[x:]
-        self.coords = [[float(x) for x in l.split(' ')] for l in coord_lines]
-        self.tri_index = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
+        self.points = [[float(x) for x in l.split(' ')] for l in coord_lines]
+        self.trilist = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
 
     def import_texture(self):
         pass
