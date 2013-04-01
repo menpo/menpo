@@ -1,5 +1,4 @@
 import numpy as np
-from mayavi import mlab
 from collections import OrderedDict
 from pybug.visualization import PointCloudViewer3d, LabelViewer3d
 

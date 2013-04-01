@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/shape/representation/mesh/cpp/mesh.cpp ./pybug/shape/representation/mesh/cpp/vertex.cpp ./pybug/shape/representation/mesh/cpp/halfedge.cpp ./pybug/shape/representation/mesh/cpp/triangle.cpp
+# distutils: sources = ./pybug/spatialdata/mesh/cpp/mesh.cpp ./pybug/spatialdata/mesh/cpp/vertex.cpp ./pybug/spatialdata/mesh/cpp/halfedge.cpp ./pybug/spatialdata/mesh/cpp/triangle.cpp
 
 from libcpp.vector cimport vector
 from libcpp.set        cimport set
