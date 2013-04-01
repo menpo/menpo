@@ -1,0 +1,3 @@
+[submodule "pybug/transform/geodesics/cpp/exact/exactgeodesic"]
+	path = pybug/transform/geodesics/cpp/exact/exactgeodesic
+	url = git@github.com:jabooth/exactgeodesic.git
