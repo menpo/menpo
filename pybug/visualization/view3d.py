@@ -13,15 +13,21 @@ class Viewer(object):
     """
 
     def __init__(self):
-        self.currentfig = None
+        self.currentfigure = None
+        self.currentscene = None
 
     def view(self, **kwargs):
-        figure = kwargs.get('on_figure')
+        figure = kwargs.get('onviewer')
         if figure == None:
             figure = self.newfigure()
+        else:
+            figure = figure.currentfigure
+            print figure
         return self._viewonfigure(figure, **kwargs)
 
 class Viewer3d(Viewer):
+    """ A viewer restricted to 3 dimensional data.
+    """
 
     def __init__(self, points):
         Viewer.__init__(self)
@@ -31,11 +37,35 @@ class Viewer3d(Viewer):
                     "data with a 3DViewer")
         self.points = points
 
+    @property
+    def n_points(self):
+        return self.points.shape[0]
+
+
 
 class PointCloudViewer3d(Viewer3d):
 
     def __init__(self, points):
         Viewer3d.__init__(self, points)
+
+
+class LabelViewer3d(Viewer3d):
+
+    def __init__(self, points, labels, **kwargs):
+        Viewer3d.__init__(self, points)
+        self.labels = labels
+        if len(self.labels) != self.n_points:
+                raise Viewer3dError('Must have len(labels) == n_points')
+        offset = kwargs.get('offset', np.zeros(3))
+        if offset.shape == (3,):
+            #single offset provided -> apply to all
+            self.offset = np.repeat(offset[np.newaxis, :], 
+                    self.n_points, axis=0)
+        elif offset.shape == (3, self.n_points):
+            self.offset = offset
+        else:
+            raise Viewer3dError('Offset must be of shape (3,)'\
+                    + 'or (3,n_points) if specified')
 
 
 class TriMeshViewer3d(Viewer3d):

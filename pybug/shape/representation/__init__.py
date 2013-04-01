@@ -1,7 +1,7 @@
 import numpy as np
 from mayavi import mlab
 from collections import OrderedDict
-from pybug.visualization import PointCloudViewer3d
+from pybug.visualization import PointCloudViewer3d, LabelViewer3d
 
 
 class FieldError(Exception):
@@ -121,7 +121,7 @@ class Landmarks(object):
         # note that the labels are always sorted when stored.
         self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
 
-    def all(self, withlabels=False):
+    def all(self, withlabels=False, indexes=False, numbered=False):
         """return all the landmark indexes. The order is always guaranteed to
         be the same for a given landmark configuration - specifically, the 
         points will be returned by sorted label, and always in the order that 
@@ -130,14 +130,33 @@ class Landmarks(object):
         all_lm = []
         labels = []
         for k, v in self.indexes.iteritems():
-            all_lm += v
-            labels += [k] * len(v)
+            if indexes:
+                all_lm += v
+            else:
+                all_lm += list(self.pc._allpoints[v])
+            newlabels = [k] * len(v)
+            if numbered:
+                newlabels = [x + '_' + str(i) for i, x in enumerate(newlabels)]
+            labels += newlabels
         if withlabels:
-           return all_lm, labels
-        return all_lm
+           return np.array(all_lm), labels
+        return np.array(all_lm)
 
     def __getitem__(self, label):
         return self.pc._allpoints[self.indexes[label]]
+
+    def view(self):
+        """ View all landmarks on the current shape, using the default
+        shape view method.
+        """
+        lms, labels = self.all(withlabels=True, numbered=True)
+        pcviewer = self.pc.view()
+        pointviewer = PointCloudViewer3d(lms)
+        pointviewer.view(onviewer=pcviewer)
+        lmviewer = LabelViewer3d(lms, labels, offset=np.array([0,16,0]))
+        lmviewer.view(onviewer=pcviewer)
+        return lmviewer
+
 
     @property
     def config(self):

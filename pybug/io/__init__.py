@@ -1,5 +1,6 @@
 import os
 import mesh
+#from pyassimp import pyassimp
 
 def smartimport(filepath, **kwargs):
     """ Smart data importer. Chooses an appropriate importer based on the
@@ -23,3 +24,10 @@ def smartimport(filepath, **kwargs):
        print 'attaching the importer at spatialdata.importer'
        spatialdata.importer = importer
     return spatialdata
+
+
+def pyassimp_import(filepath):
+    scene = pyassimp.load(filepath)
+    if len(scene.meshes) > 1:
+        print 'warning - multipl'
+
