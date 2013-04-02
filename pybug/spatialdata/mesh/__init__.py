@@ -60,6 +60,42 @@ class TriMesh(PointCloud3d):
 
         return viewer.view()
 
+    def trimesh_from_pointmask(self, pointmask):
+        orig_point_index = np.arange(self.n_points)
+        kept_points_orig_index = orig_point_index[pointmask]
+        trilist_mask = np.in1d(self.trilist, kept_points_orig_index).reshape(
+                self.trilist.shape)
+        # remove any triangle missing any number of points
+        tris_mask = np.all(trilist_mask, axis = 1)
+        kept_tris_orig_index = self.trilist[tris_mask]
+        # some additional points will have to be removed as they no longer
+        # form part of a triangle
+        kept_points_orig_index = np.unique(kept_tris_orig_index)
+        # the new points are easy to get
+        new_points = self.points[kept_points_orig_index]
+        # now we need to transfer the trilist over. First we make a new 
+        # point index
+        kept_points_new_index = np.arange(kept_points_orig_index.shape[0])
+        # now we build a mapping from the orig point index to the new
+        pi_map = np.zeros(self.n_points) # point_index_mapping
+        pi_map[kept_points_orig_index] = kept_points_new_index
+        # trivial to now pull out the new trilist
+        new_trilist = pi_map[kept_tris_orig_index].astype(np.uint32)
+        newtrimesh = TriMesh(new_points, new_trilist)
+        # now we just map over point fields and trifields respectively
+        # (note that as tcoords are simply fields, this will inherently map
+        # over our textures too)
+        for name, field in self.pointfields.iteritems():
+            newtrimesh.add_pointfield(name, field[kept_points_orig_index])
+        for name, field in self.trifields.iteritems():
+            newtrimesh.add_trifield(name, field[tris_mask])
+        newtrimesh.texture = self.texture
+        # TODO transfer metapoints and landmarks
+        return newtrimesh
+        #new_landmarks = self.landmarks.copy()
+        #for feature in new_landmarks:
+        #    new_landmarks[feature] = list(pi_map[new_landmarks[feature]])
+
 
 class FastTriMesh(TriMesh, CppTriangleMesh):
 
