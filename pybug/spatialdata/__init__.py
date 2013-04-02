@@ -86,7 +86,9 @@ class PointCloud(SpatialData):
             print 'arbitrary dimensional PointCloud rendering is not supported.'
 
 class PointCloud3d(PointCloud):
-
+    """A PointCloud constrained to 3 dimensions. Has additional visualization
+    methods. Should always be used in lieu of PointCloud when using 3D data.
+    """
     def __init__(self, points, n_metapoints=0):
         PointCloud.__init__(self, points, n_metapoints)
         if self.n_dims != 3:
@@ -144,12 +146,13 @@ class Landmarks(object):
     def __getitem__(self, label):
         return self.pc._allpoints[self.indexes[label]]
 
-    def view(self):
+    def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
-        shape view method.
+        shape view method. Kwargs passed in here will be passed through
+        to the shapes view method.
         """
         lms, labels = self.all(withlabels=True, numbered=True)
-        pcviewer = self.pc.view()
+        pcviewer = self.pc.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
         pointviewer.view(onviewer=pcviewer)
         lmviewer = LabelViewer3d(lms, labels, offset=np.array([0,16,0]))

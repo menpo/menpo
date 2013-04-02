@@ -9,7 +9,7 @@ class TriFieldError(FieldError):
 
 
 class TriMesh(PointCloud3d):
-    """A peicewise planar 3D manifold composed from triangles with vertices 
+    """A piecewise planar 3D manifold composed from triangles with vertices 
     indexed from points.
     """
     def __init__(self, points, trilist):
@@ -19,12 +19,22 @@ class TriMesh(PointCloud3d):
         self.texture = None
 
     def attach_texture(self, texture, tcoords, tcoords_trilist=None):
+        """Attaches a trifield or pointfield called 'tcoords' depending
+        on whether the tcoords given are per vertex or per triangle.
+        kwargs:
+           tcoords_trilist: a texture specific trilist used to index into
+           the tcoords. In this case tcoords will be converted to a trifield
+           removing the dependancy on the texture specific trilist.
+           This comes at a memory cost (there will be many repeated tcoords in
+           the constrcted trifield), but allows for a consistent processing 
+           of texture coords as just another field instance.
+        """
         self.texture = texture
         if tcoords_trilist != None:
             # looks like we have tcoords that are referenced into
             # by a trilist in the same way points are. As it becomes messy to
             # maintain different texturing options, we just turn this indexing 
-            # scheme into (repeated)  values stored explicitly as a trifield.
+            # scheme into (repeated) values stored explicitly as a trifield.
             self.add_trifield('tcoords', tcoords[tcoords_trilist])
         elif tcoords.shape == (self.n_points, 2):
             # tcoords are just per vertex
@@ -48,6 +58,10 @@ class TriMesh(PointCloud3d):
             self.trifields[name] = field
 
     def view(self, textured=True):
+        """ Visualze the TriMesh. By default, if the mesh has a texture a
+        textured view will be provided. This can be overridden using the 
+        boolean kwarg `textured`
+        """
         if textured and self.texture:
             viewer = TexturedTriMeshViewer3d(
                     self.points, self.trilist, self.texture,
@@ -60,7 +74,14 @@ class TriMesh(PointCloud3d):
 
         return viewer.view()
 
-    def trimesh_from_pointmask(self, pointmask):
+    def trimesh_from_pointmask(self, pointmask, astype='self'):
+        """ Builds a new trimesh from a boolean mask of points that we wish to 
+        keep. Transfers across all fields, rebuilds a suitable trilist, and 
+        handles landmark and metapoint translation (or will do, still TODO!) 
+        By default will return a mesh of type(self) (i.e. FastTriMeshes will 
+        produce FastTriMeshes) but this can be overridden using the kwarg 
+        `astype`.
+        """
         orig_point_index = np.arange(self.n_points)
         kept_points_orig_index = orig_point_index[pointmask]
         trilist_mask = np.in1d(self.trilist, kept_points_orig_index).reshape(
@@ -81,7 +102,14 @@ class TriMesh(PointCloud3d):
         pi_map[kept_points_orig_index] = kept_points_new_index
         # trivial to now pull out the new trilist
         new_trilist = pi_map[kept_tris_orig_index].astype(np.uint32)
-        newtrimesh = TriMesh(new_points, new_trilist)
+        if astype == 'self':
+            trimeshcls = type(self)
+        elif issubclass(astype, TriMesh):
+            trimeshcls = astype
+        else:
+            raise Exception('The mesh type ' + `astype` + ' is not understood'\
+                    + ' (need to be an instance of TriMesh)')
+        newtrimesh = trimeshcls(new_points, new_trilist)
         # now we just map over point fields and trifields respectively
         # (note that as tcoords are simply fields, this will inherently map
         # over our textures too)
@@ -98,7 +126,10 @@ class TriMesh(PointCloud3d):
 
 
 class FastTriMesh(TriMesh, CppTriangleMesh):
-
+    """A TriMesh with an underlying C++ data structure, allowing for efficent
+    iterations around mesh vertices and triangles. Includes fast calculations
+    of the suface divergence, gradient and laplacian.
+    """
     def __init__(self, points, trilist):
         CppTriangleMesh.__init__(self, points, trilist)
         TriMesh.__init__(self, points, trilist)
