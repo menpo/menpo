@@ -167,4 +167,37 @@ class Landmarks(object):
         to see if they are likely describing the same shape.
         """
         return tuple((k,len(v)) for k,v in self.indexes.iteritems())
+
+
+class SpatialDataCollectionError(Exception):
+    pass
+
+
+class SpatialDataCollection(object):
+    """ A bag of SpatialData. Provides funtionality for 
+    - viewing all the data in the set
+    - performing transformations on all pieces of data in the set
+
+    will enforce that all the added elements are instances of SpecialData
+    but that's it.
+    """
+    def __init__(self, spatialdataiter):
+        if not all(isinstance(x, SpatialData) for x in spatialdataiter):
+            notsd = [x for x in spatialdataiter 
+                    if not isinstance(x, SpatialData)]
+            raise SpatialDataCollectionError('Can only add SpatialData '\
+                    + ' instances (' + `notsd` + ' are not)')
+        self.data = set(spatialdataiter)
+
+    def add_spatialdata(self, spatialdata):
+        """ Adds an instance of spatialdata to the collection
+        """
+        if not isinstance(spatialdata, SpatialData):
+            raise SpatialDataCollectionError('Can only add SpatialData '\
+                    + ' instances')
+        else:
+            self.data.add(spatialdata)
+
+
+
        
