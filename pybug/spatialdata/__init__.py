@@ -172,6 +172,9 @@ class Landmarks(object):
 class SpatialDataCollectionError(Exception):
     pass
 
+class ShapeClassError(SpatialDataCollectionError):
+    pass
+
 
 class SpatialDataCollection(object):
     """ A bag of SpatialData. Provides funtionality for 
@@ -199,5 +202,17 @@ class SpatialDataCollection(object):
             self.data.add(spatialdata)
 
 
-
-       
+class ShapeClass(SpatialDataCollection):
+    """A collection of SpatialData that all have the same
+    landmark configuration (and so can be considered to be of the same shape)
+    """
+    def __init__(self, spatialdataiter):
+        SpatialDataCollection.__init__(self, spatialdataiter)
+        try:
+            unique_lm_configs = set(x.landmarks.config for x in self.data)
+        except AttributeError:
+            raise ShapeClassError("All elements of a shape class must have "\
+                    + "landmarks attached")
+        if len(unique_lm_configs) != 1:
+            raise ShapeClassError("All elements in shape class must have "\
+                    + "landmarks with the same config")
