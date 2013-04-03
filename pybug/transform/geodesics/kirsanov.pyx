@@ -21,7 +21,7 @@ cdef extern from "./cpp/exact/kirsanov_geodesic_wrapper.h":
         #        double* phi, unsigned* best_source,
         #        unsigned subdivision_level)
 
-cdef class ExactGeodesic:
+cdef class KirsanovGeodesics:
     cdef KirsanovGeodesicWrapper* kirsanovptr
     cdef int n_points
     cdef int n_tris
@@ -61,5 +61,4 @@ cdef class ExactGeodesic:
         geodesic['phi'] = phi
         geodesic['best_source'] = best_source
         return geodesic
-
     

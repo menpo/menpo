@@ -29,20 +29,21 @@ class PointCloud(SpatialData):
     for using their library methods (TODO). Handles the addition of spatial
     metadata (most commonly landmarks) by storing all such 'metapoints'
     (points which aren't part of the shape) and normal points together into
-    a joint field (_allpoints). This is masked from the end user by the use
-    of properties.
+    a joint field (points_and_metapoints). This is masked from the end user 
+    by the use of properties.
     """
     def __init__(self, points, n_metapoints=0):
         SpatialData.__init__(self)
         self.n_points, n_dims  = points.shape
         self.n_metapoints = n_metapoints
-        self._allpoints = np.empty([self.n_points + self.n_metapoints, n_dims])
-        self._allpoints[:self.n_points] = points
+        self.points_and_metapoints = np.empty(
+                [self.n_points + self.n_metapoints, n_dims])
+        self.points_and_metapoints[:self.n_points] = points
         self.pointfields = {}
 
     @property
     def points(self):
-        return self._allpoints[:self.n_points]
+        return self.points_and_metapoints[:self.n_points]
 
     @property
     def metapoints(self):
@@ -51,7 +52,7 @@ class PointCloud(SpatialData):
         storing explicit landmarks (landmarks that have coordinates and
         don't simply reference exisiting points).
         """
-        return self._allpoints[self.n_points:]
+        return self.points_and_metapoints[self.n_points:]
 
     @property
     def n_dims(self):
@@ -85,6 +86,7 @@ class PointCloud(SpatialData):
     def view(self):
             print 'arbitrary dimensional PointCloud rendering is not supported.'
 
+
 class PointCloud3d(PointCloud):
     """A PointCloud constrained to 3 dimensions. Has additional visualization
     methods. Should always be used in lieu of PointCloud when using 3D data.
@@ -96,12 +98,13 @@ class PointCloud3d(PointCloud):
                     'Trying to build a 3D Point Cloud with from ' +
                     str(self.n_dims) + ' data')
 
-    def view(self):
-        viewer = PointCloudViewer3d(self.points)
+    def view(self, **kwargs):
+        viewer = PointCloudViewer3d(self.points, **kwargs)
         return viewer.view()
 
     def attach_landmarks(self, landmarks_dict):
         self.landmarks = Landmarks(self, landmarks_dict)
+
 
 class Landmarks(object):
     """Class for storing and manipulating Landmarks associated with a shape.
@@ -115,7 +118,7 @@ class Landmarks(object):
         """ pointcloud - the shape whose these landmarks apply to
         landmark_dict - keys - landmark classes (e.g. 'mouth')
                         values - ordered list of landmark indices into 
-                        pointcloud._allpoints
+                        pointcloud.points_and_metapoints
         """
         self.pc = pointcloud
         # indexes are the indexes into the points and metapoints of self.pc.
@@ -134,7 +137,7 @@ class Landmarks(object):
             if indexes:
                 all_lm += v
             else:
-                all_lm += list(self.pc._allpoints[v])
+                all_lm += list(self.pc.points_and_metapoints[v])
             newlabels = [k] * len(v)
             if numbered:
                 newlabels = [x + '_' + str(i) for i, x in enumerate(newlabels)]
@@ -144,7 +147,7 @@ class Landmarks(object):
         return np.array(all_lm)
 
     def __getitem__(self, label):
-        return self.pc._allpoints[self.indexes[label]]
+        return self.pc.points_and_metapoints[self.indexes[label]]
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
@@ -223,3 +226,4 @@ class ShapeClass(SpatialDataCollection):
         if len(unique_lm_configs) != 1:
             raise ShapeClassError("All elements in shape class must have "\
                     + "landmarks with the same config")
+

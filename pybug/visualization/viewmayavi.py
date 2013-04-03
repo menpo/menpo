@@ -36,7 +36,7 @@ class MayaviLabelViewer3d(view3d.LabelViewer3d, MayaviViewer):
             x, y, z = tuple(label_pos[i])
             mlab.text3d(x, y, z, label, figure=figure)
         lp = label_pos
-        os = -1.0*self.offset
+        os = -1.0 * self.offset
         mlab.quiver3d(lp[:, 0], lp[:, 1], lp[:, 2], 
                 os[:, 0], os[:, 1], os[:, 2], figure=figure)
         figure.scene.disable_render = False

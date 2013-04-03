@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.stats import norm
 from pybug import spatialdata
-from pybug.transform.geodesics.exact import ExactGeodesic
+from pybug.transform.geodesics import TriMeshGeodesics 
 
 
 class GeodesicCorrespondence(spatialdata.ShapeClass):
@@ -10,8 +10,8 @@ class GeodesicCorrespondence(spatialdata.ShapeClass):
     def __init__(self, spatialdataiter):
         spatialdata.ShapeClass.__init__(self, spatialdataiter)
         for x in self.data:
-            x.geodesic = ExactGeodesic(x.points, x.trilist)
-        #self.gsig_all_points()
+            x.geodesic = TriMeshGeodesics(x.points, x.trilist)
+        self.gsig_all_points()
         #self.calculate_mapping()
         #self.calculate_mapped_faces()
 
@@ -26,27 +26,6 @@ class GeodesicCorrespondence(spatialdata.ShapeClass):
                 gsig[:,i] = geodesic['phi']
             x.add_pointfield('gsig', gsig)
 
-
-    def calculate_signitures(self):
-        if self.signiture == 'vertices':
-            print 'calculating geodesic signiture for all landmark vertices'
-            self.gsig_1 = geodesic_signiture_per_lm_vertex(self.face_1, self.method)
-            self.gsig_2 = geodesic_signiture_per_lm_vertex(self.face_2, self.method)
-        elif self.signiture == 'groups':
-            print 'calculating geodesic signiture for each group of landmark vertices'
-            self.gsig_1 = geodesic_signiture_per_lm_group(self.face_1, self.method)
-            self.gsig_2 = geodesic_signiture_per_lm_group(self.face_2, self.method)
-        elif self.signiture == 'vertices_group_mouth':
-            print 'calculating geodesic signiture for each landmark vertex except \
-                    the mouth, which is treated as a group'
-            self.gsig_1 = geodesic_signiture_per_lm_group_bar_mouth(self.face_1, self.method)
-            self.gsig_2 = geodesic_signiture_per_lm_group_bar_mouth(self.face_2, self.method)
-        elif self.signiture == 'custom_lm':
-            print 'calculating geodesic signiture for the landmarks passed in'
-            self.gsig_1 = geodesic_signiture_for_custom_lm(self.face_1, self.face_1_custom_lm, method='exact')
-            self.gsig_2 = geodesic_signiture_for_custom_lm(self.face_2, self.face_2_custom_lm, method='exact')
-        else:
-            raise Exception("I don't understand signiture " + `self.signiture`)
 
     def calculate_mapping(self):
         if self.std_dev == None:
