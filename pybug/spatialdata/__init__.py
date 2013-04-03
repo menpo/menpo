@@ -122,14 +122,14 @@ class Landmarks(object):
         # note that the labels are always sorted when stored.
         self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
 
-    def all(self, withlabels=False, indexes=False, numbered=False):
+    def all(self, labels=False, indexes=False, numbered=False):
         """return all the landmark indexes. The order is always guaranteed to
         be the same for a given landmark configuration - specifically, the 
         points will be returned by sorted label, and always in the order that 
         each point the landmark was construted in.
         """
         all_lm = []
-        labels = []
+        lmlabels = []
         for k, v in self.indexes.iteritems():
             if indexes:
                 all_lm += v
@@ -138,9 +138,9 @@ class Landmarks(object):
             newlabels = [k] * len(v)
             if numbered:
                 newlabels = [x + '_' + str(i) for i, x in enumerate(newlabels)]
-            labels += newlabels
-        if withlabels:
-           return np.array(all_lm), labels
+            lmlabels += newlabels
+        if labels:
+           return np.array(all_lm), lmlabels
         return np.array(all_lm)
 
     def __getitem__(self, label):
@@ -151,7 +151,7 @@ class Landmarks(object):
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
-        lms, labels = self.all(withlabels=True, numbered=True)
+        lms, labels = self.all(labels=True, numbered=True)
         pcviewer = self.pc.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
         pointviewer.view(onviewer=pcviewer)
@@ -159,6 +159,13 @@ class Landmarks(object):
         lmviewer.view(onviewer=pcviewer)
         return lmviewer
 
+    @property
+    def n_points(self):
+        return self.all().shape[0]
+
+    @property
+    def n_groups(self):
+        return len(self.indexes)
 
     @property
     def config(self):

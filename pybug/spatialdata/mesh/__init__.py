@@ -1,22 +1,36 @@
 import numpy as np
-from .. import PointCloud3d, FieldError
+from pybug import spatialdata
 from cpptrianglemesh import CppTriangleMesh
 from pybug.visualization import TriMeshViewer3d, TexturedTriMeshViewer3d
 
 
-class TriFieldError(FieldError):
+class TriFieldError(spatialdata.FieldError):
     pass
 
 
-class TriMesh(PointCloud3d):
+class TriMesh(spatialdata.PointCloud3d):
     """A piecewise planar 3D manifold composed from triangles with vertices 
     indexed from points.
     """
     def __init__(self, points, trilist):
-        PointCloud3d.__init__(self, points)
+        spatialdata.PointCloud3d.__init__(self, points)
         self.trilist = trilist
         self.trifields = {}
         self.texture = None
+
+    def __str__(self):
+        message = spatialdata.PointCloud.__str__(self)
+        if len(self.trifields) != 0:
+            message += '\n  trifields:'
+            for k,v in self.trifields.iteritems():
+                try:
+                    field_dim = v.shape[1]
+                except IndexError:
+                    field_dim = 1
+                message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
+        message += '\nn_tris: ' + str(self.n_tris)
+        return message
+
 
     def attach_texture(self, texture, tcoords, tcoords_trilist=None):
         """Attaches a trifield or pointfield called 'tcoords' depending
@@ -135,13 +149,13 @@ class FastTriMesh(TriMesh, CppTriangleMesh):
         TriMesh.__init__(self, points, trilist)
 
 
-class PolyMesh(PointCloud3d):
+class PolyMesh(spatialdata.PointCloud3d):
     """A 3D shape which has a notion of a manifold built from piecewise planar
     polyhedrons with vertices indexed from points. This is largely a stub that
     can be expanded later on if we need arbitrary polymeshes.
     """
     def __init__(self, points, polylist):
-        PointCloud3d.__init__(self, points)
+        spatialdata.PointCloud3d.__init__(self, points)
         self.polylist = polylist
 
     @property
