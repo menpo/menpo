@@ -230,6 +230,9 @@ class LandmarkManager(object):
     def meta_landmarks(self):
         return [x for x in self.all_landmarks if isinstance(x, MetaLandmark)]
 
+    def with_label(self, label):
+        return [x for x in self.all_landmarks if x.label == label]
+
     #def __getitem__(self, label):
     #    return self.pc.points_and_metapoints[self.indexes[label]]
 
@@ -287,7 +290,7 @@ class SpatialDataCollection(object):
                     if not isinstance(x, SpatialData)]
             raise SpatialDataCollectionError('Can only add SpatialData '\
                     + ' instances (' + `notsd` + ' are not)')
-        self.data = set(spatialdataiter)
+        self.data = list(spatialdataiter)
 
     def add_spatialdata(self, spatialdata):
         """ Adds an instance of spatialdata to the collection
@@ -296,7 +299,7 @@ class SpatialDataCollection(object):
             raise SpatialDataCollectionError('Can only add SpatialData '\
                     + ' instances')
         else:
-            self.data.add(spatialdata)
+            self.data.append(spatialdata)
 
 
 class ShapeClass(SpatialDataCollection):

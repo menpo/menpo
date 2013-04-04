@@ -18,7 +18,7 @@ class GeodesicMasker(TriMeshShapeClass):
         result = []
         for x in self.data:
             x.geodesics = TriMeshGeodesics(x.points, x.trilist)
-            indexes = [lm.asindex() for lm in x.landmarks.labels[label]]
+            indexes = [lm.asindex() for lm in x.landmarks.with_label(label)]
             print indexes
             phi = x.geodesics.geodesics(indexes)['phi']
             result.append(x.trimesh_from_pointmask(phi < distance))
