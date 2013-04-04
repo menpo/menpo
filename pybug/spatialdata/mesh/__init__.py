@@ -9,7 +9,7 @@ class TriFieldError(spatialdata.FieldError):
 
 
 class TriMesh(spatialdata.PointCloud3d):
-    """A piecewise planar 3D manifold composed from triangles with vertices 
+    """A piecewise planar 3D manifold composed from triangles with vertices
     indexed from points.
     """
     def __init__(self, points, trilist):
@@ -40,14 +40,14 @@ class TriMesh(spatialdata.PointCloud3d):
            the tcoords. In this case tcoords will be converted to a trifield
            removing the dependancy on the texture specific trilist.
            This comes at a memory cost (there will be many repeated tcoords in
-           the constrcted trifield), but allows for a consistent processing 
+           the constrcted trifield), but allows for a consistent processing
            of texture coords as just another field instance.
         """
         self.texture = texture
         if tcoords_trilist != None:
             # looks like we have tcoords that are referenced into
             # by a trilist in the same way points are. As it becomes messy to
-            # maintain different texturing options, we just turn this indexing 
+            # maintain different texturing options, we just turn this indexing
             # scheme into (repeated) values stored explicitly as a trifield.
             self.add_trifield('tcoords', tcoords[tcoords_trilist])
         elif tcoords.shape == (self.n_points, 2):
@@ -73,27 +73,27 @@ class TriMesh(spatialdata.PointCloud3d):
 
     def view(self, textured=True):
         """ Visualze the TriMesh. By default, if the mesh has a texture a
-        textured view will be provided. This can be overridden using the 
+        textured view will be provided. This can be overridden using the
         boolean kwarg `textured`
         """
         if textured and self.texture:
             viewer = TexturedTriMeshViewer3d(
                     self.points, self.trilist, self.texture,
-                    tcoords_per_tri=self.trifields.get('tcoords'), 
+                    tcoords_per_tri=self.trifields.get('tcoords'),
                     tcoords_per_point=self.pointfields.get('tcoords'))
         else:
-            viewer = TriMeshViewer3d(self.points, self.trilist, 
-                    color_per_tri=self.trifields.get('color'), 
+            viewer = TriMeshViewer3d(self.points, self.trilist,
+                    color_per_tri=self.trifields.get('color'),
                     color_per_point=self.pointfields.get('color'))
 
         return viewer.view()
 
     def trimesh_from_pointmask(self, pointmask, astype='self'):
-        """ Builds a new trimesh from a boolean mask of points that we wish to 
-        keep. Transfers across all fields, rebuilds a suitable trilist, and 
-        handles landmark and metapoint translation (or will do, still TODO!) 
-        By default will return a mesh of type(self) (i.e. FastTriMeshes will 
-        produce FastTriMeshes) but this can be overridden using the kwarg 
+        """ Builds a new trimesh from a boolean mask of points that we wish to
+        keep. Transfers across all fields, rebuilds a suitable trilist, and
+        handles landmark and metapoint translation (or will do, still TODO!)
+        By default will return a mesh of type(self) (i.e. FastTriMeshes will
+        produce FastTriMeshes) but this can be overridden using the kwarg
         `astype`.
         """
         orig_point_index = np.arange(self.n_points)
@@ -108,7 +108,7 @@ class TriMesh(spatialdata.PointCloud3d):
         kept_points_orig_index = np.unique(kept_tris_orig_index)
         # the new points are easy to get
         new_points = self.points[kept_points_orig_index]
-        # now we need to transfer the trilist over. First we make a new 
+        # now we need to transfer the trilist over. First we make a new
         # point index
         kept_points_new_index = np.arange(kept_points_orig_index.shape[0])
         # now we build a mapping from the orig point index to the new
@@ -132,7 +132,19 @@ class TriMesh(spatialdata.PointCloud3d):
         for name, field in self.trifields.iteritems():
             newtrimesh.add_trifield(name, field[tris_mask])
         newtrimesh.texture = self.texture
-        # TODO transfer metapoints and landmarks
+        # TODO transfer metalandmarks and points.
+        # also, convert reference landmarks to meta landmarks if their point is removed.
+        # TODO make this more solid - don't want to directly touch the all_landmarks
+        for lm in self.landmarks.reference_landmarks:
+            old_index = lm.pointcloud_index
+            if np.all(np.in1d(old_index, kept_points_orig_index)):
+                # referenced point still exists, in the new mesh. add it!
+                new_index = pi_map[old_index]
+                newlm = spatialdata.ReferenceLandmark(newtrimesh, new_index, lm.label,
+                        lm.label_index)
+                newtrimesh.landmarks.all_landmarks.append(newlm)
+            else:
+                print 'the point for landmark: ' + str(lm.numbered_label) + ' no longer will exist.'
         return newtrimesh
         #new_landmarks = self.landmarks.copy()
         #for feature in new_landmarks:

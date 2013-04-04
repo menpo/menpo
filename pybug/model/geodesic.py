@@ -6,8 +6,8 @@ from pybug.transform.geodesics import TriMeshGeodesics
 
 
 class GeodesicMasker(TriMeshShapeClass):
-    """A trimesh class that can produce masked versions of its members 
-    as judged by a geodesic distance from a set of landmark points
+    """A trimesh class that can produce masked versions of its members
+    as judged by a geodesic distance from a set of landmark points.
     """
     def __init__(self, trimeshiter):
         TriMeshShapeClass.__init__(self, trimeshiter)
@@ -18,7 +18,9 @@ class GeodesicMasker(TriMeshShapeClass):
         result = []
         for x in self.data:
             x.geodesics = TriMeshGeodesics(x.points, x.trilist)
-            phi = x.geodesics.geodesics(x.landmarks.indexes[label])['phi']
+            indexes = [lm.asindex() for lm in x.landmarks.labels[label]]
+            print indexes
+            phi = x.geodesics.geodesics(indexes)['phi']
             result.append(x.trimesh_from_pointmask(phi < distance))
         return result
 
@@ -44,7 +46,6 @@ class GeodesicCorrespondence(TriMeshShapeClass):
                 gsig[:,i] = geodesic['phi']
             x.add_pointfield('gsig', gsig)
         self.numberedlabels = numberedlabels
-
 
     def calculate_mapping(self):
         if self.std_dev == None:

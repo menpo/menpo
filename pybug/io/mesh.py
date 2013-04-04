@@ -73,7 +73,7 @@ class MeshImporter(object):
             mesh.attach_texture(self.texture, self.tcoords, 
                     tcoords_trilist=self.tcoords_trilist)
         if self.landmarks != None:
-            mesh.attach_landmarks(self.landmarks)
+            mesh.landmarks.add_reference_landmarks(self.landmarks)
         mesh.legacy = {}
         mesh.legacy['path_and_filename'] = self.path_and_filename
         return mesh

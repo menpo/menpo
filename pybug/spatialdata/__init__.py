@@ -32,18 +32,19 @@ class PointCloud(SpatialData):
     a joint field (points_and_metapoints). This is masked from the end user
     by the use of properties.
     """
-    def __init__(self, points, n_metapoints=0):
+    def __init__(self, points):
         SpatialData.__init__(self)
         self.n_points, n_dims  = points.shape
-        self.n_metapoints = n_metapoints
-        self.points_and_metapoints = np.empty(
-                [self.n_points + self.n_metapoints, n_dims])
-        self.points_and_metapoints[:self.n_points] = points
+        self.n_metapoints = 0
+        cachesize = 1000
+        # prealocate allpoints to have enough room for cachesize metapoints
+        self._allpoints = np.empty([self.n_points + cachesize, n_dims])
+        self._allpoints[:self.n_points] = points
         self.pointfields = {}
 
     @property
     def points(self):
-        return self.points_and_metapoints[:self.n_points]
+        return self._allpoints[:self.n_points]
 
     @property
     def metapoints(self):
@@ -52,7 +53,15 @@ class PointCloud(SpatialData):
         storing explicit landmarks (landmarks that have coordinates and
         don't simply reference exisiting points).
         """
-        return self.points_and_metapoints[self.n_points:]
+        return self._allpoints[self.n_points:]
+
+    @property
+    def points_and_metapoints(self):
+        return self._allpoints[:self.n_points_and_metapoints]
+
+    @property
+    def n_points_and_metapoints(self):
+        return self.n_points + self.n_metapoints
 
     @property
     def n_dims(self):
@@ -71,7 +80,6 @@ class PointCloud(SpatialData):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         return message
 
-
     def add_pointfield(self, name, field):
         """Add another set of field values (of arbitrary dimention) to each
         point.
@@ -83,6 +91,19 @@ class PointCloud(SpatialData):
         else:
             self.pointfields[name] = field
 
+    def add_metapoint(self, metapoint):
+        """Adds a new metapoint to the pointcloud. Returns the index
+        position that this point is stored at in self.points_and_metapoints.
+        """
+        if metapoint.size != self.n_dims:
+            raise Exception("metapoint must be of the same number of dims"\
+                    + " as the parent pointcloud")
+        next_index = self.n_points_and_metapoints
+        self._allpoints[next_index] = metapoint.flatten()
+        self.n_metapoints += 1
+        return next_index
+
+
     def view(self):
             print 'arbitrary dimensional PointCloud rendering is not supported.'
 
@@ -91,22 +112,67 @@ class PointCloud3d(PointCloud):
     """A PointCloud constrained to 3 dimensions. Has additional visualization
     methods. Should always be used in lieu of PointCloud when using 3D data.
     """
-    def __init__(self, points, n_metapoints=0):
-        PointCloud.__init__(self, points, n_metapoints)
+    def __init__(self, points):
+        PointCloud.__init__(self, points)
         if self.n_dims != 3:
             raise SpatialDataConstructionError(
                     'Trying to build a 3D Point Cloud with from ' +
                     str(self.n_dims) + ' data')
+        self.landmarks = LandmarkManager(self)
 
     def view(self, **kwargs):
         viewer = PointCloudViewer3d(self.points, **kwargs)
         return viewer.view()
 
-    def attach_landmarks(self, landmarks_dict):
-        self.landmarks = Landmarks(self, landmarks_dict)
+
+class Landmark(object):
+    """ An object representing an annotated point in a pointcloud.
+    Only makes sense in the context of a parent pointcloud, and so
+    one is required at construction.
+    """
+    def __init__(self, pointcloud, pointcloud_index, label, label_index):
+        self.pointcloud = pointcloud
+        self.pointcloud_index = pointcloud_index
+        self.label = label
+        self.label_index = label_index
+
+    def aspoint(self):
+        return self.pointcloud.points_and_metapoints[self.pointcloud_index]
+
+    def asindex(self):
+        return self.pointcloud_index
+
+    @property
+    def numbered_label(self):
+        return self.label + '_' + str(self.label_index)
 
 
-class Landmarks(object):
+class ReferenceLandmark(Landmark):
+    """A Landmark that references a point that is a part of a point cloud
+    """
+    def __init__(self, pointcloud, pointcloud_index, label, label_index):
+        Landmark.__init__(self, pointcloud, pointcloud_index,
+                label, label_index)
+        if pointcloud_index < 0 or pointcloud_index > self.pointcloud.n_points:
+            raise Exception("Reference landmarks have to have an index "\
+                    + "in the range 0 < i < n_points of the parent pointcloud")
+
+
+class MetaLandmark(Landmark):
+    """A landmark that is totally seperate to the parent point cloud."
+    """
+    def __init__(self, pointcloud, metapoint, label, label_index):
+        pointcloud_index = pointcloud.addmetapoint(metapoint)
+        Landmark.__init__(self, pointcloud, pointcloud_index,
+                label, label_index)
+
+    @property
+    def metapoint_index(self):
+        """ How far into the metapoints part of the array this metapoint is
+        """
+        return self.index - self.pc.n_points - 1
+
+class LandmarkManager(object):
     """Class for storing and manipulating Landmarks associated with a shape.
     Landmarks index into the points and metapoints of the associated
     PointCloud. Landmarks which are expicitly given as coordinates would
@@ -114,40 +180,58 @@ class Landmarks(object):
     would be composed entirely of points. This class can handle any arbitrary
     mixture of the two.
     """
-    def __init__(self, pointcloud, landmarks_dict):
+    def __init__(self, pointcloud):
         """ pointcloud - the shape whose these landmarks apply to
         landmark_dict - keys - landmark classes (e.g. 'mouth')
                         values - ordered list of landmark indices into
                         pointcloud.points_and_metapoints
         """
         self.pc = pointcloud
+        self.all_landmarks = []
+        self.labels = {}
         # indexes are the indexes into the points and metapoints of self.pc.
         # note that the labels are always sorted when stored.
-        self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
+
+    def add_reference_landmarks(self, landmark_dict):
+        #self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
+        for k, v in landmark_dict.iteritems():
+            k_lms = []
+            for i, index in enumerate(v):
+                lm = ReferenceLandmark(self.pc, index, k, i)
+                self.all_landmarks.append(lm)
+                k_lms.append(lm)
+            self.labels[k] = k_lms
+
 
     def all(self, labels=False, indexes=False, numbered=False):
         """return all the landmark indexes. The order is always guaranteed to
         be the same for a given landmark configuration - specifically, the
         points will be returned by sorted label, and always in the order that
-        each point the landmark was construted in.
+        each point the landmark was construted in. THIS IS OUT OF DATE.
         """
-        all_lm = []
-        lmlabels = []
-        for k, v in self.indexes.iteritems():
-            if indexes:
-                all_lm += v
-            else:
-                all_lm += list(self.pc.points_and_metapoints[v])
-            newlabels = [k] * len(v)
-            if numbered:
-                newlabels = [x + '_' + str(i) for i, x in enumerate(newlabels)]
-            lmlabels += newlabels
+        v = self.reference_landmarks
+        if indexes:
+            all_lm = [x.asindex() for x in v]
+        else:
+            all_lm = [list(x.aspoint()) for x in v]
+        newlabels = [x.label for x in v]
+        if numbered:
+            newlabels = [x.numbered_label for x in v]
+        lmlabels = newlabels
         if labels:
            return np.array(all_lm), lmlabels
         return np.array(all_lm)
 
-    def __getitem__(self, label):
-        return self.pc.points_and_metapoints[self.indexes[label]]
+    @property
+    def reference_landmarks(self):
+        return [x for x in self.all_landmarks if isinstance(x, ReferenceLandmark)]
+
+    @property
+    def meta_landmarks(self):
+        return [x for x in self.all_landmarks if isinstance(x, MetaLandmark)]
+
+    #def __getitem__(self, label):
+    #    return self.pc.points_and_metapoints[self.indexes[label]]
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
@@ -172,11 +256,14 @@ class Landmarks(object):
 
     @property
     def config(self):
-        """A nested tuple specifying the precise nature of the landmarks
-        (labels, and n_points per label). Allows for comparison of Landmarks
-        to see if they are likely describing the same shape.
+        """A frozen set specifying all the landmarks numbered labels
         """
-        return tuple((k,len(v)) for k,v in self.indexes.iteritems())
+        #"""A nested tuple specifying the precise nature of the landmarks
+        #(labels, and n_points per label). Allows for comparison of Landmarks
+        #to see if they are likely describing the same shape.
+        #"""
+        #return tuple((k,len(v)) for k,v in self.labels.iteritems())
+        return frozenset(x.numbered_label for x in self.all_landmarks)
 
 
 class SpatialDataCollectionError(Exception):
