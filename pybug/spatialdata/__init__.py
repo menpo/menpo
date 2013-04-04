@@ -29,7 +29,7 @@ class PointCloud(SpatialData):
     for using their library methods (TODO). Handles the addition of spatial
     metadata (most commonly landmarks) by storing all such 'metapoints'
     (points which aren't part of the shape) and normal points together into
-    a joint field (points_and_metapoints). This is masked from the end user 
+    a joint field (points_and_metapoints). This is masked from the end user
     by the use of properties.
     """
     def __init__(self, points, n_metapoints=0):
@@ -108,7 +108,7 @@ class PointCloud3d(PointCloud):
 
 class Landmarks(object):
     """Class for storing and manipulating Landmarks associated with a shape.
-    Landmarks index into the points and metapoints of the associated 
+    Landmarks index into the points and metapoints of the associated
     PointCloud. Landmarks which are expicitly given as coordinates would
     be entirely constructed from metapoints, whereas point indexed landmarks
     would be composed entirely of points. This class can handle any arbitrary
@@ -117,7 +117,7 @@ class Landmarks(object):
     def __init__(self, pointcloud, landmarks_dict):
         """ pointcloud - the shape whose these landmarks apply to
         landmark_dict - keys - landmark classes (e.g. 'mouth')
-                        values - ordered list of landmark indices into 
+                        values - ordered list of landmark indices into
                         pointcloud.points_and_metapoints
         """
         self.pc = pointcloud
@@ -127,8 +127,8 @@ class Landmarks(object):
 
     def all(self, labels=False, indexes=False, numbered=False):
         """return all the landmark indexes. The order is always guaranteed to
-        be the same for a given landmark configuration - specifically, the 
-        points will be returned by sorted label, and always in the order that 
+        be the same for a given landmark configuration - specifically, the
+        points will be returned by sorted label, and always in the order that
         each point the landmark was construted in.
         """
         all_lm = []
@@ -187,7 +187,7 @@ class ShapeClassError(SpatialDataCollectionError):
 
 
 class SpatialDataCollection(object):
-    """ A bag of SpatialData. Provides funtionality for 
+    """ A bag of SpatialData. Provides funtionality for
     - viewing all the data in the set
     - performing transformations on all pieces of data in the set
 
@@ -196,7 +196,7 @@ class SpatialDataCollection(object):
     """
     def __init__(self, spatialdataiter):
         if not all(isinstance(x, SpatialData) for x in spatialdataiter):
-            notsd = [x for x in spatialdataiter 
+            notsd = [x for x in spatialdataiter
                     if not isinstance(x, SpatialData)]
             raise SpatialDataCollectionError('Can only add SpatialData '\
                     + ' instances (' + `notsd` + ' are not)')

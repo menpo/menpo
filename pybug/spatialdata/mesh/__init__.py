@@ -164,3 +164,12 @@ class PolyMesh(spatialdata.PointCloud3d):
 
 
 
+class TriMeshShapeClass(spatialdata.ShapeClass):
+    """A shape class that only contains TriMesh instances
+    """
+    def __init__(self, trimeshiter):
+        spatialdata.ShapeClass.__init__(self, trimeshiter)
+        if not all(isinstance(x, TriMesh) for x in self.data):
+            raise spatialdata.ShapeClassError("Trying to build a trimesh shape"\
+                    + " class with non-trimesh elements")
+

@@ -1,16 +1,34 @@
 import numpy as np
 from scipy.spatial import distance
 from scipy.stats import norm
-from pybug import spatialdata
-from pybug.transform.geodesics import TriMeshGeodesics 
+from pybug.spatialdata.mesh import TriMeshShapeClass
+from pybug.transform.geodesics import TriMeshGeodesics
 
 
-class GeodesicCorrespondence(spatialdata.ShapeClass):
+class GeodesicMasker(TriMeshShapeClass):
+    """A trimesh class that can produce masked versions of its members 
+    as judged by a geodesic distance from a set of landmark points
+    """
+    def __init__(self, trimeshiter):
+        TriMeshShapeClass.__init__(self, trimeshiter)
 
-    def __init__(self, spatialdataiter):
-        spatialdata.ShapeClass.__init__(self, spatialdataiter)
+    def geodesics_from(self, label, distance):
+        """Returns
+        """
+        result = []
         for x in self.data:
-            x.geodesic = TriMeshGeodesics(x.points, x.trilist)
+            x.geodesics = TriMeshGeodesics(x.points, x.trilist)
+            phi = x.geodesics.geodesics(x.landmarks.indexes[label])['phi']
+            result.append(x.trimesh_from_pointmask(phi < distance))
+        return result
+
+
+class GeodesicCorrespondence(TriMeshShapeClass):
+
+    def __init__(self, trimeshiter):
+        TriMeshShapeClass.__init__(self, trimeshiter)
+        for x in self.data:
+            x.geodesics = TriMeshGeodesics(x.points, x.trilist)
         self.gsig_all_points()
         #self.calculate_mapping()
         #self.calculate_mapped_faces()
@@ -18,13 +36,14 @@ class GeodesicCorrespondence(spatialdata.ShapeClass):
     def gsig_all_points(self):
         for x in self.data:
             gsig = np.empty([x.n_points, x.landmarks.n_points])
-            lms, numberedlabels = x.landmarks.all(indexes=True, labels=True, 
+            lms, numberedlabels = x.landmarks.all(indexes=True, labels=True,
                     numbered=True)
             for i, lm in enumerate(lms):
                 print lm
-                geodesic = x.geodesic.geodesics([lm])
+                geodesic = x.geodesics.geodesics([lm])
                 gsig[:,i] = geodesic['phi']
             x.add_pointfield('gsig', gsig)
+        self.numberedlabels = numberedlabels
 
 
     def calculate_mapping(self):
