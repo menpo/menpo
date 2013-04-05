@@ -18,7 +18,7 @@ class GeodesicMasker(TriMeshShapeClass):
         result = []
         for x in self.data:
             x.geodesics = TriMeshGeodesics(x.points, x.trilist)
-            indexes = [lm.asindex() for lm in x.landmarks.with_label(label)]
+            indexes = [lm.index for lm in x.landmarks.with_label(label)]
             print indexes
             phi = x.geodesics.geodesics(indexes)['phi']
             result.append(x.trimesh_from_pointmask(phi < distance))
@@ -38,8 +38,8 @@ class GeodesicCorrespondence(TriMeshShapeClass):
     def gsig_all_points(self):
         for x in self.data:
             gsig = np.empty([x.n_points, x.landmarks.n_points])
-            lms, numberedlabels = x.landmarks.all(indexes=True, labels=True,
-                    numbered=True)
+            lms = [y.point for y in x.landmarks]
+            numberedlabels = [y.numbered_label for y in x.landmarks]
             for i, lm in enumerate(lms):
                 print lm
                 geodesic = x.geodesics.geodesics([lm])

@@ -132,15 +132,13 @@ class Landmark(object):
     """
     def __init__(self, pointcloud, pointcloud_index, label, label_index):
         self.pointcloud = pointcloud
-        self.pointcloud_index = pointcloud_index
+        self.index = pointcloud_index
         self.label = label
         self.label_index = label_index
 
-    def aspoint(self):
-        return self.pointcloud.points_and_metapoints[self.pointcloud_index]
-
-    def asindex(self):
-        return self.pointcloud_index
+    @property
+    def point(self):
+        return list(self.pointcloud.points_and_metapoints[self.index])
 
     @property
     def numbered_label(self):
@@ -180,36 +178,46 @@ class LandmarkManager(object):
     would be composed entirely of points. This class can handle any arbitrary
     mixture of the two.
     """
-    def __init__(self, pointcloud):
+    def __init__(self, pointcloud, landmarks=[]):
         """ pointcloud - the shape whose these landmarks apply to
-        landmark_dict - keys - landmark classes (e.g. 'mouth')
-                        values - ordered list of landmark indices into
-                        pointcloud.points_and_metapoints
+        landmarks - an existing list of landmarks to initialize this manager to
         """
-        self.pc = pointcloud
+        self.pointcloud = pointcloud
         self.all_landmarks = []
-        self.labels = {}
-        # indexes are the indexes into the points and metapoints of self.pc.
-        # note that the labels are always sorted when stored.
+        if landmarks != []:
+            pcs = set(lm.pointcloud for lm in landmarks)
+            if len(pcs) != 1:
+                raise Exception('Building a LandmarkManager using Landmarks '\
+                        + 'with non-compatable pointclouds')
+            if landmarks[0].pointcloud  is not self.pointcloud:
+                raise Exception('Building a LandmarkManager using Landmarks '\
+                        + 'with a different pointcloud to self')
+            self.all_landmarks = landmarks
+
+    def __iter__(self):
+        self._i = -1
+        return self
+
+    def next(self):
+        self._i += 1
+        if self._i == len(self.all_landmarks):
+            raise StopIteration
+        return self.all_landmarks[self._i]
 
     def add_reference_landmarks(self, landmark_dict):
-        #self.indexes = OrderedDict(sorted(landmarks_dict.iteritems()))
         for k, v in landmark_dict.iteritems():
-            k_lms = []
             for i, index in enumerate(v):
-                lm = ReferenceLandmark(self.pc, index, k, i)
+                lm = ReferenceLandmark(self.pointcloud, index, k, i)
                 self.all_landmarks.append(lm)
-                k_lms.append(lm)
-            self.labels[k] = k_lms
-
 
     def all(self, labels=False, indexes=False, numbered=False):
+        raise Exception
         """return all the landmark indexes. The order is always guaranteed to
         be the same for a given landmark configuration - specifically, the
         points will be returned by sorted label, and always in the order that
         each point the landmark was construted in. THIS IS OUT OF DATE.
         """
-        v = self.reference_landmarks
+        v = self.reference_landmarks().all_landmarks
         if indexes:
             all_lm = [x.asindex() for x in v]
         else:
@@ -222,27 +230,34 @@ class LandmarkManager(object):
            return np.array(all_lm), lmlabels
         return np.array(all_lm)
 
-    @property
     def reference_landmarks(self):
-        return [x for x in self.all_landmarks if isinstance(x, ReferenceLandmark)]
+        return self._rebuild([x for x in self.all_landmarks
+            if isinstance(x, ReferenceLandmark)])
 
-    @property
     def meta_landmarks(self):
-        return [x for x in self.all_landmarks if isinstance(x, MetaLandmark)]
+        return self._rebuild([x for x in self.all_landmarks
+            if isinstance(x, MetaLandmark)])
 
     def with_label(self, label):
-        return [x for x in self.all_landmarks if x.label == label]
+        return self._rebuild([x for x in self.all_landmarks
+            if x.label == label])
 
-    #def __getitem__(self, label):
-    #    return self.pc.points_and_metapoints[self.indexes[label]]
+    def without_label(self, label):
+        return self._rebuild([x for x in self.all_landmarks
+            if x.label != label])
+
+    def _rebuild(self, landmarks):
+        return LandmarkManager(self.pointcloud, landmarks=landmarks)
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
-        lms, labels = self.all(labels=True, numbered=True)
-        pcviewer = self.pc.view(**kwargs)
+        #lms, labels = self.all(labels=True, numbered=True)
+        lms = np.array([x.point for x in self])
+        labels = [x.numbered_label for x in self]
+        pcviewer = self.pointcloud.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
         pointviewer.view(onviewer=pcviewer)
         lmviewer = LabelViewer3d(lms, labels, offset=np.array([0,16,0]))
@@ -251,22 +266,20 @@ class LandmarkManager(object):
 
     @property
     def n_points(self):
-        return self.all().shape[0]
+        return len(self)
+
+    def __len__(self):
+        return len(self.all_landmarks)
 
     @property
-    def n_groups(self):
-        return len(self.indexes)
+    def n_labels(self):
+        return len(set(x.label for x in self))
 
     @property
     def config(self):
         """A frozen set specifying all the landmarks numbered labels
         """
-        #"""A nested tuple specifying the precise nature of the landmarks
-        #(labels, and n_points per label). Allows for comparison of Landmarks
-        #to see if they are likely describing the same shape.
-        #"""
-        #return tuple((k,len(v)) for k,v in self.labels.iteritems())
-        return frozenset(x.numbered_label for x in self.all_landmarks)
+        return frozenset(x.numbered_label for x in self)
 
 
 class SpatialDataCollectionError(Exception):

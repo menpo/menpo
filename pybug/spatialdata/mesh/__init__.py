@@ -135,8 +135,8 @@ class TriMesh(spatialdata.PointCloud3d):
         # TODO transfer metalandmarks and points.
         # also, convert reference landmarks to meta landmarks if their point is removed.
         # TODO make this more solid - don't want to directly touch the all_landmarks
-        for lm in self.landmarks.reference_landmarks:
-            old_index = lm.pointcloud_index
+        for lm in self.landmarks.reference_landmarks():
+            old_index = lm.index
             if np.all(np.in1d(old_index, kept_points_orig_index)):
                 # referenced point still exists, in the new mesh. add it!
                 new_index = pi_map[old_index]
