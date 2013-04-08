@@ -16,6 +16,6 @@ setup(name='pybug',
       author_email = 'james.booth08@imperial.ac.uk',
       ext_modules = cythonize(cython_modules, nthreads=2, quiet=True),
       packages = find_packages(),
-      install_requires = ['numpy>=1.6']
+      install_requires = ['cython>=0.17', 'numpy>=1.6']
       )
 
