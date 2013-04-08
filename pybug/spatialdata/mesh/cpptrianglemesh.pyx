@@ -2,7 +2,7 @@
 # distutils: sources = ./pybug/spatialdata/mesh/cpp/mesh.cpp ./pybug/spatialdata/mesh/cpp/vertex.cpp ./pybug/spatialdata/mesh/cpp/halfedge.cpp ./pybug/spatialdata/mesh/cpp/triangle.cpp
 
 from libcpp.vector cimport vector
-from libcpp.set        cimport set
+from libcpp.set cimport set
 from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
 cimport numpy as np
