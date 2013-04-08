@@ -1,3 +1,4 @@
+import collections
 import kirsanov
 
 class TriMeshGeodesicsError(Exception):
@@ -15,14 +16,14 @@ class TriMeshGeodesics(object):
     @property
     def n_points(self):
         return self.points.shape[0]
-        
+
 
     def geodesics(self, source_indexes, method='exact'):
-        """Calculate the geodesic distance for all points from the 
+        """Calculate the geodesic distance for all points from the
         source_indexes. kwarg 'method' can be used to choose the algorithm
         (default method='exact' giving exact geodesics)
         """
-        if type(source_indexes) == int:
+        if not isinstance(source_indexes, collections.Iterable):
             source_indexes = [source_indexes]
         if not all(i >= 0 and i < self.n_points for i in source_indexes):
             raise TriMeshGeodesicsError('Invalid indexes '\
