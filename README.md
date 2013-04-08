@@ -11,6 +11,7 @@ scipy   - linear algebra operations
 mayavi2 - visualization
 
 
+
 STRUCTURE
 =========
 

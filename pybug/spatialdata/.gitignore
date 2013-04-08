@@ -1,2 +1,0 @@
-# don't want to VC the cython generated cpp file
-cpptrianglemesh.cpp
