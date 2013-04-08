@@ -4,3 +4,4 @@
 *.exe
 *.DS_Store
 build/*
+pybug.egg-info/*
