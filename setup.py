@@ -1,8 +1,15 @@
 from distutils.core import setup
 from Cython.Build import cythonize
+import subprocess
 
 cython_modules = ["pybug/transform/geodesics/kirsanov.pyx",
                   "pybug/spatialdata/mesh/cpptrianglemesh.pyx"]
+
+
+# grab the submodule and update if required
+subprocess.call("git submodule update --init -q", shell=True)
+
+
 
 setup(name='pybug',
       version='0.1',
