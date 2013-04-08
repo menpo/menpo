@@ -2,6 +2,7 @@
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import subprocess
+import dependencies
 
 # grab the submodule and update if required
 subprocess.call("git submodule update --init -q", shell=True)
@@ -16,7 +17,6 @@ setup(name='pybug',
       author_email = 'james.booth08@imperial.ac.uk',
       ext_modules = cythonize(cython_modules, nthreads=2, quiet=True),
       packages = find_packages(),
-      install_requires = ['Cython>=0.18', 'numpy>=1.7.1', 'matplotlib>=1.1.0',
-          'ipython>=0.13.1', 'Spinx>=1.1.3']
+      install_requires = dependencies.requirements
       )
 

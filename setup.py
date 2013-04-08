@@ -2,6 +2,7 @@
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 import subprocess
+import dependencies
 
 # grab the submodule and update if required
 subprocess.call("git submodule update --init -q", shell=True)
@@ -20,7 +21,6 @@ setup(name='pybug',
       author_email = 'james.booth08@imperial.ac.uk',
       ext_modules = [kirsanov_ext, cpptrianglemesh_ext],
       packages = find_packages(),
-      install_requires = ['Cython>=0.18', 'numpy>=1.7.1',
-          'ipython>=0.13.1', 'Spinx>=1.1.3']
+      install_requires = dependencies.requirements
       )
 
