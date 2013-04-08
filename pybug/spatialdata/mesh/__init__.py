@@ -85,19 +85,22 @@ class TriMesh(spatialdata.PointCloud3d):
             viewer = TriMeshViewer3d(self.points, self.trilist,
                     color_per_tri=self.trifields.get('color'),
                     color_per_point=self.pointfields.get('color'))
-
         return viewer.view()
 
-    def trimesh_from_pointmask(self, pointmask, astype='self'):
-        """ Builds a new trimesh from a boolean mask of points that we wish to
+    def new_trimesh(self, pointmask=None, astype='self'):
+        """ Builds a new trimesh from this one. 
         keep. Transfers across all fields, rebuilds a suitable trilist, and
         handles landmark and metapoint translation (or will do, still TODO!)
         By default will return a mesh of type(self) (i.e. FastTriMeshes will
         produce FastTriMeshes) but this can be overridden using the kwarg
         `astype`.
+        kwargs: pointmask: a boolean mask of points that we wish to keep
         """
         orig_point_index = np.arange(self.n_points)
-        kept_points_orig_index = orig_point_index[pointmask]
+        if pointmask != None:
+            kept_points_orig_index = orig_point_index[pointmask]
+        else:
+            kept_points_orig_index = orig_point_index
         trilist_mask = np.in1d(self.trilist, kept_points_orig_index).reshape(
                 self.trilist.shape)
         # remove any triangle missing any number of points

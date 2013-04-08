@@ -183,7 +183,7 @@ class LandmarkManager(object):
         landmarks - an existing list of landmarks to initialize this manager to
         """
         self.pointcloud = pointcloud
-        self.all_landmarks = []
+        self._data = []
         if landmarks != []:
             pcs = set(lm.pointcloud for lm in landmarks)
             if len(pcs) != 1:
@@ -192,7 +192,8 @@ class LandmarkManager(object):
             if landmarks[0].pointcloud  is not self.pointcloud:
                 raise Exception('Building a LandmarkManager using Landmarks '\
                         + 'with a different pointcloud to self')
-            self.all_landmarks = landmarks
+            self._data = landmarks
+            self._sort_data()
 
     def __iter__(self):
         self._i = -1
@@ -200,50 +201,37 @@ class LandmarkManager(object):
 
     def next(self):
         self._i += 1
-        if self._i == len(self.all_landmarks):
+        if self._i == len(self._data):
             raise StopIteration
-        return self.all_landmarks[self._i]
+        return self._data[self._i]
 
     def add_reference_landmarks(self, landmark_dict):
         for k, v in landmark_dict.iteritems():
             for i, index in enumerate(v):
                 lm = ReferenceLandmark(self.pointcloud, index, k, i)
-                self.all_landmarks.append(lm)
+                self._data.append(lm)
+        self._sort_data()
 
-    def all(self, labels=False, indexes=False, numbered=False):
-        raise Exception
-        """return all the landmark indexes. The order is always guaranteed to
-        be the same for a given landmark configuration - specifically, the
-        points will be returned by sorted label, and always in the order that
-        each point the landmark was construted in. THIS IS OUT OF DATE.
+    def _sort_data(self):
+        """ Sorts the data by the numbered_label. Ensures that iteration
+        over self is always in a consitent order.
         """
-        v = self.reference_landmarks().all_landmarks
-        if indexes:
-            all_lm = [x.asindex() for x in v]
-        else:
-            all_lm = [list(x.aspoint()) for x in v]
-        newlabels = [x.label for x in v]
-        if numbered:
-            newlabels = [x.numbered_label for x in v]
-        lmlabels = newlabels
-        if labels:
-           return np.array(all_lm), lmlabels
-        return np.array(all_lm)
+        self._data.sort(key=lambda x: x.numbered_label)
 
     def reference_landmarks(self):
-        return self._rebuild([x for x in self.all_landmarks
+        return self._rebuild([x for x in self._data
             if isinstance(x, ReferenceLandmark)])
 
     def meta_landmarks(self):
-        return self._rebuild([x for x in self.all_landmarks
+        return self._rebuild([x for x in self._data
             if isinstance(x, MetaLandmark)])
 
     def with_label(self, label):
-        return self._rebuild([x for x in self.all_landmarks
+        return self._rebuild([x for x in self._data
             if x.label == label])
 
     def without_label(self, label):
-        return self._rebuild([x for x in self.all_landmarks
+        return self._rebuild([x for x in self._data
             if x.label != label])
 
     def _rebuild(self, landmarks):
@@ -254,7 +242,6 @@ class LandmarkManager(object):
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
-        #lms, labels = self.all(labels=True, numbered=True)
         lms = np.array([x.point for x in self])
         labels = [x.numbered_label for x in self]
         pcviewer = self.pointcloud.view(**kwargs)
@@ -264,12 +251,8 @@ class LandmarkManager(object):
         lmviewer.view(onviewer=pcviewer)
         return lmviewer
 
-    @property
-    def n_points(self):
-        return len(self)
-
     def __len__(self):
-        return len(self.all_landmarks)
+        return len(self._data)
 
     @property
     def n_labels(self):

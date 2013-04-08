@@ -21,7 +21,7 @@ class GeodesicMasker(TriMeshShapeClass):
             indexes = [lm.index for lm in x.landmarks.with_label(label)]
             print indexes
             phi = x.geodesics.geodesics(indexes)['phi']
-            result.append(x.trimesh_from_pointmask(phi < distance))
+            result.append(x.new_trimesh(pointmask=(phi < distance)))
         return result
 
 
@@ -32,34 +32,30 @@ class GeodesicCorrespondence(TriMeshShapeClass):
         for x in self.data:
             x.geodesics = TriMeshGeodesics(x.points, x.trilist)
         self.gsig_all_points()
-        #self.calculate_mapping()
+        self.f0 = self.data[0]
+        self.f1 = self.data[1]
+        self.calculate_mapping()
+        self.generate_mapped_faces()
         #self.calculate_mapped_faces()
 
     def gsig_all_points(self):
         for x in self.data:
             gsig = np.empty([x.n_points, x.landmarks.n_points])
-            lms = [y.point for y in x.landmarks]
-            numberedlabels = [y.numbered_label for y in x.landmarks]
-            for i, lm in enumerate(lms):
-                print lm
-                geodesic = x.geodesics.geodesics([lm])
+            for i, lm in enumerate(x.landmarks.reference_landmarks()):
+                geodesic = x.geodesics.geodesics(lm.index)
                 gsig[:,i] = geodesic['phi']
             x.add_pointfield('gsig', gsig)
-        self.numberedlabels = numberedlabels
 
     def calculate_mapping(self):
-        if self.std_dev == None:
-            print 'no std dev supplied - creating a linear mapping'
-            self.min_2_to_1, self.min_1_to_2 = linear_geodesic_mapping(self.gsig_1, self.gsig_2)
-        else:
-            print 'std dev supplied - creating a weighted mapping with std_dev ' + `self.std_dev`
-            self.min_2_to_1, self.min_1_to_2 = weighted_geodesic_mapping(self.gsig_1, self.gsig_2, std_dev=std_dev)
+        min_1_to_0, min_0_to_1 = linear_geodesic_mapping(
+                self.f0.pointfields['gsig'],
+                self.f1.pointfields['gsig'])
+        self.f0.add_pointfield(self.f1, min_1_to_0)
+        self.f1.add_pointfield(self.f0, min_0_to_1)
 
-    def calculate_mapped_faces(self):
-        self.face_2_on_1 = new_face_from_mapping(self.face_1, self.face_2,
-                self.min_2_to_1)
-        self.face_1_on_2 = new_face_from_mapping(self.face_2, self.face_1,
-                self.min_1_to_2)
+    def generate_mapped_faces(self):
+        self.face_1_on_0 = new_face_from_mapping(self.f0, self.f1)
+        self.face_0_on_1 = new_face_from_mapping(self.f1, self.f0)
 
 def linear_geodesic_mapping(phi_1, phi_2):
     distances = distance.cdist(phi_1, phi_2)
@@ -119,10 +115,9 @@ def geodesic_signiture_for_all_landmarks_with_mask(face, mask, method='exact'):
     # ph_coords s.t. geodesic_signiture[0] is the geodesic vector for the first ordinate
     return phi_vectors
 
-def new_face_from_mapping(face_a, face_b, min_b_to_a):
-    return Face(face_a.coords, face_a.tri_index,
-            texture=face_b.texture, texture_coords=face_b.texture_coords_per_vertex[min_b_to_a])
-
+def new_face_from_mapping(face_a, face_b):
+    newface = face_a.new_trimesh()
+    return newface
 
 def unique_closest_n(phi, n):
     ranking = np.argsort(phi, axis=1)
