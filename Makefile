@@ -1,2 +1,2 @@
 execute:
-	python setup-cython.py build_ext --inplace
+	python setup.py build_ext --inplace
