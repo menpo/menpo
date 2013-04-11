@@ -15,7 +15,8 @@ setup(name='pybug',
       description = 'iBUG Facial Modelling Toolkit',
       author = 'James Booth',
       author_email = 'james.booth08@imperial.ac.uk',
-      ext_modules = cythonize(cython_modules, nthreads=2, quiet=True),
+      ext_modules = cythonize(cython_modules, nthreads=2, 
+          quiet=True, language='c++'),
       packages = find_packages(),
       install_requires = dependencies.requirements
       )
