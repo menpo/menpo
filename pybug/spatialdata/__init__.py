@@ -6,20 +6,23 @@ from pybug.visualization import PointCloudViewer3d, LabelViewer3d
 class FieldError(Exception):
     pass
 
+
 class PointFieldError(FieldError):
     pass
+
 
 class SpatialDataConstructionError(Exception):
     pass
 
 
 class SpatialData(object):
-    """ Abstract representation of a n-dimentional piece of spatial data.
-    This could be simply be a set of vectors in an n-dimentional space,
-    or a structed surface or mesh. At this level of abstraction we only
+    """ Abstract representation of a n-dimensional piece of spatial data.
+    This could be simply be a set of vectors in an n-dimensional space,
+    or a structured surface or mesh. At this level of abstraction we only
     define basic metadata that can be attached to all kinds of spatial
     data
     """
+
     def __init__(self):
         pass
 
@@ -32,12 +35,13 @@ class PointCloud(SpatialData):
     a joint field (points_and_metapoints). This is masked from the end user
     by the use of properties.
     """
+
     def __init__(self, points):
         SpatialData.__init__(self)
-        self.n_points, n_dims  = points.shape
+        self.n_points, n_dims = points.shape
         self.n_metapoints = 0
         cachesize = 1000
-        # prealocate allpoints to have enough room for cachesize metapoints
+        # preallocate allpoints to have enough room for cachesize metapoints
         self._allpoints = np.empty([self.n_points + cachesize, n_dims])
         self._allpoints[:self.n_points] = points
         self.pointfields = {}
@@ -51,7 +55,7 @@ class PointCloud(SpatialData):
         """Points which are solely for metadata. Are guaranteed to be
         transformed in exactly the same way that points are. Useful for
         storing explicit landmarks (landmarks that have coordinates and
-        don't simply reference exisiting points).
+        don't simply reference existing points).
         """
         return self._allpoints[self.n_points:]
 
@@ -68,11 +72,11 @@ class PointCloud(SpatialData):
         return self.points.shape[1]
 
     def __str__(self):
-        message = str(type(self)) + ': n_points: ' + `self.n_points`  \
-                + ', n_dims: ' + `self.n_dims`
+        message = str(type(self)) + ': n_points: ' + `self.n_points` \
+                  + ', n_dims: ' + `self.n_dims`
         if len(self.pointfields) != 0:
             message += '\n  pointfields:'
-            for k,v in self.pointfields.iteritems():
+            for k, v in self.pointfields.iteritems():
                 try:
                     field_dim = v.shape[1]
                 except IndexError:
@@ -81,13 +85,14 @@ class PointCloud(SpatialData):
         return message
 
     def add_pointfield(self, name, field):
-        """Add another set of field values (of arbitrary dimention) to each
+        """Add another set of field values (of arbitrary dimension) to each
         point.
         """
         if field.shape[0] != self.n_points:
             raise PointFieldError("Trying to add a field with " +
-                    `field.shape[0]` + " values (need one field value per " +
-                    "point => " + `self.n_points` + " values required")
+                                  str(field.shape[0]) + " values (need one "
+                                  + "field value per point => "
+                                  + str(self.n_points) + " values required")
         else:
             self.pointfields[name] = field
 
@@ -96,28 +101,28 @@ class PointCloud(SpatialData):
         position that this point is stored at in self.points_and_metapoints.
         """
         if metapoint.size != self.n_dims:
-            raise Exception("metapoint must be of the same number of dims"\
-                    + " as the parent pointcloud")
+            raise Exception("metapoint must be of the same number of dims"
+                            + " as the parent pointcloud")
         next_index = self.n_points_and_metapoints
         self._allpoints[next_index] = metapoint.flatten()
         self.n_metapoints += 1
         return next_index
 
-
     def view(self):
-            print 'arbitrary dimensional PointCloud rendering is not supported.'
+        print 'arbitrary dimensional PointCloud rendering is not supported.'
 
 
 class PointCloud3d(PointCloud):
     """A PointCloud constrained to 3 dimensions. Has additional visualization
     methods. Should always be used in lieu of PointCloud when using 3D data.
     """
+
     def __init__(self, points):
         PointCloud.__init__(self, points)
         if self.n_dims != 3:
             raise SpatialDataConstructionError(
-                    'Trying to build a 3D Point Cloud with from ' +
-                    str(self.n_dims) + ' data')
+                'Trying to build a 3D Point Cloud with from ' +
+                str(self.n_dims) + ' data')
         self.landmarks = LandmarkManager(self)
 
     def view(self, **kwargs):
@@ -130,6 +135,7 @@ class Landmark(object):
     Only makes sense in the context of a parent pointcloud, and so
     one is required at construction.
     """
+
     def __init__(self, pointcloud, pointcloud_index, label, label_index):
         self.pointcloud = pointcloud
         self.index = pointcloud_index
@@ -148,50 +154,57 @@ class Landmark(object):
 class ReferenceLandmark(Landmark):
     """A Landmark that references a point that is a part of a point cloud
     """
+
     def __init__(self, pointcloud, pointcloud_index, label, label_index):
         Landmark.__init__(self, pointcloud, pointcloud_index,
-                label, label_index)
+                          label, label_index)
         if pointcloud_index < 0 or pointcloud_index > self.pointcloud.n_points:
-            raise Exception("Reference landmarks have to have an index "\
-                    + "in the range 0 < i < n_points of the parent pointcloud")
+            raise Exception("Reference landmarks have to have an index "
+                            + "in the range 0 < i < n_points of the parent "
+                            + "pointcloud")
 
 
 class MetaLandmark(Landmark):
-    """A landmark that is totally seperate to the parent point cloud."
+    """A landmark that is totally separate to the parent point cloud."
     """
+
     def __init__(self, pointcloud, metapoint, label, label_index):
         pointcloud_index = pointcloud.addmetapoint(metapoint)
         Landmark.__init__(self, pointcloud, pointcloud_index,
-                label, label_index)
+                          label, label_index)
 
     @property
     def metapoint_index(self):
         """ How far into the metapoints part of the array this metapoint is
         """
-        return self.index - self.pc.n_points - 1
+        return self.index - self.pointcloud.n_points - 1
+
 
 class LandmarkManager(object):
     """Class for storing and manipulating Landmarks associated with a shape.
     Landmarks index into the points and metapoints of the associated
-    PointCloud. Landmarks which are expicitly given as coordinates would
+    PointCloud. Landmarks which are explicitly given as coordinates would
     be entirely constructed from metapoints, whereas point indexed landmarks
     would be composed entirely of points. This class can handle any arbitrary
     mixture of the two.
     """
-    def __init__(self, pointcloud, landmarks=[]):
+
+    def __init__(self, pointcloud, landmarks=None):
         """ pointcloud - the shape whose these landmarks apply to
         landmarks - an existing list of landmarks to initialize this manager to
         """
+        if landmarks is None:
+            landmarks = []
         self.pointcloud = pointcloud
         self._data = []
-        if landmarks != []:
+        if landmarks:
             pcs = set(lm.pointcloud for lm in landmarks)
             if len(pcs) != 1:
-                raise Exception('Building a LandmarkManager using Landmarks '\
-                        + 'with non-compatable pointclouds')
-            if landmarks[0].pointcloud  is not self.pointcloud:
-                raise Exception('Building a LandmarkManager using Landmarks '\
-                        + 'with a different pointcloud to self')
+                raise Exception('Building a LandmarkManager using Landmarks '
+                                + 'with non-compatible pointclouds')
+            if landmarks[0].pointcloud is not self.pointcloud:
+                raise Exception('Building a LandmarkManager using Landmarks '
+                                + 'with a different pointcloud to self')
             self._data = landmarks
             self._sort_data()
 
@@ -214,25 +227,25 @@ class LandmarkManager(object):
 
     def _sort_data(self):
         """ Sorts the data by the numbered_label. Ensures that iteration
-        over self is always in a consitent order.
+        over self is always in a consistent order.
         """
         self._data.sort(key=lambda x: x.numbered_label)
 
     def reference_landmarks(self):
         return self._rebuild([x for x in self._data
-            if isinstance(x, ReferenceLandmark)])
+                              if isinstance(x, ReferenceLandmark)])
 
     def meta_landmarks(self):
         return self._rebuild([x for x in self._data
-            if isinstance(x, MetaLandmark)])
+                              if isinstance(x, MetaLandmark)])
 
     def with_label(self, label):
         return self._rebuild([x for x in self._data
-            if x.label == label])
+                              if x.label == label])
 
     def without_label(self, label):
         return self._rebuild([x for x in self._data
-            if x.label != label])
+                              if x.label != label])
 
     def _rebuild(self, landmarks):
         return LandmarkManager(self.pointcloud, landmarks=landmarks)
@@ -247,7 +260,7 @@ class LandmarkManager(object):
         pcviewer = self.pointcloud.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
         pointviewer.view(onviewer=pcviewer)
-        lmviewer = LabelViewer3d(lms, labels, offset=np.array([0,16,0]))
+        lmviewer = LabelViewer3d(lms, labels, offset=np.array([0, 16, 0]))
         lmviewer.view(onviewer=pcviewer)
         return lmviewer
 
@@ -268,32 +281,35 @@ class LandmarkManager(object):
 class SpatialDataCollectionError(Exception):
     pass
 
+
 class ShapeClassError(SpatialDataCollectionError):
     pass
 
 
 class SpatialDataCollection(object):
-    """ A bag of SpatialData. Provides funtionality for
+    """ A bag of SpatialData. Provides functionality for
     - viewing all the data in the set
     - performing transformations on all pieces of data in the set
 
     will enforce that all the added elements are instances of SpecialData
     but that's it.
     """
+
     def __init__(self, spatialdataiter):
         if not all(isinstance(x, SpatialData) for x in spatialdataiter):
             notsd = [x for x in spatialdataiter
-                    if not isinstance(x, SpatialData)]
-            raise SpatialDataCollectionError('Can only add SpatialData '\
-                    + ' instances (' + `notsd` + ' are not)')
+                     if not isinstance(x, SpatialData)]
+            raise SpatialDataCollectionError('Can only add SpatialData'
+                                             + ' instances (' + str(notsd)
+                                             + ' are not)')
         self.data = list(spatialdataiter)
 
     def add_spatialdata(self, spatialdata):
         """ Adds an instance of spatialdata to the collection
         """
         if not isinstance(spatialdata, SpatialData):
-            raise SpatialDataCollectionError('Can only add SpatialData '\
-                    + ' instances')
+            raise SpatialDataCollectionError('Can only add SpatialData '
+                                             + ' instances')
         else:
             self.data.append(spatialdata)
 
@@ -302,14 +318,15 @@ class ShapeClass(SpatialDataCollection):
     """A collection of SpatialData that all have the same
     landmark configuration (and so can be considered to be of the same shape)
     """
+
     def __init__(self, spatialdataiter):
         SpatialDataCollection.__init__(self, spatialdataiter)
         try:
             unique_lm_configs = set(x.landmarks.config for x in self.data)
         except AttributeError:
-            raise ShapeClassError("All elements of a shape class must have "\
-                    + "landmarks attached")
+            raise ShapeClassError("All elements of a shape class must have "
+                                  + "landmarks attached")
         if len(unique_lm_configs) != 1:
-            raise ShapeClassError("All elements in shape class must have "\
-                    + "landmarks with the same config")
+            raise ShapeClassError("All elements in shape class must have "
+                                  + "landmarks with the same config")
 
