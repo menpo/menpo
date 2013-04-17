@@ -6,3 +6,5 @@
 build/*
 pybug.egg-info/*
 .idea/*
+#we don't want to track cython generated cpp files
+*.cpp
