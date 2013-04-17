@@ -8,10 +8,15 @@ class TriFieldError(spatialdata.FieldError):
     pass
 
 
+class TextureError(Exception):
+    pass
+
+
 class TriMesh(spatialdata.PointCloud3d):
     """A piecewise planar 3D manifold composed from triangles with vertices
     indexed from points.
     """
+
     def __init__(self, points, trilist):
         spatialdata.PointCloud3d.__init__(self, points)
         self.trilist = trilist
@@ -22,7 +27,7 @@ class TriMesh(spatialdata.PointCloud3d):
         message = spatialdata.PointCloud.__str__(self)
         if len(self.trifields) != 0:
             message += '\n  trifields:'
-            for k,v in self.trifields.iteritems():
+            for k, v in self.trifields.iteritems():
                 try:
                     field_dim = v.shape[1]
                 except IndexError:
@@ -31,20 +36,19 @@ class TriMesh(spatialdata.PointCloud3d):
         message += '\nn_tris: ' + str(self.n_tris)
         return message
 
-
     def attach_texture(self, texture, tcoords, tcoords_trilist=None):
         """Attaches a trifield or pointfield called 'tcoords' depending
         on whether the tcoords given are per vertex or per triangle.
         kwargs:
            tcoords_trilist: a texture specific trilist used to index into
            the tcoords. In this case tcoords will be converted to a trifield
-           removing the dependancy on the texture specific trilist.
+           removing the dependency on the texture specific trilist.
            This comes at a memory cost (there will be many repeated tcoords in
-           the constrcted trifield), but allows for a consistent processing
+           the constructed trifield), but allows for a consistent processing
            of texture coords as just another field instance.
         """
         self.texture = texture
-        if tcoords_trilist != None:
+        if tcoords_trilist is not None:
             # looks like we have tcoords that are referenced into
             # by a trilist in the same way points are. As it becomes messy to
             # maintain different texturing options, we just turn this indexing
@@ -54,10 +58,11 @@ class TriMesh(spatialdata.PointCloud3d):
             # tcoords are just per vertex
             self.add_pointfield('tcoords', tcoords)
         elif tcoords.shape == (self.n_tris, 3, 2):
-            # explictly given per triangle evertex
+            # explicitly given per triangle vertex
             self.add_trifield('tcoords', tcoords)
         else:
-            raise TextureError("Don't understand how to deal with these tcoords.")
+            raise TextureError(
+                "Don't understand how to deal with these tcoords.")
 
     @property
     def n_tris(self):
@@ -66,29 +71,31 @@ class TriMesh(spatialdata.PointCloud3d):
     def add_trifield(self, name, field):
         if field.shape[0] != self.n_tris:
             raise TriFieldError("Trying to add a field with " +
-                    `field.shape[0]` + " values (need one field value per " +
-                    "tri => " + `self.n_tris` + " values required")
+                                str(field.shape[0]) + " values (need one "
+                                "field value per tri => " +
+                                str(self.n_tris) + ")")
         else:
             self.trifields[name] = field
 
     def view(self, textured=True):
-        """ Visualze the TriMesh. By default, if the mesh has a texture a
+        """ Visualize the TriMesh. By default, if the mesh has a texture a
         textured view will be provided. This can be overridden using the
         boolean kwarg `textured`
         """
         if textured and self.texture:
             viewer = TexturedTriMeshViewer3d(
-                    self.points, self.trilist, self.texture,
-                    tcoords_per_tri=self.trifields.get('tcoords'),
-                    tcoords_per_point=self.pointfields.get('tcoords'))
+                self.points, self.trilist, self.texture,
+                tcoords_per_tri=self.trifields.get('tcoords'),
+                tcoords_per_point=self.pointfields.get('tcoords'))
         else:
             viewer = TriMeshViewer3d(self.points, self.trilist,
-                    color_per_tri=self.trifields.get('color'),
-                    color_per_point=self.pointfields.get('color'))
+                                     color_per_tri=self.trifields.get('color'),
+                                     color_per_point=self.pointfields.get(
+                                         'color'))
         return viewer.view()
 
     def new_trimesh(self, pointmask=None, astype='self'):
-        """ Builds a new trimesh from this one. 
+        """ Builds a new trimesh from this one.
         keep. Transfers across all fields, rebuilds a suitable trilist, and
         handles landmark and metapoint translation (or will do, still TODO!)
         By default will return a mesh of type(self) (i.e. FastTriMeshes will
@@ -97,14 +104,14 @@ class TriMesh(spatialdata.PointCloud3d):
         kwargs: pointmask: a boolean mask of points that we wish to keep
         """
         orig_point_index = np.arange(self.n_points)
-        if pointmask != None:
+        if pointmask is not None:
             kept_points_orig_index = orig_point_index[pointmask]
         else:
             kept_points_orig_index = orig_point_index
         trilist_mask = np.in1d(self.trilist, kept_points_orig_index).reshape(
-                self.trilist.shape)
+            self.trilist.shape)
         # remove any triangle missing any number of points
-        tris_mask = np.all(trilist_mask, axis = 1)
+        tris_mask = np.all(trilist_mask, axis=1)
         kept_tris_orig_index = self.trilist[tris_mask]
         # some additional points will have to be removed as they no longer
         # form part of a triangle
@@ -124,8 +131,9 @@ class TriMesh(spatialdata.PointCloud3d):
         elif issubclass(astype, TriMesh):
             trimeshcls = astype
         else:
-            raise Exception('The mesh type ' + `astype` + ' is not understood'\
-                    + ' (need to be an instance of TriMesh)')
+            raise Exception('The mesh type ' + str(astype) + ' is not '
+                            'understood (needs to be an instance of '
+                            'TriMesh)')
         newtrimesh = trimeshcls(new_points, new_trilist)
         # now we just map over point fields and trifields respectively
         # (note that as tcoords are simply fields, this will inherently map
@@ -135,19 +143,23 @@ class TriMesh(spatialdata.PointCloud3d):
         for name, field in self.trifields.iteritems():
             newtrimesh.add_trifield(name, field[tris_mask])
         newtrimesh.texture = self.texture
-        # TODO transfer metalandmarks and points.
-        # also, convert reference landmarks to meta landmarks if their point is removed.
-        # TODO make this more solid - don't want to directly touch the all_landmarks
+        # TODO transfer metapoints and points.
+        # also, convert reference landmarks to meta landmarks if their point is
+        # removed.
+        # TODO make this more solid - don't want to directly touch the all
+        # landmarks
         for lm in self.landmarks.reference_landmarks():
             old_index = lm.index
             if np.all(np.in1d(old_index, kept_points_orig_index)):
                 # referenced point still exists, in the new mesh. add it!
                 new_index = pi_map[old_index]
-                newlm = spatialdata.ReferenceLandmark(newtrimesh, new_index, lm.label,
-                        lm.label_index)
+                newlm = spatialdata.ReferenceLandmark(newtrimesh, new_index,
+                                                      lm.label,
+                                                      lm.label_index)
                 newtrimesh.landmarks.all_landmarks.append(newlm)
             else:
-                print 'the point for landmark: ' + str(lm.numbered_label) + ' no longer will exist.'
+                print 'the point for landmark: ' + str(
+                    lm.numbered_label) + ' no longer will exist.'
         return newtrimesh
         #new_landmarks = self.landmarks.copy()
         #for feature in new_landmarks:
@@ -155,10 +167,11 @@ class TriMesh(spatialdata.PointCloud3d):
 
 
 class FastTriMesh(TriMesh, CppTriangleMesh):
-    """A TriMesh with an underlying C++ data structure, allowing for efficent
+    """A TriMesh with an underlying C++ data structure, allowing for efficient
     iterations around mesh vertices and triangles. Includes fast calculations
-    of the suface divergence, gradient and laplacian.
+    of the surface divergence, gradient and laplacian.
     """
+
     def __init__(self, points, trilist):
         CppTriangleMesh.__init__(self, points, trilist)
         TriMesh.__init__(self, points, trilist)
@@ -169,6 +182,7 @@ class PolyMesh(spatialdata.PointCloud3d):
     polyhedrons with vertices indexed from points. This is largely a stub that
     can be expanded later on if we need arbitrary polymeshes.
     """
+
     def __init__(self, points, polylist):
         spatialdata.PointCloud3d.__init__(self, points)
         self.polylist = polylist
@@ -178,13 +192,13 @@ class PolyMesh(spatialdata.PointCloud3d):
         return len(self.polylist)
 
 
-
 class TriMeshShapeClass(spatialdata.ShapeClass):
     """A shape class that only contains TriMesh instances
     """
+
     def __init__(self, trimeshiter):
         spatialdata.ShapeClass.__init__(self, trimeshiter)
         if not all(isinstance(x, TriMesh) for x in self.data):
-            raise spatialdata.ShapeClassError("Trying to build a trimesh shape"\
-                    + " class with non-trimesh elements")
-
+            raise spatialdata.ShapeClassError("Trying to build a trimesh shape"
+                                              " class with non-trimesh "
+                                              "elements")

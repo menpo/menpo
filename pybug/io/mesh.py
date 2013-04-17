@@ -8,47 +8,51 @@ import re
 from . import metadata
 from  pybug.spatialdata.mesh import TriMesh
 
-def process_with_meshlabserver(file_path, output_dir=None, script_path=None, 
-        output_filetype=None, export_flags=None):
-    """ Interface to meshlabserver to perform preprocessing on meshes before 
-    import. Returns a path to the result of the meshlabserver call, ready for 
+
+def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
+                               output_filetype=None, export_flags=None):
+    """ Interface to `meshlabserver` to perform prepossessing on meshes before
+    import. Returns a path to the result of the meshlabserver call, ready for
     import as usual.
     Kwargs:
      * script_path: if specified this script will be run on the input mesh.
      * output_dir: if None provided, set to the users tmp directory.
      * output_filetype: the output desired from meshlabserver. If not provided
              the output type will be the same as the input.
-     * export_flags: flags passed to the -om parameter. Allows for choosing what
-             aspects of the model will be exported (normals, texture coords etc)
+     * export_flags: flags passed to the -om parameter. Allows for choosing
+             what aspects of the model will be exported (normals,
+             texture coords etc)
     """
-    if output_dir == None:
+    if output_dir is None:
         output_dir = tempfile.gettempdir()
     filename = os.path.split(file_path)[-1]
-    if output_filetype != None:
+    if output_filetype is not None:
         file_root = os.path.splitext(filename)[0]
         output_filename = file_root + '.' + output_filetype
     else:
         output_filename = filename
     output_path = os.path.join(output_dir, output_filename)
-    command = 'meshlabserver -i ' + file_path + ' -o ' + \
-                        output_path 
-    if script_path != None:
-        command += ' -s ' + script_path 
-    if export_flags != None:
-        command +=    ' -om ' + export_flags
+    command = ('meshlabserver -i ' + file_path + ' -o ' +
+               output_path)
+    if script_path is not None:
+        command += ' -s ' + script_path
+    if export_flags is not None:
+        command += ' -om ' + export_flags
     commands.getoutput(command)
     return output_path
+
 
 class MeshImporter(object):
     """Base class for importing 3D meshes
     """
+
     def __init__(self, filepath):
         self.filepath = os.path.abspath(os.path.expanduser(filepath))
         self.path_and_filename = os.path.splitext(self.filepath)[0]
         # depreciate this once the other parsers are regexp
         with open(self.filepath) as f:
             self.lines = f.readlines()
-        # text is the entire file in one string (useful for regexp)
+            # text is the entire file in one string (useful for regexp)
         with open(self.filepath) as f:
             self.text = f.read()
         self.parse_geometry()
@@ -56,22 +60,23 @@ class MeshImporter(object):
         self.import_landmarks()
 
     def parse_geometry(self):
-        raise NotImplimentedException()
+        raise NotImplementedError
 
     def import_texture(self):
-        raise NotImplimentedException()
+        raise NotImplementedError
 
     def import_landmarks(self):
         try:
-            self.landmarks = metadata.json_pybug_landmarks(self.path_and_filename)
+            self.landmarks = metadata.json_pybug_landmarks(
+                self.path_and_filename)
         except metadata.MissingLandmarksError:
             self.landmarks = None
 
     def build(self, **kwargs):
         mesh = TriMesh(self.points, self.trilist)
         if self.texture != None:
-            mesh.attach_texture(self.texture, self.tcoords, 
-                    tcoords_trilist=self.tcoords_trilist)
+            mesh.attach_texture(self.texture, self.tcoords,
+                                tcoords_trilist=self.tcoords_trilist)
         if self.landmarks != None:
             mesh.landmarks.add_reference_landmarks(self.landmarks)
         mesh.legacy = {}
@@ -80,7 +85,6 @@ class MeshImporter(object):
 
 
 class OBJImporter(MeshImporter):
-
     def __init__(self, filepath):
         MeshImporter.__init__(self, filepath)
 
@@ -94,19 +98,19 @@ class OBJImporter(MeshImporter):
         # now we just grab the three possible values that can be given
         # to each face grouping.
         re_ti = re.compile(
-                u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
+            u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
         re_tcti = re.compile(
-                u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
+            u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
         re_vnti = re.compile(
-                u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
+            u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
         self.points = np.array(re_v.findall(self.text), dtype=np.float)
         self.normals = np.array(re_vn.findall(self.text), dtype=np.float)
         self.tcoords = np.array(re_tc.findall(self.text), dtype=np.float)
         self.trilist = np.array(re_ti.findall(self.text), dtype=np.uint32) - 1
         self.tcoords_trilist = np.array(
-                re_tcti.findall(self.text), dtype=np.uint32) - 1
+            re_tcti.findall(self.text), dtype=np.uint32) - 1
         self.normals_trilist = np.array(
-                re_vnti.findall(self.text), dtype=np.uint32) - 1
+            re_vnti.findall(self.text), dtype=np.uint32) - 1
 
     def import_texture(self):
         # TODO: make this more intelligent in locating the texture
@@ -119,7 +123,8 @@ class OBJImporter(MeshImporter):
         except IOError:
             print 'Warning, no texture found'
             if self.tcoords != []:
-                raise Exception('why do we have texture coords but no texture?')
+                raise Exception(
+                    'why do we have texture coords but no texture?')
             else:
                 print '(there are no texture coordinates anyway so this is expected)'
                 self.texture = None
@@ -130,33 +135,34 @@ class WRLImporter(MeshImporter):
     (see OBJImporter for an exemplary MeshImporter subclass)
     """
 
-    def __init__(self,filepath):
-        MeshImporter.__init__(self,filepath)
+    def __init__(self, filepath):
+        MeshImporter.__init__(self, filepath)
 
     def parse_geometry(self):
-        self._sectionEnds = [i for i,line in enumerate(self.lines) 
-                if ']' in line]
+        self._sectionEnds = [i for i, line in enumerate(self.lines)
+                             if ']' in line]
         self.points = self._getFloatDataForString(' Coordinate')
         self.tcoords = self._getFloatDataForString('TextureCoordinate')
-        tcoords_trilist = self._getFloatDataForString('texCoordIndex', 
-                seperator=', ', cast=int)
+        tcoords_trilist = self._getFloatDataForString('texCoordIndex',
+                                                      seperator=', ', cast=int)
         self.tcoords_trilist = [x[:-1] for x in tcoords_trilist]
         self.trilist = self.tcoords_trilist
         self.normalsIndex = None
         self.normals = None
 
     def _getFloatDataForString(self, string, **kwargs):
-        sep = kwargs.get('seperator',' ')
+        sep = kwargs.get('seperator', ' ')
         cast = kwargs.get('cast', float)
         start = self._findIndexOfFirstInstanceOfString(string)
         end = self._findNextSectionEnd(start)
-        floatLines = self.lines[start+1:end]
-        return [[cast(x) for x in line[5:-3].split(sep)] for line in floatLines]
+        floatLines = self.lines[start + 1:end]
+        return [[cast(x) for x in line[5:-3].split(sep)] for line in
+                floatLines]
 
-    def _findIndexOfFirstInstanceOfString(self,string):
-        return [i for i,line in enumerate(self.lines) if string in line][0]
+    def _findIndexOfFirstInstanceOfString(self, string):
+        return [i for i, line in enumerate(self.lines) if string in line][0]
 
-    def _findNextSectionEnd(self,beginningIndex):
+    def _findNextSectionEnd(self, beginningIndex):
         return [i for i in self._sectionEnds if i > beginningIndex][0]
 
     def import_texture(self):
@@ -190,7 +196,8 @@ class OFFImporter(MeshImporter):
         coord_lines = lines[offset:x]
         coord_index_lines = lines[x:]
         self.points = [[float(x) for x in l.split(' ')] for l in coord_lines]
-        self.trilist = [[int(x) for x in l.split(' ')[2:]] for l in coord_index_lines if l != '']
+        self.trilist = [[int(x) for x in l.split(' ')[2:]] for l in
+                        coord_index_lines if l != '']
 
     def import_texture(self):
         pass

@@ -55,12 +55,14 @@ cdef extern from "./cpp/halfedge.h":
 cdef class CppTriangleMesh:
     cdef Mesh* thisptr
 
-    def __cinit__(self, points, 
+    def __cinit__(self, points,
             np.ndarray[unsigned, ndim=2, mode="c"] trilist not None):
         if points.shape[1] != 3:
-            raise MeshConstructionError("A CppTriangleMesh can only be in 3 "\
-                   " dimensions (attemping with " + str(points.shape[1]) + ")")
-        self.thisptr = new Mesh(&trilist[0,0], trilist.shape[0], points.shape[0])
+            raise MeshConstructionError("A CppTriangleMesh can only be in 3 "
+                   + "dimensions (attempting with " + str(points.shape[1]) +
+                                        ")")
+        self.thisptr = new Mesh(&trilist[0,0], trilist.shape[0],
+                                points.shape[0])
 
     def __dealloc__(self):
         del self.thisptr
@@ -81,11 +83,11 @@ cdef class CppTriangleMesh:
         self.thisptr.verify_mesh()
 
     def vertex_status(self, n_vertex):
-        assert n_vertex >= 0 and n_vertex < self.thisptr.n_vertices
+        assert 0 <= n_vertex < self.thisptr.n_vertices
         deref(self.thisptr.vertices[n_vertex]).status()
 
     def tri_status(self, n_triangle):
-        assert n_triangle >= 0 and n_triangle < self.thisptr.n_triangles
+        assert 0 <= n_triangle < self.thisptr.n_triangles
         deref(self.thisptr.triangles[n_triangle]).status()
 
     def reduce_tri_scalar_per_vertex_to_vertices(self,
@@ -100,7 +102,7 @@ cdef class CppTriangleMesh:
             np.ndarray[double, ndim=1, mode="c"] triangle_scalar not None):
         cdef np.ndarray[double, ndim=1, mode='c'] vertex_scalar = \
             np.zeros(self.thisptr.n_vertices)
-        self.thisptr.reduce_tri_scalar_to_vertices(&triangle_scalar[0], 
+        self.thisptr.reduce_tri_scalar_to_vertices(&triangle_scalar[0],
             &vertex_scalar[0])
         return vertex_scalar
 

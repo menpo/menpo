@@ -2,6 +2,7 @@ import os
 import mesh
 #from pyassimp import pyassimp
 
+
 def smartimport(filepath, **kwargs):
     """ Smart data importer. Chooses an appropriate importer based on the
     file extension of the data file past in. pass keepimporter=True as a kwarg
@@ -17,17 +18,16 @@ def smartimport(filepath, **kwargs):
     elif ext == '.obj':
         importer = mesh.OBJImporter(filepath, **kwargs)
     else:
-       raise Exception("I don't understand the file type " + `ext`)
-       return None
+        raise Exception("I don't understand the file type " + `ext`)
     spatialdata = importer.build()
     if keepimporter:
-       print 'attaching the importer at spatialdata.importer'
-       spatialdata.importer = importer
+        print 'attaching the importer at spatialdata.importer'
+        spatialdata.importer = importer
     return spatialdata
 
 
-def pyassimp_import(filepath):
-    scene = pyassimp.load(filepath)
-    if len(scene.meshes) > 1:
-        print 'warning - multipl'
-
+# def pyassimp_import(filepath):
+#     scene = pyassimp.load(filepath)
+#     if len(scene.meshes) > 1:
+#         print 'warning - multipl'
+#

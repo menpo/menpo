@@ -42,7 +42,7 @@ class PointCloud(SpatialData):
         self.n_metapoints = 0
         cachesize = 1000
         # preallocate allpoints to have enough room for cachesize metapoints
-        self._allpoints = np.empty([self.n_points + cachesize, n_dims])
+        self._allpoints = np.empty((self.n_points + cachesize, n_dims))
         self._allpoints[:self.n_points] = points
         self.pointfields = {}
 
@@ -72,8 +72,8 @@ class PointCloud(SpatialData):
         return self.points.shape[1]
 
     def __str__(self):
-        message = str(type(self)) + ': n_points: ' + `self.n_points` \
-                  + ', n_dims: ' + `self.n_dims`
+        message = (str(type(self)) + ': n_points: ' + str(self.n_points) +
+                   ', n_dims: ' + str(self.n_dims))
         if len(self.pointfields) != 0:
             message += '\n  pointfields:'
             for k, v in self.pointfields.iteritems():
@@ -91,7 +91,7 @@ class PointCloud(SpatialData):
         if field.shape[0] != self.n_points:
             raise PointFieldError("Trying to add a field with " +
                                   str(field.shape[0]) + " values (need one "
-                                  + "field value per point => "
+                                  "field value per point => "
                                   + str(self.n_points) + " values required")
         else:
             self.pointfields[name] = field
@@ -101,8 +101,8 @@ class PointCloud(SpatialData):
         position that this point is stored at in self.points_and_metapoints.
         """
         if metapoint.size != self.n_dims:
-            raise Exception("metapoint must be of the same number of dims"
-                            + " as the parent pointcloud")
+            raise Exception("metapoint must be of the same number of dims "
+                            "as the parent pointcloud")
         next_index = self.n_points_and_metapoints
         self._allpoints[next_index] = metapoint.flatten()
         self.n_metapoints += 1
@@ -201,10 +201,10 @@ class LandmarkManager(object):
             pcs = set(lm.pointcloud for lm in landmarks)
             if len(pcs) != 1:
                 raise Exception('Building a LandmarkManager using Landmarks '
-                                + 'with non-compatible pointclouds')
+                                'with non-compatible pointclouds')
             if landmarks[0].pointcloud is not self.pointcloud:
                 raise Exception('Building a LandmarkManager using Landmarks '
-                                + 'with a different pointcloud to self')
+                                'with a different pointcloud to self')
             self._data = landmarks
             self._sort_data()
 
@@ -325,8 +325,8 @@ class ShapeClass(SpatialDataCollection):
             unique_lm_configs = set(x.landmarks.config for x in self.data)
         except AttributeError:
             raise ShapeClassError("All elements of a shape class must have "
-                                  + "landmarks attached")
+                                  "landmarks attached")
         if len(unique_lm_configs) != 1:
             raise ShapeClassError("All elements in shape class must have "
-                                  + "landmarks with the same config")
+                                  "landmarks with the same config")
 
