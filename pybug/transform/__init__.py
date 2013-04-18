@@ -2,27 +2,95 @@ import numpy as np
 import hashlib
 from matplotlib import pyplot
 
-"""
-This package contains methods for aligning a number of source objects
-to a target. Objects are provided as an iterable of ndarrays of
-shape(n_dim, n_landmarks). It is legal to provide a single source
-(which need not be contained in an iterable) so long as a single
-target is also provided. It is legal to provide no target so long
-as multiple sources are provided - in such cases, the target is
-set to the mean of the sources. All sources and targets must
-have the same n_dim, and the same n_landmarks.
-
-The resulting subclasses of alignment provide the following methods:
-  1. align(sources, source_lms)
-  returns the aligned version of the source input points when the source
-  input points are considered to be points in the space of the source_lms.
-  source_lms has to be a
-
-"""
-
 
 class AlignmentError(Exception):
     pass
+
+
+class Transformation(object):
+    """
+    An abstract representation of any n-dimensional transformation.
+    Provides a unified interface to apply the transformation (:meth:`apply`)
+    """
+
+    def apply(self, x):
+        """
+
+        :param x:
+        :raise:
+        """
+        raise NotImplementedError
+
+
+class AffineTransformation(Transformation):
+    """
+    The base class for all n-dimensional affine transformations. Provides
+    methods to break the transform down into it's constituent
+    scale/rotation/translation, to view the homogeneous matrix equivalent,
+    and to chain this transformation with other affine transformations.
+    """
+
+    def __init__(self, homogeneous_matrix):
+        self.homogeneous_matrix = homogeneous_matrix
+
+    def chain(self, x):
+        """
+        Chains this affine transformation with another one,
+        producing a new affine transformation
+        """
+        return AffineTransformation(np.dot(self.homogeneous_matrix,
+                                           x.homogeneous_matrix))
+
+    def apply(self, x):
+        """
+        Applies this transformation to a new set of vectors
+        """
+        return np.dot(self.linear_transformation, x + self.translation)
+
+    @property
+    def linear_transformation(self):
+        """
+        Returns just the linear transformation component of this affine
+        transformation.
+        """
+        return self.homogeneous_matrix[:-1, :-1]
+
+    @property
+    def translation(self):
+        """
+        Returns just the transformation aspect of this affine transformation.
+        """
+        return self.homogeneous_matrix[-1, :-1]
+
+
+class Translation(AffineTransformation):
+    """
+    An n_dim translation transformation.
+    """
+
+    def __init__(self, transformation):
+        """
+        translation : a 1-d ndarray of length n_dim (i.e.
+        if you want to make a 3d translation you must specify the
+        translation in each dimension explicitly).
+        """
+        homogeneous_matrix = np.eye(transformation.size + 1)
+        homogeneous_matrix[-1, :-1] = transformation
+        super(Translation, self).__init__(homogeneous_matrix)
+
+
+class Rotation(AffineTransformation):
+    """
+    An n_dim rotation transformation.
+    """
+
+    def __init__(self, rotation):
+        """ The rotation must be a 2-d square ndarray of shape (n_dim, n_dim)
+        By default
+        """
+        homogeneous_matrix = np.eye(rotation.shape[0] + 1)
+        homogeneous_matrix[:-1, :-1] = rotation
+        super(Rotation, self).__init__(homogeneous_matrix)
 
 
 class Alignment(object):
