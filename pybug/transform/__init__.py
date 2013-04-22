@@ -31,21 +31,30 @@ class AffineTransformation(Transformation):
     """
 
     def __init__(self, homogeneous_matrix):
+        shape = homogeneous_matrix.shape
+        if len(shape) != 2 and shape[0] != shape[1]:
+            raise Exception("You need to provide a square homogeneous matrix.")
+        self.n_dim = shape[0] - 1
         self.homogeneous_matrix = homogeneous_matrix
 
-    def chain(self, x):
+    def chain(self, affinetransform):
         """
         Chains this affine transformation with another one,
         producing a new affine transformation
         """
-        return AffineTransformation(np.dot(self.homogeneous_matrix,
-                                           x.homogeneous_matrix))
+        # note we dot this way as we have our data in the transposed
+        # representation to normal
+        return AffineTransformation(np.dot(affinetransform.homogeneous_matrix,
+                                           self.homogeneous_matrix))
 
     def apply(self, x):
         """
         Applies this transformation to a new set of vectors
+        :param x: A (n_dim, n_points) ndarray to apply this transformation to.
+
+        :return: The transformed version of x
         """
-        return np.dot(self.linear_transformation, x + self.translation)
+        return np.dot(x, self.linear_transformation) + self.translation
 
     @property
     def linear_transformation(self):
@@ -87,6 +96,35 @@ class Rotation(AffineTransformation):
     def __init__(self, rotation):
         """ The rotation must be a 2-d square ndarray of shape (n_dim, n_dim)
         By default
+        """
+        homogeneous_matrix = np.eye(rotation.shape[0] + 1)
+        homogeneous_matrix[:-1, :-1] = rotation
+        super(Rotation, self).__init__(homogeneous_matrix)
+
+    # TODO - be able to calculate rotations based on angles around axes
+    # here is a start, and see
+    # http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    # for details.
+    # @classmethod
+    # def aboutaxis(cls, axis, angle):
+    #     """
+    #     Returns a rotation object defined by angles about the axes
+    #     """
+    #     n_dim = axis.size
+    #     rotation = np.eye(n_dim) * np.cos(angle) + np.sin(angle) *
+    #
+    #     return cls()
+
+
+class Scale(AffineTransformation):
+    """
+    An n_dim rotation transformation.
+    """
+
+    def __init__(self, scale):
+        """ The scale must be a 2-d square ndarray of shape (n_dim, n_dim)
+        By default
+        :param scale:
         """
         homogeneous_matrix = np.eye(rotation.shape[0] + 1)
         homogeneous_matrix[:-1, :-1] = rotation

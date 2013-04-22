@@ -18,6 +18,7 @@ class TriMesh(spatialdata.PointCloud3d):
     """
 
     def __init__(self, points, trilist):
+        #TODO delauny triangulate if no trilist added
         spatialdata.PointCloud3d.__init__(self, points)
         self.trilist = trilist
         self.trifields = {}
