@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial import distance
 from scipy.stats import norm
-from pybug.spatialdata.mesh import TriMeshShapeClass
+from pybug.spatialdata.collection import TriMeshShapeClass
 from pybug.transform.geodesics import TriMeshGeodesics
 
 

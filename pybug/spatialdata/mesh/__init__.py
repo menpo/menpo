@@ -1,10 +1,11 @@
 import numpy as np
-from pybug import spatialdata
 from cpptrianglemesh import CppTriangleMesh
+from pybug.spatialdata.exceptions import FieldError
+from pybug.spatialdata.pointcloud import PointCloud3d
 from pybug.visualization import TriMeshViewer3d, TexturedTriMeshViewer3d
 
 
-class TriFieldError(spatialdata.FieldError):
+class TriFieldError(FieldError):
     pass
 
 
@@ -12,19 +13,19 @@ class TextureError(Exception):
     pass
 
 
-class TriMesh(spatialdata.PointCloud3d):
+class TriMesh(PointCloud3d):
     """A piecewise planar 3D manifold composed from triangles with vertices
     indexed from points.
     """
 
     def __init__(self, points, trilist):
-        spatialdata.PointCloud3d.__init__(self, points)
+        PointCloud3d.__init__(self, points)
         self.trilist = trilist
         self.trifields = {}
         self.texture = None
 
     def __str__(self):
-        message = spatialdata.PointCloud.__str__(self)
+        message = PointCloud3d.__str__(self)
         if len(self.trifields) != 0:
             message += '\n  trifields:'
             for k, v in self.trifields.iteritems():
@@ -153,7 +154,7 @@ class TriMesh(spatialdata.PointCloud3d):
             if np.all(np.in1d(old_index, kept_points_orig_index)):
                 # referenced point still exists, in the new mesh. add it!
                 new_index = pi_map[old_index]
-                newlm = spatialdata.ReferenceLandmark(newtrimesh, new_index,
+                newlm = ReferenceLandmark(newtrimesh, new_index,
                                                       lm.label,
                                                       lm.label_index)
                 newtrimesh.landmarks.all_landmarks.append(newlm)
@@ -177,14 +178,14 @@ class FastTriMesh(TriMesh, CppTriangleMesh):
         TriMesh.__init__(self, points, trilist)
 
 
-class PolyMesh(spatialdata.PointCloud3d):
+class PolyMesh(PointCloud3d):
     """A 3D shape which has a notion of a manifold built from piecewise planar
     polyhedrons with vertices indexed from points. This is largely a stub that
     can be expanded later on if we need arbitrary polymeshes.
     """
 
     def __init__(self, points, polylist):
-        spatialdata.PointCloud3d.__init__(self, points)
+        PointCloud3d.__init__(self, points)
         self.polylist = polylist
 
     @property
@@ -192,13 +193,3 @@ class PolyMesh(spatialdata.PointCloud3d):
         return len(self.polylist)
 
 
-class TriMeshShapeClass(spatialdata.ShapeClass):
-    """A shape class that only contains TriMesh instances
-    """
-
-    def __init__(self, trimeshiter):
-        spatialdata.ShapeClass.__init__(self, trimeshiter)
-        if not all(isinstance(x, TriMesh) for x in self.data):
-            raise spatialdata.ShapeClassError("Trying to build a trimesh shape"
-                                              " class with non-trimesh "
-                                              "elements")
