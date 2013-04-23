@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.stats import norm
 from pybug.spatialdata.collection import TriMeshShapeClass
-from pybug.transform.geodesics import TriMeshGeodesics
+from geodesics import TriMeshGeodesics
 
 
 class GeodesicMasker(TriMeshShapeClass):

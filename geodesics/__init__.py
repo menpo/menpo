@@ -1,5 +1,6 @@
 import collections
-import kirsanov
+from geodesics import kirsanov
+
 
 class TriMeshGeodesicsError(Exception):
     pass

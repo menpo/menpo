@@ -1,6 +1,7 @@
 from docutils.nodes import target
 import numpy as np
-from . import Alignment, _numpy_hash
+from . import _numpy_hash
+from pybug.alignment import Alignment
 
 
 class LinearTransformation(object):
