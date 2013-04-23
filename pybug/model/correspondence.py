@@ -1,5 +1,4 @@
-from pybug.spatialdata.mesh import TriMeshShapeClass
-from pybug.visualization import TexturedTriMeshViewer3d
+from pybug.spatialdata.collection import TriMeshShapeClass
 
 
 class CorrespondingTriMeshPair(TriMeshShapeClass):
@@ -11,11 +10,7 @@ class CorrespondingTriMeshPair(TriMeshShapeClass):
                     + " TriMesh instances")
         self.f0 = self.data[0]
         self.f1 = self.data[1]
-        if (self.f0.pointfields.get(self.f1) == None or 
+        if (self.f0.pointfields.get(self.f1) == None or
                 self.f1.pointfields.get(self.f0) == None):
             raise Exception("Need to have a correspondence pointfield set on "\
                     + "each trimesh for the opposite trimesh")
-
-
-    def view(self):
-        f1_viewer = 
