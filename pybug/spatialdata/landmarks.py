@@ -1,6 +1,6 @@
 import numpy as np
 from pybug.visualization import PointCloudViewer3d, LabelViewer3d
-class
+
 
 class Landmark(object):
     """ An object representing an annotated point in a pointcloud.
