@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/transform/geodesics/cpp/exact/kirsanov_geodesic_wrapper.cpp
+# distutils: sources = ./pybug/geodesics/cpp/exact/kirsanov_geodesic_wrapper.cpp
 
 import numpy as np
 cimport numpy as np

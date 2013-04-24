@@ -1,5 +1,5 @@
 import collections
-from geodesics import kirsanov
+from pybug.geodesics import kirsanov
 
 
 class TriMeshGeodesicsError(Exception):
