@@ -5,10 +5,11 @@ import subprocess
 import dependencies
 import numpy as np
 
+# 23-4-13 folded the kirsanov code into us to save having to do this
 # grab the submodule and update if required
 #subprocess.call("git submodule update --init -q", shell=True)
 
-cython_modules = ["pybug/transform/geodesics/kirsanov.pyx",
+cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/spatialdata/mesh/cpptrianglemesh.pyx"]
 
 setup(name='pybug',
