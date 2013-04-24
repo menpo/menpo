@@ -9,5 +9,6 @@ requirements = ['numpy>=1.7.1',
                 'scipy>=0.12.0',
                 'PIL>=1.1.7',
                 'numpydoc>=0.4',
+                'nose>=1.3.0',
                 'mayavi>=4.3.0']
 
