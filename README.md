@@ -1,37 +1,18 @@
 pybug
 =====
 
-A flexible python framework for working with 3D and 4D facial data.
-
 DEPENDENCIES
 ============
 
-numpy   - basic mathematical objects
-scipy   - linear algebra operations
-mayavi2 - visualization
+see dependecies.py
 
+INSTALLATION
+============
 
+pybug requires numpy, cython, and the python VTK bindings are present prior to 
+installation. After that, just run
 
-STRUCTURE
-=========
+    pip install -e git+https://github.com/jabooth/pybug.git#egg=pybug
 
-ibugMM - the full package
-  |
-  |- face.py : Face class definition
-  |
-  |- alignment # methods for aligning a set of source data points to a target shape
-  |    |
-  |    |- rigid.py : Procrustes alignment class
-  |    |   
-  |    |- nonrigid.py : TPS class
-  |
-  |- importer # classes which can import data required for 3DMM construction
-       |
-       |- models.py : classes for importing 3D models into Face instances
-       |
-       |- metadata.py : Imports for landmarks, emotion data etc
-
-
-
-
+to install. We highly recommend you do this inside a virtualenv.
 
