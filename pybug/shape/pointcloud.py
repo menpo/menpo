@@ -76,12 +76,12 @@ class PointCloud(Shape):
             self.pointfields[name] = field
 
     def add_metapoint(self, metapoint):
-        """Adds a new metapoint to the pointcloud. Returns the index
+        """Adds a new metapoint to the shape. Returns the index
         position that this point is stored at in self.points_and_metapoints.
         """
         if metapoint.size != self.n_dims:
             raise Exception("metapoint must be of the same number of dims "
-                            "as the parent pointcloud")
+                            "as the parent shape")
         next_index = self.n_points_and_metapoints
         self._allpoints[next_index] = metapoint.flatten()
         self.n_metapoints += 1

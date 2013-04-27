@@ -4,19 +4,19 @@ from pybug.visualization import PointCloudViewer3d, LabelViewer3d
 
 class Landmark(object):
     """ An object representing an annotated feature.
-    Only makes sense in the context of a parent pointcloud, and so
+    Only makes sense in the context of a parent Shape instance, and so
     one is required at construction.
     """
 
-    def __init__(self, pointcloud, pointcloud_index, label, label_index):
-        self.pointcloud = pointcloud
-        self.index = pointcloud_index
+    def __init__(self, shape, shape_index, label, label_index):
+        self.shape = shape
+        self.index = shape_index
         self.label = label
         self.label_index = label_index
 
     @property
-    def point(self):
-        return list(self.pointcloud.points_and_metapoints[self.index])
+    def feature(self):
+        return list(self.shape.points_and_metapoints[self.index])
 
     @property
     def numbered_label(self):
@@ -27,33 +27,33 @@ class ReferenceLandmark(Landmark):
     """A Landmark that references a point that is a part of a point cloud
     """
 
-    def __init__(self, pointcloud, pointcloud_index, label, label_index):
-        Landmark.__init__(self, pointcloud, pointcloud_index,
+    def __init__(self, shape, shape_index, label, label_index):
+        Landmark.__init__(self, shape, shape_index,
                           label, label_index)
-        if pointcloud_index < 0 or pointcloud_index > self.pointcloud.n_points:
+        if shape_index < 0 or shape_index > self.shape.n_points:
             raise Exception("Reference landmarks have to have an index "
                             + "in the range 0 < i < n_points of the parent "
-                            + "pointcloud")
+                            + "shape")
 
 
 class MetaLandmark(Landmark):
-    """A landmark that is totally separate from the parent point cloud."
+    """A landmark that is totally separate from the parent shape."
     """
 
-    def __init__(self, pointcloud, metapoint, label, label_index):
-        pointcloud_index = pointcloud.addmetapoint(metapoint)
-        Landmark.__init__(self, pointcloud, pointcloud_index,
+    def __init__(self, shape, metapoint, label, label_index):
+        pointcloud_index = shape.addmetapoint(metapoint)
+        Landmark.__init__(self, shape, pointcloud_index,
                           label, label_index)
 
     @property
     def metapoint_index(self):
         """ How far into the metapoints part of the array this metapoint is
         """
-        return self.index - self.pointcloud.n_points - 1
+        return self.index - self.shape.n_points - 1
 
 
 class LandmarkManager(object):
-    """Class for storing and manipulating Landmarks associated with a shape.
+    """Class for storing and manipulating Landmarks associated with a Shape.
     Landmarks index into the points and metapoints of the associated
     PointCloud. Landmarks which are explicitly given as coordinates would
     be entirely constructed from metapoints, whereas point indexed landmarks
@@ -62,7 +62,7 @@ class LandmarkManager(object):
     """
 
     def __init__(self, pointcloud, landmarks=None):
-        """ pointcloud - the shape whose these landmarks apply to
+        """ shape - the shape whose these landmarks apply to
         landmarks - an existing list of landmarks to initialize this manager to
         """
         if landmarks is None:
@@ -76,7 +76,7 @@ class LandmarkManager(object):
                                 'with non-compatible pointclouds')
             if landmarks[0].pointcloud is not self.pointcloud:
                 raise Exception('Building a LandmarkManager using Landmarks '
-                                'with a different pointcloud to self')
+                                'with a different shape to self')
             self._data = landmarks
             self._sort_data()
 
@@ -127,7 +127,7 @@ class LandmarkManager(object):
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
-        lms = np.array([x.point for x in self])
+        lms = np.array([x.feature for x in self])
         labels = [x.numbered_label for x in self]
         pcviewer = self.pointcloud.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
