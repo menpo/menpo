@@ -1,13 +1,13 @@
-from .base import Transformation
+from .base import Transform
 import numpy as np
 
 
-class AffineTransformation(Transformation):
+class AffineTransform(Transform):
     """
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
-    and to chain this transformation with other affine transformations
+    and to chain this transform with other affine transformations
     """
 
     def __init__(self, homogeneous_matrix):
@@ -17,50 +17,51 @@ class AffineTransformation(Transformation):
         format [ rotatationscale translation; 0 1]
         """
         shape = homogeneous_matrix.shape
+        print homogeneous_matrix
         if len(shape) != 2 and shape[0] != shape[1]:
             raise Exception("You need to provide a square homogeneous matrix.")
         self.n_dim = shape[0] - 1
         self.homogeneous_matrix = homogeneous_matrix
 
-    def chain(self, affinetransform):
+    def chain(self, affine_transform):
         """
-        Chains this affine transformation with another one,
-        producing a new affine transformation
-        :param affinetransform: Transform to be applied FOLLOWING self
+        Chains this affine transform with another one,
+        producing a new affine transform
+        :param affine_transform: Transform to be applied FOLLOWING self
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        return AffineTransformation(np.dot(affinetransform.homogeneous_matrix,
+        return AffineTransform(np.dot(affine_transform.homogeneous_matrix,
                                            self.homogeneous_matrix))
 
     def apply(self, x):
         """
-        Applies this transformation to a new set of vectors
-        :param x: A (n_dim, n_points) ndarray to apply this transformation to.
+        Applies this transform to a new set of vectors
+        :param x: A (n_dim, n_points) ndarray to apply this transform to.
 
         :return: The transformed version of x
         """
-        return np.dot(x, self.linear_transformation) + self.translation
+        return np.dot(x, self.linear_transform.T) + self.translation
 
     @property
-    def linear_transformation(self):
+    def linear_transform(self):
         """
-        Returns just the linear transformation component of this affine
-        transformation.
+        Returns just the linear transform component of this affine
+        transform.
         """
         return self.homogeneous_matrix[:-1, :-1]
 
     @property
     def translation(self):
         """
-        Returns just the transformation aspect of this affine transformation.
+        Returns just the transform aspect of this affine transform.
         """
-        return self.homogeneous_matrix[-1, :-1]
+        return self.homogeneous_matrix[:-1, -1]
 
 
-class Translation(AffineTransformation):
+class Translation(AffineTransform):
     """
-    An n_dim translation transformation.
+    An n_dim translation transform.
     """
 
     def __init__(self, transformation):
@@ -70,13 +71,13 @@ class Translation(AffineTransformation):
         translation in each dimension explicitly).
         """
         homogeneous_matrix = np.eye(transformation.size + 1)
-        homogeneous_matrix[-1, :-1] = transformation
+        homogeneous_matrix[:-1, -1] = transformation
         super(Translation, self).__init__(homogeneous_matrix)
 
 
-class Rotation(AffineTransformation):
+class Rotation(AffineTransform):
     """
-    An n_dim rotation transformation.
+    An n_dim rotation transform.
     """
 
     def __init__(self, rotation):
@@ -102,9 +103,9 @@ class Rotation(AffineTransformation):
     #     return cls()
 
 
-class Scale(AffineTransformation):
+class Scale(AffineTransform):
     """
-    An n_dim rotation transformation.
+    An n_dim rotation transform.
     """
 
     def __init__(self, scale):
@@ -112,6 +113,7 @@ class Scale(AffineTransformation):
         By default
         :param scale:
         """
-        homogeneous_matrix = np.eye(rotation.shape[0] + 1)
-        homogeneous_matrix[:-1, :-1] = rotation
-        super(Rotation, self).__init__(homogeneous_matrix)
+        homogeneous_matrix = np.eye(scale.size + 1)
+        np.fill_diagonal(homogeneous_matrix, scale)
+        homogeneous_matrix[-1, -1] = 1
+        super(Scale, self).__init__(homogeneous_matrix)

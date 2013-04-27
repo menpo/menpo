@@ -48,7 +48,7 @@ def h_rotation_matrix(rotation_matrix):
 class RigidAlignment(Alignment):
     """ Abstract class specializing in rigid alignments. As all such alignments
       are affine, a 'h_transforms' list is present, storing a homogeneous
-      transformation matrix for each source specifying the transform it has
+      transform matrix for each source specifying the transform it has
       undergone to match the target.
   """
 
@@ -84,7 +84,7 @@ class RigidAlignment(Alignment):
         return self.scalerotation_matrices[i], self.translation_vectors[i]
 
     def _normalise_transformation_matrices(self):
-        """ Ensures that the transformation matrix has a unit z scale,
+        """ Ensures that the transform matrix has a unit z scale,
         and is affine (e.g. bottom row = [0,0,0,1] for dim = 3)
     """
         pass
@@ -93,7 +93,7 @@ class RigidAlignment(Alignment):
 class ParallelRigidAlignment(RigidAlignment):
     """ Abstract class specializing in rigid alignments. As all such alignments
       are affine, a 'h_transforms' list is present, storing a homogeneous
-      transformation matrix for each source specifying the transform it has
+      transform matrix for each source specifying the transform it has
       undergone to match the target.
   """
 
@@ -130,7 +130,7 @@ class ParallelRigidAlignment(RigidAlignment):
         return self.scalerotation_matrices[i], self.translation_vectors[i]
 
     def _normalise_transformation_matrices(self):
-        """ Ensures that the transformation matrix has a unit z scale,
+        """ Ensures that the transform matrix has a unit z scale,
         and is affine (e.g. bottom row = [0,0,0,1] for dim = 3)
     """
         pass
