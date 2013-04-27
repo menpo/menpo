@@ -1,0 +1,2 @@
+class TriMeshGeodesicsError(Exception):
+    pass
