@@ -1,11 +1,12 @@
 
 
-class SpatialData(object):
-    """ Abstract representation of a n-dimensional piece of spatial data.
-    This could be simply be a set of vectors in an n-dimensional space,
-    or a structured surface or mesh. At this level of abstraction we only
-    define basic metadata that can be attached to all kinds of spatial
-    data.
+class Shape(object):
+    """ Abstract representation of shape. All subclasses will have some
+     data where semantic meaning can be assigned to the i'th item. Shape
+     couples a LandmarkManager to this item of data, meaning,
+     all subclasses are landmarkable. Note this does not mean that all
+     subclasses need have a spatial meaning (i.e. the 7'th node of a Graph
+     can still be landmarked)
     """
 
     def __init__(self):
