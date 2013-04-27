@@ -2,7 +2,7 @@
 # for now this module remains here.
 # TODO pybug collections - do we need them?
 #
-# from . import SpatialData
+# from . import Shape
 # from .mesh import TriMesh
 #
 #
@@ -15,7 +15,7 @@
 #
 #
 # class SpatialDataCollection(object):
-#     """ A bag of SpatialData. Provides functionality for
+#     """ A bag of Shape. Provides functionality for
 #     - viewing all the data in the set
 #     - performing transformations on all pieces of data in the set
 #
@@ -24,10 +24,10 @@
 #     """
 #
 #     def __init__(self, spatialdataiter):
-#         if not all(isinstance(x, SpatialData) for x in spatialdataiter):
+#         if not all(isinstance(x, Shape) for x in spatialdataiter):
 #             notsd = [x for x in spatialdataiter
-#                      if not isinstance(x, SpatialData)]
-#             raise SpatialDataCollectionError('Can only add SpatialData'
+#                      if not isinstance(x, Shape)]
+#             raise SpatialDataCollectionError('Can only add Shape'
 #                                              + ' instances (' + str(notsd)
 #                                              + ' are not)')
 #         self.data = list(spatialdataiter)
@@ -35,15 +35,15 @@
 #     def add_spatialdata(self, shape):
 #         """ Adds an instance of shape to the collection
 #         """
-#         if not isinstance(shape, SpatialData):
-#             raise SpatialDataCollectionError('Can only add SpatialData '
+#         if not isinstance(shape, Shape):
+#             raise SpatialDataCollectionError('Can only add Shape '
 #                                              + ' instances')
 #         else:
 #             self.data.append(shape)
 #
 #
 # class ShapeClass(SpatialDataCollection):
-#     """A collection of SpatialData that all have the same
+#     """A collection of Shape that all have the same
 #     landmark configuration (and so can be considered to be of the same shape)
 #     """
 #
