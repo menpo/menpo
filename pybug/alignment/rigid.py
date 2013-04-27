@@ -60,15 +60,17 @@ class RigidAlignment(Alignment):
         """ Returns a list of 2 dimensional numpy arrays, each of shape
         (n_dimensions,n_dimensions) which can be applied to each source frame
         to rigidly align to the target frame. Needs to be used in conjunction
-        with translation_vectors. (source*scalerotatation + translation -> target)
+        with translation_vectors. (source*scalerotatation + translation ->
+        target)
     """
         return [matrix[:-1, :-1] for matrix in self.h_transforms]
 
     @property
     def translation_vectors(self):
-        """ Returns a list of translation vectors, each of shape (n_dimensions,)
-        which can be applied to each source frame to rigidly align to the
-        target frame (source*scalerotatation + translation -> target)
+        """ Returns a list of translation vectors, each of shape
+        (n_dimensions,) which can be applied to each source frame to rigidly
+         align to the target frame (source*scalerotatation + translation ->
+         target)
     """
         return [matrix[-1, :-1] for matrix in self.h_transforms]
         pass
@@ -104,15 +106,17 @@ class ParallelRigidAlignment(RigidAlignment):
         """ Returns a list of 2 dimensional numpy arrays, each of shape
         (n_dimensions,n_dimensions) which can be applied to each source frame
         to rigidly align to the target frame. Needs to be used in conjunction
-        with translation_vectors. (source*scalerotatation + translation -> target)
+        with translation_vectors. (source*scalerotatation + translation ->
+        target)
     """
         return [matrix[:-1, :-1] for matrix in self.h_transforms]
 
     @property
     def translation_vectors(self):
-        """ Returns a list of translation vectors, each of shape (n_dimensions,)
-        which can be applied to each source frame to rigidly align to the
-        target frame (source*scalerotatation + translation -> target)
+        """ Returns a list of translation vectors, each of shape
+        (n_dimensions,) which can be applied to each source frame to rigidly
+         align to the target frame (source*scalerotatation + translation ->
+         target)
     """
         return [matrix[-1, :-1] for matrix in self.h_transforms]
         pass
@@ -206,9 +210,10 @@ class ParallelProcrustes(ParallelRigidAlignment):
         ops['translate'] = translation
         # calcuate the frobenious norm of each shape as our metric
         scale_sources = np.sqrt(np.apply_over_axes(np.sum,
-                                                   (
-                                                       self.aligned_sources - self.aligned_sources.mean(
-                                                           axis=0)) ** 2,
+                                                  (
+                                                   self.aligned_sources -
+                                                   self.aligned_sources.mean(
+                                                   axis=0)) ** 2,
                                                    [0, 1]))
         scale_target = np.sqrt(np.sum((self.target -
                                        self.target.mean(axis=0)) ** 2))
