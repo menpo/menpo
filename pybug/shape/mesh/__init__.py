@@ -3,7 +3,7 @@ from cpptrianglemesh import CppTriangleMesh
 from pybug.shape.exceptions import FieldError
 from pybug.shape.landmarks import ReferenceLandmark
 from pybug.shape.pointcloud import PointCloud
-from pybug.visualization import TriMeshViewer3d, TexturedTriMeshViewer3d
+from pybug.visualization import TriMeshViewer3d
 
 
 class TriFieldError(FieldError):
@@ -24,7 +24,6 @@ class TriMesh(PointCloud):
         PointCloud.__init__(self, points)
         self.trilist = trilist
         self.trifields = {}
-        self.texture = None
 
     def __str__(self):
         message = PointCloud.__str__(self)
@@ -38,34 +37,6 @@ class TriMesh(PointCloud):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         message += '\nn_tris: ' + str(self.n_tris)
         return message
-
-    def attach_texture(self, texture, tcoords, tcoords_trilist=None):
-        """Attaches a trifield or pointfield called 'tcoords' depending
-        on whether the tcoords given are per vertex or per triangle.
-        kwargs:
-           tcoords_trilist: a texture specific trilist used to index into
-           the tcoords. In this case tcoords will be converted to a trifield
-           removing the dependency on the texture specific trilist.
-           This comes at a memory cost (there will be many repeated tcoords in
-           the constructed trifield), but allows for a consistent processing
-           of texture coords as just another field instance.
-        """
-        self.texture = texture
-        if tcoords_trilist is not None:
-            # looks like we have tcoords that are referenced into
-            # by a trilist in the same way points are. As it becomes messy to
-            # maintain different texturing options, we just turn this indexing
-            # scheme into (repeated) values stored explicitly as a trifield.
-            self.add_trifield('tcoords', tcoords[tcoords_trilist])
-        elif tcoords.shape == (self.n_points, 2):
-            # tcoords are just per vertex
-            self.add_pointfield('tcoords', tcoords)
-        elif tcoords.shape == (self.n_tris, 3, 2):
-            # explicitly given per triangle vertex
-            self.add_trifield('tcoords', tcoords)
-        else:
-            raise TextureError(
-                "Don't understand how to deal with these tcoords.")
 
     @property
     def n_tris(self):
@@ -85,16 +56,10 @@ class TriMesh(PointCloud):
         textured view will be provided. This can be overridden using the
         boolean kwarg `textured`
         """
-        if textured and self.texture:
-            viewer = TexturedTriMeshViewer3d(
-                self.points, self.trilist, self.texture,
-                tcoords_per_tri=self.trifields.get('tcoords'),
-                tcoords_per_point=self.pointfields.get('tcoords'))
-        else:
-            viewer = TriMeshViewer3d(self.points, self.trilist,
-                                     color_per_tri=self.trifields.get('color'),
-                                     color_per_point=self.pointfields.get(
-                                         'color'))
+        viewer = TriMeshViewer3d(self.points, self.trilist,
+                                 color_per_tri=self.trifields.get('color'),
+                                 color_per_point=self.pointfields.get(
+                                     'color'))
         return viewer.view()
 
     def new_trimesh(self, pointmask=None, astype='self'):
@@ -178,6 +143,7 @@ class FastTriMesh(TriMesh, CppTriangleMesh):
     iterations around mesh vertices and triangles. Includes fast calculations
     of the surface divergence, gradient and laplacian.
     """
+    #TODO this should probably be made part of Graph with some adjustments.
 
     def __init__(self, points, trilist):
         CppTriangleMesh.__init__(self, points, trilist)
@@ -199,3 +165,4 @@ class PolyMesh(PointCloud):
         return len(self.polylist)
 
 
+from .textured import TexturedTriMesh

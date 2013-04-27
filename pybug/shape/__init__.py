@@ -51,6 +51,5 @@ class Shape(object):
 
 
 from pybug.shape.pointcloud import PointCloud
-from pybug.shape.mesh import TriMesh, FastTriMesh
+from pybug.shape.mesh import TriMesh, FastTriMesh, TexturedTriMesh
 from pybug.shape.landmarks import LandmarkManager
-
