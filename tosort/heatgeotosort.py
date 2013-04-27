@@ -50,7 +50,7 @@ cdef extern from "halfedge.h":
   cdef cppclass HalfEdge:
     pass
 
-# Wrap the Mesh class to produce CppTriangleMesh
+# Wrap the Mesh class to produce CppTriMesh
 cdef class CppTriangleMesh:
   cdef Mesh* thisptr
 

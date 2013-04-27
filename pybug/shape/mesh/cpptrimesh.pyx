@@ -51,14 +51,14 @@ cdef extern from "./cpp/halfedge.h":
     cdef cppclass HalfEdge:
         pass
 
-# Wrap the Mesh class to produce CppTriangleMesh
-cdef class CppTriangleMesh:
+# Wrap the Mesh class to produce CppTriMesh
+cdef class CppTriMesh:
     cdef Mesh* thisptr
 
     def __cinit__(self, points,
             np.ndarray[unsigned, ndim=2, mode="c"] trilist not None):
         if points.shape[1] != 3:
-            raise MeshConstructionError("A CppTriangleMesh can only be in 3 "
+            raise MeshConstructionError("A CppTriMesh can only be in 3 "
                    + "dimensions (attempting with " + str(points.shape[1]) +
                                         ")")
         self.thisptr = new Mesh(&trilist[0,0], trilist.shape[0],
