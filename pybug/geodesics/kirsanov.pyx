@@ -61,4 +61,3 @@ cdef class KirsanovGeodesics:
         geodesic['phi'] = phi
         geodesic['best_source'] = best_source
         return geodesic
-    

@@ -2,8 +2,6 @@ import collections
 from pybug.geodesics import kirsanov
 from pybug.geodesics.exceptions import TriMeshGeodesicsError
 
-__author__ = 'jab08'
-
 
 class TriMeshGeodesics(object):
     """A number of geodesics algorithms for TriMeshes, including
