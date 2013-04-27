@@ -57,7 +57,5 @@ cdef class KirsanovGeodesics:
             print "The '" + `method` + "' method for calculating exact geodesics \
                     is not understood (only 'exact' can be used at this time)"
             return None
-        geodesic = {}
-        geodesic['phi'] = phi
-        geodesic['best_source'] = best_source
+        geodesic = {'phi': phi, 'best_source': best_source}
         return geodesic
