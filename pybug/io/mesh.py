@@ -143,14 +143,14 @@ class WRLImporter(MeshImporter):
         self.points = self._getFloatDataForString(' Coordinate')
         self.tcoords = self._getFloatDataForString('TextureCoordinate')
         tcoords_trilist = self._getFloatDataForString('texCoordIndex',
-                                                      seperator=', ', cast=int)
+                                                      separator=', ', cast=int)
         self.tcoords_trilist = [x[:-1] for x in tcoords_trilist]
         self.trilist = self.tcoords_trilist
         self.normalsIndex = None
         self.normals = None
 
     def _getFloatDataForString(self, string, **kwargs):
-        sep = kwargs.get('seperator', ' ')
+        sep = kwargs.get('separator', ' ')
         cast = kwargs.get('cast', float)
         start = self._findIndexOfFirstInstanceOfString(string)
         end = self._findNextSectionEnd(start)

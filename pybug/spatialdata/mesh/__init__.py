@@ -1,6 +1,7 @@
 import numpy as np
 from cpptrianglemesh import CppTriangleMesh
 from pybug.spatialdata.exceptions import FieldError
+from pybug.spatialdata.landmarks import ReferenceLandmark
 from pybug.spatialdata.pointcloud import PointCloud
 from pybug.visualization import TriMeshViewer3d, TexturedTriMeshViewer3d
 
@@ -74,7 +75,7 @@ class TriMesh(PointCloud):
         if field.shape[0] != self.n_tris:
             raise TriFieldError("Trying to add a field with " +
                                 str(field.shape[0]) + " values (need one "
-                                "field value per tri => " +
+                                                      "field value per tri => " +
                                 str(self.n_tris) + ")")
         else:
             self.trifields[name] = field
@@ -105,6 +106,8 @@ class TriMesh(PointCloud):
         `astype`.
         kwargs: pointmask: a boolean mask of points that we wish to keep
         """
+        #TODO this is broken due to Landmark Manager changes. Fix after new
+        # LM manager is finished.
         orig_point_index = np.arange(self.n_points)
         if pointmask is not None:
             kept_points_orig_index = orig_point_index[pointmask]
@@ -134,8 +137,10 @@ class TriMesh(PointCloud):
             trimeshcls = astype
         else:
             raise Exception('The mesh type ' + str(astype) + ' is not '
-                            'understood (needs to be an instance of '
-                            'TriMesh)')
+                                                             'understood '
+                                                             '(needs to be an'
+                                                             ' instance of '
+                                                             'TriMesh)')
         newtrimesh = trimeshcls(new_points, new_trilist)
         # now we just map over point fields and trifields respectively
         # (note that as tcoords are simply fields, this will inherently map
@@ -156,8 +161,8 @@ class TriMesh(PointCloud):
                 # referenced point still exists, in the new mesh. add it!
                 new_index = pi_map[old_index]
                 newlm = ReferenceLandmark(newtrimesh, new_index,
-                                                      lm.label,
-                                                      lm.label_index)
+                                          lm.label,
+                                          lm.label_index)
                 newtrimesh.landmarks.all_landmarks.append(newlm)
             else:
                 print 'the point for landmark: ' + str(
@@ -186,7 +191,7 @@ class PolyMesh(PointCloud):
     """
 
     def __init__(self, points, polylist):
-        PointCloud3d.__init__(self, points)
+        PointCloud.__init__(self, points)
         self.polylist = polylist
 
     @property
