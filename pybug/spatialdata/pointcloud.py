@@ -2,7 +2,6 @@ import numpy as np
 from pybug.spatialdata import SpatialData
 from pybug.spatialdata.landmarks import LandmarkManager
 from pybug.spatialdata.exceptions import PointFieldError
-from pybug.spatialdata.exceptions import SpatialDataConstructionError
 from pybug.visualization import PointCloudViewer3d
 
 
@@ -23,6 +22,7 @@ class PointCloud(SpatialData):
         self._allpoints = np.empty((self.n_points + cachesize, n_dims))
         self._allpoints[:self.n_points] = points
         self.pointfields = {}
+        self.landmarks = LandmarkManager(self)
 
     @property
     def points(self):
@@ -69,7 +69,8 @@ class PointCloud(SpatialData):
         if field.shape[0] != self.n_points:
             raise PointFieldError("Trying to add a field with " +
                                   str(field.shape[0]) + " values (need one "
-                                                        "field value per point => "
+                                                        "field value per point"
+                                                        " => "
                                   + str(self.n_points) + " values required")
         else:
             self.pointfields[name] = field
@@ -87,22 +88,8 @@ class PointCloud(SpatialData):
         return next_index
 
     def view(self):
-        print 'arbitrary dimensional PointCloud rendering is not supported.'
-
-
-class PointCloud3d(PointCloud):
-    """A PointCloud constrained to 3 dimensions. Has additional visualization
-    methods. Should always be used in lieu of PointCloud when using 3D data.
-    """
-
-    def __init__(self, points):
-        PointCloud.__init__(self, points)
-        if self.n_dims != 3:
-            raise SpatialDataConstructionError(
-                'Trying to build a 3D Point Cloud with from ' +
-                str(self.n_dims) + ' data')
-        self.landmarks = LandmarkManager(self)
-
-    def view(self, **kwargs):
-        viewer = PointCloudViewer3d(self.points, **kwargs)
-        return viewer.view()
+        if self.n_dims == 3:
+            viewer = PointCloudViewer3d(self.points, **kwargs)
+            return viewer.view()
+        else:
+            print 'arbitrary dimensional PointCloud rendering is not supported.'
