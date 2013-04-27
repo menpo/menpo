@@ -19,10 +19,10 @@ class PointCloud(Shape):
         self.n_metapoints = 0
         cachesize = 1000
         # preallocate allpoints to have enough room for cachesize metapoints
+        #TODO caching update is currently not done
         self._allpoints = np.empty((self.n_points + cachesize, n_dims))
         self._allpoints[:self.n_points] = points
         self.pointfields = {}
-        self.landmarks = LandmarkManager(self)
 
     @property
     def points(self):
@@ -75,18 +75,6 @@ class PointCloud(Shape):
         else:
             self.pointfields[name] = field
 
-    def add_metapoint(self, metapoint):
-        """Adds a new metapoint to the shape. Returns the index
-        position that this point is stored at in self.points_and_metapoints.
-        """
-        if metapoint.size != self.n_dims:
-            raise Exception("metapoint must be of the same number of dims "
-                            "as the parent shape")
-        next_index = self.n_points_and_metapoints
-        self._allpoints[next_index] = metapoint.flatten()
-        self.n_metapoints += 1
-        return next_index
-
     def view(self):
         if self.n_dims == 3:
             viewer = PointCloudViewer3d(self.points, **kwargs)
@@ -94,3 +82,29 @@ class PointCloud(Shape):
         else:
             print 'arbitrary dimensional PointCloud rendering is not ' \
                   'supported.'
+
+    @property
+    def _n_landmarkable_items(self):
+        return self.n_points
+
+    def _landmark_at_index(self, index):
+        return self.points[index]
+
+    def _add_meta_landmark_item(self, metapoint):
+        """Adds a new metapoint to the cloud. Returns the index
+        position that this point is stored at in self.metapoints.
+        """
+        if metapoint.size != self.n_dims:
+            raise Exception("metapoint must be of the same number of dims "
+                            "as the parent shape")
+        next_index = self.n_points_and_metapoints
+        self._allpoints[next_index] = metapoint.flatten()
+        metapoint_index = self.n_metapoints
+        self.n_metapoints += 1
+        return metapoint_index
+
+    def _meta_landmark_at_meta_index(self, meta_index):
+        """
+        Returns the metapoint at the meta meta_index.
+        """
+        return self.metapoints[meta_index]

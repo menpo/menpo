@@ -16,7 +16,7 @@ class Landmark(object):
 
     @property
     def feature(self):
-        return list(self.shape.points_and_metapoints[self.index])
+        return list(self.shape._landmark_at_index(self.index))
 
     @property
     def numbered_label(self):
@@ -30,10 +30,10 @@ class ReferenceLandmark(Landmark):
     def __init__(self, shape, shape_index, label, label_index):
         Landmark.__init__(self, shape, shape_index,
                           label, label_index)
-        if shape_index < 0 or shape_index > self.shape.n_points:
+        if not 0 <= shape_index < self.shape._n_landmarkable_items:
             raise Exception("Reference landmarks have to have an index "
-                            + "in the range 0 < i < n_points of the parent "
-                            + "shape")
+                            + "in the range 0 < i < _n_landmarkable_items of "
+                              "the parent shape")
 
 
 class MetaLandmark(Landmark):
@@ -41,15 +41,12 @@ class MetaLandmark(Landmark):
     """
 
     def __init__(self, shape, metapoint, label, label_index):
-        pointcloud_index = shape.addmetapoint(metapoint)
-        Landmark.__init__(self, shape, pointcloud_index,
+        index = shape._add_meta_landmark_item(metapoint)
+        if index is None:
+            raise Exception("The parent shape of type " + repr(shape) + " is"
+                            " unable to accept MetaLandmarks")
+        Landmark.__init__(self, shape, index,
                           label, label_index)
-
-    @property
-    def metapoint_index(self):
-        """ How far into the metapoints part of the array this metapoint is
-        """
-        return self.index - self.shape.n_points - 1
 
 
 class LandmarkManager(object):
@@ -61,22 +58,22 @@ class LandmarkManager(object):
     mixture of the two.
     """
 
-    def __init__(self, pointcloud, landmarks=None):
+    def __init__(self, shape, landmarks=None):
         """ shape - the shape whose these landmarks apply to
         landmarks - an existing list of landmarks to initialize this manager to
         """
         if landmarks is None:
             landmarks = []
-        self.pointcloud = pointcloud
+        self.shape = shape
         self._data = []
         if landmarks:
-            pcs = set(lm.pointcloud for lm in landmarks)
-            if len(pcs) != 1:
+            shapes = set(lm.shape for lm in landmarks)
+            if len(shapes) != 1:
                 raise Exception('Building a LandmarkManager using Landmarks '
-                                'with non-compatible pointclouds')
-            if landmarks[0].pointcloud is not self.pointcloud:
+                                'with differing Shapes')
+            if landmarks[0].shape is not self.shape:
                 raise Exception('Building a LandmarkManager using Landmarks '
-                                'with a different shape to self')
+                                'with a different Shape to to the manager')
             self._data = landmarks
             self._sort_data()
 
@@ -93,7 +90,7 @@ class LandmarkManager(object):
     def add_reference_landmarks(self, landmark_dict):
         for k, v in landmark_dict.iteritems():
             for i, index in enumerate(v):
-                lm = ReferenceLandmark(self.pointcloud, index, k, i)
+                lm = ReferenceLandmark(self.shape, index, k, i)
                 self._data.append(lm)
         self._sort_data()
 
@@ -120,7 +117,7 @@ class LandmarkManager(object):
                               if x.label != label])
 
     def _rebuild(self, landmarks):
-        return LandmarkManager(self.pointcloud, landmarks=landmarks)
+        return LandmarkManager(self.shape, landmarks=landmarks)
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
@@ -129,7 +126,7 @@ class LandmarkManager(object):
         """
         lms = np.array([x.feature for x in self])
         labels = [x.numbered_label for x in self]
-        pcviewer = self.pointcloud.view(**kwargs)
+        pcviewer = self.shape.view(**kwargs)
         pointviewer = PointCloudViewer3d(lms)
         pointviewer.view(onviewer=pcviewer)
         lmviewer = LabelViewer3d(lms, labels, offset=np.array([0, 16, 0]))
