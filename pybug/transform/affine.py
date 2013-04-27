@@ -34,7 +34,7 @@ class AffineTransform(Transform):
         return AffineTransform(np.dot(affine_transform.homogeneous_matrix,
                                            self.homogeneous_matrix))
 
-    def apply(self, x):
+    def _apply(self, x):
         """
         Applies this transform to a new set of vectors
         :param x: A (n_dim, n_points) ndarray to apply this transform to.

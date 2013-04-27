@@ -1,11 +1,11 @@
 import numpy as np
 from pybug.shape import Shape
-from pybug.shape.landmarks import LandmarkManager
+from pybug.transform.base import Transformable
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer3d
 
 
-class PointCloud(Shape):
+class PointCloud(Shape, Transformable):
     """n-dimensional point cloud. Handles the addition of spatial
     metadata (most commonly landmarks) by storing all such 'metapoints'
     (points which aren't part of the shape) and normal points together into
@@ -14,12 +14,10 @@ class PointCloud(Shape):
     """
 
     def __init__(self, points):
-        Shape.__init__(self)
+        super(PointCloud, self).__init__()
         self.n_points, n_dims = points.shape
         self.n_metapoints = 0
         cachesize = 1000
-        # preallocate allpoints to have enough room for cachesize metapoints
-        #TODO caching update is currently not done
         self._allpoints = np.empty((self.n_points + cachesize, n_dims))
         self._allpoints[:self.n_points] = points
         self.pointfields = {}
@@ -108,3 +106,6 @@ class PointCloud(Shape):
         Returns the metapoint at the meta meta_index.
         """
         return self.metapoints[meta_index]
+
+    def _transform(self, transform):
+        self._allpoints = transform.apply(self._allpoints)
