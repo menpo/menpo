@@ -12,6 +12,6 @@ class SpatialData(object):
         pass
 
 
-from pybug.spatialdata.pointcloud import PointCloud
-from pybug.spatialdata.mesh import TriMesh, FastTriMesh
+from pybug.shape.pointcloud import PointCloud
+from pybug.shape.mesh import TriMesh, FastTriMesh
 

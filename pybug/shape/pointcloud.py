@@ -1,7 +1,7 @@
 import numpy as np
-from pybug.spatialdata import SpatialData
-from pybug.spatialdata.landmarks import LandmarkManager
-from pybug.spatialdata.exceptions import PointFieldError
+from pybug.shape import SpatialData
+from pybug.shape.landmarks import LandmarkManager
+from pybug.shape.exceptions import PointFieldError
 from pybug.visualization import PointCloudViewer3d
 
 
@@ -92,4 +92,5 @@ class PointCloud(SpatialData):
             viewer = PointCloudViewer3d(self.points, **kwargs)
             return viewer.view()
         else:
-            print 'arbitrary dimensional PointCloud rendering is not supported.'
+            print 'arbitrary dimensional PointCloud rendering is not ' \
+                  'supported.'

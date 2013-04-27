@@ -3,7 +3,7 @@ from pybug.visualization import PointCloudViewer3d, LabelViewer3d
 
 
 class Landmark(object):
-    """ An object representing an annotated point in a pointcloud.
+    """ An object representing an annotated feature.
     Only makes sense in the context of a parent pointcloud, and so
     one is required at construction.
     """

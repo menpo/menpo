@@ -1,4 +1,4 @@
-from pybug.spatialdata.collection import TriMeshShapeClass
+from pybug.shape.collection import TriMeshShapeClass
 
 
 class CorrespondingTriMeshPair(TriMeshShapeClass):

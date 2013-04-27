@@ -21,7 +21,7 @@ def smartimport(filepath, **kwargs):
         raise Exception("I don't understand the file type " + `ext`)
     spatialdata = importer.build()
     if keepimporter:
-        print 'attaching the importer at spatialdata.importer'
+        print 'attaching the importer at shape.importer'
         spatialdata.importer = importer
     return spatialdata
 

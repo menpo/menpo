@@ -4,7 +4,7 @@ import numpy as np
 import dependencies
 
 cython_modules = ["pybug/geodesics/kirsanov.pyx",
-                  "pybug/spatialdata/mesh/cpptrianglemesh.pyx"]
+                  "pybug/shape/mesh/cpptrianglemesh.pyx"]
 
 setup(name='pybug',
       version='0.1',

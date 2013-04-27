@@ -8,11 +8,11 @@ import dependencies
 subprocess.call("git submodule update --init -q", shell=True)
 
 cython_modules = ["pybug/transform/geodesics/kirsanov.pyx",
-                  "pybug/spatialdata/mesh/cpptrianglemesh.pyx"]
+                  "pybug/shape/mesh/cpptrianglemesh.pyx"]
 
 kirsanov_ext = Extension("kirsanov", ["pybug/transform/geodesics/kirsanov.cpp"])
 cpptrianglemesh_ext = Extension("cpptrianglemesh", 
-        ["pybug/spatialdata/mesh/cpptrianglemesh.cpp"])
+        ["pybug/shape/mesh/cpptrianglemesh.cpp"])
 
 setup(name='pybug',
       version = '0.1',

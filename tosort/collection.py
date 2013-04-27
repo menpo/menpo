@@ -32,14 +32,14 @@
 #                                              + ' are not)')
 #         self.data = list(spatialdataiter)
 #
-#     def add_spatialdata(self, spatialdata):
-#         """ Adds an instance of spatialdata to the collection
+#     def add_spatialdata(self, shape):
+#         """ Adds an instance of shape to the collection
 #         """
-#         if not isinstance(spatialdata, SpatialData):
+#         if not isinstance(shape, SpatialData):
 #             raise SpatialDataCollectionError('Can only add SpatialData '
 #                                              + ' instances')
 #         else:
-#             self.data.append(spatialdata)
+#             self.data.append(shape)
 #
 #
 # class ShapeClass(SpatialDataCollection):

@@ -5,7 +5,7 @@ import commands
 import tempfile
 import re
 from . import metadata
-from pybug.spatialdata.mesh import TriMesh
+from pybug.shape.mesh import TriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,

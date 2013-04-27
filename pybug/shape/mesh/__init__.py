@@ -1,8 +1,8 @@
 import numpy as np
 from cpptrianglemesh import CppTriangleMesh
-from pybug.spatialdata.exceptions import FieldError
-from pybug.spatialdata.landmarks import ReferenceLandmark
-from pybug.spatialdata.pointcloud import PointCloud
+from pybug.shape.exceptions import FieldError
+from pybug.shape.landmarks import ReferenceLandmark
+from pybug.shape.pointcloud import PointCloud
 from pybug.visualization import TriMeshViewer3d, TexturedTriMeshViewer3d
 
 
