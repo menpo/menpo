@@ -1,12 +1,11 @@
 import numpy as np
-import sys
 import os
-import Image
+from PIL import Image
 import commands
 import tempfile
 import re
 from . import metadata
-from  pybug.spatialdata.mesh import TriMesh
+from pybug.spatialdata.mesh import TriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -74,13 +73,12 @@ class MeshImporter(object):
 
     def build(self, **kwargs):
         mesh = TriMesh(self.points, self.trilist)
-        if self.texture != None:
+        if self.texture is not None:
             mesh.attach_texture(self.texture, self.tcoords,
                                 tcoords_trilist=self.tcoords_trilist)
-        if self.landmarks != None:
+        if self.landmarks is not None:
             mesh.landmarks.add_reference_landmarks(self.landmarks)
-        mesh.legacy = {}
-        mesh.legacy['path_and_filename'] = self.path_and_filename
+        mesh.legacy = {'path_and_filename': self.path_and_filename}
         return mesh
 
 
@@ -98,11 +96,11 @@ class OBJImporter(MeshImporter):
         # now we just grab the three possible values that can be given
         # to each face grouping.
         re_ti = re.compile(
-            u'f (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d* (\d+)\/*\d*\/*\d*')
+            u'f (\d+)/*\d*/*\d* (\d+)/*\d*/*\d* (\d+)/*\d*/*\d*')
         re_tcti = re.compile(
-            u'f \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d* \d+\/(\d+)\/*\d*')
+            u'f \d+/(\d+)/*\d* \d+/(\d+)/*\d* \d+/(\d+)/*\d*')
         re_vnti = re.compile(
-            u'f \d+\/\d*\/(\d+) \d+\/\d*\/(\d+) \d+\/\d*\/(\d+)')
+            u'f \d+/\d*/(\d+) \d+/\d*/(\d+) \d+/\d*/(\d+)')
         self.points = np.array(re_v.findall(self.text), dtype=np.float)
         self.normals = np.array(re_vn.findall(self.text), dtype=np.float)
         self.tcoords = np.array(re_tc.findall(self.text), dtype=np.float)
@@ -122,11 +120,12 @@ class OBJImporter(MeshImporter):
             self.texture = Image.open(pathToJpg)
         except IOError:
             print 'Warning, no texture found'
-            if self.tcoords != []:
+            if self.tcoords:
                 raise Exception(
                     'why do we have texture coords but no texture?')
             else:
-                print '(there are no texture coordinates anyway so this is expected)'
+                print '(there are no texture coordinates anyway so this is' \
+                      ' expected)'
                 self.texture = None
 
 

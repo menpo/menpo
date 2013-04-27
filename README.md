@@ -1,37 +1,31 @@
-pybug
-=====
-
-A flexible python framework for working with 3D and 4D facial data.
-
 DEPENDENCIES
 ============
 
-numpy   - basic mathematical objects
-scipy   - linear algebra operations
-mayavi2 - visualization
+see `dependences.py` for a full list. All of these bar those noted in the 
+installation section below will be installed for you by `pip install`.
+Note however that these packages will have many of their own non-python
+dependencies (such as BLAS, or a Fortran compiler) and you will be expected
+to have these installed. If you are using Ubuntu, the quickest way of ensuring
+you have these base dependencies is to use the `build-dep` feature of 
+`apt-get`, which grabs all build dependencies for a given Debian package.
+
+For example, running 
+
+    sudo apt-get build-dep python-numpy
+
+will install all libraries that numpy requires to build. The libraries will
+definitely be sufficient to build the version of numpy that ships with your
+version of Ubuntu - and hopefully will be sufficient for the (newer) version
+of numpy pip will download for you when installing pybug.
 
 
+INSTALLATION
+============
 
-STRUCTURE
-=========
+pybug requires numpy, cython, and the python VTK bindings are present prior to 
+installation. After that, just run
 
-ibugMM - the full package
-  |
-  |- face.py : Face class definition
-  |
-  |- alignment # methods for aligning a set of source data points to a target shape
-  |    |
-  |    |- rigid.py : Procrustes alignment class
-  |    |   
-  |    |- nonrigid.py : TPS class
-  |
-  |- importer # classes which can import data required for 3DMM construction
-       |
-       |- models.py : classes for importing 3D models into Face instances
-       |
-       |- metadata.py : Imports for landmarks, emotion data etc
+    pip install -e git+https://github.com/jabooth/pybug.git#egg=pybug
 
-
-
-
+to install. We highly recommend you do this inside a virtualenv.
 
