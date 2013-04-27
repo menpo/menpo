@@ -1,5 +1,5 @@
 import numpy as np
-from pybug.visualization import PointCloudViewer3d, LabelViewer3d
+from pybug.visualize import PointCloudViewer3d, LabelViewer3d
 
 
 class Landmark(object):

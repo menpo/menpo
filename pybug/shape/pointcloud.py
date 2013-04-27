@@ -2,7 +2,7 @@ import numpy as np
 from pybug.shape import Shape
 from pybug.shape.landmarks import LandmarkManager
 from pybug.shape.exceptions import PointFieldError
-from pybug.visualization import PointCloudViewer3d
+from pybug.visualize import PointCloudViewer3d
 
 
 class PointCloud(Shape):

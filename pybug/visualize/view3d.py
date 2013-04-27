@@ -95,7 +95,7 @@ class TexturedTriMeshViewer3d(TriMeshViewer3d):
     def tc_per_tri_to_tc_per_point(self, trilist, tcoords):
         """Generates per-point tc from per-tri tc. Obviously
          this means we loose data (some triangles will have fugly
-         textures) but allows for quick and dirty visualization of textures.
+         textures) but allows for quick and dirty visualize of textures.
         """
         u_ci, ind_of_u_ci = np.unique(trilist, return_index=True)
         return tcoords.reshape([-1, 2])[ind_of_u_ci]

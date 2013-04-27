@@ -1,6 +1,6 @@
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
-from pybug.visualization import TexturedTriMeshViewer3d
+from pybug.visualize import TexturedTriMeshViewer3d
 
 
 class TexturedTriMesh(TriMesh):

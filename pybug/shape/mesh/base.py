@@ -2,7 +2,7 @@ import numpy as np
 from pybug.shape import PointCloud
 from pybug.shape.landmarks import ReferenceLandmark
 from pybug.shape.mesh.exceptions import TriFieldError
-from pybug.visualization import TriMeshViewer3d
+from pybug.visualize import TriMeshViewer3d
 
 
 class TriMesh(PointCloud):
