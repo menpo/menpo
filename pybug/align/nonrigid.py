@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial import distance
-from pybug.alignment import Alignment, ParallelAlignment, AlignmentError
+from pybug.align import Alignment, ParallelAlignment, AlignmentError
 
 
 class ParallelNonRigidAlignment(ParallelAlignment):
