@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from affine import Translation, Rotation, Scale
+from pybug.transform import Rotation, Scale, Translation
 
 
 def test_translation():

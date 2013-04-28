@@ -1,5 +1,7 @@
+import abc
 import copy
 from .base import Transform
+from pybug.exceptions import DimensionalityError
 import numpy as np
 
 
@@ -21,6 +23,13 @@ class AffineTransform(Transform):
         if len(shape) != 2 and shape[0] != shape[1]:
             raise Exception("You need to provide a square homogeneous matrix.")
         self.n_dim = shape[0] - 1
+        # this restriction is because we have to be able to decompose
+        # transforms to find there meaning, and I haven't explored 4D+
+        # rotations (everything else is obvious). If there is need we can
+        # relax it in the future
+        if self.n_dim not in [2, 3]:
+            raise DimensionalityError("Affine Transforms can only be 2D or "
+                                      "3D")
         self.homogeneous_matrix = homogeneous_matrix
 
     @property
@@ -80,7 +89,7 @@ class AffineTransform(Transform):
         Decomposes this transform into discrete Rotations, a Scale,
         and a Translation.
 
-        :return transforms: A list of a Rotation, Scale, Rotation,
+        :return transforms: A list of a AbstractRotation, Scale, AbstractRotation,
         Translation] that are equivalent to this affine transform
         reduce(lambda x,y: x.chain(y), self.decompose) == self
         True
@@ -105,32 +114,32 @@ class DiscreteAffineTransform(AffineTransform):
         return [copy.deepcopy(self)]
 
 
-class Rotation(DiscreteAffineTransform):
+def Rotation(rotation_matrix):
+    if rotation_matrix.shape[0] == 2:
+        return Rotation2D(rotation_matrix)
+    elif rotation_matrix.shape[0] == 3:
+        return Rotation3D(rotation_matrix)
+    else:
+        raise DimensionalityError("Can only construct 2D or 3D Rotations")
+# TODO build rotations about axis, euler angles etc
+# here is a start, and see
+# http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+# for details.
+
+
+class AbstractRotation(DiscreteAffineTransform):
     """
     An n_dim rotation transform.
     """
 
-    def __init__(self, rotation):
-        """ The rotation must be a 2-d square ndarray of shape (n_dim, n_dim)
-        By default
-        """
-        homogeneous_matrix = np.eye(rotation.shape[0] + 1)
-        homogeneous_matrix[:-1, :-1] = rotation
-        super(Rotation, self).__init__(homogeneous_matrix)
+    __metaclass__ = abc.ABCMeta
 
-        # TODO build rotations about axis, euler angles etc
-        # here is a start, and see
-        # http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
-        # for details.
-        # @classmethod
-        # def aboutaxis(cls, axis, angle):
-        #     """
-        #     Returns a rotation object defined by angles about the axes
-        #     """
-        #     n_dim = axis.size
-        #     rotation = np.eye(n_dim) * np.cos(angle) + np.sin(angle) *
-        #
-        #     return cls()
+    def __init__(self, rotation_matrix):
+        """ The rotation_matrix must be a 2-d square ndarray of shape (n_dim, n_dim)
+        """
+        homogeneous_matrix = np.eye(rotation_matrix.shape[0] + 1)
+        homogeneous_matrix[:-1, :-1] = rotation_matrix
+        super(AbstractRotation, self).__init__(homogeneous_matrix)
 
     @property
     def rotation_matrix(self):
@@ -138,15 +147,63 @@ class Rotation(DiscreteAffineTransform):
         """
         return self.linear_transform
 
+    @property
+    def inverse(self):
+        return AbstractRotation(np.linalg.inv(self.rotation_matrix))
+
     def _transform_str(self):
         axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()
+        if axis is None:
+            return "NO OP"
         angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
-        message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
+        message = 'CCW AbstractRotation of %d degrees about %s' % (angle_of_rot, axis)
         return message
+
+    @abc.abstractmethod
+    def axis_and_angle_of_rotation(self):
+        pass
+
+
+class Rotation2D(AbstractRotation):
+
+    def __init__(self, rotation_matrix):
+        super(Rotation2D, self).__init__(rotation_matrix)
+        if self.n_dim != 2:
+            raise DimensionalityError("Rotation2D has to be built from a 2D"
+                                      " rotation matrix")
 
     def axis_and_angle_of_rotation(self):
         """
-        Decomposes this rotation's rotation matrix into a angular rotation
+        Decomposes this 2D rotation's rotation matrix into a angular rotation
+        The rotation is considered in a right handed sense. The axis is, by
+        definition, [0, 0, 1].
+
+        :return: (axis, angle_of_rotation)
+        axis: A unit vector, the axis about which the rotation takes place
+        angle_of_rotation: The angle in radians of the rotation about the
+        axis.
+        The angle is signed in a right handed sense.
+        """
+        axis = np.array([0, 0, 1])
+        test_vector = np.array([1, 0])
+        transformed_vector = np.dot(self.rotation_matrix,
+                                    test_vector)
+        angle_of_rotation = np.arccos(
+            np.dot(transformed_vector, test_vector))
+        return axis, angle_of_rotation
+
+
+class Rotation3D(AbstractRotation):
+
+    def __init__(self, rotation_matrix):
+        super(Rotation3D, self).__init__(rotation_matrix)
+        if self.n_dim != 3:
+            raise DimensionalityError("Rotation3D has to be built from a 3D"
+                                      " rotation matrix")
+
+    def axis_and_angle_of_rotation(self):
+        """
+        Decomposes this 3D rotation's rotation matrix into a angular rotation
         about an axis. The rotation is considered in a right handed sense.
 
         :return: (axis, angle_of_rotation)
@@ -162,13 +219,19 @@ class Rotation(DiscreteAffineTransform):
         real_eval = np.real(eval_[real_eval_mask])
         evec_with_real_eval = np.real_if_close(evec[:, real_eval_mask])
         error = 1e-7
-        re_unit_eval_mask = (1 - error) < np.abs(real_eval) < (1 + error)
+        below_margin = np.abs(real_eval) < (1 + error)
+        above_margin = (1 - error) < np.abs(real_eval)
+        re_unit_eval_mask = np.logical_and(below_margin, above_margin)
         evec_with_real_unitary_eval = evec_with_real_eval[:, re_unit_eval_mask]
         # all the eigenvectors with real unitary eigenvalues are now all
         # equally 'valid' if multiple remain that probably means that this
         # rotation is actually a no op (i.e. rotate by 360 degrees about any
         #  axis is an invariant transform) but need to check this. For now,
         # just take the first
+        if evec_with_real_unitary_eval.shape[1] != 1:
+            # TODO confirm that multiple eigenvalues of 1 means the rotation
+            #  does nothing
+            return None, None
         axis = evec_with_real_unitary_eval[:, 0]
         axis /= np.sqrt((axis ** 2).sum())  # normalize to unit vector
         # to find the angle of rotation, build a new unit vector perpendicular
@@ -206,6 +269,10 @@ class Scale(DiscreteAffineTransform):
     def scale_factors(self):
         return self.homogeneous_matrix.diagonal()[:-1]
 
+    @property
+    def inverse(self):
+        return Scale(1.0/self.scale_factors)
+
     def _transform_str(self):
         message = 'Scale by %s ' % self.scale_factors
         return message
@@ -225,6 +292,10 @@ class Translation(DiscreteAffineTransform):
         homogeneous_matrix = np.eye(transformation.size + 1)
         homogeneous_matrix[:-1, -1] = transformation
         super(Translation, self).__init__(homogeneous_matrix)
+
+    @property
+    def inverse(self):
+        return Translation(-self.translation)
 
     def _transform_str(self):
         message = 'Translate by %s ' % self.translation
