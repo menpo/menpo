@@ -7,7 +7,7 @@ cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/cpptrimesh.pyx"]
 
 setup(name='pybug',
-      version='0.1',
+      version='0.2',
       description='iBUG Facial Modelling Toolkit',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
