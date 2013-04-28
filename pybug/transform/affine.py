@@ -23,27 +23,6 @@ class AffineTransform(Transform):
         self.n_dim = shape[0] - 1
         self.homogeneous_matrix = homogeneous_matrix
 
-    def chain(self, affine_transform):
-        """
-        Chains this affine transform with another one,
-        producing a new affine transform
-        :param affine_transform: Transform to be applied FOLLOWING self
-        :return: the resulting affine transform
-        """
-        # note we dot this way as we have our data in the transposed
-        # representation to normal
-        return AffineTransform(np.dot(affine_transform.homogeneous_matrix,
-                                      self.homogeneous_matrix))
-
-    def _apply(self, x):
-        """
-        Applies this transform to a new set of vectors
-        :param x: A (n_dim, n_points) ndarray to apply this transform to.
-
-        :return: The transformed version of x
-        """
-        return np.dot(x, self.linear_transform.T) + self.translation
-
     @property
     def linear_transform(self):
         """
@@ -59,6 +38,9 @@ class AffineTransform(Transform):
         """
         return self.homogeneous_matrix[:-1, -1]
 
+    def __eq__(self, other):
+        return np.allclose(self.homogeneous_matrix, other.homogeneous_matrix)
+
     def __str__(self):
         rep = str(self.homogeneous_matrix) + '\n'
         rep += self._transform_str()
@@ -71,6 +53,27 @@ class AffineTransform(Transform):
         """
         list_str = [t._transform_str() for t in self.decompose()]
         return reduce(lambda x, y: x + '\n' + y, list_str)
+
+    def _apply(self, x):
+        """
+        Applies this transform to a new set of vectors
+        :param x: A (n_dim, n_points) ndarray to apply this transform to.
+
+        :return: The transformed version of x
+        """
+        return np.dot(x, self.linear_transform.T) + self.translation
+
+    def chain(self, affine_transform):
+        """
+        Chains this affine transform with another one,
+        producing a new affine transform
+        :param affine_transform: Transform to be applied FOLLOWING self
+        :return: the resulting affine transform
+        """
+        # note we dot this way as we have our data in the transposed
+        # representation to normal
+        return AffineTransform(np.dot(affine_transform.homogeneous_matrix,
+                                      self.homogeneous_matrix))
 
     def decompose(self):
         """
@@ -88,9 +91,6 @@ class AffineTransform(Transform):
         scale = Scale(S)
         translation = Translation(self.translation)
         return [rotation_1, scale, rotation_2, translation]
-
-    def __eq__(self, other):
-        return np.allclose(self.homogeneous_matrix, other.homogeneous_matrix)
 
 
 class DiscreteAffineTransform(AffineTransform):
@@ -118,6 +118,7 @@ class Rotation(DiscreteAffineTransform):
         homogeneous_matrix[:-1, :-1] = rotation
         super(Rotation, self).__init__(homogeneous_matrix)
 
+        # TODO build rotations about axis, euler angles etc
         # here is a start, and see
         # http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
         # for details.
@@ -130,6 +131,18 @@ class Rotation(DiscreteAffineTransform):
         #     rotation = np.eye(n_dim) * np.cos(angle) + np.sin(angle) *
         #
         #     return cls()
+
+    @property
+    def rotation_matrix(self):
+        """Returns the rotation matrix
+        """
+        return self.linear_transform
+
+    def _transform_str(self):
+        axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()
+        angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
+        message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
+        return message
 
     def axis_and_angle_of_rotation(self):
         """
@@ -172,18 +185,6 @@ class Rotation(DiscreteAffineTransform):
         if chirality_of_rotation < 0:
             angle_of_rotation *= -1.0
         return axis, angle_of_rotation
-
-    @property
-    def rotation_matrix(self):
-        """Returns the rotation matrix
-        """
-        return self.linear_transform
-
-    def _transform_str(self):
-        axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()
-        angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
-        message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
-        return message
 
 
 class Scale(DiscreteAffineTransform):
