@@ -149,7 +149,7 @@ class AbstractRotation(DiscreteAffineTransform):
 
     @property
     def inverse(self):
-        return AbstractRotation(np.linalg.inv(self.rotation_matrix))
+        return Rotation(np.linalg.inv(self.rotation_matrix))
 
     def _transform_str(self):
         axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()

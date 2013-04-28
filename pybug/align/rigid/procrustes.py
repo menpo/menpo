@@ -1,6 +1,6 @@
 import numpy as np
 from pybug.align.rigid.base import RigidAlignment, ParallelRigidAlignment
-from pybug.transform import AbstractRotation, Scale, Translation
+from pybug.transform import Rotation, Scale, Translation
 
 
 class Procrustes(RigidAlignment):
@@ -43,7 +43,7 @@ class Procrustes(RigidAlignment):
         # rotation to maximise it
         correlation = np.dot(self.aligned_source.T, self.centred_target)
         U, D, Vt = np.linalg.svd(correlation)
-        self.rotation = AbstractRotation(np.dot(U, Vt))
+        self.rotation = Rotation(np.dot(U, Vt))
         self.aligned_source = self.rotation.apply(self.aligned_source)
         # finally, move the source back out to where the target is
         self.aligned_source = self.target_translation.inverse.apply(
@@ -88,7 +88,7 @@ class ParallelProcrustes(ParallelRigidAlignment):
         # apply the translation to each source respectively
         self.aligned_sources += translation
         ops['translate'] = translation
-        # calcuate the frobenious norm of each shape as our metric
+        # calculate the frobenious norm of each shape as our metric
         scale_sources = np.sqrt(np.apply_over_axes(np.sum,
                                                    (
                                                        self.aligned_sources -
