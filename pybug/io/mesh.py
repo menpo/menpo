@@ -5,7 +5,7 @@ import commands
 import tempfile
 import re
 from . import metadata
-from pybug.spatialdata.mesh import TriMesh
+from pybug.shape.mesh import TriMesh, TexturedTriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -72,10 +72,11 @@ class MeshImporter(object):
             self.landmarks = None
 
     def build(self, **kwargs):
-        mesh = TriMesh(self.points, self.trilist)
         if self.texture is not None:
-            mesh.attach_texture(self.texture, self.tcoords,
-                                tcoords_trilist=self.tcoords_trilist)
+            mesh = TexturedTriMesh(self.points, self.trilist,
+                                   self.tcoords, self.texture)
+        else:
+            mesh = TriMesh(self.points, self.trilist)
         if self.landmarks is not None:
             mesh.landmarks.add_reference_landmarks(self.landmarks)
         mesh.legacy = {'path_and_filename': self.path_and_filename}
@@ -143,14 +144,14 @@ class WRLImporter(MeshImporter):
         self.points = self._getFloatDataForString(' Coordinate')
         self.tcoords = self._getFloatDataForString('TextureCoordinate')
         tcoords_trilist = self._getFloatDataForString('texCoordIndex',
-                                                      seperator=', ', cast=int)
+                                                      separator=', ', cast=int)
         self.tcoords_trilist = [x[:-1] for x in tcoords_trilist]
         self.trilist = self.tcoords_trilist
         self.normalsIndex = None
         self.normals = None
 
     def _getFloatDataForString(self, string, **kwargs):
-        sep = kwargs.get('seperator', ' ')
+        sep = kwargs.get('separator', ' ')
         cast = kwargs.get('cast', float)
         start = self._findIndexOfFirstInstanceOfString(string)
         end = self._findNextSectionEnd(start)
