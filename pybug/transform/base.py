@@ -39,4 +39,3 @@ class Transformable(object):
         Apply the transform given to the Transformable object.
         """
         pass
-    
