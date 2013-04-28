@@ -105,26 +105,6 @@ class DiscreteAffineTransform(AffineTransform):
         return [copy.deepcopy(self)]
 
 
-class Translation(DiscreteAffineTransform):
-    """
-    An n_dim translation transform.
-    """
-
-    def __init__(self, transformation):
-        """
-        translation : a 1-d ndarray of length n_dim (i.e.
-        if you want to make a 3d translation you must specify the
-        translation in each dimension explicitly).
-        """
-        homogeneous_matrix = np.eye(transformation.size + 1)
-        homogeneous_matrix[:-1, -1] = transformation
-        super(Translation, self).__init__(homogeneous_matrix)
-
-    def _transform_str(self):
-        message = 'Translate by %s ' % self.translation
-        return message
-
-
 class Rotation(DiscreteAffineTransform):
     """
     An n_dim rotation transform.
@@ -227,4 +207,24 @@ class Scale(DiscreteAffineTransform):
 
     def _transform_str(self):
         message = 'Scale by %s ' % self.scale_factors
+        return message
+
+
+class Translation(DiscreteAffineTransform):
+    """
+    An n_dim translation transform.
+    """
+
+    def __init__(self, transformation):
+        """
+        translation : a 1-d ndarray of length n_dim (i.e.
+        if you want to make a 3d translation you must specify the
+        translation in each dimension explicitly).
+        """
+        homogeneous_matrix = np.eye(transformation.size + 1)
+        homogeneous_matrix[:-1, -1] = transformation
+        super(Translation, self).__init__(homogeneous_matrix)
+
+    def _transform_str(self):
+        message = 'Translate by %s ' % self.translation
         return message
