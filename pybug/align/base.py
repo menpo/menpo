@@ -17,7 +17,7 @@ class Alignment(object):
         target  - an ndarray (of the same dimension of source) which
                   the source will be aligned to.
         """
-        self.source = source
+        self.source = source.copy()
         self.aligned_source = self.source.copy()
         try:
             self.n_landmarks, self.n_dim = self.source.shape
@@ -25,7 +25,7 @@ class Alignment(object):
             raise AlignmentError('Data is being provided in an invalid format'
                                  ' - must have shape (n_landmarks, n_dim)')
         assert self.n_dim, self.n_landmarks == target.shape
-        self.target = target
+        self.target = target.copy()
 
     def _view_2d(self):
         """ Visualize how points are affected by the warp in 2 dimensions.
@@ -84,14 +84,14 @@ class ParallelAlignment(object):
                     which every instance of source will be aligned to. If
                     not present, target is set to the mean source position.
         """
-        if len(sources) > 2 and target is None:
+        if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
         self.n_landmarks, self.n_dim = sources[0].shape
         self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = np.sum(self.sources) / len(sources)
+            self.target = sum(self.sources) / len(sources)
         else:
             assert self.n_dim, self.n_landmarks == target.shape
             self.target = target
