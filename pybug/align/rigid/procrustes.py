@@ -55,4 +55,11 @@ class GeneralizedProcrustesAlignment(ParallelRigidAlignment):
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAlignment, self).__init__(sources, **kwargs)
         self.procrustes = [[Procrustes(s, self.target)] for s in self.sources]
-        self.target_scale = self.target.mean(axis=1)
+        self.target_scale = np.linalg.norm(self.target)
+
+    def _recompute_mean_target(self):
+        self.target = sum(self.sources)
+        self.target *= (self.target_scale / np.linalg.norm(self.target))
+
+    def _recursive_procrustes(self):
+        pass

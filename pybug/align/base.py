@@ -91,7 +91,7 @@ class ParallelAlignment(object):
         self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = self.sources.mean(2)[..., np.newaxis]
+            self.target = np.sum(self.sources) / len(sources)
         else:
             assert self.n_dim, self.n_landmarks == target.shape
             self.target = target
