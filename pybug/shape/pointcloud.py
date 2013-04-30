@@ -108,4 +108,4 @@ class PointCloud(Shape, Transformable):
         return self.metapoints[meta_index]
 
     def _transform(self, transform):
-        self._allpoints = transform.apply(self._allpoints)
+        self._allpoints = transform(self._allpoints)
