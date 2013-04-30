@@ -11,8 +11,8 @@ class Alignment(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, source, target):
-        """ source - ndarray of landmarks which will be aligned of dimension
-         [n_landmarks x n_dim]
+        """ source - ndarray of landmarks which will be aligned of shape
+         (n_landmarks, n_dim)
 
         target  - an ndarray (of the same dimension of source) which
                   the source will be aligned to.
@@ -62,15 +62,23 @@ class Alignment(object):
         pyplot.quiver(sample_coords[:, 0], sample_coords[:, 1], delta[:, 0],
                       delta[:, 1])
         delta = self.target - self.source
-        # plot how the landmarks move from src to target
+        # plot how the landmarks move from source to target
         pyplot.quiver(self.source[:, 0], self.source[:, 1], delta[:, 0],
                       delta[:, 1])
         # rescale to the bounds
         pyplot.xlim((x_min_m, x_max_m))
         pyplot.ylim((y_min_m, y_max_m))
 
+    @abc.abstractmethod
+    def transform(self):
+        """
+        Returns a single instance of Transform that can be applied.
+        :return: a transform object
+        """
+        pass
 
-class ParallelAlignment(object):
+
+class MultipleAlignment(object):
 
     __metaclass__ = abc.ABCMeta
 
@@ -80,9 +88,9 @@ class ParallelAlignment(object):
                     ...landmarks_n] where landmarks is an ndarray of
                     dimension [n_landmarks x n_dim]
           KWARGS
-            target  - a single numpy array (of the same dimension of sources)
-                    which every instance of source will be aligned to. If
-                    not present, target is set to the mean source position.
+            target  - a single numpy array (of the same dimension of a
+            source) which every instance of source will be aligned to. If
+            not present, target is set to the mean source position.
         """
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
@@ -95,3 +103,11 @@ class ParallelAlignment(object):
         else:
             assert self.n_dim, self.n_landmarks == target.shape
             self.target = target
+
+    @abc.abstractproperty
+    def transforms(self):
+        """
+        Returns a list of transforms. one for each source,
+        which aligns it to the target.
+        """
+        pass

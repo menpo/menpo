@@ -1,5 +1,6 @@
 import numpy as np
-from pybug.align.rigid.base import RigidAlignment, ParallelRigidAlignment
+from pybug.align.base import MultipleAlignment
+from pybug.align.rigid.base import RigidAlignment
 from pybug.transform import Rotation, Scale, Translation
 
 
@@ -51,12 +52,12 @@ class Procrustes(RigidAlignment):
             self.aligned_source)
 
     def __str__(self):
-        msg = 'Alignment error: %f\n' % self.error
+        msg = 'Alignment delta_target: %f\n' % self.error
         msg += 'Optimal alignment given by:\n'
         return msg + str(self.transform)
 
 
-class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
+class GeneralizedProcrustesAnalysis(MultipleAlignment):
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
         self.procrustes = [[Procrustes(s, self.target)] for s in self.sources]
@@ -73,16 +74,18 @@ class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
         if self.n_iterations > self.max_iterations:
             print 'max number of iterations reached.'
             return False
-        new_target = sum(p[-1].aligned_source for p in self.procrustes) \
-                     / self.n_sources
+        new_target = (sum(p[-1].aligned_source for p in self.procrustes) /
+                      self.n_sources)
         rescale = Scale(self.target_scale / np.linalg.norm(new_target),
                         n_dim=self.n_dim)
-        new_target = _scale_from_com(new_target, rescale)
-        self.error = np.linalg.norm(self.target - new_target)
-        print 'at iteration %d, the error is %f' % (self.n_iterations,
-                                                    self.error)
-        if self.error < 1e-6:
-            print 'error sufficiently small, stopping.'
+        centre = Translation(-new_target.mean(axis=0))
+        rescale_about_com = centre.chain(rescale).chain(centre.inverse)
+        new_target = rescale_about_com.apply(new_target)
+        self.delta_target = np.linalg.norm(self.target - new_target)
+        print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
+                                                           self.delta_target)
+        if self.delta_target < 1e-6:
+            print 'delta_target sufficiently small, stopping.'
             return True
         else:
             self.n_iterations += 1
@@ -96,8 +99,14 @@ class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
         return [reduce(lambda a, b: a.chain(b), [x.transform for x in p])
                 for p in self.procrustes]
 
+    @property
+    def errors(self):
+        return [p[-1].error for p in self.procrustes]
 
-def _scale_from_com(points, scale):
-    # translate the target to the origin, apply the scale, translate back
-    t = Translation(-points.mean(axis=0))
-    return t.chain(scale).chain(t.inverse).apply(points)
+    @property
+    def average_error(self):
+        return sum(self.errors)/self.n_sources
+
+    def __str__(self):
+        return ('Converged after %d iterations with av. error %f'
+                % (self.n_iterations, self.average_error))
