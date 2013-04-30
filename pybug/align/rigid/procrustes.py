@@ -1,5 +1,6 @@
 import numpy as np
-from pybug.align.rigid.base import RigidAlignment, ParallelRigidAlignment
+from pybug.align.base import MultipleAlignment
+from pybug.align.rigid.base import RigidAlignment
 from pybug.transform import Rotation, Scale, Translation
 
 
@@ -13,7 +14,11 @@ class Procrustes(RigidAlignment):
 
     @property
     def error(self):
-        return np.sum((self.target - self.aligned_source) ** 2)
+        """
+        :return: The Frobenius Norm of the difference between the target and
+        the aligned source.
+        """
+        return np.linalg.norm(self.target - self.aligned_source)
 
     @property
     def transform_chain(self):
@@ -32,13 +37,10 @@ class Procrustes(RigidAlignment):
         self.source_translation = Translation(-self.source.mean(axis=0))
         # apply the translation to the source
         self.aligned_source = self.source_translation.apply(self.source)
-        print self.aligned_source
         scale_source = np.linalg.norm(self.aligned_source)
         scale_target = np.linalg.norm(self.centred_target)
-        self.scale = Scale(np.ones(self.n_dim) * (scale_target /
-                                                  scale_source))
+        self.scale = Scale(scale_target / scale_source, n_dim=self.n_dim)
         self.aligned_source = self.scale.apply(self.aligned_source)
-        print self.aligned_source
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
         correlation = np.dot(self.aligned_source.T, self.centred_target)
@@ -48,70 +50,63 @@ class Procrustes(RigidAlignment):
         # finally, move the source back out to where the target is
         self.aligned_source = self.target_translation.inverse.apply(
             self.aligned_source)
-        print self.aligned_source
+
+    def __str__(self):
+        msg = 'Alignment delta_target: %f\n' % self.error
+        msg += 'Optimal alignment given by:\n'
+        return msg + str(self.transform)
 
 
-class ParallelProcrustes(ParallelRigidAlignment):
+class GeneralizedProcrustesAnalysis(MultipleAlignment):
     def __init__(self, sources, **kwargs):
-        RigidAlignment.__init__(self, sources, **kwargs)
+        super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
+        self.procrustes = [[Procrustes(s, self.target)] for s in self.sources]
+        self.target_scale = np.linalg.norm(self.target)
+        self.n_iterations = 1
+        self.max_iterations = 100
+        self._recursive_procrustes()
 
-    def general_alignment(self):
-        # stores the items used in each procrustes step
-        self.operations = []
-        error = 999999999
-        while error > 0.0001:
-            self._procrustes_step()
-            old_target = self.target
-            self.target = self.aligned_sources.mean(axis=-1)[..., np.newaxis]
-            error = np.sum((self.target - old_target) ** 2)
-            print 'error is ' + `error`
-        self.h_transforms = []
-        for i in range(self.n_sources):
-            self.h_transforms.append(np.eye(self.n_dimensions + 1))
-            for ops in self.operations:
-                t = h_translation_matrix(ops['translate'][..., i].flatten())
-                s = h_scale_matrix(ops['rescale'][..., i].flatten(),
-                                   dim=self.n_dimensions)
-                r = h_rotation_matrix(ops['rotation'][i])
-                self.h_transforms[i] = np.dot(self.h_transforms[i],
-                                              np.dot(t,
-                                                     np.dot(s,
-                                                            r)))
+    def _recursive_procrustes(self):
+        """
+        Recursively calculates a Procrustes alignment
+        """
+        # find the average of the latest aligned sources:
+        if self.n_iterations > self.max_iterations:
+            print 'max number of iterations reached.'
+            return False
+        new_target = (sum(p[-1].aligned_source for p in self.procrustes) /
+                      self.n_sources)
+        rescale = Scale(self.target_scale / np.linalg.norm(new_target),
+                        n_dim=self.n_dim)
+        centre = Translation(-new_target.mean(axis=0))
+        rescale_about_com = centre.chain(rescale).chain(centre.inverse)
+        new_target = rescale_about_com.apply(new_target)
+        self.delta_target = np.linalg.norm(self.target - new_target)
+        print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
+                                                           self.delta_target)
+        if self.delta_target < 1e-6:
+            print 'delta_target sufficiently small, stopping.'
+            return True
+        else:
+            self.n_iterations += 1
+            self.target = new_target
+            for p in self.procrustes:
+                p.append(Procrustes(p[-1].aligned_source, new_target))
+            return self._recursive_procrustes()
 
-    def _procrustes_step(self):
-        print 'taking Procrustes step'
-        ops = {}
-        # calculate the translation required for each source to align the
-        # sources' centre of mass to the the target centre of mass
-        translation = (self.target.mean(axis=0) -
-                       self.aligned_sources.mean(axis=0))[np.newaxis, ...]
-        # apply the translation to each source respectively
-        self.aligned_sources += translation
-        ops['translate'] = translation
-        # calculate the frobenious norm of each shape as our metric
-        scale_sources = np.sqrt(np.apply_over_axes(np.sum,
-                                                   (
-                                                       self.aligned_sources -
-                                                       self.aligned_sources.mean(
-                                                           axis=0)) ** 2,
-                                                   [0, 1]))
-        scale_target = np.sqrt(np.sum((self.target -
-                                       self.target.mean(axis=0)) ** 2))
-        rescale = scale_target / scale_sources
-        self.aligned_sources = self.aligned_sources * rescale
-        ops['rescale'] = rescale
-        rotations = []
-        #for each source
-        for i in range(self.n_sources):
-            # calculate the correlation along each dimension
-            correlation = np.dot(self.aligned_sources[..., i].T,
-                                 self.target[..., 0])
-            U, D, Vt = np.linalg.svd(correlation)
-            # find the optimal rotation to minimise rotational differences
-            rotation = np.dot(U, Vt)
-            rotations.append(rotation)
-            # apply the rotation
-            self.aligned_sources[..., i] = np.dot(self.aligned_sources[..., i],
-                                                  rotation)
-        ops['rotation'] = rotations
-        self.operations.append(ops)
+    @property
+    def transforms(self):
+        return [reduce(lambda a, b: a.chain(b), [x.transform for x in p])
+                for p in self.procrustes]
+
+    @property
+    def errors(self):
+        return [p[-1].error for p in self.procrustes]
+
+    @property
+    def average_error(self):
+        return sum(self.errors)/self.n_sources
+
+    def __str__(self):
+        return ('Converged after %d iterations with av. error %f'
+                % (self.n_iterations, self.average_error))
