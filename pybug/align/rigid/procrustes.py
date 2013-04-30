@@ -13,7 +13,11 @@ class Procrustes(RigidAlignment):
 
     @property
     def error(self):
-        return np.sum((self.target - self.aligned_source) ** 2)
+        """
+        :return: The Frobenius Norm of the difference between the target and
+        the aligned source.
+        """
+        return np.linalg.norm(self.target - self.aligned_source)
 
     @property
     def transform_chain(self):
@@ -34,8 +38,7 @@ class Procrustes(RigidAlignment):
         self.aligned_source = self.source_translation.apply(self.source)
         scale_source = np.linalg.norm(self.aligned_source)
         scale_target = np.linalg.norm(self.centred_target)
-        self.scale = Scale(np.ones(self.n_dim) * (scale_target /
-                                                  scale_source))
+        self.scale = Scale(scale_target / scale_source, n_dim=self.n_dim)
         self.aligned_source = self.scale.apply(self.aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
@@ -46,6 +49,11 @@ class Procrustes(RigidAlignment):
         # finally, move the source back out to where the target is
         self.aligned_source = self.target_translation.inverse.apply(
             self.aligned_source)
+
+    def __str__(self):
+        msg = 'Alignment error: %f\n' % self.error
+        msg += 'Optimal alignment given by:\n'
+        return msg + str(self.transform)
 
 
 class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
@@ -67,7 +75,9 @@ class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
             return False
         new_target = sum(p[-1].aligned_source for p in self.procrustes) \
                      / self.n_sources
-        new_target *= self.target_scale / np.linalg.norm(new_target)
+        rescale = Scale(self.target_scale / np.linalg.norm(new_target),
+                        n_dim=self.n_dim)
+        new_target = _scale_from_com(new_target, rescale)
         self.error = np.linalg.norm(self.target - new_target)
         print 'at iteration %d, the error is %f' % (self.n_iterations,
                                                     self.error)
@@ -80,3 +90,14 @@ class GeneralizedProcrustesAnalysis(ParallelRigidAlignment):
             for p in self.procrustes:
                 p.append(Procrustes(p[-1].aligned_source, new_target))
             return self._recursive_procrustes()
+
+    @property
+    def transforms(self):
+        return [reduce(lambda a, b: a.chain(b), [x.transform for x in p])
+                for p in self.procrustes]
+
+
+def _scale_from_com(points, scale):
+    # translate the target to the origin, apply the scale, translate back
+    t = Translation(-points.mean(axis=0))
+    return t.chain(scale).chain(t.inverse).apply(points)
