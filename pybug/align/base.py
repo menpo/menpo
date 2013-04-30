@@ -56,7 +56,7 @@ class Alignment(object):
         xx, yy = np.meshgrid(x, y)
         sample_coords = np.concatenate(
             [xx.reshape([-1, 1]), yy.reshape([-1, 1])], axis=1)
-        warped_coords = self.mapping(sample_coords)
+        warped_coords = self.transform.apply(sample_coords)
         delta = warped_coords - sample_coords
         # plot the sample points result
         pyplot.quiver(sample_coords[:, 0], sample_coords[:, 1], delta[:, 0],

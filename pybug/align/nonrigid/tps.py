@@ -34,7 +34,7 @@ class TPS(NonRigidAlignment):
         top_L = np.concatenate([self.K, self.P], axis=1)
         bot_L = np.concatenate([np.swapaxes(self.P, 0, 1), O], axis=1)
         self.L = np.concatenate([top_L, bot_L], axis=0)
-        self.coeff = np.linalg.solve(self.L, self.Y.T)
+        self.coefficients = np.linalg.solve(self.L, self.Y.T)
         self._transform_object = TPSTransform(self)
 
     @property
@@ -51,34 +51,35 @@ class TPSTransform(Transform):
         self.tps = tps
         self.n_dim = self.tps.n_dim
 
-    def _apply(self, x, affinefree=False):
+    def _apply(self, points, affine_free=False):
         """ TPS transform of input x (f) and the affine-free
-        TPS transform of the input x (f_afree)
+        TPS transform of the input x (f_affine_free)
         """
-        if x.shape[1] != self.n_dim:
+        if points.shape[1] != self.n_dim:
             raise TPSError('TPS can only be used on 2D data.')
-        x = x[..., 0][:, np.newaxis]
-        y = x[..., 1][:, np.newaxis]
+        x = points[..., 0][:, None]
+        y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp
         # (C = Constant component, then X, Y respectively)
-        c_affine_C = self.tps.coeff[-3]
-        c_affine_X = self.tps.coeff[-2]
-        c_affine_Y = self.tps.coeff[-1]
+        c_affine_C = self.tps.coefficients[-3]
+        c_affine_X = self.tps.coefficients[-2]
+        c_affine_Y = self.tps.coefficients[-1]
         # the affine warp component
         f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
-        dist = distance.cdist(self.tps.source, x)
+        dist = distance.cdist(self.tps.source, points)
         kernel_dist = r_2_log_r_2_kernel(dist)
         # grab the affine free components of the warp
-        c_afree = self.tps.coeff[:-3]
-        # the affine free warp component
-        f_afree = np.sum(
-            c_afree[:, np.newaxis, :] * kernel_dist[..., np.newaxis], axis=0)
-        if affinefree:
-            return f_affine + f_afree, f_afree
+        c_affine_free = self.tps.coefficients[:-3]
+        # build the affine free warp component
+        f_affine_free = np.sum(c_affine_free[:, None, :] *
+                               kernel_dist[..., None],
+                               axis=0)
+        if affine_free:
+            return f_affine + f_affine_free, f_affine_free
         else:
-            return f_affine + f_afree
+            return f_affine + f_affine_free
 
 
 def r_2_log_r_2_kernel(r):
