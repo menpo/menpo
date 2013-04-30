@@ -10,21 +10,21 @@ class AffineTransform(Transform):
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
-    and to chain this transform with other affine transformations
+    and to chain this transform with other affine transformations.
     """
 
     def __init__(self, homogeneous_matrix):
         """
-
         :param homogeneous_matrix: (n_dim + 1, n_dim + 1) matrix of the
         format [ rotatationscale translation; 0 1]
         """
+        #TODO Check am I a valid Affine transform
         shape = homogeneous_matrix.shape
         if len(shape) != 2 and shape[0] != shape[1]:
             raise Exception("You need to provide a square homogeneous matrix.")
         self.n_dim = shape[0] - 1
         # this restriction is because we have to be able to decompose
-        # transforms to find there meaning, and I haven't explored 4D+
+        # transforms to find their meaning, and I haven't explored 4D+
         # rotations (everything else is obvious). If there is need we can
         # relax it in the future
         if self.n_dim not in [2, 3]:
@@ -51,7 +51,8 @@ class AffineTransform(Transform):
         return np.allclose(self.homogeneous_matrix, other.homogeneous_matrix)
 
     def __str__(self):
-        rep = str(self.homogeneous_matrix) + '\n'
+        rep = repr(self) + '\n'
+        rep += str(self.homogeneous_matrix) + '\n'
         rep += self._transform_str()
         return rep
 
@@ -86,13 +87,12 @@ class AffineTransform(Transform):
 
     def decompose(self):
         """
-        Decomposes this transform into discrete Rotations, a Scale,
-        and a Translation.
+        Uses an SVD to decompose this transform into discrete Affine
+        Transforms.
 
-        :return transforms: A list of a AbstractRotation, Scale, AbstractRotation,
-        Translation] that are equivalent to this affine transform
-        reduce(lambda x,y: x.chain(y), self.decompose) == self
-        True
+        :return transforms: A list of a DiscreteAffineTransforms that are
+        equivalent to this affine transform, s.t.
+        reduce(lambda x,y: x.chain(y), self.decompose()) == self
         """
         U, S, V = np.linalg.svd(self.linear_transform)
         rotation_2 = Rotation(U)
@@ -102,10 +102,40 @@ class AffineTransform(Transform):
         return [rotation_1, scale, rotation_2, translation]
 
 
-class DiscreteAffineTransform(AffineTransform):
+class SimilarityTransform(AffineTransform):
+    """
+    Specialist version of an AffineTransform that is guaranteed to be a
+    Similarity transform.
+    """
 
     def __init__(self, homogeneous_matrix):
-        super(DiscreteAffineTransform, self).__init__(homogeneous_matrix)
+        #TODO check that I am a similarity transform
+        super(SimilarityTransform, self).__init__(homogeneous_matrix)
+
+    def chain(self, transform):
+        """
+        Chains this similarity transform with another one. If the second
+        transform is also a Similarity transform, the result will be a
+        SimilarityTransform. If not, the result will be an AffineTransform.
+        :param transform: Transform to be applied FOLLOWING self
+        :return: the resulting transform
+        """
+        if isinstance(transform, SimilarityTransform):
+            return SimilarityTransform(np.dot(transform.homogeneous_matrix,
+                                              self.homogeneous_matrix))
+        else:
+            return super(SimilarityTransform, self).chain(transform)
+
+
+class DiscreteAffineTransform(object):
+    """
+    A discrete Affine transform operation (such as a Scale,
+    Translation or Rotation). Has to be able to invert itself. Make sure you
+    inherit from DiscreteAffineTransform first, for optimal decompose()
+    behavior
+    """
+
+    __metaclass__ = abc.ABCMeta
 
     def decompose(self):
         """ A DiscreteAffineTransform is already maximally decomposed -
@@ -113,30 +143,41 @@ class DiscreteAffineTransform(AffineTransform):
         """
         return [copy.deepcopy(self)]
 
+    @abc.abstractproperty
+    def inverse(self):
+        pass
+
 
 def Rotation(rotation_matrix):
+    """
+    Factory function for producing Rotation transforms.
+    :param rotation_matrix: A square legal 2D or 3D rotation matrix
+    :return: A Rotation2D or Rotation3D object.
+    """
     if rotation_matrix.shape[0] == 2:
         return Rotation2D(rotation_matrix)
     elif rotation_matrix.shape[0] == 3:
         return Rotation3D(rotation_matrix)
     else:
         raise DimensionalityError("Can only construct 2D or 3D Rotations")
-# TODO build rotations about axis, euler angles etc
-# here is a start, and see
-# http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
-# for details.
+    # TODO build rotations about axis, euler angles etc
+    # see
+    # http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    # for details.
 
 
-class AbstractRotation(DiscreteAffineTransform):
+class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
     """
-    An n_dim rotation transform.
+    Abstract n_dim rotation transform.
     """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix):
-        """ The rotation_matrix must be a 2-d square ndarray of shape (n_dim, n_dim)
+        """ The rotation_matrix must be a 2-d square ndarray of shape
+        (n_dim, n_dim)
         """
+        #TODO check that I am a valid rotation
         homogeneous_matrix = np.eye(rotation_matrix.shape[0] + 1)
         homogeneous_matrix[:-1, :-1] = rotation_matrix
         super(AbstractRotation, self).__init__(homogeneous_matrix)
@@ -156,7 +197,7 @@ class AbstractRotation(DiscreteAffineTransform):
         if axis is None:
             return "NO OP"
         angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
-        message = 'CCW AbstractRotation of %d degrees about %s' % (angle_of_rot, axis)
+        message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
         return message
 
     @abc.abstractmethod
@@ -250,11 +291,31 @@ class Rotation3D(AbstractRotation):
         return axis, angle_of_rotation
 
 
-class Scale(DiscreteAffineTransform):
+def Scale(scale_factor, n_dim=None):
     """
-    An n_dim scale transform.
+    Factory function for producing Scale transforms.
+    A UniformScale will be produced if:
+    - A float scale_factor and a n_dim kwarg are provided
+    - A ndarray scale_factor with shape (n_dim, ) is provided with all
+    elements being the same
+    A NonUniformScale will be provided if:
+    - A ndarray scale_factor with shape (n_dim, ) is provided with at least
+    two differing scale factors.
     """
+    if n_dim is None:
+        # scale_factor better be a numpy array then
+        if np.allclose(scale_factor, scale_factor[0]):
+            return UniformScale(scale_factor[0], scale_factor.shape[0])
+        else:
+            return NonUniformScale(scale_factor)
+    else:
+        return UniformScale(scale_factor, n_dim)
 
+
+class NonUniformScale(DiscreteAffineTransform, AffineTransform):
+    """
+    An n_dim scale transform, with a scale component for each dimension.
+    """
     def __init__(self, scale):
         """ The scale must be a 1-d ndarray of shape (n_dim, )
         :param scale: A vector specifying the scale factor to be applied
@@ -263,22 +324,50 @@ class Scale(DiscreteAffineTransform):
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
-        super(Scale, self).__init__(homogeneous_matrix)
+        super(NonUniformScale, self).__init__(homogeneous_matrix)
 
     @property
-    def scale_factors(self):
+    def scale(self):
         return self.homogeneous_matrix.diagonal()[:-1]
 
     @property
     def inverse(self):
-        return Scale(1.0/self.scale_factors)
+        return NonUniformScale(1.0/self.scale)
 
     def _transform_str(self):
-        message = 'Scale by %s ' % self.scale_factors
+        message = 'NonUniformScale by %s ' % self.scale
         return message
 
 
-class Translation(DiscreteAffineTransform):
+class UniformScale(DiscreteAffineTransform, SimilarityTransform):
+    """
+    An n_dim similarity scale transform, with a single scale component
+    applied to all dimensions.
+    """
+    def __init__(self, scale, n_dim):
+        """ The scale must be a 1-d ndarray of shape (n_dim, )
+        :param scale: A vector specifying the scale factor to be applied
+        along each axis.
+        """
+        homogeneous_matrix = np.eye(n_dim + 1)
+        np.fill_diagonal(homogeneous_matrix, scale)
+        homogeneous_matrix[-1, -1] = 1
+        super(UniformScale, self).__init__(homogeneous_matrix)
+
+    @property
+    def scale(self):
+        return self.homogeneous_matrix.diagonal()[0]
+
+    @property
+    def inverse(self):
+        return UniformScale(1.0/self.scale, self.n_dim)
+
+    def _transform_str(self):
+        message = 'UniformScale by %f ' % self.scale
+        return message
+
+
+class Translation(DiscreteAffineTransform, SimilarityTransform):
     """
     An n_dim translation transform.
     """
