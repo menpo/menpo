@@ -64,7 +64,7 @@ class AffineTransform(Transform):
         list_str = [t._transform_str() for t in self.decompose()]
         return reduce(lambda x, y: x + '\n' + y, list_str)
 
-    def _apply(self, x):
+    def _apply(self, x, **kwargs):
         """
         Applies this transform to a new set of vectors
         :param x: A (n_dim, n_points) ndarray to apply this transform to.
