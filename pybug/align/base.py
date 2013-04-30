@@ -69,7 +69,7 @@ class Alignment(object):
         pyplot.xlim((x_min_m, x_max_m))
         pyplot.ylim((y_min_m, y_max_m))
 
-    @abc.abstractmethod
+    @abc.abstractproperty
     def transform(self):
         """
         Returns a single instance of Transform that can be applied.

@@ -6,7 +6,7 @@ class NonRigidAlignment(Alignment):
   """
 
     def __init__(self, source, target):
-        Alignment.__init__(self, source, target)
+        super(NonRigidAlignment, self).__init__(source, target)
 
 
 class MultipleNonRigidAlignment(MultipleAlignment):

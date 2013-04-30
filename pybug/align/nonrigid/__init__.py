@@ -1,1 +1,1 @@
-from tps import TPS, ParallelTPS
+from tps import TPS
