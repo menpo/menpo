@@ -92,3 +92,13 @@ def r_2_log_r_2_kernel(r):
     # reset singularities to 0
     U[mask] = 0
     return U
+
+
+class MultipleTPS(MultipleAlignment):
+    def __init__(self, sources, **kwargs):
+        super(MultipleTPS, self).__init__(sources, **kwargs)
+        self.tps = [TPS(source, self.target) for source in self.sources]
+
+    @property
+    def transforms(self):
+        return [tps.transform for tps in self.tps]
