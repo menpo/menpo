@@ -1,4 +1,4 @@
-from pybug.align.base import Alignment, ParallelAlignment
+from pybug.align.base import Alignment, MultipleAlignment
 
 
 class NonRigidAlignment(Alignment):
@@ -9,9 +9,9 @@ class NonRigidAlignment(Alignment):
         Alignment.__init__(self, source, target)
 
 
-class ParallelNonRigidAlignment(ParallelAlignment):
+class MultipleNonRigidAlignment(MultipleAlignment):
     """ Abstract class specializing in nonrigid alignments.
     """
 
     def __init__(self, sources, **kwargs):
-        ParallelAlignment.__init__(self, sources, **kwargs)
+        MultipleAlignment.__init__(self, sources, **kwargs)

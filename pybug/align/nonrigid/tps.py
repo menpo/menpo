@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial import distance
 from pybug.align.nonrigid.exceptions import TPSError
-from pybug.align.nonrigid.base import ParallelNonRigidAlignment, \
+from pybug.align.nonrigid.base import MultipleNonRigidAlignment, \
     NonRigidAlignment
 
 
@@ -70,7 +70,7 @@ class TPS(NonRigidAlignment):
         self._view_2d()
 
 
-class ParallelTPS(ParallelNonRigidAlignment):
+class ParallelTPS(MultipleNonRigidAlignment):
     def build_TPS_matrices(self):
         self.V = self.target[..., 0].T
         self.Y = np.hstack([self.V, np.zeros([2, 3])])

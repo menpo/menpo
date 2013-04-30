@@ -11,13 +11,13 @@ class Alignment(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, source, target):
-        """ source - ndarray of landmarks which will be aligned of dimension
-         [n_landmarks x n_dim]
+        """ source - ndarray of landmarks which will be aligned of shape
+         (n_landmarks, n_dim)
 
         target  - an ndarray (of the same dimension of source) which
                   the source will be aligned to.
         """
-        self.source = source
+        self.source = source.copy()
         self.aligned_source = self.source.copy()
         try:
             self.n_landmarks, self.n_dim = self.source.shape
@@ -25,7 +25,7 @@ class Alignment(object):
             raise AlignmentError('Data is being provided in an invalid format'
                                  ' - must have shape (n_landmarks, n_dim)')
         assert self.n_dim, self.n_landmarks == target.shape
-        self.target = target
+        self.target = target.copy()
 
     def _view_2d(self):
         """ Visualize how points are affected by the warp in 2 dimensions.
@@ -62,15 +62,23 @@ class Alignment(object):
         pyplot.quiver(sample_coords[:, 0], sample_coords[:, 1], delta[:, 0],
                       delta[:, 1])
         delta = self.target - self.source
-        # plot how the landmarks move from src to target
+        # plot how the landmarks move from source to target
         pyplot.quiver(self.source[:, 0], self.source[:, 1], delta[:, 0],
                       delta[:, 1])
         # rescale to the bounds
         pyplot.xlim((x_min_m, x_max_m))
         pyplot.ylim((y_min_m, y_max_m))
 
+    @abc.abstractmethod
+    def transform(self):
+        """
+        Returns a single instance of Transform that can be applied.
+        :return: a transform object
+        """
+        pass
 
-class ParallelAlignment(object):
+
+class MultipleAlignment(object):
 
     __metaclass__ = abc.ABCMeta
 
@@ -80,43 +88,26 @@ class ParallelAlignment(object):
                     ...landmarks_n] where landmarks is an ndarray of
                     dimension [n_landmarks x n_dim]
           KWARGS
-            target  - a single numpy array (of the same dimension of sources)
-                    which every instance of source will be aligned to. If
-                    not present, target is set to the mean source position.
+            target  - a single numpy array (of the same dimension of a
+            source) which every instance of source will be aligned to. If
+            not present, target is set to the mean source position.
         """
-        self._lookup = {}
-        if type(sources) == np.ndarray:
-            # only a single landmark passed in
-            sources = [sources]
-        n_sources = len(sources)
-        n_landmarks = sources[0].shape[0]
-        n_dim = sources[0].shape[1]
-        self.sources = np.zeros([n_landmarks, n_dim, n_sources])
-        for i, source in enumerate(sources):
-            assert n_dim, n_landmarks == source.shape
-            self.sources[:, :, i] = source
-            source_hash = _numpy_hash(source)
-            self._lookup[source_hash] = i
-        self.aligned_sources = self.sources.copy()
+        if len(sources) < 2 and target is None:
+            raise Exception("Need at least two sources to align")
+        self.n_sources = len(sources)
+        self.n_landmarks, self.n_dim = sources[0].shape
+        self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = self.sources.mean(2)[..., np.newaxis]
+            self.target = sum(self.sources) / len(sources)
         else:
-            assert n_dim, n_landmarks == target.shape
-            self.target = target[..., np.newaxis]
+            assert self.n_dim, self.n_landmarks == target.shape
+            self.target = target
 
-    @property
-    def n_landmarks(self):
-        return self.sources.shape[0]
-
-    @property
-    def n_dimensions(self):
-        return self.sources.shape[1]
-
-    def aligned_version_of_source(self, source):
-        i = self._lookup[_numpy_hash(source)]
-        return self.aligned_sources[..., i]
-
-    @property
-    def n_sources(self):
-        return self.sources.shape[2]
+    @abc.abstractproperty
+    def transforms(self):
+        """
+        Returns a list of transforms. one for each source,
+        which aligns it to the target.
+        """
+        pass
