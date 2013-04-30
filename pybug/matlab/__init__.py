@@ -29,7 +29,7 @@ def gradient(f, *varargs):
     """
     gradients = np_gradient(f, *varargs)
     if len(f.shape) > 1:
-        gradients[:2] = gradients[2::-1]
+        gradients[:2] = gradients[1::-1]
     return gradients
 
 
