@@ -1,1 +1,1 @@
-from procrustes import Procrustes, ParallelProcrustes
+from procrustes import Procrustes, GeneralizedProcrustesAnalysis

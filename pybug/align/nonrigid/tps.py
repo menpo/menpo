@@ -1,162 +1,91 @@
 import numpy as np
 from scipy.spatial import distance
 from pybug.align.nonrigid.exceptions import TPSError
-from pybug.align.nonrigid.base import ParallelNonRigidAlignment, \
-    NonRigidAlignment
+from pybug.align.nonrigid.base import NonRigidAlignment
+from pybug.exceptions import DimensionalityError
+from pybug.transform.base import Transform
+from pybug.align.base import MultipleAlignment
 
 
 class TPS(NonRigidAlignment):
 
-    def __init__(self, source, target):
+    def __init__(self, source, target, kernel=None):
         """
+        The TPS alignmnet between 2D source and target landmarks. kernel can
+         be used to specify an alternative kernel function - if None is
+         supplied, the r**2 log(r**2) kernel will be used.
 
-        :param source:
-        :param target:
-        :raise:
+            :param source:
+            :param target:
+            :raise:
         """
-        Alignment.__init__(self, source, target)
+        super(TPS, self).__init__(source, target)
         if self.n_dim != 2:
-            raise TPSError('TPS can only be used on 2D data.')
-        self.V = self.target.T
+            raise DimensionalityError('TPS can only be used on 2D data.')
+        self.V = self.target.T.copy()
         self.Y = np.hstack([self.V, np.zeros([2, 3])])
         pairwise_norms = distance.squareform(distance.pdist(self.source))
-        self.K = tps_kernel_function(pairwise_norms)
+        if kernel is None:
+            kernel = r_2_log_r_2_kernel
+        self.K = kernel(pairwise_norms).T
         self.P = np.concatenate(
             [np.ones([self.n_landmarks, 1]), self.source], axis=1)
         O = np.zeros([3, 3])
         top_L = np.concatenate([self.K, self.P], axis=1)
         bot_L = np.concatenate([np.swapaxes(self.P, 0, 1), O], axis=1)
         self.L = np.concatenate([top_L, bot_L], axis=0)
-        # b_matrix is the Bending Energy Matrix
-        #L_inv = np.linalg.inv(self.L)
-        #L_inv_n = L_inv[:-3, :-3]
-        #self.b_energy = np.dot(L_inv_n,
-        #                np.dot(self.K,
-        #                       L_inv_n))
-        # store out the coefficients (weightings) of the various
-        # components of the warp
-        self.coeff = np.linalg.solve(self.L, self.Y.T)
+        self.coefficients = np.linalg.solve(self.L, self.Y.T)
+        self._transform_object = TPSTransform(self)
 
-    def mapping(self, coords, affinefree=False):
-        """ TPS transform of input coords (f) and the affine-free
-     TPS transform of the input coords (f_afree)
-    """
-        if coords.shape[1] != self.n_dim:
-            raise TPSError('TPS can only be used on 2D data.')
-        x = coords[..., 0][:, np.newaxis]
-        y = coords[..., 1][:, np.newaxis]
-        # calculate the affine coefficients of the warp
-        # (C = Constant component, then X, Y respectively)
-        c_affine_C = self.coeff[-3]
-        c_affine_X = self.coeff[-2]
-        c_affine_Y = self.coeff[-1]
-        # the affine warp component
-        f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
-        # calculate a disance matrix (for L2 Norm) between every source
-        # and the target
-        dist = distance.cdist(self.source, coords)
-        kernel_dist = tps_kernel_function(dist)
-        # grab the affine free components of the warp
-        c_afree = self.coeff[:-3]
-        # the affine free warp component
-        f_afree = np.sum(
-            c_afree[:, np.newaxis, :] * kernel_dist[..., np.newaxis], axis=0)
-        if affinefree:
-            return f_affine + f_afree, f_afree
-        else:
-            return f_affine + f_afree
+    @property
+    def transform(self):
+        return self._transform_object
 
     def view(self):
         self._view_2d()
 
 
-class ParallelTPS(ParallelNonRigidAlignment):
-    def build_TPS_matrices(self):
-        self.V = self.target[..., 0].T
-        self.Y = np.hstack([self.V, np.zeros([2, 3])])
-        pairwise_norms = np.zeros([self.n_landmarks,
-                                   self.n_landmarks, self.n_sources])
-        for i in range(self.n_sources):
-            pairwise_norms[..., i] = distance.squareform(
-                distance.pdist(self.sources[..., i]))
-            # K is n x n x s matrix of kernel function U evaluated at each of
-        # the pairwise norms
-        self.K = tps_kernel_function(pairwise_norms)
-        self.P = np.concatenate(
-            [np.ones([self.n_landmarks, 1, self.n_sources]), self.sources],
-            axis=1)
-        O = np.zeros([3, 3, self.n_sources])
-        top_L = np.concatenate([self.K, self.P], axis=1)
-        bot_L = np.concatenate([np.swapaxes(self.P, 0, 1), O], axis=1)
-        self.L = np.concatenate([top_L, bot_L], axis=0)
+class TPSTransform(Transform):
 
-        # b_matrix is the Bending Energy Matrix
-        #L_inv = np.linalg.inv(self.L)
-        #L_inv_n = L_inv[:-3, :-3]
-        #self.b_energy = np.dot(L_inv_n,
-        #                np.dot(self.K,
-        #                       L_inv_n))
-        # store out the coefficients (weightings) of the various
-        # components of the warp
-        self.coeff = np.zeros(
-            [self.Y.shape[1], self.Y.shape[0], self.n_sources])
-        for i in range(self.n_sources):
-            self.coeff[..., i] = np.linalg.solve(self.L[..., i], self.Y.T)
+    def __init__(self, tps):
+        self.tps = tps
+        self.n_dim = self.tps.n_dim
 
-    def mapping(self, coords):
-        """ TPS transform of input coords (f) and the affine-free
-        TPS transform of the input coords (f_afree)
+    def _apply(self, points, affine_free=False):
+        """ TPS transform of input x (f) and the affine-free
+        TPS transform of the input x (f_affine_free)
         """
-        x = coords[..., 0][:, np.newaxis, np.newaxis]
-        y = coords[..., 1][:, np.newaxis, np.newaxis]
+        if points.shape[1] != self.n_dim:
+            raise TPSError('TPS can only be used on 2D data.')
+        x = points[..., 0][:, None]
+        y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp
         # (C = Constant component, then X, Y respectively)
-        c_affine_C = self.coeff[-3]
-        c_affine_X = self.coeff[-2]
-        c_affine_Y = self.coeff[-1]
+        c_affine_C = self.tps.coefficients[-3]
+        c_affine_X = self.tps.coefficients[-2]
+        c_affine_Y = self.tps.coefficients[-1]
         # the affine warp component
         f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
-        dist = np.zeros([self.n_landmarks, coords.shape[0], self.n_sources])
-        for i in range(self.n_sources):
-            dist[..., i] = distance.cdist(self.sources[..., i], coords)
-        kernel_dist = tps_kernel_function(dist)
+        dist = distance.cdist(self.tps.source, points)
+        kernel_dist = r_2_log_r_2_kernel(dist)
         # grab the affine free components of the warp
-        c_afree = self.coeff[:-3]
-        # the affine free warp component
-        f_afree = np.sum(c_afree[:, np.newaxis, ...] *
-                         kernel_dist[..., np.newaxis, :], axis=0)
-        return f_affine + f_afree, f_afree
-
-    def indiv_mapping_broken(self, coords, i):
-        """ TPS transform of input coords (f) and the affine-free
-        TPS transform of the input coords (f_afree)
-        """
-        x = coords[..., 0][:, np.newaxis]
-        y = coords[..., 1][:, np.newaxis]
-        # calculate the affine coefficients of the warp
-        # (C = Constant component, then X, Y respectively)
-        c_affine_C = self.coeff[-3, :, i]
-        c_affine_X = self.coeff[-2, :, i]
-        c_affine_Y = self.coeff[-1, :, i]
-        # the affine warp component
-        f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
-        # calculate a disance matrix (for L2 Norm) between every source
-        # and the target
-        dist = distance.cdist(self.sources[..., i], coords)
-        kernel_dist = tps_kernel_function(dist)
-        # grab the affine free components of the warp
-        c_afree = self.coeff[:-3, :, i]
-        # the affine free warp component
-        f_afree = np.sum(c_afree[..., np.newaxis] *
-                         kernel_dist[:, np.newaxis, :], axis=0)
-        return f_affine + f_afree.T, f_afree.T
+        c_affine_free = self.tps.coefficients[:-3]
+        # build the affine free warp component
+        f_affine_free = np.sum(c_affine_free[:, None, :] *
+                               kernel_dist[..., None],
+                               axis=0)
+        if affine_free:
+            return f_affine + f_affine_free, f_affine_free
+        else:
+            return f_affine + f_affine_free
 
 
-def tps_kernel_function(r):
-    #TPS_KERNEL_FUNCTION Returns a matrix of evaluations of radial distances
-    # store all singularity positions
+def r_2_log_r_2_kernel(r):
+    """
+    Radial basis function for TPS.
+    """
     mask = r == 0
     r[mask] = 1
     U = r ** 2 * (np.log(r ** 2))
@@ -165,3 +94,11 @@ def tps_kernel_function(r):
     return U
 
 
+class MultipleTPS(MultipleAlignment):
+    def __init__(self, sources, **kwargs):
+        super(MultipleTPS, self).__init__(sources, **kwargs)
+        self.tps = [TPS(source, self.target) for source in self.sources]
+
+    @property
+    def transforms(self):
+        return [tps.transform for tps in self.tps]
