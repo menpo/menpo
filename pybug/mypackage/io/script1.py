@@ -2,7 +2,8 @@ __author__ = 'ja310'
 
 import os
 import matplotlib.pyplot as plt
-import functions as fn
+from pybug.mypackage.io import functions as fn
+
 
 flr0 = '/data'
 flr1 = 'db'
