@@ -84,7 +84,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.delta_target = np.linalg.norm(self.target - new_target)
         print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
                                                            self.delta_target)
-        if self.delta_target < 1e-6:
+        if self.delta_target < .1e-6:
             print 'delta_target sufficiently small, stopping.'
             return True
         else:
