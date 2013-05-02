@@ -17,5 +17,8 @@ class AssimpWrapper{
     unsigned int n_tcoord_sets(unsigned int mesh_no);
     unsigned int n_tris(unsigned int mesh_no);
     std::string texture_path();
+    void import_points(unsigned int mesh_no, double* points);
+    void import_trilist(unsigned int mesh_no, unsigned int* trilist);
+    void import_tcoords(unsigned int mesh_no, int pindex, double* tcoords);
 };
 

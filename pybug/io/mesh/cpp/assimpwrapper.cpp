@@ -93,3 +93,16 @@ std::string AssimpWrapper::texture_path(){
     return path;
 }
 
+void AssimpWrapper::import_points(unsigned int mesh_no, double* points){
+    read_points(scene->mMeshes[mesh_no], points);
+
+}
+
+void AssimpWrapper::import_trilist(unsigned int mesh_no, unsigned int* trilist){
+    read_trilist(scene->mMeshes[mesh_no], trilist);
+}
+
+void AssimpWrapper::import_tcoords(unsigned int mesh_no, int pindex, double* tcoords){
+    read_tcoords(scene->mMeshes[mesh_no], pindex, tcoords);
+}
+
