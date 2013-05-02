@@ -2,6 +2,7 @@
 #include "assimputils.h"
 #include <assimp/scene.h>
 
+
 unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords) {
     int tcoords_counter = 0;
     for(int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++) {
@@ -82,7 +83,7 @@ std::string diffuse_texture_path_on_material(aiMaterial* mat) {
     //std::cout << mat->mNumProperties << std::endl;
     aiString name;
     mat->Get(AI_MATKEY_NAME, name);
-    std::cout << "Material name is " << name.C_Str() << std::endl;
+    //std::cout << "Material name is " << name.C_Str() << std::endl;
     //std::cout << "Material path is " << path.C_Str() << std::endl;
     unsigned int texture_count = mat->GetTextureCount(aiTextureType_DIFFUSE);
     if(texture_count == 1) {
@@ -93,5 +94,6 @@ std::string diffuse_texture_path_on_material(aiMaterial* mat) {
         return cpp_path;
     }
     else
-        return "NO_TEXTURE_PATH";
+        return NO_TEXTURE_PATH;
 }
+

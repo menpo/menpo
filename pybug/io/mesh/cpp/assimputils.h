@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+const std::string NO_TEXTURE_PATH = "NO_TEXTURE_PATH";
 
 class aiMesh;
 class aiMaterial;

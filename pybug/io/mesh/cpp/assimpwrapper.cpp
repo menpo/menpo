@@ -5,6 +5,7 @@
 #include "assimpwrapper.h"
 #include "assimputils.h"
 
+
 AssimpWrapper::AssimpWrapper(std::string path) {
     // we only want raw info - don't care about a lot of the stuff that assimp
     // could give us back. Here we disable all that stuff.
@@ -24,20 +25,43 @@ AssimpWrapper::AssimpWrapper(std::string path) {
             aiProcess_FindDegenerates       |
             aiProcess_SortByPType);
     if(!scene) {
-        std::cout << "Something went wrong" << std::endl;
+        throw "We couldn't find a scene.";
     }
-    else {
-        //std::cout << "This scene has " << scene->mNumMeshes
-        //<< " meshes on it." << std::endl;
-        //std::cout << "This scene has " << scene->mNumTextures
-        //<< " textures on it." << std::endl;
-        std::cout << "This scene has " << scene->mNumMaterials
-                  << " materials on it." << std::endl;
-        for(int i = 0; i < scene->mNumMeshes; i++)
-            mesh_checker(scene->mMeshes[i]);
-        //for(int i = 0; i < scene->mNumMaterials; i++)
-        //    material_checker(scene->mMaterials[i]);
+    verify_state();
+}
+
+
+void AssimpWrapper::verify_state()
+{
+    /* Checks that we have:
+     * one and only one mesh that is composed of solely triangles.
+     * if that mesh has texture coords:
+     *    we have one and only one texture path
+     * anything else raises an exception.
+     * Returns the mesh index of the triangle mesh
+     */
+    trimesh_index = 999;
+    bool has_tcoords = false;
+    for(int i = 0; i < n_meshes(); i++) {
+        aiMesh* mesh = scene->mMeshes[i];
+        // first check this mesh is only triangles.
+        bool has_points, has_lines, has_triangles, has_polygons;
+        mesh_flags(mesh, has_points, has_lines, has_triangles, has_polygons);
+        if (!(has_points || has_lines || has_polygons)) {
+            if(trimesh_index != 999) 
+                throw "Have two seperate trimeshes.";
+            else {
+                trimesh_index = i;
+                if(n_tcoord_sets(i) > 0)
+                    has_tcoords = true;
+            }
+        }
     }
+    if(trimesh_index == 999)
+        throw "Never found a trimesh";
+    std::string path = texture_path();
+    if(path == NO_TEXTURE_PATH && has_tcoords)
+        throw "Importing mesh with tcoords but cant find texture";
 }
 
 unsigned int AssimpWrapper::n_meshes(){
@@ -57,10 +81,15 @@ unsigned int AssimpWrapper::n_tcoord_sets(unsigned int mesh_no){
     return tcoords_mask(scene->mMeshes[mesh_no], has_tcoords);
 }
 
-std::string AssimpWrapper::texture_path(unsigned int mesh_no){
+std::string AssimpWrapper::texture_path(){
     // get the mateial that is attached to this mesh
-    unsigned int mat_index = scene->mMeshes[mesh_no]->mMaterialIndex;
-    std::cout << mat_index;
-    aiMaterial* mat = scene->mMaterials[1];
-    return diffuse_texture_path_on_material(mat);
+    std::string path = NO_TEXTURE_PATH;
+    for(int i = 0; i < scene->mNumMaterials; i++) {
+        aiMaterial* mat = scene->mMaterials[i];
+        std::string path = diffuse_texture_path_on_material(mat);
+        if(path != NO_TEXTURE_PATH)
+            return path;
+    }
+    return path;
 }
+
