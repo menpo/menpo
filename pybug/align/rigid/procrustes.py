@@ -43,7 +43,7 @@ class Procrustes(RigidAlignment):
         self.aligned_source = self.scale.apply(self.aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
-        correlation = np.dot(self.aligned_source.T, self.centred_target)
+        correlation = np.dot(self.centred_target.T, self.aligned_source)
         U, D, Vt = np.linalg.svd(correlation)
         self.rotation = Rotation(np.dot(U, Vt))
         self.aligned_source = self.rotation.apply(self.aligned_source)
