@@ -43,7 +43,7 @@ class Procrustes(RigidAlignment):
         self.aligned_source = self.scale.apply(self.aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
-        correlation = np.dot(self.aligned_source.T, self.centred_target)
+        correlation = np.dot(self.centred_target.T, self.aligned_source)
         U, D, Vt = np.linalg.svd(correlation)
         self.rotation = Rotation(np.dot(U, Vt))
         self.aligned_source = self.rotation.apply(self.aligned_source)
@@ -84,7 +84,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.delta_target = np.linalg.norm(self.target - new_target)
         print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
                                                            self.delta_target)
-        if self.delta_target < 1e-6:
+        if self.delta_target < .1e-6:
             print 'delta_target sufficiently small, stopping.'
             return True
         else:
