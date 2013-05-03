@@ -99,7 +99,7 @@ class MultipleAlignment(object):
         self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = sum(self.sources) / len(sources)
+            self.target = sum(self.sources) / self.n_sources
         else:
             assert self.n_dim, self.n_landmarks == target.shape
             self.target = target
