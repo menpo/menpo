@@ -1,6 +1,6 @@
 #include <iostream>
-#include "assimputils.h"
 #include <assimp/scene.h>
+#include "assimputils.h"
 
 
 unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords) {
@@ -46,13 +46,30 @@ void read_trilist(aiMesh* mesh, unsigned int* trilist) {
     }
 }
 
-void read_tcoords(aiMesh* mesh, int pindex, double* tcoords) {
+void read_tcoords_with_alpha(aiMesh* mesh, int pindex, double* tcoords) {
+    /* Reads the tcoords, keeping the alpha channel component.
+     * expects tcoords to be a C contiguous array of size
+     * (n_points, 3)
+     */
     aiVector3D* tcoord_array = mesh->mTextureCoords[pindex];
     for(int i = 0; i < mesh->mNumVertices; i++) {
         aiVector3D tcoord = tcoord_array[i];
         tcoords[3*i] = tcoord.x;
         tcoords[3*i + 1] = tcoord.y;
         tcoords[3*i + 2] = tcoord.z;
+    }
+}
+
+void read_tcoords(aiMesh* mesh, int pindex, double* tcoords) {
+    /* Reads the (s,t) tcoords, removing the alpha channel component.
+     * expects tcoords to be a C contiguous array of size
+     * (n_points, 2)
+     */
+    aiVector3D* tcoord_array = mesh->mTextureCoords[pindex];
+    for(int i = 0; i < mesh->mNumVertices; i++) {
+        aiVector3D tcoord = tcoord_array[i];
+        tcoords[2*i] = tcoord.x;
+        tcoords[2*i + 1] = tcoord.y;
     }
 }
 

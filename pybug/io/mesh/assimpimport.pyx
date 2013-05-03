@@ -1,18 +1,13 @@
 # distutils: language = c++
 # distutils: sources = ./pybug/io/mesh/cpp/assimputils.cpp ./pybug/io/mesh/cpp/assimpwrapper.cpp
 # distutils: libraries = assimp
-from libcpp.vector cimport vector
-from libcpp.set cimport set
-from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.string cimport string
 import numpy as np
 cimport numpy as np
-import cython
-cimport cython
 
 
-# externally declare the C++ Mesh, Vertex, Triangle and HalfEdge classes
-cdef extern from "./cpp/assimp.h":
+# externally declare the C++ classes
+cdef extern from "./cpp/assimpwrapper.h":
     cdef cppclass AssimpWrapper:
         AssimpWrapper(string path) except +
         unsigned int trimesh_index
@@ -36,41 +31,46 @@ cdef class PyAssimpImporter:
         del self.thisptr
 
     @property
+    def _trimesh_index(self):
+        return self.thisptr.trimesh_index
+
+    @property
     def n_meshes(self):
         return self.thisptr.n_meshes()
-"""
-    @property
-    def n_halfedges(self):
-        return self.thisptr.n_halfedges
 
     @property
-    def n_edges(self):
-        return self.thisptr.n_halfedges - self.thisptr.n_fulledges
+    def n_points(self):
+        return self.thisptr.n_points(self._trimesh_index)
 
-    def verify_mesh(self):
-        self.thisptr.verify_mesh()
+    @property
+    def n_tris(self):
+        return self.thisptr.n_tris(self._trimesh_index)
 
-    def vertex_status(self, n_vertex):
-        assert 0 <= n_vertex < self.thisptr.n_vertices
-        deref(self.thisptr.vertices[n_vertex]).status()
+    @property
+    def n_tcoord_sets(self):
+        return self.thisptr.n_tcoord_sets(self._trimesh_index)
 
-    def tri_status(self, n_triangle):
-        assert 0 <= n_triangle < self.thisptr.n_triangles
-        deref(self.thisptr.triangles[n_triangle]).status()
+    @property
+    def texture_path(self):
+        return self.thisptr.texture_path()
 
-    def reduce_tri_scalar_per_vertex_to_vertices(self,
-            np.ndarray[double, ndim=2, mode="c"] tri_s not None):
-        cdef np.ndarray[double, ndim=1, mode='c'] vert_s = \
-            np.zeros(self.thisptr.n_vertices)
-        self.thisptr.reduce_tri_scalar_per_vertex_to_vertices(
-            &tri_s[0,0], &vert_s[0])
-        return vert_s
+    @property
+    def points(self):
+        cdef np.ndarray[double, ndim=2, mode='c'] points = \
+            np.empty([self.n_points, 3])
+        self.thisptr.import_points(self._trimesh_index, &points[0, 0])
+        return points
 
-    def reduce_tri_scalar_to_vertices(self,
-            np.ndarray[double, ndim=1, mode="c"] triangle_scalar not None):
-        cdef np.ndarray[double, ndim=1, mode='c'] vertex_scalar = \
-            np.zeros(self.thisptr.n_vertices)
-        self.thisptr.reduce_tri_scalar_to_vertices(&triangle_scalar[0],
-            &vertex_scalar[0])
-        return vertex_scalar
-"""
+    @property
+    def trilist(self):
+        cdef np.ndarray[unsigned int, ndim=2, mode='c'] trilist = \
+            np.empty([self.n_tris, 3], dtype=np.uint32)
+        self.thisptr.import_trilist(self._trimesh_index, &trilist[0, 0])
+        return trilist
+
+    @property
+    def tcoords(self):
+        cdef np.ndarray[double, ndim=2, mode='c'] tcoords = \
+            np.empty([self.n_points, 2])
+        self.thisptr.import_tcoords(self._trimesh_index, 0, &tcoords[0, 0])
+        return tcoords

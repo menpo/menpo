@@ -12,6 +12,7 @@ void mesh_flags(aiMesh* mesh, bool& has_points, bool& has_lines,
 void read_points(aiMesh* mesh, double* points);
 void read_trilist(aiMesh* mesh, unsigned int* trilist);
 void read_tcoords(aiMesh* mesh, int pindex, double* tcoords);
+void read_tcoords_with_alpha(aiMesh* mesh, int pindex, double* tcoords);
 void mesh_checker(aiMesh* mesh);
 void mesh_import(aiMesh* mesh, double* points, unsigned int* trilist,
                  double** tcoords);
