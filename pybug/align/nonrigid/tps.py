@@ -11,7 +11,7 @@ class TPS(NonRigidAlignment):
 
     def __init__(self, source, target, kernel=None):
         """
-        The TPS alignmnet between 2D source and target landmarks. kernel can
+        The TPS alignment between 2D source and target landmarks. kernel can
          be used to specify an alternative kernel function - if None is
          supplied, the r**2 log(r**2) kernel will be used.
 
