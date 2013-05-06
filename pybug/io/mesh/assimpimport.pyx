@@ -2,6 +2,7 @@
 # distutils: sources = ./pybug/io/mesh/cpp/assimputils.cpp ./pybug/io/mesh/cpp/assimpwrapper.cpp
 # distutils: libraries = assimp
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 import numpy as np
 cimport numpy as np
 
@@ -10,67 +11,81 @@ cimport numpy as np
 cdef extern from "./cpp/assimpwrapper.h":
     cdef cppclass AssimpWrapper:
         AssimpWrapper(string path) except +
-        unsigned int trimesh_index
-        unsigned int n_meshes()
-        unsigned int n_points(unsigned int mesh_no)
-        unsigned int n_tris(unsigned int mesh_no)
-        unsigned int n_tcoord_sets(unsigned int mesh_no)
-        string texture_path()
-        void import_points(unsigned int mesh_no, double* points)
-        void import_trilist(unsigned int mesh_no, unsigned int* trilist)
-        void import_tcoords(unsigned int mesh_no, int index, double* tcoords)
+        AssimpScene* get_scene()
 
-# Use the wrapper to build our PyAssimpImporter
-cdef class PyAssimpImporter:
-    cdef AssimpWrapper* thisptr
+    cdef cppclass AssimpScene:
+        vector[AssimpMesh*] meshes
+        unsigned int n_meshes()
+        string texture_path()
+
+    cdef cppclass AssimpMesh:
+        unsigned int n_points()
+        unsigned int n_faces()
+        unsigned int n_tcoord_sets()
+        void points(double* points)
+        void trilist(unsigned int* trilist)
+        void tcoords(int index, double* tcoords)
+
+
+cdef class PyAssimpWrapper:
+    cdef AssimpWrapper* importer
+    cdef AssimpScene* scene
+    cdef public list meshes
 
     def __cinit__(self, string path):
-        self.thisptr = new AssimpWrapper(path)
+        self.importer = new AssimpWrapper(path)
+        self.scene = self.importer.get_scene()
+        self.meshes = []
+        for i in range(self.n_meshes):
+            self.meshes.append(PyAssimpMesh(self, i))
+
+    @property
+    def n_meshes(self):
+        return self.scene.n_meshes()
+
+    @property
+    def texture_path(self):
+        return self.scene.texture_path()
 
     def __dealloc__(self):
         del self.thisptr
 
-    @property
-    def _trimesh_index(self):
-        return self.thisptr.trimesh_index
 
-    @property
-    def n_meshes(self):
-        return self.thisptr.n_meshes()
+cdef class PyAssimpMesh:
+    cdef AssimpMesh* thisptr
+
+    def __cinit__(self, PyAssimpWrapper wrapper, unsigned int mesh_index):
+        self.thisptr = wrapper.scene.meshes[mesh_index]
 
     @property
     def n_points(self):
-        return self.thisptr.n_points(self._trimesh_index)
+        return self.thisptr.n_points()
 
     @property
     def n_tris(self):
-        return self.thisptr.n_tris(self._trimesh_index)
+        return self.thisptr.n_faces()
 
     @property
     def n_tcoord_sets(self):
-        return self.thisptr.n_tcoord_sets(self._trimesh_index)
-
-    @property
-    def texture_path(self):
-        return self.thisptr.texture_path()
+        return self.thisptr.n_tcoord_sets()
 
     @property
     def points(self):
         cdef np.ndarray[double, ndim=2, mode='c'] points = \
             np.empty([self.n_points, 3])
-        self.thisptr.import_points(self._trimesh_index, &points[0, 0])
+        self.thisptr.points(&points[0, 0])
         return points
 
     @property
     def trilist(self):
         cdef np.ndarray[unsigned int, ndim=2, mode='c'] trilist = \
             np.empty([self.n_tris, 3], dtype=np.uint32)
-        self.thisptr.import_trilist(self._trimesh_index, &trilist[0, 0])
+        self.thisptr.trilist(&trilist[0, 0])
         return trilist
 
     @property
     def tcoords(self):
         cdef np.ndarray[double, ndim=2, mode='c'] tcoords = \
             np.empty([self.n_points, 2])
-        self.thisptr.import_tcoords(self._trimesh_index, 0, &tcoords[0, 0])
+        self.thisptr.tcoords(0, &tcoords[0, 0])
         return tcoords
