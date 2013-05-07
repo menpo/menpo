@@ -27,7 +27,7 @@ AssimpImporter::AssimpImporter(std::string path){
               aiProcess_FindDegenerates       |
               aiProcess_SortByPType);
     if(!aiscene) {
-        throw "We couldn't find a scene.";
+        throw std::string("We couldn't find a scene.");
     }
     p_scene = new AssimpScene(aiscene);
 }
@@ -114,7 +114,7 @@ bool AssimpMesh::is_pointcloud(){
 }
 
 bool AssimpMesh::is_trimesh(){
-    return (!(has_points() || has_lines() || has_polygons()) 
+    return (!(has_points() || has_lines() || has_polygons())
             && has_triangles());
 }
 
@@ -190,7 +190,7 @@ std::string diffuse_texture_path_on_material(aiMaterial* mat){
     //std::cout << "Material path is " << path.C_Str() << std::endl;
     unsigned int texture_count = mat->GetTextureCount(aiTextureType_DIFFUSE);
     if(texture_count == 1) {
-        mat->GetTexture(aiTextureType_DIFFUSE, 0, &path, 
+        mat->GetTexture(aiTextureType_DIFFUSE, 0, &path,
                         NULL, NULL, NULL, NULL, NULL);
         const char* c_path = path.C_Str();
         std::string cpp_path(c_path);

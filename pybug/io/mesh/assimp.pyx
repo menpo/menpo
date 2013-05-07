@@ -14,7 +14,7 @@ cdef extern from "./cpp/assimpwrapper.h":
     cdef const string NO_TEXTURE_PATH
 
     cdef cppclass AssimpImporter:
-        AssimpImporter(string path) except +
+        AssimpImporter(string path) except +IOError
         AssimpScene* get_scene()
 
     cdef cppclass AssimpScene:
