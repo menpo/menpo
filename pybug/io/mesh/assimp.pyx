@@ -105,4 +105,3 @@ cdef class AITriMeshImporter:
         msg += 'n_tris:   %d\n' % self.n_tris
         msg += 'n_tcoord_sets %d' % self.n_tcoord_sets
         return msg
-    

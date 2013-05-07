@@ -1,12 +1,11 @@
 import commands
-import os
 import os.path as path
 import tempfile
-from PIL import Image
 from pybug.io import metadata
 from pybug.shape import TexturedTriMesh, TriMesh
 from pybug.io.base import Importer
 from pybug.io.mesh.assimp import AIImporter
+from pybug.io.image import ImageImporter
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -48,10 +47,10 @@ class MeshImporter(AIImporter, Importer):
     def __init__(self, filepath):
         super(MeshImporter, self).__init__(filepath)
         if self.texture_path is None:
-            self.texture = None
+            self.texture_importer = None
         else:
-            self.texture = Image.open(path.join(self.folder,
-                                                self.texture_path))
+            self.texture_importer = ImageImporter(path.join(self.folder,
+                                                  self.texture_path))
 
     def import_landmarks(self):
         try:
@@ -61,30 +60,12 @@ class MeshImporter(AIImporter, Importer):
             self.landmarks = None
 
     def build(self, **kwargs):
-        if self.texture is not None:
+        if self.texture_importer is not None:
             mesh = TexturedTriMesh(self.points, self.trilist,
-                                   self.tcoords, self.texture)
+                                   self.tcoords, self.texture_importer.image)
         else:
             mesh = TriMesh(self.points, self.trilist)
         if self.landmarks is not None:
             mesh.landmarks.add_reference_landmarks(self.landmarks)
         mesh.legacy = {'path_and_filename': self.path_and_filename}
         return mesh
-
-    def import_texture(self):
-        # TODO: make this more intelligent in locating the texture
-        # (i.e. from the materials file, this can be second guess)
-        pathToJpg = path.splitext(self.filepath)[0] + '.jpg'
-        print pathToJpg
-        try:
-            Image.open(pathToJpg)
-            self.texture = Image.open(pathToJpg)
-        except IOError:
-            print 'Warning, no texture found'
-            if self.tcoords:
-                raise Exception(
-                    'why do we have texture coords but no texture?')
-            else:
-                print '(there are no texture coordinates anyway so this is' \
-                      ' expected)'
-                self.texture = None
