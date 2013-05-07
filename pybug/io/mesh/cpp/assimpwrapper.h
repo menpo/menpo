@@ -3,21 +3,24 @@
 #include <string>
 #include <vector>
 #include <assimp/Importer.hpp>
+const std::string NO_TEXTURE_PATH = "NO_TEXTURE_PATH";
 
 // forward declarations
 class aiScene;
 class aiMesh;
+class aiMaterial;
 class AssimpMesh;
 class AssimpScene;
 class AssimpWrapper;
 
 
 class AssimpWrapper{
-    AssimpScene* p_scene;
     Assimp::Importer importer;
+    AssimpScene* p_scene;
 
     public:
     AssimpWrapper(std::string path);
+    ~AssimpWrapper();
     AssimpScene* get_scene();
 };
 
@@ -39,15 +42,22 @@ class AssimpMesh{
 
     public:
     AssimpMesh(aiMesh* mesh, AssimpScene* scene);
+    unsigned int n_points();
+    unsigned int n_faces();
+    unsigned int n_tcoord_sets();
+    bool has_points();
+    bool has_lines();
+    bool has_triangles();
+    bool has_polygons();
     bool is_trimesh();
     bool is_pointcloud();
-    unsigned int n_points();
-    unsigned int n_tcoord_sets();
-    unsigned int n_faces();
     void points(double* points);
     void trilist(unsigned int* trilist);
-    void tcoords(int pindex, double* tcoords);
+    void tcoords(int index, double* tcoords);
+    void tcoords_with_alpha(int index, double* tcoords);
 };
 
-
+// HELPER ROUTINES
+unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords);
+std::string diffuse_texture_path_on_material(aiMaterial* mat);
 

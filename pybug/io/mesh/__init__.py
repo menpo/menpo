@@ -1,0 +1,1 @@
+from assimp import MeshImporter

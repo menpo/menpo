@@ -4,7 +4,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "assimpwrapper.h"
-#include "assimputils.h"
 
 
 AssimpWrapper::AssimpWrapper(std::string path) {
@@ -31,48 +30,19 @@ AssimpWrapper::AssimpWrapper(std::string path) {
     p_scene = new AssimpScene(aiscene);
 }
 
+AssimpWrapper::~AssimpWrapper(){
+    delete p_scene;
+}
+
 AssimpScene* AssimpWrapper::get_scene() {
     return p_scene;
 }
 
 
-//void AssimpWrapper::verify_state()
-//{
-//    /* Checks that we have:
-//     * one and only one mesh that is composed of solely triangles.
-//     * if that mesh has texture coords:
-//     *    we have one and only one texture path
-//     * anything else raises an exception.
-//     * Returns the mesh index of the triangle mesh
-//     */
-//    trimesh_index = 999;
-//    bool has_tcoords = false;
-//    for(int i = 0; i < n_meshes(); i++) {
-//        aiMesh* mesh = scene->mMeshes[i];
-//        // first check this mesh is only triangles.
-//        bool has_points, has_lines, has_triangles, has_polygons;
-//        mesh_flags(mesh, has_points, has_lines, has_triangles, has_polygons);
-//        if (!(has_points || has_lines || has_polygons)) {
-//            if(trimesh_index != 999) 
-//                throw "Have two seperate trimeshes.";
-//            else {
-//                trimesh_index = i;
-//                if(n_tcoord_sets(i) > 0)
-//                    has_tcoords = true;
-//            }
-//        }
-//    }
-//    if(trimesh_index == 999)
-//        throw "Never found a trimesh";
-//    std::string path = texture_path();
-//    if(path == NO_TEXTURE_PATH && has_tcoords)
-//        throw "Importing mesh with tcoords but cant find texture";
-//}
-//
 
 AssimpScene::AssimpScene(const aiScene* aiscene) {
     p_scene = aiscene;
-    for(int i = 0; i < p_scene->mNumMeshes; i++) {
+    for(unsigned int i = 0; i < p_scene->mNumMeshes; i++) {
         meshes.push_back(new AssimpMesh(p_scene->mMeshes[i], this));
     }
 }
@@ -84,7 +54,7 @@ unsigned int AssimpScene::n_meshes() {
 std::string AssimpScene::texture_path(){
     // get the material that is attached to this mesh
     std::string path = NO_TEXTURE_PATH;
-    for(int i = 0; i < p_scene->mNumMaterials; i++) {
+    for(unsigned int i = 0; i < p_scene->mNumMaterials; i++) {
         aiMaterial* mat = p_scene->mMaterials[i];
         std::string path = diffuse_texture_path_on_material(mat);
         if(path != NO_TEXTURE_PATH)
@@ -92,6 +62,7 @@ std::string AssimpScene::texture_path(){
     }
     return path;
 }
+
 
 
 AssimpMesh::AssimpMesh(aiMesh* mesh, AssimpScene* scene_in) {
@@ -109,36 +80,112 @@ unsigned int AssimpMesh::n_faces(){
 
 unsigned int AssimpMesh::n_tcoord_sets(){
     bool has_tcoords[AI_MAX_NUMBER_OF_TEXTURECOORDS];
-    return tcoords_mask(p_mesh , has_tcoords);
+    return tcoords_mask(p_mesh, has_tcoords);
 }
 
-void AssimpMesh::points(double* points){
-    read_points(p_mesh, points);
+bool AssimpMesh::has_points(){
+    return aiPrimitiveType_POINT & p_mesh->mPrimitiveTypes;
 }
 
-void AssimpMesh::trilist(unsigned int* trilist){
-    read_trilist(p_mesh, trilist);
+bool AssimpMesh::has_lines(){
+    return aiPrimitiveType_LINE & p_mesh->mPrimitiveTypes;
 }
 
-void AssimpMesh::tcoords(int pindex, double* tcoords){
-    read_tcoords(p_mesh, pindex, tcoords);
+bool AssimpMesh::has_triangles(){
+    return aiPrimitiveType_TRIANGLE & p_mesh->mPrimitiveTypes;
 }
 
-bool AssimpMesh::is_trimesh(){
-    bool has_points, has_lines, has_triangles, has_polygons;
-    mesh_flags(p_mesh, has_points, has_lines, has_triangles, has_polygons);
-    if (!(has_points || has_lines || has_polygons) && has_triangles) 
-        return true;
-    else
-        return false;
+bool AssimpMesh::has_polygons(){
+    return aiPrimitiveType_POLYGON & p_mesh->mPrimitiveTypes;
 }
 
 bool AssimpMesh::is_pointcloud(){
-    bool has_points, has_lines, has_triangles, has_polygons;
-    mesh_flags(p_mesh, has_points, has_lines, has_triangles, has_polygons);
-    if (!(has_points || has_lines || has_polygons || has_triangles)) 
-        return true;
+    return (!(has_lines() || has_polygons() || has_triangles()));
+}
+
+bool AssimpMesh::is_trimesh(){
+    return (!(has_points() || has_lines() || has_polygons()) 
+            && has_triangles());
+}
+
+void AssimpMesh::points(double* points){
+    for(unsigned int i = 0; i < p_mesh->mNumVertices; i++) {
+        aiVector3D point = p_mesh->mVertices[i];
+        points[3*i] = point.x;
+        points[3*i + 1] = point.y;
+        points[3*i + 2] = point.z;
+    }
+}
+
+void AssimpMesh::trilist(unsigned int* trilist){
+    // it is YOUR responsibility to ensure this
+    // mesh contains only triangles before calling this method.
+    for(unsigned int i = 0; i < p_mesh->mNumFaces; i++) {
+        aiFace face = p_mesh->mFaces[i];
+        trilist[3*i] = face.mIndices[0];
+        trilist[3*i + 1] = face.mIndices[1];
+        trilist[3*i + 2] = face.mIndices[2];
+    }
+}
+
+void AssimpMesh::tcoords(int index, double* tcoords){
+    /* Reads the (s,t) tcoords, removing the alpha channel component.
+     * expects tcoords to be a C contiguous array of size
+     * (n_points, 2)
+     */
+    aiVector3D* tcoord_array = p_mesh->mTextureCoords[index];
+    for(unsigned int i = 0; i < p_mesh->mNumVertices; i++) {
+        aiVector3D tcoord = tcoord_array[i];
+        tcoords[2*i] = tcoord.x;
+        tcoords[2*i + 1] = tcoord.y;
+    }
+}
+
+void AssimpMesh::tcoords_with_alpha(int index, double* tcoords){
+    /* Reads the tcoords, keeping the alpha channel component.
+     * expects tcoords to be a C contiguous array of size
+     * (n_points, 3)
+     */
+    aiVector3D* tcoord_array = p_mesh->mTextureCoords[index];
+    for(unsigned int i = 0; i < p_mesh->mNumVertices; i++) {
+        aiVector3D tcoord = tcoord_array[i];
+        tcoords[3*i] = tcoord.x;
+        tcoords[3*i + 1] = tcoord.y;
+        tcoords[3*i + 2] = tcoord.z;
+    }
+}
+
+// ***** HELPER ROUTINES ***** //
+
+unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords) {
+    int tcoords_counter = 0;
+    for(int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++) {
+        if(mesh->HasTextureCoords(i)) {
+            has_tcoords[i] = true;
+            tcoords_counter++;
+        }
+        else
+            has_tcoords[i] = false;
+    }
+    return tcoords_counter;
+}
+
+std::string diffuse_texture_path_on_material(aiMaterial* mat) {
+    aiString path;
+    //std::cout << mat->mNumProperties << std::endl;
+    aiString name;
+    mat->Get(AI_MATKEY_NAME, name);
+    //std::cout << "Material name is " << name.C_Str() << std::endl;
+    //std::cout << "Material path is " << path.C_Str() << std::endl;
+    unsigned int texture_count = mat->GetTextureCount(aiTextureType_DIFFUSE);
+    if(texture_count == 1) {
+        mat->GetTexture(aiTextureType_DIFFUSE, 0, &path, 
+                        NULL, NULL, NULL, NULL, NULL);
+        const char* c_path = path.C_Str();
+        std::string cpp_path(c_path);
+        return cpp_path;
+    }
     else
-        return false;
+        return NO_TEXTURE_PATH;
 }
 

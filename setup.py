@@ -5,7 +5,7 @@ import dependencies
 
 cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/cpptrimesh.pyx",
-                  "pybug/io/mesh/assimpimport.pyx"]
+                  "pybug/io/mesh/assimp.pyx"]
 
 setup(name='pybug',
       version='0.2',
