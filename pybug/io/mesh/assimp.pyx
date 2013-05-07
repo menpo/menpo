@@ -10,7 +10,7 @@ cimport numpy as np
 
 # externally declare the C++ classes
 cdef extern from "./cpp/assimpwrapper.h":
-    cdef cppclass AssimpWrapper:
+    cdef cppclass AssimpImporter:
         AssimpWrapper(string path) except +
         AssimpScene* get_scene()
 
@@ -31,12 +31,12 @@ cdef extern from "./cpp/assimpwrapper.h":
 
 
 cdef class MeshImporter:
-    cdef AssimpWrapper* importer
+    cdef AssimpImporter* importer
     cdef AssimpScene* scene
     cdef public list meshes
 
     def __cinit__(self, string path):
-        self.importer = new AssimpWrapper(path)
+        self.importer = new AssimpImporter(path)
         self.scene = self.importer.get_scene()
         self.meshes = []
         for i in range(self.n_meshes):

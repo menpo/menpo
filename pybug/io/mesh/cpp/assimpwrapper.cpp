@@ -6,7 +6,9 @@
 #include "assimpwrapper.h"
 
 
-AssimpWrapper::AssimpWrapper(std::string path) {
+// *************** IMPORTER *************** //
+
+AssimpImporter::AssimpImporter(std::string path){
     // we only want raw info - don't care about a lot of the stuff that assimp
     // could give us back. Here we disable all that stuff.
     importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
@@ -30,24 +32,29 @@ AssimpWrapper::AssimpWrapper(std::string path) {
     p_scene = new AssimpScene(aiscene);
 }
 
-AssimpWrapper::~AssimpWrapper(){
+AssimpImporter::~AssimpImporter(){
     delete p_scene;
 }
 
-AssimpScene* AssimpWrapper::get_scene() {
+AssimpScene* AssimpImporter::get_scene(){
     return p_scene;
 }
 
 
+// *************** SCENE *************** //
 
-AssimpScene::AssimpScene(const aiScene* aiscene) {
+AssimpScene::AssimpScene(const aiScene* aiscene){
     p_scene = aiscene;
     for(unsigned int i = 0; i < p_scene->mNumMeshes; i++) {
         meshes.push_back(new AssimpMesh(p_scene->mMeshes[i], this));
     }
 }
 
-unsigned int AssimpScene::n_meshes() {
+AssimpScene::~AssimpScene(){
+    delete meshes;
+}
+
+unsigned int AssimpScene::n_meshes(){
     return p_scene->mNumMeshes;
 }
 
@@ -64,8 +71,9 @@ std::string AssimpScene::texture_path(){
 }
 
 
+// *************** MESH *************** //
 
-AssimpMesh::AssimpMesh(aiMesh* mesh, AssimpScene* scene_in) {
+AssimpMesh::AssimpMesh(aiMesh* mesh, AssimpScene* scene_in){
     p_mesh = mesh;
     scene = scene_in;
 }
@@ -147,7 +155,7 @@ void AssimpMesh::tcoords_with_alpha(int index, double* tcoords){
      * (n_points, 3)
      */
     aiVector3D* tcoord_array = p_mesh->mTextureCoords[index];
-    for(unsigned int i = 0; i < p_mesh->mNumVertices; i++) {
+    for(unsigned int i = 0; i < p_mesh->mNumVertices; i++){
         aiVector3D tcoord = tcoord_array[i];
         tcoords[3*i] = tcoord.x;
         tcoords[3*i + 1] = tcoord.y;
@@ -155,11 +163,12 @@ void AssimpMesh::tcoords_with_alpha(int index, double* tcoords){
     }
 }
 
-// ***** HELPER ROUTINES ***** //
 
-unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords) {
+// *************** HELPER ROUTINES *************** //
+
+unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords){
     int tcoords_counter = 0;
-    for(int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++) {
+    for(int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++){
         if(mesh->HasTextureCoords(i)) {
             has_tcoords[i] = true;
             tcoords_counter++;
@@ -170,7 +179,7 @@ unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords) {
     return tcoords_counter;
 }
 
-std::string diffuse_texture_path_on_material(aiMaterial* mat) {
+std::string diffuse_texture_path_on_material(aiMaterial* mat){
     aiString path;
     //std::cout << mat->mNumProperties << std::endl;
     aiString name;

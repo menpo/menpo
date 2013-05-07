@@ -11,20 +11,22 @@ class aiMesh;
 class aiMaterial;
 class AssimpMesh;
 class AssimpScene;
-class AssimpWrapper;
+class AssimpImporter;
 
 
-class AssimpWrapper{
+// *************** IMPORTER *************** //
+class AssimpImporter{
     Assimp::Importer importer;
     AssimpScene* p_scene;
 
     public:
-    AssimpWrapper(std::string path);
-    ~AssimpWrapper();
+    AssimpImporter(std::string path);
+    ~AssimpImporter();
     AssimpScene* get_scene();
 };
 
 
+// *************** SCENE *************** //
 class AssimpScene{
     const aiScene* p_scene;
 
@@ -36,6 +38,7 @@ class AssimpScene{
 };
 
 
+// *************** MESH *************** //
 class AssimpMesh{
     aiMesh* p_mesh;
     AssimpScene* scene;
@@ -57,7 +60,8 @@ class AssimpMesh{
     void tcoords_with_alpha(int index, double* tcoords);
 };
 
-// HELPER ROUTINES
+
+// *************** HELPER ROUTINES *************** //
 unsigned int tcoords_mask(aiMesh* mesh, bool* has_tcoords);
 std::string diffuse_texture_path_on_material(aiMaterial* mat);
 
