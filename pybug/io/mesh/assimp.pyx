@@ -10,8 +10,11 @@ cimport numpy as np
 
 # externally declare the C++ classes
 cdef extern from "./cpp/assimpwrapper.h":
+
+    cdef const string NO_TEXTURE_PATH
+
     cdef cppclass AssimpImporter:
-        AssimpWrapper(string path) except +
+        AssimpImporter(string path) except +
         AssimpScene* get_scene()
 
     cdef cppclass AssimpScene:
@@ -30,7 +33,7 @@ cdef extern from "./cpp/assimpwrapper.h":
         void tcoords(int index, double* tcoords)
 
 
-cdef class MeshImporter:
+cdef class AIImporter:
     cdef AssimpImporter* importer
     cdef AssimpScene* scene
     cdef public list meshes
@@ -41,7 +44,10 @@ cdef class MeshImporter:
         self.meshes = []
         for i in range(self.n_meshes):
             if self.scene.meshes[i].is_trimesh():
-                self.meshes.append(TriMeshImporter(self, i))
+                self.meshes.append(AITriMeshImporter(self, i))
+
+    def __dealloc__(self):
+        del self.importer
 
     @property
     def n_meshes(self):
@@ -49,16 +55,16 @@ cdef class MeshImporter:
 
     @property
     def texture_path(self):
-        return self.scene.texture_path()
+        if self.scene.texture_path() == NO_TEXTURE_PATH:
+            return None
+        else:
+            return self.scene.texture_path()
 
-    def __dealloc__(self):
-        del self.thisptr
 
-
-cdef class TriMeshImporter:
+cdef class AITriMeshImporter:
     cdef AssimpMesh* thisptr
 
-    def __cinit__(self, MeshImporter wrapper, unsigned int mesh_index):
+    def __cinit__(self, AIImporter wrapper, unsigned int mesh_index):
         self.thisptr = wrapper.scene.meshes[mesh_index]
 
     @property
@@ -93,3 +99,10 @@ cdef class TriMeshImporter:
             np.empty([self.n_points, 2])
         self.thisptr.tcoords(0, &tcoords[0, 0])
         return tcoords
+
+    def __str__(self):
+        msg = 'n_points: %d\n' % self.n_points
+        msg += 'n_tris:   %d\n' % self.n_tris
+        msg += 'n_tcoord_sets %d' % self.n_tcoord_sets
+        return msg
+    
