@@ -1,8 +1,9 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/io/mesh/cpp/assimputils.cpp ./pybug/io/mesh/cpp/assimpwrapper.cpp
+# distutils: sources = ./pybug/io/mesh/cpp/assimpwrapper.cpp
 # distutils: libraries = assimp
 from libcpp.string cimport string
 from libcpp.vector cimport vector
+from libcpp cimport bool
 import numpy as np
 cimport numpy as np
 
@@ -22,12 +23,14 @@ cdef extern from "./cpp/assimpwrapper.h":
         unsigned int n_points()
         unsigned int n_faces()
         unsigned int n_tcoord_sets()
+        bool is_trimesh()
+        bool is_pointcloud()
         void points(double* points)
         void trilist(unsigned int* trilist)
         void tcoords(int index, double* tcoords)
 
 
-cdef class PyAssimpWrapper:
+cdef class MeshImporter:
     cdef AssimpWrapper* importer
     cdef AssimpScene* scene
     cdef public list meshes
@@ -37,7 +40,8 @@ cdef class PyAssimpWrapper:
         self.scene = self.importer.get_scene()
         self.meshes = []
         for i in range(self.n_meshes):
-            self.meshes.append(PyAssimpMesh(self, i))
+            if self.scene.meshes[i].is_trimesh():
+                self.meshes.append(TriMeshImporter(self, i))
 
     @property
     def n_meshes(self):
@@ -51,10 +55,10 @@ cdef class PyAssimpWrapper:
         del self.thisptr
 
 
-cdef class PyAssimpMesh:
+cdef class TriMeshImporter:
     cdef AssimpMesh* thisptr
 
-    def __cinit__(self, PyAssimpWrapper wrapper, unsigned int mesh_index):
+    def __cinit__(self, MeshImporter wrapper, unsigned int mesh_index):
         self.thisptr = wrapper.scene.meshes[mesh_index]
 
     @property
