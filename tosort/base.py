@@ -1,11 +1,11 @@
-import numpy as np
-import os
 from PIL import Image
 import commands
-import tempfile
+import os
 import re
-from . import metadata
-from pybug.shape.mesh import TriMesh, TexturedTriMesh
+import tempfile
+import numpy as np
+from pybug.io import metadata
+from pybug.shape import TexturedTriMesh, TriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
