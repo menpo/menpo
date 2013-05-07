@@ -1,1 +1,1 @@
-from assimp import MeshImporter
+from base import MeshImporter
