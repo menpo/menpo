@@ -33,6 +33,7 @@ class AssimpScene{
     public:
     std::vector<AssimpMesh*> meshes;
     AssimpScene(const aiScene* scene);
+    ~AssimpScene();
     unsigned int n_meshes();
     std::string texture_path();
 };

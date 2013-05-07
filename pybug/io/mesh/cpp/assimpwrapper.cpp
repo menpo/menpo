@@ -51,7 +51,9 @@ AssimpScene::AssimpScene(const aiScene* aiscene){
 }
 
 AssimpScene::~AssimpScene(){
-    delete meshes;
+    std::vector<AssimpMesh*>::iterator it;
+    for (it = meshes.begin(); it != meshes.end(); it++)
+        delete *it;
 }
 
 unsigned int AssimpScene::n_meshes(){
