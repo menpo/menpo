@@ -2,7 +2,7 @@ import abc
 import os
 # from pybug.io import mesh
 #
-#
+# TODO reimpliment smart import
 # def smartimport(filepath, **kwargs):
 #     """ Smart data importer. Chooses an appropriate importer based on the
 #     file extension of the data file past in. pass keepimporter=True as a kwarg
@@ -24,6 +24,8 @@ import os
 #         print 'attaching the importer at shape.importer'
 #         shape.importer = importer
 #     return shape
+
+# TODO add ability to grab all files in folder
 
 
 class Importer:
