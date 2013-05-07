@@ -67,7 +67,7 @@ class AffineTransform(Transform):
     def _apply(self, x, **kwargs):
         """
         Applies this transform to a new set of vectors
-        :param x: A (n_dim, n_points) ndarray to apply this transform to.
+        :param x: A (n_points, n_dims) ndarray to apply this transform to.
 
         :return: The transformed version of x
         """
