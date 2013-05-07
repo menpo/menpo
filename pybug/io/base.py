@@ -42,5 +42,5 @@ class Importer:
         self.folder = os.path.dirname(self.filepath)
 
     @abc.abstractmethod
-    def shape(self):
+    def build(self):
         pass

@@ -11,5 +11,5 @@ class ImageImporter(Importer):
         self._pil_image = PIL.Image.open(self.filepath)
         self.image = Image(np.array(self._pil_image))
 
-    def shape(self):
-        pass
+    def build(self):
+        return self.image

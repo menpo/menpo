@@ -54,18 +54,25 @@ class MeshImporter(AIImporter, Importer):
 
     def import_landmarks(self):
         try:
-            self.landmarks = metadata.json_pybug_landmarks(
-                self.path_and_filename)
+            self.landmarks = metadata.json_pybug_landmarks(self.filepath)
         except metadata.MissingLandmarksError:
             self.landmarks = None
 
-    def build(self, **kwargs):
-        if self.texture_importer is not None:
-            mesh = TexturedTriMesh(self.points, self.trilist,
-                                   self.tcoords, self.texture_importer.image)
-        else:
-            mesh = TriMesh(self.points, self.trilist)
-        if self.landmarks is not None:
-            mesh.landmarks.add_reference_landmarks(self.landmarks)
-        mesh.legacy = {'path_and_filename': self.path_and_filename}
-        return mesh
+    def build(self):
+        meshes = []
+        for mesh in self.meshes:
+            if self.texture_importer is not None:
+                meshes.append(TexturedTriMesh(mesh.points, mesh.trilist,
+                                              mesh.tcoords,
+                                              self.texture_importer.image))
+            else:
+                meshes.append(TriMesh(mesh.points, mesh.trilist))
+        # if self.landmarks is not None:
+        #     mesh.landmarks.add_reference_landmarks(self.landmarks)
+        # mesh.legacy = {'path_and_filename': self.path_and_filename}
+        return meshes
+
+    # def __str__(self):
+    #     msg = 'n_meshes: %d' % self.n_meshes
+    #     if self.texture is not None:
+    #         msg += 'texture'
