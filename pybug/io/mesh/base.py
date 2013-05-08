@@ -49,8 +49,14 @@ class MeshImporter(AIImporter, Importer):
         if self.texture_path is None:
             self.texture_importer = None
         else:
-            self.texture_importer = ImageImporter(path.join(self.folder,
-                                                  self.texture_path))
+            self.texture_importer = ImageImporter(self.texture_path)
+
+    @property
+    def texture_path(self):
+        if self.relative_texture_path is None:
+            return None
+        else:
+            return path.join(self.folder, self.relative_texture_path)
 
     def import_landmarks(self):
         try:

@@ -11,7 +11,7 @@ cimport numpy as np
 # externally declare the C++ classes
 cdef extern from "./cpp/assimpwrapper.h":
 
-    cdef const string NO_TEXTURE_PATH
+    cdef string NO_TEXTURE_PATH
 
     cdef cppclass AssimpImporter:
         AssimpImporter(string path) except +IOError
@@ -54,7 +54,7 @@ cdef class AIImporter:
         return self.scene.n_meshes()
 
     @property
-    def texture_path(self):
+    def relative_texture_path(self):
         if self.scene.texture_path() == NO_TEXTURE_PATH:
             return None
         else:
