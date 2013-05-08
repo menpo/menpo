@@ -1,11 +1,10 @@
 import commands
 import os.path as path
 import tempfile
-from pybug.io import metadata
-from pybug.shape import TexturedTriMesh, TriMesh
 from pybug.io.base import Importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.image import ImageImporter
+from pybug.shape import TexturedTriMesh, TriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -59,6 +58,7 @@ class MeshImporter(AIImporter, Importer):
             return path.join(self.folder, self.relative_texture_path)
 
     def import_landmarks(self):
+        import pybug.io.metadata as metadata
         try:
             self.landmarks = metadata.json_pybug_landmarks(self.filepath)
         except metadata.MissingLandmarksError:
