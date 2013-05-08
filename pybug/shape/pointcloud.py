@@ -33,7 +33,7 @@ class PointCloud(Shape, Transformable):
         storing explicit landmarks (landmarks that have coordinates and
         don't simply reference existing points).
         """
-        return self._allpoints[self.n_points:]
+        return self._allpoints[self.n_points:self.n_points_and_metapoints]
 
     @property
     def points_and_metapoints(self):
