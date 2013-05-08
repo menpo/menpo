@@ -1,31 +1,109 @@
 import abc
 import os
-# from pybug.io import mesh
-#
-# TODO reimpliment smart import
-# def smartimport(filepath, **kwargs):
-#     """ Smart data importer. Chooses an appropriate importer based on the
-#     file extension of the data file past in. pass keepimporter=True as a kwarg
-#     if you want the actual importer object attached to the returned face object
-#     at face.importer.
-#     """
-#     keepimporter = kwargs.pop('keepimporter', False)
-#     ext = os.path.splitext(filepath)[-1]
-#     if ext == '.off':
-#         importer = mesh.OFFImporter(filepath, **kwargs)
-#     elif ext == '.wrl':
-#         importer = mesh.WRLImporter(filepath, **kwargs)
-#     elif ext == '.obj':
-#         importer = mesh.OBJImporter(filepath, **kwargs)
-#     else:
-#         raise Exception("I don't understand the file type " + `ext`)
-#     shape = importer.build()
-#     if keepimporter:
-#         print 'attaching the importer at shape.importer'
-#         shape.importer = importer
-#     return shape
+import glob
+import sys
+from pybug.io.extensions import pil_exts, assimp_exts
 
-# TODO add ability to grab all files in folder
+
+def auto_import(pattern, meshes=True, images=True,
+                include_texture_images=False):
+    """ Smart data importer. Will match all files found on the glob pattern
+    passed in, build the relevant importers, and then call build() on them to
+    return a list of usable objects. To be selective, use the kwargs.
+
+    kwargs**
+    images - import images found in the pattern
+    meshes - import meshes found in the pattern
+    include_texture_images - by default, auto_import will check if the images
+    it has found  in the glob pattern are actually textures of the meshes it
+    found. If this is the case, it won't import these images separately. To
+    override this behavior, set include_texture_images to True.
+    """
+    mesh_objects, image_objects = [], []
+    if meshes:
+        mesh_files = glob_matching_extension(pattern, assimp_exts)
+        mesh_objects, mesh_importers = multi_mesh_import(mesh_files,
+                                                         keep_importers=True)
+    if images:
+        image_files = glob_matching_extension(pattern, pil_exts)
+        if meshes and not include_texture_images:
+            texture_paths = [m.texture_path for m in mesh_importers
+                             if m.texture_path is not None]
+            image_files = images_unrelated_to_meshes(image_files,
+                                                     texture_paths)
+            image_objects = multi_image_import(image_files)
+    return mesh_objects + image_objects
+
+
+def multi_image_import(image_filepaths, keep_importers=False):
+    """
+    Creates importers for all the image filepaths passed in,
+    and then calls build on them, returning a list of Images.
+    """
+    return multi_import(image_filepaths, ImageImporter, keep_importers)
+
+
+def multi_mesh_import(mesh_filepaths, keep_importers=False):
+    """
+    Creates importers for all the mesh filepaths passed in,
+    and then calls build on them, returning a list of TriMeshes or
+    TexturedTriMeshes.
+    """
+    result = multi_import(mesh_filepaths, MeshImporter, keep_importers)
+    # meshes come back as a nested list - unpack this for convenience
+    if keep_importers:
+        meshes = result[0]
+    else:
+        meshes = result
+    meshes = [mesh for mesh_grp in meshes for mesh in mesh_grp]
+    if keep_importers:
+        return meshes, result[1]
+    else:
+        return meshes
+
+
+def multi_import(filepaths, importer, keep_importers=False):
+    """
+    Creates importers of type importer for all the filepaths passed in,
+    and then calls build on them, returning a list of objects.
+    """
+    print 'creating %s for %d files' % (repr(importer), len(filepaths))
+    sys.stdout.flush()
+    importers = [importer(f) for f in filepaths]
+    print 'building objects...'
+    sys.stdout.flush()
+    objects = [i.build() for i in importers]
+    if keep_importers:
+        return objects, importers
+    else:
+        return objects
+
+
+def glob_matching_extension(pattern, extension_list):
+    """
+    Filters the results from the glob pattern passed in to only those files
+    that have an extension given in extension_list.
+
+    :param pattern: A UNIX style glob pattern to match against.
+    :param extension_list: List of extensions e.g. ['.jpg', '.png']
+    """
+    files = glob.glob(os.path.expanduser(pattern))
+    exts = [os.path.splitext(f)[1] for f in files]
+    matches = [ext in extension_list for ext in exts]
+    return [f for f, does_match in zip(files, matches) if does_match]
+
+
+def images_unrelated_to_meshes(image_paths, mesh_texture_paths):
+    """
+    Commonly, textures of meshes will have the same name as the
+    """
+    image_filenames = [os.path.splitext(f)[0] for f in image_paths]
+    mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
+    images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
+    image_name_to_path = {}
+    for k, v in zip(image_filenames, image_paths):
+        image_name_to_path[k] = v
+    return [image_name_to_path[i] for i in images_unrelated_to_mesh]
 
 
 class Importer:
@@ -46,3 +124,6 @@ class Importer:
     @abc.abstractmethod
     def build(self):
         pass
+
+from .mesh import MeshImporter
+from .image import ImageImporter
