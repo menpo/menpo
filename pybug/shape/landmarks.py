@@ -1,3 +1,4 @@
+import abc
 import numpy as np
 from pybug.visualize import PointCloudViewer3d, LabelViewer3d
 
@@ -7,6 +8,7 @@ class Landmark(object):
     Only makes sense in the context of a parent Shape instance, and so
     one is required at construction.
     """
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self, shape, shape_index, label, label_index):
         self.shape = shape
@@ -14,7 +16,7 @@ class Landmark(object):
         self.label = label
         self.label_index = label_index
 
-    @property
+    @abc.abstractproperty
     def feature(self):
         return list(self.shape._landmark_at_index(self.index))
 
@@ -35,6 +37,10 @@ class ReferenceLandmark(Landmark):
                             + "in the range 0 < i < _n_landmarkable_items of "
                               "the parent shape")
 
+    @property
+    def feature(self):
+        return list(self.shape._landmark_at_index(self.index))
+
 
 class MetaLandmark(Landmark):
     """A landmark that is totally separate from the parent shape."
@@ -47,6 +53,10 @@ class MetaLandmark(Landmark):
                             " unable to accept MetaLandmarks")
         Landmark.__init__(self, shape, index,
                           label, label_index)
+
+    @property
+    def feature(self):
+        return list(self.shape._meta_landmark_at_meta_index(self.index))
 
 
 class LandmarkManager(object):
@@ -89,9 +99,24 @@ class LandmarkManager(object):
 
     def add_reference_landmarks(self, landmark_dict):
         for k, v in landmark_dict.iteritems():
-            for i, index in enumerate(v):
-                lm = ReferenceLandmark(self.shape, index, k, i)
+            if len(v.shape) == 1:
+                lm = ReferenceLandmark(self.shape, v, k, 0)
                 self._data.append(lm)
+            else:
+                for i, index in enumerate(v):
+                    lm = ReferenceLandmark(self.shape, index, k, i)
+                    self._data.append(lm)
+        self._sort_data()
+
+    def add_meta_landmarks(self, landmark_dict):
+        for k, v in landmark_dict.iteritems():
+            if len(v.shape) == 1:
+                lm = MetaLandmark(self.shape, v, k, 0)
+                self._data.append(lm)
+            else:
+                for i, index in enumerate(v):
+                    lm = MetaLandmark(self.shape, index, k, i)
+                    self._data.append(lm)
         self._sort_data()
 
     def _sort_data(self):

@@ -49,8 +49,10 @@ class MissingLandmarksError(Exception):
 def medical_landmarks(path):
     try:
         with open(path, 'rb') as f:
-            return np.fromfile(
+            landmarks = np.fromfile(
                 f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
+            landmark_db = {'medical': landmarks, 'nose': landmarks[25]}
+            return landmark_db
     except IOError:
         raise MissingLandmarksError
 
