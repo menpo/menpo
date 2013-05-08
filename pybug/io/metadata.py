@@ -2,6 +2,9 @@ import scipy.io
 import numpy as np
 import json
 
+# TODO json landmark format
+
+# TODO Import landmarks (subclass of Importer)
 
 def msc_bu4d_landmarks(path):
     """ A function to import BU4D landmarks in the format used for my MSc 
