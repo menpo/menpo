@@ -5,13 +5,13 @@
 #include <fstream>
 #include <cmath>
 
-MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoords_in, 
-        unsigned int* coordIndex_in, size_t numTriangles_in, 
-        float* texCoord_in, uint8_t* textureImage_in, 
-        size_t textureWidth_in, size_t textureHeight_in, bool INTERACTIVE_MODE)
+MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoords_in,
+        unsigned int* coordIndex_in, size_t numTriangles_in,
+        float* texCoord_in, uint8_t* textureImage_in,
+        size_t textureWidth_in, size_t textureHeight_in)
 {
     lightVector = new float[3];
-    memset(lightVector,0,3);
+    memset(lightVector, 0, 3);
     lightVector[2] = 1.0;
 
     title = "MM3D Viewer";
@@ -29,10 +29,7 @@ MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoor
     // start viewing straight on
     lastAngleX = 0.0;
     lastAngleY = 0.0;
-    if(INTERACTIVE_MODE)
-        RETURN_FRAMEBUFFER = false;
-    else
-        RETURN_FRAMEBUFFER = true;
+    RETURN_FRAMEBUFFER = true;
 }
 
 MM3DRenderer::~MM3DRenderer()
@@ -76,7 +73,7 @@ void MM3DRenderer::initializeVertexBuffer()
     glBindBuffer(GL_ARRAY_BUFFER, tpsCoordBuffer);
     // allocate enough memory to store tpsCoord to the GL_ARRAY_BUFFER
     // target (which due to the above line is tpsCoordBuffer) and store it
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4, 
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4,
             tpsCoord, GL_STATIC_DRAW);
     // enable the coord array (will be location = 0 in shader)
     glEnableVertexAttribArray(0);
@@ -90,7 +87,7 @@ void MM3DRenderer::initializeVertexBuffer()
         // --- SETUP TEXTUREVECTORBUFFER (1)
         glGenBuffers(1, &textureVectorBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, textureVectorBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4, 
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4,
                 textureVector, GL_STATIC_DRAW);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 4, GL_DOUBLE, GL_FALSE, 0, 0);
@@ -101,7 +98,7 @@ void MM3DRenderer::initializeVertexBuffer()
         // --- SETUP TEXCOORDBUFFER (1)
         glGenBuffers(1, &texCoordBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*2, 
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*2,
                 texCoord, GL_STATIC_DRAW);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -111,7 +108,7 @@ void MM3DRenderer::initializeVertexBuffer()
     // --- SETUP COORDBUFFER (2)
     glGenBuffers(1, &coordBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*3, 
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*3,
             coord, GL_STATIC_DRAW);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -119,7 +116,7 @@ void MM3DRenderer::initializeVertexBuffer()
 
     glGenBuffers(1, &indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numTriangles*3, 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numTriangles*3,
             coordIndex, GL_STATIC_DRAW);
 }
 
@@ -128,15 +125,15 @@ void MM3DRenderer::initializeTexture()
     // choose which unit to use and activate it
     textureImageUnit = 1;
     glActiveTexture(GL_TEXTURE0 + textureImageUnit);
-    // specify the data storage and actually get OpenGL to 
+    // specify the data storage and actually get OpenGL to
     // store our textureImage
     glGenTextures(1, &textureImageID);
     glBindTexture(GL_TEXTURE_2D, textureImageID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-            textureWidth, textureHeight, 0, GL_RGBA, 
+            textureWidth, textureHeight, 0, GL_RGBA,
             GL_UNSIGNED_BYTE, textureImage);
 
-    // Create the description of the texture (sampler) and bind it to the 
+    // Create the description of the texture (sampler) and bind it to the
     // correct texture unit
     glGenSamplers(1, &textureSampler);
     glSamplerParameteri(textureSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -172,9 +169,9 @@ void MM3DRenderer::initializeFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
             GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_2D, fbTexture, 0);
     checkError();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -185,10 +182,10 @@ void MM3DRenderer::initializeFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     checkError();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
             GL_RGB, GL_FLOAT, NULL);
     checkError();
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
             GL_TEXTURE_2D, fbCoord, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     checkError();
@@ -211,35 +208,19 @@ void MM3DRenderer::initializeFrameBuffer()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void MM3DRenderer::display() 
+void MM3DRenderer::display()
 {
     //std::cout << "Calling the MM3DRenderer display method" << std::endl;
-    if(RETURN_FRAMEBUFFER)
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    else
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(theProgram);
-    if(!RETURN_FRAMEBUFFER)
-    {
-        perspectiveMatrixUnif = glGetUniformLocation(theProgram, "perspectiveMatrix");
-        glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
-        rotationMatrixUinf = glGetUniformLocation(theProgram, "rotationMatrix");
-        glUniformMatrix4fv(rotationMatrixUinf, 1, GL_FALSE, rotationMatrix);
-        translationVectorUnif = glGetUniformLocation(theProgram, "translationVector");
-        glUniform4fv(translationVectorUnif, 1, translationVector);
-        GLuint lightDirectionUnif = glGetUniformLocation(theProgram, "lightDirection");
-        glUniform3fv(lightDirectionUnif, 1, lightVector);
-        printUnitTests();
-    }
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
     glActiveTexture(GL_TEXTURE0 + textureImageUnit);
     glBindTexture(GL_TEXTURE_2D, textureImageID);
     glDrawElements(GL_TRIANGLES, numTriangles*3, GL_UNSIGNED_INT, 0);
     glutSwapBuffers();
-    if(RETURN_FRAMEBUFFER)
-        glutLeaveMainLoop();
+    glutLeaveMainLoop();
 }
 
 void MM3DRenderer::printUnitTests()
@@ -252,7 +233,7 @@ void MM3DRenderer::printUnitTests()
     input[3] = 1;
 
     float * result = new float[4];
-    float * tempResult = new float[4];	
+    float * tempResult = new float[4];
     matrixTimesVector(rotationMatrix,input,tempResult);
     for(int i = 0; i < 4; i++)
         tempResult[i] += translationVector[i];
@@ -284,11 +265,7 @@ void MM3DRenderer::initializeProgram()
     std::vector<GLuint> shaderList;
     std::string strVertexShader;
     std::string strFragmentShader;
-    if(!RETURN_FRAMEBUFFER){
-        strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/interactive.vert";
-        strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/interactive.frag";
-    }	
-    else if(TEXTURE_IMAGE){	
+    if(TEXTURE_IMAGE){
         strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.vert";
         strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.frag";
     }
@@ -309,25 +286,22 @@ void MM3DRenderer::initializeProgram()
 void MM3DRenderer::cleanup()
 {
     std::cout << "MM3DRenderer::cleanup()" << std::endl;
-    if(RETURN_FRAMEBUFFER)
-        grabFrameBufferData();
+    grabFrameBufferData();
+    std::cout << "grabbed frame buffer data" << std::endl;
     destroyShaders();
+    std::cout << "destroyed shaders" << std::endl;
     destroyVBO();
+    std::cout << "destroryed vbo" << std::endl;
 }
 
 void MM3DRenderer::grabFrameBufferData()
 {
-    if(RETURN_FRAMEBUFFER)
-    {
-        glActiveTexture(GL_TEXTURE0 + fbTextureUnit);
-        glBindTexture(GL_TEXTURE_2D, fbTexture);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fboPixels);
-        glActiveTexture(GL_TEXTURE0 + fbCoordUnit);
-        glBindTexture(GL_TEXTURE_2D, fbCoord);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, fboCoords);
-    }
-    else
-        std::cout << "Trying to return FBO on an interactive session!" << std::endl;
+    glActiveTexture(GL_TEXTURE0 + fbTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, fbTexture);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fboPixels);
+    glActiveTexture(GL_TEXTURE0 + fbCoordUnit);
+    glBindTexture(GL_TEXTURE_2D, fbCoord);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, fboCoords);
 }
 
 void MM3DRenderer::destroyShaders()
@@ -364,28 +338,7 @@ void MM3DRenderer::destroyVBO()
     }
 }
 
-void MM3DRenderer::render(int argc, char *argv[])
-{
-    if(!RETURN_FRAMEBUFFER)
-    {
-        float fFrustumScale = 1.0f; float fzNear = 0.5f; float fzFar = 10.0f;
-        memset(perspectiveMatrix,0, sizeof(float) * 16);
-        perspectiveMatrix[0] = fFrustumScale;
-        perspectiveMatrix[5] = fFrustumScale;
-        perspectiveMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar);
-        perspectiveMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar);
-        perspectiveMatrix[11] = -1.0;
-
-        memset(translationVector,0, sizeof(float) * 4);
-        translationVector[2] = -2.0;
-
-        startFramework(argc, argv);
-    }
-    else
-        std::cout << "Trying to render a RETURN_FRAMEBUFFER object!" << std::endl;
-}
-
-void MM3DRenderer::returnFBPixels(int argc, char *argv[], uint8_t *fboPixels_in, float *fboCoords_in, int width, int height)
+void MM3DRenderer::returnFBPixels(uint8_t *fboPixels_in, float *fboCoords_in, int width, int height)
 {
     fboPixels = fboPixels_in;
     fboCoords = fboCoords_in;
@@ -405,115 +358,7 @@ void MM3DRenderer::returnFBPixels(int argc, char *argv[], uint8_t *fboPixels_in,
     rotationMatrix[5]  = 1.0;
     rotationMatrix[10] = 1.0;
     rotationMatrix[15] = 1.0;
-    startFramework(argc, argv);
-}
-
-void MM3DRenderer::reshape(int width, int height)
-{
-    // if in interactive mode -> adjust perspective matrix
-    if(!RETURN_FRAMEBUFFER)
-    {
-        float fFrustumScale = 1.4;
-        perspectiveMatrix[0] = fFrustumScale / (width / (float)height);
-        perspectiveMatrix[5] = fFrustumScale;
-
-        glUseProgram(theProgram);
-        glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
-        glUseProgram(0);
-    }
-
-    glViewport(0, 0, (GLsizei) width, (GLsizei) height);
-
-}
-
-void MM3DRenderer::mouseMove(int x, int y)
-{
-    // if in interactive mode
-    if(!RETURN_FRAMEBUFFER)
-    {
-        int width = glutGet(GLUT_WINDOW_WIDTH);
-        int height = glutGet(GLUT_WINDOW_HEIGHT);
-        float pi = atan2f(0.0,-1.0);
-        //std::cout << "width: " << width << "\theight : " << height << std::endl;
-        int deltaX = lastX - x;
-        int deltaY = lastY - y;
-        //std::cout << "dX: " << deltaX << "\tdY: " << deltaY << std::endl;
-
-        angleX = lastAngleX + (1.0*deltaY)*pi/height;
-        angleY = lastAngleY + (1.0*deltaX)*pi/width;
-
-        if(angleX < -pi/2)
-            angleX = -pi/2;
-        if(angleX > pi/2)
-            angleX = pi/2;
-        if(angleY < -pi/2)
-            angleY = -pi/2;
-        if(angleX > pi/2)
-            angleX = pi/2;
-        setRotationMatrixForAngleXAngleY(angleX,angleY);
-        glutPostRedisplay();
-    }
-}
-
-void MM3DRenderer::setRotationMatrixForAngleXAngleY(float angleX,float angleY)
-{
-    rotationMatrix[5]  =  cos(angleX);
-    rotationMatrix[6]  = -sin(angleX);
-    rotationMatrix[9]  =  sin(angleX);
-    rotationMatrix[10] =  cos(angleX);
-
-    rotationMatrix[0]  =  cos(angleY);
-    rotationMatrix[2]  =  sin(angleY);
-    rotationMatrix[8] = -sin(angleY);
-    rotationMatrix[10] =  cos(angleY);
-}
-
-void MM3DRenderer::mouseButtonPress(int button, int state, int x, int y)
-{
-
-    if(state)
-    {
-        std::cout << "Released"  << std::endl;
-        // button let go - remember current angle
-        lastAngleX = angleX;
-        lastAngleY = angleY;
-    }
-    else
-    {
-        std::cout << "Pressed" << std::endl;
-        // button pressed - remember starting position
-        lastX = x;
-        lastY = y;
-    }
-}
-
-void MM3DRenderer::keyboardDown( unsigned char key, int x, int y )
-{
-    float pi = atan2f(0.0,-1.0);
-    if(key == 32) //space bar
-    {
-        // reset the rotation to centre
-        memset(rotationMatrix, 0, sizeof(float) * 16);
-        rotationMatrix[0] = 1.0;
-        rotationMatrix[5] = 1.0;
-        rotationMatrix[10] = 1.0;
-        rotationMatrix[15] = 1.0;
-        glutPostRedisplay();
-    }
-    else if (key==27)// ESC key
-        glutLeaveMainLoop ();
-    else if (key == 'p')
-    {		
-        setRotationMatrixForAngleXAngleY(-0.10,pi/9.0);
-        glutPostRedisplay();
-
-    }
-    else if (key == 's')
-    {
-        setRotationMatrixForAngleXAngleY(0,pi/2.);
-        glutPostRedisplay();
-    }
-    else
-        std::cout << "Keydown: " << key << std::endl;
+    char *blank  = "somthing";
+    startFramework(0, &blank);
 }
 

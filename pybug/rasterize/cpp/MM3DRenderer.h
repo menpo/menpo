@@ -70,15 +70,14 @@ class MM3DRenderer : public GLRFramework
         float angleX, angleY;
     public:
         // basic constructor only taking in coords and a textureVector
-        //MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, double* textureVector_in, 
+        //MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, double* textureVector_in,
         //	unsigned int* coordIndex_in, size_t numTriangles_in);
         // constructor taking in textureImage
-        MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, 
-                unsigned int* coordIndex_in, size_t numTriangles_in, 
-                float* texCoord_in, uint8_t* textureImage_in, 
-                size_t textureWidth_in, size_t textureHeight_in, bool INTERACTIVE_MODE);
-        void returnFBPixels(int argc, char *argv[], uint8_t* pixels, float* coords, int width, int height);
-        void render(int argc, char *argv[]);
+        MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in,
+                unsigned int* coordIndex_in, size_t numTriangles_in,
+                float* texCoord_in, uint8_t* textureImage_in,
+                size_t textureWidth_in, size_t textureHeight_in);
+        void returnFBPixels(uint8_t* pixels, float* coords, int width, int height);
         ~MM3DRenderer();
 
     private:
@@ -92,13 +91,7 @@ class MM3DRenderer : public GLRFramework
         void destroyShaders();
         void destroyVBO();
         void grabFrameBufferData();
-        void reshape(int width, int height);
-        void mouseMove(int x, int y);
-        void mouseButtonPress(int button, int state, int x, int y);
-        void keyboardDown( unsigned char key, int x, int y );
-
         void printUnitTests();
         void matrixTimesVector(float* matrix, float* vector, float*result);
-        void setRotationMatrixForAngleXAngleY(float angleX,float angleY);
 };
 

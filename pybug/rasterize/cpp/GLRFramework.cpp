@@ -60,14 +60,6 @@ void GLRFramework::startFramework(int argc, char *argv[])
     fprintf(stdout, "Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
     // Set up function callbacks with wrapper functions
-    glutReshapeFunc(reshapeWrapper);
-    glutMouseFunc(mouseButtonPressWrapper);
-    glutMotionFunc(mouseMoveWrapper);
-    glutDisplayFunc(displayWrapper);
-    glutKeyboardFunc(keyboardDownWrapper);
-    glutKeyboardUpFunc(keyboardUpWrapper);
-    glutSpecialFunc(specialKeyboardDownWrapper);
-    glutSpecialUpFunc(specialKeyboardUpWrapper);
     glutCloseFunc(cleanupWrapper);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     fprintf(stdout,"OpenGL Version: %s\n",glGetString(GL_VERSION));
@@ -79,46 +71,6 @@ void GLRFramework::startFramework(int argc, char *argv[])
     glutMainLoop();
 }
 
-void GLRFramework::display() {
-    std::cout << "GLRFramework::display()" << std::endl;
-}
-
-void GLRFramework::reshape(int width, int height) {
-    glViewport(0,0,(GLsizei)width,(GLsizei)height);
-}
-
-void GLRFramework::mouseButtonPress(int button, int state, int x, int y) {
-    printf("MouseButtonPress: x: %d y: %d\n", x, y);
-
-}
-
-void GLRFramework::mouseMove(int x, int y) {
-    printf("MouseMove: x: %d y: %d\n", x, y);
-}
-
-void GLRFramework::keyboardDown( unsigned char key, int x, int y ) 
-{
-    printf( "KeyboardDown: %c = %d\n", key, (int)key );
-    if (key==27) { // ESC key
-        glutLeaveMainLoop ();
-    }
-}
-
-void GLRFramework::keyboardUp( unsigned char key, int x, int y ) 
-{
-    printf( "KeyboardUp: %c \n", key );
-}
-
-void GLRFramework::specialKeyboardDown( int key, int x, int y ) 
-{
-    printf( "SpecialKeyboardDown: %d\n", key );
-}
-
-void GLRFramework::specialKeyboardUp( int key, int x, int y ) 
-{
-    printf( "SpecialKeyboardUp: %d \n", key );
-}
-
 void GLRFramework::init() {
     std::cout << "GLRFramework::init()" << std::endl;
 }
@@ -126,6 +78,10 @@ void GLRFramework::init() {
 void GLRFramework::setInstance() {
     std::cout << "GLRFramework::setInstance()" << std::endl;
     instance = this;
+}
+
+void GLRFramework::display() {
+    std::cout << "GLRFramework::display()" << std::endl;
 }
 
 void GLRFramework::cleanup() {
@@ -138,34 +94,6 @@ void GLRFramework::cleanup() {
 
 void GLRFramework::displayWrapper() {
     instance->display(); 
-}
-
-void GLRFramework::reshapeWrapper(int width, int height) {
-    instance->reshape(width, height);
-}
-
-void GLRFramework::mouseButtonPressWrapper(int button, int state, int x, int y) {
-    instance->mouseButtonPress(button, state, x, y);
-}
-
-void GLRFramework::mouseMoveWrapper(int x, int y) {
-    instance->mouseMove(x, y);
-}
-
-void GLRFramework::keyboardDownWrapper(unsigned char key, int x, int y) {
-    instance->keyboardDown(key,x,y);
-}
-
-void GLRFramework::keyboardUpWrapper(unsigned char key, int x, int y) {
-    instance->keyboardUp(key,x,y);
-}
-
-void GLRFramework::specialKeyboardDownWrapper(int key, int x, int y) {
-    instance->specialKeyboardDown(key,x,y);
-}
-
-void GLRFramework::specialKeyboardUpWrapper(int key, int x, int y) {
-    instance->specialKeyboardUp(key,x,y);
 }
 
 void GLRFramework::cleanupWrapper() {

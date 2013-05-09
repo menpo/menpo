@@ -139,13 +139,13 @@ int main(int argc, char** argv)
     generateTextureImage(textureImage);
     generateTextureVector(textureVector);
 
-    MM3DRenderer renderer(tpsCoord, coord, numCoord, indexData, numTriangle, texCoord, textureImage, tW,tH,true);
+    MM3DRenderer* renderer = new MM3DRenderer(tpsCoord, coord, numCoord, indexData, numTriangle, texCoord, textureImage, tW, tH);
 
     int width = 128;
     int height = 128;
     uint8_t* pixels = new uint8_t[width*height*4];
     float* coordResult = new float[width*height*3];
-    renderer.render(argc, argv);
+    renderer->returnFBPixels(argc, argv, pixels, coordResult, width, height);
 
     int count = 0;
     for(int i = 0; i < height*width*3; i++){
@@ -161,6 +161,7 @@ int main(int argc, char** argv)
     delete[] texCoord;
     delete[] pixels;
     delete[] coordResult;
+    delete renderer;
     return(EXIT_SUCCESS);
 }
 
