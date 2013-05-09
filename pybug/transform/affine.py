@@ -2,7 +2,9 @@ import abc
 import copy
 from .base import Transform
 from pybug.exceptions import DimensionalityError
+import pybug.matlab as matlab
 import numpy as np
+from scipy import ndimage
 
 
 class AffineTransform(Transform):
@@ -73,7 +75,7 @@ class AffineTransform(Transform):
         """
         return np.dot(x, self.linear_transform.T) + self.translation
 
-    def chain(self, affine_transform):
+    def compose(self, affine_transform):
         """
         Chains this affine transform with another one,
         producing a new affine transform
@@ -101,6 +103,87 @@ class AffineTransform(Transform):
         translation = Translation(self.translation)
         return [rotation_1, scale, rotation_2, translation]
 
+    def jacobian(self, shape):
+        """
+        Computes the Jacobian of the transform w.r.t the parameters. This is
+        constant for affine transforms.
+
+        The Jacobian generated (for 2D) is of the form
+
+            x 0 y 0 1 0
+            0 x 0 y 0 1
+
+        This maintains a parameter order of:
+
+          W(x;p) = [1 + p1  p3      p5] [x]
+                   [p2      1 + p4  p6] [y]
+                                        [1]
+
+        :return dW/dp: A n_dim x num_params x shape ndarray representing the
+        Jacobian of the transform.
+        """
+        # Swap x and y coordinates for image
+        s = list(shape)
+        s[:2] = s[1::-1]
+        ranges = [np.arange(d) for d in s]
+
+        # Create the meshgrids for the image, including a set of ones
+        grids = np.meshgrid(*ranges)
+        grids.append(np.ones(shape))
+
+        # Generate a mask for each dimension, the masks are as follows (for 2D)
+        # x:  1 0 0 0 0 0  y:  0 0 1 0 0 0  ones:  0 0 0 0 1 0
+        #     0 1 0 0 0 0      0 0 0 1 0 0         0 0 0 0 0 1
+        masks = []
+        n = self.n_dim
+        for i in xrange(n + 1):
+            # Create correct array size (of zeros)
+            masks.append(np.zeros([n, n * (n + 1)]))
+            # Add an identity matrix to the correct offset (slice (2,2) array)
+            masks[i][:, n * i:n * (i + 1)] = np.eye(n)
+
+        # Allocate the jacobian memory as zeros
+        jacs = np.zeros(shape + masks[0].shape)
+
+        # Sum each dimension, masked appropriately
+        # Add new dimensions to end of array
+        for i in xrange(self.n_dim + 1):
+            jacs += masks[i] * grids[i][..., None, None]
+
+        # Reshape the matrix to an (n_dim x n_params x shape) ndarray
+        i = np.arange(-2, self.n_dim)
+        indices = np.arange(self.n_dim + 2)[i]
+        return np.transpose(jacs, indices)
+
+    @property
+    def parameters(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. This does not
+        include the homogeneous part of the warp. Note that it flattens using
+        Fortran ordering, to stay consistent with Matlab.
+        """
+        params = self.homogeneous_matrix - np.eye(self.n_dim + 1)
+        return params[:self.n_dim, :].flatten(order='F')
+
+    @classmethod
+    def from_parameters(cls, p):
+        if p.shape[0] is 6:  # 2D affine
+            homo_matrix = np.eye(3)
+            homo_matrix[:2, :] += matlab.reshape(p, [2, 3])
+            return AffineTransform(homo_matrix)
+        elif p.shape[0] is 12:  # 3D affine
+            homo_matrix = np.eye(4)
+            homo_matrix[:3, :] += matlab.reshape(p, [3, 4])
+            return AffineTransform(homo_matrix)
+        else:
+            raise DimensionalityError("Affine Transforms can only be 2D or "
+                                      "3D")
+
+    @property
+    def inverse(self):
+        return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
+
 
 class SimilarityTransform(AffineTransform):
     """
@@ -112,7 +195,7 @@ class SimilarityTransform(AffineTransform):
         #TODO check that I am a similarity transform
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
 
-    def chain(self, transform):
+    def compose(self, transform):
         """
         Chains this similarity transform with another one. If the second
         transform is also a Similarity transform, the result will be a
@@ -124,7 +207,7 @@ class SimilarityTransform(AffineTransform):
             return SimilarityTransform(np.dot(transform.homogeneous_matrix,
                                               self.homogeneous_matrix))
         else:
-            return super(SimilarityTransform, self).chain(transform)
+            return super(SimilarityTransform, self).compose(transform)
 
 
 class DiscreteAffineTransform(object):
@@ -142,10 +225,6 @@ class DiscreteAffineTransform(object):
         return a copy of self in a list
         """
         return [copy.deepcopy(self)]
-
-    @abc.abstractproperty
-    def inverse(self):
-        pass
 
 
 def Rotation(rotation_matrix):

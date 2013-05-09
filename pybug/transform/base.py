@@ -39,6 +39,46 @@ class Transform(object):
         """
         pass
 
+    @abc.abstractmethod
+    def jacobian(self, shape):
+        """
+        Calculates the Jacobian of the warp - this may be constant
+        :param shape
+        """
+        pass
+
+    @abc.abstractmethod
+    def compose(self, a):
+        """
+        Composes two transforms together: W(x;p) <- W(x;p) o W(x;delta_p)
+        :param a: transform of the same type as this object
+        """
+        pass
+
+    @abc.abstractproperty
+    def inverse(self):
+        """
+        Returns the inverse of the transform, if applicable
+        :raise NonInvertable if transform has no inverse
+        """
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def from_parameters(cls, p):
+        """
+        Build a transform from the provided 1D parameter array
+        :param p: 1D parameter array
+        """
+        pass
+
+    @abc.abstractproperty
+    def parameters(self):
+        """
+        Return the parameters of the transform as a 1D ndarray
+        """
+        pass
+
 
 class Transformable(object):
     """

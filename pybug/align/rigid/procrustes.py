@@ -27,7 +27,7 @@ class Procrustes(RigidAlignment):
 
     @property
     def transform(self):
-        return reduce(lambda x, y: x.chain(y), self.transform_chain)
+        return reduce(lambda x, y: x.compose(y), self.transform_chain)
 
     def _procrustes_step(self):
         # firstly, translate the target to the origin
@@ -79,7 +79,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         rescale = Scale(self.target_scale / np.linalg.norm(new_target),
                         n_dim=self.n_dim)
         centre = Translation(-new_target.mean(axis=0))
-        rescale_about_com = centre.chain(rescale).chain(centre.inverse)
+        rescale_about_com = centre.compose(rescale).compose(centre.inverse)
         new_target = rescale_about_com.apply(new_target)
         self.delta_target = np.linalg.norm(self.target - new_target)
         print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
@@ -96,7 +96,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
     @property
     def transforms(self):
-        return [reduce(lambda a, b: a.chain(b), [x.transform for x in p])
+        return [reduce(lambda a, b: a.compose(b), [x.transform for x in p])
                 for p in self.procrustes]
 
     @property
