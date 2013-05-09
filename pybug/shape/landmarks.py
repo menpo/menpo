@@ -97,6 +97,10 @@ class LandmarkManager(object):
             raise StopIteration
         return self._data[self._i]
 
+    @property
+    def as_array(self):
+        return np.array([lm.feature for lm in self])
+
     def add_reference_landmarks(self, landmark_dict):
         for k, v in landmark_dict.iteritems():
             if len(v.shape) == 1:
@@ -164,6 +168,10 @@ class LandmarkManager(object):
     @property
     def n_labels(self):
         return len(set(x.label for x in self))
+
+    @property
+    def n_landmarks(self):
+        return len(self._data)
 
     @property
     def config(self):
