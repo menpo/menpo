@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/rasterize/cpp/Rasterizer.cpp ./pybug/rasterize/cpp/GLRFramework.cpp
+# distutils: sources = ./pybug/rasterize/cpp/Rasterizer.cpp
 # distutils: libraries = GLU GL glut GLEW
 from libcpp.vector cimport vector
 from libc.stdint cimport uint8_t

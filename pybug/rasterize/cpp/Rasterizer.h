@@ -1,17 +1,29 @@
 #pragma once
-#include "GLRFramework.h"
+
 #include <vector>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+#include <GL/glew.h>
+#include <vector>
+#include <GL/freeglut.h>
 
-class Rasterizer : public GLRFramework {
+GLuint createShader(GLenum eShaderType, std::string &strShaderFile);
+GLuint createProgram(const std::vector<GLuint> &shaderList);
+void checkError();
+
+
+class Rasterizer {
     private:
+    	std::string _title;
         double*  _points;  // (X,Y,Z,W) position
         float* _color_f;  // (X,Y,Z) float value per point
         double*  _textureVector;  // (R,G,B,A) color per point (redundant if texture is used)
         float* _tcoords;  // (s,t) texture coordinates
         uint8_t* _texture;
         GLuint* _trilist;
-        float* _light_vector;  // vector to the direction of light
 
         size_t _num_points;
         size_t _num_tris;
@@ -29,7 +41,7 @@ class Rasterizer : public GLRFramework {
         GLuint _points_buffer;
         GLuint _tcoord_buffer;
         GLuint _trilist_buffer;
-        GLuint _coordBuffer;
+        GLuint _color_buffer;
         GLuint _textureVectorBuffer;
 
         GLuint _texture_ID;
@@ -47,29 +59,27 @@ class Rasterizer : public GLRFramework {
 
         GLuint _textureUniform;  // Handles to uniforms
 
-        bool _TEXTURE_IMAGE;
 
-        // variables tracking last place pressed
-        int _last_X, _last_Y;
-        float _last_angle_X, _last_angle_Y;
-        float _angle_X, _angle_Y;
+    protected:
+        static Rasterizer *instance;
 
     public:
-        // basic constructor only taking in coords and a textureVector
-        //MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, double* textureVector_in,
-        //	unsigned int* coordIndex_in, size_t numTriangles_in);
-        // constructor taking in textureImage
+        int WINDOW_WIDTH;
+        int WINDOW_HEIGHT;
+        int WINDOW_X_POSITION;
+        int WINDOW_Y_POSITION;
+
         Rasterizer(double* points, float* coord, size_t n_coords,
                 unsigned int* trilist, size_t num_tris,
                 float* texCoord_in, uint8_t* textureImage_in,
                 size_t textureWidth_in, size_t textureHeight_in);
         void return_FB_pixels(uint8_t* pixels, float* coords, int width, int height);
-        ~Rasterizer();
 
     private:
         void init();
         void initialize_vertex_buffer();
         void display();
+        void setInstance();
         void initialize_program();
         void initialize_texture();
         void initialize_frame_buffer();
@@ -77,7 +87,9 @@ class Rasterizer : public GLRFramework {
         void destroy_shaders();
         void destroy_VBO();
         void grabFrameBufferData();
-        void printUnitTests();
-        void matrix_times_vector(float* matrix, float* vector, float* result);
+        void startFramework(int argc, char *argv[]);
+        static void displayWrapper();
+        static void reshapeWrapper(int width, int height);
+        static void cleanupWrapper();
 };
 

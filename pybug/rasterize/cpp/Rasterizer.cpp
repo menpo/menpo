@@ -5,16 +5,86 @@
 #include <fstream>
 #include <cmath>
 
+Rasterizer *Rasterizer::instance = NULL;
+
+// ----- OPENGL HELPER FUNCTIONS ------ //
+
+GLuint createProgram(const std::vector<GLuint> &shaderList) {
+    GLuint program = glCreateProgram();
+    for(size_t i = 0; i < shaderList.size(); i++)
+        glAttachShader(program, shaderList[i]);
+    glLinkProgram(program);
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint infoLogLength;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        GLchar *strInfoLog = new GLchar[infoLogLength + 1];
+        glGetProgramInfoLog(program, infoLogLength, NULL, strInfoLog);
+        fprintf(stderr, "Linker failure: %s\n", strInfoLog);
+        delete[] strInfoLog;
+    }
+    for(size_t i = 0; i < shaderList.size(); i++)
+        glDetachShader(program, shaderList[i]);
+    return program;
+}
+
+GLuint createShader(GLenum eShaderType,
+		                          std::string &strShaderFilename) {
+    GLuint shader = glCreateShader(eShaderType);
+    std::ifstream shaderFile(strShaderFilename.c_str(), std::ifstream::in);
+    GLchar strFileData[10000];
+    unsigned int i  = 0;
+    while(shaderFile.good()) {
+        strFileData[i] = shaderFile.get();
+        std::cout << strFileData[i];
+        i++;
+    }
+    strFileData[i-1] = '\0';
+    const GLchar* constStrFileData = (const char*)strFileData;
+    std::cout << constStrFileData << std::endl;
+    glShaderSource(shader, 1, &constStrFileData, NULL);
+    glCompileShader(shader);
+    GLint status;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint infoLogLength;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+        GLchar *strInfoLog = new GLchar[infoLogLength + 1];
+        glGetShaderInfoLog(shader, infoLogLength, NULL, strInfoLog);
+        const char *strShaderType = NULL;
+        switch (eShaderType) {
+            case GL_VERTEX_SHADER:   strShaderType = "vertex";   break;
+            case GL_GEOMETRY_SHADER: strShaderType = "geometry"; break;
+            case GL_FRAGMENT_SHADER: strShaderType = "fragment"; break;
+        }
+        fprintf(stderr, "Compile failure in %s shader: \n%s\n",
+                strShaderType, strInfoLog);
+        delete[] strInfoLog;
+        exit(EXIT_FAILURE);
+    }
+    return shader;
+}
+
+void checkError() {
+    GLenum err;
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        printf("Error. glError: 0x%04X", err);
+        std::cout << " - " << gluErrorString(err) << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 Rasterizer::Rasterizer(double* points, float* color,  size_t num_points,
 					   unsigned int* trilist, size_t num_tris,
 					   float* tcoords, uint8_t* texture,
 					   size_t texture_width, size_t texture_height){
-    _light_vector = new float[3];
-    memset(_light_vector, 0, 3);
-    _light_vector[2] = 1.0;
+    WINDOW_WIDTH = 768;
+    WINDOW_HEIGHT = 768;
+    WINDOW_X_POSITION = 100;
+    WINDOW_Y_POSITION = 100;
     _title = "OpenGL Rasterizer";
-    _TEXTURE_IMAGE = true;
-    std::cout << "Rasterizer::Rasterizer(TextureImage)" << std::endl;
     _points = points;
     _color_f = color;
     _trilist = trilist;
@@ -24,18 +94,9 @@ Rasterizer::Rasterizer(double* points, float* color,  size_t num_points,
     _texture = texture;
     _texture_width = texture_width;
     _texture_height = texture_height;
-    // start viewing straight on
-    _last_angle_X = 0.0;
-    _last_angle_Y = 0.0;
-}
-
-Rasterizer::~Rasterizer(){
-    std::cout << "Rasterizer::~Rasterizer()" << std::endl;
-    delete [] _light_vector;
 }
 
 void Rasterizer::init(){
-    std::cout << "Rasterizer::init()" << std::endl;
     checkError();
     glEnable (GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -50,12 +111,60 @@ void Rasterizer::init(){
     checkError();
     initialize_vertex_buffer();
     checkError();
-    if(_TEXTURE_IMAGE)
-        initialize_texture();
+    initialize_texture();
     checkError();
 	glDepthFunc(GL_LEQUAL);
 	initialize_frame_buffer();
     checkError();
+}
+
+void Rasterizer::setInstance() {
+    instance = this;
+}
+
+void Rasterizer::startFramework(int argc, char *argv[]) {
+    setInstance();
+    // Sets the instance to self, used in the callback wrapper functions
+    std::cout << "Calling startFramework in GLRFramework" << std::endl;
+    // Fire up GLUT
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    //glutInitContextVersion(4, 0);
+    //glutInitContextProfile(GLUT_CORE_PROFILE);
+    glutInitWindowPosition(WINDOW_X_POSITION, WINDOW_Y_POSITION);
+    glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    glutCreateWindow(_title.c_str());
+
+    // Fire up GLEW
+    GLenum status = glewInit();
+    if (status != GLEW_OK) {
+        fprintf(stderr, "GLEW Failed to start! Error: %s\n", glewGetErrorString(status));
+        exit(EXIT_FAILURE);
+    }
+    fprintf(stdout, "Using GLEW %s\n", glewGetString(GLEW_VERSION));
+
+    // Set up function callbacks with wrapper functions
+    glutCloseFunc(cleanupWrapper);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+    fprintf(stdout,"OpenGL Version: %s\n",glGetString(GL_VERSION));
+
+    // Call subclasses init
+    init();
+
+    // Start the main GLUT thread
+    glutMainLoop();
+}
+
+// ******************************************************************
+// ** Static functions which are passed to Glut function callbacks **
+// ******************************************************************
+
+void Rasterizer::displayWrapper() {
+    instance->display();
+}
+
+void Rasterizer::cleanupWrapper() {
+    instance->cleanup();
 }
 
 void Rasterizer::initialize_vertex_buffer(){
@@ -72,31 +181,17 @@ void Rasterizer::initialize_vertex_buffer(){
     glVertexAttribPointer(0, 4, GL_DOUBLE, GL_FALSE, 0, 0);
     // Detach from GL_ARRAY_BUFFER (good practice)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    if(!_TEXTURE_IMAGE){
-        //  TEXTUREVECTORBUFFER (1)
-        glGenBuffers(1, &_textureVectorBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, _textureVectorBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*_num_points*4,
-                _textureVector, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_DOUBLE, GL_FALSE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-    else{
-        // TCOORD BUFFER (1)
-        glGenBuffers(1, &_tcoord_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, _tcoord_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * _num_points * 2,
-                _tcoords, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-
+	// TCOORD BUFFER (1)
+	glGenBuffers(1, &_tcoord_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, _tcoord_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * _num_points * 2,
+			_tcoords, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
     // SETUP COORDBUFFER (2)
-    glGenBuffers(1, &_coordBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _coordBuffer);
+    glGenBuffers(1, &_color_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _color_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * _num_points * 3,
             _color_f, GL_STATIC_DRAW);
     glEnableVertexAttribArray(2);
@@ -130,7 +225,7 @@ void Rasterizer::initialize_texture(){
     glBindSampler(_texture_image_unit, _texture_sampler);
     // bind the texture to a uniform called "textureImage" which can be
     // accessed from shaders
-    _textureUniform = glGetUniformLocation(_the_program, "textureImage");
+    _textureUniform = glGetUniformLocation(_the_program, "texture_image");
     glUniform1i(_textureUniform, _texture_image_unit);
 
     // set the active Texture to 0 - as long as this is not changed back
@@ -178,11 +273,13 @@ void Rasterizer::initialize_frame_buffer(){
     GLsizei buffsSize = 2;
     glDrawBuffers(buffsSize, buffs);
     // now, the depth buffer
-    GLuint depthBuffer;
-    glGenRenderbuffers(1,  &depthBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER,depthBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WINDOW_WIDTH, WINDOW_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,depthBuffer);
+    GLuint depth_buffer;
+    glGenRenderbuffers(1,  &depth_buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER,depth_buffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WINDOW_WIDTH,
+    					  WINDOW_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+    					      GL_RENDERBUFFER, depth_buffer);
     GLenum status;
     status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
@@ -207,52 +304,13 @@ void Rasterizer::display(){
     glutLeaveMainLoop();
 }
 
-void Rasterizer::printUnitTests(){
-    float* input = new float[4];
-    memset(input,0.,4);
-    input[0] = 0;
-    input[1] = 0;
-    input[2] = 1;
-    input[3] = 1;
-    float * result = new float[4];
-    float * tempResult = new float[4];
-    matrix_times_vector(_rotation_matrix,input,tempResult);
-    for(int i = 0; i < 4; i++)
-        tempResult[i] += _translation_vector[i];
-    matrix_times_vector(_perspective_matrix,tempResult,result);
-    for(int i = 0; i < 4; i ++)
-        printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-_translation_vector[i],result[i]);
-    std::cout << std::endl;
-    delete [] input;
-    delete [] tempResult;
-    delete [] result;
-}
-
-void Rasterizer::matrix_times_vector(float* m, float* v, float*m_x_v){
-    m_x_v[0] = 0;
-    m_x_v[1] = 0;
-    m_x_v[2] = 0;
-    m_x_v[3] = 0;
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
-            m_x_v[i] += m[4*i+ j]*v[j];
-        }
-    }
-}
-
 void Rasterizer::initialize_program(){
     std::cout << "initialize_program()...";
     std::vector<GLuint> shaderList;
     std::string strVertexShader;
     std::string strFragmentShader;
-    if(_TEXTURE_IMAGE){
-        strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.vert";
-        strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.frag";
-    }
-    else{
-        strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/shader.vert";
-        strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/shader.frag";
-    }
+    strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.vert";
+    strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.frag";
     shaderList.push_back(createShader(GL_VERTEX_SHADER,   strVertexShader  ));
     shaderList.push_back(createShader(GL_FRAGMENT_SHADER, strFragmentShader));
 
@@ -293,7 +351,7 @@ void Rasterizer::destroy_VBO(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glDeleteBuffers(1, &_textureVectorBuffer);
-    glDeleteBuffers(1, &_coordBuffer);
+    glDeleteBuffers(1, &_color_buffer);
     glDeleteBuffers(1, &_points_buffer);
     glDeleteBuffers(1, &_trilist_buffer);
 
@@ -315,19 +373,6 @@ void Rasterizer::return_FB_pixels(uint8_t *fboPixels, float *fboCoords,
     _fbo_coords = fboCoords;
     WINDOW_WIDTH = width;
     WINDOW_HEIGHT = height;
-    // set the rotation, perspective, and translation objects to unitary
-    //(we just want orthogonal projection)
-    memset(_translation_vector,0, sizeof(float) * 4);
-    memset(_perspective_matrix,0, sizeof(float) * 16);
-    _perspective_matrix[0]  = 1.0;
-    _perspective_matrix[5]  = 1.0;
-    _perspective_matrix[10] = 1.0;
-    _perspective_matrix[15] = 1.0;
-    memset(_rotation_matrix,0, sizeof(float) * 16);
-    _rotation_matrix[0]  = 1.0;
-    _rotation_matrix[5]  = 1.0;
-    _rotation_matrix[10] = 1.0;
-    _rotation_matrix[15] = 1.0;
     char *blank  = "blank";
     startFramework(0, &blank);
 }
