@@ -1,2 +1,2 @@
 GLRenderer:
-	g++ -g -Wall driver.cpp MM3DRenderer.cpp  GLRFramework.cpp -lGLU -lGL -lglut -lGLEW -o driver.exe
+	g++ -g -Wall driver.cpp Rasterizer.cpp -lGLU -lGL -lglut -lGLEW -o driver.exe

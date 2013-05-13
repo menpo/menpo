@@ -1,11 +1,14 @@
 #version 330
 
-smooth in vec4 theColor;
+uniform sampler2D texture_image;
+smooth in vec2 tcoord;
+smooth in vec3 color;
 
-out vec4 outputColor;
+layout(location = 0) out vec3 outputColor;
+layout(location = 1) out vec3 outputCoord;
 
 void main()
 {
-   outputColor = theColor;
+   outputColor = texture(texture_image, tcoord).rgb;
+   outputCoord = color;
 }
-

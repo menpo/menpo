@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdint.h>
-#include "MM3DRenderer.h"
+#include "Rasterizer.h"
 
 
 void generateTextureVector(double* texture)
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
     int height = 128;
     uint8_t* pixels = new uint8_t[width*height*4];
     float* coordResult = new float[width*height*3];
-    renderer->returnFBPixels(argc, argv, pixels, coordResult, width, height);
+    renderer->return_FB_pixels(pixels, coordResult, width, height);
 
     int count = 0;
     for(int i = 0; i < height*width*3; i++){

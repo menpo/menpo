@@ -94,6 +94,7 @@ Rasterizer::Rasterizer(double* points, float* color,  size_t num_points,
     _texture = texture;
     _texture_width = texture_width;
     _texture_height = texture_height;
+    printf("Rasterizer built\n");
 }
 
 void Rasterizer::init(){
@@ -114,6 +115,7 @@ void Rasterizer::init(){
     initialize_texture();
     checkError();
 	glDepthFunc(GL_LEQUAL);
+    printf("Made it here\n");
 	initialize_frame_buffer();
     checkError();
 }
@@ -138,15 +140,16 @@ void Rasterizer::startFramework(int argc, char *argv[]) {
     // Fire up GLEW
     GLenum status = glewInit();
     if (status != GLEW_OK) {
-        fprintf(stderr, "GLEW Failed to start! Error: %s\n", glewGetErrorString(status));
+        fprintf(stderr, "GLEW Failed to start! Error: %s\n",
+        		glewGetErrorString(status));
         exit(EXIT_FAILURE);
     }
-    fprintf(stdout, "Using GLEW %s\n", glewGetString(GLEW_VERSION));
+    printf("Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
     // Set up function callbacks with wrapper functions
     glutCloseFunc(cleanupWrapper);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-    fprintf(stdout,"OpenGL Version: %s\n",glGetString(GL_VERSION));
+    printf("OpenGL Version: %s\n",glGetString(GL_VERSION));
 
     // Call subclasses init
     init();
@@ -309,9 +312,11 @@ void Rasterizer::initialize_program(){
     std::vector<GLuint> shaderList;
     std::string strVertexShader;
     std::string strFragmentShader;
-    strVertexShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.vert";
-    strFragmentShader = "/home/jab08/gits/msc_project/matlab/GLRenderer/textureImage.frag";
-    shaderList.push_back(createShader(GL_VERTEX_SHADER,   strVertexShader  ));
+    strVertexShader =
+    		"/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/shader.vert";
+    strFragmentShader =
+    		"/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/shader.frag";
+    shaderList.push_back(createShader(GL_VERTEX_SHADER, strVertexShader));
     shaderList.push_back(createShader(GL_FRAGMENT_SHADER, strFragmentShader));
 
     _the_program = createProgram(shaderList);
