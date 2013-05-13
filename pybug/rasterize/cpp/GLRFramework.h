@@ -42,4 +42,3 @@ class GLRFramework {
         static void reshapeWrapper(int width, int height);
         static void cleanupWrapper();
 };
-
