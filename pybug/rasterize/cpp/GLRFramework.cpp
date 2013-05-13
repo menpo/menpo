@@ -5,36 +5,36 @@ GLRFramework *GLRFramework::instance = NULL;
 
 GLRFramework::GLRFramework() { 
     std::cout << "GLRFramework::GLRFramework()" << std::endl;
-    title = "Generic Viewer";
+    _title = "Generic Viewer";
     WINDOW_WIDTH = 768;
     WINDOW_HEIGHT = 768;
     WINDOW_X_POSITION = 100;
     WINDOW_Y_POSITION = 100;
     // set the perspective matrix to be identity by default
-    perspectiveMatrix = new float[16];
-    rotationMatrix = new float[16];
-    translationVector = new float[4];
+    _perspective_matrix = new float[16];
+    _rotation_matrix = new float[16];
+    _translation_vector = new float[4];
 
-    memset(perspectiveMatrix,0, sizeof(float) * 16);
+    memset(_perspective_matrix,0, sizeof(float) * 16);
 
-    memset(translationVector,0, sizeof(float) * 4);
-    perspectiveMatrix[0] = 1.0;
-    perspectiveMatrix[5] = 1.0;
-    perspectiveMatrix[10] = 1.0;
-    perspectiveMatrix[15] = 1.0;
+    memset(_translation_vector,0, sizeof(float) * 4);
+    _perspective_matrix[0] = 1.0;
+    _perspective_matrix[5] = 1.0;
+    _perspective_matrix[10] = 1.0;
+    _perspective_matrix[15] = 1.0;
 
-    memset(rotationMatrix, 0, sizeof(float) * 16);
-    rotationMatrix[0] = 1.0;
-    rotationMatrix[5] = 1.0;
-    rotationMatrix[10] = 1.0;
-    rotationMatrix[15] = 1.0;
+    memset(_rotation_matrix, 0, sizeof(float) * 16);
+    _rotation_matrix[0] = 1.0;
+    _rotation_matrix[5] = 1.0;
+    _rotation_matrix[10] = 1.0;
+    _rotation_matrix[15] = 1.0;
 }
 
 GLRFramework::~GLRFramework() {
     std::cout << "Calling the GLRFramework destructor" << std::endl;
-    delete[] perspectiveMatrix;
-    delete[] translationVector;
-    delete[] rotationMatrix;
+    delete[] _perspective_matrix;
+    delete[] _translation_vector;
+    delete[] _rotation_matrix;
 }
 
 void GLRFramework::startFramework(int argc, char *argv[]) 
@@ -48,7 +48,7 @@ void GLRFramework::startFramework(int argc, char *argv[])
     //glutInitContextProfile(GLUT_CORE_PROFILE);
     glutInitWindowPosition(WINDOW_X_POSITION, WINDOW_Y_POSITION);
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    glutCreateWindow(title.c_str()); 
+    glutCreateWindow(_title.c_str()); 
 
     // Fire up GLEW
     GLenum status = glewInit();

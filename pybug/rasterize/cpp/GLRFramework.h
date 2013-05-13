@@ -11,7 +11,7 @@
 class GLRFramework {
 
     protected:
-        std::string title;
+        std::string _title;
         static GLRFramework *instance;
 
     public:
@@ -19,9 +19,9 @@ class GLRFramework {
         int WINDOW_HEIGHT;
         int WINDOW_X_POSITION;
         int WINDOW_Y_POSITION;
-        float *perspectiveMatrix;
-        float *rotationMatrix;
-        float *translationVector;
+        float *_perspective_matrix;
+        float *_rotation_matrix;
+        float *_translation_vector;
 
     public:
         GLRFramework();
