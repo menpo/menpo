@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/rasterize/matlabcpp/MM3DRenderer.cpp ./pybug/rasterize/matlabcpp/GLRFramework.cpp
+# distutils: sources = ./pybug/rasterize/cpp/MM3DRenderer.cpp ./pybug/rasterize/cpp/GLRFramework.cpp
 # distutils: libraries = GLU GL glut GLEW
 from libcpp.vector cimport vector
 from libc.stdint cimport uint8_t
@@ -9,7 +9,7 @@ cimport numpy as np
 
 
 # externally declare the C++ classes
-cdef extern from "./matlabcpp/MM3DRenderer.h":
+cdef extern from "./cpp/MM3DRenderer.h":
 
     cdef cppclass MM3DRenderer:
         MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in,
