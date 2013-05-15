@@ -34,10 +34,6 @@ protected:
 	virtual void reshape(int width, int height);
 	virtual void cleanup();
 
-	GLuint createShader(GLenum eShaderType, std::string &strShaderFile);
-	GLuint createProgram(const std::vector<GLuint> &shaderList);
-	void checkError();
-
 	virtual void mouseButtonPress(int button, int state, int x, int y);
 	virtual void mouseMove(int x, int y);
 	virtual void keyboardDown( unsigned char key, int x, int y );

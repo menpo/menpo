@@ -3,6 +3,12 @@
 #include <vector>
 #include <stdint.h>
 
+GLuint create_shader(GLenum eShaderType, std::string &strShaderFile);
+GLuint create_program(const std::vector<GLuint> &shaderList);
+void check_error();
+void matrix_x_vector(float* matrix, float* vector, float*result);
+
+
 class Rasterizer : public GLRFramework
 {
 
@@ -21,7 +27,7 @@ private:
 	GLuint* _trilist;
 
 	// vector to the direction of light
-	float* lightVector;
+	float* _light_vector;
 
 	size_t  _n_points;
 	size_t  _n_tris;
@@ -55,24 +61,19 @@ private:
 	int _fb_texture_unit;
 	int _fb_color_unit;
 	GLubyte* _fbo_pixels;
-	GLfloat* _fbo_coords;
+	GLfloat* _fbo_color_pixels;
 
 	// Handles to uniforms
 	GLuint _texture_uniform;
 
-	bool TEXTURE_IMAGE;
 	// if true we are rendering to just return the framebuffer.
 	bool RETURN_FRAMEBUFFER;
 
 	// variables tracking last place pressed
 	int lastX, lastY;
-	float lastAngleX, lastAngleY;
+	float _last_angle_X, _last_angle_Y;
     float angleX, angleY;
 public:
-	// basic constructor only taking in coords and a textureVector
-	//MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, double* textureVector_in, 
-	//	unsigned int* coordIndex_in, size_t numTriangles_in);
-	// constructor taking in textureImage
 	Rasterizer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, 
 		unsigned int* coordIndex_in, size_t numTriangles_in, 
 		float* texCoord_in, uint8_t* textureImage_in, 
@@ -98,6 +99,5 @@ private:
 	void keyboardDown( unsigned char key, int x, int y );
 
 	void printUnitTests();
-	void matrixTimesVector(float* matrix, float* vector, float*result);
 	void setRotationMatrixForAngleXAngleY(float angleX,float angleY);
 };
