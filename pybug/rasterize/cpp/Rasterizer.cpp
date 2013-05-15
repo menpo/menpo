@@ -5,6 +5,24 @@
 #include <fstream>
 #include <cmath>
 
+/**
+ * Checks the global OpenGL state to see if an error has occurred.
+ *
+ * If an error is encountered, the program is exited, and a log to stderr
+ * of the problem made.
+ */
+void glr_check_error();
+
+/**
+ * Builds an OpenGL shader of the type shader_type, where shader_type can be:
+ * 	- GL_VERTEX_SHADER
+ * 	- GL_GEOMETRY_SHADER
+ * 	- GL_FRAGMENT_SHADER
+ *
+ * 	Returns the GLuint that points to the shader. If there is an error, the
+ * 	program is exited, and the error message produced.
+ */
+GLuint glr_create_shader_from_string(GLenum shader_type, const GLchar* string);
 
 
 void glr_check_error() {
@@ -18,9 +36,9 @@ void glr_check_error() {
 }
 
 GLuint glr_create_shader_from_string(GLenum shader_type,
-								     const GLchar* file_string) {
+								     const GLchar* string) {
 	GLuint shader = glCreateShader(shader_type);
-	glShaderSource(shader, 1, &file_string, NULL);
+	glShaderSource(shader, 1, &string, NULL);
 	glCompileShader(shader);
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
@@ -63,15 +81,16 @@ GLuint glr_create_program(const std::vector<GLuint> &shaders) {
 	return program;
 }
 
-glr_texture glr_build_rgba_texture(uint8_t* texture, size_t texture_width,
-				                   size_t texture_height) {
+glr_texture glr_build_rgba_texture_at_unit(uint8_t* texture, size_t width,
+				                   	       size_t height, unsigned int unit) {
 	glr_texture texture_tmp;
-	texture_tmp.datatype = GL_UNSIGNED_BYTE;
-	texture_tmp.n_channels = 4;
-	texture_tmp.texture_width = texture_width;
-	texture_tmp.texture_height = texture_height;
-	texture_tmp.specification = GL_RGBA;
-	texture_tmp.pixels = texture;
+	texture_tmp.unit = unit; // the texture unit this texture binds to
+	texture_tmp.internal_format = GL_RGBA8;
+	texture_tmp.width = width;
+	texture_tmp.height = height;
+	texture_tmp.format = GL_RGBA;
+	texture_tmp.type = GL_UNSIGNED_BYTE;
+	texture_tmp.data = texture;
 	return texture_tmp;
 }
 
@@ -112,10 +131,11 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 	textured_mesh.h_points = glr_build_h_points(points, n_points);
 	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
 	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
-	textured_mesh.texture = glr_build_rgba_texture(texture, texture_width,
-											  texture_height);
+	textured_mesh.texture = glr_build_rgba_texture_at_unit(texture, texture_width,
+											  texture_height, 1);
 	return textured_mesh;
 }
+
 
 void glr_init_array_buffer_from_vectorset(glr_vectorset& vector) {
 	glGenBuffers(1, &(vector.vbo));
@@ -146,6 +166,39 @@ void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh) {
 	glr_init_element_buffer_from_vectorset(mesh.trilist);
 }
 
+void glr_init_texture(glr_texture& texture) {
+	// activate this textures unit
+	glActiveTexture(GL_TEXTURE0 + texture.unit);
+	glGenTextures(1, &(texture.texture_ID));
+	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
+	glTexImage2D(GL_TEXTURE_2D, 0, texture.internal_format,
+		texture.width, texture.height, 0, texture.format,
+		texture.type, texture.data);
+	// Create the description of the texture (sampler) and bind it to the
+	// correct texture unit
+	glGenSamplers(1, &(texture.sampler));
+	glSamplerParameteri(texture.sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glSamplerParameteri(texture.sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glSamplerParameteri(texture.sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glBindSampler(texture.unit, texture.sampler);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void glr_bind_texture_to_program(glr_texture& texture, GLuint program) {
+	glActiveTexture(GL_TEXTURE0 + texture.unit);
+	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
+	// bind the texture to a uniform called "texture" which can be
+	// accessed from shaders
+	texture.uniform = glGetUniformLocation(program, "texture");
+	glUniform1i(texture.uniform, texture.unit);
+	// set the active Texture to 0 - as long as this is not changed back
+	// to textureImageUnit, we know our shaders will find textureImage bound to
+	// GL_TEXTURE_2D when they look in textureImageUnit
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void glr_global_state_settings() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -164,11 +217,6 @@ void glr_get_framebuffer(unsigned int texture_unit_offset,
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void glr_get_framebuffer_for_glr_texture(glr_texture t, void* texture) {
-	glr_get_framebuffer(t.unit_offset, t.framebuffer, t.specification,
-			        t.datatype, texture);
-}
-
 void glr_destroy_program() {
 	glUseProgram(0);
 }
@@ -183,11 +231,10 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh) {
 	//glDeleteBuffers(1, &_color_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDeleteBuffers(1, &(mesh.trilist.vbo));
-	// now are buffers are all cleared, we can unblind and delete the vao
+	// now are buffers are all cleared, we can unbind and delete the vao
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &(mesh.vao));
 }
-
 
 void read_file(const char* filepath, GLchar* file_string) {
 	std::ifstream file(filepath, std::ifstream::in);
@@ -290,16 +337,19 @@ void Rasterizer::init_buffers() {
 void Rasterizer::init_texture() {
 	std::cout << "Rasterizer::init_texture()" << std::endl;
 	// choose which unit to use and activate it
+//	glr_init_texture(_textured_mesh.texture);
+//	glr_bind_texture_to_program(_textured_mesh.texture, _the_program);
+
 	_texture_unit = 1;
 	glActiveTexture(GL_TEXTURE0 + _texture_unit);
-	// specify the data storage and actually get OpenGL to 
+	// specify the data storage and actually get OpenGL to
 	// store our textureImage
 	glGenTextures(1, &_texture_ID);
 	glBindTexture(GL_TEXTURE_2D, _texture_ID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-		_texture_width, _texture_height, 0, GL_RGBA, 
+		_texture_width, _texture_height, 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, _texture);
-	// Create the description of the texture (sampler) and bind it to the 
+	// Create the description of the texture (sampler) and bind it to the
 	// correct texture unit
 	glGenSamplers(1, &_texture_sampler);
 	glSamplerParameteri(_texture_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -318,6 +368,7 @@ void Rasterizer::init_texture() {
 	// on unit 0 - the state of our textureUnit is safe.
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
 
 void Rasterizer::init_frame_buffer() {
 	std::cout << "Rasterizer::init_frame_buffer()" << std::endl;
@@ -393,37 +444,19 @@ void Rasterizer::display()
 		GLuint lightDirectionUnif = glGetUniformLocation(_the_program, "lightDirection");
 		glUniform3fv(lightDirectionUnif, 1, _light_vector);
 	}
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _textured_mesh.trilist.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _textured_mesh.trilist.vbo);
+//	glActiveTexture(GL_TEXTURE0 + _textured_mesh.texture.unit);
+//	glBindTexture(GL_TEXTURE_2D, _textured_mesh.texture.texture_ID);
+//	glDrawElements(GL_TRIANGLES, _textured_mesh.trilist.n_vectors * 3,
+//				   GL_UNSIGNED_INT, 0);
 	glActiveTexture(GL_TEXTURE0 + _texture_unit);
 	glBindTexture(GL_TEXTURE_2D, _texture_ID);
-	glDrawElements(GL_TRIANGLES, _n_tris*3, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, _n_tris * 3,
+				   GL_UNSIGNED_INT, 0);
 	glutSwapBuffers();
 	if(RETURN_FRAMEBUFFER)
 		glutLeaveMainLoop();
 }
-
-//void Rasterizer::printUnitTests() {
-//	std::cout << "Rasterizer::printUnitTests()" << std::endl;
-//	float* input = new float[4];
-//	memset(input,0.,4);
-//	input[0] = 0;
-//	input[1] = 0;
-//	input[2] = 1;
-//	input[3] = 1;
-//
-//	float * result = new float[4];
-//	float * tempResult = new float[4];
-//	matrix_x_vector(rotationMatrix,input,tempResult);
-//	for(int i = 0; i < 4; i++)
-//		tempResult[i] += translationVector[i];
-//	matrix_x_vector(perspectiveMatrix,tempResult,result);
-//	for(int i = 0; i < 4; i ++)
-//		printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-translationVector[i],result[i]);
-//	std::cout << std::endl;
-//	delete [] input;
-//	delete [] tempResult;
-//	delete [] result;
-//}
 
 void Rasterizer::init_program() {
 	std::cout << "Rasterizer::init_program()" << std::endl;
@@ -596,4 +629,28 @@ void Rasterizer::keyboardDown(unsigned char key, int x, int y ) {
 	} else
 		std::cout << "Keydown: " << key << std::endl;
 }
+
+
+//void Rasterizer::printUnitTests() {
+//	std::cout << "Rasterizer::printUnitTests()" << std::endl;
+//	float* input = new float[4];
+//	memset(input,0.,4);
+//	input[0] = 0;
+//	input[1] = 0;
+//	input[2] = 1;
+//	input[3] = 1;
+//
+//	float * result = new float[4];
+//	float * tempResult = new float[4];
+//	matrix_x_vector(rotationMatrix,input,tempResult);
+//	for(int i = 0; i < 4; i++)
+//		tempResult[i] += translationVector[i];
+//	matrix_x_vector(perspectiveMatrix,tempResult,result);
+//	for(int i = 0; i < 4; i ++)
+//		printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-translationVector[i],result[i]);
+//	std::cout << std::endl;
+//	delete [] input;
+//	delete [] tempResult;
+//	delete [] result;
+//}
 

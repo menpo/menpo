@@ -9,14 +9,18 @@ void glr_check_error();
 void matrix_x_vector(float* matrix, float* vector, float*result);
 
 typedef struct {
-	unsigned int unit_offset;
-	GLuint framebuffer;
-	GLenum specification;
-	GLenum datatype;
-	void* pixels;
-	unsigned int texture_width;
-	unsigned int texture_height;
-	unsigned int n_channels;
+	unsigned int unit;
+	GLint internal_format;
+	GLsizei width;
+	GLsizei height;
+	GLenum format;
+	GLenum type;
+	GLvoid* data;
+	// texture binding variables
+	GLuint texture_ID;
+	GLuint texture_unit;
+	GLuint sampler; // stores texture traits.
+	GLuint uniform;
 } glr_texture;
 
 typedef struct {
@@ -67,10 +71,10 @@ private:
 	GLuint translationVectorUnif;
 	GLuint rotationMatrixUinf;
 
-	GLuint _points_buffer;
+	//GLuint _points_buffer;
 	GLuint _color_buffer;
 	GLuint _textureVectorBuffer;
-	GLuint _tcoord_buffer;
+	//GLuint _tcoord_buffer;
 
 	GLuint _trilist_buffer;
 
@@ -123,3 +127,6 @@ private:
 	//void printUnitTests();
 	void setRotationMatrixForAngleXAngleY(float angleX,float angleY);
 };
+
+
+
