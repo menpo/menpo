@@ -1,4 +1,4 @@
-#include "MM3DRenderer.h"
+#include "Rasterizer.h"
 #include <iostream>
 #include <stdio.h>
 #include <algorithm>
@@ -24,7 +24,7 @@ MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoord
 }
 */
 
-MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoords_in, 
+Rasterizer::Rasterizer(double* tpsCoord_in, float* coord_in,  size_t numCoords_in, 
 		unsigned int* coordIndex_in, size_t numTriangles_in, 
 		float* texCoord_in, uint8_t* textureImage_in, 
 		size_t textureWidth_in, size_t textureHeight_in, bool INTERACTIVE_MODE)
@@ -36,15 +36,15 @@ MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoor
 	title = "MM3D Viewer";
 	TEXTURE_IMAGE = true;
 	std::cout << "MM3DRenderer::MM3DRenderer(TextureImage)" << std::endl;
-	tpsCoord = tpsCoord_in;
-	coord = coord_in;
-	coordIndex = coordIndex_in;
-	numCoord = numCoords_in;
-	numTriangles = numTriangles_in;
-	texCoord = texCoord_in;
-	textureImage = textureImage_in;
-	textureWidth = textureWidth_in;
-	textureHeight = textureHeight_in;
+	_h_points = tpsCoord_in;
+	_color = coord_in;
+	_trilist = coordIndex_in;
+	_n_points = numCoords_in;
+	_n_tris = numTriangles_in;
+	_tcoords = texCoord_in;
+	_texture = textureImage_in;
+	_texture_width = textureWidth_in;
+	_texture_height = textureHeight_in;
 	// start viewing straight on
 	lastAngleX = 0.0;
 	lastAngleY = 0.0;
@@ -54,13 +54,13 @@ MM3DRenderer::MM3DRenderer(double* tpsCoord_in, float* coord_in,  size_t numCoor
 		RETURN_FRAMEBUFFER = true;
 }
 
-MM3DRenderer::~MM3DRenderer()
+Rasterizer::~Rasterizer()
 {
 	std::cout << "MM3DRenderer::~MM3DRenderer()" << std::endl;
 	delete [] lightVector;
 }
 
-void MM3DRenderer::init()
+void Rasterizer::init()
 {
 	std::cout << "MM3DRenderer::init()" << std::endl;
 	checkError();
@@ -68,35 +68,35 @@ void MM3DRenderer::init()
 	glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-	glGenVertexArrays(1, &vao);
+	glGenVertexArrays(1, &_vao);
 	checkError();
-	glBindVertexArray(vao);
+	glBindVertexArray(_vao);
 	checkError();
-	initializeProgram();
-	glUseProgram(theProgram);
+	init_program();
+	glUseProgram(_the_program);
 	checkError();
-	initializeVertexBuffer();
+	init_vertex_buffer();
 	checkError();
 	if(TEXTURE_IMAGE)
-		initializeTexture();
+		init_texture();
 	checkError();
 	if(RETURN_FRAMEBUFFER)
 	{
 		glDepthFunc(GL_LEQUAL);
-		initializeFrameBuffer();
+		init_frame_buffer();
 	}
 	checkError();
 }
 
-void MM3DRenderer::initializeVertexBuffer()
+void Rasterizer::init_vertex_buffer()
 {
 	// --- SETUP TPSCOORDBUFFER (0)
-	glGenBuffers(1, &tpsCoordBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, tpsCoordBuffer);
+	glGenBuffers(1, &_points_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, _points_buffer);
 	// allocate enough memory to store tpsCoord to the GL_ARRAY_BUFFER
 	// target (which due to the above line is tpsCoordBuffer) and store it
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4, 
-		tpsCoord, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*_n_points*4, 
+		_h_points, GL_STATIC_DRAW);
 	// enable the coord array (will be location = 0 in shader)
 	glEnableVertexAttribArray(0);
 	//prescribe how the data is stored
@@ -107,9 +107,9 @@ void MM3DRenderer::initializeVertexBuffer()
 	if(!TEXTURE_IMAGE)
 	{
 		// --- SETUP TEXTUREVECTORBUFFER (1)
-		glGenBuffers(1, &textureVectorBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, textureVectorBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*numCoord*4, 
+		glGenBuffers(1, &_textureVectorBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _textureVectorBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*_n_points*4, 
 			textureVector, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 4, GL_DOUBLE, GL_FALSE, 0, 0);
@@ -118,54 +118,54 @@ void MM3DRenderer::initializeVertexBuffer()
 	else
 	{
 		// --- SETUP TEXCOORDBUFFER (1)
-		glGenBuffers(1, &texCoordBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*2, 
-			texCoord, GL_STATIC_DRAW);
+		glGenBuffers(1, &_tcoord_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _tcoord_buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*_n_points*2, 
+			_tcoords, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	// --- SETUP COORDBUFFER (2)
-	glGenBuffers(1, &coordBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numCoord*3, 
-		coord, GL_STATIC_DRAW);
+	glGenBuffers(1, &_color_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, _color_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*_n_points*3, 
+		_color, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glGenBuffers(1, &indexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numTriangles*3, 
-		coordIndex, GL_STATIC_DRAW);
+	glGenBuffers(1, &_trilist_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _trilist_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*_n_tris*3, 
+		_trilist, GL_STATIC_DRAW);
 }
 
-void MM3DRenderer::initializeTexture()
+void Rasterizer::init_texture()
 {
 	// choose which unit to use and activate it
-	textureImageUnit = 1;
-	glActiveTexture(GL_TEXTURE0 + textureImageUnit);
+	_texture_unit = 1;
+	glActiveTexture(GL_TEXTURE0 + _texture_unit);
 	// specify the data storage and actually get OpenGL to 
 	// store our textureImage
-	glGenTextures(1, &textureImageID);
-	glBindTexture(GL_TEXTURE_2D, textureImageID);
+	glGenTextures(1, &_texture_ID);
+	glBindTexture(GL_TEXTURE_2D, _texture_ID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-		textureWidth, textureHeight, 0, GL_RGBA, 
-		GL_UNSIGNED_BYTE, textureImage);
+		_texture_width, _texture_height, 0, GL_RGBA, 
+		GL_UNSIGNED_BYTE, _texture);
 
 	// Create the description of the texture (sampler) and bind it to the 
 	// correct texture unit
-	glGenSamplers(1, &textureSampler);
-	glSamplerParameteri(textureSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glSamplerParameteri(textureSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glBindSampler(textureImageUnit, textureSampler);
+	glGenSamplers(1, &_texture_sampler);
+	glSamplerParameteri(_texture_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glSamplerParameteri(_texture_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glSamplerParameteri(_texture_sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glBindSampler(_texture_unit, _texture_sampler);
     // bind the texture to a uniform called "textureImage" which can be
 	// accessed from shaders
-	textureUniform = glGetUniformLocation(theProgram, "textureImage");
-	glUniform1i(textureUniform, textureImageUnit);
+	_texture_uniform = glGetUniformLocation(_the_program, "textureImage");
+	glUniform1i(_texture_uniform, _texture_unit);
 
 	// set the active Texture to 0 - as long as this is not changed back
 	// to textureImageUnit, we know our shaders will find textureImage bound to
@@ -176,17 +176,17 @@ void MM3DRenderer::initializeTexture()
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void MM3DRenderer::initializeFrameBuffer()
+void Rasterizer::init_frame_buffer()
 {
 	checkError();
 
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glGenFramebuffers(1, &_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-	fbTextureUnit = 2;
-	glActiveTexture(GL_TEXTURE0 + fbTextureUnit);
-	glGenTextures(1, &fbTexture);
-	glBindTexture(GL_TEXTURE_2D, fbTexture);
+	_fb_texture_unit = 2;
+	glActiveTexture(GL_TEXTURE0 + _fb_texture_unit);
+	glGenTextures(1, &_fb_texture);
+	glBindTexture(GL_TEXTURE_2D, _fb_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -194,11 +194,11 @@ void MM3DRenderer::initializeFrameBuffer()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
-		GL_TEXTURE_2D, fbTexture, 0);
+		GL_TEXTURE_2D, _fb_texture, 0);
 	checkError();
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glGenTextures(1, &fbCoord);
-	glBindTexture(GL_TEXTURE_2D, fbCoord);
+	glGenTextures(1, &_fb_color);
+	glBindTexture(GL_TEXTURE_2D, _fb_color);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -208,7 +208,7 @@ void MM3DRenderer::initializeFrameBuffer()
 		GL_RGB, GL_FLOAT, NULL);
 	checkError();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
-		GL_TEXTURE_2D, fbCoord, 0);
+		GL_TEXTURE_2D, _fb_color, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	checkError();
 	const GLenum buffs[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
@@ -230,38 +230,38 @@ void MM3DRenderer::initializeFrameBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void MM3DRenderer::display() 
+void Rasterizer::display() 
 {
 	//std::cout << "Calling the MM3DRenderer display method" << std::endl;
 	if(RETURN_FRAMEBUFFER)
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 	else
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(theProgram);
+	glUseProgram(_the_program);
 	if(!RETURN_FRAMEBUFFER)
 	{
-		perspectiveMatrixUnif = glGetUniformLocation(theProgram, "perspectiveMatrix");
+		perspectiveMatrixUnif = glGetUniformLocation(_the_program, "perspectiveMatrix");
 		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
-		rotationMatrixUinf = glGetUniformLocation(theProgram, "rotationMatrix");
+		rotationMatrixUinf = glGetUniformLocation(_the_program, "rotationMatrix");
 		glUniformMatrix4fv(rotationMatrixUinf, 1, GL_FALSE, rotationMatrix);
-		translationVectorUnif = glGetUniformLocation(theProgram, "translationVector");
+		translationVectorUnif = glGetUniformLocation(_the_program, "translationVector");
 		glUniform4fv(translationVectorUnif, 1, translationVector);
-		GLuint lightDirectionUnif = glGetUniformLocation(theProgram, "lightDirection");
+		GLuint lightDirectionUnif = glGetUniformLocation(_the_program, "lightDirection");
 		glUniform3fv(lightDirectionUnif, 1, lightVector);
 		printUnitTests();
 	}
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-	glActiveTexture(GL_TEXTURE0 + textureImageUnit);
-	glBindTexture(GL_TEXTURE_2D, textureImageID);
-	glDrawElements(GL_TRIANGLES, numTriangles*3, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _trilist_buffer);
+	glActiveTexture(GL_TEXTURE0 + _texture_unit);
+	glBindTexture(GL_TEXTURE_2D, _texture_ID);
+	glDrawElements(GL_TRIANGLES, _n_tris*3, GL_UNSIGNED_INT, 0);
 	glutSwapBuffers();
 	if(RETURN_FRAMEBUFFER)
 		glutLeaveMainLoop();
 }
 
-void MM3DRenderer::printUnitTests()
+void Rasterizer::printUnitTests()
 {
 	float* input = new float[4];
 	memset(input,0.,4);
@@ -284,7 +284,7 @@ void MM3DRenderer::printUnitTests()
 	delete [] result;
 }
 
-void MM3DRenderer::matrixTimesVector(float* matrix, float* vector, float*result)
+void Rasterizer::matrixTimesVector(float* matrix, float* vector, float*result)
 {
 	result[0] = 0;
 	result[1] = 0;
@@ -297,7 +297,7 @@ void MM3DRenderer::matrixTimesVector(float* matrix, float* vector, float*result)
 	}
 }
 
-void MM3DRenderer::initializeProgram()
+void Rasterizer::init_program()
 {
 	std::cout << "initializeProgram()...";
 	std::vector<GLuint> shaderList;
@@ -319,42 +319,42 @@ void MM3DRenderer::initializeProgram()
 	shaderList.push_back(createShader(GL_VERTEX_SHADER,   strVertexShader  ));
 	shaderList.push_back(createShader(GL_FRAGMENT_SHADER, strFragmentShader));
 
-	theProgram = createProgram(shaderList);
+	_the_program = createProgram(shaderList);
 
 	std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 	std::cout << "done." << std::endl;
 }
 
-void MM3DRenderer::cleanup()
+void Rasterizer::cleanup()
 {
 	std::cout << "MM3DRenderer::cleanup()" << std::endl;
 	if(RETURN_FRAMEBUFFER)
-		grabFrameBufferData();
-	destroyShaders();
-	destroyVBO();
+		grab_framebuffer_data();
+	destroy_shaders();
+	destroy_VBO();
 }
 
-void MM3DRenderer::grabFrameBufferData()
+void Rasterizer::grab_framebuffer_data()
 {
 	if(RETURN_FRAMEBUFFER)
 	{
-		glActiveTexture(GL_TEXTURE0 + fbTextureUnit);
-		glBindTexture(GL_TEXTURE_2D, fbTexture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fboPixels);
-		glActiveTexture(GL_TEXTURE0 + fbCoordUnit);
-		glBindTexture(GL_TEXTURE_2D, fbCoord);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, fboCoords);
+		glActiveTexture(GL_TEXTURE0 + _fb_texture_unit);
+		glBindTexture(GL_TEXTURE_2D, _fb_texture);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, _fbo_pixels);
+		glActiveTexture(GL_TEXTURE0 + _fb_color_unit);
+		glBindTexture(GL_TEXTURE_2D, _fb_color);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, _fbo_coords);
 	}
 	else
 		std::cout << "Trying to return FBO on an interactive session!" << std::endl;
 }
 
-void MM3DRenderer::destroyShaders()
+void Rasterizer::destroy_shaders()
 {
 	glUseProgram(0);
 }
 
-void MM3DRenderer::destroyVBO()
+void Rasterizer::destroy_VBO()
 {
 	GLenum errorCheckValue = glGetError();
 
@@ -365,14 +365,14 @@ void MM3DRenderer::destroyVBO()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glDeleteBuffers(1, &textureVectorBuffer);
-	glDeleteBuffers(1, &coordBuffer);
-	glDeleteBuffers(1, &tpsCoordBuffer);
-	glDeleteBuffers(1, &indexBuffer);
+	glDeleteBuffers(1, &_textureVectorBuffer);
+	glDeleteBuffers(1, &_color_buffer);
+	glDeleteBuffers(1, &_points_buffer);
+	glDeleteBuffers(1, &_trilist_buffer);
 	
 
 	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &vao);
+	glDeleteVertexArrays(1, &_vao);
 	errorCheckValue = glGetError();
     if (errorCheckValue != GL_NO_ERROR){
         fprintf(stderr,
@@ -383,7 +383,7 @@ void MM3DRenderer::destroyVBO()
     }
 }
 
-void MM3DRenderer::render(int argc, char *argv[])
+void Rasterizer::render(int argc, char *argv[])
 {
 	if(!RETURN_FRAMEBUFFER)
 	{
@@ -404,10 +404,10 @@ void MM3DRenderer::render(int argc, char *argv[])
 		std::cout << "Trying to render a RETURN_FRAMEBUFFER object!" << std::endl;
 }
 
-void MM3DRenderer::returnFBPixels(int argc, char *argv[], uint8_t *fboPixels_in, float *fboCoords_in, int width, int height)
+void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *fboPixels_in, float *fboCoords_in, int width, int height)
 {
-	fboPixels = fboPixels_in;
-	fboCoords = fboCoords_in;
+	_fbo_pixels = fboPixels_in;
+	_fbo_coords = fboCoords_in;
 	WINDOW_WIDTH = width;
 	WINDOW_HEIGHT = height;
 	RETURN_FRAMEBUFFER = true;
@@ -427,7 +427,7 @@ void MM3DRenderer::returnFBPixels(int argc, char *argv[], uint8_t *fboPixels_in,
 	startFramework(argc, argv);
 }
 
-void MM3DRenderer::reshape(int width, int height)
+void Rasterizer::reshape(int width, int height)
 {
 	// if in interactive mode -> adjust perspective matrix
 	if(!RETURN_FRAMEBUFFER)
@@ -436,7 +436,7 @@ void MM3DRenderer::reshape(int width, int height)
 		perspectiveMatrix[0] = fFrustumScale / (width / (float)height);
 		perspectiveMatrix[5] = fFrustumScale;
     
-		glUseProgram(theProgram);
+		glUseProgram(_the_program);
 		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
 		glUseProgram(0);
 	}
@@ -445,7 +445,7 @@ void MM3DRenderer::reshape(int width, int height)
 
 }
 
-void MM3DRenderer::mouseMove(int x, int y)
+void Rasterizer::mouseMove(int x, int y)
 {
 	// if in interactive mode
 	if(!RETURN_FRAMEBUFFER)
@@ -474,7 +474,7 @@ void MM3DRenderer::mouseMove(int x, int y)
 	}
 }
 
-void MM3DRenderer::setRotationMatrixForAngleXAngleY(float angleX,float angleY)
+void Rasterizer::setRotationMatrixForAngleXAngleY(float angleX,float angleY)
 {
 	rotationMatrix[5]  =  cos(angleX);
 	rotationMatrix[6]  = -sin(angleX);
@@ -487,7 +487,7 @@ void MM3DRenderer::setRotationMatrixForAngleXAngleY(float angleX,float angleY)
 	rotationMatrix[10] =  cos(angleY);
 }
 
-void MM3DRenderer::mouseButtonPress(int button, int state, int x, int y)
+void Rasterizer::mouseButtonPress(int button, int state, int x, int y)
 {
 	
 	if(state)
@@ -506,7 +506,7 @@ void MM3DRenderer::mouseButtonPress(int button, int state, int x, int y)
 	}
 }
 
-void MM3DRenderer::keyboardDown( unsigned char key, int x, int y )
+void Rasterizer::keyboardDown( unsigned char key, int x, int y )
 {
 	float pi = atan2f(0.0,-1.0);
 	if(key == 32) //space bar

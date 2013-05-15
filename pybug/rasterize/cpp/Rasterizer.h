@@ -3,62 +3,62 @@
 #include <vector>
 #include <stdint.h>
 
-class MM3DRenderer : public GLRFramework
+class Rasterizer : public GLRFramework
 {
 
 private:
 	// stores (X,Y,Z,W) position tpsCoordinates
-	double*  tpsCoord;
+	double*  _h_points;
 	// (X,Y,Z) procrustes alligned coords (non tps'd)
-	float* coord;
+	float* _color;
 	// provides an (R,G,B,A) color for each coord
 	// (redundent if textureImage is used)
 	double*  textureVector;
 	// (s,t) texture coords
-	float* texCoord;
-	uint8_t* textureImage;
+	float* _tcoords;
+	uint8_t* _texture;
 	// index into coord/textureVector
-	GLuint* coordIndex;
+	GLuint* _trilist;
 
 	// vector to the direction of light
 	float* lightVector;
 
-	size_t  numCoord;
-	size_t  numTriangles;
-	size_t textureWidth;
-	size_t textureHeight;
+	size_t  _n_points;
+	size_t  _n_tris;
+	size_t _texture_width;
+	size_t _texture_height;
 	// what Texture Unit we wish to bind the texture to
-	int textureImageUnit;
+	int _texture_unit;
 
 	// --- Handles to GL objects ---
-	GLuint vao;
-	GLuint theProgram;
+	GLuint _vao;
+	GLuint _the_program;
 	GLuint perspectiveMatrixUnif;
 	GLuint translationVectorUnif;
 	GLuint rotationMatrixUinf;
 
-	GLuint tpsCoordBuffer;
-	GLuint coordBuffer;
-	GLuint textureVectorBuffer;
-	GLuint texCoordBuffer;
+	GLuint _points_buffer;
+	GLuint _color_buffer;
+	GLuint _textureVectorBuffer;
+	GLuint _tcoord_buffer;
 
-	GLuint indexBuffer;
+	GLuint _trilist_buffer;
 
-	GLuint textureImageID;
+	GLuint _texture_ID;
 	// object storing texture traits.
-	GLuint textureSampler;
+	GLuint _texture_sampler;
 
 	//fbo parameters
-	GLuint fbo;
-	GLuint fbTexture;
-	GLuint fbCoord;
-	int fbTextureUnit;
-	int fbCoordUnit;
-	GLubyte* fboPixels;
-	GLfloat* fboCoords;
+	GLuint _fbo;
+	GLuint _fb_texture;
+	GLuint _fb_color;
+	int _fb_texture_unit;
+	int _fb_color_unit;
+	GLubyte* _fbo_pixels;
+	GLfloat* _fbo_coords;
 
 	// Handles to uniforms
-	GLuint textureUniform;
+	GLuint _texture_uniform;
 
 	bool TEXTURE_IMAGE;
 	// if true we are rendering to just return the framebuffer.
@@ -73,25 +73,25 @@ public:
 	//MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, double* textureVector_in, 
 	//	unsigned int* coordIndex_in, size_t numTriangles_in);
 	// constructor taking in textureImage
-	MM3DRenderer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, 
+	Rasterizer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, 
 		unsigned int* coordIndex_in, size_t numTriangles_in, 
 		float* texCoord_in, uint8_t* textureImage_in, 
 		size_t textureWidth_in, size_t textureHeight_in, bool INTERACTIVE_MODE);
-	void returnFBPixels(int argc, char *argv[], uint8_t* pixels, float* coords, int width, int height);
+	void return_FB_pixels(int argc, char *argv[], uint8_t* pixels, float* coords, int width, int height);
 	void render(int argc, char *argv[]);
-	~MM3DRenderer();
+	~Rasterizer();
 
 private:
 	void init();
-	void initializeVertexBuffer();
+	void init_vertex_buffer();
 	void display();
-	void initializeProgram();
-	void initializeTexture();
-	void initializeFrameBuffer();
+	void init_program();
+	void init_texture();
+	void init_frame_buffer();
 	void cleanup();
-	void destroyShaders();
-	void destroyVBO();
-	void grabFrameBufferData();
+	void destroy_shaders();
+	void destroy_VBO();
+	void grab_framebuffer_data();
 	void reshape(int width, int height);
 	void mouseMove(int x, int y);
 	void mouseButtonPress(int button, int state, int x, int y);
