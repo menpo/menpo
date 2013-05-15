@@ -28,7 +28,7 @@ public:
 	virtual ~GLRFramework();
 		
 protected:
-	void startFramework(int argc, char *argv[]);
+	void start_framework(int argc, char *argv[]);
 	virtual void init();
 	virtual void display();
 	virtual void reshape(int width, int height);

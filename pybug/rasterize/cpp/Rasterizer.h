@@ -3,11 +3,35 @@
 #include <vector>
 #include <stdint.h>
 
-GLuint create_shader(GLenum eShaderType, std::string &strShaderFile);
-GLuint create_program(const std::vector<GLuint> &shaderList);
-void check_error();
+GLuint create_shader_from_filepath(GLenum shader_type, const char* filepath);
+GLuint glr_create_program(const std::vector<GLuint> &shaderList);
+void glr_check_error();
 void matrix_x_vector(float* matrix, float* vector, float*result);
 
+typedef struct {
+	unsigned int unit_offset;
+	GLuint framebuffer;
+	GLenum specification;
+	GLenum datatype;
+	void* pixels;
+	unsigned int texture_width;
+	unsigned int texture_height;
+	unsigned int n_channels;
+} glr_texture;
+
+typedef struct {
+	void* vectors;
+	unsigned int n_vectors;
+	unsigned int n_dims;
+	GLenum datatype;
+} glr_vectorset;
+
+typedef struct {
+	glr_vectorset* points;
+	glr_vectorset* tcoords;
+	glr_vectorset* trilist;
+	glr_texture* texture;
+} glr_textured_mesh;
 
 class Rasterizer : public GLRFramework
 {
@@ -90,7 +114,7 @@ private:
 	void init_texture();
 	void init_frame_buffer();
 	void cleanup();
-	void destroy_shaders();
+	void destroy_program();
 	void destroy_VBO();
 	void grab_framebuffer_data();
 	void reshape(int width, int height);

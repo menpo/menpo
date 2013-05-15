@@ -6,64 +6,53 @@
 #include <cmath>
 
 
-GLuint create_program(const std::vector<GLuint> &shaderList) {
+GLuint glr_create_program(const std::vector<GLuint> &shaders) {
 	GLuint program = glCreateProgram();
-	for(size_t i = 0; i < shaderList.size(); i++)
-		glAttachShader(program, shaderList[i]);
+	for(size_t i = 0; i < shaders.size(); i++)
+		glAttachShader(program, shaders[i]);
 	glLinkProgram(program);
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
 	if (status == GL_FALSE) {
-		GLint infoLogLength;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-		GLchar *strInfoLog = new GLchar[infoLogLength + 1];
-		glGetProgramInfoLog(program, infoLogLength, NULL, strInfoLog);
-		fprintf(stderr, "Linker failure: %s\n", strInfoLog);
-		delete[] strInfoLog;
+		GLint info_log_length;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
+		GLchar *str_info_log = new GLchar[info_log_length + 1];
+		glGetProgramInfoLog(program, info_log_length, NULL, str_info_log);
+		fprintf(stderr, "Linker failure: %s\n", str_info_log);
+		delete[] str_info_log;
 	}
-	for(size_t i = 0; i < shaderList.size(); i++)
-		glDetachShader(program, shaderList[i]);
+	for(size_t i = 0; i < shaders.size(); i++)
+		glDetachShader(program, shaders[i]);
 	return program;
 }
 
-
-GLuint create_shader(GLenum eShaderType,  std::string &strShaderFilename){
-	GLuint shader = glCreateShader(eShaderType);
-	std::ifstream shaderFile(strShaderFilename.c_str(), std::ifstream::in);
-	GLchar strFileData[10000];
-	unsigned int i  = 0;
-	while(shaderFile.good()) {
-		strFileData[i] = shaderFile.get();
-		std::cout << strFileData[i];
-		i++;
-	}
-	strFileData[i-1] = '\0';
-	const GLchar* constStrFileData = (const char*)strFileData;
-	std::cout << constStrFileData << std::endl;
-	glShaderSource(shader, 1, &constStrFileData, NULL);
+GLuint glr_create_shader_from_string(GLenum shader_type,
+								     const GLchar* file_string) {
+	GLuint shader = glCreateShader(shader_type);
+	glShaderSource(shader, 1, &file_string, NULL);
 	glCompileShader(shader);
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
-		GLint infoLogLength;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
-		GLchar *strInfoLog = new GLchar[infoLogLength + 1];
-		glGetShaderInfoLog(shader, infoLogLength, NULL, strInfoLog);
+		GLint info_log_length;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_length);
+		GLchar *str_info_log = new GLchar[info_log_length + 1];
+		glGetShaderInfoLog(shader, info_log_length, NULL, str_info_log);
 		const char *strShaderType = NULL;
-		switch (eShaderType) {
+		switch (shader_type) {
 			case GL_VERTEX_SHADER:   strShaderType = "vertex";   break;
 			case GL_GEOMETRY_SHADER: strShaderType = "geometry"; break;
 			case GL_FRAGMENT_SHADER: strShaderType = "fragment"; break;
 		}
 		fprintf(stderr, "Compile failure in %s shader: \n%s\n",
-			strShaderType, strInfoLog);
-		delete[] strInfoLog;
+				strShaderType, str_info_log);
+		delete[] str_info_log;
 		exit(EXIT_FAILURE);
 	}
 	return shader;
 }
 
-void check_error() {
+void glr_check_error() {
 	GLenum err;
 	err = glGetError();
 	if (err != GL_NO_ERROR) {
@@ -71,6 +60,45 @@ void check_error() {
 		std::cout << " - " << gluErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
+}
+
+void glr_get_framebuffer(unsigned int texture_unit_offset,
+		             GLuint texture_framebuffer, GLenum texture_specification,
+		             GLenum texture_datatype, void* texture) {
+	glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
+	glBindTexture(GL_TEXTURE_2D, texture_framebuffer);
+	glGetTexImage(GL_TEXTURE_2D, 0, texture_specification,
+			      texture_datatype, texture);
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void glr_get_framebuffer_for_glr_texture(glr_texture t, void* texture) {
+	glr_get_framebuffer(t.unit_offset, t.framebuffer, t.specification,
+			        t.datatype, texture);
+}
+
+void glr_destroy_program() {
+	glUseProgram(0);
+}
+
+
+void read_file(const char* filepath, GLchar* file_string) {
+	std::ifstream file(filepath, std::ifstream::in);
+	unsigned int i  = 0;
+	while(file.good()) {
+		file_string[i] = file.get();
+		i++;
+	}
+	file_string[i-1] = '\0';
+}
+
+GLuint create_shader_from_filepath(GLenum shader_type,
+						           const char* filepath){
+	GLchar file_string[100000];
+	read_file(filepath, file_string);
+	// now we've done reading, const the data
+	const GLchar* const_file_string = (const char*)file_string;
+	return glr_create_shader_from_string(shader_type, const_file_string);
 }
 
 
@@ -96,7 +124,7 @@ Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 	_light_vector[2] = 1.0;
 
 	title = "MM3D Viewer";
-	std::cout << "Rasterizer::Rasterizer" << std::endl;
+	std::cout << "Rasterizer::Rasterizer(...)" << std::endl;
 	_h_points = points;
 	_color = color;
 	_trilist = trilist;
@@ -122,31 +150,31 @@ Rasterizer::~Rasterizer() {
 
 void Rasterizer::init() {
 	std::cout << "Rasterizer::init()" << std::endl;
-	check_error();
+	glr_check_error();
 	glEnable (GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 	glGenVertexArrays(1, &_vao);
-	check_error();
+	glr_check_error();
 	glBindVertexArray(_vao);
-	check_error();
+	glr_check_error();
 	init_program();
 	glUseProgram(_the_program);
-	check_error();
+	glr_check_error();
 	init_vertex_buffer();
-	check_error();
+	glr_check_error();
 	init_texture();
-	check_error();
-	if(RETURN_FRAMEBUFFER)
-	{
+	glr_check_error();
+	if(RETURN_FRAMEBUFFER) {
 		glDepthFunc(GL_LEQUAL);
 		init_frame_buffer();
 	}
-	check_error();
+	glr_check_error();
 }
 
 void Rasterizer::init_vertex_buffer() {
+	std::cout << "Rasterizer::init_vertex_buffer()" << std::endl;
 	// --- SETUP TPSCOORDBUFFER (0)
 	glGenBuffers(1, &_points_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, _points_buffer);
@@ -198,6 +226,7 @@ void Rasterizer::init_vertex_buffer() {
 
 void Rasterizer::init_texture()
 {
+	std::cout << "Rasterizer::init_texture()" << std::endl;
 	// choose which unit to use and activate it
 	_texture_unit = 1;
 	glActiveTexture(GL_TEXTURE0 + _texture_unit);
@@ -232,7 +261,8 @@ void Rasterizer::init_texture()
 
 void Rasterizer::init_frame_buffer()
 {
-	check_error();
+	std::cout << "Rasterizer::init_frame_buffer()" << std::endl;
+	glr_check_error();
 
 	glGenFramebuffers(1, &_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
@@ -249,7 +279,7 @@ void Rasterizer::init_frame_buffer()
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
 		GL_TEXTURE_2D, _fb_texture, 0);
-	check_error();
+	glr_check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glGenTextures(1, &_fb_color);
 	glBindTexture(GL_TEXTURE_2D, _fb_color);
@@ -257,14 +287,14 @@ void Rasterizer::init_frame_buffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	check_error();
+	glr_check_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
 		GL_RGB, GL_FLOAT, NULL);
-	check_error();
+	glr_check_error();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
 		GL_TEXTURE_2D, _fb_color, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	check_error();
+	glr_check_error();
 	const GLenum buffs[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 	GLsizei buffsSize = 2;
 	glDrawBuffers(buffsSize, buffs);
@@ -315,6 +345,7 @@ void Rasterizer::display()
 }
 
 void Rasterizer::printUnitTests() {
+	std::cout << "Rasterizer::printUnitTests()" << std::endl;
 	float* input = new float[4];
 	memset(input,0.,4);
 	input[0] = 0;
@@ -338,48 +369,48 @@ void Rasterizer::printUnitTests() {
 
 void Rasterizer::init_program() {
 	std::cout << "Rasterizer::init_program()" << std::endl;
-	std::vector<GLuint> shaderList;
-	std::string strVertexShader;
-	std::string strFragmentShader;
+	std::vector<GLuint> shaders;
+	std::string vertex_shader_str;
+	std::string fragment_shader_str;
 	if(!RETURN_FRAMEBUFFER) {
-		strVertexShader = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.vert";
-		strFragmentShader = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.frag";
+		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.vert";
+		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.frag";
 	} else {
-		strVertexShader = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.vert";
-		strFragmentShader = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.frag";
+		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.vert";
+		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.frag";
 	}
-	shaderList.push_back(create_shader(GL_VERTEX_SHADER,   strVertexShader  ));
-	shaderList.push_back(create_shader(GL_FRAGMENT_SHADER, strFragmentShader));
-	_the_program = create_program(shaderList);
-	std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
-	std::cout << "done." << std::endl;
+	shaders.push_back(create_shader_from_filepath(GL_VERTEX_SHADER,   vertex_shader_str.c_str()));
+	shaders.push_back(create_shader_from_filepath(GL_FRAGMENT_SHADER, fragment_shader_str.c_str()));
+	_the_program = glr_create_program(shaders);
+	std::for_each(shaders.begin(), shaders.end(), glDeleteShader);
 }
 
 void Rasterizer::cleanup() {
 	std::cout << "Rasterizer::cleanup()" << std::endl;
 	if(RETURN_FRAMEBUFFER)
 		grab_framebuffer_data();
-	destroy_shaders();
+	destroy_program();
 	destroy_VBO();
 }
 
 void Rasterizer::grab_framebuffer_data() {
+	std::cout << "Rasterizer::grab_framebuffer_data()" << std::endl;
 	if(RETURN_FRAMEBUFFER) {
-		glActiveTexture(GL_TEXTURE0 + _fb_texture_unit);
-		glBindTexture(GL_TEXTURE_2D, _fb_texture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, _fbo_pixels);
-		glActiveTexture(GL_TEXTURE0 + _fb_color_unit);
-		glBindTexture(GL_TEXTURE_2D, _fb_color);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, _fbo_color_pixels);
+		glr_get_framebuffer(_fb_texture_unit, _fb_texture, GL_RGBA,
+				         GL_UNSIGNED_BYTE, _fbo_pixels);
+		glr_get_framebuffer(_fb_color_unit, _fb_color, GL_RGB,
+				         GL_FLOAT, _fbo_color_pixels);
 	} else
 		std::cout << "Trying to return FBO on an interactive session!" << std::endl;
 }
 
-void Rasterizer::destroy_shaders() {
-	glUseProgram(0);
+void Rasterizer::destroy_program() {
+	std::cout << "Rasterizer::destroy_program()" << std::endl;
+	glr_destroy_program();
 }
 
 void Rasterizer::destroy_VBO() {
+	std::cout << "Rasterizer::destroy_vbo()" << std::endl;
 	GLenum errorCheckValue = glGetError();
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);
@@ -401,6 +432,7 @@ void Rasterizer::destroy_VBO() {
 }
 
 void Rasterizer::render(int argc, char *argv[]) {
+	std::cout << "Rasterizer::render()" << std::endl;
 	if(!RETURN_FRAMEBUFFER) {
 		float fFrustumScale = 1.0f; float fzNear = 0.5f; float fzFar = 10.0f;
 		memset(perspectiveMatrix,0, sizeof(float) * 16);
@@ -411,7 +443,7 @@ void Rasterizer::render(int argc, char *argv[]) {
 		perspectiveMatrix[11] = -1.0;
 		memset(translationVector,0, sizeof(float) * 4);
 		translationVector[2] = -2.0;
-		startFramework(argc, argv);
+		start_framework(argc, argv);
 	} else
 		std::cout << "Trying to render a RETURN_FRAMEBUFFER object!"
 				  << std::endl;
@@ -419,6 +451,7 @@ void Rasterizer::render(int argc, char *argv[]) {
 
 void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,
 						          float *color_pixels, int width, int height) {
+	std::cout << "Rasterizer::return_FB_pixels()" << std::endl;
 	_fbo_pixels = pixels;
 	_fbo_color_pixels = color_pixels;
 	WINDOW_WIDTH = width;
@@ -437,10 +470,11 @@ void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,
 	rotationMatrix[5]  = 1.0;
 	rotationMatrix[10] = 1.0;
 	rotationMatrix[15] = 1.0;
-	startFramework(argc, argv);
+	start_framework(argc, argv);
 }
 
 void Rasterizer::reshape(int width, int height) {
+	std::cout << "Rasterizer::reshape(...)" << std::endl;
 	// if in interactive mode -> adjust perspective matrix
 	if(!RETURN_FRAMEBUFFER) {
 		float fFrustumScale = 1.4;
@@ -454,6 +488,7 @@ void Rasterizer::reshape(int width, int height) {
 }
 
 void Rasterizer::mouseMove(int x, int y) {
+	std::cout << "Rasterizer::mouseMove(...)" << std::endl;
 	// if in interactive mode
 	if(!RETURN_FRAMEBUFFER) {
 		int width = glutGet(GLUT_WINDOW_WIDTH);
@@ -492,6 +527,7 @@ void Rasterizer::setRotationMatrixForAngleXAngleY(float angleX,float angleY) {
 }
 
 void Rasterizer::mouseButtonPress(int button, int state, int x, int y) {
+	std::cout << "Rasterizer::mouseButtonPress(...)" << std::endl;
 	if(state) {
 		std::cout << "Released"  << std::endl;
 		// button let go - remember current angle
@@ -505,7 +541,8 @@ void Rasterizer::mouseButtonPress(int button, int state, int x, int y) {
 	}
 }
 
-void Rasterizer::keyboardDown( unsigned char key, int x, int y ) {
+void Rasterizer::keyboardDown(unsigned char key, int x, int y ) {
+	std::cout << "Rasterizer::keyboardDown(...)" << std::endl;
 	float pi = atan2f(0.0,-1.0);
 	if(key == 32) { //space bar
 		// reset the rotation to centre

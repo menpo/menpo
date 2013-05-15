@@ -59,3 +59,5 @@ cdef class OpenGLRasterizer:
         self.thisptr.return_FB_pixels(1, &b, &pixels[0,0,0], &coords[0,0,0],
                                     render_width, render_height)
         return pixels, coords
+
+ 

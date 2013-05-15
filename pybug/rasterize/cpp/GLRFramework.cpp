@@ -31,16 +31,15 @@ GLRFramework::GLRFramework() {
 }
 
 GLRFramework::~GLRFramework() {
-	std::cout << "Calling the GLRFramework destructor" << std::endl;
+	std::cout << "GLRFramework::~GLRFramework()" << std::endl;
 	delete[] perspectiveMatrix;
 	delete[] translationVector;
 	delete[] rotationMatrix;
 }
 
-void GLRFramework::startFramework(int argc, char *argv[]) 
-{
+void GLRFramework::start_framework(int argc, char *argv[])  {
+	std::cout << "GLRFramework::start_framework()" << std::endl;
 	setInstance();	// Sets the instance to self, used in the callback wrapper functions
-	std::cout << "Calling startFramework in GLRFramework" << std::endl;
 	// Fire up GLUT
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -49,16 +48,13 @@ void GLRFramework::startFramework(int argc, char *argv[])
 	glutInitWindowPosition(WINDOW_X_POSITION, WINDOW_Y_POSITION);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow(title.c_str()); 
-	
 	// Fire up GLEW
 	GLenum status = glewInit();
-	if (status != GLEW_OK)
-	{
+	if (status != GLEW_OK) {
 	  fprintf(stderr, "GLEW Failed to start! Error: %s\n", glewGetErrorString(status));
 	  exit(EXIT_FAILURE);
 	}
-	fprintf(stdout, "Using GLEW %s\n", glewGetString(GLEW_VERSION));
-
+	fprintf(stdout, "  - Using GLEW %s\n", glewGetString(GLEW_VERSION));
 	// Set up function callbacks with wrapper functions
 	glutReshapeFunc(reshapeWrapper);
 	glutMouseFunc(mouseButtonPressWrapper);
@@ -70,7 +66,7 @@ void GLRFramework::startFramework(int argc, char *argv[])
 	glutSpecialUpFunc(specialKeyboardUpWrapper);
 	glutCloseFunc(cleanupWrapper);
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-	fprintf(stdout,"OpenGL Version: %s\n",glGetString(GL_VERSION));
+	fprintf(stdout,"  - OpenGL Version: %s\n",glGetString(GL_VERSION));
 
 	// Call subclasses init
 	init();
