@@ -6,24 +6,15 @@
 #include <cmath>
 
 
-GLuint glr_create_program(const std::vector<GLuint> &shaders) {
-	GLuint program = glCreateProgram();
-	for(size_t i = 0; i < shaders.size(); i++)
-		glAttachShader(program, shaders[i]);
-	glLinkProgram(program);
-	GLint status;
-	glGetProgramiv(program, GL_LINK_STATUS, &status);
-	if (status == GL_FALSE) {
-		GLint info_log_length;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
-		GLchar *str_info_log = new GLchar[info_log_length + 1];
-		glGetProgramInfoLog(program, info_log_length, NULL, str_info_log);
-		fprintf(stderr, "Linker failure: %s\n", str_info_log);
-		delete[] str_info_log;
+
+void glr_check_error() {
+	GLenum err;
+	err = glGetError();
+	if (err != GL_NO_ERROR) {
+		printf("Error. glError: 0x%04X", err);
+		std::cout << " - " << gluErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
 	}
-	for(size_t i = 0; i < shaders.size(); i++)
-		glDetachShader(program, shaders[i]);
-	return program;
 }
 
 GLuint glr_create_shader_from_string(GLenum shader_type,
@@ -52,14 +43,115 @@ GLuint glr_create_shader_from_string(GLenum shader_type,
 	return shader;
 }
 
-void glr_check_error() {
-	GLenum err;
-	err = glGetError();
-	if (err != GL_NO_ERROR) {
-		printf("Error. glError: 0x%04X", err);
-		std::cout << " - " << gluErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
+GLuint glr_create_program(const std::vector<GLuint> &shaders) {
+	GLuint program = glCreateProgram();
+	for(size_t i = 0; i < shaders.size(); i++)
+		glAttachShader(program, shaders[i]);
+	glLinkProgram(program);
+	GLint status;
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (status == GL_FALSE) {
+		GLint info_log_length;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
+		GLchar *str_info_log = new GLchar[info_log_length + 1];
+		glGetProgramInfoLog(program, info_log_length, NULL, str_info_log);
+		fprintf(stderr, "Linker failure: %s\n", str_info_log);
+		delete[] str_info_log;
 	}
+	for(size_t i = 0; i < shaders.size(); i++)
+		glDetachShader(program, shaders[i]);
+	return program;
+}
+
+glr_texture glr_build_rgba_texture(uint8_t* texture, size_t texture_width,
+				                   size_t texture_height) {
+	glr_texture texture_tmp;
+	texture_tmp.datatype = GL_UNSIGNED_BYTE;
+	texture_tmp.n_channels = 4;
+	texture_tmp.texture_width = texture_width;
+	texture_tmp.texture_height = texture_height;
+	texture_tmp.specification = GL_RGBA;
+	texture_tmp.pixels = texture;
+	return texture_tmp;
+}
+
+glr_vectorset glr_build_h_points(double* points, size_t n_points) {
+	glr_vectorset points_tmp;
+	points_tmp.datatype = GL_DOUBLE;
+	points_tmp.n_dims = 4;
+	points_tmp.n_vectors = n_points;
+	points_tmp.size = sizeof(GLdouble);
+	points_tmp.vectors = points;
+	return points_tmp;
+}
+
+glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points) {
+	glr_vectorset tcoords_tmp;
+	tcoords_tmp.datatype = GL_FLOAT;
+	tcoords_tmp.n_dims = 2;
+	tcoords_tmp.n_vectors = n_points;
+	tcoords_tmp.size = sizeof(float);
+	tcoords_tmp.vectors = tcoords;
+	return tcoords_tmp;
+}
+
+glr_vectorset glr_build_trilist(unsigned int* trilist, size_t n_tris) {
+	glr_vectorset trilist_tmp;
+	trilist_tmp.datatype = GL_UNSIGNED_INT;
+	trilist_tmp.n_dims = 3;
+	trilist_tmp.n_vectors = n_tris;
+	trilist_tmp.size = sizeof(GLuint);
+	trilist_tmp.vectors = trilist;
+	return trilist_tmp;
+}
+
+glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
+		unsigned int* trilist, size_t n_tris, float* tcoords,
+		uint8_t* texture, size_t texture_width, size_t texture_height) {
+	glr_textured_mesh textured_mesh;
+	textured_mesh.h_points = glr_build_h_points(points, n_points);
+	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
+	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
+	textured_mesh.texture = glr_build_rgba_texture(texture, texture_width,
+											  texture_height);
+	return textured_mesh;
+}
+
+void glr_init_array_buffer_from_vectorset(glr_vectorset& vector) {
+	glGenBuffers(1, &(vector.vbo));
+	glBindBuffer(GL_ARRAY_BUFFER, vector.vbo);
+	glBufferData(GL_ARRAY_BUFFER,
+				 vector.size * vector.n_vectors * vector.n_dims,
+				 vector.vectors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vector.attribute_pointer);
+	glVertexAttribPointer(vector.attribute_pointer, vector.n_dims,
+						  vector.datatype, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void glr_init_element_buffer_from_vectorset(glr_vectorset& vector) {
+	glGenBuffers(1, &(vector.vbo));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vector.vbo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+				 vector.size * vector.n_vectors * vector.n_dims,
+				 vector.vectors, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh) {
+	glGenVertexArrays(1, &(mesh.vao));
+	glBindVertexArray(mesh.vao);
+	glr_init_array_buffer_from_vectorset(mesh.h_points);
+	glr_init_array_buffer_from_vectorset(mesh.tcoords);
+	glr_init_element_buffer_from_vectorset(mesh.trilist);
+}
+
+void glr_global_state_settings() {
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glDepthFunc(GL_LEQUAL);
 }
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,
@@ -81,6 +173,21 @@ void glr_destroy_program() {
 	glUseProgram(0);
 }
 
+void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh) {
+	glDisableVertexAttribArray(mesh.h_points.attribute_pointer);
+	glDisableVertexAttribArray(mesh.tcoords.attribute_pointer);
+	// TODO this needs to be the color array
+	glDisableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glDeleteBuffers(1, &(mesh.h_points.vbo)); // _points_buffer
+	//glDeleteBuffers(1, &_color_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDeleteBuffers(1, &(mesh.trilist.vbo));
+	// now are buffers are all cleared, we can unblind and delete the vao
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &(mesh.vao));
+}
+
 
 void read_file(const char* filepath, GLchar* file_string) {
 	std::ifstream file(filepath, std::ifstream::in);
@@ -91,16 +198,6 @@ void read_file(const char* filepath, GLchar* file_string) {
 	}
 	file_string[i-1] = '\0';
 }
-
-GLuint create_shader_from_filepath(GLenum shader_type,
-						           const char* filepath){
-	GLchar file_string[100000];
-	read_file(filepath, file_string);
-	// now we've done reading, const the data
-	const GLchar* const_file_string = (const char*)file_string;
-	return glr_create_shader_from_string(shader_type, const_file_string);
-}
-
 
 void matrix_x_vector(float* matrix, float* vector, float*result) {
 	result[0] = 0;
@@ -114,6 +211,15 @@ void matrix_x_vector(float* matrix, float* vector, float*result) {
 	}
 }
 
+GLuint create_shader_from_filepath(GLenum shader_type,
+						           const char* filepath){
+	GLchar file_string[100000];
+	read_file(filepath, file_string);
+	// now we've done reading, const the data
+	const GLchar* const_file_string = (const char*)file_string;
+	return glr_create_shader_from_string(shader_type, const_file_string);
+}
+
 
 Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 					   unsigned int* trilist, size_t n_tris, float* tcoords,
@@ -125,12 +231,14 @@ Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 
 	title = "MM3D Viewer";
 	std::cout << "Rasterizer::Rasterizer(...)" << std::endl;
-	_h_points = points;
+	_textured_mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
+											 tcoords, texture, texture_width,
+											 texture_height);
+	_textured_mesh.h_points.attribute_pointer = 0;
+	_textured_mesh.tcoords.attribute_pointer = 1;
 	_color = color;
-	_trilist = trilist;
 	_n_points = n_points;
 	_n_tris = n_tris;
-	_tcoords = tcoords;
 	_texture = texture;
 	_texture_width = texture_width;
 	_texture_height = texture_height;
@@ -150,64 +258,24 @@ Rasterizer::~Rasterizer() {
 
 void Rasterizer::init() {
 	std::cout << "Rasterizer::init()" << std::endl;
-	glr_check_error();
-	glEnable (GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
-	glGenVertexArrays(1, &_vao);
-	glr_check_error();
-	glBindVertexArray(_vao);
-	glr_check_error();
+	glr_global_state_settings();
 	init_program();
 	glUseProgram(_the_program);
 	glr_check_error();
-	init_vertex_buffer();
+	init_buffers();
 	glr_check_error();
 	init_texture();
 	glr_check_error();
 	if(RETURN_FRAMEBUFFER) {
-		glDepthFunc(GL_LEQUAL);
 		init_frame_buffer();
 	}
 	glr_check_error();
 }
 
-void Rasterizer::init_vertex_buffer() {
+void Rasterizer::init_buffers() {
 	std::cout << "Rasterizer::init_vertex_buffer()" << std::endl;
-	// --- SETUP TPSCOORDBUFFER (0)
-	glGenBuffers(1, &_points_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, _points_buffer);
-	// allocate enough memory to store tpsCoord to the GL_ARRAY_BUFFER
-	// target (which due to the above line is tpsCoordBuffer) and store it
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*_n_points*4, 
-		_h_points, GL_STATIC_DRAW);
-	// enable the coord array (will be location = 0 in shader)
-	glEnableVertexAttribArray(0);
-	//prescribe how the data is stored
-	glVertexAttribPointer(0, 4, GL_DOUBLE, GL_FALSE, 0, 0);
-	// detatch from GL_ARRAY_BUFFER (good practice)
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-//	if(!TEXTURE_IMAGE)
-//	{
-//		// --- SETUP TEXTUREVECTORBUFFER (1)
-//		glGenBuffers(1, &_textureVectorBuffer);
-//		glBindBuffer(GL_ARRAY_BUFFER, _textureVectorBuffer);
-//		glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble)*_n_points*4,
-//			textureVector, GL_STATIC_DRAW);
-//		glEnableVertexAttribArray(1);
-//		glVertexAttribPointer(1, 4, GL_DOUBLE, GL_FALSE, 0, 0);
-//		glBindBuffer(GL_ARRAY_BUFFER, 0);
-//	}
-	// --- SETUP TCOORDBUFFER (1)
-	glGenBuffers(1, &_tcoord_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, _tcoord_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*_n_points*2,
-		_tcoords, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glr_setup_buffers_on_textured_mesh(_textured_mesh);
 
 	// --- SETUP COLORBUFFER (2)
 	glGenBuffers(1, &_color_buffer);
@@ -217,15 +285,9 @@ void Rasterizer::init_vertex_buffer() {
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &_trilist_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _trilist_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*_n_tris*3, 
-		_trilist, GL_STATIC_DRAW);
 }
 
-void Rasterizer::init_texture()
-{
+void Rasterizer::init_texture() {
 	std::cout << "Rasterizer::init_texture()" << std::endl;
 	// choose which unit to use and activate it
 	_texture_unit = 1;
@@ -237,7 +299,6 @@ void Rasterizer::init_texture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 		_texture_width, _texture_height, 0, GL_RGBA, 
 		GL_UNSIGNED_BYTE, _texture);
-
 	// Create the description of the texture (sampler) and bind it to the 
 	// correct texture unit
 	glGenSamplers(1, &_texture_sampler);
@@ -249,7 +310,6 @@ void Rasterizer::init_texture()
 	// accessed from shaders
 	_texture_uniform = glGetUniformLocation(_the_program, "textureImage");
 	glUniform1i(_texture_uniform, _texture_unit);
-
 	// set the active Texture to 0 - as long as this is not changed back
 	// to textureImageUnit, we know our shaders will find textureImage bound to
 	// GL_TEXTURE_2D when they look in textureImageUnit
@@ -259,8 +319,7 @@ void Rasterizer::init_texture()
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Rasterizer::init_frame_buffer()
-{
+void Rasterizer::init_frame_buffer() {
 	std::cout << "Rasterizer::init_frame_buffer()" << std::endl;
 	glr_check_error();
 
@@ -333,9 +392,8 @@ void Rasterizer::display()
 		glUniform4fv(translationVectorUnif, 1, translationVector);
 		GLuint lightDirectionUnif = glGetUniformLocation(_the_program, "lightDirection");
 		glUniform3fv(lightDirectionUnif, 1, _light_vector);
-		printUnitTests();
 	}
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _trilist_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _textured_mesh.trilist.vbo);
 	glActiveTexture(GL_TEXTURE0 + _texture_unit);
 	glBindTexture(GL_TEXTURE_2D, _texture_ID);
 	glDrawElements(GL_TRIANGLES, _n_tris*3, GL_UNSIGNED_INT, 0);
@@ -344,28 +402,28 @@ void Rasterizer::display()
 		glutLeaveMainLoop();
 }
 
-void Rasterizer::printUnitTests() {
-	std::cout << "Rasterizer::printUnitTests()" << std::endl;
-	float* input = new float[4];
-	memset(input,0.,4);
-	input[0] = 0;
-	input[1] = 0;
-	input[2] = 1;
-	input[3] = 1;
-
-	float * result = new float[4];
-	float * tempResult = new float[4];	
-	matrix_x_vector(rotationMatrix,input,tempResult);
-	for(int i = 0; i < 4; i++)
-		tempResult[i] += translationVector[i];
-	matrix_x_vector(perspectiveMatrix,tempResult,result);
-	for(int i = 0; i < 4; i ++)
-		printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-translationVector[i],result[i]);
-	std::cout << std::endl;
-	delete [] input;
-	delete [] tempResult;
-	delete [] result;
-}
+//void Rasterizer::printUnitTests() {
+//	std::cout << "Rasterizer::printUnitTests()" << std::endl;
+//	float* input = new float[4];
+//	memset(input,0.,4);
+//	input[0] = 0;
+//	input[1] = 0;
+//	input[2] = 1;
+//	input[3] = 1;
+//
+//	float * result = new float[4];
+//	float * tempResult = new float[4];
+//	matrix_x_vector(rotationMatrix,input,tempResult);
+//	for(int i = 0; i < 4; i++)
+//		tempResult[i] += translationVector[i];
+//	matrix_x_vector(perspectiveMatrix,tempResult,result);
+//	for(int i = 0; i < 4; i ++)
+//		printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-translationVector[i],result[i]);
+//	std::cout << std::endl;
+//	delete [] input;
+//	delete [] tempResult;
+//	delete [] result;
+//}
 
 void Rasterizer::init_program() {
 	std::cout << "Rasterizer::init_program()" << std::endl;
@@ -389,8 +447,8 @@ void Rasterizer::cleanup() {
 	std::cout << "Rasterizer::cleanup()" << std::endl;
 	if(RETURN_FRAMEBUFFER)
 		grab_framebuffer_data();
-	destroy_program();
-	destroy_VBO();
+	glr_destroy_program();
+	glr_destroy_vbos_on_trianglar_mesh(_textured_mesh);
 }
 
 void Rasterizer::grab_framebuffer_data() {
@@ -400,35 +458,10 @@ void Rasterizer::grab_framebuffer_data() {
 				         GL_UNSIGNED_BYTE, _fbo_pixels);
 		glr_get_framebuffer(_fb_color_unit, _fb_color, GL_RGB,
 				         GL_FLOAT, _fbo_color_pixels);
-	} else
-		std::cout << "Trying to return FBO on an interactive session!" << std::endl;
-}
-
-void Rasterizer::destroy_program() {
-	std::cout << "Rasterizer::destroy_program()" << std::endl;
-	glr_destroy_program();
-}
-
-void Rasterizer::destroy_VBO() {
-	std::cout << "Rasterizer::destroy_vbo()" << std::endl;
-	GLenum errorCheckValue = glGetError();
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &_textureVectorBuffer);
-	glDeleteBuffers(1, &_color_buffer);
-	glDeleteBuffers(1, &_points_buffer);
-	glDeleteBuffers(1, &_trilist_buffer);
-	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &_vao);
-	errorCheckValue = glGetError();
-    if (errorCheckValue != GL_NO_ERROR) {
-        fprintf(stderr, "ERROR: Could not destroy the VBO: %s \n",
-                gluErrorString(errorCheckValue));
-        exit(-1);
-    }
+	} else {
+		std::cout << "Trying to return FBO on an interactive session!"
+		          << std::endl;
+	}
 }
 
 void Rasterizer::render(int argc, char *argv[]) {

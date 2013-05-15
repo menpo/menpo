@@ -23,29 +23,28 @@ typedef struct {
 	void* vectors;
 	unsigned int n_vectors;
 	unsigned int n_dims;
+	unsigned int size;
 	GLenum datatype;
+	GLuint vbo;
+	unsigned int attribute_pointer;
 } glr_vectorset;
 
 typedef struct {
-	glr_vectorset* points;
-	glr_vectorset* tcoords;
-	glr_vectorset* trilist;
-	glr_texture* texture;
+	glr_vectorset h_points;
+	glr_vectorset tcoords;
+	glr_vectorset trilist;
+	glr_texture texture;
+	GLuint vao;
 } glr_textured_mesh;
 
-class Rasterizer : public GLRFramework
-{
+class Rasterizer : public GLRFramework {
 
 private:
-	// stores (X,Y,Z,W) position tpsCoordinates
-	double*  _h_points;
-	// (X,Y,Z) procrustes alligned coords (non tps'd)
+	glr_textured_mesh _textured_mesh;
 	float* _color;
 	// provides an (R,G,B,A) color for each coord
 	// (redundent if textureImage is used)
 	double*  textureVector;
-	// (s,t) texture coords
-	float* _tcoords;
 	uint8_t* _texture;
 	// index into coord/textureVector
 	GLuint* _trilist;
@@ -61,8 +60,9 @@ private:
 	int _texture_unit;
 
 	// --- Handles to GL objects ---
-	GLuint _vao;
 	GLuint _the_program;
+
+
 	GLuint perspectiveMatrixUnif;
 	GLuint translationVectorUnif;
 	GLuint rotationMatrixUinf;
@@ -108,20 +108,18 @@ public:
 
 private:
 	void init();
-	void init_vertex_buffer();
+	void init_buffers();
 	void display();
 	void init_program();
 	void init_texture();
 	void init_frame_buffer();
 	void cleanup();
-	void destroy_program();
-	void destroy_VBO();
 	void grab_framebuffer_data();
 	void reshape(int width, int height);
 	void mouseMove(int x, int y);
 	void mouseButtonPress(int button, int state, int x, int y);
 	void keyboardDown( unsigned char key, int x, int y );
 
-	void printUnitTests();
+	//void printUnitTests();
 	void setRotationMatrixForAngleXAngleY(float angleX,float angleY);
 };
