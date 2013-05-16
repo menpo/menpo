@@ -222,7 +222,7 @@ void glr_bind_texture_to_program(glr_texture& texture, GLuint program) {
 	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
 	// bind the texture to a uniform called "texture" which can be
 	// accessed from shaders
-	texture.uniform = glGetUniformLocation(program, "textureImage");
+	texture.uniform = glGetUniformLocation(program, "texture_image");
 	glUniform1i(texture.uniform, texture.unit);
 	// set the active Texture to 0 - as long as this is not changed back
 	// to textureImageUnit, we know our shaders will find textureImage bound to
@@ -474,8 +474,8 @@ void Rasterizer::init_program() {
 		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.vert";
 		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.frag";
 	} else {
-		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.vert";
-		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/textureImage.frag";
+		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/texture_shader.vert";
+		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/texture_shader.frag";
 	}
 	shaders.push_back(create_shader_from_filepath(GL_VERTEX_SHADER,   vertex_shader_str.c_str()));
 	shaders.push_back(create_shader_from_filepath(GL_FRAGMENT_SHADER, fragment_shader_str.c_str()));
@@ -637,28 +637,3 @@ void Rasterizer::keyboardDown(unsigned char key, int x, int y ) {
 	} else
 		std::cout << "Keydown: " << key << std::endl;
 }
-
-
-//void Rasterizer::printUnitTests() {
-//	std::cout << "Rasterizer::printUnitTests()" << std::endl;
-//	float* input = new float[4];
-//	memset(input,0.,4);
-//	input[0] = 0;
-//	input[1] = 0;
-//	input[2] = 1;
-//	input[3] = 1;
-//
-//	float * result = new float[4];
-//	float * tempResult = new float[4];
-//	matrix_x_vector(rotationMatrix,input,tempResult);
-//	for(int i = 0; i < 4; i++)
-//		tempResult[i] += translationVector[i];
-//	matrix_x_vector(perspectiveMatrix,tempResult,result);
-//	for(int i = 0; i < 4; i ++)
-//		printf("%2.2f\t%2.2f\t%2.2f\n",input[i],tempResult[i]-translationVector[i],result[i]);
-//	std::cout << std::endl;
-//	delete [] input;
-//	delete [] tempResult;
-//	delete [] result;
-//}
-

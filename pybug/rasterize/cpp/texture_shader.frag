@@ -1,6 +1,6 @@
 #version 330
 
-uniform sampler2D textureImage;
+uniform sampler2D texture_image;
 smooth in vec2 texCoord;
 smooth in vec3 coord;
 
@@ -9,7 +9,7 @@ layout(location = 1) out vec3 outputCoord;
 
 void main()
 {
-   outputColor = texture(textureImage, texCoord).rgb;
+   outputColor = texture(texture_image, texCoord).rgb;
    outputCoord = coord;
 }
 
