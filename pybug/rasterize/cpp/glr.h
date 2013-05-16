@@ -65,34 +65,50 @@ GLuint glr_create_shader_from_string(GLenum shader_type, const GLchar* string);
 GLuint glr_create_program(const std::vector<GLuint> &shaders);
 
 /*
- * Builds a glr_vectorset storing the pertinent information about a set of
- * homogeneous (X, Y, Z, W) points. Returns the vectorset ready for use.
+ * Returns a glr_vectorset configured for a set of homogeneous (X, Y, Z, W)
+ * points of type double.
+ * Note that the attribute_pointer needs to be set before being bound to the
+ * OpenGL context.
  */
 glr_vectorset glr_build_h_points(double* points, size_t n_points);
 
 /*
- * Builds a glr_vectorset storing the pertinent information about a set of
- * (S,T) texture coordinates. Returns the vectorset ready for use.
+ * Returns a glr_vectorset configured for a set of float (S,T) texture
+ * coordinates.
+ * Note that the attribute_pointer needs to be set before being bound to the
+ * OpenGL context.
  */
 glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points);
 
 /*
- * Builds a glr_vectorset storing the pertinent information about a set of
- * (v1, v2, v3) triangluation indices (a triangle list). Returns the vectorset
- * ready for use.
+ * Returns a glr_vectorset configured for a set of (v1, v2, v3) triangluation
+ * indices (a triangle list).
  */
 glr_vectorset glr_build_trilist(unsigned int* trilist, size_t n_tris);
 
-
-
+/*
+ * Returns a glr_texture configured for an 8-bit RGBA texture. Note that the
+ * texture unit is initialised to 999, and should be changed before attempting
+ * to bind to the OpenGL context.
+ */
 glr_texture glr_build_rgba_texture(uint8_t* texture, size_t width,
 								   size_t height);
 
-
+/*
+ * Returns a glr_texture configured for a float RGB texture. Note that the
+ * texture unit is initialised to 999, and should be changed before attempting
+ * to bind to the OpenGL context.
+ */
 glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
 								   	    size_t height);
 
-
+/*
+ * Returns a glr_textured_mesh configured for a mesh with:
+ * - a set of double points @ .points (attribute_pointer needs to be set after)
+ * - an unsigned int triangle list @ .trilist
+ * - an 8-bit RGBA texture @ .texture (unit need to be set)
+ * - a set of float texture coords @ .tcoords (attribute_pointer as points)
+ */
 glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 		unsigned int* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height);
