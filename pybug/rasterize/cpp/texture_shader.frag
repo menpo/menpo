@@ -1,15 +1,14 @@
 #version 330
 
 uniform sampler2D texture_image;
-smooth in vec2 texCoord;
-smooth in vec3 coord;
+smooth in vec2 tcoord;
+smooth in vec3 linear_mapping_coord;
 
-layout(location = 0) out vec3 outputColor;
-layout(location = 1) out vec3 outputCoord;
+layout(location = 0) out vec3 output_color;
+layout(location = 1) out vec3 output_linear_mapping;
 
-void main()
-{
-   outputColor = texture(texture_image, texCoord).rgb;
-   outputCoord = coord;
+void main() {
+   output_color = texture(texture_image, tcoord).rgb;
+   output_linear_mapping = linear_mapping_coord;
 }
 

@@ -198,6 +198,7 @@ void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh) {
 	glBindVertexArray(0);
 }
 
+// TODO make the texture sampler a seperate customizable thing.
 void glr_init_texture(glr_texture& texture) {
 	// activate this textures unit
 	glActiveTexture(GL_TEXTURE0 + texture.unit);
