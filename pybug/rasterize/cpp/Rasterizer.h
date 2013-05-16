@@ -61,6 +61,8 @@ private:
 
 	GLuint _color_buffer;
 
+	glr_texture  _texture_fb;
+	glr_texture  _texture_fb_color;
 	//fbo parameters
 	GLuint _fbo;
 	GLuint _fb_texture;

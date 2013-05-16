@@ -126,6 +126,20 @@ glr_texture glr_build_rgba_texture(uint8_t* texture, size_t width,
 	return texture_tmp;
 }
 
+glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
+								   	    size_t height) {
+	glr_texture texture_tmp;
+	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
+	// 999 as a safety - must be changed!
+	texture_tmp.internal_format = GL_RGB32F_ARB;
+	texture_tmp.width = width;
+	texture_tmp.height = height;
+	texture_tmp.format = GL_RGB;
+	texture_tmp.type = GL_FLOAT;
+	texture_tmp.data = texture;
+	return texture_tmp;
+}
+
 glr_vectorset glr_build_h_points(double* points, size_t n_points) {
 	glr_vectorset points_tmp;
 	points_tmp.datatype = GL_DOUBLE;
@@ -376,9 +390,32 @@ void Rasterizer::init_buffers() {
 void Rasterizer::init_frame_buffer() {
 	std::cout << "Rasterizer::init_frame_buffer()" << std::endl;
 	glr_check_error();
-
 	glGenFramebuffers(1, &_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+//	// first, build a texture:
+//	_texture_fb = glr_build_rgba_texture(_fbo_pixels, WINDOW_WIDTH,
+//			WINDOW_HEIGHT);
+//	// assign it to a new unit
+//	_texture_fb.unit = 2;
+//	// and initialise it
+//	glr_init_texture(_texture_fb);
+//	glGenFramebuffers(1, &_fbo);
+//	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+//	glBindTexture(GL_TEXTURE_2D, _texture_fb.texture_ID);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+//		GL_TEXTURE_2D, _texture_fb.texture_ID, 0);
+//	// repeat for the second framebuffer
+//
+//	_texture_fb_color = glr_build_rgb_float_texture(_fbo_color_pixels,
+//			WINDOW_WIDTH, WINDOW_HEIGHT);
+//	_texture_fb_color.unit = 3;
+//	glr_init_texture(_texture_fb_color);
+//	glGenFramebuffers(1, &_fb_color);
+//	glBindFramebuffer(GL_FRAMEBUFFER, _fb_color);
+//	glBindTexture(GL_TEXTURE_2D, _texture_fb_color.texture_ID);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+//		GL_TEXTURE_2D, _texture_fb_color.texture_ID, 0);
 
 	_fb_texture_unit = 2;
 	glActiveTexture(GL_TEXTURE0 + _fb_texture_unit);
@@ -388,12 +425,12 @@ void Rasterizer::init_frame_buffer() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D, _fb_texture, 0);
-	// THIS BEING GL_COLOR_ATTACHMENT0 means that anything rendered to
-	// layout(location = 0) in the fragment shader will end up here.
+    // THIS BEING GL_COLOR_ATTACHMENT0 means that anything rendered to
+    // layout(location = 0) in the fragment shader will end up here.
 	glr_check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glGenTextures(1, &_fb_color);
@@ -403,10 +440,10 @@ void Rasterizer::init_frame_buffer() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glr_check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
 		GL_RGB, GL_FLOAT, NULL);
 	glr_check_error();
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
 		GL_TEXTURE_2D, _fb_color, 0);
 	// THIS BEING GL_COLOR_ATTACHMENT1 means that anything rendered to
 	// layout(location = 1) in the fragment shader will end up here.
@@ -499,6 +536,11 @@ void Rasterizer::grab_framebuffer_data() {
 				         GL_UNSIGNED_BYTE, _fbo_pixels);
 		glr_get_framebuffer(_fb_color_unit, _fb_color, GL_RGB,
 				         GL_FLOAT, _fbo_color_pixels);
+//		glr_get_framebuffer(_texture_fb.unit, _texture_fb.texture_ID,
+//				_texture_fb.format, _texture_fb.type, _texture_fb.data);
+//			glr_get_framebuffer(_texture_fb_color.unit,
+//					_texture_fb_color.texture_ID, _texture_fb_color.format,
+//					_texture_fb_color.type, _texture_fb.data);
 	} else {
 		std::cout << "Trying to return FBO on an interactive session!"
 		          << std::endl;
