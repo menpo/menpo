@@ -1,1 +1,1 @@
-from base import MeshImporter
+from base import AssimpImporter, WRLImporter
