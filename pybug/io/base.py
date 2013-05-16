@@ -2,7 +2,6 @@ import abc
 import os
 import glob
 import sys
-from pybug.io.extensions import pil_exts, assimp_exts
 
 
 def auto_import(pattern, meshes=True, images=True,
@@ -21,35 +20,35 @@ def auto_import(pattern, meshes=True, images=True,
     """
     mesh_objects, image_objects = [], []
     if meshes:
-        mesh_files = glob_matching_extension(pattern, assimp_exts)
-        mesh_objects, mesh_importers = multi_mesh_import(mesh_files,
-                                                         keep_importers=True)
+        mesh_paths = _glob_matching_extension(pattern, mesh_types)
+        mesh_objects, mesh_importers = _multi_mesh_import(mesh_paths,
+                                                          keep_importers=True)
     if images:
-        image_files = glob_matching_extension(pattern, pil_exts)
+        image_files = _glob_matching_extension(pattern, image_types)
         if meshes and not include_texture_images:
             texture_paths = [m.texture_path for m in mesh_importers
                              if m.texture_path is not None]
-            image_files = images_unrelated_to_meshes(image_files,
+            image_files = _images_unrelated_to_meshes(image_files,
                                                      texture_paths)
-            image_objects = multi_image_import(image_files)
+            image_objects = _multi_image_import(image_files)
     return mesh_objects + image_objects
 
 
-def multi_image_import(image_filepaths, keep_importers=False):
+def _multi_image_import(image_filepaths, keep_importers=False):
     """
     Creates importers for all the image filepaths passed in,
     and then calls build on them, returning a list of Images.
     """
-    return multi_import(image_filepaths, ImageImporter, keep_importers)
+    return _multi_import(image_filepaths, image_types, keep_importers)
 
 
-def multi_mesh_import(mesh_filepaths, keep_importers=False):
+def _multi_mesh_import(mesh_filepaths, keep_importers=False):
     """
     Creates importers for all the mesh filepaths passed in,
     and then calls build on them, returning a list of TriMeshes or
     TexturedTriMeshes.
     """
-    result = multi_import(mesh_filepaths, MeshImporter, keep_importers)
+    result = _multi_import(mesh_filepaths, mesh_types, keep_importers)
     # meshes come back as a nested list - unpack this for convenience
     if keep_importers:
         meshes = result[0]
@@ -62,16 +61,23 @@ def multi_mesh_import(mesh_filepaths, keep_importers=False):
         return meshes
 
 
-def multi_import(filepaths, importer, keep_importers=False):
+def _multi_import(filepaths, extensions_map, keep_importers=False):
     """
     Creates importers of type importer for all the filepaths passed in,
-    and then calls build on them, returning a list of objects.
+    and then calls build on them, returning a list of objects. Expects every
+    file type in the filepaths list to have a supported importer.
     """
-    print 'creating %s for %d files' % (repr(importer), len(filepaths))
-    sys.stdout.flush()
-    importers = [importer(f) for f in filepaths]
-    print 'building objects...'
-    sys.stdout.flush()
+    object_count = len(filepaths)
+    importers = []
+
+    for i, (f, ext) in enumerate(filepaths):
+        importer_type = extensions_map.get(ext)
+        importers.append(importer_type(f))
+        # Cheeky carriage return so we print on the same line
+        sys.stdout.write('\rCreating importer for %s (%d of %d)'
+                         % (repr(importer_type), i + 1, object_count))
+        sys.stdout.flush()
+
     objects = [i.build() for i in importers]
     if keep_importers:
         return objects, importers
@@ -79,23 +85,27 @@ def multi_import(filepaths, importer, keep_importers=False):
         return objects
 
 
-def glob_matching_extension(pattern, extension_list):
+def _glob_matching_extension(pattern, extension_map):
     """
     Filters the results from the glob pattern passed in to only those files
-    that have an extension given in extension_list.
+    that have an importer given in extension_map.
 
     :param pattern: A UNIX style glob pattern to match against.
-    :param extension_list: List of extensions e.g. ['.jpg', '.png']
+    :param extension_map: Map of extensions to importer class
+                          e.g {'jpg': ImageImporter}
     """
     files = glob.glob(os.path.expanduser(pattern))
     exts = [os.path.splitext(f)[1] for f in files]
-    matches = [ext in extension_list for ext in exts]
-    return [f for f, does_match in zip(files, matches) if does_match]
+    matches = [(ext, ext in extension_map) for ext in exts]
+    print 'Found {0} files. ({1}/{0}) are importable'.format(len(exts),
+                                                             len(matches))
+    return [(f, ext) for f, (ext, does_match) in zip(files, matches)
+            if does_match]
 
 
-def images_unrelated_to_meshes(image_paths, mesh_texture_paths):
+def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
     """
-    Commonly, textures of meshes will have the same name as the
+    Commonly, textures of meshes will have the same name as the mesh file
     """
     image_filenames = [os.path.splitext(f)[0] for f in image_paths]
     mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
@@ -125,5 +135,4 @@ class Importer:
     def build(self):
         pass
 
-from .mesh import MeshImporter
-from .image import ImageImporter
+from pybug.io.extensions import mesh_types, image_types
