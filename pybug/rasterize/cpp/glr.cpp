@@ -161,17 +161,9 @@ void glr_init_element_buffer_from_vectorset(glr_vectorset& vector) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh) {
-	glGenVertexArrays(1, &(mesh.vao));
-	glBindVertexArray(mesh.vao);
-	glr_init_array_buffer_from_vectorset(mesh.h_points);
-	glr_init_array_buffer_from_vectorset(mesh.tcoords);
-	glr_init_element_buffer_from_vectorset(mesh.trilist);
-	glBindVertexArray(0);
-}
-
 // TODO make the texture sampler a seperate customizable thing.
 void glr_init_texture(glr_texture& texture) {
+	printf("glr_init_texture(...)\n");
 	// activate this textures unit
 	glActiveTexture(GL_TEXTURE0 + texture.unit);
 	glGenTextures(1, &(texture.texture_ID));
@@ -188,6 +180,16 @@ void glr_init_texture(glr_texture& texture) {
 	glBindSampler(texture.unit, texture.sampler);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void glr_init_buffers_from_textured_mesh(glr_textured_mesh& mesh) {
+	printf("glr_init_buffers_from_textured_mesh(...)\n");
+	glGenVertexArrays(1, &(mesh.vao));
+	glBindVertexArray(mesh.vao);
+	glr_init_array_buffer_from_vectorset(mesh.h_points);
+	glr_init_array_buffer_from_vectorset(mesh.tcoords);
+	glr_init_element_buffer_from_vectorset(mesh.trilist);
+	glBindVertexArray(0);
 }
 
 void glr_bind_texture_to_program(glr_texture& texture, GLuint program) {

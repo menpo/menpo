@@ -120,7 +120,7 @@ void glr_init_array_buffer_from_vectorset(glr_vectorset& vector);
 void glr_init_element_buffer_from_vectorset(glr_vectorset& vector);
 
 
-void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh);
+void glr_init_buffers_from_textured_mesh(glr_textured_mesh& mesh);
 
 
 void glr_init_texture(glr_texture& texture);

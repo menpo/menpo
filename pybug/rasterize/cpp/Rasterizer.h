@@ -28,14 +28,13 @@ private:
 	glr_texture  _texture_fb;
 	glr_texture  _texture_fb_color;
 
-
 	//fbo parameters
 	GLuint _fbo;
-	GLuint _fb_texture;
-	GLuint _fb_color;
+	GLuint _fb_texture_id;
+	GLuint _fb_color_id;
 	int _fb_texture_unit;
 	int _fb_color_unit;
-	GLubyte* _fbo_pixels;
+	GLubyte* _fb_texture_pixels;
 	GLfloat* _fbo_color_pixels;
 
 	// if true we are rendering to just return the framebuffer.
