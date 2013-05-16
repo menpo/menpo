@@ -24,6 +24,37 @@ void glr_check_error();
  */
 GLuint glr_create_shader_from_string(GLenum shader_type, const GLchar* string);
 
+/*
+ * Taking a vector of shaders, links the shaders into a single program,
+ * returning the programs binding. If there is an error in the link,
+ * an error message is produced and the program is terminated. If this program
+ * successfully returns, it is safe to delete the individual shaders themselves
+ * immediately - the program is built as is kept in the OpenGL state for us.
+ */
+GLuint glr_create_program(const std::vector<GLuint> &shaders);
+
+/*
+ * Builds a glr_vectorset storing the pertinent information about a set of
+ * homogeneous (X, Y, Z, W) points. Returns the vectorset ready for use.
+ */
+glr_vectorset glr_build_h_points(double* points, size_t n_points);
+
+/*
+ * Builds a glr_vectorset storing the pertinent information about a set of
+ * (S,T) texture coordinates. Returns the vectorset ready for use.
+ */
+glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points);
+
+/*
+ * Builds a glr_vectorset storing the pertinent information about a set of
+ * (v1, v2, v3) triangluation indices (a triangle list). Returns the vectorset
+ * ready for use.
+ */
+glr_vectorset glr_build_trilist(unsigned int* trilist, size_t n_tris);
+
+
+
+
 
 void glr_check_error() {
 	GLenum err;
@@ -81,10 +112,11 @@ GLuint glr_create_program(const std::vector<GLuint> &shaders) {
 	return program;
 }
 
-glr_texture glr_build_rgba_texture_at_unit(uint8_t* texture, size_t width,
-				                   	       size_t height, unsigned int unit) {
+glr_texture glr_build_rgba_texture(uint8_t* texture, size_t width,
+								   size_t height) {
 	glr_texture texture_tmp;
-	texture_tmp.unit = unit; // the texture unit this texture binds to
+	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
+	// 999 as a safety - must be changed!
 	texture_tmp.internal_format = GL_RGBA8;
 	texture_tmp.width = width;
 	texture_tmp.height = height;
@@ -131,11 +163,10 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 	textured_mesh.h_points = glr_build_h_points(points, n_points);
 	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
 	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
-	textured_mesh.texture = glr_build_rgba_texture_at_unit(texture, texture_width,
-											  texture_height, 1);
+	textured_mesh.texture = glr_build_rgba_texture(texture,
+			texture_width, texture_height);
 	return textured_mesh;
 }
-
 
 void glr_init_array_buffer_from_vectorset(glr_vectorset& vector) {
 	glGenBuffers(1, &(vector.vbo));
@@ -282,8 +313,14 @@ Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 	_textured_mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
 											 tcoords, texture, texture_width,
 											 texture_height);
+	// now we have an instantiated glr_textured_mesh, we have to choose
+	// some the OpenGL properties and set them. We decide that the h_points
+	// should be bound to input 0 into the shader, while tcoords should be
+	// input 1...
 	_textured_mesh.h_points.attribute_pointer = 0;
 	_textured_mesh.tcoords.attribute_pointer = 1;
+	// and we assign the texture we have to unit 1.
+	_textured_mesh.texture.unit = 1;
 	_color = color;
 	_n_points = n_points;
 	// start viewing straight on
@@ -354,6 +391,8 @@ void Rasterizer::init_frame_buffer() {
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
 		GL_TEXTURE_2D, _fb_texture, 0);
+	// THIS BEING GL_COLOR_ATTACHMENT0 means that anything rendered to
+	// layout(location = 0) in the fragment shader will end up here.
 	glr_check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glGenTextures(1, &_fb_color);
@@ -368,6 +407,8 @@ void Rasterizer::init_frame_buffer() {
 	glr_check_error();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, 
 		GL_TEXTURE_2D, _fb_color, 0);
+	// THIS BEING GL_COLOR_ATTACHMENT1 means that anything rendered to
+	// layout(location = 1) in the fragment shader will end up here.
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glr_check_error();
 	const GLenum buffs[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
@@ -379,6 +420,9 @@ void Rasterizer::init_frame_buffer() {
 	glBindRenderbuffer(GL_RENDERBUFFER,depthBuffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,depthBuffer);
+	// THIS BEING GL_DEPTH_COMPONENT means that the depth information at each
+	// fragment will end up here. Note that we must manually set up the depth
+	// buffer when using framebuffers.
 	GLenum status;
 	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if(status != GL_FRAMEBUFFER_COMPLETE)

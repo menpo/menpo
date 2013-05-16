@@ -59,10 +59,7 @@ private:
 	GLuint translationVectorUnif;
 	GLuint rotationMatrixUinf;
 
-	//GLuint _points_buffer;
 	GLuint _color_buffer;
-	GLuint _textureVectorBuffer;
-	//GLuint _tcoord_buffer;
 
 	//fbo parameters
 	GLuint _fbo;
