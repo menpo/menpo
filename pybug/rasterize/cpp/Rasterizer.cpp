@@ -164,6 +164,7 @@ void glr_setup_buffers_on_textured_mesh(glr_textured_mesh& mesh) {
 	glr_init_array_buffer_from_vectorset(mesh.h_points);
 	glr_init_array_buffer_from_vectorset(mesh.tcoords);
 	glr_init_element_buffer_from_vectorset(mesh.trilist);
+	glBindVertexArray(0);
 }
 
 void glr_init_texture(glr_texture& texture) {
@@ -190,7 +191,7 @@ void glr_bind_texture_to_program(glr_texture& texture, GLuint program) {
 	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
 	// bind the texture to a uniform called "texture" which can be
 	// accessed from shaders
-	texture.uniform = glGetUniformLocation(program, "texture");
+	texture.uniform = glGetUniformLocation(program, "textureImage");
 	glUniform1i(texture.uniform, texture.unit);
 	// set the active Texture to 0 - as long as this is not changed back
 	// to textureImageUnit, we know our shaders will find textureImage bound to
@@ -285,10 +286,6 @@ Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 	_textured_mesh.tcoords.attribute_pointer = 1;
 	_color = color;
 	_n_points = n_points;
-	_n_tris = n_tris;
-	_texture = texture;
-	_texture_width = texture_width;
-	_texture_height = texture_height;
 	// start viewing straight on
 	_last_angle_X = 0.0;
 	_last_angle_Y = 0.0;
@@ -311,7 +308,10 @@ void Rasterizer::init() {
 	glr_check_error();
 	init_buffers();
 	glr_check_error();
-	init_texture();
+	std::cout << "Rasterizer::init_texture()" << std::endl;
+	// choose which unit to use and activate it
+	glr_init_texture(_textured_mesh.texture);
+	glr_bind_texture_to_program(_textured_mesh.texture, _the_program);
 	glr_check_error();
 	if(RETURN_FRAMEBUFFER) {
 		init_frame_buffer();
@@ -332,41 +332,6 @@ void Rasterizer::init_buffers() {
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void Rasterizer::init_texture() {
-	std::cout << "Rasterizer::init_texture()" << std::endl;
-	// choose which unit to use and activate it
-//	glr_init_texture(_textured_mesh.texture);
-//	glr_bind_texture_to_program(_textured_mesh.texture, _the_program);
-
-	_texture_unit = 1;
-	glActiveTexture(GL_TEXTURE0 + _texture_unit);
-	// specify the data storage and actually get OpenGL to
-	// store our textureImage
-	glGenTextures(1, &_texture_ID);
-	glBindTexture(GL_TEXTURE_2D, _texture_ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-		_texture_width, _texture_height, 0, GL_RGBA,
-		GL_UNSIGNED_BYTE, _texture);
-	// Create the description of the texture (sampler) and bind it to the
-	// correct texture unit
-	glGenSamplers(1, &_texture_sampler);
-	glSamplerParameteri(_texture_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glSamplerParameteri(_texture_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glSamplerParameteri(_texture_sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glBindSampler(_texture_unit, _texture_sampler);
-    // bind the texture to a uniform called "textureImage" which can be
-	// accessed from shaders
-	_texture_uniform = glGetUniformLocation(_the_program, "textureImage");
-	glUniform1i(_texture_uniform, _texture_unit);
-	// set the active Texture to 0 - as long as this is not changed back
-	// to textureImageUnit, we know our shaders will find textureImage bound to
-	// GL_TEXTURE_2D when they look in textureImageUnit
-	glActiveTexture(GL_TEXTURE0);
-	// note now we are free to unbind GL_TEXTURE_2D
-	// on unit 0 - the state of our textureUnit is safe.
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 
@@ -434,6 +399,7 @@ void Rasterizer::display()
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(_the_program);
+	glBindVertexArray(_textured_mesh.vao);
 	if(!RETURN_FRAMEBUFFER) {
 		perspectiveMatrixUnif = glGetUniformLocation(_the_program, "perspectiveMatrix");
 		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
@@ -445,14 +411,11 @@ void Rasterizer::display()
 		glUniform3fv(lightDirectionUnif, 1, _light_vector);
 	}
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _textured_mesh.trilist.vbo);
-//	glActiveTexture(GL_TEXTURE0 + _textured_mesh.texture.unit);
-//	glBindTexture(GL_TEXTURE_2D, _textured_mesh.texture.texture_ID);
-//	glDrawElements(GL_TRIANGLES, _textured_mesh.trilist.n_vectors * 3,
-//				   GL_UNSIGNED_INT, 0);
-	glActiveTexture(GL_TEXTURE0 + _texture_unit);
-	glBindTexture(GL_TEXTURE_2D, _texture_ID);
-	glDrawElements(GL_TRIANGLES, _n_tris * 3,
+	glActiveTexture(GL_TEXTURE0 + _textured_mesh.texture.unit);
+	glBindTexture(GL_TEXTURE_2D, _textured_mesh.texture.texture_ID);
+	glDrawElements(GL_TRIANGLES, _textured_mesh.trilist.n_vectors * 3,
 				   GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 	glutSwapBuffers();
 	if(RETURN_FRAMEBUFFER)
 		glutLeaveMainLoop();
@@ -510,9 +473,10 @@ void Rasterizer::render(int argc, char *argv[]) {
 		memset(translationVector,0, sizeof(float) * 4);
 		translationVector[2] = -2.0;
 		start_framework(argc, argv);
-	} else
+	} else {
 		std::cout << "Trying to render a RETURN_FRAMEBUFFER object!"
 				  << std::endl;
+	}
 }
 
 void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,

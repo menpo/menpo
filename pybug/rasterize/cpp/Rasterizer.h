@@ -46,26 +46,14 @@ class Rasterizer : public GLRFramework {
 private:
 	glr_textured_mesh _textured_mesh;
 	float* _color;
-	// provides an (R,G,B,A) color for each coord
-	// (redundent if textureImage is used)
-	double*  textureVector;
-	uint8_t* _texture;
-	// index into coord/textureVector
-	GLuint* _trilist;
 
 	// vector to the direction of light
 	float* _light_vector;
 
 	size_t  _n_points;
-	size_t  _n_tris;
-	size_t _texture_width;
-	size_t _texture_height;
-	// what Texture Unit we wish to bind the texture to
-	int _texture_unit;
 
 	// --- Handles to GL objects ---
 	GLuint _the_program;
-
 
 	GLuint perspectiveMatrixUnif;
 	GLuint translationVectorUnif;
@@ -76,12 +64,6 @@ private:
 	GLuint _textureVectorBuffer;
 	//GLuint _tcoord_buffer;
 
-	GLuint _trilist_buffer;
-
-	GLuint _texture_ID;
-	// object storing texture traits.
-	GLuint _texture_sampler;
-
 	//fbo parameters
 	GLuint _fbo;
 	GLuint _fb_texture;
@@ -90,9 +72,6 @@ private:
 	int _fb_color_unit;
 	GLubyte* _fbo_pixels;
 	GLfloat* _fbo_color_pixels;
-
-	// Handles to uniforms
-	GLuint _texture_uniform;
 
 	// if true we are rendering to just return the framebuffer.
 	bool RETURN_FRAMEBUFFER;
@@ -115,7 +94,6 @@ private:
 	void init_buffers();
 	void display();
 	void init_program();
-	void init_texture();
 	void init_frame_buffer();
 	void cleanup();
 	void grab_framebuffer_data();
