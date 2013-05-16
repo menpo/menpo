@@ -1,0 +1,4 @@
+
+
+class MeshImportError(Exception):
+    pass
