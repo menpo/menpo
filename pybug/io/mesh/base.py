@@ -196,3 +196,63 @@ class FIMImporter(MeshImporter):
         mesh.trilist = Delaunay(data[:, :2]).simplices
 
         return mesh
+
+
+class BNTImporter(MeshImporter):
+    """
+    Allows importing the BNT file format from the bosphorus dataset.
+    This reads in the 5 channels (3D coordinates and texture coordinates),
+    splits them appropriately and then triangulates the x and y
+    coordinates to create a surface. The texture path is also given in the file
+    format.
+    """
+
+    def __init__(self, filepath):
+        # Impossible to know where the texture is in this format
+        self.relative_texture_path = None
+        self.meshes = []
+        self.meshes.append(self.parse_bnt(filepath))
+        # Setup class before super class call
+        super(BNTImporter, self).__init__(filepath)
+
+    def parse_bnt(self, filepath):
+        with open(filepath, 'rb') as f:
+            n_rows = np.fromfile(f, dtype=np.uint16, count=1)
+            n_cols = np.fromfile(f, dtype=np.uint16, count=1)
+            z_min = np.fromfile(f, dtype=np.float64, count=1)
+
+            # Get integers and convert to valid string
+            image_path_len = np.fromfile(f, dtype=np.uint16, count=1)
+            tex_path = np.fromfile(f, dtype=np.uint8, count=image_path_len)
+            self.relative_texture_path = ''.join(map(chr, tex_path))
+
+            # Get data and reshape (reshape in an odd order due to Matlab's
+            # Fortran ordering). First three columns are 3D coordinates
+            # and last two are 2D texture coordinates
+            coords_len = np.fromfile(f, dtype=np.uint32, count=1)
+            data = np.fromfile(f, dtype=np.float64, count=coords_len * 5)
+            data = data.reshape([5, coords_len/5]).T
+
+        # Build expando object (dynamic object hack)
+        mesh = lambda: 0
+
+        # Get the 3D coordinates
+        points = data[:, :3]
+        # We want to remove the z-min plane because otherwise the mesh is not
+        # renderable. We assume that if any point has a z-coordinate of the
+        # z-min value then the whole point is worthless, so we drop it.
+        valid_indices = points[:, 2] != z_min
+        points = points[valid_indices, :]
+        mesh.points = points
+
+        # Apparently the texture coordinates are upside down?
+        mesh.tcoords = np.flipud(data[:, -2:])
+        # We also filter the texture coordinate by the valid points. Because
+        # the mesh is actually laid out as an image, each point has one
+        # texture coordinate, so this mapping is valid.
+        mesh.tcoords = mesh.tcoords[valid_indices]
+
+        # Triangulate just the 2D coordinates, as this is a surface
+        mesh.trilist = Delaunay(points[:, :2]).simplices
+
+        return mesh
