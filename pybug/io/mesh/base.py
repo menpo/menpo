@@ -8,6 +8,7 @@ from pybug.io.image import ImageImporter
 from pybug.shape import TexturedTriMesh, TriMesh
 from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
+from scipy.spatial import Delaunay
 import numpy as np
 
 
@@ -104,7 +105,6 @@ class WRLImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        # Read the while file in for regex matching
         with open(filepath) as f:
             self.text = f.read()
         # Assumes a single mesh per file
@@ -165,3 +165,34 @@ class WRLImporter(MeshImporter):
             texture_path = None
 
         return mesh, texture_path
+
+
+class FIMImporter(MeshImporter):
+    """
+    Allows importing floating point images as meshes.
+    This reads in the shape in to 3 channels and then triangulates the x and y
+    coordinates to create a surface.
+    """
+
+    def __init__(self, filepath):
+        # Impossible to know where the texture is in this format
+        self.relative_texture_path = None
+        self.meshes = []
+        self.meshes.append(self.parse_fim(filepath))
+        # Setup class before super class call
+        super(FIMImporter, self).__init__(filepath)
+
+    def parse_fim(self, filepath):
+        with open(filepath, 'rb') as f:
+            size = np.fromfile(f, dtype=np.uint32, count=3)
+            data = np.fromfile(f, dtype=np.float32, count=np.product(size))
+            data = data.reshape([size[0] * size[1], size[2]])
+
+        # Build expando object (dynamic object hack)
+        mesh = lambda: 0
+
+        mesh.points = data
+        # Triangulate just the 2D coordinates, as this is a surface
+        mesh.trilist = Delaunay(data[:, :2]).simplices
+
+        return mesh
