@@ -208,10 +208,10 @@ class BNTImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        # Impossible to know where the texture is in this format
-        self.relative_texture_path = None
+        mesh, texture_path = self.parse_bnt(filepath)
+        self.relative_texture_path = texture_path
         self.meshes = []
-        self.meshes.append(self.parse_bnt(filepath))
+        self.meshes.append(mesh)
         # Setup class before super class call
         super(BNTImporter, self).__init__(filepath)
 
@@ -225,8 +225,8 @@ class BNTImporter(MeshImporter):
 
             # Get integers and convert to valid string
             image_path_len = np.fromfile(f, dtype=np.uint16, count=1)
-            tex_path = np.fromfile(f, dtype=np.uint8, count=image_path_len)
-            self.relative_texture_path = ''.join(map(chr, tex_path))
+            texture_path = np.fromfile(f, dtype=np.uint8, count=image_path_len)
+            texture_path = ''.join(map(chr, texture_path))
 
             # Get data and reshape (reshape in an odd order due to Matlab's
             # Fortran ordering). First three columns are 3D coordinates
@@ -257,4 +257,4 @@ class BNTImporter(MeshImporter):
         # Triangulate just the 2D coordinates, as this is a surface
         mesh.trilist = Delaunay(points[:, :2]).simplices
 
-        return mesh
+        return mesh, texture_path
