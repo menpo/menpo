@@ -1,5 +1,5 @@
 # A list of extensions that different importers support.
-from pybug.io.mesh.base import AssimpImporter, WRLImporter, FIMImporter, BNTImporter
+from pybug.io.mesh.base import AssimpImporter, WRLImporter, FIMImporter, BNTImporter, ABSImporter
 from pybug.io.image import ImageImporter
 
 
@@ -48,7 +48,8 @@ mesh_types = {'.dae': AssimpImporter,
               # '.blend': AssimpImporter,
               '.wrl': WRLImporter,
               '.fim': FIMImporter,
-              '.bnt': BNTImporter}
+              '.bnt': BNTImporter,
+              '.abs': ABSImporter}
 
 
 image_types = {'.bmp': ImageImporter,

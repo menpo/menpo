@@ -37,8 +37,10 @@ class Viewer3d(Viewer):
         Viewer.__init__(self)
         dim = points.shape[1]
         if dim != 3:
-            raise Viewer3dError("Trying to view " + str(dim) +
-                                "data with a 3DViewer")
+            raise Viewer3dError("Expected a 3-dimensional object, "
+                                "but got a {0} object. "
+                                "Provide an Nx3 object."
+                                .format(str(points.shape)))
         self.points = points
 
     @property
