@@ -1,4 +1,5 @@
-#version 330
+#version 130
+#extension GL_ARB_explicit_attrib_location : require
 
 layout(location = 0) in vec4 point;
 layout(location = 1) in vec2 tcoord_in;
