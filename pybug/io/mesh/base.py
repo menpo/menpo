@@ -217,6 +217,8 @@ class BNTImporter(MeshImporter):
 
     def parse_bnt(self, filepath):
         with open(filepath, 'rb') as f:
+            # Currently these are unused, but they are in the format
+            # Could possibly store as metadata?
             n_rows = np.fromfile(f, dtype=np.uint16, count=1)
             n_cols = np.fromfile(f, dtype=np.uint16, count=1)
             z_min = np.fromfile(f, dtype=np.float64, count=1)
