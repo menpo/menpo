@@ -78,6 +78,10 @@ def _multi_import(filepaths, extensions_map, keep_importers=False):
                          % (repr(importer_type), i + 1, object_count))
         sys.stdout.flush()
 
+    # New line to clear for the next print
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+
     objects = [i.build() for i in importers]
     if keep_importers:
         return objects, importers
