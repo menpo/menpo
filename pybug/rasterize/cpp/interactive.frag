@@ -1,4 +1,5 @@
-#version 420
+#version 130
+#extension GL_ARB_explicit_attrib_location : require
 
 uniform sampler2D textureImage;
 smooth in vec2 texCoord;
