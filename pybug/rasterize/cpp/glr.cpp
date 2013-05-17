@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <cmath>
 #include <iostream>
 #include <string.h>
 #include <GL/glew.h>
@@ -241,4 +242,25 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh) {
 	// now are buffers are all cleared, we can unbind and delete the vao
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &(mesh.vao));
+}
+
+void glr_math_float_matrix_eye(float* matrix) {
+    memset(matrix,0, sizeof(float) * 16);
+    matrix[0] = 1.0;
+    matrix[5] = 1.0;
+    matrix[10] = 1.0;
+    matrix[15] = 1.0;
+}
+
+void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x, 
+                                               float angle_y) {
+    glr_math_float_matrix_eye(matrix);
+	matrix[5]  =  cos(angle_x);
+	matrix[6]  = -sin(angle_x);
+	matrix[9]  =  sin(angle_x);
+	matrix[10] =  cos(angle_x);
+	matrix[0]  =  cos(angle_y);
+	matrix[2]  =  sin(angle_y);
+	matrix[8]  = -sin(angle_y);
+	matrix[10] =  cos(angle_y);
 }

@@ -1,5 +1,6 @@
 #include "GLRFramework.h"
 #include <fstream>
+#include "glr.h"
 
 GLRFramework *GLRFramework::instance = NULL;
 
@@ -11,27 +12,20 @@ GLRFramework::GLRFramework() {
     WINDOW_X_POSITION = 100;
     WINDOW_Y_POSITION = 100;
     // set the perspective matrix to be identity by default
-    perspectiveMatrix = new float[16];
-    rotationMatrix = new float[16];
-    translationVector = new float[4];
-    memset(perspectiveMatrix,0, sizeof(float) * 16);
-    memset(translationVector,0, sizeof(float) * 4);
-    perspectiveMatrix[0] = 1.0;
-    perspectiveMatrix[5] = 1.0;
-    perspectiveMatrix[10] = 1.0;
-    perspectiveMatrix[15] = 1.0;
-    memset(rotationMatrix, 0, sizeof(float) * 16);
-    rotationMatrix[0] = 1.0;
-    rotationMatrix[5] = 1.0;
-    rotationMatrix[10] = 1.0;
-    rotationMatrix[15] = 1.0;
+    _m_perspective = new float[16];
+    glr_math_float_matrix_eye(_m_perspective);
+    _m_rotation = new float[16];
+    glr_math_float_matrix_eye(_m_rotation);
+    _v_translation = new float[4];
+    memset(_v_translation,0, sizeof(float) * 4);
 }
+
 
 GLRFramework::~GLRFramework() {
     std::cout << "GLRFramework::~GLRFramework()" << std::endl;
-    delete[] perspectiveMatrix;
-    delete[] translationVector;
-    delete[] rotationMatrix;
+    delete[] _m_perspective;
+    delete[] _v_translation;
+    delete[] _m_rotation;
 }
 
 void GLRFramework::start_framework(int argc, char *argv[])  {

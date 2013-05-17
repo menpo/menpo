@@ -19,9 +19,9 @@ class GLRFramework {
         int WINDOW_HEIGHT;
         int WINDOW_X_POSITION;
         int WINDOW_Y_POSITION;
-        float *perspectiveMatrix;
-        float *rotationMatrix;
-        float *translationVector;
+        float *_m_perspective;
+        float *_m_rotation;
+        float *_v_translation;
 
     public:
         GLRFramework();

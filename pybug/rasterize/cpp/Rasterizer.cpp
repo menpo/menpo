@@ -5,7 +5,6 @@
 #include <fstream>
 #include <cmath>
 
-
 void read_file(const char* filepath, GLchar* file_string) {
 	std::ifstream file(filepath, std::ifstream::in);
 	unsigned int i  = 0;
@@ -14,18 +13,6 @@ void read_file(const char* filepath, GLchar* file_string) {
 		i++;
 	}
 	file_string[i-1] = '\0';
-}
-
-void matrix_x_vector(float* matrix, float* vector, float*result) {
-	result[0] = 0;
-	result[1] = 0;
-	result[2] = 0;
-	result[3] = 0;
-	for(int i = 0; i < 4; i++) {
-		for(int j = 0; j < 4; j++) {
-			result[i] += matrix[4*i+ j]*vector[j];
-		}
-	}
 }
 
 GLuint create_shader_from_filepath(GLenum shader_type,
@@ -158,8 +145,6 @@ void Rasterizer::init_frame_buffer() {
 
 
 
-
-
 	glGenTextures(1, &_fb_color_id);
 	glBindTexture(GL_TEXTURE_2D, _fb_color_id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -211,11 +196,11 @@ void Rasterizer::display() {
 	glBindVertexArray(_textured_mesh.vao);
 	if(!RETURN_FRAMEBUFFER) {
 		perspectiveMatrixUnif = glGetUniformLocation(_the_program, "perspectiveMatrix");
-		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
+		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, _m_perspective);
 		rotationMatrixUinf = glGetUniformLocation(_the_program, "rotationMatrix");
-		glUniformMatrix4fv(rotationMatrixUinf, 1, GL_FALSE, rotationMatrix);
+		glUniformMatrix4fv(rotationMatrixUinf, 1, GL_FALSE, _m_rotation);
 		translationVectorUnif = glGetUniformLocation(_the_program, "translationVector");
-		glUniform4fv(translationVectorUnif, 1, translationVector);
+		glUniform4fv(translationVectorUnif, 1, _v_translation);
 		GLuint lightDirectionUnif = glGetUniformLocation(_the_program, "lightDirection");
 		glUniform3fv(lightDirectionUnif, 1, _light_vector);
 	}
@@ -278,14 +263,14 @@ void Rasterizer::render(int argc, char *argv[]) {
 	std::cout << "Rasterizer::render()" << std::endl;
 	if(!RETURN_FRAMEBUFFER) {
 		float fFrustumScale = 1.0f; float fzNear = 0.5f; float fzFar = 10.0f;
-		memset(perspectiveMatrix,0, sizeof(float) * 16);
-		perspectiveMatrix[0] = fFrustumScale;
-		perspectiveMatrix[5] = fFrustumScale;
-		perspectiveMatrix[10] = (fzFar + fzNear) / (fzNear - fzFar);
-		perspectiveMatrix[14] = (2 * fzFar * fzNear) / (fzNear - fzFar);
-		perspectiveMatrix[11] = -1.0;
-		memset(translationVector,0, sizeof(float) * 4);
-		translationVector[2] = -2.0;
+		memset(_m_perspective,0, sizeof(float) * 16);
+		_m_perspective[0] = fFrustumScale;
+		_m_perspective[5] = fFrustumScale;
+		_m_perspective[10] = (fzFar + fzNear) / (fzNear - fzFar);
+		_m_perspective[14] = (2 * fzFar * fzNear) / (fzNear - fzFar);
+		_m_perspective[11] = -1.0;
+		memset(_v_translation,0, sizeof(float) * 4);
+		_v_translation[2] = -2.0;
 		start_framework(argc, argv);
 	} else {
 		std::cout << "Trying to render a RETURN_FRAMEBUFFER object!"
@@ -303,17 +288,9 @@ void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,
 	RETURN_FRAMEBUFFER = true;
 	// set the rotation, perspective, and translation objects to
 	// unitary (we just want orthogonal projection)
-	memset(translationVector,0, sizeof(float) * 4);
-	memset(perspectiveMatrix,0, sizeof(float) * 16);
-	perspectiveMatrix[0]  = 1.0;
-	perspectiveMatrix[5]  = 1.0;
-	perspectiveMatrix[10] = 1.0;
-	perspectiveMatrix[15] = 1.0;
-	memset(rotationMatrix,0, sizeof(float) * 16);
-	rotationMatrix[0]  = 1.0;
-	rotationMatrix[5]  = 1.0;
-	rotationMatrix[10] = 1.0;
-	rotationMatrix[15] = 1.0;
+	memset(_v_translation,0, sizeof(float) * 4);
+    glr_math_float_matrix_eye(_m_perspective);
+    glr_math_float_matrix_eye(_m_rotation);
 	start_framework(argc, argv);
 }
 
@@ -322,10 +299,10 @@ void Rasterizer::reshape(int width, int height) {
 	// if in interactive mode -> adjust perspective matrix
 	if(!RETURN_FRAMEBUFFER) {
 		float fFrustumScale = 1.4;
-		perspectiveMatrix[0] = fFrustumScale / (width / (float)height);
-		perspectiveMatrix[5] = fFrustumScale;
+		_m_perspective[0] = fFrustumScale / (width / (float)height);
+		_m_perspective[5] = fFrustumScale;
 		glUseProgram(_the_program);
-		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
+		glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, _m_perspective);
 		glUseProgram(0);
 	}
     glViewport(0, 0, (GLsizei) width, (GLsizei) height);
@@ -342,10 +319,8 @@ void Rasterizer::mouseMove(int x, int y) {
 		int deltaX = lastX - x;
 		int deltaY = lastY - y;
 		//std::cout << "dX: " << deltaX << "\tdY: " << deltaY << std::endl;
-
 		angleX = _last_angle_X + (1.0*deltaY)*pi/height;
 		angleY = _last_angle_Y + (1.0*deltaX)*pi/width;
-	
 		if(angleX < -pi/2)
 			angleX = -pi/2;
 		if(angleX > pi/2)
@@ -354,20 +329,9 @@ void Rasterizer::mouseMove(int x, int y) {
 			angleY = -pi/2;
 		if(angleX > pi/2)
 			angleX = pi/2;
-		setRotationMatrixForAngleXAngleY(angleX,angleY);
+		glr_math_float_matrix_rotation_for_angles(_m_rotation, angleX, angleY);
 		glutPostRedisplay();
 	}
-}
-
-void Rasterizer::setRotationMatrixForAngleXAngleY(float angleX,float angleY) {
-	rotationMatrix[5]  =  cos(angleX);
-	rotationMatrix[6]  = -sin(angleX);
-	rotationMatrix[9]  =  sin(angleX);
-	rotationMatrix[10] =  cos(angleX);
-	rotationMatrix[0]  =  cos(angleY);
-	rotationMatrix[2]  =  sin(angleY);
-	rotationMatrix[8] = -sin(angleY);
-	rotationMatrix[10] =  cos(angleY);
 }
 
 void Rasterizer::mouseButtonPress(int button, int state, int x, int y) {
@@ -390,19 +354,15 @@ void Rasterizer::keyboardDown(unsigned char key, int x, int y ) {
 	float pi = atan2f(0.0,-1.0);
 	if(key == 32) { //space bar
 		// reset the rotation to centre
-		memset(rotationMatrix, 0, sizeof(float) * 16);
-		rotationMatrix[0] = 1.0;
-		rotationMatrix[5] = 1.0;
-		rotationMatrix[10] = 1.0;
-		rotationMatrix[15] = 1.0;
+        glr_math_float_matrix_eye(_m_rotation);
 		glutPostRedisplay();
 	} else if (key==27)// ESC key
         glutLeaveMainLoop ();
 	else if (key == 'p') {
-		setRotationMatrixForAngleXAngleY(-0.10,pi/9.0);
+		glr_math_float_matrix_rotation_for_angles(_m_rotation, -0.10, pi/9.0);
 		glutPostRedisplay();
 	} else if (key == 's') {
-		setRotationMatrixForAngleXAngleY(0,pi/2.);
+		glr_math_float_matrix_rotation_for_angles(_m_rotation, 0, pi/2.);
 		glutPostRedisplay();
 	} else
 		std::cout << "Keydown: " << key << std::endl;

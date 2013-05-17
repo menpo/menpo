@@ -141,3 +141,10 @@ void glr_destroy_program();
 
 
 void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh);
+
+
+void glr_math_float_matrix_eye(float* matrix);
+
+void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x, 
+                                               float angle_y);
+

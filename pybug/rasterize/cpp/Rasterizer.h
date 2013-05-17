@@ -45,10 +45,10 @@ private:
 	float _last_angle_X, _last_angle_Y;
     float angleX, angleY;
 public:
-	Rasterizer(double* tpsCoord_in, float* coord_in, size_t numCoords_in, 
-		unsigned int* coordIndex_in, size_t numTriangles_in, 
-		float* texCoord_in, uint8_t* textureImage_in, 
-		size_t textureWidth_in, size_t textureHeight_in, bool INTERACTIVE_MODE);
+	Rasterizer(double* points, float* color, size_t n_points, 
+               unsigned int* trilist, size_t n_tris, float* tcoords, 
+               uint8_t* texture, size_t texture_width, size_t texture_height, 
+               bool INTERACTIVE_MODE);
 	void return_FB_pixels(int argc, char *argv[], uint8_t* pixels,
 			float* coords, int width, int height);
 	void render(int argc, char *argv[]);
@@ -66,7 +66,6 @@ private:
 	void mouseMove(int x, int y);
 	void mouseButtonPress(int button, int state, int x, int y);
 	void keyboardDown( unsigned char key, int x, int y );
-	void setRotationMatrixForAngleXAngleY(float angleX,float angleY);
 };
 
 
