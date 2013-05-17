@@ -101,8 +101,10 @@ def _glob_matching_extension(pattern, extension_map):
     files = glob.glob(os.path.expanduser(pattern))
     exts = [os.path.splitext(f)[1] for f in files]
     matches = [(ext, ext in extension_map) for ext in exts]
-    print 'Found {0} files. ({1}/{0}) are importable'.format(len(exts),
-                                                             len(matches))
+
+    print 'Found {0} files. ({1}/{0}) are importable'.format(
+        len(exts), len(filter(lambda x: x[1] is True, matches)))
+
     return [(f, ext) for f, (ext, does_match) in zip(files, matches)
             if does_match]
 
