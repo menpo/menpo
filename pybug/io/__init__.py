@@ -1,3 +1,4 @@
-from base import auto_import, multi_image_import, multi_mesh_import
-from mesh import MeshImporter
+from base import auto_import
+from mesh import AssimpImporter, WRLImporter, FIMImporter, BNTImporter, \
+                 ABSImporter
 from image import ImageImporter

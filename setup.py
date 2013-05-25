@@ -17,5 +17,6 @@ setup(name='pybug',
       ext_modules=cythonize(cython_modules, nthreads=2,
                             quiet=True, language='c++'),
       packages=find_packages(),
-      install_requires=dependencies.requirements
+      install_requires=dependencies.requirements,
+      dependency_links=dependencies.repositories
       )
