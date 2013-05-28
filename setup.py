@@ -2,6 +2,9 @@ from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
 import dependencies
+from pybug.rasterize.cpp.shaders import build_c_shaders
+
+build_c_shaders()
 
 cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/cpptrimesh.pyx",

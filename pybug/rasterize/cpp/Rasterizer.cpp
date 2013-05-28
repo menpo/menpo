@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <cmath>
+#include "shaders.h"
 
 void read_file(const char* filepath, GLchar* file_string) {
 	std::ifstream file(filepath, std::ifstream::in);
@@ -218,17 +219,19 @@ void Rasterizer::display() {
 void Rasterizer::init_program() {
 	std::cout << "Rasterizer::init_program()" << std::endl;
 	std::vector<GLuint> shaders;
-	std::string vertex_shader_str;
-	std::string fragment_shader_str;
+	const GLchar *vertex_shader_str;
+	const GLchar *fragment_shader_str;
 	if(!RETURN_FRAMEBUFFER) {
-		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.vert";
-		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/interactive.frag";
+		vertex_shader_str = interactive_vert_str;
+		fragment_shader_str = interactive_frag_str;
 	} else {
-		vertex_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/texture_shader.vert";
-		fragment_shader_str = "/home/jab08/.virtualenvs/pybug/src/pybug/pybug/rasterize/cpp/texture_shader.frag";
+		vertex_shader_str = texture_shader_vert_str;
+		fragment_shader_str = texture_shader_frag_str;
 	}
-	shaders.push_back(create_shader_from_filepath(GL_VERTEX_SHADER,   vertex_shader_str.c_str()));
-	shaders.push_back(create_shader_from_filepath(GL_FRAGMENT_SHADER, fragment_shader_str.c_str()));
+	shaders.push_back(glr_create_shader_from_string(
+			GL_VERTEX_SHADER, vertex_shader_str));
+	shaders.push_back(glr_create_shader_from_string(
+			GL_FRAGMENT_SHADER, fragment_shader_str));
 	_the_program = glr_create_program(shaders);
 	std::for_each(shaders.begin(), shaders.end(), glDeleteShader);
 }
