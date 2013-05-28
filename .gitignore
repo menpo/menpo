@@ -8,3 +8,5 @@ pybug.egg-info/*
 .idea/*
 #we don't want to track cython generated cpp files
 #*.cpp
+# ignore IPython notebook autosave files
+.ipynb_checkpoints
