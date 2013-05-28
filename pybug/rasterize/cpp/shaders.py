@@ -22,6 +22,7 @@ c_folder = os.path.dirname(os.path.abspath(__file__))
 shaders_folder = os.path.join(c_folder, 'shaders')
 header_filepath = os.path.join(c_folder, header_file)
 
+
 class Shader:
     def __init__(self, path):
         self.path = path
