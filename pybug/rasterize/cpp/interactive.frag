@@ -1,14 +1,13 @@
-#version 130
-#extension GL_ARB_explicit_attrib_location : require
+#version 330
 
-uniform sampler2D textureImage;
-smooth in vec2 texCoord;
+uniform sampler2D texture_image;
+smooth in vec2 tcoord;
 smooth in float interpColor;
 
 layout(location = 0) out vec3 outputColor;
 
 void main()
 {
-   outputColor = interpColor*interpColor*texture(textureImage, texCoord).rgb;
+   outputColor = interpColor*interpColor*texture(texture_image, tcoord).rgb;
 }
 
