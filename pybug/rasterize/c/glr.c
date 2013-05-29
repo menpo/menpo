@@ -7,11 +7,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <cmath>
-#include <iostream>
+#include <math.h>
 #include <string.h>
 #include <GL/glew.h>
-#include <vector>
 #include <GL/freeglut.h>
 #include "glr.h"
 
@@ -20,7 +18,7 @@ void glr_check_error() {
 	err = glGetError();
 	if (err != GL_NO_ERROR) {
 		printf("Error. glError: 0x%04X", err);
-		std::cout << " - " << gluErrorString(err) << std::endl;
+		printf(" - %s\n", gluErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 }
@@ -35,7 +33,7 @@ GLuint glr_create_shader_from_string(GLenum shader_type,
 	if (status == GL_FALSE) {
 		GLint info_log_length;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_length);
-		GLchar *str_info_log = new GLchar[info_log_length + 1];
+		GLchar str_info_log [info_log_length + 1];
 		glGetShaderInfoLog(shader, info_log_length, NULL, str_info_log);
 		const char *strShaderType = NULL;
 		switch (shader_type) {
@@ -45,15 +43,14 @@ GLuint glr_create_shader_from_string(GLenum shader_type,
 		}
 		fprintf(stderr, "Compile failure in %s shader: \n%s\n",
 				strShaderType, str_info_log);
-		delete[] str_info_log;
 		exit(EXIT_FAILURE);
 	}
 	return shader;
 }
 
-GLuint glr_create_program(const std::vector<GLuint> &shaders) {
+GLuint glr_create_program(GLuint *shaders, size_t n_shaders) {
 	GLuint program = glCreateProgram();
-	for(size_t i = 0; i < shaders.size(); i++)
+	for(size_t i = 0; i < n_shaders; i++)
 		glAttachShader(program, shaders[i]);
 	glLinkProgram(program);
 	GLint status;
@@ -61,12 +58,11 @@ GLuint glr_create_program(const std::vector<GLuint> &shaders) {
 	if (status == GL_FALSE) {
 		GLint info_log_length;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
-		GLchar *str_info_log = new GLchar[info_log_length + 1];
+		GLchar str_info_log [info_log_length + 1];
 		glGetProgramInfoLog(program, info_log_length, NULL, str_info_log);
 		fprintf(stderr, "Linker failure: %s\n", str_info_log);
-		delete[] str_info_log;
 	}
-	for(size_t i = 0; i < shaders.size(); i++)
+	for(size_t i = 0; i < n_shaders; i++)
 		glDetachShader(program, shaders[i]);
 	return program;
 }
@@ -141,65 +137,65 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 	return textured_mesh;
 }
 
-void glr_init_array_buffer_from_vectorset(glr_vectorset& vector) {
-	glGenBuffers(1, &(vector.vbo));
-	glBindBuffer(GL_ARRAY_BUFFER, vector.vbo);
+void glr_init_array_buffer_from_vectorset(glr_vectorset *vector) {
+	glGenBuffers(1, &(vector->vbo));
+	glBindBuffer(GL_ARRAY_BUFFER, vector->vbo);
 	glBufferData(GL_ARRAY_BUFFER,
-				 vector.size * vector.n_vectors * vector.n_dims,
-				 vector.vectors, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(vector.attribute_pointer);
-	glVertexAttribPointer(vector.attribute_pointer, vector.n_dims,
-						  vector.datatype, GL_FALSE, 0, 0);
+				 (vector->size) * (vector->n_vectors) * (vector->n_dims),
+				 vector->vectors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vector->attribute_pointer);
+	glVertexAttribPointer(vector->attribute_pointer, vector->n_dims,
+						  vector->datatype, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void glr_init_element_buffer_from_vectorset(glr_vectorset& vector) {
-	glGenBuffers(1, &(vector.vbo));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vector.vbo);
+void glr_init_element_buffer_from_vectorset(glr_vectorset *vector) {
+	glGenBuffers(1, &(vector->vbo));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vector->vbo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-				 vector.size * vector.n_vectors * vector.n_dims,
-				 vector.vectors, GL_STATIC_DRAW);
+			(vector->size) * (vector->n_vectors) * (vector->n_dims),
+			vector->vectors, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // TODO make the texture sampler a seperate customizable thing.
-void glr_init_texture(glr_texture& texture) {
+void glr_init_texture(glr_texture *texture) {
 	printf("glr_init_texture(...)\n");
 	// activate this textures unit
-	glActiveTexture(GL_TEXTURE0 + texture.unit);
-	glGenTextures(1, &(texture.texture_ID));
-	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, texture.internal_format,
-		texture.width, texture.height, 0, texture.format,
-		texture.type, texture.data);
+	glActiveTexture(GL_TEXTURE0 + texture->unit);
+	glGenTextures(1, &(texture->texture_ID));
+	glBindTexture(GL_TEXTURE_2D, texture->texture_ID);
+	glTexImage2D(GL_TEXTURE_2D, 0, texture->internal_format,
+		texture->width, texture->height, 0, texture->format,
+		texture->type, texture->data);
 	// Create the description of the texture (sampler) and bind it to the
 	// correct texture unit
-	glGenSamplers(1, &(texture.sampler));
-	glSamplerParameteri(texture.sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glSamplerParameteri(texture.sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glSamplerParameteri(texture.sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glBindSampler(texture.unit, texture.sampler);
+	glGenSamplers(1, &(texture->sampler));
+	glSamplerParameteri(texture->sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glSamplerParameteri(texture->sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glSamplerParameteri(texture->sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glBindSampler(texture->unit, texture->sampler);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void glr_init_buffers_from_textured_mesh(glr_textured_mesh& mesh) {
+void glr_init_buffers_from_textured_mesh(glr_textured_mesh *mesh) {
 	printf("glr_init_buffers_from_textured_mesh(...)\n");
-	glGenVertexArrays(1, &(mesh.vao));
-	glBindVertexArray(mesh.vao);
-	glr_init_array_buffer_from_vectorset(mesh.h_points);
-	glr_init_array_buffer_from_vectorset(mesh.tcoords);
-	glr_init_element_buffer_from_vectorset(mesh.trilist);
+	glGenVertexArrays(1, &(mesh->vao));
+	glBindVertexArray(mesh->vao);
+	glr_init_array_buffer_from_vectorset(&mesh->h_points);
+	glr_init_array_buffer_from_vectorset(&mesh->tcoords);
+	glr_init_element_buffer_from_vectorset(&mesh->trilist);
 	glBindVertexArray(0);
 }
 
-void glr_bind_texture_to_program(glr_texture& texture, GLuint program) {
-	glActiveTexture(GL_TEXTURE0 + texture.unit);
-	glBindTexture(GL_TEXTURE_2D, texture.texture_ID);
+void glr_bind_texture_to_program(glr_texture *texture, GLuint program) {
+	glActiveTexture(GL_TEXTURE0 + texture->unit);
+	glBindTexture(GL_TEXTURE_2D, texture->texture_ID);
 	// bind the texture to a uniform called "texture" which can be
 	// accessed from shaders
-	texture.uniform = glGetUniformLocation(program, "texture_image");
-	glUniform1i(texture.uniform, texture.unit);
+	texture->uniform = glGetUniformLocation(program, "texture_image");
+	glUniform1i(texture->uniform, texture->unit);
 	// set the active Texture to 0 - as long as this is not changed back
 	// to textureImageUnit, we know our shaders will find textureImage bound to
 	// GL_TEXTURE_2D when they look in textureImageUnit

@@ -1,6 +1,6 @@
-#include <iostream>
+#include <stdio.h>
 #include <stdint.h>
-#include "Rasterizer.h"
+#include "glrasterizer.h"
 
 void init_points(double* points) 
 {
@@ -79,38 +79,20 @@ int main(int argc, char** argv)
     size_t n_tris = 1;
     size_t t_w = 64;
     size_t t_h = 64;
-    double *points = new double[n_points * 4];
-    float *color = new float[n_points * 3];
-    uint8_t *texture = new uint8_t[t_w * t_h * 4];
-    float *tcoords = new float[n_points * 2];
+    double points [n_points * 4];
+    uint8_t texture [t_w * t_h * 4];
+    float tcoords [n_points * 2];
 
     init_points(points);
     init_tcoords(tcoords);
     init_texture(texture, t_w * t_h);
-    init_color(color);
 
-    Rasterizer rasterizer(points, color, n_points, trilist, n_tris, tcoords, 
-            texture, t_w, t_h, true);
+    init_scene(points, n_points, trilist, n_tris, tcoords, texture, t_w, t_h);
 
     int output_w = 128;
     int output_h = 128;
-    uint8_t* pixels = new uint8_t[output_w * output_h * 4];
-    float* colorResult = new float[output_w * output_h * 3];
-    rasterizer.render(argc, argv);
-
-    int count = 0;
-    for(int i = 0; i < output_h * output_w * 3; i++) {
-        if(colorResult[i] > 0.1)
-            count++;
-    }
-    double ratio  = count * 1.0 / (output_h * output_w * 3.0);
-    std::cout << "Proportion non-black: " << ratio << std::endl;
-    delete[] points;
-    delete[] color;
-    delete[] texture;
-    delete[] tcoords;
-    delete[] pixels;
-    delete[] colorResult;
-    return(EXIT_SUCCESS);
+    uint8_t pixels [output_w * output_h * 4];
+    return_FB_pixels(pixels, output_w, output_h);
+    return(0);
 }
 
