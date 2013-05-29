@@ -1,35 +1,17 @@
-#include "Rasterizer.h"
 #include <iostream>
 #include <stdio.h>
 #include <algorithm>
 #include <fstream>
 #include <cmath>
+#include "Rasterizer.h"
 #include "shaders.h"
-
-void read_file(const char* filepath, GLchar* file_string) {
-	std::ifstream file(filepath, std::ifstream::in);
-	unsigned int i  = 0;
-	while(file.good()) {
-		file_string[i] = file.get();
-		i++;
-	}
-	file_string[i-1] = '\0';
-}
-
-GLuint create_shader_from_filepath(GLenum shader_type,
-						           const char* filepath){
-	GLchar file_string[100000];
-	read_file(filepath, file_string);
-	// now we've done reading, const the data
-	const GLchar* const_file_string = (const char*)file_string;
-	return glr_create_shader_from_string(shader_type, const_file_string);
-}
 
 
 Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 					   unsigned int* trilist, size_t n_tris, float* tcoords,
 					   uint8_t* texture, size_t texture_width,
-					   size_t texture_height, bool INTERACTIVE_MODE) {
+					   size_t texture_height, bool INTERACTIVE_MODE)
+{
 	_light_vector = new float[3];
 	memset(_light_vector,0,3);
 	_light_vector[2] = 1.0;
@@ -58,12 +40,14 @@ Rasterizer::Rasterizer(double* points, float* color, size_t n_points,
 		RETURN_FRAMEBUFFER = true;
 }
 
-Rasterizer::~Rasterizer() {
+Rasterizer::~Rasterizer()
+{
 	std::cout << "Rasterizer::~Rasterizer()" << std::endl;
 	delete [] _light_vector;
 }
 
-void Rasterizer::init() {
+void Rasterizer::init()
+{
 	std::cout << "Rasterizer::init()" << std::endl;
 	glr_global_state_settings();
 	init_program();
@@ -81,7 +65,8 @@ void Rasterizer::init() {
 	glr_check_error();
 }
 
-void Rasterizer::init_buffers() {
+void Rasterizer::init_buffers()
+{
 	std::cout << "Rasterizer::init_buffers()" << std::endl;
 
     glr_init_buffers_from_textured_mesh(_textured_mesh);
@@ -97,7 +82,8 @@ void Rasterizer::init_buffers() {
 }
 
 
-void Rasterizer::init_frame_buffer() {
+void Rasterizer::init_frame_buffer()
+{
 	std::cout << "Rasterizer::init_frame_buffer()" << std::endl;
 	glr_check_error();
 	glGenFramebuffers(1, &_fbo);
@@ -185,7 +171,8 @@ void Rasterizer::init_frame_buffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Rasterizer::display() {
+void Rasterizer::display()
+{
 	std::cout << "Rasterizer::display()" << std::endl;
 	if(RETURN_FRAMEBUFFER)
 		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
@@ -216,7 +203,8 @@ void Rasterizer::display() {
 		glutLeaveMainLoop();
 }
 
-void Rasterizer::init_program() {
+void Rasterizer::init_program()
+{
 	std::cout << "Rasterizer::init_program()" << std::endl;
 	std::vector<GLuint> shaders;
 	const GLchar *vertex_shader_str;
@@ -236,7 +224,8 @@ void Rasterizer::init_program() {
 	std::for_each(shaders.begin(), shaders.end(), glDeleteShader);
 }
 
-void Rasterizer::cleanup() {
+void Rasterizer::cleanup()
+{
 	std::cout << "Rasterizer::cleanup()" << std::endl;
 	if(RETURN_FRAMEBUFFER)
 		grab_framebuffer_data();
@@ -244,7 +233,8 @@ void Rasterizer::cleanup() {
 	glr_destroy_vbos_on_trianglar_mesh(_textured_mesh);
 }
 
-void Rasterizer::grab_framebuffer_data() {
+void Rasterizer::grab_framebuffer_data()
+{
 	std::cout << "Rasterizer::grab_framebuffer_data()" << std::endl;
 	if(RETURN_FRAMEBUFFER) {
 //		glr_get_framebuffer(_fb_texture_unit, _fb_texture, GL_RGBA,
@@ -262,7 +252,8 @@ void Rasterizer::grab_framebuffer_data() {
 	}
 }
 
-void Rasterizer::render(int argc, char *argv[]) {
+void Rasterizer::render(int argc, char *argv[])
+{
 	std::cout << "Rasterizer::render()" << std::endl;
 	if(!RETURN_FRAMEBUFFER) {
 		float fFrustumScale = 1.0f; float fzNear = 0.5f; float fzFar = 10.0f;
@@ -282,7 +273,8 @@ void Rasterizer::render(int argc, char *argv[]) {
 }
 
 void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,
-						          float *color_pixels, int width, int height) {
+						          float *color_pixels, int width, int height)
+{
 	std::cout << "Rasterizer::return_FB_pixels()" << std::endl;
 	_fb_texture_pixels = pixels;
 	_fbo_color_pixels = color_pixels;
@@ -297,7 +289,8 @@ void Rasterizer::return_FB_pixels(int argc, char *argv[], uint8_t *pixels,
 	start_framework(argc, argv);
 }
 
-void Rasterizer::reshape(int width, int height) {
+void Rasterizer::reshape(int width, int height)
+{
 	std::cout << "Rasterizer::reshape(...)" << std::endl;
 	// if in interactive mode -> adjust perspective matrix
 	if(!RETURN_FRAMEBUFFER) {
@@ -311,7 +304,8 @@ void Rasterizer::reshape(int width, int height) {
     glViewport(0, 0, (GLsizei) width, (GLsizei) height);
 }
 
-void Rasterizer::mouseMove(int x, int y) {
+void Rasterizer::mouseMove(int x, int y)
+{
 	std::cout << "Rasterizer::mouseMove(...)" << std::endl;
 	// if in interactive mode
 	if(!RETURN_FRAMEBUFFER) {
