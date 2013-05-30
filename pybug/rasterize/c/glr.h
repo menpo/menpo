@@ -73,7 +73,7 @@ typedef struct {
  * If an error is encountered, the program is exited, and a log to stderr
  * of the problem made.
  */
-void glr_check_error();
+void glr_check_error(void);
 
 /**
  * Builds an OpenGL shader of the type shader_type, where shader_type can be:
@@ -160,7 +160,7 @@ void glr_init_texture(glr_texture *texture);
 void glr_bind_texture_to_program(glr_texture *texture, GLuint program);
 
 
-void glr_global_state_settings();
+void glr_global_state_settings(void);
 
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,
@@ -168,7 +168,7 @@ void glr_get_framebuffer(unsigned int texture_unit_offset,
 		             GLenum texture_datatype, void* texture);
 
 
-void glr_destroy_program();
+void glr_destroy_program(void);
 
 
 void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh);

@@ -2,8 +2,9 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include "glrglut.h"
+#include "glrasterizer.h"
 
-glr_glut_config glr_build_glut_config(){
+glr_glut_config glr_build_glut_config(void){
 	glr_glut_config config;
 	config.title = "Generic Viewer";
     config.WINDOW_WIDTH = 768;
@@ -16,6 +17,7 @@ glr_glut_config glr_build_glut_config(){
 
 void glr_glut_init(glr_glut_config config)
 {
+	printf("glr_glut_init(...)\n");
 	// Fire up GLUT
 	int argc = 1;
 	char *argv = "dummy";
@@ -35,27 +37,24 @@ void glr_glut_init(glr_glut_config config)
 	}
 	fprintf(stdout, "  - Using GLEW %s\n", glewGetString(GLEW_VERSION));
 	if(GLEW_ARB_texture_buffer_object_rgb32)
-	   fprintf(stdout, "Float (X,Y,Z) rendering is supported\n");
+	   fprintf(stdout, "  - Float (X,Y,Z) rendering is supported\n");
 	else
-	   fprintf(stdout, "Float (X,Y,Z) rendering not supported\n");
+	   fprintf(stdout, "  - Float (X,Y,Z) rendering not supported\n");
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
 	fprintf(stdout,"  - OpenGL Version: %s\n",glGetString(GL_VERSION));
 	glr_glut_set_callbacks();
 }
 
-void glr_glut_set_callbacks()
+void glr_glut_set_callbacks(void)
 {
 	glutReshapeFunc(glr_glut_reshape);
-	glutDisplayFunc(glr_glut_display);
-	glutCloseFunc(glr_glut_cleanup);
-}
-
-
-void glr_glut_display() {
+	glutDisplayFunc(display);
+	glutCloseFunc(cleanup);
 }
 
 void glr_glut_reshape(int width, int height) {
+	printf("glr_glut_reshape(...)\n");
 //	if(!PERSPECTIVE) {
 //		float fFrustumScale = 1.4;
 //		_m_perspective[0] = fFrustumScale / (width / (float)height);
@@ -88,5 +87,7 @@ void glr_glut_reshape(int width, int height) {
 //	}
 //}
 
-void glr_glut_cleanup() {
+void glr_glut_cleanup(void) {
+	printf("glr_glut_cleanup()\n");
+	cleanup();
 }

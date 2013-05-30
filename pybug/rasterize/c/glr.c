@@ -13,7 +13,7 @@
 #include <GL/freeglut.h>
 #include "glr.h"
 
-void glr_check_error() {
+void glr_check_error(void) {
 	GLenum err;
 	err = glGetError();
 	if (err != GL_NO_ERROR) {
@@ -203,7 +203,7 @@ void glr_bind_texture_to_program(glr_texture *texture, GLuint program) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void glr_global_state_settings() {
+void glr_global_state_settings(void) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -221,7 +221,7 @@ void glr_get_framebuffer(unsigned int texture_unit_offset,
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void glr_destroy_program() {
+void glr_destroy_program(void) {
 	glUseProgram(0);
 }
 
