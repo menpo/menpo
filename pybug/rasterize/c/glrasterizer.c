@@ -15,19 +15,9 @@ void init_scene(double* points, size_t n_points, unsigned int* trilist,
 		size_t texture_height)
 {
 	printf("init_scene(...)\n");
-	scene.config = glr_build_glut_config();
 	scene.mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
 											 tcoords, texture, texture_width,
 											 texture_height);
-	// now we have an instantiated glr_textured_mesh, we have to choose
-	// some the OpenGL properties and set them. We decide that the h_points
-	// should be bound to input 0 into the shader, while tcoords should be
-	// input 1...
-	scene.mesh.h_points.attribute_pointer = 0;
-	scene.mesh.tcoords.attribute_pointer = 1;
-	// and we assign the texture we have to unit 1.
-	scene.mesh.texture.unit = 1;
-
 	glr_math_float_matrix_eye(scene.camera.perspective);
 	glr_math_float_matrix_eye(scene.camera.rotation);
 	memset(scene.camera.translation, 0, sizeof(float) * 4);
@@ -42,6 +32,8 @@ void return_FB_pixels(uint8_t *pixels, int width, int height)
 	memset(scene.camera.translation, 0, sizeof(float) * 4);
     glr_math_float_matrix_eye(scene.camera.perspective);
     glr_math_float_matrix_eye(scene.camera.rotation);
+    // set the glut config
+	scene.config = glr_build_glut_config(width, height);
 	// start glut
 	glr_glut_init(scene.config);
 	// call the init
@@ -58,10 +50,19 @@ void init(void)
 	_init_program_and_shaders();
 	glUseProgram(scene.program);
 	glr_check_error();
+	// now we have an instantiated glr_textured_mesh, we have to choose
+	// some the OpenGL properties and set them. We decide that the h_points
+	// should be bound to input 0 into the shader, while tcoords should be
+	// input 1...
+	scene.mesh.h_points.attribute_pointer = 0;
+	scene.mesh.tcoords.attribute_pointer = 1;
+	// assign the meshes texture to be on unit 1 in initialize the buffer for
+	// it
+	scene.mesh.texture.unit = 1;
 	glr_init_buffers_from_textured_mesh(&scene.mesh);
 	glr_check_error();
-	// choose which unit to use and activate it
 	glr_init_texture(&scene.mesh.texture);
+	glr_check_error();
 	glr_bind_texture_to_program(&scene.mesh.texture, scene.program);
 	glr_check_error();
 	_init_frame_buffer();
@@ -132,25 +133,7 @@ void _init_program_and_shaders(void)
 
 
 
-void _init_frame_buffer(void)
-{
-	printf("_init_frame_buffer()\n");
-	glr_check_error();
-	// assign the framebuffer texture to a new unit
-	scene.fb_texture.unit = 2;
-	// and initialise it
-	glr_init_texture(&scene.fb_texture);
-	// now we can bind to the active framebuffer.
-	glGenFramebuffers(1, &scene.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
-	// attach the texture to the framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-		GL_TEXTURE_2D, scene.fb_texture.unit, 0);
-	// THIS BEING GL_COLOR_ATTACHMENT0 means that anything rendered to
-	// layout(location = 0) in the fragment shader will end up here.
-	glr_check_error();
-	glBindTexture(GL_TEXTURE_2D, 0);
-	//	// repeat for the position rendering
+//	// repeat for the position rendering
 	//	_texture_fb_color = glr_build_rgb_float_texture(_fbo_color_pixels,
 	//			WINDOW_WIDTH, WINDOW_HEIGHT);
 	//    _texture_fb_color.unit = 3;
@@ -171,15 +154,31 @@ void _init_frame_buffer(void)
 	//		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	//	glBindTexture(GL_TEXTURE_2D, 0);
 	//
-	GLsizei n_buffers = 1;
+
+
+
+void _init_frame_buffer(void)
+{
+	printf("_init_frame_buffer()\n");
+	// for a framebuffer we don't actually care about the texture unit.
+	// however, glr_init_texture will bind the unit before performing the
+	// initialization for consistency. We can safely set a (usually illegal)
+	// value of zero here so that the unit binding is basically a no op.
+	scene.fb_texture.unit = 0;
+	glr_init_texture(&scene.fb_texture);
+	glr_init_framebuffer(&scene.fbo, &scene.fb_texture,
+			GL_COLOR_ATTACHMENT0);
+	// We set the framebuffer to GL_COLOR_ATTACHMENT0 - anything rendered to
+	// layout(location = 0) in the fragment shader will end up here.
 	const GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
-	glDrawBuffers(n_buffers, buffers);
+	glr_register_draw_framebuffers(scene.fbo, 1, buffers);
 	// now, the depth buffer
 	GLuint depth_buffer;
-	glGenRenderbuffers(1,  &depth_buffer);
+	glGenRenderbuffers(1, &depth_buffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,
 			scene.fb_texture.width, scene.fb_texture.height);
+	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 			GL_RENDERBUFFER, depth_buffer);
 	// THIS BEING GL_DEPTH_COMPONENT means that the depth information at each
@@ -194,52 +193,22 @@ void _init_frame_buffer(void)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-
 void display(void)
 {
 	printf("display()\n");
 	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(scene.program);
-	glBindVertexArray(scene.mesh.vao);
-//	if(!RETURN_FRAMEBUFFER) {
-//		scene.camera.perspective_unif = glGetUniformLocation(scene.program, "perspectiveMatrix");
-//		glUniformMatrix4fv(scene.camera.perspective_unif, 1, GL_FALSE,
-//				scene.camera.perspective);
-//		scene.camera.rotation_unif = glGetUniformLocation(scene.program, "rotationMatrix");
-//		glUniformMatrix4fv(scene.camera.rotation_unif, 1, GL_FALSE,
-//				scene.camera.rotation);
-//		scene.camera.translation_unif = glGetUniformLocation(scene.program, "translationVector");
-//		glUniform4fv(scene.camera.translation_unif, 1,
-//				scene.camera.translation);
-//		scene.light.position_unif = glGetUniformLocation(scene.program, "lightDirection");
-//		glUniform3fv(scene.light.position_unif, 1,
-//				scene.light.position);
-//	}
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.mesh.trilist.vbo);
-	glActiveTexture(GL_TEXTURE0 + scene.mesh.texture.unit);
-	glBindTexture(GL_TEXTURE_2D, scene.mesh.texture.texture_ID);
-	glDrawElements(GL_TRIANGLES, scene.mesh.trilist.n_vectors * 3,
-				   GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-	glutSwapBuffers();
+	glr_render_scene(&scene);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glutLeaveMainLoop();
 }
 
 
-void _grab_framebuffer_data(void)
+void grab_framebuffer_and_cleanup(void)
 {
-	printf("_grab_framebuffer_data()\n");
+	printf("grab_framebuffer_and_cleanup()\n");
 	glr_get_framebuffer(scene.fb_texture.unit, scene.fb_texture.texture_ID,
 			scene.fb_texture.format, scene.fb_texture.type,
 			scene.fb_texture.data);
-}
-
-void cleanup(void)
-{
-	printf("cleanup()\n");
-	_grab_framebuffer_data();
 	glr_destroy_program();
 	glr_destroy_vbos_on_trianglar_mesh(scene.mesh);
 }

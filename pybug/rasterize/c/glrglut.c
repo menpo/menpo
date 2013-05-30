@@ -4,13 +4,13 @@
 #include "glrglut.h"
 #include "glrasterizer.h"
 
-glr_glut_config glr_build_glut_config(void){
+glr_glut_config glr_build_glut_config(int width, int height){
 	glr_glut_config config;
 	config.title = "Generic Viewer";
-    config.WINDOW_WIDTH = 768;
-    config.WINDOW_HEIGHT = 768;
-    config.WINDOW_X_POSITION = 100;
-    config.WINDOW_Y_POSITION = 100;
+    config.WINDOW_WIDTH = width;
+    config.WINDOW_HEIGHT = height;
+    config.WINDOW_X_POSITION = 0;
+    config.WINDOW_Y_POSITION = 0;
     config.display_mode = GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH;
     return config;
 }
@@ -50,7 +50,7 @@ void glr_glut_set_callbacks(void)
 {
 	glutReshapeFunc(glr_glut_reshape);
 	glutDisplayFunc(display);
-	glutCloseFunc(cleanup);
+	glutCloseFunc(grab_framebuffer_and_cleanup);
 }
 
 void glr_glut_reshape(int width, int height) {
@@ -89,5 +89,5 @@ void glr_glut_reshape(int width, int height) {
 
 void glr_glut_cleanup(void) {
 	printf("glr_glut_cleanup()\n");
-	cleanup();
+	grab_framebuffer_and_cleanup();
 }

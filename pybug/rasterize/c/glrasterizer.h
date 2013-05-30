@@ -15,8 +15,6 @@ void _init_program_and_shaders(void);
 
 void _init_frame_buffer(void);
 
-void _grab_framebuffer_data(void);
-
 void display(void);
 
-void cleanup(void);
+void grab_framebuffer_and_cleanup(void);

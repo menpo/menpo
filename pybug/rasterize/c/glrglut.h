@@ -9,7 +9,7 @@ typedef struct {
 	unsigned int display_mode;
 } glr_glut_config;
 
-glr_glut_config glr_build_glut_config(void);
+glr_glut_config glr_build_glut_config(int width, int height);
 
 void glr_glut_init(glr_glut_config config);
 

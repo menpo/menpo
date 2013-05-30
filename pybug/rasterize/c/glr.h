@@ -160,7 +160,17 @@ void glr_init_texture(glr_texture *texture);
 void glr_bind_texture_to_program(glr_texture *texture, GLuint program);
 
 
+void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment);
+
+
+void glr_register_draw_framebuffers(GLuint fbo, size_t n_attachments,
+		GLuint* attachments);
+
+
 void glr_global_state_settings(void);
+
+
+void glr_render_scene(glr_scene* scene);
 
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,
@@ -175,6 +185,7 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh);
 
 
 void glr_math_float_matrix_eye(float *matrix);
+
 
 void glr_math_float_matrix_rotation_for_angles(float *matrix, float angle_x,
                                                float angle_y);

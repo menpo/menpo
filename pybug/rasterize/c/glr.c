@@ -1,10 +1,3 @@
-/*
- * gllr.cpp
- *
- *  Created on: 16 May 2013
- *      Author: jab08
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -203,12 +196,59 @@ void glr_bind_texture_to_program(glr_texture *texture, GLuint program) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
+{
+	glGenFramebuffers(1, fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D,
+			texture->texture_ID, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glr_check_error();
+}
+
+void glr_register_draw_framebuffers(GLuint fbo, size_t n_attachments,
+		GLuint* attachments)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glDrawBuffers(n_attachments, attachments);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glr_check_error();
+}
+
 void glr_global_state_settings(void) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glDepthFunc(GL_LEQUAL);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void glr_render_scene(glr_scene* scene) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(scene->program);
+	glBindVertexArray(scene->mesh.vao);
+	scene->camera.perspective_unif = glGetUniformLocation(scene->program,
+			"perspective");
+	glUniformMatrix4fv(scene->camera.perspective_unif, 1, GL_FALSE,
+			scene->camera.perspective);
+	scene->camera.rotation_unif = glGetUniformLocation(scene->program,
+			"rotation");
+	glUniformMatrix4fv(scene->camera.rotation_unif, 1, GL_FALSE,
+			scene->camera.rotation);
+	scene->camera.translation_unif = glGetUniformLocation(scene->program,
+			"translation");
+	glUniform4fv(scene->camera.translation_unif, 1, scene->camera.translation);
+	scene->light.position_unif = glGetUniformLocation(scene->program,
+			"light_position");
+	glUniform3fv(scene->light.position_unif, 1, scene->light.position);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
+	glActiveTexture(GL_TEXTURE0 + scene->mesh.texture.unit);
+	glBindTexture(GL_TEXTURE_2D, scene->mesh.texture.texture_ID);
+	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
+			GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glutSwapBuffers();
 }
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,
