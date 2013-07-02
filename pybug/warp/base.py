@@ -19,7 +19,7 @@ def matlab_interpolator(image, coords, order, type):
 
 
 def warp(image, template_shape, transform,
-         interpolator=matlab_interpolator,
+         interpolator=map_coordinates_interpolator,
          type='constant', order=1):
     # Swap x and y for images
     dims = list(template_shape)

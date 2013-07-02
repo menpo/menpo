@@ -113,7 +113,7 @@ def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
     """
     Commonly, textures of meshes will have the same name as the mesh file
     """
-    image_filenames = [os.path.splitext(f)[0] for f in image_paths]
+    image_filenames = [os.path.splitext(f)[0] for f, ext in image_paths]
     mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
     images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
     image_name_to_path = {}

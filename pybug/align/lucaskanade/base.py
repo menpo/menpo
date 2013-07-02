@@ -2,13 +2,16 @@ import abc
 from scipy.linalg import norm, solve
 import numpy as np
 from pybug.warp import warp
+from pybug.warp.base import map_coordinates_interpolator
 
 
 class LucasKanade:
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, image, template, similarity_measure, transform,
-                 optimisation='GN', update_step=0.001, eps=10 ** -6):
+                 interpolator=map_coordinates_interpolator,
+                 optimisation='GN', update_step=0.001,
+                 eps=10 ** -6):
         self._image = image
         self._template = template
         self._transform = transform
@@ -17,6 +20,7 @@ class LucasKanade:
         self._update_step = update_step
         self._eps = eps
         self._warp_parameters = []
+        self._interpolator = interpolator
 
     def _select_optimisation(self, optimisation):
         if optimisation is 'GN':
@@ -63,7 +67,8 @@ class InverseCompositional(LucasKanade):
     def align(self, max_iters=30):
         self._warp_parameters = []
         self._iters = 0
-        delta_p = self._eps + 1
+        # Initial error > eps
+        error = self._eps + 1
 
         # Compute the Jacobian of the warp
         dW_dp = self._transform.jacobian(self._template.shape)
@@ -76,9 +81,10 @@ class InverseCompositional(LucasKanade):
         self._H = self._sim_measure.calculate_hessian(VT_dW_dp)
 
         # Baker-Matthews, Inverse Compositional Algorithm
-        while self._iters < (max_iters - 1) and np.abs(norm(delta_p)) > self._eps:
+        while self._iters < (max_iters - 1) and error > self._eps:
             # Compute warped image with current parameters
-            IWxp = warp(self._image, self._template.shape, self._transform)
+            IWxp = warp(self._image, self._template.shape, self._transform,
+                        interpolator=self._interpolator)
 
             self._warp_parameters.append(self._transform.parameters)
 
@@ -97,6 +103,9 @@ class InverseCompositional(LucasKanade):
             # Increase iteration count
             self._iters += 1
 
+            # Test convergence
+            error = np.abs(norm(delta_p))
+
         # Append final warp params
         self._warp_parameters.append(self._transform.parameters)
 
@@ -108,12 +117,14 @@ class ForwardAdditive(LucasKanade):
     def align(self, max_iters=30):
         self._warp_parameters = []
         self._iters = 0
-        delta_p = self._eps + 1
+        # Initial error > eps
+        error = self._eps + 1
 
         # Forward Additive Algorithm
-        while self._iters < (max_iters - 1) and np.abs(norm(delta_p)) > self._eps:
+        while self._iters < (max_iters - 1) and error > self._eps:
             # Compute warped image with current parameters
-            IWxp = warp(self._image, self._template.shape, self._transform)
+            IWxp = warp(self._image, self._template.shape, self._transform,
+                        interpolator=self._interpolator)
 
             self._warp_parameters.append(self._transform.parameters)
 
@@ -123,7 +134,8 @@ class ForwardAdditive(LucasKanade):
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = (self._sim_measure.
                         steepest_descent_images(self._image, dW_dp,
-                                                transform=self._transform))
+                            transform=self._transform,
+                            interpolator=self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self._sim_measure.calculate_hessian(VI_dW_dp)
@@ -142,6 +154,9 @@ class ForwardAdditive(LucasKanade):
 
             # Increase iteration count
             self._iters += 1
+
+            # Test convergence
+            error = np.abs(norm(delta_p))
 
          # Append final warp params
         self._warp_parameters.append(self._transform.parameters)
