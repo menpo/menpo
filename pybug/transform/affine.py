@@ -4,7 +4,6 @@ from .base import Transform
 from pybug.exceptions import DimensionalityError
 import pybug.matlab as matlab
 import numpy as np
-from scipy import ndimage
 
 
 class AffineTransform(Transform):
@@ -84,8 +83,8 @@ class AffineTransform(Transform):
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        return AffineTransform(np.dot(affine_transform.homogeneous_matrix,
-                                      self.homogeneous_matrix))
+        return AffineTransform(np.dot(self.homogeneous_matrix,
+                                      affine_transform.homogeneous_matrix))
 
     def decompose(self):
         """

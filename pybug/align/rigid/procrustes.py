@@ -1,7 +1,7 @@
 import numpy as np
 from pybug.align.base import MultipleAlignment
 from pybug.align.rigid.base import RigidAlignment
-from pybug.transform import Rotation, Scale, Translation
+from pybug.transform.affine import Rotation, Scale, Translation
 
 
 class Procrustes(RigidAlignment):

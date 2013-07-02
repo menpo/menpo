@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from pybug.transform import Rotation, Scale, Translation
+from pybug.transform.affine import Rotation, Translation
 from pybug.exceptions import DimensionalityError
 from nose.tools import raises
 
