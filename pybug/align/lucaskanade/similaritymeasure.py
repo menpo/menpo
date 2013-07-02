@@ -26,6 +26,7 @@ import scipy.linalg
 from pybug.convolution import log_gabor
 import pybug.matlab as matlab
 from pybug.warp import warp
+from pybug.warp.base import map_coordinates_interpolator
 
 
 class SimilarityMeasure(object):
@@ -53,7 +54,7 @@ class SimilarityMeasure(object):
         return np.sqrt(np.mean(self._error_img ** 2))
 
     @abc.abstractmethod
-    def steepest_descent_images(self, image, dW_dp):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
         r"""
         Calculates the standard steepest descent images. Within the forward
         additive framework this is defined as
@@ -81,13 +82,15 @@ class SimilarityMeasure(object):
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
         pass
 
-    def _calculate_gradients(self, image, shape, transform=None):
+    def _calculate_gradients(self, image, shape, transform=None,
+                             interpolator=map_coordinates_interpolator):
         # Calculate the gradient over the image
         gradient = matlab.gradient(image)
 
         # Warp image for forward additive, if we've been given a transform
         if not transform is None:
-            gradient = [warp(g, shape, transform) for g in gradient]
+            gradient = [warp(g, shape, transform, interpolator=interpolator)
+                        for g in gradient]
 
         return gradient
 
@@ -110,9 +113,9 @@ class SimilarityMeasure(object):
 
 class LeastSquares(SimilarityMeasure):
 
-    def steepest_descent_images(self, image, dW_dp, transform=None):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                             transform)
+                                             **kwargs)
 
         # Add an extra axis for broadcasting
         gradient = [g[np.newaxis, ...] for g in gradient]
@@ -143,9 +146,9 @@ class GaborFourier(SimilarityMeasure):
             gabor = log_gabor(np.ones(image_shape), **kwargs)
             self._filter_bank = gabor[2]  # Get filter bank matrix
 
-    def steepest_descent_images(self, image, dW_dp, transform=None):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                             transform)
+                                             **kwargs)
         gradient = [g[np.newaxis, ...] for g in gradient]
         gradient = np.concatenate(gradient, axis=0)
         VT_dW_dp = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
@@ -180,12 +183,12 @@ class ECC(SimilarityMeasure):
 
         return i
 
-    def steepest_descent_images(self, image, dW_dp, transform=None):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
 
         norm_image = self.__normalise_images(image)
 
         gradient = self._calculate_gradients(norm_image, dW_dp.shape[-2:],
-                                             transform)
+                                             **kwargs)
         gradient = [g[np.newaxis, ...] for g in gradient]
         gradient = np.concatenate(gradient, axis=0)
         G = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
@@ -237,10 +240,10 @@ class GradientImages(SimilarityMeasure):
         ab = ab + m_ab
         return gradients / ab
 
-    def steepest_descent_images(self, image, dW_dp, transform=None):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
         n_dim = len(image.shape)
         gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              transform)
+                                              **kwargs)
 
         self.__template_gradients = self.__regularise_gradients(gradients)
 
@@ -294,9 +297,9 @@ class GradientImages(SimilarityMeasure):
 
 class GradientCorrelation(SimilarityMeasure):
 
-    def steepest_descent_images(self, image, dW_dp, transform=None):
+    def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              transform)
+                                              **kwargs)
 
         phi = np.angle(gradients[0] + gradients[1] * 1j)
         self.__cos_phi = np.cos(phi)
