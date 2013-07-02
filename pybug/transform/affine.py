@@ -4,7 +4,6 @@ from .base import Transform
 from pybug.exceptions import DimensionalityError
 import pybug.matlab as matlab
 import numpy as np
-from scipy import ndimage
 
 
 class AffineTransform(Transform):
