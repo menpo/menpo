@@ -111,7 +111,7 @@ class Residual(object):
         return self._sum_over_axes(sd, axes)
 
 
-class LeastSquares(Residual):
+class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
