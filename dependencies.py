@@ -12,8 +12,8 @@ requirements = ['numpy>=1.7.1',
                 'nose>=1.3.0',
                 'mayavi>=4.3.0',
                 'pyvrml>=2.4',
-                'mlabwrap>=1.1.5']
+                'mlabwrap>=1.1.6']
 
 # NOTE: Have to include the egg name in the requirements list as well
 repositories = ['https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4',
-                'https://github.com/patricksnape/mlabwrap/tarball/master#egg=mlabwrap-1.1.5']
+                'https://github.com/patricksnape/mlabwrap/tarball/master#egg=mlabwrap-1.1.6']
