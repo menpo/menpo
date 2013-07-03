@@ -29,9 +29,9 @@ from pybug.warp import warp
 from pybug.warp.base import map_coordinates_interpolator
 
 
-class SimilarityMeasure(object):
+class Residual(object):
     """
-    An abstract base class for calculating the similarity between two images
+    An abstract base class for calculating the residual between two images
     within the Lucas-Kanade algorithm. The classes were designed
     specifically to work within the Lucas-Kanade framework and so no
     guarantee is made that calling methods on these subclasses will generate
@@ -111,7 +111,7 @@ class SimilarityMeasure(object):
         return self._sum_over_axes(sd, axes)
 
 
-class LeastSquares(SimilarityMeasure):
+class LeastSquares(Residual):
 
     def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
@@ -134,7 +134,7 @@ class LeastSquares(SimilarityMeasure):
         return self._sum_steepest_descent(sd)
 
 
-class GaborFourier(SimilarityMeasure):
+class GaborFourier(Residual):
 
     def __init__(self, image_shape, **kwargs):
         if 'filter_bank' in kwargs:
@@ -172,7 +172,7 @@ class GaborFourier(SimilarityMeasure):
         return self._sum_steepest_descent(sd)
 
 
-class ECC(SimilarityMeasure):
+class ECC(Residual):
 
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
@@ -232,7 +232,7 @@ class ECC(SimilarityMeasure):
         return self._sum_steepest_descent(Ge)
 
 
-class GradientImages(SimilarityMeasure):
+class GradientImages(Residual):
 
     def __regularise_gradients(self, gradients):
         ab = np.sqrt(sum([np.square(g) for g in gradients]))
@@ -295,7 +295,7 @@ class GradientImages(SimilarityMeasure):
         return sum(G)
 
 
-class GradientCorrelation(SimilarityMeasure):
+class GradientCorrelation(Residual):
 
     def steepest_descent_images(self, image, dW_dp, **kwargs):
         gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
