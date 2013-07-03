@@ -8,12 +8,11 @@ from pybug.warp.base import map_coordinates_interpolator
 class LucasKanade:
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image, template, residual, transform,
+    def __init__(self, image, residual, transform,
                  interpolator=map_coordinates_interpolator,
                  optimisation='GN', update_step=0.001,
                  eps=10 ** -6):
         self._image = image
-        self._template = template
         self._transform = transform
         self._residual = residual
         self._calculate_delta_p = self._select_optimisation(optimisation)
@@ -62,7 +61,20 @@ class LucasKanade:
         return self._iters
 
 
-class InverseCompositional(LucasKanade):
+class ImageLucasKanade(LucasKanade):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, image, template, residual, transform,
+                 interpolator=map_coordinates_interpolator,
+                 optimisation='GN', update_step=0.001,
+                 eps=10 ** -6):
+        super(ImageLucasKanade, self).__init__(
+            image, residual, transform, interpolator,
+            optimisation, update_step, eps)
+        self._template = template
+
+
+class InverseCompositional(ImageLucasKanade):
 
     def align(self, max_iters=30):
         self._warp_parameters = []
@@ -112,7 +124,57 @@ class InverseCompositional(LucasKanade):
         return self._transform
 
 
-class ForwardAdditive(LucasKanade):
+class AppearanceInverseCompositional(ImageLucasKanade):
+
+    def align(self, max_iters=30):
+        self._warp_parameters = []
+        self._iters = 0
+        # Initial error > eps
+        error = self._eps + 1
+
+        # Compute the Jacobian of the warp (4)
+        dW_dp = self._transform.jacobian(self._template.shape)
+
+        # Compute steepest descent images, VT_dW_dp (3)
+        VT_dW_dp = self._residual.steepest_descent_images(self._template,
+                                                             dW_dp)
+
+        # Compute Hessian and inverse
+        self._H = self._residual.calculate_hessian(VT_dW_dp)
+
+        # Baker-Matthews, Inverse Compositional Algorithm
+        while self._iters < (max_iters - 1) and error > self._eps:
+            # Compute warped image with current parameters
+            IWxp = warp(self._image, self._template.shape, self._transform,
+                        interpolator=self._interpolator)
+
+            self._warp_parameters.append(self._transform.parameters)
+
+            # Compute steepest descent parameter updates
+            sd_delta_p = (self._residual.
+                          steepest_descent_update(VT_dW_dp, IWxp,
+                                                  self._template))
+
+            # Compute gradient descent parameter updates
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Update warp parameters
+            deltap_transform = self._transform.from_parameters(delta_p)
+            self._transform = self._transform.compose(deltap_transform.inverse)
+
+            # Increase iteration count
+            self._iters += 1
+
+            # Test convergence
+            error = np.abs(norm(delta_p))
+
+        # Append final warp params
+        self._warp_parameters.append(self._transform.parameters)
+
+        return self._transform
+
+
+class ForwardAdditive(ImageLucasKanade):
 
     def align(self, max_iters=30):
         self._warp_parameters = []
