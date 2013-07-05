@@ -21,6 +21,17 @@ definitely be sufficient to build the version of numpy that ships with your
 version of Ubuntu - and hopefully will be sufficient for the (newer) version
 of numpy pip will download for you when installing pybug.
 
+Optional Dependancies
+---------------------
+
+The following Python packages are optional dependancies:
+
+  * ``mlabwrap`` - Matlab/Python interface. Needs Matlab to be installed.
+
+Optional dependancies can be installed via the command:
+
+    pip install -e git+https://github.com/YOURGITHUBACCOUNT/pybug.git#egg=pybug[mlabwrap]
+
 External
 --------
 
