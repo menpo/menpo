@@ -17,5 +17,6 @@ setup(name='pybug',
                             quiet=True, language='c++'),
       packages=find_packages(),
       install_requires=dependencies.requirements,
+      extras_require=dependencies.optionals,
       dependency_links=dependencies.repositories
       )
