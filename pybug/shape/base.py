@@ -49,3 +49,22 @@ class Shape(object):
         Returns the meta item at the meta index position.
         """
         pass
+
+    @abc.abstractmethod
+    def as_flattened(self):
+        """
+        Returns a flattened representation of the shape as a single vector.
+
+        Useful for statistical analysis of the shape.
+        """
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def from_flattened(cls, flattened, n_dims, **kwargs):
+        """
+        Build an instance of the shape from the provided 1D flattened array
+        :param flattened: Flattened representation of the shape
+        :param n_dims: Number of dimensions of the shape
+        """
+        pass

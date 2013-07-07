@@ -20,3 +20,14 @@ def test_pointcloud_n_points():
                        [1, 1, 1]])
     pc = PointCloud(points)
     assert(pc.n_points == 2)
+
+
+def test_pointcloud_flatten_rebuild():
+    points = np.array([[1, 2, 3],
+                       [1, 1, 1]])
+    pc = PointCloud(points)
+    flattened = pc.as_flattened()
+    new_pc = PointCloud.from_flattened(flattened, pc.n_dims)
+    assert(np.all(new_pc.n_dims == pc.n_dims))
+    assert(np.all(new_pc.n_points == pc.n_points))
+    assert(np.all(pc.points == new_pc.points))

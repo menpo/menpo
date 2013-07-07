@@ -63,6 +63,7 @@ class Transform(object):
         """
         pass
 
+    # TODO this actually doesn't register as an abstract method
     @classmethod
     @abc.abstractmethod
     def from_parameters(cls, p):
