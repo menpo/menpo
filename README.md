@@ -172,3 +172,35 @@ doesn't work as expected, I would run `make` here. Maybe you switched to a
 different git branch or something with different Cython files - if so, this
 would fix any problems.
 
+TESTING
+=======
+
+For simplicity, we are using
+[nosetests](https://nose.readthedocs.org/en/latest/) to test. Tests are simply
+python files with a name starting with `test_`. For now, tests are placed next
+to the modules that they test - see `pybug.shape` for an example. Tests
+themselves are functions with names starting `test_` inside one of these test
+files.
+
+Running
+
+    nosetests -v
+
+from the top of the repository is all this is required - nose will find all
+our tests and run them for us, ensuring that none of them throw exceptions.
+Note that a `@raises` decorator can also be used to test that desireable
+exceptions are raised - see `pybug.transform.affine_test` for an example.
+
+Note that tests need to access the `data` folder in the repo frequently.
+For now, we have the assumption that `nosetests` is executed from
+the very top of the repo, so data can be reliably found at `./data/` in
+all tests.
+
+
+
+Finally, note that nose runs through all of the pybug package looking for
+tests, importing everything as it goes (much like how Sphinx works looking
+for docs). As a result, on systems which haven't installed the optional
+`mlabwrap`, you will see an error raised as nosetests attempts to import
+it from the pybug.matlab.wrapper` package - this can be safely ignored.
+
