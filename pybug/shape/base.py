@@ -1,8 +1,9 @@
 import abc
 from pybug.shape.landmarks import LandmarkManager
+from pybug.base import Flattenable
 
 
-class Shape(object):
+class Shape(Flattenable):
     """ Abstract representation of shape. All subclasses will have some
      data where semantic meaning can be assigned to the i'th item. Shape
      couples a LandmarkManager to this item of data, meaning,
@@ -47,24 +48,5 @@ class Shape(object):
     def _meta_landmark_at_meta_index(self, index):
         """
         Returns the meta item at the meta index position.
-        """
-        pass
-
-    @abc.abstractmethod
-    def as_flattened(self):
-        """
-        Returns a flattened representation of the shape as a single vector.
-
-        Useful for statistical analysis of the shape.
-        """
-        pass
-
-    @classmethod
-    @abc.abstractmethod
-    def from_flattened(cls, flattened, n_dims, **kwargs):
-        """
-        Build an instance of the shape from the provided 1D flattened array
-        :param flattened: Flattened representation of the shape
-        :param n_dims: Number of dimensions of the shape
         """
         pass

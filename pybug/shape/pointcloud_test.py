@@ -27,7 +27,7 @@ def test_pointcloud_flatten_rebuild():
                        [1, 1, 1]])
     pc = PointCloud(points)
     flattened = pc.as_flattened()
-    new_pc = PointCloud.from_flattened(flattened, pc.n_dims)
+    new_pc = PointCloud.from_flattened_with_instance(flattened, pc)
     assert(np.all(new_pc.n_dims == pc.n_dims))
     assert(np.all(new_pc.n_points == pc.n_points))
     assert(np.all(pc.points == new_pc.points))
