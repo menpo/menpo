@@ -12,14 +12,28 @@ class Image(Flattenable):
             self.mask = mask.astype(np.bool).copy()
         else:
             self.mask = np.ones((self.width, self.height), dtype=np.bool)
-        self.n_active_pixels = np.sum(self.mask)
+        self.n_masked_pixels = np.sum(self.mask)
         self.pixels = image_data.copy()
 
     def view(self):
         return ImageViewer(self.pixels)
 
     def as_flattened(self):
-        return self.pixels[self.mask].flatten()
+        return self.masked_pixels.flatten()
+
+    @property
+    def masked_pixels(self):
+        """
+        :return: (n_active_pixels, n_channels) ndarray of pixels that have a
+         True mask value
+        """
+        return self.pixels[self.mask]
+
+    @property
+    def masked_pixel_indices(self):
+        y, x = np.meshgrid(np.arange(self.width), np.arange(self.height))
+        xy = np.concatenate((x[..., np.newaxis], y[..., np.newaxis]), 2)
+        return xy[self.mask]
 
     @classmethod
     def from_flattened_with_instance(cls, flattened, instance, **kwargs):
