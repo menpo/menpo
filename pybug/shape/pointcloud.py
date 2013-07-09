@@ -47,12 +47,11 @@ class PointCloud(Shape, Transformable):
     def n_dims(self):
         return self.points.shape[1]
 
-    def as_flattened(self):
+    def as_vector(self):
         return self.points.flatten()
 
-    @classmethod
-    def from_flattened_with_instance(cls, flattened, instance, **kwargs):
-        n_dims = instance.n_dims
+    def from_vector(self, flattened):
+        n_dims = self.n_dims
         return PointCloud(flattened.reshape([-1, n_dims]))
 
     def __str__(self):
