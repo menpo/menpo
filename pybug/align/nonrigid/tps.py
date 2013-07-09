@@ -95,22 +95,52 @@ class TPSTransform(Transform):
         evaluated at points - this may be constant.
         :param points
         """
-        # My matlab code loops over all vertices but maybe in python I can
-        # get away without a loop because of the broadcasting...
+        # I've been tempted to rename all TPS properties so that they match
+        # the names on my transfer, that would, perhaps, facilitate the
+        # understanding of this method... Let me know what do you think...
+        # It'd be quite a lot of renaming I guess...
 
-        # This needs to be coded, I can do that between this eening and
-        # tomorrow morning,
-        dL_dx = np.zeros(self.tps.L.shape + (self.tps.source.shapes[0],))
-        #dL_dx[]
+        # This is probably the shittest code ever written in python but I
+        # just want to get this coded up as fast as possible, we can tidy it
+        # up later on...
 
-        # TPS kernel (nonlinear + affine) # This bit should be OK
+        dL_dx = np.zeros(self.tps.L.shape + (self.tps.source.shape[0],))
+
+        s = np.zeros(self.tps.K.shape + (2,))
+
+        for i in np.arange(0, self.tps.K.shape[0]):
+            s[:, i, :] = self.tps.source - self.tps.source[i, :]
+
+        r = distance.squareform(distance.pdist(self.tps.source))
+        mask = r == 0
+        r[mask] = 1
+
+        # the derivative should be the same for x an y therefore y just use
+        # x -> s[:, :, 1]
+        aux = 2 * (1 + np.log(r**2)) * s[:, :, 1]
+
+        for i in np.arange(0, self.tps.K.shape[0]):
+            dK_dxi = np.zeros_like(self.tps.K)
+            dK_dxi[i, :] = aux[i, :]
+            dK_dxi[:, i] = -aux[:, i]
+            dP_dxi = np.zeros_like(self.tps.P)
+            dP_dxi[i, 1] = 1
+            dL_dx[0:self.tps.K.shape[0], 0:self.tps.K.shape[0], i] = dK_dxi
+            dL_dx[0:self.tps.K.shape[1], self.tps.K.shape[0]:, i] = dP_dxi
+            dL_dx[self.tps.K.shape[0]:, 0:self.tps.K.shape[1],
+            i] = dP_dxi.T
+
+        # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = r_2_log_r_2_ker,nel(dist)
+        kernel_dist = r_2_log_r_2_kernel(dist)
         k = np.concatenate([kernel_dist, np.ones((1, points.shape[0])),
                             points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
 
-        return self.tps.Y * (-inv_L * dL_dx * inv_L) * k
+        # Got stuck here... Don't really know how to perform this series of
+        # matrix multiplications... Once this is done the derivative should
+        # be OK
+        return self.tps.Y.dot((-inv_L.dot(dL_dx.dot(inv_L)))).dot(k)
 
         pass
 
@@ -159,14 +189,14 @@ def r_2_log_r_2_kernel(r):
 # TODO: This may end up being a method in class later on ...
 def r_2_log_r_2_kernel_derivative(r):
     """
-    Radial basis function for TPS.
+    Derivative of the radial basis function for TPS.
     """
     mask = r == 0
     r[mask] = 1
-    U = r ** 2 * (np.log(r ** 2))
+    dUdr = 2 * r * (1 + np.log(r ** 2))
     # reset singularities to 0
-    U[mask] = 0
-    return U
+    dUdr[mask] = 0
+    return dUdr
 
 
 class MultipleTPS(MultipleAlignment):
