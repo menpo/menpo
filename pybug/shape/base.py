@@ -1,8 +1,9 @@
 import abc
 from pybug.shape.landmarks import LandmarkManager
+from pybug.base import Flattenable
 
 
-class Shape(object):
+class Shape(Flattenable):
     """ Abstract representation of shape. All subclasses will have some
      data where semantic meaning can be assigned to the i'th item. Shape
      couples a LandmarkManager to this item of data, meaning,
