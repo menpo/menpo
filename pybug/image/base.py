@@ -1,9 +1,9 @@
 import numpy as np
 from pybug.visualize import ImageViewer
-from pybug.base import Flattenable
+from pybug.base import Vectorizable
 
 
-class Image(Flattenable):
+class Image(Vectorizable):
 
     def __init__(self, image_data, mask=None):
         self.width, self.height, self.n_channels = image_data.shape
@@ -18,7 +18,7 @@ class Image(Flattenable):
     def view(self):
         return ImageViewer(self.pixels)
 
-    def as_flattened(self):
+    def as_vector(self):
         return self.masked_pixels.flatten()
 
     @property
@@ -35,10 +35,9 @@ class Image(Flattenable):
         xy = np.concatenate((x[..., np.newaxis], y[..., np.newaxis]), 2)
         return xy[self.mask]
 
-    @classmethod
-    def from_flattened_with_instance(cls, flattened, instance, **kwargs):
-        mask = instance.mask
-        image_data = np.zeros_like(instance.pixels)
-        pixels_per_channel = flattened.reshape((-1, instance.n_channels))
+    def from_vector(self, flattened):
+        mask = self.mask
+        image_data = np.zeros_like(self.pixels)
+        pixels_per_channel = flattened.reshape((-1, self.n_channels))
         image_data[mask] = pixels_per_channel
         return Image(image_data, mask=mask)
