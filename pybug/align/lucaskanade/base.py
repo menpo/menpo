@@ -147,7 +147,7 @@ class ImageInverseCompositional(ImageLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.TransformClass.from_parameters(delta_p)
+            delta_p_transform = self.TransformClass.from_vector(delta_p)
             self.transforms.append(
                 self.optimal_transform.compose(delta_p_transform.inverse))
 
@@ -188,7 +188,7 @@ class AppearanceInverseCompositional(AppearanceModelLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.TransformClass.from_parameters(delta_p)
+            delta_p_transform = self.TransformClass.from_vector(delta_p)
             self.transforms.append(
                 self.optimal_transform.compose(delta_p_transform.inverse))
 
@@ -231,7 +231,7 @@ class ImageForwardAdditive(ImageLucasKanade):
             # Update warp parameters
             new_params = self.optimal_transform.parameters + delta_p
             self.transforms.append(
-                self.TransformClass.from_parameters(new_params))
+                self.TransformClass.from_vector(new_params))
 
             # Test convergence
             error = np.abs(norm(delta_p))
