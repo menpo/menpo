@@ -9,8 +9,7 @@ class ImageImporter(Importer):
     def __init__(self, filepath):
         super(ImageImporter, self).__init__(filepath)
         self._pil_image = PILImage.open(self.filepath)
-        # Image pixels are always saved as double precision between 0-1
-        self.image = Image(np.array(self._pil_image, dtype=np.float64) / 255)
+        self.image = Image(self._pil_image)
 
     def build(self):
         return self.image
