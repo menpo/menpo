@@ -1,1 +1,1 @@
-from pybug.align.lucaskanade.base import ForwardAdditive, InverseCompositional
+from pybug.align.lucaskanade.base import ImageForwardAdditive, ImageInverseCompositional
