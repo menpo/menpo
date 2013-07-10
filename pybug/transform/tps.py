@@ -74,34 +74,37 @@ class TPSTransform(Transform):
         s = self.tps.source[:, np.newaxis, :] - self.tps.source
         r = distance.squareform(distance.pdist(self.tps.source))
         r[r == 0] = 1
-        aux = 2 * (1 + np.log(r**2)) * s[:, :, 0]
-        aux2 = 2 * (1 + np.log(r**2)) * s[:, :, 1]
+        aux = 2 * (1 + np.log(r**2))[..., None] * s
         dW_dx = np.zeros((n_pts, n_lms, 2))
         for i in np.arange(n_lms):
-            dK_dxi = np.zeros_like(self.tps.K)
-            dK_dyi = np.zeros_like(self.tps.K)
-            dK_dxi[i, :] = aux[i, :]
-            dK_dxi[:, i] = -aux[:, i]
-            dK_dyi[i, :] = aux2[i, :]
-            dK_dyi[:, i] = -aux2[:, i]
+            dK_dxyi = np.zeros((self.tps.K.shape + (2,)))
+            dK_dxyi[i] = aux[i]
+            dK_dxyi[:, i] = -aux[:, i]
+
             dP_dxi = np.zeros_like(self.tps.P)
             dP_dyi = np.zeros_like(self.tps.P)
             dP_dxi[i, 1] = -1
             dP_dyi[i, 2] = -1
-            dL_dx[:n_lms, :n_lms, i] = dK_dxi
+
+            dL_dx[:n_lms, :n_lms, i] = dK_dxyi[..., 0]
             dL_dx[:n_lms, n_lms:, i] = dP_dxi
             dL_dx[n_lms:, :n_lms, i] = dP_dxi.T
-            dL_dy[:n_lms, :n_lms, i] = dK_dyi
+
+            dL_dy[:n_lms, :n_lms, i] = dK_dxyi[..., 1]
             dL_dy[:n_lms, n_lms:, i] = dP_dyi
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
-            aux3 = np.zeros((self.tps.Y.shape[1], points.shape[0]))
-            aux4 = np.zeros((self.tps.Y.shape[1], points.shape[0]))
+            aux3 = np.zeros((self.tps.Y.shape[1], n_pts))
+            aux4 = np.zeros((self.tps.Y.shape[1], n_pts))
             aux5 = (points - self.tps.source[i, :])
             aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
             aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
-            dW_dx[:, i, 0] = self.tps.Y[0, :].dot((-inv_L.dot(dL_dx[:, :,i].dot(inv_L)))).dot(k).T + self.tps.coefficients[:, 0].dot(aux3)
-            dW_dx[:, i, 1] = self.tps.Y[1, :].dot((-inv_L.dot(dL_dy[:, :,i].dot(inv_L)))).dot(k).T + self.tps.coefficients[:, 1].dot(aux4)
+            dW_dx[:, i, 0] = (self.tps.Y[0].dot(
+                (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T +
+                self.tps.coefficients[:, 0].dot(aux3))
+            dW_dx[:, i, 1] = (self.tps.Y[1].dot(
+                (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T +
+                self.tps.coefficients[:, 1].dot(aux4))
 
         return dW_dx
 
