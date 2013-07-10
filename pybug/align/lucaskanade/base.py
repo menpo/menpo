@@ -205,7 +205,9 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
         error = self.eps + 1
 
         # grab mean appearance pixel locations
-        mean_appearance = self.appearance_model.mean
+        # project out the mean appearance immediately
+        mean_appearance = self.appearance_model.project_out(
+            self.appearance_model.mean)
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
