@@ -26,7 +26,8 @@ class TPS(NonRigidAlignment):
         pairwise_norms = distance.squareform(distance.pdist(self.source))
         if kernel is None:
             kernel = r_2_log_r_2_kernel
-        self.K = kernel(pairwise_norms)
+        self.kernel = kernel
+        self.K = self.kernel(pairwise_norms)
         self.P = np.concatenate(
             [np.ones([self.n_landmarks, 1]), self.source], axis=1)
         O = np.zeros([3, 3])
@@ -69,7 +70,7 @@ class TPSTransform(Transform):
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = r_2_log_r_2_kernel(dist)
+        kernel_dist = self.tps.kernel(dist)
         # grab the affine free components of the warp
         c_affine_free = self.tps.coefficients[:-3]
         # build the affine free warp component
@@ -106,7 +107,7 @@ class TPSTransform(Transform):
 
         # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = r_2_log_r_2_kernel(dist)
+        kernel_dist = self.tps.kernel(dist)
         k = np.concatenate([kernel_dist, np.ones((1, points.shape[0])),
                             points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
