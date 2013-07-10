@@ -104,21 +104,26 @@ class TPSTransform(Transform):
         # just want to get this coded up as fast as possible, we can tidy it
         # up later on...
 
+        # TPS kernel (nonlinear + affine)
+        dist = distance.cdist(self.tps.source, points)
+        kernel_dist = r_2_log_r_2_kernel(dist)
+        k = np.concatenate([kernel_dist, np.ones((1, points.shape[0])),
+                            points.T], axis=0)
+        inv_L = np.linalg.inv(self.tps.L)
+
+        # This is the tricky bit, surely this can be coded in a much better
+        # way...
         dL_dx = np.zeros(self.tps.L.shape + (self.tps.source.shape[0],))
-
         s = np.zeros(self.tps.K.shape + (2,))
-
         for i in np.arange(0, self.tps.K.shape[0]):
             s[:, i, :] = self.tps.source - self.tps.source[i, :]
-
         r = distance.squareform(distance.pdist(self.tps.source))
         mask = r == 0
         r[mask] = 1
-
         # the derivative should be the same for x an y therefore y just use
         # x -> s[:, :, 1]
         aux = 2 * (1 + np.log(r**2)) * s[:, :, 1]
-
+        dW_dx = np.zeros((points.shape[0], self.tps.source.shape[0]))
         for i in np.arange(0, self.tps.K.shape[0]):
             dK_dxi = np.zeros_like(self.tps.K)
             dK_dxi[i, :] = aux[i, :]
@@ -129,20 +134,10 @@ class TPSTransform(Transform):
             dL_dx[0:self.tps.K.shape[1], self.tps.K.shape[0]:, i] = dP_dxi
             dL_dx[self.tps.K.shape[0]:, 0:self.tps.K.shape[1],
             i] = dP_dxi.T
+            dW_dx[:, i] = self.tps.Y[0, :].dot((-inv_L.dot(dL_dx[:, :,
+                                                     i].dot(inv_L)))).dot(k).T
 
-        # TPS kernel (nonlinear + affine)
-        dist = distance.cdist(self.tps.source, points)
-        kernel_dist = r_2_log_r_2_kernel(dist)
-        k = np.concatenate([kernel_dist, np.ones((1, points.shape[0])),
-                            points.T], axis=0)
-        inv_L = np.linalg.inv(self.tps.L)
-
-        # Got stuck here... Don't really know how to perform this series of
-        # matrix multiplications... Once this is done the derivative should
-        # be OK
-        return self.tps.Y.dot((-inv_L.dot(dL_dx.dot(inv_L)))).dot(k)
-
-        pass
+        return dW_dx
 
     def jacobian_target(self, shape):
         """
