@@ -154,8 +154,7 @@ class AffineTransform(Transform):
         indices = np.arange(self.n_dim + 2)[i]
         return np.transpose(jacs, indices)
 
-    @property
-    def parameters(self):
+    def as_vector(self):
         """
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. This does not
@@ -166,7 +165,15 @@ class AffineTransform(Transform):
         return params[:self.n_dim, :].flatten(order='F')
 
     @classmethod
-    def from_parameters(cls, p):
+    def from_vector(cls, p):
+        # n.b. generally, from_vector should be an instance method. However,
+        # as Python class methods can be called on any instance,
+        # we are free to implement the from_vector method as a class method
+        # where appropriate, as is the case in AffineTransform. This means
+        # we can use from_vector as a constructor to the class in addition
+        # to it's usual role in building novel instances where some kind of
+        # state needs to be stolen from a pre-existing instance (hence the
+        # need for this to in general be an instance method).
         if p.shape[0] is 6:  # 2D affine
             homo_matrix = np.eye(3)
             homo_matrix[:2, :] += matlab.reshape(p, [2, 3])

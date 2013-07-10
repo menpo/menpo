@@ -1,12 +1,12 @@
 import abc
+from pybug.base import Vectorizable
 
 
-class Transform(object):
+class Transform(Vectorizable):
     """
     An abstract representation of any n-dimensional transform.
     Provides a unified interface to apply the transform (:meth:`apply`)
     """
-    __metaclass__ = abc.ABCMeta
 
     def apply(self, x, **kwargs):
         """
@@ -63,22 +63,13 @@ class Transform(object):
         """
         pass
 
-    # TODO this actually doesn't register as an abstract method
-    @classmethod
-    @abc.abstractmethod
-    def from_parameters(cls, p):
-        """
-        Build a transform from the provided 1D parameter array
-        :param p: 1D parameter array
-        """
-        pass
-
-    @abc.abstractproperty
+    @property
     def parameters(self):
         """
         Return the parameters of the transform as a 1D ndarray
         """
-        pass
+        print 'transform.parameters is depreciated - use as_vector() instead'
+        return self.as_vector()
 
 
 class Transformable(object):
