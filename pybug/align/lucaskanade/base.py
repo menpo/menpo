@@ -112,7 +112,7 @@ class AppearanceModelLucasKanade(LucasKanade):
             optimisation, update_step, eps)
         # in appearance alignment, we align an appearance model to the target
         # image
-        self._model = model
+        self.appearance_model = model
 
 
 class ImageInverseCompositional(ImageLucasKanade):
@@ -183,6 +183,52 @@ class ImageForwardAdditive(ImageLucasKanade):
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
                 VI_dW_dp, self.template, IWxp)
+
+            # Compute gradient descent parameter updates
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Update warp parameters
+            new_params = self.optimal_transform.as_vector() + delta_p
+            self.transforms.append(
+                self.initial_transform.from_vector(new_params))
+
+            # Test convergence
+            error = np.abs(norm(delta_p))
+
+        return self.optimal_transform
+
+
+class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
+
+    def _align(self, max_iters=30):
+        # Initial error > eps
+        error = self.eps + 1
+
+        # grab mean appearance pixel locations
+        mean_appearance = self.appearance_model.mean
+
+        # Forward Additive Algorithm
+        while self.n_iters < (max_iters - 1) and error > self.eps:
+            # Compute warped image with current parameters
+            IWxp = warp(self.image, mean_appearance.shape,
+                        self.optimal_transform,
+                        interpolator=self._interpolator)
+            # and project out the appearance model from this image
+            IWxp = self.appearance_model.project_out(IWxp)
+            # Compute the Jacobian of the warp
+            dW_dp = self.optimal_transform.jacobian(mean_appearance.shape)
+
+            # Compute steepest descent images, VI_dW_dp
+            VI_dW_dp = self.residual.steepest_descent_images(
+                self.image, dW_dp, transform=self.optimal_transform,
+                interpolator=self._interpolator)
+
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(VI_dW_dp)
+
+            # Compute steepest descent parameter updates
+            sd_delta_p = self.residual.steepest_descent_update(
+                VI_dW_dp, mean_appearance, IWxp)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
