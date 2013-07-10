@@ -112,30 +112,50 @@ class TPSTransform(Transform):
         inv_L = np.linalg.inv(self.tps.L)
 
         # This is the tricky bit, surely this can be coded in a much better
-        # way...
+        # way... But I just wanted to focus on getting the semantics right!
         dL_dx = np.zeros(self.tps.L.shape + (self.tps.source.shape[0],))
+        dL_dy = np.zeros(self.tps.L.shape + (self.tps.source.shape[0],))
         s = np.zeros(self.tps.K.shape + (2,))
         for i in np.arange(0, self.tps.K.shape[0]):
             s[:, i, :] = self.tps.source - self.tps.source[i, :]
         r = distance.squareform(distance.pdist(self.tps.source))
         mask = r == 0
         r[mask] = 1
-        # the derivative should be the same for x an y therefore y just use
-        # x -> s[:, :, 1]
-        aux = 2 * (1 + np.log(r**2)) * s[:, :, 1]
-        dW_dx = np.zeros((points.shape[0], self.tps.source.shape[0]))
+        aux = 2 * (1 + np.log(r**2)) * s[:, :, 0]
+        aux2 = 2 * (1 + np.log(r**2)) * s[:, :, 1]
+        dW_dx = np.zeros((points.shape[0], self.tps.source.shape[0], 2))
         for i in np.arange(0, self.tps.K.shape[0]):
             dK_dxi = np.zeros_like(self.tps.K)
+            dK_dyi = np.zeros_like(self.tps.K)
             dK_dxi[i, :] = aux[i, :]
             dK_dxi[:, i] = -aux[:, i]
+            dK_dyi[i, :] = aux2[i, :]
+            dK_dyi[:, i] = -aux2[:, i]
             dP_dxi = np.zeros_like(self.tps.P)
-            dP_dxi[i, 1] = 1
+            dP_dyi = np.zeros_like(self.tps.P)
+            dP_dxi[i, 1] = -1
+            dP_dyi[i, 2] = -1
             dL_dx[0:self.tps.K.shape[0], 0:self.tps.K.shape[0], i] = dK_dxi
             dL_dx[0:self.tps.K.shape[1], self.tps.K.shape[0]:, i] = dP_dxi
             dL_dx[self.tps.K.shape[0]:, 0:self.tps.K.shape[1],
             i] = dP_dxi.T
-            dW_dx[:, i] = self.tps.Y[0, :].dot((-inv_L.dot(dL_dx[:, :,
-                                                     i].dot(inv_L)))).dot(k).T
+            dL_dy[0:self.tps.K.shape[0], 0:self.tps.K.shape[0], i] = dK_dyi
+            dL_dy[0:self.tps.K.shape[1], self.tps.K.shape[0]:, i] = dP_dyi
+            dL_dy[self.tps.K.shape[0]:, 0:self.tps.K.shape[1],
+            i] = dP_dyi.T
+            # new bit
+            aux3 = np.zeros((self.tps.Y.shape[1], points.shape[0]))
+            aux4 = np.zeros((self.tps.Y.shape[1], points.shape[0]))
+            aux5 = (points - self.tps.source[i, :])
+            aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
+            aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
+            dW_dx[:, i, 0] = self.tps.Y[0, :].dot((-inv_L.dot(dL_dx[:, :,
+                                                     i].dot(inv_L)))).dot(k)\
+                .T + self.tps.coefficients[:, 0].dot(aux3)
+
+            dW_dx[:, i, 1] = self.tps.Y[1, :].dot((-inv_L.dot(dL_dy[:, :,
+                                                     i].dot(inv_L)))).dot(k)\
+                .T + self.tps.coefficients[:, 1].dot(aux4)
 
         return dW_dx
 
