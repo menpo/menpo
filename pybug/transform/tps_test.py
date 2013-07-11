@@ -1,80 +1,74 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from pybug.transform.affine import Rotation, Translation
-from pybug.exceptions import DimensionalityError
-from nose.tools import raises
+from pybug.align.nonrigid.tps import TPS
+
+square_src_landmarks = np.array([[-1.0, -1.0],
+                                 [-1,  1],
+                                 [1, -1],
+                                 [1,  1]])
+
+square_tgt_landmarks = np.array([[-1.0, -1.0],
+                                 [-1,  1],
+                                 [1, -1],
+                                 [1,  1]])
+
+perturbed_tgt_landmarks = np.array([[-0.6, -1.3],
+                                    [-0.8,  1.2],
+                                    [0.7, -0.8],
+                                    [1.3,  0.5]])
+
+x = np.arange(-1, 1, 0.01)
+y = np.arange(-1, 1, 0.01)
+xx, yy = np.meshgrid(x, y)
+square_sample_points = np.array([xx.flatten(1), yy.flatten(1)]).T
 
 
-@raises(DimensionalityError)
-def test_1d():
-    t_vec = np.array([1])
-    Translation(t_vec)
+def test_tps_maps_src_to_tgt():
+    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
+    assert_allclose(tps.transform.apply(square_src_landmarks),
+                    perturbed_tgt_landmarks)
 
 
-@raises(DimensionalityError)
-def test_5d():
-    t_vec = np.ones(5)
-    Translation(t_vec)
+def test_tps_jacobian_manual_corner_value_check():
+    tps = TPS(square_src_landmarks, square_tgt_landmarks)
+    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
+    dwdx_corner = np.array(
+        [[1.,  0.99619633,  0.99231034,  0.98835616, 0.98434133],
+         [0.99619633,  0.99240803,  0.98853625,  0.98459474, 0.98059178],
+         [0.99231034,  0.98853625,  0.98468246,  0.98075813,  0.9767711],
+         [0.98835616,  0.98459474,  0.98075813,  0.97685217,  0.97288316],
+         [0.98434133,  0.98059178,  0.9767711,   0.97288316,  0.96893276]])
+    assert_allclose(jacobian_image[:5, :5, 0, 0], dwdx_corner)
+    assert_allclose(jacobian_image[:5, :5, 0, 1], dwdx_corner)
 
 
-def test_translation():
-    t_vec = np.array([1, 2, 3])
-    starting_vector = np.random.rand(10, 3)
-    transform = Translation(t_vec)
-    transformed = transform.apply(starting_vector)
-    assert_allclose(starting_vector + t_vec, transformed)
+def test_tps_jacobian_unitary_x_y():
+    tps = TPS(square_src_landmarks, square_tgt_landmarks)
+    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
+    # both the x and y derivatives summed over all values should equal 1
+    assert_allclose(jacobian_image.sum(axis=2), 1)
 
 
-def test_basic_2d_rotation():
-    rotation_matrix = np.array([[0, 1],
-                                [-1, 0]])
-    rotation = Rotation(rotation_matrix)
-    assert_allclose(np.array([0, -1]), rotation.apply(np.array([1, 0])))
+def test_tps_jacobian_manual_sample_a():
+    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
+    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    onetwothreefour = np.array(
+        [[0.78665966,  0.62374388],
+         [0.09473867, -0.68910365],
+         [0.68788235,  0.18713078],
+         [-0.80552584,  1.11078411]])
+    assert_allclose(dW_dxy[1234], onetwothreefour)
 
 
-def test_basic_2d_rotation_axis_angle():
-    rotation_matrix = np.array([[0, 1],
-                                [-1, 0]])
-    rotation = Rotation(rotation_matrix)
-    axis, angle = rotation.axis_and_angle_of_rotation()
-    assert_allclose(axis, np.array([0, 0, 1]))
-    assert_allclose((90 * np.pi)/180, angle)
+def test_tps_jacobian_manual_sample_b():
+    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
+    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    threesixfouronethree = np.array(
+        [[0.67244171, -0.0098011 ],
+         [-0.77028611, -1.19256858],
+         [0.8296718, 0.95940495],
+         [-0.03122042,  1.00073478]])
+    assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
 
-
-def test_basic_3d_rotation():
-    a = np.sqrt(3.0)/2.0
-    b = 0.5
-    # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
-    rotation = Rotation(rotation_matrix)
-    starting_vector = np.array([0, 1, 0])
-    transformed = rotation.apply(starting_vector)
-    assert_allclose(np.array([0, a, -b]), transformed)
-
-
-def test_basic_3d_rotation_axis_angle():
-    a = np.sqrt(3.0)/2.0
-    b = 0.5
-    # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
-    rotation = Rotation(rotation_matrix)
-    axis, angle = rotation.axis_and_angle_of_rotation()
-    assert_allclose(axis, np.array([1, 0, 0]))
-    assert_allclose((-30 * np.pi)/180, angle)
-
-
-def test_3d_rotation_inverse_eye():
-    a = np.sqrt(3.0)/2.0
-    b = 0.5
-    # this is a rotation of -30 degrees about the x axis
-    rotation_matrix = np.array([[1, 0, 0],
-                                [0, a, b],
-                                [0, -b, a]])
-    rotation = Rotation(rotation_matrix)
-    transformed = rotation.compose(rotation.inverse)
-    print transformed.homogeneous_matrix
-    assert_allclose(np.eye(4), transformed.homogeneous_matrix, atol=1e-15)
