@@ -2,6 +2,7 @@ import viewmayavi
 import viewimage
 
 PointCloudViewer3d = viewmayavi.MayaviPointCloudViewer3d
+PointCloudViewer2d = viewimage.MatplotLibPointCloudViewer2d
 TriMeshViewer3d = viewmayavi.MayaviTriMeshViewer3d
 TexturedTriMeshViewer3d = viewmayavi.MayaviTexturedTriMeshViewer3d
 LabelViewer3d = viewmayavi.MayaviLabelViewer3d

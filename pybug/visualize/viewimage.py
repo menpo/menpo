@@ -7,3 +7,7 @@ def MatplotLibImageViewer(image):
         return plt.imshow(image[..., 0], cmap=cm.Greys_r)
     else:
         return plt.imshow(image)
+
+
+def MatplotLibPointCloudViewer2d(points, **kwargs):
+    return plt.scatter(points[...,0], points[...,1])

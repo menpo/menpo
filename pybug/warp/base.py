@@ -41,3 +41,29 @@ def warp(image, template_shape, transform,
     warped_image = np.nan_to_num(warped_image)
 
     return warped_image
+
+
+def warp_image_onto_template_image(image, template_image, transform,
+                                   interpolator=map_coordinates_interpolator,
+                                   mode='constant', order=1):
+    """
+    Samples an image at all the masked pixel locations in template_image,
+    returning a version of template image where all pixels have been sampled.
+    :param image: The image that is to be sampled from
+    :param template_image: The template image. Defines what pixels will be
+        sampled.
+    :param transform: The transform that dictates where the pixel locations
+        of the template image are mapped to on image. Pixel values will be
+        sampled from the mapped location.
+    :param interpolator: The interpolator that will be used in resolving
+        what value is chosen from the image at the mapped coordinates.
+    :param mode:
+    :param order:
+    :return:
+    """
+    template_points = template_image.masked_pixel_indices
+    points_to_sample = transform.apply(template_points)
+    sampled_pixel_values = interpolator(image.pixels, points_to_sample,
+                                        order, mode)
+    sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
+    return template_image.from_vector(sampled_pixel_values)

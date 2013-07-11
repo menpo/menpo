@@ -126,12 +126,12 @@ class PCAModel(LinearModel):
         """
         self.samples = samples
         self.n_samples = len(samples)
+        self.n_features = len(samples[0].as_vector())
         self.n_components = n_components
         if self.n_components is None:
             # -1 to prevent us from getting noise in the final component
-            self.n_components = self.n_samples - 1
+            self.n_components = min(self.n_samples, self.n_features) - 1
         # flatten one sample to find the n_features we need
-        self.n_features = len(samples[0].as_vector())
 
         # create and populate the data matrix
         print "Building the data matrix..."

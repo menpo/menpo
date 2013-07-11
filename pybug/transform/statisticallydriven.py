@@ -27,10 +27,9 @@ class StatisticallyDrivenTransform(Transform):
             # set all the weights to 0 (yielding the mean)
             weights = np.zeros(self.model.n_components)
         self.weights = weights
-        # TODO we need an example of a transform_constructor.
         self.transform_constructor = transform_constructor
         self.transform = transform_constructor(
-            self.model.instance(weights), self.model.mean)
+            self.model.instance(weights).points, self.model.mean.points)
 
     def jacobian(self, points):
         dW_dX = self.transform.jacobian_shape(points)
@@ -46,3 +45,12 @@ class StatisticallyDrivenTransform(Transform):
 
     def as_vector(self):
         return self.weights
+
+    def _apply(self, x, **kwargs):
+        pass
+
+    def compose(self, a):
+        pass
+
+    def inverse(self):
+        pass
