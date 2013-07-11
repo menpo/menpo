@@ -2,6 +2,7 @@ import abc
 from scipy.linalg import norm, solve
 import numpy as np
 from pybug.warp import warp
+from pybug.warp.base import warp_image_onto_template_image
 from pybug.warp.base import map_coordinates_interpolator
 
 
@@ -206,19 +207,23 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
 
         # grab mean appearance pixel locations
         # project out the mean appearance immediately
-        mean_appearance = self.appearance_model.project_out(
-            self.appearance_model.mean)
+        # TODO implement project_out and uncomment this
+        # mean_appearance = self.appearance_model.project_out(
+        #     self.appearance_model.mean)
+        mean_appearance = self.appearance_model.mean
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp(self.image, mean_appearance.shape,
-                        self.optimal_transform,
-                        interpolator=self._interpolator)
+            IWxp = warp_image_onto_template_image(
+                self.image, mean_appearance,
+                self.optimal_transform, interpolator=self._interpolator)
             # and project out the appearance model from this image
-            IWxp = self.appearance_model.project_out(IWxp)
+            # TODO implement project_out and uncomment this
+            # IWxp = self.appearance_model.project_out(IWxp)
             # Compute the Jacobian of the warp
-            dW_dp = self.optimal_transform.jacobian(mean_appearance.shape)
+            dW_dp = self.optimal_transform.jacobian(
+                mean_appearance.masked_pixel_indices)
 
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = self.residual.steepest_descent_images(
@@ -229,8 +234,10 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
             self._H = self.residual.calculate_hessian(VI_dW_dp)
 
             # Compute steepest descent parameter updates
+            # TODO remove this dependence on greyscale only (pixels[..., 0])
             sd_delta_p = self.residual.steepest_descent_update(
-                VI_dW_dp, mean_appearance, IWxp)
+                VI_dW_dp, mean_appearance.pixels[..., 0],
+                IWxp.pixels[..., 0])
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
@@ -242,5 +249,6 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
 
             # Test convergence
             error = np.abs(norm(delta_p))
+            print self.n_iters
 
         return self.optimal_transform

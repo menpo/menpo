@@ -62,8 +62,9 @@ def warp_image_onto_template_image(image, template_image, transform,
     :return:
     """
     template_points = template_image.masked_pixel_indices
-    points_to_sample = transform.apply(template_points)
-    sampled_pixel_values = interpolator(image.pixels, points_to_sample,
+    # TODO why is this transposed?
+    points_to_sample = transform.apply(template_points).T
+    sampled_pixel_values = interpolator(image, points_to_sample,
                                         order, mode)
     sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
     return template_image.from_vector(sampled_pixel_values)
