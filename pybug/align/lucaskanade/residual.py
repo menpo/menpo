@@ -114,7 +114,8 @@ class Residual(object):
 class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
+        # TODO think this is a bug fix, should be tested
+        gradient = self._calculate_gradients(image, dW_dp.shape[2:],
                                              **kwargs)
 
         # Add an extra axis for broadcasting
