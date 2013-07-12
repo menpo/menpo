@@ -1,2 +1,2 @@
-from mlabwrap import mlab
-mlab.init()
+from mlabwrap import MlabInstance
+mlab = MlabInstance.get_instance()
