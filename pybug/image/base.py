@@ -12,18 +12,20 @@ class Image(Vectorizable):
             image_data = np.array(image_data)
         # get the attributes of the image
         self.width, self.height = image_data.shape[:2]
-        if len(image_data.shape) == 3:
-            self.n_channels = image_data.shape[2]
+        if len(image_data.shape) >= 3:
+            self.n_channels = image_data.shape[-1]
         else:
             self.n_channels = 1
-            # ensure all our self.pixels are 3 dimensional, even if the last
-            # dim is unitary in length
+            # ensure all our self.pixels have channel in the last dim,
+            # even if the last dim is unitary in length
             image_data = image_data[..., np.newaxis]
+        self.image_shape = image_data.shape[:-1]
+        self.n_dims = len(self.image_shape)
         if mask is not None:
-            assert((self.width, self.height) == mask.shape)
+            assert(self.image_shape == mask.shape)
             self.mask = mask.astype(np.bool).copy()
         else:
-            self.mask = np.ones((self.width, self.height), dtype=np.bool)
+            self.mask = np.ones(self.image_shape, dtype=np.bool)
         self.n_masked_pixels = np.sum(self.mask)
 
         # ensure that the data is in the right format
@@ -35,7 +37,10 @@ class Image(Vectorizable):
         self.pixels = image_data.copy()
 
     def view(self):
-        return ImageViewer(self.pixels)
+        if self.n_dims == 2:
+            return ImageViewer(self.pixels)
+        else:
+            raise Exception("n_dim Image rendering is not yet supported.")
 
     def as_vector(self):
         return self.masked_pixels.flatten()
@@ -48,11 +53,50 @@ class Image(Vectorizable):
         """
         return self.pixels[self.mask]
 
+    def mask_bounding_extent(self, boundary=0):
+        """
+        Returns the maximum and minimum values along all dimensions that the
+        mask includes.
+        :param boundary: A number of pixels that should be added to the
+        extent.
+        Note that if the bounding extent is snapped to not go beyond the
+        edge of the image.
+        :return: ndarray [n_dims, 2] where
+        [k, :] = [min_bounding_dim_k, max_bounding_dim_k]
+        """
+        mpi = self.masked_pixel_indices
+        maxes = np.max(mpi, axis=0) + boundary
+        mins = np.min(mpi, axis=0) - boundary
+        # check we don't stray under any edges
+        mins[mins < 0] = 0
+        # check we don't stray over any edges
+        over_image = self.image_shape - maxes < 0
+        maxes[over_image] = np.array(self.image_shape)[over_image]
+        return np.vstack((mins, maxes)).T
+
+    def mask_bounding_extent_slicer(self, boundary=0):
+        extents = self.mask_bounding_extent(boundary)
+        return [slice(x[0], x[1]) for x in list(extents)]
+
+    def mask_bounding_pixels(self, boundary=0):
+        return self.pixels[self.mask_bounding_extent_slicer(boundary)]
+
+    def mask_bounding_extent_meshgrids(self, boundary=0):
+        """
+        Returns a list of meshgrids, the ith item being the meshgrid over
+        the bounding extent over the i'th dimension.
+        :param boundary:
+        :return:
+        """
+        extents = self.mask_bounding_extent(boundary)
+        return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])
+
+
     @property
     def masked_pixel_indices(self):
-        y, x = np.meshgrid(np.arange(self.width), np.arange(self.height))
-        xy = np.concatenate((x[..., np.newaxis], y[..., np.newaxis]), 2)
-        return xy[self.mask]
+        if getattr(self, '_indices_cache', None) is None:
+            self._indices_cache = np.vstack(np.nonzero(self.mask)).T
+        return self._indices_cache
 
     def from_vector(self, flattened):
         mask = self.mask
@@ -66,6 +110,9 @@ class Image(Vectorizable):
             print "Warning - trying to convert to greyscale an image with " \
                   "only one channel - returning a copy"
             return Image(self.pixels, self.mask)
+        if self.n_channels != 3 or self.n_dims != 2:
+            raise Exception("Trying to perform RGB-> greyscale conversion on"
+                            " a non-2D-RGB Image.")
         pil_image = self.as_PILImage()
         pil_bw_image = pil_image.convert('L')
         return Image(pil_bw_image, mask=self.mask)
@@ -73,4 +120,32 @@ class Image(Vectorizable):
     def as_PILImage(self):
         return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
 
-
+    def gradient(self, inc_unmasked_pixels=False):
+        """
+        Returns an Image which is the gradient of this one.
+        :return:
+        """
+        if self.n_channels != 1:
+            raise Exception("Warning - trying to take the gradient on a "
+                            "non-grayscale image")
+        if inc_unmasked_pixels:
+            # we know this is B + W, drop the last axis (n_channels which is 1)
+            gradients = np.gradient(self.pixels[..., 0])
+            # Add an extra axis for broadcasting
+            gradients = [g[..., None] for g in gradients]
+            # Concatenate gradient list into an array (the new_image)
+            new_image = np.concatenate(gradients, axis=-1)
+        else:
+            masked_square_image = self.mask_bounding_pixels(boundary=3)
+            bounding_mask = self.mask_bounding_extent_slicer(3)
+            # we know this is B + W, drop the last axis (n_channels which is 1)
+            gradients = np.gradient(masked_square_image[..., 0])
+            # Add an extra axis for broadcasting
+            gradients = [g[..., None] for g in gradients]
+            # Concatenate gradient list into a vector
+            gradient_array = np.concatenate(gradients, axis=-1)
+            # make a new blank image
+            new_image = np.empty((self.image_shape + (self.n_dims,)))
+            # populate the new image with the gradient
+            new_image[bounding_mask] = gradient_array
+        return Image(new_image, mask=self.mask)
