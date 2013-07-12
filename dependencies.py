@@ -14,8 +14,8 @@ requirements = ['Cython>=0.18',
                 'Sphinx>=1.2b1',
                 'tornado>=3.0.1']
 
-optionals = {'mlabwrap': 'mlabwrap>=1.1.6'}
+optionals = {'mlabwrap': 'mlabwrap>=1.2'}
 
 # NOTE: Have to include the egg name in the requirements list as well
 repositories = ['https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4',
-                'https://github.com/patricksnape/mlabwrap/tarball/master#egg=mlabwrap-1.1.6']
+                'https://github.com/patricksnape/mlabwrap/tarball/master#egg=mlabwrap-1.2']
