@@ -114,25 +114,15 @@ class Residual(object):
 class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, **kwargs):
-        # TODO think this is a bug fix, should be tested
-        gradient = self._calculate_gradients(image, dW_dp.shape[2:],
-                                             **kwargs)
-
-        # Add an extra axis for broadcasting
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        # Concatenate gradient list into a vector
-        gradient = np.concatenate(gradient, axis=0)
-
-        return np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
+        gradient = image.gradient().as_vector(keep_channels=True)
+        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
-        H = VT_dW_dp[:, np.newaxis, ...] * VT_dW_dp
-        return self._sum_Hessian(H)
+        return VT_dW_dp.T.dot(VT_dW_dp)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        self._error_img = IWxp - template
-        sd = VT_dW_dp * self._error_img
-        return self._sum_steepest_descent(sd)
+        self._error_img = IWxp.as_vector() - template.as_vector()
+        return VT_dW_dp.T.dot(self._error_img)
 
 
 class GaborFourier(Residual):

@@ -123,7 +123,7 @@ class ImageInverseCompositional(ImageLucasKanade):
         error = self.eps + 1
 
         # Compute the Jacobian of the warp
-        dW_dp = self.optimal_transform.jacobian(self.template.shape)
+        dW_dp = self.optimal_transform.jacobian(self.template.image_shape)
 
         # Compute steepest descent images, VT_dW_dp
         VT_dW_dp = self.residual.steepest_descent_images(self.template,
@@ -135,9 +135,11 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp(self.image, self.template.shape,
-                        self.optimal_transform,
-                        interpolator=self._interpolator)
+            IWxp = warp_image_onto_template_image(self.image,
+                                                  self.template,
+                                                  self.optimal_transform,
+                                                  interpolator=
+                                                  self._interpolator)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(VT_dW_dp, IWxp,

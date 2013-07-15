@@ -1,7 +1,7 @@
 from unittest import SkipTest
 import numpy as np
 from numpy.testing import assert_approx_equal
-from pybug.warp import warp
+from pybug.warp import warp_image_onto_template_image
 from pybug.io import auto_import
 from pybug import data_path_to
 from pybug.transform import AffineTransform
@@ -17,11 +17,12 @@ except Exception:
 # Setup the static assets (the takeo image)
 takeo_path = data_path_to('takeo.ppm')
 takeo = auto_import(takeo_path)[0]
-image = takeo.pixels[..., 0]
+image = takeo.as_greyscale()
+template, translation = image.crop(slice(70, 169), slice(30, 129))
 
 # Setup global conditions
-initial_params = np.array([0, 0, 0, 0, 30.5, 70.5])
-target_params = np.array([0, 0.1, 0.2, 0, 30, 70])
+initial_params = np.array([0, 0, 0, 0, 70.5, 30.5])
+target_params = np.array([0, 0.2, 0.1, 0, 70, 30])
 target_shape = (99, 99)
 
 
@@ -36,10 +37,12 @@ def setup_conditions(interpolator):
     global initial_params
     global target_params
     global target_shape
+    global template
 
-    template = warp(image, target_shape,
-                    AffineTransform.from_vector(target_params),
-                    interpolator=interpolator)
+    target_transform = AffineTransform.from_vector(target_params)
+    template = warp_image_onto_template_image(image, template,
+                                              target_transform,
+                                              interpolator=interpolator)
 
     return image, template, initial_params
 
@@ -49,10 +52,10 @@ def setup_error():
     global target_shape
 
     target_transform = AffineTransform.from_vector(target_params)
-    original_box = np.array([[0, 0],
-                             [target_shape[1], 0],
-                             [target_shape[1], target_shape[0]],
-                             [0, target_shape[0]]]).T
+    original_box = np.array([[0,               0],
+                             [target_shape[0], 0],
+                             [target_shape[0], target_shape[1]],
+                             [0,               target_shape[1]]]).T
     target_pts = target_transform.apply(original_box.T)
 
     return target_pts, original_box
