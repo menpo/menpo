@@ -43,8 +43,11 @@ class Image(Vectorizable):
         else:
             raise Exception("n_dim Image rendering is not yet supported.")
 
-    def as_vector(self):
-        return self.masked_pixels.flatten()
+    def as_vector(self, keep_channels=False):
+        if keep_channels:
+            return self.masked_pixels.reshape([-1, self.n_channels])
+        else:
+            return self.masked_pixels.flatten()
 
     @property
     def masked_pixels(self):
