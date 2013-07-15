@@ -1,5 +1,6 @@
 import numpy as np
 import PIL.Image as PILImage
+from pybug.transform.affine import Translation
 from pybug.visualize import ImageViewer
 from pybug.base import Vectorizable
 
@@ -119,6 +120,45 @@ class Image(Vectorizable):
 
     def as_PILImage(self):
         return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
+
+    def crop(self, *args):
+        r"""
+        Crops the image using the given slice objects. Expects
+        ``len(args) == self.n_dims``. Maintains the cropped portion of the
+        mask. Also returns the
+        :class:`Translation <pybug.transform.affine.Translation>` that would
+        translate the cropped portion back in to the original reference
+        position. **Note:** Only 2D and 3D images are currently supported.
+
+        :param args: The slices to take over each axis
+        :type args: List of slice objects
+        :raises: AssertionError, ValueError
+        :return: (cropped_image, translation)
+
+                cropped_image:
+                    Cropped portion of the image, including cropped mask.
+
+                translation:
+                    Translation transform that repositions the cropped image
+                    in the reference frame of the original.
+        :rtype: (:class:`Image <pybug.image.base.Image>`,
+            :class:`Translation <pybug.transform.affine.Translation>`)
+        """
+        assert(self.n_dims == len(args))
+        if len(args) == 2:
+            cropped_image = self.pixels[args[0], args[1], ...]
+            cropped_mask = self.mask[args[0], args[1], ...]
+            translation = np.array([args[0].start, args[1].start])
+        elif len(args) == 3:
+            cropped_image = self.pixels[args[0], args[1], args[2], ...]
+            cropped_mask = self.mask[args[0], args[1], args[2], ...]
+            translation = np.array([args[0].start, args[1].start,
+                                    args[2].start])
+        else:
+            raise ValueError("Only 2D and 3D images are currently supported.")
+
+        return (Image(cropped_image, mask=cropped_mask),
+                Translation(translation))
 
     def gradient(self, inc_unmasked_pixels=False):
         """
