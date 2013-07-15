@@ -454,17 +454,21 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
     """
-    An n_dim translation transform.
+    An ``n_dim`` translation transform.
     """
 
-    def __init__(self, transformation):
+    def __init__(self, translation):
+        r"""
+        Creates a translation transformation object. Expects a translation
+        vector of length ``n_dim - 1``.
+
+        :param translation: a 1D vector of length n_dim (i.e.
+            if you want to make a 3d translation you must specify the
+            translation in each dimension explicitly)
+        :type translation: ndarray [``n_dim``]
         """
-        translation : a 1-d ndarray of length n_dim (i.e.
-        if you want to make a 3d translation you must specify the
-        translation in each dimension explicitly).
-        """
-        homogeneous_matrix = np.eye(transformation.size + 1)
-        homogeneous_matrix[:-1, -1] = transformation
+        homogeneous_matrix = np.eye(translation.shape[0] + 1)
+        homogeneous_matrix[:-1, -1] = translation
         super(Translation, self).__init__(homogeneous_matrix)
 
     @property
