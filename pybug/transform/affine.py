@@ -107,12 +107,12 @@ class AffineTransform(Transform):
         Computes the Jacobian of the transform w.r.t the parameters. This is
         constant for affine transforms.
 
-        The Jacobian generated (for 2D) is of the form
+        The Jacobian generated (for 2D) is of the form::
 
             x 0 y 0 1 0
             0 x 0 y 0 1
 
-        This maintains a parameter order of:
+        This maintains a parameter order of::
 
           W(x;p) = [1 + p1  p3      p5] [x]
                    [p2      1 + p4  p6] [y]
@@ -121,13 +121,10 @@ class AffineTransform(Transform):
         :return dW/dp: A n_dim x num_params x shape ndarray representing the
         Jacobian of the transform.
         """
-        # Swap x and y coordinates for image
-        s = list(shape)
-        s[:2] = s[1::-1]
-        ranges = [np.arange(d) for d in s]
+        ranges = [np.arange(d) for d in shape]
 
         # Create the meshgrids for the image, including a set of ones
-        grids = np.meshgrid(*ranges)
+        grids = np.meshgrid(*ranges, indexing='ij')
         grids.append(np.ones(shape))
 
         # Generate a mask for each dimension, the masks are as follows (for 2D)
@@ -149,10 +146,9 @@ class AffineTransform(Transform):
         for i in xrange(self.n_dim + 1):
             jacs += masks[i] * grids[i][..., None, None]
 
-        # Reshape the matrix to an (n_dim x n_params x shape) ndarray
-        i = np.arange(-2, self.n_dim)
-        indices = np.arange(self.n_dim + 2)[i]
-        return np.transpose(jacs, indices)
+        # Reshape the matrix to an (n_pixels x n_params x n_dims) ndarray
+        jacs = jacs.reshape([-1, self.n_dim, jacs.shape[-1]])
+        return np.transpose(jacs, [0, 2, 1])
 
     def as_vector(self):
         """
