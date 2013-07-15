@@ -2,20 +2,21 @@ import numpy as np
 import scipy.ndimage as ndimage
 
 
-def map_coordinates_interpolator(image, coords, order, type):
-    # Swap x and y for images
-    coords[:2] = coords[1::-1]
-    concat_coords = [c[np.newaxis, ...] for c in coords]
-    concat_coords = np.concatenate(concat_coords, axis=0)
-    return ndimage.map_coordinates(image, concat_coords, order=order,
-                                   mode=type)
+def map_coordinates_interpolator(image, coords, shape, **kwargs):
+    order = kwargs.get('order', 1)
+    mode = kwargs.get('mode', 'constant')
+    return ndimage.map_coordinates(image, coords, order=order, mode=mode)
 
 
-def matlab_interpolator(image, coords, order, type):
+def matlab_interpolator(image, coords, shape, **kwargs):
     from pybug.matlab.wrapper import mlab
-    # Swap x and y back due to syntax of interpn
-    coords[:2] = coords[1::-1]
-    return mlab.interpn(image, *coords)
+    params_list = []
+    method = kwargs.get('method', 'linear')
+    for i in xrange(coords.shape[0]):
+        params_list.append(coords[i, ...].reshape(shape))
+    # Append interpolation method
+    params_list.append(method)
+    return mlab.interpn(image, *params_list).flatten()
 
 
 def warp(image, template_shape, transform,
@@ -45,7 +46,7 @@ def warp(image, template_shape, transform,
 
 def warp_image_onto_template_image(image, template_image, transform,
                                    interpolator=map_coordinates_interpolator,
-                                   mode='constant', order=1):
+                                   **kwargs):
     """
     Samples an image at all the masked pixel locations in template_image,
     returning a version of template image where all pixels have been sampled.
@@ -62,9 +63,9 @@ def warp_image_onto_template_image(image, template_image, transform,
     :return:
     """
     template_points = template_image.masked_pixel_indices
-    # TODO why is this transposed?
     points_to_sample = transform.apply(template_points).T
-    sampled_pixel_values = interpolator(image, points_to_sample,
-                                        order, mode)
+    sampled_pixel_values = interpolator(np.squeeze(image.pixels),
+                                        points_to_sample,
+                                        template_image.image_shape, **kwargs)
     sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
     return template_image.from_vector(sampled_pixel_values)

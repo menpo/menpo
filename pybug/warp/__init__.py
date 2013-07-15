@@ -1,1 +1,1 @@
-from pybug.warp.base import warp
+from pybug.warp.base import warp, warp_image_onto_template_image
