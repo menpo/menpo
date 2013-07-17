@@ -24,6 +24,7 @@ from numpy.fft import fftshift, fftn
 import scipy.ndimage
 import scipy.linalg
 from pybug.convolution import log_gabor
+from pybug.image import Image
 import pybug.matlab as matlab
 from pybug.warp import warp, warp_image_onto_template_image
 from pybug.warp.base import map_coordinates_interpolator
@@ -168,45 +169,40 @@ class ECC(Residual):
 
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
-        i = np.copy(image)
+        new_im = Image(image.pixels, mask=image.mask)
+        i = new_im.pixels
         i -= np.mean(i)
         i /= scipy.linalg.norm(i)
         i = np.nan_to_num(i)
 
-        return i
+        new_im.pixels = i
+        return new_im
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-
+    def steepest_descent_images(self, image, dW_dp, forward=None):
         norm_image = self.__normalise_images(image)
 
-        gradient = self._calculate_gradients(norm_image, dW_dp.shape[-2:],
-                                             **kwargs)
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        gradient = np.concatenate(gradient, axis=0)
-        G = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
-
-        return G
+        gradient = self._calculate_gradients(norm_image, forward=forward)
+        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
-        H = VT_dW_dp[:, np.newaxis, ...] * VT_dW_dp
-        H = self._sum_Hessian(H)
+        H = VT_dW_dp.T.dot(VT_dW_dp)
         self.__H_inv = scipy.linalg.inv(H)
 
         return H
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        normalised_IWxp = self.__normalise_images(IWxp)
-        normalised_template = self.__normalise_images(template)
+        normalised_IWxp = self.__normalise_images(IWxp).as_vector()
+        normalised_template = self.__normalise_images(template).as_vector()
 
-        Gt = self._sum_steepest_descent(VT_dW_dp * normalised_template)
-        Gw = self._sum_steepest_descent(VT_dW_dp * normalised_IWxp)
+        Gt = VT_dW_dp.T.dot(normalised_template)
+        Gw = VT_dW_dp.T.dot(normalised_IWxp)
 
         # Calculate the numerator
         IWxp_norm = scipy.linalg.norm(normalised_IWxp)
         num = (IWxp_norm ** 2) - np.dot(Gw.T, np.dot(self.__H_inv, Gw))
 
         # Calculate the denominator
-        den1 = np.dot(normalised_template.flatten(), normalised_IWxp.flatten())
+        den1 = np.dot(normalised_template, normalised_IWxp)
         den2 = np.dot(Gt.T, np.dot(self.__H_inv, Gw))
         den = den1 - den2
 
@@ -219,9 +215,8 @@ class ECC(Residual):
             l = 0
 
         self._error_img = l * normalised_IWxp - normalised_template
-        Ge = VT_dW_dp * self._error_img
 
-        return self._sum_steepest_descent(Ge)
+        return VT_dW_dp.T.dot(self._error_img)
 
 
 class GradientImages(Residual):
