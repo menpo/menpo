@@ -102,10 +102,29 @@ class Image(Vectorizable):
             self._indices_cache = np.vstack(np.nonzero(self.mask)).T
         return self._indices_cache
 
-    def from_vector(self, flattened):
+    def from_vector(self, flattened, n_channels=-1):
+        r"""
+        Takes a flattened vector and returns a new image formed by reshaping
+        the vector to the correct pixels and channels.
+
+        :param flattened: A flattened vector of all pixels and channels of an
+            image
+        :type flattened: ndarray [N x 1]
+        :param n_channels: If given, will assume that flattened is the same
+            shape as this image, but with a possibly different number of
+            channels
+        :type n_channels: int [Optional]
+        :return: New image of same shape as this image and the number of
+            specified channels.
+        :rtype: :class:`Image <pybug.image.base.Image>`
+        """
         mask = self.mask
-        image_data = np.zeros_like(self.pixels)
-        pixels_per_channel = flattened.reshape((-1, self.n_channels))
+        # This is useful for when we want to add an extra channel to an image
+        # but maintain the shape. For example, when calculating the gradient
+        n_channels = self.n_channels if n_channels == -1 else n_channels
+        # Creates zeros of size (M x N x n_channels)
+        image_data = np.zeros(self.pixels.shape[:-1] + (n_channels,))
+        pixels_per_channel = flattened.reshape((-1, n_channels))
         image_data[mask] = pixels_per_channel
         return Image(image_data, mask=mask)
 
