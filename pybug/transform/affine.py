@@ -102,7 +102,7 @@ class AffineTransform(Transform):
         translation = Translation(self.translation)
         return [rotation_1, scale, rotation_2, translation]
 
-    def jacobian(self, shape):
+    def jacobian_old_shape(self, shape):
         """
         Computes the Jacobian of the transform w.r.t the parameters. This is
         constant for affine transforms.
@@ -149,6 +149,54 @@ class AffineTransform(Transform):
         # Reshape the matrix to an (n_pixels x n_params x n_dims) ndarray
         jacs = jacs.reshape([-1, self.n_dim, jacs.shape[-1]])
         return np.transpose(jacs, [0, 2, 1])
+
+    def jacobian(self, points):
+        """
+        Computes the Jacobian of the transform w.r.t the parameters. This is
+        constant for affine transforms.
+
+        The Jacobian generated (for 2D) is of the form::
+
+            x 0 y 0 1 0
+            0 x 0 y 0 1
+
+        This maintains a parameter order of::
+
+          W(x;p) = [1 + p1  p3      p5] [x]
+                   [p2      1 + p4  p6] [y]
+                                        [1]
+
+        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+        the
+        Jacobian of the transform.
+        """
+        n_points, points_n_dim = points.shape
+        if points_n_dim != self.n_dim:
+            raise DimensionalityError(
+                "Trying to sample jacobian in incorrect dimensions "
+                "(transform is {}D, sampling at {}D)".format(
+                    self.n_dim, points_n_dim))
+        n_params = self.n_dim * self.n_dim + self.n_dim
+        # prealloc the jacobian
+        jac = np.zeros((n_points, n_params, self.n_dim))
+        # a mask that we can apply at each iteration
+        dim_mask = np.eye(self.n_dim, dtype=np.bool)
+
+        for i, s in enumerate(range(0, self.n_dim * self.n_dim, self.n_dim)):
+            # i is current axis
+            # s is slicing offset
+            # make a mask for a single points jacobian
+            full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+            # fill the mask in for the ith axis
+            full_mask[slice(s, s + self.n_dim)] = dim_mask
+            # assign the ith axis points to this mask, broadcasting over all
+            # points
+            jac[:, full_mask] = points[:, i][..., None]
+        # finally, just repeat the same but for the ones at the end
+        full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+        full_mask[slice(s + self.n_dim, s + 2 * self.n_dim)] = dim_mask
+        jac[:, full_mask] = 1
+        return jac
 
     def as_vector(self):
         """
