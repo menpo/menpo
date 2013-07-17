@@ -25,7 +25,7 @@ import scipy.ndimage
 import scipy.linalg
 from pybug.convolution import log_gabor
 import pybug.matlab as matlab
-from pybug.warp import warp
+from pybug.warp import warp, warp_image_onto_template_image
 from pybug.warp.base import map_coordinates_interpolator
 
 
@@ -82,17 +82,18 @@ class Residual(object):
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
         pass
 
-    def _calculate_gradients(self, image, shape, transform=None,
-                             interpolator=map_coordinates_interpolator):
+    def _calculate_gradients(self, image, forward=None):
         # Calculate the gradient over the image
-        gradient = matlab.gradient(image)
+        gradient = image.gradient()
 
         # Warp image for forward additive, if we've been given a transform
-        if not transform is None:
-            gradient = [warp(g, shape, transform, interpolator=interpolator)
-                        for g in gradient]
+        if forward:
+            template, transform, interp = forward
+            gradient = warp_image_onto_template_image(gradient, template,
+                                                      transform,
+                                                      interpolator=interp)
 
-        return gradient
+        return gradient.as_vector(keep_channels=True)
 
     def _sum_over_axes(self, tensor, axes):
         tensor_summed = np.apply_over_axes(np.sum, tensor, axes)
@@ -113,8 +114,8 @@ class Residual(object):
 
 class LSIntensity(Residual):
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradient = image.gradient().as_vector(keep_channels=True)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradient = self._calculate_gradients(image, forward=forward)
         return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):

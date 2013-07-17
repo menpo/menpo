@@ -127,7 +127,7 @@ class ImageInverseCompositional(ImageLucasKanade):
 
         # Compute steepest descent images, VT_dW_dp
         VT_dW_dp = self.residual.steepest_descent_images(self.template,
-                                                             dW_dp)
+                                                         dW_dp)
 
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(VT_dW_dp)
@@ -168,17 +168,19 @@ class ImageForwardAdditive(ImageLucasKanade):
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp(self.image, self.template.shape,
-                        self.optimal_transform,
-                        interpolator=self._interpolator)
+            IWxp = warp_image_onto_template_image(self.image, self.template,
+                                                  self.optimal_transform,
+                                                  interpolator=
+                                                  self._interpolator)
 
             # Compute the Jacobian of the warp
-            dW_dp = self.optimal_transform.jacobian(self.template.shape)
+            dW_dp = self.optimal_transform.jacobian(self.template.image_shape)
 
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = self.residual.steepest_descent_images(
-                self.image, dW_dp, transform=self.optimal_transform,
-                interpolator=self._interpolator)
+                self.image, dW_dp, forward=(self.template,
+                                            self.optimal_transform,
+                                            self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(VI_dW_dp)
