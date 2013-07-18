@@ -94,29 +94,14 @@ class Residual(object):
                                                       transform,
                                                       interpolator=interp)
 
-        return gradient.as_vector(keep_channels=True)
-
-    def _sum_over_axes(self, tensor, axes):
-        tensor_summed = np.apply_over_axes(np.sum, tensor, axes)
-        return np.squeeze(tensor_summed)
-
-    def _sum_Hessian(self, H):
-        # Creates a reverse list from n_dim + 1:2 to sum over
-        # eg. for 3 dimensional image: [4, 3, 2]
-        axes = range(len(H.shape) - 1, 1, -1)
-        return self._sum_over_axes(H, axes)
-
-    def _sum_steepest_descent(self, sd):
-        # Creates a reverse list from n_dim:1 to sum over
-        # eg. for 3 dimensional image: [3, 2, 1]
-        axes = range(len(sd.shape) - 1, 0, -1)
-        return self._sum_over_axes(sd, axes)
+        return gradient
 
 
 class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
         gradient = self._calculate_gradients(image, forward=forward)
+        gradient = gradient.as_vector(keep_channels=True)
         return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
@@ -181,7 +166,9 @@ class ECC(Residual):
     def steepest_descent_images(self, image, dW_dp, forward=None):
         norm_image = self.__normalise_images(image)
 
-        gradient = self._calculate_gradients(norm_image, forward=forward)
+        gradient = self._calculate_gradients(norm_image,
+                                             forward=forward)
+        gradient = gradient.as_vector(keep_channels=True)
         return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
