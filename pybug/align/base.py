@@ -27,7 +27,7 @@ class Alignment(object):
         assert self.n_dim, self.n_landmarks == target.shape
         self.target = target.copy()
 
-    def _view_2d(self):
+    def _view_2d(self, image=False):
         """ Visualize how points are affected by the warp in 2 dimensions.
         """
         #TODO this should be separated out into visualize.
@@ -64,10 +64,12 @@ class Alignment(object):
         delta = self.target - self.source
         # plot how the landmarks move from source to target
         pyplot.quiver(self.source[:, 0], self.source[:, 1], delta[:, 0],
-                      delta[:, 1])
+                      delta[:, 1], angles='xy', scale_units='xy', scale=1)
         # rescale to the bounds
         pyplot.xlim((x_min_m, x_max_m))
         pyplot.ylim((y_min_m, y_max_m))
+        if image:
+            pyplot.gca().invert_yaxis()
 
     @abc.abstractproperty
     def transform(self):

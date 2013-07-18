@@ -40,8 +40,8 @@ class TPS(NonRigidAlignment):
     def transform(self):
         return self._transform_object
 
-    def view(self):
-        self._view_2d()
+    def view(self, image=False):
+        self._view_2d(image=image)
 
 
 # TODO: This may end up being a method in class later on ...
