@@ -31,20 +31,34 @@ class StatisticallyDrivenTransform(Transform):
         self.transform = transform_constructor(
             self.model.instance(weights).points, self.model.mean.points)
 
+    @property
+    def n_dim(self):
+        return self.transform.n_dim
+
     def jacobian(self, points):
         """
         Chains together the jacobian of the warp wrt it's source landmarks
         (dW_dx) with the jacobian of the linear model wrt it's shape (dX_dp).
+        Yields dW_dP of shape (n_points, n_params, n_dims)
         """
         dW_dX = self.transform.jacobian_source(points)
-        # TODO check if the jacobian of the warp is components transposed.
-        dX_dp = self.model.components.T
-        # dW_dX is of shape (n_points, n_landmarks, n_dims)
-        # dX_dp is of shape (n_landmarks x n_dims, n_components)
-        # we reshape dW_dX to (n_points, n_landmarks x n_dims) to be able to
-        # dot, producing something of shape (n_points, n_components) as we
-        # would expect.
-        return dW_dX.reshape((dW_dX.shape[0], -1)).dot(dX_dp)
+        c = self.model.components
+        # c.shape     (n_params, [n_landmarks x n_dims]) *
+        # dW_dX.shape (n_points, n_landmarks, n_dims)
+        # dW_dp.shape (n_points, n_params, n_dims)
+        # * components are parameters in this setting -> n_params == n_comps
+
+        # from PointCloud.as_vector(), we know that c[0, :] has the stride
+        # (x1, y1, x2, y2, ...., xn, yn)
+        # -> reshaping the last axis of c to (n_landmarks, n_dims) will
+        # correctly restore the final axis to be a dimension axis
+        dX_dp = c.reshape(c.shape[0], -1, self.n_dim)
+        # dW_dX.shape (n_points,           n_landmarks, n_dims)
+        # dX_dp.shape (          n_params, n_landmarks, n_dims)
+        # dW_dp.shape (n_points, n_params,              n_dims)
+        # i = points, l = landmarks, d = dims, p = params
+        dW_dp = np.einsum('ild, pld -> ipd', dW_dX, dX_dp)
+        return dW_dp
 
     def from_vector(self, flattened):
         return StatisticallyDrivenTransform(self.model,

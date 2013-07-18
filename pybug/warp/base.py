@@ -66,8 +66,9 @@ def warp_image_onto_template_image(image, template_image, transform,
     """
     template_points = template_image.masked_pixel_indices
     points_to_sample = transform.apply(template_points).T
-
-    sampled_pixel_values = np.zeros([template_image.pixels.size,
+    # we want to sample each channel in turn, returning a vector of sampled
+    # pixels. Store those in a (n_pixels, n_channels) array.
+    sampled_pixel_values = np.zeros([template_image.n_masked_pixels,
                                      image.n_channels])
     pixels = image.pixels
     for i in xrange(image.n_channels):
@@ -76,6 +77,8 @@ def warp_image_onto_template_image(image, template_image, transform,
                                                     template_image.image_shape,
                                                     **kwargs)
     sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
-
-    return template_image.from_vector(sampled_pixel_values,
+    # note that as Image.as_vector() returns a vector with stride
+    # [R1 G1 B1, R2 ....] we can flatten our sampled_pixel_values to get the
+    # normal Image vector form.
+    return template_image.from_vector(sampled_pixel_values.flatten(),
                                       n_channels=image.n_channels)

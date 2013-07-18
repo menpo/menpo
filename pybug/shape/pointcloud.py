@@ -48,6 +48,12 @@ class PointCloud(Shape, Transformable):
         return self.points.shape[1]
 
     def as_vector(self):
+        """
+        Returns a flattened representation of the pointcloud.
+        Note that the flattened representation is of the form
+        [x0, y0, x1, y1, ....., xn, yn] for 2D.
+        :return:
+        """
         return self.points.flatten()
 
     def from_vector(self, flattened):

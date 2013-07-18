@@ -233,17 +233,16 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
 
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = self.residual.steepest_descent_images(
-                self.image, dW_dp, transform=self.optimal_transform,
-                interpolator=self._interpolator)
+                self.image, dW_dp, forward=(mean_appearance,
+                                            self.optimal_transform,
+                                            self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(VI_dW_dp)
 
             # Compute steepest descent parameter updates
-            # TODO remove this dependence on greyscale only (pixels[..., 0])
             sd_delta_p = self.residual.steepest_descent_update(
-                VI_dW_dp, mean_appearance.pixels[..., 0],
-                IWxp.pixels[..., 0])
+                VI_dW_dp, mean_appearance, IWxp)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
