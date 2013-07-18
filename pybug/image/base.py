@@ -3,6 +3,7 @@ import PIL.Image as PILImage
 from pybug.transform.affine import Translation
 from pybug.visualize import ImageViewer
 from pybug.base import Vectorizable
+import itertools
 
 
 class Image(Vectorizable):
@@ -205,15 +206,16 @@ class Image(Vectorizable):
 
     def gradient(self, inc_unmasked_pixels=False):
         """
-        Returns an Image which is the gradient of this one.
+        Returns an Image which is the gradient of this one. In the case of
+        multiple channels, it returns the gradient over each axis over each
+        channel.
         :return:
         """
-        if self.n_channels != 1:
-            raise Exception("Warning - trying to take the gradient on a "
-                            "non-grayscale image")
         if inc_unmasked_pixels:
-            # we know this is B + W, drop the last axis (n_channels which is 1)
-            gradients = np.gradient(self.pixels[..., 0])
+            gradients = [np.gradient(g) for g in
+                         np.rollaxis(self.pixels, -1)]
+            # Flatten the lists
+            gradients = list(itertools.chain.from_iterable(gradients))
             # Add an extra axis for broadcasting
             gradients = [g[..., None] for g in gradients]
             # Concatenate gradient list into an array (the new_image)
@@ -221,14 +223,16 @@ class Image(Vectorizable):
         else:
             masked_square_image = self.mask_bounding_pixels(boundary=3)
             bounding_mask = self.mask_bounding_extent_slicer(3)
-            # we know this is B + W, drop the last axis (n_channels which is 1)
-            gradients = np.gradient(masked_square_image[..., 0])
+            gradients = [np.gradient(g) for g in
+                         np.rollaxis(masked_square_image, -1)]
+            # Flatten the lists
+            gradients = list(itertools.chain.from_iterable(gradients))
             # Add an extra axis for broadcasting
             gradients = [g[..., None] for g in gradients]
             # Concatenate gradient list into a vector
             gradient_array = np.concatenate(gradients, axis=-1)
             # make a new blank image
-            new_image = np.empty((self.image_shape + (self.n_dims,)))
+            new_image = np.empty((self.image_shape + (len(gradients),)))
             # populate the new image with the gradient
             new_image[bounding_mask] = gradient_array
         return Image(new_image, mask=self.mask)
