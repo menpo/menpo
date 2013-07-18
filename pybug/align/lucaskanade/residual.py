@@ -209,64 +209,80 @@ class ECC(Residual):
 class GradientImages(Residual):
 
     def __regularise_gradients(self, gradients):
-        ab = np.sqrt(sum([np.square(g) for g in gradients]))
+        pixels = gradients.pixels
+        ab = np.sqrt(np.sum(np.square(pixels), -1))
         m_ab = np.median(ab)
         ab = ab + m_ab
-        return gradients / ab
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        n_dim = len(image.shape)
-        gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              **kwargs)
+        gradients.pixels = pixels / ab[..., None]
+        return gradients
 
-        self.__template_gradients = self.__regularise_gradients(gradients)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        n_dims = image.n_dims
+        gradient = self._calculate_gradients(image, forward=forward)
+
+        self.__template_gradients = self.__regularise_gradients(gradient)
 
         # Calculate second order derivatives over each dimension
-        gradients = [matlab.gradient(g) for g in self.__template_gradients]
+        gradient = self._calculate_gradients(self.__template_gradients,
+                                             forward=forward)
 
         # Set the second derivatives that should theoretically match to by the
         # same value. For example, in 3D (xx means the second order derivative
         # of x with respect to x):
         #   xy = yx, xz = zx, yz = zy =>
-        #   gradients[0][1] = gradients[1][0],
-        #   gradients[0][2] = gradients[2][0],
+        #   gradients[0][1] = gradients[1][0]
+        #   gradients[0][2] = gradients[2][0]
         #   gradients[1][2] = gradients[2][1]
-        for i in xrange(n_dim - 1):
-            for j in xrange(i + 1, n_dim):
-                gradients[i][j] = gradients[j][i]
+        # Therefore, we use exploit the symmetry to fix the derivatives:
+        #   xx  xy  xz
+        #   yx  yy  yz
+        #   zx  zy  zz
+        # Where we can see that the we need the upper triangle = lower
+        # triangle
+        gradient = gradient.as_vector(keep_channels=True).reshape([-1,
+                                                                   n_dims,
+                                                                   n_dims])
+        mask = np.zeros([n_dims, n_dims], dtype=np.bool)
+        # Find the lower triangle indices
+        tri_indices = np.tril_indices(n_dims, k=-1)
+        mask[tri_indices] = True
+        gradient[:, mask] = gradient[:, mask.T]
+        gradient = gradient.reshape([-1, n_dims ** 2])
 
-        sd_images = []
-        for g in gradients:
-            g = [gg[np.newaxis, ...] for gg in g]
-            g = np.concatenate(g, axis=0)
-            sd = np.sum(dW_dp * g[:, np.newaxis, ...], axis=0)
-            sd_images.append(sd)
-
-        return sd_images
+        # Reshape to keep the xs and ys separate
+        gradient = gradient.reshape([-1, n_dims, n_dims])
+        sd = dW_dp[:, :, None, :] * gradient[:, None, ...]
+        return np.sum(sd, axis=3)
 
     def calculate_hessian(self, VT_dW_dp):
         # Loop over every dimension and compute the individual Hessians, e.g:
-        # Hx = Gx.T * Gx
-        H = [self._sum_Hessian(g[:, np.newaxis, ...] * g) for g in VT_dW_dp]
-
-        # Hx + Hy ...
-        return sum(H)
+        #   Hx = Gx.T * Gx
+        # And then sum
+        # Sum over the pixels and dimensions in order to yield a p x q matrix
+        # n = number of pixels
+        # p,q = number of parameters
+        # d = number of dimensions
+        return np.einsum('npd, nqd', VT_dW_dp, VT_dW_dp)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = matlab.gradient(IWxp)
+        IWxp_gradients = self._calculate_gradients(IWxp)
         IWxp_gradients = self.__regularise_gradients(IWxp_gradients)
 
-        error_imgs = [i - j for i, j in
-                      zip(IWxp_gradients, self.__template_gradients)]
-        self._error_img = sum(error_imgs)
+        IWxp_pixels = IWxp_gradients.as_vector(keep_channels=True)
+        T_pixels = self.__template_gradients.as_vector(keep_channels=True)
+
+        error_imgs = IWxp_pixels - T_pixels
+        self._error_img = np.sum(error_imgs, 1)
 
         # Compute steepest descent update for each dimension, e.g:
         # sd_x = Gx.T * error_img_x
-        G = [self._sum_steepest_descent(error_im * gradient)
-             for gradient, error_im in zip(VT_dW_dp, error_imgs)]
-
-        # sd_x + sd_y ...
-        return sum(G)
+        # Then sd_x + sd_y + ...
+        # Sum over pixels and dimensions to leave just the parameter updates,
+        # n = number of pixels
+        # p = number of parameters
+        # d = number of dimensions
+        return np.einsum('npd, nd', VT_dW_dp, error_imgs)
 
 
 class GradientCorrelation(Residual):
