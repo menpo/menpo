@@ -49,6 +49,27 @@ class Image(Vectorizable):
         else:
             return self.masked_pixels.flatten()
 
+    @classmethod
+    def blank(cls, shape, n_channels=1, fill=0, mask=None):
+        """
+        Returns a blank image
+        :param cls:
+        :param shape: The shape of the image
+        :param n_channels: The number of channels the image should have
+        :param fill: The value to fill all pixels with
+        :param mask: An optional mask that can be applied
+        :return: A new Image of the requested size.
+        """
+        pixels = np.ones(shape + (n_channels,)) * fill
+        return Image(pixels, mask=mask)
+
+    def copy(self):
+        """
+        :return: A copy of this image
+        """
+        return Image(self.pixels, mask=self.mask)
+
+
     @property
     def masked_pixels(self):
         """
