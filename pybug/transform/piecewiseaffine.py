@@ -1,4 +1,5 @@
 import numpy as np
+from pybug.exceptions import DimensionalityError
 from pybug.shape import TriMesh
 from pybug.transform import AffineTransform, Transform
 
@@ -6,8 +7,15 @@ from pybug.transform import AffineTransform, Transform
 class PiecewiseAffineTransform(Transform):
 
     def __init__(self, source, target, trilist):
+        if
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
+        if self.source.n_dims != self.source.n_tris:
+            raise DimensionalityError("source and target must have the same "
+                                      "dimension")
+        if self.source.n_dims != 2:
+            raise DimensionalityError("source and target must be 2 "
+                                      "dimensional")
         self.transforms = self._produce_affine_transforms_per_tri()
 
     @property
