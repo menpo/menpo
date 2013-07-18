@@ -219,11 +219,13 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
         mean_appearance = self.appearance_model.mean
 
         # Forward Additive Algorithm
+        ims =[]  # tmp
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = warp_image_onto_template_image(
                 self.image, mean_appearance,
                 self.optimal_transform, interpolator=self._interpolator)
+            ims.append(IWxp)  # tmp
             # and project out the appearance model from this image
             # TODO implement project_out and uncomment this
             # IWxp = self.appearance_model.project_out(IWxp)
@@ -254,6 +256,9 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
 
             # Test convergence
             error = np.abs(norm(delta_p))
-            print self.n_iters
+            print '{} - convergence: {}'.format(self.n_iters, error)
+            print '{} - residualerr: {}\n'.format(self.n_iters,
+                                                  self.residual.error)
 
-        return self.optimal_transform
+        #return self.optimal_transform
+        return ims  # tmp
