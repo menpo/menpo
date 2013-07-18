@@ -28,7 +28,6 @@ class Image(Vectorizable):
             self.mask = mask.astype(np.bool).copy()
         else:
             self.mask = np.ones(self.image_shape, dtype=np.bool)
-        self.n_masked_pixels = np.sum(self.mask)
 
         # ensure that the data is in the right format
         if image_data.dtype == np.uint8:
@@ -37,6 +36,10 @@ class Image(Vectorizable):
             # convert to double
             image_data = image_data.astype(np.float64)
         self.pixels = image_data.copy()
+
+    @property
+    def n_masked_pixels(self):
+        return np.sum(self.mask)
 
     def view(self):
         if self.n_dims == 2:
@@ -117,12 +120,16 @@ class Image(Vectorizable):
         extents = self.mask_bounding_extent(boundary)
         return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])
 
-
+    # disabled for now as this requires a setter on the mask to
+    # update the cache.
+    # @property
+    # def masked_pixel_indices(self):
+    #     if getattr(self, '_indices_cache', None) is None:
+    #         self._indices_cache = np.vstack(np.nonzero(self.mask)).T
+    #     return self._indices_cache
     @property
     def masked_pixel_indices(self):
-        if getattr(self, '_indices_cache', None) is None:
-            self._indices_cache = np.vstack(np.nonzero(self.mask)).T
-        return self._indices_cache
+        return np.vstack(np.nonzero(self.mask)).T
 
     def from_vector(self, flattened, n_channels=-1):
         r"""
