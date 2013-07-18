@@ -7,7 +7,6 @@ from pybug.transform import AffineTransform, Transform
 class PiecewiseAffineTransform(Transform):
 
     def __init__(self, source, target, trilist):
-        if
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
         if self.source.n_dims != self.source.n_tris:
