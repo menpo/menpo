@@ -224,8 +224,7 @@ class GradientImages(Residual):
         self.__template_gradients = self.__regularise_gradients(gradient)
 
         # Calculate second order derivatives over each dimension
-        gradient = self._calculate_gradients(self.__template_gradients,
-                                             forward=forward)
+        gradient = self._calculate_gradients(self.__template_gradients)
 
         # Set the second derivatives that should theoretically match to by the
         # same value. For example, in 3D (xx means the second order derivative
