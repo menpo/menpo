@@ -4,7 +4,7 @@ from pybug.shape import TriMesh
 from pybug.transform import AffineTransform, Transform
 
 
-class PiecewiseAffineTransform(object):
+class PiecewiseAffineTransform(Transform):
 
     def __init__(self, source, target, trilist):
         self.source = TriMesh(source, trilist)
@@ -15,7 +15,7 @@ class PiecewiseAffineTransform(object):
         if self.source.n_dims != 2:
             raise DimensionalityError("source and target must be 2 "
                                       "dimensional")
-        self.transforms = self._produce_affine_transforms_per_tri()
+        self._produce_affine_transforms_per_tri()
 
     @property
     def n_tris(self):
@@ -64,3 +64,92 @@ class PiecewiseAffineTransform(object):
         self.s, self.t = s, t
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
+
+    def tri_containment(self, points):
+        """
+        Finds for each input point whether it is contained in a triangle,
+        and if so what triangle index it is in.
+        :param points: An [n_points, n_dim] input array
+        :return: (points_in_tris, tri_index)
+        points_in_tris is an index into points, st
+        points[points_in_tris] yields only points that are contained within
+        a triangle.
+        tri_index is the triangle index for each points[points_in_tris],
+        assigning each point in a triangle to the triangle index.
+        """
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        # todo this could be cached if tri_containment is being tested at
+        # many points
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        u = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        v = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+
+        return np.nonzero(np.logical_and(
+            np.logical_and(u >= 0, v >= 0), u + v <= 1))
+
+    def _tri_containment_loop(self, points):
+        """
+        Performs the same operation as tri_containment but in C style.
+        Useful as a reference for how to convert C/Matlab style to numpy
+        (especially the use of einsum)
+        """
+        all_ij, all_ik = self.sij.T, self.sik.T
+        all_i = self.s[0].T
+        output = np.zeros((points.shape[0], self.n_tris), dtype=np.bool)
+        for i, p in enumerate(points):
+            for t in range(self.n_tris):
+                ip = p - all_i[t]
+                ij = all_ij[t]
+                ik = all_ik[t]
+                dot_jj = np.dot(ij, ij)
+                dot_kk = np.dot(ik, ik)
+                dot_jk = np.dot(ij, ik)
+                dot_pj = np.dot(ip, ij)
+                dot_pk = np.dot(ip, ik)
+
+                d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+                u = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+                v = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+                output[i, t] = (u >= 0 and v >= 0) and u + v <= 1
+        return np.nonzero(output)
+
+    def _apply(self, x, **kwargs):
+        """
+        Applies this transform to a new set of vectors
+        :param x: A (n_points, n_dims) ndarray to apply this transform to.
+
+        :return: The transformed version of x
+        """
+        x_in_tris, tri_index = self.tri_containment(x)
+        # build a list of points in each triangle for each triangle
+        x_per_tri = [x[x_in_tris[tri_index == i]] for i in xrange(self.n_tris)]
+        # zip the transforms and the list to apply to make the transformed x
+        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
+                                                     self.transforms)]
+        x_transformed = x.copy()
+        # loop through each triangle, indexing into the x_transformed array
+        # for points in that triangle and replacing the value of x with x_t
+        for i, x_t in enumerate(x_per_tri_tran):
+            x_transformed[x_in_tris[tri_index == i]] = x_t
+        return x_transformed
+
+    def as_vector(self):
+        pass
+
+    def compose(self, a):
+        pass
+
+    def from_vector(self, flattened):
+        pass
+
+    def inverse(self):
+        pass
+
+    def jacobian(self, shape):
+        pass
