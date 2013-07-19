@@ -8,6 +8,7 @@ from pybug.transform import AffineTransform
 from pybug.align.lucaskanade import ImageInverseCompositional, \
     ImageForwardAdditive
 from pybug.align.lucaskanade.residual import *
+from pybug.warp.base import map_coordinates_interpolator
 
 try:
     from pybug.warp.base import matlab_interpolator

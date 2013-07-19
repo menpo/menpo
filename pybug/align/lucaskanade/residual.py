@@ -25,9 +25,7 @@ import scipy.ndimage
 import scipy.linalg
 from pybug.convolution import log_gabor
 from pybug.image import Image
-import pybug.matlab as matlab
-from pybug.warp import warp, warp_image_onto_template_image
-from pybug.warp.base import map_coordinates_interpolator
+from pybug.warp import warp_image_onto_template_image
 
 
 class Residual(object):
@@ -118,36 +116,44 @@ class GaborFourier(Residual):
         if 'filter_bank' in kwargs:
             self._filter_bank = kwargs.get('filter_bank')
             if self._filter_bank.shape != image_shape:
-                raise ValueError('Filter bank must match the '
-                                 'size of the image')
+                raise ValueError('Filter bank shape must match the shape '
+                                 'of the image')
         else:
             gabor = log_gabor(np.ones(image_shape), **kwargs)
-            self._filter_bank = gabor[2]  # Get filter bank matrix
+            # Get filter bank matrix
+            self._filter_bank = gabor[2]
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                             **kwargs)
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        gradient = np.concatenate(gradient, axis=0)
-        VT_dW_dp = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
+        # Flatten the filter bank for vectorized calculations
+        self._filter_bank = self._filter_bank.flatten()
 
-        # Get a range from 1 to number of image dimensions for computing
-        # FFT over
-        image_dims = range(1, len(image.shape) + 1)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradient = self._calculate_gradients(image, forward=forward)
+        gradient_vec = gradient.as_vector(keep_channels=True)
+        VT_dW_dp = np.sum(dW_dp * gradient_vec[:, np.newaxis, ...], axis=2)
+
+        # We have to take the FFT, therefore, we need an image
+        # Reshape back to an image from the vectorized form. Use the gradient
+        # shape in case of FA version (gradients get warped)
+        sd_image_shape = gradient.image_shape + (VT_dW_dp.shape[-1],)
+        sd_image = np.reshape(VT_dW_dp, sd_image_shape)
+        fft_axes = range(image.n_dims)
 
         # Compute FFT over each parameter
-        return fftshift(fftn(VT_dW_dp, axes=image_dims), axes=image_dims)
+        # Then, reshape back to vector for consistency with other residuals
+        FT_VT_dW_dp = fftshift(fftn(sd_image, axes=fft_axes), axes=fft_axes)
+        # Reshape to (n_pixels x n_params)
+        return FT_VT_dW_dp.reshape([-1, VT_dW_dp.shape[-1]])
 
     def calculate_hessian(self, VT_dW_dp):
-        filtered_jac = (self._filter_bank ** 0.5) * VT_dW_dp
-        H = np.conjugate(filtered_jac[:, np.newaxis, ...]) * filtered_jac
-        return self._sum_Hessian(H)
+        filtered_jac = (self._filter_bank[..., None] ** 0.5) * VT_dW_dp
+        return np.conjugate(filtered_jac).T.dot(filtered_jac)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        self._error_img = fftshift(fftn(IWxp - template))
+        # Calculate FFT error image and flatten
+        self._error_img = fftshift(fftn(np.squeeze(IWxp.pixels -
+                                                   template.pixels))).flatten()
         ft_error_img = self._filter_bank * self._error_img
-        sd = VT_dW_dp * np.conjugate(ft_error_img)
-        return self._sum_steepest_descent(sd)
+        return VT_dW_dp.T.dot(np.conjugate(ft_error_img))
 
 
 class ECC(Residual):
@@ -173,7 +179,7 @@ class ECC(Residual):
 
     def calculate_hessian(self, VT_dW_dp):
         H = VT_dW_dp.T.dot(VT_dW_dp)
-        self.__H_inv = scipy.linalg.inv(H)
+        self._H_inv = scipy.linalg.inv(H)
 
         return H
 
@@ -186,11 +192,11 @@ class ECC(Residual):
 
         # Calculate the numerator
         IWxp_norm = scipy.linalg.norm(normalised_IWxp)
-        num = (IWxp_norm ** 2) - np.dot(Gw.T, np.dot(self.__H_inv, Gw))
+        num = (IWxp_norm ** 2) - np.dot(Gw.T, np.dot(self._H_inv, Gw))
 
         # Calculate the denominator
         den1 = np.dot(normalised_template, normalised_IWxp)
-        den2 = np.dot(Gt.T, np.dot(self.__H_inv, Gw))
+        den2 = np.dot(Gt.T, np.dot(self._H_inv, Gw))
         den = den1 - den2
 
         # Calculate lambda to choose the step size
@@ -288,10 +294,10 @@ class GradientCorrelation(Residual):
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
         gradients = self._calculate_gradients(image, forward=forward)
-
         first_grad = gradients.as_vector(keep_channels=True)
-        # Calculate the angle between the gradients. Here I fix the gradients
-        # to be the cartesian x and y values, which means flipping the axes
+
+        # Axis 0 = y, Axis 1 = x
+        # Therefore, calculate the angle between the gradients
         phi = np.angle(first_grad[..., 1] + first_grad[..., 0] * 1j)
         self._cos_phi = np.cos(phi)
         self._sin_phi = np.sin(phi)
@@ -331,8 +337,8 @@ class GradientCorrelation(Residual):
         IWxp_gradients = self._calculate_gradients(IWxp)
         IWxp_grads = IWxp_gradients.as_vector(keep_channels=True)
 
-        # Calculate the angle between the gradients. Here I fix the gradients
-        # to be the cartesian x and y values, which means flipping the axes
+        # Axis 0 = y, Axis 1 = x
+        # Therefore, calculate the angle between the gradients
         phi = np.angle(IWxp_grads[..., 1] + IWxp_grads[..., 0] * 1j)
         IWxp_cos_phi = np.cos(phi)
         IWxp_sin_phi = np.sin(phi)
