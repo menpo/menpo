@@ -286,62 +286,68 @@ class GradientImages(Residual):
 
 class GradientCorrelation(Residual):
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              **kwargs)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradients = self._calculate_gradients(image, forward=forward)
 
-        phi = np.angle(gradients[0] + gradients[1] * 1j)
-        self.__cos_phi = np.cos(phi)
-        self.__sin_phi = np.sin(phi)
+        first_grad = gradients.as_vector(keep_channels=True)
+        # Calculate the angle between the gradients. Here I fix the gradients
+        # to be the cartesian x and y values, which means flipping the axes
+        phi = np.angle(first_grad[..., 1] + first_grad[..., 0] * 1j)
+        self._cos_phi = np.cos(phi)
+        self._sin_phi = np.sin(phi)
 
-        gradient_xs = matlab.gradient(self.__cos_phi)
-        gradient_ys = matlab.gradient(self.__sin_phi)
-        gradient_ys[0] = gradient_xs[1]
+        # Concatenate the sin and cos so that we can take the second
+        # derivatives correctly. sin(phi) = y and cos(phi) = x which is the
+        # correct ordering when multiplying against the warp Jacobian
+        angle_grads = np.concatenate([self._sin_phi[..., None],
+                                      self._cos_phi[..., None]], axis=1)
+        angle_grads = gradients.from_vector(angle_grads)
+        second_grad = self._calculate_gradients(angle_grads).as_vector(
+            keep_channels=True)
+        # Fix the derivatives - yx = xy
+        second_grad[..., 1] = second_grad[..., 2]
 
-        # Jacobian of x values
-        gradient_xs = [g[np.newaxis, ...] for g in gradient_xs]
-        gradient_xs = np.concatenate(gradient_xs, axis=0)
-        Gx = np.sum(-self.__sin_phi[np.newaxis, np.newaxis, ...] *
-                    dW_dp * gradient_xs[:, np.newaxis, ...], axis=0)
+        # Jacobian of axis 1 values (x)
+        G1 = np.sum(-self._sin_phi[..., None, None] *
+                    dW_dp * second_grad[:, None, 2:], axis=2)
 
-        # Jacobian of y values
-        gradient_ys = [g[np.newaxis, ...] for g in gradient_ys]
-        gradient_ys = np.concatenate(gradient_ys, axis=0)
-        Gy = np.sum(self.__cos_phi[np.newaxis, np.newaxis, ...] *
-                    dW_dp * gradient_ys[:, np.newaxis, ...], axis=0)
+        # Jacobian of axis 0 values (y)
+        G0 = np.sum(self._cos_phi[..., None, None] *
+                    dW_dp * second_grad[:, None, :2], axis=2)
 
-        self.__N = image.size
-        self.__J = np.sum([Gx, Gy], axis=0)
+        self._N = np.product(image.image_shape)
+        self._J = np.sum([G0, G1], axis=0)
 
-        return Gx, Gy
+        return G0, G1
 
     def calculate_hessian(self, VT_dW_dp):
-        Gx, Gy = VT_dW_dp
-        Gx = np.sum(np.sum(Gx[:, np.newaxis, ...] * Gx, axis=2), axis=2)
-        Gy = np.sum(np.sum(Gy[:, np.newaxis, ...] * Gy, axis=2), axis=2)
+        G0, G1 = VT_dW_dp
+        G0 = G0.T.dot(G0)
+        G1 = G1.T.dot(G1)
 
-        return Gx + Gy
+        return G0 + G1
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = matlab.gradient(IWxp)
+        IWxp_gradients = self._calculate_gradients(IWxp)
+        IWxp_grads = IWxp_gradients.as_vector(keep_channels=True)
 
-        # Calculate the gradient direction for the input image
-        phi = np.angle(IWxp_gradients[0] + IWxp_gradients[1] * 1j)
+        # Calculate the angle between the gradients. Here I fix the gradients
+        # to be the cartesian x and y values, which means flipping the axes
+        phi = np.angle(IWxp_grads[..., 1] + IWxp_grads[..., 0] * 1j)
         IWxp_cos_phi = np.cos(phi)
         IWxp_sin_phi = np.sin(phi)
 
         # Calculate the angular error
-        ang_err = self.__cos_phi * IWxp_sin_phi - self.__sin_phi * IWxp_cos_phi
+        ang_err = self._cos_phi * IWxp_sin_phi - self._sin_phi * IWxp_cos_phi
         self._error_img = ang_err
 
         # Calculate the step size
-        JT_Sdelta = self.__J * ang_err[np.newaxis, ...]
-        JT_Sdelta = np.sum(np.sum(JT_Sdelta, axis=1), axis=1)
+        JT_Sdelta = self._J.T.dot(ang_err)
 
-        qp = IWxp_cos_phi * self.__cos_phi + IWxp_sin_phi * self.__sin_phi
+        qp = IWxp_cos_phi * self._cos_phi + IWxp_sin_phi * self._sin_phi
         qp = np.sum(qp)
 
-        l = self.__N / qp
+        l = self._N / qp
         image_error = l * JT_Sdelta
 
         return image_error

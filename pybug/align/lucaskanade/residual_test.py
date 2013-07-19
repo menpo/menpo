@@ -130,13 +130,13 @@ def test_2d_gradientimages_fa_map_coords():
 def test_2d_gradientcorrelation_ic_map_coords():
     residual_wrapper(GradientCorrelation(), ImageInverseCompositional,
                      map_coordinates_interpolator,
-                     8.75514246052598)
+                     8.755365214854102)
 
 
 def test_2d_gradientcorrelation_fa_map_coords():
     residual_wrapper(GradientCorrelation(), ImageForwardAdditive,
                      map_coordinates_interpolator,
-                     2.9755961254911782)
+                     1.599221605730202)
 
 ###############################################################################
 
@@ -222,10 +222,10 @@ def test_2d_gradientcorrelation_ic_matlab():
         raise SkipTest("Matlab not found")
 
 
-def test_2d_gradientcorrelation_fa():
+def test_2d_gradientcorrelation_fa_matlab():
     try:
         residual_wrapper(GradientCorrelation(),
                          ImageForwardAdditive, matlab_interpolator,
-                         2.0480934329718363)
+                         1.5916726405416726)
     except NameError:
         raise SkipTest("Matlab not found")
