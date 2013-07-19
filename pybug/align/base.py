@@ -59,16 +59,24 @@ class Alignment(object):
         warped_coords = self.transform.apply(sample_coords)
         delta = warped_coords - sample_coords
         # plot the sample points result
-        pyplot.quiver(sample_coords[:, 0], sample_coords[:, 1], delta[:, 0],
-                      delta[:, 1])
+        x, y, = 0, 1
+        if image:
+            # if we are overlaying points onto an image,
+            # we have to account for the fact that axis 0 is typically
+            # called 'y' and axis 1 is typically called 'x'. Flip them here
+            x, y = y, x
+        pyplot.quiver(sample_coords[:, x], sample_coords[:, y], delta[:, x],
+                      delta[:, y])
         delta = self.target - self.source
         # plot how the landmarks move from source to target
-        pyplot.quiver(self.source[:, 0], self.source[:, 1], delta[:, 0],
-                      delta[:, 1], angles='xy', scale_units='xy', scale=1)
+        pyplot.quiver(self.source[:, x], self.source[:, y], delta[:, x],
+                      delta[:, y], angles='xy', scale_units='xy', scale=1)
         # rescale to the bounds
         pyplot.xlim((x_min_m, x_max_m))
         pyplot.ylim((y_min_m, y_max_m))
         if image:
+            # if we are overlaying points on an image, axis0 (the 'y' axis)
+            # is flipped.
             pyplot.gca().invert_yaxis()
 
     @abc.abstractproperty

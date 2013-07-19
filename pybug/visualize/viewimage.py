@@ -10,4 +10,6 @@ def MatplotLibImageViewer(image):
 
 
 def MatplotLibPointCloudViewer2d(points, **kwargs):
-    return plt.scatter(points[...,0], points[...,1])
+    # note that we flip the y,x to account for the fact
+    # that we always consider axis 0, axis 1
+    return plt.scatter(points[...,1], points[...,0])
