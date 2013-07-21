@@ -6,17 +6,30 @@ import sys
 
 def auto_import(pattern, meshes=True, images=True,
                 include_texture_images=False):
-    """ Smart data importer. Will match all files found on the glob pattern
-    passed in, build the relevant importers, and then call build() on them to
-    return a list of usable objects. To be selective, use the kwargs.
+    r"""
+    Smart data importer. Will match all files found on the glob pattern
+    passed in, build the relevant importers, and then call ``build()`` on them
+    to return a list of usable objects.
 
-    kwargs**
-    images - import images found in the pattern
-    meshes - import meshes found in the pattern
-    include_texture_images - by default, auto_import will check if the images
-    it has found  in the glob pattern are actually textures of the meshes it
-    found. If this is the case, it won't import these images separately. To
-    override this behavior, set include_texture_images to True.
+    :param pattern: The glob style pattern to search for textures and meshes.
+
+        Examples::
+            Look for all meshes that have file extension ``.obj``:
+
+            >>> auto_import('*.obj')
+
+            Look for all files that begin with the string ``test``:
+
+            >>> auto_import('test.*')
+    :type pattern: string
+    :keyword meshes: Include mesh types in results
+    :type meshes: bool
+    :keyword images: Include image types in results
+    :type images: bool
+    :keyword include_texture_images: Check if the images it has found  in
+        the glob pattern are actually textures of the meshes it found.
+        If this is the case, it won't import these images separately.
+    :type include_texture_images: bool
     """
     mesh_objects, image_objects = [], []
     if meshes:
@@ -35,9 +48,21 @@ def auto_import(pattern, meshes=True, images=True,
 
 
 def _multi_image_import(image_filepaths, keep_importers=False):
-    """
+    r"""
     Creates importers for all the image filepaths passed in,
-    and then calls build on them, returning a list of Images.
+    and then calls build on them, returning a list of
+    :class:`Images <pybug.image.base.Image>`.
+
+    :param image_filepaths: List of filepaths
+    :type image_filepaths: list of strings
+    :keyword keep_importers: Returns the
+        :class:`Importers <pybug.io.base.Importer>` as well as the images
+        themselves
+    :type keep_importers: bool
+    :return: list of images or tuple of (images, importers)
+    :rtype: [:class:`Image <pybug.image.base.Image>`] or
+            ([:class:`Images <pybug.image.base.Image>`],
+            [:class:`Importers <pybug.io.base.Importer>`])
     """
     return _multi_import(image_filepaths, image_types, keep_importers)
 
