@@ -7,6 +7,23 @@ import itertools
 
 
 class Image(Vectorizable):
+    r"""
+    Represents an N-dimensional image of size ``[M x N x ...]``. Images can be
+    masked in order to identify a region on interest. All images implicitly
+    have a mask that is defined as the the entire image. Supports
+    construction from a PILImage.
+
+    ``np.uint8`` pixel data is converted to ``np.float64`` and scaled between
+    ``0`` and ``1`` by dividing each pixel by ``255``.
+
+    :param image_data: The pixel data for the image, where the last axis
+        represents the number of channels.
+    :type image_data: ndarray [M x N ... x n_channels] or PILImage
+    :keyword mask: A binary array representing the mask. Must be the same
+        shape as the image. Only one mask is supported for an image (so the
+        mask is applied to every channel equally).
+    :type mask: ndarray [M x N ...] of ``np.bool`
+    """
 
     def __init__(self, image_data, mask=None):
         # we support construction from a PIL Image class
@@ -39,15 +56,36 @@ class Image(Vectorizable):
 
     @property
     def n_masked_pixels(self):
+        r"""
+        The number of ``True`` values in the mask.
+
+        :return: Number of masked pixels
+        :rtype: int
+        """
         return np.sum(self.mask)
 
     def view(self):
+        r"""
+        View the image using the default image viewer. Currently only
+        supports the rendering of 2D images.
+        """
         if self.n_dims == 2:
             return ImageViewer(self.pixels)
         else:
             raise Exception("n_dim Image rendering is not yet supported.")
 
     def as_vector(self, keep_channels=False):
+        r"""
+        Convert image to a vectorized form.
+
+        :keyword keep_channels:
+            ``True``: returns ``n_channels`` column vectors.
+
+            ``False``: returns a 1D array of all channels concatenated.
+        :return: Vectorized image
+        :rtype: ndarray [n_pixels] or [n_pixels x n_channels] if
+         ``keep_channels is True``
+        """
         if keep_channels:
             return self.masked_pixels.reshape([-1, self.n_channels])
         else:
@@ -55,43 +93,57 @@ class Image(Vectorizable):
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, mask=None):
-        """
+        r"""
         Returns a blank image
-        :param cls:
+
         :param shape: The shape of the image
+        :type shape: tuple or list
         :param n_channels: The number of channels the image should have
+        :type n_channels: int
         :param fill: The value to fill all pixels with
+        :type fill: int
         :param mask: An optional mask that can be applied
+        :type mask: ndarray [M x N ...]
         :return: A new Image of the requested size.
+        :rtype: :class:`Image <pybug.image.base.Image>`
         """
         pixels = np.ones(shape + (n_channels,)) * fill
         return Image(pixels, mask=mask)
 
     def copy(self):
-        """
+        r"""
+        Return a copy of this image by instantiating an image with the same
+        pixel and mask data
+
         :return: A copy of this image
+        :rtype: :class:`Image <pybug.image.base.Image>`
         """
         return Image(self.pixels, mask=self.mask)
 
-
     @property
     def masked_pixels(self):
-        """
-        :return: (n_active_pixels, n_channels) ndarray of pixels that have a
-         True mask value
+        r"""
+        Get the pixels covered by the ``True`` values in the mask.
+
+        :return: Pixels that have a ``True`` mask value
+        :rtype: ndarray [n_active_pixels, n_channels]
         """
         return self.pixels[self.mask]
 
     def mask_bounding_extent(self, boundary=0):
-        """
+        r"""
         Returns the maximum and minimum values along all dimensions that the
         mask includes.
-        :param boundary: A number of pixels that should be added to the
-        extent.
-        Note that if the bounding extent is snapped to not go beyond the
-        edge of the image.
-        :return: ndarray [n_dims, 2] where
-        [k, :] = [min_bounding_dim_k, max_bounding_dim_k]
+
+        :keyword boundary: A number of pixels that should be added to the
+            extent.
+
+            **Note:** the bounding extent is snapped to not go beyond
+            the edge of the image.
+        :type boundary: int >= 0
+        :return: The bounding extent
+        :rtype: ndarray [n_dims, 2] where
+            [k, :] = [min_bounding_dim_k, max_bounding_dim_k]
         """
         mpi = self.masked_pixel_indices
         maxes = np.max(mpi, axis=0) + boundary
@@ -104,18 +156,44 @@ class Image(Vectorizable):
         return np.vstack((mins, maxes)).T
 
     def mask_bounding_extent_slicer(self, boundary=0):
+        r"""
+        Returns a slice object that can be used to retrieve the bounding
+        extent.
+
+        :keyword boundary: Passed through to :meth:`mask_bounding_extent
+            <pybug.image.base.Image.mask_bounding_extent>`. The number of
+            pixels that should be added to the extent.
+        :type boundary: int >= 0
+        :returns: Bounding extend slice object
+        :rtype: slice
+        """
         extents = self.mask_bounding_extent(boundary)
         return [slice(x[0], x[1]) for x in list(extents)]
 
     def mask_bounding_pixels(self, boundary=0):
+        r"""
+        Returns the pixels inside the bounding extent of the mask.
+
+        :keyword boundary: Passed through to :meth:`mask_bounding_extent_slicer
+            <pybug.image.base.Image.mask_bounding_extent_slicer>`. The
+            number of pixels that should be added to the extent.
+        :type boundary: int >= 0
+        :return: Pixels inside the bounding extent of the mask
+        :rtype: ndarray [M x N ... x n_channels]
+        """
         return self.pixels[self.mask_bounding_extent_slicer(boundary)]
 
     def mask_bounding_extent_meshgrids(self, boundary=0):
-        """
-        Returns a list of meshgrids, the ith item being the meshgrid over
-        the bounding extent over the i'th dimension.
-        :param boundary:
-        :return:
+        r"""
+        Returns a list of meshgrids, the ``i`` th item being the meshgrid over
+        the bounding extent of the ``i`` th dimension.
+
+        :keyword boundary: Passed through to :meth:`mask_bounding_extent
+            <pybug.image.base.Image.mask_bounding_extent>`. The number of
+            pixels that should be added to the extent.
+        :type boundary: int >= 0
+        :return: list of ndarrays (output of ``np.meshgrid``)
+        :rtype: list
         """
         extents = self.mask_bounding_extent(boundary)
         return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])
@@ -129,6 +207,12 @@ class Image(Vectorizable):
     #     return self._indices_cache
     @property
     def masked_pixel_indices(self):
+        r"""
+        The indices of pixels that represent non-zero values within the mask.
+
+        :return: array of indices
+        :rtype: ndarray
+        """
         return np.vstack(np.nonzero(self.mask)).T
 
     def from_vector(self, flattened, n_channels=-1):
@@ -139,10 +223,10 @@ class Image(Vectorizable):
         :param flattened: A flattened vector of all pixels and channels of an
             image
         :type flattened: ndarray [N x 1]
-        :param n_channels: If given, will assume that flattened is the same
+        :keyword n_channels: If given, will assume that flattened is the same
             shape as this image, but with a possibly different number of
             channels
-        :type n_channels: int [Optional]
+        :type n_channels: int
         :return: New image of same shape as this image and the number of
             specified channels.
         :rtype: :class:`Image <pybug.image.base.Image>`
@@ -157,7 +241,16 @@ class Image(Vectorizable):
         image_data[mask] = pixels_per_channel
         return Image(image_data, mask=mask)
 
+    # TODO: can we do this mathematically and consistently ourselves?
     def as_greyscale(self):
+        r"""
+        Returns a greyscale copy of the image. This uses PIL in order to
+        achieve this and so is only guaranteed to work for 2D images. The
+        output image is guaranteed to have 1 channel.
+
+        :return: A greyscale copy of the image
+        :rtype: :class:`Image <pybug.image.base.Image>`
+        """
         if self.n_channels == 1:
             print "Warning - trying to convert to greyscale an image with " \
                   "only one channel - returning a copy"
@@ -170,6 +263,13 @@ class Image(Vectorizable):
         return Image(pil_bw_image, mask=self.mask)
 
     def as_PILImage(self):
+        r"""
+        Return a PIL copy of the image. Scales the image by ``255`` and
+        converts to ``np.uint8``.
+
+        :return: PIL copy of image as ``np.uint8``
+        :rtype: PILImage
+        """
         return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
 
     def crop(self, *args):
@@ -212,11 +312,13 @@ class Image(Vectorizable):
                 Translation(translation))
 
     def gradient(self, inc_unmasked_pixels=False):
-        """
+        r"""
         Returns an Image which is the gradient of this one. In the case of
         multiple channels, it returns the gradient over each axis over each
-        channel.
-        :return:
+        channel as a flat list.
+
+        :return: The gradient over each axis over each channel
+        :rtype: list
         """
         if inc_unmasked_pixels:
             gradients = [np.gradient(g) for g in
