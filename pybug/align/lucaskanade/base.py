@@ -1,18 +1,15 @@
 import abc
 from scipy.linalg import norm, solve
 import numpy as np
-from pybug.warp import warp
-from pybug.warp.base import warp_image_onto_template_image
-from pybug.warp.base import map_coordinates_interpolator
+from pybug.warp.base import scipy_warp
 
 
 class LucasKanade:
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, image, residual, transform,
-                 interpolator=map_coordinates_interpolator,
-                 optimisation='GN', update_step=0.001,
-                 eps=10 ** -6):
+                 warp=scipy_warp, optimisation='GN', update_step=0.001,
+                 eps=10 ** -10):
         # set basic state for all Lucas Kanade algorithms
         self.initial_transform = transform
         self.TransformClass = transform.__class__
@@ -22,9 +19,9 @@ class LucasKanade:
         self.eps = eps
         self.transforms = [self.initial_transform]
 
-        # select the optimisation approach and interpolator
+        # select the optimisation approach and warp function
         self._calculate_delta_p = self._select_optimisation(optimisation)
-        self._interpolator = interpolator
+        self._warp = warp
 
     def _select_optimisation(self, optimisation):
         if optimisation is 'GN':
@@ -92,12 +89,11 @@ class LucasKanade:
 class ImageLucasKanade(LucasKanade):
 
     def __init__(self, image, template, residual, transform,
-                 interpolator=map_coordinates_interpolator,
+                 warp=scipy_warp,
                  optimisation='GN', update_step=0.001,
                  eps=10 ** -6):
         super(ImageLucasKanade, self).__init__(
-            image, residual, transform, interpolator,
-            optimisation, update_step, eps)
+            image, residual, transform, warp, optimisation, update_step, eps)
         # in image alignment, we align a template image to the target image
         self.template = template
 
@@ -105,12 +101,10 @@ class ImageLucasKanade(LucasKanade):
 class AppearanceModelLucasKanade(LucasKanade):
 
     def __init__(self, image, model, residual, transform,
-                 interpolator=map_coordinates_interpolator,
-                 optimisation='GN', update_step=0.001,
+                 warp=scipy_warp, optimisation='GN', update_step=0.001,
                  eps=10 ** -6):
         super(AppearanceModelLucasKanade, self).__init__(
-            image, residual, transform, interpolator,
-            optimisation, update_step, eps)
+            image, residual, transform, warp, optimisation, update_step, eps)
         # in appearance alignment, we align an appearance model to the target
         # image
         self.appearance_model = model
@@ -136,11 +130,8 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp_image_onto_template_image(self.image,
-                                                  self.template,
-                                                  self.optimal_transform,
-                                                  interpolator=
-                                                  self._interpolator)
+            IWxp = self._warp(self.image, self.template,
+                              self.optimal_transform)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(VT_dW_dp, IWxp,
@@ -169,10 +160,8 @@ class ImageForwardAdditive(ImageLucasKanade):
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp_image_onto_template_image(self.image, self.template,
-                                                  self.optimal_transform,
-                                                  interpolator=
-                                                  self._interpolator)
+            IWxp = self._warp(self.image, self.template,
+                              self.optimal_transform)
 
             # Compute the Jacobian of the warp
             dW_dp = self.optimal_transform.jacobian(
@@ -182,7 +171,7 @@ class ImageForwardAdditive(ImageLucasKanade):
             VI_dW_dp = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
-                                            self._interpolator))
+                                            self._warp))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(VI_dW_dp)
@@ -222,9 +211,8 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
         ims =[]  # tmp
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = warp_image_onto_template_image(
-                self.image, mean_appearance,
-                self.optimal_transform, interpolator=self._interpolator)
+            IWxp = self._warp(self.image, mean_appearance,
+                              self.optimal_transform)
             ims.append(IWxp)  # tmp
             # and project out the appearance model from this image
             # TODO implement project_out and uncomment this
@@ -237,7 +225,7 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
             VI_dW_dp = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(mean_appearance,
                                             self.optimal_transform,
-                                            self._interpolator))
+                                            self._warp))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(VI_dW_dp)

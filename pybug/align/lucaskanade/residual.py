@@ -21,11 +21,9 @@ IJCAI. Vol. 81. 1981.
 import abc
 import numpy as np
 from numpy.fft import fftshift, fftn
-import scipy.ndimage
 import scipy.linalg
 from pybug.convolution import log_gabor
 from pybug.image import Image
-from pybug.warp import warp_image_onto_template_image
 
 
 class Residual(object):
@@ -87,10 +85,8 @@ class Residual(object):
 
         # Warp image for forward additive, if we've been given a transform
         if forward:
-            template, transform, interp = forward
-            gradient = warp_image_onto_template_image(gradient, template,
-                                                      transform,
-                                                      interpolator=interp)
+            template, transform, warp = forward
+            gradient = warp(gradient, template, transform)
 
         return gradient
 
