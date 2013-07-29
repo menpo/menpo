@@ -9,6 +9,7 @@ class PiecewiseAffineTransform(Transform):
     def __init__(self, source, target, trilist):
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
+        self.n_dim = self.source.n_dims
         if self.source.n_dims != self.target.n_dims:
             raise DimensionalityError("source and target must have the same "
                                       "dimension")
