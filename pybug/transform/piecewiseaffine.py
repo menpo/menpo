@@ -53,8 +53,7 @@ class PiecewiseAffineTransform(Transform):
         si, sj, sk = s[0], s[1], s[2]
         ti = t[0]
 
-        d = ((sij[0] - si[0]) * (sik[1] - si[1]) -
-             (sij[1] - si[1]) * (sik[0] - si[0]))
+        d = (sij[0] * sik[1]) - (sij[1] * sik[0])
 
         c_x = (sik[1] * tij - sij[1] * tik) / d
         c_y = (sij[0] * tik - sik[0] * tij) / d
