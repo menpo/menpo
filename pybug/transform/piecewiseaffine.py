@@ -197,7 +197,7 @@ class PiecewiseAffineTransform(Transform):
         # zip the transforms and the list to apply to make the transformed x
         x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
                                                      self.transforms)]
-        x_transformed = x.copy()
+        x_transformed = np.ones_like(x) * np.nan
         # loop through each triangle, indexing into the x_transformed array
         # for points in that triangle and replacing the value of x with x_t
         for i, x_t in enumerate(x_per_tri_tran):

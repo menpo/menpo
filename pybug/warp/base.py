@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
-from pybug.image import Image
 
 
 def scipy_warp(image, template_image, transform, order=1,
@@ -41,10 +40,11 @@ def scipy_warp(image, template_image, transform, order=1,
     # [R1 G1 B1, R2 ....] we can flatten our sampled_pixel_values to get the
     # normal Image vector form.
     warped_image = template_image.from_vector(sampled_pixel_values.flatten(),
-                                      n_channels=image.n_channels)
+                                              n_channels=image.n_channels)
     if warp_mask:
+        # note that we need to set the order to 0 for mapping binary data
         new_mask_values = map_coordinates(image.mask.pixels, points_to_sample,
-                                          order=order, mode=mode)
+                                          order=0, mode=mode)
         # rebuild the mask just like we do with images.
         new_mask = template_image.mask.from_vector(new_mask_values)
         # update the template to use the new mask
