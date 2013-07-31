@@ -461,6 +461,9 @@ class Image(AbstractImage):
         return (Image(cropped_image, mask=cropped_mask),
                 Translation(translation))
 
+    # TODO this kwarg could be False for higher perf True for debug
+    # TODO something is fishy about this method, kwarg seems to be making diff
+    # TODO make a unit test for gradient of masked images (inc_masked_pixels)
     def gradient(self, inc_unmasked_pixels=False):
         r"""
         Returns an Image which is the gradient of this one. In the case of
@@ -481,7 +484,7 @@ class Image(AbstractImage):
             new_image = np.concatenate(gradients, axis=-1)
         else:
             masked_square_image = self.mask_bounding_pixels(boundary=3)
-            bounding_mask = self.mask_bounding_extent_slicer(3)
+            bounding_mask = self.mask.true_bounding_extent_slicer(3)
             gradients = [np.gradient(g) for g in
                          np.rollaxis(masked_square_image, -1)]
             # Flatten the lists
