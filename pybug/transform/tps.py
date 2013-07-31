@@ -110,7 +110,7 @@ class TPSTransform(Transform):
 
     def jacobian_target(self, shape):
         """
-        Calculates the Jacobian of the tps warp wrt the source landmarks -
+        Calculates the Jacobian of the tps warp wrt the target landmarks -
         this may be constant.
         :param shape
         """

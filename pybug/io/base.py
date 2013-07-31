@@ -95,7 +95,8 @@ def _multi_import(filepaths, extensions_map, keep_importers=False):
     object_count = len(filepaths)
     importers = []
 
-    for i, (f, ext) in enumerate(filepaths):
+    # Loop over the sorted filepaths (keeps logical filepath order)
+    for i, (f, ext) in enumerate(sorted(filepaths)):
         importer_type = extensions_map.get(ext)
         importers.append(importer_type(f))
         # Cheeky carriage return so we print on the same line

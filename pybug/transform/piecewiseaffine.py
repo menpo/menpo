@@ -9,6 +9,7 @@ class PiecewiseAffineTransform(Transform):
     def __init__(self, source, target, trilist):
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
+        self.n_dim = self.source.n_dims
         if self.source.n_dims != self.target.n_dims:
             raise DimensionalityError("source and target must have the same "
                                       "dimension")
@@ -20,6 +21,14 @@ class PiecewiseAffineTransform(Transform):
     @property
     def n_tris(self):
         return self.source.n_tris
+
+    @property
+    def n_points(self):
+        return self.source.n_points
+
+    @property
+    def trilist(self):
+        return self.source.trilist
 
     def _produce_affine_transforms_per_tri(self):
         # we permute the axes of the indexed point set to have shape
@@ -44,8 +53,7 @@ class PiecewiseAffineTransform(Transform):
         si, sj, sk = s[0], s[1], s[2]
         ti = t[0]
 
-        d = ((sij[0] - si[0]) * (sik[1] - si[1]) -
-             (sij[1] - si[1]) * (sik[0] - si[0]))
+        d = (sij[0] * sik[1]) - (sij[1] * sik[0])
 
         c_x = (sik[1] * tij - sij[1] * tik) / d
         c_y = (sij[0] * tik - sik[0] * tij) / d
@@ -65,6 +73,31 @@ class PiecewiseAffineTransform(Transform):
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
 
+    def alpha_beta(self, points):
+        """
+        Calculates the alpha and beta values for each triangle for all
+        points provided.
+        :param points:
+        :return:
+        """
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        # todo this could be cached if tri_containment is being tested at
+        # many points
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        alpha = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        beta = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        return alpha, beta
+
+    def _containment_from_alpha_beta(self, alpha, beta):
+        return np.nonzero(np.logical_and(
+            np.logical_and(alpha >= 0, beta >= 0), alpha + beta <= 1))
+
     def tri_containment(self, points):
         """
         Finds for each input point whether it is contained in a triangle,
@@ -77,21 +110,53 @@ class PiecewiseAffineTransform(Transform):
         tri_index is the triangle index for each points[points_in_tris],
         assigning each point in a triangle to the triangle index.
         """
-        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
-        # todo this could be cached if tri_containment is being tested at
-        # many points
-        dot_jj = np.einsum('dt, dt -> t', ij, ij)
-        dot_kk = np.einsum('dt, dt -> t', ik, ik)
-        dot_jk = np.einsum('dt, dt -> t', ij, ik)
-        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+        alpha, beta = self.alpha_beta(points)
+        return self._containment_from_alpha_beta(alpha, beta)
 
-        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        u = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        v = (dot_kk * dot_pj - dot_jk * dot_pk) * d
-
-        return np.nonzero(np.logical_and(
-            np.logical_and(u >= 0, v >= 0), u + v <= 1))
+    def jacobian_source(self, points):
+        """
+        Returns the jacobian of the warp at each
+        :param points:
+        :return:
+        """
+        alpha_i, beta_i = self.alpha_beta(points)
+        # given alpha beta implicitly for the first vertex in our trilist,
+        # we can permute around to get the others. (e.g. rotate CW around
+        # the triangle to get the j'th vertex-as-prime varient,
+        # and once again to the kth).
+        #
+        # alpha_j = 1 - alpha_i - beta_i
+        # beta_j = alpha_i
+        #
+        # alpha_k = beta_i
+        # beta_k = 1 - alpha_i - beta_i
+        #
+        # for the jacobian we only need 1 - a - b for each vertex (i, j, & k)
+        # gamma_i = 1 - alpha_i - beta_i
+        # gamma_j = 1 - (1 - alpha_i - beta_i) - alpha_i = beta_i
+        # gamma_k = 1 - (beta_i) - (1 - alpha_i - beta_i) = alpha_i
+        # skipping the working out:
+        gamma_i = 1 - alpha_i - beta_i
+        gamma_j = beta_i
+        gamma_k = alpha_i
+        # the jacobian wrt source is of shape (n_points, n_source lm, n_dim)
+        jac = np.zeros((points.shape[0], self.n_points, 2))
+        # now its a case of writing the gamma values in for the correct
+        # triangles
+        points_in_tris, tri_index = self._containment_from_alpha_beta(
+            alpha_i, beta_i)
+        for i in xrange(self.n_tris):
+            # e.g. [0,1,2]
+            points_index_in_tri_i = points_in_tris[tri_index == i]
+            # e.g [3,4,7]
+            vertices_index_of_tri_i = self.trilist[i]
+            jac[points_index_in_tri_i, vertices_index_of_tri_i[0], :] = (
+                gamma_i[points_index_in_tri_i, i][..., None])
+            jac[points_index_in_tri_i, vertices_index_of_tri_i[1], :] = (
+                gamma_j[points_index_in_tri_i, i][..., None])
+            jac[points_index_in_tri_i, vertices_index_of_tri_i[2], :] = (
+                gamma_k[points_index_in_tri_i, i][..., None])
+        return jac
 
     def _tri_containment_loop(self, points):
         """
