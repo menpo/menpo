@@ -95,18 +95,17 @@ class AbstractImage(Vectorizable):
         """
         return type(self)(flattened.reshape(self.shape))
 
-    def crop(self, *args):
+    def crop(self, *slice_args):
         r"""
         Crops the image using the given slice objects. Expects
-        ``len(args) == self.n_dims``.
-        Also returns the
+        ``len(args) == self.n_dims``. Also returns the
         :class:`Translation <pybug.transform.affine.Translation>` that would
         translate the cropped portion back in to the original reference
         position. **Note:** Only 2D and 3D images are currently supported.
 
-        :param args: The slices to take over each axis
-        :type args: List of slice objects
-        :raises: AssertionError, ValueError
+        :param slice_args: The slices to take over each axis
+        :type slice_args: List of slice objects
+        :raises: DimensionalityError, ValueError
         :return: (cropped_image, translation)
 
                 cropped_image:
@@ -118,20 +117,10 @@ class AbstractImage(Vectorizable):
         :rtype: (:class:`Image <pybug.image.base.Image>`,
             :class:`Translation <pybug.transform.affine.Translation>`)
         """
-        assert(self.n_dims == len(args))
-        if len(args) == 2:
-            cropped_image = self.pixels[args[0], args[1], ...]
-            translation = np.array([args[0].start, args[1].start])
-        elif len(args) == 3:
-            cropped_image = self.pixels[args[0], args[1], args[2], ...]
-            translation = np.array([args[0].start, args[1].start,
-                                    args[2].start])
-        else:
-            raise ValueError("Only 2D and 3D images are currently supported.")
-
-        return (type(self)(cropped_image),
-                Translation(translation))
-
+        assert(self.n_dims == len(slice_args))
+        cropped_image = self.pixels[slice_args]
+        translation = np.array([x.start for x in slice_args])
+        return type(self)(cropped_image), Translation(translation)
 
 class MaskImage(AbstractImage):
     """
@@ -258,7 +247,8 @@ class Image(AbstractImage):
     """
 
     def __init__(self, image_data, mask=None):
-
+        if not isinstance(image_data, np.ndarray):
+            image_data = np.array(image_data)
         # Correct for intensity images having no channel
         if len(image_data.shape) == 2:
             image_data = image_data[..., np.newaxis]
@@ -422,7 +412,7 @@ class Image(AbstractImage):
         """
         return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
 
-    def crop(self, *args):
+    def crop(self, *slice_args):
         r"""
         Crops the image using the given slice objects. Expects
         ``len(args) == self.n_dims``. Maintains the cropped portion of the
@@ -431,9 +421,9 @@ class Image(AbstractImage):
         translate the cropped portion back in to the original reference
         position. **Note:** Only 2D and 3D images are currently supported.
 
-        :param args: The slices to take over each axis
-        :type args: List of slice objects
-        :raises: AssertionError, ValueError
+        :param slice_args: The slices to take over each axis
+        :type slice_args: List of slice objects
+        :raises: DimensionalityError, ValueError
         :return: (cropped_image, translation)
 
                 cropped_image:
@@ -445,19 +435,10 @@ class Image(AbstractImage):
         :rtype: (:class:`Image <pybug.image.base.Image>`,
             :class:`Translation <pybug.transform.affine.Translation>`)
         """
-        assert(self.n_dims == len(args))
-        if len(args) == 2:
-            cropped_image = self.pixels[args[0], args[1], ...]
-            cropped_mask = self.mask[args[0], args[1], ...]
-            translation = np.array([args[0].start, args[1].start])
-        elif len(args) == 3:
-            cropped_image = self.pixels[args[0], args[1], args[2], ...]
-            cropped_mask = self.mask[args[0], args[1], args[2], ...]
-            translation = np.array([args[0].start, args[1].start,
-                                    args[2].start])
-        else:
-            raise ValueError("Only 2D and 3D images are currently supported.")
-
+        assert(self.n_dims == len(slice_args))
+        cropped_image = self.pixels[slice_args]
+        cropped_mask = self.mask.pixels[slice_args]
+        translation = np.array([x.start for x in slice_args])
         return (Image(cropped_image, mask=cropped_mask),
                 Translation(translation))
 

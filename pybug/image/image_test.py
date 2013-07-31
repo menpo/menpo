@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
+from pybug.exceptions import DimensionalityError
 from pybug.image import Image
 from nose.tools import raises
 
@@ -34,7 +35,7 @@ def test_2d_crop_with_mask():
 
     correct_mask = np.zeros([20, 60])
     correct_mask[10:, 20:30] = 1
-    assert_allclose(cropped_im.mask, correct_mask)
+    assert_allclose(cropped_im.mask.pixels, correct_mask)
     assert_allclose(translation.as_vector(), [0, 0, 0, 0, 0, 0])
 
 
@@ -65,13 +66,13 @@ def test_3d_crop_with_mask():
 
     correct_mask = np.zeros([20, 60, 10])
     correct_mask[10:, 20:30, :10] = 1
-    assert_allclose(cropped_im.mask, correct_mask)
+    assert_allclose(cropped_im.mask.pixels, correct_mask)
     assert_allclose(translation.as_vector(),
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
-@raises(ValueError)
-def test_4d_crop_raises_valueerror():
+@raises(DimensionalityError)
+def test_4d_crop_raises_dimensionalityerror():
     pixels = np.ones((120, 120, 120, 120, 3))
     im = Image(pixels)
 
