@@ -17,5 +17,5 @@ def test_scipy_warp():
     target_transform = AffineTransform.from_vector(initial_params)
     warped_im = scipy_warp(image, template, target_transform)
 
-    assert(warped_im.image_shape == template.image_shape)
+    assert(warped_im.shape == template.shape)
     assert_allclose(warped_im.pixels, template.pixels)

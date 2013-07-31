@@ -130,7 +130,7 @@ class GaborFourier(Residual):
         # We have to take the FFT, therefore, we need an image
         # Reshape back to an image from the vectorized form. Use the gradient
         # shape in case of FA version (gradients get warped)
-        sd_image_shape = gradient.image_shape + (VT_dW_dp.shape[-1],)
+        sd_image_shape = gradient.shape + (VT_dW_dp.shape[-1],)
         sd_image = np.reshape(VT_dW_dp, sd_image_shape)
         fft_axes = range(image.n_dims)
 
@@ -317,7 +317,7 @@ class GradientCorrelation(Residual):
         G0 = np.sum(self._cos_phi[..., None, None] *
                     dW_dp * second_grad[:, None, :2], axis=2)
 
-        self._N = np.product(image.image_shape)
+        self._N = np.product(image.shape)
         self._J = np.sum([G0, G1], axis=0)
 
         return G0, G1

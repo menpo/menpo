@@ -118,7 +118,7 @@ class ImageInverseCompositional(ImageLucasKanade):
 
         # Compute the Jacobian of the warp
         dW_dp = self.optimal_transform.jacobian(
-            self.template.masked_pixel_indices)
+            self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
         VT_dW_dp = self.residual.steepest_descent_images(self.template,
@@ -165,7 +165,7 @@ class ImageForwardAdditive(ImageLucasKanade):
 
             # Compute the Jacobian of the warp
             dW_dp = self.optimal_transform.jacobian(
-                self.template.masked_pixel_indices)
+                self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = self.residual.steepest_descent_images(
@@ -219,7 +219,7 @@ class ProjectOutAppearanceForwardAdditive(AppearanceModelLucasKanade):
             # IWxp = self.appearance_model.project_out(IWxp)
             # Compute the Jacobian of the warp
             dW_dp = self.optimal_transform.jacobian(
-                mean_appearance.masked_pixel_indices)
+                mean_appearance.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             VI_dW_dp = self.residual.steepest_descent_images(
