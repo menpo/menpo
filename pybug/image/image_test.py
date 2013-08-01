@@ -73,7 +73,7 @@ def test_3d_crop_with_mask():
 
 @raises(DimensionalityError)
 def test_4d_crop_raises_dimensionalityerror():
-    pixels = np.ones((120, 120, 120, 120, 3))
+    pixels = np.ones((10, 12, 11, 12, 3))
     im = Image(pixels)
 
     im.crop(slice(0, 20), slice(0, 60), slice(0, 10), slice(0, 10))

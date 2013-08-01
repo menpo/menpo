@@ -122,6 +122,7 @@ class AbstractImage(Vectorizable):
         translation = np.array([x.start for x in slice_args])
         return type(self)(cropped_image), Translation(translation)
 
+
 class MaskImage(AbstractImage):
     """
     A mask image with only 0's and 1's.
@@ -435,12 +436,20 @@ class Image(AbstractImage):
         :rtype: (:class:`Image <pybug.image.base.Image>`,
             :class:`Translation <pybug.transform.affine.Translation>`)
         """
-        assert(self.n_dims == len(slice_args))
-        cropped_image = self.pixels[slice_args]
-        cropped_mask = self.mask.pixels[slice_args]
-        translation = np.array([x.start for x in slice_args])
-        return (Image(cropped_image, mask=cropped_mask),
-                Translation(translation))
+        # crop our image
+        cropped_image, translation = super(Image, self).crop(*slice_args)
+        # crop our mask
+        cropped_mask, mask_translation = self.mask.crop(*slice_args)
+        cropped_image.mask = cropped_mask  # assign the mask
+        # sanity check
+        assert (translation == mask_translation)
+        return cropped_image, translation
+        # assert(self.n_dims == len(slice_args))
+        # cropped_image = self.pixels[slice_args]
+        # cropped_mask = self.mask.pixels[slice_args]
+        # translation = np.array([x.start for x in slice_args])
+        # return (Image(cropped_image, mask=cropped_mask),
+        #         Translation(translation))
 
     # TODO this kwarg could be False for higher perf True for debug
     # TODO something is fishy about this method, kwarg seems to be making diff
