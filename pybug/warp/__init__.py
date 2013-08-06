@@ -1,1 +1,1 @@
-from pybug.warp.base import scipy_warp
+from pybug.warp.base import scipy_warp, cinterp2_warp
