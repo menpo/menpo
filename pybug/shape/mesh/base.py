@@ -1,6 +1,5 @@
 import numpy as np
 from pybug.shape import PointCloud
-from pybug.shape.landmarks import ReferenceLandmark
 from pybug.shape.mesh.exceptions import TriFieldError
 from pybug.visualize import TriMeshViewer3d
 
@@ -112,18 +111,18 @@ class TriMesh(PointCloud):
         # removed.
         # TODO make this more solid - don't want to directly touch the all
         # landmarks
-        for lm in self.landmarks.reference_landmarks():
-            old_index = lm.index
-            if np.all(np.in1d(old_index, kept_points_orig_index)):
-                # referenced point still exists, in the new mesh. add it!
-                new_index = pi_map[old_index]
-                newlm = ReferenceLandmark(newtrimesh, new_index,
-                                          lm.label,
-                                          lm.label_index)
-                newtrimesh.landmarks.all_landmarks.append(newlm)
-            else:
-                print 'the point for landmark: ' + str(
-                    lm.numbered_label) + ' no longer will exist.'
+        # for lm in self.landmarks.reference_landmarks():
+        #     old_index = lm.index
+        #     if np.all(np.in1d(old_index, kept_points_orig_index)):
+        #         # referenced point still exists, in the new mesh. add it!
+        #         new_index = pi_map[old_index]
+        #         newlm = ReferenceLandmark(newtrimesh, new_index,
+        #                                   lm.label,
+        #                                   lm.label_index)
+        #         newtrimesh.landmarks.all_landmarks.append(newlm)
+        #     else:
+        #         print 'the point for landmark: ' + str(
+        #             lm.numbered_label) + ' no longer will exist.'
         return newtrimesh
         #new_landmarks = self.landmarks.copy()
         #for feature in new_landmarks:

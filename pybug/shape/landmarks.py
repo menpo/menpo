@@ -1,152 +1,40 @@
-import abc
 import numpy as np
+from pybug.exceptions import DimensionalityError
 from pybug.visualize import PointCloudViewer3d, LabelViewer3d
 
 
-class Landmark(object):
-    """ An object representing an annotated feature.
-    Only makes sense in the context of a parent Shape instance, and so
-    one is required at construction.
-    """
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, shape, shape_index, label, label_index):
-        self.shape = shape
-        self.index = shape_index
-        self.label = label
-        self.label_index = label_index
-
-    @abc.abstractproperty
-    def feature(self):
-        return list(self.shape._landmark_at_index(self.index))
-
-    @property
-    def numbered_label(self):
-        return self.label + '_' + str(self.label_index)
-
-
-class ReferenceLandmark(Landmark):
-    """A Landmark that references a point that is a part of a point cloud
-    """
-
-    def __init__(self, shape, shape_index, label, label_index):
-        Landmark.__init__(self, shape, shape_index,
-                          label, label_index)
-        if not 0 <= shape_index < self.shape._n_landmarkable_items:
-            raise Exception("Reference landmarks have to have an index "
-                            + "in the range 0 < i < _n_landmarkable_items of "
-                              "the parent shape")
-
-    @property
-    def feature(self):
-        return list(self.shape._landmark_at_index(self.index))
-
-
-class MetaLandmark(Landmark):
-    """A landmark that is totally separate from the parent shape."
-    """
-
-    def __init__(self, shape, metapoint, label, label_index):
-        index = shape._add_meta_landmark_item(metapoint)
-        if index is None:
-            raise Exception("The parent shape of type " + repr(shape) + " is"
-                            " unable to accept MetaLandmarks")
-        Landmark.__init__(self, shape, index,
-                          label, label_index)
-
-    @property
-    def feature(self):
-        return list(self.shape._meta_landmark_at_meta_index(self.index))
-
-
 class LandmarkManager(object):
-    """Class for storing and manipulating Landmarks associated with a Shape.
-    Landmarks index into the points and metapoints of the associated
-    PointCloud. Landmarks which are explicitly given as coordinates would
-    be entirely constructed from metapoints, whereas point indexed landmarks
-    would be composed entirely of points. This class can handle any arbitrary
-    mixture of the two.
+    """
+    Class for storing and manipulating Landmarks associated with a Shape.
     """
 
-    def __init__(self, shape, landmarks=None):
-        """ shape - the shape whose these landmarks apply to
-        landmarks - an existing list of landmarks to initialize this manager to
+    def __init__(self, shape, landmark_dict=None):
         """
-        if landmarks is None:
-            landmarks = []
+        """
+        self.landmark_dict = {}
         self.shape = shape
-        self._data = []
-        if landmarks:
-            shapes = set(lm.shape for lm in landmarks)
-            if len(shapes) != 1:
-                raise Exception('Building a LandmarkManager using Landmarks '
-                                'with differing Shapes')
-            if landmarks[0].shape is not self.shape:
-                raise Exception('Building a LandmarkManager using Landmarks '
-                                'with a different Shape to to the manager')
-            self._data = landmarks
-            self._sort_data()
+        if landmark_dict:
+            self.add_landmarks(landmark_dict)
 
-    def __iter__(self):
-        self._i = -1
-        return self
-
-    def next(self):
-        self._i += 1
-        if self._i == len(self._data):
-            raise StopIteration
-        return self._data[self._i]
-
-    @property
-    def as_array(self):
-        return np.array([lm.feature for lm in self])
-
-    def add_reference_landmarks(self, landmark_dict):
-        for k, v in landmark_dict.iteritems():
-            if len(v.shape) == 1:
-                lm = ReferenceLandmark(self.shape, v, k, 0)
-                self._data.append(lm)
+    def add_landmarks(self, landmark_dict):
+        for key, pointcloud in landmark_dict.iteritems():
+            if pointcloud.n_dims == self.shape.n_dims:
+                self.landmark_dict[key] = pointcloud
             else:
-                for i, index in enumerate(v):
-                    lm = ReferenceLandmark(self.shape, index, k, i)
-                    self._data.append(lm)
-        self._sort_data()
-
-    def add_meta_landmarks(self, landmark_dict):
-        for k, v in landmark_dict.iteritems():
-            if len(v.shape) == 1:
-                lm = MetaLandmark(self.shape, v, k, 0)
-                self._data.append(lm)
-            else:
-                for i, index in enumerate(v):
-                    lm = MetaLandmark(self.shape, index, k, i)
-                    self._data.append(lm)
-        self._sort_data()
-
-    def _sort_data(self):
-        """ Sorts the data by the numbered_label. Ensures that iteration
-        over self is always in a consistent order.
-        """
-        self._data.sort(key=lambda x: x.numbered_label)
-
-    def reference_landmarks(self):
-        return self._rebuild([x for x in self._data
-                              if isinstance(x, ReferenceLandmark)])
-
-    def meta_landmarks(self):
-        return self._rebuild([x for x in self._data
-                              if isinstance(x, MetaLandmark)])
+                raise DimensionalityError("Dimensions of the landmarks must "
+                                          "match the dimensions of the "
+                                          "parent shape")
 
     def with_label(self, label):
-        return self._rebuild([x for x in self._data
-                              if x.label == label])
+        return LandmarkManager(self.shape, {label: self.landmark_dict[label]})
 
     def without_label(self, label):
-        return self._rebuild([x for x in self._data
-                              if x.label != label])
+        new_dict = dict(self.landmark_dict)
+        del new_dict[label]
+        return LandmarkManager(self.shape, new_dict)
 
     def _rebuild(self, landmarks):
-        return LandmarkManager(self.shape, landmarks=landmarks)
+        return LandmarkManager(self.shape, landmark_dict=landmarks)
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
@@ -162,16 +50,29 @@ class LandmarkManager(object):
         lmviewer.view(onviewer=pcviewer)
         return lmviewer
 
-    def __len__(self):
-        return len(self._data)
+    @property
+    def labels(self):
+        return self.landmark_dict.keys()
+
+    @property
+    def landmarks(self):
+        return self.landmark_dict.values()
+
+    @property
+    def all_landmarks(self):
+        from pybug.shape import PointCloud
+
+        all_points = [x.points for x in self.landmarks]
+        all_points = np.concatenate(all_points, axis=0)
+        return PointCloud(all_points)
 
     @property
     def n_labels(self):
-        return len(set(x.label for x in self))
+        return len(self.landmark_dict)
 
     @property
     def n_landmarks(self):
-        return len(self._data)
+        return sum([x.n_points for x in self.landmark_dict.values()])
 
     @property
     def config(self):
