@@ -1,18 +1,20 @@
 import numpy as np
 import PIL.Image as PILImage
+from pybug.exceptions import DimensionalityError
 from pybug.transform.affine import Translation
-from pybug.visualize import ImageViewer
-from pybug.base import Vectorizable
+from pybug.visualize import ImageViewer2d
+from pybug.base import Vectorizable, Landmarkable
 import itertools
 
 
-class AbstractImage(Vectorizable):
+class AbstractImage(Vectorizable, Landmarkable):
     """
     An abstract representation of an image. All images can be
     vectorized/built from vector, viewed,
     all have an image_shape, all are n_dimensional
     """
     def __init__(self, image_data):
+        Landmarkable.__init__(self)
         self.pixels = np.array(image_data)
 
     @property
@@ -63,15 +65,16 @@ class AbstractImage(Vectorizable):
         pixels = np.ones(shape, dtype=dtype) * fill
         return cls(pixels)
 
-    def view(self):
+    def view(self, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
         """
         if self.n_dims == 2:
-            return ImageViewer(self.pixels)
+            return ImageViewer2d(self.pixels).view(**kwargs)
         else:
-            raise Exception("n_dim Image rendering is not yet supported.")
+            raise DimensionalityError("Non 2D Image rendering is not yet "
+                                      "supported.")
 
     def copy(self):
         r"""

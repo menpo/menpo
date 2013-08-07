@@ -1,6 +1,6 @@
 import numpy as np
 from pybug.exceptions import DimensionalityError
-from pybug.visualize import PointCloudViewer3d, LabelViewer3d
+from pybug.visualize import LandmarkViewer
 
 
 class LandmarkManager(object):
@@ -8,11 +8,12 @@ class LandmarkManager(object):
     Class for storing and manipulating Landmarks associated with a Shape.
     """
 
-    def __init__(self, shape, landmark_dict=None):
+    def __init__(self, shape, label, landmark_dict=None):
         """
         """
         self.landmark_dict = {}
         self.shape = shape
+        self.label = label
         if landmark_dict:
             self.add_landmarks(landmark_dict)
 
@@ -26,29 +27,22 @@ class LandmarkManager(object):
                                           "parent shape")
 
     def with_label(self, label):
-        return LandmarkManager(self.shape, {label: self.landmark_dict[label]})
+        return LandmarkManager(self.shape, self.label,
+                               {label: self.landmark_dict[label]})
 
     def without_label(self, label):
         new_dict = dict(self.landmark_dict)
         del new_dict[label]
-        return LandmarkManager(self.shape, new_dict)
-
-    def _rebuild(self, landmarks):
-        return LandmarkManager(self.shape, landmark_dict=landmarks)
+        return LandmarkManager(self.shape, self.label, new_dict)
 
     def view(self, **kwargs):
         """ View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
-        lms = np.array([x.feature for x in self])
-        labels = [x.numbered_label for x in self]
-        pcviewer = self.shape.view(**kwargs)
-        pointviewer = PointCloudViewer3d(lms)
-        pointviewer.view(onviewer=pcviewer)
-        lmviewer = LabelViewer3d(lms, labels, offset=np.array([0, 16, 0]))
-        lmviewer.view(onviewer=pcviewer)
-        return lmviewer
+        shape_viewer = self.shape.view(**kwargs)
+        return LandmarkViewer(self.label, self.landmark_dict).view(
+            onviewer=shape_viewer, **kwargs)
 
     @property
     def labels(self):
@@ -73,9 +67,3 @@ class LandmarkManager(object):
     @property
     def n_landmarks(self):
         return sum([x.n_points for x in self.landmark_dict.values()])
-
-    @property
-    def config(self):
-        """A frozen set specifying all the landmarks numbered labels
-        """
-        return frozenset(x.numbered_label for x in self)

@@ -1,3 +1,4 @@
 from pybug.visualize.base import PointCloudViewer2d, PointCloudViewer3d, \
-    TriMeshViewer3d, TexturedTriMeshViewer3d, LabelViewer3d, ImageViewer
+    TriMeshViewer3d, TexturedTriMeshViewer3d, LandmarkViewer3d, \
+    LandmarkViewer2d, LandmarkViewer, ImageViewer2d
 

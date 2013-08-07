@@ -1,4 +1,5 @@
 import abc
+from pybug.shape.landmarks import LandmarkManager
 
 
 class Vectorizable(object):
@@ -29,3 +30,21 @@ class Vectorizable(object):
         :param flattened: Flattened representation of the object
         """
         pass
+
+
+class Landmarkable(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        self.landmarks = {}
+
+    def add_landmark_set(self, label, landmark_dict):
+        if not isinstance(landmark_dict, dict):
+            raise ValueError('Landmark set must be of type dictionary')
+        else:
+            self.landmarks[label] = LandmarkManager(
+                self, label, landmark_dict=landmark_dict)
+
+    def get_landmark_set(self, label):
+        return self.landmarks[label]

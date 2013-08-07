@@ -34,7 +34,7 @@ class PointCloudViewer3d(Viewer3d):
         Viewer3d.__init__(self, points)
 
 
-class LabelViewer3d(Viewer3d):
+class LandmarkViewer3d(Viewer3d):
     def __init__(self, points, labels, **kwargs):
         Viewer3d.__init__(self, points)
         self.labels = labels

@@ -22,5 +22,14 @@ class Viewer2d(Viewer):
 
 
 class PointCloudViewer2d(Viewer2d):
+
     def __init__(self, points):
         Viewer2d.__init__(self, points)
+
+
+class LandmarkViewer2d(Viewer):
+
+    def __init__(self, label, landmark_dict):
+        Viewer.__init__(self)
+        self.landmark_dict = landmark_dict
+        self.label = label
