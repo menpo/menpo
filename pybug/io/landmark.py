@@ -16,14 +16,14 @@ class LandmarkImporter(Importer):
         super(LandmarkImporter, self).__init__(filepath)
 
     def build(self):
-        return self.landmark_manager
+        return self.label, self.landmark_dict
 
 
 class ASFImporter(LandmarkImporter):
 
     def __init__(self, filepath):
         super(ASFImporter, self).__init__(filepath)
-        self.landmark_manager = self.parse_asf(filepath)
+        self.label, self.landmark_dict = self.parse_asf(filepath)
 
     def parse_asf(self, filepath):
         with open(filepath, 'r') as f:
@@ -46,11 +46,11 @@ class ASFImporter(LandmarkImporter):
             tl[i, ...] = [int(connects_from), int(connects_to)]
 
         scaled_points = np.empty_like(points)
+        # TODO: Scale properly!
         scaled_points[..., 0] = points[..., 0] * 200 #* images[0].height
         scaled_points[..., 1] = points[..., 1] * 200 #* images[0].width
 
-        self.landmark_manager = LandmarkManager('ASF',
-                                                PointCloud(scaled_points))
+        return 'ASF', {'all': PointCloud(scaled_points)}
 
         # These are the edges
         # edges = scaled_points[tl]

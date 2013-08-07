@@ -139,16 +139,18 @@ def find_alternative_files(file_type, filepath, extension_map):
     :param extension_map:
     :return: The basename of the file that was found eg mesh.bmp
     """
-    all_paths = find_extensions_from_basename(filepath)
-    base_names = filter_extensions(all_paths, extension_map)
     try:
+        all_paths = find_extensions_from_basename(filepath)
+        base_names = filter_extensions(all_paths, extension_map)
         if len(base_names) > 1:
             print "Warning: More than one {0} was found: " \
                   "{1}. Taking the first by default".format(
                   file_type, base_names)
         return base_names[0]
-    except:
-        raise ImportError("Failed to find an alternative file")
+    except Exception as e:
+        raise ImportError("Failed to find a {0} for {1} from types {2}. "
+                          "Reason: {3}".format(file_type, filepath,
+                                               extension_map, e.message))
 
 
 def get_importer(path, extension_map):
@@ -166,8 +168,11 @@ def get_importer(path, extension_map):
                   "{0}. Taking the first importer by default".format(
                   path)
         return importers[0]
-    except:
-        raise ImportError("Failed to find importer for the given file")
+    except Exception as e:
+        raise ImportError("Failed to find importer for {0} "
+                          "for types {1}. Reason: {2}".format(path,
+                                                              extension_map,
+                                                              e.message))
 
 
 def _multi_import(filepaths, extensions_map, keep_importers=False):
