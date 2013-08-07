@@ -2,8 +2,7 @@ import abc
 import commands
 import os.path as path
 import tempfile
-from pybug.io.base import Importer, map_filepaths_to_importers, \
-    find_alternative_files, get_importer
+from pybug.io.base import Importer, find_alternative_files, get_importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
 from pybug.io.landmark import LandmarkImporter
@@ -76,6 +75,36 @@ class MeshImporter(Importer):
             self.landmark_importer = get_importer(self.landmark_path,
                                                   landmark_types)
 
+    def _search_for_texture(self):
+        """
+        Tries to find a texture with the same name as the mesh
+        :return: The relative texture path, or None
+        """
+        # Stop searching every single time we access the property
+        self.attempted_texture_search = True
+        # This import is here to avoid circular dependencies
+        from pybug.io.extensions import image_types
+        try:
+            return find_alternative_files('texture', self.filepath,
+                                          image_types)
+        except ImportError:
+            return None
+
+    def _search_for_landmarks(self):
+        """
+        Tries to find a set of landmarks with the same name as the mesh
+        :return: The relative landmarks path, or None
+        """
+        # Stop searching every single time we access the property
+        self.attempted_landmark_search = True
+        # This import is here to avoid circular dependencies
+        from pybug.io.extensions import landmark_types
+        try:
+            return find_alternative_files('landmarks', self.filepath,
+                                          landmark_types)
+        except ImportError:
+            return None
+
     @property
     def texture_path(self):
         """
@@ -87,45 +116,36 @@ class MeshImporter(Importer):
         if not hasattr(self, 'relative_texture_path'):
             self.relative_texture_path = None
 
+        # Try find a texture path if we can
         if self.relative_texture_path is None and \
                 not self.attempted_texture_search:
-            # Stop searching every single time we access the property
-            self.attempted_texture_search = True
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import image_types
-            try:
-                self.relative_texture_path = find_alternative_files(
-                    'texture', self.filepath, image_types)
-            except ImportError:
-                return None
-        elif self.relative_texture_path is None:
-            return None
+            self.relative_texture_path = self._search_for_texture()
 
-        # Fall through, should only happen when path is valid
-        return path.join(self.folder, self.relative_texture_path)
+        try:
+            return path.join(self.folder, self.relative_texture_path)
+        except AttributeError:
+            return None
 
     @property
     def landmark_path(self):
+        """
+        Get the absolute path to the landmarks. Returns None if none can be
+        found. Makes it's best effort to find an appropriate landmark set by
+        searching for landmarks with the same name as the mesh.
+        """
         # Avoid attribute not being set
         if not hasattr(self, 'relative_landmark_path'):
             self.relative_landmark_path = None
 
+        # Try find a texture path if we can
         if self.relative_landmark_path is None and \
                 not self.attempted_landmark_search:
-            # Stop searching every single time we access the property
-            self.attempted_landmark_search = True
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import landmark_types
-            try:
-                self.relative_landmark_path = find_alternative_files(
-                    'landmark', self.filepath, landmark_types)
-            except ImportError:
-                return None
-        elif self.relative_landmark_path is None:
-            return None
+            self.relative_landmark_path = self._search_for_landmarks()
 
-        # Fall through, should only happen when path is valid
-        return path.join(self.folder, self.relative_landmark_path)
+        try:
+            return path.join(self.folder, self.relative_landmark_path)
+        except AttributeError:
+            return None
 
     def build(self):
         meshes = []

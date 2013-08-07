@@ -1,9 +1,8 @@
 import abc
-from sys import path
+import os.path as path
 import PIL.Image as PILImage
-from pybug.io.base import Importer
+from pybug.io.base import Importer, get_importer, find_alternative_files
 from pybug.image import Image
-from pybug.io.landmark import LandmarkImporter
 
 
 class ImageImporter(Importer):
@@ -15,23 +14,56 @@ class ImageImporter(Importer):
 
     def __init__(self, filepath):
         super(ImageImporter, self).__init__(filepath)
+        self.attempted_landmark_search = False
 
         if self.landmark_path is None or not path.exists(self.landmark_path):
             self.landmark_importer = None
         else:
-            self.landmark_importer = LandmarkImporter(self.landmark_path)
+            # This import is here to avoid circular dependencies
+            from pybug.io.extensions import landmark_types
+            self.landmark_importer = get_importer(self.landmark_path,
+                                                  landmark_types)
+
+    def _search_for_landmarks(self):
+        """
+        Tries to find a set of landmarks with the same name as the image
+        :return: The relative landmarks path, or None
+        """
+        # Stop searching every single time we access the property
+        self.attempted_landmark_search = True
+        # This import is here to avoid circular dependencies
+        from pybug.io.extensions import landmark_types
+        try:
+            return find_alternative_files('landmarks', self.filepath,
+                                          landmark_types)
+        except ImportError:
+            return None
 
     @property
     def landmark_path(self):
+        """
+        Get the absolute path to the landmarks. Returns None if none can be
+        found. Makes it's best effort to find an appropriate landmark set by
+        searching for landmarks with the same name as the image.
+        """
+        # Avoid attribute not being set
+        if not hasattr(self, 'relative_landmark_path'):
+            self.relative_landmark_path = None
+
+        # Try find a texture path if we can
+        if self.relative_landmark_path is None and \
+                not self.attempted_landmark_search:
+            self.relative_landmark_path = self._search_for_landmarks()
+
         try:
             return path.join(self.folder, self.relative_landmark_path)
-        except:
+        except AttributeError:
             return None
 
     def build(self):
         if self.landmark_importer is not None:
-            landmark_dict = self.landmark_importer.build()
-            self.image.add_landmark_set(landmark_dict.label, landmark_dict)
+            label, landmark_dict = self.landmark_importer.build()
+            self.image.add_landmark_set(label, landmark_dict)
         return self.image
 
 
