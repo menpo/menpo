@@ -1,6 +1,8 @@
 # A list of extensions that different importers support.
-from pybug.io.mesh.base import AssimpImporter, WRLImporter, FIMImporter, BNTImporter, ABSImporter
-from pybug.io.image import ImageImporter
+from pybug.io.landmark import ASFImporter
+from pybug.io.mesh import AssimpImporter, WRLImporter, FIMImporter, \
+    BNTImporter, ABSImporter
+from pybug.io.image import PILImporter
 
 
 mesh_types = {'.dae': AssimpImporter,
@@ -52,25 +54,27 @@ mesh_types = {'.dae': AssimpImporter,
               '.abs': ABSImporter}
 
 
-image_types = {'.bmp': ImageImporter,
-               '.dib': ImageImporter,
-               '.dcx': ImageImporter,
-               '.eps': ImageImporter,
-               '.ps': ImageImporter,
-               '.gif': ImageImporter,
-               '.im': ImageImporter,
-               '.jpg': ImageImporter,
-               '.jpe': ImageImporter,
-               '.jpeg': ImageImporter,
-               '.pcd': ImageImporter,
-               '.pcx': ImageImporter,
-               '.png': ImageImporter,
-               '.pbm': ImageImporter,
-               '.pgm': ImageImporter,
-               '.ppm': ImageImporter,
-               '.psd': ImageImporter,
-               '.tif': ImageImporter,
-               '.tiff': ImageImporter,
-               '.xbm': ImageImporter,
-               # '.pdf': ImageImporter,
-               '.xpm': ImageImporter}
+image_types = {'.bmp': PILImporter,
+               '.dib': PILImporter,
+               '.dcx': PILImporter,
+               '.eps': PILImporter,
+               '.ps': PILImporter,
+               '.gif': PILImporter,
+               '.im': PILImporter,
+               '.jpg': PILImporter,
+               '.jpe': PILImporter,
+               '.jpeg': PILImporter,
+               '.pcd': PILImporter,
+               '.pcx': PILImporter,
+               '.png': PILImporter,
+               '.pbm': PILImporter,
+               '.pgm': PILImporter,
+               '.ppm': PILImporter,
+               '.psd': PILImporter,
+               '.tif': PILImporter,
+               '.tiff': PILImporter,
+               '.xbm': PILImporter,
+               # '.pdf': PILImporter,
+               '.xpm': PILImporter}
+
+landmark_types = {'.asf': ASFImporter}
