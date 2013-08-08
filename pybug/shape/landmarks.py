@@ -18,6 +18,9 @@ class LandmarkManager(object):
         if landmark_dict:
             self.add_landmarks(landmark_dict)
 
+    def __iter__(self):
+        return iter(self.landmark_dict.iteritems())
+
     def add_landmarks(self, landmark_dict):
         for key, pointcloud in landmark_dict.iteritems():
             if pointcloud.n_dims == self.shape.n_dims:
@@ -26,6 +29,9 @@ class LandmarkManager(object):
                 raise DimensionalityError("Dimensions of the landmarks must "
                                           "match the dimensions of the "
                                           "parent shape")
+
+    def update_landmarks(self, label, lmarks):
+        self.landmark_dict[label] = lmarks
 
     def with_label(self, label):
         return LandmarkManager(self.shape, self.label,

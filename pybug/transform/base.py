@@ -26,7 +26,7 @@ class Transform(Vectorizable):
             """
             return self._apply(x_, **kwargs)
         try:
-            x._transform(transform)
+            return x._transform(transform)
         except AttributeError:
             return self._apply(x, **kwargs)
 
