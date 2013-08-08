@@ -1,8 +1,8 @@
 # A list of extensions that different importers support.
-from pybug.io.landmark import ASFImporter
 from pybug.io.mesh import AssimpImporter, WRLImporter, FIMImporter, \
     BNTImporter, ABSImporter
 from pybug.io.image import PILImporter
+from pybug.shape.landmarks_image import ImageASFImporter
 
 
 mesh_types = {'.dae': AssimpImporter,
@@ -77,4 +77,6 @@ image_types = {'.bmp': PILImporter,
                # '.pdf': PILImporter,
                '.xpm': PILImporter}
 
-landmark_types = {'.asf': ASFImporter}
+image_landmark_types = {'.asf': ImageASFImporter}
+
+mesh_landmark_types = {}

@@ -20,9 +20,9 @@ class ImageImporter(Importer):
             self.landmark_importer = None
         else:
             # This import is here to avoid circular dependencies
-            from pybug.io.extensions import landmark_types
+            from pybug.io.extensions import image_landmark_types
             self.landmark_importer = get_importer(self.landmark_path,
-                                                  landmark_types)
+                                                  image_landmark_types)
 
     def _search_for_landmarks(self):
         """
@@ -32,10 +32,10 @@ class ImageImporter(Importer):
         # Stop searching every single time we access the property
         self.attempted_landmark_search = True
         # This import is here to avoid circular dependencies
-        from pybug.io.extensions import landmark_types
+        from pybug.io.extensions import image_landmark_types
         try:
             return find_alternative_files('landmarks', self.filepath,
-                                          landmark_types)
+                                          image_landmark_types)
         except ImportError:
             return None
 

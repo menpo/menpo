@@ -28,8 +28,14 @@ class LandmarkImporter(Importer):
 
 class ASFImporter(LandmarkImporter):
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, filepath):
         super(ASFImporter, self).__init__(filepath)
+
+    @abc.abstractmethod
+    def _build_points(self, xs, ys):
+        pass
 
     def _parse_format(self, scale_factors=np.array([1, 1]), **kwargs):
         with open(self.filepath, 'r') as f:
@@ -43,16 +49,19 @@ class ASFImporter(LandmarkImporter):
         # Pop the last element of the list for the image_name
         image_name = landmarks.pop()
 
-        points = np.empty([count, 2])
+        xs = np.empty([count, 1])
+        ys = np.empty([count, 1])
         connectivity = np.empty([count, 2], dtype=np.int)
         for i in xrange(count):
             # Though unpacked, they are still all strings
             # Only unpack the first 7
             (path_num, path_type, xpos, ypos,
              point_num, connects_from, connects_to) = landmarks[i].split()[:7]
-            points[i, ...] = [float(ypos), float(xpos)]
+            xs[i, ...] = float(xpos)
+            ys[i, ...] = float(ypos)
             connectivity[i, ...] = [int(connects_from), int(connects_to)]
 
+        points = self._build_points(xs, ys)
         scaled_points = Scale(np.array(scale_factors)).apply(points)
 
         # TODO: Use connectivity and create a graph type instead of PointCloud
