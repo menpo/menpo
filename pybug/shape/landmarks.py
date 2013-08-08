@@ -36,17 +36,15 @@ class LandmarkManager(object):
         del new_dict[label]
         return LandmarkManager(self.shape, self.label, new_dict)
 
-    def view(self, include_labels=True, cmap=cm.jet,
-             halign='center', valign='bottom', size=6, **kwargs):
+    def view(self, include_labels=True, **kwargs):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
         """
         shape_viewer = self.shape.view(**kwargs)
-        return LandmarkViewer(self.label, self.landmark_dict).view(
-            onviewer=shape_viewer, include_labels=include_labels, cmap=cmap,
-            halign=halign, valign=valign, size=size, **kwargs)
+        return LandmarkViewer(self.label, self.landmark_dict, self.shape).view(
+            onviewer=shape_viewer, include_labels=include_labels, **kwargs)
 
     @property
     def labels(self):
