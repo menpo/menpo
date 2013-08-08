@@ -5,7 +5,6 @@ import tempfile
 from pybug.io.base import Importer, find_alternative_files, get_importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
-from pybug.io.landmark import LandmarkImporter
 from pybug.shape import TexturedTriMesh, TriMesh
 from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
@@ -158,8 +157,9 @@ class MeshImporter(Importer):
                 new_mesh = TriMesh(mesh.points, mesh.trilist)
 
             if self.landmark_importer is not None:
-                label, landmark_dict = self.landmark_importer.build()
-                new_mesh.add_landmark_set(label, landmark_dict)
+                label, l_dict = self.landmark_importer.build(
+                    scale_factors=np.max(mesh.points))
+                new_mesh.add_landmark_set(label, l_dict)
 
             meshes.append(new_mesh)
 

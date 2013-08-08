@@ -62,8 +62,9 @@ class ImageImporter(Importer):
 
     def build(self):
         if self.landmark_importer is not None:
-            label, landmark_dict = self.landmark_importer.build()
-            self.image.add_landmark_set(label, landmark_dict)
+            label, lmark_dict = self.landmark_importer.build(
+                scale_factors=self.image.shape)
+            self.image.add_landmark_set(label, lmark_dict)
         return self.image
 
 
