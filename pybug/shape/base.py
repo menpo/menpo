@@ -1,5 +1,6 @@
 import abc
-from pybug.base import Vectorizable, Landmarkable
+from pybug.base import Vectorizable
+from pybug.landmark import Landmarkable
 from pybug.transform.base import Transformable
 
 

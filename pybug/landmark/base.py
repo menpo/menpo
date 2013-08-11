@@ -1,7 +1,25 @@
-from matplotlib import cm
 import numpy as np
+import abc
 from pybug.exceptions import DimensionalityError
 from pybug.visualize import LandmarkViewer
+
+
+class Landmarkable(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        self.landmarks = {}
+
+    def add_landmark_set(self, label, landmark_dict):
+        if not isinstance(landmark_dict, dict):
+            raise ValueError('Landmark set must be of type dictionary')
+        else:
+            self.landmarks[label] = LandmarkManager(
+                self, label, landmark_dict=landmark_dict)
+
+    def get_landmark_set(self, label):
+        return self.landmarks[label]
 
 
 class LandmarkManager(object):

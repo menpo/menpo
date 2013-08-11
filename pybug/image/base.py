@@ -3,7 +3,8 @@ import PIL.Image as PILImage
 from pybug.exceptions import DimensionalityError
 from pybug.transform.affine import Translation
 from pybug.visualize import ImageViewer2d
-from pybug.base import Vectorizable, Landmarkable
+from pybug.landmark import Landmarkable
+from pybug.base import Vectorizable
 import itertools
 
 
