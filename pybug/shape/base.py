@@ -6,7 +6,11 @@ from pybug.transform.base import Transformable
 
 class Shape(Vectorizable, Landmarkable, Transformable):
     """
-    Abstract representation of shape.
+    Abstract representation of shape. Shapes are vectorizable, landmarkable
+    and transformable. This base class handles transforming landmarks when
+    the shape is transformed. Therefore, implementations of Shape have to
+    implement the abstract _transform_self method that handles transforming
+    the Shape itself.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -15,9 +19,10 @@ class Shape(Vectorizable, Landmarkable, Transformable):
 
     def _transform(self, transform):
         """
-        Transform the landmarks and the shape itself
-        :param transform:
-        :return:
+        Transform the landmarks and the shape itself.
+
+        :param transform: A function to transform the spatial data with
+        :return: A pointer to self (the result of _transform_self)
         """
         for manager in self.landmarks.values():
             for label, lmarks in manager:
@@ -30,8 +35,9 @@ class Shape(Vectorizable, Landmarkable, Transformable):
         """
         Implement this method to transform the concrete implementation of a
         shape. This is then called by the Shape's _transform method, which
-        will have updated the landmarks beforehand
-        :param transform: A function to transfrom the spatial data with
+        will have updated the landmarks beforehand.
+
+        :param transform: A function to transform the spatial data with
         :return: A pointer to self
         """
         pass

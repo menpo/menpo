@@ -11,8 +11,8 @@ import itertools
 class AbstractImage(Vectorizable, Landmarkable):
     """
     An abstract representation of an image. All images can be
-    vectorized/built from vector, viewed,
-    all have an image_shape, all are n_dimensional
+    vectorized/built from vector, viewed, all have an image_shape,
+    all are n_dimensional. Images are also Landmarkable.
     """
     def __init__(self, image_data):
         Landmarkable.__init__(self)
