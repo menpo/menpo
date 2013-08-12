@@ -1,0 +1,3 @@
+
+class LabellingError(Exception):
+    pass
