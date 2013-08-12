@@ -37,7 +37,7 @@ class ASFImporter(LandmarkImporter):
     def _build_points(self, xs, ys):
         pass
 
-    def _parse_format(self, scale_factors=np.array([1, 1]), **kwargs):
+    def _parse_format(self, scale_factors=np.array([1.0, 1.0]), **kwargs):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
