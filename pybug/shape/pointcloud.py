@@ -1,7 +1,6 @@
-import numpy as np
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
-from pybug.visualize import PointCloudViewer3d, PointCloudViewer2d
+from pybug.visualize import PointCloudViewer
 
 
 class PointCloud(Shape):
@@ -62,13 +61,7 @@ class PointCloud(Shape):
             self.pointfields[name] = field
 
     def view(self, **kwargs):
-        if self.n_dims == 3:
-            return PointCloudViewer3d(self.points, **kwargs).view(**kwargs)
-        elif self.n_dims == 2:
-            return PointCloudViewer2d(self.points).view(**kwargs)
-        else:
-            print 'arbitrary dimensional PointCloud rendering is not ' \
-                  'supported.'
+        return PointCloudViewer(self.points).view(**kwargs)
 
     def _transform_self(self, transform):
         self.points = transform(self.points)

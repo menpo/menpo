@@ -1,7 +1,7 @@
 import numpy as np
 from pybug.shape import PointCloud
 from pybug.shape.mesh.exceptions import TriFieldError
-from pybug.visualize import TriMeshViewer3d
+from pybug.visualize import TriMeshViewer
 
 
 class TriMesh(PointCloud):
@@ -42,16 +42,12 @@ class TriMesh(PointCloud):
         else:
             self.trifields[name] = field
 
-    def view(self, textured=True):
+    def view(self, textured=True, **kwargs):
         """ Visualize the TriMesh. By default, if the mesh has a texture a
         textured view will be provided. This can be overridden using the
         boolean kwarg `textured`
         """
-        viewer = TriMeshViewer3d(self.points, self.trilist,
-                                 color_per_tri=self.trifields.get('color'),
-                                 color_per_point=self.pointfields.get(
-                                     'color'))
-        return viewer.view()
+        return TriMeshViewer(self.points, self.trilist).view(**kwargs)
 
     def new_trimesh(self, pointmask=None, astype='self'):
         """ Builds a new trimesh from this one.
