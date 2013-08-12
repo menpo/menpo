@@ -50,17 +50,14 @@ class MatplotlibTriMeshViewer2d(view2d.TriMeshViewer2d, MatplotlibViewer):
     def __init__(self, points, trilist):
         super(MatplotlibTriMeshViewer2d, self).__init__(points, trilist)
 
-    def _viewonfigure(self, figure, image_view=False, **kwargs):
+    def _viewonfigure(self, figure, image_view=False, label=None, **kwargs):
         self.currentfigure = figure
 
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
         self.currentscene = figure.add_subplot(111)
-
-        for tri in self.trilist:
-            joined_tri = np.append(tri, tri[0])
-            self.currentscene.plot(points[joined_tri, 0],
-                                   points[joined_tri, 1], **kwargs)
+        self.currentscene.triplot(points[:, 0], points[:, 1], self.trilist,
+                                  label=label, color='b')
 
         return self
 
