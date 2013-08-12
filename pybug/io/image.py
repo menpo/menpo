@@ -16,6 +16,7 @@ class ImageImporter(Importer):
         super(ImageImporter, self).__init__(filepath)
         self.attempted_landmark_search = False
 
+    def _build_landmark_importer(self):
         if self.landmark_path is None or not path.exists(self.landmark_path):
             self.landmark_importer = None
         else:
@@ -60,7 +61,16 @@ class ImageImporter(Importer):
         except AttributeError:
             return None
 
+    @abc.abstractmethod
+    def _build_image(self):
+        pass
+
     def build(self):
+        # Build the image as defined by the overridden method and then search
+        # for valid landmarks that may have been defined by the importer
+        self._build_image()
+        self._build_landmark_importer()
+
         if self.landmark_importer is not None:
             label, lmark_dict = self.landmark_importer.build(
                 scale_factors=self.image.shape)
@@ -72,6 +82,7 @@ class PILImporter(ImageImporter):
 
     def __init__(self, filepath):
         super(PILImporter, self).__init__(filepath)
+
+    def _build_image(self):
         self._pil_image = PILImage.open(self.filepath)
         self.image = Image(self._pil_image)
-
