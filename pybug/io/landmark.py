@@ -69,3 +69,35 @@ class ASFImporter(LandmarkImporter):
 
         self.label = 'ASF'
         self.landmark_dict = {'all': PointCloud(scaled_points)}
+
+
+class PTSImporter(LandmarkImporter):
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(PTSImporter, self).__init__(filepath)
+
+    @abc.abstractmethod
+    def _build_points(self, xs, ys):
+        pass
+
+    def _parse_format(self, **kwargs):
+        f = open(self.filepath, 'r')
+        for line in f:
+            if line.split()[0] == '{':
+                break
+        xs = []
+        ys = []
+        for line in f:
+            if line.split()[0] != '}':
+                xpos, ypos = line.split()[0:2]
+                xs.append(xpos)
+                ys.append(ypos)
+        xs = np.array(xs, dtype=np.float).reshape((-1, 1))
+        ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+
+        points = self._build_points(xs, ys)
+
+        self.label = 'PTS'
+        self.landmark_dict = {'all': PointCloud(points)}

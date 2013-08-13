@@ -2,7 +2,7 @@
 from pybug.io.mesh import AssimpImporter, WRLImporter, FIMImporter, \
     BNTImporter, ABSImporter
 from pybug.io.image import PILImporter
-from pybug.io.landmark_image import ImageASFImporter
+from pybug.io.landmark_image import ImageASFImporter, ImagePTSImporter
 
 
 mesh_types = {'.dae': AssimpImporter,
@@ -77,6 +77,7 @@ image_types = {'.bmp': PILImporter,
                # '.pdf': PILImporter,
                '.xpm': PILImporter}
 
-image_landmark_types = {'.asf': ImageASFImporter}
+image_landmark_types = {'.asf': ImageASFImporter,
+                        '.pts': ImagePTSImporter}
 
 mesh_landmark_types = {}

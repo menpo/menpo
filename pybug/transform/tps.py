@@ -76,6 +76,9 @@ class TPSTransform(Transform):
         r[r == 0] = 1
         aux = 2 * (1 + np.log(r**2))[..., None] * s
         dW_dx = np.zeros((n_pts, n_lms, 2))
+
+        pseudo_target = np.hstack([self.tps.source.T, np.zeros([2, 3])])
+
         for i in np.arange(n_lms):
             dK_dxyi = np.zeros((self.tps.K.shape + (2,)))
             dK_dxyi[i] = aux[i]
@@ -99,12 +102,10 @@ class TPSTransform(Transform):
             aux5 = (points - self.tps.source[i, :])
             aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
             aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
-            dW_dx[:, i, 0] = (self.tps.Y[0].dot(
-                (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T +
-                self.tps.coefficients[:, 0].dot(aux3))
-            dW_dx[:, i, 1] = (self.tps.Y[1].dot(
-                (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T +
-                self.tps.coefficients[:, 1].dot(aux4))
+            dW_dx[:, i, 0] = (pseudo_target[0].dot(
+                (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T)
+            dW_dx[:, i, 1] = (pseudo_target[1].dot(
+                (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T)
 
         return dW_dx
 

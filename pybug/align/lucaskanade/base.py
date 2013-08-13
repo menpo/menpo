@@ -157,6 +157,10 @@ class ImageForwardAdditive(ImageLucasKanade):
         # Initial error > eps
         error = self.eps + 1
 
+        # Compute the Jacobian of the warp
+        dW_dp = self.optimal_transform.jacobian(
+            self.template.mask.true_indices)
+
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
