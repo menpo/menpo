@@ -21,9 +21,9 @@ class MayaviPointCloudViewer3d(view3d.PointCloudViewer3d, MayaviViewer):
         return self
 
 
-class MayaviLabelViewer3d(view3d.LabelViewer3d, MayaviViewer):
+class MayaviLandmarkViewer3d(view3d.LandmarkViewer3d, MayaviViewer):
     def __init__(self, points, labels, **kwargs):
-        view3d.LabelViewer3d.__init__(self, points, labels, **kwargs)
+        view3d.LandmarkViewer3d.__init__(self, points, labels, **kwargs)
 
     def _viewonfigure(self, figure, **kwargs):
         # disabling the rendering greatly speeds up this for loop

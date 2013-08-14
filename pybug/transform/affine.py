@@ -102,17 +102,17 @@ class AffineTransform(Transform):
         translation = Translation(self.translation)
         return [rotation_1, scale, rotation_2, translation]
 
-    def jacobian(self, shape):
+    def jacobian_old_shape(self, shape):
         """
         Computes the Jacobian of the transform w.r.t the parameters. This is
         constant for affine transforms.
 
-        The Jacobian generated (for 2D) is of the form
+        The Jacobian generated (for 2D) is of the form::
 
             x 0 y 0 1 0
             0 x 0 y 0 1
 
-        This maintains a parameter order of:
+        This maintains a parameter order of::
 
           W(x;p) = [1 + p1  p3      p5] [x]
                    [p2      1 + p4  p6] [y]
@@ -121,13 +121,10 @@ class AffineTransform(Transform):
         :return dW/dp: A n_dim x num_params x shape ndarray representing the
         Jacobian of the transform.
         """
-        # Swap x and y coordinates for image
-        s = list(shape)
-        s[:2] = s[1::-1]
-        ranges = [np.arange(d) for d in s]
+        ranges = [np.arange(d) for d in shape]
 
         # Create the meshgrids for the image, including a set of ones
-        grids = np.meshgrid(*ranges)
+        grids = np.meshgrid(*ranges, indexing='ij')
         grids.append(np.ones(shape))
 
         # Generate a mask for each dimension, the masks are as follows (for 2D)
@@ -149,10 +146,57 @@ class AffineTransform(Transform):
         for i in xrange(self.n_dim + 1):
             jacs += masks[i] * grids[i][..., None, None]
 
-        # Reshape the matrix to an (n_dim x n_params x shape) ndarray
-        i = np.arange(-2, self.n_dim)
-        indices = np.arange(self.n_dim + 2)[i]
-        return np.transpose(jacs, indices)
+        # Reshape the matrix to an (n_pixels x n_params x n_dims) ndarray
+        jacs = jacs.reshape([-1, self.n_dim, jacs.shape[-1]])
+        return np.transpose(jacs, [0, 2, 1])
+
+    def jacobian(self, points):
+        """
+        Computes the Jacobian of the transform w.r.t the parameters. This is
+        constant for affine transforms.
+
+        The Jacobian generated (for 2D) is of the form::
+
+            x 0 y 0 1 0
+            0 x 0 y 0 1
+
+        This maintains a parameter order of::
+
+          W(x;p) = [1 + p1  p3      p5] [x]
+                   [p2      1 + p4  p6] [y]
+                                        [1]
+
+        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+        the
+        Jacobian of the transform.
+        """
+        n_points, points_n_dim = points.shape
+        if points_n_dim != self.n_dim:
+            raise DimensionalityError(
+                "Trying to sample jacobian in incorrect dimensions "
+                "(transform is {}D, sampling at {}D)".format(
+                    self.n_dim, points_n_dim))
+        n_params = self.n_dim * self.n_dim + self.n_dim
+        # prealloc the jacobian
+        jac = np.zeros((n_points, n_params, self.n_dim))
+        # a mask that we can apply at each iteration
+        dim_mask = np.eye(self.n_dim, dtype=np.bool)
+
+        for i, s in enumerate(range(0, self.n_dim * self.n_dim, self.n_dim)):
+            # i is current axis
+            # s is slicing offset
+            # make a mask for a single points jacobian
+            full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+            # fill the mask in for the ith axis
+            full_mask[slice(s, s + self.n_dim)] = dim_mask
+            # assign the ith axis points to this mask, broadcasting over all
+            # points
+            jac[:, full_mask] = points[:, i][..., None]
+        # finally, just repeat the same but for the ones at the end
+        full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+        full_mask[slice(s + self.n_dim, s + 2 * self.n_dim)] = dim_mask
+        jac[:, full_mask] = 1
+        return jac
 
     def as_vector(self):
         """
@@ -454,17 +498,21 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
     """
-    An n_dim translation transform.
+    An ``n_dim`` translation transform.
     """
 
-    def __init__(self, transformation):
+    def __init__(self, translation):
+        r"""
+        Creates a translation transformation object. Expects a translation
+        vector of length ``n_dim - 1``.
+
+        :param translation: a 1D vector of length n_dim (i.e.
+            if you want to make a 3d translation you must specify the
+            translation in each dimension explicitly)
+        :type translation: ndarray [``n_dim``]
         """
-        translation : a 1-d ndarray of length n_dim (i.e.
-        if you want to make a 3d translation you must specify the
-        translation in each dimension explicitly).
-        """
-        homogeneous_matrix = np.eye(transformation.size + 1)
-        homogeneous_matrix[:-1, -1] = transformation
+        homogeneous_matrix = np.eye(translation.shape[0] + 1)
+        homogeneous_matrix[:-1, -1] = translation
         super(Translation, self).__init__(homogeneous_matrix)
 
     @property

@@ -21,12 +21,9 @@ IJCAI. Vol. 81. 1981.
 import abc
 import numpy as np
 from numpy.fft import fftshift, fftn
-import scipy.ndimage
 import scipy.linalg
 from pybug.convolution import log_gabor
-import pybug.matlab as matlab
-from pybug.warp import warp
-from pybug.warp.base import map_coordinates_interpolator
+from pybug.image import Image
 
 
 class Residual(object):
@@ -82,56 +79,31 @@ class Residual(object):
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
         pass
 
-    def _calculate_gradients(self, image, shape, transform=None,
-                             interpolator=map_coordinates_interpolator):
+    def _calculate_gradients(self, image, forward=None):
         # Calculate the gradient over the image
-        gradient = matlab.gradient(image)
+        gradient = image.gradient()
 
         # Warp image for forward additive, if we've been given a transform
-        if not transform is None:
-            gradient = [warp(g, shape, transform, interpolator=interpolator)
-                        for g in gradient]
+        if forward:
+            template, transform, warp = forward
+            gradient = warp(gradient, template, transform)
 
         return gradient
-
-    def _sum_over_axes(self, tensor, axes):
-        tensor_summed = np.apply_over_axes(np.sum, tensor, axes)
-        return np.squeeze(tensor_summed)
-
-    def _sum_Hessian(self, H):
-        # Creates a reverse list from n_dim + 1:2 to sum over
-        # eg. for 3 dimensional image: [4, 3, 2]
-        axes = range(len(H.shape) - 1, 1, -1)
-        return self._sum_over_axes(H, axes)
-
-    def _sum_steepest_descent(self, sd):
-        # Creates a reverse list from n_dim:1 to sum over
-        # eg. for 3 dimensional image: [3, 2, 1]
-        axes = range(len(sd.shape) - 1, 0, -1)
-        return self._sum_over_axes(sd, axes)
 
 
 class LSIntensity(Residual):
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                             **kwargs)
-
-        # Add an extra axis for broadcasting
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        # Concatenate gradient list into a vector
-        gradient = np.concatenate(gradient, axis=0)
-
-        return np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradient = self._calculate_gradients(image, forward=forward)
+        gradient = gradient.as_vector(keep_channels=True)
+        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
-        H = VT_dW_dp[:, np.newaxis, ...] * VT_dW_dp
-        return self._sum_Hessian(H)
+        return VT_dW_dp.T.dot(VT_dW_dp)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        self._error_img = IWxp - template
-        sd = VT_dW_dp * self._error_img
-        return self._sum_steepest_descent(sd)
+        self._error_img = IWxp.as_vector() - template.as_vector()
+        return VT_dW_dp.T.dot(self._error_img)
 
 
 class GaborFourier(Residual):
@@ -140,82 +112,87 @@ class GaborFourier(Residual):
         if 'filter_bank' in kwargs:
             self._filter_bank = kwargs.get('filter_bank')
             if self._filter_bank.shape != image_shape:
-                raise ValueError('Filter bank must match the '
-                                 'size of the image')
+                raise ValueError('Filter bank shape must match the shape '
+                                 'of the image')
         else:
             gabor = log_gabor(np.ones(image_shape), **kwargs)
-            self._filter_bank = gabor[2]  # Get filter bank matrix
+            # Get filter bank matrix
+            self._filter_bank = gabor[2]
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradient = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                             **kwargs)
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        gradient = np.concatenate(gradient, axis=0)
-        VT_dW_dp = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
+        # Flatten the filter bank for vectorized calculations
+        self._filter_bank = self._filter_bank.flatten()
 
-        # Get a range from 1 to number of image dimensions for computing
-        # FFT over
-        image_dims = range(1, len(image.shape) + 1)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradient = self._calculate_gradients(image, forward=forward)
+        gradient_vec = gradient.as_vector(keep_channels=True)
+        VT_dW_dp = np.sum(dW_dp * gradient_vec[:, np.newaxis, ...], axis=2)
+
+        # We have to take the FFT, therefore, we need an image
+        # Reshape back to an image from the vectorized form. Use the gradient
+        # shape in case of FA version (gradients get warped)
+        sd_image_shape = gradient.shape + (VT_dW_dp.shape[-1],)
+        sd_image = np.reshape(VT_dW_dp, sd_image_shape)
+        fft_axes = range(image.n_dims)
 
         # Compute FFT over each parameter
-        return fftshift(fftn(VT_dW_dp, axes=image_dims), axes=image_dims)
+        # Then, reshape back to vector for consistency with other residuals
+        FT_VT_dW_dp = fftshift(fftn(sd_image, axes=fft_axes), axes=fft_axes)
+        # Reshape to (n_pixels x n_params)
+        return FT_VT_dW_dp.reshape([-1, VT_dW_dp.shape[-1]])
 
     def calculate_hessian(self, VT_dW_dp):
-        filtered_jac = (self._filter_bank ** 0.5) * VT_dW_dp
-        H = np.conjugate(filtered_jac[:, np.newaxis, ...]) * filtered_jac
-        return self._sum_Hessian(H)
+        filtered_jac = (self._filter_bank[..., None] ** 0.5) * VT_dW_dp
+        return np.conjugate(filtered_jac).T.dot(filtered_jac)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        self._error_img = fftshift(fftn(IWxp - template))
+        # Calculate FFT error image and flatten
+        self._error_img = fftshift(fftn(np.squeeze(IWxp.pixels -
+                                                   template.pixels))).flatten()
         ft_error_img = self._filter_bank * self._error_img
-        sd = VT_dW_dp * np.conjugate(ft_error_img)
-        return self._sum_steepest_descent(sd)
+        return VT_dW_dp.T.dot(np.conjugate(ft_error_img))
 
 
 class ECC(Residual):
 
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
-        i = np.copy(image)
+        new_im = Image(image.pixels, mask=image.mask)
+        i = new_im.pixels
         i -= np.mean(i)
         i /= scipy.linalg.norm(i)
         i = np.nan_to_num(i)
 
-        return i
+        new_im.pixels = i
+        return new_im
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-
+    def steepest_descent_images(self, image, dW_dp, forward=None):
         norm_image = self.__normalise_images(image)
 
-        gradient = self._calculate_gradients(norm_image, dW_dp.shape[-2:],
-                                             **kwargs)
-        gradient = [g[np.newaxis, ...] for g in gradient]
-        gradient = np.concatenate(gradient, axis=0)
-        G = np.sum(dW_dp * gradient[:, np.newaxis, ...], axis=0)
-
-        return G
+        gradient = self._calculate_gradients(norm_image,
+                                             forward=forward)
+        gradient = gradient.as_vector(keep_channels=True)
+        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
     def calculate_hessian(self, VT_dW_dp):
-        H = VT_dW_dp[:, np.newaxis, ...] * VT_dW_dp
-        H = self._sum_Hessian(H)
-        self.__H_inv = scipy.linalg.inv(H)
+        H = VT_dW_dp.T.dot(VT_dW_dp)
+        self._H_inv = scipy.linalg.inv(H)
 
         return H
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        normalised_IWxp = self.__normalise_images(IWxp)
-        normalised_template = self.__normalise_images(template)
+        normalised_IWxp = self.__normalise_images(IWxp).as_vector()
+        normalised_template = self.__normalise_images(template).as_vector()
 
-        Gt = self._sum_steepest_descent(VT_dW_dp * normalised_template)
-        Gw = self._sum_steepest_descent(VT_dW_dp * normalised_IWxp)
+        Gt = VT_dW_dp.T.dot(normalised_template)
+        Gw = VT_dW_dp.T.dot(normalised_IWxp)
 
         # Calculate the numerator
         IWxp_norm = scipy.linalg.norm(normalised_IWxp)
-        num = (IWxp_norm ** 2) - np.dot(Gw.T, np.dot(self.__H_inv, Gw))
+        num = (IWxp_norm ** 2) - np.dot(Gw.T, np.dot(self._H_inv, Gw))
 
         # Calculate the denominator
-        den1 = np.dot(normalised_template.flatten(), normalised_IWxp.flatten())
-        den2 = np.dot(Gt.T, np.dot(self.__H_inv, Gw))
+        den1 = np.dot(normalised_template, normalised_IWxp)
+        den2 = np.dot(Gt.T, np.dot(self._H_inv, Gw))
         den = den1 - den2
 
         # Calculate lambda to choose the step size
@@ -227,132 +204,152 @@ class ECC(Residual):
             l = 0
 
         self._error_img = l * normalised_IWxp - normalised_template
-        Ge = VT_dW_dp * self._error_img
 
-        return self._sum_steepest_descent(Ge)
+        return VT_dW_dp.T.dot(self._error_img)
 
 
 class GradientImages(Residual):
 
     def __regularise_gradients(self, gradients):
-        ab = np.sqrt(sum([np.square(g) for g in gradients]))
+        pixels = gradients.pixels
+        ab = np.sqrt(np.sum(np.square(pixels), -1))
         m_ab = np.median(ab)
         ab = ab + m_ab
-        return gradients / ab
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        n_dim = len(image.shape)
-        gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              **kwargs)
+        gradients.pixels = pixels / ab[..., None]
+        return gradients
 
-        self.__template_gradients = self.__regularise_gradients(gradients)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        n_dims = image.n_dims
+        gradient = self._calculate_gradients(image, forward=forward)
+
+        self.__template_gradients = self.__regularise_gradients(gradient)
 
         # Calculate second order derivatives over each dimension
-        gradients = [matlab.gradient(g) for g in self.__template_gradients]
+        gradient = self._calculate_gradients(self.__template_gradients)
 
         # Set the second derivatives that should theoretically match to by the
         # same value. For example, in 3D (xx means the second order derivative
         # of x with respect to x):
         #   xy = yx, xz = zx, yz = zy =>
-        #   gradients[0][1] = gradients[1][0],
-        #   gradients[0][2] = gradients[2][0],
+        #   gradients[0][1] = gradients[1][0]
+        #   gradients[0][2] = gradients[2][0]
         #   gradients[1][2] = gradients[2][1]
-        for i in xrange(n_dim - 1):
-            for j in xrange(i + 1, n_dim):
-                gradients[i][j] = gradients[j][i]
+        # Therefore, we use exploit the symmetry to fix the derivatives:
+        #   xx  xy  xz
+        #   yx  yy  yz
+        #   zx  zy  zz
+        # Where we can see that the we need the upper triangle = lower
+        # triangle
+        gradient = gradient.as_vector(keep_channels=True).reshape([-1,
+                                                                   n_dims,
+                                                                   n_dims])
+        mask = np.zeros([n_dims, n_dims], dtype=np.bool)
+        # Find the lower triangle indices
+        tri_indices = np.tril_indices(n_dims, k=-1)
+        mask[tri_indices] = True
+        gradient[:, mask] = gradient[:, mask.T]
+        gradient = gradient.reshape([-1, n_dims ** 2])
 
-        sd_images = []
-        for g in gradients:
-            g = [gg[np.newaxis, ...] for gg in g]
-            g = np.concatenate(g, axis=0)
-            sd = np.sum(dW_dp * g[:, np.newaxis, ...], axis=0)
-            sd_images.append(sd)
-
-        return sd_images
+        # Reshape to keep the xs and ys separate
+        gradient = gradient.reshape([-1, n_dims, n_dims])
+        sd = dW_dp[:, :, None, :] * gradient[:, None, ...]
+        return np.sum(sd, axis=3)
 
     def calculate_hessian(self, VT_dW_dp):
         # Loop over every dimension and compute the individual Hessians, e.g:
-        # Hx = Gx.T * Gx
-        H = [self._sum_Hessian(g[:, np.newaxis, ...] * g) for g in VT_dW_dp]
-
-        # Hx + Hy ...
-        return sum(H)
+        #   Hx = Gx.T * Gx
+        # And then sum
+        # Sum over the pixels and dimensions in order to yield a p x q matrix
+        # n = number of pixels
+        # p,q = number of parameters
+        # d = number of dimensions
+        return np.einsum('npd, nqd', VT_dW_dp, VT_dW_dp)
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = matlab.gradient(IWxp)
+        IWxp_gradients = self._calculate_gradients(IWxp)
         IWxp_gradients = self.__regularise_gradients(IWxp_gradients)
 
-        error_imgs = [i - j for i, j in
-                      zip(IWxp_gradients, self.__template_gradients)]
-        self._error_img = sum(error_imgs)
+        IWxp_pixels = IWxp_gradients.as_vector(keep_channels=True)
+        T_pixels = self.__template_gradients.as_vector(keep_channels=True)
+
+        error_imgs = IWxp_pixels - T_pixels
+        self._error_img = np.sum(error_imgs, 1)
 
         # Compute steepest descent update for each dimension, e.g:
         # sd_x = Gx.T * error_img_x
-        G = [self._sum_steepest_descent(error_im * gradient)
-             for gradient, error_im in zip(VT_dW_dp, error_imgs)]
-
-        # sd_x + sd_y ...
-        return sum(G)
+        # Then sd_x + sd_y + ...
+        # Sum over pixels and dimensions to leave just the parameter updates,
+        # n = number of pixels
+        # p = number of parameters
+        # d = number of dimensions
+        return np.einsum('npd, nd', VT_dW_dp, error_imgs)
 
 
 class GradientCorrelation(Residual):
 
-    def steepest_descent_images(self, image, dW_dp, **kwargs):
-        gradients = self._calculate_gradients(image, dW_dp.shape[-2:],
-                                              **kwargs)
+    def steepest_descent_images(self, image, dW_dp, forward=None):
+        gradients = self._calculate_gradients(image, forward=forward)
+        first_grad = gradients.as_vector(keep_channels=True)
 
-        phi = np.angle(gradients[0] + gradients[1] * 1j)
-        self.__cos_phi = np.cos(phi)
-        self.__sin_phi = np.sin(phi)
+        # Axis 0 = y, Axis 1 = x
+        # Therefore, calculate the angle between the gradients
+        phi = np.angle(first_grad[..., 1] + first_grad[..., 0] * 1j)
+        self._cos_phi = np.cos(phi)
+        self._sin_phi = np.sin(phi)
 
-        gradient_xs = matlab.gradient(self.__cos_phi)
-        gradient_ys = matlab.gradient(self.__sin_phi)
-        gradient_ys[0] = gradient_xs[1]
+        # Concatenate the sin and cos so that we can take the second
+        # derivatives correctly. sin(phi) = y and cos(phi) = x which is the
+        # correct ordering when multiplying against the warp Jacobian
+        angle_grads = np.concatenate([self._sin_phi[..., None],
+                                      self._cos_phi[..., None]], axis=1)
+        angle_grads = gradients.from_vector(angle_grads)
+        second_grad = self._calculate_gradients(angle_grads).as_vector(
+            keep_channels=True)
+        # Fix the derivatives - yx = xy
+        second_grad[..., 1] = second_grad[..., 2]
 
-        # Jacobian of x values
-        gradient_xs = [g[np.newaxis, ...] for g in gradient_xs]
-        gradient_xs = np.concatenate(gradient_xs, axis=0)
-        Gx = np.sum(-self.__sin_phi[np.newaxis, np.newaxis, ...] *
-                    dW_dp * gradient_xs[:, np.newaxis, ...], axis=0)
+        # Jacobian of axis 1 values (x)
+        G1 = np.sum(-self._sin_phi[..., None, None] *
+                    dW_dp * second_grad[:, None, 2:], axis=2)
 
-        # Jacobian of y values
-        gradient_ys = [g[np.newaxis, ...] for g in gradient_ys]
-        gradient_ys = np.concatenate(gradient_ys, axis=0)
-        Gy = np.sum(self.__cos_phi[np.newaxis, np.newaxis, ...] *
-                    dW_dp * gradient_ys[:, np.newaxis, ...], axis=0)
+        # Jacobian of axis 0 values (y)
+        G0 = np.sum(self._cos_phi[..., None, None] *
+                    dW_dp * second_grad[:, None, :2], axis=2)
 
-        self.__N = image.size
-        self.__J = np.sum([Gx, Gy], axis=0)
+        self._N = np.product(image.shape)
+        self._J = np.sum([G0, G1], axis=0)
 
-        return Gx, Gy
+        return G0, G1
 
     def calculate_hessian(self, VT_dW_dp):
-        Gx, Gy = VT_dW_dp
-        Gx = np.sum(np.sum(Gx[:, np.newaxis, ...] * Gx, axis=2), axis=2)
-        Gy = np.sum(np.sum(Gy[:, np.newaxis, ...] * Gy, axis=2), axis=2)
+        G0, G1 = VT_dW_dp
+        G0 = G0.T.dot(G0)
+        G1 = G1.T.dot(G1)
 
-        return Gx + Gy
+        return G0 + G1
 
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = matlab.gradient(IWxp)
+        IWxp_gradients = self._calculate_gradients(IWxp)
+        IWxp_grads = IWxp_gradients.as_vector(keep_channels=True)
 
-        # Calculate the gradient direction for the input image
-        phi = np.angle(IWxp_gradients[0] + IWxp_gradients[1] * 1j)
+        # Axis 0 = y, Axis 1 = x
+        # Therefore, calculate the angle between the gradients
+        phi = np.angle(IWxp_grads[..., 1] + IWxp_grads[..., 0] * 1j)
         IWxp_cos_phi = np.cos(phi)
         IWxp_sin_phi = np.sin(phi)
 
         # Calculate the angular error
-        ang_err = self.__cos_phi * IWxp_sin_phi - self.__sin_phi * IWxp_cos_phi
+        ang_err = self._cos_phi * IWxp_sin_phi - self._sin_phi * IWxp_cos_phi
         self._error_img = ang_err
 
         # Calculate the step size
-        JT_Sdelta = self.__J * ang_err[np.newaxis, ...]
-        JT_Sdelta = np.sum(np.sum(JT_Sdelta, axis=1), axis=1)
+        JT_Sdelta = self._J.T.dot(ang_err)
 
-        qp = IWxp_cos_phi * self.__cos_phi + IWxp_sin_phi * self.__sin_phi
+        qp = IWxp_cos_phi * self._cos_phi + IWxp_sin_phi * self._sin_phi
         qp = np.sum(qp)
 
-        l = self.__N / qp
+        l = self._N / qp
         image_error = l * JT_Sdelta
 
         return image_error

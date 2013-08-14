@@ -1,10 +1,10 @@
+import abc
 import commands
 import os.path as path
 import tempfile
-from pybug.io.base import Importer
+from pybug.io.base import Importer, find_alternative_files, get_importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
-from pybug.io.image import ImageImporter
 from pybug.shape import TexturedTriMesh, TriMesh
 from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
@@ -47,54 +47,149 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
 
 
 class MeshImporter(Importer):
-    """Base class for importing 3D meshes
     """
+    Base class for importing 3D meshes
+    """
+
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, filepath):
         super(MeshImporter, self).__init__(filepath)
+        self.meshes = []
+        self.attempted_texture_search = False
+        self.attempted_landmark_search = False
+
+    def _build_texture_and_landmark_importers(self):
         if self.texture_path is None or not path.exists(self.texture_path):
             self.texture_importer = None
         else:
-            self.texture_importer = ImageImporter(self.texture_path)
+            # This import is here to avoid circular dependencies
+            from pybug.io.extensions import image_types
+            self.texture_importer = get_importer(self.texture_path,
+                                                 image_types)
+
+        if self.landmark_path is None or not path.exists(self.landmark_path):
+            self.landmark_importer = None
+        else:
+            # This import is here to avoid circular dependencies
+            from pybug.io.extensions import mesh_landmark_types
+            self.landmark_importer = get_importer(self.landmark_path,
+                                                  mesh_landmark_types)
+
+    def _search_for_texture(self):
+        """
+        Tries to find a texture with the same name as the mesh
+        :return: The relative texture path, or None
+        """
+        # Stop searching every single time we access the property
+        self.attempted_texture_search = True
+        # This import is here to avoid circular dependencies
+        from pybug.io.extensions import image_types
+        try:
+            return find_alternative_files('texture', self.filepath,
+                                          image_types)
+        except ImportError:
+            return None
+
+    def _search_for_landmarks(self):
+        """
+        Tries to find a set of landmarks with the same name as the mesh
+        :return: The relative landmarks path, or None
+        """
+        # Stop searching every single time we access the property
+        self.attempted_landmark_search = True
+        # This import is here to avoid circular dependencies
+        from pybug.io.extensions import mesh_landmark_types
+        try:
+            return find_alternative_files('landmarks', self.filepath,
+                                          mesh_landmark_types)
+        except ImportError:
+            return None
 
     @property
     def texture_path(self):
-        if self.relative_texture_path is None:
-            return None
-        else:
-            return path.join(self.folder, self.relative_texture_path)
+        """
+        Get the absolute path to the texture. Returns None if one can't be
+        found. Makes it's best effort to find an appropriate texture by
+        searching for textures with the same name as the mesh.
+        """
+        # Avoid attribute not being set
+        if not hasattr(self, 'relative_texture_path'):
+            self.relative_texture_path = None
 
-    def import_landmarks(self):
-        import pybug.io.metadata as metadata
+        # Try find a texture path if we can
+        if self.relative_texture_path is None and \
+                not self.attempted_texture_search:
+            self.relative_texture_path = self._search_for_texture()
+
         try:
-            self.landmarks = metadata.json_pybug_landmarks(self.filepath)
-        except metadata.MissingLandmarksError:
-            self.landmarks = None
+            return path.join(self.folder, self.relative_texture_path)
+        except AttributeError:
+            return None
+
+    @property
+    def landmark_path(self):
+        """
+        Get the absolute path to the landmarks. Returns None if none can be
+        found. Makes it's best effort to find an appropriate landmark set by
+        searching for landmarks with the same name as the mesh.
+        """
+        # Avoid attribute not being set
+        if not hasattr(self, 'relative_landmark_path'):
+            self.relative_landmark_path = None
+
+        # Try find a texture path if we can
+        if self.relative_landmark_path is None and \
+                not self.attempted_landmark_search:
+            self.relative_landmark_path = self._search_for_landmarks()
+
+        try:
+            return path.join(self.folder, self.relative_landmark_path)
+        except AttributeError:
+            return None
+
+    @abc.abstractmethod
+    def _parse_format(self):
+        pass
 
     def build(self):
+        # Parse the format as defined by the overridden method and then search
+        # for valid textures and landmarks that may have been defined by the
+        # format
+        self._parse_format()
+        self._build_texture_and_landmark_importers()
+
         meshes = []
         for mesh in self.meshes:
             if self.texture_importer is not None:
-                meshes.append(TexturedTriMesh(mesh.points, mesh.trilist,
-                                              mesh.tcoords,
-                                              self.texture_importer.image))
+                new_mesh = TexturedTriMesh(mesh.points, mesh.trilist,
+                                           mesh.tcoords,
+                                           self.texture_importer.build())
             else:
-                meshes.append(TriMesh(mesh.points, mesh.trilist))
-        # if self.landmarks is not None:
-        #     mesh.landmarks.add_reference_landmarks(self.landmarks)
-        # mesh.legacy = {'path_and_filename': self.path_and_filename}
-        return meshes
+                new_mesh = TriMesh(mesh.points, mesh.trilist)
 
-    # def __str__(self):
-    #     msg = 'n_meshes: %d' % self.n_meshes
-    #     if self.texture is not None:
-    #         msg += 'texture'
+            if self.landmark_importer is not None:
+                label, l_dict = self.landmark_importer.build(
+                    scale_factors=np.max(mesh.points))
+                new_mesh.add_landmark_set(label, l_dict)
+
+            meshes.append(new_mesh)
+
+        return meshes
 
 
 class AssimpImporter(AIImporter, MeshImporter):
-    """Base class for importing 3D meshes
+    """
+    Base class for importing 3D meshes
     """
     def __init__(self, filepath):
         super(AssimpImporter, self).__init__(filepath)
+
+    def _parse_format(self):
+        self.build_scene()
+        # Properties should have different names because of multiple
+        # inheritance
+        self.relative_texture_path = self.assimp_texture_path
 
 
 class WRLImporter(MeshImporter):
@@ -106,22 +201,18 @@ class WRLImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        with open(filepath) as f:
-            self.text = f.read()
-        # Assumes a single mesh per file
-        mesh, texture_path = self.parse_vrml97(self.text)
-        self.relative_texture_path = texture_path
-        self.meshes = []
-        self.meshes.append(mesh)
         # Setup class before super class call
         super(WRLImporter, self).__init__(filepath)
 
-    def parse_vrml97(self, file):
+    def _parse_format(self):
+        with open(self.filepath) as f:
+            self.text = f.read()
+
         parser = buildVRML97Parser()
-        vrml_tuple = parser.parse(file)
+        vrml_tuple = parser.parse(self.text)
 
         # Build expando object (dynamic object hack)
-        mesh = lambda: 0
+        self.mesh = lambda: 0
 
         # I assume these tuples are always built in this order
         scenegraph = vrml_tuple[1][1]
@@ -141,10 +232,10 @@ class WRLImporter(MeshImporter):
         if shape is None:
             raise MeshImportError('Unable to find shape in transform')
 
-        mesh.points = shape.geometry.coord.point
-        mesh.tcoords = shape.geometry.texCoord.point
+        self.mesh.points = shape.geometry.coord.point
+        self.mesh.tcoords = shape.geometry.texCoord.point
         # Drop the -1 delimiters
-        mesh.trilist = shape.geometry.coordIndex.reshape([-1, 4])[:, :3]
+        self.mesh.trilist = shape.geometry.coordIndex.reshape([-1, 4])[:, :3]
         # See if we have a seperate texture index, if not just create an empty
         # array
         try:
@@ -154,18 +245,19 @@ class WRLImporter(MeshImporter):
 
         # Fix texture coordinates - we can only have one index so we choose
         # to use the triangle index
-        if np.max(tex_trilist) > np.max(mesh.trilist):
-            new_tcoords = np.zeros([mesh.points.shape[0], 2])
-            new_tcoords[mesh.trilist] = mesh.tcoords[tex_trilist]
-            mesh.tcoords = new_tcoords
+        if np.max(tex_trilist) > np.max(self.mesh.trilist):
+            new_tcoords = np.zeros([self.mesh.points.shape[0], 2])
+            new_tcoords[self.mesh.trilist] = self.mesh.tcoords[tex_trilist]
+            self.mesh.tcoords = new_tcoords
 
         # Get the texture path - it's fine not to have one defined
         try:
-            texture_path = shape.appearance.texture.url[0]
+            self.relative_texture_path = shape.appearance.texture.url[0]
         except (AttributeError, IndexError):
-            texture_path = None
+            self.relative_texture_path = None
 
-        return mesh, texture_path
+        # Assumes a single mesh per file
+        self.meshes = [self.mesh]
 
 
 class FIMImporter(MeshImporter):
@@ -176,27 +268,26 @@ class FIMImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        # Impossible to know where the texture is in this format
-        self.relative_texture_path = None
-        self.meshes = []
-        self.meshes.append(self.parse_fim(filepath))
         # Setup class before super class call
         super(FIMImporter, self).__init__(filepath)
 
-    def parse_fim(self, filepath):
-        with open(filepath, 'rb') as f:
+    def _parse_format(self):
+        with open(self.filepath, 'rb') as f:
             size = np.fromfile(f, dtype=np.uint32, count=3)
             data = np.fromfile(f, dtype=np.float32, count=np.product(size))
             data = data.reshape([size[0] * size[1], size[2]])
 
         # Build expando object (dynamic object hack)
-        mesh = lambda: 0
+        self.mesh = lambda: 0
 
-        mesh.points = data
+        self.mesh.points = data
         # Triangulate just the 2D coordinates, as this is a surface
-        mesh.trilist = Delaunay(data[:, :2]).simplices
+        self.mesh.trilist = Delaunay(data[:, :2]).simplices
 
-        return mesh
+        # Impossible to know where the texture is in this format
+        self.relative_texture_path = None
+        # Assumes a single mesh per file
+        self.meshes = [self.mesh]
 
 
 class BNTImporter(MeshImporter):
@@ -209,15 +300,11 @@ class BNTImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        mesh, texture_path = self.parse_bnt(filepath)
-        self.relative_texture_path = texture_path
-        self.meshes = []
-        self.meshes.append(mesh)
         # Setup class before super class call
         super(BNTImporter, self).__init__(filepath)
 
-    def parse_bnt(self, filepath):
-        with open(filepath, 'rb') as f:
+    def _parse_format(self):
+        with open(self.filepath, 'rb') as f:
             # Currently these are unused, but they are in the format
             # Could possibly store as metadata?
             n_rows = np.fromfile(f, dtype=np.uint16, count=1)
@@ -233,11 +320,11 @@ class BNTImporter(MeshImporter):
             # Fortran ordering). First three columns are 3D coordinates
             # and last two are 2D texture coordinates
             coords_len = np.fromfile(f, dtype=np.uint32, count=1)
-            data = np.fromfile(f, dtype=np.float64, count=coords_len * 5)
-            data = data.reshape([5, coords_len/5]).T
+            data = np.fromfile(f, dtype=np.float64, count=coords_len * 5.0)
+            data = data.reshape([5, coords_len/5.0]).T
 
         # Build expando object (dynamic object hack)
-        mesh = lambda: 0
+        self.mesh = lambda: 0
 
         # Get the 3D coordinates
         points = data[:, :3]
@@ -246,19 +333,21 @@ class BNTImporter(MeshImporter):
         # z-min value then the whole point is worthless, so we drop it.
         valid_indices = points[:, 2] != z_min
         points = points[valid_indices, :]
-        mesh.points = points
+        self.mesh.points = points
 
         # Apparently the texture coordinates are upside down?
-        mesh.tcoords = np.flipud(data[:, -2:])
+        self.mesh.tcoords = np.flipud(data[:, -2:])
         # We also filter the texture coordinate by the valid points. Because
         # the mesh is actually laid out as an image, each point has one
         # texture coordinate, so this mapping is valid.
-        mesh.tcoords = mesh.tcoords[valid_indices]
+        self.mesh.tcoords = self.mesh.tcoords[valid_indices]
 
         # Triangulate just the 2D coordinates, as this is a surface
-        mesh.trilist = Delaunay(points[:, :2]).simplices
+        self.mesh.trilist = Delaunay(points[:, :2]).simplices
 
-        return mesh, texture_path
+        self.relative_texture_path = texture_path
+        # Assumes a single mesh per file
+        self.meshes = [self.mesh]
 
 
 class ABSImporter(MeshImporter):
@@ -271,15 +360,11 @@ class ABSImporter(MeshImporter):
     """
 
     def __init__(self, filepath):
-        mesh, texture_path = self.parse_abs(filepath)
-        self.relative_texture_path = texture_path
-        self.meshes = []
-        self.meshes.append(mesh)
         # Setup class before super class call
         super(ABSImporter, self).__init__(filepath)
 
-    def parse_abs(self, filepath):
-        with open(filepath, 'r') as f:
+    def _parse_format(self):
+        with open(self.filepath, 'r') as f:
             # Currently these are unused, but they are in the format
             # Could possibly store as metadata?
             # Assume first result for regexes
@@ -291,10 +376,10 @@ class ABSImporter(MeshImporter):
         # Currently this also loads the mask, which we don't use
         # The mask is located at
         #   >>> image_data[:, 0]
-        image_data = np.loadtxt(filepath, skiprows=3, unpack=True)
+        image_data = np.loadtxt(self.filepath, skiprows=3, unpack=True)
 
         # Build expando object (dynamic object hack)
-        mesh = lambda: 0
+        self.mesh = lambda: 0
 
         # Get the 3D coordinates
         points = np.hstack([image_data[:, 1][..., None],
@@ -305,11 +390,15 @@ class ABSImporter(MeshImporter):
         # z-min value then the whole point is worthless, so we drop it.
         valid_indices = points[:, 2] != np.min(points[:, 2])
         points = points[valid_indices, :]
-        mesh.points = points
+        self.mesh.points = points
 
         # Triangulate just the 2D coordinates, as this is a surface
-        mesh.trilist = Delaunay(points[:, :2]).simplices
+        self.mesh.trilist = Delaunay(points[:, :2]).simplices
 
         # TODO: Although texture exist for this dataset, there is no texture
         # coordinate set, so we can't currently use them
-        return mesh, None
+        self.mesh.tcoords = []
+
+        self.relative_texture_path = None
+        # Assumes a single mesh per file
+        self.meshes = [self.mesh]

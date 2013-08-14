@@ -1,2 +1,1 @@
-from .base import Image
-from .landmarked import LandmarkedImage
+from pybug.image.base import Image

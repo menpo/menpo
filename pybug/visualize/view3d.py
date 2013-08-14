@@ -1,4 +1,5 @@
 import numpy as np
+from pybug.visualize.base import Viewer
 
 
 class Viewer3dError(Exception):
@@ -7,26 +8,6 @@ class Viewer3dError(Exception):
 
 class TCoordsViewerError(Viewer3dError):
     pass
-
-
-class Viewer(object):
-    """Abstract class for performing visualizations. Framework specific
-    implementations of these classes are made in order to separate
-    implementation cleanly from the rest of the code.
-    """
-
-    def __init__(self):
-        self.currentfigure = None
-        self.currentscene = None
-
-    def view(self, **kwargs):
-        figure = kwargs.get('onviewer')
-        if figure is None:
-            figure = self.newfigure()
-        else:
-            figure = figure.currentfigure
-            print figure
-        return self._viewonfigure(figure, **kwargs)
 
 
 class Viewer3d(Viewer):
@@ -53,7 +34,7 @@ class PointCloudViewer3d(Viewer3d):
         Viewer3d.__init__(self, points)
 
 
-class LabelViewer3d(Viewer3d):
+class LandmarkViewer3d(Viewer3d):
     def __init__(self, points, labels, **kwargs):
         Viewer3d.__init__(self, points)
         self.labels = labels

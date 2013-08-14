@@ -71,3 +71,4 @@ def test_tps_jacobian_manual_sample_b():
          [0.8296718, 0.95940495],
          [-0.03122042,  1.00073478]])
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
+

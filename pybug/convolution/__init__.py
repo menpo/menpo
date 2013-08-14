@@ -26,25 +26,20 @@ def __adjusted_meshgrid(shape):
     :param shape: tuple denoting size of meshgrid
     :return: tuple of length of shape where each element is of size shape
     """
-    # Swap x and y axis as we are dealing with images
-    adjust_shape = list(shape)
-    adjust_shape[:2] = adjust_shape[1::-1]
     adjust_range = []
-
-    for dim in adjust_shape:
+    for dim in shape:
         adjust_range.append(np.linspace(-0.5, 0.5, dim))
 
-    return np.meshgrid(*adjust_range)
+    return np.meshgrid(*adjust_range, indexing='ij')
 
 
 def __frequency_butterworth_filter(shape, cutoff, order):
-    """
+    r"""
     Builds an N-D butterworth filter
 
-                    1
-    f =    --------------------
-                             2n
-             1.0 + (w/cutoff)
+        ..math::
+
+            f = \frac{1.0}{1.0 + (w / cutoff)^{2n}}
 
     The frequency origin of the returned filter is at the corners.
 
@@ -64,8 +59,6 @@ def __frequency_butterworth_filter(shape, cutoff, order):
 
 
 # TODO: merge the 2D and 3D versions if possible
-#       will likely involve removing the angular d_theta finding in the 2D
-#       version and re-introducing the d_phi_sigma
 def log_gabor(image, **kwargs):
     """
     Creates a log-gabor filter bank, including smoothing the images via a
@@ -77,6 +70,7 @@ def log_gabor(image, **kwargs):
     This algorithm is directly derived from work by Peter Kovesi.
 
     For details of log-Gabor filters see:
+
     D. J. Field, "Relations Between the Statistics of Natural Images and the
     Response Properties of Cortical Cells", Journal of The Optical Society of
     America A, Vol 4, No. 12, December 1987. pp 2379-2394
@@ -151,13 +145,13 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
     # Pre-compute fourier values
     image_fft = np.fft.fftn(image)
 
-    x, y, z = __adjusted_meshgrid(image.shape)
+    axis0, axis1, axis2 = __adjusted_meshgrid(image.shape)
 
-    radius = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-    theta = np.arctan2(y, x)
+    radius = np.sqrt(axis0 ** 2 + axis1 ** 2 + axis2 ** 2)
+    theta = np.arctan2(axis0, axis1)
     # TODO: Is adding the mean REALLY a good idea?
     m_ab = np.abs(np.mean(radius))
-    phi = np.arccos(z / (radius + m_ab))
+    phi = np.arccos(axis2 / (radius + m_ab))
 
     radius = np.fft.ifftshift(radius)
     radius[0, 0, 0] = 1.0
@@ -215,9 +209,10 @@ def __log_gabor_3d(image, num_scales=4, num_phi_orientations=6,
                 shifted_filter = np.fft.fftshift(filter_bank)
                 S += shifted_filter * np.conjugate(shifted_filter)
 
-                tmp_complex_conv[s, :, :] = np.fft.ifft2(image_fft * filter_bank)
+                tmp_complex_conv[s, :, :] = np.fft.ifft2(image_fft *
+                                                         filter_bank)
 
-            complex_conv[:, e, a, :, :] = tmp_complex_conv[np.newaxis, np.newaxis, ...]
+            complex_conv[:, e, a, :, :] = tmp_complex_conv[None, None, ...]
 
     # TODO: Do we need to flip S as in the 2D version?
     return complex_conv, bandpass, S
@@ -242,10 +237,10 @@ def __log_gabor_2d(image, num_scales=4, num_orientations=6,
     # Pre-compute fourier values
     image_fft = np.fft.fft2(image)
 
-    x, y = __adjusted_meshgrid(image.shape)
+    axis0, axis1 = __adjusted_meshgrid(image.shape)
 
-    radius = np.sqrt(x ** 2 + y ** 2)
-    phi = np.arctan2(y, x)
+    radius = np.sqrt(axis0 ** 2 + axis1 ** 2)
+    phi = np.arctan2(axis0, axis1)
 
     radius = np.fft.ifftshift(radius)
     radius[0][0] = 1.0
@@ -295,7 +290,7 @@ def __log_gabor_2d(image, num_scales=4, num_orientations=6,
 
             tmp_complex_conv[s, :, :] = np.fft.ifft2(image_fft * filter_bank)
 
-        complex_conv[:, o, :, :] = tmp_complex_conv[np.newaxis, ...]
+        complex_conv[:, o, :, :] = tmp_complex_conv[None, ...]
 
     # TODO: Why is this done??
     return complex_conv, bandpass, np.flipud(S)
