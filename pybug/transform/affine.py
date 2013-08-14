@@ -207,9 +207,9 @@ class SimilarityTransform(AffineTransform):
         if ndims == 2:
             params = self.homogeneous_matrix - np.eye(ndims + 1)
             # Pick off a, b, tx, ty
-            params = params[:ndims, :].flatten(order='F')[-4:]
-            # Reorder because b and a are swapped otherwise
-            return params[[1, 0, 2, 3]]
+            params = params[:ndims, :].flatten(order='F')
+            # Pick out a, b, tx, ty
+            return params[[0, 1, 4, 5]]
         elif ndims == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -219,10 +219,22 @@ class SimilarityTransform(AffineTransform):
 
     @classmethod
     def from_vector(cls, p):
-        # See affine from_vector with regards to classmethod decorator
-        # TODO: Implement
-        raise NotImplementedError("To be implemented")
-
+    	# See affine from_vector with regards to classmethod decorator
+	if p.shape[0] == 4:
+	    homo = np.eye(3)
+	    homo[0, 0] += p[0]
+            homo[1, 1] += p[0]
+            homo[0, 1] = -p[1]
+	    homo[1, 0] = p[1]
+            homo[:2, 2] = p[2:]
+	    return SimilarityTransform(homo)
+	elif p.shape[0] == 7:
+	    raise NotImplementedError("3D similrity transforms cannot be "
+	       			      "vectorized yet.")
+	else:
+	    raise DimensionalityError("Only 2D and 3D Similarity transforms "
+			              "are currently supported.")
+		
     def compose(self, transform):
         """
         Chains this similarity transform with another one. If the second
