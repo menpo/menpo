@@ -39,9 +39,12 @@ cdef class AIImporter:
     cdef public list meshes
 
     def __cinit__(self, string path):
-        self.importer = new AssimpImporter(path)
-        self.scene = self.importer.get_scene()
         self.meshes = []
+        self.filepath = path
+
+    def build_scene(self):
+        self.importer = new AssimpImporter(self.filepath)
+        self.scene = self.importer.get_scene()
         for i in range(self.n_meshes):
             if self.scene.meshes[i].is_trimesh():
                 self.meshes.append(AITriMeshImporter(self, i))
@@ -54,7 +57,7 @@ cdef class AIImporter:
         return self.scene.n_meshes()
 
     @property
-    def relative_texture_path(self):
+    def assimp_texture_path(self):
         if self.scene.texture_path() == NO_TEXTURE_PATH:
             return None
         else:

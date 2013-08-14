@@ -1,8 +1,5 @@
-import viewmayavi
-import viewimage
+from pybug.visualize.base import PointCloudViewer2d, PointCloudViewer3d, \
+    TriMeshViewer3d, TexturedTriMeshViewer3d, LandmarkViewer3d, \
+    LandmarkViewer2d, LandmarkViewer, ImageViewer2d, TriMeshViewer2d, \
+    PointCloudViewer, TriMeshViewer
 
-PointCloudViewer3d = viewmayavi.MayaviPointCloudViewer3d
-TriMeshViewer3d = viewmayavi.MayaviTriMeshViewer3d
-TexturedTriMeshViewer3d = viewmayavi.MayaviTexturedTriMeshViewer3d
-LabelViewer3d = viewmayavi.MayaviLabelViewer3d
-ImageViewer = viewimage.MatplotLibImageViewer
