@@ -102,54 +102,6 @@ class AffineTransform(Transform):
         translation = Translation(self.translation)
         return [rotation_1, scale, rotation_2, translation]
 
-    def jacobian_old_shape(self, shape):
-        """
-        Computes the Jacobian of the transform w.r.t the parameters. This is
-        constant for affine transforms.
-
-        The Jacobian generated (for 2D) is of the form::
-
-            x 0 y 0 1 0
-            0 x 0 y 0 1
-
-        This maintains a parameter order of::
-
-          W(x;p) = [1 + p1  p3      p5] [x]
-                   [p2      1 + p4  p6] [y]
-                                        [1]
-
-        :return dW/dp: A n_dim x num_params x shape ndarray representing the
-        Jacobian of the transform.
-        """
-        ranges = [np.arange(d) for d in shape]
-
-        # Create the meshgrids for the image, including a set of ones
-        grids = np.meshgrid(*ranges, indexing='ij')
-        grids.append(np.ones(shape))
-
-        # Generate a mask for each dimension, the masks are as follows (for 2D)
-        # x:  1 0 0 0 0 0  y:  0 0 1 0 0 0  ones:  0 0 0 0 1 0
-        #     0 1 0 0 0 0      0 0 0 1 0 0         0 0 0 0 0 1
-        masks = []
-        n = self.n_dim
-        for i in xrange(n + 1):
-            # Create correct array size (of zeros)
-            masks.append(np.zeros([n, n * (n + 1)]))
-            # Add an identity matrix to the correct offset (slice (2,2) array)
-            masks[i][:, n * i:n * (i + 1)] = np.eye(n)
-
-        # Allocate the jacobian memory as zeros
-        jacs = np.zeros(shape + masks[0].shape)
-
-        # Sum each dimension, masked appropriately
-        # Add new dimensions to end of array
-        for i in xrange(self.n_dim + 1):
-            jacs += masks[i] * grids[i][..., None, None]
-
-        # Reshape the matrix to an (n_pixels x n_params x n_dims) ndarray
-        jacs = jacs.reshape([-1, self.n_dim, jacs.shape[-1]])
-        return np.transpose(jacs, [0, 2, 1])
-
     def jacobian(self, points):
         """
         Computes the Jacobian of the transform w.r.t the parameters. This is
