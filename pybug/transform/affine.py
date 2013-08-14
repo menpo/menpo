@@ -197,6 +197,32 @@ class SimilarityTransform(AffineTransform):
         #TODO check that I am a similarity transform
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
 
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [a, b, tx, ty].
+        """
+        ndims = self.n_dim
+        if ndims == 2:
+            params = self.homogeneous_matrix - np.eye(ndims + 1)
+            # Pick off a, b, tx, ty
+            params = params[:ndims, :].flatten(order='F')[-4:]
+            # Reorder because b and a are swapped otherwise
+            return params[[1, 0, 2, 3]]
+        elif ndims == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        # TODO: Implement
+        raise NotImplementedError("To be implemented")
+
     def compose(self, transform):
         """
         Chains this similarity transform with another one. If the second
