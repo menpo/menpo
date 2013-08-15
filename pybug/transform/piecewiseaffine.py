@@ -204,6 +204,15 @@ class PiecewiseAffineTransform(Transform):
             x_transformed[x_in_tris[tri_index == i]] = x_t
         return x_transformed
 
+    @property
+    def n_parameters(self):
+        """
+        There is a 2D affine transformation per triangle, therefore, there are
+        number of triangles * parameters for 2D affine transform number of
+        parameters for a PieceWiseAffine transform: n_tris * 6
+        """
+        return self.n_tris * 6
+
     def as_vector(self):
         pass
 

@@ -1,3 +1,4 @@
+from PyQt4.uic import properties
 import abc
 import copy
 from .base import Transform
@@ -34,7 +35,7 @@ class AffineTransform(Transform):
         self.homogeneous_matrix = homogeneous_matrix
 
     @property
-    def linear_transform(self):
+    def linear_component(self):
         """
         Returns just the linear transform component of this affine
         transform.
@@ -42,7 +43,7 @@ class AffineTransform(Transform):
         return self.homogeneous_matrix[:-1, :-1]
 
     @property
-    def translation(self):
+    def translation_component(self):
         """
         Returns just the n-dim translation component of this affine transform.
         """
@@ -72,7 +73,7 @@ class AffineTransform(Transform):
 
         :return: The transformed version of x
         """
-        return np.dot(x, self.linear_transform.T) + self.translation
+        return np.dot(x, self.linear_component.T) + self.translation_component
 
     def compose(self, affine_transform):
         """
@@ -95,60 +96,12 @@ class AffineTransform(Transform):
         equivalent to this affine transform, s.t.
         reduce(lambda x,y: x.chain(y), self.decompose()) == self
         """
-        U, S, V = np.linalg.svd(self.linear_transform)
+        U, S, V = np.linalg.svd(self.linear_component)
         rotation_2 = Rotation(U)
         rotation_1 = Rotation(V)
         scale = Scale(S)
-        translation = Translation(self.translation)
+        translation = Translation(self.translation_component)
         return [rotation_1, scale, rotation_2, translation]
-
-    def jacobian_old_shape(self, shape):
-        """
-        Computes the Jacobian of the transform w.r.t the parameters. This is
-        constant for affine transforms.
-
-        The Jacobian generated (for 2D) is of the form::
-
-            x 0 y 0 1 0
-            0 x 0 y 0 1
-
-        This maintains a parameter order of::
-
-          W(x;p) = [1 + p1  p3      p5] [x]
-                   [p2      1 + p4  p6] [y]
-                                        [1]
-
-        :return dW/dp: A n_dim x num_params x shape ndarray representing the
-        Jacobian of the transform.
-        """
-        ranges = [np.arange(d) for d in shape]
-
-        # Create the meshgrids for the image, including a set of ones
-        grids = np.meshgrid(*ranges, indexing='ij')
-        grids.append(np.ones(shape))
-
-        # Generate a mask for each dimension, the masks are as follows (for 2D)
-        # x:  1 0 0 0 0 0  y:  0 0 1 0 0 0  ones:  0 0 0 0 1 0
-        #     0 1 0 0 0 0      0 0 0 1 0 0         0 0 0 0 0 1
-        masks = []
-        n = self.n_dim
-        for i in xrange(n + 1):
-            # Create correct array size (of zeros)
-            masks.append(np.zeros([n, n * (n + 1)]))
-            # Add an identity matrix to the correct offset (slice (2,2) array)
-            masks[i][:, n * i:n * (i + 1)] = np.eye(n)
-
-        # Allocate the jacobian memory as zeros
-        jacs = np.zeros(shape + masks[0].shape)
-
-        # Sum each dimension, masked appropriately
-        # Add new dimensions to end of array
-        for i in xrange(self.n_dim + 1):
-            jacs += masks[i] * grids[i][..., None, None]
-
-        # Reshape the matrix to an (n_pixels x n_params x n_dims) ndarray
-        jacs = jacs.reshape([-1, self.n_dim, jacs.shape[-1]])
-        return np.transpose(jacs, [0, 2, 1])
 
     def jacobian(self, points):
         """
@@ -198,6 +151,23 @@ class AffineTransform(Transform):
         jac[:, full_mask] = 1
         return jac
 
+    @property
+    def n_parameters(self):
+        """
+        n_dim * (n_dim + 1) parameters - every element of the matrix bar the
+        homogeneous part
+        2D Affine: 6 parameters::
+
+            [p1, p3, p5]
+            [p2, p4, p6]
+
+        3D Affine: 12 parameters::
+            [p1, p4, p7, p10]
+            [p2, p5, p8, p11]
+            [p3, p6, p9, p12]
+        """
+        return self.n_dim * (self.n_dim + 1)
+
     def as_vector(self):
         """
         Return the parameters of the transform as a 1D array. These parameters
@@ -244,6 +214,64 @@ class SimilarityTransform(AffineTransform):
     def __init__(self, homogeneous_matrix):
         #TODO check that I am a similarity transform
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
+
+    @property
+    def n_parameters(self):
+        """
+        2D Similarity: 4 parameters::
+
+            [(1 + a), -b,      tx]
+            [b,       (1 + a), ty]
+
+        3D Similarity: Currently not supported
+        :return:
+        """
+        if self.n_dim == 2:
+            return 4
+        elif self.n_dim == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [a, b, tx, ty].
+        """
+        ndims = self.n_dim
+        if ndims == 2:
+            params = self.homogeneous_matrix - np.eye(ndims + 1)
+            # Pick off a, b, tx, ty
+            params = params[:ndims, :].flatten(order='F')
+            # Pick out a, b, tx, ty
+            return params[[0, 1, 4, 5]]
+        elif ndims == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        if p.shape[0] == 4:
+            homo = np.eye(3)
+            homo[0, 0] += p[0]
+            homo[1, 1] += p[0]
+            homo[0, 1] = -p[1]
+            homo[1, 0] = p[1]
+            homo[:2, 2] = p[2:]
+            return SimilarityTransform(homo)
+        elif p.shape[0] == 7:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
 
     def compose(self, transform):
         """
@@ -315,7 +343,7 @@ class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
     def rotation_matrix(self):
         """Returns the rotation matrix
         """
-        return self.linear_transform
+        return self.linear_component
 
     @property
     def inverse(self):
@@ -361,6 +389,27 @@ class Rotation2D(AbstractRotation):
         angle_of_rotation = np.arccos(
             np.dot(transformed_vector, test_vector))
         return axis, angle_of_rotation
+
+    @property
+    def n_parameters(self):
+        """
+        1 parameter - [theta] - The angle of rotation around [0, 0, 1]
+        """
+        return 1
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [theta].
+        """
+        return self.axis_and_angle_of_rotation()[1]
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return Rotation2D(np.array([[np.cos(p), -np.sin(p)],
+                                    [np.sin(p), np.cos(p)]]))
 
 
 class Rotation3D(AbstractRotation):
@@ -419,18 +468,55 @@ class Rotation3D(AbstractRotation):
             angle_of_rotation *= -1.0
         return axis, angle_of_rotation
 
+    @property
+    def n_parameters(self):
+        """
+        Not currently implemented
+        """
+        raise NotImplementedError('3D rotations do not support vectorisation '
+                                  'yet.')
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [TODO: fill me in].
+        """
+        # TODO: Implement 3D rotation vectorisation
+        raise NotImplementedError('3D rotations do not support vectorisation '
+                                  'yet.')
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        # TODO: Implement 3D rotation vectorisation
+        raise NotImplementedError('3D rotations do not support vectorisation '
+                                  'yet.')
+
 
 def Scale(scale_factor, n_dim=None):
     """
-    Factory function for producing Scale transforms.
+    Factory function for producing Scale transforms. Zero scale factors are not
+    permitted
+
     A UniformScale will be produced if:
-    - A float scale_factor and a n_dim kwarg are provided
-    - A ndarray scale_factor with shape (n_dim, ) is provided with all
+        - A float scale_factor and a n_dim kwarg are provided
+        - A ndarray scale_factor with shape (n_dim, ) is provided with all
     elements being the same
+
     A NonUniformScale will be provided if:
-    - A ndarray scale_factor with shape (n_dim, ) is provided with at least
-    two differing scale factors.
+        - A ndarray scale_factor with shape (n_dim, ) is provided with at least
+        two differing scale factors.
+
+    :param scale_factor: Either an ndarray of scales for each dimensions or a
+        single scalar value to be applied across each dimension
+    :param n_dim: The dimensionality of the output transform
+    :raises: ValueError if any of the scale factors is zero
+    :returns: Either a UniformScale or a NonUniformScale
     """
+    if not np.all(scale_factor):
+        raise ValueError('Having a zero in one of the scales is invalid')
+
     if n_dim is None:
         # scale_factor better be a numpy array then
         if np.allclose(scale_factor, scale_factor[0]):
@@ -467,33 +553,128 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         message = 'NonUniformScale by %s ' % self.scale
         return message
 
+    @property
+    def n_parameters(self):
+        """
+        n_dim parameters - [scale_x, scale_y, ....] - The scalar values
+        representing the scale across each dimension
+        """
+        return self.scale.shape[0]
 
-class UniformScale(DiscreteAffineTransform, SimilarityTransform):
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [sx, sy, ...].
+        """
+        return self.scale
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return NonUniformScale(p)
+
+
+def UniformScale(scale, n_dim):
     """
-    An n_dim similarity scale transform, with a single scale component
+    Factory function for producing UniformScale objects. A single scale and the
+    number of dimensions required is expected. Currently, only 2D and 3D
+    Uniform Scale objects are supported.
+
+    :param scale: A scalar value representing the scale across each axis
+    :param n_dim: The number of dimensions for the transform
+    :return: Either a
+        :class:`UniformScale2D <pybug.transform.affine.UniformScale2D>` or a
+        :class:`UniformScale3D <pybug.transform.affine.UniformScale3D>`
+    """
+    if n_dim == 2:
+        return UniformScale2D(scale)
+    elif n_dim == 3:
+        return UniformScale3D(scale)
+    else:
+        raise DimensionalityError('Only 2D or 3D UniformScale transforms are '
+                                  'currently supported.')
+
+
+class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
+    """
+    An abstract similarity scale transform, with a single scale component
     applied to all dimensions.
     """
-    def __init__(self, scale, n_dim):
-        """ The scale must be a 1-d ndarray of shape (n_dim, )
-        :param scale: A vector specifying the scale factor to be applied
-        along each axis.
-        """
-        homogeneous_matrix = np.eye(n_dim + 1)
-        np.fill_diagonal(homogeneous_matrix, scale)
-        homogeneous_matrix[-1, -1] = 1
-        super(UniformScale, self).__init__(homogeneous_matrix)
+
+    __metaclass__ = abc.ABCMeta
 
     @property
     def scale(self):
         return self.homogeneous_matrix.diagonal()[0]
 
-    @property
-    def inverse(self):
-        return UniformScale(1.0/self.scale, self.n_dim)
-
     def _transform_str(self):
         message = 'UniformScale by %f ' % self.scale
         return message
+
+    @property
+    def n_parameters(self):
+        """
+        1 parameter - scale - The scalar value representing the scale across
+        each dimension
+        """
+        return 1
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [s].
+        """
+        return self.scale
+
+
+class UniformScale2D(AbstractUniformScale):
+    """
+    An 2D similarity scale transform, with a single scale component
+    applied to all dimensions.
+
+    :param scale: A scaler value indicating the scale across each axis
+    """
+
+    def __init__(self, scale):
+        homogeneous_matrix = np.eye(3)
+        np.fill_diagonal(homogeneous_matrix, scale)
+        homogeneous_matrix[-1, -1] = 1
+        super(UniformScale2D, self).__init__(homogeneous_matrix)
+
+    @property
+    def inverse(self):
+        return UniformScale2D(1.0/self.scale)
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return UniformScale2D(p)
+
+
+class UniformScale3D(AbstractUniformScale):
+    """
+    An 3D similarity scale transform, with a single scale component
+    applied to all dimensions.
+
+    :param scale: A scaler value indicating the scale across each axis
+    """
+
+    def __init__(self, scale):
+        homogeneous_matrix = np.eye(4)
+        np.fill_diagonal(homogeneous_matrix, scale)
+        homogeneous_matrix[-1, -1] = 1
+        super(UniformScale3D, self).__init__(homogeneous_matrix)
+
+    @property
+    def inverse(self):
+        return UniformScale3D(1.0/self.scale)
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return UniformScale3D(p)
 
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
@@ -517,8 +698,29 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     @property
     def inverse(self):
-        return Translation(-self.translation)
+        return Translation(-self.translation_component)
 
     def _transform_str(self):
-        message = 'Translate by %s ' % self.translation
+        message = 'Translate by %s ' % self.translation_component
         return message
+
+    @property
+    def n_parameters(self):
+        """
+        n_dim parameters - [tx, ty, ...] - The translation along each axis
+        :return:
+        """
+        return self.n_dim
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [tx, ty].
+        """
+        return self.homogeneous_matrix[:self.n_dim, self.n_dim]
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return Translation(p)
