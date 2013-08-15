@@ -1,9 +1,10 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-from pybug.transform.affine import Rotation, Translation
+from pybug.transform.affine import Rotation, Translation, \
+    AffineTransform, SimilarityTransform, AbstractUniformScale, NonUniformScale, \
+    Rotation2D, Rotation3D, UniformScale2D, UniformScale3D, UniformScale, Scale
 from pybug.exceptions import DimensionalityError
 from nose.tools import raises
-from pybug.transform.affine import AffineTransform, SimilarityTransform
 
 @raises(DimensionalityError)
 def test_1d():
@@ -333,9 +334,7 @@ def test_translation_2d_from_vector():
 
 def test_translation_2d_as_vector():
     params = np.array([1, 2])
-
     vec = Translation(params).as_vector()
-
     assert_allclose(vec, params)
 
 
@@ -353,7 +352,155 @@ def test_translation_3d_from_vector():
 
 def test_translation_3d_as_vector():
     params = np.array([1, 2, 3])
-
     vec = Translation(params).as_vector()
-
     assert_allclose(vec, params)
+
+
+def test_uniformscale2d_from_vector():
+    scale = 2
+    homo = np.array([[scale, 0, 0],
+                     [0, scale, 0],
+                     [0, 0, 1]])
+
+    tr = UniformScale2D.from_vector(scale)
+
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_uniformscale2d_as_vector():
+    scale = 2
+    vec = UniformScale2D(scale).as_vector()
+    assert_allclose(vec, scale)
+
+
+def test_nonuniformscale2d_from_vector():
+    scale = np.array([1, 2])
+    homo = np.array([[scale[0], 0, 0],
+                     [0, scale[1], 0],
+                     [0, 0, 1]])
+
+    tr = NonUniformScale.from_vector(scale)
+
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_nonuniformscale2d_as_vector():
+    scale = np.array([1, 2])
+    vec = NonUniformScale(scale).as_vector()
+    assert_allclose(vec, scale)
+
+
+def test_uniformscale3d_from_vector():
+    scale = 2
+    homo = np.array([[scale, 0, 0, 0],
+                     [0, scale, 0, 0],
+                     [0, 0, scale, 0],
+                     [0, 0, 0, 1]])
+
+    tr = UniformScale3D.from_vector(scale)
+
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_uniformscale3d_as_vector():
+    scale = 2
+
+    vec = UniformScale3D(scale).as_vector()
+
+    assert_allclose(vec, scale)
+
+
+def test_uniformscale_build_2d():
+    scale = 2
+    homo = np.array([[scale, 0, 0],
+                     [0, scale, 0],
+                     [0, 0, 1]])
+
+    tr = UniformScale(scale, 2)
+
+    assert(isinstance(tr, UniformScale2D))
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_uniformscale_build_3d():
+    scale = 2
+    homo = np.array([[scale, 0, 0, 0],
+                     [0, scale, 0, 0],
+                     [0, 0, scale, 0],
+                     [0, 0, 0, 1]])
+
+    tr = UniformScale(scale, 3)
+
+    assert(isinstance(tr, UniformScale3D))
+    assert_equal(tr.homogeneous_matrix, homo)
+
+@raises(DimensionalityError)
+def test_uniformscale_build_4d_raise_dimensionalityerror():
+    UniformScale(1, 4)
+
+
+def test_scale_build_2d_uniform_pass_dim():
+    scale = 2
+    ndim = 2
+    tr = Scale(scale, ndim)
+
+    assert(isinstance(tr, UniformScale2D))
+
+
+def test_scale_build_3d_uniform_pass_dim():
+    scale = 2
+    ndim = 3
+    tr = Scale(scale, ndim)
+
+    assert(isinstance(tr, UniformScale3D))
+
+
+def test_scale_build_2d_nonuniform():
+    scale = np.array([1, 2])
+    tr = Scale(scale)
+
+    assert(isinstance(tr, NonUniformScale))
+
+
+def test_scale_build_2d_uniform_from_vec():
+    scale = np.array([2, 2])
+    tr = Scale(scale)
+
+    assert(isinstance(tr, UniformScale2D))
+
+
+@raises(ValueError)
+def test_scale_zero_scale_raise_valuerror():
+    Scale(np.array([1, 0]))
+
+
+def test_rotation2d_from_vector():
+    theta = np.pi / 2
+    homo = np.array([[0.0, -1.0, 0.0],
+                     [1.0, 0.0, 0.0],
+                     [0.0, 0.0, 1.0]], dtype=np.float64)
+
+    tr = Rotation2D.from_vector(theta)
+
+    assert_allclose(tr.homogeneous_matrix, homo, atol=1**-15)
+
+
+def test_rotation2d_as_vector():
+    theta = np.pi / 2
+    rot_matrix = np.array([[0.0, -1.0],
+                          [1.0, 0.0]])
+
+    vec = Rotation2D(rot_matrix).as_vector()
+
+    assert_allclose(vec, theta)
+
+
+@raises(NotImplementedError)
+def test_rotation3d_from_vector_raises_notimplementederror():
+    Rotation3D.from_vector(0)
+
+
+@raises(NotImplementedError)
+def test_rotation3d_as_vector_raises_notimplementederror():
+    homo = np.eye(3)
+    Rotation3D(homo).as_vector()
