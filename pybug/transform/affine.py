@@ -1,7 +1,6 @@
-from PyQt4.uic import properties
 import abc
 import copy
-from .base import Transform
+from pybug.transform.base import Transform
 from pybug.exceptions import DimensionalityError
 import pybug.matlab as matlab
 import numpy as np
@@ -120,18 +119,16 @@ class AffineTransform(Transform):
                                         [1]
 
         :return dW/dp: A n_points x n_params x n_dims ndarray representing
-        the
-        Jacobian of the transform.
+            the Jacobian of the transform.
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dim:
             raise DimensionalityError(
                 "Trying to sample jacobian in incorrect dimensions "
-                "(transform is {}D, sampling at {}D)".format(
+                "(transform is {0}D, sampling at {1}D)".format(
                     self.n_dim, points_n_dim))
-        n_params = self.n_dim * self.n_dim + self.n_dim
         # prealloc the jacobian
-        jac = np.zeros((n_points, n_params, self.n_dim))
+        jac = np.zeros((n_points, self.n_parameters, self.n_dim))
         # a mask that we can apply at each iteration
         dim_mask = np.eye(self.n_dim, dtype=np.bool)
 
@@ -139,14 +136,14 @@ class AffineTransform(Transform):
             # i is current axis
             # s is slicing offset
             # make a mask for a single points jacobian
-            full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+            full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
             # fill the mask in for the ith axis
             full_mask[slice(s, s + self.n_dim)] = dim_mask
             # assign the ith axis points to this mask, broadcasting over all
             # points
             jac[:, full_mask] = points[:, i][..., None]
         # finally, just repeat the same but for the ones at the end
-        full_mask = np.zeros((n_params, self.n_dim), dtype=bool)
+        full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
         full_mask[slice(s + self.n_dim, s + 2 * self.n_dim)] = dim_mask
         jac[:, full_mask] = 1
         return jac
@@ -234,6 +231,59 @@ class SimilarityTransform(AffineTransform):
         else:
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
+
+    def jacobian(self, points):
+        """
+        Computes the Jacobian of the transform w.r.t the parameters.
+
+        The Jacobian generated (for 2D) is of the form::
+
+            x -y 1 0
+            y  x 0 1
+
+        This maintains a parameter order of::
+
+          W(x;p) = [1 + a  -b   ] [x] + tx
+                   [b      1 + a] [y] + ty
+
+        :param points: The points to calculate the jacobian over
+        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+            the Jacobian of the transform.
+        :raises: DimensionalityError if ``points_n_dim != self.n_dim`` or
+            transform is not 2D
+        """
+        n_points, points_n_dim = points.shape
+        if points_n_dim != self.n_dim:
+            raise DimensionalityError('Trying to sample jacobian in incorrect '
+                                      'dimensions (transform is {0}D, '
+                                      'sampling at {1}D)'.format(self.n_dim,
+                                                                 points_n_dim))
+        elif self.n_dim != 2:
+            # TODO: implement 3D Jacobian
+            raise DimensionalityError("Only the Jacobian of a 2D similarity "
+                                      "transform is currently supported.")
+
+        # prealloc the jacobian
+        jac = np.zeros((n_points, self.n_parameters, self.n_dim))
+        ones = np.ones_like(points)
+
+        # Build a mask and apply it to the points to build the jacobian
+        # Do this for each paramter - [a, b, tx, ty] respectively
+        self._apply_jacobian_mask(jac, np.array([1, 1]), 0, points)
+        self._apply_jacobian_mask(jac, np.array([-1, 1]), 1, points[:, ::-1])
+        self._apply_jacobian_mask(jac, np.array([1, 0]), 2, ones)
+        self._apply_jacobian_mask(jac, np.array([0, 1]), 3, ones)
+
+        return jac
+
+    def _apply_jacobian_mask(self, jac, param_mask, row_index, points):
+        # make a mask for a single points jacobian
+        full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=np.bool)
+        # fill the mask in for the ith axis
+        full_mask[row_index] = [True, True]
+        # assign the ith axis points to this mask, broadcasting over all
+        # points
+        jac[:, full_mask] = points * param_mask
 
     def as_vector(self):
         """
