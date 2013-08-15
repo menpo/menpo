@@ -322,3 +322,21 @@ def test_affine_jacobian_3d_with_positions():
     dW_dp = t.jacobian(explicit_pixel_locations)
     assert_equal(dW_dp, jac_solution3d)
 
+
+def test_translation_2d_from_vector():
+    params = np.array([1, 2])
+    homo = np.array([[1, 0, params[0]],
+                     [0, 1, params[1]],
+                     [0, 0, 1]])
+
+    tr = Translation.from_vector(params)
+
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_translation_2d_as_vector():
+    params = np.array([1, 2])
+
+    vec = Translation(params).as_vector()
+
+    assert_allclose(vec, params)

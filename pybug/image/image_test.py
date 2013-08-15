@@ -19,7 +19,7 @@ def test_2d_crop_without_mask():
     assert(cropped_im.shape == (10, 10))
     assert(cropped_im.n_channels == 3)
     assert(np.alltrue(cropped_im.shape))
-    assert_allclose(translation.as_vector(), [0, 0, 0, 0, 10, 50])
+    assert_allclose(translation.as_vector(), [10, 50])
 
 
 def test_2d_crop_with_mask():
@@ -36,7 +36,7 @@ def test_2d_crop_with_mask():
     correct_mask = np.zeros([20, 60])
     correct_mask[10:, 20:30] = 1
     assert_allclose(cropped_im.mask.pixels, correct_mask)
-    assert_allclose(translation.as_vector(), [0, 0, 0, 0, 0, 0])
+    assert_allclose(translation.as_vector(), [0, 0])
 
 
 def test_3d_crop_without_mask():
@@ -49,8 +49,7 @@ def test_3d_crop_without_mask():
     assert(cropped_im.shape == (10, 10, 20))
     assert(cropped_im.n_channels == 3)
     assert(np.alltrue(cropped_im.shape))
-    assert_allclose(translation.as_vector(),
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 50, 100])
+    assert_allclose(translation.as_vector(), [10, 50, 100])
 
 
 def test_3d_crop_with_mask():
@@ -67,8 +66,7 @@ def test_3d_crop_with_mask():
     correct_mask = np.zeros([20, 60, 10])
     correct_mask[10:, 20:30, :10] = 1
     assert_allclose(cropped_im.mask.pixels, correct_mask)
-    assert_allclose(translation.as_vector(),
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert_allclose(translation.as_vector(), [0, 0, 0])
 
 
 @raises(DimensionalityError)

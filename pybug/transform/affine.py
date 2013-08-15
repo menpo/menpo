@@ -512,3 +512,16 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def _transform_str(self):
         message = 'Translate by %s ' % self.translation_component
         return message
+
+    def as_vector(self):
+        """
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [tx, ty].
+        """
+        return self.homogeneous_matrix[:self.n_dim, self.n_dim]
+
+    @classmethod
+    def from_vector(cls, p):
+        # See affine from_vector with regards to classmethod decorator
+        return Translation(p)
