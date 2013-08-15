@@ -63,14 +63,6 @@ class Transform(Vectorizable):
         """
         pass
 
-    @property
-    def parameters(self):
-        """
-        Return the parameters of the transform as a 1D ndarray
-        """
-        print 'transform.parameters is depreciated - use as_vector() instead'
-        return self.as_vector()
-
 
 class Transformable(object):
     """
