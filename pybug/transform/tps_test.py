@@ -72,3 +72,7 @@ def test_tps_jacobian_manual_sample_b():
          [-0.03122042,  1.00073478]])
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
 
+
+def test_tps_n_parameters():
+    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
+    assert(tps.transform.n_parameters == 14)

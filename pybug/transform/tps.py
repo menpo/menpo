@@ -131,6 +131,16 @@ class TPSTransform(Transform):
         """
         pass
 
+    @property
+    def n_parameters(self):
+        """
+        There is a parameter for each dimension, and thus two parameters per
+        landmark + the parameters of a 2D affine transform:
+        (2 * num_landmarks) + 6
+        :return:
+        """
+        return (2 * self.tps.n_landmarks) + 6
+
     def as_vector(self):
         """
         Return the parameters of the transform as a 1D ndarray
