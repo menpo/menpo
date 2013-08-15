@@ -1,9 +1,23 @@
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+from pybug.exceptions import DimensionalityError
+from pybug.visualize.base import Viewer
 
 
-def MatplotLibImageViewer(image):
-    if image.shape[2] == 1:
-        return plt.imshow(image[..., 0], cmap=cm.Greys_r)
-    else:
-        return plt.imshow(image)
+class ViewerImage(Viewer):
+    """ A viewer restricted to Image dimensional data.
+    """
+
+    def __init__(self, image):
+        Viewer.__init__(self)
+        dim = len(image.shape)
+        if dim != 3:
+            raise DimensionalityError("Expected a 2-dimensional Image with "
+                                      "multiple channels"
+                                      "but got a {0} object"
+                                      .format(str(image.shape)))
+        self.image = image
+
+
+class ImageViewer2d(ViewerImage):
+
+    def __init__(self, image):
+        ViewerImage.__init__(self, image)
