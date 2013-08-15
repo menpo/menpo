@@ -219,22 +219,22 @@ class SimilarityTransform(AffineTransform):
 
     @classmethod
     def from_vector(cls, p):
-    	# See affine from_vector with regards to classmethod decorator
-	if p.shape[0] == 4:
-	    homo = np.eye(3)
-	    homo[0, 0] += p[0]
+        # See affine from_vector with regards to classmethod decorator
+        if p.shape[0] == 4:
+            homo = np.eye(3)
+            homo[0, 0] += p[0]
             homo[1, 1] += p[0]
             homo[0, 1] = -p[1]
-	    homo[1, 0] = p[1]
+            homo[1, 0] = p[1]
             homo[:2, 2] = p[2:]
-	    return SimilarityTransform(homo)
-	elif p.shape[0] == 7:
-	    raise NotImplementedError("3D similrity transforms cannot be "
-	       			      "vectorized yet.")
-	else:
-	    raise DimensionalityError("Only 2D and 3D Similarity transforms "
-			              "are currently supported.")
-		
+            return SimilarityTransform(homo)
+        elif p.shape[0] == 7:
+            raise NotImplementedError("3D similrity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
+
     def compose(self, transform):
         """
         Chains this similarity transform with another one. If the second
