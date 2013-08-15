@@ -264,6 +264,30 @@ jac_solution3d = np.array(
     [0.,  1.,  0.],
     [0.,  0.,  1.]]])
 
+sim_jac_solution2d = np.array([[[0.,  0.],
+                              [0.,  0.],
+                              [1.,  0.],
+                              [0.,  1.]],
+                              [[0.,  1.],
+                              [-1.,  0.],
+                              [1.,  0.],
+                              [0.,  1.]],
+                              [[0.,  2.],
+                              [-2.,  0.],
+                              [1.,  0.],
+                              [0.,  1.]],
+                              [[1.,  0.],
+                              [0.,  1.],
+                              [1.,  0.],
+                              [0.,  1.]],
+                              [[1.,  1.],
+                              [-1.,  1.],
+                              [1.,  0.],
+                              [0.,  1.]],
+                              [[1.,  2.],
+                              [-2.,  1.],
+                              [1.,  0.],
+                              [0.,  1.]]])
 
 def test_affine_jacobian_2d_with_positions():
     params = np.array([0, 0.1, 0.2, 0, 30, 70])
@@ -297,6 +321,33 @@ def test_affine_jacobian_3d_with_positions():
         [1, 2, 1]])
     dW_dp = t.jacobian(explicit_pixel_locations)
     assert_equal(dW_dp, jac_solution3d)
+
+
+def test_similarity_jacobian_2d():
+    params = np.ones(4)
+    t = SimilarityTransform.from_vector(params)
+    explicit_pixel_locations = np.array(
+        [[0, 0],
+        [0, 1],
+        [0, 2],
+        [1, 0],
+        [1, 1],
+        [1, 2]])
+    dW_dp = t.jacobian(explicit_pixel_locations)
+    assert_equal(dW_dp, sim_jac_solution2d)
+
+
+@raises(DimensionalityError)
+def test_similarity_jacobian_3d_raises_dimensionalityerror():
+    t = SimilarityTransform(np.eye(4))
+    t.jacobian(np.ones([2, 3]))
+
+
+@raises(DimensionalityError)
+def test_similarity_2d_points_raises_dimensionalityerror():
+    params = np.ones(4)
+    t = SimilarityTransform.from_vector(params)
+    t.jacobian(np.ones([2, 3]))
 
 
 def test_similarity_2d_from_vector():
