@@ -34,7 +34,7 @@ class AffineTransform(Transform):
         self.homogeneous_matrix = homogeneous_matrix
 
     @property
-    def linear_transform(self):
+    def linear_component(self):
         """
         Returns just the linear transform component of this affine
         transform.
@@ -42,7 +42,7 @@ class AffineTransform(Transform):
         return self.homogeneous_matrix[:-1, :-1]
 
     @property
-    def translation(self):
+    def translation_component(self):
         """
         Returns just the n-dim translation component of this affine transform.
         """
@@ -72,7 +72,7 @@ class AffineTransform(Transform):
 
         :return: The transformed version of x
         """
-        return np.dot(x, self.linear_transform.T) + self.translation
+        return np.dot(x, self.linear_component.T) + self.translation_component
 
     def compose(self, affine_transform):
         """
@@ -95,11 +95,11 @@ class AffineTransform(Transform):
         equivalent to this affine transform, s.t.
         reduce(lambda x,y: x.chain(y), self.decompose()) == self
         """
-        U, S, V = np.linalg.svd(self.linear_transform)
+        U, S, V = np.linalg.svd(self.linear_component)
         rotation_2 = Rotation(U)
         rotation_1 = Rotation(V)
         scale = Scale(S)
-        translation = Translation(self.translation)
+        translation = Translation(self.translation_component)
         return [rotation_1, scale, rotation_2, translation]
 
     def jacobian(self, points):
@@ -229,7 +229,7 @@ class SimilarityTransform(AffineTransform):
             homo[:2, 2] = p[2:]
             return SimilarityTransform(homo)
         elif p.shape[0] == 7:
-            raise NotImplementedError("3D similrity transforms cannot be "
+            raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
@@ -305,7 +305,7 @@ class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
     def rotation_matrix(self):
         """Returns the rotation matrix
         """
-        return self.linear_transform
+        return self.linear_component
 
     @property
     def inverse(self):
@@ -507,8 +507,8 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     @property
     def inverse(self):
-        return Translation(-self.translation)
+        return Translation(-self.translation_component)
 
     def _transform_str(self):
-        message = 'Translate by %s ' % self.translation
+        message = 'Translate by %s ' % self.translation_component
         return message
