@@ -16,6 +16,7 @@ class Transform(Vectorizable):
         destructive, returning the transformed version. Any **kwargs will be
         passed to the specific transform _apply methods (see these for
         documentation on what are available)
+
         :param x:
         :param kwargs:
         :return:
@@ -34,6 +35,7 @@ class Transform(Vectorizable):
     def _apply(self, x, **kwargs):
         """
         Applies the transform to the array x, returning the result.
+
         :param x:
         :raise:
         """
@@ -43,6 +45,7 @@ class Transform(Vectorizable):
     def jacobian(self, shape):
         """
         Calculates the Jacobian of the warp - this may be constant
+
         :param shape
         """
         pass
@@ -51,6 +54,7 @@ class Transform(Vectorizable):
     def compose(self, a):
         """
         Composes two transforms together: W(x;p) <- W(x;p) o W(x;delta_p)
+
         :param a: transform of the same type as this object
         """
         pass
@@ -59,17 +63,18 @@ class Transform(Vectorizable):
     def inverse(self):
         """
         Returns the inverse of the transform, if applicable
-        :raise NonInvertable if transform has no inverse
+
+        :raise `NonInvertable` if transform has no inverse
         """
         pass
 
-    @property
-    def parameters(self):
+    @abc.abstractproperty
+    def n_parameters(self):
         """
-        Return the parameters of the transform as a 1D ndarray
+        Returns the number of parameters that determine the transform. For
+        example, a 2D affine transformation has 6 parameters
         """
-        print 'transform.parameters is depreciated - use as_vector() instead'
-        return self.as_vector()
+        pass
 
 
 class Transformable(object):
