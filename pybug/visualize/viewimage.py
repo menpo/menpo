@@ -9,9 +9,9 @@ class ViewerImage(Viewer):
     def __init__(self, image):
         Viewer.__init__(self)
         dim = len(image.shape)
-        if dim != 3:
+        if dim not in [2, 3]:
             raise DimensionalityError("Expected a 2-dimensional Image with "
-                                      "multiple channels"
+                                      "optional channels"
                                       "but got a {0} object"
                                       .format(str(image.shape)))
         self.image = image
