@@ -18,9 +18,10 @@ class MatplotlibImageViewer2d(viewimage.ImageViewer2d, MatplotlibViewer):
         self.currentfigure = figure
         ax = figure.add_subplot(111)
 
-        if self.image.shape[2] == 1:
-            self.currentscene = ax.imshow(self.image[..., 0],
-                                          cmap=cm.Greys_r, **kwargs)
+        if len(self.image.shape) == 2 or self.image.shape[2] == 1:
+            im = self.image
+            im = im if len(im.shape) == 2 else im[..., 0]
+            self.currentscene = ax.imshow(im, cmap=cm.Greys_r, **kwargs)
         else:
             self.currentscene = ax.imshow(self.image, **kwargs)
 
