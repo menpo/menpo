@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from pybug.transform.affine import Rotation, Translation, \
-    AffineTransform, SimilarityTransform, AbstractUniformScale, NonUniformScale, \
+    AffineTransform, SimilarityTransform, NonUniformScale, \
     Rotation2D, Rotation3D, UniformScale2D, UniformScale3D, UniformScale, Scale
 from pybug.exceptions import DimensionalityError
 from nose.tools import raises
@@ -504,3 +504,72 @@ def test_rotation3d_from_vector_raises_notimplementederror():
 def test_rotation3d_as_vector_raises_notimplementederror():
     homo = np.eye(3)
     Rotation3D(homo).as_vector()
+
+
+def test_affine_2d_n_parameters():
+    homo = np.eye(3)
+    t = AffineTransform(homo)
+    assert(t.n_parameters == 6)
+
+
+def test_affine_3d_n_parameters():
+    homo = np.eye(4)
+    t = AffineTransform(homo)
+    assert(t.n_parameters == 12)
+
+
+def test_similarity_2d_n_parameters():
+    homo = np.eye(3)
+    t = SimilarityTransform(homo)
+    assert(t.n_parameters == 4)
+
+
+@raises(NotImplementedError)
+def test_similarity_3d_n_parameters_raises_notimplementederror():
+    homo = np.eye(4)
+    t = SimilarityTransform(homo)
+    # Raises exception
+    t.n_parameters
+
+
+def test_uniformscale2d_n_parameters():
+    scale = 2
+    t = UniformScale2D(scale)
+    assert(t.n_parameters == 1)
+
+
+def test_uniformscale3d_n_parameters():
+    scale = 2
+    t = UniformScale3D(scale)
+    assert(t.n_parameters == 1)
+
+
+def test_nonuniformscale_2d_n_parameters():
+    scale = np.array([1, 2])
+    t = NonUniformScale(scale)
+    assert(t.n_parameters == 2)
+
+
+def test_translation_2d_n_parameters():
+    trans = np.array([1, 2])
+    t = Translation(trans)
+    assert(t.n_parameters == 2)
+
+
+def test_translation_3d_n_parameters():
+    trans = np.array([1, 2, 3])
+    t = Translation(trans)
+    assert(t.n_parameters == 3)
+
+
+def test_rotation2d_n_parameters():
+    rot_matrix = np.eye(2)
+    t = Rotation2D(rot_matrix)
+    assert(t.n_parameters == 1)
+
+@raises(NotImplementedError)
+def test_rotation3d_n_parameters_raises_notimplementederror():
+    rot_matrix = np.eye(3)
+    t = Rotation3D(rot_matrix)
+    # Throws exception
+    t.n_parameters

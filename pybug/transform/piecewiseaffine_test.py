@@ -23,3 +23,8 @@ def test_affine_transforms():
     assert(len(pwa.transforms) == 2)
     assert_equal(pwa.transforms[0].homogeneous_matrix, a_affine)
     assert_equal(pwa.transforms[1].homogeneous_matrix, b_affine)
+
+
+def test_pwa_n_parameters():
+    pwa = PiecewiseAffineTransform(a, b, tl)
+    assert(pwa.n_parameters == 12)

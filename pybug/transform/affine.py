@@ -1,3 +1,4 @@
+from PyQt4.uic import properties
 import abc
 import copy
 from .base import Transform
@@ -150,6 +151,23 @@ class AffineTransform(Transform):
         jac[:, full_mask] = 1
         return jac
 
+    @property
+    def n_parameters(self):
+        """
+        n_dim * (n_dim + 1) parameters - every element of the matrix bar the
+        homogeneous part
+        2D Affine: 6 parameters::
+
+            [p1, p3, p5]
+            [p2, p4, p6]
+
+        3D Affine: 12 parameters::
+            [p1, p4, p7, p10]
+            [p2, p5, p8, p11]
+            [p3, p6, p9, p12]
+        """
+        return self.n_dim * (self.n_dim + 1)
+
     def as_vector(self):
         """
         Return the parameters of the transform as a 1D array. These parameters
@@ -196,6 +214,26 @@ class SimilarityTransform(AffineTransform):
     def __init__(self, homogeneous_matrix):
         #TODO check that I am a similarity transform
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
+
+    @property
+    def n_parameters(self):
+        """
+        2D Similarity: 4 parameters::
+
+            [(1 + a), -b,      tx]
+            [b,       (1 + a), ty]
+
+        3D Similarity: Currently not supported
+        :return:
+        """
+        if self.n_dim == 2:
+            return 4
+        elif self.n_dim == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
 
     def as_vector(self):
         """
@@ -352,6 +390,13 @@ class Rotation2D(AbstractRotation):
             np.dot(transformed_vector, test_vector))
         return axis, angle_of_rotation
 
+    @property
+    def n_parameters(self):
+        """
+        1 parameter - [theta] - The angle of rotation around [0, 0, 1]
+        """
+        return 1
+
     def as_vector(self):
         """
         Return the parameters of the transform as a 1D array. These parameters
@@ -422,6 +467,14 @@ class Rotation3D(AbstractRotation):
         if chirality_of_rotation < 0:
             angle_of_rotation *= -1.0
         return axis, angle_of_rotation
+
+    @property
+    def n_parameters(self):
+        """
+        Not currently implemented
+        """
+        raise NotImplementedError('3D rotations do not support vectorisation '
+                                  'yet.')
 
     def as_vector(self):
         """
@@ -500,6 +553,14 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         message = 'NonUniformScale by %s ' % self.scale
         return message
 
+    @property
+    def n_parameters(self):
+        """
+        n_dim parameters - [scale_x, scale_y, ....] - The scalar values
+        representing the scale across each dimension
+        """
+        return self.scale.shape[0]
+
     def as_vector(self):
         """
         Return the parameters of the transform as a 1D array. These parameters
@@ -550,6 +611,14 @@ class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
     def _transform_str(self):
         message = 'UniformScale by %f ' % self.scale
         return message
+
+    @property
+    def n_parameters(self):
+        """
+        1 parameter - scale - The scalar value representing the scale across
+        each dimension
+        """
+        return 1
 
     def as_vector(self):
         """
@@ -634,6 +703,14 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def _transform_str(self):
         message = 'Translate by %s ' % self.translation_component
         return message
+
+    @property
+    def n_parameters(self):
+        """
+        n_dim parameters - [tx, ty, ...] - The translation along each axis
+        :return:
+        """
+        return self.n_dim
 
     def as_vector(self):
         """
