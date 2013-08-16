@@ -80,6 +80,62 @@ def test_3d_rotation_inverse_eye():
     print transformed.homogeneous_matrix
     assert_allclose(np.eye(4), transformed.homogeneous_matrix, atol=1e-15)
 
+
+def test_basic_2d_affine():
+    linear_component = np.array([[1, -6],
+                                 [-3, 2]])
+    translation_component = np.array([7, -8])
+    homogeneous_matrix = np.zeros((3, 3))
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(homogeneous_matrix)
+    x = np.array([[0, 1],
+                  [1, 1],
+                  [-1, -5],
+                  [3, -5]])
+    # transform x explicitly
+    solution = np.dot(x, linear_component.T) + translation_component
+    # transform x using the affine transform
+    result = affine.apply(x)
+    # check that both answers are equivalent
+    assert_allclose(solution, result)
+    # create several copies of x
+    x_copies = np.array([x, x, x, x, x, x, x, x])
+    # transform all of copies at once using the affine transform
+    results = affine.apply(x_copies)
+    # check that all copies have been transformed correctly
+    for r in results:
+        assert_allclose(solution, r)
+
+
+def test_basic_3d_affine():
+    linear_component = np.array([[1, 6, -4],
+                                 [-3, -2, 5],
+                                 [5, -1, 3]])
+    translation_component = np.array([7, -8, 9])
+    homogeneous_matrix = np.zeros((4, 4))
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(homogeneous_matrix)
+    x = np.array([[0, 1,  2],
+                  [1, 1, 1],
+                  [-1, 2, -5],
+                  [1, -5, -1]])
+    # transform x explicitly
+    solution = np.dot(x, linear_component.T) + translation_component
+    # transform x using the affine transform
+    result = affine.apply(x)
+    # check that both answers are equivalent
+    assert_allclose(solution, result)
+    # create several copies of x
+    x_copies = np.array([x, x, x, x, x, x, x, x])
+    # transform all of copies at once using the affine transform
+    results = affine.apply(x_copies)
+    # check that all copies have been transformed correctly
+    for r in results:
+        assert_allclose(solution, r)
+
+
 jac_solution2d = np.array(
     [[[0.,  0.],
     [0.,  0.],
