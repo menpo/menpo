@@ -1,4 +1,5 @@
 import numpy as np
+import cython
 cimport numpy as np
 cimport cython
 
@@ -36,7 +37,7 @@ cdef inline np.ndarray[FLOAT64_T, ndim=2] cross(double[:, :] x,
 
 
 cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
-                     np.ndarray[int, ndim=2] face):
+                      np.ndarray[cython.integral, ndim=2] face):
     """
     Compute the per-vertex and per-face normal of the vertices given a list of
     faces.
