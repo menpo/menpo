@@ -5,11 +5,84 @@ from pybug.warp.base import scipy_warp
 
 
 class LucasKanade:
+    r"""
+    An abstract base class for implementations of Lucas-Kanade [1]_
+    type algorithms.
+
+    This is to abstract away optimisation specific functionality such as the
+    calculation of the Hessian (which could be derived using a number of
+    techniques, including Gauss-Newton and Levenberg-Marquardt).
+
+    Parameters
+    ----------
+    image : :class:`pybug.image.base.Image`
+        The image to perform the alignment upon.
+
+        .. note:: Only the image is expected within the base class because
+            different algorithms expect different kinds of template
+            (image/model)
+    residual : :class:`pybug.align.lucaskanade.residual.Residual`
+        The kind of residual to be calculated. This is used to quantify the
+        error between the input image and the reference object.
+    transform : :class:`pybug.transform.base.Transform`
+        The transformation type used to warp the image in to the appropriate
+        reference frame. This is used by the warping function to calculate
+        sub-pixel coordinates of the input image in the reference frame.
+    warp : function
+        A function that takes 3 arguments,
+        ``warp(`` :class:`image <pybug.image.base.Image>`,
+        :class:`template <pybug.image.base.Image>`,
+        :class:`transform <pybug.transform.base.Transform>` ``)``
+        This function is intended to perform sub-pixel interpolation of the
+        pixel locations calculated by transforming the given image into the
+        reference frame of the template. Appropriate functions are given in
+        :doc:`pybug.warp`.
+    optimisation : 'GN' | 'LM', optional
+        The optimisation technique used to calculate the Hessian approximation.
+
+        Default: 'GN'
+    update_step : float, optional
+        The update step used when performing a Levenberg-Marquardt
+        optimisation.
+
+        Default: 0.001
+    eps : float, optional
+        The convergence value. When calculating the level of convergence, if
+        the norm of the delta parameter updates is less than ``eps``, the
+        algorithm is considered to have converged.
+
+        Default: 1**-10
+
+    Notes
+    -----
+    The type of optimisation technique chosen will determine properties such
+    as the convergence rate of the algorithm. The supported optimisation
+    techniques are detailed below:
+
+    ===== ==================== ===============================================
+    type  full name            hessian approximation
+    ===== ==================== ===============================================
+    'GN'  Gauss-Newton         :math:`\mathbf{J^T J}`
+    'LM'  Levenberg-Marquardt  :math:`\mathbf{J^T J + \lambda\, diag(J^T J)}`
+    ===== ==================== ===============================================
+
+    Attributes
+    ----------
+    optimal_transform
+    transform_parameters
+    n_iters
+
+    References
+    ----------
+    .. [1] Lucas, Bruce D., and Takeo Kanade.
+       "An iterative image registration technique with an application to
+       stereo vision." IJCAI. Vol. 81. 1981.
+    """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, image, residual, transform,
                  warp=scipy_warp, optimisation='GN', update_step=0.001,
-                 eps=10 ** -10):
+                 eps=1 ** -10):
         # set basic state for all Lucas Kanade algorithms
         self.initial_transform = transform
         self.TransformClass = transform.__class__
@@ -51,7 +124,7 @@ class LucasKanade:
         return solve(H_lm, sd_delta_p)
 
     def align(self, max_iters=30):
-        """
+        r"""
         Perform an alignment using the Lukas-Kanade framework.
 
         Parameters
@@ -62,7 +135,7 @@ class LucasKanade:
 
         Returns
         -------
-        transform : pybug.transform.base.Transform
+        transform : :class:`pybug.transform.base.Transform`
             The final transform that optimally aligns the source to the
             target.
         """
@@ -71,24 +144,40 @@ class LucasKanade:
 
     @abc.abstractmethod
     def _align(self, **kwargs):
-        """
-        The actual alignment function.
+        r"""
+        Abstract method to be overridden by subclasses that implements the
+        alignment algorithm.
         """
         pass
 
     @property
     def optimal_transform(self):
-        """
-        The last transform that was applied is by definition the optimal
+        r"""
+        The final transform that was applied is by definition the optimal.
+
+        :type: :class:`pybug.transform.base.Transform`
         """
         return self.transforms[-1]
 
     @property
     def transform_parameters(self):
+        r"""
+         The parameters of every transform calculated during alignment.
+
+        :type: list of (P,) ndarrays
+
+        The parameters are obtained by calling the ``as_vector()`` method on
+        each transfor.
+        """
         return [x.as_vector() for x in self.transforms]
 
     @property
     def n_iters(self):
+        r"""
+        The number of iterations performed.
+
+        :type: int
+        """
         # nb at 0'th iteration we still have one transform
         # (self.initial_transform)
         return len(self.transforms) - 1
