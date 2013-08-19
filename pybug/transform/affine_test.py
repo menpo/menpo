@@ -85,7 +85,7 @@ def test_basic_2d_affine():
     linear_component = np.array([[1, -6],
                                  [-3, 2]])
     translation_component = np.array([7, -8])
-    homogeneous_matrix = np.zeros((3, 3))
+    homogeneous_matrix = np.eye(3, 3)
     homogeneous_matrix[:-1, :-1] = linear_component
     homogeneous_matrix[:-1, -1] = translation_component
     affine = AffineTransform(homogeneous_matrix)
@@ -113,7 +113,7 @@ def test_basic_3d_affine():
                                  [-3, -2, 5],
                                  [5, -1, 3]])
     translation_component = np.array([7, -8, 9])
-    homogeneous_matrix = np.zeros((4, 4))
+    homogeneous_matrix = np.eye(4, 4)
     homogeneous_matrix[:-1, :-1] = linear_component
     homogeneous_matrix[:-1, -1] = translation_component
     affine = AffineTransform(homogeneous_matrix)
@@ -134,6 +134,72 @@ def test_basic_3d_affine():
     # check that all copies have been transformed correctly
     for r in results:
         assert_allclose(solution, r)
+
+
+def test_estimate_2d_affine():
+    linear_component = np.array([[1, -6],
+                                 [-3, 2]])
+    translation_component = np.array([7, -8])
+    homogeneous_matrix = np.eye(3, 3)
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(homogeneous_matrix)
+    source = np.array([[0, 1],
+                       [1, 1],
+                       [-1, -5],
+                       [3, -5]])
+    target = affine.apply(source)
+    # estimate the transform from source and target
+    estimate = AffineTransform.estimate(source, target)
+    # check the estimates is correct
+    assert_allclose(affine.homogeneous_matrix, estimate.homogeneous_matrix)
+
+
+def test_basic_2d_similarity():
+    linear_component = np.array([[2, -6],
+                                 [6, 2]])
+    translation_component = np.array([7, -8])
+    homogeneous_matrix = np.eye(3, 3)
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    similarity = SimilarityTransform(homogeneous_matrix)
+    x = np.array([[0, 1],
+                  [1, 1],
+                  [-1, -5],
+                  [3, -5]])
+    # transform x explicitly
+    solution = np.dot(x, linear_component.T) + translation_component
+    # transform x using the affine transform
+    result = similarity.apply(x)
+    # check that both answers are equivalent
+    assert_allclose(solution, result)
+    # create several copies of x
+    x_copies = np.array([x, x, x, x, x, x, x, x])
+    # transform all of copies at once using the affine transform
+    results = similarity.apply(x_copies)
+    # check that all copies have been transformed correctly
+    for r in results:
+        assert_allclose(solution, r)
+
+
+def test_estimate_2d_similarity():
+    linear_component = np.array([[2, -6],
+                                 [6, 2]])
+    translation_component = np.array([7, -8])
+    homogeneous_matrix = np.eye(3, 3)
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    similarity = SimilarityTransform(homogeneous_matrix)
+    source = np.array([[0, 1],
+                       [1, 1],
+                       [-1, -5],
+                       [3, -5]])
+    target = similarity.apply(source)
+    # estimate the transform from source and target
+    estimate = AffineTransform.estimate(source, target)
+    # check the estimates is correct
+    assert_allclose(similarity.homogeneous_matrix,
+                    estimate.homogeneous_matrix)
 
 
 jac_solution2d = np.array(

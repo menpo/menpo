@@ -148,6 +148,52 @@ class AffineTransform(Transform):
         jac[:, full_mask] = 1
         return jac
 
+    def jacobian_points(self, points):
+        """
+        Computes the Jacobian of the transform w.r.t the points to which
+        the transform is applied to. This is constant for affine transforms.
+
+        The Jacobian generated (for 2D) is of the form::
+
+            x 0 y 0 1 0
+            0 x 0 y 0 1
+
+        This maintains a parameter order of::
+
+          W(x;p) = [1 + p1  p3      p5] [x]
+                   [p2      1 + p4  p6] [y]
+                                        [1]
+
+        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+            the Jacobian of the transform.
+        """
+        n_points, points_n_dim = points.shape
+        if points_n_dim != self.n_dim:
+            raise DimensionalityError(
+                "Trying to sample jacobian in incorrect dimensions "
+                "(transform is {0}D, sampling at {1}D)".format(
+                    self.n_dim, points_n_dim))
+        # prealloc the jacobian
+        jac = np.zeros((n_points, self.n_parameters, self.n_dim))
+        # a mask that we can apply at each iteration
+        dim_mask = np.eye(self.n_dim, dtype=np.bool)
+
+        for i, s in enumerate(range(0, self.n_dim * self.n_dim, self.n_dim)):
+            # i is current axis
+            # s is slicing offset
+            # make a mask for a single points jacobian
+            full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
+            # fill the mask in for the ith axis
+            full_mask[slice(s, s + self.n_dim)] = dim_mask
+            # assign the ith axis points to this mask, broadcasting over all
+            # points
+            jac[:, full_mask] = points[:, i][..., None]
+        # finally, just repeat the same but for the ones at the end
+        full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
+        full_mask[slice(s + self.n_dim, s + 2 * self.n_dim)] = dim_mask
+        jac[:, full_mask] = 1
+        return jac
+
     @property
     def n_parameters(self):
         """
@@ -200,6 +246,85 @@ class AffineTransform(Transform):
     @property
     def inverse(self):
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
+
+    @classmethod
+    def estimate(cls, source, target):
+        """
+        Infers the affine transform relating two vectors with the same
+        dimensionality.
+
+        The affine transform is defined as:
+
+            X = a*x + b*y + tx
+            Y = c*x + d*y + ty
+
+        These equations can be transformed to the following form::
+
+            a*x + b*y + tx - X = 0
+            c*x + d*y + ty - Y = 0
+
+        which can be written in matrix form as:
+
+            A x = 0
+
+        where::
+
+            A   = [[x y 1 0 0 0 X]
+                   [0 0 0 x y 1 Y]
+                    ...
+                    ...
+                  ]
+            x.T = [a b tx c d ty c6]
+
+        Using total least-squares, the solution of the previous homogeneous
+        system of equations is the right singular vector of A which
+        corresponds to the smallest singular value normalized by the
+        coefficient c6.
+
+        :param source: A n_points x n_dims ndarray.
+        :param target: A n_points x n_dims ndarray.
+        :return: The AffineTransform object relating the previous two vectors.
+        """
+        n_dim = source.shape[1]
+        if n_dim == 2:
+            n_points = source.shape[0]
+            xs = source[:, 0]
+            ys = source[:, 1]
+            xd = target[:, 0]
+            yd = target[:, 1]
+
+            # parameters: a, b, tx, c, d, ty
+            A = np.zeros((n_points * 2, 7))
+            # a
+            A[:n_points, 0] = xs
+            # b
+            A[:n_points, 1] = ys
+            # tx
+            A[:n_points, 2] = 1
+            # c
+            A[n_points:, 3] = xs
+            # d
+            A[n_points:, 4] = ys
+            # ty
+            A[n_points:, 5] = 1
+            # target
+            A[:n_points, 6] = xd
+            A[n_points:, 6] = yd
+            # the parameters of the affine transform are given by the least
+            # significant right singular vector normalized by coefficient c6.
+            _, _, V = np.linalg.svd(A)
+            a, b, tx, c, d, ty = - V[-1, :-1] / V[-1, -1]
+            # build homogeneous matrix
+            homogeneous_matrix = np.array([[a, b, tx],
+                                           [c, d, ty],
+                                           [0, 0,  1]])
+            return cls(homogeneous_matrix)
+        elif n_dim == 3:
+            raise NotImplementedError("3D affine transforms cannot be "
+                                      "inferred yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D affine transforms "
+                                      "are currently supported.")
 
 
 class SimilarityTransform(AffineTransform):
@@ -291,14 +416,14 @@ class SimilarityTransform(AffineTransform):
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [a, b, tx, ty].
         """
-        ndims = self.n_dim
-        if ndims == 2:
-            params = self.homogeneous_matrix - np.eye(ndims + 1)
+        n_dim = self.n_dim
+        if n_dim == 2:
+            params = self.homogeneous_matrix - np.eye(n_dim + 1)
             # Pick off a, b, tx, ty
-            params = params[:ndims, :].flatten(order='F')
+            params = params[:n_dim, :].flatten(order='F')
             # Pick out a, b, tx, ty
             return params[[0, 1, 4, 5]]
-        elif ndims == 3:
+        elif n_dim == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
@@ -336,6 +461,84 @@ class SimilarityTransform(AffineTransform):
                                               self.homogeneous_matrix))
         else:
             return super(SimilarityTransform, self).compose(transform)
+
+    @classmethod
+    def estimate(cls, source, target):
+        """
+        Infers the affine transform relating two vectors with the same
+        dimensionality.
+
+        The affine transform is defined as:
+
+            X = a*x - b*y + tx
+            Y = b*x + a*y + ty
+
+        These equations can be transformed to the following form::
+
+            a*x - b*y + tx - X = 0
+            b*x + a*y + ty - Y = 0
+
+        which can be written in matrix form as:
+
+            A x = 0
+
+        where::
+
+            A   = [[x -y 1 0 X]
+                   [y  x 0 1 Y]
+                    ...
+                    ...
+                  ]
+            x.T = [a b tx ty c4]
+
+        Using total least-squares, the solution of the previous homogeneous
+        system of equations is the right singular vector of A which
+        corresponds to the smallest singular value normalized by the
+        coefficient c4.
+
+        :param source: A n_points x n_dims ndarray.
+        :param target: A n_points x n_dims ndarray.
+        :return: The SimilarityTransform object relating the previous two
+            vectors.
+        """
+        n_dim = source.shape[1]
+        if n_dim == 2:
+            n_points = source.shape[0]
+            xs = source[:, 0]
+            ys = source[:, 1]
+            xd = target[:, 0]
+            yd = target[:, 1]
+            # parameters: a, b, tx, ty
+            A = np.zeros((n_points * 2, 5))
+            # a
+            A[:n_points, 0] = xs
+            A[n_points:, 0] = ys
+            # b
+            A[:n_points, 1] = -ys
+            A[n_points:, 1] = xs
+            # tx
+            A[:n_points, 2] = 1
+            # ty
+            A[n_points:, 3] = 1
+            # target
+            A[:n_points, 4] = xd
+            A[n_points:, 4] = yd
+            # the parameters of the similarity transform are given by the
+            # least significant right singular vector normalized by
+            # coefficient c4.
+            _, _, V = np.linalg.svd(A)
+            a, b, tx, ty = - V[-1, :-1] / V[-1, -1]
+            # build homogeneous matrix
+            homogeneous_matrix = np.array([[a, -b, tx],
+                                           [b,  a, ty],
+                                           [0,  0,  1]])
+            return cls(homogeneous_matrix)
+        elif n_dim == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "inferred yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D similarity transforms "
+                                      "are currently supported.")
 
 
 class DiscreteAffineTransform(object):
