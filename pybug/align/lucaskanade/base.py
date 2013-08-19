@@ -167,7 +167,7 @@ class LucasKanade:
         :type: list of (P,) ndarrays
 
         The parameters are obtained by calling the ``as_vector()`` method on
-        each transfor.
+        each transform.
         """
         return [x.as_vector() for x in self.transforms]
 
