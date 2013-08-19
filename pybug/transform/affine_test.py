@@ -26,6 +26,21 @@ def test_translation():
     assert_allclose(starting_vector + t_vec, transformed)
 
 
+def test_estimate_2d_translation():
+    t_vec = np.array([1, 2])
+    translation = Translation(t_vec)
+    source = np.array([[0, 1],
+                       [1, 1],
+                       [-1, -5],
+                       [3, -5]])
+    target = translation.apply(source)
+    # estimate the transform from source and target
+    estimate = Translation.estimate(source, target)
+    # check the estimates is correct
+    assert_allclose(translation.homogeneous_matrix,
+                    estimate.homogeneous_matrix)
+
+
 def test_basic_2d_rotation():
     rotation_matrix = np.array([[0, 1],
                                 [-1, 0]])
@@ -40,6 +55,22 @@ def test_basic_2d_rotation_axis_angle():
     axis, angle = rotation.axis_and_angle_of_rotation()
     assert_allclose(axis, np.array([0, 0, 1]))
     assert_allclose((90 * np.pi)/180, angle)
+
+
+def test_estimate_2d_rotation():
+    rotation_matrix = np.array([[0, 1],
+                                [-1, 0]])
+    rotation = Rotation(rotation_matrix)
+    source = np.array([[0, 1],
+                       [1, 1],
+                       [-1, -5],
+                       [3, -5]])
+    target = rotation.apply(source)
+    # estimate the transform from source and target
+    estimate = Rotation2D.estimate(source, target)
+    # check the estimates is correct
+    assert_allclose(rotation.homogeneous_matrix,
+                    estimate.homogeneous_matrix)
 
 
 def test_basic_3d_rotation():
@@ -108,6 +139,25 @@ def test_basic_2d_affine():
         assert_allclose(solution, r)
 
 
+def test_estimate_2d_affine():
+    linear_component = np.array([[1, -6],
+                                 [-3, 2]])
+    translation_component = np.array([7, -8])
+    homogeneous_matrix = np.eye(3, 3)
+    homogeneous_matrix[:-1, :-1] = linear_component
+    homogeneous_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(homogeneous_matrix)
+    source = np.array([[0, 1],
+                       [1, 1],
+                       [-1, -5],
+                       [3, -5]])
+    target = affine.apply(source)
+    # estimate the transform from source and target
+    estimate = AffineTransform.estimate(source, target)
+    # check the estimates is correct
+    assert_allclose(affine.homogeneous_matrix, estimate.homogeneous_matrix)
+
+
 def test_basic_3d_affine():
     linear_component = np.array([[1, 6, -4],
                                  [-3, -2, 5],
@@ -134,25 +184,6 @@ def test_basic_3d_affine():
     # check that all copies have been transformed correctly
     for r in results:
         assert_allclose(solution, r)
-
-
-def test_estimate_2d_affine():
-    linear_component = np.array([[1, -6],
-                                 [-3, 2]])
-    translation_component = np.array([7, -8])
-    homogeneous_matrix = np.eye(3, 3)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(homogeneous_matrix)
-    source = np.array([[0, 1],
-                       [1, 1],
-                       [-1, -5],
-                       [3, -5]])
-    target = affine.apply(source)
-    # estimate the transform from source and target
-    estimate = AffineTransform.estimate(source, target)
-    # check the estimates is correct
-    assert_allclose(affine.homogeneous_matrix, estimate.homogeneous_matrix)
 
 
 def test_basic_2d_similarity():
@@ -196,7 +227,7 @@ def test_estimate_2d_similarity():
                        [3, -5]])
     target = similarity.apply(source)
     # estimate the transform from source and target
-    estimate = AffineTransform.estimate(source, target)
+    estimate = SimilarityTransform.estimate(source, target)
     # check the estimates is correct
     assert_allclose(similarity.homogeneous_matrix,
                     estimate.homogeneous_matrix)

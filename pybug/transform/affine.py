@@ -249,6 +249,10 @@ class AffineTransform(Transform):
 
     @classmethod
     def estimate(cls, source, target):
+        return cls(cls._estimate(source, target))
+
+    @classmethod
+    def _estimate(cls, source, target):
         """
         Infers the affine transform relating two vectors with the same
         dimensionality.
@@ -318,7 +322,7 @@ class AffineTransform(Transform):
             homogeneous_matrix = np.array([[a, b, tx],
                                            [c, d, ty],
                                            [0, 0,  1]])
-            return cls(homogeneous_matrix)
+            return homogeneous_matrix
         elif n_dim == 3:
             raise NotImplementedError("3D affine transforms cannot be "
                                       "inferred yet.")
@@ -463,7 +467,7 @@ class SimilarityTransform(AffineTransform):
             return super(SimilarityTransform, self).compose(transform)
 
     @classmethod
-    def estimate(cls, source, target):
+    def _estimate(cls, source, target):
         """
         Infers the affine transform relating two vectors with the same
         dimensionality.
@@ -532,7 +536,7 @@ class SimilarityTransform(AffineTransform):
             homogeneous_matrix = np.array([[a, -b, tx],
                                            [b,  a, ty],
                                            [0,  0,  1]])
-            return cls(homogeneous_matrix)
+            return homogeneous_matrix
         elif n_dim == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "inferred yet.")
@@ -663,6 +667,13 @@ class Rotation2D(AbstractRotation):
         # See affine from_vector with regards to classmethod decorator
         return Rotation2D(np.array([[np.cos(p), -np.sin(p)],
                                     [np.sin(p), np.cos(p)]]))
+
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Rotation2D, cls)._estimate(source, target)
+        similarity = SimilarityTransform(homogeneous_matrix)
+        r1, s, r2, t = similarity.decompose()
+        return r1.compose(r2).homogeneous_matrix[:-1, :-1]
 
 
 class Rotation3D(AbstractRotation):
@@ -827,6 +838,21 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         # See affine from_vector with regards to classmethod decorator
         return NonUniformScale(p)
 
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
+        n_dim = source[1]
+        if n_dim == 2:
+            scale = np.zeros((1, 2))
+            scale[0] = homogeneous_matrix[0, 0]
+            scale[1] = homogeneous_matrix[1, 1]
+        elif n_dim == 3:
+            scale = np.zeros((1, 3))
+            scale[0] = homogeneous_matrix[0, 0]
+            scale[1] = homogeneous_matrix[1, 1]
+            scale[2] = homogeneous_matrix[2, 2]
+        return scale
+
 
 def UniformScale(scale, n_dim):
     """
@@ -905,6 +931,13 @@ class UniformScale2D(AbstractUniformScale):
         # See affine from_vector with regards to classmethod decorator
         return UniformScale2D(p)
 
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(UniformScale2D, cls)._estimate(source,
+                                                                  target)
+        scale = homogeneous_matrix[0]
+        return scale
+
 
 class UniformScale3D(AbstractUniformScale):
     """
@@ -977,3 +1010,9 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def from_vector(cls, p):
         # See affine from_vector with regards to classmethod decorator
         return Translation(p)
+
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
+        translation = homogeneous_matrix[:-1, -1]
+        return translation
