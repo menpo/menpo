@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial import distance
-from pybug.align.nonrigid.exceptions import TPSError
+from pybug.exceptions import DimensionalityError
 from pybug.transform.base import Transform
 
 
@@ -16,7 +16,7 @@ class TPSTransform(Transform):
         TPS transform of the input x (f_affine_free)
         """
         if points.shape[1] != self.n_dim:
-            raise TPSError('TPS can only be used on 2D data.')
+            raise DimensionalityError('TPS can only be used on 2D data.')
         x = points[..., 0][:, None]
         y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp
