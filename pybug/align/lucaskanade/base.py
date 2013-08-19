@@ -52,11 +52,19 @@ class LucasKanade:
 
     def align(self, max_iters=30):
         """
-        Perform an alignment using the Lukas Kanade framework.
-        :param max_iters: The maximum number of iterations that will be used
-         in performing the alignment
-        :return: The final transform that optimally aligns the source to the
-         target.
+        Perform an alignment using the Lukas-Kanade framework.
+
+        Parameters
+        ----------
+        max_iters : int
+            The maximum number of iterations that will be used in performing
+            the alignment
+
+        Returns
+        -------
+        transform : pybug.transform.base.Transform
+            The final transform that optimally aligns the source to the
+            target.
         """
         self.transforms = [self.initial_transform]
         return self._align(max_iters)

@@ -25,10 +25,10 @@ lucaskanade Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`similaritymeasure` Module
--------------------------------
+:mod:`residual` Module
+----------------------
 
-.. automodule:: pybug.align.lucaskanade.similaritymeasure
+.. automodule:: pybug.align.lucaskanade.residual
     :members:
     :undoc-members:
     :show-inheritance:

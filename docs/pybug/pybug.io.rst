@@ -41,10 +41,18 @@ io Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`metadata` Module
+:mod:`landmark` Module
 ----------------------
 
-.. automodule:: pybug.io.metadata
+.. automodule:: pybug.io.landmark
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`landmark_image` Module
+----------------------------
+
+.. automodule:: pybug.io.landmark_image
     :members:
     :undoc-members:
     :show-inheritance:

@@ -17,3 +17,11 @@ warp Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`cinterp` Module
+---------------------
+
+.. automodule:: pybug.warp.cinterp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
