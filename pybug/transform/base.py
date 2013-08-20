@@ -42,11 +42,22 @@ class Transform(Vectorizable):
         pass
 
     @abc.abstractmethod
-    def jacobian(self, shape):
+    def jacobian(self, points):
         """
-        Calculates the Jacobian of the warp - this may be constant
+        Calculates the Jacobian of the transform w.r.t. the parameters of its
+        parameters - this may be constant
 
-        :param shape
+        :param points
+        """
+        pass
+
+    @abc.abstractmethod
+    def jacobian_points(self, points):
+        """
+        Calculates the Jacobian of the transform w.r.t. the points to which
+        the transform is applied to - this may be constant
+
+        :param points
         """
         pass
 

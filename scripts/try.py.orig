@@ -32,11 +32,19 @@ shapes = [PointCloud(p) for p in points]
 import pickle
 
 # load a previously buid AAM
+<<<<<<< HEAD
 aam = pickle.load(open('/vol/atlas/aams/aam_lfpw', "rb"))
 
 template = aam["template"]
 template_landmarks = aam["template_landmarks"]
 tps_appearance_model = aam["tps_appearance_model"]
+=======
+aam = pickle.load(open('/vol/atlas/aams/lfpw_pwa', "rb"))
+
+template = aam["template"]
+template_landmarks = aam["template_landmarks"]
+appearance_model = aam["appearance_model"]
+>>>>>>> master
 shape_model = aam["shape_model"]
 
 # <markdowncell>
@@ -65,9 +73,9 @@ initial_weights = np.concatenate([global_weights, np.zeros_like(shape_weights)])
 
 # <codecell>
 
+<<<<<<< HEAD
 from pybug.align.nonrigid.tps import TPS
 from pybug.transform.statisticallydriven import StatisticallyDrivenTransform
-from scipy.spatial import Delaunay
 
 # function for directly constructing tps transform objects from tps objects
 def tps_constructor(src_landmarks, tgt_landmarks):
@@ -76,6 +84,18 @@ def tps_constructor(src_landmarks, tgt_landmarks):
 
 initial_transform = StatisticallyDrivenTransform(shape_model,
                                                  tps_constructor,
+=======
+from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
+from pybug.transform.statisticallydriven import StatisticallyDrivenTransform
+from scipy.spatial import Delaunay
+
+def pwa_constructor(src_landmarks, tgt_landmarks):
+    tri = Delaunay(src_landmarks)
+    return PiecewiseAffineTransform(src_landmarks, tgt_landmarks, tri.simplices)
+
+initial_transform = StatisticallyDrivenTransform(shape_model,
+                                                 pwa_constructor,
+>>>>>>> master
                                                  source=template_landmarks,
                                                  parameters=initial_weights,
                                                  global_transform=global_transform)
@@ -86,8 +106,15 @@ from pybug.warp import scipy_warp
 
 initial_warp = scipy_warp(test_image, template, initial_transform)
 
+<<<<<<< HEAD
 temp_tps = TPS(template_landmarks.points, test_shape.points)
 temp = scipy_warp(test_image, template, temp_tps.transform)
+=======
+
+trilist = template.get_landmark_set('ibug_68_trimesh').landmark_dict['tri'].trilist
+temp_pwa = PiecewiseAffineTransform(template_landmarks.points, test_shape.points, trilist)
+temp = scipy_warp(test_image, template, temp_pwa.transform)
+>>>>>>> master
 
 test_image.add_landmark_set("initial", {"initial": initial_transform.target})
 test_image.get_landmark_set("initial").view()
@@ -98,8 +125,29 @@ temp.view()
 # <codecell>
 
 from pybug.align.lucaskanade.residual import LSIntensity
+<<<<<<< HEAD
 from pybug.align.lucaskanade.base import ImageForwardAdditive, ImageForwardCompositional
 
 residual = LSIntensity()
 lk_algorithm = ImageForwardCompositional(test_image, temp, residual, initial_transform)
 optimal_transform = lk_algorithm.align()
+=======
+from pybug.align.lucaskanade.base import ImageForwardAdditive, ImageForwardCompositional, ImageInverseCompositional
+
+residual = LSIntensity()
+lk_algorithm = ImageForwardCompositional(test_image, temp, residual, initial_transform)
+optimal_transform = lk_algorithm.align(max_iters=10)
+
+# <codecell>
+
+fitted_shape = optimal_transform.target
+fitted_appearance = scipy_warp(test_image, template, optimal_transform)
+
+test_image.add_landmark_set("fitting_result", {"fitting_result": fitted_shape})
+test_image.get_landmark_set("fitting_result").view()
+
+fitted_appearance.view()
+
+# <codecell>
+
+>>>>>>> master

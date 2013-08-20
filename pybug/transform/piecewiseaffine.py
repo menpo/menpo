@@ -158,6 +158,14 @@ class PiecewiseAffineTransform(Transform):
                 gamma_k[points_index_in_tri_i, i][..., None])
         return jac
 
+    def jacobian_points(self, points):
+        """
+        Returns the jacobian of the warp at each
+        :param points:
+        :return:
+        """
+        return np.eye(2, 2)
+
     def _tri_containment_loop(self, points):
         """
         Performs the same operation as tri_containment but in C style.
