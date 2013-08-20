@@ -17,10 +17,10 @@ def const(f, *args, **kwargs):
     f : func
         Function to wrap
     args : list
-        Function ``f``s args
+        Function ``f`` s args
     kwargs : dictionary
-        Function ``f``s kwargs
-    copy : {True, False}
+        Function ``f`` s kwargs
+    copy : {True, False}, optional
         If ``False`` then don't copy the parameters - use with caution
 
         Default : True
