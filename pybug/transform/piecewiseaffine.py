@@ -113,7 +113,7 @@ class PiecewiseAffineTransform(Transform):
         alpha, beta = self.alpha_beta(points)
         return self._containment_from_alpha_beta(alpha, beta)
 
-    def jacobian_source(self, points):
+    def weight_points(self, points):
         """
         Returns the jacobian of the warp at each
         :param points:

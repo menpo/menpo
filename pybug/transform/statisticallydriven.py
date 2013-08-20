@@ -228,9 +228,8 @@ class StatisticallyDrivenTransform(Transform):
         #lala = np.dot(self.target.points, self.global_transform.inverse
         #.linear_component.T)
 
-        #dW_dx = self.transform.jacobian_points(self.source)
-        dW_dx = np.eye(2, 2)
-        dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
+        dW_dx = self.transform.jacobian_points(self.source)
+        #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         dW_dx = dW_dx[np.newaxis, ...]
         # dW_dx:  n_landmarks  x  n_dim  x  n_dim
 
