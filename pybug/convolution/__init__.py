@@ -80,7 +80,7 @@ def __frequency_butterworth_filter(shape, cutoff, order):
 
 # TODO: merge the 2D and 3D versions if possible
 def log_gabor(image, **kwargs):
-    """
+    r"""
     Creates a log-gabor filter bank, including smoothing the images via a
     low-pass filter at the edges.
 
