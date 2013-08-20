@@ -21,10 +21,21 @@ import numpy as np
 def __adjusted_meshgrid(shape):
     """
     Creates an adjusted meshgrid that accounts for odd image sizes. Linearly
-    interpolates the values
+    interpolates the values. This meshgrid assumes 'ij' indexing - which is
+    due to the 1st dimension of an image being the y-dimension.
 
-    :param shape: tuple denoting size of meshgrid
-    :return: tuple of length of shape where each element is of size shape
+    Parameters
+    ----------
+    shape: tuple
+        Size of meshgrid, (M, N, ...). The dimensionality should not be
+        swapped due to using images. Therefore, for a 2D image, the expected
+        tuple is ``(HEIGHT, WIDTH)``.
+
+    Returns
+    -------
+    meshgrid : list of (M, N, ...) ndarrays
+        The meshgrid over each dimension given by the shape.
+
     """
     adjust_range = []
     for dim in shape:
@@ -43,11 +54,20 @@ def __frequency_butterworth_filter(shape, cutoff, order):
 
     The frequency origin of the returned filter is at the corners.
 
-    :param shape: tuple containing the size of the filter
-    :param cutoff: cutoff frequency of the filter [0, 0.5]
-    :param order: order of the filter, the higher it is the sharper the
-                  transition
-    :return: ndarray of size shape
+    Parameters
+    ----------
+    shape : tuple
+        The size of the filter (M, N, ...)
+    cutoff : double
+        Cutoff frequency of the filter in the range ``[0, 0.5]``
+    order : positive int
+        Order of the filter. The higher it is the sharper the transition
+
+    Returns
+    -------
+    butterworth_filter : (M, N, ...) ndarray
+        The butterworth filter for the given parameters. Will be the same
+        shape as was requested.
     """
     # Dimension-free sum of squares
     grid = __adjusted_meshgrid(shape)
@@ -62,57 +82,108 @@ def __frequency_butterworth_filter(shape, cutoff, order):
 def log_gabor(image, **kwargs):
     """
     Creates a log-gabor filter bank, including smoothing the images via a
-    low-pass filter at the edges. To create a 2D filter bank, simply specify
-    the number of phi orientations (orientations in the xy-plane). To create a
-    3D filter bank, you must specify both the number of phi (azimuth) and theta
-    (elevation) orientations.
+    low-pass filter at the edges.
+
+    To create a 2D filter bank, simply specify
+    the number of phi orientations (orientations in the xy-plane).
+
+    To create a 3D filter bank, you must specify both the number of
+    phi (azimuth) and theta (elevation) orientations.
 
     This algorithm is directly derived from work by Peter Kovesi.
 
-    For details of log-Gabor filters see:
+    Parameters
+    ----------
+    image : (M, N, ...) ndarray
+        Image to be convolved
+    num_scales : int, optional
+        Number of wavelet scales.
 
-    D. J. Field, "Relations Between the Statistics of Natural Images and the
-    Response Properties of Cortical Cells", Journal of The Optical Society of
-    America A, Vol 4, No. 12, December 1987. pp 2379-2394
+        ========== ==
+        Default 2D 4
+        Default 3D 4
+        ========== ==
+    num_phi_orientations : int, optional
+        Number of filter orientations in the xy-plane
 
-    :param image: image to be convolved
-    :param num_scales: number of wavelet scales.
-    :param num_phi_orientations: number of filter orientations in the xy-plane
-    :param num_theta_orientations: number of filter orientations in the z-plane
-    :param min_wavelength: wavelength of smallest scale filter.
-    :param scaling_constant: scaling factor between successive filters.
-    :param center_sigma: Ratio of the standard deviation of the Gaussian
-        describing the log Gabor filter's transfer function in the frequency
-        domain to the filter center frequency.
-    :param d_phi_sigma: angular bandwidth in xy-plane
-    :param d_theta_sigma: angular bandwidth in z-plane
-    :param min_wavelength: wavelength of smallest scale filter.
-    :return: tuple (complex_conv, bandpass, S)
+        ========== ==
+        Default 2D 6
+        Default 3D 6
+        ========== ==
+    num_theta_orientations : int, optional
+        **Only required for 3D**. Number of filter orientations in the z-plane
 
-                complex_conv:
-                    (ndarray) num_scales x num_orientations x image.shape
-                    Complex valued convolution results. The real part is the
-                    result of convolving with the even symmetric filter, the
-                    imaginary part is the result from convolution with the
-                    odd symmetric filter.
+        ========== ==
+        Default 2D N/A
+        Default 3D 4
+        ========== ==
+    min_wavelength : int, optional
+        Wavelength of smallest scale filter.
 
-                    Return the magnitude of the convolution over the image at
-                    scale s and orientation o::
+        ========== ==
+        Default 2D 3
+        Default 3D 3
+        ========== ==
+    scaling_constant : int, optional
+        Scaling factor between successive filters.
 
-                        >>> np.abs(complex_conv[s, o, :, :])
+        ========== ==
+        Default 2D 2
+        Default 3D 2
+        ========== ==
+    center_sigma : double, optional
+        Ratio of the standard deviation of the Gaussian describing the Log
+        Gabor filter's transfer function in the frequency domain to the filter
+        center frequency.
 
-                    Return the phase angles::
+        ========== ==
+        Default 2D 0.65
+        Default 3D 0.65
+        ========== ==
+    d_phi_sigma : double, optional
+        Angular bandwidth in xy-plane
 
-                        >>> np.angle(complex_conv[s, o, :, :])
+        ========== ==
+        Default 2D 1.3
+        Default 3D 1.5
+        ========== ==
+    d_theta_sigma : double, optional
+        **Only required for 3D**. Angular bandwidth in z-plane
 
-                bandpass:
-                    (ndarray) num_scales x image.shape
-                    Bandpass images corresponding to each scale s
+        ========== ==
+        Default 2D N/A
+        Default 3D 1.5
+        ========== ==
 
-                S:
-                    (ndarray) image.shape
-                    Convolved image
+    Returns
+    -------
+    complex_conv : (num_scales x num_orientations x image.shape) ndarray
+        Complex valued convolution results. The real part is the
+        result of convolving with the even symmetric filter, the
+        imaginary part is the result from convolution with the
+        odd symmetric filter.
+    bandpass : (num_scales x image.shape) ndarray
+        Bandpass images corresponding to each scale ``s``
+    S: (image.shape) ndarray
+        Convolved image
 
+    Examples
+    --------
+    Return the magnitude of the convolution over the image at
+    scale ``s`` and orientation ``o``::
+
+        >>> np.abs(complex_conv[s, o, :, :])
+
+    Return the phase angles::
+
+        >>> np.angle(complex_conv[s, o, :, :])
+
+    References
+    ----------
+    .. [1] D. J. Field, "Relations Between the Statistics of Natural Images
+        and the Response Properties of Cortical Cells",
+        Journal of The Optical Society of America A, Vol 4, No. 12,
+        December 1987. pp 2379-2394
     """
     if len(image.shape) == 2:    # 2D filter
         return __log_gabor_2d(image, **kwargs)
