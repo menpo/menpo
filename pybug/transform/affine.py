@@ -7,18 +7,19 @@ import numpy as np
 
 
 class AffineTransform(Transform):
-    """
+    r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
     and to chain this transform with other affine transformations.
+
+    Parameters
+    ----------
+    homogeneous_matrix : (D + 1, D + 1) ndarray
+        The homogeneous matrix of the affine transformation.
     """
 
     def __init__(self, homogeneous_matrix):
-        """
-        :param homogeneous_matrix: (n_dim + 1, n_dim + 1) matrix of the
-        format [ rotatationscale translation; 0 1]
-        """
         #TODO Check am I a valid Affine transform
         shape = homogeneous_matrix.shape
         if len(shape) != 2 and shape[0] != shape[1]:
@@ -35,16 +36,20 @@ class AffineTransform(Transform):
 
     @property
     def linear_component(self):
-        """
+        r"""
         Returns just the linear transform component of this affine
         transform.
+
+        :type: (D, D) ndarray
         """
         return self.homogeneous_matrix[:-1, :-1]
 
     @property
     def translation_component(self):
-        """
-        Returns just the n-dim translation component of this affine transform.
+        r"""
+        Returns just the translation component.
+
+        :type: (D,) ndarray
         """
         return self.homogeneous_matrix[:-1, -1]
 
@@ -58,28 +63,49 @@ class AffineTransform(Transform):
         return rep
 
     def _transform_str(self):
-        """
+        r"""
         A string representation explaining what this affine transform does.
         Has to be implemented by base classes.
+
+        Returns
+        -------
+        str : string
+            String representation of transform.
         """
         list_str = [t._transform_str() for t in self.decompose()]
         return reduce(lambda x, y: x + '\n' + y, list_str)
 
     def _apply(self, x, **kwargs):
-        """
-        Applies this transform to a new set of vectors
-        :param x: A (n_points, n_dims) ndarray to apply this transform to.
+        r"""
+        Applies this transform to a new set of vectors.
 
-        :return: The transformed version of x
+        Parameters
+        ----------
+        x : (N, D) ndarray
+            Array to apply this transform to.
+
+
+        Returns
+        -------
+        transformed_x : (N, D) ndarray
+            The transformed array.
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
     def compose(self, affine_transform):
-        """
-        Chains this affine transform with another one,
-        producing a new affine transform
-        :param affine_transform: Transform to be applied FOLLOWING self
-        :return: the resulting affine transform
+        r"""
+        Chains this affine transform with another one, producing a new affine
+        transform.
+
+        Parameters
+        ----------
+        affine_transform : :class:`AffineTransform`
+            Transform to be applied *FOLLOWING* self
+
+        Returns
+        --------
+        transform : :class:`AffineTransform`
+            The resulting affine transform.
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
@@ -87,13 +113,16 @@ class AffineTransform(Transform):
                                       affine_transform.homogeneous_matrix))
 
     def decompose(self):
-        """
+        r"""
         Uses an SVD to decompose this transform into discrete Affine
         Transforms.
 
-        :return transforms: A list of a DiscreteAffineTransforms that are
-        equivalent to this affine transform, s.t.
-        reduce(lambda x,y: x.chain(y), self.decompose()) == self
+        Returns
+        -------
+        transforms: list of :class`DiscreteAffineTransform` that
+            Equivalent to this affine transform, such that:
+
+            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
         """
         U, S, V = np.linalg.svd(self.linear_component)
         rotation_2 = Rotation(U)
@@ -103,7 +132,7 @@ class AffineTransform(Transform):
         return [rotation_1, scale, rotation_2, translation]
 
     def jacobian(self, points):
-        """
+        r"""
         Computes the Jacobian of the transform w.r.t the parameters. This is
         constant for affine transforms.
 
@@ -118,7 +147,15 @@ class AffineTransform(Transform):
                    [p2      1 + p4  p6] [y]
                                         [1]
 
-        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The set of points to calculate the jacobian for.
+
+        Returns
+        -------
+        dW_dp : (N, P, D) ndarray
+            A (``n_points``, ``n_params``, ``n_dims``) array representing
             the Jacobian of the transform.
         """
         n_points, points_n_dim = points.shape
@@ -150,9 +187,14 @@ class AffineTransform(Transform):
 
     @property
     def n_parameters(self):
-        """
-        n_dim * (n_dim + 1) parameters - every element of the matrix bar the
-        homogeneous part
+        r"""
+        ``n_dim * (n_dim + 1)`` parameters - every element of the matrix bar
+        the homogeneous part.
+
+        :type: int
+
+        Examples
+        --------
         2D Affine: 6 parameters::
 
             [p1, p3, p5]
@@ -166,17 +208,68 @@ class AffineTransform(Transform):
         return self.n_dim * (self.n_dim + 1)
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. This does not
         include the homogeneous part of the warp. Note that it flattens using
         Fortran ordering, to stay consistent with Matlab.
+
+        **2D**
+
+        ========= ===========================================
+        parameter definition
+        ========= ===========================================
+        p1        Affine parameter
+        p2        Affine parameter
+        p3        Affine parameter
+        p4        Affine parameter
+        p5        Translation in ``x``
+        p6        Translation in ``y``
+        ========= ===========================================
+
+        3D and higher transformations follow a similar format to the 2D case.
+
+        Returns
+        -------
+        params : (P,) ndarray
+            The values that paramaterise the transform.
         """
         params = self.homogeneous_matrix - np.eye(self.n_dim + 1)
         return params[:self.n_dim, :].flatten(order='F')
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Supports rebuilding from 2D and 3D parameter sets.
+
+        2D Affine: 6 parameters::
+
+            [p1, p3, p5]
+            [p2, p4, p6]
+
+        3D Affine: 12 parameters::
+            [p1, p4, p7, p10]
+            [p2, p5, p8, p11]
+            [p3, p6, p9, p12]
+
+        Parameters
+        ----------
+        p : (P,) ndarray
+            The array of parameters.
+
+        Returns
+        -------
+        transform : :class:`AffineTransform`
+            The transform initialised to the given parameters.
+
+        Raises
+        ------
+        DimensionalityError
+            Only 2D and 3D transforms are supported.
+        """
         # n.b. generally, from_vector should be an instance method. However,
         # as Python class methods can be called on any instance,
         # we are free to implement the from_vector method as a class method
@@ -199,13 +292,23 @@ class AffineTransform(Transform):
 
     @property
     def inverse(self):
+        r"""
+        The inverse of the matrix.
+
+        :type: :class:`AffineTransform`
+        """
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
 
 
 class SimilarityTransform(AffineTransform):
-    """
-    Specialist version of an AffineTransform that is guaranteed to be a
-    Similarity transform.
+    r"""
+    Specialist version of an :class:`AffineTransform` that is guaranteed to be
+    a Similarity transform.
+
+    Parameters
+    ----------
+    homogeneous_matrix : (D + 1, D + 1) ndarray
+        The homogeneous matrix of the similarity transform.
     """
 
     def __init__(self, homogeneous_matrix):
@@ -214,14 +317,22 @@ class SimilarityTransform(AffineTransform):
 
     @property
     def n_parameters(self):
-        """
+        r"""
         2D Similarity: 4 parameters::
 
             [(1 + a), -b,      tx]
             [b,       (1 + a), ty]
 
         3D Similarity: Currently not supported
-        :return:
+
+        Returns
+        -------
+        4
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Only 2D transforms are supported.
         """
         if self.n_dim == 2:
             return 4
@@ -233,7 +344,7 @@ class SimilarityTransform(AffineTransform):
                                       "are currently supported.")
 
     def jacobian(self, points):
-        """
+        r"""
         Computes the Jacobian of the transform w.r.t the parameters.
 
         The Jacobian generated (for 2D) is of the form::
@@ -246,11 +357,21 @@ class SimilarityTransform(AffineTransform):
           W(x;p) = [1 + a  -b   ] [x] + tx
                    [b      1 + a] [y] + ty
 
-        :param points: The points to calculate the jacobian over
-        :return dW/dp: A n_points x n_params x n_dims ndarray representing
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to calculate the jacobian over
+
+        Returns
+        -------
+        dW_dp : (N, P, D) ndarray
+            A (``n_points``, ``n_params``, ``n_dims``) array representing
             the Jacobian of the transform.
-        :raises: DimensionalityError if ``points_n_dim != self.n_dim`` or
-            transform is not 2D
+
+        Raises
+        ------
+        DimensionalityError
+            ``points.n_dim != self.n_dim`` or transform is not 2D
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dim:
@@ -286,10 +407,35 @@ class SimilarityTransform(AffineTransform):
         jac[:, full_mask] = points * param_mask
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [a, b, tx, ty].
+
+        **2D**
+
+        ========= ===========================================
+        parameter definition
+        ========= ===========================================
+        a         The rotation angle + scale
+        b         The rotation angle
+        tx        Translation in ``x``
+        ty        Translation in ``y``
+        ========= ===========================================
+
+        .. note::
+
+            Only 2D transforms are currently supported.
+
+        Returns
+        -------
+        params : (P,) ndarray
+            The values that parameterise the transform.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            If the transform is not 2D
         """
         ndims = self.n_dim
         if ndims == 2:
@@ -307,6 +453,31 @@ class SimilarityTransform(AffineTransform):
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Supports rebuilding from 2D parameter sets.
+
+        2D Similarity: 4 parameters::
+
+            [a, b, tx, ty]
+
+        Parameters
+        ----------
+        p : (P,) ndarray
+            The array of parameters.
+
+        Returns
+        -------
+        transform : :class:`SimilarityTransform`
+            The transform initialised to the given parameters.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Only 2D transforms are supported.
+        """
         # See affine from_vector with regards to classmethod decorator
         if p.shape[0] == 4:
             homo = np.eye(3)
@@ -324,12 +495,21 @@ class SimilarityTransform(AffineTransform):
                                       "are currently supported.")
 
     def compose(self, transform):
-        """
+        r"""
         Chains this similarity transform with another one. If the second
         transform is also a Similarity transform, the result will be a
-        SimilarityTransform. If not, the result will be an AffineTransform.
-        :param transform: Transform to be applied FOLLOWING self
-        :return: the resulting transform
+        :class:`SimilarityTransform`.
+        If not, the result will be an :class:`AffineTransform`.
+
+        Parameters
+        ----------
+        transform : :class:`AffineTransform` or :class:`SimilarityTransform`
+            Transform to be applied *FOLLOWING* self
+
+        Returns
+        -------
+        transform : :class:`AffineTransform` or :class:`SimilarityTransform`
+            The resulting transform
         """
         if isinstance(transform, SimilarityTransform):
             return SimilarityTransform(np.dot(transform.homogeneous_matrix,
@@ -339,27 +519,46 @@ class SimilarityTransform(AffineTransform):
 
 
 class DiscreteAffineTransform(object):
-    """
-    A discrete Affine transform operation (such as a Scale,
-    Translation or Rotation). Has to be able to invert itself. Make sure you
-    inherit from DiscreteAffineTransform first, for optimal decompose()
-    behavior
+    r"""
+    A discrete Affine transform operation (such as a :meth:`Scale`,
+    :class:`Translation` or :meth:`Rotation`). Has to be able to invertable.
+    Make sure you inherit from :class:`DiscreteAffineTransform` first,
+    for optimal ``decompose()`` behavior.
     """
 
     __metaclass__ = abc.ABCMeta
 
     def decompose(self):
-        """ A DiscreteAffineTransform is already maximally decomposed -
-        return a copy of self in a list
+        r"""
+        A :class:`DiscreteAffineTransform` is already maximally decomposed -
+        return a copy of self in a list.
+
+        Returns
+        -------
+        transform : :class:`DiscreteAffineTransform`
+            Deep copy of ``self``.
         """
         return [copy.deepcopy(self)]
 
 
 def Rotation(rotation_matrix):
-    """
-    Factory function for producing Rotation transforms.
-    :param rotation_matrix: A square legal 2D or 3D rotation matrix
-    :return: A Rotation2D or Rotation3D object.
+    r"""
+    Factory function for producing :class:`AbstractRotation` transforms.
+
+    Parameters
+    ----------
+    rotation_matrix : (D, D) ndarray
+        A square legal 2D or 3D rotation matrix
+
+    Returns
+    -------
+    rotation : :class:`Rotation2D` or :class:`Rotation3D`
+        A 2D or 3D rotation transform
+
+    Raises
+    ------
+    DimensionalityError
+        Only 2D and 3D transforms are supported.
     """
     if rotation_matrix.shape[0] == 2:
         return Rotation2D(rotation_matrix)
@@ -368,22 +567,23 @@ def Rotation(rotation_matrix):
     else:
         raise DimensionalityError("Can only construct 2D or 3D Rotations")
     # TODO build rotations about axis, euler angles etc
-    # see
-    # http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    # see http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
     # for details.
 
 
 class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
-    """
-    Abstract n_dim rotation transform.
+    r"""
+    Abstract ``n_dim`` rotation transform.
+
+    Parameters
+    ----------
+    rotation_matrix : (D, D) ndarray
+        A valid, square rotation matrix
     """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix):
-        """ The rotation_matrix must be a 2-d square ndarray of shape
-        (n_dim, n_dim)
-        """
         #TODO check that I am a valid rotation
         homogeneous_matrix = np.eye(rotation_matrix.shape[0] + 1)
         homogeneous_matrix[:-1, :-1] = rotation_matrix
@@ -391,12 +591,20 @@ class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
 
     @property
     def rotation_matrix(self):
-        """Returns the rotation matrix
+        r"""
+        The rotation matrix.
+
+        :type: (D, D) ndarray
         """
         return self.linear_component
 
     @property
     def inverse(self):
+        r"""
+        The inverse rotation matrix.
+
+        :type: (D, D) ndarray
+        """
         return Rotation(np.linalg.inv(self.rotation_matrix))
 
     def _transform_str(self):
@@ -409,10 +617,35 @@ class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
 
     @abc.abstractmethod
     def axis_and_angle_of_rotation(self):
+        r"""
+        Abstract method for computing the axis and angle of rotation.
+
+        Returns
+        -------
+        axis : (D,) ndarray
+            The unit vector representing the axis of rotation
+        angle_of_rotation : double
+            The angle in radians of the rotation about the axis. The angle is
+            signed in a right handed sense.
+        """
         pass
 
 
 class Rotation2D(AbstractRotation):
+    r"""
+    A 2-dimensional rotation. Parametrised by a single parameter, ``theta``,
+    which represents the right-handed rotation around ``[0, 0, 1]``.
+
+    Parameters
+    ----------
+    rotation_matrix : (2, 2) ndarray
+        The 2D rotation matrix.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 2D rotation matrices are supported.
+    """
 
     def __init__(self, rotation_matrix):
         super(Rotation2D, self).__init__(rotation_matrix)
@@ -421,16 +654,18 @@ class Rotation2D(AbstractRotation):
                                       " rotation matrix")
 
     def axis_and_angle_of_rotation(self):
-        """
+        r"""
         Decomposes this 2D rotation's rotation matrix into a angular rotation
         The rotation is considered in a right handed sense. The axis is, by
         definition, [0, 0, 1].
 
-        :return: (axis, angle_of_rotation)
-        axis: A unit vector, the axis about which the rotation takes place
-        angle_of_rotation: The angle in radians of the rotation about the
-        axis.
-        The angle is signed in a right handed sense.
+        Returns
+        -------
+        axis : (2,) ndarray
+            The vector representing the axis of rotation
+        angle_of_rotation : double
+            The angle in radians of the rotation about the axis. The angle is
+            signed in a right handed sense.
         """
         axis = np.array([0, 0, 1])
         test_vector = np.array([1, 0])
@@ -442,27 +677,72 @@ class Rotation2D(AbstractRotation):
 
     @property
     def n_parameters(self):
-        """
-        1 parameter - [theta] - The angle of rotation around [0, 0, 1]
+        r"""
+        The number of parameters: 1
+
+        :type: int
         """
         return 1
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [theta].
+
+        +----------+--------------------------------------------+
+        |parameter | definition                                 |
+        +==========+============================================+
+        |theta     | The angle of rotation around ``[0, 0, 1]`` |
+        +----------+--------------------------------------------+
+
+        Returns
+        -------
+        theta : double
+            Angle of rotation around axis. Right-handed.
         """
         return self.axis_and_angle_of_rotation()[1]
 
     @classmethod
     def from_vector(cls, p):
-        # See affine from_vector with regards to classmethod decorator
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Supports rebuilding from 2D parameter sets.
+
+        2D Rotation: 1 parameter::
+
+            [theta]
+
+        Parameters
+        ----------
+        p : (1,) ndarray
+            The array of parameters.
+
+        Returns
+        -------
+        transform : :class:`Rotation2D`
+            The transform initialised to the given parameters.
+        """
         return Rotation2D(np.array([[np.cos(p), -np.sin(p)],
                                     [np.sin(p), np.cos(p)]]))
 
 
 class Rotation3D(AbstractRotation):
+    r"""
+    A 3-dimensional rotation. **Currently no parametrisation is implemented**.
+
+    Parameters
+    ----------
+    rotation_matrix : (D, D) ndarray
+        The 3D rotation matrix.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 3D rotation matrices are supported.
+    """
 
     def __init__(self, rotation_matrix):
         super(Rotation3D, self).__init__(rotation_matrix)
@@ -471,17 +751,21 @@ class Rotation3D(AbstractRotation):
                                       " rotation matrix")
 
     def axis_and_angle_of_rotation(self):
-        """
+        r"""
         Decomposes this 3D rotation's rotation matrix into a angular rotation
         about an axis. The rotation is considered in a right handed sense.
 
-        :return: (axis, angle_of_rotation)
-        axis: A unit vector, the axis about which the rotation takes place
-        angle_of_rotation: The angle in radians of the rotation about the
-        axis.
-        The angle is signed in a right handed sense.
+        Returns
+        -------
+        axis : (3,) ndarray
+            A unit vector, the axis about which the rotation takes place
+        angle_of_rotation : double
+            The angle in radians of the rotation about the ``axis``.
+            The angle is signed in a right handed sense.
 
-        See http://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis
+        References
+        ----------
+        .. [1] http://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis
         """
         eval_, evec = np.linalg.eig(self.rotation_matrix)
         real_eval_mask = np.isreal(eval_)
@@ -520,17 +804,26 @@ class Rotation3D(AbstractRotation):
 
     @property
     def n_parameters(self):
+        r"""
+        Not yet implemented.
+
+        Raises
+        -------
+        NotImplementedError
+            Not yet implemented.
         """
-        Not currently implemented
-        """
+        # TODO: Implement 3D rotation vectorisation
         raise NotImplementedError('3D rotations do not support vectorisation '
                                   'yet.')
 
     def as_vector(self):
-        """
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. The parameters
-        are output in the order [TODO: fill me in].
+        r"""
+        Not yet implemented.
+
+        Raises
+        -------
+        NotImplementedError
+            Not yet implemented.
         """
         # TODO: Implement 3D rotation vectorisation
         raise NotImplementedError('3D rotations do not support vectorisation '
@@ -538,6 +831,14 @@ class Rotation3D(AbstractRotation):
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Not yet implemented.
+
+        Raises
+        -------
+        NotImplementedError
+            Not yet implemented.
+        """
         # See affine from_vector with regards to classmethod decorator
         # TODO: Implement 3D rotation vectorisation
         raise NotImplementedError('3D rotations do not support vectorisation '
@@ -545,24 +846,37 @@ class Rotation3D(AbstractRotation):
 
 
 def Scale(scale_factor, n_dim=None):
-    """
+    r"""
     Factory function for producing Scale transforms. Zero scale factors are not
-    permitted
+    permitted.
 
-    A UniformScale will be produced if:
-        - A float scale_factor and a n_dim kwarg are provided
-        - A ndarray scale_factor with shape (n_dim, ) is provided with all
-    elements being the same
+    A :class:`UniformScale` will be produced if:
 
-    A NonUniformScale will be provided if:
-        - A ndarray scale_factor with shape (n_dim, ) is provided with at least
-        two differing scale factors.
+        - A float ``scale_factor`` and a ``n_dim`` kwarg are provided
+        - A ndarray scale_factor with shape (``n_dim``, ) is provided with all
+        elements being the same
 
-    :param scale_factor: Either an ndarray of scales for each dimensions or a
-        single scalar value to be applied across each dimension
-    :param n_dim: The dimensionality of the output transform
-    :raises: ValueError if any of the scale factors is zero
-    :returns: Either a UniformScale or a NonUniformScale
+    A :class:`NonUniformScale` will be provided if:
+
+        - A ndarray ``scale_factor`` with shape (``n_dim``, ) is provided with
+        at least two differing scale factors.
+
+    Parameters
+    ----------
+    scale_factor: double or (D,) ndarray
+        Scale for each axis.
+    n_dim: int
+        The dimensionality of the output transform.
+
+    Returns
+    -------
+    scale : :class:`UniformScale` or :class:`NonUniformScale`
+        The correct type of scale
+
+    Raises
+    -------
+    ValueError
+        If any of the scale factors is zero
     """
     if not np.all(scale_factor):
         raise ValueError('Having a zero in one of the scales is invalid')
@@ -578,14 +892,15 @@ def Scale(scale_factor, n_dim=None):
 
 
 class NonUniformScale(DiscreteAffineTransform, AffineTransform):
-    """
-    An n_dim scale transform, with a scale component for each dimension.
+    r"""
+    An ``n_dim`` scale transform, with a scale component for each dimension.
+
+    Parameters
+    ----------
+    scale : (D,) ndarray
+        A scale for each axis.
     """
     def __init__(self, scale):
-        """ The scale must be a 1-d ndarray of shape (n_dim, )
-        :param scale: A vector specifying the scale factor to be applied
-        along each axis.
-        """
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
@@ -593,10 +908,20 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
 
     @property
     def scale(self):
+        r"""
+        The scale vector.
+
+        :type: (D,) ndarray
+        """
         return self.homogeneous_matrix.diagonal()[:-1]
 
     @property
     def inverse(self):
+        """
+        The inverse scale.
+
+        :type: :class:`NonUniformScale`
+        """
         return NonUniformScale(1.0/self.scale)
 
     def _transform_str(self):
@@ -606,36 +931,85 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     @property
     def n_parameters(self):
         """
-        n_dim parameters - [scale_x, scale_y, ....] - The scalar values
-        representing the scale across each dimension
+        The number of parameters: ``n_dims``.
+
+        :type: int
+
+        ``n_dim`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
+        representing the scale across each axis.
         """
         return self.scale.shape[0]
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [sx, sy, ...].
+        are output in the order [s0, s1, ...].
+
+        +----------+--------------------------------------------+
+        |parameter | definition                                 |
+        +==========+============================================+
+        |s0        | The scale across the first axis            |
+        |s1        | The scale across the second axis           |
+        |...       | ...                                        |
+        |sn        | The scale across the nth axis              |
+        +----------+--------------------------------------------+
+
+        Returns
+        -------
+        s : (D,) ndarray
+            The scale across each axis.
         """
         return self.scale
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        2D non uniform scale: 2 parameters::
+
+            [s0, s1]
+
+        Other dimensionalities are similar to the 2D case.
+
+        Parameters
+        ----------
+        p : (D,) ndarray
+            The array of parameters.
+
+        Returns
+        -------
+        transform : :class:`NonUniformScale`
+            The transform initialised to the given parameters.
+        """
         # See affine from_vector with regards to classmethod decorator
         return NonUniformScale(p)
 
 
 def UniformScale(scale, n_dim):
-    """
-    Factory function for producing UniformScale objects. A single scale and the
-    number of dimensions required is expected. Currently, only 2D and 3D
-    Uniform Scale objects are supported.
+    r"""
+    Factory function for producing :class:`UniformScale` objects. A single
+    scale and the number of dimensions required is expected.
+    Currently, only 2D and 3D :class:`UniformScale` objects are supported.
 
-    :param scale: A scalar value representing the scale across each axis
-    :param n_dim: The number of dimensions for the transform
-    :return: Either a
-        :class:`UniformScale2D <pybug.transform.affine.UniformScale2D>` or a
-        :class:`UniformScale3D <pybug.transform.affine.UniformScale3D>`
+    Parameters
+    ----------
+    scale : double
+        A scalar value representing the scale across each axis
+    n_dim : int
+        The number of dimensions for the transform.
+
+    Returns
+    -------
+    transform : :class:`UniformScale2D` or a class:`UniformScale3D`
+        The correct Uniform scale type.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 2D and 3D scale objects are supported.
     """
     if n_dim == 2:
         return UniformScale2D(scale)
@@ -647,15 +1021,21 @@ def UniformScale(scale, n_dim):
 
 
 class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
-    """
+    r"""
     An abstract similarity scale transform, with a single scale component
-    applied to all dimensions.
+    applied to all dimensions. This is abstracted out to remove unnecessary
+    code duplication.
     """
 
     __metaclass__ = abc.ABCMeta
 
     @property
     def scale(self):
+        r"""
+        The single scale value.
+
+        :type: double
+        """
         return self.homogeneous_matrix.diagonal()[0]
 
     def _transform_str(self):
@@ -664,27 +1044,42 @@ class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
 
     @property
     def n_parameters(self):
-        """
-        1 parameter - scale - The scalar value representing the scale across
-        each dimension
+        r"""
+        The number of parameters: 1
+
+        :type: int
         """
         return 1
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [s].
+
+        +----------+--------------------------------+
+        |parameter | definition                     |
+        +==========+================================+
+        |s        | The scale across the each axis  |
+        +----------+--------------------------------+
+
+        Returns
+        -------
+        s : double
+            The scale across each axis.
         """
         return self.scale
 
 
 class UniformScale2D(AbstractUniformScale):
-    """
+    r"""
     An 2D similarity scale transform, with a single scale component
     applied to all dimensions.
 
-    :param scale: A scaler value indicating the scale across each axis
+    Parameters
+    ----------
+    scale : double
+        A scalar value indicating the scale across each axis
     """
 
     def __init__(self, scale):
@@ -695,10 +1090,33 @@ class UniformScale2D(AbstractUniformScale):
 
     @property
     def inverse(self):
-        return UniformScale2D(1.0/self.scale)
+        r"""
+        The inverse scale.
+
+        :type: :class:`UniformScale2D`
+        """
+        return UniformScale2D(1.0 / self.scale)
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        2D uniform scale: 1 parameter::
+
+            s0
+
+        Parameters
+        ----------
+        p : double
+            The parameter.
+
+        Returns
+        -------
+        transform : :class:`UniformScale2D`
+            The transform initialised to the given parameter.
+        """
         # See affine from_vector with regards to classmethod decorator
         return UniformScale2D(p)
 
@@ -708,7 +1126,10 @@ class UniformScale3D(AbstractUniformScale):
     An 3D similarity scale transform, with a single scale component
     applied to all dimensions.
 
-    :param scale: A scaler value indicating the scale across each axis
+    Parameters
+    ----------
+    scale : double
+        A scalar value indicating the scale across each axis
     """
 
     def __init__(self, scale):
@@ -719,35 +1140,59 @@ class UniformScale3D(AbstractUniformScale):
 
     @property
     def inverse(self):
-        return UniformScale3D(1.0/self.scale)
+        r"""
+        The inverse scale.
+
+        :type: :class:`UniformScale3D`
+        """
+        return UniformScale3D(1.0 / self.scale)
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        3D uniform scale: 1 parameter::
+
+            s0
+
+        Parameters
+        ----------
+        p : double
+            The parameter.
+
+        Returns
+        -------
+        transform : :class:`UniformScale3D`
+            The transform initialised to the given parameter.
+        """
         # See affine from_vector with regards to classmethod decorator
         return UniformScale3D(p)
 
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
-    """
-    An ``n_dim`` translation transform.
+    r"""
+    An N-dimensional translation transform.
+
+    Parameters
+    ----------
+    translation : (D,) ndarray
+        The translation in each axis.
     """
 
     def __init__(self, translation):
-        r"""
-        Creates a translation transformation object. Expects a translation
-        vector of length ``n_dim - 1``.
-
-        :param translation: a 1D vector of length n_dim (i.e.
-            if you want to make a 3d translation you must specify the
-            translation in each dimension explicitly)
-        :type translation: ndarray [``n_dim``]
-        """
         homogeneous_matrix = np.eye(translation.shape[0] + 1)
         homogeneous_matrix[:-1, -1] = translation
         super(Translation, self).__init__(homogeneous_matrix)
 
     @property
     def inverse(self):
+        r"""
+        The inverse translation (negated).
+
+        :return: :class:`Translation`
+        """
         return Translation(-self.translation_component)
 
     def _transform_str(self):
@@ -756,21 +1201,56 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     @property
     def n_parameters(self):
-        """
-        n_dim parameters - [tx, ty, ...] - The translation along each axis
-        :return:
+        r"""
+        The number of parameters: ``n_dim``
+
+        :type: int
         """
         return self.n_dim
 
     def as_vector(self):
-        """
+        r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [tx, ty].
+        are output in the order [t0, t1, ...].
+
+         +----------+--------------------------------------------+
+        |parameter | definition                                  |
+        +==========+=============================================+
+        |t0        | The translation in the first axis           |
+        |t1        | The translation in the second axis          |
+        |...       | ...                                         |
+        |tn        | The translation in the nth axis             |
+        +----------+---------------------------------------------+
+
+        Returns
+        -------
+        ts : (D,) ndarray
+            The translation in each axis.
         """
         return self.homogeneous_matrix[:self.n_dim, self.n_dim]
 
     @classmethod
     def from_vector(cls, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        2D translation: 2 parameters::
+
+            [t0, t1]
+
+        Other dimensionality translations are similar to the 2D translation.
+
+        Parameters
+        ----------
+        p : double
+            The parameters.
+
+        Returns
+        -------
+        transform : :class:`Translation`
+            The transform initialised to the given parameters.
+        """
         # See affine from_vector with regards to classmethod decorator
         return Translation(p)

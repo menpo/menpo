@@ -10,7 +10,7 @@ class Landmarkable(object):
     Landmarkable objects have a public dictionary of landmarks which are
     managed by a :class:`pybug.landmark.base.LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
-     Landmarks can be N-dimensional and are expected to be some
+    Landmarks can be N-dimensional and are expected to be some
     subclass of :class:`pybug.shape.pointcloud.Pointcloud`.
     """
 

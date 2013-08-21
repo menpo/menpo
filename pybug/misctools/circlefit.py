@@ -9,7 +9,7 @@ def circle_fit(coords):
     Parameters
     ----------
     coords : (N, 2) ndarray
-        Set of ``x`` and ``y` coordinates.
+        Set of ``x`` and ``y`` coordinates.
 
     Returns
     -------

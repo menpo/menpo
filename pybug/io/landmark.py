@@ -57,7 +57,7 @@ class LandmarkImporter(Importer):
 
 class ASFImporter(LandmarkImporter):
     r"""
-    Abstract base class for an immporter for the ASF file format.
+    Abstract base class for an importer for the ASF file format.
     Currently **does not support the connectivity specified in the format**.
 
     Implementations of this class should override the :meth:`_build_points`
@@ -68,11 +68,12 @@ class ASFImporter(LandmarkImporter):
     Landmark set label: ASF
 
     Landmark labels:
-    ======
-    label
-    ======
-    all
-    ======
+
+    +---------+
+    | label   |
+    +=========+
+    | all     |
+    +---------+
 
     Parameters
     ----------
@@ -143,11 +144,12 @@ class PTSImporter(LandmarkImporter):
     Landmark set label: PTS
 
     Landmark labels:
-    ======
-    label
-    ======
-    all
-    ======
+
+    +---------+
+    | label   |
+    +=========+
+    | all     |
+    +---------+
     """
 
     __metaclass__ = abc.ABCMeta

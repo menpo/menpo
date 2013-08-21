@@ -7,7 +7,7 @@ def gradient(f, *varargs):
 
     The gradient is computed using central differences in the interior and
     first differences at the boundaries. The returned gradient hence has the
-     same shape as the input array. This matches
+    same shape as the input array. This matches
     Matlab's functionality, which is quoted as:
 
     "The first output FX is always the gradient along the 2nd
