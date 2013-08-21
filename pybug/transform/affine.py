@@ -521,6 +521,10 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D similarity transforms "
                                       "are currently supported.")
 
+    @property
+    def inverse(self):
+        return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
+
 
 class DiscreteAffineTransform(object):
     """
@@ -625,7 +629,7 @@ class Rotation2D(AbstractRotation):
         return axis, angle_of_rotation
 
     @property
-    def n_parameters(self):
+    def n_parameters(cls):
         """
         1 parameter - [theta] - The angle of rotation around [0, 0, 1]
         """

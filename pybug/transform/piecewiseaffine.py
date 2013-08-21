@@ -164,7 +164,7 @@ class PiecewiseAffineTransform(Transform):
         :param points:
         :return:
         """
-        return np.eye(2, 2)
+        return np.eye(2, 2)[np.newaxis, ...]
 
     def _tri_containment_loop(self, points):
         """
