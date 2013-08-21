@@ -6,7 +6,8 @@ class StatisticallyDrivenTransform(Transform):
 
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform_constructor, source=None,
-                 parameters=None, global_transform=None, speed_up=None):
+                 parameters=None, global_transform=None,
+                 composition='linear', speed_up=None):
         """
         A transform that couples a traditional landmark-based transform to a
         statistical model together with a global similarity transform,
@@ -58,6 +59,10 @@ class StatisticallyDrivenTransform(Transform):
             global_transform = global_transform.from_vector(
                 self.global_parameters)
         self.global_transform = global_transform
+
+        # composition
+        self.composition = composition
+        self.compose = self._select_composition(self.composition)
 
         # speed up
         if speed_up is not None:
@@ -162,6 +167,7 @@ class StatisticallyDrivenTransform(Transform):
                                             parameters=flattened,
                                             global_transform=self
                                             .global_transform,
+                                            composition=self.composition,
                                             speed_up=(self._cached_points,
                                                       self.dW_dX))
 
@@ -171,7 +177,18 @@ class StatisticallyDrivenTransform(Transform):
     def _apply(self, x, **kwargs):
         return self.transform._apply(x, **kwargs)
 
-    def compose(self, statistically_driven_transform):
+    def _select_composition(self, composition):
+        if composition is 'linear':
+            return self._compose_linear
+        elif composition is 'algorithmic':
+            return self._compose_algorithmic
+        elif composition is 'mathematical':
+            return self._compose_mathematical
+        else:
+            raise ValueError('Unknown optimisation string selected. Valid'
+                             'options are: GN, LM')
+
+    def _compose_mathematical(self, statistically_driven_transform):
         """
         Composes two statistically driven transforms together based on the
         first order approximation proposed in:
@@ -229,11 +246,12 @@ class StatisticallyDrivenTransform(Transform):
         #.linear_component.T)
 
         dW_dx = self.transform.jacobian_points(self.source)
+        dW_dx = np.eye(2, 2)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         dW_dx = dW_dx[np.newaxis, ...]
         # dW_dx:  n_landmarks  x  n_dim  x  n_dim
 
-        dW_dx_dW_dp_0 = np.einsum('ilj, idj -> idj', dW_dx, dW_dp_0)
+        dW_dx_dW_dp_0 = np.einsum('ijl, idl -> idj', dW_dx, dW_dp_0)
 
         #dW_dx.swapaxes(1, 2)
         #aux1 = dW_dx[:, :, 0]
@@ -259,6 +277,35 @@ class StatisticallyDrivenTransform(Transform):
 
         return self.from_vector(p)
 
+    def _compose_linear(self, statistically_driven_transform):
+        new_mean = statistically_driven_transform.target
+
+        aux3 = self.model.template_sample.from_vector(
+            np.dot(self.model.components.T,
+                   self.weights)).points + \
+            new_mean.points
+
+        aux4 = self.global_transform.apply(aux3)
+
+        from pybug.shape import PointCloud
+        return self.estimate(PointCloud(aux4))
+
+    def _compose_algorithmic(self, statistically_driven_transform):
+        pass
+
+    def compose(self):
+        pass
+
+    def estimate(self, target):
+        global_transform = self.global_transform.estimate(
+            self.model.mean.points, target.points)
+        global_parameters = global_transform.as_vector()
+        aligned_target = global_transform.inverse.apply(target)
+        weights = self.model.project(aligned_target)
+        parameters = np.hstack((global_parameters, weights))
+        return self.from_vector(parameters)
+
     @property
     def inverse(self):
+
         return self.from_vector(-self.as_vector())

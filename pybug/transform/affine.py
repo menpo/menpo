@@ -703,6 +703,10 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D similarity transforms "
                                       "are currently supported.")
 
+    @property
+    def inverse(self):
+        return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
+
 
 class DiscreteAffineTransform(object):
     r"""

@@ -641,18 +641,33 @@ class Image(AbstractImage):
             # Concatenate gradient list into an array (the new_image)
             new_image = np.concatenate(gradients, axis=-1)
         else:
-            masked_square_image = self.mask_bounding_pixels(boundary=3)
-            bounding_mask = self.mask.true_bounding_extent_slicer(3)
-            gradients = [np.gradient(g) for g in
-                         np.rollaxis(masked_square_image, -1)]
+            #masked_square_image = self.mask_bounding_pixels(boundary=3)
+            #bounding_mask = self.mask.true_bounding_extent_slicer(3)
+            #gradients = [np.gradient(g) for g in np.rollaxis(
+            # masked_square_image, -1)]
             # Flatten the lists
-            gradients = list(itertools.chain.from_iterable(gradients))
+            #gradients = list(itertools.chain.from_iterable(gradients))
             # Add an extra axis for broadcasting
-            gradients = [g[..., None] for g in gradients]
+            #gradients = [g[..., None] for g in gradients]
             # Concatenate gradient list into a vector
-            gradient_array = np.concatenate(gradients, axis=-1)
+            #gradient_array = np.concatenate(gradients, axis=-1)
             # make a new blank image
-            new_image = np.empty((self.shape + (len(gradients),)))
+            #new_image = np.zeros((self.shape + (len(gradients),)))
             # populate the new image with the gradient
-            new_image[bounding_mask] = gradient_array
+            #new_image[bounding_mask] = gradient_array
+
+            gradients = [np.gradient(g) for g in np.rollaxis(self.pixels, -1)]
+            gradients = list(itertools.chain.from_iterable(gradients))
+            gradients = [g[..., None] for g in gradients]
+            gradient_array = np.concatenate(gradients, axis=-1)
+
+            from skimage.morphology import diamond, binary_erosion
+
+            a = diamond(1)
+
+            mask = binary_erosion(self.mask.pixels, a)
+
+            new_image = np.zeros((self.shape + (len(gradients),)))
+            new_image[mask] = gradient_array[mask]
+
         return Image(new_image, mask=self.mask)

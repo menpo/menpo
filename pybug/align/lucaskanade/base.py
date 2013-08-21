@@ -4,7 +4,7 @@ import numpy as np
 from pybug.warp.base import scipy_warp
 
 
-class LucasKanade:
+class LucasKanade(object):
     r"""
     An abstract base class for implementations of Lucas-Kanade [1]_
     type algorithms.
@@ -80,17 +80,15 @@ class LucasKanade:
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image, residual, transform,
+    def __init__(self, residual, transform,
                  warp=scipy_warp, optimisation='GN', update_step=0.001,
                  eps=1 ** -10):
         # set basic state for all Lucas Kanade algorithms
         self.initial_transform = transform
         self.TransformClass = transform.__class__
-        self.image = image
         self.residual = residual
         self.update_step = update_step
         self.eps = eps
-        self.transforms = [self.initial_transform]
 
         # select the optimisation approach and warp function
         self._calculate_delta_p = self._select_optimisation(optimisation)
@@ -123,7 +121,13 @@ class LucasKanade:
 
         return solve(H_lm, sd_delta_p)
 
-    def align(self, max_iters=30):
+    def _precompute(self):
+        """
+        Performs pre-computations related to specific alignment algorithms
+        """
+        pass
+
+    def align(self, image, params, max_iters=30):
         r"""
         Perform an alignment using the Lukas-Kanade framework.
 
@@ -139,7 +143,9 @@ class LucasKanade:
             The final transform that optimally aligns the source to the
             target.
         """
-        self.transforms = [self.initial_transform]
+        # TODO: define a consistent multi-resolution logic
+        self.transforms = [self.initial_transform.from_vector(params)]
+        self.image = image
         return self._align(max_iters)
 
     @abc.abstractmethod
@@ -185,26 +191,33 @@ class LucasKanade:
 
 class ImageLucasKanade(LucasKanade):
 
-    def __init__(self, image, template, residual, transform,
-                 warp=scipy_warp,
-                 optimisation='GN', update_step=0.001,
+    def __init__(self, template, residual, transform,
+                 warp=scipy_warp, optimisation='GN', update_step=0.001,
                  eps=10 ** -6):
         super(ImageLucasKanade, self).__init__(
-            image, residual, transform, warp, optimisation, update_step, eps)
+            residual, transform,
+            warp, optimisation, update_step, eps)
         # in image alignment, we align a template image to the target image
         self.template = template
+
+        # pre-compute
+        self._precompute()
 
 
 class AppearanceModelLucasKanade(LucasKanade):
 
-    def __init__(self, image, model, residual, transform,
+    def __init__(self, model, residual, transform,
                  warp=scipy_warp, optimisation='GN', update_step=0.001,
                  eps=10 ** -6):
         super(AppearanceModelLucasKanade, self).__init__(
-            image, residual, transform, warp, optimisation, update_step, eps)
-        # in appearance alignment, we align an appearance model to the target
-        # image
+            residual, transform,
+            warp, optimisation, update_step, eps)
+        # in appearance model alignment, we align an appearance model to the
+        # target image
         self.appearance_model = model
+
+        # pre-compute
+        self._precompute()
 
 
 class ImageForwardAdditive(ImageLucasKanade):
@@ -253,13 +266,16 @@ class ImageForwardAdditive(ImageLucasKanade):
 
 class ImageForwardCompositional(ImageLucasKanade):
 
+    def _precompute(self):
+        # Compute the Jacobian of the warp
+        self.dW_dp = self.initial_transform.jacobian(
+            self.template.mask.true_indices)
+
+        pass
+
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
-
-        # Compute the Jacobian of the warp
-        dW_dp = self.optimal_transform.jacobian(
-            self.template.mask.true_indices)
 
         # Forward Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -267,8 +283,13 @@ class ImageForwardCompositional(ImageLucasKanade):
             IWxp = self._warp(self.image, self.template,
                               self.optimal_transform)
 
+            # TODO: add "forward_compositional" kwarg with options
+            # In the forward compositional algorithm there are two different
+            # ways of computing the steepest descent images:
+            #   1. V[I(x)](W(x,p)) * dW/dx * dW/dp
+            #   2. V[I(W(x,p))] * dW/dp -> this is what is currently used
             # Compute steepest descent images, VI_dW_dp
-            VI_dW_dp = self.residual.steepest_descent_images(IWxp, dW_dp)
+            VI_dW_dp = self.residual.steepest_descent_images(IWxp, self.dW_dp)
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(VI_dW_dp)
@@ -293,19 +314,23 @@ class ImageForwardCompositional(ImageLucasKanade):
 
 class ImageInverseCompositional(ImageLucasKanade):
 
-    def _align(self, max_iters=30):
-        # Initial error > eps
-        error = self.eps + 1
-
+    def _precompute(self):
         # Compute the Jacobian of the warp
-        dW_dp = self.optimal_transform.jacobian(
+        dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
-        VT_dW_dp = self.residual.steepest_descent_images(self.template, dW_dp)
+        self.VT_dW_dp = self.residual.steepest_descent_images(
+            self.template, dW_dp)
 
         # Compute Hessian and inverse
-        self._H = self.residual.calculate_hessian(VT_dW_dp)
+        self._H = self.residual.calculate_hessian(self.VT_dW_dp)
+
+        pass
+
+    def _align(self, max_iters=30):
+        # Initial error > eps
+        error = self.eps + 1
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -314,8 +339,8 @@ class ImageInverseCompositional(ImageLucasKanade):
                               self.optimal_transform)
 
             # Compute steepest descent parameter updates
-            sd_delta_p = self.residual.steepest_descent_update(VT_dW_dp, IWxp,
-                                                               self.template)
+            sd_delta_p = self.residual.steepest_descent_update(
+                self.VT_dW_dp, IWxp, self.template)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
