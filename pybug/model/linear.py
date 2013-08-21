@@ -2,7 +2,6 @@ import abc
 import numpy as np
 from sklearn.decomposition import PCA as SklearnPCA
 from pybug.model.base import StatisticalModel
-from pybug.transform.affine import SimilarityTransform
 
 
 # TODO: better document what a linear model does.
@@ -394,6 +393,13 @@ class PCAModel(LinearModel):
         :type: (``n_components``, ``n_features``) ndarray
         """
         return self._pca.components_
+
+    @property
+    def jacobian(self):
+        jac = self.components.reshape((self.n_components,
+                                       -1,
+                                       self.template_sample.n_dims))
+        return jac.swapaxes(0, 1)
 
     def _instance(self, weightings):
         if weightings.shape[0] > self.n_components:
