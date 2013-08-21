@@ -6,8 +6,16 @@ from pybug.image import Image
 
 
 class ImageImporter(Importer):
-    """
-    Base class for importing images
+    r"""
+    Base class for importing images.  Image importers are capable of
+    automatically importing landmarks that share the same basename as the
+    image. A search in the current directory is performed whenever an image
+    is imported.
+
+    Parameters
+    ----------
+    filepath : string
+        An absolute filepath
     """
 
     __metaclass__ = abc.ABCMeta
@@ -17,6 +25,10 @@ class ImageImporter(Importer):
         self.attempted_landmark_search = False
 
     def _build_landmark_importer(self):
+        r"""
+        Check if a ``landmark_path`` exists, and if it does, then create the
+        landmark importer.
+        """
         if self.landmark_path is None or not path.exists(self.landmark_path):
             self.landmark_importer = None
         else:
@@ -26,9 +38,14 @@ class ImageImporter(Importer):
                                                   image_landmark_types)
 
     def _search_for_landmarks(self):
-        """
-        Tries to find a set of landmarks with the same name as the image
-        :return: The relative landmarks path, or None
+        r"""
+        Tries to find a set of landmarks with the same name as the image. This
+        is only attempted once.
+
+        Returns
+        -------
+        basename : string
+            The basename of the landmarks file found, eg. ``image.pts``.
         """
         # Stop searching every single time we access the property
         self.attempted_landmark_search = True
@@ -42,9 +59,11 @@ class ImageImporter(Importer):
 
     @property
     def landmark_path(self):
-        """
-        Get the absolute path to the landmarks. Returns None if none can be
-        found. Makes it's best effort to find an appropriate landmark set by
+        r"""
+        Get the absolute path to the landmarks.
+
+        Returns ``None`` if none can be found.
+        Makes it's best effort to find an appropriate landmark set by
         searching for landmarks with the same name as the image.
         """
         # Avoid attribute not being set
@@ -63,9 +82,25 @@ class ImageImporter(Importer):
 
     @abc.abstractmethod
     def _build_image(self):
+        r"""
+        Abstract method that handles actually building an image. This involves
+        reading the image from disk and doing any necessary processing.
+
+        Should set the ``self.image`` attribute.
+        """
         pass
 
     def build(self):
+        r"""
+        Overrides the :meth:`build <pybug.io.base.Importer.build>` method.
+
+        Builds the image and landmarks. Assigns the landmark set to the image.
+
+        Returns
+        -------
+        image : :class:`pybug.image.base.Image`
+            The image object with landmarks attached if they exist
+        """
         # Build the image as defined by the overridden method and then search
         # for valid landmarks that may have been defined by the importer
         self._build_image()
@@ -79,10 +114,24 @@ class ImageImporter(Importer):
 
 
 class PILImporter(ImageImporter):
+    r"""
+    Imports an image using PIL
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of image
+    """
 
     def __init__(self, filepath):
         super(PILImporter, self).__init__(filepath)
 
     def _build_image(self):
+        r"""
+        Read the image using PIL and then use the
+        :class:`pybug.image.base.Image` constructor to create a class.
+
+        Sets the newly built Image to ``self.image``.
+        """
         self._pil_image = PILImage.open(self.filepath)
         self.image = Image(self._pil_image)
