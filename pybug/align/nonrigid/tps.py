@@ -41,6 +41,8 @@ class TPS(NonRigidAlignment):
         if kernel is None:
             kernel = r_2_log_r_2_kernel
         self.kernel = kernel
+        # TODO: kernels need some sort of structured form
+        self.kernel_derivative = r_2_log_r_2_kernel_derivative
         self.K = self.kernel(pairwise_norms)
         self.P = np.concatenate(
             [np.ones([self.n_landmarks, 1]), self.source], axis=1)
@@ -75,7 +77,7 @@ class TPS(NonRigidAlignment):
         self._view_2d(image=image)
 
 
-# TODO: This may end up being a method in class later on ...
+# TODO: kernels need some sort of structured form
 def r_2_log_r_2_kernel(r):
     r"""
     Radial basis function for TPS.
@@ -93,7 +95,7 @@ def r_2_log_r_2_kernel(r):
     return U
 
 
-# TODO: This may end up being a method in class later on ...
+# TODO: kernels need some sort of structured form
 def r_2_log_r_2_kernel_derivative(r):
     r"""
     Derivative of the radial basis function for TPS.
@@ -105,7 +107,7 @@ def r_2_log_r_2_kernel_derivative(r):
     """
     mask = r == 0
     r[mask] = 1
-    dUdr = 2 * r * (1 + np.log(r ** 2))
+    dUdr = 2 * (1 + np.log(r ** 2))
     # reset singularities to 0
     dUdr[mask] = 0
     return dUdr
