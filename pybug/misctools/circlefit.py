@@ -3,8 +3,24 @@ from scipy import optimize
 
 
 def circle_fit(coords):
-    """ Adapted from:
-    http://www.scipy.org/Cookbook/Least_Squares_Circle
+    """
+    Find the least squares circle fitting a set of 2D points ``(x,y)``.
+
+    Parameters
+    ----------
+    coords : (N, 2) ndarray
+        Set of ``x`` and ``y` coordinates.
+
+    Returns
+    -------
+    centre_i : (2,)
+        The 2D coordinates of the centre of the circle.
+    r_i : double
+        The radius of the circle.
+
+    References
+    ----------
+    .. [1] http://www.scipy.org/Cookbook/Least_Squares_Circle
     """
 
     def r_sq_of_circle(coords, centre):
@@ -23,10 +39,3 @@ def circle_fit(coords):
     r_i = np.sqrt(r_sq_of_circle(coords, centre_i))
     return centre_i, r_i
 
-#coords = np.array([[ 36.,  14.],
-#                   [ 36.,  10.],
-#                   [ 19.,  28.],
-#                   [ 18.,  31.],
-#                   [ 33.,  18.],
-#                   [ 26.,  26.]])
-#
