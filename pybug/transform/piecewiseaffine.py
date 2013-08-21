@@ -195,7 +195,7 @@ class PiecewiseAffineTransform(Transform):
         alpha, beta = self.alpha_beta(points)
         return self._containment_from_alpha_beta(alpha, beta)
 
-    def jacobian_source(self, points):
+    def weight_points(self, points):
         """
         Returns the jacobian of the warp at each point given in relation to the
         source points.
@@ -249,6 +249,14 @@ class PiecewiseAffineTransform(Transform):
             jac[points_index_in_tri_i, vertices_index_of_tri_i[2], :] = (
                 gamma_k[points_index_in_tri_i, i][..., None])
         return jac
+
+    def jacobian_points(self, points):
+        """
+        Returns the jacobian of the warp at each
+        :param points:
+        :return:
+        """
+        return np.eye(2, 2)
 
     def _tri_containment_loop(self, points):
         """
