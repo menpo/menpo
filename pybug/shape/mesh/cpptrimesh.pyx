@@ -52,6 +52,7 @@ cdef extern from "./cpp/halfedge.h":
         pass
 
 # Wrap the Mesh class to produce CppTriMesh
+# TODO: document me
 cdef class CppTriMesh:
     cdef Mesh* thisptr
 
