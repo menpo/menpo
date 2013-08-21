@@ -8,10 +8,10 @@ class Landmarkable(object):
     r"""
     Abstract interface for object that can have landmarks attached to them.
     Landmarkable objects have a public dictionary of landmarks which are
-    managed by a :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
-    . This means that different sets of landmarks can be attached to the
-    same object. Landmarks can be N-dimensional and are expected to be some
-    subclass of :class:`PointCloud <pybug.shape.pointcloud.Pointcloud>`.
+    managed by a :class:`pybug.landmark.base.LandmarkManager`. This means that
+    different sets of landmarks can be attached to the same object.
+     Landmarks can be N-dimensional and are expected to be some
+    subclass of :class:`pybug.shape.pointcloud.Pointcloud`.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -24,18 +24,22 @@ class Landmarkable(object):
         Add a new set of landmarks to the object. These landmarks should
         come in the form of a dictionary. Each key is the semantic
         meaning of the landmark and the landmarks themselves are of some
-        subclass of :class:`PointCloud <pybug.shape.pointcloud.Pointcloud>`.
+        subclass of :class:`pybug.shape.pointcloud.Pointcloud`.
         The provided label becomes the key for the landmark dictionary. It's
         important to note that any subclass of PointCloud can be used,
         it is just assumed that it contains a numpy array of points.
 
-        :param label: The name of the set of landmarks
-        :type label: String
-        :param landmark_dict: Dictionary of labels and pointclouds
-            representing all the landmarks
-        :type landmark_dict: Python dictionary. Keys are strings,
-            values are :class:`pointclouds <pybug.shape.pointcloud.Pointcloud>`
-        :raise:
+        Parameters
+        ----------
+        label : string
+            The name of the set of landmarks
+        landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`)
+            Dictionary of labels and pointclouds representing all the landmarks
+
+        Raises
+        ------
+        ValueError
+            If ``landmark_dict`` is not of type dictionary.
         """
         if not isinstance(landmark_dict, dict):
             raise ValueError('Landmark set must be of type dictionary')
@@ -53,14 +57,16 @@ class LandmarkManager(object):
     This involves managing the internal dictionary, as well as providing
     convenience functions for operations like viewing.
 
-    :param shape: The parent object that owns these landmarks
-    :type shape: :class:`Landmarkable <pybug.landmarks.base.Landmarkable>`
-    :param label: Name of landmark set
-    :type label: String
-    :param landmark_dict: Dictionary of labels and pointclouds representing
-        the landmark set
-    :type landmark_dict: Python dictionary. Keys are strings,
-        values are :class:`pointclouds <pybug.shape.pointcloud.Pointcloud>`
+    Parameters
+    ----------
+    shape : :class:`pybug.landmarks.base.Landmarkable`
+        The parent object that owns these landmarks
+    label : string
+        Name of landmark set
+    landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`), optional
+        Dictionary of labels and pointclouds representing all the landmarks
+
+        Default: ``None``
     """
 
     def __init__(self, shape, label, landmark_dict=None):
@@ -82,12 +88,14 @@ class LandmarkManager(object):
         labels to pointclouds. If the label already exists it will be
         replaced with the new value.
 
-        :param landmark_dict: Dictionary of labels and pointclouds representing
-            the landmark set
-        :type landmark_dict: Python dictionary. Keys are strings,
-            values are :class:`pointclouds <pybug.shape.pointcloud.Pointcloud>`
-        :raise:
-            :class:`DimensionalityError <pybug.exceptions.DimensionalityError>`
+        Parameters
+        ----------
+        landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`), optional
+            Dictionary of labels and pointclouds representing all the landmarks
+
+        Raises
+        ------
+        :class:`pybug.exceptions.DimensionalityError`
             Raised when the dimensions of the landmarks don't match those of
             the parent shape.
         """
@@ -102,14 +110,15 @@ class LandmarkManager(object):
     def update_landmarks(self, label, lmarks):
         r"""
         Replace a given label with a new subclass of
-        :class:`pointclouds <pybug.shape.pointcloud.Pointcloud>`. If the
-        label does not exist, then this becomes a new entry.
+        :class:`pybug.shape.pointcloud.Pointcloud`. If the label does not
+        exist, then this becomes a new entry.
 
-        :param label: The semantic meaning of the landmarks being added eg.
-            eye
-        :type label: String
-        :param lmarks: A collection of landmarks
-        :type lmarks: :class:`PointCloud <pybug.shape.pointcloud.Pointcloud>`
+        Parameters
+        ----------
+        :param label : string
+            The semantic meaning of the landmarks being added eg. eye
+        :param lmarks : :class:`pybug.shape.pointcloud.Pointcloud`
+            The landmark pointcloud.
         """
         self.landmark_dict[label] = lmarks
 
@@ -118,10 +127,15 @@ class LandmarkManager(object):
         Return a new LandmarkManager that only contains the given label.
         This is useful for things like only viewing the 'eye' landmarks.
 
-        :param label: The label of the landmarks to view
-        :type label: String
-        :return: New landmark manager containing only the given label.
-        :rtype: :class:`LandmarkManager <pybug.landmarks.base.LandmarkManager>`
+        Parameters
+        ----------
+        :param label : string
+            The label of the landmarks to view
+
+        Returns
+        -------
+        landmark_manager : :class:`LandmarkManager`
+            New landmark manager containing only the given label.
         """
         return LandmarkManager(self.shape, self.label,
                                {label: self.landmark_dict[label]})
@@ -133,10 +147,15 @@ class LandmarkManager(object):
         This is useful for things like filtering out the 'eye' landmarks when
         viewing.
 
-        :param label: The label of the landmarks to exclude
-        :type label: String
-        :return: New landmark manager excluding the given label.
-        :rtype: :class:`LandmarkManager <pybug.landmarks.base.LandmarkManager>`
+        Parameters
+        ----------
+        :param label : string
+            The label of the landmarks to view
+
+        Returns
+        -------
+        landmark_manager : :class:`LandmarkManager`
+            New landmark manager excluding the given label.
         """
         new_dict = dict(self.landmark_dict)
         del new_dict[label]
@@ -148,8 +167,12 @@ class LandmarkManager(object):
         shape view method. Kwargs passed in here will be passed through
         to the shapes view method.
 
-        :keyword include_labels: If True, also render the label names next
-        to the landmarks.
+        Parameters
+        ----------
+        include_labels : bool, optional
+            If ``True``, also render the label names next to the landmarks.
+        kwargs : dict, optional
+            Passed through to the viewer.
         """
         shape_viewer = self.shape.view(**kwargs)
         return LandmarkViewer(self.label, self.landmark_dict, self.shape).view(
@@ -160,8 +183,7 @@ class LandmarkManager(object):
         """
         All the labels for the landmark set.
 
-        :return: Landmark labels
-        :rtype: List of strings
+        :type: List of strings
         """
         return self.landmark_dict.keys()
 
@@ -170,9 +192,7 @@ class LandmarkManager(object):
         """
         All the landmarks for the set.
 
-        :return: Landmarks
-        :rtype: List of
-            :class:`PointClouds <pybug.shape.pointcloud.Pointcloud>`
+        :type: List of :class:`pybug.shape.pointcloud.Pointcloud`
         """
         return self.landmark_dict.values()
 
@@ -180,11 +200,12 @@ class LandmarkManager(object):
     def all_landmarks(self):
         """
         A new pointcloud that contains all the points within the landmark
-        set. Iterates over the dictionary and creates a single PointCloud
-        using all the points.
+        set.
 
-        :return: All the landmarks in the set.
-        :rtype: :class:`PointClouds <pybug.shape.pointcloud.Pointcloud>`
+        Iterates over the dictionary and creates a single PointCloud using
+        all the points.
+
+        :type: :class:`pybug.shape.pointcloud.Pointcloud`
         """
         from pybug.shape import PointCloud
 
@@ -195,21 +216,20 @@ class LandmarkManager(object):
     @property
     def n_labels(self):
         """
-        Total number of labels
+        Total number of labels.
 
-        :return: Label count
-        :rtype: int
+        :type: int
         """
         return len(self.landmark_dict)
 
     @property
     def n_landmarks(self):
         """
-        Total number of landmarks (across ALL keys). Iterate over each
-        PointCloud and sum the number of points. Therefore, this is the same
-         as the number of points of the all_landmarks property.
+        Total number of landmarks (across ALL keys).
 
-        :return: Landmark count
-        :rtype: int
+        Iterate over each PointCloud and sum the number of points. Therefore,
+        this is the same as the number of points of the all_landmarks property.
+
+        :type: int
         """
         return sum([x.n_points for x in self.landmark_dict.values()])
