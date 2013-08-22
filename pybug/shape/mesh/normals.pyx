@@ -4,6 +4,11 @@ cimport numpy as np
 cimport cython
 
 ctypedef np.float64_t FLOAT64_T
+ctypedef fused integrals:
+    np.uint32_t
+    np.uint64_t
+    np.int32_t
+    np.int64_t
 
 cdef np.ndarray[FLOAT64_T, ndim=2] normalise(np.ndarray[FLOAT64_T, ndim=2] vec):
     """
@@ -37,7 +42,7 @@ cdef inline np.ndarray[FLOAT64_T, ndim=2] cross(double[:, :] x,
 
 
 cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
-                      np.ndarray[cython.integral, ndim=2] face):
+                      np.ndarray[integrals, ndim=2] face):
     """
     Compute the per-vertex and per-face normal of the vertices given a list of
     faces.
