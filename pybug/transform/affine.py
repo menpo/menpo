@@ -201,6 +201,7 @@ class AffineTransform(Transform):
             [p2, p4, p6]
 
         3D Affine: 12 parameters::
+
             [p1, p4, p7, p10]
             [p2, p5, p8, p11]
             [p3, p6, p9, p12]
@@ -251,6 +252,7 @@ class AffineTransform(Transform):
             [p2, p4, p6]
 
         3D Affine: 12 parameters::
+
             [p1, p4, p7, p10]
             [p2, p5, p8, p11]
             [p3, p6, p9, p12]
@@ -950,8 +952,11 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         |parameter | definition                                 |
         +==========+============================================+
         |s0        | The scale across the first axis            |
+        +----------+--------------------------------------------+
         |s1        | The scale across the second axis           |
+        +----------+--------------------------------------------+
         |...       | ...                                        |
+        +----------+--------------------------------------------+
         |sn        | The scale across the nth axis              |
         +----------+--------------------------------------------+
 
@@ -1060,7 +1065,7 @@ class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
         +----------+--------------------------------+
         |parameter | definition                     |
         +==========+================================+
-        |s        | The scale across the each axis  |
+        |s         | The scale across each axis     |
         +----------+--------------------------------+
 
         Returns
