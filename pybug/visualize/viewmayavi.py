@@ -52,6 +52,12 @@ class MayaviTriMeshViewer3d(view3d.TriMeshViewer3d, MayaviViewer):
                                                  self.trilist,
                                                  color=(0.5, 0.5, 0.5),
                                                  figure=figure)
+
+        normals = kwargs.get('normals', None)
+        if not normals is None and normals.shape[1] == 3:
+            MayaviVectorViewer3d(self.points,
+                                 normals)._viewonfigure(figure, **kwargs)
+
         self.currentfigure = figure
         return self
 
@@ -69,8 +75,8 @@ class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d,
         pd.point_data.t_coords = self.tcoords_per_point
         mapper = tvtk.PolyDataMapper(input=pd)
         actor = tvtk.Actor(mapper=mapper)
-        #get the texture as a np arrage and arrange it for inclusion
-        #with a tvtk ImageData class
+        # get the texture as a np arrage and arrange it for inclusion
+        # with a tvtk ImageData class
         image_data = np.flipud(self.texture.pixels).flatten().reshape(
             [-1, 3]).astype(np.uint8)
         image = tvtk.ImageData()
@@ -78,11 +84,35 @@ class MayaviTexturedTriMeshViewer3d(view3d.TexturedTriMeshViewer3d,
         image.dimensions = self.texture.height, self.texture.width, 1
         texture = tvtk.Texture(input=image)
         actor.texture = texture
-        #v = ivtk.IVTK(size=(700,700))
-        #v.open()
         figure.scene.add_actors(actor)
-        #mlab.show()
+
+        normals = kwargs.get('normals', None)
+        if not normals is None and normals.shape[1] == 3:
+            MayaviVectorViewer3d(self.points,
+                                 normals)._viewonfigure(figure, **kwargs)
+
         self.currentfigure = figure
         self.currentscene = figure.scene
         return self
 
+
+class MayaviVectorViewer3d(MayaviViewer):
+
+    def __init__(self, points, vectors):
+        super(MayaviVectorViewer3d, self).__init__()
+        self.points = points
+        self.vectors = vectors
+
+    def _viewonfigure(self, figure, **kwargs):
+        # Only get every nth vector. 1 means get every vector.
+        mask_points = kwargs.get('mask_points', 1)
+        self.currentscene = mlab.quiver3d(self.points[:, 0],
+                                          self.points[:, 1],
+                                          self.points[:, 2],
+                                          self.vectors[:, 0],
+                                          self.vectors[:, 1],
+                                          self.vectors[:, 2],
+                                          mask_points=mask_points,
+                                          figure=figure)
+        self.currentfigure = figure
+        return self

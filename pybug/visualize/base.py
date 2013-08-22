@@ -22,7 +22,7 @@ class Viewer(object):
 
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d
+    MayaviLandmarkViewer3d, MayaviVectorViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
     MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d
@@ -37,6 +37,7 @@ LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
+VectorViewer3d = MayaviVectorViewer3d
 
 
 class LandmarkViewer(object):
@@ -99,10 +100,7 @@ class TriMeshViewer(object):
             return TriMeshViewer2d(self.points, self.trilist).view(**kwargs)
 
         elif self.points.shape[1] == 3:
-            return TriMeshViewer3d(self.points, self.trilist,
-                                   color_per_tri=self.trifields.get('color'),
-                                   color_per_point=self.pointfields.get(
-                                   'color')).view(**kwargs)
+            return TriMeshViewer3d(self.points, self.trilist).view(**kwargs)
         else:
             raise DimensionalityError("Only 2D and 3D TriMeshes are "
                                       "currently supported")
