@@ -4,7 +4,7 @@ import numpy as np
 
 class ImageASFImporter(ASFImporter):
     r"""
-    Implements the :meth:`_build_points` method for images. Here, ``y` is the
+    Implements the :meth:`_build_points` method for images. Here, ``y`` is the
     first axis.
 
     Parameters
@@ -38,7 +38,7 @@ class ImageASFImporter(ASFImporter):
 
 class ImagePTSImporter(PTSImporter):
     r"""
-    Implements the :meth:`_build_points` method for images. Here, ``y` is the
+    Implements the :meth:`_build_points` method for images. Here, ``y`` is the
     first axis.
 
     Parameters

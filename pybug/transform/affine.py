@@ -854,12 +854,12 @@ def Scale(scale_factor, n_dim=None):
 
         - A float ``scale_factor`` and a ``n_dim`` kwarg are provided
         - A ndarray scale_factor with shape (``n_dim``, ) is provided with all
-        elements being the same
+          elements being the same
 
     A :class:`NonUniformScale` will be provided if:
 
         - A ndarray ``scale_factor`` with shape (``n_dim``, ) is provided with
-        at least two differing scale factors.
+          at least two differing scale factors.
 
     Parameters
     ----------
@@ -1214,7 +1214,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [t0, t1, ...].
 
-         +----------+--------------------------------------------+
+        +-----------+--------------------------------------------+
         |parameter | definition                                  |
         +==========+=============================================+
         |t0        | The translation in the first axis           |
