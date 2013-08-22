@@ -5,9 +5,9 @@ from pybug.transform import Transform
 class StatisticallyDrivenTransform(Transform):
 
     #TODO: Rethink this transform so it knows how to deal with complex shapes
-    def __init__(self, model, transform_constructor, source=None,
-                 parameters=None, global_transform=None,
-                 composition='linear', speed_up=None):
+    def __init__(self, model, transform_constructor,
+                 source=None, weights=None, global_transform=None,
+                 composition='model', speed_up=None):
         """
         A transform that couples a traditional landmark-based transform to a
         statistical model together with a global similarity transform,
@@ -20,8 +20,6 @@ class StatisticallyDrivenTransform(Transform):
         source landmarks of the transform.
 
         :param model: A statistical linear shape model.
-        :param similarity_model: A similarity model based on the previous
-            shape model.
         :param transform_constructor: A function that returns a Transform
             object. It will be fed the source landmarks as the first
             argument and the target landmarks as the second. The target is
@@ -29,9 +27,9 @@ class StatisticallyDrivenTransform(Transform):
             provide weights - the source is either given or set to the
             model's mean.
         :param source: The source landmarks of the transform. If no source
-        is provided the mean of the model is used.
-        :param parameters: The reconstruction weights that will be fed to
-        the model in order to generate an instance of the target landmarks.
+            is provided the mean of the model is used.
+        :param weights: The reconstruction weights that will be fed to
+            the model in order to generate an instance of the target landmarks.
         """
         self.model = model
         self.transform_constructor = transform_constructor
@@ -43,26 +41,16 @@ class StatisticallyDrivenTransform(Transform):
         self.source = source
 
         # weights
-        if parameters is None and global_transform is None:
+        if weights is None:
             # set all weights to 0 (yielding the mean)
-            parameters = np.zeros(self.model.n_components)
-        elif parameters is None:
-            # set all weights to 0 (yielding the mean)
-            parameters = np.zeros(global_transform.n_parameters +
-                                  self.model.n_components)
-        self.parameters = parameters
+            weights = np.zeros(self.model.n_components)
+        self.weights = weights
 
         # global transform
-        if global_transform is not None:
-            self.global_transform = global_transform
-            # re-build global transform
-            global_transform = global_transform.from_vector(
-                self.global_parameters)
         self.global_transform = global_transform
 
         # composition
         self.composition = composition
-        self.compose = self._select_composition(self.composition)
 
         # speed up
         if speed_up is not None:
@@ -86,23 +74,20 @@ class StatisticallyDrivenTransform(Transform):
         return self.transform.n_dim
 
     @property
-    def n_parameters(self):
-        return (self.model.n_components +
-                self.global_transform.n_parameters)
+    def n_weights(self):
+        return self.model.n_components
 
     @property
-    def weights(self):
-        if self.global_transform is None:
-            return self.parameters
-        else:
-            return self.parameters[self.global_transform.n_parameters:]
+    def n_global_parameters(self):
+        return self.global_transform.n_parameters
+
+    @property
+    def n_parameters(self):
+        return self.n_weights + self.n_global_parameters
 
     @property
     def global_parameters(self):
-        if self.global_transform is None:
-            return None
-        else:
-            return self.parameters[:self.global_transform.n_parameters]
+        return self.global_transform.as_vector()
 
     def jacobian(self, points):
         """
@@ -161,34 +146,60 @@ class StatisticallyDrivenTransform(Transform):
         pass
 
     def from_vector(self, flattened):
-        return StatisticallyDrivenTransform(self.model,
-                                            self.transform_constructor,
-                                            source=self.source,
-                                            parameters=flattened,
-                                            global_transform=self
-                                            .global_transform,
-                                            composition=self.composition,
-                                            speed_up=(self._cached_points,
-                                                      self.dW_dX))
+        global_transform = self.global_transform.from_vector(
+            flattened[:self.n_global_parameters])
+        weights = flattened[self.n_global_parameters:]
+
+        return StatisticallyDrivenTransform(
+            self.model, self.transform_constructor,
+            source=self.source, weights=weights,
+            global_transform=global_transform, composition=self.composition,
+            speed_up=(self._cached_points, self.dW_dX))
 
     def as_vector(self):
-        return self.parameters
+        return np.hstack((self.global_parameters, self.weights))
 
     def _apply(self, x, **kwargs):
         return self.transform._apply(x, **kwargs)
 
-    def _select_composition(self, composition):
-        if composition is 'linear':
-            return self._compose_linear
-        elif composition is 'algorithmic':
-            return self._compose_algorithmic
-        elif composition is 'mathematical':
-            return self._compose_mathematical
+    # TODO: Could be implemented as optimization option in LK???
+    # Problems:
+    #   - This method needs to be explicitly overwritten in order to match
+    #     the common interface defined for Transform objects
+    def compose(self, statistically_driven_transform):
+        if self.composition is 'model':
+            return self._compose_model(statistically_driven_transform)
+        elif self.composition is 'warp':
+            return self._compose_warp(statistically_driven_transform)
+        elif self.composition is 'both':
+            return self._compose_both(statistically_driven_transform)
         else:
-            raise ValueError('Unknown optimisation string selected. Valid'
-                             'options are: GN, LM')
+            raise ValueError('Unknown composition string selected. Valid'
+                             'options are: model, warp, both')
 
-    def _compose_mathematical(self, statistically_driven_transform):
+    def _compose_model(self, statistically_driven_transform):
+        incremental_target = statistically_driven_transform.target
+        model_variation = (self.model.instance(self.weights).points -
+                           self.model.mean.points)
+        composed_target = self.global_transform.apply(model_variation +
+                                                      incremental_target
+                                                      .points)
+        from pybug.shape import PointCloud
+        return self.estimate(PointCloud(composed_target))
+
+    # TODO: The call to transform.apply will not work properly for PWA
+    #   - Define a new function in TPS & PWA called .apply_to_target
+    #   - For TPS this function should ne the same as the normal .apply()
+    #     method
+    #   - For PWA it should implement Bakers algorithmic approach to
+    #     composition
+    def _compose_warp(self, statistically_driven_transform):
+        incremental_target = statistically_driven_transform.target
+        composed_target = self.transform.apply(incremental_target)
+
+        return self.estimate(composed_target)
+
+    def _compose_both(self, statistically_driven_transform):
         """
         Composes two statistically driven transforms together based on the
         first order approximation proposed in:
@@ -240,27 +251,11 @@ class StatisticallyDrivenTransform(Transform):
             dW_dp = np.hstack((dW_dq, dW_db))
             # dW_dp:    n_landmarks  x     n_weights     x  n_dim
 
-        #
-
-        #lala = np.dot(self.target.points, self.global_transform.inverse
-        #.linear_component.T)
-
         dW_dx = self.transform.jacobian_points(self.source)
-        dW_dx = np.eye(2, 2)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
-        dW_dx = dW_dx[np.newaxis, ...]
         # dW_dx:  n_landmarks  x  n_dim  x  n_dim
 
         dW_dx_dW_dp_0 = np.einsum('ijl, idl -> idj', dW_dx, dW_dp_0)
-
-        #dW_dx.swapaxes(1, 2)
-        #aux1 = dW_dx[:, :, 0]
-        #aux2 = dW_dx[:, :, 1]
-
-        #dW_dx_dW_dp_0 = aux1[:, np.newaxis] * dW_dp_0 + aux2[:,
-        # np.newaxis] * dW_dp_0
-
-
         # dW_dx:          n_landmarks  x  n_dim     x  n_dim
         # dW_dp_0:        n_landmarks  x  n_params  x  n_dim
         # dW_dx_dW_dp_0:  n_landmarks  x  n_params  x  n_dim
@@ -277,25 +272,6 @@ class StatisticallyDrivenTransform(Transform):
 
         return self.from_vector(p)
 
-    def _compose_linear(self, statistically_driven_transform):
-        new_mean = statistically_driven_transform.target
-
-        aux3 = self.model.template_sample.from_vector(
-            np.dot(self.model.components.T,
-                   self.weights)).points + \
-            new_mean.points
-
-        aux4 = self.global_transform.apply(aux3)
-
-        from pybug.shape import PointCloud
-        return self.estimate(PointCloud(aux4))
-
-    def _compose_algorithmic(self, statistically_driven_transform):
-        pass
-
-    def compose(self):
-        pass
-
     def estimate(self, target):
         global_transform = self.global_transform.estimate(
             self.model.mean.points, target.points)
@@ -307,5 +283,4 @@ class StatisticallyDrivenTransform(Transform):
 
     @property
     def inverse(self):
-
         return self.from_vector(-self.as_vector())
