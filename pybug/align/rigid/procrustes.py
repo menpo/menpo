@@ -5,7 +5,15 @@ from pybug.transform.affine import Rotation, Scale, Translation
 
 
 class Procrustes(RigidAlignment):
-    """Procrustes Alignment of a set of source landmarks to a target.
+    r"""
+    Procrustes Alignment of a set of source landmarks to a target.
+
+    Parameters
+    -----------
+    source : (N, D) ndarray
+        The source points to perform Procrustes alignment from
+    target : (N, D) ndarray
+        The target points to perform Procrustes alignment to
     """
 
     def __init__(self, source, target):
@@ -14,19 +22,31 @@ class Procrustes(RigidAlignment):
 
     @property
     def error(self):
-        """
-        :return: The Frobenius Norm of the difference between the target and
+        r"""
+        The Frobenius Norm of the difference between the target and
         the aligned source.
+
+        :type: float
         """
         return np.linalg.norm(self.target - self.aligned_source)
 
     @property
     def transform_chain(self):
+        r"""
+        List of transforms containing the chain of transformations to apply.
+
+        :type: list of :class:`pybug.transform.base.Transform`
+        """
         return [self.source_translation, self.scale, self.rotation,
                 self.target_translation.inverse]
 
     @property
     def transform(self):
+        r"""
+        The single transformation from source to target.
+
+        :type: :class:`pybug.transform.base.Transform`
+        """
         return reduce(lambda x, y: x.compose(y), self.transform_chain)
 
     def _procrustes_step(self):
@@ -58,6 +78,9 @@ class Procrustes(RigidAlignment):
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
+    r"""
+    TODO: Write documentation
+    """
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
         self.procrustes = [[Procrustes(s, self.target)] for s in self.sources]

@@ -6,9 +6,16 @@ from pybug.shape.mesh.normals import compute_normals
 
 
 class TriMesh(PointCloud):
-    """
+    r"""
     A pointcloud with a connectivity defined by a triangle list. These are
     designed to be explicitly 2D or 3D.
+
+    Parameters
+    ----------
+    points : (N, D) ndarray
+        The set coordinates for the mesh.
+    trilist : (M, 3) ndarray
+        The triangle list.
     """
 
     def __init__(self, points, trilist):
@@ -59,6 +66,11 @@ class TriMesh(PointCloud):
 
     @property
     def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
         return len(self.trilist)
 
     def add_trifield(self, name, field):
@@ -73,6 +85,21 @@ class TriMesh(PointCloud):
     def view(self, **kwargs):
         """
         Visualize the TriMesh.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Passed through to the viewer.
+
+        Returns
+        -------
+        viewer : :class:`pybug.visualize.base.Viewer`
+            The viewer object.
+
+        Raises
+        ------
+        DimensionalityError
+            If ``not self.n_dims in [2, 3]``.
         """
         return TriMeshViewer(self.points, self.trilist).view(**kwargs)
 

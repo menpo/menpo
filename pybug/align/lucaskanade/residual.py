@@ -11,12 +11,13 @@ a multi-dimensional array, so we dynamically calculate the list of axes
 to summer over. However, the basics of the logic, other than dimension
 reduction, should be similar to the original algorithms.
 
-Citations:
+References
+----------
 
-Lucas, Bruce D., and Takeo Kanade.
-"An iterative image registration technique with an application to stereo
-vision."
-IJCAI. Vol. 81. 1981.
+.. [1] Lucas, Bruce D., and Takeo Kanade.
+       "An iterative image registration technique with an application to stereo
+       vision."
+       IJCAI. Vol. 81. 1981.
 """
 import abc
 import numpy as np
@@ -39,8 +40,14 @@ class Residual(object):
     @property
     def error(self):
         r"""
-        The RMS of the error image. Will only generate a result if the
-        steepest descent update has been calculated prior.
+        The RMS of the error image.
+
+        :type: float
+
+        Notes
+        -----
+        Will only generate a result if the
+        :func:`steepest_descent_update` function has been calculated prior.
 
         .. math::
             error = \sqrt{\sum_x E(x)^2}
@@ -53,33 +60,101 @@ class Residual(object):
     @abc.abstractmethod
     def steepest_descent_images(self, image, dW_dp, **kwargs):
         r"""
-        Calculates the standard steepest descent images. Within the forward
-        additive framework this is defined as
+        Calculates the standard steepest descent images.
+
+        Within the forward additive framework this is defined as
 
         .. math::
              \nabla I \frac{\partial W}{\partial p}
 
-        :param image: The image to calculate the steepest descent
-            images from, could be either the template or input image depending
-            on which framework is used.
-        :type image: ndarray
-        :param dW_dp: The Jacobian of the warp.
-        :type dW_dp: ndarray
-        :return: The steepest descent images of shape
-            (num_params x image_height x image_width)
-        :rtype: ndarray
+        The input image is vectorised (``N``-pixels) so that masked images can
+        be handled.
+
+        Parameters
+        ----------
+        image : :class:`pybug.image.base.Image`
+            The image to calculate the steepest descent images from, could be
+            either the template or input image depending on which framework is
+            used.
+        dW_dp : ndarray
+            The Jacobian of the warp.
+
+        Returns
+        -------
+        VT_dW_dp : (N, n_params) ndarray
+            The steepest descent images
         """
         pass
 
     @abc.abstractmethod
     def calculate_hessian(self, VT_dW_dp):
+        r"""
+        Calculates the Gauss-Newton approximation to the Hessian.
+
+        This is abstracted because some residuals expect the Hessian to be
+        pre-processed. The Gauss-Newton approximation to the Hessian is
+        defined as:
+
+        .. math::
+            \mathbf{J J^T}
+
+        Parameters
+        ----------
+        VT_dW_dp : (N, n_params) ndarray
+            The steepest descent images.
+
+        Returns
+        -------
+        H : (n_params, n_params) ndarray
+            The approximation to the Hessian
+        """
         pass
 
     @abc.abstractmethod
     def steepest_descent_update(self, VT_dW_dp, IWxp, template):
+        r"""
+        Calculates the steepest descent parameter updates.
+
+        These are defined, for the forward additive algorithm, as:
+
+        .. math::
+            \sum_x [ \nabla I \frac{\partial W}{\partial p} ]^T [ T(x) - I(W(x;p)) ]
+
+        Parameters
+        ----------
+        VT_dW_dp : (N, n_params) ndarray
+            The steepest descent images.
+        IWxp : :class:`pybug.image.base.Image`
+            Either the warped image or the template
+            (depending on the framework)
+        template : :class:`pybug.image.base.Image`
+            Either the warped image or the template
+            (depending on the framework)
+
+        Returns
+        -------
+        sd_delta_p : (n_params,) ndarray
+            The steepest descent parameter updates.
+        """
         pass
 
     def _calculate_gradients(self, image, forward=None):
+        r"""
+        Calculates the gradients of the given method.
+
+        If ``forward`` is provided, then the gradients are warped
+        (as is required in the forward additive algorithm)
+
+        Parameters
+        ----------
+        image : :class:`pybug.image.base.Image`
+            The image to calculate the gradients for
+        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.Transform>`, ``warp``), optional
+            A tuple containing the extra parameters required for the function
+            ``warp`` (which should be passed as a function handle).
+
+            Default: ``None``
+        """
         # Calculate the gradient over the image
         gradient = image.gradient()
 
