@@ -148,6 +148,29 @@ class AffineTransform(Transform):
         jac[:, full_mask] = 1
         return jac
 
+    def jacobian_points(self, points):
+        """
+        Computes the Jacobian of the transform wrt the points to which
+        the transform is applied to. This is constant for affine transforms.
+
+        The Jacobian for a given point (for 2D) is of the form::
+
+            Jx = [(1 + a),     -b  ]
+            Jy = [   b,     (1 + a)]
+            J =  [Jx, Jy] = [[(1 + a), -b], [b, (1 + a)]]
+
+        where a and b come from:
+
+            W(x;p) = [1 + a   -b      tx] [x]
+                     [b       1 + a   ty] [y]
+                                          [1]
+
+        :return dW/dx: A n_points x n_dims x n_dims ndarray representing
+            the Jacobian of the transform wrt the points to which the
+            transform is applied to.
+        """
+        return self.linear_component[None, ...]
+
     @property
     def n_parameters(self):
         """
@@ -200,6 +223,89 @@ class AffineTransform(Transform):
     @property
     def inverse(self):
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
+
+    @classmethod
+    def estimate(cls, source, target):
+        return cls(cls._estimate(source, target))
+
+    @classmethod
+    def _estimate(cls, source, target):
+        """
+        Infers the affine transform relating two vectors with the same
+        dimensionality.
+
+        The affine transform is defined as:
+
+            X = a*x + b*y + tx
+            Y = c*x + d*y + ty
+
+        These equations can be transformed to the following form::
+
+            a*x + b*y + tx - X = 0
+            c*x + d*y + ty - Y = 0
+
+        which can be written in matrix form as:
+
+            A x = 0
+
+        where::
+
+            A   = [[x y 1 0 0 0 X]
+                   [0 0 0 x y 1 Y]
+                    ...
+                    ...
+                  ]
+            x.T = [a b tx c d ty c6]
+
+        Using total least-squares, the solution of the previous homogeneous
+        system of equations is the right singular vector of A which
+        corresponds to the smallest singular value normalized by the
+        coefficient c6.
+
+        :param source: A n_points x n_dims ndarray.
+        :param target: A n_points x n_dims ndarray.
+        :return: The AffineTransform object relating the previous two vectors.
+        """
+        n_dim = source.shape[1]
+        if n_dim == 2:
+            n_points = source.shape[0]
+            xs = source[:, 0]
+            ys = source[:, 1]
+            xd = target[:, 0]
+            yd = target[:, 1]
+
+            # parameters: a, b, tx, c, d, ty
+            A = np.zeros((n_points * 2, 7))
+            # a
+            A[:n_points, 0] = xs
+            # b
+            A[:n_points, 1] = ys
+            # tx
+            A[:n_points, 2] = 1
+            # c
+            A[n_points:, 3] = xs
+            # d
+            A[n_points:, 4] = ys
+            # ty
+            A[n_points:, 5] = 1
+            # target
+            A[:n_points, 6] = xd
+            A[n_points:, 6] = yd
+            # the parameters of the affine transform are given by the least
+            # significant right singular vector normalized by coefficient c6.
+            _, _, V = np.linalg.svd(A)
+            a, b, tx, c, d, ty = - V[-1, :-1] / V[-1, -1]
+            # build homogeneous matrix
+            homogeneous_matrix = np.array([[a, b, tx],
+                                           [c, d, ty],
+                                           [0, 0,  1]])
+            return homogeneous_matrix
+        elif n_dim == 3:
+            raise NotImplementedError("3D affine transforms cannot be "
+                                      "inferred yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D affine transforms "
+                                      "are currently supported.")
 
 
 class SimilarityTransform(AffineTransform):
@@ -291,14 +397,14 @@ class SimilarityTransform(AffineTransform):
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [a, b, tx, ty].
         """
-        ndims = self.n_dim
-        if ndims == 2:
-            params = self.homogeneous_matrix - np.eye(ndims + 1)
+        n_dim = self.n_dim
+        if n_dim == 2:
+            params = self.homogeneous_matrix - np.eye(n_dim + 1)
             # Pick off a, b, tx, ty
-            params = params[:ndims, :].flatten(order='F')
+            params = params[:n_dim, :].flatten(order='F')
             # Pick out a, b, tx, ty
             return params[[0, 1, 4, 5]]
-        elif ndims == 3:
+        elif n_dim == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
@@ -336,6 +442,88 @@ class SimilarityTransform(AffineTransform):
                                               self.homogeneous_matrix))
         else:
             return super(SimilarityTransform, self).compose(transform)
+
+    @classmethod
+    def _estimate(cls, source, target):
+        """
+        Infers the affine transform relating two vectors with the same
+        dimensionality.
+
+        The affine transform is defined as:
+
+            X = a*x - b*y + tx
+            Y = b*x + a*y + ty
+
+        These equations can be transformed to the following form::
+
+            a*x - b*y + tx - X = 0
+            b*x + a*y + ty - Y = 0
+
+        which can be written in matrix form as:
+
+            A x = 0
+
+        where::
+
+            A   = [[x -y 1 0 X]
+                   [y  x 0 1 Y]
+                    ...
+                    ...
+                  ]
+            x.T = [a b tx ty c4]
+
+        Using total least-squares, the solution of the previous homogeneous
+        system of equations is the right singular vector of A which
+        corresponds to the smallest singular value normalized by the
+        coefficient c4.
+
+        :param source: A n_points x n_dims ndarray.
+        :param target: A n_points x n_dims ndarray.
+        :return: The SimilarityTransform object relating the previous two
+            vectors.
+        """
+        n_dim = source.shape[1]
+        if n_dim == 2:
+            n_points = source.shape[0]
+            xs = source[:, 0]
+            ys = source[:, 1]
+            xd = target[:, 0]
+            yd = target[:, 1]
+            # parameters: a, b, tx, ty
+            A = np.zeros((n_points * 2, 5))
+            # a
+            A[:n_points, 0] = xs
+            A[n_points:, 0] = ys
+            # b
+            A[:n_points, 1] = -ys
+            A[n_points:, 1] = xs
+            # tx
+            A[:n_points, 2] = 1
+            # ty
+            A[n_points:, 3] = 1
+            # target
+            A[:n_points, 4] = xd
+            A[n_points:, 4] = yd
+            # the parameters of the similarity transform are given by the
+            # least significant right singular vector normalized by
+            # coefficient c4.
+            _, _, V = np.linalg.svd(A)
+            a, b, tx, ty = - V[-1, :-1] / V[-1, -1]
+            # build homogeneous matrix
+            homogeneous_matrix = np.array([[a, -b, tx],
+                                           [b,  a, ty],
+                                           [0,  0,  1]])
+            return homogeneous_matrix
+        elif n_dim == 3:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "inferred yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D similarity transforms "
+                                      "are currently supported.")
+
+    @property
+    def inverse(self):
+        return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
 
 
 class DiscreteAffineTransform(object):
@@ -441,7 +629,7 @@ class Rotation2D(AbstractRotation):
         return axis, angle_of_rotation
 
     @property
-    def n_parameters(self):
+    def n_parameters(cls):
         """
         1 parameter - [theta] - The angle of rotation around [0, 0, 1]
         """
@@ -460,6 +648,13 @@ class Rotation2D(AbstractRotation):
         # See affine from_vector with regards to classmethod decorator
         return Rotation2D(np.array([[np.cos(p), -np.sin(p)],
                                     [np.sin(p), np.cos(p)]]))
+
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Rotation2D, cls)._estimate(source, target)
+        similarity = SimilarityTransform(homogeneous_matrix)
+        r1, s, r2, t = similarity.decompose()
+        return r1.compose(r2).homogeneous_matrix[:-1, :-1]
 
 
 class Rotation3D(AbstractRotation):
@@ -624,6 +819,21 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         # See affine from_vector with regards to classmethod decorator
         return NonUniformScale(p)
 
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
+        n_dim = source[1]
+        if n_dim == 2:
+            scale = np.zeros((1, 2))
+            scale[0] = homogeneous_matrix[0, 0]
+            scale[1] = homogeneous_matrix[1, 1]
+        elif n_dim == 3:
+            scale = np.zeros((1, 3))
+            scale[0] = homogeneous_matrix[0, 0]
+            scale[1] = homogeneous_matrix[1, 1]
+            scale[2] = homogeneous_matrix[2, 2]
+        return scale
+
 
 def UniformScale(scale, n_dim):
     """
@@ -702,6 +912,13 @@ class UniformScale2D(AbstractUniformScale):
         # See affine from_vector with regards to classmethod decorator
         return UniformScale2D(p)
 
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(UniformScale2D, cls)._estimate(source,
+                                                                  target)
+        scale = homogeneous_matrix[0]
+        return scale
+
 
 class UniformScale3D(AbstractUniformScale):
     """
@@ -774,3 +991,9 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def from_vector(cls, p):
         # See affine from_vector with regards to classmethod decorator
         return Translation(p)
+
+    @classmethod
+    def _estimate(cls, source, target):
+        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
+        translation = homogeneous_matrix[:-1, -1]
+        return translation

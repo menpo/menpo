@@ -4,6 +4,7 @@ from pybug.transform.tps import TPSTransform
 from pybug.align.nonrigid.base import NonRigidAlignment
 from pybug.exceptions import DimensionalityError
 from pybug.align.base import MultipleAlignment
+from pybug.basis.rbf import R2LogR2
 
 
 class TPS(NonRigidAlignment):
@@ -22,11 +23,11 @@ class TPS(NonRigidAlignment):
             raise DimensionalityError('TPS can only be used on 2D data.')
         self.V = self.target.T.copy()
         self.Y = np.hstack([self.V, np.zeros([2, 3])])
-        pairwise_norms = distance.squareform(distance.pdist(self.source))
+        pairwise_norms = distance.cdist(self.source, self.source)
         if kernel is None:
-            kernel = r_2_log_r_2_kernel
+            kernel = R2LogR2()
         self.kernel = kernel
-        self.K = self.kernel(pairwise_norms)
+        self.K = self.kernel.phi(pairwise_norms)
         self.P = np.concatenate(
             [np.ones([self.n_landmarks, 1]), self.source], axis=1)
         O = np.zeros([3, 3])
@@ -42,32 +43,6 @@ class TPS(NonRigidAlignment):
 
     def view(self, image=False):
         self._view_2d(image=image)
-
-
-# TODO: This may end up being a method in class later on ...
-def r_2_log_r_2_kernel(r):
-    """
-    Radial basis function for TPS.
-    """
-    mask = r == 0
-    r[mask] = 1
-    U = r ** 2 * (np.log(r ** 2))
-    # reset singularities to 0
-    U[mask] = 0
-    return U
-
-
-# TODO: This may end up being a method in class later on ...
-def r_2_log_r_2_kernel_derivative(r):
-    """
-    Derivative of the radial basis function for TPS.
-    """
-    mask = r == 0
-    r[mask] = 1
-    dUdr = 2 * r * (1 + np.log(r ** 2))
-    # reset singularities to 0
-    dUdr[mask] = 0
-    return dUdr
 
 
 class MultipleTPS(MultipleAlignment):
