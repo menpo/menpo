@@ -199,7 +199,7 @@ class StatisticallyDrivenTransform(Transform):
 
         return self.estimate(composed_target)
 
-    def _compose_both(self, statistically_driven_transform):
+    def _compose_both(self, stat_driven_transform):
         """
         Composes two statistically driven transforms together based on the
         first order approximation proposed in:
@@ -207,7 +207,7 @@ class StatisticallyDrivenTransform(Transform):
         - G. Papandreou and P. Maragos, "Adaptive and Constrained Algorithms
           for Inverse Compositional Active Appearance Model Fitting", CVPR08
 
-        :param statistically_driven_transform: the StatisticallyDrivenTransform
+        :param stat_driven_transform: the StatisticallyDrivenTransform
             object to which the composition has to be performed with.
         :return the resulting StatisticallyDrivenTransform
         """
@@ -249,13 +249,21 @@ class StatisticallyDrivenTransform(Transform):
 
             # dW/dp is simply the concatenation of dX_dq with dX_db
             dW_dp = np.hstack((dW_dq, dW_db))
-            # dW_dp:    n_landmarks  x     n_weights     x  n_dim
+            # dW_dp:    n_landmarks  x     n_params     x  n_dim
 
         dW_dx = self.transform.jacobian_points(self.source)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         # dW_dx:  n_landmarks  x  n_dim  x  n_dim
 
-        dW_dx_dW_dp_0 = np.einsum('ijl, idl -> idj', dW_dx, dW_dp_0)
+        #TODO: Can we do this without splitting across the two dimensions?
+        dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
+        dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
+        dW_dp_0_mat = np.reshape(dW_dp_0, (self.model.mean.n_points * self.n_dim,
+                                           self.n_parameters))
+        dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
+        dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0, (self.model.mean.n_points,
+                                                   self.n_parameters,
+                                                   self.n_dim))
         # dW_dx:          n_landmarks  x  n_dim     x  n_dim
         # dW_dp_0:        n_landmarks  x  n_params  x  n_dim
         # dW_dx_dW_dp_0:  n_landmarks  x  n_params  x  n_dim
@@ -266,9 +274,7 @@ class StatisticallyDrivenTransform(Transform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        p = (self.as_vector() +
-             np.sum(Jp * statistically_driven_transform.as_vector(),
-                    axis=0))
+        p = self.as_vector() + np.dot(Jp, stat_driven_transform.as_vector())
 
         return self.from_vector(p)
 

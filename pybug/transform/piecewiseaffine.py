@@ -252,11 +252,26 @@ class PiecewiseAffineTransform(Transform):
 
     def jacobian_points(self, points):
         """
-        Returns the jacobian of the warp at each
-        :param points:
-        :return:
+        Calculates the Jacobian of the PWA warp with respect to the the points
+        to which the warp is applied to. Expected to return a
+        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
+        as necessary.
+
+        The derivative of a piecewise affine warp with respect to the points
+        is simply the identity matrix for every point in the warp.
+
+        Parameters
+        ----------
+        points: (N, D) ndarray
+            The points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dx: (N, D, D) ndarray
+            The Jacobian of the transform with respect to the points to which
+            the transform is applied to.
         """
-        return np.eye(2, 2)[np.newaxis, ...]
+        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
 
     def _tri_containment_loop(self, points):
         """
