@@ -174,8 +174,6 @@ class ImageForwardCompositional(ImageLucasKanade):
         self.dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-        pass
-
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
@@ -228,8 +226,6 @@ class ImageInverseCompositional(ImageLucasKanade):
 
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self.VT_dW_dp)
-
-        pass
 
     def _align(self, max_iters=30):
         # Initial error > eps
