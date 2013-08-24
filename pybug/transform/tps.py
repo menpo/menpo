@@ -137,30 +137,21 @@ class TPSTransform(Transform):
             the Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
-        #Y = np.hstack([points.T, np.zeros([2, 3])])
-        #coefficients = np.linalg.solve(self.tps.L, Y.T)
-
-        abs_dist = distance.cdist(self.tps.source, self.tps.source)
-
-        vec_dist = self.tps.source - self.tps.source[:, np.newaxis]
-
-        for i in range(0, 68):
-            vec_dist[:, i, :] = (self.tps.source[i, :] -
-                              self.tps.source)
+        pairwise_norms = distance.cdist(self.tps.source, self.tps.source)
+        vec_dist = np.subtract(self.tps.source[:, None], self.tps.source)
 
         dk_dx = np.zeros((self.tps.n_landmarks + 3,
                           self.tps.n_landmarks,
                           self.n_dim))
-        aux_1 = self.tps.kernel_derivative(abs_dist)
-        dk_dx[:-3, :] = aux_1[..., np.newaxis] * vec_dist
+        kernel_derivative = self.tps.kernel.derivative(pairwise_norms) / pairwise_norms
+        dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
 
-        aux_2 = np.array([[0, 0],
-                          [1, 0],
-                          [0, 1]])
-        dk_dx[-3:, :] = aux_2[:, np.newaxis]
+        affine_derivative = np.array([[0, 0],
+                                     [1, 0],
+                                     [0, 1]])
+        dk_dx[-3:, :] = affine_derivative[:, np.newaxis]
 
-        return np.einsum('ij, ikl -> kjl', self.tps.coefficients, dk_dx)
-
+        return np.einsum('ij, ikl -> klj', self.tps.coefficients, dk_dx)
 
     # TODO: revise this function and try to speed it up!!!
     def weight_points(self, points):
