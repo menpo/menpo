@@ -329,7 +329,7 @@ class PiecewiseAffineTransform(Transform):
     @property
     def n_parameters(self):
         """
-        Number of parameters: ``6``.
+        Number of parameters: ``n_tris * 6``.
 
         :type: int
 

@@ -5,6 +5,14 @@ from pybug.transform.base import Transform
 
 
 class TPSTransform(Transform):
+    r"""
+    A thin plate splines transform.
+
+    Parameters
+    ----------
+    tps : :class:`pybug.align.nonrigid.tps.TPS`
+        The TPS alignment object to use for transforming.
+    """
 
     def __init__(self, tps):
         self.tps = tps
@@ -12,8 +20,23 @@ class TPSTransform(Transform):
 
     def _apply(self, points, affine_free=False):
         """
-        TPS transform of input x (f) and the affine-free
-        TPS transform of the input x (f_affine_free)
+        Performs a TPS transform on the given points.
+
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to transform.
+        affine_free : bool, optional
+            If ``True`` the affine free component is also returned seperately.
+
+            Default: ``False``
+
+        Returns
+        --------
+        f : (N, D) ndarray
+            The transformed points
+        f_affine_free : (N, D) ndarray
+            The transformed points without the affine components applied.
         """
         if points.shape[1] != self.n_dim:
             raise DimensionalityError('TPS can only be used on 2D data.')
@@ -44,11 +67,17 @@ class TPSTransform(Transform):
     def jacobian(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the parameters - this
-        may be constant
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dp: n_points x n_params x n_dims ndarray representing
-            the Jacobian of the transform evaluated at the previous points.
+        may be constant.
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform evaluated at the previous points.
         """
         pass
 
@@ -56,10 +85,16 @@ class TPSTransform(Transform):
     def jacobian_source(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the source landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx_s: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the source landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points.
         """
         # I've been tempted to rename all TPS properties so that they match
@@ -118,10 +153,16 @@ class TPSTransform(Transform):
     def jacobian_target(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the target landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx_t: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the target landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the target landmarks evaluated
             at the previous points.
         """
         pass
@@ -131,10 +172,16 @@ class TPSTransform(Transform):
         """
         Calculates the Jacobian of the TPS warp wrt to the the points to which
         the warp is applied to.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx:  n_points x n_dims x n_dims ndarray representing
-            the Jacobian of the transform wrt the points to which the
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
         pairwise_norms = distance.cdist(self.tps.source, self.tps.source)
@@ -161,10 +208,16 @@ class TPSTransform(Transform):
         case of the Jacobian wrt to the source landmarks that is used in AAMs
         to weight the relative importance of each pixel in the reference
         frame wrt to each one of the source landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the source landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points and assuming that the target is equal to
             the source.
         """
@@ -214,36 +267,48 @@ class TPSTransform(Transform):
 
     def compose(self, a):
         """
-        Composes two transforms together: W(x;p) <- W(x;p) o W(x;delta_p)
-        :param a: transform of the same type as this object
+        Composes two transforms together::
+
+            ``W(x;p) <- W(x;p) o W(x;delta_p)``
+
+        Parameters
+        ----------
+        a : :class:`TPSTransform`
+            TPS transform to compose with.
+
+        Returns
+        -------
+        composed : :class:`TPSTransform`
+            The result of the composition.
         """
         pass
 
     def inverse(self):
         """
-        Returns the inverse of the transform, if applicable
-        :raise NonInvertable if transform has no inverse
+        Returns the inverse of the transform, if applicable.
+
+        Returns
+        -------
+        inverse : :class:`TPSTransform`
+            The inverse of the transform.
         """
         pass
 
     @property
     def n_parameters(self):
         """
+        Number of parameters: ``(2 * n_landmarks) + 6``.
+
+        :type: int
+
         There is a parameter for each dimension, and thus two parameters per
-        landmark + the parameters of a 2D affine transform:
-        (2 * num_landmarks) + 6
-        :return:
+        landmark + the parameters of a 2D affine transform
+        ``(2 * n_landmarks) + 6``
         """
         return (2 * self.tps.n_landmarks) + 6
 
     def as_vector(self):
-        """
-        Return the parameters of the transform as a 1D ndarray
-        """
-        pass
+        raise NotImplementedError("TPS as_vector is not implemented yet.")
 
-    def from_vector(self, vectorized_instance):
-        """
-        Return the parameters of the transform as a 1D ndarray
-        """
-        pass
+    def from_vector(self, flattened):
+        raise NotImplementedError("TPS from_vector is not implemented yet.")
