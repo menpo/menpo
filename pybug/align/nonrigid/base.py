@@ -2,7 +2,15 @@ from pybug.align.base import Alignment, MultipleAlignment
 
 
 class NonRigidAlignment(Alignment):
-    """ Abstract class specializing in nonrigid alignments.
+    r"""
+    Abstract class specializing in nonrigid alignments.
+
+    Parameters
+    -----------
+    source : (N, D) ndarray
+        The source points to apply the transformation from
+    target : (N, D) ndarray
+        The target points to apply the transformation to
     """
 
     def __init__(self, source, target):
@@ -10,7 +18,13 @@ class NonRigidAlignment(Alignment):
 
 
 class MultipleNonRigidAlignment(MultipleAlignment):
-    """ Abstract class specializing in nonrigid alignments.
+    r"""
+    Abstract class specializing in nonrigid alignments.
+
+    Parameters
+    -----------
+    source : list of ndarray
+        A list of sources to apply a transformation to
     """
 
     def __init__(self, sources, **kwargs):

@@ -3,7 +3,20 @@ from pybug.visualize.base import Viewer
 
 
 class ViewerImage(Viewer):
-    """ A viewer restricted to Image dimensional data.
+    r"""
+    A viewer restricted to 2 dimensional image data. The image can have an
+    optional number of channels (RGB images). 1 channel images are rendered
+    in grayscale.
+
+    Parameters
+    ----------
+    image : (M, N) ndarray
+        A 2D set of pixels in the range ``[0, 1]``.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 2D images are supported.
     """
 
     def __init__(self, image):

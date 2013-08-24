@@ -3,8 +3,18 @@ from pybug.visualize.base import Viewer
 
 
 class Viewer2d(Viewer):
-    """
+    r"""
     A viewer restricted to 2 dimensional data.
+
+    Parameters
+    ----------
+    points : (N, 2) ndarray
+        A 2D set of points.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 2D pointclouds are supported.
     """
 
     def __init__(self, points):
@@ -19,6 +29,11 @@ class Viewer2d(Viewer):
 
     @property
     def n_points(self):
+        r"""
+        The number of points.
+
+        :type: int
+        """
         return self.points.shape[0]
 
 

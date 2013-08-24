@@ -9,3 +9,10 @@ matlab Package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+    pybug.matlab.wrapper
+

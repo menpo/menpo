@@ -17,14 +17,6 @@ nonrigid Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`exceptions` Module
-------------------------
-
-.. automodule:: pybug.align.nonrigid.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`tps` Module
 -----------------
 

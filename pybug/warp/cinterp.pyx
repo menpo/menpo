@@ -23,12 +23,27 @@ cdef extern from "cpp/interp2.h":
 def interp2(np.ndarray[np.float64_t, ndim=3, mode='c'] F not None,
             axis0_indices, axis1_indices, mode='bilinear'):
     """
+    Given a multi-channel image and a set of sub-pixel coordinates, return the
+    interpolated pixel values using the given ``mode``.
 
-    :param F: Two dimensional input image, with a channels
-    :param axis0_indices:
-    :param axis1_indices:
-    :param mode:
-    :return:
+    Parameters
+    ----------
+    F : (N, 2, C) c-contiguous double ndarray
+        Two dimensional input image, with ``C`` optional channels
+    axis0_indices : (M,) ndarray
+        The set of indices over the first axis.
+    axis1_indices : (M,) ndarray
+        The set of indices over the second axis.
+    mode : {'bilinear', 'bicubic', 'nearest'}, optional
+        The type of interpolation to be performed.
+
+        Default: bilinear
+
+    Returns
+    -------
+    interpolated : (M, C) c-contiguous double ndarray
+        An array where each column is the interpolated values for the given
+        channel.
     """
 
     # Convert Python input (indices), which could be integers, to doubles
