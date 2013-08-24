@@ -33,14 +33,6 @@ shape Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`landmarks` Module
------------------------
-
-.. automodule:: pybug.shape.landmarks
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`pointcloud` Module
 ------------------------
 
