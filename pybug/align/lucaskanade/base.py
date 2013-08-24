@@ -267,6 +267,10 @@ class ImageForwardAdditive(ImageLucasKanade):
 class ImageForwardCompositional(ImageLucasKanade):
 
     def _precompute(self):
+        r"""
+        The forward compositional algorithm pre-computes the Jacobian of the
+        warp. This is set as an attribute on the class.
+        """
         # Compute the Jacobian of the warp
         self.dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
@@ -313,6 +317,11 @@ class ImageForwardCompositional(ImageLucasKanade):
 class ImageInverseCompositional(ImageLucasKanade):
 
     def _precompute(self):
+        r"""
+        The Inverse Compositional algorithm pre-computes the jacobian of the
+        warp, the steepest descent images and the Hessian. These are all
+        stored as attributes on the class.
+        """
         # Compute the Jacobian of the warp
         dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
