@@ -169,7 +169,7 @@ class AffineTransform(Transform):
             the Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
-        return np.tile(self.linear_component, (points.shape[0], 1, 1))
+        return self.linear_component[None, ...]
 
     @property
     def n_parameters(self):
