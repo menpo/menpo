@@ -29,7 +29,7 @@ class TPSTransform(Transform):
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         # grab the affine free components of the warp
         c_affine_free = self.tps.coefficients[:-3]
         # build the affine free warp component
@@ -72,7 +72,7 @@ class TPSTransform(Transform):
 
         # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
 
@@ -182,7 +182,7 @@ class TPSTransform(Transform):
 
         # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
 
