@@ -8,6 +8,8 @@ class Transform(Vectorizable):
     Provides a unified interface to apply the transform (:meth:`apply`)
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def apply(self, x, **kwargs):
         """
         Applies this transform to x. If x is `Transformable`,
