@@ -9,6 +9,8 @@ class Transform(Vectorizable):
     transforms are vectorizable.
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def apply(self, x, **kwargs):
         r"""
         Applies this transform to ``x``. If ``x`` is :class:`Transformable`,
