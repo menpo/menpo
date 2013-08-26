@@ -106,6 +106,52 @@ class LinearModel(StatisticalModel):
         """
         pass
 
+    def distance_to_subspace(self, novel_instance):
+        """
+        Returns a version of novel_instance where all the information in
+        the first n_components of the model has been projected out.
+        :param novel_instance: A novel instance of Vectorizable
+        :return: A copy of novel instance, with all features of the
+        model projected out
+        """
+        vectorized_instance = self._distance_to_subspace(novel_instance.as_vector())
+        return novel_instance.from_vector(vectorized_instance.flatten())
+
+    @abc.abstractmethod
+    def _distance_to_subspace(self, novel_vectorized_instance):
+        """
+        Returns a version of novel_instance where all the information in
+        the first n_components of the model has been projected out.
+        :param novel_vectorized_instance: A vectorized novel instance of the
+        model
+        :return: The resulting vectorized instance where the features of the
+        model from the first n_components have been removed.
+        """
+        pass
+
+    def distance_within_subspace(self, novel_instance):
+        """
+        Returns a version of novel_instance where all the information in
+        the first n_components of the model has been projected out.
+        :param novel_instance: A novel instance of Vectorizable
+        :return: A copy of novel instance, with all features of the
+        model projected out
+        """
+        vectorized_instance = self._distance_within_subspace(novel_instance.as_vector())
+        return novel_instance.from_vector(vectorized_instance.flatten())
+
+    @abc.abstractmethod
+    def _distance_within_subspace(self, novel_vectorized_instance):
+        """
+        Returns a version of novel_instance where all the information in
+        the first n_components of the model has been projected out.
+        :param novel_vectorized_instance: A vectorized novel instance of the
+        model
+        :return: The resulting vectorized instance where the features of the
+        model from the first n_components have been removed.
+        """
+        pass
+
 
 class PCAModel(LinearModel):
     """
@@ -192,3 +238,11 @@ class PCAModel(LinearModel):
         # TODO:
         return (novel_vectorized_instance -
                 np.dot(self.components.T, weights))
+
+    def _distance_to_subspace(self, novel_vectorized_instance):
+        return (self.inv_avg_variance) * obj._project_out(novel_vectorized_instance)
+
+    def _distance_from_subspace(self, novel_vectorized_instance):
+        weights = np.dot(self.components, novel_vectorized_instance)
+        L = 1 / np.diag(self.explained_variance)
+        return np.dot(self.components, np.dot(L, weights))
