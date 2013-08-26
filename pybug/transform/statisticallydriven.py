@@ -70,8 +70,8 @@ class StatisticallyDrivenTransform(Transform):
                                                self.target.points)
 
     @property
-    def n_dim(self):
-        return self.transform.n_dim
+    def n_dims(self):
+        return self.transform.n_dims
 
     @property
     def n_weights(self):
@@ -112,10 +112,13 @@ class StatisticallyDrivenTransform(Transform):
             # cache points
             self._cached_points = points
 
+        model_jacobian = self.model.jacobian.reshape(
+            (self.n_weights, -1, self.n_dims)).swapaxes(0, 1)
+
         # compute dX/dp
         if self.global_transform is None:
             # dX/dp is simply the Jacobian of the model
-            dX_dp = self.model.jacobian
+            dX_dp = model_jacobian
         else:
             # dX/dq is the Jacobian of the global transform evaluated at the
             # mean of the model.
@@ -124,7 +127,7 @@ class StatisticallyDrivenTransform(Transform):
 
             # by application of the chain rule dX_db is the Jacobian of the
             # model transformed by the linear component of the global transform
-            dS_db = self.model.jacobian
+            dS_db = model_jacobian
             dX_dS = self.global_transform.jacobian_points(
                 self.model.mean.points)
             dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
@@ -194,10 +197,16 @@ class StatisticallyDrivenTransform(Transform):
     #   - For PWA it should implement Bakers algorithmic approach to
     #     composition
     def _compose_warp(self, statistically_driven_transform):
-        incremental_target = statistically_driven_transform.target
-        composed_target = self.transform.apply(incremental_target)
+        aux3 = (statistically_driven_transform.model.instance(
+            statistically_driven_transform.weights).points -
+            statistically_driven_transform.model.mean.points)
+        aux4 = statistically_driven_transform.global_transform.apply(
+            aux3 + self.source.points)
 
-        return self.estimate(composed_target)
+        composed_target = self.transform.apply(aux4)
+
+        from pybug.shape import PointCloud
+        return self.estimate(PointCloud(composed_target))
 
     def _compose_both(self, statistically_driven_transform):
         """
@@ -211,6 +220,10 @@ class StatisticallyDrivenTransform(Transform):
             object to which the composition has to be performed with.
         :return the resulting StatisticallyDrivenTransform
         """
+
+        model_jacobian = self.model.jacobian.reshape(
+            (self.n_weights, -1, self.n_dims)).swapaxes(0, 1)
+
         # compute:
         # -> dW/dp when p=0
         # -> dW/dp when p!=0
@@ -218,7 +231,7 @@ class StatisticallyDrivenTransform(Transform):
         if self.global_transform is None:
             # dW/dp when p=0 and when p!=0 are the same and simply given by
             # the Jacobian of the model
-            dW_dp_0 = self.model.jacobian
+            dW_dp_0 = model_jacobian
             dW_dp = dW_dp_0
             # dW_dp_0:  n_landmarks  x     n_params     x  n_dim
             # dW_dp:    n_landmarks  x     n_params     x  n_dim
@@ -230,7 +243,7 @@ class StatisticallyDrivenTransform(Transform):
             # dW_dq:  n_landmarks  x  n_global_params  x  n_dim
 
             # dW/db when p=0, is the Jacobian of the model
-            dW_db_0 = self.model.jacobian
+            dW_db_0 = model_jacobian
             # dW_db_0:  n_landmarks  x     n_weights     x  n_dim
 
             # dW/dp when p=0, is simply the concatenation of the previous

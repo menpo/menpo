@@ -23,12 +23,12 @@ class AffineTransform(Transform):
         shape = homogeneous_matrix.shape
         if len(shape) != 2 and shape[0] != shape[1]:
             raise Exception("You need to provide a square homogeneous matrix.")
-        self.n_dim = shape[0] - 1
+        self.n_dims = shape[0] - 1
         # this restriction is because we have to be able to decompose
         # transforms to find their meaning, and I haven't explored 4D+
         # rotations (everything else is obvious). If there is need we can
         # relax it in the future
-        if self.n_dim not in [2, 3]:
+        if self.n_dims not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or "
                                       "3D")
         self.homogeneous_matrix = homogeneous_matrix
@@ -122,29 +122,29 @@ class AffineTransform(Transform):
             the Jacobian of the transform.
         """
         n_points, points_n_dim = points.shape
-        if points_n_dim != self.n_dim:
+        if points_n_dim != self.n_dims:
             raise DimensionalityError(
                 "Trying to sample jacobian in incorrect dimensions "
                 "(transform is {0}D, sampling at {1}D)".format(
-                    self.n_dim, points_n_dim))
+                    self.n_dims, points_n_dim))
         # prealloc the jacobian
-        jac = np.zeros((n_points, self.n_parameters, self.n_dim))
+        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
         # a mask that we can apply at each iteration
-        dim_mask = np.eye(self.n_dim, dtype=np.bool)
+        dim_mask = np.eye(self.n_dims, dtype=np.bool)
 
-        for i, s in enumerate(range(0, self.n_dim * self.n_dim, self.n_dim)):
+        for i, s in enumerate(range(0, self.n_dims * self.n_dims, self.n_dims)):
             # i is current axis
             # s is slicing offset
             # make a mask for a single points jacobian
-            full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
+            full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=bool)
             # fill the mask in for the ith axis
-            full_mask[slice(s, s + self.n_dim)] = dim_mask
+            full_mask[slice(s, s + self.n_dims)] = dim_mask
             # assign the ith axis points to this mask, broadcasting over all
             # points
             jac[:, full_mask] = points[:, i][..., None]
         # finally, just repeat the same but for the ones at the end
-        full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=bool)
-        full_mask[slice(s + self.n_dim, s + 2 * self.n_dim)] = dim_mask
+        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=bool)
+        full_mask[slice(s + self.n_dims, s + 2 * self.n_dims)] = dim_mask
         jac[:, full_mask] = 1
         return jac
 
@@ -186,7 +186,7 @@ class AffineTransform(Transform):
             [p2, p5, p8, p11]
             [p3, p6, p9, p12]
         """
-        return self.n_dim * (self.n_dim + 1)
+        return self.n_dims * (self.n_dims + 1)
 
     def as_vector(self):
         """
@@ -195,8 +195,8 @@ class AffineTransform(Transform):
         include the homogeneous part of the warp. Note that it flattens using
         Fortran ordering, to stay consistent with Matlab.
         """
-        params = self.homogeneous_matrix - np.eye(self.n_dim + 1)
-        return params[:self.n_dim, :].flatten(order='F')
+        params = self.homogeneous_matrix - np.eye(self.n_dims + 1)
+        return params[:self.n_dims, :].flatten(order='F')
 
     @classmethod
     def from_vector(cls, p):
@@ -329,9 +329,9 @@ class SimilarityTransform(AffineTransform):
         3D Similarity: Currently not supported
         :return:
         """
-        if self.n_dim == 2:
+        if self.n_dims == 2:
             return 4
-        elif self.n_dim == 3:
+        elif self.n_dims == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
@@ -359,18 +359,18 @@ class SimilarityTransform(AffineTransform):
             transform is not 2D
         """
         n_points, points_n_dim = points.shape
-        if points_n_dim != self.n_dim:
+        if points_n_dim != self.n_dims:
             raise DimensionalityError('Trying to sample jacobian in incorrect '
                                       'dimensions (transform is {0}D, '
-                                      'sampling at {1}D)'.format(self.n_dim,
+                                      'sampling at {1}D)'.format(self.n_dims,
                                                                  points_n_dim))
-        elif self.n_dim != 2:
+        elif self.n_dims != 2:
             # TODO: implement 3D Jacobian
             raise DimensionalityError("Only the Jacobian of a 2D similarity "
                                       "transform is currently supported.")
 
         # prealloc the jacobian
-        jac = np.zeros((n_points, self.n_parameters, self.n_dim))
+        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
         ones = np.ones_like(points)
 
         # Build a mask and apply it to the points to build the jacobian
@@ -384,7 +384,7 @@ class SimilarityTransform(AffineTransform):
 
     def _apply_jacobian_mask(self, jac, param_mask, row_index, points):
         # make a mask for a single points jacobian
-        full_mask = np.zeros((self.n_parameters, self.n_dim), dtype=np.bool)
+        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=np.bool)
         # fill the mask in for the ith axis
         full_mask[row_index] = [True, True]
         # assign the ith axis points to this mask, broadcasting over all
@@ -397,7 +397,7 @@ class SimilarityTransform(AffineTransform):
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [a, b, tx, ty].
         """
-        n_dim = self.n_dim
+        n_dim = self.n_dims
         if n_dim == 2:
             params = self.homogeneous_matrix - np.eye(n_dim + 1)
             # Pick off a, b, tx, ty
@@ -604,7 +604,7 @@ class Rotation2D(AbstractRotation):
 
     def __init__(self, rotation_matrix):
         super(Rotation2D, self).__init__(rotation_matrix)
-        if self.n_dim != 2:
+        if self.n_dims != 2:
             raise DimensionalityError("Rotation2D has to be built from a 2D"
                                       " rotation matrix")
 
@@ -661,7 +661,7 @@ class Rotation3D(AbstractRotation):
 
     def __init__(self, rotation_matrix):
         super(Rotation3D, self).__init__(rotation_matrix)
-        if self.n_dim != 3:
+        if self.n_dims != 3:
             raise DimensionalityError("Rotation3D has to be built from a 3D"
                                       " rotation matrix")
 
@@ -977,7 +977,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         n_dim parameters - [tx, ty, ...] - The translation along each axis
         :return:
         """
-        return self.n_dim
+        return self.n_dims
 
     def as_vector(self):
         """
@@ -985,7 +985,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         are parametrised as deltas from the identity warp. The parameters
         are output in the order [tx, ty].
         """
-        return self.homogeneous_matrix[:self.n_dim, self.n_dim]
+        return self.homogeneous_matrix[:self.n_dims, self.n_dims]
 
     @classmethod
     def from_vector(cls, p):

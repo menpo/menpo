@@ -20,11 +20,11 @@ class Alignment(object):
         self.source = source.copy()
         self.aligned_source = self.source.copy()
         try:
-            self.n_landmarks, self.n_dim = self.source.shape
+            self.n_landmarks, self.n_dims = self.source.shape
         except ValueError:
             raise AlignmentError('Data is being provided in an invalid format'
                                  ' - must have shape (n_landmarks, n_dim)')
-        assert self.n_dim, self.n_landmarks == target.shape
+        assert self.n_dims, self.n_landmarks == target.shape
         self.target = target.copy()
 
     def _view_2d(self, image=False):

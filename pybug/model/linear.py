@@ -83,28 +83,23 @@ class LinearModel(StatisticalModel):
             weightings = weightings[:n_components]
         return self._instance(weightings)
 
-    def project_out(self, novel_instance, n_components):
+    def project_out(self, novel_instance):
         """
         Returns a version of novel_instance where all the information in
         the first n_components of the model has been projected out.
         :param novel_instance: A novel instance of Vectorizable
-        :param n_components: The number of components to utilize from the
-        model
         :return: A copy of novel instance, with all features of the
         model projected out
         """
-        vectorized_instance = self._project_out(novel_instance.as_vector(),
-                                                n_components)
-        return novel_instance.from_vector(vectorized_instance)
+        vectorized_instance = self._project_out(novel_instance.as_vector())
+        return novel_instance.from_vector(vectorized_instance.flatten())
 
     @abc.abstractmethod
-    def _project_out(self, novel_vectorized_instance, n_components):
+    def _project_out(self, novel_vectorized_instance):
         """
         Returns a version of novel_instance where all the information in
         the first n_components of the model has been projected out.
         :param novel_vectorized_instance: A vectorized novel instance of the
-        model
-        :param n_components: The number of components to utilize from the
         model
         :return: The resulting vectorized instance where the features of the
         model from the first n_components have been removed.
@@ -174,10 +169,7 @@ class PCAModel(LinearModel):
 
     @property
     def jacobian(self):
-        jac = self.components.reshape((self.n_components,
-                                       -1,
-                                       self.template_sample.n_dims))
-        return jac.swapaxes(0, 1)
+        return self.components
 
     def _instance(self, weightings):
         if weightings.shape[0] > self.n_components:
@@ -195,6 +187,8 @@ class PCAModel(LinearModel):
         return self._pca.transform(
             novel_vectorized_instance.reshape((1, -1))).flatten()
 
-    def _project_out(self, novel_vectorized_instance, n_components):
-        #TODO Implement project_out on PCAModel
-        pass
+    def _project_out(self, novel_vectorized_instance):
+        weights = np.dot(self.components, novel_vectorized_instance)
+        # TODO:
+        return (novel_vectorized_instance -
+                np.dot(self.components.T, weights))

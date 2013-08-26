@@ -8,14 +8,14 @@ class TPSTransform(Transform):
 
     def __init__(self, tps):
         self.tps = tps
-        self.n_dim = self.tps.n_dim
+        self.n_dims = self.tps.n_dims
 
     def _apply(self, points, affine_free=False):
         """
         TPS transform of input x (f) and the affine-free
         TPS transform of the input x (f_affine_free)
         """
-        if points.shape[1] != self.n_dim:
+        if points.shape[1] != self.n_dims:
             raise TPSError('TPS can only be used on 2D data.')
         x = points[..., 0][:, None]
         y = points[..., 1][:, None]
@@ -146,11 +146,11 @@ class TPSTransform(Transform):
 
         for i in range(0, 68):
             vec_dist[:, i, :] = (self.tps.source[i, :] -
-                              self.tps.source)
+                                 self.tps.source)
 
         dk_dx = np.zeros((self.tps.n_landmarks + 3,
                           self.tps.n_landmarks,
-                          self.n_dim))
+                          self.n_dims))
         aux_1 = self.tps.kernel_derivative(abs_dist)
         dk_dx[:-3, :] = aux_1[..., np.newaxis] * vec_dist
 
@@ -160,7 +160,6 @@ class TPSTransform(Transform):
         dk_dx[-3:, :] = aux_2[:, np.newaxis]
 
         return np.einsum('ij, ikl -> kjl', self.tps.coefficients, dk_dx)
-
 
     # TODO: revise this function and try to speed it up!!!
     def weight_points(self, points):
