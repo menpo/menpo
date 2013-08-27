@@ -309,3 +309,11 @@ class PCAModel(LinearModel):
         # TODO:
         return (novel_vectorized_instance -
                 np.dot(self.components.T, weights))
+
+    def _distance_to_subspace(self, novel_vectorized_instance):
+        return (self.inv_avg_variance) * obj._project_out(novel_vectorized_instance)
+
+    def _distance_from_subspace(self, novel_vectorized_instance):
+        weights = np.dot(self.components, novel_vectorized_instance)
+        L = 1 / np.diag(self.explained_variance)
+        return np.dot(self.components, np.dot(L, weights))
