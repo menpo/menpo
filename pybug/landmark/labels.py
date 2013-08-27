@@ -6,9 +6,9 @@ from pybug.landmark.exceptions import LabellingError
 def imm_58_points(landmarks):
     """
     Apply the 58 point semantic labels from the
-    `IMM dataset <http://www2.imm.dtu.dk/~aam/>`_ to the landmarks in the
-    given landmark manager. The label applied to this new manager will be
-    'imm_58_points'.
+    IMM dataset to the landmarks in the given landmark manager.
+
+    The label applied to this new manager will be 'imm_58_points'.
 
     The semantic labels applied are as follows:
 
@@ -20,14 +20,24 @@ def imm_58_points(landmarks):
       - mouth
       - nose
 
-    :param landmarks: The landmarks to apply semantic labels to.
-    :type landmarks:
-        :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
-    :return: New landmark manager with label 'imm_58_points'
-    :raises:
-        :class:`LabellingError <pybug.landmark.exceptions.LabellingError>`
-        if the given landmark set contains less than 58 points
-    :rtype: :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
+    Parameters
+    ----------
+    landmarks: :class:`pybug.landmark.base.LandmarkManager`
+        The landmarks to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
+        New landmark manager with label 'imm_58_points'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark set contains less than 58 points
+
+    References
+    -----------
+    .. [1] http://www2.imm.dtu.dk/~aam/
     """
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined in the IMM dataset (and not thus not a PointCloud)
@@ -49,12 +59,14 @@ def imm_58_points(landmarks):
 
     return LandmarkManager(landmarks.shape, label, landmark_dict)
 
+
 def ibug_68_points(landmarks):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of http://www.multipie.org/) to the landmarks in
-    the given landmark manager. The label applied to this new manager will be
-    'ibug_68_points'.
+    original semantic labels of multiPIE) to the landmarks in
+    the given landmark manager.
+
+    The label applied to this new manager will be 'ibug_68_points'.
 
     The semantic labels applied are as follows:
 
@@ -66,14 +78,24 @@ def ibug_68_points(landmarks):
       - mouth
       - nose
 
-    :param landmarks: The landmarks to apply semantic labels to.
-    :type landmarks:
-        :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
-    :return: New landmark manager with label 'ibug_68_points'
-    :raises:
-        :class:`LabellingError <pybug.landmark.exceptions.LabellingError>`
-        if the given landmark set contains less than 68 points
-    :rtype: :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
+    Parameters
+    ----------
+    landmarks: :class:`pybug.landmark.base.LandmarkManager`
+        The landmarks to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
+        New landmark manager with label 'ibug_68_points'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark set contains less than 68 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
     """
     # TODO: might have to rethink what's the v=bes way of implementing this
     # functions
@@ -101,22 +123,33 @@ def ibug_68_points(landmarks):
 def ibug_68_contour(landmarks):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of http://www.multipie.org/) to the landmarks in
-    the given landmark manager. The label applied to this new manager will be
-    'ibug_68_points'.
+    original semantic labels of multiPIE) to the landmarks in
+    the given landmark manager.
+
+    The label applied to this new manager will be 'ibug_68_contour'.
 
     The semantic labels applied are as follows:
 
       - contour
 
-    :param landmarks: The landmarks to apply semantic labels to.
-    :type landmarks:
-        :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
-    :return: New landmark manager with label 'ibug_68_points'
-    :raises:
-        :class:`LabellingError <pybug.landmark.exceptions.LabellingError>`
-        if the given landmark set contains less than 68 points
-    :rtype: :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
+    Parameters
+    ----------
+    landmarks: :class:`pybug.landmark.base.LandmarkManager`
+        The landmarks to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
+        New landmark manager with label 'ibug_68_contour'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark set contains less than 68 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
     """
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined by ibug (and not thus not a PointCloud)
@@ -141,22 +174,33 @@ def ibug_68_contour(landmarks):
 def ibug_68_trimesh(landmarks):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of http://www.multipie.org/) to the landmarks in
-    the given landmark manager. The label applied to this new manager will be
-    'ibug_68_points'.
+    original semantic labels of multiPIE) to the landmarks in
+    the given landmark manager.
+
+    The label applied to this new manager will be 'ibug_68_trimesh'.
 
     The semantic labels applied are as follows:
 
-      - contour
+      - tri
 
-    :param landmarks: The landmarks to apply semantic labels to.
-    :type landmarks:
-        :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
-    :return: New landmark manager with label 'ibug_68_points'
-    :raises:
-        :class:`LabellingError <pybug.landmark.exceptions.LabellingError>`
-        if the given landmark set contains less than 68 points
-    :rtype: :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>`
+    Parameters
+    ----------
+    landmarks: :class:`pybug.landmark.base.LandmarkManager`
+        The landmarks to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
+        New landmark manager with label 'ibug_68_trimesh'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark set contains less than 68 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
     """
 
     from pybug.shape import TriMesh
@@ -210,16 +254,21 @@ def labeller(landmarkables, label, label_func):
     will be separated in to separate pointclouds and given a label that
     identifies their semantic meaning.
 
-    :param landmarkables: List of landmarkable objects
-    :type landmarkables:
-        [:class:`Landmarkable <pybug.landmark.base.Landmarkable>`]
-    :param label: The label of the landmark set to apply semantic labels to
-    :type label: String
-    :param label_func: A labelling function taken from this module
-    :type label_func: Function that takes a
-        :class:`LandmarkManager <pybug.landmark.base.LandmarkManager>` and
-        returns a new LandmarkManager with semantic labels applied.
-    :return: The list of modified landmarkables (this is just for convenience,
+    Parameters
+    ----------
+    landmarkables: list of :class:`pybug.landmark.base.Landmarkable`
+        List of landmarkable objects
+    label: string
+        The label of the landmark set to apply semantic labels to.
+    label_func: func
+        A labelling function taken from this module. ``func`` should take a
+        :class:`pybug.landmark.base.LandmarkManager` and
+        return a new LandmarkManager with semantic labels applied.
+
+    Returns
+    -------
+    landmarkables : list of :class:`pybug.landmark.base.Landmarkable`
+        The list of modified landmarkables (this is just for convenience,
         the list will actually be modified in place)
     """
     landmarks = [label_func(l.get_landmark_set(label))

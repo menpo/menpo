@@ -3,34 +3,40 @@ from pybug.transform import Transform
 
 
 class StatisticallyDrivenTransform(Transform):
+    r"""
+    A transform that couples a traditional landmark-based transform to a
+    statistical model together with a global similarity transform,
+    such that the parameters of the transform are fully specified by
+    both the weights of statistical model and the parameters of the
+    similarity transform.. The model is assumed to
+    generate an instance which is then transformed by the similarity
+    transform; the result defines the target landmarks of the transform.
+    If no source is provided, the mean of the model is defined as the
+    source landmarks of the transform.
+
+    Parameters
+    ----------
+    model : :class:`pybug.model.base.StatisticalModel`
+        A linear statistical shape model.
+    transform_constructor : func
+        A function that returns a :class:`pybug.transform.base.Transform`
+        object. It will be fed the source landmarks as the first
+        argument and the target landmarks as the second. The target is
+        set to the points generated from the model using the
+        provide weights - the source is either given or set to the
+        model's mean.
+    source : :class:`pybug.shape.base.PointCloud`
+        The source landmarks of the transform. If no ``source`` is provided the
+        mean of the model is used.
+    weights : (P,) ndarray
+        The reconstruction weights that will be fed to the model in order to
+        generate an instance of the target landmarks.
+    """
 
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform_constructor,
                  source=None, weights=None, global_transform=None,
                  composition='model', speed_up=None):
-        """
-        A transform that couples a traditional landmark-based transform to a
-        statistical model together with a global similarity transform,
-        such that the parameters of the transform are fully specified by
-        both the weights of statistical model and the parameters of the
-        similarity transform.. The model is assumed to
-        generate an instance which is then transformed by the similarity
-        transform; the result defines the target landmarks of the transform.
-        If no source is provided, the mean of the model is defined as the
-        source landmarks of the transform.
-
-        :param model: A statistical linear shape model.
-        :param transform_constructor: A function that returns a Transform
-            object. It will be fed the source landmarks as the first
-            argument and the target landmarks as the second. The target is
-            set to the points generated from the model using the
-            provide weights - the source is either given or set to the
-            model's mean.
-        :param source: The source landmarks of the transform. If no source
-            is provided the mean of the model is used.
-        :param weights: The reconstruction weights that will be fed to
-            the model in order to generate an instance of the target landmarks.
-        """
         self.model = model
         self.transform_constructor = transform_constructor
 
@@ -70,23 +76,50 @@ class StatisticallyDrivenTransform(Transform):
                                                self.target.points)
 
     @property
-    def n_dims(self):
-        return self.transform.n_dims
+    def n_dim(self):
+        r"""
+        The number of dimensions that the transform supports.
+
+        :type: int
+        """
+        return self.transform.n_dim
 
     @property
     def n_weights(self):
+        r"""
+        The number of parameters in the linear model.
+
+        :type: int
+        """
         return self.model.n_components
 
     @property
     def n_global_parameters(self):
+        r"""
+        The number of parameters in the ``global_transform``
+
+        :type: int
+        """
         return self.global_transform.n_parameters
 
     @property
     def n_parameters(self):
+        r"""
+        The total number of parameters.
+
+        This is ``n_weights + n_global_parameters``.
+
+        :type: int
+        """
         return self.n_weights + self.n_global_parameters
 
     @property
     def global_parameters(self):
+        r"""
+        The parameters for the global transform.
+
+        :type: (``n_global_parameters``,) ndarray
+        """
         return self.global_transform.as_vector()
 
     def jacobian(self, points):
@@ -98,10 +131,16 @@ class StatisticallyDrivenTransform(Transform):
         equal to the source (dW/dx), together with the Jacobian of the
         linear model (and of the global transform if present) wrt its
         weights (dX/dp).
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dp: n_points x n_params x n_dims ndarray representing the
-            Jacobian of the StatisticallyDrivenTransform evaluated at the
+
+        Parameters
+        -----------
+        points: (N, D) ndarray
+            The points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the StatisticallyDrivenTransform evaluated at the
             previous points.
         """
         # check if re-computation of dW/dx can be avoided
@@ -145,10 +184,40 @@ class StatisticallyDrivenTransform(Transform):
 
         return dW_dp
 
+    # TODO: document me
     def jacobian_points(self, points):
+        r"""
+        TO BE DOCUMENTED
+
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to evaluate the Jacobian at.
+
+        Returns
+        -------
+        dW_dx : (N, D, D) ndarray
+            The jacobian with respect to the points
+        """
         pass
 
     def from_vector(self, flattened):
+        """
+        Build a new transform from the given parameter vector. This vector
+        is expected to have ``n_parameters`` values in it. Both the global
+        transform and the linear model are initialised with the appropriate
+        parameters.
+
+        Parameters
+        ----------
+        flattened : (``n_parameters``,) ndarray
+            The flattened vector of parameters.
+
+        Returns
+        -------
+        transform : :class:`StatisticallyDrivenTransform`
+            A new transform initialised with the given parameter vector.
+        """
         global_transform = self.global_transform.from_vector(
             flattened[:self.n_global_parameters])
         weights = flattened[self.n_global_parameters:]
@@ -160,9 +229,34 @@ class StatisticallyDrivenTransform(Transform):
             speed_up=(self._cached_points, self.dW_dX))
 
     def as_vector(self):
+        r"""
+        Return the current parameters of this transform. This is the
+        concatenated vector of the linear model's weights and the global
+        transform parameters.
+
+        Returns
+        -------
+        params : (``n_parameters``,) ndarray
+            The vector of parameters
+        """
         return np.hstack((self.global_parameters, self.weights))
 
     def _apply(self, x, **kwargs):
+        r"""
+        Apply this transform to the given object. Uses the internal transform.
+
+        Parameters
+        ----------
+        x : (N, D) ndarray or a transformable object
+            The object to be transformed.
+        kwargs : dict
+            Passed through to transforms ``apply`` method.
+
+        Returns
+        --------
+        transformed : (N, D) ndarray or object
+            The transformed object
+        """
         return self.transform._apply(x, **kwargs)
 
     # TODO: Could be implemented as optimization option in LK???
@@ -197,33 +291,34 @@ class StatisticallyDrivenTransform(Transform):
     #   - For PWA it should implement Bakers algorithmic approach to
     #     composition
     def _compose_warp(self, statistically_driven_transform):
-        aux3 = (statistically_driven_transform.model.instance(
-            statistically_driven_transform.weights).points -
-            statistically_driven_transform.model.mean.points)
-        aux4 = statistically_driven_transform.global_transform.apply(
-            aux3 + self.source.points)
+        incremental_target = statistically_driven_transform.target
+        composed_target = self.transform.apply(incremental_target)
 
-        composed_target = self.transform.apply(aux4)
+        return self.estimate(composed_target)
 
-        from pybug.shape import PointCloud
-        return self.estimate(PointCloud(composed_target))
-
-    def _compose_both(self, statistically_driven_transform):
+    def _compose_both(self, stat_driven_transform):
         """
         Composes two statistically driven transforms together based on the
-        first order approximation proposed in:
+        first order approximation proposed by Papandreou and Maragos.
 
-        - G. Papandreou and P. Maragos, "Adaptive and Constrained Algorithms
-          for Inverse Compositional Active Appearance Model Fitting", CVPR08
+        Parameters
+        ----------
+        stat_driven_transform : :class:`StatisticallyDrivenTransform`
+            The transform object to which the composition has to be
+            performed with.
 
-        :param statistically_driven_transform: the StatisticallyDrivenTransform
-            object to which the composition has to be performed with.
-        :return the resulting StatisticallyDrivenTransform
+        Returns
+        -------
+        composed : :class:`StatisticallyDrivenTransform`
+            The new transform representing the result of the composition.
+
+        References
+        ----------
+
+        .. [1] G. Papandreou and P. Maragos, "Adaptive and Constrained
+               Algorithms for Inverse Compositional Active Appearance Model
+               Fitting", CVPR08
         """
-
-        model_jacobian = self.model.jacobian.reshape(
-            (self.n_weights, -1, self.n_dims)).swapaxes(0, 1)
-
         # compute:
         # -> dW/dp when p=0
         # -> dW/dp when p!=0
@@ -231,7 +326,7 @@ class StatisticallyDrivenTransform(Transform):
         if self.global_transform is None:
             # dW/dp when p=0 and when p!=0 are the same and simply given by
             # the Jacobian of the model
-            dW_dp_0 = model_jacobian
+            dW_dp_0 = self.model.jacobian
             dW_dp = dW_dp_0
             # dW_dp_0:  n_landmarks  x     n_params     x  n_dim
             # dW_dp:    n_landmarks  x     n_params     x  n_dim
@@ -243,7 +338,7 @@ class StatisticallyDrivenTransform(Transform):
             # dW_dq:  n_landmarks  x  n_global_params  x  n_dim
 
             # dW/db when p=0, is the Jacobian of the model
-            dW_db_0 = model_jacobian
+            dW_db_0 = self.model.jacobian
             # dW_db_0:  n_landmarks  x     n_weights     x  n_dim
 
             # dW/dp when p=0, is simply the concatenation of the previous
@@ -262,13 +357,21 @@ class StatisticallyDrivenTransform(Transform):
 
             # dW/dp is simply the concatenation of dX_dq with dX_db
             dW_dp = np.hstack((dW_dq, dW_db))
-            # dW_dp:    n_landmarks  x     n_weights     x  n_dim
+            # dW_dp:    n_landmarks  x     n_params     x  n_dim
 
         dW_dx = self.transform.jacobian_points(self.source)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         # dW_dx:  n_landmarks  x  n_dim  x  n_dim
 
-        dW_dx_dW_dp_0 = np.einsum('ijl, idl -> idj', dW_dx, dW_dp_0)
+        #TODO: Can we do this without splitting across the two dimensions?
+        dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
+        dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
+        dW_dp_0_mat = np.reshape(dW_dp_0, (self.model.mean.n_points * self.n_dim,
+                                           self.n_parameters))
+        dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
+        dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0, (self.model.mean.n_points,
+                                                   self.n_parameters,
+                                                   self.n_dim))
         # dW_dx:          n_landmarks  x  n_dim     x  n_dim
         # dW_dp_0:        n_landmarks  x  n_params  x  n_dim
         # dW_dx_dW_dp_0:  n_landmarks  x  n_params  x  n_dim
@@ -279,9 +382,7 @@ class StatisticallyDrivenTransform(Transform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        p = (self.as_vector() +
-             np.sum(Jp * statistically_driven_transform.as_vector(),
-                    axis=0))
+        p = self.as_vector() + np.dot(Jp, stat_driven_transform.as_vector())
 
         return self.from_vector(p)
 

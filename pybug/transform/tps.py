@@ -1,22 +1,45 @@
 import numpy as np
 from scipy.spatial import distance
-from pybug.align.nonrigid.exceptions import TPSError
+from pybug.exceptions import DimensionalityError
 from pybug.transform.base import Transform
 
 
 class TPSTransform(Transform):
+    r"""
+    A thin plate splines transform.
+
+    Parameters
+    ----------
+    tps : :class:`pybug.align.nonrigid.tps.TPS`
+        The TPS alignment object to use for transforming.
+    """
 
     def __init__(self, tps):
         self.tps = tps
-        self.n_dims = self.tps.n_dims
+        self.n_dim = self.tps.n_dim
 
     def _apply(self, points, affine_free=False):
         """
-        TPS transform of input x (f) and the affine-free
-        TPS transform of the input x (f_affine_free)
+        Performs a TPS transform on the given points.
+
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to transform.
+        affine_free : bool, optional
+            If ``True`` the affine free component is also returned seperately.
+
+            Default: ``False``
+
+        Returns
+        --------
+        f : (N, D) ndarray
+            The transformed points
+        f_affine_free : (N, D) ndarray
+            The transformed points without the affine components applied.
         """
-        if points.shape[1] != self.n_dims:
-            raise TPSError('TPS can only be used on 2D data.')
+        if points.shape[1] != self.n_dim:
+            raise DimensionalityError('TPS can only be used on 2D data.')
         x = points[..., 0][:, None]
         y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp
@@ -29,7 +52,7 @@ class TPSTransform(Transform):
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         # grab the affine free components of the warp
         c_affine_free = self.tps.coefficients[:-3]
         # build the affine free warp component
@@ -44,11 +67,17 @@ class TPSTransform(Transform):
     def jacobian(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the parameters - this
-        may be constant
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dp: n_points x n_params x n_dims ndarray representing
-            the Jacobian of the transform evaluated at the previous points.
+        may be constant.
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform evaluated at the previous points.
         """
         pass
 
@@ -56,10 +85,16 @@ class TPSTransform(Transform):
     def jacobian_source(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the source landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx_s: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the source landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points.
         """
         # I've been tempted to rename all TPS properties so that they match
@@ -72,7 +107,7 @@ class TPSTransform(Transform):
 
         # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
 
@@ -118,10 +153,16 @@ class TPSTransform(Transform):
     def jacobian_target(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the target landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx_t: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the target landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the target landmarks evaluated
             at the previous points.
         """
         pass
@@ -131,35 +172,33 @@ class TPSTransform(Transform):
         """
         Calculates the Jacobian of the TPS warp wrt to the the points to which
         the warp is applied to.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx:  n_points x n_dims x n_dims ndarray representing
-            the Jacobian of the transform wrt the points to which the
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
-        #Y = np.hstack([points.T, np.zeros([2, 3])])
-        #coefficients = np.linalg.solve(self.tps.L, Y.T)
-
-        abs_dist = distance.cdist(self.tps.source, self.tps.source)
-
-        vec_dist = self.tps.source - self.tps.source[:, np.newaxis]
-
-        for i in range(0, 68):
-            vec_dist[:, i, :] = (self.tps.source[i, :] -
-                                 self.tps.source)
+        pairwise_norms = distance.cdist(self.tps.source, self.tps.source)
+        vec_dist = np.subtract(self.tps.source[:, None], self.tps.source)
 
         dk_dx = np.zeros((self.tps.n_landmarks + 3,
                           self.tps.n_landmarks,
-                          self.n_dims))
-        aux_1 = self.tps.kernel_derivative(abs_dist)
-        dk_dx[:-3, :] = aux_1[..., np.newaxis] * vec_dist
+                          self.n_dim))
+        kernel_derivative = self.tps.kernel.derivative(pairwise_norms) / pairwise_norms
+        dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
 
-        aux_2 = np.array([[0, 0],
-                          [1, 0],
-                          [0, 1]])
-        dk_dx[-3:, :] = aux_2[:, np.newaxis]
+        affine_derivative = np.array([[0, 0],
+                                     [1, 0],
+                                     [0, 1]])
+        dk_dx[-3:, :] = affine_derivative[:, np.newaxis]
 
-        return np.einsum('ij, ikl -> kjl', self.tps.coefficients, dk_dx)
+        return np.einsum('ij, ikl -> klj', self.tps.coefficients, dk_dx)
 
     # TODO: revise this function and try to speed it up!!!
     def weight_points(self, points):
@@ -169,10 +208,16 @@ class TPSTransform(Transform):
         case of the Jacobian wrt to the source landmarks that is used in AAMs
         to weight the relative importance of each pixel in the reference
         frame wrt to each one of the source landmarks.
-        :param points: n_points x n_dims ndarray representing the points at
-            which the Jacobian will be evaluated.
-        :return dW/dx: n_points x n_landmarks x n_dims ndarray representing
-            the Jacobian of the transform wrt to the source landmarks evaluated
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points and assuming that the target is equal to
             the source.
         """
@@ -181,7 +226,7 @@ class TPSTransform(Transform):
 
         # TPS kernel (nonlinear + affine)
         dist = distance.cdist(self.tps.source, points)
-        kernel_dist = self.tps.kernel(dist)
+        kernel_dist = self.tps.kernel.phi(dist)
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
         inv_L = np.linalg.inv(self.tps.L)
 
@@ -222,36 +267,48 @@ class TPSTransform(Transform):
 
     def compose(self, a):
         """
-        Composes two transforms together: W(x;p) <- W(x;p) o W(x;delta_p)
-        :param a: transform of the same type as this object
+        Composes two transforms together::
+
+            ``W(x;p) <- W(x;p) o W(x;delta_p)``
+
+        Parameters
+        ----------
+        a : :class:`TPSTransform`
+            TPS transform to compose with.
+
+        Returns
+        -------
+        composed : :class:`TPSTransform`
+            The result of the composition.
         """
         pass
 
     def inverse(self):
         """
-        Returns the inverse of the transform, if applicable
-        :raise NonInvertable if transform has no inverse
+        Returns the inverse of the transform, if applicable.
+
+        Returns
+        -------
+        inverse : :class:`TPSTransform`
+            The inverse of the transform.
         """
         pass
 
     @property
     def n_parameters(self):
         """
+        Number of parameters: ``(2 * n_landmarks) + 6``.
+
+        :type: int
+
         There is a parameter for each dimension, and thus two parameters per
-        landmark + the parameters of a 2D affine transform:
-        (2 * num_landmarks) + 6
-        :return:
+        landmark + the parameters of a 2D affine transform
+        ``(2 * n_landmarks) + 6``
         """
         return (2 * self.tps.n_landmarks) + 6
 
     def as_vector(self):
-        """
-        Return the parameters of the transform as a 1D ndarray
-        """
-        pass
+        raise NotImplementedError("TPS as_vector is not implemented yet.")
 
-    def from_vector(self, vectorized_instance):
-        """
-        Return the parameters of the transform as a 1D ndarray
-        """
-        pass
+    def from_vector(self, flattened):
+        raise NotImplementedError("TPS from_vector is not implemented yet.")

@@ -11,7 +11,18 @@ class TCoordsViewerError(Viewer3dError):
 
 
 class Viewer3d(Viewer):
-    """ A viewer restricted to 3 dimensional data.
+    """
+    A viewer restricted to 3 dimensional data.
+
+    Parameters
+    ----------
+    points : (N, 3) ndarray
+        A 3D set of points.
+
+    Raises
+    ------
+    DimensionalityError
+        Only 3D pointclouds are supported.
     """
 
     def __init__(self, points):
@@ -26,6 +37,11 @@ class Viewer3d(Viewer):
 
     @property
     def n_points(self):
+        r"""
+        The number of points.
+
+        :type: int
+        """
         return self.points.shape[0]
 
 
@@ -76,9 +92,18 @@ class TexturedTriMeshViewer3d(TriMeshViewer3d):
                 self.trilist, self.tcoords_per_tri)
 
     def tc_per_tri_to_tc_per_point(self, trilist, tcoords):
-        """Generates per-point tc from per-tri tc. Obviously
-         this means we loose data (some triangles will have fugly
-         textures) but allows for quick and dirty visualize of textures.
+        """
+        Generates per-point texture coordinate from per-tri texture
+        coordinates. Obviously this means we lose data
+        (some triangles will have incorrect textures) but allows for quick and
+        dirty visualize of textures.
+
+        Parameters
+        ----------
+        trilist : (M, 3) ndarray
+            Triangulation.
+        tcoords : (L, 2) ndarray
+            Texture coordinates per triangle.
         """
         u_ci, ind_of_u_ci = np.unique(trilist, return_index=True)
         return tcoords.reshape([-1, 2])[ind_of_u_ci]

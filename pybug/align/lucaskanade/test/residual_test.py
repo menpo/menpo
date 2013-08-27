@@ -52,9 +52,9 @@ def compute_fixed_error(transform):
 
 def residual_wrapper(residual, algo, warp, expected_error):
     image, template, initial_params = setup_conditions(warp)
-    align_algo = algo(image, template, residual,
+    align_algo = algo(template, residual,
                       AffineTransform.from_vector(initial_params), warp=warp)
-    transform = align_algo.align()
+    transform = align_algo.align(image, initial_params)
     rms_error = compute_fixed_error(transform)
     assert_approx_equal(rms_error, expected_error)
 

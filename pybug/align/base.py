@@ -1,34 +1,44 @@
 import abc
 import numpy as np
 from matplotlib import pyplot
-from pybug.align.exceptions import AlignmentError
+from pybug.exceptions import DimensionalityError
 
 
 class Alignment(object):
-    """ Aligns a single source object to a target.
+    r"""
+    Abstract base class for alignment algorithms. Alignment algorithms should
+    align a single source object to a target.
+
+    Parameters
+    ----------
+    source : (N, D) ndarray
+        Source to align from
+    target : (N, D) ndarray
+        Target to align to
+
+    Raises
+    ------
+    DimensionalityError
+        Raised when the ndarrays are not 2-dimensional (N, D)
     """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, source, target):
-        """ source - ndarray of landmarks which will be aligned of shape
-         (n_landmarks, n_dim)
-
-        target  - an ndarray (of the same dimension of source) which
-                  the source will be aligned to.
-        """
         self.source = source.copy()
         self.aligned_source = self.source.copy()
         try:
-            self.n_landmarks, self.n_dims = self.source.shape
+            self.n_landmarks, self.n_dim = self.source.shape
         except ValueError:
-            raise AlignmentError('Data is being provided in an invalid format'
-                                 ' - must have shape (n_landmarks, n_dim)')
-        assert self.n_dims, self.n_landmarks == target.shape
+            raise DimensionalityError('Data is being provided in an invalid '
+                                      'format - must have shape '
+                                      '(n_landmarks, n_dim)')
+        assert self.n_dim, self.n_landmarks == target.shape
         self.target = target.copy()
 
     def _view_2d(self, image=False):
-        """ Visualize how points are affected by the warp in 2 dimensions.
+        """
+        Visualize how points are affected by the warp in 2 dimensions.
         """
         #TODO this should be separated out into visualize.
         # a factor by which the minimum and maximum x and y values of the warp
@@ -81,27 +91,31 @@ class Alignment(object):
 
     @abc.abstractproperty
     def transform(self):
-        """
-        Returns a single instance of Transform that can be applied.
-        :return: a transform object
+        r"""
+        Returns a single instance of the Transform that can be applied.
+
+        :type: :class:`pybug.transform.base.Transform`
         """
         pass
 
 
 class MultipleAlignment(object):
+    r"""
+    Abstract base class for aligning multiple sources to a target.
+
+    Parameters
+    ----------
+    sources : (N, D) list of ndarrays
+        List of points to be aligned
+    target : (N, D) ndarray, optional
+        The target to align to.
+
+        Default: The ``mean`` of sources
+    """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, sources, target=None):
-        """ sources - an iterable of numpy arrays of landmarks which will be
-                    aligned e.g. [landmarks_0, landmarks_1,
-                    ...landmarks_n] where landmarks is an ndarray of
-                    dimension [n_landmarks x n_dim]
-          KWARGS
-            target  - a single numpy array (of the same dimension of a
-            source) which every instance of source will be aligned to. If
-            not present, target is set to the mean source position.
-        """
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
@@ -116,8 +130,10 @@ class MultipleAlignment(object):
 
     @abc.abstractproperty
     def transforms(self):
-        """
-        Returns a list of transforms. one for each source,
-        which aligns it to the target.
+        r"""
+        Returns a list of transforms, one for each source, which aligns it to
+        the target.
+
+        :type: list of :class:`pybug.transform.base.Transform`
         """
         pass

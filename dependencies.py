@@ -12,6 +12,7 @@ requirements = ['Cython>=0.18',
                 'scikit-learn>=0.13.1',
                 'scipy>=0.12.0',
                 'Sphinx>=1.2b1',
+                'numpydoc>=0.4',
                 'tornado>=3.0.1']
 
 optionals = {'mlabwrap': 'mlabwrap>=1.2'}
