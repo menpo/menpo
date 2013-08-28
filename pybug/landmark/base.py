@@ -2,6 +2,7 @@ import numpy as np
 import abc
 from pybug.exceptions import DimensionalityError
 from pybug.visualize import LandmarkViewer
+from pybug.visualize.base import Viewable
 
 
 class Landmarkable(object):
@@ -51,7 +52,7 @@ class Landmarkable(object):
         return self.landmarks[label]
 
 
-class LandmarkManager(object):
+class LandmarkManager(Viewable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -161,7 +162,8 @@ class LandmarkManager(object):
         del new_dict[label]
         return LandmarkManager(self.shape, self.label, new_dict)
 
-    def view(self, include_labels=True, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, include_labels=True,
+              **kwargs):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
@@ -174,9 +176,13 @@ class LandmarkManager(object):
         kwargs : dict, optional
             Passed through to the viewer.
         """
-        shape_viewer = self.shape.view(**kwargs)
-        return LandmarkViewer(self.label, self.landmark_dict, self.shape).view(
-            onviewer=shape_viewer, include_labels=include_labels, **kwargs)
+        shape_viewer = self.shape.view(figure_id=figure_id,
+                                       new_figure=new_figure, **kwargs)
+        lmark_viewer = LandmarkViewer(shape_viewer.figure_id, False,
+                                      self.label, self.landmark_dict,
+                                      self.shape)
+
+        return lmark_viewer.render(include_labels=include_labels, **kwargs)
 
     @property
     def labels(self):

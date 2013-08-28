@@ -100,8 +100,8 @@ class PointCloud(Shape):
         else:
             self.pointfields[name] = field
 
-    def view(self, **kwargs):
-        return PointCloudViewer(self.points).view(**kwargs)
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        return PointCloudViewer(figure_id, new_figure, self.points).render(**kwargs)
 
     def _transform_self(self, transform):
         self.points = transform(self.points)
