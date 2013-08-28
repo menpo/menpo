@@ -46,6 +46,7 @@ class MayaviViewer(Renderer):
 
 
 class MayaviPointCloudViewer3d(MayaviViewer):
+
     def __init__(self, figure_id, new_figure, points):
         super(MayaviPointCloudViewer3d, self).__init__(figure_id, new_figure)
         self.points = points
@@ -58,6 +59,7 @@ class MayaviPointCloudViewer3d(MayaviViewer):
 
 
 class MayaviLandmarkViewer3d(MayaviViewer):
+
     def __init__(self, figure_id, new_figure, label, landmark_dict):
         super(MayaviLandmarkViewer3d, self).__init__(figure_id, new_figure)
         self.label = label
