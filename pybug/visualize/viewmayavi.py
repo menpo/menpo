@@ -119,13 +119,13 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
         pd.point_data.t_coords = self.tcoords_per_point
         mapper = tvtk.PolyDataMapper(input=pd)
         actor = tvtk.Actor(mapper=mapper)
-        #get the texture as a np arrage and arrange it for inclusion
-        #with a tvtk ImageData class
-        image_data = np.flipud(self.texture.pixels).flatten().reshape(
+        # Get the pixels from our image class which are [0, 1] and scale
+        # back to valid pixels. Then convert to tvtk ImageData.
+        image_data = np.flipud(self.texture.pixels * 255).flatten().reshape(
             [-1, 3]).astype(np.uint8)
         image = tvtk.ImageData()
         image.point_data.scalars = image_data
-        image.dimensions = self.texture.height, self.texture.width, 1
+        image.dimensions = self.texture.shape[1], self.texture.shape[0], 1
         texture = tvtk.Texture(input=image)
         actor.texture = texture
         self.figure.scene.add_actors(actor)
