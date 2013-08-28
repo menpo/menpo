@@ -11,8 +11,11 @@ class MayaviViewer(Renderer):
 
     Parameters
     ----------
-    figure_id : int or ``None``
-        A figure id or ``None``. ``None`` implicitly creates a new figure.
+    figure_id : str or ``None``
+        A figure name or ``None``. ``None`` assumes we maintain the Mayavi
+        state machine and use ``mlab.gcf()``.
+    new_figure : bool
+        If ``True``, creates a new figure to render on.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -21,6 +24,17 @@ class MayaviViewer(Renderer):
         super(MayaviViewer, self).__init__(figure_id, new_figure)
 
     def get_figure(self):
+        r"""
+        Gets the figure specified by the combination of ``self.figure_id`` and
+        ``self.new_figure``. If ``self.figure_id == None`` then ``mlab.gcf()``
+        is used. ``self.figure_id`` is also set to the correct id of the figure
+        if a new figure is created.
+
+        Returns
+        -------
+        figure : Mayavi figure object
+            The figure we will be rendering on.
+        """
         if self.new_figure or self.figure_id is not None:
             self.figure = mlab.figure(self.figure_id)
         else:

@@ -6,13 +6,16 @@ from pybug.visualize.base import Renderer
 
 
 class MatplotlibRenderer(Renderer):
-    """
-    Abstract class for performing visualizations using Matplotlib.
+    r"""
+    Abstract class for rendering visualizations using Matplotlib.
 
     Parameters
     ----------
     figure_id : int or ``None``
-        A figure id or ``None``. ``None`` implicitly creates a new figure.
+        A figure id or ``None``. ``None`` assumes we maintain the Matplotlib
+        state machine and use ``plt.gcf()``.
+    new_figure : bool
+        If ``True``, creates a new figure to render on.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -21,6 +24,17 @@ class MatplotlibRenderer(Renderer):
         super(MatplotlibRenderer, self).__init__(figure_id, new_figure)
 
     def get_figure(self):
+        r"""
+        Gets the figure specified by the combination of ``self.figure_id`` and
+        ``self.new_figure``. If ``self.figure_id == None`` then ``plt.gcf()``
+        is used. ``self.figure_id`` is also set to the correct id of the figure
+        if a new figure is created.
+
+        Returns
+        -------
+        figure : Matplotlib figure object
+            The figure we will be rendering on.
+        """
         if self.new_figure or self.figure_id is not None:
             self.figure = plt.figure(self.figure_id)
         else:
@@ -116,7 +130,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                                 verticalalignment=valign, size=size)
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
 
-    def _viewonfigure(self, include_labels=True, **kwargs):
+    def _render(self, include_labels=True, **kwargs):
         self._plot_landmarks(include_labels, False, **kwargs)
         return self
 
