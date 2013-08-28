@@ -250,7 +250,8 @@ class MeshImporter(Importer):
         meshes = []
         for mesh in self.meshes:
             if self.texture_importer is not None:
-                new_mesh = TexturedTriMesh(mesh.points, mesh.trilist,
+                new_mesh = TexturedTriMesh(mesh.points.astype(np.float64),
+                                           mesh.trilist,
                                            mesh.tcoords,
                                            self.texture_importer.build())
             else:
