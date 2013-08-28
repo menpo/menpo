@@ -12,9 +12,17 @@ ctypedef fused integrals:
 
 cdef np.ndarray[FLOAT64_T, ndim=2] normalise(np.ndarray[FLOAT64_T, ndim=2] vec):
     """
-    Normalise the given vector
-    :param vec: N x 3 vector
-    :return: Normalised N x 3 vector
+    Normalise the given array of vectors.
+
+    Parameters
+    ----------
+    vec : (N, 3) c-contiguous double ndarray
+        The array of vectors to normalise
+
+    Returns
+    -------
+    normalised : (N, 3) c-contiguous double ndarray
+        Normalised array of vectors.
     """
     # Avoid divisions by almost 0 numbers
     # np.spacing(1) is equivalent to Matlab's eps
@@ -26,10 +34,22 @@ cdef np.ndarray[FLOAT64_T, ndim=2] normalise(np.ndarray[FLOAT64_T, ndim=2] vec):
 cdef inline np.ndarray[FLOAT64_T, ndim=2] cross(double[:, :] x,
                                                 double[:, :] y):
     """
-    The N x 3 cross product (returns the vectors orthogonal to x and y)
-    :param x: N x 3 vector
-    :param y: N x 3 vector
-    :return: The N x 3 vector representing the cross product
+    The N x 3 cross product (returns the vectors orthogonal
+    to ``x`` and ``y``). This performs the cross product on each (3, 1) vector
+    in the two arrays. Assumes ``x`` and ``y`` have the same shape.
+
+    Parameters
+    ----------
+    x : (N, 3) double memory view
+        First array to perform cross product with.
+    y : (N, 3) double memory view
+        Second array to perform cross product with.
+
+    Returns
+    -------
+    cross : (N, 3) c-contiguous double ndarray
+        The array of vectors representing the cross product between each
+        corresponding vector.
     """
     cdef np.ndarray[FLOAT64_T, ndim=2] z = np.empty_like(x)
     cdef int n = x.shape[0]
@@ -45,11 +65,22 @@ cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
                       np.ndarray[integrals, ndim=2] face):
     """
     Compute the per-vertex and per-face normal of the vertices given a list of
-    faces.
-    :param vertex: The list of points to compute normals for
-    :type vertex: ndarray [N, 3]
-    :param face: The list of faces (triangle list)
-    :type face: ndarray [M, 3]
+    faces. Ensures that all the normals are pointing in a consistent direction
+    (to avoid 'inverted' normals).
+
+    Parameters
+    ----------
+    vertex : (N, 3) c-contiguous double ndarray
+        The list of points to compute normals for.
+    face : (M, 3) c-contiguous double ndarray
+        The list of faces (triangle list).
+
+    Returns
+    -------
+    vertex_normal : (N, 3) c-contiguous double ndarray
+        The normal per vertex.
+    face_normal : (M, 3) c-contiguous double ndarray
+        The normal per face.
     :return:
     """
     cdef int nface = face.shape[0]
