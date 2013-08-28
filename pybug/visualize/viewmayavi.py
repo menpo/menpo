@@ -93,7 +93,10 @@ class MayaviTriMeshViewer3d(MayaviViewer):
         self.points = points
         self.trilist = trilist
 
-    def _render(self, **kwargs):
+    def _render(self, normals=None, **kwargs):
+        if normals is not None:
+            MayaviVectorViewer3d(self.figure_id, False,
+                                 self.points, normals)._render(**kwargs)
         mlab.triangular_mesh(self.points[:, 0],
                              self.points[:, 1],
                              self.points[:, 2],
@@ -114,7 +117,10 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
         self.texture = texture
         self.tcoords_per_point = tcoords_per_point
 
-    def _render(self, **kwargs):
+    def _render(self, normals=None, **kwargs):
+        if normals is not None:
+            MayaviVectorViewer3d(self.figure_id, False,
+                                 self.points, normals)._render(**kwargs)
         pd = tvtk.PolyData()
         pd.points = self.points
         pd.polys = self.trilist
