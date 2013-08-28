@@ -1,6 +1,8 @@
+from pybug.exceptions import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh.exceptions import TriFieldError
 from pybug.visualize import TriMeshViewer
+from pybug.shape.mesh.normals import compute_normals
 
 
 class TriMesh(PointCloud):
@@ -35,6 +37,44 @@ class TriMesh(PointCloud):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         message += '\nn_tris: ' + str(self.n_tris)
         return message
+
+    @property
+    def vertex_normals(self):
+        r"""
+        Normal at each point.
+
+        :type: (``n_points``, 3) ndarray
+
+        Compute the per-vertex normals from the current set of points and
+        triangle list. Only valid for 3D dimensional meshes.
+
+        Raises
+        ------
+        DimensionalityError
+            If mesh is not 3D
+        """
+        if self.n_dims != 3:
+            raise DimensionalityError("Normals are only valid for 3D meshes")
+        return compute_normals(self.points, self.trilist)[0]
+
+    @property
+    def face_normals(self):
+        r"""
+        Normal at each face.
+
+        :type: (``n_tris``, 3) ndarray
+
+        Compute the face normals from the current set of points and
+        triangle list. Only valid for 3D dimensional meshes.
+
+        Raises
+        ------
+        DimensionalityError
+            If mesh is not 3D
+        """
+        if self.n_dims != 3:
+            raise DimensionalityError("Normals are only valid for 3D meshes")
+        return compute_normals(self.points, self.trilist)[1]
 
     @property
     def n_tris(self):

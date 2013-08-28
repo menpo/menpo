@@ -178,7 +178,7 @@ class Viewable(object):
 
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d
+    MayaviLandmarkViewer3d, MayaviVectorViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
     MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d
@@ -193,6 +193,7 @@ LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
+VectorViewer3d = MayaviVectorViewer3d
 
 
 class LandmarkViewer(object):

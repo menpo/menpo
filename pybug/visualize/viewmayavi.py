@@ -93,7 +93,10 @@ class MayaviTriMeshViewer3d(MayaviViewer):
         self.points = points
         self.trilist = trilist
 
-    def _render(self, **kwargs):
+    def _render(self, normals=None, **kwargs):
+        if normals is not None:
+            MayaviVectorViewer3d(self.figure_id, False,
+                                 self.points, normals)._render(**kwargs)
         mlab.triangular_mesh(self.points[:, 0],
                              self.points[:, 1],
                              self.points[:, 2],
@@ -114,7 +117,10 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
         self.texture = texture
         self.tcoords_per_point = tcoords_per_point
 
-    def _render(self, **kwargs):
+    def _render(self, normals=None, **kwargs):
+        if normals is not None:
+            MayaviVectorViewer3d(self.figure_id, False,
+                                 self.points, normals)._render(**kwargs)
         pd = tvtk.PolyData()
         pd.points = self.points
         pd.polys = self.trilist
@@ -134,3 +140,24 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
 
         return self
 
+
+class MayaviVectorViewer3d(MayaviViewer):
+
+    def __init__(self, figure_id, new_figure, points, vectors):
+        super(MayaviVectorViewer3d, self).__init__(figure_id,
+                                                   new_figure)
+        self.points = points
+        self.vectors = vectors
+
+    def _render(self, **kwargs):
+        # Only get every nth vector. 1 means get every vector.
+        mask_points = kwargs.get('mask_points', 1)
+        mlab.quiver3d(self.points[:, 0],
+                      self.points[:, 1],
+                      self.points[:, 2],
+                      self.vectors[:, 0],
+                      self.vectors[:, 1],
+                      self.vectors[:, 2],
+                      mask_points=mask_points,
+                      figure=self.figure)
+        return self
