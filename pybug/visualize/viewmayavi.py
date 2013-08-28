@@ -76,6 +76,7 @@ class MayaviLandmarkViewer3d(MayaviViewer):
                 mlab.text3d(p[0], p[1], p[2], l, figure=self.figure)
         positions = np.array(positions)
         os = np.zeros_like(positions)
+        os[:, 2] = 1
         mlab.quiver3d(positions[:, 0], positions[:, 1], positions[:, 2],
                       os[:, 0], os[:, 1], os[:, 2], figure=self.figure)
         self.figure.scene.disable_render = False
