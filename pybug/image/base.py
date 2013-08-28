@@ -2,14 +2,14 @@ import numpy as np
 import PIL.Image as PILImage
 from pybug.exceptions import DimensionalityError
 from pybug.transform.affine import Translation
-from pybug.visualize import ImageViewer2d
 from pybug.landmark import Landmarkable
 from pybug.base import Vectorizable
 from skimage.morphology import diamond, binary_erosion
 import itertools
+from pybug.visualize.base import Viewable, ImageViewer
 
 
-class AbstractImage(Vectorizable, Landmarkable):
+class AbstractImage(Vectorizable, Landmarkable, Viewable):
     r"""
     An abstract representation of an image. All images can be
     vectorized/built from vector, viewed, all have a ``shape``,
@@ -118,7 +118,7 @@ class AbstractImage(Vectorizable, Landmarkable):
         pixels = np.ones(shape, dtype=dtype) * fill
         return cls(pixels)
 
-    def view(self, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -133,11 +133,8 @@ class AbstractImage(Vectorizable, Landmarkable):
         DimensionalityError
             If Image is not 2D
         """
-        if self.n_dims == 2:
-            return ImageViewer2d(self.pixels).view(**kwargs)
-        else:
-            raise DimensionalityError("Non 2D Image rendering is not yet "
-                                      "supported.")
+        return ImageViewer(figure_id, new_figure,
+                           self.n_dims, self.pixels).render(**kwargs)
 
     def copy(self):
         r"""
