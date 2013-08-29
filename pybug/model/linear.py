@@ -143,7 +143,7 @@ class LinearModel(StatisticalModel):
             weightings = weightings[:n_components]
         return self._instance(weightings)
 
-    def project_out(self, novel_instance, n_components):
+    def project_out(self, novel_instance):
         """
         Returns a version of ``novel_instance`` where all the information in
         the first ``n_components`` of the model has been projected out.
@@ -167,7 +167,7 @@ class LinearModel(StatisticalModel):
         return novel_instance.from_vector(vectorized_instance.flatten())
 
     @abc.abstractmethod
-    def _project_out(self, novel_vectorized_instance, n_components):
+    def _project_out(self, novel_vectorized_instance):
         """
         Returns a version of ``novel_instance`` where all the information in
         the first ``n_components`` of the model has been projected out.
@@ -189,9 +189,18 @@ class LinearModel(StatisticalModel):
         """
         pass
 
-	@abc.abstractproperty
+    @property
     def jacobian(self):
-        return self._jacobian
+        # TODO: document me
+        jac = self._jacobian
+        jac = jac.reshape(self.n_components, -1, self.template_sample.n_dims)
+        return jac.swapaxes(0, 1)
+
+    @abc.abstractproperty
+    def _jacobian(self):
+        # TODO: document me
+        pass
+
 
 #TODO: give a description of what it means to be a PCA model
 class PCAModel(LinearModel):
@@ -285,7 +294,7 @@ class PCAModel(LinearModel):
         return self._pca.components_
 
     @property
-    def jacobian(self):
+    def _jacobian(self):
         return self.components
 
     def _instance(self, weightings):
@@ -306,14 +315,5 @@ class PCAModel(LinearModel):
 
     def _project_out(self, novel_vectorized_instance):
         weights = np.dot(self.components, novel_vectorized_instance)
-        # TODO:
         return (novel_vectorized_instance -
                 np.dot(self.components.T, weights))
-
-    def _distance_to_subspace(self, novel_vectorized_instance):
-        return (self.inv_avg_variance) * obj._project_out(novel_vectorized_instance)
-
-    def _distance_from_subspace(self, novel_vectorized_instance):
-        weights = np.dot(self.components, novel_vectorized_instance)
-        L = 1 / np.diag(self.explained_variance)
-        return np.dot(self.components, np.dot(L, weights))
