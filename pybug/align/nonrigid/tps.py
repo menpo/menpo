@@ -34,7 +34,7 @@ class TPS(NonRigidAlignment):
 
     def __init__(self, source, target, kernel=None):
         super(TPS, self).__init__(source, target)
-        if self.n_dims != 2:
+        if self.n_dim != 2:
             raise DimensionalityError('TPS can only be used on 2D data.')
         self.V = self.target.T.copy()
         self.Y = np.hstack([self.V, np.zeros([2, 3])])
