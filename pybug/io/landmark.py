@@ -102,6 +102,7 @@ class ASFImporter(LandmarkImporter):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
+        # Remove comments and blank lines
         landmarks = [l for l in landmarks.splitlines()
                      if (l.rstrip() and not '#' in l)]
 
@@ -184,3 +185,73 @@ class PTSImporter(LandmarkImporter):
 
         self.label = 'PTS'
         self.landmark_dict = {'all': PointCloud(points)}
+
+
+class LM3Importer(LandmarkImporter):
+    r"""
+    Importer for the LM3 file format from the bosphorus dataset. This is a 3D
+    landmark type and so it is assumed it only applies to meshes.
+
+    Landmark set label: LM3
+
+    Landmark labels:
+
+    +------------------------+
+    | label                  |
+    +========================+
+    | outer_left_eyebrow     |
+    | middle_left_eyebrow    |
+    | inner_left_eyebrow     |
+    | inner_right_eyebrow    |
+    | middle_right_eyebrow   |
+    | outer_right_eyebrow    |
+    | outer_left_eye_corner  |
+    | inner_left_eye_corner  |
+    | inner_right_eye_corner |
+    | outer_right_eye_corner |
+    | nose_saddle_left       |
+    | nose_saddle_right      |
+    | left_nose_peak         |
+    | nose_tip               |
+    | right_nose_peak        |
+    | left_mouth_corner      |
+    | upper_lip_outer_middle |
+    | right_mouth_corner     |
+    | upper_lip_inner_middle |
+    | lower_lip_inner_middle |
+    | lower_lip_outer_middle |
+    | chin_middle            |
+    +------------------------+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(LM3Importer, self).__init__(filepath)
+
+    def _parse_format(self, **kwargs):
+        with open(self.filepath, 'r') as f:
+            landmarks = f.read()
+
+        # Remove comments and blank lines
+        landmark_text = [l for l in landmarks.splitlines()
+                         if (l.rstrip() and not '#' in l)]
+
+        # First line says how many landmarks there are: 22 Landmarks
+        # So pop it off the front
+        num_points = int(landmark_text.pop(0).split()[0])
+        points = []
+        labels = []
+
+        # The lines then alternate between the labels and the coordinates
+        for i in xrange(num_points * 2):
+            if i % 2 == 0:  # label
+                labels.append(landmark_text[i])
+            else:  # coordinate
+                p = landmark_text[i].split()
+                points.append(PointCloud(np.array([float(p[0]),
+                                                  float(p[1]),
+                                                  float(p[2])], ndmin=2)))
+
+        self.label = 'LM3'
+        self.landmark_dict = dict(zip(labels, points))
