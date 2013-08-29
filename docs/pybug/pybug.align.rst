@@ -17,14 +17,6 @@ align Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`exceptions` Module
-------------------------
-
-.. automodule:: pybug.align.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 

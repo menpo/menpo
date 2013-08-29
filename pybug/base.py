@@ -16,7 +16,10 @@ class Vectorizable(object):
         """
         Returns a flattened representation of the object as a single vector.
 
-        Useful for statistical analysis of the object.
+        Returns
+        -------
+        vector : (N,) ndarray
+            The flattened vector.
         """
         pass
 
@@ -24,10 +27,17 @@ class Vectorizable(object):
     def from_vector(self, flattened):
         """
         Build a new instance of the object from the provided 1D flattened
-        array, using self to fill out the missing state required to rebuild a
-        full object from it's standardized flattened state.
+        array, using ``self`` to fill out the missing state required to
+        rebuild a full object from it's standardized flattened state.
 
-        :param flattened: Flattened representation of the object
-        :type flattened: ndarray
+        Parameters
+        ----------
+        flattened : (N,) ndarray
+            Flattened representation of the object.
+
+        Returns
+        -------
+        object : :class:`Vectorizable`
+            An instance of the class.
         """
         pass

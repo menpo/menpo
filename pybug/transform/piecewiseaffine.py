@@ -5,11 +5,36 @@ from pybug.transform import AffineTransform, Transform
 
 
 class PiecewiseAffineTransform(Transform):
+    r"""
+    A piecewise affine transformation. This is composed of a number of
+    triangles defined be a set of source and target vertices. These vertices
+    are related by a common triangle list. Points can then be mapped via
+    barycentric coordinates from the source to the target space. Points within
+    related triangles can be transformed via the same affine transform. Points
+    outside of the convex hull of the source points have an undefined
+    transform.
+
+    Parameters
+    ----------
+    source : (N, 2) ndarray
+        The source points.
+    target : (N, 2) ndarray
+        The target points.
+    trilist : (M, 3) ndarray
+        A common triangulation for the ``source`` and ``target``.
+
+    Raises
+    ------
+    DimensionalityError
+        Source and target must have the same dimensionality.
+
+        Source and target must be 2D.
+    """
 
     def __init__(self, source, target, trilist):
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
-        self.n_dim = self.source.n_dims
+        self.n_dims = self.source.n_dims
         if self.source.n_dims != self.target.n_dims:
             raise DimensionalityError("source and target must have the same "
                                       "dimension")
@@ -20,17 +45,36 @@ class PiecewiseAffineTransform(Transform):
 
     @property
     def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
         return self.source.n_tris
 
     @property
     def n_points(self):
+        r"""
+        The number of points in the source and target.
+
+        :type: int
+        """
         return self.source.n_points
 
     @property
     def trilist(self):
+        r"""
+        The triangle list.
+
+        :type: (``n_tris``, 3) ndarray
+        """
         return self.source.trilist
 
     def _produce_affine_transforms_per_tri(self):
+        r"""
+        Compute the affine transformation between each triangle in the source
+        and target. This is calculated analytically.
+        """
         # we permute the axes of the indexed point set to have shape
         # [3, n_dims, n_tris] for ease of indexing in.
         s = np.transpose(self.source.points[self.source.trilist],
@@ -75,10 +119,20 @@ class PiecewiseAffineTransform(Transform):
 
     def alpha_beta(self, points):
         """
-        Calculates the alpha and beta values for each triangle for all
-        points provided.
-        :param points:
-        :return:
+        Calculates the alpha and beta values (barycentric coordinates) for each
+        triangle for all points provided.
+
+        Parameters
+        ----------
+        points : (K, 2) ndarray
+            Points to calculate the barycentric coordinates for.
+
+        Returns
+        --------
+        alpha : (K, ``n_tris``)
+            The alpha for each point and triangle.
+        beta : (K, ``n_tris``)
+            The beta for each point and triangle.
         """
         ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
         # todo this could be cached if tri_containment is being tested at
@@ -95,6 +149,27 @@ class PiecewiseAffineTransform(Transform):
         return alpha, beta
 
     def _containment_from_alpha_beta(self, alpha, beta):
+        r"""
+        Check ``alpha`` and ``beta`` are within a triangle (``alpha >= 0``,
+        ``beta >= 0``, ``alpha + beta <= 1``). Returns the indices of the
+        triangles that are ``alpha`` and ``beta`` are in.
+
+        Parameters
+        ----------
+        alpha: (K, ``n_tris``) ndarray
+            Alpha for each point and triangle being tested.
+        beta: (K, ``n_tris``) ndarray
+            Beta for each point and triangle being tested.
+
+        Returns
+        -------
+        points_in_tris : (L,) ndarray
+            Index into points, such that ``points[points_in_tris]`` yields only
+            points that are contained within a triangle.
+        tri_index : (L,) ndarray
+            triangle index for each ``points[points_in_tris]``, assigning each
+            point in a triangle to the triangle index.
+        """
         return np.nonzero(np.logical_and(
             np.logical_and(alpha >= 0, beta >= 0), alpha + beta <= 1))
 
@@ -102,22 +177,39 @@ class PiecewiseAffineTransform(Transform):
         """
         Finds for each input point whether it is contained in a triangle,
         and if so what triangle index it is in.
-        :param points: An [n_points, n_dim] input array
-        :return: (points_in_tris, tri_index)
-        points_in_tris is an index into points, st
-        points[points_in_tris] yields only points that are contained within
-        a triangle.
-        tri_index is the triangle index for each points[points_in_tris],
-        assigning each point in a triangle to the triangle index.
+
+        Parameters
+        -----------
+        points : (K, 2) ndarray
+            Points to test.
+
+        Returns
+        -------
+        points_in_tris : (L,) ndarray
+            Index into points, such that ``points[points_in_tris]`` yields only
+            points that are contained within a triangle.
+        tri_index : (L,) ndarray
+            triangle index for each ``points[points_in_tris]``, assigning each
+            point in a triangle to the triangle index.
         """
         alpha, beta = self.alpha_beta(points)
         return self._containment_from_alpha_beta(alpha, beta)
 
     def weight_points(self, points):
         """
-        Returns the jacobian of the warp at each
-        :param points:
-        :return:
+        Returns the jacobian of the warp at each point given in relation to the
+        source points.
+
+        Parameters
+        ----------
+        points : (K, 2) ndarray
+            The points to calculate the Jacobian for.
+
+        Returns
+        -------
+        jacobian : (K, ``n_points``, 2) ndarray
+            The Jacobian for each of the ``K`` given points over each point in
+            the source points.
         """
         alpha_i, beta_i = self.alpha_beta(points)
         # given alpha beta implicitly for the first vertex in our trilist,
@@ -160,17 +252,32 @@ class PiecewiseAffineTransform(Transform):
 
     def jacobian_points(self, points):
         """
-        Returns the jacobian of the warp at each
-        :param points:
-        :return:
+        Calculates the Jacobian of the PWA warp with respect to the the points
+        to which the warp is applied to. Expected to return a
+        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
+        as necessary.
+
+        The derivative of a piecewise affine warp with respect to the points
+        is simply the identity matrix for every point in the warp.
+
+        Parameters
+        ----------
+        points: (N, D) ndarray
+            The points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dx: (N, D, D) ndarray
+            The Jacobian of the transform with respect to the points to which
+            the transform is applied to.
         """
-        return np.eye(2, 2)
+        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
 
     def _tri_containment_loop(self, points):
         """
         Performs the same operation as tri_containment but in C style.
         Useful as a reference for how to convert C/Matlab style to numpy
-        (especially the use of einsum)
+        (especially the use of einsum).
         """
         all_ij, all_ik = self.sij.T, self.sik.T
         all_i = self.s[0].T
@@ -194,10 +301,17 @@ class PiecewiseAffineTransform(Transform):
 
     def _apply(self, x, **kwargs):
         """
-        Applies this transform to a new set of vectors
-        :param x: A (n_points, n_dims) ndarray to apply this transform to.
+        Applies this transform to a new set of vectors.
 
-        :return: The transformed version of x
+        Parameters
+        ----------
+        x : (K, 2) ndarray
+            Points to apply this transform to.
+
+        Returns
+        -------
+        transformed : (K, 2) ndarray
+            The transformed array.
         """
         x_in_tris, tri_index = self.tri_containment(x)
         # build a list of points in each triangle for each triangle
@@ -215,23 +329,27 @@ class PiecewiseAffineTransform(Transform):
     @property
     def n_parameters(self):
         """
+        Number of parameters: ``n_tris * 6``.
+
+        :type: int
+
         There is a 2D affine transformation per triangle, therefore, there are
         number of triangles * parameters for 2D affine transform number of
-        parameters for a PieceWiseAffine transform: n_tris * 6
+        parameters for a PieceWiseAffine transform: ``n_tris * 6``.
         """
         return self.n_tris * 6
 
     def as_vector(self):
-        pass
+        raise NotImplementedError("PWA as_vector is not implemented yet.")
 
     def compose(self, a):
-        pass
+        raise NotImplementedError("PWA compose is not implemented yet.")
 
     def from_vector(self, flattened):
-        pass
+        raise NotImplementedError("PWA from_vector is not implemented yet.")
 
     def inverse(self):
-        pass
+        raise NotImplementedError("PWA inverse is not implemented yet.")
 
     def jacobian(self, shape):
-        pass
+        raise NotImplementedError("PWA jacobian is not implemented yet.")

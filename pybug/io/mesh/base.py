@@ -15,17 +15,37 @@ import re
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
                                output_filetype=None, export_flags=None):
-    """ Interface to `meshlabserver` to perform prepossessing on meshes before
+    r"""
+    Interface to `meshlabserver` to perform prepossessing on meshes before
     import. Returns a path to the result of the meshlabserver call, ready for
-    import as usual.
-    Kwargs:
-     * script_path: if specified this script will be run on the input mesh.
-     * output_dir: if None provided, set to the users tmp directory.
-     * output_filetype: the output desired from meshlabserver. If not provided
-             the output type will be the same as the input.
-     * export_flags: flags passed to the -om parameter. Allows for choosing
-             what aspects of the model will be exported (normals,
-             texture coords etc)
+    import as usual. **Requires Meshlab to be installed**.
+
+    Parameters
+    ----------
+    file_path : string
+        Absolute filepath to the mesh
+    script_path : atring, optional
+        If specified this script will be run on the input mesh.
+
+        Default: ``None``
+    output_dir : string, optional
+        The output directory for the processed mesh.
+
+        Default: The users tmp directory.
+    output_filetype : string, optional
+        The output filetype desired from meshlabserver. Takes the form of an
+        extension, eg ``obj``.
+
+        Default: The same as the input mesh
+    export_flags : string, optional
+        Flags passed to the ``-om`` parameter. Allows for choosing
+        what aspects of the model will be exported (normals,
+        texture coords etc)
+
+    Returns
+    -------
+    output_path : string
+        The absolute filepath to the processed mesh.
     """
     if output_dir is None:
         output_dir = tempfile.gettempdir()
@@ -47,8 +67,17 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
 
 
 class MeshImporter(Importer):
-    """
-    Base class for importing 3D meshes
+    r"""
+    Abstract base class for importing meshes. Searches in the directory
+    specified by filepath for landmarks and textures with the same basename as
+    the mesh. If found, they are automatically attached. If a texture is found
+    then a :class:`pybug.shape.mesh.textured.TexturedTriMesh` is built, else a
+    :class:`pybug.shape.mesh.base.Trimesh` is built.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -60,6 +89,10 @@ class MeshImporter(Importer):
         self.attempted_landmark_search = False
 
     def _build_texture_and_landmark_importers(self):
+        r"""
+        Search for a texture and landmark file in the same directory as the
+        mesh. If they exist, create importers for them.
+        """
         if self.texture_path is None or not path.exists(self.texture_path):
             self.texture_importer = None
         else:
@@ -77,9 +110,13 @@ class MeshImporter(Importer):
                                                   mesh_landmark_types)
 
     def _search_for_texture(self):
-        """
-        Tries to find a texture with the same name as the mesh
-        :return: The relative texture path, or None
+        r"""
+        Tries to find a texture with the same name as the mesh.
+
+        Returns
+        --------
+        relative_texture_path : string
+            The relative path to the texture or ``None`` if one can't be found
         """
         # Stop searching every single time we access the property
         self.attempted_texture_search = True
@@ -93,8 +130,12 @@ class MeshImporter(Importer):
 
     def _search_for_landmarks(self):
         """
-        Tries to find a set of landmarks with the same name as the mesh
-        :return: The relative landmarks path, or None
+        Tries to find a landmark file with the same name as the mesh.
+
+        Returns
+        --------
+        relative_landmark_path : string
+            The relative path to the landmarks or ``None`` if none can be found
         """
         # Stop searching every single time we access the property
         self.attempted_landmark_search = True
@@ -111,7 +152,15 @@ class MeshImporter(Importer):
         """
         Get the absolute path to the texture. Returns None if one can't be
         found. Makes it's best effort to find an appropriate texture by
-        searching for textures with the same name as the mesh.
+        searching for textures with the same name as the mesh. Will only
+        search for the path the first time ``texture_path`` is invoked.
+
+        Sets the ``self.relative_texture_path`` attribute.
+
+        Returns
+        -------
+        texture_path : string
+            Absolute filepath to the texture
         """
         # Avoid attribute not being set
         if not hasattr(self, 'relative_texture_path'):
@@ -132,7 +181,15 @@ class MeshImporter(Importer):
         """
         Get the absolute path to the landmarks. Returns None if none can be
         found. Makes it's best effort to find an appropriate landmark set by
-        searching for landmarks with the same name as the mesh.
+        searching for landmarks with the same name as the mesh. Will only
+        search for the path the first time ``landmark_path`` is invoked.
+
+        Sets the ``self.relative_landmark_path`` attribute.
+
+        Returns
+        -------
+        landmark_path : string
+            Absolute filepath to the landmarks
         """
         # Avoid attribute not being set
         if not hasattr(self, 'relative_landmark_path'):
@@ -150,19 +207,51 @@ class MeshImporter(Importer):
 
     @abc.abstractmethod
     def _parse_format(self):
+        r"""
+        Abstract method that handles actually building a mesh. This involves
+        reading the mesh from disk and doing any necessary parsing.
+
+        Should set the ``self.meshes`` attribute. Each mesh in ``self.meshes``
+        is expected to be an object with attributes:
+
+        ======== ==========================
+        name     type
+        ======== ==========================
+        points   double ndarray
+        trilist  int ndarray
+        tcoords  double ndarray (optional)
+        ======== ==========================
+
+        May also set the ``self.relative_texture_path`` if it is specified by
+        the format.
+        """
         pass
 
     def build(self):
-        # Parse the format as defined by the overridden method and then search
-        # for valid textures and landmarks that may have been defined by the
-        # format
+        r"""
+        Overrides the :meth:`build <pybug.io.base.Importer.build>` method.
+
+        Parse the format as defined by :meth:`_parse_format` and then search
+        for valid textures and landmarks that may have been defined by the
+        format.
+
+        Build the appropriate type of mesh defined by parsing the format. May
+        or may not be textured.
+
+        Returns
+        -------
+        meshes : list of :class:`pybug.shape.mesh.textured.TexturedTriMesh` or :class:`pybug.shape.mesh.base.Trimesh`
+            List of meshes
+        """
+        #
         self._parse_format()
         self._build_texture_and_landmark_importers()
 
         meshes = []
         for mesh in self.meshes:
             if self.texture_importer is not None:
-                new_mesh = TexturedTriMesh(mesh.points, mesh.trilist,
+                new_mesh = TexturedTriMesh(mesh.points.astype(np.float64),
+                                           mesh.trilist,
                                            mesh.tcoords,
                                            self.texture_importer.build())
             else:
@@ -180,12 +269,20 @@ class MeshImporter(Importer):
 
 class AssimpImporter(AIImporter, MeshImporter):
     """
-    Base class for importing 3D meshes
+    Uses assimp to import meshes. The assimp importing is wrapped via cython,
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
     def __init__(self, filepath):
         super(AssimpImporter, self).__init__(filepath)
 
     def _parse_format(self):
+        r"""
+        Use assimp to build the mesh. Also, get the relative texture path.
+        """
         self.build_scene()
         # Properties should have different names because of multiple
         # inheritance
@@ -198,6 +295,11 @@ class WRLImporter(MeshImporter):
     Uses a fork of PyVRML97 to do (hopefully) more robust parsing of VRML
     files. It should be noted that, unfortunately, this is a lot slower than
     the C++-based assimp importer.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
 
     def __init__(self, filepath):
@@ -205,6 +307,15 @@ class WRLImporter(MeshImporter):
         super(WRLImporter, self).__init__(filepath)
 
     def _parse_format(self):
+        r"""
+        Use pyVRML to parse the file and build a mesh object. A single mesh per
+        file is assumed.
+
+        Raises
+        ------
+        MeshImportError
+            If no transform or shape is found in the scenegraph
+        """
         with open(self.filepath) as f:
             self.text = f.read()
 
@@ -261,10 +372,15 @@ class WRLImporter(MeshImporter):
 
 
 class FIMImporter(MeshImporter):
-    """
+    r"""
     Allows importing floating point images as meshes.
-    This reads in the shape in to 3 channels and then triangulates the x and y
-    coordinates to create a surface.
+    This reads in the shape in to 3 channels and then triangulates the
+    ``x`` and ``y`` coordinates to create a surface.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
 
     def __init__(self, filepath):
@@ -272,6 +388,11 @@ class FIMImporter(MeshImporter):
         super(FIMImporter, self).__init__(filepath)
 
     def _parse_format(self):
+        r"""
+        Read the file and parse it as necessary. Since the data lies on a grid
+        we can triangulate the 2D coordinates to get a valid triangulation. One
+        mesh is assumed per file.
+        """
         with open(self.filepath, 'rb') as f:
             size = np.fromfile(f, dtype=np.uint32, count=3)
             data = np.fromfile(f, dtype=np.float32, count=np.product(size))
@@ -291,12 +412,20 @@ class FIMImporter(MeshImporter):
 
 
 class BNTImporter(MeshImporter):
-    """
+    r"""
     Allows importing the BNT file format from the bosphorus dataset.
     This reads in the 5 channels (3D coordinates and texture coordinates),
-    splits them appropriately and then triangulates the x and y
+    splits them appropriately and then triangulates the ``x`` and ``y``
     coordinates to create a surface. The texture path is also given in the file
     format.
+
+    The z-min plane is removed and the 2D coordinates are triangulated to form
+    the mesh.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
 
     def __init__(self, filepath):
@@ -304,6 +433,11 @@ class BNTImporter(MeshImporter):
         super(BNTImporter, self).__init__(filepath)
 
     def _parse_format(self):
+        r"""
+        Read the file in and parse appropriately. Includes reading the texture
+        path. Remove the z-min plane and triangulate the 2D gridded
+        coordinates. A single mesh is assumed per file.
+        """
         with open(self.filepath, 'rb') as f:
             # Currently these are unused, but they are in the format
             # Could possibly store as metadata?
@@ -351,12 +485,18 @@ class BNTImporter(MeshImporter):
 
 
 class ABSImporter(MeshImporter):
-    """
+    r"""
     Allows importing the ABS file format from the FRGC dataset.
-    This file format also includes a mask that we don't currently expose. The
-    z-min value is stripped from the mesh to make it renderable. We are
+    This file format also includes a mask that we don't currently expose.
+
+    The z-min value is stripped from the mesh to make it renderable. We are
     currently unable to texture these meshes as we don't have texture
     coordinates.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
     """
 
     def __init__(self, filepath):
@@ -364,6 +504,10 @@ class ABSImporter(MeshImporter):
         super(ABSImporter, self).__init__(filepath)
 
     def _parse_format(self):
+        r"""
+        Read in the file and remove the z-min. Triangulate the 2D gridded
+        coordinates to create a valid triangulation.
+        """
         with open(self.filepath, 'r') as f:
             # Currently these are unused, but they are in the format
             # Could possibly store as metadata?

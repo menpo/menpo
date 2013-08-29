@@ -22,6 +22,22 @@ cdef extern from "./cpp/exact/kirsanov_geodesic_wrapper.h":
         #        unsigned subdivision_level)
 
 cdef class KirsanovGeodesics:
+    r"""
+    Cython wrapper for the cpp class used to calculated the Kirsanov Geodesics.
+
+    Parameters
+    ----------
+    points : (N, D) c-contiguous double ndarray
+        The cartesian points
+    trilist : (M, 3) c-contiguous unsigned ndarray
+        The triangulation of the given points
+
+    References
+    ----------
+    .. [1] Surazhsky, Vitaly, et al.
+        "Fast exact and approximate geodesics on meshes."
+        ACM Transactions on Graphics (TOG). Vol. 24. No. 3. ACM, 2005.
+    """
     cdef KirsanovGeodesicWrapper* kirsanovptr
     cdef int n_points
     cdef int n_tris
@@ -38,6 +54,31 @@ cdef class KirsanovGeodesics:
         del self.kirsanovptr
 
     def geodesics(self, source_vertices, method='exact'):
+        r"""
+        Calculate the geodesic distance for all points from the
+        given ``source_indexes``.
+
+        Parameters
+        -----------
+        source_vertices : (N,) c-contiguous unsigned ndarray
+            List of indexes to calculate the geodesics for
+        method : {'exact'}
+            The method using to calculate the geodesics. Only the 'exact'
+            method is currently supported
+
+            Default: exact
+
+        Returns
+        -------
+        TODO: document these?
+        phi : UNKNOWN
+        best_source : UNKNOWN
+
+        Raises
+        -------
+        ValueError
+            If the given method is not 'exact'
+        """
         cdef np.ndarray[unsigned, ndim=1, mode='c'] np_sources = np.array(
                 source_vertices, dtype=np.uint32)
         cdef np.ndarray[double, ndim=1, mode='c'] phi = np.zeros(
@@ -54,8 +95,9 @@ cdef class KirsanovGeodesics:
         #    self.kirsanovptr.all_subdivision_geodesics_from_source_vertices(
         #            &np_sources[0], np_sources.size, &phi[0], &best_source[0], 3)
         else:
-            print "The '" + `method` + "' method for calculating exact geodesics \
-                    is not understood (only 'exact' can be used at this time)"
-            return None
+            raise ValueError("The '" + `method` + "' method for calculating "
+                            "geodesics is not understood "
+                            "(only 'exact' can be used at this time)")
+
         geodesic = {'phi': phi, 'best_source': best_source}
         return geodesic

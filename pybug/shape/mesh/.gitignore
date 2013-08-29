@@ -1,1 +1,3 @@
 cpptrimesh.cpp
+normals.c
+*.so

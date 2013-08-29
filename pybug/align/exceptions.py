@@ -1,2 +1,0 @@
-class AlignmentError(Exception):
-    pass

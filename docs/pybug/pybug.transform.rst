@@ -17,18 +17,34 @@ transform Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`affine_test` Module
--------------------------
-
-.. automodule:: pybug.transform.affine_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`base` Module
 ------------------
 
 .. automodule:: pybug.transform.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`piecewiseaffine` Module
+-----------------------------
+
+.. automodule:: pybug.transform.piecewiseaffine
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`statisticallydriven` Module
+---------------------------------
+
+.. automodule:: pybug.transform.statisticallydriven
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`tps` Module
+-----------------
+
+.. automodule:: pybug.transform.tps
     :members:
     :undoc-members:
     :show-inheritance:

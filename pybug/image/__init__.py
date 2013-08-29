@@ -1,1 +1,1 @@
-from pybug.image.base import Image
+from pybug.image.base import Image, MaskImage
