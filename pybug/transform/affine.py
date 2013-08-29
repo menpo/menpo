@@ -518,15 +518,17 @@ class SimilarityTransform(AffineTransform):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order [a, b, tx, ty].
+        are output in the order ``[a, b, tx, ty]``, given that
+        ``a = k cos(theta) - 1`` and ``b = k sin(theta)`` where ``k`` is a
+        uniform scale and ``theta`` is a clockwise rotation in radians.
 
         **2D**
 
         ========= ===========================================
         parameter definition
         ========= ===========================================
-        a         The rotation angle + scale
-        b         The rotation angle
+        a         ``a = k cos(theta) - 1``
+        b         ``b = k sin(theta)``
         tx        Translation in ``x``
         ty        Translation in ``y``
         ========= ===========================================
