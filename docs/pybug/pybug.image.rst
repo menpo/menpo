@@ -17,11 +17,3 @@ image Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`landmarked` Module
-------------------------
-
-.. automodule:: pybug.image.landmarked
-    :members:
-    :undoc-members:
-    :show-inheritance:
-

@@ -2,7 +2,7 @@
 
 class FieldError(Exception):
     """
-    Base class for errors to do with setting fields on pointclouds and their
+    Base class for errors to do with setting fields on PointClouds and their
     subclasses.
     """
     pass

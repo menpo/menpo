@@ -3,26 +3,37 @@ from pybug.base import Vectorizable
 
 
 class Transform(Vectorizable):
+    r"""
+    An abstract representation of any N-dimensional transform.
+    Provides a unified interface to apply the transform (:meth:`apply`). All
+    transforms are vectorizable.
     """
-    An abstract representation of any n-dimensional transform.
-    Provides a unified interface to apply the transform (:meth:`apply`)
-    """
+
+    __metaclass__ = abc.ABCMeta
 
     def apply(self, x, **kwargs):
-        """
-        Applies this transform to x. If x is `Transformable`,
-        x will be handed this transform object to transform itself. If not,
-        x is assumed to be a numpy array. The transformation will be non
-        destructive, returning the transformed version. Any **kwargs will be
-        passed to the specific transform _apply methods (see these for
-        documentation on what are available)
+        r"""
+        Applies this transform to ``x``. If ``x`` is :class:`Transformable`,
+        ``x`` will be handed this transform object to transform itself. If not,
+        ``x`` is assumed to be a numpy array. The transformation will be non
+        destructive, returning the transformed version. Any ``kwargs`` will be
+        passed to the specific transform :meth:`_apply` methods.
 
-        :param x:
-        :param kwargs:
-        :return:
+        Parameters
+        ----------
+        x : (N, D) ndarray or an object that implements :class:`Transformable`
+            The array or object to be transformed.
+        kwargs : dict
+            Passed through to :meth:`_apply`.
+
+        Returns
+        -------
+        transformed : same as ``x``
+            The transformed array or object
         """
         def transform(x_):
-            """ Local closure which calls the _apply method with the kwargs
+            """
+            Local closure which calls the ``_apply`` method with the ``kwargs``
             attached.
             """
             return self._apply(x_, **kwargs)
@@ -33,62 +44,98 @@ class Transform(Vectorizable):
 
     @abc.abstractmethod
     def _apply(self, x, **kwargs):
-        """
-        Applies the transform to the array x, returning the result.
+        r"""
+        Applies the transform to the array ``x``, returning the result.
 
-        :param x:
-        :raise:
+        Parameters
+        ----------
+        x : (N, D) ndarray
+
+        Returns
+        -------
+        transformed : (N, D) ndarray
+            Transformed array.
         """
         pass
 
     @abc.abstractmethod
-    def jacobian(self, shape):
-        """
-        Calculates the Jacobian of the warp - this may be constant
+    def jacobian(self, points):
+        r"""
+        Calculates the Jacobian of the warp, may be constant.
 
-        :param shape
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to calculate the Jacobian over.
+
+        Returns
+        -------
+        dW_dp : (N, P, D) ndarray
+            A (``n_points``, ``n_params``, ``n_dims``) array representing
+            the Jacobian of the transform.
         """
         pass
 
     @abc.abstractmethod
     def compose(self, a):
-        """
-        Composes two transforms together: W(x;p) <- W(x;p) o W(x;delta_p)
+        r"""
+        Composes two transforms together::
 
-        :param a: transform of the same type as this object
+            W(x;p) <- W(x;p) o W(x;delta_p)
+
+        Parameters
+        ----------
+        a : :class:`Transform`
+            Transform to be applied *FOLLOWING* self
+
+        Returns
+        --------
+        transform : :class:`Transform`
+            The resulting transform.
         """
         pass
 
     @abc.abstractproperty
     def inverse(self):
-        """
-        Returns the inverse of the transform, if applicable
+        r"""
+        The inverse of the transform.
 
-        :raise `NonInvertable` if transform has no inverse
+        :type: :class:`Transform`
         """
         pass
 
     @abc.abstractproperty
     def n_parameters(self):
-        """
-        Returns the number of parameters that determine the transform. For
-        example, a 2D affine transformation has 6 parameters
+        r"""
+        Returns the number of parameters that determine the transform.
+
+        :type: int
         """
         pass
 
 
 class Transformable(object):
-    """
-    Interface for transformable objects. When Transform.apply() is called on
-     an object, if the object has the method _transform,
-     the method is called, passing in the transforms apply() method.
-     This allows for the object to define how it should transform itself.
+    r"""
+    Interface for transformable objects. When :meth:`apply` is called on
+    an object, if the object has the method :meth:`_transform`,
+    the method is called, passing in the transforms :meth:`apply` method.
+    This allows for the object to define how it should transform itself.
     """
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def _transform(self, transform):
-        """
+        r"""
         Apply the transform given to the Transformable object.
+
+        Parameters
+        ----------
+        transform : func
+            Function that applies a transformation to the transformable object.
+
+        Returns
+        -------
+        transformed : :class:`Transformable`
+            The transformed object. Transformed in place.
         """
         pass
