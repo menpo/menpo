@@ -1,5 +1,5 @@
-from scipy.linalg import norm
 import numpy as np
+from scipy.linalg import norm
 from pybug.align.lucaskanade.appearance.base import AppearanceLucasKanade
 
 
@@ -28,7 +28,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
                                             self.optimal_transform,
                                             self._warp))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -56,13 +56,11 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-        pass
-
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
 
-        # Forward Additive Algorithm
+        # Forward Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self._warp(self.image, self.template,
@@ -74,7 +72,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -102,8 +100,6 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-        pass
-
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
@@ -121,7 +117,7 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(self.template,
                                                       self._dW_dp)
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates

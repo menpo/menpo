@@ -46,7 +46,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             # Concatenate VI_dW_dp with appearance model Jacobian
             J = np.hstack((J, appearance_jacobian))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -78,8 +78,6 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-        pass
-
     def _align(self, max_iters=30, project=True):
         # Initial error > eps
         error = self.eps + 1
@@ -102,7 +100,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
 
-        # Forward Additive Algorithm
+        # Forward Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self._warp(self.image, self.template,
@@ -114,7 +112,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             # Concatenate VI_dW_dp with appearance model Jacobian
             J = np.hstack((J, appearance_jacobian))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -146,8 +144,6 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         # Compute the Jacobian of the warp
         self._dW_dp = self.initial_transform.jacobian(
             self.appearance_model.mean.mask.true_indices)
-
-        pass
 
     def _align(self, max_iters=30, project=True):
         # Initial error > eps
@@ -184,7 +180,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             # Concatenate VI_dW_dp with appearance model Jacobian
             J = np.hstack((J, appearance_jacobian))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
