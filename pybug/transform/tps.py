@@ -81,7 +81,7 @@ class TPSTransform(Transform):
         """
         pass
 
-    # TODO: revise this function and try to speed it up!!!
+    # TODO: revise me
     def jacobian_source(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the source landmarks.
@@ -97,10 +97,6 @@ class TPSTransform(Transform):
             The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points.
         """
-        # I've been tempted to rename all TPS properties so that they match
-        # the names on my transfer, that would, perhaps, facilitate the
-        # understanding of this method... Let me know what do you think...
-        # It'd be quite a lot of renaming I guess...
 
         n_lms = self.tps.n_landmarks
         n_pts = points.shape[0]
