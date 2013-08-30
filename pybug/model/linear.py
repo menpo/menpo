@@ -143,7 +143,7 @@ class LinearModel(StatisticalModel):
             weightings = weightings[:n_components]
         return self._instance(weightings)
 
-    def project_out(self, novel_instance, n_components):
+    def project_out(self, novel_instance):
         """
         Returns a version of ``novel_instance`` where all the information in
         the first ``n_components`` of the model has been projected out.
@@ -163,12 +163,11 @@ class LinearModel(StatisticalModel):
             A copy of ``novel instance``, with all features of the model
             projected out.
         """
-        vectorized_instance = self._project_out(novel_instance.as_vector(),
-                                                n_components)
-        return novel_instance.from_vector(vectorized_instance)
+        vectorized_instance = self._project_out(novel_instance.as_vector())
+        return novel_instance.from_vector(vectorized_instance.flatten())
 
     @abc.abstractmethod
-    def _project_out(self, novel_vectorized_instance, n_components):
+    def _project_out(self, novel_vectorized_instance):
         """
         Returns a version of ``novel_instance`` where all the information in
         the first ``n_components`` of the model has been projected out.
@@ -190,118 +189,16 @@ class LinearModel(StatisticalModel):
         """
         pass
 
+    @property
+    def jacobian(self):
+        # TODO: document me
+        jac = self._jacobian
+        jac = jac.reshape(self.n_components, -1, self.template_sample.n_dims)
+        return jac.swapaxes(0, 1)
 
-class SimilarityModel(LinearModel):
-    """
-    Re-parametrization of the similarity transform as a linear model.
-
-    Parameters
-    ----------
-    reference : :class:`pybug.shape.base.PointCloud`
-        A pointcloud to which the similarity transform will be applied to.
-    """
-
-    # TODO: remove 2d real data assumption
-    def __init__(self, reference):
-        self.reference = reference
-        self.samples = [self.reference]
-        self.n_components = 4
-        self.components = self._compute_similarity_components(reference)
-
-    def _compute_similarity_components(self, reference):
-        scale = self.reference
-        rotation = self.reference.points[:, [1, 0]]
-        rotation[:, 1] *= -1
-        x_translation = np.zeros_like(reference.points)
-        x_translation[:, 1] += 1
-        y_translation = x_translation[:, [1, 0]]
-        return np.linalg.qr(
-            np.array([scale.as_vector(), rotation.flatten(),
-                      x_translation.flatten(), y_translation.flatten()]).T)[0]
-
-    def equivalent_similarity_transform(self, weights):
-        """
-        Returns a :class:`pybug.transform.affine.SimilarityTransform` that
-        performs the exact same transformation on the model reference as
-        creating an instance of the model using the given ``weights``.
-
-        Parameters
-        ----------
-        weights: (N,) ndarray
-            The weights that should be used in the model.
-
-        Returns
-        -------
-        transform : :class:`pybug.transform.affine.SimilarityTransform`
-            The equivalent transform given the ``weights``.
-        """
-        return self._equivalent_similarity_transform(self.instance(weights))
-
-    def _equivalent_similarity_transform(self, novel_instance):
-        """
-        Returns a :class:`pybug.transform.affine.SimilarityTransform` relating
-        the given ``novel_instance`` with the model reference.
-
-        Parameters
-        ----------
-        novel_instance : (N,) ndarray
-            A vectorized novel instance of the model.
-
-        Returns
-        -------
-        transform : :class:`pybug.transform.affine.SimilarityTransform`
-            The equivalent transform given the ``novel_instance``.
-        """
-        ind = [0, 10, 20]
-        s = self.reference.points[ind]
-        t = novel_instance.points[ind]
-
-        # sik
-        # ^^^
-        # ||\- the k'th point
-        # ||
-        # |vector between end (j or k) and i
-        # source [target]
-        # if i is absent, it is the position of the ijk point.
-        # (not a _vector_ between points)
-        # get vectors ij ik for source and target
-        sij, sik = s[1] - s[0], s[2] - s[0]
-        tij, tik = t[1] - t[0], t[2] - t[0]
-
-        # source vertex positions
-        si, sj, sk = s[0], s[1], s[2]
-        ti = t[0]
-
-        d = (sij[0] * sik[1]) - (sij[1] * sik[0])
-
-        c_x = (sik[1] * tij - sij[1] * tik) / d
-        c_y = (sij[0] * tik - sik[0] * tij) / d
-        c_t = ti + (tij * (si[1] * sik[0] - si[0] * sik[1]) +
-                    tik * (si[0] * sij[1] - si[1] * sij[0])) / d
-        ht = np.eye(3)
-        ht[:2, 0] = c_x
-        ht[:2, 1] = c_y
-        ht[:2, 2] = c_t
-
-        return SimilarityTransform(ht)
-
-    def _instance(self, weights):
-        if weights.shape[0] > self.n_components:
-            raise Exception(
-                "Number of weighs cannot be greater than {}".format(
-                    self.n_components))
-        elif weights.shape[0] < self.n_components:
-            full_weights = np.zeros(self.n_components)
-            full_weights[:weights.shape[0]] = weights
-            weights = full_weights
-        return self.reference.as_vector() + np.dot(self.components, weights)
-
-    def _project(self, novel_vectorized_instance):
-        return np.dot(self.components.T, (novel_vectorized_instance -
-                                          self.reference.as_vector()))
-
-    def _project_out(self, novel_vectorized_instance, n_components):
-        #TODO Implement project_out on SimilarityModel
+    @abc.abstractproperty
+    def _jacobian(self):
+        # TODO: document me
         pass
 
 
@@ -341,12 +238,14 @@ class PCAModel(LinearModel):
         # flatten one sample to find the n_features we need
 
         # create and populate the data matrix
+        print "Building the data matrix..."
         data = np.zeros((self.n_samples, self.n_features))
         for i, sample in enumerate(self.samples):
             data[i] = sample.as_vector()
 
         # build the SKlearn PCA passing in the number of components.
         self._pca = SklearnPCA(n_components=self.n_components)
+        print "Calculating Principal Components..."
         self._pca.fit(data)
 
     @property
@@ -395,11 +294,8 @@ class PCAModel(LinearModel):
         return self._pca.components_
 
     @property
-    def jacobian(self):
-        jac = self.components.reshape((self.n_components,
-                                       -1,
-                                       self.template_sample.n_dims))
-        return jac.swapaxes(0, 1)
+    def _jacobian(self):
+        return self.components
 
     def _instance(self, weightings):
         if weightings.shape[0] > self.n_components:
@@ -417,6 +313,7 @@ class PCAModel(LinearModel):
         return self._pca.transform(
             novel_vectorized_instance.reshape((1, -1))).flatten()
 
-    def _project_out(self, novel_vectorized_instance, n_components):
-        #TODO Implement project_out on PCAModel
-        pass
+    def _project_out(self, novel_vectorized_instance):
+        weights = np.dot(self.components, novel_vectorized_instance)
+        return (novel_vectorized_instance -
+                np.dot(self.components.T, weights))
