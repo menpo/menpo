@@ -36,7 +36,7 @@ class StatisticallyDrivenTransform(Transform):
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform_constructor,
                  source=None, weights=None, global_transform=None,
-                 composition='model', speed_up=None):
+                 composition='both', speed_up=None):
         self.model = model
         self.transform_constructor = transform_constructor
 
@@ -76,13 +76,13 @@ class StatisticallyDrivenTransform(Transform):
                                                self.target.points)
 
     @property
-    def n_dim(self):
+    def n_dims(self):
         r"""
         The number of dimensions that the transform supports.
 
         :type: int
         """
-        return self.transform.n_dim
+        return self.transform.n_dims
 
     @property
     def n_weights(self):
@@ -151,10 +151,12 @@ class StatisticallyDrivenTransform(Transform):
             # cache points
             self._cached_points = points
 
+        model_jacobian = self.model.jacobian
+
         # compute dX/dp
         if self.global_transform is None:
             # dX/dp is simply the Jacobian of the model
-            dX_dp = self.model.jacobian
+            dX_dp = model_jacobian
         else:
             # dX/dq is the Jacobian of the global transform evaluated at the
             # mean of the model.
@@ -163,7 +165,7 @@ class StatisticallyDrivenTransform(Transform):
 
             # by application of the chain rule dX_db is the Jacobian of the
             # model transformed by the linear component of the global transform
-            dS_db = self.model.jacobian
+            dS_db = model_jacobian
             dX_dS = self.global_transform.jacobian_points(
                 self.model.mean.points)
             dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
@@ -316,6 +318,8 @@ class StatisticallyDrivenTransform(Transform):
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
+        model_jacobian = self.model.jacobian
+
         # compute:
         # -> dW/dp when p=0
         # -> dW/dp when p!=0
@@ -323,7 +327,7 @@ class StatisticallyDrivenTransform(Transform):
         if self.global_transform is None:
             # dW/dp when p=0 and when p!=0 are the same and simply given by
             # the Jacobian of the model
-            dW_dp_0 = self.model.jacobian
+            dW_dp_0 = model_jacobian
             dW_dp = dW_dp_0
             # dW_dp_0:  n_landmarks  x     n_params     x  n_dim
             # dW_dp:    n_landmarks  x     n_params     x  n_dim
@@ -335,7 +339,7 @@ class StatisticallyDrivenTransform(Transform):
             # dW_dq:  n_landmarks  x  n_global_params  x  n_dim
 
             # dW/db when p=0, is the Jacobian of the model
-            dW_db_0 = self.model.jacobian
+            dW_db_0 = model_jacobian
             # dW_db_0:  n_landmarks  x     n_weights     x  n_dim
 
             # dW/dp when p=0, is simply the concatenation of the previous
@@ -363,12 +367,12 @@ class StatisticallyDrivenTransform(Transform):
         #TODO: Can we do this without splitting across the two dimensions?
         dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
         dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
-        dW_dp_0_mat = np.reshape(dW_dp_0, (self.model.mean.n_points * self.n_dim,
+        dW_dp_0_mat = np.reshape(dW_dp_0, (self.model.mean.n_points * self.n_dims,
                                            self.n_parameters))
         dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
         dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0, (self.model.mean.n_points,
                                                    self.n_parameters,
-                                                   self.n_dim))
+                                                   self.n_dims))
         # dW_dx:          n_landmarks  x  n_dim     x  n_dim
         # dW_dp_0:        n_landmarks  x  n_params  x  n_dim
         # dW_dx_dW_dp_0:  n_landmarks  x  n_params  x  n_dim
