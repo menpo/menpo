@@ -41,12 +41,13 @@ typedef struct {
   UT_hash_handle hh;
 } AlphaBetaIndex;
 
-AlphaBetaIndex* retrieveAlphaBetaFromCache(Point queryPoint);
+AlphaBetaIndex* retrieveAlphaBetaFromCache(AlphaBetaIndex **hash, Point queryPoint);
 // should only be called after retrieveAlphaBetaFromCache has returned NULL
-void addAlphaBetaIndexToCache(Point queryPoint, int index, double alpha, double beta);
-void cachedAlphaBetaIndexForPointInTriangleCollection(TriangleCollection *tris, Point point,
+void addAlphaBetaIndexToCache(AlphaBetaIndex **hash, Point queryPoint, int index, double alpha, double beta);
+void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, TriangleCollection *tris, Point point,
                                                       int *index, double *alpha, double *beta);
-void arrayAlphaBetaIndexForPoints(TriangleCollection *tris, double *points, unsigned int n_points,
+void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris,
+                                  double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas);
-void clearCacheAndDelete(void);
+void clearCacheAndDelete(AlphaBetaIndex **hash);
 
