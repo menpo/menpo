@@ -1,6 +1,6 @@
 import abc
-from scipy.linalg import norm, solve
 import numpy as np
+from scipy.linalg import solve
 from pybug.warp.base import scipy_warp
 
 
