@@ -27,10 +27,26 @@ typedef struct {
   unsigned int n_triangles;
 } TriangleCollection;
 
-
 TriangleCollection initTriangleCollection(double *vertices, unsigned int *trilist,
                                           unsigned int n_triangles);
 void deleteTriangleCollection(TriangleCollection *tris);
-int containingTriangleAndAlphaBetaForPoint(TriangleCollection tris, Point p,
-                                           double *alpha, double *beta);
+void containingTriangleAndAlphaBetaForPoint(TriangleCollection *tris, Point p,
+                                           int *index, double *alpha, double *beta);
+
+typedef struct {
+  Point queryPoint;
+  double alpha;
+  double beta;
+  int index;
+  UT_hash_handle hh;
+} AlphaBetaIndex;
+
+AlphaBetaIndex* retrieveAlphaBetaFromCache(Point queryPoint);
+// should only be called after retrieveAlphaBetaFromCache has returned NULL
+void addAlphaBetaIndexToCache(Point queryPoint, int index, double alpha, double beta);
+void cachedAlphaBetaIndexForPointInTriangleCollection(TriangleCollection *tris, Point point,
+                                                      int *index, double *alpha, double *beta);
+void arrayAlphaBetaIndexForPoints(TriangleCollection *tris, double *points, unsigned int n_points,
+                                  int *indexes, double *alphas, double *betas);
+void clearCacheAndDelete(void);
 

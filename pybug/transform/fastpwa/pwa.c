@@ -93,12 +93,12 @@ void deleteTriangleCollection(TriangleCollection *tris)
   free(tris->triangles);
 }
 
-int containingTriangleAndAlphaBetaForPoint(TriangleCollection tris, Point p,
-                                           double *alpha, double *beta)
+void containingTriangleAndAlphaBetaForPoint(TriangleCollection *tris, Point p,
+                                            int *index, double *alpha, double *beta)
 {
-  int index = -1; // means no matching triangle
-  for (unsigned int i = 0; i < tris.n_triangles; i++) {
-    alphaBetaForTriangle(tris.triangles[i], p, alpha, beta);
+  *index = -1; // no matching triangle
+  for (unsigned int i = 0; i < tris->n_triangles; i++) {
+    alphaBetaForTriangle(tris->triangles[i], p, alpha, beta);
     //printf("Triangle %u\n", i);
     //trianglePrint(tris.triangles[i]);
     //printf("has alpha=%1.2f, beta=%1.2f\n", *alpha, *beta);
@@ -106,14 +106,76 @@ int containingTriangleAndAlphaBetaForPoint(TriangleCollection tris, Point p,
       //printf(" This triangle contains the point ");
       //pointPrint(p);
       //printf("\n\n");
-      index = (int)i;
-      break;
+      *index = (int)i;
     } else {
       //printf(" This triangle does not contain the point ");
       //pointPrint(p);
       //printf("\n\n");
     }
   }
-  return index;
+}
+
+//
+// ----- HASHMAP -----
+//
+AlphaBetaIndex *alphaBetaIndexHash = NULL;
+
+AlphaBetaIndex* retrieveAlphaBetaFromCache(Point queryPoint)
+{
+  AlphaBetaIndex *resultInHash = NULL;
+  // check to see if there is already this result in the hash
+  HASH_FIND(hh, alphaBetaIndexHash, &queryPoint, sizeof(Point), resultInHash);
+  return resultInHash;
+}
+
+// should only be called after retrieveAlphaBetaFromCache has returned NULL
+void addAlphaBetaIndexToCache(Point queryPoint, int index, double alpha, double beta)
+{
+  // dynamically allocate a new result object
+  AlphaBetaIndex *result;
+  result = malloc(sizeof(AlphaBetaIndex));
+  memset(result, 0, sizeof(AlphaBetaIndex));
+  result->queryPoint = queryPoint;
+  result->index = index;
+  result->alpha = alpha;
+  result->beta = beta;
+  HASH_ADD(hh, alphaBetaIndexHash, queryPoint, sizeof(Point), result);
+}
+
+void cachedAlphaBetaIndexForPointInTriangleCollection(TriangleCollection *tris, Point point,
+                                                      int *index, double *alpha, double *beta)
+{
+  // check to see if the point is in the hashmap
+  AlphaBetaIndex *cachedResult = retrieveAlphaBetaFromCache(point);
+  if (cachedResult) {
+    // just return the values
+    *alpha = cachedResult->alpha;
+    *beta = cachedResult->beta;
+    *index = cachedResult->index;
+  } else {
+    // no entry in the cache - calculate the alpha/beta and cache it
+    containingTriangleAndAlphaBetaForPoint(tris, point, index, alpha, beta);
+    addAlphaBetaIndexToCache(point, *index, *alpha, *beta);
+  }
+}
+
+void arrayAlphaBetaIndexForPoints(TriangleCollection *tris, double *points, unsigned int n_points,
+                                  int *indexes, double *alphas, double *betas)
+{
+  for (unsigned int i = 0; i < n_points; i++) {
+    // build a point object
+    Point queryPoint = initPoint(points + i * 2);
+    cachedAlphaBetaIndexForPointInTriangleCollection(tris, queryPoint,
+                                                     indexes + i, alphas + i, betas + i);
+  }
+}
+
+void clearCacheAndDelete(void)
+{
+  AlphaBetaIndex *currentResult, *tmp;
+  HASH_ITER(hh, alphaBetaIndexHash, currentResult, tmp) {
+    HASH_DEL(alphaBetaIndexHash, currentResult);  /* delete; users advances to next */
+    free(currentResult);            /* optional- if you want to free  */
+  }
 }
 
