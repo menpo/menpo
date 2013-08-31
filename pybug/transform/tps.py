@@ -16,7 +16,7 @@ class TPSTransform(Transform):
 
     def __init__(self, tps):
         self.tps = tps
-        self.n_dim = self.tps.n_dims
+        self.n_dim = self.tps.n_dim
 
     def _apply(self, points, affine_free=False):
         """

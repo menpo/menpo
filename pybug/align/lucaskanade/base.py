@@ -1,6 +1,6 @@
 import abc
-from scipy.linalg import norm, solve
 import numpy as np
+from scipy.linalg import solve
 from pybug.warp.base import scipy_warp
 
 
@@ -37,8 +37,9 @@ class LucasKanade(object):
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
         :doc:`pybug.warp`.
-    optimisation : 'GN' | 'LM', optional
+    optimisation : ('GN',) | ('LM', float), optional
         The optimisation technique used to calculate the Hessian approximation.
+        Note that for 'LM' the float is used to set the update step.
 
         Default: 'GN'
     update_step : float, optional
@@ -81,7 +82,7 @@ class LucasKanade(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, residual, transform,
-                 warp=scipy_warp, optimisation=('GN',), eps=1 ** -10):
+                 warp=scipy_warp, optimisation=('GN',), eps=1**-10):
         # set basic state for all Lucas Kanade algorithms
         self.initial_transform = transform
         self.TransformClass = transform.__class__

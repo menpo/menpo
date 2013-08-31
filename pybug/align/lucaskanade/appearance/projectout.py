@@ -1,5 +1,5 @@
-from scipy.linalg import norm
 import numpy as np
+from scipy.linalg import norm
 from pybug.align.lucaskanade.appearance.base import AppearanceLucasKanade
 
 
@@ -31,7 +31,7 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
                                             self.optimal_transform,
                                             self._warp))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -59,8 +59,6 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-        pass
-
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
@@ -80,7 +78,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
 
             # Compute steepest descent parameter updates
@@ -115,10 +113,8 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
         # Project out appearance model from VT_dW_dp
         self._J = self.appearance_model._project_out(J)
 
-        # Compute Hessian and inverse
+        # Compute Hessian
         self._H = self.residual.calculate_hessian(self._J)
-
-        pass
 
     def _align(self, max_iters=30):
         # Initial error > eps

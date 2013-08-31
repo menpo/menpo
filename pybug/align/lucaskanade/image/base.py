@@ -41,7 +41,7 @@ class ImageForwardAdditive(ImageLucasKanade):
                                             self.optimal_transform,
                                             self._warp))
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(VI_dW_dp)
 
             # Compute steepest descent parameter updates
@@ -92,7 +92,7 @@ class ImageForwardCompositional(ImageLucasKanade):
             VI_dW_dp = self.residual.steepest_descent_images(IWxp,
                                                              self._dW_dp)
 
-            # Compute Hessian and inverse
+            # Compute Hessian
             self._H = self.residual.calculate_hessian(VI_dW_dp)
 
             # Compute steepest descent parameter updates
@@ -129,7 +129,7 @@ class ImageInverseCompositional(ImageLucasKanade):
         self._VT_dW_dp = self.residual.steepest_descent_images(
             self.template, dW_dp)
 
-        # Compute Hessian and inverse
+        # Compute Hessian
         self._H = self.residual.calculate_hessian(self._VT_dW_dp)
 
     def _align(self, max_iters=30):
