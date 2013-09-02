@@ -1,3 +1,5 @@
-from nonrigid import TPS, MultipleTPS
-from rigid import Procrustes, GeneralizedProcrustesAnalysis
-from lucaskanade import ImageInverseCompositional, ImageForwardAdditive
+import lucaskanade
+
+import nonrigid
+
+import rigid
