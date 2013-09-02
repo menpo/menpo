@@ -37,6 +37,7 @@ def sparse_hog(image, method='dalaltriggs', num_orientations=9, cell_size=4,
                              0, 0, 0, 0, 0, 0, 0, verbose)
     image = np.asfortranarray(image)
     descriptors, centers, opt_info = _hog(image, options)
+    descriptors = np.squeeze(descriptors)
     if verbose:
         return (np.ascontiguousarray(descriptors),
                 np.ascontiguousarray(centers),
