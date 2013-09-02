@@ -28,12 +28,12 @@ cdef extern from "./fastpwa/pwa.h":
     void clearCacheAndDelete(AlphaBetaIndex **hashMap)
     void deleteTriangleCollection(TriangleCollection *tris)
 
-cdef class FastPiecewiseAffine:
+cdef class CLookupPWA:
     cdef TriangleCollection tris
     cdef AlphaBetaIndex *hashMap
 
     def __cinit__(self,
-                  np.ndarray[double, ndim=2, mode="c"] points not None,
+                  double[:, ::1] points not None,
                   np.ndarray[unsigned, ndim=2, mode="c"] trilist not None):
         hashMap = NULL
         if points.shape[1] != 2:
@@ -49,9 +49,9 @@ cdef class FastPiecewiseAffine:
     def alpha_beta_index(self, np.ndarray[double, ndim=2, mode="c"] points
                          not None):
         cdef np.ndarray[double, ndim=1, mode='c'] alphas = \
-            np.zeros(points.shape[0])
+            np.zeros(points.shape[0], dtype=np.float64)
         cdef np.ndarray[double, ndim=1, mode='c'] betas = \
-            np.zeros(points.shape[0])
+            np.zeros(points.shape[0], dtype=np.float64)
         cdef np.ndarray[int, ndim=1, mode='c'] indexes = \
             np.zeros(points.shape[0], dtype=np.int32)
         arrayAlphaBetaIndexForPoints(&self.hashMap, &self.tris, &points[0,0],

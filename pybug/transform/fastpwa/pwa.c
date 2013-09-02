@@ -107,6 +107,7 @@ void containingTriangleAndAlphaBetaForPoint(TriangleCollection *tris, Point p,
       //pointPrint(p);
       //printf("\n\n");
       *index = (int)i;
+      return;
     } else {
       //printf(" This triangle does not contain the point ");
       //pointPrint(p);
@@ -146,12 +147,12 @@ void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, Tri
   // check to see if the point is in the hashmap
   AlphaBetaIndex *cachedResult = retrieveAlphaBetaFromCache(hash, point);
   if (cachedResult) {
-    printf("cache hit\n");
+    //printf("cache hit\n");
     *alpha = cachedResult->alpha;
     *beta = cachedResult->beta;
     *index = cachedResult->index;
   } else {
-    printf("cache miss\n");
+    //printf("cache miss\n");
     // no entry in the cache - calculate the alpha/beta and cache it
     containingTriangleAndAlphaBetaForPoint(tris, point, index, alpha, beta);
     addAlphaBetaIndexToCache(hash, point, *index, *alpha, *beta);

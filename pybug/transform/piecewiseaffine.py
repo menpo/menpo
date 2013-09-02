@@ -3,7 +3,7 @@ import numpy as np
 from pybug.exceptions import DimensionalityError
 from pybug.shape import TriMesh
 from pybug.transform import AffineTransform, Transform
-from pybug.transform.fastpiecewiseaffine import FastPiecewiseAffine
+from pybug.transform.fastpwa import CLookupPWA
 
 
 class TriangleContainmentError(Exception):
@@ -521,7 +521,8 @@ class DotProductPWATransform(PWATransform):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-class CDotProductPWATransform(DotProductPWATransform):
+
+class CachedPWATransform(DotProductPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -547,17 +548,19 @@ class CDotProductPWATransform(DotProductPWATransform):
     """
 
     def __init__(self, source, target, trilist):
-        super(CDotProductPWATransform, self).__init__(source, target,
-                                                     trilist)
-        self._fastpwa = FastPiecewiseAffine(source.astype(np.float64),
-                                            trilist.astype(np.uint32))
+        super(CachedPWATransform, self).__init__(source, target,
+                                                 trilist)
+        source_c = np.require(source, dtype=np.float64, requirements=['C'])
+        trilist_c = np.require(trilist, dtype=np.uint32, requirements=['C'])
+        self._fastpwa = CLookupPWA(source_c,
+                                   trilist_c)
 
     def alpha_beta(self, points):
         pass
 
     def index_alpha_beta(self, points):
-        alpha, beta, index = self._fastpwa.alpha_beta_index(points.astype(np
-        .float64))
+        points_c = np.require(points, dtype=np.float64, requirements=['C'])
+        alpha, beta, index = self._fastpwa.alpha_beta_index(points_c)
         if np.any(index < 0):
             raise TriangleContainmentError(index < 0)
         else:
