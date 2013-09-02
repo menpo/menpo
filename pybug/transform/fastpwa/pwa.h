@@ -49,5 +49,8 @@ void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, Tri
 void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris,
                                   double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas);
+void arrayMapForPointsAndTargetPoints(AlphaBetaIndex **hash, TriangleCollection *sourceTris,
+                                  TriangleCollection *targetTris, double *points, unsigned int n_points,
+                                  double *mappedPoints);
 void clearCacheAndDelete(AlphaBetaIndex **hash);
 

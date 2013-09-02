@@ -38,9 +38,27 @@ cdef class CLookupPWA:
         hashMap = NULL
         if points.shape[1] != 2:
             pass
+        self.n_tris = trilist.shape[0]
         self.tris =  initTriangleCollection(&points[0,0], &trilist[0,0],
                                             trilist.shape[0])
 
+    def _init_source_triangles(self,
+                  double[:, ::1] points not None,
+                  np.ndarray[unsigned, ndim=2, mode="c"] trilist not None):
+        hashMap = NULL
+        if points.shape[1] != 2:
+            raise Exception
+        elif points.shape[0] != self.n_tris:
+            raise Exception
+        self.tris =  initTriangleCollection(&points[0,0], &trilist[0,0],
+                                            self.n_tris)
+
+    def _init_target_triangles(self,
+                  double[:, ::1] points not None,
+                  np.ndarray[unsigned, ndim=2, mode="c"] trilist not None):
+        self.target_tris = initTriangleCollection(&points[0, 0],
+                                                  &trilist[0, 0],
+                                                  trilist.shape[0])
 
     def __dealloc__(self):
         deleteTriangleCollection(&self.tris)
