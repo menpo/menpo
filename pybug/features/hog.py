@@ -18,12 +18,17 @@ def dense_hog(image, method='dalaltriggs', num_orientations=9, cell_size=4,
                              window_step_vertical, window_step_horizontal,
                              window_step_unit, padding_enabled, verbose)
     image = np.asfortranarray(image)
-    descriptors, centers = _hog(image, options)
-    return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
+    descriptors, centers, opt_info = _hog(image, options)
+    if verbose:
+        return (np.ascontiguousarray(descriptors),
+                np.ascontiguousarray(centers),
+                opt_info)
+    else:
+        return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
 
 
-def sparse_hog(image, method='zhuramanan', num_orientations=9, cell_size=4,
-               block_size=2, gradient_signed=1, l2_norm_clip=0.2,
+def sparse_hog(image, method='dalaltriggs', num_orientations=9, cell_size=4,
+               block_size=2, gradient_signed=True, l2_norm_clip=0.2,
                verbose=False):
     # We should never use the manually filled out values - but they are
     # given sensible values as a defense.
@@ -31,8 +36,13 @@ def sparse_hog(image, method='zhuramanan', num_orientations=9, cell_size=4,
                              block_size, gradient_signed, l2_norm_clip,
                              0, 0, 0, 0, 0, 0, 0, verbose)
     image = np.asfortranarray(image)
-    descriptors, centers = _hog(image, options)
-    return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
+    descriptors, centers, opt_info = _hog(image, options)
+    if verbose:
+        return (np.ascontiguousarray(descriptors),
+                np.ascontiguousarray(centers),
+                opt_info)
+    else:
+        return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
 
 
 def _parse_options(type, method, num_orientations, cell_size,

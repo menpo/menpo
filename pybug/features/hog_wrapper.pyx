@@ -7,12 +7,13 @@ import cython
 cimport cython
 from libcpp.string cimport string
 
+
 cdef extern from "math.h":
     double ceil(double)
     double round(double)
 
 cdef extern from "cpp/hog/HOG.h":
-    cdef cppclass wins:
+    cdef struct wins:
         int numberOfWindowsHorizontally
         int numberOfWindowsVertically
         int numberOfWindows
@@ -113,13 +114,83 @@ cpdef _hog(np.ndarray[np.float64_t, ndim=3, mode='fortran'] image,
                                                             info.numberOfWindowsHorizontally,
                                                             2], order='F')
 
-    # Print information if asked
-    PrintInformation(&options[0], info)
-
     # Processing
     MainLoop(&options[0], info, &windowImage[0, 0, 0],
              &descriptorMatrix[0, 0, 0], &descriptorVector[0],
              &image[0, 0, 0], &windows_matrix_descriptors_matrix[0, 0, 0, 0, 0],
              &windows_centers_matrix[0, 0, 0])
 
-    return windows_matrix_descriptors_matrix, windows_centers_matrix
+    return (windows_matrix_descriptors_matrix,
+            windows_centers_matrix,
+            _wins_to_option_information(info, options))
+
+
+cdef _wins_to_option_information(wins w, double[:] options):
+    return HOGOptionInformation(
+        options[0],
+        options[8],
+        w.numberOfWindowsHorizontally,
+        w.numberOfWindowsVertically,
+        w.numberOfWindows,
+        w.windowHeight,
+        w.windowWidth,
+        w.windowStepHorizontal,
+        w.windowStepVertical,
+        w.numberOfBlocksPerWindowHorizontally,
+        w.numberOfBlocksPerWindowVertically,
+        w.descriptorLengthPerBlock,
+        w.descriptorLengthPerWindow,
+        w.imageHeight,
+        w.imageWidth,
+        w.returnOnlyWindowsWithinImageLimits,
+        w.inputImageIsGrayscale
+    )
+
+
+class HOGOptionInformation:
+
+    def __init__(self, type, method, horizontal_window_count,
+                 vertical_window_count, n_windows,window_height,
+                 window_width, horizontal_window_step, vertical_window_step,
+                 horizontal_window_block_count,
+                 vertical_window_block_count, hog_length_per_block,
+                 hog_length_per_window, image_height, image_width,
+                 is_padding_enabled, is_greyscale):
+        self.type = 'sparse' if type == 1.0 else 'dense'
+        self.method = 'dalaltriggs' if method == 1.0 else 'zhuramanan'
+        self.horizontal_window_count = horizontal_window_count
+        self.vertical_window_count = vertical_window_count
+        self.n_windows = n_windows
+        self.window_height = window_height
+        self.window_width = window_width
+        self.horizontal_window_step = horizontal_window_step
+        self.vertical_window_step = vertical_window_step
+        self.horizontal_window_block_count = horizontal_window_block_count
+        self.vertical_window_block_count = vertical_window_block_count
+        self.hog_length_per_block = hog_length_per_block
+        self.hog_length_per_window = hog_length_per_window
+        self.image_height = image_height
+        self.image_width = image_width
+        self.padding_enabled = bool(is_padding_enabled)
+        self.color = "greyscale" if is_greyscale else "rgb"
+
+    def __str__(self):
+        return """Input image: {0} x {1} pixels ({2})
+{3} HOGs
+Windows Size = {4} x {5} pixels
+Windows Step = {6} x {7} pixels
+Number of Windows = {8} x {9} = {10}
+Descriptor per window = {11} x {12} x {13} = {14} x 1
+Method of {15}
+Only Windows Within Image Limits: {16}""".format(
+            self.image_height, self.image_width, self.color,
+            self.type,
+            self.window_height, self.window_width,
+            self.vertical_window_step, self.horizontal_window_step,
+            self.vertical_window_count, self.horizontal_window_count,
+            self.n_windows,
+            self.vertical_window_block_count,
+            self.horizontal_window_block_count,
+            self.hog_length_per_block, self.hog_length_per_window,
+            self.method,
+            self.padding_enabled)
