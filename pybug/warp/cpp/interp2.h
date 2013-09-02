@@ -77,4 +77,4 @@ InterpolationMethod parseInterpolationMethod(const std::string method_str);
 void interpolate(const NDARRAY *F, const NDARRAY *row_vector, const NDARRAY *col_vector,
                  const std::string type, double *out_data);
 
-#endif /* INTERn_channels2_H_ */
+#endif
