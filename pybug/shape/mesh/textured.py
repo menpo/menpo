@@ -1,3 +1,4 @@
+import numpy as np
 from pybug.exceptions import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
@@ -39,7 +40,7 @@ class TexturedTriMesh(TriMesh):
         tcoords_scaled : :class:`pybug.shape.PointCloud`
             A scaled version of the tcoords.
         """
-        scale = Scale(np.ndarray(self.texture.shape)[::-1])
+        scale = Scale(np.array(self.texture.shape)[::-1])
         return PointCloud(scale.apply(self.tcoords.points))
 
     def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
