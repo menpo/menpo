@@ -1,7 +1,7 @@
+from scipy.spatial.distance import cdist
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
-from scipy.spatial.distance import cdist
 
 
 # TODO: sort of pointfields?
@@ -125,7 +125,10 @@ class PointCloud(Shape):
         Returns
         -------
         distance_matrix: (N, M) ndarray
-            The symetric pairwise distance matrix between the two PointClouds
+            The symmetric pairwise distance matrix between the two PointClouds
+            s.t. distance_matrix[i, j] is the distance between the i'th
+            point of this PointCloud and the j'th point of the input
+            PointCloud.
         """
         if self.n_dims != pointcloud.n_dims:
             raise Exception("The two PointClouds must be of the same "
