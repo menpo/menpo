@@ -2,6 +2,7 @@ from pybug.exceptions import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d
+from pybug.transform.affine import Scale
 
 
 class TexturedTriMesh(TriMesh):
@@ -27,8 +28,22 @@ class TexturedTriMesh(TriMesh):
         self.tcoords = PointCloud(tcoords)
         self.texture = texture
 
-    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def tcoords_pixel_scaled(self):
+        r"""
+        Returns a PointCloud that is scaled to be suitable for directly
+        indexing into the pixels of the texture (e.g. for manual mapping
+        operations).
+
+        Returns
+        -------
+        tcoords_scaled : :class:`pybug.shape.PointCloud`
+            A scaled version of the tcoords.
         """
+        scale = Scale(np.ndarray(self.texture.shape)[::-1])
+        return PointCloud(scale.apply(self.tcoords.points))
+
+    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+        r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
 
