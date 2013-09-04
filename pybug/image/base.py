@@ -5,8 +5,9 @@ from pybug.transform.affine import Translation
 from pybug.landmark import Landmarkable
 from pybug.base import Vectorizable
 from skimage.morphology import diamond, binary_erosion
+from scipy.spatial import Delaunay
 import itertools
-from pybug.visualize.base import Viewable, ImageViewer
+from pybug.visualize.base import Viewable, ImageViewer, DepthImageHeightViewer
 
 
 class AbstractImage(Vectorizable, Landmarkable, Viewable):
@@ -680,3 +681,79 @@ class Image(ChannelImage):
             new_image[mask] = gradient_array[mask]
 
         return Image(new_image, mask=self.mask)
+
+
+class DepthImage(Image):
+    r"""
+    An image the represents a depth image. Due to the fact a depth image has
+    an implicit spatial meaning, a DepthImage also contains a
+    :class:'pybug.shape.mesh.base.TriMesh`. This allows the depth image to be
+    treated as an image, but expose an object that represents the depth
+    as a mesh.
+
+    Will have exactly 1 channel.
+    """
+
+    def __init__(self, image_data, mask=None, texture=None, trilist=None):
+        super(DepthImage, self).__init__(image_data, mask=mask)
+        self.mesh = self._create_mesh_from_depth(image_data, trilist, texture)
+
+    def _create_mesh_from_depth(self, image_data, trilist, texture):
+        from pybug.shape.mesh import TriMesh, TexturedTriMesh
+        # Generate the grid of points
+        [ys, xs] = np.meshgrid(np.arange(image_data.shape[0]),
+                               np.arange(image_data.shape[1]),
+                               indexing='ij')
+        points = np.hstack([ys.reshape([-1, 1]), xs.reshape([-1, 1]),
+                            image_data.reshape([-1, 1])])
+        if texture is None:
+            return TriMesh(points, trilist)
+        else:
+            tex_coords = np.meshgrid(np.linspace(0, 1, texture.shape[0]),
+                                     np.linspace(0, 1, texture.shape[1]))
+            TexturedTriMesh(points, trilist, tex_coords, texture)
+
+    def _view(self, figure_id=None, new_figure=False, type='image', **kwargs):
+        r"""
+        View the image using the default image viewer. Before the image is
+        rendered the depth values are normalised between 0 and 1. The range
+        is then shifted so that the viewable range provides a reasonable
+        contrast.
+
+        Parameters
+        ----------
+        type : {'image', 'mesh', 'height'}
+            The manner in which to render the depth map.
+
+            ========== =========================
+            key        description
+            ========== =========================
+            image      View as a greyscale image
+            mesh       View as a triangulated mesh
+            height     View as a height map
+            ========== =========================
+
+            Default: 'image'
+
+        Returns
+        -------
+        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
+            The viewer the image is being shown within
+        """
+        pixels = self.pixels.copy()
+        pixels[np.isinf(pixels)] = np.nan
+        pixels = np.abs(pixels)
+        pixels /= np.nanmax(pixels)
+        pixels[pixels == 0] = np.nanmin(pixels[np.nonzero(pixels)])
+
+        if type is 'image':
+            return ImageViewer(figure_id, new_figure,
+                               self.n_dims, pixels).render(**kwargs)
+        if type is 'mesh':
+            return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
+                                   **kwargs)
+        if type is 'height':
+            return DepthImageHeightViewer(figure_id, new_figure,
+                                          pixels[:, :, 0]).render(**kwargs)
+        else:
+            raise ValueError('Supported type values are: image, mesh, height')
