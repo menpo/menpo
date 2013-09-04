@@ -120,4 +120,4 @@ def test_2d_gradientcorrelation_ic_map_coords():
 def test_2d_gradientcorrelation_fa_map_coords():
     residual_wrapper(GradientCorrelation(), ImageForwardAdditive,
                      scipy_warp,
-                     1.599221605730202)
+                     10.494169974979323)
