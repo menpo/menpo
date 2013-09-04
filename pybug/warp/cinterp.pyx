@@ -20,8 +20,8 @@ cdef extern from "cpp/interp2.h":
                           const string type, double *out_data) except +
 
 @cython.boundscheck(False)
-def interp2(np.ndarray[np.float64_t, ndim=3, mode='c'] F not None,
-            axis0_indices, axis1_indices, mode='bilinear'):
+def interp2(img not None, axis0_indices not None, axis1_indices not None,
+            mode='bilinear'):
     """
     Given a multi-channel image and a set of sub-pixel coordinates, return the
     interpolated pixel values using the given ``mode``.
@@ -47,6 +47,8 @@ def interp2(np.ndarray[np.float64_t, ndim=3, mode='c'] F not None,
     """
 
     # Convert Python input (indices), which could be integers, to doubles
+    cdef np.ndarray[np.float64_t, ndim=3, mode='c'] F = np.array(
+        img, dtype=np.float64, order='C')
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] axis0 = np.array(
             axis0_indices, dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] axis1 = np.array(
