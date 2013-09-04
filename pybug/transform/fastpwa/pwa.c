@@ -69,8 +69,8 @@ void alphaBetaForTriangle(Triangle t, Point p, double *alpha, double *beta)
   double dot_pj = pointDot(ip, ij);
   double dot_pk = pointDot(ip, ik);
   double d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk);
-  *alpha = (dot_jj * dot_pk - dot_jk * dot_pj) * d;
-  *beta = (dot_kk * dot_pj - dot_jk * dot_pk) * d;
+  *alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d;
+  *beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d;
 }
 
 //

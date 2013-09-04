@@ -98,9 +98,13 @@ class PWATransform(Transform):
         Returns
         --------
         alpha : (K, ``n_tris``)
-            The alpha for each point and triangle.
+            The alpha for each point and triangle. Alpha can be interpreted
+            as the contribution of the ij vector to the position of the
+            point in question.
         beta : (K, ``n_tris``)
-            The beta for each point and triangle.
+            The beta for each point and triangle. Beta can be interpreted as
+             the contribution of the ik vector to the position of the point
+             in question.
         """
         raise NotImplementedError()
 
@@ -354,8 +358,8 @@ class DiscreteAffinePWATransform(PWATransform):
         dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
 
         d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        alpha = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        beta = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
         return alpha, beta
 
     def index_alpha_beta(self, points):
@@ -393,7 +397,9 @@ class DiscreteAffinePWATransform(PWATransform):
         ``error.points_outside_source_domain`` to handle this case.
         """
         alpha, beta = self.alpha_beta(points)
-        return self._containment_from_alpha_beta(alpha, beta), alpha, beta
+        each_point = np.arange(points.shape[0])
+        index = self._containment_from_alpha_beta(alpha, beta)
+        return index, alpha[each_point, index], beta[each_point, index]
 
     def _containment_from_alpha_beta(self, alpha, beta):
         r"""
@@ -436,7 +442,7 @@ class DiscreteAffinePWATransform(PWATransform):
             # don't want duplicates! ensure that here:
             index = np.zeros(alpha.shape[0])
             index[point_index] = tri_index
-            return index
+            return index.astype(np.uint32)
 
     def _apply(self, x, **kwargs):
         """
@@ -560,7 +566,7 @@ class CachedPWATransform(DotProductPWATransform):
 
     def index_alpha_beta(self, points):
         points_c = np.require(points, dtype=np.float64, requirements=['C'])
-        alpha, beta, index = self._fastpwa.alpha_beta_index(points_c)
+        index, alpha, beta = self._fastpwa.index_alpha_beta(points_c)
         if np.any(index < 0):
             raise TriangleContainmentError(index < 0)
         else:

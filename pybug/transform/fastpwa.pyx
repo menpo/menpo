@@ -31,6 +31,7 @@ cdef extern from "./fastpwa/pwa.h":
 cdef class CLookupPWA:
     cdef TriangleCollection tris
     cdef AlphaBetaIndex *hashMap
+    cdef n_tris
 
     def __cinit__(self,
                   double[:, ::1] points not None,
@@ -64,7 +65,7 @@ cdef class CLookupPWA:
         deleteTriangleCollection(&self.tris)
         clearCacheAndDelete(&self.hashMap)
 
-    def alpha_beta_index(self, np.ndarray[double, ndim=2, mode="c"] points
+    def index_alpha_beta(self, np.ndarray[double, ndim=2, mode="c"] points
                          not None):
         cdef np.ndarray[double, ndim=1, mode='c'] alphas = \
             np.zeros(points.shape[0], dtype=np.float64)
@@ -75,4 +76,4 @@ cdef class CLookupPWA:
         arrayAlphaBetaIndexForPoints(&self.hashMap, &self.tris, &points[0,0],
                                      points.shape[0], &indexes[0],
                                      &alphas[0], &betas[0])
-        return alphas, betas, indexes
+        return indexes, alphas, betas
