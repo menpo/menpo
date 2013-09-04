@@ -48,9 +48,7 @@ class PointCloud(Shape):
         r"""
         The mean of all the points in this PointCloud.
 
-        Returns
-        -------
-        centre: (D,) ndarray
+        :type: (D,) ndarray
             The centre of this PointCloud.
         """
         return np.mean(self.points, axis=0)
