@@ -1,3 +1,4 @@
+import numpy as np
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
@@ -41,6 +42,16 @@ class PointCloud(Shape):
         :type: int
         """
         return self.points.shape[1]
+
+    @property
+    def centre(self):
+        r"""
+        The mean of all the points in this PointCloud.
+
+        :type: (D,) ndarray
+            The centre of this PointCloud.
+        """
+        return np.mean(self.points, axis=0)
 
     def as_vector(self):
         r"""
