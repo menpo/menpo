@@ -1,3 +1,4 @@
+from scipy.spatial.distance import cdist
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
@@ -106,3 +107,30 @@ class PointCloud(Shape):
     def _transform_self(self, transform):
         self.points = transform(self.points)
         return self
+
+    def distance_to(self, pointcloud, **kwargs):
+
+        r"""
+        Returns a distance matrix between this point cloud and another.
+        By default the Euclidian distance is calculated - see
+        ``scipy.spatial.distance.cdist`` for valid kwargs to change the metric
+        and other properties.
+
+        Parameters
+        ----------
+        pointcloud : PointCloud (M points, D dim)
+            The second pointcloud to compute distances between. This must be
+             of the same dimension as this PointCloud.
+
+        Returns
+        -------
+        distance_matrix: (N, M) ndarray
+            The symmetric pairwise distance matrix between the two PointClouds
+            s.t. distance_matrix[i, j] is the distance between the i'th
+            point of this PointCloud and the j'th point of the input
+            PointCloud.
+        """
+        if self.n_dims != pointcloud.n_dims:
+            raise ValueError("The two PointClouds must be of the same "
+                             "dimensionality.")
+        return cdist(self.points, pointcloud.points, **kwargs)
