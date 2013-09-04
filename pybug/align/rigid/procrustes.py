@@ -124,7 +124,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
     @property
     def mean_target(self):
-        return np.mean([p[-1].target for p in self.procrustes])
+        return np.mean([p[-1].target for p in self.procrustes], axis=0)
 
     @property
     def errors(self):
