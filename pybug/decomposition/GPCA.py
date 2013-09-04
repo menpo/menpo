@@ -4,30 +4,66 @@ from scipy.linalg.blas import dgemm
 
 
 class GPCA(object):
+    r"""
+    Generalized Principal Component Analysis (GPCA) by Eigenvalue
+    Decomposition of the data's scatter matrix.
+
+    This implementation uses the scipy.linalg implementation of the
+    eigenvalue decomposition. Similar to the Scikit-Learn PCA implementation
+    it only works for dense arrays, however, this one should scale better to
+    large dimensional data.
+
+    The class interface matches the one of the Scikit-Learn PCA class
+
+    Parameters
+    -----------
+    n_components : int or None
+        Number of components to be retained.
+        if n_components is not set all components
+
+    center : bool, optional
+        When True GPCA is performed after mean centering the data
+
+    whiten : bool, optional
+        When True (False by default) transforms the `components_` to ensure
+        that they covariance is the identity matrix.
+    """
 
     def __init__(self, n_components=None, center=True, whiten=False):
-        """
-        :param n_components:
-        :param center:
-        :param whiten:
-        :return:
-        """
         self.n_components = n_components
         self.center = center
         self.whiten = whiten
 
     def fit(self, X):
-        """
-        :param X:
-        :return:
+        r"""
+        Apply GPCA on the data matrix X
+
+        Parameters
+        ----------
+        x : (n_samples, n_features) ndarray
+            Training data
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         self._fit(X)
         return self
 
     def _fit(self, X):
-        """
-        :param X:
-        :return:
+        r"""
+        Apply GPCA on the data matrix X
+
+        Parameters
+        ----------
+        x : (n_samples, n_features) ndarray
+            Training data
+
+        Returns
+        -------
+        eigenvectors : (n_components, n_features) ndarray
+        eigenvalues : (n_components,) ndarray
         """
         n_samples, n_features = X.shape
 
@@ -77,9 +113,17 @@ class GPCA(object):
         return eigenvectors, eigenvalues
 
     def transform(self, X):
-        """
-        :param X:
-        :return:
+        r"""
+        Apply the dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X : (n_samples, n_features) ndarray
+
+        Returns
+        -------
+        Z: (n_samples, n_components) ndarray
+
         """
         if self.center:
             X = X - self.mean_
@@ -88,9 +132,19 @@ class GPCA(object):
         return Z
 
     def inverse_transform(self, Z):
-        """
-        :param Z:
-        :return:
+        r"""
+        Parameters
+        ----------
+        Z : (n_samples, n_components) ndarray
+
+        Returns
+        -------
+        X: (n_samples, n_features) ndarray
+
+        Notes
+        -----
+        If whitening is used, inverse_transform does not perform the
+        exact inverse operation of transform.
         """
         X = dgemm(alpha=1.0, a=Z.T, b=self.components_.T,
                   trans_a=True, trans_b=True)
@@ -102,13 +156,22 @@ class GPCA(object):
 
 
 def _eigenvalue_decomposition(S, eps=10**-10):
-    """
-    :param S:
-    :return:
+    r"""
+
+    Parameters
+    ----------
+    S : (N, N)  ndarray
+        Scatter matrix
+
+    Returns
+    -------
+    pos_eigenvectors: (N, p) ndarray
+    pos_eigenvalues: (p,) ndarray
+    neg_eigenvectors: (N, n) ndarray
+    neg_eigenvalues: (n,) ndarray
     """
     # compute eigenvalue decomposition
     eigenvalues, eigenvectors = np.linalg.eig(S)
-
     # sort eigenvalues from largest to smallest
     index = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[index]
@@ -117,21 +180,25 @@ def _eigenvalue_decomposition(S, eps=10**-10):
     # set tolerance limit
     limit = np.max(np.abs(eigenvalues)) * eps
 
-    # positive eigenvalues
+    # select positive eigenvalues
     pos_index = eigenvalues > 0
     pos_eigenvalues = eigenvalues[pos_index]
     pos_eigenvectors = eigenvectors[:, pos_index]
-
+    # check they are within the expected tolerance
     index = pos_eigenvalues > limit
     pos_eigenvalues = pos_eigenvalues[index]
     pos_eigenvectors = pos_eigenvectors[:, index]
 
-    # negative eigenvalues
+    # # select negative eigenvalues
     # neg_index = eigenvalues < 0
     # neg_eigenvalues = eigenvalues[neg_index]
     # neg_eigenvectors = eigenvectors[:, neg_index]
-    #
+    # # check they are within the expected tolerance
     # index = np.abs(neg_eigenvalues) > limit
+    # neg_eigenvalues = neg_eigenvalues[index]
+    # neg_eigenvectors = neg_eigenvectors[:, index]
+    # # resort them
+    # index = np.argsort(np.abs(neg_eigenvalues))[::-1]
     # neg_eigenvalues = neg_eigenvalues[index]
     # neg_eigenvectors = neg_eigenvectors[:, index]
 
