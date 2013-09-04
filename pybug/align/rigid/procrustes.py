@@ -59,7 +59,7 @@ class Procrustes(RigidAlignment):
         self.aligned_source = self.source_translation.apply(self.source)
         scale_source = np.linalg.norm(self.aligned_source)
         scale_target = np.linalg.norm(self.centred_target)
-        self.scale = Scale(scale_target / scale_source, n_dim=self.n_dims)
+        self.scale = Scale(scale_target / scale_source, n_dims=self.n_dims)
         self.aligned_source = self.scale.apply(self.aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
@@ -100,7 +100,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         new_target = (sum(p[-1].aligned_source for p in self.procrustes) /
                       self.n_sources)
         rescale = Scale(self.target_scale / np.linalg.norm(new_target),
-                        n_dim=self.n_dim)
+                        n_dims=self.n_dims)
         centre = Translation(-new_target.mean(axis=0))
         rescale_about_com = centre.compose(rescale).compose(centre.inverse)
         new_target = rescale_about_com.apply(new_target)

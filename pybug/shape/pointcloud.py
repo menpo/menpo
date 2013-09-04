@@ -1,3 +1,5 @@
+import numpy as np
+from scipy.spatial.distance import cdist
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
@@ -42,6 +44,16 @@ class PointCloud(Shape):
         """
         return self.points.shape[1]
 
+    @property
+    def centre(self):
+        r"""
+        The mean of all the points in this PointCloud.
+
+        :type: (D,) ndarray
+            The centre of this PointCloud.
+        """
+        return np.mean(self.points, axis=0)
+
     def as_vector(self):
         r"""
         Returns a flattened representation of the pointcloud.
@@ -57,9 +69,9 @@ class PointCloud(Shape):
 
     def from_vector(self, flattened):
         r"""
-        Builds a new pointcoloud given then ``flattened`` vector. This allows
-        rebuilding pointclouds with the correct number of dimensions from a
-        vector.
+        Builds a new :class:`PointCloud` given then ``flattened`` vector.
+        This allows rebuilding pointclouds with the correct number of
+        dimensions from a vector.
 
         Parameters
         ----------
@@ -86,6 +98,45 @@ class PointCloud(Shape):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         return message
 
+    def max_min_bounds(self, boundary=0):
+        r"""
+        The maximum and minimum extent of the :class:`PointCloud`.
+        An optional boundary argument can be provided to expand the bounds
+        by a constant margin.
+
+        Parameters
+        ----------
+        boundary: b float
+            A optional padding distance that is added to the bounds. Default
+             is zero, meaning the max/min of tightest possible containing
+             square/cube/hypercube is returned.
+
+        Returns
+        --------
+        max_b : (D,) ndarray
+            The maximum extent of the :class:`PointCloud` and boundary along
+            each dimension
+
+        min_b : (D,) ndarray
+            The minimum extent of the :class:`PointCloud` and boundary along
+            each dimension
+        """
+        max_b = np.max(self.points, axis=0) + boundary
+        min_b = np.min(self.points, axis=0) - boundary
+        return max_b, min_b
+
+    def range_bounds(self):
+        r"""
+        The range of the extent of the :class:`PointCloud`.
+
+        Returns
+        --------
+        range_b : (D,) ndarray
+            The range of the :class:`PointCloud`s extent in each dimension.
+        """
+        max_b, min_b = self.max_min_bounds()
+        return max_b - min_b
+
     def add_pointfield(self, name, field):
         """
         Add another set of field values (of arbitrary dimension) to each
@@ -106,3 +157,30 @@ class PointCloud(Shape):
     def _transform_self(self, transform):
         self.points = transform(self.points)
         return self
+
+    def distance_to(self, pointcloud, **kwargs):
+
+        r"""
+        Returns a distance matrix between this point cloud and another.
+        By default the Euclidian distance is calculated - see
+        ``scipy.spatial.distance.cdist`` for valid kwargs to change the metric
+        and other properties.
+
+        Parameters
+        ----------
+        pointcloud : PointCloud (M points, D dim)
+            The second pointcloud to compute distances between. This must be
+             of the same dimension as this PointCloud.
+
+        Returns
+        -------
+        distance_matrix: (N, M) ndarray
+            The symmetric pairwise distance matrix between the two PointClouds
+            s.t. distance_matrix[i, j] is the distance between the i'th
+            point of this PointCloud and the j'th point of the input
+            PointCloud.
+        """
+        if self.n_dims != pointcloud.n_dims:
+            raise ValueError("The two PointClouds must be of the same "
+                             "dimensionality.")
+        return cdist(self.points, pointcloud.points, **kwargs)

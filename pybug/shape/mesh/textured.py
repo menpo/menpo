@@ -1,7 +1,9 @@
+import numpy as np
 from pybug.exceptions import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d
+from pybug.transform.affine import Scale
 
 
 class TexturedTriMesh(TriMesh):
@@ -27,8 +29,40 @@ class TexturedTriMesh(TriMesh):
         self.tcoords = PointCloud(tcoords)
         self.texture = texture
 
-    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def tcoords_pixel_scaled(self):
+        r"""
+        Returns a PointCloud that is modified to be suitable for directly
+        indexing into the pixels of the texture (e.g. for manual mapping
+        operations). The resulting tcoords behave just like image landmarks
+        do:
+
+         >>> texture = texturedtrimesh.texture
+         >>> tc_ps = texturedtrimesh.tcoords_pixel_scaled()
+         >>> pixel_values_at_tcs = texture[tc_ps[: ,0], tc_ps[:, 1]]
+
+        The operations that are performed are:
+
+        - Flipping the origin from bottom-left to top-left
+        - Scaling the tcoords by the image shape (denormalising them)
+        - Permuting the axis so that
+
+        Returns
+        -------
+        tcoords_scaled : :class:`pybug.shape.PointCloud`
+            A copy of the tcoords that behave like Image landmarks
         """
+        scale = Scale(np.array(self.texture.shape)[::-1])
+        tcoords = self.tcoords.points.copy()
+        # flip the 'y' st 1 -> 0 and 0 -> 1, moving the axis to upper left
+        tcoords[:, 1] = 1 - tcoords[:, 1]
+        # apply the scale to get the units correct
+        tcoords = scale.apply(tcoords)
+        # flip axis 0 and axis 1 so indexing is as expected
+        tcoords = tcoords[:, ::-1]
+        return PointCloud(tcoords)
+
+    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+        r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
 

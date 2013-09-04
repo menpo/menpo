@@ -255,3 +255,28 @@ class LM3Importer(LandmarkImporter):
 
         self.label = 'LM3'
         self.landmark_dict = dict(zip(labels, points))
+
+
+class LANImporter(LandmarkImporter):
+    r"""
+    Importer for the LAN file format for the GOSH dataset. This is a 3D
+    landmark type and so it is assumed it only applies to meshes.
+
+    Landmark set label: LAN
+
+    Note that the exact meaning of each landmark in this set varies,
+    so all we can do is import all landmarks found under the label 'LAN'
+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(LANImporter, self).__init__(filepath)
+
+    def _parse_format(self, **kwargs):
+        with open(self.filepath, 'r') as f:
+            landmarks = np.fromfile(
+                f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
+        self.label = 'LAN'
+        self.landmark_dict = {'LAN' : PointCloud(landmarks)}

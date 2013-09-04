@@ -211,7 +211,7 @@ class AffineTransform(Transform):
     @property
     def n_parameters(self):
         r"""
-        ``n_dim * (n_dim + 1)`` parameters - every element of the matrix bar
+        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
         the homogeneous part.
 
         :type: int
@@ -366,8 +366,8 @@ class AffineTransform(Transform):
         :param target: A n_points x n_dims ndarray.
         :return: The AffineTransform object relating the previous two vectors.
         """
-        n_dim = source.shape[1]
-        if n_dim == 2:
+        n_dims = source.shape[1]
+        if n_dims == 2:
             n_points = source.shape[0]
             xs = source[:, 0]
             ys = source[:, 1]
@@ -400,7 +400,7 @@ class AffineTransform(Transform):
                                            [c, d, ty],
                                            [0, 0,  1]])
             return homogeneous_matrix
-        elif n_dim == 3:
+        elif n_dims == 3:
             raise NotImplementedError("3D affine transforms cannot be "
                                       "inferred yet.")
         else:
@@ -479,7 +479,7 @@ class SimilarityTransform(AffineTransform):
         Raises
         ------
         DimensionalityError
-            ``points.n_dim != self.n_dim`` or transform is not 2D
+            ``points.n_dims != self.n_dims`` or transform is not 2D
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
@@ -547,14 +547,14 @@ class SimilarityTransform(AffineTransform):
         DimensionalityError, NotImplementedError
             If the transform is not 2D
         """
-        n_dim = self.n_dims
-        if n_dim == 2:
-            params = self.homogeneous_matrix - np.eye(n_dim + 1)
+        n_dims = self.n_dims
+        if n_dims == 2:
+            params = self.homogeneous_matrix - np.eye(n_dims + 1)
             # Pick off a, b, tx, ty
-            params = params[:n_dim, :].flatten(order='F')
+            params = params[:n_dims, :].flatten(order='F')
             # Pick out a, b, tx, ty
             return params[[0, 1, 4, 5]]
-        elif n_dim == 3:
+        elif n_dims == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
@@ -666,8 +666,8 @@ class SimilarityTransform(AffineTransform):
         :return: The SimilarityTransform object relating the previous two
             vectors.
         """
-        n_dim = source.shape[1]
-        if n_dim == 2:
+        n_dims = source.shape[1]
+        if n_dims == 2:
             n_points = source.shape[0]
             xs = source[:, 0]
             ys = source[:, 1]
@@ -698,7 +698,7 @@ class SimilarityTransform(AffineTransform):
                                            [b,  a, ty],
                                            [0,  0,  1]])
             return homogeneous_matrix
-        elif n_dim == 3:
+        elif n_dims == 3:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "inferred yet.")
         else:
@@ -765,7 +765,7 @@ def Rotation(rotation_matrix):
 
 class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
     r"""
-    Abstract ``n_dim`` rotation transform.
+    Abstract ``n_dims`` rotation transform.
 
     Parameters
     ----------
@@ -1044,27 +1044,27 @@ class Rotation3D(AbstractRotation):
                                   'yet.')
 
 
-def Scale(scale_factor, n_dim=None):
+def Scale(scale_factor, n_dims=None):
     r"""
     Factory function for producing Scale transforms. Zero scale factors are not
     permitted.
 
     A :class:`UniformScale` will be produced if:
 
-        - A float ``scale_factor`` and a ``n_dim`` kwarg are provided
-        - A ndarray scale_factor with shape (``n_dim``, ) is provided with all
+        - A float ``scale_factor`` and a ``n_dims`` kwarg are provided
+        - A ndarray scale_factor with shape (``n_dims``, ) is provided with all
           elements being the same
 
     A :class:`NonUniformScale` will be provided if:
 
-        - A ndarray ``scale_factor`` with shape (``n_dim``, ) is provided with
+        - A ndarray ``scale_factor`` with shape (``n_dims``, ) is provided with
           at least two differing scale factors.
 
     Parameters
     ----------
     scale_factor: double or (D,) ndarray
         Scale for each axis.
-    n_dim: int
+    n_dims: int
         The dimensionality of the output transform.
 
     Returns
@@ -1080,19 +1080,19 @@ def Scale(scale_factor, n_dim=None):
     if not np.all(scale_factor):
         raise ValueError('Having a zero in one of the scales is invalid')
 
-    if n_dim is None:
+    if n_dims is None:
         # scale_factor better be a numpy array then
         if np.allclose(scale_factor, scale_factor[0]):
             return UniformScale(scale_factor[0], scale_factor.shape[0])
         else:
             return NonUniformScale(scale_factor)
     else:
-        return UniformScale(scale_factor, n_dim)
+        return UniformScale(scale_factor, n_dims)
 
 
 class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     r"""
-    An ``n_dim`` scale transform, with a scale component for each dimension.
+    An ``n_dims`` scale transform, with a scale component for each dimension.
 
     Parameters
     ----------
@@ -1134,7 +1134,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
 
         :type: int
 
-        ``n_dim`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
+        ``n_dims`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
         representing the scale across each axis.
         """
         return self.scale.shape[0]
@@ -1192,12 +1192,12 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     @classmethod
     def _estimate(cls, source, target):
         homogeneous_matrix = super(Translation, cls)._estimate(source, target)
-        n_dim = source[1]
-        if n_dim == 2:
+        n_dims = source[1]
+        if n_dims == 2:
             scale = np.zeros((1, 2))
             scale[0] = homogeneous_matrix[0, 0]
             scale[1] = homogeneous_matrix[1, 1]
-        elif n_dim == 3:
+        elif n_dims == 3:
             scale = np.zeros((1, 3))
             scale[0] = homogeneous_matrix[0, 0]
             scale[1] = homogeneous_matrix[1, 1]
@@ -1205,7 +1205,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         return scale
 
 
-def UniformScale(scale, n_dim):
+def UniformScale(scale, n_dims):
     r"""
     Factory function for producing :class:`UniformScale` objects. A single
     scale and the number of dimensions required is expected.
@@ -1215,7 +1215,7 @@ def UniformScale(scale, n_dim):
     ----------
     scale : double
         A scalar value representing the scale across each axis
-    n_dim : int
+    n_dims : int
         The number of dimensions for the transform.
 
     Returns
@@ -1228,9 +1228,9 @@ def UniformScale(scale, n_dim):
     DimensionalityError
         Only 2D and 3D scale objects are supported.
     """
-    if n_dim == 2:
+    if n_dims == 2:
         return UniformScale2D(scale)
-    elif n_dim == 3:
+    elif n_dims == 3:
         return UniformScale3D(scale)
     else:
         raise DimensionalityError('Only 2D or 3D UniformScale transforms are '
@@ -1426,7 +1426,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     @property
     def n_parameters(self):
         r"""
-        The number of parameters: ``n_dim``
+        The number of parameters: ``n_dims``
 
         :type: int
         """
