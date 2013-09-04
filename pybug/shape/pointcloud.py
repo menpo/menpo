@@ -131,6 +131,6 @@ class PointCloud(Shape):
             PointCloud.
         """
         if self.n_dims != pointcloud.n_dims:
-            raise Exception("The two PointClouds must be of the same "
-                            "dimensionality.")
+            raise ValueError("The two PointClouds must be of the same "
+                             "dimensionality.")
         return cdist(self.points, pointcloud.points, **kwargs)
