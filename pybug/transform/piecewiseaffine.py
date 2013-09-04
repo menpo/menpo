@@ -231,7 +231,7 @@ class PiecewiseAffineTransform(Transform):
         gamma_i = 1 - alpha_i - beta_i
         gamma_j = beta_i
         gamma_k = alpha_i
-        # the jacobian wrt source is of shape (n_points, n_source lm, n_dim)
+        # the jacobian wrt source is of shape (n_points, n_source lm, n_dims)
         jac = np.zeros((points.shape[0], self.n_points, 2))
         # now its a case of writing the gamma values in for the correct
         # triangles
