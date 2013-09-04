@@ -16,7 +16,7 @@ class TPSTransform(Transform):
 
     def __init__(self, tps):
         self.tps = tps
-        self.n_dim = self.tps.n_dim
+        self.n_dims = self.tps.n_dims
 
     def _apply(self, points, affine_free=False):
         """
@@ -38,7 +38,7 @@ class TPSTransform(Transform):
         f_affine_free : (N, D) ndarray
             The transformed points without the affine components applied.
         """
-        if points.shape[1] != self.n_dim:
+        if points.shape[1] != self.n_dims:
             raise DimensionalityError('TPS can only be used on 2D data.')
         x = points[..., 0][:, None]
         y = points[..., 1][:, None]
@@ -185,7 +185,7 @@ class TPSTransform(Transform):
 
         dk_dx = np.zeros((self.tps.n_landmarks + 3,
                           self.tps.n_landmarks,
-                          self.n_dim))
+                          self.n_dims))
         kernel_derivative = self.tps.kernel.derivative(pairwise_norms) / pairwise_norms
         dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
 
