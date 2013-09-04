@@ -32,7 +32,7 @@ class Alignment(object):
         except ValueError:
             raise DimensionalityError('Data is being provided in an invalid '
                                       'format - must have shape '
-                                      '(n_landmarks, n_dim)')
+                                      '(n_landmarks, n_dims)')
         assert self.n_dims, self.n_landmarks == target.shape
         self.target = target.copy()
 
@@ -119,13 +119,13 @@ class MultipleAlignment(object):
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
-        self.n_landmarks, self.n_dim = sources[0].shape
+        self.n_landmarks, self.n_dims = sources[0].shape
         self.sources = sources
         if target is None:
             # set the target to the mean source position
             self.target = sum(self.sources) / self.n_sources
         else:
-            assert self.n_dim, self.n_landmarks == target.shape
+            assert self.n_dims, self.n_landmarks == target.shape
             self.target = target
 
     @abc.abstractproperty
