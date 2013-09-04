@@ -744,7 +744,6 @@ class DepthImage(Image):
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
         pixels /= np.nanmax(pixels)
-        pixels[pixels == 0] = np.nanmin(pixels[np.nonzero(pixels)])
 
         if type is 'image':
             return ImageViewer(figure_id, new_figure,
