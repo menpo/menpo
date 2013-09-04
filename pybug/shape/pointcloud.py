@@ -1,3 +1,4 @@
+import numpy as np
 from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
@@ -85,6 +86,45 @@ class PointCloud(Shape):
                     field_dim = 1
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         return message
+
+    def max_min_bounds(self, boundary=0):
+        r"""
+        The maximum and minimum extent of the `pybug
+        .shape.pointcloud.PointCloud`. An optional boundary argument can be
+        provided to expand the bounds by a constant margin.
+
+        Parameters
+        ----------
+        boundary: b float
+            A optional padding distance that is added to the bounds. Default
+             is zero, meaning the max/min of tightest possible containing
+             square/cube/hypercube is returned.
+
+        Returns
+        --------
+        max_b : (D,) ndarray
+            The maximum extent of the PointCloud and boundary along each
+            dimension
+
+        min_b : (D,) ndarray
+            The minimum extent of the PointCloud and boundary along each
+            dimension
+        """
+        max_b = np.max(self.points, axis=0) + boundary
+        min_b = np.min(self.points, axis=0) - boundary
+        return max_b, min_b
+
+    def range_bounds(self):
+        r"""
+        The range of the extent of the `pybug.shape.pointcloud.PointCloud`.
+
+        Returns
+        --------
+        range_b : (D,) ndarray
+            The range of the PointCloud's extent in each dimension.
+        """
+        max_b, min_b = self.max_min_bounds()
+        return max_b - min_b
 
     def add_pointfield(self, name, field):
         """
