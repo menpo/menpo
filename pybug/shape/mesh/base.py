@@ -3,6 +3,7 @@ from pybug.shape import PointCloud
 from pybug.shape.mesh.exceptions import TriFieldError
 from pybug.visualize import TriMeshViewer
 from pybug.shape.mesh.normals import compute_normals
+from scipy.spatial import Delaunay
 
 
 class TriMesh(PointCloud):
@@ -19,9 +20,10 @@ class TriMesh(PointCloud):
     """
 
     def __init__(self, points, trilist):
-        #TODO Delaunay triangulate if no trilist added
         #TODO add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points)
+        if trilist is None:
+            trilist = Delaunay(points).simplices
         self.trilist = trilist
         self.trifields = {}
 
