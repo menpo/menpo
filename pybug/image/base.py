@@ -118,6 +118,18 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
         pixels = np.ones(shape, dtype=dtype) * fill
         return cls(pixels)
 
+    @property
+    def centre(self):
+        r"""
+        The geometric centre of the Image - the subpixel that is in the
+        middle.
+
+        Useful for aligning 3D shapes and images.
+
+        :type: (D,) ndarray
+        """
+        return np.array(self.shape, dtype=np.double) / 2
+
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
