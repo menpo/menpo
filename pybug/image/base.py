@@ -694,24 +694,30 @@ class DepthImage(Image):
     Will have exactly 1 channel.
     """
 
-    def __init__(self, image_data, mask=None, texture=None, trilist=None):
+    def __init__(self, image_data, mask=None, texture=None, points=None,
+                 tcoords=None, trilist=None):
         super(DepthImage, self).__init__(image_data, mask=mask)
-        self.mesh = self._create_mesh_from_depth(image_data, trilist, texture)
+        self.mesh = self._create_mesh_from_depth(image_data, points, trilist,
+                                                 tcoords, texture)
 
-    def _create_mesh_from_depth(self, image_data, trilist, texture):
+    def _create_mesh_from_depth(self, image_data, points, trilist, tcoords,
+                                texture):
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
-        # Generate the grid of points
-        [ys, xs] = np.meshgrid(np.arange(image_data.shape[0]),
-                               np.arange(image_data.shape[1]),
-                               indexing='ij')
-        points = np.hstack([ys.reshape([-1, 1]), xs.reshape([-1, 1]),
-                            image_data.reshape([-1, 1])])
+        if points is None:
+            # Generate the grid of points
+            [ys, xs] = np.meshgrid(np.arange(image_data.shape[0]),
+                                   np.arange(image_data.shape[1]),
+                                   indexing='ij')
+            points = np.hstack([ys.reshape([-1, 1]), xs.reshape([-1, 1]),
+                                image_data.reshape([-1, 1])])
         if texture is None:
             return TriMesh(points, trilist)
         else:
-            tex_coords = np.meshgrid(np.linspace(0, 1, texture.shape[0]),
-                                     np.linspace(0, 1, texture.shape[1]))
-            TexturedTriMesh(points, trilist, tex_coords, texture)
+            if tcoords is None:
+                coord_per_pixel = np.linspace(0, 1, np.prod(texture.shape))
+                tcoords = np.hstack([coord_per_pixel.reshape([-1, 1])[::-1],
+                                     coord_per_pixel.reshape([-1, 1])])
+            return TexturedTriMesh(points, trilist, tcoords, texture)
 
     def _view(self, figure_id=None, new_figure=False, type='image', **kwargs):
         r"""

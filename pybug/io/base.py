@@ -57,7 +57,7 @@ def auto_import(pattern, meshes=True, images=True,
         mesh_objects, mesh_importers = _multi_mesh_import(mesh_paths,
                                                           keep_importers=True)
     if images:
-        image_files = _glob_matching_extension(pattern, image_types)
+        image_files = _glob_matching_extension(pattern, all_image_types)
         if meshes and not include_texture_images:
             texture_paths = [m.texture_path for m in mesh_importers
                              if m.texture_path is not None]
@@ -89,7 +89,7 @@ def _multi_image_import(image_filepaths, keep_importers=False):
         ``True`` then the importer for each image is returned as a tuple of s
         lists.
     """
-    return _multi_import(image_filepaths, image_types, keep_importers)
+    return _multi_import(image_filepaths, all_image_types, keep_importers)
 
 
 def _multi_mesh_import(mesh_filepaths, keep_importers=False):
@@ -429,4 +429,4 @@ class Importer(object):
         pass
 
 # Avoid circular imports
-from pybug.io.extensions import mesh_types, image_types
+from pybug.io.extensions import mesh_types, all_image_types
