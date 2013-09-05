@@ -20,8 +20,12 @@ cdef extern from "./fastpwa/pwa.h":
                                               unsigned int *trilist,
                                               unsigned int n_triangles)
 
-    void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hashMap,
+    void arrayCachedAlphaBetaIndexForPoints(AlphaBetaIndex **hashMap,
                                       TriangleCollection *tris,
+                                      double *points,
+                                      unsigned int n_points, int *indexes,
+                                      double *alphas, double *betas)
+    void arrayAlphaBetaIndexForPoints(TriangleCollection *tris,
                                       double *points,
                                       unsigned int n_points, int *indexes,
                                       double *alphas, double *betas)
@@ -65,7 +69,8 @@ cdef class CLookupPWA:
         deleteTriangleCollection(&self.tris)
         clearCacheAndDelete(&self.hashMap)
 
-    def index_alpha_beta(self, np.ndarray[double, ndim=2, mode="c"] points
+    def index_alpha_beta(self, np.ndarray[double, ndim=2,
+                                               mode="c"] points
                          not None):
         cdef np.ndarray[double, ndim=1, mode='c'] alphas = \
             np.zeros(points.shape[0], dtype=np.float64)
@@ -73,7 +78,8 @@ cdef class CLookupPWA:
             np.zeros(points.shape[0], dtype=np.float64)
         cdef np.ndarray[int, ndim=1, mode='c'] indexes = \
             np.zeros(points.shape[0], dtype=np.int32)
-        arrayAlphaBetaIndexForPoints(&self.hashMap, &self.tris, &points[0,0],
+        arrayCachedAlphaBetaIndexForPoints(&self.hashMap, &self.tris,
+                                          &points[0,0],
                                      points.shape[0], &indexes[0],
                                      &alphas[0], &betas[0])
         return indexes, alphas, betas

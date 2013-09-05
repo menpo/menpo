@@ -46,7 +46,10 @@ AlphaBetaIndex* retrieveAlphaBetaFromCache(AlphaBetaIndex **hash, Point queryPoi
 void addAlphaBetaIndexToCache(AlphaBetaIndex **hash, Point queryPoint, int index, double alpha, double beta);
 void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, TriangleCollection *tris, Point point,
                                                       int *index, double *alpha, double *beta);
-void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris,
+void arrayCachedAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris,
+                                  double *points, unsigned int n_points,
+                                  int *indexes, double *alphas, double *betas);
+void arrayAlphaBetaIndexForPoints(TriangleCollection *tris,
                                   double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas);
 void arrayMapForPointsAndTargetPoints(AlphaBetaIndex **hash, TriangleCollection *sourceTris,

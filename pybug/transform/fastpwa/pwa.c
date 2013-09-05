@@ -159,7 +159,7 @@ void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, Tri
   }
 }
 
-void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris, double *points, unsigned int n_points,
+void arrayCachedAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris, double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas)
 {
   for (unsigned int i = 0; i < n_points; i++) {
@@ -167,6 +167,16 @@ void arrayAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tri
     Point queryPoint = initPoint(points + i * 2);
     cachedAlphaBetaIndexForPointInTriangleCollection(hash, tris, queryPoint,
                                                      indexes + i, alphas + i, betas + i);
+  }
+}
+
+void arrayAlphaBetaIndexForPoints(TriangleCollection *tris, double *points, unsigned int n_points,
+                                  int *indexes, double *alphas, double *betas)
+{
+  for (unsigned int i = 0; i < n_points; i++) {
+    // build a point object
+    Point queryPoint = initPoint(points + i * 2);
+    containingTriangleAndAlphaBetaForPoint(tris, queryPoint, indexes + i, alphas + i, betas + i);
   }
 }
 
