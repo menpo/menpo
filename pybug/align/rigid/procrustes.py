@@ -123,6 +123,10 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                 for p in self.procrustes]
 
     @property
+    def mean_aligned_shape(self):
+        return np.mean([p[-1].target for p in self.procrustes], axis=0)
+
+    @property
     def errors(self):
         return [p[-1].error for p in self.procrustes]
 
