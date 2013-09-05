@@ -1,0 +1,1 @@
+from pybug.features.lbp.base import dense_hog, sparse_hog
