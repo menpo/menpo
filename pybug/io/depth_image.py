@@ -330,3 +330,60 @@ class BNTImporter(DepthImageImporter):
         self.tcoords[:, 1] = -self.tcoords[:, 1]
 
         self.relative_texture_path = texture_path
+
+
+class FIMImporter(DepthImageImporter):
+    r"""
+    Allows importing floating point images as depth images.
+    This reads in the shape in to 3 channels and then triangulates the
+    ``x`` and ``y`` coordinates to create a surface. An example of this
+    datatype is the aligned BU4D dataset.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
+    """
+
+    def __init__(self, filepath):
+        # Setup class before super class call
+        super(FIMImporter, self).__init__(filepath)
+
+    def _process_landmarks(self, original_image, lmark_dict):
+        r"""
+        There are no default landmarks for this dataset so we currently don't
+        perform any processing.
+
+        Parameters
+        ----------
+        original_image : :class:`pybug.image.base.Image`
+            The original image that the landmarks belong to
+        lmark_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
+            The landmark dictionary to transform
+        """
+        pass
+
+    def _build_image_and_mesh(self):
+        r"""
+        Read the file and parse it as necessary. Since the data lies on a grid
+        we can triangulate the 2D coordinates to get a valid triangulation.
+
+        The format does not specify texture coordinates.
+        """
+        with open(self.filepath, 'rb') as f:
+            size = np.fromfile(f, dtype=np.uint32, count=3)
+            data = np.fromfile(f, dtype=np.float32, count=np.product(size))
+            data = data.reshape([size[0], size[1], size[2]])
+
+        # Replace the zero buffer values with nan so that the image renders
+        # nicely
+        data[data == 0] = np.nan
+
+        self.depth_image = data[:, :, 2]
+        self.mask = ~np.isnan(self.depth_image)
+
+        points = np.reshape(data, [size[0] * size[1], size[2]])
+        valid_points = ~np.isnan(points).any(axis=1)
+        self.points = points[valid_points]
+        # Generate a triangulation from the points
+        self.trilist = Delaunay(self.points[:, :2]).simplices

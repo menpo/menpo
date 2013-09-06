@@ -371,46 +371,6 @@ class WRLImporter(MeshImporter):
         self.meshes = [self.mesh]
 
 
-class FIMImporter(MeshImporter):
-    r"""
-    Allows importing floating point images as meshes.
-    This reads in the shape in to 3 channels and then triangulates the
-    ``x`` and ``y`` coordinates to create a surface.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the mesh.
-    """
-
-    def __init__(self, filepath):
-        # Setup class before super class call
-        super(FIMImporter, self).__init__(filepath)
-
-    def _parse_format(self):
-        r"""
-        Read the file and parse it as necessary. Since the data lies on a grid
-        we can triangulate the 2D coordinates to get a valid triangulation. One
-        mesh is assumed per file.
-        """
-        with open(self.filepath, 'rb') as f:
-            size = np.fromfile(f, dtype=np.uint32, count=3)
-            data = np.fromfile(f, dtype=np.float32, count=np.product(size))
-            data = data.reshape([size[0] * size[1], size[2]])
-
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
-        self.mesh.points = data
-        # Triangulate just the 2D coordinates, as this is a surface
-        self.mesh.trilist = Delaunay(data[:, :2]).simplices
-
-        # Impossible to know where the texture is in this format
-        self.relative_texture_path = None
-        # Assumes a single mesh per file
-        self.meshes = [self.mesh]
-
-
 class ABSImporter(MeshImporter):
     r"""
     Allows importing the ABS file format from the FRGC dataset.

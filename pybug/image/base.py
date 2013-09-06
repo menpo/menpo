@@ -714,6 +714,8 @@ class DepthImage(Image):
             return TriMesh(points, trilist)
         else:
             if tcoords is None:
+                # TODO: This doesn't work at the moment, texture comes out
+                # wrong
                 coord_per_pixel = np.linspace(0, 1, np.prod(texture.shape))
                 tcoords = np.hstack([coord_per_pixel.reshape([-1, 1])[::-1],
                                      coord_per_pixel.reshape([-1, 1])])
