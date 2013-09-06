@@ -87,7 +87,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.target_scale = np.linalg.norm(self.target)
         self.n_iterations = 1
         self.max_iterations = 100
-        self._recursive_procrustes()
+        self.converged = self._recursive_procrustes()
+        print self
 
     def _recursive_procrustes(self):
         """
@@ -95,7 +96,6 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         """
         # find the average of the latest aligned sources:
         if self.n_iterations > self.max_iterations:
-            print 'max number of iterations reached.'
             return False
         new_target = (sum(p[-1].aligned_source for p in self.procrustes) /
                       self.n_sources)
@@ -105,10 +105,9 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         rescale_about_com = centre.compose(rescale).compose(centre.inverse)
         new_target = rescale_about_com.apply(new_target)
         self.delta_target = np.linalg.norm(self.target - new_target)
-        print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
-                                                           self.delta_target)
+        #print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
+        #                                                   self.delta_target)
         if self.delta_target < 1e-6:
-            print 'delta_target sufficiently small, stopping.'
             return True
         else:
             self.n_iterations += 1
@@ -123,6 +122,10 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
                 for p in self.procrustes]
 
     @property
+    def mean_aligned_shape(self):
+        return np.mean([p[-1].target for p in self.procrustes], axis=0)
+
+    @property
     def errors(self):
         return [p[-1].error for p in self.procrustes]
 
@@ -131,5 +134,10 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         return sum(self.errors)/self.n_sources
 
     def __str__(self):
-        return ('Converged after %d iterations with av. error %f'
-                % (self.n_iterations, self.average_error))
+        if self.converged:
+            return ('Converged after %d iterations with av. error %f'
+                    % (self.n_iterations, self.average_error))
+        else:
+            return ('Failed to converge after %d iterations with av. error '
+                    '%f' % (self.n_iterations, self.average_error))
+

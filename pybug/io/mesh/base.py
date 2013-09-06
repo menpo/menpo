@@ -13,7 +13,8 @@ import numpy as np
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
-                               output_filetype=None, export_flags=None):
+                               output_filetype=None, export_flags=None,
+                               meshlab_command='meshlabserver'):
     r"""
     Interface to `meshlabserver` to perform prepossessing on meshes before
     import. Returns a path to the result of the meshlabserver call, ready for
@@ -40,6 +41,10 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
         Flags passed to the ``-om`` parameter. Allows for choosing
         what aspects of the model will be exported (normals,
         texture coords etc)
+    meshlab_command : string, optional
+        The meshlabserver executable to run.
+
+        Default: 'meshlabserver'
 
     Returns
     -------
@@ -55,7 +60,7 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
     else:
         output_filename = filename
     output_path = path.join(output_dir, output_filename)
-    command = ('meshlabserver -i ' + file_path + ' -o ' +
+    command = (meshlab_command + ' -i ' + file_path + ' -o ' +
                output_path)
     if script_path is not None:
         command += ' -s ' + script_path
