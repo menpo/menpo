@@ -78,8 +78,8 @@ class PCA(object):
             S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True)
 
             # perform eigenvalue decomposition
-            # eigenvectors:  n_samples  x  n_features
-            # eigenvalues:   n_samples
+            # eigenvectors:  n_features x  n_features
+            # eigenvalues:   n_features
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
             if self.whiten:
@@ -112,7 +112,7 @@ class PCA(object):
             # set number of components to number of recovered eigenvalues
             self.n_components = eigenvalues.shape[0]
 
-        if self.n_components < n_features:
+        if self.n_components < np.min(n_samples, n_features):
             # noise variance equals average variance of discarded components
             self.noise_variance_ = eigenvectors[self.n_components:].mean()
         else:
