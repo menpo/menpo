@@ -182,8 +182,8 @@ class LSIntensity(Residual):
         gradient = np.reshape(gradient, (gradient.shape[0], -1, 2))
 
         # compute steepest descent images
-        # gradient:  n_pixels  x  n_channels  x  n_params  x  n_dims
-        # dW_dp:     n_pixels  x  n_channels  x  n_params  x  n_dims
+        # gradient:  n_pixels  x  n_channels  x      _     x  n_dims
+        # dW_dp:     n_pixels  x       _      x  n_params  x  n_dims
         # sdi:       n_pixels  x  n_channels  x  n_params
         sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
 
