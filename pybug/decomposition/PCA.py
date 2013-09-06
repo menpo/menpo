@@ -3,17 +3,17 @@ import numpy as np
 from scipy.linalg.blas import dgemm
 
 
-class GPCA(object):
+class PCA(object):
     r"""
-    Generalized Principal Component Analysis (GPCA) by Eigenvalue
-    Decomposition of the data's scatter matrix.
+    Principal Component Analysis (GPCA) by Eigenvalue Decomposition of the
+    data's scatter matrix.
 
-    This implementation uses the scipy.linalg implementation of the
-    eigenvalue decomposition. Similar to the Scikit-Learn PCA implementation
+    This implementation uses the scipy.linalg.eig implementation of
+    eigenvalue decomposition. Similar to Scikit-Learn PCA implementation,
     it only works for dense arrays, however, this one should scale better to
     large dimensional data.
 
-    The class interface matches the one of the Scikit-Learn PCA class
+    The class interface augments the one defined by Scikit-Learn PCA class.
 
     Parameters
     -----------
@@ -74,37 +74,56 @@ class GPCA(object):
 
         if n_features < n_samples:
             # compute covariance matrix
+            # S:  n_features  x  n_features
             S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True)
+
             # perform eigenvalue decomposition
+            # eigenvectors:  n_samples  x  n_features
+            # eigenvalues:   n_samples
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
             if self.whiten:
-                # whiten the eigenvectors
+                # whiten eigenvectors
                 eigenvectors *= eigenvalues ** -0.5
 
         else:
             # n_features > n_samples
             # compute covariance matrix
+            # S:  n_samples  x  n_samples
             S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True)
+
             # perform eigenvalue decomposition
+            # eigenvectors:  n_samples  x  n_samples
+            # eigenvalues:   n_samples
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
             aux = 2
             if self.whiten:
-                # will cause the eigenvectors to be whiten
+                # will cause eigenvectors to be whiten
                 aux = 1
 
-            # compute the final eigenvectors
+            # compute final eigenvectors
+            # eigenvectors:  n_samples  x  n_features
             w = eigenvalues ** (-1 / aux)
             eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
                                      trans_b=True)
 
-        # transpose eigenvectors so that it is n_samples x n_features
+        if self.n_components is None:
+            # set number of components to number of recovered eigenvalues
+            self.n_components = eigenvalues.shape[0]
+
+        if self.n_components < n_features:
+            # noise variance equals average variance of discarded components
+            self.noise_variance_ = eigenvectors[self.n_components:].mean()
+        else:
+            # if all components are kept, noise variance equals 0
+            self.noise_variance_ = 0.
+
+        # transpose eigenvectors
+        # eigenvectors:  n_samples  x  n_features
         eigenvectors = eigenvectors.T
 
-        if self.n_components is None:
-            # set # of components to number of recovered eigenvalues
-            self.n_components = eigenvalues.shape[0]
+        # keep appropriate number of components
         self.components_ = eigenvectors[:self.n_components, :]
         self.explained_variance_ = eigenvalues[:self.n_components]
         self.explained_variance_ratio_ = (self.explained_variance_ /
@@ -127,8 +146,8 @@ class GPCA(object):
         """
         if self.center:
             X = X - self.mean_
-        Z = dgemm(alpha=1.0, a=X.T, b=self.components_.T, trans_a=True)
         # Z = np.dot(X, self.components_.T)
+        Z = dgemm(alpha=1.0, a=X.T, b=self.components_.T, trans_a=True)
         return Z
 
     def inverse_transform(self, Z):
@@ -146,9 +165,9 @@ class GPCA(object):
         If whitening is used, inverse_transform does not perform the
         exact inverse operation of transform.
         """
+        # X = np.dot(Z, self.components_)
         X = dgemm(alpha=1.0, a=Z.T, b=self.components_.T,
                   trans_a=True, trans_b=True)
-        #X = np.dot(Z, self.components_)
         if self.center:
             X = X + self.mean_
 
@@ -188,18 +207,5 @@ def _eigenvalue_decomposition(S, eps=10**-10):
     index = pos_eigenvalues > limit
     pos_eigenvalues = pos_eigenvalues[index]
     pos_eigenvectors = pos_eigenvectors[:, index]
-
-    # # select negative eigenvalues
-    # neg_index = eigenvalues < 0
-    # neg_eigenvalues = eigenvalues[neg_index]
-    # neg_eigenvectors = eigenvectors[:, neg_index]
-    # # check they are within the expected tolerance
-    # index = np.abs(neg_eigenvalues) > limit
-    # neg_eigenvalues = neg_eigenvalues[index]
-    # neg_eigenvectors = neg_eigenvectors[:, index]
-    # # resort them
-    # index = np.argsort(np.abs(neg_eigenvalues))[::-1]
-    # neg_eigenvalues = neg_eigenvalues[index]
-    # neg_eigenvectors = neg_eigenvectors[:, index]
 
     return pos_eigenvectors, pos_eigenvalues

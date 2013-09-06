@@ -1,1 +1,1 @@
-from GPCA import GPCA
+from PCA import PCA
