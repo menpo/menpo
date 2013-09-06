@@ -88,6 +88,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.n_iterations = 1
         self.max_iterations = 100
         self.converged = self._recursive_procrustes()
+        print self
 
     def _recursive_procrustes(self):
         """
@@ -95,7 +96,6 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         """
         # find the average of the latest aligned sources:
         if self.n_iterations > self.max_iterations:
-            print 'max number of iterations reached without convergence.'
             return False
         new_target = (sum(p[-1].aligned_source for p in self.procrustes) /
                       self.n_sources)
@@ -108,7 +108,6 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         #print 'at iteration %d, the delta_target is %f' % (self.n_iterations,
         #                                                   self.delta_target)
         if self.delta_target < 1e-6:
-            print self
             return True
         else:
             self.n_iterations += 1
@@ -141,3 +140,4 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         else:
             return ('Failed to converge after %d iterations with av. error '
                     '%f' % (self.n_iterations, self.average_error))
+
