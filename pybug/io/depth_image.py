@@ -32,6 +32,8 @@ class DepthImageImporter(Importer):
         self.relative_texture_path = None
         self.points = None
         self.trilist = None
+        self.mask = None
+        self.tcoords = None
 
     def _build_texture_and_landmark_importers(self):
         r"""
@@ -224,14 +226,17 @@ class DepthImageImporter(Importer):
 
         self.image = DepthImage(self.depth_image, points=self.points,
                                 trilist=self.trilist, tcoords=self.tcoords,
-                                texture=texture)
+                                texture=texture, mask=self.mask)
 
         if self.image_landmark_importer is not None:
             label, lmark_dict = self.image_landmark_importer.build(
                 scale_factors=self.image.shape)
             texture.add_landmark_set(label, lmark_dict)
+            # Add landmarks to image - may need scaling if original texture
+            # is different in size to depth image
             self.image.add_landmark_set(label,
-                                        self._process_landmarks(texture, lmark_dict))
+                                        self._process_landmarks(texture,
+                                                                lmark_dict))
 
         if self.mesh_landmark_importer is not None:
             label, lmark_dict = self.mesh_landmark_importer.build()
@@ -308,8 +313,8 @@ class BNTImporter(DepthImageImporter):
         points[points == bad_value] = np.nan
 
         # Use only those coordinates with do not contains nans
-        valid_indices = ~np.isnan(points).any(axis=1)
-        self.points = points[valid_indices]
+        valid_points = ~np.isnan(points).any(axis=1)
+        self.points = points[valid_points]
         # Generate a triangulation from the points
         self.trilist = Delaunay(self.points[:, :2]).simplices
 
@@ -318,9 +323,10 @@ class BNTImporter(DepthImageImporter):
         # Must by flipped upside down due to image vs mesh ordering
         self.depth_image = np.fliplr(np.reshape(points[:, 2][::-1],
                                                 [n_rows, n_cols]))
+        self.mask = ~np.isnan(self.depth_image)
 
         # Apparently the texture coordinates are upside down?
-        self.tcoords = data[:, -2:][valid_indices]
+        self.tcoords = data[:, -2:][valid_points]
         self.tcoords[:, 1] = -self.tcoords[:, 1]
 
         self.relative_texture_path = texture_path
