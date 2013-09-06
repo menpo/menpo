@@ -6,6 +6,7 @@ from pybug.image import DepthImage
 from pybug.io.base import Importer, get_importer, find_alternative_files
 from scipy.spatial import Delaunay
 from pybug.transform.affine import Scale
+import re
 
 
 class DepthImageImporter(Importer):
@@ -353,15 +354,8 @@ class FIMImporter(DepthImageImporter):
         r"""
         There are no default landmarks for this dataset so we currently don't
         perform any processing.
-
-        Parameters
-        ----------
-        original_image : :class:`pybug.image.base.Image`
-            The original image that the landmarks belong to
-        lmark_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
-            The landmark dictionary to transform
         """
-        pass
+        return lmark_dict
 
     def _build_image_and_mesh(self):
         r"""
@@ -387,3 +381,61 @@ class FIMImporter(DepthImageImporter):
         self.points = points[valid_points]
         # Generate a triangulation from the points
         self.trilist = Delaunay(self.points[:, :2]).simplices
+
+
+class ABSImporter(DepthImageImporter):
+    r"""
+    Allows importing the ABS file format from the FRGC dataset.
+
+    The z-min value is stripped from the mesh to make it renderable.
+
+    Parameters
+    ----------
+    filepath : string
+        Absolute filepath of the mesh.
+    """
+
+    def __init__(self, filepath):
+        # Setup class before super class call
+        super(ABSImporter, self).__init__(filepath)
+
+    def _process_landmarks(self, original_image, lmark_dict):
+        r"""
+        The original texture and the given texture are the same size.
+        """
+        return lmark_dict
+
+    def _build_image_and_mesh(self):
+        r"""
+        Read in the file and remove the z-min. Triangulate the 2D gridded
+        coordinates to create a valid triangulation.
+        """
+        with open(self.filepath, 'r') as f:
+            # Currently these are unused, but they are in the format
+            # Could possibly store as metadata?
+            # Assume first result for regexes
+            re_rows = re.compile(u'([0-9]+) rows')
+            n_rows = int(re_rows.findall(f.readline())[0])
+            re_cols = re.compile(u'([0-9]+) columns')
+            n_cols = int(re_cols.findall(f.readline())[0])
+
+
+        # This also loads the mask
+        #   >>> image_data[:, 0]
+        image_data = np.loadtxt(self.filepath, skiprows=3, unpack=True)
+
+        # Replace the lowest value with nan so that we can render properly
+        image_data[image_data == np.min(image_data)] = np.nan
+
+        self.depth_image = np.reshape(image_data[:, 3], [n_rows, n_cols])
+        self.mask = np.reshape(image_data[:, 0], [n_rows, n_cols])
+
+        # Get the 3D coordinates
+        points = np.hstack([image_data[:, 1][..., None],
+                            image_data[:, 2][..., None],
+                            image_data[:, 3][..., None]])
+        valid_points = ~np.isnan(points).any(axis=1)
+        self.points = points[valid_points]
+        # Generate a triangulation from the points
+        self.trilist = Delaunay(self.points[:, :2]).simplices
+

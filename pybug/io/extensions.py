@@ -1,8 +1,8 @@
 # A list of extensions that different importers support.
-from pybug.io.depth_image import BNTImporter, FIMImporter
+from pybug.io.depth_image import BNTImporter, FIMImporter, ABSImporter
 from pybug.io.landmark import LM3Importer, LANImporter, LM2Importer
 from pybug.io.landmark_mesh import MeshPTSImporter
-from pybug.io.mesh import AssimpImporter, WRLImporter, ABSImporter
+from pybug.io.mesh import AssimpImporter, WRLImporter
 from pybug.io.image import PILImporter
 from pybug.io.landmark_image import ImageASFImporter, ImagePTSImporter
 
@@ -50,11 +50,11 @@ mesh_types = {'.dae': AssimpImporter,
               '.pk3': AssimpImporter,
               '.mdc': AssimpImporter,
               # '.blend': AssimpImporter,
-              '.wrl': WRLImporter,
-              '.abs': ABSImporter}
+              '.wrl': WRLImporter}
 
 depth_image_types = {'.bnt': BNTImporter,
-                     '.fim': FIMImporter}
+                     '.fim': FIMImporter,
+                     '.abs': ABSImporter}
 
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,
@@ -87,6 +87,6 @@ image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter}
 
-mesh_landmark_types = {'.pts': MeshPTSImporter,
+mesh_landmark_types = {'.pts3': MeshPTSImporter,
                        '.lm3': LM3Importer,
                        '.lan': LANImporter}

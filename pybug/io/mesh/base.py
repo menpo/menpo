@@ -10,7 +10,6 @@ from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
 from scipy.spatial import Delaunay
 import numpy as np
-import re
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -370,66 +369,3 @@ class WRLImporter(MeshImporter):
         # Assumes a single mesh per file
         self.meshes = [self.mesh]
 
-
-class ABSImporter(MeshImporter):
-    r"""
-    Allows importing the ABS file format from the FRGC dataset.
-    This file format also includes a mask that we don't currently expose.
-
-    The z-min value is stripped from the mesh to make it renderable. We are
-    currently unable to texture these meshes as we don't have texture
-    coordinates.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the mesh.
-    """
-
-    def __init__(self, filepath):
-        # Setup class before super class call
-        super(ABSImporter, self).__init__(filepath)
-
-    def _parse_format(self):
-        r"""
-        Read in the file and remove the z-min. Triangulate the 2D gridded
-        coordinates to create a valid triangulation.
-        """
-        with open(self.filepath, 'r') as f:
-            # Currently these are unused, but they are in the format
-            # Could possibly store as metadata?
-            # Assume first result for regexes
-            re_rows = re.compile(u'([0-9]+) rows')
-            n_rows = int(re_rows.findall(f.readline())[0])
-            re_cols = re.compile(u'([0-9]+) columns')
-            n_cols = int(re_cols.findall(f.readline())[0])
-
-        # Currently this also loads the mask, which we don't use
-        # The mask is located at
-        #   >>> image_data[:, 0]
-        image_data = np.loadtxt(self.filepath, skiprows=3, unpack=True)
-
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
-        # Get the 3D coordinates
-        points = np.hstack([image_data[:, 1][..., None],
-                            image_data[:, 2][..., None],
-                            image_data[:, 3][..., None]])
-        # We want to remove the z-min plane because otherwise the mesh is not
-        # renderable. We assume that if any point has a z-coordinate of the
-        # z-min value then the whole point is worthless, so we drop it.
-        valid_indices = points[:, 2] != np.min(points[:, 2])
-        points = points[valid_indices, :]
-        self.mesh.points = points
-
-        # Triangulate just the 2D coordinates, as this is a surface
-        self.mesh.trilist = Delaunay(points[:, :2]).simplices
-
-        # TODO: Although texture exist for this dataset, there is no texture
-        # coordinate set, so we can't currently use them
-        self.mesh.tcoords = []
-
-        self.relative_texture_path = None
-        # Assumes a single mesh per file
-        self.meshes = [self.mesh]

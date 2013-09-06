@@ -1,1 +1,1 @@
-from base import AssimpImporter, WRLImporter, ABSImporter
+from base import AssimpImporter, WRLImporter
