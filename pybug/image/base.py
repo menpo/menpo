@@ -179,7 +179,8 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
 
     def crop(self, *slice_args):
         r"""
-        Crops the image using the given slice objects. Expects
+        Returns a cropped version of this image using the given slice
+        objects. Expects
         ``len(args) == self.n_dims``.
 
         Also returns the
