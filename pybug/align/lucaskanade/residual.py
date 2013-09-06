@@ -169,9 +169,27 @@ class Residual(object):
 class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
+        # compute gradient
+        # gradient:  height  x  width  x  n_channels
         gradient = self._calculate_gradients(image, forward=forward)
+
+        # reshape gradient
+        # gradient:  n_pixels  x  (n_channels x n_dims)
         gradient = gradient.as_vector(keep_channels=True)
-        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
+
+        # reshape gradient
+        # gradient:  n_pixels  x  n_channels  x  n_dims
+        gradient = np.reshape(gradient, (gradient.shape[0], -1, image.n_dims))
+
+        # compute steepest descent images
+        # gradient:  n_pixels  x  n_channels  x            x  n_dims
+        # dW_dp:     n_pixels  x              x  n_params  x  n_dims
+        # sdi:       n_pixels  x  n_channels  x  n_params
+        sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
+
+        # reshape steepest descent images
+        # sdi:  (n_pixels x n_channels)  x  n_params
+        return np.reshape(sdi, (-1, dW_dp.shape[1]))
 
     def calculate_hessian(self, VT_dW_dp):
         return VT_dW_dp.T.dot(VT_dW_dp)
