@@ -65,7 +65,7 @@ class MayaviSurfaceViewer3d(MayaviViewer):
         self.values = values
 
     def _render(self, **kwargs):
-        warp_scale = kwargs.get('warp_scale', 1.0)
+        warp_scale = kwargs.get('warp_scale', 'auto')
         mlab.surf(self.values, warp_scale=warp_scale)
         return self
 
