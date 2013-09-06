@@ -52,7 +52,6 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
     output_path : string
         The absolute filepath to the processed mesh.
     """
-    print 'hello'
     if output_dir is None:
         output_dir = tempfile.gettempdir()
     filename = path.split(file_path)[-1]
@@ -68,9 +67,8 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
         command += ' -s ' + script_path
     if export_flags is not None:
         command += ' -om ' + export_flags
-    print command
     commands.getoutput(command)
-    return output_path, command
+    return output_path
 
 
 class MeshImporter(Importer):
