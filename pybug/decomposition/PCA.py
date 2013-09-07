@@ -75,7 +75,7 @@ class PCA(object):
         if n_features < n_samples:
             # compute covariance matrix
             # S:  n_features  x  n_features
-            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True)
+            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True) / n_samples
 
             # perform eigenvalue decomposition
             # eigenvectors:  n_features x  n_features
@@ -90,7 +90,7 @@ class PCA(object):
             # n_features > n_samples
             # compute covariance matrix
             # S:  n_samples  x  n_samples
-            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True)
+            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True) / n_samples
 
             # perform eigenvalue decomposition
             # eigenvectors:  n_samples  x  n_samples
@@ -104,7 +104,7 @@ class PCA(object):
 
             # compute final eigenvectors
             # eigenvectors:  n_samples  x  n_features
-            w = eigenvalues ** (-1 / aux)
+            w = (n_samples * eigenvalues) ** (-1 / aux)
             eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
                                      trans_b=True)
 
@@ -114,7 +114,7 @@ class PCA(object):
 
         if self.n_components < np.min((n_samples, n_features)):
             # noise variance equals average variance of discarded components
-            self.noise_variance_ = eigenvalues[self.n_components:].mean() / n_samples
+            self.noise_variance_ = eigenvalues[self.n_components:].mean()
         else:
             # if all components are kept, noise variance equals 0
             self.noise_variance_ = 0.
@@ -125,7 +125,7 @@ class PCA(object):
 
         # keep appropriate number of components
         self.components_ = eigenvectors[:self.n_components, :]
-        self.explained_variance_ = eigenvalues[:self.n_components] / n_samples
+        self.explained_variance_ = eigenvalues[:self.n_components]
         self.explained_variance_ratio_ = (self.explained_variance_ /
                                           self.explained_variance_.sum())
 
