@@ -141,7 +141,7 @@ class LinearModel(StatisticalModel):
         """
         weights = self._project(vec_instance)
         if n_components is not None:
-            weights = weights[:n_components]
+            weights = weights[..., :n_components]
         return self._instance(weights)
 
     def project_out(self, instance):
@@ -235,7 +235,7 @@ class LinearModel(StatisticalModel):
         sheared_reconstruction : ``self.sample_data_class``
             A sheared (non-orthogonal) reconstruction of ``instance``.
         """
-        vec_instance = self._to_subspace(instance.as_vector())
+        vec_instance = self._within_subspace(instance.as_vector())
         return instance.from_vector(vec_instance)
 
     @abc.abstractmethod
@@ -333,10 +333,19 @@ class PCAModel(LinearModel):
         self._pca.fit(data)
 
         # store inverse noise variance
-        self. inv_noise_variance = 1 / self.noise_variance
+        self.inv_noise_variance = 1 / self.noise_variance
         # pre-compute weighted components: U * L
         self.weighted_components = ((1 / self.explained_variance)[..., None] *
                                     self.components)
+
+    @property
+    def eigenvalues(self):
+        """
+        The eigenvalues associated to each principal component
+
+        :type: (``n_components``,) ndarray
+        """
+        return self.explained_variance * self.n_samples
 
     @property
     def explained_variance(self):
@@ -397,8 +406,8 @@ class PCAModel(LinearModel):
                 "Number of weightings cannot be greater than {}".format(
                     self.n_components))
         elif weights.shape[-1] < self.n_components:
-            full_weights = np.zeros(self.n_components)
-            full_weights[..., :weights.shape[0]] = weights
+            full_weights = np.zeros((weights.shape[0], self.n_components))
+            full_weights[..., :weights.shape[-1]] = weights
             weights = full_weights
         return self._pca.inverse_transform(weights)
 
@@ -409,7 +418,7 @@ class PCAModel(LinearModel):
         return vec_instance - self._reconstruct(vec_instance)
 
     def _to_subspace(self, vec_instance):
-        return self.inv_noise_variance * self._within_subspace(vec_instance)
+        return self.inv_noise_variance * self._project_out(vec_instance)
 
     def _within_subspace(self, vec_instance):
         weights = self._project(vec_instance)

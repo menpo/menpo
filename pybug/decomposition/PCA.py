@@ -112,9 +112,9 @@ class PCA(object):
             # set number of components to number of recovered eigenvalues
             self.n_components = eigenvalues.shape[0]
 
-        if self.n_components < np.min(n_samples, n_features):
+        if self.n_components < np.min((n_samples, n_features)):
             # noise variance equals average variance of discarded components
-            self.noise_variance_ = eigenvectors[self.n_components:].mean()
+            self.noise_variance_ = eigenvalues[self.n_components:].mean() / n_samples
         else:
             # if all components are kept, noise variance equals 0
             self.noise_variance_ = 0.
@@ -125,7 +125,7 @@ class PCA(object):
 
         # keep appropriate number of components
         self.components_ = eigenvectors[:self.n_components, :]
-        self.explained_variance_ = eigenvalues[:self.n_components]
+        self.explained_variance_ = eigenvalues[:self.n_components] / n_samples
         self.explained_variance_ratio_ = (self.explained_variance_ /
                                           self.explained_variance_.sum())
 
