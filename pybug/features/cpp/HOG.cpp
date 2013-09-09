@@ -1,0 +1,15 @@
+#include "HOG.h"
+#include <iostream>
+
+HOG::HOG() {
+
+}
+
+HOG::~HOG() {
+
+}
+
+void HOG::apply(double *windowImage, unsigned int windowHeight, unsigned int windowWidth)
+{
+	std::cout << "Hello from apply in HOG" << std::endl;
+}
