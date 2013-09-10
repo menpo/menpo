@@ -477,63 +477,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         return x_transformed
 
 
-class DotProductAbstractPWATransform(AbstractPWATransform):
-    r"""
-    A piecewise affine transformation.
-
-    The apply method in this case involves dotting the triangle vectors with
-    the values of alpha and beta found. This works much better for larger
-    numbers of triangles, although it still may be desirable to use the C
-    variant which uses a lookup table (particularly for Images).
-
-    Parameters
-    ----------
-    source : (N, 2) ndarray
-        The source points.
-    target : (N, 2) ndarray
-        The target points.
-    trilist : (M, 3) ndarray
-        A common triangulation for the ``source`` and ``target``.
-
-    Raises
-    ------
-    DimensionalityError
-        Source and target must have the same dimensionality.
-
-        Source and target must be 2D.
-    """
-
-    def __init__(self, source, target, trilist):
-        super(DotProductAbstractPWATransform, self).__init__(source, target,
-                                                     trilist)
-        t = target[trilist]
-        # get vectors ij ik for the target
-        self.tij, self.tik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
-        # target i'th vertex positions
-        self.ti = t[:, 0]
-
-    def _apply(self, x, **kwargs):
-        """
-        Applies this transform to a new set of vectors.
-
-        Parameters
-        ----------
-        x : (K, 2) ndarray
-            Points to apply this transform to.
-
-        Returns
-        -------
-        transformed : (K, 2) ndarray
-            The transformed array.
-        """
-        tri_index, alpha, beta = self.index_alpha_beta(x)
-
-        return (self.ti[tri_index] +
-                alpha[:, None] * self.tij[tri_index] +
-                beta[:, None] * self.tik[tri_index])
-
-
-class CachedPWATransform(DotProductAbstractPWATransform):
+class CachedPWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -561,6 +505,11 @@ class CachedPWATransform(DotProductAbstractPWATransform):
     def __init__(self, source, target, trilist):
         super(CachedPWATransform, self).__init__(source, target,
                                                  trilist)
+        t = target[trilist]
+        # get vectors ij ik for the target
+        self.tij, self.tik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
+        # target i'th vertex positions
+        self.ti = t[:, 0]
         # make sure the source and target satisfy the c requirements
         source_c = np.require(source, dtype=np.float64, requirements=['C'])
         trilist_c = np.require(trilist, dtype=np.uint32, requirements=['C'])
@@ -579,6 +528,27 @@ class CachedPWATransform(DotProductAbstractPWATransform):
             raise TriangleContainmentError(index < 0)
         else:
             return index, alpha, beta
+
+    def _apply(self, x, **kwargs):
+        """
+        Applies this transform to a new set of vectors.
+
+        Parameters
+        ----------
+        x : (K, 2) ndarray
+            Points to apply this transform to.
+
+        Returns
+        -------
+        transformed : (K, 2) ndarray
+            The transformed array.
+        """
+        tri_index, alpha, beta = self.index_alpha_beta(x)
+
+        return (self.ti[tri_index] +
+                alpha[:, None] * self.tij[tri_index] +
+                beta[:, None] * self.tik[tri_index])
+
 
 
 PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
