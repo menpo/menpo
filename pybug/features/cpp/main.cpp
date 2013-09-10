@@ -3,6 +3,7 @@
 #include "LBP.h"
 #include "ImageWindowIterator.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 int main()
 {
@@ -28,9 +29,9 @@ int main()
     ///////////////////////////////////////////////////////////////////////////
 
 	// INITIALIZE INPUT IMAGE WITH RAND
+    unsigned int i1, i2, k;
 	double *image;
 	if (imageIsGrayscale==false) {
-		unsigned int i1, i2, k;
 		image = (double *) malloc(imageHeight*imageWidth*3*sizeof(double));
 		for (i1 = 0; i1 < imageHeight; i1++)
 			for (i2 = 0; i2 < imageWidth; i2++)
@@ -38,7 +39,6 @@ int main()
 					image[i1+imageHeight*(i2+imageWidth*k)] = rand()% 100 + 1;
 	}
 	else {
-		unsigned int i1, i2;
 		image = (double *) malloc(imageHeight*imageWidth*sizeof(double));
 		for (i1 = 0; i1 < imageHeight; i1++)
 			for (i2 = 0; i2 < imageWidth; i2++)
@@ -48,17 +48,26 @@ int main()
 	// CREATE WINDOW FEATURE
 	HOG windowFeature = HOG(windowHeight, windowWidth, method, numberOfOrientationBins, cellHeightAndWidthInPixels, blockHeightAndWidthInCells, enableSignedGradients, l2normClipping);
 	//LBP windowFeature = LBP();
-	if (verbose==true)
-		windowFeature.print_information();
 
 	// CREATE ITERATOR
 	ImageWindowIterator iter = ImageWindowIterator(image, imageHeight, imageWidth, windowHeight, windowWidth, windowStepHorizontal, windowStepVertical, enablePadding, imageIsGrayscale, &windowFeature);
+
+	// CREATE OUTPUT IMAGE
+	double *outputImage;
+	outputImage = (double *) malloc(iter.numberOfWindowsVertically*iter.numberOfWindowsHorizontally*windowFeature.descriptorLengthPerWindow*sizeof(double));
+
+	// CREATE WINDOWS CENTERS
+	int *windowsCenters;
+	windowsCenters = (int *) malloc(iter.numberOfWindowsVertically*iter.numberOfWindowsHorizontally*2*sizeof(int));
+
+	// CALL ITERATOR
+	iter.apply(outputImage, windowsCenters);
+
+	// VERBOSE
+	if (verbose==true)
+		windowFeature.print_information();
 	if (verbose==true)
 		iter.print_information();
-
-	//iter.apply();
-
-	std::cout << "Output size is " << iter.numberOfWindowsVertically << " x " << iter.numberOfWindowsHorizontally << " x " << windowFeature.descriptorLengthPerWindow << std::endl << std::endl;
 
 	return 0;
 }

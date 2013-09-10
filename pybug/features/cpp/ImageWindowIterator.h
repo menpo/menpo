@@ -8,7 +8,7 @@ public:
 			unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
 			unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale, WindowFeature *windowFeature);
 	virtual ~ImageWindowIterator();
-	void apply();
+	void apply(double *outputImage, int *windowsCenters);
 	void print_information();
 private:
 	double *image;

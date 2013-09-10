@@ -39,8 +39,9 @@ ImageWindowIterator::~ImageWindowIterator() {
 }
 
 void ImageWindowIterator::print_information() {
+	std::cout << std::endl << "Image Window Iterator" << std::endl << "---------------------" << std::endl;
     if (this->imageIsGrayscale==true)
-    	std::cout << std::endl << "Image is GRAY with size " << this->imageHeight << "x" << this->imageWidth << std::endl;
+    	std::cout << "Input image is GRAY with size " << this->imageHeight << "x" << this->imageWidth << std::endl;
     else
     	std::cout << std::endl << "Image is RGB with size " << this->imageHeight << "x" << this->imageWidth << std::endl;
     std::cout << "Window of size " << this->windowHeight << "x" << this->windowWidth << " and step (" << this->windowStepHorizontal << "," << this->windowStepVertical << ")" << std::endl;
@@ -48,18 +49,16 @@ void ImageWindowIterator::print_information() {
     	std::cout << "Padding is enabled" << std::endl;
     else
     	std::cout << "Padding is disabled" << std::endl;
-    std::cout << "Number of windows is " << this->numberOfWindowsVertically << "x" << this->numberOfWindowsHorizontally << " = " << this->numberOfWindows << std::endl << std::endl;
-    //std::cout << "descriptor length " << this->windowFeature->descriptorLengthPerWindow << std::endl;
+    std::cout << "Number of windows is " << this->numberOfWindowsVertically << "x" << this->numberOfWindowsHorizontally << " = " << this->numberOfWindows << std::endl;
+    std::cout << "Output image has size " << this->numberOfWindowsVertically << "x" << this->numberOfWindowsHorizontally << "x" << windowFeature->descriptorLengthPerWindow << std::endl << std::endl;
 }
 
-void ImageWindowIterator::apply() {
+void ImageWindowIterator::apply(double *outputImage, int *windowsCenters) {
 	unsigned int windowHeight, windowWidth, windowStepHorizontal, windowStepVertical, imageHeight, imageWidth;
 	bool enablePadding, imageIsGrayscale;
-	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k, thirdDimension;
+	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k, d;
 	unsigned int windowIndexHorizontal, windowIndexVertical;
 	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically, numberOfWindows;
-
-	std::cout << "Hello from iterator's apply" << std::endl;
 
     // Load window size, image size, window step, padding
     windowHeight = this->windowHeight;
@@ -80,6 +79,10 @@ void ImageWindowIterator::apply() {
     	windowImage = (double *) malloc(imageHeight*imageWidth*sizeof(double));
     else
     	windowImage = (double *) malloc(imageHeight*imageWidth*3*sizeof(double));
+
+    // Initialize descriptorVector
+    double* descriptorVector;
+    descriptorVector = (double *) malloc(windowFeature->descriptorLengthPerWindow*sizeof(double));
 
     // Main loop
     for (windowIndexVertical = 0; windowIndexVertical < numberOfWindowsVertically; windowIndexVertical++) {
@@ -127,52 +130,21 @@ void ImageWindowIterator::apply() {
                 }
             }
 
-            // Print windowImage
-            std::cout << "window " << windowIndexVertical << "," << windowIndexHorizontal << std::endl;
-            if (imageIsGrayscale==false)
-            {
-            	for (k=0; k<3; k++) {
-            		for (i=0; i<windowHeight; i++)
-            		{
-            			for (j=0; j<windowWidth; j++)
-            				std::cout << windowImage[i+windowHeight*(j+windowWidth*k)] << "\t";
-            			std::cout << std::endl;
-            		}
-            		std::cout << std::endl;
-            	}
-            }
-            else {
-            	for (i=0; i<windowHeight; i++) {
-            		for (j=0; j<windowWidth; j++)
-           				std::cout << windowImage[i+windowHeight*j] << "\t";
-            		std::cout << std::endl;
-            	}
-            }
-
-
             // Compute descriptor of window
-            this->windowFeature->apply(windowImage, windowHeight, windowWidth, imageIsGrayscale);
-            std::cout << std::endl;
-            /*DalalTriggsHOGdescriptor(windowImage,params,info.windowSize,descriptorVector,info.inputImageIsGrayscale);
-            d=0;
-            for (d2=0; d2<info.numberOfBlocksPerWindowHorizontally; d2++) {
-                for (d1=0; d1<info.numberOfBlocksPerWindowVertically; d1++) {
-                    for (d3=0; d3<info.descriptorLengthPerBlock; d3++) {
-                        descriptorMatrix[d1+info.numberOfBlocksPerWindowVertically*(d2+info.numberOfBlocksPerWindowHorizontally*d3)] = descriptorVector[d];
-                        d = d + 1; }}}
+            this->windowFeature->apply(windowImage, imageIsGrayscale, descriptorVector);
 
             // Store results
-            for (d2=0; d2<info.numberOfBlocksPerWindowHorizontally; d2++)
-                for (d1=0; d1<info.numberOfBlocksPerWindowVertically; d1++)
-                    for (d3=0; d3<info.descriptorLengthPerBlock; d3++)
-                        WindowsMatrixDescriptorsMatrix[windowIndexVertical+info.numberOfWindowsVertically*(windowIndexHorizontal+info.numberOfWindowsHorizontally*(d1+info.numberOfBlocksPerWindowVertically*(d2+info.numberOfBlocksPerWindowHorizontally*d3)))] = descriptorMatrix[d1+info.numberOfBlocksPerWindowVertically*(d2+info.numberOfBlocksPerWindowHorizontally*d3)];
-            WindowsCentersMatrix[windowIndexVertical+info.numberOfWindowsVertically*windowIndexHorizontal] = rowCenter + 1;
-            WindowsCentersMatrix[windowIndexVertical+info.numberOfWindowsVertically*(windowIndexHorizontal+info.numberOfWindowsHorizontally)] = columnCenter + 1;*/
+            //std::cout << windowIndexVertical << "," << windowIndexHorizontal << " STORING" << std::endl;
+            for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)
+            	outputImage[windowIndexVertical+numberOfWindowsVertically*(windowIndexHorizontal+numberOfWindowsHorizontally*d)] = descriptorVector[d];
+            windowsCenters[windowIndexVertical+numberOfWindowsVertically*windowIndexHorizontal] = rowCenter;
+            windowsCenters[windowIndexVertical+numberOfWindowsVertically*(windowIndexHorizontal+numberOfWindowsHorizontally)] = columnCenter;
         }
     }
 
     // Free windowImage
     free(windowImage);
+    free(descriptorVector);
 
 
 
