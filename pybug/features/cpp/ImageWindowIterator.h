@@ -3,11 +3,12 @@
 
 class ImageWindowIterator {
 public:
-	ImageWindowIterator(double *image, unsigned int imageWidth, unsigned int imageHeight,
+	ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth,
 			unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
 			unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale, WindowFeature *windowFeature);
 	virtual ~ImageWindowIterator();
 	void apply();
+	void print_information();
 private:
 	double *image;
 	unsigned int imageWidth, imageHeight;
