@@ -1,1 +1,0 @@
-from pybug.features.lbp.base import dense_lbp
