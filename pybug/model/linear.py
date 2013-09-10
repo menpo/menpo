@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from scipy.linalg.blas import dgemm
-from pybug.decomposition import PCA as PybugPCA
+from pybug.decomposition import base as PybugPCA
 from pybug.model.base import StatisticalModel
 
 
@@ -66,7 +66,7 @@ class LinearModel(StatisticalModel):
         projected : (n_components,)
             A vector of optimal linear weightings
         """
-        return self._project(instance.as_vector())
+        return self._project(instance.as_vector()).flatten()
 
 
     @abc.abstractmethod
@@ -334,18 +334,9 @@ class PCAModel(LinearModel):
 
         # store inverse noise variance
         self.inv_noise_variance = 1 / self.noise_variance
-        # pre-compute weighted components: U * L
-        self.weighted_components = ((1 / self.explained_variance)[..., None] *
-                                    self.components)
-
-    @property
-    def eigenvalues(self):
-        """
-        The eigenvalues associated to each principal component
-
-        :type: (``n_components``,) ndarray
-        """
-        return self.explained_variance * self.n_samples
+        # pre-compute whiten components: U * L^{-1/2}
+        self.whitened_components = \
+            self.explained_variance ** (-1 / 2)[..., None] * self.components
 
     @property
     def explained_variance(self):
@@ -406,7 +397,10 @@ class PCAModel(LinearModel):
                 "Number of weightings cannot be greater than {}".format(
                     self.n_components))
         elif weights.shape[-1] < self.n_components:
-            full_weights = np.zeros((weights.shape[0], self.n_components))
+            if len(weights.shape) == 1:
+                full_weights = np.zeros(self.n_components)
+            else:
+                full_weights = np.zeros((weights.shape[0], self.n_components))
             full_weights[..., :weights.shape[-1]] = weights
             weights = full_weights
         return self._pca.inverse_transform(weights)
@@ -415,12 +409,17 @@ class PCAModel(LinearModel):
         return self._pca.transform(vec_instance)
 
     def _project_out(self, vec_instance):
-        return vec_instance - self._reconstruct(vec_instance)
+        weights = dgemm(alpha=1.0, a=vec_instance.T, b=self.components.T,
+                        trans_a=True)
+        return (vec_instance -
+                dgemm(alpha=1.0, a=weights.T, b=self.components.T,
+                      trans_a=True, trans_b=True))
 
     def _to_subspace(self, vec_instance):
         return self.inv_noise_variance * self._project_out(vec_instance)
 
     def _within_subspace(self, vec_instance):
-        weights = self._project(vec_instance)
-        return dgemm(alpha=1.0, a=weights.T, b=self.weighted_components.T,
+        weights = dgemm(alpha=1.0, a=vec_instance.T,
+                        b=self.whitened_components.T, trans_a=True)
+        return dgemm(alpha=1.0, a=weights.T, b=self.whitened_components.T,
                      trans_a=True, trans_b=True)
