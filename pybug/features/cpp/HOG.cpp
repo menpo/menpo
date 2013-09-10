@@ -11,5 +11,5 @@ HOG::~HOG() {
 
 void HOG::apply(double *windowImage, unsigned int windowHeight, unsigned int windowWidth)
 {
-	std::cout << "Hello from apply in HOG" << std::endl;
+	std::cout << "Hello from HOG's apply" << std::endl;
 }

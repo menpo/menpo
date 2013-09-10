@@ -12,5 +12,5 @@ LBP::~LBP() {
 
 void LBP::apply(double *windowImage, unsigned int windowHeight, unsigned int windowWidth)
 {
-	std::cout << "Hello from apply in LBP" << std::endl;
+	std::cout << "Hello from LBP's apply" << std::endl;
 }

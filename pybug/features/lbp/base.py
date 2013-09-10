@@ -1,97 +1,61 @@
 import numpy as np
 
-# The HOG functions were converted from Matlab and thus assume fortran
-# ordering. In order to do maintain this ordering without user intervention,
-# we handle marshalling the data type in these methods.
+def lbp(input_image, radius=1, number_of_samples=8, mapping_type='u2', output_mode='dense'):
+    #mapping_type = 'u2' for uniform, 'ri' for rotation-invariant,
+    #               'riu2' for uniform rotation-invariant, 0 for no mapping
+    #output_mode = 'h' for histogram, 'nh' for normalizedHistogram, 'dense' for dense LBP image
+
+    return radius
 
 
-def dense_hog(image, method='dalaltriggs', num_orientations=9, cell_size=4,
-              block_size=2, gradient_signed=True, l2_norm_clip=0.2,
-              window_height=16, window_width=16, window_unit='pixels',
-              window_step_vertical=1, window_step_horizontal=1,
-              window_step_unit='pixels', padding_disabled=False, verbose=False):
+def _get_mapping(number_of_samples, mapping_type):
+    #returns a mapping table for LBP codes in a neighbourhood of number_of_samples sampling
+    #mapping_type = 'u2' for uniform, 'ri' for rotation-invariant, 'riu2' for uniform rotation-invariant
 
-    options = _parse_options('dense', method, num_orientations, cell_size,
-                             block_size, gradient_signed, l2_norm_clip,
-                             window_height, window_width, window_unit,
-                             window_step_vertical, window_step_horizontal,
-                             window_step_unit, padding_disabled, verbose)
-    image = np.asfortranarray(image)
-    descriptors, centers, opt_info = _hog(image, options)
-    if verbose:
-        return (np.ascontiguousarray(descriptors),
-                np.ascontiguousarray(centers),
-                opt_info)
-    else:
-        return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
+    table = np.arange(0, 2**number_of_samples)
+    new_max = 0  # number of patterns in the resulting LBP code
+    index = 0
 
+    if mapping_type == 'u2':  # Uniform 2
+        new_max = number_of_samples*(number_of_samples-1) + 3
+        for i in range(0, 2**number_of_samples):
+            j = bitset(bitshift(i,1,number_of_samples),1,bitget(i,number_of_samples)) # rotate left
+            numt = sum(bitget(bitxor(i,j),1:number_of_samples)) # number of 1->0 and
+            #0->1 transitions
+            #in binary string
+            #x is equal to the
+            #number of 1-bits in
+            #XOR(x,Rotate left(x))
+            if numt <= 2:
+                table[i] = index
+                index += 1
+            else:
+                table[i] = new_max - 1
 
-def sparse_hog(image, method='dalaltriggs', num_orientations=9, cell_size=4,
-               block_size=2, gradient_signed=True, l2_norm_clip=0.2,
-               verbose=False):
-    # We should never use the manually filled out values - but they are
-    # given sensible values as a defense.
-    options = _parse_options('sparse', method, num_orientations, cell_size,
-                             block_size, gradient_signed, l2_norm_clip,
-                             0, 0, 0, 0, 0, 0, 0, verbose)
-    image = np.asfortranarray(image)
-    descriptors, centers, opt_info = _hog(image, options)
-    descriptors = np.squeeze(descriptors)
-    if verbose:
-        return (np.ascontiguousarray(descriptors),
-                np.ascontiguousarray(centers),
-                opt_info)
-    else:
-        return np.ascontiguousarray(descriptors), np.ascontiguousarray(centers)
+    if mapping_type == 'ri':  # Rotation invariant
+        tmp_map = np.zeros((2**number_of_samples, 1)) - 1
+        for i in range(0, 2**number_of_samples):
+            rm = i
+            r = i
+            for j in range(1, number_of_samples):
+                r = bitset(bitshift(r,1,number_of_samples),1,bitget(r,number_of_samples))  # rotate left
+                if r < rm:
+                    rm = r
+            if tmp_map[rm] < 0:
+                tmp_map[rm] = new_max
+                new_max += 1
+            table[i] = tmp_map[rm]
 
+    if mapping_type == 'riu2':  # Uniform & Rotation invariant
+        new_max = number_of_samples + 2
+        for i in range(0, 2**number_of_samples):
+            j = bitset(bitshift(i,1,number_of_samples),1,bitget(i,number_of_samples))  # rotate left
+            numt = sum(bitget(bitxor(i,j),1:number_of_samples))
+            if numt <= 2:
+                table[i] = sum(bitget(i,1:number_of_samples))
+            else:
+                table[i] = number_of_samples + 1
 
-def _parse_options(type, method, num_orientations, cell_size,
-                   block_size, gradient_signed, l2_norm_clip,
-                   window_height, window_width, window_unit,
-                   window_step_vertical, window_step_horizontal,
-                   window_step_unit, padding_disabled, verbose):
-    # Options only valid for dense HOGs
-    if type is 'dense':
-        if window_height <= 0:
-            raise ValueError("Window height must be > 0.")
-        if window_width <= 0:
-            raise ValueError("Window width must be > 0.")
-        if window_unit not in ['pixels', 'blocks']:
-            raise ValueError("Window unit must be either pixels or blocks")
-        if window_step_horizontal <= 0:
-            raise ValueError("Horizontal window step must be > 0.")
-        if window_step_vertical <= 0:
-            raise ValueError("Vertical window step must be > 0.")
-        if window_step_unit not in ['pixels', 'cells']:
-            raise ValueError("Window step unit must be "
-                             "either pixels or cells.")
+    num = new_max
+    return table, number_of_samples, num
 
-    if method not in ['dalaltriggs', 'zhuramanan']:
-        raise ValueError("Method must be either dalaltriggs or zhuramanan.")
-    if num_orientations <= 0:
-        raise ValueError("Number of orientation bins must be > 0.")
-    if cell_size <= 0:
-        raise ValueError("Cell size (in pixels) must be > 0.")
-    if block_size <= 0:
-        raise ValueError("Block size (in cells) must be > 0.")
-    if l2_norm_clip <= 0.0:
-        raise ValueError("Value for L2-norm clipping must be > 0.0.")
-
-    options = np.zeros(15)
-    options[0] = 1 if type is 'sparse' else 2
-    options[1] = window_height
-    options[2] = window_width
-    options[3] = 1 if window_unit is 'blocks' else 2
-    options[4] = window_step_horizontal
-    options[5] = window_step_vertical
-    options[6] = 1 if window_step_unit is 'cells' else 2
-    options[7] = padding_disabled
-    options[8] = 1 if method is 'dalaltriggs' else 2
-    options[9] = num_orientations
-    options[10] = cell_size
-    options[11] = block_size
-    options[12] = gradient_signed
-    options[13] = l2_norm_clip
-    options[14] = verbose
-
-    return options
