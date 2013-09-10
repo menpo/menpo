@@ -2,12 +2,8 @@
 # distutils: sources = ./pybug/transform/fastpwa/pwa.c
 # distutils: extra_compile_args = -std=c99
 
-
-from cython.operator cimport dereference as deref, preincrement as inc
 import numpy as np
 cimport numpy as np
-import cython
-cimport cython
 
 cdef extern from "./fastpwa/pwa.h":
     ctypedef struct TriangleCollection:

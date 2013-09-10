@@ -7,13 +7,20 @@ from pybug.transform.fastpwa import CLookupPWA
 
 
 class TriangleContainmentError(Exception):
+    r"""
+    Exception that is thrown when an attempt is made to map a point with a
+    PWATransform that does not lie in a source triangle.
 
+    points_outside_source_domain : (d,) ndarray
+        A boolean value for the d points that were attempted to be applied.
+        If True, the point was outside of the domain.
+    """
     def __init__(self, points_outside_source_domain):
         super(TriangleContainmentError, self).__init__()
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class PWATransform(Transform):
+class AbstractPWATransform(Transform):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -35,9 +42,7 @@ class PWATransform(Transform):
     Raises
     ------
     DimensionalityError
-        Source and target must have the same dimensionality.
-
-        Source and target must be 2D.
+        Source and target must both be 2D.
 
     TriangleContainmentError
         All points to apply must be contained in a source triangle. Check
@@ -88,7 +93,8 @@ class PWATransform(Transform):
     def alpha_beta(self, points):
         r"""
         Calculates the alpha and beta values (barycentric coordinates) for each
-        triangle for all points provided.
+        triangle for all points provided. Note that this does not raise a
+        TriangleContainmentError.
 
         Parameters
         ----------
@@ -106,7 +112,7 @@ class PWATransform(Transform):
              the contribution of the ik vector to the position of the point
              in question.
         """
-        raise NotImplementedError()
+        pass
 
     @abc.abstractmethod
     def index_alpha_beta(self, points):
@@ -135,7 +141,6 @@ class PWATransform(Transform):
             Alpha for containing triangle of each point.
         beta : (L,) ndarray
             Beta for containing triangle of each point.
-
 
         Raises
         ------
@@ -251,7 +256,7 @@ class PWATransform(Transform):
         raise NotImplementedError("PWA jacobian is not implemented yet.")
 
 
-class DiscreteAffinePWATransform(PWATransform):
+class DiscreteAffineAbstractPWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -281,8 +286,8 @@ class DiscreteAffinePWATransform(PWATransform):
     """
 
     def __init__(self, source, target, trilist):
-        super(DiscreteAffinePWATransform, self).__init__(source, target,
-                                                             trilist)
+        super(DiscreteAffineAbstractPWATransform, self).__init__(
+            source, target, trilist)
         self._produce_affine_transforms_per_tri()
 
     def _produce_affine_transforms_per_tri(self):
@@ -472,7 +477,7 @@ class DiscreteAffinePWATransform(PWATransform):
         return x_transformed
 
 
-class DotProductPWATransform(PWATransform):
+class DotProductAbstractPWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -499,7 +504,7 @@ class DotProductPWATransform(PWATransform):
     """
 
     def __init__(self, source, target, trilist):
-        super(DotProductPWATransform, self).__init__(source, target,
+        super(DotProductAbstractPWATransform, self).__init__(source, target,
                                                      trilist)
         t = target[trilist]
         # get vectors ij ik for the target
@@ -528,7 +533,7 @@ class DotProductPWATransform(PWATransform):
                 beta[:, None] * self.tik[tri_index])
 
 
-class CachedPWATransform(DotProductPWATransform):
+class CachedPWATransform(DotProductAbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -556,12 +561,15 @@ class CachedPWATransform(DotProductPWATransform):
     def __init__(self, source, target, trilist):
         super(CachedPWATransform, self).__init__(source, target,
                                                  trilist)
+        # make sure the source and target satisfy the c requirements
         source_c = np.require(source, dtype=np.float64, requirements=['C'])
         trilist_c = np.require(trilist, dtype=np.uint32, requirements=['C'])
-        self._fastpwa = CLookupPWA(source_c,
-                                   trilist_c)
+        # build the cython wrapped C object and store it locally
+        self._fastpwa = CLookupPWA(source_c, trilist_c)
 
     def alpha_beta(self, points):
+        # todo - implement alpha beta for the C fast pwa
+        # this is not needed for the apply method
         pass
 
     def index_alpha_beta(self, points):
@@ -571,3 +579,6 @@ class CachedPWATransform(DotProductPWATransform):
             raise TriangleContainmentError(index < 0)
         else:
             return index, alpha, beta
+
+
+PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
