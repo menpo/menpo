@@ -49,6 +49,7 @@ void ImageWindowIterator::print_information() {
     else
     	std::cout << "Padding is disabled" << std::endl;
     std::cout << "Number of windows is " << this->numberOfWindowsVertically << "x" << this->numberOfWindowsHorizontally << " = " << this->numberOfWindows << std::endl << std::endl;
+    //std::cout << "descriptor length " << this->windowFeature->descriptorLengthPerWindow << std::endl;
 }
 
 void ImageWindowIterator::apply() {
@@ -147,11 +148,11 @@ void ImageWindowIterator::apply() {
             		std::cout << std::endl;
             	}
             }
-            std::cout << std::endl;
 
 
             // Compute descriptor of window
             this->windowFeature->apply(windowImage, windowHeight, windowWidth, imageIsGrayscale);
+            std::cout << std::endl;
             /*DalalTriggsHOGdescriptor(windowImage,params,info.windowSize,descriptorVector,info.inputImageIsGrayscale);
             d=0;
             for (d2=0; d2<info.numberOfBlocksPerWindowHorizontally; d2++) {
