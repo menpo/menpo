@@ -256,7 +256,7 @@ class AbstractPWATransform(Transform):
         raise NotImplementedError("PWA jacobian is not implemented yet.")
 
 
-class DiscreteAffineAbstractPWATransform(AbstractPWATransform):
+class DiscreteAffinePWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
@@ -286,7 +286,7 @@ class DiscreteAffineAbstractPWATransform(AbstractPWATransform):
     """
 
     def __init__(self, source, target, trilist):
-        super(DiscreteAffineAbstractPWATransform, self).__init__(
+        super(DiscreteAffinePWATransform, self).__init__(
             source, target, trilist)
         self._produce_affine_transforms_per_tri()
 
