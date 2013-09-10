@@ -29,10 +29,12 @@ class PCA(object):
         that they covariance is the identity matrix.
     """
 
-    def __init__(self, n_components=None, center=True, whiten=False):
+    def __init__(self, n_components=None, centered=True,
+                 biased=False, whitened=False):
         self.n_components = n_components
-        self.center = center
-        self.whiten = whiten
+        self.centered = centered
+        self.biased = biased
+        self.whitened = whitened
 
     def fit(self, X):
         r"""
@@ -67,7 +69,12 @@ class PCA(object):
         """
         n_samples, n_features = X.shape
 
-        if self.center:
+        if self.biased:
+            N = n_samples
+        else:
+            N = n_samples - 1
+
+        if self.centered:
             # center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
@@ -75,14 +82,14 @@ class PCA(object):
         if n_features < n_samples:
             # compute covariance matrix
             # S:  n_features  x  n_features
-            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True) / (n_samples - 1)
+            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True) / N
 
             # perform eigenvalue decomposition
             # eigenvectors:  n_features x  n_features
             # eigenvalues:   n_features
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
-            if self.whiten:
+            if self.whitened:
                 # whiten eigenvectors
                 eigenvectors *= eigenvalues ** -0.5
 
@@ -90,7 +97,7 @@ class PCA(object):
             # n_features > n_samples
             # compute covariance matrix
             # S:  n_samples  x  n_samples
-            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True) / (n_samples - 1)
+            S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True) / N
 
             # perform eigenvalue decomposition
             # eigenvectors:  n_samples  x  n_samples
@@ -98,7 +105,7 @@ class PCA(object):
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
             aux = 2
-            if self.whiten:
+            if self.whitened:
                 # will cause eigenvectors to be whiten
                 aux = 1
 
@@ -144,7 +151,7 @@ class PCA(object):
         Z: (n_samples, n_components) ndarray
 
         """
-        if self.center:
+        if self.centered:
             X = X - self.mean_
         # Z = np.dot(X, self.components_.T)
         Z = dgemm(alpha=1.0, a=X.T, b=self.components_.T, trans_a=True)
@@ -168,7 +175,7 @@ class PCA(object):
         # X = np.dot(Z, self.components_)
         X = dgemm(alpha=1.0, a=Z.T, b=self.components_.T,
                   trans_a=True, trans_b=True)
-        if self.center:
+        if self.centered:
             X = X + self.mean_
 
         return X

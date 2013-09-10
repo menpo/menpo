@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from scipy.linalg.blas import dgemm
-from pybug.decomposition import base as PybugPCA
+from pybug.decomposition import PCA as PybugPCA
 from pybug.model.base import StatisticalModel
 
 
@@ -336,7 +336,7 @@ class PCAModel(LinearModel):
         self.inv_noise_variance = 1 / self.noise_variance
         # pre-compute whiten components: U * L^{-1/2}
         self.whitened_components = \
-            self.explained_variance ** (-1 / 2)[..., None] * self.components
+            (self.explained_variance ** (-1 / 2))[..., None] * self.components
 
     @property
     def explained_variance(self):
