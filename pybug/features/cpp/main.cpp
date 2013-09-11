@@ -50,18 +50,18 @@ int main()
 	//LBP windowFeature = LBP();
 
 	// CREATE ITERATOR
-	ImageWindowIterator iter = ImageWindowIterator(image, imageHeight, imageWidth, windowHeight, windowWidth, windowStepHorizontal, windowStepVertical, enablePadding, imageIsGrayscale, &windowFeature);
+	ImageWindowIterator iter = ImageWindowIterator(image, imageHeight, imageWidth, windowHeight, windowWidth, windowStepHorizontal, windowStepVertical, enablePadding, imageIsGrayscale);
 
 	// CREATE OUTPUT IMAGE
 	double *outputImage;
-	outputImage = (double *) malloc(iter.numberOfWindowsVertically*iter.numberOfWindowsHorizontally*windowFeature.descriptorLengthPerWindow*sizeof(double));
+	outputImage = (double *) malloc(iter._numberOfWindowsVertically*iter._numberOfWindowsHorizontally*windowFeature.descriptorLengthPerWindow*sizeof(double));
 
 	// CREATE WINDOWS CENTERS
 	int *windowsCenters;
-	windowsCenters = (int *) malloc(iter.numberOfWindowsVertically*iter.numberOfWindowsHorizontally*2*sizeof(int));
+	windowsCenters = (int *) malloc(iter._numberOfWindowsVertically*iter._numberOfWindowsHorizontally*2*sizeof(int));
 
 	// CALL ITERATOR
-	iter.apply(outputImage, windowsCenters);
+	iter.apply(outputImage, windowsCenters, &windowFeature);
 
 	// VERBOSE
 	if (verbose==true)

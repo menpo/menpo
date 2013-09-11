@@ -3,18 +3,18 @@
 
 class ImageWindowIterator {
 public:
-	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically, numberOfWindows;
+	unsigned int _numberOfWindowsHorizontally, _numberOfWindowsVertically, _numberOfWindows;
 	ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth,
 			unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
-			unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale, WindowFeature *windowFeature);
+			unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale);
 	virtual ~ImageWindowIterator();
-	void apply(double *outputImage, int *windowsCenters);
+	void apply(double *outputImage, int *windowsCenters, WindowFeature *windowFeature);
 	void print_information();
 private:
-	double *image;
-	unsigned int imageWidth, imageHeight;
-	WindowFeature *windowFeature;
-    unsigned int windowHeight, windowWidth;
-    unsigned int windowStepHorizontal, windowStepVertical;
-    bool enablePadding, imageIsGrayscale;
+	double *_image;
+	unsigned int _imageWidth, _imageHeight;
+    unsigned int _windowHeight, _windowWidth;
+    unsigned int _windowStepHorizontal, _windowStepVertical;
+    bool _enablePadding, _imageIsGrayscale;
+    unsigned int _numberOfChannels;
 };
