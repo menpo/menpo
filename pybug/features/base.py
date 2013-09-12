@@ -1,5 +1,7 @@
 from pybug.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
+from scipy.misc import imrotate
+import matplotlib.pyplot as plt
 
 # HOG Features
 # hog function first creates an iterator object and then applies the hog computation
@@ -114,3 +116,41 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
                                                    l2_norm_clip, verbose)
         del iterator
         return np.ascontiguousarray(output_image), np.ascontiguousarray(windows_centers)
+
+
+def view_hog(w):
+    bs = 20
+    w = w[:, :, 0:9]
+    neg_w = -w
+    scale = np.maximum(w.max(), neg_w.max())
+    pos = _hog_picture(w, bs) * 255/scale
+    neg = _hog_picture(-w, bs) * 255/scale
+
+    # put pictures together and draw
+    if w.min() < 0:
+        im = np.uint8(np.concatenate((pos, neg)))
+    else:
+        im = np.uint8(pos)
+    return im
+
+
+# Make picture of positive HOG weights.
+def _hog_picture(w, bs):
+    # construct a "glyph" for each orientation
+    bim1 = np.zeros((bs, bs))
+    bim1[:, round(bs/2)-1:round(bs/2)+1] = 1
+    bim = np.zeros((bim1.shape[0], bim1.shape[1], 9))
+    bim[:, :, 0] = bim1
+    for i in range(2, 10):
+        bim[:, :, i-1] = imrotate(bim1, -(i-1)*20)
+
+    # make pictures of positive weights bs adding up weighted glyphs
+    s = w.shape
+    w[w < 0] = 0
+    im = np.zeros((bs*s[0], bs*s[1]))
+    for i in range(1, s[0]+1):
+        for j in range(1, s[1]+1):
+            for k in range(1, 10):
+                #print '%d:%d, %d:%d\n' % ((i-1)*bs-1, i*bs-1, (j-1)*bs-1, j*bs-1)
+                im[(i-1)*bs:i*bs][:, (j-1)*bs:j*bs] = im[(i-1)*bs:i*bs][:, (j-1)*bs:j*bs] + bim[:, :, k-1] * w[i-1, j-1, k-1]
+    return im
