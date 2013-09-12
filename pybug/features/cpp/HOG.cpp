@@ -2,14 +2,7 @@
 
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int method, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels,
 		unsigned int blockHeightAndWidthInCells, bool enableSignedGradients, double l2normClipping) {
-	double binsSize;
-	unsigned int descriptorLengthPerBlock, hist1, hist2, descriptorLengthPerWindow, numberOfBlocksPerWindowVertically, numberOfBlocksPerWindowHorizontally;
-
-	// Initialize descriptor vector/matrix
-	if (enableSignedGradients == true)
-		binsSize = 2*pi/numberOfOrientationBins;
-	else
-		binsSize = pi/numberOfOrientationBins;
+	unsigned int descriptorLengthPerBlock = 0, hist1, hist2, descriptorLengthPerWindow = 0, numberOfBlocksPerWindowVertically = 0, numberOfBlocksPerWindowHorizontally = 0;
 
     if (method==1)
     {
@@ -79,24 +72,28 @@ void HOG::apply(double *windowImage, bool imageIsGrayscale, double *descriptorVe
 
 	if (this->method == 1)	{
 		// Prepare input arguments
-        params = new double[5];
-        params[0] = this->numberOfOrientationBins;
-        params[1] = this->cellHeightAndWidthInPixels;
-        params[2] = this->blockHeightAndWidthInCells;
-        if (this->enableSignedGradients == true)
-        	params[3] = 1;
-        else
-        	params[3] = 0;
-        params[4] = this->l2normClipping;
+        //params = new double[5];
+        //params[0] = this->numberOfOrientationBins;
+        //params[1] = this->cellHeightAndWidthInPixels;
+        //params[2] = this->blockHeightAndWidthInCells;
+        //if (this->enableSignedGradients == true)
+        //	params[3] = 1;
+        //else
+        //	params[3] = 0;
+        //params[4] = this->l2normClipping;
 
         // Call function
-        DalalTriggsHOGdescriptor(windowImage, params, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
+        //DalalTriggsHOGdescriptor(windowImage, params, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
+		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
 	}
 	else {
 		// Call function
 		//ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, descriptorMatrix);
 		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, descriptorVector);
 	}
+	/*descriptorVector[0] = windowImage[0];
+	descriptorVector[1] = windowImage[1];
+	descriptorVector[2] = windowImage[2];*/
 }
 
 // ZHU & RAMANAN: Face Detection, Pose Estimation and Landmark Localization in the Wild
@@ -124,10 +121,8 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
     visible[0] = blocks[0]*cellHeightAndWidthInPixels;
     visible[1] = blocks[1]*cellHeightAndWidthInPixels;
 
-    for (x=1; x<visible[1]-1; x++)
-    {
-        for (y=1; y<visible[0]-1; y++)
-        {
+    for (x=1; x<visible[1]-1; x++) {
+        for (y=1; y<visible[0]-1; y++) {
             // first color channel
             double *s = inputImage + min(x,imageWidth-2)*imageHeight + min(y,imageHeight-2);
             double dy = *(s+1) - *(s-1);
@@ -147,14 +142,12 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
             double v3 = dx3*dx3 + dy3*dy3;
 
             // pick channel with strongest gradient
-            if (v2>v)
-            {
+            if (v2>v) {
                 v = v2;
                 dx = dx2;
                 dy = dy2;
             }
-            if (v3>v)
-            {
+            if (v3>v) {
                 v = v3;
                 dx = dx3;
                 dy = dy3;
@@ -163,16 +156,13 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
             // snap to one of 18 orientations
             double best_dot = 0;
             int best_o = 0;
-            for (o=0; o<9; o++)
-            {
+            for (o=0; o<9; o++) {
                 double dot = uu[o]*dx + vv[o]*dy;
-                if (dot>best_dot)
-                {
+                if (dot>best_dot) {
                     best_dot = dot;
                     best_o = o;
                 }
-                else if (-dot>best_dot)
-                {
+                else if (-dot>best_dot) {
                     best_dot = -dot;
                     best_o = o + 9;
                 }
@@ -289,12 +279,18 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
 
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
-void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int imageHeight, unsigned int imageWidth, double *descriptorVector, bool imageIsGrayscale) {
-    int numberOfOrientationBins       = (int) params[0];
-    double cellHeightAndWidthInPixels     =  params[1];
-    int blockHeightAndWidthInCells    = (int) params[2];
-    int signedOrUnsignedGradients        = (int) params[3];
-    double l2normClipping   = params[4];
+void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, double *descriptorVector, bool imageIsGrayscale) {
+    //int numberOfOrientationBins       = (int) params[0];
+    //double cellHeightAndWidthInPixels     =  params[1];
+    //int blockHeightAndWidthInCells    = (int) params[2];
+    //int signedOrUnsignedGradients        = (int) params[3];
+    //double l2normClipping   = params[4];
+
+	unsigned int signedOrUnsignedGradients;
+    if (signedOrUnsignedGradientsBool == true)
+    	signedOrUnsignedGradients = 1;
+    else
+    	signedOrUnsignedGradients = 0;
 
     int hist1= 2+ceil(-0.5 + imageHeight/cellHeightAndWidthInPixels);
     int hist2= 2+ceil(-0.5 + imageWidth/cellHeightAndWidthInPixels);
@@ -303,7 +299,8 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
 
     float dx[3], dy[3], gradientOrientation, gradientMagnitude, tempMagnitude;
     float Xc, Yc, Oc, blockNorm;
-    int x1, x2, y1, y2, bin1, bin2;
+    int x1, x2, y1, y2, bin1;
+    unsigned int x, y, i, j, k, bin2;
     int descriptorIndex = 0;
 
     vector<vector<vector<double> > > h(hist1, vector<vector<double> > (hist2, vector<double> (numberOfOrientationBins, 0.0) ) );
@@ -314,47 +311,47 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
         for(unsigned int x=0; x<imageWidth; x++) {
             if (imageIsGrayscale == true){
                 if(x==0) dx[0] = inputImage[y +(x+1)*imageHeight];
-                else{
+                else {
                     if (x==imageWidth-1) dx[0] = -inputImage[y + (x-1)*imageHeight];
                     else dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
                 }
                 if(y==0) dy[0] = -inputImage[y+1+x*imageHeight];
-                else{
+                else {
                     if (y==imageHeight-1) dy[0] = inputImage[y-1+x*imageHeight];
                     else dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
                 }
             }
-            else{
-                if(x==0){
+            else {
+                if(x==0) {
                     dx[0] = inputImage[y +(x+1)*imageHeight];
                     dx[1] = inputImage[y +(x+1)*imageHeight + imageHeight*imageWidth];
                     dx[2] = inputImage[y +(x+1)*imageHeight + 2*imageHeight*imageWidth];
                 }
-                else{
-                    if (x==imageWidth-1){
+                else {
+                    if (x==imageWidth-1) {
                         dx[0] = -inputImage[y + (x-1)*imageHeight];
                         dx[1] = -inputImage[y + (x-1)*imageHeight + imageHeight*imageWidth];
                         dx[2] = -inputImage[y + (x-1)*imageHeight + 2*imageHeight*imageWidth];
                     }
-                    else{
+                    else {
                         dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
                         dx[1] = inputImage[y+(x+1)*imageHeight + imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + imageHeight*imageWidth];
                         dx[2] = inputImage[y+(x+1)*imageHeight + 2*imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + 2*imageHeight*imageWidth];
 
                     }
                 }
-                if(y==0){
+                if(y==0) {
                     dy[0] = -inputImage[y+1+x*imageHeight];
                     dy[1] = -inputImage[y+1+x*imageHeight + imageHeight*imageWidth];
                     dy[2] = -inputImage[y+1+x*imageHeight + 2*imageHeight*imageWidth];
                 }
-                else{
-                    if (y==imageHeight-1){
+                else {
+                    if (y==imageHeight-1) {
                         dy[0] = inputImage[y-1+x*imageHeight];
                         dy[1] = inputImage[y-1+x*imageHeight + imageHeight*imageWidth];
                         dy[2] = inputImage[y-1+x*imageHeight + 2*imageHeight*imageWidth];
                     }
-                    else{
+                    else {
                         dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
                         dy[1] = -inputImage[y+1+x*imageHeight + imageHeight*imageWidth] + inputImage[y-1+x*imageHeight + imageHeight*imageWidth];
                         dy[2] = -inputImage[y+1+x*imageHeight + 2*imageHeight*imageWidth] + inputImage[y-1+x*imageHeight + 2*imageHeight*imageWidth];
@@ -365,11 +362,11 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
             gradientMagnitude = sqrt(dx[0]*dx[0] + dy[0]*dy[0]);
             gradientOrientation= atan2(dy[0], dx[0]);
 
-            if (imageIsGrayscale == false){
+            if (imageIsGrayscale == false) {
                 tempMagnitude = gradientMagnitude;
-                for (unsigned int cli=1;cli<3;++cli){
+                for (unsigned int cli=1;cli<3;++cli) {
                     tempMagnitude= sqrt(dx[cli]*dx[cli] + dy[cli]*dy[cli]);
-                    if (tempMagnitude>gradientMagnitude){
+                    if (tempMagnitude>gradientMagnitude) {
                         gradientMagnitude=tempMagnitude;
                         gradientOrientation= atan2(dy[cli], dx[cli]);
                     }
@@ -393,12 +390,11 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
 
             Oc = (bin1+1+1-1.5)*binsSize;
 
-            if (bin2==numberOfOrientationBins){
+            if (bin2==numberOfOrientationBins)
                 bin2=0;
-            }
-            if (bin1<0){
+
+            if (bin1<0)
                 bin1=numberOfOrientationBins-1;
-            }
 
             h[y1][x1][bin1]= h[y1][x1][bin1] + gradientMagnitude * (1-((x+1-Xc)/cellHeightAndWidthInPixels)) * (1-((y+1-Yc)/cellHeightAndWidthInPixels))*(1-((gradientOrientation-Oc)/binsSize));
             h[y1][x1][bin2]= h[y1][x1][bin2] + gradientMagnitude * (1-((x+1-Xc)/cellHeightAndWidthInPixels)) * (1-((y+1-Yc)/cellHeightAndWidthInPixels))*(((gradientOrientation-Oc)/binsSize));
@@ -411,35 +407,20 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
         }
     }
 
-
-
     //Block normalization
-    for(unsigned int x=1; x<hist2-blockHeightAndWidthInCells; x++)
-    {
-        for (unsigned int y=1; y<hist1-blockHeightAndWidthInCells; y++)
-        {
-
+    for(x=1; x<hist2-blockHeightAndWidthInCells; x++) {
+        for (y=1; y<hist1-blockHeightAndWidthInCells; y++) {
             blockNorm=0;
-            for (unsigned int i=0; i<blockHeightAndWidthInCells; i++)
-            {
-                for(unsigned int j=0; j<blockHeightAndWidthInCells; j++)
-                {
-                    for(unsigned int k=0; k<numberOfOrientationBins; k++)
-                    {
+            for (i=0; i<blockHeightAndWidthInCells; i++)
+                for(j=0; j<blockHeightAndWidthInCells; j++)
+                    for(k=0; k<numberOfOrientationBins; k++)
                         blockNorm+=h[y+i][x+j][k]*h[y+i][x+j][k];
-                    }
-                }
-            }
 
             blockNorm=sqrt(blockNorm);
-            for (unsigned int i=0; i<blockHeightAndWidthInCells; i++)
-            {
-                for(unsigned int j=0; j<blockHeightAndWidthInCells; j++)
-                {
-                    for(unsigned int k=0; k<numberOfOrientationBins; k++)
-                    {
-                        if (blockNorm>0)
-                        {
+            for (i=0; i<blockHeightAndWidthInCells; i++) {
+                for(j=0; j<blockHeightAndWidthInCells; j++) {
+                    for(k=0; k<numberOfOrientationBins; k++) {
+                        if (blockNorm>0) {
                             block[i][j][k]=h[y+i][x+j][k]/blockNorm;
                             if (block[i][j][k]>l2normClipping)
                                 block[i][j][k]=l2normClipping;
@@ -449,24 +430,15 @@ void DalalTriggsHOGdescriptor(double *inputImage, double *params, unsigned int i
             }
 
             blockNorm=0;
-            for (unsigned int i=0; i<blockHeightAndWidthInCells; i++)
-            {
-                for(unsigned int j=0; j<blockHeightAndWidthInCells; j++)
-                {
-                    for(unsigned int k=0; k<numberOfOrientationBins; k++)
-                    {
+            for (i=0; i<blockHeightAndWidthInCells; i++)
+                for(j=0; j<blockHeightAndWidthInCells; j++)
+                    for(k=0; k<numberOfOrientationBins; k++)
                         blockNorm+=block[i][j][k]*block[i][j][k];
-                    }
-                }
-            }
 
             blockNorm=sqrt(blockNorm);
-            for (unsigned int i=0; i<blockHeightAndWidthInCells; i++)
-            {
-                for(unsigned int j=0; j<blockHeightAndWidthInCells; j++)
-                {
-                    for(unsigned int k=0; k<numberOfOrientationBins; k++)
-                    {
+            for (i=0; i<blockHeightAndWidthInCells; i++) {
+                for(j=0; j<blockHeightAndWidthInCells; j++) {
+                    for(k=0; k<numberOfOrientationBins; k++) {
                         if (blockNorm>0)
                             descriptorVector[descriptorIndex]=block[i][j][k]/blockNorm;
                         else

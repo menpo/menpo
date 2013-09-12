@@ -5,17 +5,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main()
-{
+using namespace std ;
+
+int main(int argc, char *argv[]) {
 	// DEFINE WINDOWS-RELATED OPTIONS
 	unsigned int imageWidth = 100, imageHeight = 100;
-	unsigned int windowWidth = 16, windowHeight = 16;
+	unsigned int windowWidth = imageWidth, windowHeight = imageHeight;
 	unsigned int windowStepHorizontal = 1, windowStepVertical = 1;
 	bool enablePadding = false;
 	bool imageIsGrayscale = true;
 
 	// DEFINE FEATURE-RELATED OPTIONS
-	unsigned int sparseOrDense = 2; // 1 for sparse, 2 for dense
+	//unsigned int sparseOrDense = 2; // 1 for sparse, 2 for dense
 	unsigned int method = 2; // 1 dalaltriggs, 2 for zhuramanan
 	unsigned int numberOfOrientationBins = 9;
 	unsigned int cellHeightAndWidthInPixels = 4;

@@ -6,7 +6,7 @@
 ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth,
 		unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
 		unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale) {
-	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically, i;
+	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically;
 
     // Find number of windows
     if (!enablePadding) {
@@ -53,14 +53,16 @@ void ImageWindowIterator::print_information() {
 }
 
 void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, WindowFeature *windowFeature) {
-	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k, d;
-	unsigned int windowIndexHorizontal, windowIndexVertical;
+	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k;
+	unsigned int windowIndexHorizontal, windowIndexVertical, d;
 
     // Initialize windowImage
-    double* windowImage = (double *) malloc(_windowHeight*_windowWidth*_numberOfChannels*sizeof(double));
+	double* windowImage = new double[_windowHeight*_windowWidth*_numberOfChannels];
+    //double* windowImage = (double *) malloc(_windowHeight*_windowWidth*_numberOfChannels*sizeof(double));
 
     // Initialize descriptorVector
-    double* descriptorVector = (double *) malloc(windowFeature->descriptorLengthPerWindow*sizeof(double));
+	double* descriptorVector = new double[windowFeature->descriptorLengthPerWindow];
+    //double* descriptorVector = (double *) malloc(windowFeature->descriptorLengthPerWindow*sizeof(double));
 
     // Main loop
     for (windowIndexVertical = 0; windowIndexVertical < _numberOfWindowsVertically; windowIndexVertical++) {
@@ -87,11 +89,11 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
             // Copy window image
 			for (i=rowFrom; i<=rowTo; i++) {
 				for (j=columnFrom; j<=columnTo; j++) {
-					if (i<0 || i>_imageHeight-1 || j<0 || j>_imageWidth-1)
-						for (k=0; k<_numberOfChannels; k++)
+					if (i<0 || i>(int)_imageHeight-1 || j<0 || j>(int)_imageWidth-1)
+						for (k=0; k<(int)_numberOfChannels; k++)
 							windowImage[(i-rowFrom)+_windowHeight*((j-columnFrom)+_windowWidth*k)] = 0;
 					else
-						for (k=0; k<_numberOfChannels; k++)
+						for (k=0; k<(int)_numberOfChannels; k++)
 							windowImage[(i-rowFrom)+_windowHeight*((j-columnFrom)+_windowWidth*k)] = _image[i+_imageHeight*(j+_imageWidth*k)];
 				}
 			}
@@ -100,7 +102,6 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
             windowFeature->apply(windowImage, _imageIsGrayscale, descriptorVector);
 
             // Store results
-            //std::cout << windowIndexVertical << "," << windowIndexHorizontal << " STORING" << std::endl;
             for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)
             	outputImage[windowIndexVertical+_numberOfWindowsVertically*(windowIndexHorizontal+_numberOfWindowsHorizontally*d)] = descriptorVector[d];
             windowsCenters[windowIndexVertical+_numberOfWindowsVertically*windowIndexHorizontal] = rowCenter;
@@ -109,7 +110,9 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
     }
 
     // Free windowImage
-    free(windowImage);
-    free(descriptorVector);
+    //free(windowImage);
+    //free(descriptorVector);
+    delete[] windowImage;
+    delete[] descriptorVector;
 }
 

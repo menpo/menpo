@@ -1,1 +1,0 @@
-from pybug.features_old.hog.base import dense_hog, sparse_hog
