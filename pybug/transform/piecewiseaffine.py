@@ -89,40 +89,6 @@ class AbstractPWATransform(Transform):
         """
         return self.source.trilist
 
-    def alpha_beta(self, points):
-        r"""
-        Calculates the alpha and beta values (barycentric coordinates) for each
-        triangle for all points provided. Note that this does not raise a
-        TriangleContainmentError.
-
-        Parameters
-        ----------
-        points : (K, 2) ndarray
-            Points to calculate the barycentric coordinates for.
-
-        Returns
-        --------
-        alpha : (K, ``n_tris``)
-            The alpha for each point and triangle. Alpha can be interpreted
-            as the contribution of the ij vector to the position of the
-            point in question.
-        beta : (K, ``n_tris``)
-            The beta for each point and triangle. Beta can be interpreted as
-             the contribution of the ik vector to the position of the point
-             in question.
-        """
-        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
-        dot_jj = np.einsum('dt, dt -> t', ij, ij)
-        dot_kk = np.einsum('dt, dt -> t', ik, ik)
-        dot_jk = np.einsum('dt, dt -> t', ij, ik)
-        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
-
-        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
-        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        return alpha, beta
-
     @abc.abstractmethod
     def index_alpha_beta(self, points):
         """
@@ -175,10 +141,10 @@ class AbstractPWATransform(Transform):
             The Jacobian for each of the ``K`` given points over each point in
             the source points.
         """
-        tri_index, alpha_i, beta_i = self.alpha_beta(points)
+        tri_index, alpha_i, beta_i = self.index_alpha_beta(points)
         # given alpha beta implicitly for the first vertex in our trilist,
         # we can permute around to get the others. (e.g. rotate CW around
-        # the triangle to get the j'th vertex-as-prime varient,
+        # the triangle to get the j'th vertex-as-prime variant,
         # and once again to the kth).
         #
         # alpha_j = 1 - alpha_i - beta_i
@@ -188,28 +154,30 @@ class AbstractPWATransform(Transform):
         # beta_k = 1 - alpha_i - beta_i
         #
         # for the jacobian we only need 1 - a - b for each vertex (i, j, & k)
+        #
         # gamma_i = 1 - alpha_i - beta_i
         # gamma_j = 1 - (1 - alpha_i - beta_i) - alpha_i = beta_i
         # gamma_k = 1 - (beta_i) - (1 - alpha_i - beta_i) = alpha_i
-        # skipping the working out:
-        gamma_i = 1 - alpha_i - beta_i
-        gamma_j = beta_i
-        gamma_k = alpha_i
-        # the jacobian wrt source is of shape (n_points, n_source lm, n_dims)
+        #
+        # skipping the working out, and stacking all the gamma's together
+        # so gamma_ijk.shape = (n_sample_points, 3)
+        gamma_ijk = np.hstack(((1 - alpha_i - beta_i)[:, None],
+                               beta_i[:, None],
+                               alpha_i[:, None]))
+        # the jacobian wrt source is of shape
+        # (n_sample_points, n_source_points, 2)
         jac = np.zeros((points.shape[0], self.n_points, 2))
-        # now its a case of writing the gamma values in for the correct
-        # triangles
-        for i in xrange(self.n_tris):
-            # e.g. [0,1,2]
-            points_index_in_tri_i = (tri_index == i)
-            # e.g [3,4,7]
-            vertices_index_of_tri_i = self.trilist[i]
-            jac[points_index_in_tri_i, vertices_index_of_tri_i[0], :] = (
-                gamma_i[points_index_in_tri_i, i][..., None])
-            jac[points_index_in_tri_i, vertices_index_of_tri_i[1], :] = (
-                gamma_j[points_index_in_tri_i, i][..., None])
-            jac[points_index_in_tri_i, vertices_index_of_tri_i[2], :] = (
-                gamma_k[points_index_in_tri_i, i][..., None])
+        # per sample point, find the source points for the ijk vertices of
+        # the containing triangle - only these points will get a non 0
+        # jacobian value
+        ijk_per_point = self.trilist[tri_index]
+        # to index into the jacobian, we just need a linear iterator for the
+        # first axis - literally [0, 1, ... , n_sample_points]. The
+        # reshape is needed to make it broadcastable with the other indexing
+        # term, ijk_per_point.
+        linear_iterator = np.arange(points.shape[0]).reshape((-1, 1))
+        # in one line, we are done.
+        jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
     def jacobian_points(self, points):
@@ -345,6 +313,40 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         self.s, self.t = s, t
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
+
+    def alpha_beta(self, points):
+        r"""
+        Calculates the alpha and beta values (barycentric coordinates) for each
+        triangle for all points provided. Note that this does not raise a
+        TriangleContainmentError.
+
+        Parameters
+        ----------
+        points : (K, 2) ndarray
+            Points to calculate the barycentric coordinates for.
+
+        Returns
+        --------
+        alpha : (K, ``n_tris``)
+            The alpha for each point and triangle. Alpha can be interpreted
+            as the contribution of the ij vector to the position of the
+            point in question.
+        beta : (K, ``n_tris``)
+            The beta for each point and triangle. Beta can be interpreted as
+             the contribution of the ik vector to the position of the point
+             in question.
+        """
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        return alpha, beta
 
     def index_alpha_beta(self, points):
         """
