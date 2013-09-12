@@ -89,7 +89,6 @@ class AbstractPWATransform(Transform):
         """
         return self.source.trilist
 
-    @abc.abstractmethod
     def alpha_beta(self, points):
         r"""
         Calculates the alpha and beta values (barycentric coordinates) for each
@@ -112,7 +111,17 @@ class AbstractPWATransform(Transform):
              the contribution of the ik vector to the position of the point
              in question.
         """
-        pass
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        return alpha, beta
 
     @abc.abstractmethod
     def index_alpha_beta(self, points):
@@ -337,36 +346,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
 
-    def alpha_beta(self, points):
-        """
-        Calculates the alpha and beta values (barycentric coordinates) for each
-        triangle for all points provided.
-
-        Parameters
-        ----------
-        points : (K, 2) ndarray
-            Points to calculate the barycentric coordinates for.
-
-        Returns
-        --------
-        alpha : (K, ``n_tris``)
-            The alpha for each point and triangle.
-        beta : (K, ``n_tris``)
-            The beta for each point and triangle.
-        """
-        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
-        # many points
-        dot_jj = np.einsum('dt, dt -> t', ij, ij)
-        dot_kk = np.einsum('dt, dt -> t', ik, ik)
-        dot_jk = np.einsum('dt, dt -> t', ij, ik)
-        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
-
-        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
-        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        return alpha, beta
-
     def index_alpha_beta(self, points):
         """
         Finds for each input point the index of it's bounding triangle
@@ -516,11 +495,6 @@ class CachedPWATransform(AbstractPWATransform):
         # build the cython wrapped C object and store it locally
         self._fastpwa = CLookupPWA(source_c, trilist_c)
 
-    def alpha_beta(self, points):
-        # todo - implement alpha beta for the C fast pwa
-        # this is not needed for the apply method
-        pass
-
     def index_alpha_beta(self, points):
         points_c = np.require(points, dtype=np.float64, requirements=['C'])
         index, alpha, beta = self._fastpwa.index_alpha_beta(points_c)
@@ -548,7 +522,6 @@ class CachedPWATransform(AbstractPWATransform):
         return (self.ti[tri_index] +
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
-
 
 
 PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
