@@ -35,7 +35,6 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 }
 
 ImageWindowIterator::~ImageWindowIterator() {
-	// TODO Auto-generated destructor stub
 }
 
 void ImageWindowIterator::print_information() {
@@ -55,19 +54,17 @@ void ImageWindowIterator::print_information() {
 void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, WindowFeature *windowFeature) {
 	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k;
 	unsigned int windowIndexHorizontal, windowIndexVertical, d;
+	int imageHeight = (int)_imageHeight;
+	int imageWidth = (int)_imageWidth;
+	int numberOfChannels = (int)_numberOfChannels;
 
-    // Initialize windowImage
+    // Initialize temporary matrices
 	double* windowImage = new double[_windowHeight*_windowWidth*_numberOfChannels];
-    //double* windowImage = (double *) malloc(_windowHeight*_windowWidth*_numberOfChannels*sizeof(double));
-
-    // Initialize descriptorVector
 	double* descriptorVector = new double[windowFeature->descriptorLengthPerWindow];
-    //double* descriptorVector = (double *) malloc(windowFeature->descriptorLengthPerWindow*sizeof(double));
 
     // Main loop
     for (windowIndexVertical = 0; windowIndexVertical < _numberOfWindowsVertically; windowIndexVertical++) {
-        for (windowIndexHorizontal = 0; windowIndexHorizontal < _numberOfWindowsHorizontally; windowIndexHorizontal++)
-        {
+        for (windowIndexHorizontal = 0; windowIndexHorizontal < _numberOfWindowsHorizontally; windowIndexHorizontal++) {
             // Find window limits
             if (!_enablePadding) {
                 rowFrom = windowIndexVertical*_windowStepVertical;
@@ -87,14 +84,14 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
             }
 
             // Copy window image
-			for (i=rowFrom; i<=rowTo; i++) {
-				for (j=columnFrom; j<=columnTo; j++) {
-					if (i<0 || i>(int)_imageHeight-1 || j<0 || j>(int)_imageWidth-1)
-						for (k=0; k<(int)_numberOfChannels; k++)
+			for (i = rowFrom; i <= rowTo; i++) {
+				for (j = columnFrom; j <= columnTo; j++) {
+					if (i < 0 || i > imageHeight-1 || j < 0 || j > imageWidth-1)
+						for (k = 0; k < numberOfChannels; k++)
 							windowImage[(i-rowFrom)+_windowHeight*((j-columnFrom)+_windowWidth*k)] = 0;
 					else
-						for (k=0; k<(int)_numberOfChannels; k++)
-							windowImage[(i-rowFrom)+_windowHeight*((j-columnFrom)+_windowWidth*k)] = _image[i+_imageHeight*(j+_imageWidth*k)];
+						for (k=0; k < numberOfChannels; k++)
+							windowImage[(i-rowFrom)+_windowHeight*((j-columnFrom)+_windowWidth*k)] = _image[i+imageHeight*(j+imageWidth*k)];
 				}
 			}
 
@@ -109,9 +106,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
         }
     }
 
-    // Free windowImage
-    //free(windowImage);
-    //free(descriptorVector);
+    // Free temporary matrices
     delete[] windowImage;
     delete[] descriptorVector;
 }
