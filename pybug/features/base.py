@@ -1,7 +1,6 @@
 from pybug.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
 from scipy.misc import imrotate
-import matplotlib.pyplot as plt
 
 # HOG Features
 # hog function first creates an iterator object and then applies the hog computation
@@ -43,7 +42,6 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
     # Parse options
     if type not in ['dense', 'sparse']:
         raise ValueError("Type must be either dense or sparse.")
-    # Options only valid for dense HOGs
     if type is 'dense':
         if window_height <= 0:
             raise ValueError("Window height must be > 0.")
@@ -70,11 +68,18 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
 
     # Correct input image
     image = np.asfortranarray(image)
-    if image.shape[2] == 1 and method == 'zhuramanan':
-        image = np.tile(image, [1, 1, 3])
+    if image.shape[2] == 3:
+        image *= 255.
+    elif image.shape[2] == 1:
+        if method == 'dalaltriggs':
+            image = image
+        elif method == 'zhuramanan':
+            image *= 255.
+            image = np.tile(image, [1, 1, 3])
 
-    # Apply method
+    # Dense case
     if type == 'dense':
+        # Create iterator
         if method == 'dalaltriggs':
             method = 1
             if window_unit == 'blocks':
@@ -95,14 +100,18 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
                 window_step_horizontal = np.uint32(window_step_horizontal * cell_size)
         iterator = CppImageWindowIterator(image, window_height, window_width, window_step_horizontal,
                                           window_step_vertical, padding)
-
+        # Print iterator's info
         if verbose:
             print iterator
+        # Compute HOG
         output_image, windows_centers = iterator.HOG(method, num_bins, cell_size, block_size, signed_gradient,
                                                      l2_norm_clip, verbose)
+        # Destroy iterator and return
         del iterator
         return np.ascontiguousarray(output_image), np.ascontiguousarray(windows_centers)
+    # Sparse case
     elif type == 'sparse':
+        # Create iterator
         if method == 'dalaltriggs':
             method = 1
             window_size = cell_size * block_size
@@ -112,8 +121,10 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
             window_size = 3*cell_size
             step = cell_size
         iterator = CppImageWindowIterator(image, window_size, window_size, step, step, False)
+        # Compute HOG
         output_image, windows_centers = iterator.HOG(method, num_bins, cell_size, block_size, signed_gradient,
-                                                   l2_norm_clip, verbose)
+                                                     l2_norm_clip, verbose)
+        # Destroy iterator and return
         del iterator
         return np.ascontiguousarray(output_image), np.ascontiguousarray(windows_centers)
 
