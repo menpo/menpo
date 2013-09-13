@@ -129,39 +129,35 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
         return np.ascontiguousarray(output_image), np.ascontiguousarray(windows_centers)
 
 
-def view_hog(w):
-    bs = 20
-    w = w[:, :, 0:9]
-    neg_w = -w
-    scale = np.maximum(w.max(), neg_w.max())
-    pos = _hog_picture(w, bs) * 255/scale
-    neg = _hog_picture(-w, bs) * 255/scale
-
-    # put pictures together and draw
-    if w.min() < 0:
-        im = np.uint8(np.concatenate((pos, neg)))
+def view_hog(weights, block_size=10, num_bins=9):
+    weights = weights[:, :, 0:num_bins]
+    negative_weights = -weights
+    scale = np.maximum(weights.max(), negative_weights.max())
+    pos = _hog_picture(weights, block_size, num_bins) * 255/scale
+    neg = _hog_picture(-weights, block_size, num_bins) * 255/scale
+    if weights.min() < 0:
+        hog_image = np.concatenate((pos, neg))
     else:
-        im = np.uint8(pos)
-    return im
+        hog_image = pos
+    return hog_image
 
 
-# Make picture of positive HOG weights.
-def _hog_picture(w, bs):
+def _hog_picture(weights, block_size, num_bins):
     # construct a "glyph" for each orientation
-    bim1 = np.zeros((bs, bs))
-    bim1[:, round(bs/2)-1:round(bs/2)+1] = 1
-    bim = np.zeros((bim1.shape[0], bim1.shape[1], 9))
-    bim[:, :, 0] = bim1
-    for i in range(2, 10):
-        bim[:, :, i-1] = imrotate(bim1, -(i-1)*20)
-
-    # make pictures of positive weights bs adding up weighted glyphs
-    s = w.shape
-    w[w < 0] = 0
-    im = np.zeros((bs*s[0], bs*s[1]))
+    block_image_temp = np.zeros((block_size, block_size))
+    block_image_temp[:, round(block_size/2)-1:round(block_size/2)+1] = 1
+    block_image = np.zeros((block_image_temp.shape[0], block_image_temp.shape[1], num_bins))
+    block_image[:, :, 0] = block_image_temp
+    for i in range(2, num_bins+1):
+        block_image[:, :, i-1] = imrotate(block_image_temp, -(i-1)*block_size)
+    # make pictures of positive weights by adding up weighted glyphs
+    s = weights.shape
+    weights[weights < 0] = 0
+    hog_picture = np.zeros((block_size*s[0], block_size*s[1]))
     for i in range(1, s[0]+1):
         for j in range(1, s[1]+1):
             for k in range(1, 10):
-                #print '%d:%d, %d:%d\n' % ((i-1)*bs-1, i*bs-1, (j-1)*bs-1, j*bs-1)
-                im[(i-1)*bs:i*bs][:, (j-1)*bs:j*bs] = im[(i-1)*bs:i*bs][:, (j-1)*bs:j*bs] + bim[:, :, k-1] * w[i-1, j-1, k-1]
-    return im
+                hog_picture[(i-1)*block_size:i*block_size][:, (j-1)*block_size:j*block_size] = \
+                    hog_picture[(i-1)*block_size:i*block_size][:, (j-1)*block_size:j*block_size] + \
+                    block_image[:, :, k-1] * weights[i-1, j-1, k-1]
+    return hog_picture
