@@ -199,7 +199,6 @@ class AbstractPWATransform(Transform):
             The Jacobian of the transform with respect to the points to which
             the transform is applied to.
         """
-        #TODO can this be correct? Guessing this is not implimented yet.
         return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
 
     @property
