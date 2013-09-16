@@ -309,7 +309,16 @@ class PCAModel(LinearModel):
             saving measure.
     PCA: specific class implementing PCA, optional
 
-        Default: 'PybugPCA'
+        Default: `PybugPCA`
+
+        .. note::
+
+            This will currently break if `sklearn.decomposition.pca.PCA` is
+            set to be the specific implementation of PCA. This is because
+            this implementation does not support the concept of
+            `noise_variance`. Support for this concept is expected on their
+            next upcoming release.
+
 
     """
 
