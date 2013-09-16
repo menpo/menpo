@@ -142,28 +142,26 @@ class AbstractPWATransform(Transform):
             the source points.
         """
         tri_index, alpha_i, beta_i = self.index_alpha_beta(points)
-        # given alpha beta implicitly for the first vertex in our trilist,
+        # for the jacobian we only need
+        # gamma = 1 - alpha - beta
+        # for each vertex (i, j, & k)
+        # gamma is the 'far edge' weighting wrt the vertex in question.
+        # given gamma implicitly for the first vertex in our trilist,
         # we can permute around to get the others. (e.g. rotate CW around
         # the triangle to get the j'th vertex-as-prime variant,
         # and once again to the kth).
         #
         # alpha_j = 1 - alpha_i - beta_i
-        # beta_j = alpha_i
+        # gamma_j = alpha_i
+        # gamma_k = beta_i
         #
-        # alpha_k = beta_i
-        # beta_k = 1 - alpha_i - beta_i
+        # TODO this ordering is empirically correct but I don't know why..
         #
-        # for the jacobian we only need 1 - a - b for each vertex (i, j, & k)
-        #
-        # gamma_i = 1 - alpha_i - beta_i
-        # gamma_j = 1 - (1 - alpha_i - beta_i) - alpha_i = beta_i
-        # gamma_k = 1 - (beta_i) - (1 - alpha_i - beta_i) = alpha_i
-        #
-        # skipping the working out, and stacking all the gamma's together
+        # we stack all the gamma's together
         # so gamma_ijk.shape = (n_sample_points, 3)
         gamma_ijk = np.hstack(((1 - alpha_i - beta_i)[:, None],
-                               beta_i[:, None],
-                               alpha_i[:, None]))
+                               alpha_i[:, None],
+                               beta_i[:, None]))
         # the jacobian wrt source is of shape
         # (n_sample_points, n_source_points, 2)
         jac = np.zeros((points.shape[0], self.n_points, 2))
