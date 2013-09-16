@@ -118,6 +118,18 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
         pixels = np.ones(shape, dtype=dtype) * fill
         return cls(pixels)
 
+    @property
+    def centre(self):
+        r"""
+        The geometric centre of the Image - the subpixel that is in the
+        middle.
+
+        Useful for aligning 3D shapes and images.
+
+        :type: (D,) ndarray
+        """
+        return np.array(self.shape, dtype=np.double) / 2
+
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
@@ -167,7 +179,8 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
 
     def crop(self, *slice_args):
         r"""
-        Crops the image using the given slice objects. Expects
+        Returns a cropped version of this image using the given slice
+        objects. Expects
         ``len(args) == self.n_dims``.
 
         Also returns the
