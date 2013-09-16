@@ -166,8 +166,7 @@ class StatisticallyDrivenTransform(Transform):
             # by application of the chain rule dX_db is the Jacobian of the
             # model transformed by the linear component of the global transform
             dS_db = model_jacobian
-            dX_dS = self.global_transform.jacobian_points(
-                self.model.mean.points)
+            dX_dS = self.global_transform.jacobian_points()
             dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
             # dS_db:  n_landmarks  x     n_weights     x  n_dims
             # dX_dS:  n_landmarks  x     n_dims        x  n_dims
@@ -184,14 +183,9 @@ class StatisticallyDrivenTransform(Transform):
         return dW_dp
 
     # TODO: document me
-    def jacobian_points(self, points):
+    def jacobian_points(self):
         r"""
         TO BE DOCUMENTED
-
-        Parameters
-        ----------
-        points : (N, D) ndarray
-            The points to evaluate the Jacobian at.
 
         Returns
         -------
@@ -350,8 +344,7 @@ class StatisticallyDrivenTransform(Transform):
             # by application of the chain rule dW_db when p!=0,
             # is the Jacobian of the global transform wrt the points times
             # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-            dW_dS = self.global_transform.jacobian_points(
-                self.model.mean.points)
+            dW_dS = self.global_transform.jacobian_points()
             dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
             # dW_dS:  n_landmarks  x      n_dims       x  n_dims
             # dW_db:  n_landmarks  x     n_weights     x  n_dims
@@ -360,7 +353,7 @@ class StatisticallyDrivenTransform(Transform):
             dW_dp = np.hstack((dW_dq, dW_db))
             # dW_dp:    n_landmarks  x     n_params     x  n_dims
 
-        dW_dx = self.transform.jacobian_points(self.source)
+        dW_dx = self.transform.jacobian_points()
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         # dW_dx:  n_landmarks  x  n_dims  x  n_dims
 

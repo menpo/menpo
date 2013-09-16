@@ -178,7 +178,7 @@ class AbstractPWATransform(Transform):
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
-    def jacobian_points(self, points):
+    def jacobian_points(self):
         """
         Calculates the Jacobian of the PWA warp with respect to the the points
         to which the warp is applied to. Expected to return a
@@ -187,11 +187,6 @@ class AbstractPWATransform(Transform):
 
         The derivative of a piecewise affine warp with respect to the points
         is simply the identity matrix for every point in the warp.
-
-        Parameters
-        ----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
 
         Returns
         -------

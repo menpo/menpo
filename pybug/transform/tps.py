@@ -164,15 +164,10 @@ class TPSTransform(Transform):
         pass
 
     # TODO: this is needed for composition
-    def jacobian_points(self, points):
+    def jacobian_points(self):
         """
         Calculates the Jacobian of the TPS warp wrt to the the points to which
         the warp is applied to.
-
-        Parameters
-        ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
 
         Returns
         -------

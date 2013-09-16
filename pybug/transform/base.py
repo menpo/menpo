@@ -77,6 +77,18 @@ class Transform(Vectorizable):
         pass
 
     @abc.abstractmethod
+    def jacobian_points(self):
+        r"""
+        Calculates the Jacobian of the warp with respect to the points.
+
+        Returns
+        -------
+        dW_dx : (N, D, D) ndarray
+            The jacobian with respect to the points
+        """
+        pass
+
+    @abc.abstractmethod
     def compose(self, a):
         r"""
         Composes two transforms together::
