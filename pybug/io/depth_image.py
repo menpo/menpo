@@ -2,14 +2,14 @@ from __future__ import division
 import abc
 import os.path as path
 import numpy as np
-from pybug.image import DepthImage
+from pybug.image import ShapeImage
 from pybug.io.base import Importer, get_importer, find_alternative_files
 from scipy.spatial import Delaunay
 from pybug.transform.affine import Scale
 import re
 
 
-class DepthImageImporter(Importer):
+class SpatialImageImporter(Importer):
     r"""
     Base class for importing depth images. Depth images are defined by file
     types whereby the data lies explicitly on a grid. This grid pattern means
@@ -24,17 +24,17 @@ class DepthImageImporter(Importer):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, filepath):
-        super(DepthImageImporter, self).__init__(filepath)
+        super(SpatialImageImporter, self).__init__(filepath)
         self.attempted_image_landmark_search = False
         self.attempted_mesh_landmark_search = False
         self.attempted_texture_search = False
         self.relative_mesh_landmark_path = None
         self.relative_image_landmark_path = None
         self.relative_texture_path = None
-        self.points = None
         self.trilist = None
         self.mask = None
         self.tcoords = None
+        self.shape_image = None
 
     def _build_texture_and_landmark_importers(self):
         r"""
@@ -49,7 +49,8 @@ class DepthImageImporter(Importer):
             self.texture_importer = get_importer(self.texture_path,
                                                  image_types)
 
-        if self.image_landmark_path is None or not path.exists(self.image_landmark_path):
+        if (self.image_landmark_path is None or not
+                path.exists(self.image_landmark_path)):
             self.image_landmark_importer = None
         else:
             # This import is here to avoid circular dependencies
@@ -57,7 +58,8 @@ class DepthImageImporter(Importer):
             self.image_landmark_importer = get_importer(
                 self.image_landmark_path, image_landmark_types)
 
-        if self.mesh_landmark_path is None or not path.exists(self.mesh_landmark_path):
+        if (self.mesh_landmark_path is None or not
+                path.exists(self.mesh_landmark_path)):
             self.mesh_landmark_importer = None
         else:
             # This import is here to avoid circular dependencies
@@ -110,8 +112,8 @@ class DepthImageImporter(Importer):
         searching for landmarks with the same name as the image.
         """
         # Try find a texture path if we can
-        if self.relative_image_landmark_path is None and \
-                not self.attempted_image_landmark_search:
+        if (self.relative_image_landmark_path is None and not
+                self.attempted_image_landmark_search):
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_landmark_types
             # Stop searching every single time we access the property
@@ -225,7 +227,7 @@ class DepthImageImporter(Importer):
         else:
             texture = None
 
-        self.image = DepthImage(self.depth_image, points=self.points,
+        self.image = ShapeImage(self.shape_image,
                                 trilist=self.trilist, tcoords=self.tcoords,
                                 texture=texture, mask=self.mask)
 
@@ -246,7 +248,7 @@ class DepthImageImporter(Importer):
         return self.image
 
 
-class BNTImporter(DepthImageImporter):
+class BNTImporter(SpatialImageImporter):
     r"""
     Allows importing the BNT file format from the bosphorus dataset.
     This reads in the 5 channels (3D coordinates and texture coordinates),
@@ -271,7 +273,7 @@ class BNTImporter(DepthImageImporter):
 
     def _process_landmarks(self, original_image, lmark_dict):
         original_shape = original_image.shape
-        depth_image_shape = self.depth_image.shape
+        depth_image_shape = self.shape_image.shape
 
         # Scale the points down to the smaller depth image size
         scale_0 = depth_image_shape[0] / original_shape[0]
@@ -308,23 +310,20 @@ class BNTImporter(DepthImageImporter):
             data = data.reshape([5, coords_len / 5.0]).T
 
         # Get the 3D coordinates
-        points = data[:, :3]
+        shape_pixels = data[:, :3]
         # We want to remove the bad values because otherwise the mesh is not
         # renderable. We do this by replacing the bad value values with nan
-        points[points == bad_value] = np.nan
-
-        # Use only those coordinates with do not contains nans
-        valid_points = ~np.isnan(points).any(axis=1)
-        self.points = points[valid_points]
-        # Generate a triangulation from the points
-        self.trilist = Delaunay(self.points[:, :2]).simplices
+        shape_pixels[shape_pixels == bad_value] = np.nan
 
         # The image contains all coordinates
         # Must be flipped LR due to Fortran ordering from Matlab
         # Must by flipped upside down due to image vs mesh ordering
-        self.depth_image = np.fliplr(np.reshape(points[:, 2][::-1],
+        self.shape_image = np.fliplr(np.reshape(shape_pixels[:, 2][::-1],
                                                 [n_rows, n_cols]))
-        self.mask = ~np.isnan(self.depth_image)
+        self.mask = ~np.isnan(self.shape_image)
+
+        # Use only those coordinates with do not contains nans
+        valid_points = ~np.isnan(shape_pixels).any(axis=1)
 
         # Apparently the texture coordinates are upside down?
         self.tcoords = data[:, -2:][valid_points]
@@ -333,7 +332,7 @@ class BNTImporter(DepthImageImporter):
         self.relative_texture_path = texture_path
 
 
-class FIMImporter(DepthImageImporter):
+class FIMImporter(SpatialImageImporter):
     r"""
     Allows importing floating point images as depth images.
     This reads in the shape in to 3 channels and then triangulates the
@@ -373,17 +372,11 @@ class FIMImporter(DepthImageImporter):
         # nicely
         data[data == 0] = np.nan
 
-        self.depth_image = data[:, :, 2]
-        self.mask = ~np.isnan(self.depth_image)
-
-        points = np.reshape(data, [size[0] * size[1], size[2]])
-        valid_points = ~np.isnan(points).any(axis=1)
-        self.points = points[valid_points]
-        # Generate a triangulation from the points
-        self.trilist = Delaunay(self.points[:, :2]).simplices
+        self.shape_image = data
+        self.mask = ~np.isnan(self.shape_image)
 
 
-class ABSImporter(DepthImageImporter):
+class ABSImporter(SpatialImageImporter):
     r"""
     Allows importing the ABS file format from the FRGC dataset.
 
@@ -427,15 +420,5 @@ class ABSImporter(DepthImageImporter):
         # Replace the lowest value with nan so that we can render properly
         image_data[image_data == np.min(image_data)] = np.nan
 
-        self.depth_image = np.reshape(image_data[:, 3], [n_rows, n_cols])
+        self.shape_image = np.reshape(image_data[:, 1:], [n_rows, n_cols, 3])
         self.mask = np.reshape(image_data[:, 0], [n_rows, n_cols])
-
-        # Get the 3D coordinates
-        points = np.hstack([image_data[:, 1][..., None],
-                            image_data[:, 2][..., None],
-                            image_data[:, 3][..., None]])
-        valid_points = ~np.isnan(points).any(axis=1)
-        self.points = points[valid_points]
-        # Generate a triangulation from the points
-        self.trilist = Delaunay(self.points[:, :2]).simplices
-
