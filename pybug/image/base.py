@@ -154,7 +154,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         else:
             return self.pixels.flatten()
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, channel=None, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -169,8 +169,11 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         DimensionalityError
             If Image is not 2D
         """
-        return ImageViewer(figure_id, new_figure,
-                           self.n_dims, self.pixels).render(**kwargs)
+        pixels_to_view = self.pixels
+        if channel is not None:
+            pixels_to_view = pixels_to_view[..., channel]
+        return ImageViewer(figure_id, new_figure, self.n_dims,
+                           pixels_to_view).render(**kwargs)
 
     def crop(self, *slice_args):
         r"""
@@ -668,8 +671,8 @@ class Abstract2DImage(MaskedNDImage):
     def __init__(self, image_data, mask=None):
         image = np.asarray(image_data)
         if image.ndim != 3:
-            raise ValueError("Data passed in to the Abstract2DImage "
-                             "constructor has to be 3D (2D + k channels")
+            raise ValueError("Trying to build a 2DImage with "
+                             "{} dims".format(image.ndim - 1))
         # ensure pixels are np.float [0,1]
         if image.dtype == np.uint8:
             image = image.astype(np.float64) / 255
@@ -747,6 +750,9 @@ class RGBImage(Abstract2DImage):
         """
         if fill == 0:
             pixels = np.zeros(shape + (3,), dtype=np.float64)
+        elif fill < 0 or fill > 1:
+            raise ValueError("RGBImage can only have values in the range "
+                             "[0-1] (tried to fill with {})".format(fill))
         else:
             pixels = np.ones(shape + (3,), dtype=np.float64) * fill
         return cls(pixels, mask=mask)
@@ -814,6 +820,10 @@ class IntensityImage(Abstract2DImage):
         """
         if fill == 0:
             pixels = np.zeros(shape, dtype=np.float64)
+        elif fill < 0 or fill > 1:
+            raise ValueError("IntensityImage can only have values in the "
+                             "range [0-1] "
+                             "(tried to fill with {})".format(fill))
         else:
             pixels = np.ones(shape, dtype=np.float64) * fill
         return cls(pixels, mask=mask)
