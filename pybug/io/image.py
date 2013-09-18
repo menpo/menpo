@@ -1,8 +1,9 @@
 import abc
 import os.path as path
+import numpy as np
 import PIL.Image as PILImage
 from pybug.io.base import Importer, get_importer, find_alternative_files
-from pybug.image import Image
+from pybug.image import RGBImage, IntensityImage
 
 
 class ImageImporter(Importer):
@@ -134,4 +135,10 @@ class PILImporter(ImageImporter):
         Sets the newly built Image to ``self.image``.
         """
         self._pil_image = PILImage.open(self.filepath)
-        self.image = Image(self._pil_image)
+        image_pixels = np.array(self._pil_image)
+        if image_pixels.ndim == 2:
+            self.image = IntensityImage(image_pixels)
+        elif image_pixels.shape[2] == 1:
+            self.image = IntensityImage(image_pixels[..., 0])
+        else:
+            self.image = RGBImage(image_pixels)
