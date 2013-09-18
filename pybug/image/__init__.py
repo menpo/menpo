@@ -1,1 +1,3 @@
-from pybug.image.base import Image, DepthImage, MaskImage
+from pybug.image.base import (RGBImage, IntensityImage,
+                              MaskedNDImage, BooleanNDImage,
+                              VoxelImage, ShapeImage, DepthImage)

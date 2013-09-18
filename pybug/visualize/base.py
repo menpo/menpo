@@ -247,8 +247,8 @@ class LandmarkViewer(object):
         if self.landmark_dict:
             item = self.landmark_dict.values()[0]
             if item.n_dims == 2:
-                from pybug.image.base import AbstractImage
-                if isinstance(self.shape, AbstractImage):
+                from pybug.image.base import AbstractNDImage
+                if isinstance(self.shape, AbstractNDImage):
                     return LandmarkViewer2dImage(
                         self.figure_id, self.new_figure,
                         self.label, self.landmark_dict).render(**kwargs)
