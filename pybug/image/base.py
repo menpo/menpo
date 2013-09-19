@@ -170,10 +170,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             If Image is not 2D
         """
         pixels_to_view = self.pixels
-        if channel is not None:
-            pixels_to_view = pixels_to_view[..., channel]
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view).render(**kwargs)
+                           pixels_to_view, channel=channel).render(**kwargs)
 
     def crop(self, *slice_args):
         r"""
@@ -261,6 +259,13 @@ class BooleanNDImage(AbstractNDImage):
         else:
             mask = np.zeros(shape, dtype=np.bool)
         return cls(mask)
+
+
+    @property
+    def mask(self):
+        r"""
+        """
+        return self.pixels[..., 0]
 
     @property
     def n_true(self):
@@ -475,7 +480,7 @@ class MaskedNDImage(AbstractNDImage):
 
         :type: (``mask.n_true``, ``n_channels``) ndarray
         """
-        return self.pixels[self.mask.pixels]
+        return self.pixels[self.mask.mask]
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -538,7 +543,7 @@ class MaskedNDImage(AbstractNDImage):
         # Creates zeros of size (M x N x ... x n_channels)
         image_data = np.zeros(self.shape + (n_channels,))
         pixels_per_channel = flattened.reshape((-1, n_channels))
-        image_data[self.mask.pixels] = pixels_per_channel
+        image_data[self.mask.mask] = pixels_per_channel
         # call the constructor accounting for the fact that some image
         # classes expect a channel axis and some don't.
         return self.__class__._init_with_channel(image_data, mask=self.mask)
@@ -861,18 +866,25 @@ class AbstractSpatialImage(MaskedNDImage):
 
     def _create_mesh_from_shape(self, points, trilist, tcoords, texture):
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
+        from scipy.spatial import Delaunay
+        if trilist is None:
+            # delauney the 2D surface.
+            trilist = Delaunay(points[..., :2]).simplices
         if texture is None:
             return TriMesh(points, trilist)
         else:
             if tcoords is None:
-                # TODO: This doesn't work at the moment, texture comes out
-                # wrong
-                coord_per_pixel = np.linspace(0, 1, np.prod(texture.shape))
-                tcoords = np.hstack([coord_per_pixel.reshape([-1, 1])[::-1],
-                                     coord_per_pixel.reshape([-1, 1])])
+                tcoords = self.mask.true_indices.astype(np.float64)
+                # scale to [0, 1]
+                tcoords = tcoords / np.array(self.shape)
+                # (s,t) = (y,x)
+                tcoords = np.fliplr(tcoords)
+                # move origin to top left
+                tcoords[:, 1] = 1.0 - tcoords[:, 1]
             return TexturedTriMesh(points, trilist, tcoords, texture)
 
-    def _view(self, figure_id=None, new_figure=False, type='image', **kwargs):
+    def _view(self, figure_id=None, new_figure=False, type='image',
+              channel=None, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -903,10 +915,10 @@ class AbstractSpatialImage(MaskedNDImage):
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
         pixels /= np.nanmax(pixels)
-
         if type is 'image':
             return ImageViewer(figure_id, new_figure,
-                               self.n_dims, pixels).render(**kwargs)
+                               self.n_dims, pixels,
+                               channel=channel).render(**kwargs)
         if type is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)
@@ -914,7 +926,11 @@ class AbstractSpatialImage(MaskedNDImage):
             return self._view_extra(figure_id, new_figure, type, **kwargs)
 
     def _view_extra(self, figure_id, new_figure, type, **kwargs):
-        raise ValueError("Supported type values are: 'image', 'mesh'")
+        if type is 'height':
+            return DepthImageHeightViewer(
+                figure_id, new_figure, self.pixels[:, :, 2]).render(**kwargs)
+        else:
+            raise ValueError('Supported type values are: image, mesh, height')
 
 
 class ShapeImage(AbstractSpatialImage):
@@ -937,6 +953,9 @@ class ShapeImage(AbstractSpatialImage):
             raise ValueError("Trying to build a ShapeImage with {} channels "
                              "- has to have exactly 3 (for X, Y, "
                              "Z)".format(self.n_channels))
+
+    def _generate_points(self):
+        return self.masked_pixels
 
 
 class DepthImage(AbstractSpatialImage):
@@ -995,8 +1014,7 @@ class DepthImage(AbstractSpatialImage):
             The viewer the image is being shown within
         """
         if type is 'height':
-            return DepthImageHeightViewer(figure_id, new_figure,
-                                          self.pixels[:, :,
-                                          0]).render(**kwargs)
+            return DepthImageHeightViewer(
+                figure_id, new_figure, self.pixels[:, :, 0]).render(**kwargs)
         else:
             raise ValueError('Supported type values are: image, mesh, height')

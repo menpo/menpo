@@ -318,16 +318,19 @@ class BNTImporter(SpatialImageImporter):
         # The image contains all coordinates
         # Must be flipped LR due to Fortran ordering from Matlab
         # Must by flipped upside down due to image vs mesh ordering
-        self.shape_image = np.fliplr(np.reshape(shape_pixels[:, 2][::-1],
-                                                [n_rows, n_cols]))
-        self.mask = ~np.isnan(self.shape_image)
+        self.shape_image = np.fliplr(np.reshape(shape_pixels[:, :3][::-1],
+                                                [n_rows, n_cols, 3]))
+        self.mask = ~np.any(np.isnan(self.shape_image), axis=-1)
 
         # Use only those coordinates with do not contains nans
         valid_points = ~np.isnan(shape_pixels).any(axis=1)
 
         # Apparently the texture coordinates are upside down?
-        self.tcoords = data[:, -2:][valid_points]
-        self.tcoords[:, 1] = -self.tcoords[:, 1]
+        #self.tcoords = data[:, -2:][valid_points]
+        #self.tcoords[:, 1] = 1.0 - self.tcoords[:, 1]
+        # struggling to interpret these - let the ShapeImage build them
+        # instead.
+        self.tcoords = None
 
         self.relative_texture_path = texture_path
 

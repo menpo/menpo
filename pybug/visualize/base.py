@@ -331,9 +331,12 @@ class ImageViewer(object):
     pixels : (N, D) ndarray
         The pixels to render.
     """
-    def __init__(self, figure_id, new_figure, dimensions, pixels):
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 channel=None):
         self.figure_id = figure_id
         self.new_figure = new_figure
+        if channel is not None:
+            pixels = pixels[..., channel]
         self.pixels = pixels
         self.dimensions = dimensions
 
