@@ -301,6 +301,11 @@ class WRLImporter(MeshImporter):
     files. It should be noted that, unfortunately, this is a lot slower than
     the C++-based assimp importer.
 
+    VRML allows non-triangular polygons, whilst our importer pipeline doesn't.
+    Therefore, any non-triangular polygons are dropped. VRML also allows
+    separate texture coordinate indices, which we do not support. To have
+    a better formed mesh, try exporting the WRL as OBJ from Meshlab.
+
     Parameters
     ----------
     filepath : string
