@@ -178,7 +178,7 @@ class AbstractPWATransform(Transform):
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
-    def jacobian_points(self):
+    def jacobian_points(self, points):
         """
         Calculates the Jacobian of the PWA warp with respect to the the points
         to which the warp is applied to. Expected to return a

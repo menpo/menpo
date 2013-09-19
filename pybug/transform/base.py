@@ -77,7 +77,7 @@ class Transform(Vectorizable):
         pass
 
     @abc.abstractmethod
-    def jacobian_points(self):
+    def jacobian_points(self, points):
         r"""
         Calculates the Jacobian of the warp with respect to the points.
 

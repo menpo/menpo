@@ -185,7 +185,7 @@ class AffineTransform(Transform):
         jac[:, full_mask] = 1
         return jac
 
-    def jacobian_points(self):
+    def jacobian_points(self, points):
         r"""
         Computes the Jacobian of the transform wrt the points to which
         the transform is applied to. This is constant for affine transforms.
