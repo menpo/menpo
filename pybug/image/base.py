@@ -106,6 +106,21 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return self.pixels.shape[0]
 
     @property
+    def depth(self):
+        r"""
+        The depth of the image.
+
+        This is the depth according to image semantics, and is thus the size
+        of the **third** dimension. If the n_dim of the image is 2, this is 0.
+
+        :type: int
+        """
+        if self.n_dims == 2:
+            return 0
+        else:
+            return self.pixels.shape[0]
+
+    @property
     def shape(self):
         r"""
         The shape of the image
@@ -126,6 +141,17 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         :type: (D,) ndarray
         """
         return np.array(self.shape, dtype=np.double) / 2
+
+    @property
+    def _str_shape(self):
+        if self.n_dims > 3:
+            return reduce(lambda x, y: str(x) + ' x ' + str(y),
+                          self.shape) + ' (in memory)'
+        elif self.n_dims == 3:
+            return (str(self.width) + 'W x ' + str(self.height) + 'H x ' +
+                    str(self.depth) + 'D')
+        elif self.n_dims == 2:
+            return str(self.width) + 'W x ' + str(self.height) + 'H'
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -287,6 +313,24 @@ class BooleanNDImage(AbstractNDImage):
         return self.n_pixels - self.n_true
 
     @property
+    def proportion_true(self):
+        r"""
+        The proportion of the mask which is ``True``
+
+        :type: double
+        """
+        return (self.n_true * 1.0) / self.n_pixels
+
+    @property
+    def proportion_false(self):
+        r"""
+        The proportion of the mask which is ``False``
+
+        :type: double
+        """
+        return (self.n_false * 1.0) / self.n_pixels
+
+    @property
     def true_indices(self):
         r"""
         The indices of pixels that are true.
@@ -305,6 +349,11 @@ class BooleanNDImage(AbstractNDImage):
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(~self.pixels[..., 0])).T
+
+    def __str__(self):
+        return ('{} {}D mask, {:.1%} '
+                'of which is True '.format(self._str_shape, self.n_dims,
+                                           self.proportion_true))
 
     def from_vector(self, flattened):
         r"""
@@ -481,6 +530,12 @@ class MaskedNDImage(AbstractNDImage):
         :type: (``mask.n_true``, ``n_channels``) ndarray
         """
         return self.pixels[self.mask.mask]
+
+    def __str__(self):
+        return ('{} {}D MaskedImage with {} channels. '
+                'Attached mask {:.1%} true'.format(
+                self._str_shape, self.n_dims, self.n_channels,
+                self.mask.proportion_true))
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -857,18 +912,18 @@ class AbstractSpatialImage(MaskedNDImage):
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
                              .format(self.n_dims))
-        points = self._generate_points()
-        self.mesh = self._create_mesh_from_shape(points, trilist, tcoords,
+        self.mesh = self._create_mesh_from_shape(trilist, tcoords,
                                                  texture)
 
     def _generate_points(self):
         raise NotImplementedError()
 
-    def _create_mesh_from_shape(self, points, trilist, tcoords, texture):
+    def _create_mesh_from_shape(self, trilist, tcoords, texture):
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
         from scipy.spatial import Delaunay
+        points = self._generate_points()
         if trilist is None:
-            # delauney the 2D surface.
+            # Delaunay the 2D surface.
             trilist = Delaunay(points[..., :2]).simplices
         if texture is None:
             return TriMesh(points, trilist)
