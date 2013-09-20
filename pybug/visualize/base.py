@@ -338,6 +338,7 @@ class ImageViewer(object):
     """
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channel=None, mask=None):
+        pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
         if channel is not None:
