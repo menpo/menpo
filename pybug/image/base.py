@@ -197,47 +197,68 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channel=channel).render(**kwargs)
 
-    def crop_self(self, *slice_args):
+    def crop(self, min_indices, max_indices):
         r"""
-        Crops this image using the given slice objects. Expects
-        ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
-        maintain their position relative to the newly cropped image.
+        Crops this image using the given minimum and maximum indices.
+        Landmarks are correctly adjusted so they maintain their position
+        relative to the newly cropped image.
 
         Parameters
         -----------
-        slice_args: The slices to take over each axis
-        slice_args: List of slice objects
+        min_indices: (n_dims, ) ndarray
+            The minimum index over each dimension
+        max_indices: (n_dims, ) ndarray
+            The maximum index over each dimension
 
         Returns
         -------
-        cropped_image : :class:`self`
+        cropped_image : :class:`type(self)`
             This image, but cropped.
         """
-        assert(self.n_dims == len(slice_args))
-        self.pixels = self.pixels[slice_args]
-        lm_translation = Translation(-np.array([x.start for x in slice_args]))
+        min_indices = np.floor(min_indices)
+        max_indices = np.ceil(max_indices)
+        if not (min_indices.size == max_indices.size == self.n_dims):
+            raise ValueError("Both min and max indices should be 1D numpy "
+                             "arrays of length n_dims ({})".format(
+                             self.n_dims))
+        elif not np.all(max_indices > min_indices):
+            raise ValueError("All max indices must be greater that the min "
+                             "indices")
+        # noinspection PyArgumentList
+        slices = [slice(min_i, max_i)
+                  for min_i, max_i in
+                  zip(list(min_indices), list(max_indices))]
+        self.pixels = self.pixels[slices]
+        lm_translation = Translation(-min_indices)
         # update all our landmarks
         for manager in self.landmarks.values():
             for label, landmarks in manager:
                 lm_translation.apply(landmarks)
         return self
 
-    def crop(self, *slice_args):
+    def cropped_copy(self, min_indices, max_indices):
         r"""
-        Returns a cropped version of this image using the given slice
-        objects. Expects
-        ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
-        maintain their position relative to the newly cropped image.
+        Return a cropped copy of this image using the given minimum and
+        maximum indices.
+        Landmarks are correctly adjusted so they maintain their position
+        relative to the newly cropped image.
 
         Parameters
         -----------
-        slice_args: The slices to take over each axis
-        slice_args: List of slice objects
+        min_indices: (n_dims, ) ndarray
+            The minimum index over each dimension
+        max_indices: (n_dims, ) ndarray
+            The maximum index over each dimension
 
         Returns
         -------
-        cropped_image : :class:`Image`
-            A new instance of self, cropped.
+        cropped_image : :class:`type(self)`
+            A new instance of self, but cropped.
         """
         cropped_image = deepcopy(self)
-        return cropped_image.crop_self(*slice_args)
+        return cropped_image.crop(min_indices, max_indices)
+
+    def crop_to_points(self, points, boundary=0):
+        # TODO choose landmarks by def
+        min_indices, max_indices = points.bounds(boundary=boundary)
+        self.crop(min_indices, max_indices)

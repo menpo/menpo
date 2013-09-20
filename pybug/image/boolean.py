@@ -228,7 +228,7 @@ class BooleanNDImage(AbstractNDImage):
         # check we don't stray over any edges
         over_image = self.shape - maxes < 0
         maxes[over_image] = np.array(self.shape)[over_image]
-        return np.vstack((mins, maxes)).T
+        return mins, maxes
 
     # noinspection PyTypeChecker
     def bounds_false(self, boundary=0):
@@ -256,25 +256,3 @@ class BooleanNDImage(AbstractNDImage):
             ``[k, :] = [min_bounding_dim_k, max_bounding_dim_k]``
         """
         return self.inverted_copy().bounds_true(boundary=boundary)
-
-    # noinspection PyTypeChecker,PyArgumentList
-    def true_bounding_extent_slicer(self, boundary=0):
-        r"""
-        Returns a slice object that can be used to retrieve the bounding
-        extent.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`true_bounding_extent`. The number of
-            pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_extent : slice
-            Bounding extent slice object
-        """
-        extents = self.bounds_true(boundary)
-        return [slice(x[0], x[1]) for x in list(extents)]

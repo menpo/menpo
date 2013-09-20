@@ -82,7 +82,7 @@ def test_2d_crop_without_mask():
     pixels = np.ones((120, 120, 3))
     im = RGBImage(pixels)
 
-    cropped_im = im.crop(slice(10, 20), slice(50, 60))
+    cropped_im = im.cropped_copy(slice(10, 20), slice(50, 60))
 
     assert(cropped_im.shape == (10, 10))
     assert(cropped_im.n_channels == 3)
@@ -94,7 +94,7 @@ def test_2d_crop_with_mask():
     mask = np.zeros_like(pixels[..., 0])
     mask[10:100, 20:30] = 1
     im = RGBImage(pixels, mask=mask)
-    cropped_im = im.crop(slice(0, 20), slice(0, 60))
+    cropped_im = im.cropped_copy(slice(0, 20), slice(0, 60))
     assert(cropped_im.shape == (20, 60))
     assert(np.alltrue(cropped_im.shape))
 
@@ -105,4 +105,4 @@ def test_crop_wrong_arg_num_raises_assertionerror():
     pixels = np.ones((120, 120, 3))
     im = RGBImage(pixels)
 
-    im.crop(slice(0, 20))
+    im.cropped_copy(slice(0, 20))

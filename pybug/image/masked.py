@@ -218,7 +218,7 @@ class MaskedNDImage(AbstractNDImage):
                            pixels_to_view, channel=channel,
                            mask=mask).render(**kwargs)
 
-    def crop_self(self, *slice_args):
+    def crop(self, min_indices, max_indices):
         r"""
         Crops this image using the given slice objects. Expects
         ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
@@ -235,9 +235,9 @@ class MaskedNDImage(AbstractNDImage):
             This image, but cropped.
         """
         # crop our image
-        super(MaskedNDImage, self).crop_self(*slice_args)
+        super(MaskedNDImage, self).crop(min_indices, max_indices)
         # crop our mask
-        self.mask.crop_self(*slice_args)
+        self.mask.crop(min_indices, max_indices)
         return self
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
@@ -282,7 +282,7 @@ class MaskedNDImage(AbstractNDImage):
             np.logical_and(~eroded_mask, self.mask.pixels, eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
-
+        # TODO Landmarks should be copied over here
         return grad_image
 
     def constrain_mask_to_landmarks(self, group=None, label=None):

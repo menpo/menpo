@@ -13,7 +13,7 @@ from pybug.align.lucaskanade.residual import *
 takeo_path = data_path_to('takeo.ppm')
 takeo = auto_import(takeo_path)[0]
 image = takeo.as_greyscale()
-template, translation = image.crop(slice(70, 169), slice(30, 129))
+template, translation = image.cropped_copy(slice(70, 169), slice(30, 129))
 
 # Setup global conditions
 initial_params = np.array([0, 0, 0, 0, 70.5, 30.5])
