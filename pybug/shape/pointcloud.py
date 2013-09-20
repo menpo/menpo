@@ -98,9 +98,9 @@ class PointCloud(Shape):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         return message
 
-    def max_min_bounds(self, boundary=0):
+    def bounds(self, boundary=0):
         r"""
-        The maximum and minimum extent of the :class:`PointCloud`.
+        The minimum to maximum extent of the :class:`PointCloud`.
         An optional boundary argument can be provided to expand the bounds
         by a constant margin.
 
@@ -113,28 +113,28 @@ class PointCloud(Shape):
 
         Returns
         --------
-        max_b : (D,) ndarray
+        min_b : (D,) ndarray
             The maximum extent of the :class:`PointCloud` and boundary along
             each dimension
 
-        min_b : (D,) ndarray
+        max_b : (D,) ndarray
             The minimum extent of the :class:`PointCloud` and boundary along
             each dimension
         """
-        max_b = np.max(self.points, axis=0) + boundary
         min_b = np.min(self.points, axis=0) - boundary
-        return max_b, min_b
+        max_b = np.max(self.points, axis=0) + boundary
+        return min_b, max_b
 
-    def range_bounds(self):
+    def range(self):
         r"""
         The range of the extent of the :class:`PointCloud`.
 
         Returns
         --------
-        range_b : (D,) ndarray
+        range : (D,) ndarray
             The range of the :class:`PointCloud`s extent in each dimension.
         """
-        max_b, min_b = self.max_min_bounds()
+        min_b, max_b = self.bounds()
         return max_b - min_b
 
     def add_pointfield(self, name, field):
@@ -152,7 +152,8 @@ class PointCloud(Shape):
             self.pointfields[name] = field
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointCloudViewer(figure_id, new_figure, self.points).render(**kwargs)
+        return PointCloudViewer(figure_id, new_figure,
+                                self.points).render(**kwargs)
 
     def _transform_self(self, transform):
         self.points = transform(self.points)
