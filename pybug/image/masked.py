@@ -218,25 +218,6 @@ class MaskedNDImage(AbstractNDImage):
                            pixels_to_view, channel=channel,
                            mask=mask).render(**kwargs)
 
-    def mask_bounding_pixels(self, boundary=0):
-        r"""
-        Returns the pixels inside the bounding extent of the mask.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`mask_bounding_extent_slicer`. The
-            number of pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_pixels : (M, N, C) ndarray
-            Pixels inside the bounding extent of the mask
-        """
-        return self.pixels[self.mask.true_bounding_extent_slicer(boundary)]
-
     def crop_self(self, *slice_args):
         r"""
         Crops this image using the given slice objects. Expects

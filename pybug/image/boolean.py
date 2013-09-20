@@ -1,4 +1,5 @@
 # noinspection PyPackageRequirements
+from copy import deepcopy
 import numpy as np
 from pybug.image.base import AbstractNDImage
 
@@ -180,11 +181,27 @@ class BooleanNDImage(AbstractNDImage):
         self.pixels = flattened.reshape(self.pixels.shape)
         return self
 
-    # noinspection PyTypeChecker
-    def true_bounding_extent(self, boundary=0):
+    def invert(self):
         r"""
-        Returns the maximum and minimum values along all dimensions that the
-        mask includes.
+        Inverts the current mask in place.
+        """
+        self.pixels = ~self.pixels
+
+    def inverted_copy(self):
+        r"""
+        Returns a copy of this Boolean image, which is inverted.
+        """
+        inverse = deepcopy(self)
+        inverse.invert()
+        return inverse
+
+    # noinspection PyTypeChecker
+    def bounds_true(self, boundary=0):
+        r"""
+        Returns the minimum to maximum indices along all dimensions that the
+        mask includes which fully surround the False mask values. In the case
+        of a 2D Image for instance, the min and max define two corners of a
+        rectangle bounding the False pixel values.
 
         Parameters
         ----------
@@ -213,6 +230,33 @@ class BooleanNDImage(AbstractNDImage):
         maxes[over_image] = np.array(self.shape)[over_image]
         return np.vstack((mins, maxes)).T
 
+    # noinspection PyTypeChecker
+    def bounds_false(self, boundary=0):
+        r"""
+        Returns the minimum to maximum indices along all dimensions that the
+        mask includes which fully surround the true mask values. In the case
+        of a 2D Image for instance, the min and max define two corners of a
+        rectangle bounding the False pixel values.
+
+        Parameters
+        ----------
+        boundary : int >= 0, optional
+            A number of pixels that should be added to the extent.
+
+            Default: 0
+
+            .. note::
+                The bounding extent is snapped to not go beyond
+                the edge of the image.
+
+        Returns
+        -------
+        bounding_extent : (``n_dims``, 2) ndarray
+            The bounding extent where
+            ``[k, :] = [min_bounding_dim_k, max_bounding_dim_k]``
+        """
+        return self.inverted_copy().bounds_true(boundary=boundary)
+
     # noinspection PyTypeChecker,PyArgumentList
     def true_bounding_extent_slicer(self, boundary=0):
         r"""
@@ -232,27 +276,5 @@ class BooleanNDImage(AbstractNDImage):
         bounding_extent : slice
             Bounding extent slice object
         """
-        extents = self.true_bounding_extent(boundary)
+        extents = self.bounds_true(boundary)
         return [slice(x[0], x[1]) for x in list(extents)]
-
-    # noinspection PyTypeChecker
-    def mask_bounding_extent_meshgrids(self, boundary=0):
-        r"""
-        Returns a list of meshgrids, the ``i`` th item being the meshgrid over
-        the bounding extent of the ``i`` th dimension.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`true_bounding_extent`. The number of
-            pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_extent : list of ndarrays
-            output of ``np.meshgrid``
-        """
-        extents = self.true_bounding_extent(boundary)
-        return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])

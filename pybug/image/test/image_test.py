@@ -63,7 +63,7 @@ def test_mask_true_bounding_extent():
     mask = BooleanNDImage.blank((64, 14, 51), fill=False)
     mask.mask[0, 13, 5] = True
     mask.mask[5, 2, 4] = True
-    tbe = mask.true_bounding_extent()
+    tbe = mask.bounds_true()
     true_extends = np.array([[0,  5], [2, 13], [4,  5]])
     assert_equal(tbe, true_extends)
 
