@@ -60,8 +60,10 @@ class MayaviPointCloudViewer3d(MayaviViewer):
 
 class MayaviSurfaceViewer3d(MayaviViewer):
 
-    def __init__(self, figure_id, new_figure, values):
+    def __init__(self, figure_id, new_figure, values, mask=None):
         super(MayaviSurfaceViewer3d, self).__init__(figure_id, new_figure)
+        if mask is not None:
+            values[~mask] = np.nan
         self.values = values
 
     def _render(self, **kwargs):

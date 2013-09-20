@@ -1170,12 +1170,14 @@ class AbstractSpatialImage(MaskedNDImage):
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)
         else:
-            return self._view_extra(figure_id, new_figure, mode, **kwargs)
+            return self._view_extra(figure_id, new_figure, mode, mask,
+                                    **kwargs)
 
-    def _view_extra(self, figure_id, new_figure, mode, **kwargs):
+    def _view_extra(self, figure_id, new_figure, mode, mask, **kwargs):
         if mode is 'height':
             return DepthImageHeightViewer(
-                figure_id, new_figure, self.pixels[:, :, 2]).render(**kwargs)
+                figure_id, new_figure,
+                self.pixels[:, :, 2], mask=mask).render(**kwargs)
         else:
             raise ValueError("Supported mode values are: 'image', 'mesh'"
                              " and 'height'")
@@ -1234,7 +1236,7 @@ class DepthImage(AbstractSpatialImage):
     def _generate_points(self):
         return np.hstack((self.mask.true_indices, self.masked_pixels))
 
-    def _view_extra(self, figure_id, new_figure, mode, **kwargs):
+    def _view_extra(self, figure_id, new_figure, mode, mask, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -1263,7 +1265,8 @@ class DepthImage(AbstractSpatialImage):
         """
         if mode is 'height':
             return DepthImageHeightViewer(
-                figure_id, new_figure, self.pixels[:, :, 0]).render(**kwargs)
+                figure_id, new_figure,
+                self.pixels[:, :, 0], mask=mask).render(**kwargs)
         else:
             raise ValueError("Supported mode values are: 'image', 'mesh'"
                              " and 'height'")
