@@ -200,6 +200,31 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channel=channel).render(**kwargs)
 
+    def crop_self(self, *slice_args):
+        r"""
+        Crops this image using the given slice objects. Expects
+        ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
+        maintain their position relative to the newly cropped image.
+
+        Parameters
+        -----------
+        slice_args: The slices to take over each axis
+        slice_args: List of slice objects
+
+        Returns
+        -------
+        cropped_image : :class:`self`
+            This image, but cropped.
+        """
+        assert(self.n_dims == len(slice_args))
+        self.pixels = self.pixels[slice_args]
+        lm_translation = Translation(-np.array([x.start for x in slice_args]))
+        # update all our landmarks
+        for manager in self.landmarks.values():
+            for label, landmarks in manager:
+                lm_translation.apply(landmarks)
+        return self
+
     def crop(self, *slice_args):
         r"""
         Returns a cropped version of this image using the given slice
@@ -215,20 +240,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         Returns
         -------
         cropped_image : :class:`Image`
-            Cropped portion of the image.
+            A new instance of self, cropped.
         """
-        assert(self.n_dims == len(slice_args))
-        cropped_image_pixels = self.pixels[slice_args]
-        lm_translation = Translation(-np.array([x.start for x in slice_args]))
         cropped_image = deepcopy(self)
-        cropped_image.pixels = cropped_image_pixels
-        # borrowed from pubug.transform.base
-        # TODO consider unifying this somewhere
-        for manager in cropped_image.landmarks.values():
-            for label, landmarks in manager:
-                landmarks._transform_self(lm_translation)
-                manager.update_landmarks(label, landmarks)
-        return cropped_image
+        return cropped_image.crop_self(*slice_args)
 
 
 class BooleanNDImage(AbstractNDImage):
@@ -714,29 +729,27 @@ class MaskedNDImage(AbstractNDImage):
         """
         return self.pixels[self.mask.true_bounding_extent_slicer(boundary)]
 
-    def crop(self, *slice_args):
+    def crop_self(self, *slice_args):
         r"""
-        Crops the image using the given slice objects. Expects
-        ``len(args) == self.n_dims``. Maintains the cropped portion of the
-        mask. Landmarks are correctly adjusted so they maintain their
-        position relative to the newly cropped image.
+        Crops this image using the given slice objects. Expects
+        ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
+        maintain their position relative to the newly cropped image.
 
         Parameters
-        ----------
+        -----------
         slice_args: The slices to take over each axis
         slice_args: List of slice objects
 
         Returns
         -------
-        cropped_image : :class:`Image`:
-            Cropped portion of the image, including cropped mask.
+        cropped_image : :class:`self`
+            This image, but cropped.
         """
         # crop our image
-        cropped_image = super(MaskedNDImage, self).crop(*slice_args)
+        super(MaskedNDImage, self).crop_self(*slice_args)
         # crop our mask
-        cropped_mask = self.mask.crop(*slice_args)
-        cropped_image.mask = cropped_mask  # assign the mask
-        return cropped_image
+        self.mask.crop_self(*slice_args)
+        return self
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
