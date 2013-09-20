@@ -1,3 +1,5 @@
-from pybug.image.base import (RGBImage, IntensityImage,
-                              MaskedNDImage, BooleanNDImage,
-                              VoxelImage, ShapeImage, DepthImage)
+from pybug.image.boolean import BooleanNDImage
+from pybug.image.masked import MaskedNDImage
+from pybug.image.spatial import ShapeImage, DepthImage
+from pybug.image.standard import RGBImage, IntensityImage
+from pybug.image.voxel import VoxelImage
