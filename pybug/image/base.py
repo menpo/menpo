@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 import PIL.Image as PILImage
+import scipy.linalg
 from pybug.transform.affine import Translation
 from pybug.landmark import Landmarkable
 from pybug.base import Vectorizable
@@ -955,8 +956,9 @@ class RGBImage(Abstract2DImage):
 
         Parameters
         ----------
-        mode : 'average' 'luminosity' 'channel'
-            'luminosity' -TODO luminosity docs
+        mode : {'average', 'luminosity', 'channel'}
+            'luminosity' - Calculates the luminance using the CCIR 601 formula
+                ``Y' = 0.299 R' + 0.587 G' + 0.114 B'``
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
 
@@ -973,8 +975,12 @@ class RGBImage(Abstract2DImage):
             A copy of this image in greyscale.
         """
         if mode == 'luminosity':
-            # TODO insert the luminosity algorithm in here.
-            pixels = self.pixels[..., 0]
+            # Invert the transformation matrix to get more precise values
+            T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
+                                           [1.0, -0.272, -0.647],
+                                           [1.0, -1.106, 1.703]]))
+            coef = T[0, :]
+            pixels = np.dot(self.pixels, coef.T)
         elif mode == 'average':
             pixels = np.mean(self.pixels, axis=-1)
         elif mode == 'channel':
