@@ -1126,7 +1126,7 @@ class AbstractSpatialImage(MaskedNDImage):
             return TexturedTriMesh(points, trilist, tcoords, texture)
 
     def _view(self, figure_id=None, new_figure=False, mode='image',
-              channel=None, **kwargs):
+              channel=None, masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -1157,10 +1157,15 @@ class AbstractSpatialImage(MaskedNDImage):
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
         pixels /= np.nanmax(pixels)
+
+        mask = None
+        if masked:
+            mask = self.mask.mask
+
         if mode is 'image':
             return ImageViewer(figure_id, new_figure,
                                self.n_dims, pixels,
-                               channel=channel).render(**kwargs)
+                               channel=channel, mask=mask).render(**kwargs)
         if mode is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)
