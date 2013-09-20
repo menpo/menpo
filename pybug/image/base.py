@@ -376,6 +376,28 @@ class BooleanNDImage(AbstractNDImage):
         """
         return BooleanNDImage(flattened.reshape(self.shape))
 
+    def update_from_vector(self, flattened):
+        r"""
+        Takes a flattened vector and update this Boolean image by
+        reshaping the vector to the correct dimensions. Note that this is
+        rebuilding a boolean image **itself** from boolean values. The mask
+        is in no way interpreted in performing the operation, in contrast to
+        MaskedNDImage, where only the masked region is used in
+        {from, as}_vector.
+
+        Parameters
+        ----------
+        flattened : (``n_pixels``,)
+            A flattened vector of all the pixels of a BooleanImage.
+
+        Returns
+        -------
+        image : :class:`BooleanNDImage`
+            This image post update
+        """
+        self.pixels = flattened.reshape(self.pixels.shape)
+        return self
+
     def true_bounding_extent(self, boundary=0):
         r"""
         Returns the maximum and minimum values along all dimensions that the
@@ -496,6 +518,16 @@ class MaskedNDImage(AbstractNDImage):
             self.mask = BooleanNDImage.blank(self.shape, fill=True)
 
     @classmethod
+    def _init_with_channel(cls, image_data_with_channel, mask):
+        r"""
+        Constructor that always requires the image has a
+        channel on the last axis. Only used by from_vector. By default,
+        just calls the constructor. Subclasses with constructors that don't
+        require channel axes need to overwrite this.
+        """
+        return cls(image_data_with_channel, mask)
+
+    @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
         r"""
         Returns a blank image
@@ -530,6 +562,10 @@ class MaskedNDImage(AbstractNDImage):
         :type: (``mask.n_true``, ``n_channels``) ndarray
         """
         return self.pixels[self.mask.mask]
+
+    @masked_pixels.setter
+    def masked_pixels(self, value):
+        self.pixels[self.mask.mask] = value
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
@@ -603,15 +639,26 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return self.__class__._init_with_channel(image_data, mask=self.mask)
 
-    @classmethod
-    def _init_with_channel(cls, image_data_with_channel, mask):
+    def update_from_vector(self, flattened):
         r"""
-        Constructor that always requires the image has a
-        channel on the last axis. Only used by from_vector. By default,
-        just calls the constructor. Subclasses with constructors that don't
-        require channel axes need to overwrite this.
+        Takes a flattened vector and updates this image by reshaping
+        the vector to the correct pixels and channels. Note that the only
+        region of the image that will be filled is the masked region.
+
+        Parameters
+        ----------
+        flattened : (``n_pixels``,)
+            A flattened vector of all pixels and channels of an image.
+
+        Returns
+        -------
+        image : :class:`MaskedNDImage`
+            This image after being updated
         """
-        return cls(image_data_with_channel, mask)
+        self.masked_pixels = flattened.reshape((-1, self.n_channels))
+        # call the constructor accounting for the fact that some image
+        # classes expect a channel axis and some don't.
+        return self
 
     def mask_bounding_pixels(self, boundary=0):
         r"""
@@ -817,6 +864,12 @@ class RGBImage(Abstract2DImage):
             pixels = np.ones(shape + (3,), dtype=np.float64) * fill
         return cls(pixels, mask=mask)
 
+    def __str__(self):
+        return ('{} RGBImage. '
+                'Attached mask {:.1%} true'.format(
+                self._str_shape, self.n_dims, self.n_channels,
+                self.mask.proportion_true))
+
     def as_greyscale(self, mode='average', channel=None):
         r"""
         Returns a greyscale version of the RGB image.
@@ -930,6 +983,12 @@ class IntensityImage(Abstract2DImage):
         else:
             pixels = np.ones(shape, dtype=np.float64) * fill
         return cls(pixels, mask=mask)
+
+    def __str__(self):
+        return ('{} IntensityImage. '
+                'Attached mask {:.1%} true'.format(
+                self._str_shape, self.n_dims, self.n_channels,
+                self.mask.proportion_true))
 
 
 class VoxelImage(MaskedNDImage):
