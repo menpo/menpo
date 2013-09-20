@@ -330,13 +330,20 @@ class ImageViewer(object):
         The number of dimensions in the image
     pixels : (N, D) ndarray
         The pixels to render.
+    channel: int
+        A specific channel of pixels to render. If None, render all.
+    mask: (N, D) ndarray
+        A boolean mask to be applied to the image. All points outside the
+        mask are set to 0.
     """
     def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 channel=None):
+                 channel=None, mask=None):
         self.figure_id = figure_id
         self.new_figure = new_figure
         if channel is not None:
             pixels = pixels[..., channel]
+        if mask is not None:
+            pixels[~mask] = 0.
         self.pixels = pixels
         self.dimensions = dimensions
 

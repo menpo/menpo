@@ -335,7 +335,7 @@ class BooleanNDImage(AbstractNDImage):
         r"""
         The indices of pixels that are true.
 
-        :type: (M, N, ...) ndarray
+        :type: (n_dim, n_true_pixels) ndarray
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(self.pixels[..., 0])).T
@@ -345,10 +345,20 @@ class BooleanNDImage(AbstractNDImage):
         r"""
         The indices of pixels that are false.
 
-        :type: (M, N, ...) ndarray
+        :type: (n_dim, n_false_pixels) ndarray
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(~self.pixels[..., 0])).T
+
+    @property
+    def all_indices(self):
+        r"""
+        Indices into all pixels of the mask, as consistent with
+        true_indices & false_indices
+
+        :type: (n_dim, n_pixels) ndarray
+        """
+        return np.indices(self.shape).reshape([self.n_dims, -1]).T
 
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
@@ -660,6 +670,30 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return self
 
+    def _view(self, figure_id=None, new_figure=False, channel=None,
+              masked=True, **kwargs):
+        r"""
+        View the image using the default image viewer. Currently only
+        supports the rendering of 2D images.
+
+        Returns
+        -------
+        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
+            The viewer the image is being shown within
+
+        Raises
+        ------
+        DimensionalityError
+            If Image is not 2D
+        """
+        mask = None
+        if masked:
+            mask = self.mask.mask
+        pixels_to_view = self.pixels
+        return ImageViewer(figure_id, new_figure, self.n_dims,
+                           pixels_to_view, channel=channel,
+                           mask=mask).render(**kwargs)
+
     def mask_bounding_pixels(self, boundary=0):
         r"""
         Returns the pixels inside the bounding extent of the mask.
@@ -799,6 +833,51 @@ class Abstract2DImage(MaskedNDImage):
             PIL copy of image as ``np.uint8``
         """
         return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
+
+    def constrain_mask_to_landmarks(self, group=None, label=None):
+        r"""
+        Restricts this image's mask to be equal to the the convex hull
+        around the landmarks chosen.
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             label is passed, the convex hull of all landmarks is used.
+
+            Default: None
+        """
+        from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
+        from pybug.transform.piecewiseaffine import TriangleContainmentError
+
+        if len(self.landmarks) == 0:
+            raise ValueError("There are no attached landmarks to "
+                             "infer a mask from")
+        if group is None:
+            if len(self.landmarks) > 1:
+                raise ValueError("no group was provided and there are "
+                                 "multiple groups. Specify a group, "
+                                 "e.g. {}".format(self.landmarks.keys[0]))
+            else:
+                group = self.landmarks.keys()[0]
+
+        if label is None:
+            pc = self.landmarks[group].all_landmarks
+        else:
+            pc = self.landmarks[group].with_label(label).all_landmarks
+
+        # delaunay as no trilist provided
+        pwa = PiecewiseAffineTransform(pc.points, pc.points)
+        try:
+            pwa.apply(self.mask.all_indices)
+        except TriangleContainmentError, e:
+            self.mask.update_from_vector(~e.points_outside_source_domain)
 
 
 class RGBImage(Abstract2DImage):
