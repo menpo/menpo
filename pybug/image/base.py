@@ -817,6 +817,49 @@ class RGBImage(Abstract2DImage):
             pixels = np.ones(shape + (3,), dtype=np.float64) * fill
         return cls(pixels, mask=mask)
 
+    def as_greyscale(self, mode='average', channel=None):
+        r"""
+        Returns a greyscale version of the RGB image.
+
+        Parameters
+        ----------
+        mode : 'average' 'luminosity' 'channel'
+            'luminosity' -TODO luminosity docs
+            'average' - intensity is an equal average of all three channels
+            'channel' - a specific channel is used
+
+            Default 'luminosity'
+
+        channel: int, optional
+            The channel to be taken. Only used if mode is 'channel'.
+
+            Default: None
+
+        Returns
+        -------
+        greyscale_image: :class:`IntensityImage`
+            A copy of this image in greyscale.
+        """
+        if mode == 'luminosity':
+            # TODO insert the luminosity algorithm in here.
+            pixels = self.pixels[..., 0]
+        elif mode == 'average':
+            pixels = np.mean(self.pixels, axis=-1)
+        elif mode == 'channel':
+            if channel is None:
+                raise ValueError("for the 'channel' mode you have to provide"
+                                 " a channel index")
+            elif channel < 0  or channel > 2:
+                raise ValueError("channel can only be 0, 1, or 2 "
+                                 "in RGB images.")
+            pixels = self.pixels[..., channel]
+        mask = deepcopy(self.mask)
+        # TODO is this is a safe copy of the landmark dict?
+        landmark_dict = deepcopy(self.landmarks)
+        greyscale = IntensityImage(pixels, mask=mask)
+        greyscale.landmarks = landmark_dict
+        return greyscale
+
 
 class IntensityImage(Abstract2DImage):
     r"""
@@ -938,7 +981,7 @@ class AbstractSpatialImage(MaskedNDImage):
                 tcoords[:, 1] = 1.0 - tcoords[:, 1]
             return TexturedTriMesh(points, trilist, tcoords, texture)
 
-    def _view(self, figure_id=None, new_figure=False, type='image',
+    def _view(self, figure_id=None, new_figure=False, mode='image',
               channel=None, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
@@ -948,7 +991,7 @@ class AbstractSpatialImage(MaskedNDImage):
 
         Parameters
         ----------
-        type : {'image', 'mesh', 'height'}
+        mode : {'image', 'mesh', 'height'}
             The manner in which to render the depth map.
 
             ========== =========================
@@ -970,22 +1013,23 @@ class AbstractSpatialImage(MaskedNDImage):
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
         pixels /= np.nanmax(pixels)
-        if type is 'image':
+        if mode is 'image':
             return ImageViewer(figure_id, new_figure,
                                self.n_dims, pixels,
                                channel=channel).render(**kwargs)
-        if type is 'mesh':
+        if mode is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)
         else:
-            return self._view_extra(figure_id, new_figure, type, **kwargs)
+            return self._view_extra(figure_id, new_figure, mode, **kwargs)
 
-    def _view_extra(self, figure_id, new_figure, type, **kwargs):
-        if type is 'height':
+    def _view_extra(self, figure_id, new_figure, mode, **kwargs):
+        if mode is 'height':
             return DepthImageHeightViewer(
                 figure_id, new_figure, self.pixels[:, :, 2]).render(**kwargs)
         else:
-            raise ValueError('Supported type values are: image, mesh, height')
+            raise ValueError("Supported mode values are: 'image', 'mesh'"
+                             " and 'height'")
 
 
 class ShapeImage(AbstractSpatialImage):
@@ -1041,7 +1085,7 @@ class DepthImage(AbstractSpatialImage):
     def _generate_points(self):
         return np.hstack((self.mask.true_indices, self.masked_pixels))
 
-    def _view_extra(self, figure_id, new_figure, type, **kwargs):
+    def _view_extra(self, figure_id, new_figure, mode, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -1050,7 +1094,7 @@ class DepthImage(AbstractSpatialImage):
 
         Parameters
         ----------
-        type : {'image', 'mesh', 'height'}
+        mode : {'image', 'mesh', 'height'}
             The manner in which to render the depth map.
 
             ========== =========================
@@ -1068,8 +1112,9 @@ class DepthImage(AbstractSpatialImage):
         image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
             The viewer the image is being shown within
         """
-        if type is 'height':
+        if mode is 'height':
             return DepthImageHeightViewer(
                 figure_id, new_figure, self.pixels[:, :, 0]).render(**kwargs)
         else:
-            raise ValueError('Supported type values are: image, mesh, height')
+            raise ValueError("Supported mode values are: 'image', 'mesh'"
+                             " and 'height'")
