@@ -303,3 +303,50 @@ class MaskedNDImage(AbstractNDImage):
             grad_image.pixels[eroded_mask] = 0.0
 
         return grad_image
+
+    def constrain_mask_to_landmarks(self, group=None, label=None):
+        r"""
+        Restricts this image's mask to be equal to the the convex hull
+        around the landmarks chosen.
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             label is passed, the convex hull of all landmarks is used.
+
+            Default: None
+        """
+        from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
+        from pybug.transform.piecewiseaffine import TriangleContainmentError
+
+        if self.n_dims != 2:
+            raise ValueError("can only constrain mask on 2D images.")
+        if len(self.landmarks) == 0:
+            raise ValueError("There are no attached landmarks to "
+                             "infer a mask from")
+        if group is None:
+            if len(self.landmarks) > 1:
+                raise ValueError("no group was provided and there are "
+                                 "multiple groups. Specify a group, "
+                                 "e.g. {}".format(self.landmarks.keys()[0]))
+            else:
+                group = self.landmarks.keys()[0]
+
+        if label is None:
+            pc = self.landmarks[group].all_landmarks
+        else:
+            pc = self.landmarks[group].with_label(label).all_landmarks
+
+        # Delaunay as no trilist provided
+        pwa = PiecewiseAffineTransform(pc.points, pc.points)
+        try:
+            pwa.apply(self.mask.all_indices)
+        except TriangleContainmentError, e:
+            self.mask.update_from_vector(~e.points_outside_source_domain)
