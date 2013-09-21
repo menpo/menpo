@@ -262,3 +262,25 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         # TODO choose landmarks by def
         min_indices, max_indices = points.bounds(boundary=boundary)
         self.crop(min_indices, max_indices)
+
+    def crop_to_landmarks(self, group=None, label=None, boundary=0):
+        r"""
+        Crop this image to be bounded just around a set of landmarks
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             all landmarks in the group are used.
+
+            Default: None
+        """
+        pc = self._all_landmarks_with_group_and_label(group, label)
+        min_indices, max_indices = pc.bounds(boundary=boundary)
+        self.crop(min_indices, max_indices)

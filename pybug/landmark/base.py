@@ -1,5 +1,5 @@
-import numpy as np
 import abc
+import numpy as np
 from pybug.exceptions import DimensionalityError
 from pybug.visualize import LandmarkViewer
 from pybug.visualize.base import Viewable
@@ -34,7 +34,8 @@ class Landmarkable(object):
         ----------
         label : string
             The name of the set of landmarks
-        landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`)
+        landmark_dict : dictionary (string,
+                                   :class:`pybug.shape.pointcloud.Pointcloud`)
             Dictionary of labels and pointclouds representing all the landmarks
 
         Raises
@@ -48,8 +49,72 @@ class Landmarkable(object):
             self.landmarks[label] = LandmarkManager(
                 self, label, landmark_dict=landmark_dict)
 
-    def get_landmark_set(self, label):
-        return self.landmarks[label]
+    @property
+    def n_landmark_groups(self):
+        r"""
+        The number of landmark groups on this object.
+
+        :type: int
+        """
+        return len(self.landmarks)
+
+    @property
+    def _lms(self):
+        r"""
+        Convenient access to landmarks. If there is only one landmark group
+        this returns the manager on that sole group. If not, returns 0.
+
+        Note that this is just an interactive session convenience - never
+        rely on this method in functions
+
+        :type: :class:`LandmarkManager` or None
+        """
+        if self.n_landmark_groups == 1:
+            return self.landmarks.values()[0]
+        else:
+            return None
+
+    def _all_landmarks_with_group_and_label(self, group=None, label=None):
+        r"""
+        Returns the point cloud of the landmarks matching the group and
+        label arguments.
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             all landmarks in the group are used.
+
+            Default: None
+
+        Returns
+        -------
+        pc : :class:`pybug.shape.pointcloud.PointCloud`
+            The point cloud of the landmarks found.
+        """
+        if self.n_landmark_groups == 0:
+            raise ValueError("Cannot recover landmark pointcloud as there "
+                             "are no landmarks on this object")
+
+        if group is None:
+            if self.n_landmark_groups > 1:
+                raise ValueError("no group was provided and there are "
+                                 "multiple groups. Specify a group, "
+                                 "e.g. {}".format(self.landmarks.keys()[0]))
+            else:
+                group = self.landmarks.keys()[0]
+
+        if label is None:
+            pc = self.landmarks[group].all_landmarks
+        else:
+            pc = self.landmarks[group].with_label(label).all_landmarks
+        return pc
 
 
 class LandmarkManager(Viewable):
@@ -60,19 +125,20 @@ class LandmarkManager(Viewable):
 
     Parameters
     ----------
-    shape : :class:`pybug.landmarks.base.Landmarkable`
+    target : :class:`pybug.landmarks.base.Landmarkable`
         The parent object that owns these landmarks
     label : string
         Name of landmark set
-    landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`), optional
+    landmark_dict : dictionary (string,
+                         :class:`pybug.shape.pointcloud.Pointcloud`), optional
         Dictionary of labels and pointclouds representing all the landmarks
 
         Default: ``None``
     """
 
-    def __init__(self, shape, label, landmark_dict=None):
+    def __init__(self, target, label, landmark_dict=None):
         self.landmark_dict = {}
-        self.shape = shape
+        self.target = target
         self.label = label
         if landmark_dict:
             self.add_landmarks(landmark_dict)
@@ -91,7 +157,8 @@ class LandmarkManager(Viewable):
 
         Parameters
         ----------
-        landmark_dict : dictionary (string, :class:`pybug.shape.pointcloud.Pointcloud`), optional
+        landmark_dict : dictionary (string,
+                        :class:`pybug.shape.pointcloud.Pointcloud`), optional
             Dictionary of labels and pointclouds representing all the landmarks
 
         Raises
@@ -101,14 +168,14 @@ class LandmarkManager(Viewable):
             the parent shape.
         """
         for key, pointcloud in landmark_dict.iteritems():
-            if pointcloud.n_dims == self.shape.n_dims:
+            if pointcloud.n_dims == self.target.n_dims:
                 self.landmark_dict[key] = pointcloud
             else:
                 raise DimensionalityError("Dimensions of the landmarks must "
                                           "match the dimensions of the "
                                           "parent shape")
 
-    def update_landmarks(self, label, lmarks):
+    def update_landmarks(self, label, landmarks):
         r"""
         Replace a given label with a new subclass of
         :class:`pybug.shape.pointcloud.Pointcloud`. If the label does not
@@ -118,10 +185,32 @@ class LandmarkManager(Viewable):
         ----------
         :param label : string
             The semantic meaning of the landmarks being added eg. eye
-        :param lmarks : :class:`pybug.shape.pointcloud.Pointcloud`
+        :param landmarks : :class:`pybug.shape.pointcloud.Pointcloud`
             The landmark pointcloud.
         """
-        self.landmark_dict[label] = lmarks
+        self.landmark_dict[label] = landmarks
+
+    @property
+    def target(self):
+        r"""
+        The instance of :class:`Landmarkable` that this Landmark manager
+        belongs to.
+
+        :type : :class:`Landmarkable`
+        """
+        return self._target
+
+    @target.setter
+    def target(self, target):
+        r"""
+        Set the ownership of a landmark manager to an instance of
+        :class:`Landmarkable`.
+        """
+        if not isinstance(target, Landmarkable):
+            raise ValueError("Trying to set a target that is not "
+                             "Landmarkable")
+        else:
+            self._target = target
 
     def with_label(self, label):
         """
@@ -138,7 +227,7 @@ class LandmarkManager(Viewable):
         landmark_manager : :class:`LandmarkManager`
             New landmark manager containing only the given label.
         """
-        return LandmarkManager(self.shape, self.label,
+        return LandmarkManager(self.target, self.label,
                                {label: self.landmark_dict[label]})
 
     def without_label(self, label):
@@ -160,7 +249,7 @@ class LandmarkManager(Viewable):
         """
         new_dict = dict(self.landmark_dict)
         del new_dict[label]
-        return LandmarkManager(self.shape, self.label, new_dict)
+        return LandmarkManager(self.target, self.label, new_dict)
 
     def _view(self, figure_id=None, new_figure=False, include_labels=True,
               **kwargs):
@@ -176,13 +265,13 @@ class LandmarkManager(Viewable):
         kwargs : dict, optional
             Passed through to the viewer.
         """
-        shape_viewer = self.shape.view(figure_id=figure_id,
-                                       new_figure=new_figure, **kwargs)
-        lmark_viewer = LandmarkViewer(shape_viewer.figure_id, False,
-                                      self.label, self.landmark_dict,
-                                      self.shape)
+        target_viewer = self.target.view(figure_id=figure_id,
+                                         new_figure=new_figure, **kwargs)
+        landmark_viewer = LandmarkViewer(target_viewer.figure_id, False,
+                                         self.label, self.landmark_dict,
+                                         self.target)
 
-        return lmark_viewer.render(include_labels=include_labels, **kwargs)
+        return landmark_viewer.render(include_labels=include_labels, **kwargs)
 
     @property
     def labels(self):

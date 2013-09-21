@@ -309,21 +309,8 @@ class MaskedNDImage(AbstractNDImage):
 
         if self.n_dims != 2:
             raise ValueError("can only constrain mask on 2D images.")
-        if len(self.landmarks) == 0:
-            raise ValueError("There are no attached landmarks to "
-                             "infer a mask from")
-        if group is None:
-            if len(self.landmarks) > 1:
-                raise ValueError("no group was provided and there are "
-                                 "multiple groups. Specify a group, "
-                                 "e.g. {}".format(self.landmarks.keys()[0]))
-            else:
-                group = self.landmarks.keys()[0]
 
-        if label is None:
-            pc = self.landmarks[group].all_landmarks
-        else:
-            pc = self.landmarks[group].with_label(label).all_landmarks
+        pc = self._all_landmarks_with_group_and_label(group, label)
 
         # Delaunay as no trilist provided
         pwa = PiecewiseAffineTransform(pc.points, pc.points)
