@@ -6,10 +6,38 @@ from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
 class AbstractSpatialImage(MaskedNDImage):
     r"""
     A 2D image that represents spatial data in some fashion in it's channel
-    data. As a result, it contains a :class:'pybug.shape.mesh.base.TriMesh`
+    data. As a result, it contains a :class:`pybug.shape.mesh.base.TriMesh`,
+    or, if a texture is provided, a
+    :class:`pybug.shape.mesh.base.TexturedTriMesh`.
+
+    Parameters
+    -----------
+    image_data: (M, N, ..., C) ndarray
+        Array representing the spatial image pixels, with the last axis being
+        channels.
+    mask: (M, N, ..., L) boolean ndarray or :class:`BooleanNDImage`, optional
+        A suitable mask for the spatial data
+
+        Default: All true mask
+    trilist: (n_tris, 3), ndarray, optional
+        Triangle list for the trimesh. If None, the trilist is generation
+        from all True points using Delaunay triangulation.
+
+        Default: None
+    tcoords: (n_true, 2), ndarray, optional
+        Texture coordinates relating each True value of the mask to the
+        texture space
+
+        Default: If texture is provided, tcoords are generated on the
+        assumption that the texture and the spatial data are in
+        correspondence. If no texture, None.
+    texture: :class:`Abstract2DImage` instance, optional
+        A texture to be associated with the spatial data
+
+        Default: None (no texture)
     """
-    def __init__(self, image_data, mask=None, texture=None,
-                 tcoords=None, trilist=None):
+    def __init__(self, image_data, mask=None, trilist=None,
+                 tcoords=None, texture=None):
         super(AbstractSpatialImage, self).__init__(image_data, mask=mask)
         if self.n_dims != 2:
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
@@ -22,6 +50,30 @@ class AbstractSpatialImage(MaskedNDImage):
         raise NotImplementedError()
 
     def _create_mesh_from_shape(self, trilist, tcoords, texture):
+        r"""
+        Creates a mesh from the spatial information.
+
+        Parameters
+        ----------
+        trilist: (n_tris, 3), ndarray, optional
+            Triangle list for the trimesh. If None, the trilist is generation
+            from all True points using Delaunay triangulation.
+
+            Default: None
+
+        tcoords: (n_true, 2), ndarray, optional
+            Texture coordinates relating each True value of the mask to the
+            texture space
+
+            Default: If texture is provided, tcoords are generated on the
+            assumption that the texture and the spatial data are in
+            correspondence. If no texture, None.
+
+        texture: :class:`Abstract2DImage` instance, optional
+            A texture to be associated with the spatial data
+
+            Default: None (no texture)
+        """
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
         from scipy.spatial import Delaunay
         points = self._generate_points()
@@ -109,12 +161,37 @@ class ShapeImage(AbstractSpatialImage):
 
     Has to be a 2D image, and has to have exactly 3 channels for (X,Y,
     Z) spatial values.
-    """
 
-    def __init__(self, image_data, mask=None, texture=None, tcoords=None,
-                 trilist=None):
-        super(ShapeImage, self).__init__(image_data, mask, texture, tcoords,
-                                         trilist)
+    Parameters
+    -----------
+    image_data: (M, N, 3) ndarray
+        Array representing the spatial image pixels, with the last axis being
+        the spatial data per pixel.
+    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+        A suitable mask for the spatial data
+
+        Default: All true mask
+    trilist: (n_tris, 3), ndarray, optional
+        Triangle list for the trimesh. If None, the trilist is generation
+        from all True points using Delaunay triangulation.
+
+        Default: None
+    tcoords: (n_true, 2), ndarray, optional
+        Texture coordinates relating each True value of the mask to the
+        texture space
+
+        Default: If texture is provided, tcoords are generated on the
+        assumption that the texture and the spatial data are in
+        correspondence. If no texture, None.
+    texture: :class:`Abstract2DImage` instance, optional
+        A texture to be associated with the spatial data
+
+        Default: None (no texture)
+    """
+    def __init__(self, image_data, mask=None, trilist=None,
+                 tcoords=None, texture=None):
+        super(ShapeImage, self).__init__(image_data, mask, trilist, tcoords,
+                                         texture)
         if self.n_channels != 3:
             raise ValueError("Trying to build a ShapeImage with {} channels "
                              "- has to have exactly 3 (for X, Y, "
@@ -134,12 +211,38 @@ class DepthImage(AbstractSpatialImage):
 
     Will have exactly 1 channel. The numpy array used to build the
     DepthImage is of shape (M, N) - it does not include the channel axis.
+
+    Parameters
+    -----------
+    image_data: (M, N) ndarray
+        Array representing the spatial image pixels. There is no channel
+        axis - each pixel position stores a single depth value.
+    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+        A suitable mask for the spatial data
+
+        Default: All true mask
+    trilist: (n_tris, 3), ndarray, optional
+        Triangle list for the trimesh. If None, the trilist is generation
+        from all True points using Delaunay triangulation.
+
+        Default: None
+    tcoords: (n_true, 2), ndarray, optional
+        Texture coordinates relating each True value of the mask to the
+        texture space
+
+        Default: If texture is provided, tcoords are generated on the
+        assumption that the texture and the spatial data are in
+        correspondence. If no texture, None.
+    texture: :class:`Abstract2DImage` instance, optional
+        A texture to be associated with the spatial data
+
+        Default: None (no texture)
     """
 
-    def __init__(self, image_data, mask=None, texture=None, tcoords=None,
-                 trilist=None):
-        super(DepthImage, self).__init__(image_data[..., None], mask,
-                                         texture, tcoords, trilist)
+    def __init__(self, image_data, mask=None, trilist=None,
+                 tcoords=None, texture=None):
+        super(DepthImage, self).__init__(image_data, mask, trilist, tcoords,
+                                         texture)
         if self.n_channels != 1:
             raise ValueError("Trying to build a DepthImage with {} channels "
                              "- has to have exactly 1 (for Z values)"

@@ -114,11 +114,11 @@ class PointCloud(Shape):
         Returns
         --------
         min_b : (D,) ndarray
-            The maximum extent of the :class:`PointCloud` and boundary along
+            The minimum extent of the :class:`PointCloud` and boundary along
             each dimension
 
         max_b : (D,) ndarray
-            The minimum extent of the :class:`PointCloud` and boundary along
+            The maximum extent of the :class:`PointCloud` and boundary along
             each dimension
         """
         min_b = np.min(self.points, axis=0) - boundary

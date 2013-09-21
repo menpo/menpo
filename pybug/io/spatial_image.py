@@ -227,9 +227,9 @@ class SpatialImageImporter(Importer):
         else:
             texture = None
 
-        self.image = ShapeImage(self.shape_image,
+        self.image = ShapeImage(self.shape_image, mask=self.mask,
                                 trilist=self.trilist, tcoords=self.tcoords,
-                                texture=texture, mask=self.mask)
+                                texture=texture)
 
         if self.image_landmark_importer is not None:
             label, lmark_dict = self.image_landmark_importer.build(

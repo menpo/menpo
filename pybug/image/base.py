@@ -6,6 +6,31 @@ from pybug.transform.affine import Translation
 from pybug.visualize.base import Viewable, ImageViewer
 
 
+class ImageBoundaryError(Exception):
+    r"""
+    Exception that is thrown when an attempt is made to crop an image beyond
+    the edge of it's boundary.
+
+    requested_min : (d,) ndarray
+        The per-dimension minimum index requested for the crop
+    requested_max : (d,) ndarray
+        The per-dimension maximum index requested for the crop
+    snapped_min : (d,) ndarray
+        The per-dimension minimum index that could be used if the crop was
+        constrained to the image boundaries.
+    requested_max : (d,) ndarray
+        The per-dimension maximum index that could be used if the crop was
+        constrained to the image boundaries.
+    """
+    def __init__(self, requested_min, requested_max, snapped_min,
+                 snapped_max):
+        super(ImageBoundaryError, self).__init__()
+        self.requested_min = requested_min
+        self.requested_max = requested_max
+        self.snapped_min = snapped_min
+        self.snapped_max = snapped_max
+
+
 class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
     r"""
     An abstract representation of an image. All images can be
@@ -197,7 +222,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channel=channel).render(**kwargs)
 
-    def crop(self, min_indices, max_indices):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -207,13 +233,32 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         -----------
         min_indices: (n_dims, ) ndarray
             The minimum index over each dimension
+
         max_indices: (n_dims, ) ndarray
             The maximum index over each dimension
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
 
         Returns
         -------
         cropped_image : :class:`type(self)`
             This image, but cropped.
+
+        Raises
+        ------
+        ValueError
+            min_indices and max_indices both have to be of length n_dims.
+            All max_indices must be greater than min_indices.
+
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+
         """
         min_indices = np.floor(min_indices)
         max_indices = np.ceil(max_indices)
@@ -224,10 +269,18 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         elif not np.all(max_indices > min_indices):
             raise ValueError("All max indices must be greater that the min "
                              "indices")
+        min_bounded = self.constrain_points_to_bounds(min_indices)
+        max_bounded = self.constrain_points_to_bounds(max_indices)
+        if not constrain_to_boundary and not (
+                np.all(min_bounded == min_indices) or
+                np.all(max_bounded == max_indices)):
+            # points have been constrained and the user didn't want this -
+            raise ImageBoundaryError(min_indices, max_indices,
+                                     min_bounded, max_bounded)
         # noinspection PyArgumentList
         slices = [slice(min_i, max_i)
                   for min_i, max_i in
-                  zip(list(min_indices), list(max_indices))]
+                  zip(list(min_bounded), list(max_bounded))]
         self.pixels = self.pixels[slices]
         lm_translation = Translation(-min_indices)
         # update all our landmarks
@@ -236,29 +289,50 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                 lm_translation.apply(landmarks)
         return self
 
-    def cropped_copy(self, min_indices, max_indices):
+    def cropped_copy(self, min_indices, max_indices,
+                     constrain_to_boundary=False):
         r"""
         Return a cropped copy of this image using the given minimum and
-        maximum indices.
-        Landmarks are correctly adjusted so they maintain their position
-        relative to the newly cropped image.
+        maximum indices. Landmarks are correctly adjusted so they maintain
+        their position relative to the newly cropped image.
 
         Parameters
         -----------
         min_indices: (n_dims, ) ndarray
             The minimum index over each dimension
+
         max_indices: (n_dims, ) ndarray
             The maximum index over each dimension
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
 
         Returns
         -------
         cropped_image : :class:`type(self)`
             A new instance of self, but cropped.
+
+
+        Raises
+        ------
+        ValueError
+            min_indices and max_indices both have to be of length n_dims.
+            All max_indices must be greater than min_indices.
+
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
         """
         cropped_image = deepcopy(self)
-        return cropped_image.crop(min_indices, max_indices)
+        return cropped_image.crop(min_indices, max_indices,
+                                  constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label=None, boundary=0):
+    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+                          constrain_to_boundary=True):
         r"""
         Crop this image to be bounded just around a set of landmarks
 
@@ -275,8 +349,53 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
              all landmarks in the group are used.
 
             Default: None
+
+        boundary: int, Optional
+            An extra padding to be added all around the landmarks bounds.
+
+            Default: 0
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
         """
         pc = self._all_landmarks_with_group_and_label(group, label)
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        self.crop(min_indices, max_indices)
+        self.crop(min_indices, max_indices,
+                  constrain_to_boundary=constrain_to_boundary)
 
+    def constrain_points_to_bounds(self, points):
+        r"""
+        Constrains the points provided to be within the bounds of this
+        image.
+
+        Parameters
+        ----------
+
+        points: (d,) ndarray
+            points to be snapped to the image boundaries
+
+        Returns
+        -------
+
+        bounded_points: (d,) ndarray
+            points snapped to not stray outside the image edges
+
+        """
+        bounded_points = points.copy()
+        # check we don't stray under any edges
+        bounded_points[bounded_points < 0] = 0
+        # check we don't stray over any edges
+        shape = np.array(self.shape)
+        over_image = (shape - bounded_points) < 0
+        bounded_points[over_image] = shape[over_image]
+        return bounded_points

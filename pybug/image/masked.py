@@ -9,10 +9,10 @@ from pybug.visualize.base import ImageViewer
 
 class MaskedNDImage(AbstractNDImage):
     r"""
-    Represents an n-dimensional image with a number of channels, of size
-    ``(M, N, ..., C)`` which has a mask. Images can be masked in order to
-    identify a region of interest. All images implicitly have a mask that is
-    defined as the the entire image. The mask is an instance of
+    Represents an n-dimensional k-channel image, which has a mask.
+    Images can be masked in order to identify a region of interest. All
+    images implicitly have a mask that is defined as the the entire image.
+    The mask is an instance of
     :class:`BooleanNDImage`.
 
     Parameters
@@ -28,7 +28,7 @@ class MaskedNDImage(AbstractNDImage):
         Default: :class:`BooleanNDImage` covering the whole image
 
     Raises
-    -------
+    ------
     ValueError
         Mask is not the same shape as the image
     """
@@ -51,6 +51,7 @@ class MaskedNDImage(AbstractNDImage):
             # no mask provided - make the default.
             self.mask = BooleanNDImage.blank(self.shape, fill=True)
 
+    # noinspection PyMethodOverriding
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
         r"""
@@ -70,17 +71,28 @@ class MaskedNDImage(AbstractNDImage):
         ----------
         shape : tuple or list
             The shape of the image
+        n_channels: int, optional
+            The number of channels to create the image with
+
+            Default: 1
         fill : int, optional
             The value to fill all pixels with
 
             Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
         mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
-            An optional mask that can be applied.
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
 
         Returns
         -------
-        blank_image : :class:`Image`
-            A new Image of the requested size.
+        blank_image : :class:`MaskedNDImage`
+            A new masked image of the requested size.
         """
         if fill == 0:
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
@@ -116,12 +128,12 @@ class MaskedNDImage(AbstractNDImage):
         ----------
         keep_channels : bool, optional
 
-            ========== =================
+            ========== ====================================
             Value      Return shape
-            ========== =================
+            ========== ====================================
             ``True``   (``mask.n_true``,``n_channels``)
             ``False``  (``mask.n_true`` x ``n_channels``,)
-            ========== =================
+            ========== ====================================
 
             Default: ``False``
 
@@ -135,7 +147,7 @@ class MaskedNDImage(AbstractNDImage):
         else:
             return self.masked_pixels.flatten()
 
-    def from_vector(self, flattened, n_channels=-1):
+    def from_vector(self, flattened, n_channels=None):
         r"""
         Takes a flattened vector and returns a new image formed by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -154,7 +166,7 @@ class MaskedNDImage(AbstractNDImage):
             shape as this image, but with a possibly different number of
             channels
 
-            Default: -1 (use the existing image channels)
+            Default: Use the existing image channels
 
         Returns
         -------
@@ -164,14 +176,14 @@ class MaskedNDImage(AbstractNDImage):
         """
         # This is useful for when we want to add an extra channel to an image
         # but maintain the shape. For example, when calculating the gradient
-        n_channels = self.n_channels if n_channels == -1 else n_channels
+        n_channels = self.n_channels if n_channels is None else n_channels
         # Creates zeros of size (M x N x ... x n_channels)
         image_data = np.zeros(self.shape + (n_channels,))
         pixels_per_channel = flattened.reshape((-1, n_channels))
         image_data[self.mask.mask] = pixels_per_channel
         # call the constructor accounting for the fact that some image
         # classes expect a channel axis and some don't.
-        return self.__class__._init_with_channel(image_data, mask=self.mask)
+        return type(self)._init_with_channel(image_data, mask=self.mask)
 
     def update_from_vector(self, flattened):
         r"""
@@ -190,8 +202,6 @@ class MaskedNDImage(AbstractNDImage):
             This image after being updated
         """
         self.masked_pixels = flattened.reshape((-1, self.n_channels))
-        # call the constructor accounting for the fact that some image
-        # classes expect a channel axis and some don't.
         return self
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
@@ -218,27 +228,84 @@ class MaskedNDImage(AbstractNDImage):
                            pixels_to_view, channel=channel,
                            mask=mask).render(**kwargs)
 
-    def crop(self, min_indices, max_indices):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=True):
         r"""
-        Crops this image using the given slice objects. Expects
-        ``len(args) == self.n_dims``. Landmarks are correctly adjusted so they
-        maintain their position relative to the newly cropped image.
+        Crops this image using the given minimum and maximum indices.
+        Landmarks are correctly adjusted so they maintain their position
+        relative to the newly cropped image.
 
         Parameters
         -----------
-        slice_args: The slices to take over each axis
-        slice_args: List of slice objects
+        min_indices: (n_dims, ) ndarray
+            The minimum index over each dimension
+
+        max_indices: (n_dims, ) ndarray
+            The maximum index over each dimension
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, a ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
 
         Returns
         -------
-        cropped_image : :class:`self`
+        cropped_image : :class:`type(self)`
             This image, but cropped.
+
+        Raises
+        ------
+        ValueError
+            min_indices and max_indices both have to be of length n_dims.
+            All max_indices must be greater than min_indices.
+
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+
         """
         # crop our image
-        super(MaskedNDImage, self).crop(min_indices, max_indices)
+        super(MaskedNDImage, self).crop(
+            min_indices, max_indices,
+            constrain_to_boundary=constrain_to_boundary)
         # crop our mask
-        self.mask.crop(min_indices, max_indices)
+        self.mask.crop(min_indices, max_indices,
+                       constrain_to_boundary=constrain_to_boundary)
         return self
+
+    def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
+        r"""
+        Crop this image to be bounded just the ``True`` values of it's mask.
+
+        Parameters
+        ----------
+
+        boundary: int, Optional
+            An extra padding to be added all around the true mask region.
+
+            Default: 0
+
+        constrain_to_boundary: boolean, optional
+            If ``True`` the crop will be snapped to not go beyond this images
+            boundary. If ``False``, a ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image. Note that is
+            only possible if boundary != 0.
+
+            Default: ``True``
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if constrain_to_boundary is ``False``, and an attempt is
+            made to crop the image in a way that violates the image bounds.
+        """
+        min_indices, max_indices = self.mask.bounds_true(
+            boundary=boundary, constrain_to_boundary=False)
+        # no point doing the bounds check twice - let the crop do it only.
+        self.crop(min_indices, max_indices,
+                  constrain_to_boundary=constrain_to_boundary)
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
@@ -249,8 +316,10 @@ class MaskedNDImage(AbstractNDImage):
         Parameters
         ----------
         nullify_values_at_mask_boundaries : bool, optional
-            If ``True``, the gradient is taken over the entire image and not
-            just the masked area.
+            If ``True`` a one pixel boundary is set to 0 around the edge of
+            the ``True`` mask region. This is useful in situations where
+            there is absent data in the image which will cause erroneous
+            gradient settings.
 
         Default: False
 
@@ -275,11 +344,11 @@ class MaskedNDImage(AbstractNDImage):
 
         if nullify_values_at_mask_boundaries:
             # Erode the edge of the mask in by one pixel
-            eroded_mask = binary_erosion(self.mask.pixels, iterations=1)
+            eroded_mask = binary_erosion(self.mask.mask, iterations=1)
 
             # replace the eroded mask with the diff between the two
-            # masks
-            np.logical_and(~eroded_mask, self.mask.pixels, eroded_mask)
+            # masks. This is only true in the region we want to nullify.
+            np.logical_and(~eroded_mask, self.mask. mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
         grad_image.landmarks = deepcopy(self.landmarks)
