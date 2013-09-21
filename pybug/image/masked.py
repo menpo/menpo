@@ -101,6 +101,22 @@ class MaskedNDImage(AbstractNDImage):
         return cls(pixels, mask=mask)
 
     @property
+    def n_true_pixels(self):
+        return self.mask.n_true
+
+    @property
+    def n_false_pixels(self):
+        return self.mask.n_false
+
+    @property
+    def n_true_elements(self):
+        return self.n_true_pixels * self.n_channels
+
+    @property
+    def n_false_elements(self):
+        return self.n_false_pixels * self.n_channels
+
+    @property
     def masked_pixels(self):
         r"""
         Get the pixels covered by the ``True`` values in the mask.
