@@ -20,6 +20,31 @@ class Landmarkable(object):
     def __init__(self):
         self.landmarks = {}
 
+    @property
+    def n_landmark_groups(self):
+        r"""
+        The number of landmark groups on this object.
+
+        :type: int
+        """
+        return len(self.landmarks)
+
+    @property
+    def _lms(self):
+        r"""
+        Convenient access to landmarks. If there is only one landmark group
+        this returns the manager on that sole group. If not, returns 0.
+
+        Note that this is just an interactive session convenience - never
+        rely on this method in functions
+
+        :type: :class:`LandmarkManager` or None
+        """
+        if self.n_landmark_groups == 1:
+            return self.landmarks.values()[0]
+        else:
+            return None
+
     def add_landmark_set(self, label, landmark_dict):
         r"""
         Add a new set of landmarks to the object. These landmarks should
@@ -48,31 +73,6 @@ class Landmarkable(object):
         else:
             self.landmarks[label] = LandmarkManager(
                 self, label, landmark_dict=landmark_dict)
-
-    @property
-    def n_landmark_groups(self):
-        r"""
-        The number of landmark groups on this object.
-
-        :type: int
-        """
-        return len(self.landmarks)
-
-    @property
-    def _lms(self):
-        r"""
-        Convenient access to landmarks. If there is only one landmark group
-        this returns the manager on that sole group. If not, returns 0.
-
-        Note that this is just an interactive session convenience - never
-        rely on this method in functions
-
-        :type: :class:`LandmarkManager` or None
-        """
-        if self.n_landmark_groups == 1:
-            return self.landmarks.values()[0]
-        else:
-            return None
 
     def _all_landmarks_with_group_and_label(self, group=None, label=None):
         r"""
@@ -116,6 +116,14 @@ class Landmarkable(object):
             pc = self.landmarks[group].with_label(label).all_landmarks
         return pc
 
+    def _enforce_ownership_of_all_landmarks(self):
+        r"""
+        Loops through all landmark groups on self and ensures each has a
+        target of self.
+        """
+        for manager in self.landmarks.iteritems():
+            manager.target = self
+
 
 class LandmarkManager(Viewable):
     """
@@ -148,6 +156,84 @@ class LandmarkManager(Viewable):
         Iterate over the internal landmark dictionary
         """
         return iter(self.landmark_dict.iteritems())
+
+    @property
+    def target(self):
+        r"""
+        The instance of :class:`Landmarkable` that this Landmark manager
+        belongs to.
+
+        :type : :class:`Landmarkable`
+        """
+        return self._target
+
+    @target.setter
+    def target(self, target):
+        r"""
+        Set the ownership of a landmark manager to an instance of
+        :class:`Landmarkable`.
+        """
+        if not isinstance(target, Landmarkable):
+            raise ValueError("Trying to set a target that is not "
+                             "Landmarkable")
+        else:
+            self._target = target
+
+    @property
+    def n_labels(self):
+        """
+        Total number of labels.
+
+        :type: int
+        """
+        return len(self.landmark_dict)
+
+    @property
+    def n_landmarks(self):
+        """
+        Total number of landmarks (across ALL keys).
+
+        Iterate over each PointCloud and sum the number of points. Therefore,
+        this is the same as the number of points of the all_landmarks property.
+
+        :type: int
+        """
+        return sum([x.n_points for x in self.landmark_dict.values()])
+
+    @property
+    def labels(self):
+        """
+        All the labels for the landmark set.
+
+        :type: List of strings
+        """
+        return self.landmark_dict.keys()
+
+    @property
+    def landmarks(self):
+        """
+        All the landmarks for the set.
+
+        :type: List of :class:`pybug.shape.pointcloud.Pointcloud`
+        """
+        return self.landmark_dict.values()
+
+    @property
+    def all_landmarks(self):
+        """
+        A new pointcloud that contains all the points within the landmark
+        set.
+
+        Iterates over the dictionary and creates a single PointCloud using
+        all the points.
+
+        :type: :class:`pybug.shape.pointcloud.Pointcloud`
+        """
+        from pybug.shape import PointCloud
+
+        all_points = [x.points for x in self.landmarks]
+        all_points = np.concatenate(all_points, axis=0)
+        return PointCloud(all_points)
 
     def add_landmarks(self, landmark_dict):
         r"""
@@ -189,28 +275,6 @@ class LandmarkManager(Viewable):
             The landmark pointcloud.
         """
         self.landmark_dict[label] = landmarks
-
-    @property
-    def target(self):
-        r"""
-        The instance of :class:`Landmarkable` that this Landmark manager
-        belongs to.
-
-        :type : :class:`Landmarkable`
-        """
-        return self._target
-
-    @target.setter
-    def target(self, target):
-        r"""
-        Set the ownership of a landmark manager to an instance of
-        :class:`Landmarkable`.
-        """
-        if not isinstance(target, Landmarkable):
-            raise ValueError("Trying to set a target that is not "
-                             "Landmarkable")
-        else:
-            self._target = target
 
     def with_label(self, label):
         """
@@ -272,59 +336,3 @@ class LandmarkManager(Viewable):
                                          self.target)
 
         return landmark_viewer.render(include_labels=include_labels, **kwargs)
-
-    @property
-    def labels(self):
-        """
-        All the labels for the landmark set.
-
-        :type: List of strings
-        """
-        return self.landmark_dict.keys()
-
-    @property
-    def landmarks(self):
-        """
-        All the landmarks for the set.
-
-        :type: List of :class:`pybug.shape.pointcloud.Pointcloud`
-        """
-        return self.landmark_dict.values()
-
-    @property
-    def all_landmarks(self):
-        """
-        A new pointcloud that contains all the points within the landmark
-        set.
-
-        Iterates over the dictionary and creates a single PointCloud using
-        all the points.
-
-        :type: :class:`pybug.shape.pointcloud.Pointcloud`
-        """
-        from pybug.shape import PointCloud
-
-        all_points = [x.points for x in self.landmarks]
-        all_points = np.concatenate(all_points, axis=0)
-        return PointCloud(all_points)
-
-    @property
-    def n_labels(self):
-        """
-        Total number of labels.
-
-        :type: int
-        """
-        return len(self.landmark_dict)
-
-    @property
-    def n_landmarks(self):
-        """
-        Total number of landmarks (across ALL keys).
-
-        Iterate over each PointCloud and sum the number of points. Therefore,
-        this is the same as the number of points of the all_landmarks property.
-
-        :type: int
-        """
-        return sum([x.n_points for x in self.landmark_dict.values()])

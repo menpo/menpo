@@ -258,11 +258,6 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         cropped_image = deepcopy(self)
         return cropped_image.crop(min_indices, max_indices)
 
-    def crop_to_points(self, points, boundary=0):
-        # TODO choose landmarks by def
-        min_indices, max_indices = points.bounds(boundary=boundary)
-        self.crop(min_indices, max_indices)
-
     def crop_to_landmarks(self, group=None, label=None, boundary=0):
         r"""
         Crop this image to be bounded just around a set of landmarks
@@ -284,3 +279,4 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         pc = self._all_landmarks_with_group_and_label(group, label)
         min_indices, max_indices = pc.bounds(boundary=boundary)
         self.crop(min_indices, max_indices)
+

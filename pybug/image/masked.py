@@ -282,7 +282,8 @@ class MaskedNDImage(AbstractNDImage):
             np.logical_and(~eroded_mask, self.mask.pixels, eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
-        # TODO Landmarks should be copied over here
+        grad_image.landmarks = deepcopy(self.landmarks)
+        grad_image._enforce_ownership_of_all_landmarks()
         return grad_image
 
     def constrain_mask_to_landmarks(self, group=None, label=None):
