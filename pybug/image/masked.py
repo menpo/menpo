@@ -288,7 +288,7 @@ class MaskedNDImage(AbstractNDImage):
 
     def constrain_mask_to_landmarks(self, group=None, label=None):
         r"""
-        Restricts this image's mask to be equal to the the convex hull
+        Restricts this image's mask to be equal to the convex hull
         around the landmarks chosen.
 
         Parameters
