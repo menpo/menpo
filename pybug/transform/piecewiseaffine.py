@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from scipy.spatial import Delaunay
 from pybug.exceptions import DimensionalityError
 from pybug.shape import TriMesh
 from pybug.transform import AffineTransform, Transform
@@ -36,8 +37,10 @@ class AbstractPWATransform(Transform):
         The source points.
     target : (N, 2) ndarray
         The target points.
-    trilist : (M, 3) ndarray
+    trilist : (M, 3) ndarray, optional
         A common triangulation for the ``source`` and ``target``.
+
+        Default: Delaunay triangulation of the source
 
     Raises
     ------
@@ -51,7 +54,9 @@ class AbstractPWATransform(Transform):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, source, target, trilist):
+    def __init__(self, source, target, trilist=None):
+        if trilist is None:
+            trilist = Delaunay(source).simplices
         self.source = TriMesh(source, trilist)
         self.target = TriMesh(target, trilist)
         self.n_dims = self.source.n_dims
@@ -243,8 +248,10 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         The source points.
     target : (N, 2) ndarray
         The target points.
-    trilist : (M, 3) ndarray
+    trilist : (M, 3) ndarray, optional
         A common triangulation for the ``source`` and ``target``.
+
+        Default: Delaunay triangulation of the source
 
     Raises
     ------
@@ -254,7 +261,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         Source and target must be 2D.
     """
 
-    def __init__(self, source, target, trilist):
+    def __init__(self, source, target, trilist=None):
         super(DiscreteAffinePWATransform, self).__init__(
             source, target, trilist)
         self._produce_affine_transforms_per_tri()
@@ -464,9 +471,10 @@ class CachedPWATransform(AbstractPWATransform):
         The source points.
     target : (N, 2) ndarray
         The target points.
-    trilist : (M, 3) ndarray
+    trilist : (M, 3) ndarray, optional
         A common triangulation for the ``source`` and ``target``.
 
+        Default: Delaunay triangulation of the source
     Raises
     ------
     DimensionalityError
@@ -475,17 +483,18 @@ class CachedPWATransform(AbstractPWATransform):
         Source and target must be 2D.
     """
 
-    def __init__(self, source, target, trilist):
+    def __init__(self, source, target, trilist=None):
         super(CachedPWATransform, self).__init__(source, target,
                                                  trilist)
-        t = target[trilist]
+        t = target[self.trilist]
         # get vectors ij ik for the target
         self.tij, self.tik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
         # target i'th vertex positions
         self.ti = t[:, 0]
         # make sure the source and target satisfy the c requirements
         source_c = np.require(source, dtype=np.float64, requirements=['C'])
-        trilist_c = np.require(trilist, dtype=np.uint32, requirements=['C'])
+        trilist_c = np.require(self.trilist, dtype=np.uint32,
+                               requirements=['C'])
         # build the cython wrapped C object and store it locally
         self._fastpwa = CLookupPWA(source_c, trilist_c)
 
