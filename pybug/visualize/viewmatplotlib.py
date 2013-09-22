@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import numpy as np
 import abc
 from pybug.visualize.base import Renderer
@@ -35,6 +33,7 @@ class MatplotlibRenderer(Renderer):
         figure : Matplotlib figure object
             The figure we will be rendering on.
         """
+        import matplotlib.pyplot as plt
         if self.new_figure or self.figure_id is not None:
             self.figure = plt.figure(self.figure_id)
         else:
@@ -52,6 +51,8 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
 
     def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
         if len(self.image.shape) == 2 or self.image.shape[2] == 1:
             im = self.image
             im = im if len(im.shape) == 2 else im[..., 0]
@@ -71,6 +72,7 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
 
     def _render(self, image_view=False, cmap=None,
                       colour_array='b', label=None, **kwargs):
+        import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
         plt.scatter(points[:, 0], points[:, 1], cmap=cmap,
@@ -86,6 +88,7 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
         self.trilist = trilist
 
     def _render(self, image_view=False, label=None, **kwargs):
+        import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
         plt.triplot(points[:, 0], points[:, 1], self.trilist,
@@ -102,6 +105,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.landmark_dict = landmark_dict
 
     def _plot_landmarks(self, include_labels, image_view, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
         colours = kwargs.get('colours',
                              np.random.random([3, len(self.landmark_dict)]))
         halign = kwargs.get('halign', 'center')
