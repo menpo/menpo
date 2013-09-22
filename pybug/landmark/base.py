@@ -121,7 +121,7 @@ class Landmarkable(object):
         Loops through all landmark groups on self and ensures each has a
         target of self.
         """
-        for manager in self.landmarks.iteritems():
+        for manager in self.landmarks.itervalues():
             manager.target = self
 
 

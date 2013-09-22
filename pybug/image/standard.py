@@ -125,10 +125,9 @@ class RGBImage(Abstract2DImage):
     def __str__(self):
         return ('{} RGBImage. '
                 'Attached mask {:.1%} true'.format(
-                self._str_shape, self.n_dims, self.n_channels,
-                self.mask.proportion_true))
+                self._str_shape, self.mask.proportion_true))
 
-    def as_greyscale(self, mode='average', channel=None):
+    def as_greyscale(self, mode='luminosity', channel=None):
         r"""
         Returns a greyscale version of the RGB image.
 
@@ -251,5 +250,4 @@ class IntensityImage(Abstract2DImage):
     def __str__(self):
         return ('{} IntensityImage. '
                 'Attached mask {:.1%} true'.format(
-                self._str_shape, self.n_dims, self.n_channels,
-                self.mask.proportion_true))
+                self._str_shape, self.mask.proportion_true))
