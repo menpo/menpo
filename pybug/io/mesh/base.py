@@ -300,6 +300,11 @@ class WRLImporter(MeshImporter):
     files. It should be noted that, unfortunately, this is a lot slower than
     the C++-based assimp importer.
 
+    VRML allows non-triangular polygons, whilst our importer pipeline doesn't.
+    Therefore, any non-triangular polygons are dropped. VRML also allows
+    separate texture coordinate indices, which we do not support. To have
+    a better formed mesh, try exporting the WRL as OBJ from Meshlab.
+
     Parameters
     ----------
     filepath : string
@@ -349,12 +354,15 @@ class WRLImporter(MeshImporter):
 
         self.mesh.points = shape.geometry.coord.point
         self.mesh.tcoords = shape.geometry.texCoord.point
-        # Drop the -1 delimiters
-        self.mesh.trilist = shape.geometry.coordIndex.reshape([-1, 4])[:, :3]
+
+        self.mesh.trilist = self._filter_non_triangular_polygons(
+                shape.geometry.coordIndex)
+
         # See if we have a seperate texture index, if not just create an empty
         # array
         try:
-            tex_trilist = shape.geometry.texCoordIndex.reshape([-1, 4])[:, :3]
+            tex_trilist = self._filter_non_triangular_polygons(
+                shape.geometry.texCoordIndex)
         except AttributeError:
             tex_trilist = np.array([-1])
 
@@ -373,4 +381,21 @@ class WRLImporter(MeshImporter):
 
         # Assumes a single mesh per file
         self.meshes = [self.mesh]
+
+    def _filter_non_triangular_polygons(self, coord_list):
+        # VRML allows arbitrary polygon coordinates, whilst we only support
+        # triangles. They are delimited by -1, so we split on them and filter
+        # out non-triangle polygons
+        index_list = coord_list
+        index_list = np.split(index_list, np.where(index_list == -1)[0])
+        # The first polygon is missing the -1 at the beginning
+        # Have to cast to int32 because that's the default, but on 64bit
+        # machines a single number defaults to int64
+        np.insert(index_list[0], 0, np.array([-1], dtype=np.int32))
+        # Filter out those coordinates that are not triangles
+        index_list = [i for i in index_list if len(i[1:]) == 3]
+        # Convert to 2D array
+        index_list = np.array(index_list)
+        # Slice of -1 delimiters
+        return index_list[:, 1:]
 

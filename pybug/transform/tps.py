@@ -169,11 +169,6 @@ class TPSTransform(Transform):
         Calculates the Jacobian of the TPS warp wrt to the the points to which
         the warp is applied to.
 
-        Parameters
-        ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
-
         Returns
         -------
         dW/dp : (N, P, D) ndarray

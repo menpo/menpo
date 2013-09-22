@@ -188,11 +188,6 @@ class StatisticallyDrivenTransform(Transform):
         r"""
         TO BE DOCUMENTED
 
-        Parameters
-        ----------
-        points : (N, D) ndarray
-            The points to evaluate the Jacobian at.
-
         Returns
         -------
         dW_dx : (N, D, D) ndarray
@@ -360,7 +355,7 @@ class StatisticallyDrivenTransform(Transform):
             dW_dp = np.hstack((dW_dq, dW_db))
             # dW_dp:    n_landmarks  x     n_params     x  n_dims
 
-        dW_dx = self.transform.jacobian_points(self.source)
+        dW_dx = self.transform.jacobian_points(self.model.mean.points)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         # dW_dx:  n_landmarks  x  n_dims  x  n_dims
 
