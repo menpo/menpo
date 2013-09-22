@@ -193,11 +193,6 @@ class AbstractPWATransform(Transform):
         The derivative of a piecewise affine warp with respect to the points
         is simply the identity matrix for every point in the warp.
 
-        Parameters
-        ----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
-
         Returns
         -------
         dW/dx: (N, D, D) ndarray

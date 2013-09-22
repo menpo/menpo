@@ -186,7 +186,7 @@ class AffineTransform(Transform):
         return jac
 
     def jacobian_points(self, points):
-        """
+        r"""
         Computes the Jacobian of the transform wrt the points to which
         the transform is applied to. This is constant for affine transforms.
 
@@ -202,8 +202,10 @@ class AffineTransform(Transform):
                      [b       1 + a   ty] [y]
                                           [1]
 
-        :return dW/dx: A n_points x n_dims x n_dims ndarray representing
-            the Jacobian of the transform wrt the points to which the
+        Returns
+        -------
+        dW/dx: dW/dx: (N, D, D) ndarray
+            The Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
         return self.linear_component[None, ...]
