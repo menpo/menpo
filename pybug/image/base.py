@@ -5,8 +5,9 @@ from pybug.transform.affine import Translation
 from pybug.landmark import Landmarkable
 from pybug.base import Vectorizable
 from skimage.morphology import diamond, binary_erosion
+from scipy.spatial import Delaunay
 import itertools
-from pybug.visualize.base import Viewable, ImageViewer
+from pybug.visualize.base import Viewable, ImageViewer, DepthImageHeightViewer
 
 
 class AbstractImage(Vectorizable, Landmarkable, Viewable):
@@ -20,11 +21,13 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
     Parameters
     -----------
     image_data: (M, N, ...) ndarray
-        Array representing the image pixels.
+        Array representing the image pixels
     """
     def __init__(self, image_data):
         Landmarkable.__init__(self)
-        self.pixels = np.array(image_data)
+        # asarray will pass through ndarrays unchanged
+        image_data = np.asarray(image_data)
+        self.pixels = image_data
 
     @property
     def width(self):
@@ -210,19 +213,63 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
         return type(self)(cropped_image), Translation(translation)
 
 
-class MaskImage(AbstractImage):
+class ChannelImage(AbstractImage):
     r"""
-    A mask image made from binary pixels.
+    An abstract base class for images that contain channels. These images
+    are expected to be 2-dimensional and must have at least one channel.
+
+    Therefore, this base classes enforces the channel dimension even for
+    intensity images.
+
+     Parameters
+    -----------
+    image_data : (M, N, [C]) ndarray
+        The pixel values. If channel data is not provided then an extra axis
+        is added.
+    """
+
+    def __init__(self, image_data):
+        super(ChannelImage, self).__init__(image_data)
+        # All 2D images must have a channel dimension
+        if len(self.pixels.shape) == 2:
+            self.pixels = self.pixels[..., None]
+
+    @property
+    def shape(self):
+        r"""
+        Returns the shape of the image
+        (with ``n_channel`` values at each point).
+
+        :type: tuple
+        """
+        return self.pixels.shape[:-1]
+
+    @property
+    def n_channels(self):
+        """
+        The total number of channels.
+
+        :type: int
+        """
+        return self.pixels.shape[-1]
+
+
+class MaskImage(ChannelImage):
+    r"""
+    A mask image made from binary pixels. Expected to be 2-dimensional
+    and will have exactly 1 channel.
 
     Parameters
     -----------
-    mask_data : (M, N) ndarray
-        The pixel values. Are automatically coerced in to boolean values.
+    mask_data : (M, N, [1]) ndarray
+        The pixel values. Masks may only contain 1 channel.
+        Automatically coerced in to boolean values.
     """
 
     def __init__(self, mask_data):
         super(MaskImage, self).__init__(mask_data)
-        self.pixels = self.pixels.astype(np.bool)  # enforce boolean pixels
+        # Enforce boolean pixels
+        self.pixels = self.pixels.astype(np.bool)
 
     @property
     def n_true(self):
@@ -248,18 +295,32 @@ class MaskImage(AbstractImage):
         r"""
         The indices of pixels that are true.
 
-        :type: ndarray
+        :type: (M, N) ndarray
         """
-        return np.vstack(np.nonzero(self.pixels)).T
+        # Ignore the dead third axis
+        return np.vstack(np.nonzero(self.pixels[:, :, 0])).T
 
     @property
     def false_indices(self):
         r"""
         The indices of pixels that are false.
 
-        :type: ndarray
+        :type: (M, N) ndarray
         """
-        return np.vstack(np.nonzero(~self.pixels)).T
+        # Ignore the dead third axis
+        return np.vstack(np.nonzero(~self.pixels[:, :, 0])).T
+
+    @property
+    def mask(self):
+        r"""
+        The boolean mask that this image represents. This essentially slices
+        off the channel dimension so that this object can be used directly
+        for indexing.
+
+        :type: (M, N) ndarray
+        """
+        # Ignore the dead third axis
+        return self.pixels[:, :, 0]
 
     def true_bounding_extent(self, boundary=0):
         r"""
@@ -336,9 +397,9 @@ class MaskImage(AbstractImage):
         return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])
 
 
-class Image(AbstractImage):
+class Image(ChannelImage):
     r"""
-    Represents an 2-dimensional image with a number of channels, of size
+    Represents a 2-dimensional image with a number of channels, of size
     ``(M, N, C)``. Images can be masked in order to identify a region of
     interest. All images implicitly have a mask that is defined as the the
     entire image. Supports construction from a ``PILImage``.
@@ -366,51 +427,24 @@ class Image(AbstractImage):
     """
 
     def __init__(self, image_data, mask=None):
-        if not isinstance(image_data, np.ndarray):
-            image_data = np.array(image_data)
-        # Correct for intensity images having no channel
-        if len(image_data.shape) == 2:
-            image_data = image_data[..., np.newaxis]
-
-        # ensure datatype is float [0,1]
-        if image_data.dtype == np.uint8:
-            image_data = image_data.astype(np.float64) / 255
-        elif image_data.dtype != np.float64:
-            # convert to double
-            image_data = image_data.astype(np.float64)
-
-        # now we let super have our data
         super(Image, self).__init__(image_data)
+        # ensure datatype is float [0,1]
+        if self.pixels.dtype == np.uint8:
+            self.pixels = self.pixels.astype(np.float64) / 255
+        elif self.pixels.dtype != np.float64:
+            # convert to double
+            self.pixels = self.pixels.astype(np.float64)
 
         if mask is not None:
-            if self.shape != mask.shape:
+            if self.shape[:2] != mask.shape[:2]:
                 raise ValueError("The mask is not of the same shape as the "
-                                "image")
+                                 "image")
             if isinstance(mask, MaskImage):
                 # have a MaskImage object - pull out the mask itself
                 mask = mask.pixels
             self.mask = MaskImage(mask)
         else:
             self.mask = MaskImage(np.ones(self.shape))
-
-    @property
-    def shape(self):
-        r"""
-        Returns the shape of the image
-        (with ``n_channel`` values at each point).
-
-        :type: tuple
-        """
-        return self.pixels.shape[:-1]
-
-    @property
-    def n_channels(self):
-        """
-        The total number of channels.
-
-        :type: int
-        """
-        return self.pixels.shape[-1]
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -419,6 +453,7 @@ class Image(AbstractImage):
         Parameters
         ----------
         keep_channels : bool, optional
+
             ========== =================
             Value      Return shape
             ========== =================
@@ -481,7 +516,7 @@ class Image(AbstractImage):
 
         :type: (``mask.n_true``, ``n_channels``) ndarray
         """
-        return self.pixels[self.mask.pixels]
+        return self.pixels[self.mask.mask]
 
     def mask_bounding_pixels(self, boundary=0):
         r"""
@@ -534,8 +569,7 @@ class Image(AbstractImage):
         # Creates zeros of size (M x N x n_channels)
         image_data = np.zeros(self.shape + (n_channels,))
         pixels_per_channel = flattened.reshape((-1, n_channels))
-        mask_array = self.mask.pixels  # the 'pixels' of a MaskImage is the
-        # numpy mask array itself
+        mask_array = self.mask.mask
         image_data[mask_array] = pixels_per_channel
         return Image(image_data, mask=mask_array)
 
@@ -559,14 +593,14 @@ class Image(AbstractImage):
             images are supported.
         """
         if self.n_channels == 1:
-            return Image(self.pixels, self.mask.pixels)
+            return Image(self.pixels, self.mask)
         if self.n_channels != 3 or self.n_dims != 2:
             raise DimensionalityError("Trying to perform RGB-> greyscale "
                                       "conversion on a non-2D-RGB Image.")
 
         pil_image = self.as_PILImage()
         pil_bw_image = pil_image.convert('L')
-        return Image(pil_bw_image, mask=self.mask.pixels)
+        return Image(pil_bw_image, mask=self.mask)
 
     def as_PILImage(self):
         r"""
@@ -613,12 +647,6 @@ class Image(AbstractImage):
         # sanity check
         assert (translation == mask_translation)
         return cropped_image, translation
-        # assert(self.n_dims == len(slice_args))
-        # cropped_image = self.pixels[slice_args]
-        # cropped_mask = self.mask.pixels[slice_args]
-        # translation = np.array([x.start for x in slice_args])
-        # return (Image(cropped_image, mask=cropped_mask),
-        #         Translation(translation))
 
     # TODO this kwarg could be False for higher perf True for debug
     # TODO something is fishy about this method, kwarg seems to be making diff
@@ -660,9 +688,92 @@ class Image(AbstractImage):
             # Erode the edge of the mask so that the gradients are not
             # affected by the outlying pixels
             diamond_structure = diamond(1)
-            mask = binary_erosion(self.mask.pixels, diamond_structure)
+            mask = binary_erosion(self.mask.mask, diamond_structure)
 
             new_image = np.zeros((self.shape + (len(gradients),)))
             new_image[mask] = gradient_array[mask]
 
         return Image(new_image, mask=self.mask)
+
+
+class DepthImage(Image):
+    r"""
+    An image the represents a depth image. Due to the fact a depth image has
+    an implicit spatial meaning, a DepthImage also contains a
+    :class:'pybug.shape.mesh.base.TriMesh`. This allows the depth image to be
+    treated as an image, but expose an object that represents the depth
+    as a mesh.
+
+    Will have exactly 1 channel.
+    """
+
+    def __init__(self, image_data, mask=None, texture=None, points=None,
+                 tcoords=None, trilist=None):
+        super(DepthImage, self).__init__(image_data, mask=mask)
+        self.mesh = self._create_mesh_from_depth(image_data, points, trilist,
+                                                 tcoords, texture)
+
+    def _create_mesh_from_depth(self, image_data, points, trilist, tcoords,
+                                texture):
+        from pybug.shape.mesh import TriMesh, TexturedTriMesh
+        if points is None:
+            # Generate the grid of points
+            [ys, xs] = np.meshgrid(np.arange(image_data.shape[0]),
+                                   np.arange(image_data.shape[1]),
+                                   indexing='ij')
+            points = np.hstack([ys.reshape([-1, 1]), xs.reshape([-1, 1]),
+                                image_data.reshape([-1, 1])])
+        if texture is None:
+            return TriMesh(points, trilist)
+        else:
+            if tcoords is None:
+                # TODO: This doesn't work at the moment, texture comes out
+                # wrong
+                coord_per_pixel = np.linspace(0, 1, np.prod(texture.shape))
+                tcoords = np.hstack([coord_per_pixel.reshape([-1, 1])[::-1],
+                                     coord_per_pixel.reshape([-1, 1])])
+            return TexturedTriMesh(points, trilist, tcoords, texture)
+
+    def _view(self, figure_id=None, new_figure=False, type='image', **kwargs):
+        r"""
+        View the image using the default image viewer. Before the image is
+        rendered the depth values are normalised between 0 and 1. The range
+        is then shifted so that the viewable range provides a reasonable
+        contrast.
+
+        Parameters
+        ----------
+        type : {'image', 'mesh', 'height'}
+            The manner in which to render the depth map.
+
+            ========== =========================
+            key        description
+            ========== =========================
+            image      View as a greyscale image
+            mesh       View as a triangulated mesh
+            height     View as a height map
+            ========== =========================
+
+            Default: 'image'
+
+        Returns
+        -------
+        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
+            The viewer the image is being shown within
+        """
+        pixels = self.pixels.copy()
+        pixels[np.isinf(pixels)] = np.nan
+        pixels = np.abs(pixels)
+        pixels /= np.nanmax(pixels)
+
+        if type is 'image':
+            return ImageViewer(figure_id, new_figure,
+                               self.n_dims, pixels).render(**kwargs)
+        if type is 'mesh':
+            return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
+                                   **kwargs)
+        if type is 'height':
+            return DepthImageHeightViewer(figure_id, new_figure,
+                                          pixels[:, :, 0]).render(**kwargs)
+        else:
+            raise ValueError('Supported type values are: image, mesh, height')

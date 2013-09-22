@@ -246,7 +246,10 @@ class LM3Importer(LandmarkImporter):
         # The lines then alternate between the labels and the coordinates
         for i in xrange(num_points * 2):
             if i % 2 == 0:  # label
-                labels.append(landmark_text[i])
+                # Lowercase, remove spaces and replace with underscores
+                l = landmark_text[i]
+                l = '_'.join(l.lower().split())
+                labels.append(l)
             else:  # coordinate
                 p = landmark_text[i].split()
                 points.append(PointCloud(np.array([float(p[0]),
@@ -254,6 +257,90 @@ class LM3Importer(LandmarkImporter):
                                                   float(p[2])], ndmin=2)))
 
         self.label = 'LM3'
+        self.landmark_dict = dict(zip(labels, points))
+
+
+class LM2Importer(LandmarkImporter):
+    r"""
+    Importer for the LM2 file format from the bosphorus dataset. This is a 2D
+    landmark type and so it is assumed it only applies to images.
+
+    Landmark set label: LM2
+
+    Landmark labels:
+
+    +------------------------+
+    | label                  |
+    +========================+
+    | outer_left_eyebrow     |
+    | middle_left_eyebrow    |
+    | inner_left_eyebrow     |
+    | inner_right_eyebrow    |
+    | middle_right_eyebrow   |
+    | outer_right_eyebrow    |
+    | outer_left_eye_corner  |
+    | inner_left_eye_corner  |
+    | inner_right_eye_corner |
+    | outer_right_eye_corner |
+    | nose_saddle_left       |
+    | nose_saddle_right      |
+    | left_nose_peak         |
+    | nose_tip               |
+    | right_nose_peak        |
+    | left_mouth_corner      |
+    | upper_lip_outer_middle |
+    | right_mouth_corner     |
+    | upper_lip_inner_middle |
+    | lower_lip_inner_middle |
+    | lower_lip_outer_middle |
+    | chin_middle            |
+    +------------------------+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(LM2Importer, self).__init__(filepath)
+
+    def _parse_format(self, **kwargs):
+        with open(self.filepath, 'r') as f:
+            landmarks = f.read()
+
+        # Remove comments and blank lines
+        landmark_text = [l for l in landmarks.splitlines()
+                         if (l.rstrip() and not '#' in l)]
+
+        # First line says how many landmarks there are: 22 Landmarks
+        # So pop it off the front
+        num_points = int(landmark_text.pop(0).split()[0])
+        points = []
+        labels = []
+
+        # The next set of lines defines the labels
+        labels_str = landmark_text.pop(0)
+        if not labels_str == 'Labels:':
+            raise ImportError("LM2 landmarks are incorrectly formatted. "
+                              "Expected a list of labels beginning with "
+                              "'Labels:' but found '{0}'".format(labels_str))
+        for i in xrange(num_points):
+            # Lowercase, remove spaces and replace with underscores
+            l = landmark_text.pop(0)
+            l = '_'.join(l.lower().split())
+            labels.append(l)
+
+        # The next set of lines defines the coordinates
+        coords_str = landmark_text.pop(0)
+        if not coords_str == '2D Image coordinates:':
+            raise ImportError("LM2 landmarks are incorrectly formatted. "
+                              "Expected a list of coordinates beginning with "
+                              "'2D Image coordinates:' "
+                              "but found '{0}'".format(coords_str))
+        for i in xrange(num_points):
+                p = landmark_text.pop(0).split()
+                points.append(PointCloud(np.array([float(p[1]), float(p[0])],
+                                                  ndmin=2)))
+
+        self.label = 'LM2'
         self.landmark_dict = dict(zip(labels, points))
 
 

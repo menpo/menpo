@@ -58,6 +58,18 @@ class MayaviPointCloudViewer3d(MayaviViewer):
         return self
 
 
+class MayaviSurfaceViewer3d(MayaviViewer):
+
+    def __init__(self, figure_id, new_figure, values):
+        super(MayaviSurfaceViewer3d, self).__init__(figure_id, new_figure)
+        self.values = values
+
+    def _render(self, **kwargs):
+        warp_scale = kwargs.get('warp_scale', 'auto')
+        mlab.surf(self.values, warp_scale=warp_scale)
+        return self
+
+
 class MayaviLandmarkViewer3d(MayaviViewer):
 
     def __init__(self, figure_id, new_figure, label, landmark_dict):

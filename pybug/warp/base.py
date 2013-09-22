@@ -6,12 +6,6 @@ from pybug.warp.cinterp import interp2
 def __cinterp2(pixels, points_to_sample, **kwargs):
     mode = kwargs.get('mode', 'bilinear')
 
-    # If we've been passed a masked image, which don't have a channel dimension
-    # then we add one
-    # TODO: This could be very slow, can't masked images be 3 dimensional as well?
-    if not len(pixels.shape) == 3:
-        pixels = np.array(pixels[..., None], dtype=np.float64)
-
     return interp2(pixels, points_to_sample[0, :], points_to_sample[1, :],
                    mode=mode)
 
@@ -20,10 +14,6 @@ def __scipy(pixels, points_to_sample, **kwargs):
     sampled_pixel_values = []
     mode = kwargs.get('mode', 'constant')
     order = kwargs.get('order', 1)
-
-    # TODO: This could be very slow, can't masked images be 3 dimensional as well?
-    if not len(pixels.shape) == 3:
-        pixels = pixels[..., None]
 
     # Loop over every channel in image
     for i in xrange(pixels.shape[2]):
