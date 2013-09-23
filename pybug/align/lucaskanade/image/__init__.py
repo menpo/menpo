@@ -1,3 +1,4 @@
-from base import (ImageForwardAdditive,
-                  ImageForwardCompositional,
-                  ImageInverseCompositional)
+from pybug.align.lucaskanade.image.base import \
+    (ImageForwardAdditive,
+     ImageForwardCompositional,
+     ImageInverseCompositional)

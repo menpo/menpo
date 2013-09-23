@@ -1,19 +1,16 @@
-from adaptive import (AdaptiveForwardAdditive,
-                      AdaptiveForwardCompositional,
-                      AdaptiveInverseCompositional)
-
-from alternating import (AlternatingForwardAdditive,
-                         AlternatingForwardCompositional,
-                         AlternatingInverseCompositional)
-
-#from probabilistic import (ProbabilisticForwardAdditive,
-#                           ProbabilisticForwardCompositional,
-#                           ProbabilisticInverseCompositional)
-
-from projectout import (ProjectOutForwardAdditive,
-                        ProjectOutForwardCompositional,
-                        ProjectOutInverseCompositional)
-
-from simultaneous import (SimultaneousForwardAdditive,
-                          SimultaneousForwardCompositional,
-                          SimultaneousInverseCompositional)
+from pybug.align.lucaskanade.appearance.adaptive import  \
+    (AdaptiveForwardAdditive,
+     AdaptiveForwardCompositional,
+     AdaptiveInverseCompositional)
+from pybug.align.lucaskanade.appearance.alternating import \
+    (AlternatingForwardAdditive,
+     AlternatingForwardCompositional,
+     AlternatingInverseCompositional)
+from pybug.align.lucaskanade.appearance.projectout import \
+    (ProjectOutForwardAdditive,
+     ProjectOutForwardCompositional,
+     ProjectOutInverseCompositional)
+from pybug.align.lucaskanade.appearance.simultaneous import \
+    (SimultaneousForwardAdditive,
+     SimultaneousForwardCompositional,
+     SimultaneousInverseCompositional)

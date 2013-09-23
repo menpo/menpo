@@ -415,6 +415,9 @@ class GradientImages(Residual):
         second_grad = np.reshape(second_grad, (-1, image.n_channels,
                                                n_dims, n_dims))
 
+        # Fix crossed derivatives: dydx = dxdy
+        second_grad[:, :, 1, 0] = second_grad[:, :, 0, 1]
+
         # compute steepest descent images
         # second_grad: n_pixels  x  n_channels  x            x n_dims x n_dims
         # dW_dp:       n_pixels  x              x  n_params  x n_dims x
@@ -502,6 +505,9 @@ class GradientCorrelation(Residual):
         # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
         second_grad = np.reshape(second_grad, (-1, image.n_channels,
                                                n_dims, n_dims))
+
+        # Fix crossed derivatives: dydx = dxdy
+        second_grad[:, :, 1, 0] = second_grad[:, :, 0, 1]
 
         # complete full IGOs gradient computation
         # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
