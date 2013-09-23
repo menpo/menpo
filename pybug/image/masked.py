@@ -94,6 +94,8 @@ class MaskedNDImage(AbstractNDImage):
         blank_image : :class:`MaskedNDImage`
             A new masked image of the requested size.
         """
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(shape)
         if fill == 0:
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:

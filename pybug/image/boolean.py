@@ -54,6 +54,8 @@ class BooleanNDImage(AbstractNDImage):
         blank_image : :class:`BooleanNDImage`
             A blank mask of the requested size
         """
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(shape)
         if fill:
             mask = np.ones(shape, dtype=np.bool)
         else:

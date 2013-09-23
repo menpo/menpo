@@ -113,6 +113,8 @@ class RGBImage(Abstract2DImage):
         blank_image : :class:`RGBImage`
             A new Image of the requested size.
         """
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(shape)
         if fill == 0:
             pixels = np.zeros(shape + (3,), dtype=np.float64)
         elif fill < 0 or fill > 1:
@@ -237,6 +239,8 @@ class IntensityImage(Abstract2DImage):
         blank_image : :class:`IntensityImage`
             A new Image of the requested size.
         """
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(shape)
         if fill == 0:
             pixels = np.zeros(shape, dtype=np.float64)
         elif fill < 0 or fill > 1:
