@@ -1,1 +1,1 @@
-from tps import TPS, MultipleTPS
+from pybug.align.nonrigid.tps import TPS, MultipleTPS

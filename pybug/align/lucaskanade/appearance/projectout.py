@@ -9,17 +9,11 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
 
-        # Project out appearance model from mean appearance
-        self.template = self.appearance_model.project_out(self.template)
-
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self._warp(self.image, self.template,
                               self.optimal_transform)
-
-            # Project out appearance model from warped image
-            IWxp = self.appearance_model.project_out(IWxp)
 
             # Compute warp Jacobian
             dW_dp = self.optimal_transform.jacobian(
@@ -30,6 +24,9 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
                                             self._warp))
+
+            # Project out appearance model from VI_dW_dp
+            J = self.appearance_model._project_out(J.T).T
 
             # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
@@ -63,20 +60,17 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
 
-        # Project out appearance model from mean appearance
-        self.template = self.appearance_model.project_out(self.template)
-
         # Forward Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self._warp(self.image, self.template,
                               self.optimal_transform)
 
-            # Project out appearance model from warped image
-            IWxp = self.appearance_model.project_out(IWxp)
-
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
+
+            # Project out appearance model from VI_dW_dp
+            J = self.appearance_model._project_out(J.T).T
 
             # Compute Hessian
             self._H = self.residual.calculate_hessian(J)
@@ -111,7 +105,7 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
             self.template, dW_dp)
 
         # Project out appearance model from VT_dW_dp
-        self._J = self.appearance_model._project_out(J)
+        self._J = self.appearance_model._project_out(J.T).T
 
         # Compute Hessian
         self._H = self.residual.calculate_hessian(self._J)
