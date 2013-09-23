@@ -121,9 +121,11 @@ class AbstractSpatialImage(MaskedNDImage):
         image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
             The viewer the image is being shown within
         """
+        import scipy.stats
         pixels = self.pixels.copy()
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
+        pixels -= scipy.stats.nanmean(pixels)
         pixels /= np.nanmax(pixels)
 
         mask = None
