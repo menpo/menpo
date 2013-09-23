@@ -170,7 +170,7 @@ class LSIntensity(Residual):
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
         # compute gradient
-        # gradient:  height  x  width  x  n_channels
+        # gradient:  height  x  width  x  (n_channels x n_dims)
         gradient = self._calculate_gradients(image, forward=forward)
 
         # reshape gradient
@@ -179,7 +179,8 @@ class LSIntensity(Residual):
 
         # reshape gradient
         # gradient:  n_pixels  x  n_channels  x  n_dims
-        gradient = np.reshape(gradient, (gradient.shape[0], -1, image.n_dims))
+        gradient = np.reshape(gradient, (-1, image.n_channels,
+                                         image.n_dims))
 
         # compute steepest descent images
         # gradient:  n_pixels  x  n_channels  x            x  n_dims
@@ -191,12 +192,12 @@ class LSIntensity(Residual):
         # sdi:  (n_pixels x n_channels)  x  n_params
         return np.reshape(sdi, (-1, dW_dp.shape[1]))
 
-    def calculate_hessian(self, VT_dW_dp):
-        return VT_dW_dp.T.dot(VT_dW_dp)
+    def calculate_hessian(self, sdi):
+        return sdi.T.dot(sdi)
 
-    def steepest_descent_update(self, VT_dW_dp, IWxp, template):
+    def steepest_descent_update(self, sdi, IWxp, template):
         self._error_img = IWxp.as_vector() - template.as_vector()
-        return VT_dW_dp.T.dot(self._error_img)
+        return sdi.T.dot(self._error_img)
 
 
 class GaborFourier(Residual):
@@ -216,39 +217,102 @@ class GaborFourier(Residual):
         self._filter_bank = self._filter_bank.flatten()
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
-        gradient = self._calculate_gradients(image, forward=forward)
-        gradient_vec = gradient.as_vector(keep_channels=True)
-        VT_dW_dp = np.sum(dW_dp * gradient_vec[:, np.newaxis, ...], axis=2)
+        # compute gradient
+        # gradient:  height  x  width  x  n_channels
+        gradient_img = self._calculate_gradients(image, forward=forward)
 
-        # We have to take the FFT, therefore, we need an image
-        # Reshape back to an image from the vectorized form. Use the gradient
-        # shape in case of FA version (gradients get warped)
-        sd_image_shape = gradient.shape + (VT_dW_dp.shape[-1],)
-        sd_image = np.reshape(VT_dW_dp, sd_image_shape)
+        # reshape gradient
+        # gradient:  n_pixels  x  (n_channels x n_dims)
+        gradient = gradient_img.as_vector(keep_channels=True)
+
+        # reshape gradient
+        # gradient:  n_pixels  x  n_channels  x  n_dims
+        gradient = np.reshape(gradient, (-1, image.n_channels, image.n_dims))
+
+        # compute steepest descent images
+        # gradient:  n_pixels  x  n_channels  x            x  n_dims
+        # dW_dp:     n_pixels  x              x  n_params  x  n_dims
+        # sdi:       n_pixels  x  n_channels  x  n_params
+        sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
+
+        # make sdi images
+        # sdi_img:  height  x  width  x  n_channels  x  n_params
+        sdi_img_shape = (gradient_img.height, gradient_img.width,
+                         image.n_channels * dW_dp.shape[1])
+        sdi_img = Image(np.zeros(sdi_img_shape), mask=gradient_img.mask)
+        sdi_img = sdi_img.from_vector(sdi.flatten())
+
+        # compute FFT over each channel, parameter and dimension
+        # fft_sdi:  height  x  width  x  n_channels  x  n_params
         fft_axes = range(image.n_dims)
+        fft_sdi = fftshift(fftn(sdi_img.pixels, axes=fft_axes), axes=fft_axes)
 
-        # Compute FFT over each parameter
-        # Then, reshape back to vector for consistency with other residuals
-        FT_VT_dW_dp = fftshift(fftn(sd_image, axes=fft_axes), axes=fft_axes)
-        # Reshape to (n_pixels x n_params)
-        return FT_VT_dW_dp.reshape([-1, VT_dW_dp.shape[-1]])
+        # ToDo: Note that, fft_sdi is rectangular, i.e. is not define in
+        # terms of the mask pixels, but in terms of the whole image.
+        # Selecting mask pixels once the fft has been computed makes no
+        # sense because they have lost their original spatial meaning.
 
-    def calculate_hessian(self, VT_dW_dp):
-        filtered_jac = (self._filter_bank[..., None] ** 0.5) * VT_dW_dp
-        return np.conjugate(filtered_jac).T.dot(filtered_jac)
+        # reshape steepest descent images
+        # sdi:  (height x width x n_channels)  x  n_params
+        return np.reshape(fft_sdi, (-1, dW_dp.shape[1]))
 
-    def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        # Calculate FFT error image and flatten
-        self._error_img = fftshift(fftn(np.squeeze(IWxp.pixels -
-                                                   template.pixels))).flatten()
-        ft_error_img = self._filter_bank * self._error_img
-        return VT_dW_dp.T.dot(np.conjugate(ft_error_img))
+    def calculate_hessian(self, sdi):
+        # reshape steepest descent images
+        # sdi:  n_channels  x  n_pixels  x  n_params
+        sdi = np.reshape(sdi, (-1, self._filter_bank.shape[0], sdi.shape[1]))
+
+        # compute filtered steepest descent images
+        # _filter_bank:              x  n_pixels  x
+        # sdi:           n_channels  x  n_pixels  x  n_params
+        # filtered_sdi:  n_channels  x  n_pixels  x  n_params
+        filtered_sdi = (self._filter_bank[None, ..., None] ** 0.5) * sdi
+
+        # reshape filtered steepest descent images
+        # filtered_sdi:  (n_pixels x n_channels)  x  n_params
+        filtered_sdi = np.reshape(filtered_sdi, (-1, sdi.shape[-1]))
+
+        # compute filtered hessian
+        # filtered_sdi:  (n_pixels x n_channels)  x  n_params
+        # hessian:              n_param           x  n_param
+        return np.conjugate(filtered_sdi).T.dot(filtered_sdi)
+
+    def steepest_descent_update(self, sdi, IWxp, template):
+        # compute error image
+        # error_img:  height  x  width  x  n_channels
+        error_img = IWxp.pixels - template.pixels
+
+        # compute FFT error image
+        # fft_error_img:  height  x  width  x  n_channels
+        fft_axes = range(IWxp.n_dims)
+        fft_error_img = fftshift(fftn(error_img, axes=fft_axes),
+                                 axes=fft_axes)
+
+        # reshape FFT error image
+        # fft_error_img:  (height x width)  x  n_channels
+        fft_error_img = np.reshape(fft_error_img, (-1, IWxp.n_channels))
+
+        # compute filtered steepest descent images
+        # _filter_bank:        (height x width)  x
+        # fft_error_img:       (height x width)  x  n_channels
+        # filtered_error_img:  (height x width)  x  n_channels
+        filtered_error_img = (self._filter_bank[..., None] * fft_error_img)
+
+        # reshape _error_img
+        # _error_img:  (height x width x n_channels)
+        self._error_img = filtered_error_img.flatten()
+
+        # compute steepest descent update
+        # sdi:         (height x width x n_channels)  x  n_parameters
+        # _error_img:  (height x width x n_channels)
+        # sdu:             n_parameters
+        return sdi.T.dot(np.conjugate(self._error_img))
 
 
 class ECC(Residual):
 
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
+        # ToDo: is this supposed to be per channel normalization?
         new_im = Image(image.pixels, mask=image.mask)
         i = new_im.pixels
         i -= np.mean(i)
@@ -259,25 +323,44 @@ class ECC(Residual):
         return new_im
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
+        # normalize image
+        # image:  height  x  width  x  n_channels
         norm_image = self.__normalise_images(image)
 
-        gradient = self._calculate_gradients(norm_image,
-                                             forward=forward)
+        # compute gradient
+        # gradient:  height  x  width  x  n_channels
+        gradient = self._calculate_gradients(norm_image, forward=forward)
+
+        # reshape gradient
+        # gradient:  n_pixels  x  (n_channels x n_dims)
         gradient = gradient.as_vector(keep_channels=True)
-        return np.sum(dW_dp * gradient[:, np.newaxis, :], axis=2)
 
-    def calculate_hessian(self, VT_dW_dp):
-        H = VT_dW_dp.T.dot(VT_dW_dp)
+        # reshape gradient
+        # gradient:  n_pixels  x  n_channels  x  n_dims
+        gradient = np.reshape(gradient, (-1, image.n_channels,
+                                         image.n_dims))
+
+        # compute steepest descent images
+        # gradient:  n_pixels  x  n_channels  x            x  n_dims
+        # dW_dp:     n_pixels  x              x  n_params  x  n_dims
+        # sdi:       n_pixels  x  n_channels  x  n_params
+        sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
+
+        # reshape steepest descent images
+        # sdi:  (n_pixels x n_channels)  x  n_params
+        return np.reshape(sdi, (-1, dW_dp.shape[1]))
+
+    def calculate_hessian(self, sdi):
+        H = sdi.T.dot(sdi)
         self._H_inv = scipy.linalg.inv(H)
-
         return H
 
-    def steepest_descent_update(self, VT_dW_dp, IWxp, template):
+    def steepest_descent_update(self, sdi, IWxp, template):
         normalised_IWxp = self.__normalise_images(IWxp).as_vector()
         normalised_template = self.__normalise_images(template).as_vector()
 
-        Gt = VT_dW_dp.T.dot(normalised_template)
-        Gw = VT_dW_dp.T.dot(normalised_IWxp)
+        Gt = sdi.T.dot(normalised_template)
+        Gw = sdi.T.dot(normalised_IWxp)
 
         # Calculate the numerator
         IWxp_norm = scipy.linalg.norm(normalised_IWxp)
@@ -298,7 +381,7 @@ class ECC(Residual):
 
         self._error_img = l * normalised_IWxp - normalised_template
 
-        return VT_dW_dp.T.dot(self._error_img)
+        return sdi.T.dot(self._error_img)
 
 
 class GradientImages(Residual):
@@ -308,141 +391,188 @@ class GradientImages(Residual):
         ab = np.sqrt(np.sum(np.square(pixels), -1))
         m_ab = np.median(ab)
         ab = ab + m_ab
-
         gradients.pixels = pixels / ab[..., None]
         return gradients
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
         n_dims = image.n_dims
-        gradient = self._calculate_gradients(image, forward=forward)
 
-        self.__template_gradients = self.__regularise_gradients(gradient)
+        # compute gradient
+        # gradient:  height  x  width  x  (n_channels x n_dims)
+        first_grad = self._calculate_gradients(image, forward=forward)
+        self.__template_gradients = self.__regularise_gradients(first_grad)
 
-        # Calculate second order derivatives over each dimension
-        gradient = self._calculate_gradients(self.__template_gradients)
+        # compute second order derivatives over each dimension
+        # gradient:  height  x  width  x  (n_channels x n_dims x n_dims)
+        second_grad = self._calculate_gradients(self.__template_gradients)
 
-        # Set the second derivatives that should theoretically match to by the
-        # same value. For example, in 3D (xx means the second order derivative
-        # of x with respect to x):
-        #   xy = yx, xz = zx, yz = zy =>
-        #   gradients[0][1] = gradients[1][0]
-        #   gradients[0][2] = gradients[2][0]
-        #   gradients[1][2] = gradients[2][1]
-        # Therefore, we use exploit the symmetry to fix the derivatives:
-        #   xx  xy  xz
-        #   yx  yy  yz
-        #   zx  zy  zz
-        # Where we can see that the we need the upper triangle = lower
-        # triangle
-        gradient = gradient.as_vector(keep_channels=True).reshape([-1,
-                                                                   n_dims,
-                                                                   n_dims])
-        mask = np.zeros([n_dims, n_dims], dtype=np.bool)
-        # Find the lower triangle indices
-        tri_indices = np.tril_indices(n_dims, k=-1)
-        mask[tri_indices] = True
-        gradient[:, mask] = gradient[:, mask.T]
-        gradient = gradient.reshape([-1, n_dims ** 2])
+        # reshape gradient
+        # second_grad:  n_pixels  x  (n_channels x n_dims)
+        second_grad = second_grad.as_vector(keep_channels=True)
 
-        # Reshape to keep the xs and ys separate
-        gradient = gradient.reshape([-1, n_dims, n_dims])
-        sd = dW_dp[:, :, None, :] * gradient[:, None, ...]
-        return np.sum(sd, axis=3)
+        # reshape gradient
+        # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
+        second_grad = np.reshape(second_grad, (-1, image.n_channels,
+                                               n_dims, n_dims))
 
-    def calculate_hessian(self, VT_dW_dp):
-        # Loop over every dimension and compute the individual Hessians, e.g:
-        #   Hx = Gx.T * Gx
-        # And then sum
-        # Sum over the pixels and dimensions in order to yield a p x q matrix
-        # n = number of pixels
-        # p,q = number of parameters
-        # d = number of dimensions
-        return np.einsum('npd, nqd', VT_dW_dp, VT_dW_dp)
+        # compute steepest descent images
+        # second_grad: n_pixels  x  n_channels  x            x n_dims x n_dims
+        # dW_dp:       n_pixels  x              x  n_params  x n_dims x
+        # sdi:         n_pixels  x  n_channels  x  n_params
+        sdi = np.sum(dW_dp[:, None, :, :, None] *
+                     second_grad[:, :, None, :, :], axis=3).swapaxes(2, 3)
 
-    def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = self._calculate_gradients(IWxp)
-        IWxp_gradients = self.__regularise_gradients(IWxp_gradients)
+        # reshape steepest descent images
+        # sdi:  (n_pixels x n_channels)  x  n_params
+        return np.reshape(sdi, (-1, dW_dp.shape[1]))
 
-        IWxp_pixels = IWxp_gradients.as_vector(keep_channels=True)
-        T_pixels = self.__template_gradients.as_vector(keep_channels=True)
+    def calculate_hessian(self, sdi):
+        # compute hessian
+        # sdi:      (n_pixels x n_channels x n_dims)  x  n_parameters
+        # hessian:             n_parameters           x  n_parameters
+        return sdi.T.dot(sdi)
 
-        error_imgs = IWxp_pixels - T_pixels
-        self._error_img = np.sum(error_imgs, 1)
+    def steepest_descent_update(self, sdi, IWxp, template):
+        # compute IWxp regularized gradient
+        # gradient:  height  x  width  x  (n_channels x n_dims)
+        IWxp_gradient = self._calculate_gradients(IWxp)
+        IWxp_gradient = self.__regularise_gradients(IWxp_gradient)
 
-        # Compute steepest descent update for each dimension, e.g:
-        # sd_x = Gx.T * error_img_x
-        # Then sd_x + sd_y + ...
-        # Sum over pixels and dimensions to leave just the parameter updates,
-        # n = number of pixels
-        # p = number of parameters
-        # d = number of dimensions
-        return np.einsum('npd, nd', VT_dW_dp, error_imgs)
+        # compute vectorized error_image
+        # _error_img:  (n_pixels x n_channels x n_dims)
+        self._error_img = (IWxp_gradient.as_vector() -
+                           self.__template_gradients.as_vector())
+
+        # compute steepest descent update
+        # sdi:         (n_pixels x n_channels x n_dims)  x  n_parameters
+        # _error_img:  (n_pixels x n_channels x n_dims)
+        # sdu:                    n_parameters
+        return sdi.T.dot(self._error_img)
 
 
 class GradientCorrelation(Residual):
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
-        gradients = self._calculate_gradients(image, forward=forward)
-        first_grad = gradients.as_vector(keep_channels=True)
+        n_dims = image.n_dims
 
-        # Axis 0 = y, Axis 1 = x
-        # Therefore, calculate the angle between the gradients
+        # compute gradient
+        # gradient:  height  x  width  x  (n_channels x n_dims)
+        gradient_img = self._calculate_gradients(image, forward=forward)
+
+        # reshape gradient
+        # first_grad:  n_pixels  x  (n_channels x n_dims)
+        first_grad = gradient_img.as_vector(keep_channels=True)
+
+        # reshape gradient
+        # gradient:  n_pixels  x  n_channels  x  n_dims
+        first_grad = np.reshape(first_grad, (-1, image.n_channels,
+                                             image.n_dims))
+
+        # compute IGOs (remember axis 0 is y, axis 1 is x)
+        # phi:       n_pixels  x  n_channels
+        # _cos_phi:  n_pixels  x  n_channels
+        # _sin_phi:  n_pixels  x  n_channels
         phi = np.angle(first_grad[..., 1] + first_grad[..., 0] * 1j)
         self._cos_phi = np.cos(phi)
         self._sin_phi = np.sin(phi)
 
-        # Concatenate the sin and cos so that we can take the second
+        # concatenate sin and cos terms so that we can take the second
         # derivatives correctly. sin(phi) = y and cos(phi) = x which is the
         # correct ordering when multiplying against the warp Jacobian
+        # _cos_phi:     n_pixels  x  n_channels
+        # _sin_phi:     n_pixels  x  n_channels
+        # angle_grads:  n_pixels  x  n_channels x  n_dims
         angle_grads = np.concatenate([self._sin_phi[..., None],
-                                      self._cos_phi[..., None]], axis=1)
-        angle_grads = gradients.from_vector(angle_grads)
-        second_grad = self._calculate_gradients(angle_grads).as_vector(
-            keep_channels=True)
-        # Fix the derivatives - yx = xy
-        second_grad[..., 1] = second_grad[..., 2]
+                                      self._cos_phi[..., None]], axis=2)
 
-        # Jacobian of axis 1 values (x)
-        G1 = np.sum(-self._sin_phi[..., None, None] *
-                    dW_dp * second_grad[:, None, 2:], axis=2)
+        # reshape angle_grads
+        # gradient:  height  x  width  x  (n_channels x n_dims)
+        angle_grads = np.reshape(angle_grads, (first_grad.shape[0], -1))
+        angle_grads = gradient_img.from_vector(angle_grads)
 
-        # Jacobian of axis 0 values (y)
-        G0 = np.sum(self._cos_phi[..., None, None] *
-                    dW_dp * second_grad[:, None, :2], axis=2)
+        # compute IGOs gradient
+        # second_grad:  height  x  width  x  (n_channels x n_dims x n_dims)
+        second_grad = self._calculate_gradients(angle_grads)
 
+        # reshape gradient
+        # second_grad:  n_pixels  x  (n_channels x n_dims)
+        second_grad = second_grad.as_vector(keep_channels=True)
+
+        # reshape IGOs gradient
+        # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
+        second_grad = np.reshape(second_grad, (-1, image.n_channels,
+                                               n_dims, n_dims))
+
+        # complete full IGOs gradient computation
+        # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
+        second_grad[..., 1] = (-self._sin_phi[..., None] *
+                               second_grad[..., 1])
+        second_grad[..., 0] = (self._cos_phi[..., None] *
+                               second_grad[..., 0])
+
+        # compute steepest descent images
+        # second_grad: n_pixels  x  n_channels  x            x n_dims x n_dims
+        # dW_dp:       n_pixels  x              x  n_params  x n_dims x
+        # sdi:         n_pixels  x  n_channels  x  n_params
+        sdi = np.sum(np.sum(dW_dp[:, None, :, :, None] *
+                            second_grad[:, :, None, :, :], axis=3), axis=3)
+
+        # compute constant N
+        # _N:  1
         self._N = np.product(image.shape)
-        self._J = np.sum([G0, G1], axis=0)
 
-        return G0, G1
+        # reshape steepest descent images
+        # sdi:  (n_pixels x n_channels)  x  n_params
+        return np.reshape(sdi, (-1, dW_dp.shape[1]))
 
-    def calculate_hessian(self, VT_dW_dp):
-        G0, G1 = VT_dW_dp
-        G0 = G0.T.dot(G0)
-        G1 = G1.T.dot(G1)
+    def calculate_hessian(self, sdi):
+        # compute hessian
+        # sdi:      (n_pixels x n_channels x n_dims)  x  n_parameters
+        # hessian:             n_parameters           x  n_parameters
+        return sdi.T.dot(sdi)
 
-        return G0 + G1
+    def steepest_descent_update(self, sdi, IWxp, template):
+        # compute IWxp gradient
+        # IWxp_gradient:  height  x  width  x  (n_channels x n_dims)
+        IWxp_gradient = self._calculate_gradients(IWxp)
 
-    def steepest_descent_update(self, VT_dW_dp, IWxp, template):
-        IWxp_gradients = self._calculate_gradients(IWxp)
-        IWxp_grads = IWxp_gradients.as_vector(keep_channels=True)
+        # reshape IWxp gradient
+        # IWxp_gradient:  n_pixels  x  (n_channels x n_dims)
+        IWxp_gradient = IWxp_gradient.as_vector(keep_channels=True)
 
-        # Axis 0 = y, Axis 1 = x
-        # Therefore, calculate the angle between the gradients
-        phi = np.angle(IWxp_grads[..., 1] + IWxp_grads[..., 0] * 1j)
+        # reshape IWxp first gradient
+        # IWxp_gradient:  n_pixels  x  n_channels  x  n_dims
+        IWxp_gradient = np.reshape(IWxp_gradient, (-1, IWxp.n_channels,
+                                                   IWxp.n_dims))
+
+        # compute IGOs (remember axis 0 is y, axis 1 is x)
+        # phi:           n_pixels  x  n_channels
+        # IWxp_cos_phi:  n_pixels  x  n_channels
+        # IWxp_sin_phi:  n_pixels  x  n_channels
+        phi = np.angle(IWxp_gradient[..., 1] + IWxp_gradient[..., 0] * 1j)
         IWxp_cos_phi = np.cos(phi)
         IWxp_sin_phi = np.sin(phi)
 
-        # Calculate the angular error
-        ang_err = self._cos_phi * IWxp_sin_phi - self._sin_phi * IWxp_cos_phi
-        self._error_img = ang_err
+        # compute angular error
+        # _error_img:  (n_pixels x n_channels)
+        self._error_img = (self._cos_phi * IWxp_sin_phi -
+                           self._sin_phi * IWxp_cos_phi).flatten()
 
-        # Calculate the step size
-        JT_Sdelta = self._J.T.dot(ang_err)
+        # compute steepest descent update
+        # sdi:         (n_pixels x n_channels)  x  n_parameters
+        # _error_img:  (n_pixels x n_channels)
+        # sdu:             n_parameters
+        sdu = sdi.T.dot(self._error_img)
 
-        qp = IWxp_cos_phi * self._cos_phi + IWxp_sin_phi * self._sin_phi
-        qp = np.sum(qp)
-
+        # compute step size
+        # qp:  1
+        # l:   1
+        qp = np.sum(IWxp_cos_phi * self._cos_phi +
+                    IWxp_sin_phi * self._sin_phi)
         l = self._N / qp
-        image_error = l * JT_Sdelta
 
-        return image_error
+        # compute steepest descent update
+        # l:                  1
+        # sdu:           n_parameters
+        # weighted_sdu:  n_parameters
+        return l * sdu
