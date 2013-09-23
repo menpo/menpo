@@ -20,11 +20,11 @@ References
        IJCAI. Vol. 81. 1981.
 """
 import abc
+import copy
 import numpy as np
 from numpy.fft import fftshift, fftn
 import scipy.linalg
 from pybug.convolution import log_gabor
-from pybug.image import Image
 
 
 class Residual(object):
@@ -249,7 +249,7 @@ class ECC(Residual):
 
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
-        new_im = Image(image.pixels, mask=image.mask)
+        new_im = copy.deepcopy(image.pixels, mask=image.mask)
         i = new_im.pixels
         i -= np.mean(i)
         i /= scipy.linalg.norm(i)
