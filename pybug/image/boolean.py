@@ -34,7 +34,7 @@ class BooleanNDImage(AbstractNDImage):
         return cls(image_data_with_channel[..., 0])
 
     @classmethod
-    def blank(cls, shape, fill=True):
+    def blank(cls, shape, fill=True, **kwargs):
         r"""
         Returns a blank :class:`BooleanNDImage` of the requested shape
 

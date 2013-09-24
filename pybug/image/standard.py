@@ -93,7 +93,7 @@ class RGBImage(Abstract2DImage):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def blank(cls, shape, fill=0, mask=None):
+    def blank(cls, shape, fill=0, mask=None, **kwargs):
         r"""
         Returns a blank image
 
@@ -219,7 +219,7 @@ class IntensityImage(Abstract2DImage):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def blank(cls, shape, fill=0, mask=None):
+    def blank(cls, shape, fill=0, mask=None, **kwargs):
         r"""
         Returns a blank IntensityImage of the requested shape.
 
