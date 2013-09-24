@@ -6,12 +6,6 @@ from pybug.warp.cinterp import interp2
 def __cinterp2(pixels, points_to_sample, **kwargs):
     mode = kwargs.get('mode', 'bilinear')
 
-    # If we've been passed a masked image, which don't have a channel dimension
-    # then we add one
-    # TODO: This could be very slow, can't masked images be 3 dimensional as well?
-    if not len(pixels.shape) == 3:
-        pixels = np.array(pixels[..., None], dtype=np.float64)
-
     return interp2(pixels, points_to_sample[0, :], points_to_sample[1, :],
                    mode=mode)
 
@@ -20,10 +14,6 @@ def __scipy(pixels, points_to_sample, **kwargs):
     sampled_pixel_values = []
     mode = kwargs.get('mode', 'constant')
     order = kwargs.get('order', 1)
-
-    # TODO: This could be very slow, can't masked images be 3 dimensional as well?
-    if not len(pixels.shape) == 3:
-        pixels = pixels[..., None]
 
     # Loop over every channel in image
     for i in xrange(pixels.shape[2]):
@@ -191,7 +181,8 @@ def _base_warp(image, template_image, transform, interpolator, warp_mask=False,
         The warped image. This is a copy of the original images with the pixel
         information changed to represent the warping.
     """
-    template_points = template_image.mask.true_indices
+    generic_mask = template_image.mask
+    template_points = generic_mask.true_indices
     points_to_sample = transform.apply(template_points).T
     # we want to sample each channel in turn, returning a vector of sampled
     # pixels. Store those in a (n_pixels, n_channels) array.
@@ -203,8 +194,11 @@ def _base_warp(image, template_image, transform, interpolator, warp_mask=False,
     # note that as Image.as_vector() returns a vector with stride
     # [R1 G1 B1, R2 ....] we can flatten our sampled_pixel_values to get the
     # normal Image vector form.
-    warped_image = template_image.from_vector(sampled_pixel_values.flatten(),
-                                              n_channels=image.n_channels)
+    warped_image = type(image).blank(generic_mask.shape, mask=generic_mask,
+                                     n_channels=image.n_channels)
+    warped_image = warped_image.update_from_vector(
+        sampled_pixel_values.flatten())
+
     if warp_mask:
         # note that we need to set the order to 0 for mapping binary data
         kwargs.setdefault('order', 0)

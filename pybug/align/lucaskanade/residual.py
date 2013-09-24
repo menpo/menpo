@@ -20,11 +20,12 @@ References
        IJCAI. Vol. 81. 1981.
 """
 import abc
+import copy
 import numpy as np
 from numpy.fft import fftshift, fftn
 import scipy.linalg
 from pybug.convolution import log_gabor
-from pybug.image import Image
+from pybug.image import MaskedNDImage
 
 
 class Residual(object):
@@ -237,10 +238,12 @@ class GaborFourier(Residual):
 
         # make sdi images
         # sdi_img:  height  x  width  x  n_channels  x  n_params
-        sdi_img_shape = (gradient_img.height, gradient_img.width,
-                         image.n_channels * dW_dp.shape[1])
-        sdi_img = Image(np.zeros(sdi_img_shape), mask=gradient_img.mask)
-        sdi_img = sdi_img.from_vector(sdi.flatten())
+        sdi_img_shape = (gradient_img.height, gradient_img.width)
+        sdi_img_channels = image.n_channels * dW_dp.shape[1]
+        sdi_img = MaskedNDImage.blank(sdi_img_shape,
+                                      n_channels=sdi_img_channels,
+                                      mask=gradient_img.mask)
+        sdi_img = sdi_img.update_from_vector(sdi.flatten())
 
         # compute FFT over each channel, parameter and dimension
         # fft_sdi:  height  x  width  x  n_channels  x  n_params
@@ -313,7 +316,7 @@ class ECC(Residual):
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
         # ToDo: is this supposed to be per channel normalization?
-        new_im = Image(image.pixels, mask=image.mask)
+        new_im = copy.deepcopy(image)
         i = new_im.pixels
         i -= np.mean(i)
         i /= scipy.linalg.norm(i)
