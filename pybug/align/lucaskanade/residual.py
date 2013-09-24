@@ -316,7 +316,7 @@ class ECC(Residual):
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
         # ToDo: is this supposed to be per channel normalization?
-        new_im = Image(image.pixels, mask=image.mask)
+        new_im = copy.deepcopy(image)
         i = new_im.pixels
         i -= np.mean(i)
         i /= scipy.linalg.norm(i)
