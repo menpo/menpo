@@ -1,3 +1,4 @@
+import abc
 import numpy as np
 from pybug.image.masked import MaskedNDImage
 from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
@@ -36,6 +37,7 @@ class AbstractSpatialImage(MaskedNDImage):
 
         Default: None (no texture)
     """
+
     def __init__(self, image_data, mask=None, trilist=None,
                  tcoords=None, texture=None):
         super(AbstractSpatialImage, self).__init__(image_data, mask=mask)
@@ -43,13 +45,30 @@ class AbstractSpatialImage(MaskedNDImage):
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
                              .format(self.n_dims))
-        self.mesh = self._create_mesh_from_shape(trilist, tcoords,
-                                                 texture)
+        self._trilist = trilist
+        self._tcoords = tcoords
+        self._texture = texture
+        self._mesh = None
 
+    @property
+    def mesh(self):
+        if self._mesh is None:
+            self._mesh = self._create_mesh_from_shape()
+        return self._mesh
+
+    def rebuild_mesh(self):
+        self._mesh = None
+
+    def update_from_vector(self, flattened):
+        # Regenerate mesh and then call the base class update method
+        self.rebuild_mesh()
+        MaskedNDImage.update_from_vector(self, flattened)
+
+    @abc.abstractmethod
     def _generate_points(self):
-        raise NotImplementedError()
+        pass
 
-    def _create_mesh_from_shape(self, trilist, tcoords, texture):
+    def _create_mesh_from_shape(self):
         r"""
         Creates a mesh from the spatial information.
 
@@ -77,13 +96,17 @@ class AbstractSpatialImage(MaskedNDImage):
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
         from scipy.spatial import Delaunay
         points = self._generate_points()
-        if trilist is None:
+
+        if self._trilist is None:
             # Delaunay the 2D surface.
             trilist = Delaunay(points[..., :2]).simplices
-        if texture is None:
+        else:
+            trilist = self.trilist
+
+        if self._texture is None:
             return TriMesh(points, trilist)
         else:
-            if tcoords is None:
+            if self._tcoords is None:
                 tcoords = self.mask.true_indices.astype(np.float64)
                 # scale to [0, 1]
                 tcoords = tcoords / np.array(self.shape)
@@ -91,7 +114,9 @@ class AbstractSpatialImage(MaskedNDImage):
                 tcoords = np.fliplr(tcoords)
                 # move origin to top left
                 tcoords[:, 1] = 1.0 - tcoords[:, 1]
-            return TexturedTriMesh(points, trilist, tcoords, texture)
+            else:
+                tcoords = self._tcoords
+            return TexturedTriMesh(points, trilist, tcoords, self._texture)
 
     def _view(self, figure_id=None, new_figure=False, mode='image',
               channel=None, masked=True, **kwargs):
@@ -252,6 +277,10 @@ class DepthImage(AbstractSpatialImage):
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
+        if image_data_with_channel.ndim != 3 or \
+           image_data_with_channel.shape[-1] != 1:
+            raise ValueError("DepthImage must be constructed with 3 "
+                             "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
 
     def _generate_points(self):

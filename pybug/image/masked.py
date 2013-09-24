@@ -100,7 +100,7 @@ class MaskedNDImage(AbstractNDImage):
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls(pixels, mask=mask)
+        return cls._init_with_channel(pixels, mask=mask)
 
     @property
     def n_true_pixels(self):

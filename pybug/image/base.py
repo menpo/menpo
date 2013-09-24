@@ -1,3 +1,4 @@
+import abc
 import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
@@ -45,6 +46,9 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         Array representing the image pixels, with the last axis being
         channels.
     """
+
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, image_data):
         Landmarkable.__init__(self)
         # asarray will pass through ndarrays unchanged

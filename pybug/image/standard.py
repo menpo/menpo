@@ -43,6 +43,10 @@ class Abstract2DImage(MaskedNDImage):
         elif image.dtype != np.float64:
             # convert to double
             image = image.astype(np.float64)
+        # Ensure values are between 0 and 1 inclusive
+        if np.any(image > 1.0) or np.any(image < 0.0):
+            raise ValueError("2D Images can only have values in the "
+                             "range [0-1]")
         super(Abstract2DImage, self).__init__(image, mask=mask)
 
     # noinspection PyUnresolvedReferences
@@ -90,39 +94,6 @@ class RGBImage(Abstract2DImage):
             raise ValueError("Trying to build an RGBImage with {} channels -"
                              " you must provide a numpy array of size (M, N,"
                              " 3)".format(self.n_channels))
-
-    # noinspection PyMethodOverriding
-    @classmethod
-    def blank(cls, shape, fill=0, mask=None, **kwargs):
-        r"""
-        Returns a blank image
-
-        Parameters
-        ----------
-        shape : tuple or list
-            The shape of the image
-        fill : int, optional
-            The value to fill all pixels with
-
-            Default: 0
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
-            An optional mask that can be applied.
-
-        Returns
-        -------
-        blank_image : :class:`RGBImage`
-            A new Image of the requested size.
-        """
-        # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(shape)
-        if fill == 0:
-            pixels = np.zeros(shape + (3,), dtype=np.float64)
-        elif fill < 0 or fill > 1:
-            raise ValueError("RGBImage can only have values in the range "
-                             "[0-1] (tried to fill with {})".format(fill))
-        else:
-            pixels = np.ones(shape + (3,), dtype=np.float64) * fill
-        return cls(pixels, mask=mask)
 
     def __str__(self):
         return ('{} RGBImage. '
@@ -215,41 +186,11 @@ class IntensityImage(Abstract2DImage):
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
+        if image_data_with_channel.ndim != 3 or \
+           image_data_with_channel.shape[-1] != 1:
+            raise ValueError("IntensityImage must be constructed with 3 "
+                             "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
-
-    # noinspection PyMethodOverriding
-    @classmethod
-    def blank(cls, shape, fill=0, mask=None, **kwargs):
-        r"""
-        Returns a blank IntensityImage of the requested shape.
-
-        Parameters
-        ----------
-        shape : tuple or list
-            The shape of the image
-        fill : int, optional
-            The value to fill all pixels with
-
-            Default: 0
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
-            An optional mask that can be applied.
-
-        Returns
-        -------
-        blank_image : :class:`IntensityImage`
-            A new Image of the requested size.
-        """
-        # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(shape)
-        if fill == 0:
-            pixels = np.zeros(shape, dtype=np.float64)
-        elif fill < 0 or fill > 1:
-            raise ValueError("IntensityImage can only have values in the "
-                             "range [0-1] "
-                             "(tried to fill with {})".format(fill))
-        else:
-            pixels = np.ones(shape, dtype=np.float64) * fill
-        return cls(pixels, mask=mask)
 
     def __str__(self):
         return ('{} IntensityImage. '
