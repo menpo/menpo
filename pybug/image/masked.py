@@ -201,7 +201,7 @@ class MaskedNDImage(AbstractNDImage):
         image_data[self.mask.mask] = pixels_per_channel
         # call the constructor accounting for the fact that some image
         # classes expect a channel axis and some don't.
-        return type(self)(image_data, mask=self.mask)
+        return type(self)._init_with_channel(image_data, mask=self.mask)
 
     def update_from_vector(self, flattened):
         r"""
