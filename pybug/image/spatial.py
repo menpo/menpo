@@ -243,8 +243,8 @@ class DepthImage(AbstractSpatialImage):
 
     def __init__(self, image_data, mask=None, trilist=None,
                  tcoords=None, texture=None):
-        super(DepthImage, self).__init__(image_data, mask, trilist, tcoords,
-                                         texture)
+        super(DepthImage, self).__init__(image_data[..., None], mask, trilist,
+                                         tcoords, texture)
         if self.n_channels != 1:
             raise ValueError("Trying to build a DepthImage with {} channels "
                              "- has to have exactly 1 (for Z values)"
