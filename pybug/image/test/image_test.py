@@ -64,8 +64,10 @@ def test_mask_true_bounding_extent():
     mask.mask[0, 13, 5] = True
     mask.mask[5, 2, 4] = True
     tbe = mask.bounds_true()
-    true_extends = np.array([[0,  5], [2, 13], [4,  5]])
-    assert_equal(tbe, true_extends)
+    true_extends_mins = np.array([0, 2, 4])
+    true_extends_maxs = np.array([5, 13, 5])
+    assert_equal(tbe[0], true_extends_mins)
+    assert_equal(tbe[1], true_extends_maxs)
 
 
 def test_rgb_image_creation():
@@ -82,7 +84,7 @@ def test_2d_crop_without_mask():
     pixels = np.ones((120, 120, 3))
     im = RGBImage(pixels)
 
-    cropped_im = im.cropped_copy(slice(10, 20), slice(50, 60))
+    cropped_im = im.cropped_copy([10, 50], [20, 60])
 
     assert(cropped_im.shape == (10, 10))
     assert(cropped_im.n_channels == 3)
@@ -94,15 +96,6 @@ def test_2d_crop_with_mask():
     mask = np.zeros_like(pixels[..., 0])
     mask[10:100, 20:30] = 1
     im = RGBImage(pixels, mask=mask)
-    cropped_im = im.cropped_copy(slice(0, 20), slice(0, 60))
+    cropped_im = im.cropped_copy([0, 0], [20, 60])
     assert(cropped_im.shape == (20, 60))
     assert(np.alltrue(cropped_im.shape))
-
-
-
-@raises(AssertionError)
-def test_crop_wrong_arg_num_raises_assertionerror():
-    pixels = np.ones((120, 120, 3))
-    im = RGBImage(pixels)
-
-    im.cropped_copy(slice(0, 20))
