@@ -25,6 +25,7 @@ import numpy as np
 from numpy.fft import fftshift, fftn
 import scipy.linalg
 from pybug.convolution import log_gabor
+from pybug.image import MaskedNDImage
 
 
 class Residual(object):
@@ -237,10 +238,12 @@ class GaborFourier(Residual):
 
         # make sdi images
         # sdi_img:  height  x  width  x  n_channels  x  n_params
-        sdi_img_shape = (gradient_img.height, gradient_img.width,
-                         image.n_channels * dW_dp.shape[1])
-        sdi_img = Image(np.zeros(sdi_img_shape), mask=gradient_img.mask)
-        sdi_img = sdi_img.from_vector(sdi.flatten())
+        sdi_img_shape = (gradient_img.height, gradient_img.width)
+        sdi_img_channels = image.n_channels * dW_dp.shape[1]
+        sdi_img = MaskedNDImage.blank(sdi_img_shape,
+                                      n_channels=sdi_img_channels,
+                                      mask=gradient_img.mask)
+        sdi_img = sdi_img.update_from_vector(sdi.flatten())
 
         # compute FFT over each channel, parameter and dimension
         # fft_sdi:  height  x  width  x  n_channels  x  n_params
