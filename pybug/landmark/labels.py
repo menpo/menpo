@@ -57,7 +57,7 @@ def imm_58_points(landmarks):
         raise LabellingError("IMM's 58 points mark-up expects at least 58 "
                              "points. However, {0}".format(e.message))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    return LandmarkManager(landmarks.target, label, landmark_dict)
 
 
 def ibug_68_points(landmarks):
@@ -117,7 +117,7 @@ def ibug_68_points(landmarks):
         raise LabellingError("ibug's 68 points mark-up expects at least 68 "
                              "points. However, {0}".format(e.message))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    return LandmarkManager(landmarks.target, label, landmark_dict)
 
 
 def ibug_68_contour(landmarks):
@@ -168,7 +168,7 @@ def ibug_68_contour(landmarks):
         raise LabellingError("ibug's 68 points mark-up expects at least 68 "
                              "points. However, {0}".format(e.message))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    return LandmarkManager(landmarks.target, label, landmark_dict)
 
 
 def ibug_68_trimesh(landmarks):
@@ -240,7 +240,7 @@ def ibug_68_trimesh(landmarks):
         raise LabellingError("ibug's 68 points mark-up expects at least 68 "
                              "points. However, {0}".format(e.message))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    return LandmarkManager(landmarks.target, label, landmark_dict)
 
 # TODO: ibug_68_all? imports points, contour and trimesh?
 
@@ -271,7 +271,7 @@ def labeller(landmarkables, label, label_func):
         The list of modified landmarkables (this is just for convenience,
         the list will actually be modified in place)
     """
-    landmarks = [label_func(l.get_landmark_set(label))
+    landmarks = [label_func(l.landmarks[label])
                  for l in landmarkables]
 
     for (obj, lmarks) in zip(landmarkables, landmarks):
