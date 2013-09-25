@@ -13,7 +13,9 @@ class Landmarkable(object):
     managed by a :class:`pybug.landmark.base.LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
     Landmarks can be N-dimensional and are expected to be some
-    subclass of :class:`pybug.shape.pointcloud.Pointcloud`.
+    subclass of :class:`pybug.shape.pointcloud.Pointcloud`. These landmarks
+    are wrapped inside a :class:`LandmarkGroup` object that performs
+    useful tasks like label filtering and viewing.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -65,6 +67,19 @@ class LandmarkManager(Transformable):
         return iter(self._landmark_groups.iteritems())
 
     def __setitem__(self, group_label, value):
+        """
+        Sets a new landmark group for the given label. This can be set using
+        an existing landmark group, or using a PointCloud. Existing landmark
+        groups will have their target reset. If a PointCloud is provided then
+        all landmarks belong to a single label `all`.
+
+        Parameters
+        ----------
+        group_label : String
+            Label of new group.
+        value : LandmarkGroup or PointCloud
+            The new landmark group to set.
+        """
         from pybug.shape import PointCloud
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
@@ -80,6 +95,19 @@ class LandmarkManager(Transformable):
         self._landmark_groups[group_label]._target = self._target
 
     def __getitem__(self, group_label):
+        """
+        Returns the group for the provided label.
+
+        Parameters
+        ---------
+        group_label : String
+            The label of the group.
+
+        Returns
+        -------
+        lmark_group : :class:`LandmarkGroup`
+            The matching landmark group.
+        """
         return self._landmark_groups[group_label]
 
     @property
@@ -120,6 +148,15 @@ class LandmarkManager(Transformable):
         return self._landmark_groups.keys()
 
     def update(self, landmark_manager):
+        """
+        Update the manager with the groups from another manager. This performs
+        a deep copy on the other landmark manager and resets it's target.
+
+        Parameters
+        ----------
+        landmark_manager : :class:`LandmarkManager`
+            The landmark manager to copy from.
+        """
         new_landmark_manager = copy.deepcopy(landmark_manager)
         new_landmark_manager._target = self.__target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
@@ -132,7 +169,21 @@ class LandmarkManager(Transformable):
 
 class LandmarkGroup(Viewable):
     """
+    An immutable object that holds a PointCloud (or a subclass) and stores
+    labels for each point. These labels are defined via masks on the
+    pointcloud. For this reason, the pointcloud is considered to be immutable.
 
+    Parameters
+    ----------
+    target : :class:`pybug.landmarks.base.Landmarkable`
+        The parent object of this landmark group.
+    group_label : String
+        The label of the group.
+    pointcloud : :class:`pybug.shape.pointcloud.PointCloud`
+        The pointcloud representing the landmarks.
+    labels_to_masks : dict of string to boolean ndarrays
+        For each label, the mask that specifies the indices in to the
+        pointcloud that belong to the label.
     """
 
     def __init__(self, target, group_label, pointcloud, labels_to_masks):
@@ -285,6 +336,20 @@ class LandmarkGroup(Viewable):
         return self._new_group_with_only_labels(labels_to_keep)
 
     def _new_group_with_only_labels(self, labels):
+        """
+        Deal with changing indices when you add and remove points. In this case
+        we only deal with building a new dataset that keeps masks.
+
+        Parameters
+        ----------
+        labels : [String]
+            List of strings of the labels to keep
+
+        Returns
+        -------
+        lmark_group : :class:`LandmarkGroup`
+            The new landmark group with only the requested labels.
+        """
         set_difference = set(labels).difference(self.labels)
         if len(set_difference) > 0:
             raise ValueError('Labels {0} do not exist in the landmark '
