@@ -1,5 +1,6 @@
 import abc
 from pybug.base import Vectorizable
+from pybug.visualize.base import Viewable
 
 
 class Transform(Vectorizable):
@@ -14,10 +15,11 @@ class Transform(Vectorizable):
     def apply(self, x, **kwargs):
         r"""
         Applies this transform to ``x``. If ``x`` is :class:`Transformable`,
-        ``x`` will be handed this transform object to transform itself. If not,
-        ``x`` is assumed to be a numpy array. The transformation will be non
-        destructive, returning the transformed version. Any ``kwargs`` will be
-        passed to the specific transform :meth:`_apply` methods.
+        ``x`` will be handed this transform object to transform itself
+        destructively. If not, ``x`` is assumed to be a numpy array. The
+        transformation will be non destructive, returning the transformed
+        version. Any ``kwargs`` will be passed to the specific transform
+        :meth:`_apply` methods.
 
         Parameters
         ----------
@@ -124,6 +126,28 @@ class Transform(Vectorizable):
         :type: int
         """
         pass
+
+
+class AlignmentTransform(Transform, Viewable):
+
+    def __init__(self, source, target):
+        self.source = source
+        self.aligned_source = None
+        self.target = target
+        if source.n_dims != target.ndims:
+            raise ValueError("Source and target must have the same "
+                             "dimensionality")
+        if source.n_points != target.n_points:
+            raise ValueError("Source and target must have the same number of"
+                             " points")
+
+    @property
+    def n_dims(self):
+        return self.source.n_dims
+
+    @property
+    def n_points(self):
+        return self.source.n_points
 
 
 class Transformable(object):
