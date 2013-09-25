@@ -64,8 +64,18 @@ class LandmarkManager(Transformable):
         """
         return iter(self._landmark_groups.iteritems())
 
-    def __setitem__(self, group_label, landmark_group):
-        self._landmark_groups[group_label] = copy.deepcopy(landmark_group)
+    def __setitem__(self, group_label, value):
+        from pybug.shape import PointCloud
+        if isinstance(value, PointCloud):
+            lmark_group = LandmarkGroup(
+                None, None, value,
+                {'all': np.ones(value.n_points, dtype=np.bool)})
+        elif isinstance(value, LandmarkGroup):
+            lmark_group = copy.deepcopy(value)
+        else:
+            raise ValueError('Valid types are PointCloud or LandmarkGroup')
+
+        self._landmark_groups[group_label] = lmark_group
         self._landmark_groups[group_label]._group_label = group_label
         self._landmark_groups[group_label]._target = self._target
 
