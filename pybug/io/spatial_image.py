@@ -242,8 +242,8 @@ class SpatialImageImporter(Importer):
                                                                   lmark_group)
 
         if self.mesh_landmark_importer is not None:
-            label, lmark_dict = self.mesh_landmark_importer.build()
-            self.image.mesh.add_landmark_set(label, lmark_dict)
+            lmark_group = self.mesh_landmark_importer.build()
+            self.image.mesh.landmarks[lmark_group.group_label] = lmark_group
 
         return self.image
 
