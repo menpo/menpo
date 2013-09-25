@@ -1,4 +1,5 @@
 import abc
+from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.visualize.base import Viewable
 
@@ -11,6 +12,114 @@ class Transform(Vectorizable):
     """
 
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, source=None, target=None):
+        self._source = source
+        self.aligned_source = None
+        self._target = target
+
+    @classmethod
+    def align(cls, source, target, **kwargs):
+        r"""
+        Alternative Transform constructor. Constructs a Transform by finding
+        the optimal transform to align source to target.
+
+        Parameters
+        ----------
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+        """
+        if source.n_dims != target.ndims:
+            raise ValueError("Source and target must have the same "
+                             "dimensionality")
+        if source.n_points != target.n_points:
+            raise ValueError("Source and target must have the same number of"
+                             " points")
+        return cls._align(source, target, **kwargs)
+
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        pass
+
+    @abc.abstractproperty
+    def n_dims(self):
+        r"""`
+        The dimensionality of the transform.
+
+        :type: int
+        """
+        pass
+
+    @abc.abstractproperty
+    def n_parameters(self):
+        r"""
+        The number of parameters that determine the transform.
+
+        :type: int
+        """
+        pass
+
+    @property
+    def is_alignment_transform(self):
+        return self.source is not None and self.target is not None
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, value):
+        r"""
+        Updates this alignment transform to point to a new target.
+        """
+        if not self.is_alignment_transform:
+            raise NotImplementedError("Cannot update target for Transforms "
+                                      "not built with the align constructor")
+        else:
+            if value.n_dims != self.target.n_dims:
+                raise ValueError(
+                    "The current target is {}D, the new target is {}D - new "
+                    "target has to have the same dimensionality as the "
+                    "old".format(self.target.n_dims, value.n_dims))
+            elif value.n_points != self.target.n_points:
+                raise ValueError(
+                    "The current target has {} points, the new target has {} "
+                    "- new target has to have the same number of points as the"
+                    " old".format(self.target.n_points, value.n_points))
+            else:
+                old_target = self._target
+                self._target = value
+                self._update_from_target(old_target)
+
+    @abc.abstractmethod
+    def _update_from_target(self, old_target):
+        r"""
+        Updates this alignment transform based on the newly set target.
+        """
+        pass
+
+    def from_target(self, target):
+        r"""
+        Returns a new instance of this alignment transform with the source
+        unchanged but the target set to a newly provided target.
+
+        Parameters
+        ----------
+
+        target: :class:`pybug.shape.PointCloud`
+            The new target that should be used in this align transform.
+        """
+        new_transform = deepcopy(self)
+        new_transform.target = target
+        return new_transform
 
     def apply(self, x, **kwargs):
         r"""
@@ -33,12 +142,14 @@ class Transform(Vectorizable):
         transformed : same as ``x``
             The transformed array or object
         """
+
         def transform(x_):
             """
             Local closure which calls the ``_apply`` method with the ``kwargs``
             attached.
             """
             return self._apply(x_, **kwargs)
+
         try:
             return x._transform(transform)
         except AttributeError:
@@ -118,22 +229,14 @@ class Transform(Vectorizable):
         """
         pass
 
-    @abc.abstractproperty
-    def n_parameters(self):
-        r"""
-        Returns the number of parameters that determine the transform.
 
-        :type: int
-        """
-        pass
-
-
-class AlignmentTransform(Transform, Viewable):
+class AlignmentTransform(Transform):
+    r"""
+    :class:`Transform`s that are defined in terms of a source and target.
+    """
 
     def __init__(self, source, target):
-        self.source = source
-        self.aligned_source = None
-        self.target = target
+        super(AlignmentTransform, self).__init__(source=source, target=target)
         if source.n_dims != target.ndims:
             raise ValueError("Source and target must have the same "
                              "dimensionality")

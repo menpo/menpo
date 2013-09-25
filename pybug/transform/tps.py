@@ -36,25 +36,29 @@ class TPS(AlignmentTransform):
         super(TPS, self).__init__(source, target)
         if self.n_dims != 2:
             raise DimensionalityError('TPS can only be used on 2D data.')
-        self.V = self.target.points.T.copy()
-        self.Y = np.hstack([self.V, np.zeros([2, 3])])
+        self.v = self.target.points.T.copy()
+        self.y = np.hstack([self.v, np.zeros([2, 3])])
         self.pairwise_norms = self.source.distance_to(self.source)
         if kernel is None:
             kernel = R2LogR2()
         self.kernel = kernel
-        self.K = self.kernel.phi(self.pairwise_norms)
-        self.P = np.concatenate(
+        self.k = self.kernel.phi(self.pairwise_norms)
+        self.p = np.concatenate(
             [np.ones([self.n_points, 1]), self.source.points], axis=1)
-        O = np.zeros([3, 3])
-        top_L = np.concatenate([self.K, self.P], axis=1)
-        bot_L = np.concatenate([self.P.T, O], axis=1)
-        self.L = np.concatenate([top_L, bot_L], axis=0)
-        self.coefficients = np.linalg.solve(self.L, self.Y.T)
+        o = np.zeros([3, 3])
+        top_l = np.concatenate([self.k, self.p], axis=1)
+        bot_l = np.concatenate([self.p.T, o], axis=1)
+        self.l = np.concatenate([top_l, bot_l], axis=0)
+        self.coefficients = np.linalg.solve(self.l, self.y.T)
 
-    def view(self, image=False):
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        return TPS(source, target)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
-        View the object. This plots the source points and vectors that
-        represent the shift from source to target.
+        View the AlignmentTransform. This plots the source points and vectors
+        that represent the shift from source to target.
 
         Parameters
         ----------
@@ -63,14 +67,7 @@ class TPS(AlignmentTransform):
 
             Default: ``False``
         """
-        self._view_2d(image=image)
-
-
-    def _view(self, image=False):
-        """
-        Visualize how points are affected by the warp in 2 dimensions.
-        """
-        view_2d_alignment(self.source.points, self.target.points, self)
+        return AlignmentViewer2d(figure_id, new_figure, self)
 
     def _apply(self, points, affine_free=False):
         """
@@ -99,11 +96,11 @@ class TPS(AlignmentTransform):
         y = points.points[..., 1][:, None]
         # calculate the affine coefficients of the warp
         # (C = Constant component, then X, Y respectively)
-        c_affine_C = self.coefficients[-3]
-        c_affine_X = self.coefficients[-2]
-        c_affine_Y = self.coefficients[-1]
+        c_affine_c = self.coefficients[-3]
+        c_affine_x = self.coefficients[-2]
+        c_affine_y = self.coefficients[-1]
         # the affine warp component
-        f_affine = c_affine_C + c_affine_X * x + c_affine_Y * y
+        f_affine = c_affine_c + c_affine_x * x + c_affine_y * y
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
         dist = self.source.distance_to(points)
@@ -162,22 +159,22 @@ class TPS(AlignmentTransform):
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)),
                             points.T],
                            axis=0)
-        inv_L = np.linalg.inv(self.L)
+        inv_L = np.linalg.inv(self.l)
 
-        dL_dx = np.zeros(self.L.shape + (n_lms,))
-        dL_dy = np.zeros(self.L.shape + (n_lms,))
+        dL_dx = np.zeros(self.l.shape + (n_lms,))
+        dL_dy = np.zeros(self.l.shape + (n_lms,))
         s = self.source.points[:, np.newaxis, :] - self.source.points
         r = distance.squareform(distance.pdist(self.source.points))
         r[r == 0] = 1
         aux = 2 * (1 + np.log(r**2))[..., None] * s
         dW_dx = np.zeros((n_pts, n_lms, 2))
         for i in np.arange(n_lms):
-            dK_dxyi = np.zeros((self.K.shape + (2,)))
+            dK_dxyi = np.zeros((self.k.shape + (2,)))
             dK_dxyi[i] = aux[i]
             dK_dxyi[:, i] = -aux[:, i]
 
-            dP_dxi = np.zeros_like(self.P)
-            dP_dyi = np.zeros_like(self.P)
+            dP_dxi = np.zeros_like(self.p)
+            dP_dyi = np.zeros_like(self.p)
             dP_dxi[i, 1] = -1
             dP_dyi[i, 2] = -1
 
@@ -189,16 +186,16 @@ class TPS(AlignmentTransform):
             dL_dy[:n_lms, n_lms:, i] = dP_dyi
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
-            aux3 = np.zeros((self.Y.shape[1], n_pts))
-            aux4 = np.zeros((self.Y.shape[1], n_pts))
+            aux3 = np.zeros((self.y.shape[1], n_pts))
+            aux4 = np.zeros((self.y.shape[1], n_pts))
             aux5 = (points - self.source[i, :])
             # TODO this is hardcoded and should be set based on kernel
             aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
             aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
-            dW_dx[:, i, 0] = (self.Y[0].dot(
+            dW_dx[:, i, 0] = (self.y[0].dot(
                 (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T +
                 self.coefficients[:, 0].dot(aux3))
-            dW_dx[:, i, 1] = (self.Y[1].dot(
+            dW_dx[:, i, 1] = (self.y[1].dot(
                 (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T +
                 self.coefficients[:, 1].dot(aux4))
 
@@ -219,7 +216,8 @@ class TPS(AlignmentTransform):
             The Jacobian of the transform wrt to the target landmarks evaluated
             at the previous points.
         """
-        pass
+        raise NotImplementedError("TPS jacobian_target is not implemented "
+                                  "yet.")
 
     # TODO: this is needed for composition
     def jacobian_points(self, points):
@@ -279,10 +277,10 @@ class TPS(AlignmentTransform):
         dist = self.source.distance_to(points_pc)
         kernel_dist = self.kernel.phi(dist)
         k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
-        inv_L = np.linalg.inv(self.L)
+        inv_L = np.linalg.inv(self.l)
 
-        dL_dx = np.zeros(self.L.shape + (n_lms,))
-        dL_dy = np.zeros(self.L.shape + (n_lms,))
+        dL_dx = np.zeros(self.l.shape + (n_lms,))
+        dL_dy = np.zeros(self.l.shape + (n_lms,))
         s = self.source.points[:, np.newaxis, :] - self.source.points
         r = distance.squareform(distance.pdist(self.source.points))
         r[r == 0] = 1
@@ -292,12 +290,12 @@ class TPS(AlignmentTransform):
         pseudo_target = np.hstack([self.source.points.T, np.zeros([2, 3])])
 
         for i in np.arange(n_lms):
-            dK_dxyi = np.zeros((self.K.shape + (2,)))
+            dK_dxyi = np.zeros((self.k.shape + (2,)))
             dK_dxyi[i] = aux[i]
             dK_dxyi[:, i] = -aux[:, i]
 
-            dP_dxi = np.zeros_like(self.P)
-            dP_dyi = np.zeros_like(self.P)
+            dP_dxi = np.zeros_like(self.p)
+            dP_dyi = np.zeros_like(self.p)
             dP_dxi[i, 1] = -1
             dP_dyi[i, 2] = -1
 
@@ -332,7 +330,7 @@ class TPS(AlignmentTransform):
         composed : :class:`TPSTransform`
             The result of the composition.
         """
-        pass
+        raise NotImplementedError("TPS compose is not implemented yet.")
 
     def inverse(self):
         """
@@ -343,7 +341,7 @@ class TPS(AlignmentTransform):
         inverse : :class:`TPSTransform`
             The inverse of the transform.
         """
-        pass
+        raise NotImplementedError("TPS inverse is not implemented yet.")
 
     @property
     def n_parameters(self):

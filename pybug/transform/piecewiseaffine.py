@@ -5,6 +5,7 @@ from pybug.exceptions import DimensionalityError
 from pybug.shape import TriMesh
 from pybug.transform import AffineTransform, Transform
 from pybug.transform.fastpwa import CLookupPWA
+from pybug.transform.base import AlignmentTransform
 
 
 class TriangleContainmentError(Exception):
@@ -21,7 +22,7 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class AbstractPWATransform(Transform):
+class AbstractPWATransform(AlignmentTransform):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -75,15 +76,6 @@ class AbstractPWATransform(Transform):
         :type: int
         """
         return self.source.n_tris
-
-    @property
-    def n_points(self):
-        r"""
-        The number of points in the source and target.
-
-        :type: int
-        """
-        return self.source.n_points
 
     @property
     def trilist(self):
@@ -217,11 +209,11 @@ class AbstractPWATransform(Transform):
     def as_vector(self):
         raise NotImplementedError("PWA as_vector is not implemented yet.")
 
-    def compose(self, a):
-        raise NotImplementedError("PWA compose is not implemented yet.")
-
     def from_vector(self, flattened):
         raise NotImplementedError("PWA from_vector is not implemented yet.")
+
+    def compose(self, a):
+        raise NotImplementedError("PWA compose is not implemented yet.")
 
     def inverse(self):
         raise NotImplementedError("PWA inverse is not implemented yet.")
