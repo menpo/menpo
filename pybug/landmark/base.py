@@ -1,8 +1,9 @@
 import abc
-import numpy as np
-from pybug.exceptions import DimensionalityError
+import copy
+from pybug.transform.base import Transformable
 from pybug.visualize import LandmarkViewer
 from pybug.visualize.base import Viewable
+import numpy as np
 
 
 class Landmarkable(object):
@@ -18,7 +19,17 @@ class Landmarkable(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self.landmarks = {}
+        super(Landmarkable, self).__init__()
+        self._landmarks = LandmarkManager(self)
+
+    @property
+    def landmarks(self):
+        return self._landmarks
+
+    @landmarks.setter
+    def landmarks(self, value):
+        self._landmarks = copy.deepcopy(value)
+        self._landmarks._target = self
 
     @property
     def n_landmark_groups(self):
@@ -27,105 +38,10 @@ class Landmarkable(object):
 
         :type: int
         """
-        return len(self.landmarks)
-
-    @property
-    def _lms(self):
-        r"""
-        Convenient access to landmarks. If there is only one landmark group
-        this returns the manager on that sole group. If not, returns 0.
-
-        Note that this is just an interactive session convenience - never
-        rely on this method in functions
-
-        :type: :class:`LandmarkManager` or None
-        """
-        if self.n_landmark_groups == 1:
-            return self.landmarks.values()[0]
-        else:
-            return None
-
-    def add_landmark_set(self, label, landmark_dict):
-        r"""
-        Add a new set of landmarks to the object. These landmarks should
-        come in the form of a dictionary. Each key is the semantic
-        meaning of the landmark and the landmarks themselves are of some
-        subclass of :class:`pybug.shape.pointcloud.Pointcloud`.
-        The provided label becomes the key for the landmark dictionary. It's
-        important to note that any subclass of PointCloud can be used,
-        it is just assumed that it contains a numpy array of points.
-
-        Parameters
-        ----------
-        label : string
-            The name of the set of landmarks
-        landmark_dict : dictionary (string,
-                                   :class:`pybug.shape.pointcloud.Pointcloud`)
-            Dictionary of labels and pointclouds representing all the landmarks
-
-        Raises
-        ------
-        ValueError
-            If ``landmark_dict`` is not of type dictionary.
-        """
-        if not isinstance(landmark_dict, dict):
-            raise ValueError('Landmark set must be of type dictionary')
-        else:
-            self.landmarks[label] = LandmarkManager(
-                self, label, landmark_dict=landmark_dict)
-
-    def _all_landmarks_with_group_and_label(self, group=None, label=None):
-        r"""
-        Returns the point cloud of the landmarks matching the group and
-        label arguments.
-
-        Parameters
-        ----------
-        group : string, Optional
-            The key of the landmark set that should be used. If None,
-            and if there is only one set of landmarks, this set will be used.
-
-            Default: None
-
-        label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
-             all landmarks in the group are used.
-
-            Default: None
-
-        Returns
-        -------
-        pc : :class:`pybug.shape.pointcloud.PointCloud`
-            The point cloud of the landmarks found.
-        """
-        if self.n_landmark_groups == 0:
-            raise ValueError("Cannot recover landmark pointcloud as there "
-                             "are no landmarks on this object")
-
-        if group is None:
-            if self.n_landmark_groups > 1:
-                raise ValueError("no group was provided and there are "
-                                 "multiple groups. Specify a group, "
-                                 "e.g. {}".format(self.landmarks.keys()[0]))
-            else:
-                group = self.landmarks.keys()[0]
-
-        if label is None:
-            pc = self.landmarks[group].all_landmarks
-        else:
-            pc = self.landmarks[group].with_label(label).all_landmarks
-        return pc
-
-    def _enforce_ownership_of_all_landmarks(self):
-        r"""
-        Loops through all landmark groups on self and ensures each has a
-        target of self.
-        """
-        for manager in self.landmarks.itervalues():
-            manager.target = self
+        return self.landmarks.n_groups
 
 
-class LandmarkManager(Viewable):
+class LandmarkManager(Transformable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -144,176 +60,242 @@ class LandmarkManager(Viewable):
         Default: ``None``
     """
 
-    def __init__(self, target, label, landmark_dict=None):
-        self.landmark_dict = {}
-        self.target = target
-        self.label = label
-        if landmark_dict:
-            self.add_landmarks(landmark_dict)
+    def __init__(self, target):
+        super(LandmarkManager, self).__init__()
+        self.__target = target
+        self._landmark_groups = {}
 
     def __iter__(self):
         """
-        Iterate over the internal landmark dictionary
+        Iterate over the internal landmark group dictionary
         """
-        return iter(self.landmark_dict.iteritems())
+        return iter(self._landmark_groups.iteritems())
+
+    def __setitem__(self, group_label, landmark_group):
+        self._landmark_groups[group_label] = copy.deepcopy(landmark_group)
+        self._landmark_groups[group_label]._group_label = group_label
+        self._landmark_groups[group_label]._target = self._target
+
+    def __getitem__(self, group_label):
+        return self._landmark_groups[group_label]
 
     @property
-    def target(self):
-        r"""
-        The instance of :class:`Landmarkable` that this Landmark manager
-        belongs to.
+    def _target(self):
+        return self.__target
 
-        :type : :class:`Landmarkable`
-        """
-        return self._target
-
-    @target.setter
-    def target(self, target):
-        r"""
-        Set the ownership of a landmark manager to an instance of
-        :class:`Landmarkable`.
-        """
-        if not isinstance(target, Landmarkable):
-            raise ValueError("Trying to set a target that is not "
-                             "Landmarkable")
-        else:
-            self._target = target
+    @_target.setter
+    def _target(self, value):
+        self.__target = value
+        for group in self._landmark_groups.itervalues():
+            group._target = self.__target
 
     @property
-    def n_labels(self):
+    def n_groups(self):
         """
         Total number of labels.
 
         :type: int
         """
-        return len(self.landmark_dict)
+        return len(self._landmark_groups)
 
     @property
-    def n_landmarks(self):
+    def has_landmarks(self):
         """
-        Total number of landmarks (across ALL keys).
-
-        Iterate over each PointCloud and sum the number of points. Therefore,
-        this is the same as the number of points of the all_landmarks property.
+        Whether the object has landmarks or not
 
         :type: int
         """
-        return sum([x.n_points for x in self.landmark_dict.values()])
+        return self.n_groups == 0
 
     @property
-    def labels(self):
+    def group_labels(self):
         """
         All the labels for the landmark set.
 
         :type: List of strings
         """
-        return self.landmark_dict.keys()
+        return self._landmark_groups.keys()
+
+    def update(self, landmark_manager):
+        new_landmark_manager = copy.deepcopy(landmark_manager)
+        new_landmark_manager._target = self.__target
+        self._landmark_groups.update(new_landmark_manager._landmark_groups)
+
+    def _transform(self, transform):
+        for group in self._landmark_groups.itervalues():
+            group.landmarks._transform(transform)
+        return self
+
+
+class LandmarkGroup(Viewable):
+    """
+
+    """
+
+    def __init__(self, target, group_label, pointcloud, labels_to_masks):
+        super(LandmarkGroup, self).__init__()
+
+        if not labels_to_masks:
+            raise ValueError('Landmark groups are designed for their internal '
+                             'state, other than owernship, to be immutable. '
+                             'Empty label sets are not permitted.')
+
+        if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
+            raise ValueError('Each mask must have the same number of points '
+                             'as the landmark pointcloud.')
+
+        unlabelled_points = np.sum(labels_to_masks.values(), axis=0) == 0
+        if np.any(unlabelled_points):
+            raise ValueError('Every point in the landmark pointcloud must be '
+                             'labelled. Points {0} were unlabelled.'.format(
+                             np.nonzero(unlabelled_points)))
+
+        self._group_label = group_label
+        self._target = target
+        self._pointcloud = pointcloud
+        self._labels_to_masks = labels_to_masks
+
+    def __iter__(self):
+        """
+        Iterate over the internal label dictionary
+        """
+        return iter(self._labels_to_masks)
+
+    def __setitem__(self, label, indices):
+        """
+        Add a new label to the landmark group by adding a new set of indices
+
+        Parameters
+        ----------
+        label : String
+            Label of landmark.
+        indices : (K,) ndarray
+            Array of indices in to the pointcloud. Each index implies
+            membership to the label.
+        """
+        mask = np.zeros(self._pointcloud.n_points, dtype=np.bool)
+        mask[indices] = True
+        self._labels_to_masks[label] = mask
+
+    def __getitem__(self, label):
+        """
+        Get back a sub-pointcloud given a label. Internally only one pointcloud
+        is kept, but we wish to have access to the pointcloud specific to a
+        particular label.
+
+        Parameters
+        ----------
+        label : Label of landmark
+
+        Returns
+        -------
+        pointcloud : :class:`pybug.shape.pointcloud.Pointcloud`
+            The pointcloud containing all the landmarks for the given label.
+        """
+        return self._pointcloud.from_mask(self._labels_to_masks[label])
+
+    @property
+    def group_label(self):
+        """
+        The label of this landmark group.
+
+        :type: String
+        """
+        return self._group_label
+
+    @property
+    def labels(self):
+        """
+        The list of labels that belong to this group.
+
+        :type: [strings]
+        """
+        return self._labels_to_masks.keys()
+
+    @property
+    def n_labels(self):
+        """
+        Number of labels in the group.
+
+        :type: int
+        """
+        return len(self.labels)
 
     @property
     def landmarks(self):
         """
-        All the landmarks for the set.
-
-        :type: List of :class:`pybug.shape.pointcloud.Pointcloud`
-        """
-        return self.landmark_dict.values()
-
-    @property
-    def all_landmarks(self):
-        """
-        A new pointcloud that contains all the points within the landmark
-        set.
-
-        Iterates over the dictionary and creates a single PointCloud using
-        all the points.
+        The pointcloud representing all the landmarks in the group.
 
         :type: :class:`pybug.shape.pointcloud.Pointcloud`
         """
-        from pybug.shape import PointCloud
+        return self._pointcloud
 
-        all_points = [x.points for x in self.landmarks]
-        all_points = np.concatenate(all_points, axis=0)
-        return PointCloud(all_points)
+    @property
+    def n_landmarks(self):
+        """
+        The total number of landmarks in the group.
 
-    def add_landmarks(self, landmark_dict):
-        r"""
-        Add more landmarks to the current set. Expects a dictionary of
-        labels to pointclouds. If the label already exists it will be
-        replaced with the new value.
+        :type: int
+        """
+        return self._pointcloud.n_points
+
+    def with_labels(self, labels):
+        """
+        Returns a new landmark group that contains only the given label.
 
         Parameters
         ----------
-        landmark_dict : dictionary (string,
-                        :class:`pybug.shape.pointcloud.Pointcloud`), optional
-            Dictionary of labels and pointclouds representing all the landmarks
-
-        Raises
-        ------
-        :class:`pybug.exceptions.DimensionalityError`
-            Raised when the dimensions of the landmarks don't match those of
-            the parent shape.
-        """
-        for key, pointcloud in landmark_dict.iteritems():
-            if pointcloud.n_dims == self.target.n_dims:
-                self.landmark_dict[key] = pointcloud
-            else:
-                raise DimensionalityError("Dimensions of the landmarks must "
-                                          "match the dimensions of the "
-                                          "parent shape")
-
-    def update_landmarks(self, label, landmarks):
-        r"""
-        Replace a given label with a new subclass of
-        :class:`pybug.shape.pointcloud.Pointcloud`. If the label does not
-        exist, then this becomes a new entry.
-
-        Parameters
-        ----------
-        :param label : string
-            The semantic meaning of the landmarks being added eg. eye
-        :param landmarks : :class:`pybug.shape.pointcloud.Pointcloud`
-            The landmark pointcloud.
-        """
-        self.landmark_dict[label] = landmarks
-
-    def with_label(self, label):
-        """
-        Return a new LandmarkManager that only contains the given label.
-        This is useful for things like only viewing the 'eye' landmarks.
-
-        Parameters
-        ----------
-        :param label : string
-            The label of the landmarks to view
+        label : String
+            Label to filter on.
 
         Returns
         -------
-        landmark_manager : :class:`LandmarkManager`
-            New landmark manager containing only the given label.
+        landmark_group : :class:`LandmarkGroup`
+            A new landmark group with the same group label but containing only
+            the given label.
         """
-        return LandmarkManager(self.target, self.label,
-                               {label: self.landmark_dict[label]})
+        # Make it easier to use by accepting a single string as well as a list
+        if isinstance(labels, str):
+            labels = [labels]
+        return self._new_group_with_only_labels(labels)
 
-    def without_label(self, label):
+    def without_labels(self, labels):
         """
-        Return a new LandmarkManager that contains all landmarks except
-        those with the given label.
-        This is useful for things like filtering out the 'eye' landmarks when
-        viewing.
+        Returns a new landmark group that contains all labels EXCEPT the given
+        label.
 
         Parameters
         ----------
-        :param label : string
-            The label of the landmarks to view
+        label : String
+            Label to exclude.
 
         Returns
         -------
-        landmark_manager : :class:`LandmarkManager`
-            New landmark manager excluding the given label.
+        landmark_group : :class:`LandmarkGroup`
+            A new landmark group with the same group label but containing all
+            labels except the given label.
         """
-        new_dict = dict(self.landmark_dict)
-        del new_dict[label]
-        return LandmarkManager(self.target, self.label, new_dict)
+        # Make it easier to use by accepting a single string as well as a list
+        if isinstance(labels, str):
+            labels = [labels]
+        labels_to_keep = list(set(self.labels).difference(labels))
+        return self._new_group_with_only_labels(labels_to_keep)
+
+    def _new_group_with_only_labels(self, labels):
+        set_difference = set(labels).difference(self.labels)
+        if len(set_difference) > 0:
+            raise ValueError('Labels {0} do not exist in the landmark '
+                             'group. Available labels are: {1}'.format(
+                             list(set_difference), self.labels))
+
+        masks_to_keep = [self._labels_to_masks[l] for l in labels
+                         if l in self._labels_to_masks]
+        overlap = np.sum(masks_to_keep, axis=0) > 0
+        masks_to_keep = [l[overlap] for l in masks_to_keep]
+
+        return LandmarkGroup(self._target, self.group_label,
+                             self._pointcloud.from_mask(overlap),
+                             dict(zip(labels, masks_to_keep)))
 
     def _view(self, figure_id=None, new_figure=False, include_labels=True,
               **kwargs):
@@ -329,10 +311,10 @@ class LandmarkManager(Viewable):
         kwargs : dict, optional
             Passed through to the viewer.
         """
-        target_viewer = self.target.view(figure_id=figure_id,
-                                         new_figure=new_figure, **kwargs)
+        target_viewer = self._target.view(figure_id=figure_id,
+                                          new_figure=new_figure, **kwargs)
         landmark_viewer = LandmarkViewer(target_viewer.figure_id, False,
-                                         self.label, self.landmark_dict,
-                                         self.target)
+                                         self.group_label, self._pointcloud,
+                                         self._labels_to_masks, self._target)
 
         return landmark_viewer.render(include_labels=include_labels, **kwargs)

@@ -169,9 +169,9 @@ class PointCloud(Shape):
 
         Parameters
         ----------
-        pointcloud : PointCloud (M points, D dim)
+        pointcloud : :class:`PointCloud`
             The second pointcloud to compute distances between. This must be
-             of the same dimension as this PointCloud.
+            of the same dimension as this PointCloud.
 
         Returns
         -------
@@ -185,3 +185,41 @@ class PointCloud(Shape):
             raise ValueError("The two PointClouds must be of the same "
                              "dimensionality.")
         return cdist(self.points, pointcloud.points, **kwargs)
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud and returns a new pointcloud containing only those
+        points that were `True` in the mask.
+
+        Parameters
+        ----------
+        mask : (N,) ndarray
+            1D array of booleans
+
+        Returns
+        -------
+        pointcloud : :class:`PointCloud`
+            A new pointcloud that has been masked.
+        """
+        return PointCloud(self.points[mask, :])
+
+    def update_from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud. The same pointcloud is updated in place.
+
+        Parameters
+        ----------
+        mask : (N,) ndarray
+            1D array of booleans
+
+        Returns
+        -------
+        pointcloud : :class:`PointCloud`
+            A pointer to self.
+        """
+        self.points = self.points[mask, :]
+        return self

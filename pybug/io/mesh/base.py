@@ -262,9 +262,9 @@ class MeshImporter(Importer):
                 new_mesh = TriMesh(mesh.points, mesh.trilist)
 
             if self.landmark_importer is not None:
-                label, l_dict = self.landmark_importer.build(
+                lmark_group = self.landmark_importer.build(
                     scale_factors=np.max(mesh.points))
-                new_mesh.add_landmark_set(label, l_dict)
+                new_mesh.landmarks[lmark_group.group_label] = lmark_group
 
             meshes.append(new_mesh)
 

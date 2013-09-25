@@ -1,5 +1,6 @@
 import abc
 from pybug.io.base import Importer
+from pybug.landmark.base import LandmarkGroup
 from pybug.shape import PointCloud
 import numpy as np
 from pybug.transform.affine import Scale
@@ -19,8 +20,9 @@ class LandmarkImporter(Importer):
 
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
-        self.label = 'default'
-        self.landmark_dict = {}
+        self.group_label = 'default'
+        self.pointcloud = None
+        self.labels_to_masks = None
 
     def build(self, **kwargs):
         """
@@ -42,7 +44,8 @@ class LandmarkImporter(Importer):
             landmarks.
         """
         self._parse_format(**kwargs)
-        return self.label, self.landmark_dict
+        return LandmarkGroup(None, self.group_label, self.pointcloud,
+                             self.labels_to_masks)
 
     @abc.abstractmethod
     def _parse_format(self, **kwargs):
@@ -183,8 +186,9 @@ class PTSImporter(LandmarkImporter):
 
         points = self._build_points(xs, ys)
 
-        self.label = 'PTS'
-        self.landmark_dict = {'all': PointCloud(points)}
+        self.group_label = 'PTS'
+        self.pointcloud = PointCloud(points)
+        self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
 
 
 class LM3Importer(LandmarkImporter):
