@@ -43,7 +43,7 @@ class Landmarkable(object):
         return self.landmarks.n_groups
 
 
-class LandmarkManager(Transformable):
+class LandmarkManager(Transformable, Viewable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -165,6 +165,20 @@ class LandmarkManager(Transformable):
         for group in self._landmark_groups.itervalues():
             group.landmarks._transform(transform)
         return self
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        """
+        View all landmarks groups on the current manager.
+
+        Parameters
+        ----------
+        include_labels : bool, optional
+            If ``True``, also render the label names next to the landmarks.
+        kwargs : dict, optional
+            Passed through to the viewer.
+        """
+        for group in self._landmark_groups.itervalues():
+            group._view(figure_id=figure_id, new_figure=new_figure, **kwargs)
 
 
 class LandmarkGroup(Viewable):
