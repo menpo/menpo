@@ -194,11 +194,16 @@ class PointCloud(Shape):
 
     def norm(self, **kwargs):
         r"""
-        Returns the norm of this point cloud.
+        Returns the norm of this point cloud. This is a translation and
+        rotation invariant measure of the point cloud's intrinsic size - in
+        other words, it is always taken around the point cloud's centre.
+
+        By default, the Frobenius norm is taken, but this can be changed by
+        setting kwargs - see numpy.linalg.norm for valid options.
 
         Returns
         -------
         norm: float
-            The norm of the PointClouds
+            The norm of this :class:`PointCloud`
         """
         return np.linalg.norm(self.points - self.centre, **kwargs)
