@@ -62,7 +62,7 @@ class AbstractSpatialImage(MaskedNDImage):
     def update_from_vector(self, flattened):
         # Regenerate mesh and then call the base class update method
         self.rebuild_mesh()
-        MaskedNDImage.update_from_vector(self, flattened)
+        return MaskedNDImage.update_from_vector(self, flattened)
 
     @abc.abstractmethod
     def _generate_points(self):
