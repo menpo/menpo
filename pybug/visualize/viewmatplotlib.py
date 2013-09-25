@@ -163,8 +163,8 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         Visualize how points are affected by the warp in 2 dimensions.
         """
         from matplotlib import pyplot
-        source = self.alignment_transform.source
-        target = self.alignment_transform.target
+        source = self.alignment_transform.source.points
+        target = self.alignment_transform.target.points
         # a factor by which the minimum and maximum x and y values of the warp
         # will be increased by.
         x_margin_factor, y_margin_factor = 0.5, 0.5

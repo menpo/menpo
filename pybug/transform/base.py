@@ -1,22 +1,17 @@
 import abc
 from copy import deepcopy
 from pybug.base import Vectorizable
+from pybug.visualize import AlignmentViewer2d
 from pybug.visualize.base import Viewable
 
 
-class Transform(Vectorizable):
-    r"""
-    An abstract representation of any N-dimensional transform.
-    Provides a unified interface to apply the transform (:meth:`apply`). All
-    transforms are vectorizable.
-    """
+class Alignment(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, source=None, target=None):
-        self._source = source
-        self.aligned_source = None
-        self._target = target
+    def __init__(self):
+        self._target = None
+        self._source = None
 
     @classmethod
     def align(cls, source, target, **kwargs):
@@ -32,36 +27,52 @@ class Transform(Vectorizable):
 
         target: :class:`pybug.shape.PointCloud`
             The target pointcloud instance used in the alignment
+
+        Returns
+        -------
+
+        alignment_transform: :class:`pybug.transform.Transform`
+            A Transform object that is_alignment.
         """
-        if source.n_dims != target.ndims:
-            raise ValueError("Source and target must have the same "
-                             "dimensionality")
-        if source.n_points != target.n_points:
-            raise ValueError("Source and target must have the same number of"
-                             " points")
+        cls._verify_source_and_target(source, target)
         return cls._align(source, target, **kwargs)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
-        pass
-
-    @abc.abstractproperty
-    def n_dims(self):
-        r"""`
-        The dimensionality of the transform.
-
-        :type: int
-        """
-        pass
-
-    @abc.abstractproperty
-    def n_parameters(self):
         r"""
-        The number of parameters that determine the transform.
+        Alternative Transform constructor. Constructs a Transform by finding
+        the optimal transform to align source to target.
 
-        :type: int
+        Parameters
+        ----------
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+
+        This is called automatically by align once verification of source and
+        target is performed.
+
+        Returns
+        -------
+
+        alignment_transform: :class:`pybug.transform.Transform`
+            A Transform object that is_alignment.
         """
         pass
+
+    @staticmethod
+    def _verify_source_and_target(source, target):
+        if source.n_dims != target.n_dims:
+            raise ValueError("Source and target must have the same "
+                             "dimensionality")
+        elif source.n_points != target.n_points:
+            raise ValueError("Source and target must have the same number of"
+                             " points")
+        else:
+            return True
 
     @property
     def is_alignment_transform(self):
@@ -120,6 +131,37 @@ class Transform(Vectorizable):
         new_transform = deepcopy(self)
         new_transform.target = target
         return new_transform
+
+
+class Transform(Alignment, Vectorizable):
+    r"""
+    An abstract representation of any N-dimensional transform.
+    Provides a unified interface to apply the transform (:meth:`apply`). All
+    transforms are Vectorizable.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        Alignment.__init__(self)
+
+    @abc.abstractproperty
+    def n_dims(self):
+        r"""`
+        The dimensionality of the transform.
+
+        :type: int
+        """
+        pass
+
+    @abc.abstractproperty
+    def n_parameters(self):
+        r"""
+        The number of parameters that determine the transform.
+
+        :type: int
+        """
+        pass
 
     def apply(self, x, **kwargs):
         r"""
@@ -230,19 +272,25 @@ class Transform(Vectorizable):
         pass
 
 
-class AlignmentTransform(Transform):
+class AlignmentTransform(Transform, Viewable):
     r"""
-    :class:`Transform`s that are defined in terms of a source and target.
+    :class:`Transform`s that are solely defined in terms of a source and
+    target.
+
+    All transforms include support for alignments - all have a source and
+    target property the alignment constructor, and methods like
+    from_target(). However, for most transforms this is an optional
+    interface - if the alignment constructor is not used, is_alignment is
+    false, and all alignment methods will fail. This class is for transforms
+    that solely make sense as alignments. It just simplifies the interface down
+    slightly, to remove code repetition.
     """
 
     def __init__(self, source, target):
-        super(AlignmentTransform, self).__init__(source=source, target=target)
-        if source.n_dims != target.ndims:
-            raise ValueError("Source and target must have the same "
-                             "dimensionality")
-        if source.n_points != target.n_points:
-            raise ValueError("Source and target must have the same number of"
-                             " points")
+        Transform.__init__(self)
+        if self._verify_source_and_target(source, target):
+            self._source = source
+            self._target = target
 
     @property
     def n_dims(self):
@@ -251,6 +299,48 @@ class AlignmentTransform(Transform):
     @property
     def n_points(self):
         return self.source.n_points
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        r"""
+        View the AlignmentTransform. This plots the source points and vectors
+        that represent the shift from source to target.
+
+        Parameters
+        ----------
+        image : bool, optional
+            If ``True`` the vectors are plotted on top of an image
+
+            Default: ``False``
+        """
+        if self.n_dims == 2:
+            return AlignmentViewer2d(figure_id, new_figure, self)
+        else:
+            raise ValueError("Only 2D alignments can be viewed currently.")
+
+    @classmethod
+    def align(cls, source, target, **kwargs):
+        r"""
+        Alternative Transform constructor. Constructs a Transform by finding
+        the optimal transform to align source to target. Note that for
+        AlignmentTransform's we know that align == __init__. To save
+        repetition we share the align method here.
+
+        Parameters
+        ----------
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+
+        Returns
+        -------
+
+        alignment_transform: :class:`pybug.transform.Transform`
+            A Transform object that is_alignment.
+        """
+        return cls(source, target, **kwargs)
 
 
 class Transformable(object):

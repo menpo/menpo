@@ -1,10 +1,8 @@
 import numpy as np
 from scipy.spatial import distance
-from pybug.exceptions import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.transform.base import AlignmentTransform
 from pybug.basis.rbf import R2LogR2
-from pybug.visualize import AlignmentViewer2d
 
 
 class TPS(AlignmentTransform):
@@ -35,7 +33,7 @@ class TPS(AlignmentTransform):
     def __init__(self, source, target, kernel=None):
         super(TPS, self).__init__(source, target)
         if self.n_dims != 2:
-            raise DimensionalityError('TPS can only be used on 2D data.')
+            raise ValueError('TPS can only be used on 2D data.')
         self.v = self.target.points.T.copy()
         self.y = np.hstack([self.v, np.zeros([2, 3])])
         self.pairwise_norms = self.source.distance_to(self.source)
@@ -50,24 +48,6 @@ class TPS(AlignmentTransform):
         bot_l = np.concatenate([self.p.T, o], axis=1)
         self.l = np.concatenate([top_l, bot_l], axis=0)
         self.coefficients = np.linalg.solve(self.l, self.y.T)
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        return TPS(source, target)
-
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
-        r"""
-        View the AlignmentTransform. This plots the source points and vectors
-        that represent the shift from source to target.
-
-        Parameters
-        ----------
-        image : bool, optional
-            If ``True`` the vectors are plotted on top of an image
-
-            Default: ``False``
-        """
-        return AlignmentViewer2d(figure_id, new_figure, self)
 
     def _apply(self, points, affine_free=False):
         """
@@ -361,3 +341,6 @@ class TPS(AlignmentTransform):
 
     def from_vector(self, flattened):
         raise NotImplementedError("TPS from_vector is not implemented yet.")
+
+    def _update_from_target(self, old_target):
+        pass
