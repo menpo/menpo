@@ -69,7 +69,7 @@ class TexturedTriMesh(TriMesh):
         Parameters
         ----------
         textured : bool, optional
-            If ``True``, render the textur.
+            If ``True``, render the texture.
 
             Default: ``True``
 

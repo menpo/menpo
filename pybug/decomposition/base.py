@@ -5,7 +5,7 @@ from scipy.linalg.blas import dgemm
 
 class PCA(object):
     r"""
-    Principal Component Analysis (GPCA) by Eigenvalue Decomposition of the
+    Principal Component Analysis (PCA) by Eigenvalue Decomposition of the
     data's scatter matrix.
 
     This implementation uses the scipy.linalg.eig implementation of
@@ -22,7 +22,7 @@ class PCA(object):
         if n_components is not set all components
 
     center : bool, optional
-        When True GPCA is performed after mean centering the data
+        When True PCA is performed after mean centering the data
 
     whiten : bool, optional
         When True (False by default) transforms the `components_` to ensure
@@ -38,7 +38,7 @@ class PCA(object):
 
     def fit(self, X):
         r"""
-        Apply GPCA on the data matrix X
+        Apply PCA on the data matrix X
 
         Parameters
         ----------
@@ -55,7 +55,7 @@ class PCA(object):
 
     def _fit(self, X):
         r"""
-        Apply GPCA on the data matrix X
+        Apply PCA on the data matrix X
 
         Parameters
         ----------

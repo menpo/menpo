@@ -178,7 +178,7 @@ class Viewable(object):
 
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d, MayaviVectorViewer3d
+    MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
     MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d
@@ -194,6 +194,7 @@ LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 VectorViewer3d = MayaviVectorViewer3d
+DepthImageHeightViewer = MayaviSurfaceViewer3d
 
 
 class LandmarkViewer(object):
@@ -246,8 +247,8 @@ class LandmarkViewer(object):
         if self.landmark_dict:
             item = self.landmark_dict.values()[0]
             if item.n_dims == 2:
-                from pybug.image import Image
-                if type(self.shape) is Image:
+                from pybug.image.base import AbstractNDImage
+                if isinstance(self.shape, AbstractNDImage):
                     return LandmarkViewer2dImage(
                         self.figure_id, self.new_figure,
                         self.label, self.landmark_dict).render(**kwargs)
@@ -329,10 +330,21 @@ class ImageViewer(object):
         The number of dimensions in the image
     pixels : (N, D) ndarray
         The pixels to render.
+    channel: int
+        A specific channel of pixels to render. If None, render all.
+    mask: (N, D) ndarray
+        A boolean mask to be applied to the image. All points outside the
+        mask are set to 0.
     """
-    def __init__(self, figure_id, new_figure, dimensions, pixels):
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 channel=None, mask=None):
+        pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
+        if channel is not None:
+            pixels = pixels[..., channel]
+        if mask is not None:
+            pixels[~mask] = 0.
         self.pixels = pixels
         self.dimensions = dimensions
 

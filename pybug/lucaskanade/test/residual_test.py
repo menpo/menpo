@@ -13,7 +13,7 @@ from pybug.lucaskanade.residual import *
 takeo_path = data_path_to('takeo.ppm')
 takeo = auto_import(takeo_path)[0]
 image = takeo.as_greyscale()
-template, translation = image.crop(slice(70, 169), slice(30, 129))
+template = image.cropped_copy([70, 30], [169, 129])
 
 # Setup global conditions
 initial_params = np.array([0, 0, 0, 0, 70.5, 30.5])
@@ -120,4 +120,4 @@ def test_2d_gradientcorrelation_ic_map_coords():
 def test_2d_gradientcorrelation_fa_map_coords():
     residual_wrapper(GradientCorrelation(), ImageForwardAdditive,
                      scipy_warp,
-                     1.599221605730202)
+                     10.494169974979323)
