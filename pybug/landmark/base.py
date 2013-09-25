@@ -51,13 +51,6 @@ class LandmarkManager(Transformable):
     ----------
     target : :class:`pybug.landmarks.base.Landmarkable`
         The parent object that owns these landmarks
-    label : string
-        Name of landmark set
-    landmark_dict : dictionary (string,
-                         :class:`pybug.shape.pointcloud.Pointcloud`), optional
-        Dictionary of labels and pointclouds representing all the landmarks
-
-        Default: ``None``
     """
 
     def __init__(self, target):

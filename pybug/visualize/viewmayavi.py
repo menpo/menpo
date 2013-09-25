@@ -75,18 +75,21 @@ class MayaviSurfaceViewer3d(MayaviViewer):
 
 class MayaviLandmarkViewer3d(MayaviViewer):
 
-    def __init__(self, figure_id, new_figure, label, landmark_dict):
+    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+                 labels_to_masks):
         super(MayaviLandmarkViewer3d, self).__init__(figure_id, new_figure)
-        self.label = label
-        self.landmark_dict = landmark_dict
+        self.label = group_label
+        self.pointcloud = pointcloud
+        self.labels_to_masks = labels_to_masks
 
     def _render(self, **kwargs):
         from mayavi import mlab
         # disabling the rendering greatly speeds up this for loop
         self.figure.scene.disable_render = True
         positions = []
-        for label, pcloud in self.landmark_dict.iteritems():
-            for i, p in enumerate(pcloud.points):
+        for label, mask in self.labels_to_masks.iteritems():
+            p = self.pointcloud.from_mask(mask)
+            for i, p in enumerate(p.points):
                 positions.append(p)
                 l = '%s_%d' % (label, i)
                 # TODO: This is due to a bug in mayavi that won't allow

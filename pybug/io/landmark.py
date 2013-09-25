@@ -37,11 +37,9 @@ class LandmarkImporter(Importer):
 
         Returns
         -------
-        label : string
-            The label that specifies what kind of landmarks were found
-        landmark_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
-            A map from semantic labels to points that make up a set of
-            landmarks.
+        landmark_group : string
+            The landmark group parsed from the file.
+            Every point will be labelled.
         """
         self._parse_format(**kwargs)
         return LandmarkGroup(None, self.group_label, self.pointcloud,
@@ -53,7 +51,7 @@ class LandmarkImporter(Importer):
         Read the landmarks file from disk, parse it in to semantic labels and
         :class:`pybug.shape.base.PointCloud`.
 
-        Set the ``self.label`` and ``self.landmark_dict`` attributes.
+        Set the ``self.label`` and ``self.pointcloud`` attributes.
         """
         pass
 
