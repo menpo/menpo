@@ -1,5 +1,6 @@
 import abc
 from pybug.io.base import Importer
+from pybug.landmark.base import LandmarkGroup
 from pybug.shape import PointCloud
 import numpy as np
 from pybug.transform.affine import Scale
@@ -19,8 +20,9 @@ class LandmarkImporter(Importer):
 
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
-        self.label = 'default'
-        self.landmark_dict = {}
+        self.group_label = 'default'
+        self.pointcloud = None
+        self.labels_to_masks = None
 
     def build(self, **kwargs):
         """
@@ -35,14 +37,13 @@ class LandmarkImporter(Importer):
 
         Returns
         -------
-        label : string
-            The label that specifies what kind of landmarks were found
-        landmark_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
-            A map from semantic labels to points that make up a set of
-            landmarks.
+        landmark_group : string
+            The landmark group parsed from the file.
+            Every point will be labelled.
         """
         self._parse_format(**kwargs)
-        return self.label, self.landmark_dict
+        return LandmarkGroup(None, self.group_label, self.pointcloud,
+                             self.labels_to_masks)
 
     @abc.abstractmethod
     def _parse_format(self, **kwargs):
@@ -50,7 +51,7 @@ class LandmarkImporter(Importer):
         Read the landmarks file from disk, parse it in to semantic labels and
         :class:`pybug.shape.base.PointCloud`.
 
-        Set the ``self.label`` and ``self.landmark_dict`` attributes.
+        Set the ``self.label`` and ``self.pointcloud`` attributes.
         """
         pass
 
@@ -183,8 +184,9 @@ class PTSImporter(LandmarkImporter):
 
         points = self._build_points(xs, ys)
 
-        self.label = 'PTS'
-        self.landmark_dict = {'all': PointCloud(points)}
+        self.group_label = 'PTS'
+        self.pointcloud = PointCloud(points)
+        self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
 
 
 class LM3Importer(LandmarkImporter):
@@ -240,7 +242,9 @@ class LM3Importer(LandmarkImporter):
         # First line says how many landmarks there are: 22 Landmarks
         # So pop it off the front
         num_points = int(landmark_text.pop(0).split()[0])
-        points = []
+        xs = []
+        ys = []
+        zs = []
         labels = []
 
         # The lines then alternate between the labels and the coordinates
@@ -252,12 +256,22 @@ class LM3Importer(LandmarkImporter):
                 labels.append(l)
             else:  # coordinate
                 p = landmark_text[i].split()
-                points.append(PointCloud(np.array([float(p[0]),
-                                                  float(p[1]),
-                                                  float(p[2])], ndmin=2)))
+                xs.append(float(p[0]))
+                ys.append(float(p[1]))
+                zs.append(float(p[2]))
 
-        self.label = 'LM3'
-        self.landmark_dict = dict(zip(labels, points))
+        xs = np.array(xs, dtype=np.float).reshape((-1, 1))
+        ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+        zs = np.array(zs, dtype=np.float).reshape((-1, 1))
+
+        self.group_label = 'LM3'
+        self.pointcloud = PointCloud(np.hstack([xs, ys, zs]))
+        # Create the mask whereby there is one landmark per label
+        # (identity matrix)
+        masks = np.eye(num_points).astype(np.bool)
+        masks = np.vsplit(masks, num_points)
+        masks = [np.squeeze(m) for m in masks]
+        self.labels_to_masks = dict(zip(labels, masks))
 
 
 class LM2Importer(LandmarkImporter):
@@ -313,7 +327,6 @@ class LM2Importer(LandmarkImporter):
         # First line says how many landmarks there are: 22 Landmarks
         # So pop it off the front
         num_points = int(landmark_text.pop(0).split()[0])
-        points = []
         labels = []
 
         # The next set of lines defines the labels
@@ -335,13 +348,25 @@ class LM2Importer(LandmarkImporter):
                               "Expected a list of coordinates beginning with "
                               "'2D Image coordinates:' "
                               "but found '{0}'".format(coords_str))
+        xs = []
+        ys = []
         for i in xrange(num_points):
-                p = landmark_text.pop(0).split()
-                points.append(PointCloud(np.array([float(p[1]), float(p[0])],
-                                                  ndmin=2)))
+            p = landmark_text.pop(0).split()
+            xs.append(float(p[0]))
+            ys.append(float(p[1]))
 
-        self.label = 'LM2'
-        self.landmark_dict = dict(zip(labels, points))
+        xs = np.array(xs, dtype=np.float).reshape((-1, 1))
+        ys = np.array(ys, dtype=np.float).reshape((-1, 1))
+
+        self.group_label = 'LM2'
+        # Flip the x and y
+        self.pointcloud = PointCloud(np.hstack([ys, xs]))
+        # Create the mask whereby there is one landmark per label
+        # (identity matrix)
+        masks = np.eye(num_points).astype(np.bool)
+        masks = np.vsplit(masks, num_points)
+        masks = [np.squeeze(m) for m in masks]
+        self.labels_to_masks = dict(zip(labels, masks))
 
 
 class LANImporter(LandmarkImporter):
@@ -365,5 +390,8 @@ class LANImporter(LandmarkImporter):
         with open(self.filepath, 'r') as f:
             landmarks = np.fromfile(
                 f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
-        self.label = 'LAN'
-        self.landmark_dict = {'LAN' : PointCloud(landmarks)}
+
+        self.group_label = 'LM3'
+        self.pointcloud = PointCloud(landmarks)
+        self.labels_to_masks = {'all': np.ones(landmarks.shape[0],
+                                               dtype=np.bool)}
