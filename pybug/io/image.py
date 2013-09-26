@@ -108,9 +108,9 @@ class ImageImporter(Importer):
         self._build_landmark_importer()
 
         if self.landmark_importer is not None:
-            label, lmark_dict = self.landmark_importer.build(
+            lmark_group = self.landmark_importer.build(
                 scale_factors=self.image.shape)
-            self.image.add_landmark_set(label, lmark_dict)
+            self.image.landmarks[lmark_group.group_label] = lmark_group
         return self.image
 
 
