@@ -21,20 +21,31 @@ class PCA(object):
         Number of components to be retained.
         if n_components is not set all components
 
-    center : bool, optional
-        When True PCA is performed after mean centering the data
-
     whiten : bool, optional
         When True (False by default) transforms the `components_` to ensure
         that they covariance is the identity matrix.
+
+    center : bool, optional
+        When True (True by default) PCA is performed after mean centering the
+        data
+
+    bias: bool, optional
+        When True (False by default) a biased estimator of the covariance
+        matrix is used, i.e.:
+
+            \frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
+
+        instead of default:
+
+            \frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
     """
 
-    def __init__(self, n_components=None, centered=True,
-                 biased=False, whitened=False):
-        self.n_components = n_components
-        self.centered = centered
-        self.biased = biased
-        self.whitened = whitened
+    def __init__(self, n_components=None, whiten=False,
+                 center=True, bias=False):
+        self.n_components_ = n_components
+        self.whiten = whiten
+        self.center = center
+        self.bias = bias
 
     def fit(self, X):
         r"""
@@ -69,15 +80,17 @@ class PCA(object):
         """
         n_samples, n_features = X.shape
 
-        if self.biased:
+        if self.bias:
             N = n_samples
         else:
             N = n_samples - 1
 
-        if self.centered:
+        if self.center:
             # center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
+        else:
+            self.mean_ = np.zeros(n_features)
 
         if n_features < n_samples:
             # compute covariance matrix
@@ -89,7 +102,7 @@ class PCA(object):
             # eigenvalues:   n_features
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
-            if self.whitened:
+            if self.whiten:
                 # whiten eigenvectors
                 eigenvectors *= eigenvalues ** -0.5
 
@@ -105,7 +118,7 @@ class PCA(object):
             eigenvectors, eigenvalues = _eigenvalue_decomposition(S)
 
             aux = 2
-            if self.whitened:
+            if self.whiten:
                 # will cause eigenvectors to be whiten
                 aux = 1
 
@@ -115,13 +128,13 @@ class PCA(object):
             eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
                                      trans_b=True)
 
-        if self.n_components is None:
+        if self.n_components_ is None:
             # set number of components to number of recovered eigenvalues
-            self.n_components = eigenvalues.shape[0]
+            self.n_components_ = eigenvalues.shape[0]
 
-        if self.n_components < np.min((n_samples, n_features)):
+        if self.n_components_ < np.min((n_samples, n_features)):
             # noise variance equals average variance of discarded components
-            self.noise_variance_ = eigenvalues[self.n_components:].mean()
+            self.noise_variance_ = eigenvalues[self.n_components_:].mean()
         else:
             # if all components are kept, noise variance equals 0
             self.noise_variance_ = 0.
@@ -131,10 +144,10 @@ class PCA(object):
         eigenvectors = eigenvectors.T
 
         # keep appropriate number of components
-        self.components_ = eigenvectors[:self.n_components, :]
-        self.explained_variance_ = eigenvalues[:self.n_components]
+        self.components_ = eigenvectors[:self.n_components_, :]
+        self.explained_variance_ = eigenvalues[:self.n_components_]
         self.explained_variance_ratio_ = (self.explained_variance_ /
-                                          self.explained_variance_.sum())
+                                          eigenvalues.sum())
 
         return eigenvectors, eigenvalues
 
@@ -151,9 +164,7 @@ class PCA(object):
         Z: (n_samples, n_components) ndarray
 
         """
-        if self.centered:
-            X = X - self.mean_
-        # Z = np.dot(X, self.components_.T)
+        X = X - self.mean_
         Z = dgemm(alpha=1.0, a=X.T, b=self.components_.T, trans_a=True)
         return Z
 
@@ -172,12 +183,9 @@ class PCA(object):
         If whitening is used, inverse_transform does not perform the
         exact inverse operation of transform.
         """
-        # X = np.dot(Z, self.components_)
         X = dgemm(alpha=1.0, a=Z.T, b=self.components_.T,
                   trans_a=True, trans_b=True)
-        if self.centered:
-            X = X + self.mean_
-
+        X = X + self.mean_
         return X
 
 
