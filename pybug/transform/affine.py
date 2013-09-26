@@ -2,6 +2,7 @@ import abc
 import copy
 from pybug.transform.base import Transform
 from pybug.exceptions import DimensionalityError
+#TODO remove matlab here
 import pybug.matlab as matlab
 import numpy as np
 
@@ -20,19 +21,119 @@ class AffineTransform(Transform):
     """
 
     def __init__(self, homogeneous_matrix):
-        #TODO Check am I a valid Affine transform
+        super(AffineTransform, self).__init__()
         shape = homogeneous_matrix.shape
         if len(shape) != 2 and shape[0] != shape[1]:
             raise Exception("You need to provide a square homogeneous matrix.")
-        self.n_dims = shape[0] - 1
-        # this restriction is because we have to be able to decompose
-        # transforms to find their meaning, and I haven't explored 4D+
-        # rotations (everything else is obvious). If there is need we can
-        # relax it in the future
+        self.homogeneous_matrix = homogeneous_matrix
         if self.n_dims not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or "
                                       "3D")
-        self.homogeneous_matrix = homogeneous_matrix
+
+    @property
+    def n_dims(self):
+        return self.homogeneous_matrix.shape[0] - 1
+
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        r"""
+        Alternative Transform constructor. Constructs an AffineTransform by
+        finding the optimal transform to align source to target.
+
+        Parameters
+        ----------
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+
+        This is called automatically by align once verification of source and
+        target is performed.
+
+        Returns
+        -------
+
+        alignment_transform: :class:`pybug.transform.Transform`
+            A Transform object that is_alignment.
+
+
+        Notes
+        -----
+
+        The affine transform is defined as:
+
+            X = a*x + b*y + tx
+            Y = c*x + d*y + ty
+
+        These equations can be transformed to the following form::
+
+            a*x + b*y + tx - X = 0
+            c*x + d*y + ty - Y = 0
+
+        which can be written in matrix form as:
+
+            A x = 0
+
+        where::
+
+            A   = [[x y 1 0 0 0 X]
+                   [0 0 0 x y 1 Y]
+                    ...
+                    ...
+                  ]
+            x.T = [a b tx c d ty c6]
+
+        Using total least-squares, the solution of the previous homogeneous
+        system of equations is the right singular vector of A which
+        corresponds to the smallest singular value normalized by the
+        coefficient c6.
+
+
+        :return: The AffineTransform object relating the previous two vectors.
+        """
+        n_dims = source.shape[1]
+        if n_dims == 2:
+            n_points = source.shape[0]
+            xs = source[:, 0]
+            ys = source[:, 1]
+            xd = target[:, 0]
+            yd = target[:, 1]
+
+            # parameters: a, b, tx, c, d, ty
+            A = np.zeros((n_points * 2, 7))
+            # a
+            A[:n_points, 0] = xs
+            # b
+            A[:n_points, 1] = ys
+            # tx
+            A[:n_points, 2] = 1
+            # c
+            A[n_points:, 3] = xs
+            # d
+            A[n_points:, 4] = ys
+            # ty
+            A[n_points:, 5] = 1
+            # target
+            A[:n_points, 6] = xd
+            A[n_points:, 6] = yd
+            # the parameters of the affine transform are given by the least
+            # significant right singular vector normalized by coefficient c6.
+            _, _, V = np.linalg.svd(A)
+            a, b, tx, c, d, ty = - V[-1, :-1] / V[-1, -1]
+            # build homogeneous matrix
+            homogeneous_matrix = np.array([[a, b, tx],
+                                           [c, d, ty],
+                                           [0, 0,  1]])
+            return homogeneous_matrix
+        elif n_dims == 3:
+            raise NotImplementedError("3D affine transforms cannot be "
+                                      "inferred yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D affine transforms "
+                                      "are currently supported.")
+
 
     @property
     def linear_component(self):
@@ -327,8 +428,8 @@ class AffineTransform(Transform):
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
 
     @classmethod
-    def estimate(cls, source, target):
-        return cls(cls._estimate(source, target))
+    def _align(cls, source, target, **kwargs):
+        pass
 
     @classmethod
     def _estimate(cls, source, target):
@@ -1139,7 +1240,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         ``n_dims`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
         representing the scale across each axis.
         """
-        return self.scale.shape[0]
+        return self.scale.size
 
     def as_vector(self):
         r"""
@@ -1192,74 +1293,26 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         return NonUniformScale(p)
 
     @classmethod
-    def _estimate(cls, source, target):
-        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
-        n_dims = source[1]
-        if n_dims == 2:
-            scale = np.zeros((1, 2))
-            scale[0] = homogeneous_matrix[0, 0]
-            scale[1] = homogeneous_matrix[1, 1]
-        elif n_dims == 3:
-            scale = np.zeros((1, 3))
-            scale[0] = homogeneous_matrix[0, 0]
-            scale[1] = homogeneous_matrix[1, 1]
-            scale[2] = homogeneous_matrix[2, 2]
-        return scale
+    def _align(cls, source, target, **kwargs):
+        #TODO scale per dim should be used.
+        pass
 
 
-def UniformScale(scale, n_dims):
-    r"""
-    Factory function for producing :class:`UniformScale` objects. A single
-    scale and the number of dimensions required is expected.
-    Currently, only 2D and 3D :class:`UniformScale` objects are supported.
-
-    Parameters
-    ----------
-    scale : double
-        A scalar value representing the scale across each axis
-    n_dims : int
-        The number of dimensions for the transform.
-
-    Returns
-    -------
-    transform : :class:`UniformScale2D` or a class:`UniformScale3D`
-        The correct Uniform scale type.
-
-    Raises
-    ------
-    DimensionalityError
-        Only 2D and 3D scale objects are supported.
-    """
-    if n_dims == 2:
-        return UniformScale2D(scale)
-    elif n_dims == 3:
-        return UniformScale3D(scale)
-    else:
-        raise DimensionalityError('Only 2D or 3D UniformScale transforms are '
-                                  'currently supported.')
-
-
-class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
+class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     r"""
     An abstract similarity scale transform, with a single scale component
     applied to all dimensions. This is abstracted out to remove unnecessary
     code duplication.
     """
+    def __init__(self, scale, n_dims):
+        homogeneous_matrix = np.eye(n_dims)
+        np.fill_diagonal(homogeneous_matrix, scale)
+        homogeneous_matrix[-1, -1] = 1
+        super(UniformScale, self).__init__(homogeneous_matrix)
 
-    __metaclass__ = abc.ABCMeta
-
-    @property
-    def scale(self):
-        r"""
-        The single scale value.
-
-        :type: double
-        """
-        return self.homogeneous_matrix.diagonal()[0]
-
-    def _transform_str(self):
-        message = 'UniformScale by %f ' % self.scale
-        return message
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        return cls(target.norm()/source.norm())
 
     @property
     def n_parameters(self):
@@ -1269,6 +1322,24 @@ class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
         :type: int
         """
         return 1
+
+    @property
+    def scale(self):
+        r"""
+        The single scale value.
+
+        :type: double
+        """
+        return self.homogeneous_matrix[0, 0]
+
+    @property
+    def inverse(self):
+        r"""
+        The inverse scale.
+
+        :type: type(self)
+        """
+        return type(self)(1.0 / self.scale)
 
     def as_vector(self):
         r"""
@@ -1289,42 +1360,10 @@ class AbstractUniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.scale
 
-
-class UniformScale2D(AbstractUniformScale):
-    r"""
-    An 2D similarity scale transform, with a single scale component
-    applied to all dimensions.
-
-    Parameters
-    ----------
-    scale : double
-        A scalar value indicating the scale across each axis
-    """
-
-    def __init__(self, scale):
-        homogeneous_matrix = np.eye(3)
-        np.fill_diagonal(homogeneous_matrix, scale)
-        homogeneous_matrix[-1, -1] = 1
-        super(UniformScale2D, self).__init__(homogeneous_matrix)
-
-    @property
-    def inverse(self):
+    def from_vector(self, p):
         r"""
-        The inverse scale.
+        Returns a UniformScale from the scale argument
 
-        :type: :class:`UniformScale2D`
-        """
-        return UniformScale2D(1.0 / self.scale)
-
-    @classmethod
-    def from_vector(cls, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        2D uniform scale: 1 parameter::
-
-            s0
 
         Parameters
         ----------
@@ -1333,68 +1372,14 @@ class UniformScale2D(AbstractUniformScale):
 
         Returns
         -------
-        transform : :class:`UniformScale2D`
-            The transform initialised to the given parameter.
+        scale : cls
+            A 2D or 3D scale as appropriate.
         """
-        # See affine from_vector with regards to classmethod decorator
-        return UniformScale2D(p)
+        return UniformScale(p, self.n_dims)
 
-    @classmethod
-    def _estimate(cls, source, target):
-        homogeneous_matrix = super(UniformScale2D, cls)._estimate(source,
-                                                                  target)
-        scale = homogeneous_matrix[0]
-        return scale
-
-
-class UniformScale3D(AbstractUniformScale):
-    """
-    An 3D similarity scale transform, with a single scale component
-    applied to all dimensions.
-
-    Parameters
-    ----------
-    scale : double
-        A scalar value indicating the scale across each axis
-    """
-
-    def __init__(self, scale):
-        homogeneous_matrix = np.eye(4)
-        np.fill_diagonal(homogeneous_matrix, scale)
-        homogeneous_matrix[-1, -1] = 1
-        super(UniformScale3D, self).__init__(homogeneous_matrix)
-
-    @property
-    def inverse(self):
-        r"""
-        The inverse scale.
-
-        :type: :class:`UniformScale3D`
-        """
-        return UniformScale3D(1.0 / self.scale)
-
-    @classmethod
-    def from_vector(cls, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        3D uniform scale: 1 parameter::
-
-            s0
-
-        Parameters
-        ----------
-        p : double
-            The parameter.
-
-        Returns
-        -------
-        transform : :class:`UniformScale3D`
-            The transform initialised to the given parameter.
-        """
-        # See affine from_vector with regards to classmethod decorator
-        return UniformScale3D(p)
+    def _transform_str(self):
+        message = 'UniformScale by %f ' % self.scale
+        return message
 
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
@@ -1412,6 +1397,19 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         homogeneous_matrix[:-1, -1] = translation
         super(Translation, self).__init__(homogeneous_matrix)
 
+    @classmethod
+    def _align(cls, source, target):
+        return cls(target.centre - source.centre)
+
+    @property
+    def n_parameters(self):
+        r"""
+        The number of parameters: ``n_dims``
+
+        :type: int
+        """
+        return self.n_dims
+
     @property
     def inverse(self):
         r"""
@@ -1424,15 +1422,6 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def _transform_str(self):
         message = 'Translate by %s ' % self.translation_component
         return message
-
-    @property
-    def n_parameters(self):
-        r"""
-        The number of parameters: ``n_dims``
-
-        :type: int
-        """
-        return self.n_dims
 
     def as_vector(self):
         r"""
@@ -1478,11 +1467,4 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         transform : :class:`Translation`
             The transform initialised to the given parameters.
         """
-        # See affine from_vector with regards to classmethod decorator
         return Translation(p)
-
-    @classmethod
-    def _estimate(cls, source, target):
-        homogeneous_matrix = super(Translation, cls)._estimate(source, target)
-        translation = homogeneous_matrix[:-1, -1]
-        return translation
