@@ -208,7 +208,7 @@ class PointCloud(Shape):
         """
         return np.linalg.norm(self.points - self.centre, **kwargs)
 
-	def from_mask(self, mask):
+    def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
         points in the pointcloud. This is then broadcast across the dimensions
