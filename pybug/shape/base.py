@@ -33,10 +33,7 @@ class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
         self : ``self``
             A pointer to ``self`` (the result of :meth:`_transform_self`).
         """
-        for manager in self.landmarks.values():
-            for label, lmarks in manager:
-                lmarks._transform_self(transform)
-                manager.update_landmarks(label, lmarks)
+        self.landmarks._transform(transform)
         return self._transform_self(transform)
 
     @abc.abstractmethod

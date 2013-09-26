@@ -185,7 +185,7 @@ class SpatialImageImporter(Importer):
         pass
 
     @abc.abstractmethod
-    def _process_landmarks(self, original_image, lmark_dict):
+    def _process_landmarks(self, original_image, landmark_group):
         r"""
         Abstract method that allows the landmarks to be transformed between
         the original image space and the depth image space. The space may
@@ -196,13 +196,13 @@ class SpatialImageImporter(Importer):
         ----------
         original_image : :class:`pybug.image.base.Image`
             The original image that the landmarks belong to
-        lmark_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
-            The landmark dictionary to transform
+        lmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+            The landmark group to transform
 
         Returns
         -------
-        transformed_dict : dict (string, :class:`pybug.shape.base.PointCloud`)
-            The transformed landmark points.
+        transformed_group : :class:`pybug.landmark.base.LandmarkGroup`
+            The transformed landmark group.
         """
         pass
 
@@ -232,18 +232,18 @@ class SpatialImageImporter(Importer):
                                 texture=texture)
 
         if self.image_landmark_importer is not None:
-            label, lmark_dict = self.image_landmark_importer.build(
+            lmark_group = self.image_landmark_importer.build(
                 scale_factors=self.image.shape)
-            texture.add_landmark_set(label, lmark_dict)
+            label = lmark_group.group_label
+            texture.landmarks[label] = lmark_group
             # Add landmarks to image - may need scaling if original texture
             # is different in size to depth image
-            self.image.add_landmark_set(label,
-                                        self._process_landmarks(texture,
-                                                                lmark_dict))
+            self.image.landmarks[label] = self._process_landmarks(texture,
+                                                                  lmark_group)
 
         if self.mesh_landmark_importer is not None:
-            label, lmark_dict = self.mesh_landmark_importer.build()
-            self.image.mesh.add_landmark_set(label, lmark_dict)
+            lmark_group = self.mesh_landmark_importer.build()
+            self.image.mesh.landmarks[lmark_group.group_label] = lmark_group
 
         return self.image
 
@@ -271,7 +271,7 @@ class BNTImporter(SpatialImageImporter):
         # Setup class before super class call
         super(BNTImporter, self).__init__(filepath)
 
-    def _process_landmarks(self, original_image, lmark_dict):
+    def _process_landmarks(self, original_image, lmark_group):
         original_shape = original_image.shape
         depth_image_shape = self.shape_image.shape
 
@@ -280,10 +280,9 @@ class BNTImporter(SpatialImageImporter):
         scale_1 = depth_image_shape[1] / original_shape[1]
         scale = Scale(np.array([scale_0, scale_1]))
 
-        for l in lmark_dict.values():
-            scale.apply(l)
+        scale.apply(lmark_group.landmarks)
 
-        return lmark_dict
+        return lmark_group
 
     def _build_image_and_mesh(self):
         r"""
@@ -352,12 +351,12 @@ class FIMImporter(SpatialImageImporter):
         # Setup class before super class call
         super(FIMImporter, self).__init__(filepath)
 
-    def _process_landmarks(self, original_image, lmark_dict):
+    def _process_landmarks(self, original_image, lmark_group):
         r"""
         There are no default landmarks for this dataset so we currently don't
         perform any processing.
         """
-        return lmark_dict
+        return lmark_group
 
     def _build_image_and_mesh(self):
         r"""
@@ -395,11 +394,11 @@ class ABSImporter(SpatialImageImporter):
         # Setup class before super class call
         super(ABSImporter, self).__init__(filepath)
 
-    def _process_landmarks(self, original_image, lmark_dict):
+    def _process_landmarks(self, original_image, lmark_group):
         r"""
         The original texture and the given texture are the same size.
         """
-        return lmark_dict
+        return lmark_group
 
     def _build_image_and_mesh(self):
         r"""
