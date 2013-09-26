@@ -6,6 +6,9 @@ from pybug.visualize.base import Viewable
 
 
 class Alignment(object):
+    r"""
+    Abstract interface for alignements.
+    """
 
     __metaclass__ = abc.ABCMeta
 
@@ -114,6 +117,10 @@ class Alignment(object):
     def _update_from_target(self, old_target):
         r"""
         Updates this alignment transform based on the newly set target.
+
+        Prior to this method being called, a new target has been verified
+        and set as self.target. The previous target is passed in in case
+        this is needed to compute the update.
         """
         pass
 
@@ -122,6 +129,11 @@ class Alignment(object):
         Returns a new instance of this alignment transform with the source
         unchanged but the target set to a newly provided target.
 
+        This default implementation simply deep copy's the current
+        transform, and then changes the target in place. If there is a more
+        efficient way for transforms to perform this operation, they can
+        just subclass this method.
+
         Parameters
         ----------
 
@@ -129,6 +141,9 @@ class Alignment(object):
             The new target that should be used in this align transform.
         """
         new_transform = deepcopy(self)
+        # If this method is overridden in a subclass verification of target
+        # will have to be called manually (right now it is called in the
+        # target setter here).
         new_transform.target = target
         return new_transform
 
