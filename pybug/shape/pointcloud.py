@@ -108,8 +108,8 @@ class PointCloud(Shape):
         ----------
         boundary: b float
             A optional padding distance that is added to the bounds. Default
-             is zero, meaning the max/min of tightest possible containing
-             square/cube/hypercube is returned.
+            is zero, meaning the max/min of tightest possible containing
+            square/cube/hypercube is returned.
 
         Returns
         --------
@@ -125,16 +125,23 @@ class PointCloud(Shape):
         max_b = np.max(self.points, axis=0) + boundary
         return min_b, max_b
 
-    def range(self):
+    def range(self, boundary=0):
         r"""
         The range of the extent of the :class:`PointCloud`.
+
+        Parameters
+        ----------
+        boundary: b float
+            A optional padding distance that is used to extend the bounds
+            from which the range is computed. Default is zero, no extension
+            is performed.
 
         Returns
         --------
         range : (D,) ndarray
             The range of the :class:`PointCloud`s extent in each dimension.
         """
-        min_b, max_b = self.bounds()
+        min_b, max_b = self.bounds(boundary)
         return max_b - min_b
 
     def add_pointfield(self, name, field):
@@ -160,7 +167,6 @@ class PointCloud(Shape):
         return self
 
     def distance_to(self, pointcloud, **kwargs):
-
         r"""
         Returns a distance matrix between this point cloud and another.
         By default the Euclidian distance is calculated - see
@@ -185,3 +191,19 @@ class PointCloud(Shape):
             raise ValueError("The two PointClouds must be of the same "
                              "dimensionality.")
         return cdist(self.points, pointcloud.points, **kwargs)
+
+    def norm(self, **kwargs):
+        r"""
+        Returns the norm of this point cloud. This is a translation and
+        rotation invariant measure of the point cloud's intrinsic size - in
+        other words, it is always taken around the point cloud's centre.
+
+        By default, the Frobenius norm is taken, but this can be changed by
+        setting kwargs - see numpy.linalg.norm for valid options.
+
+        Returns
+        -------
+        norm: float
+            The norm of this :class:`PointCloud`
+        """
+        return np.linalg.norm(self.points - self.centre, **kwargs)
