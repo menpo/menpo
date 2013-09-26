@@ -42,7 +42,7 @@ def imm_58_points(landmark_group):
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     group_label = 'imm_58_points'
-    n_points = landmark_group.landmarks.n_points
+    n_points = landmark_group.lms.n_points
 
     if n_points != 58:
         raise LabellingError("{0} mark-up expects exactly 58 "
@@ -50,7 +50,7 @@ def imm_58_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(landmark_group._target, group_label,
-                                       copy.deepcopy(landmark_group.landmarks),
+                                       copy.deepcopy(landmark_group.lms),
                                        {})
     new_landmark_group['chin'] = np.arange(13)
     new_landmark_group['leye'] = np.arange(13, 21)
@@ -103,7 +103,7 @@ def ibug_68_points(landmark_group):
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined by ibug (and thus not a PointCloud)
     group_label = 'ibug_68_points'
-    n_points = landmark_group.landmarks.n_points
+    n_points = landmark_group.lms.n_points
 
     if n_points != 68:
         raise LabellingError("{0} mark-up expects exactly 68 "
@@ -112,7 +112,7 @@ def ibug_68_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        copy.deepcopy(landmark_group.landmarks),
+        copy.deepcopy(landmark_group.lms),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(17)
@@ -160,7 +160,7 @@ def ibug_68_contour(landmark_group):
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined by ibug (and thus not a PointCloud)
     group_label = 'ibug_68_contour'
-    n_points = landmark_group.landmarks.n_points
+    n_points = landmark_group.lms.n_points
 
     if n_points != 68:
         raise LabellingError("{0} mark-up expects exactly 68 "
@@ -169,7 +169,7 @@ def ibug_68_contour(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        copy.deepcopy(landmark_group.landmarks),
+        copy.deepcopy(landmark_group.lms),
         {'all': np.ones(n_points, dtype=np.bool)})
     new_landmark_group['contour'] = np.concatenate([np.arange(17),
                                                     np.arange(16, 21),
@@ -213,7 +213,7 @@ def ibug_68_trimesh(landmark_group):
     from pybug.shape import TriMesh
 
     group_label = 'ibug_68_trimesh'
-    n_points = landmark_group.landmarks.n_points
+    n_points = landmark_group.lms.n_points
 
     if n_points != 68:
         raise LabellingError("{0} mark-up expects exactly 68 "
@@ -249,7 +249,7 @@ def ibug_68_trimesh(landmark_group):
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        TriMesh(copy.deepcopy(landmark_group.landmarks.points), tri_list),
+        TriMesh(copy.deepcopy(landmark_group.lms.points), tri_list),
         {'tri': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
@@ -284,7 +284,7 @@ def labeller(landmarkables, group_label, label_func):
     landmark_groups = [label_func(landmarkable.landmarks[group_label])
                        for landmarkable in landmarkables]
 
-    for (lmarkable, group) in zip(landmarkables, landmark_groups):
-        lmarkable.landmarks[group.group_label] = group
+    for (lanmarkable, group) in zip(landmarkables, landmark_groups):
+        lanmarkable.landmarks[group.group_label] = group
 
     return landmarkables

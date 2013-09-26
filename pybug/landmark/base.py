@@ -136,7 +136,7 @@ class LandmarkManager(Transformable, Viewable):
 
         :type: int
         """
-        return self.n_groups != 0
+        return self.n_groups == 0
 
     @property
     def group_labels(self):
@@ -163,7 +163,7 @@ class LandmarkManager(Transformable, Viewable):
 
     def _transform(self, transform):
         for group in self._landmark_groups.itervalues():
-            group.landmarks._transform(transform)
+            group.lms._transform(transform)
         return self
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
@@ -247,20 +247,19 @@ class LandmarkGroup(Viewable):
 
     def __getitem__(self, label):
         """
-        Get back a sub-pointcloud given a label. Internally only one pointcloud
-        is kept, but we wish to have access to the pointcloud specific to a
-        particular label.
+        Returns a new landmark group that contains ONLY the specified label.
 
         Parameters
         ----------
-        label : Label of landmark
+        label : String
+            Label to filter on.
 
         Returns
         -------
-        pointcloud : :class:`pybug.shape.pointcloud.Pointcloud`
-            The pointcloud containing all the landmarks for the given label.
+        landmark_group : :class:`LandmarkGroup`
+            A new landmark group with a single label.
         """
-        return self._pointcloud.from_mask(self._labels_to_masks[label])
+        return self.with_labels(label)
 
     @property
     def group_label(self):
@@ -290,7 +289,7 @@ class LandmarkGroup(Viewable):
         return len(self.labels)
 
     @property
-    def landmarks(self):
+    def lms(self):
         """
         The pointcloud representing all the landmarks in the group.
 
