@@ -1,16 +1,13 @@
 from scipy.linalg import norm
 import numpy as np
-from pybug.align.lucaskanade.appearance.base import AppearanceLucasKanade
+from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 
-class SimultaneousForwardAdditive(AppearanceLucasKanade):
+class AdaptiveForwardAdditive(AppearanceLucasKanade):
 
     def _align(self, max_iters=30, project=True):
         # Initial error > eps
         error = self.eps + 1
-
-        # Number of shape parameters
-        n_params = self.optimal_transform.n_parameters
 
         # Initial appearance weights
         if project:
@@ -23,9 +20,6 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_components)
-
-        # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = self.appearance_model._jacobian.T
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -38,31 +32,33 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
-            J = self.residual.steepest_descent_images(
+            J_aux = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
                                             self._warp))
 
-            # Concatenate VI_dW_dp with appearance model Jacobian
-            J = np.hstack((J, appearance_jacobian))
+            # Project out appearance model from VT_dW_dp
+            self._J = self.appearance_model._project_out(J_aux.T).T
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(J)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                J, IWxp, self.template)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.optimal_transform.as_vector() + delta_p[:n_params]
+            params = self.optimal_transform.as_vector() + delta_p
             self.transforms.append(
                 self.initial_transform.from_vector(params))
 
             # Update appearance weights
-            weights -= delta_p[n_params:]
+            error_img = self.template.from_vector(self.residual._error_img -
+                                                  np.dot(J_aux, delta_p))
+            weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
 
             # Test convergence
@@ -71,19 +67,18 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         return self.optimal_transform
 
 
-class SimultaneousForwardCompositional(AppearanceLucasKanade):
+class AdaptiveForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
+        pass
+
     def _align(self, max_iters=30, project=True):
         # Initial error > eps
         error = self.eps + 1
-
-        # Number of shape parameters
-        n_params = self.optimal_transform.n_parameters
 
         # Initial appearance weights
         if project:
@@ -97,39 +92,37 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_components)
 
-        # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = self.appearance_model._jacobian.T
-
-        # Forward Compositional Algorithm
+        # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self._warp(self.image, self.template,
                               self.optimal_transform)
 
             # Compute steepest descent images, VI_dW_dp
-            J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
+            J_aux = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
-            # Concatenate VI_dW_dp with appearance model Jacobian
-            J = np.hstack((J, appearance_jacobian))
+            # Project out appearance model from VT_dW_dp
+            self._J = self.appearance_model._project_out(J_aux.T).T
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(J)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                J, IWxp, self.template)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(
-                delta_p[:n_params])
+            delta_p_transform = self.initial_transform.from_vector(delta_p)
             self.transforms.append(
                 self.optimal_transform.compose(delta_p_transform))
 
             # Update appearance weights
-            weights -= delta_p[n_params:]
+            error_img = self.template.from_vector(self.residual._error_img -
+                                                  np.dot(J_aux, delta_p))
+            weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
 
             # Test convergence
@@ -138,19 +131,18 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         return self.optimal_transform
 
 
-class SimultaneousInverseCompositional(AppearanceLucasKanade):
+class AdaptiveInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
-        # Compute the Jacobian of the warp
+        # Compute warp Jacobian
         self._dW_dp = self.initial_transform.jacobian(
-            self.appearance_model.mean.mask.true_indices)
+            self.template.mask.true_indices)
+
+        pass
 
     def _align(self, max_iters=30, project=True):
         # Initial error > eps
         error = self.eps + 1
-
-        # Number of shape parameters
-        n_params = self.optimal_transform.n_parameters
 
         # Initial appearance weights
         if project:
@@ -164,40 +156,37 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_components)
 
-        # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = self.appearance_model._jacobian.T
-
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self._warp(self.image, self.template, self.optimal_transform)
 
             # Compute steepest descent images, VT_dW_dp
-            J = self.residual.steepest_descent_images(self.template,
-                                                      self._dW_dp)
+            J_aux = self.residual.steepest_descent_images(self.template,
+                                                          self._dW_dp)
 
-            # Concatenate VI_dW_dp with appearance model Jacobian
-            J = np.hstack((J, appearance_jacobian))
+            # Project out appearance model from VT_dW_dp
+            self._J = self.appearance_model._project_out(J_aux.T).T
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(J)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                J, IWxp, self.template)
+                self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(
-                delta_p[:n_params])
+            delta_p_transform = self.initial_transform.from_vector(delta_p)
             self.transforms.append(
                 self.optimal_transform.compose(delta_p_transform.inverse))
 
-            # Update appearance weights
-            weights = weights + delta_p[n_params:]
+            # Update appearance parameters
+            error_img = self.template.from_vector(self.residual._error_img -
+                                                  np.dot(J_aux, delta_p))
+            weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
 
             # Test convergence

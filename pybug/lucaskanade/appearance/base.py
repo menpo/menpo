@@ -1,5 +1,5 @@
 from pybug.warp.base import scipy_warp
-from pybug.align.lucaskanade.base import LucasKanade
+from pybug.lucaskanade.base import LucasKanade
 
 
 class AppearanceLucasKanade(LucasKanade):

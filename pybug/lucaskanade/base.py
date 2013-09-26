@@ -94,18 +94,33 @@ class LucasKanade(object):
         self._warp = warp
 
     def _select_optimisation(self, optimisation):
+        if optimisation[0] == 'GD':
+            self.update_step = optimisation[1]
+            self.__e_lm = 0
+            return self._gradient_descent
         if optimisation[0] == 'GN':
             return self._gauss_newton_update
+        elif optimisation[0] == 'GN_lp':
+            self.lp = optimisation[1]
+            return self._gauss_newton_lp_update
         elif optimisation[0] == 'LM':
             self.update_step = optimisation[1]
             self.__e_lm = 0
             return self._levenberg_marquardt_update
         else:
             raise ValueError('Unknown optimisation string selected. Valid'
-                             'options are: GN, LM')
+                             'options are: GN, GN_lp, LM')
+
+    def _gradient_descent(self, sd_delta_p):
+        raise NotImplementedError("Gradient descent optimization not "
+                                  "implemented yet")
 
     def _gauss_newton_update(self, sd_delta_p):
         return solve(self._H, sd_delta_p)
+
+    def _gauss_newton_lp_update(self, sd_delta_p):
+        raise NotImplementedError("Gauss-Newton lp-norm optimization not "
+                                  "implemented yet")
 
     def _levenberg_marquardt_update(self, sd_delta_p):
         LM = np.diagflat(np.diagonal(self._H))
