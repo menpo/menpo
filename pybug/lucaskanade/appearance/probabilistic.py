@@ -117,7 +117,7 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
 
             # Compute steepest descent images, VT_dW_dp
             J = self.residual.steepest_descent_images(self.template,
-                                                          self._dW_dp)
+                                                      self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
             self._J = (self.appearance_model._to_subspace(J.T) +
