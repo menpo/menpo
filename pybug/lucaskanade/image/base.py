@@ -1,7 +1,7 @@
 from scipy.linalg import norm
 import numpy as np
 from pybug.warp.base import scipy_warp
-from pybug.align.lucaskanade.base import LucasKanade
+from pybug.lucaskanade.base import LucasKanade
 
 
 class ImageLucasKanade(LucasKanade):
@@ -36,17 +36,17 @@ class ImageForwardAdditive(ImageLucasKanade):
 
             # TODO: rename kwarg "forward" to "forward_additive"
             # Compute steepest descent images, VI_dW_dp
-            VI_dW_dp = self.residual.steepest_descent_images(
+            self._J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
                                             self._warp))
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(VI_dW_dp)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                VI_dW_dp, self.template, IWxp)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
@@ -89,15 +89,14 @@ class ImageForwardCompositional(ImageLucasKanade):
             #   1. V[I(x)](W(x,p)) * dW/dx * dW/dp
             #   2. V[I(W(x,p))] * dW/dp -> this is what is currently used
             # Compute steepest descent images, VI_dW_dp
-            VI_dW_dp = self.residual.steepest_descent_images(IWxp,
-                                                             self._dW_dp)
+            self._J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(VI_dW_dp)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                VI_dW_dp, self.template, IWxp)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
@@ -126,11 +125,12 @@ class ImageInverseCompositional(ImageLucasKanade):
             self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
-        self._VT_dW_dp = self.residual.steepest_descent_images(
+        self._J = self.residual.steepest_descent_images(
             self.template, dW_dp)
 
-        # Compute Hessian
-        self._H = self.residual.calculate_hessian(self._VT_dW_dp)
+        # TODO: Pre-compute the inverse
+        # Compute Hessian and inverse
+        self._H = self.residual.calculate_hessian(self._J)
 
     def _align(self, max_iters=30):
         # Initial error > eps
@@ -144,17 +144,18 @@ class ImageInverseCompositional(ImageLucasKanade):
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                self._VT_dW_dp, IWxp, self.template)
+                self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            self.delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
+            delta_p_transform = self.initial_transform.from_vector(
+                self.delta_p)
             self.transforms.append(
                 self.optimal_transform.compose(delta_p_transform.inverse))
 
             # Test convergence
-            error = np.abs(norm(delta_p))
+            error = np.abs(norm(self.delta_p))
 
         return self.optimal_transform

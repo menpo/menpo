@@ -1,6 +1,6 @@
-import numpy as np
 from scipy.linalg import norm
-from pybug.align.lucaskanade.appearance.base import AppearanceLucasKanade
+import numpy as np
+from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 
 class ProjectOutForwardAdditive(AppearanceLucasKanade):
@@ -25,18 +25,18 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
                                             self.optimal_transform,
                                             self._warp))
 
-            # Project out appearance model from VI_dW_dp
-            J = self.appearance_model._project_out(J.T).T
+            # Project out appearance model from VT_dW_dp
+            self._J = self.appearance_model._project_out(J.T).T
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(J)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                J, IWxp, self.template)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
             new_params = self.optimal_transform.as_vector() + delta_p
@@ -56,6 +56,8 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
+        pass
+
     def _align(self, max_iters=30):
         # Initial error > eps
         error = self.eps + 1
@@ -69,18 +71,18 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
-            # Project out appearance model from VI_dW_dp
-            J = self.appearance_model._project_out(J.T).T
+            # Project out appearance model from VT_dW_dp
+            self._J = self.appearance_model._project_out(J.T).T
 
-            # Compute Hessian
-            self._H = self.residual.calculate_hessian(J)
+            # Compute Hessian and inverse
+            self._H = self.residual.calculate_hessian(self._J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
-                J, IWxp, self.template)
+                self._J, self.template, IWxp)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
             delta_p_transform = self.initial_transform.from_vector(delta_p)
@@ -107,8 +109,10 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
         # Project out appearance model from VT_dW_dp
         self._J = self.appearance_model._project_out(J.T).T
 
-        # Compute Hessian
+        # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J)
+
+        pass
 
     def _align(self, max_iters=30):
         # Initial error > eps

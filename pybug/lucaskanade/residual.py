@@ -193,8 +193,12 @@ class LSIntensity(Residual):
         # sdi:  (n_pixels x n_channels)  x  n_params
         return np.reshape(sdi, (-1, dW_dp.shape[1]))
 
-    def calculate_hessian(self, sdi):
-        return sdi.T.dot(sdi)
+    def calculate_hessian(self, J, J2=None):
+        if J2 is None:
+            H = J.T.dot(J)
+        else:
+            H = J.T.dot(J2)
+        return H
 
     def steepest_descent_update(self, sdi, IWxp, template):
         self._error_img = IWxp.as_vector() - template.as_vector()
