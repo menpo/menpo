@@ -373,7 +373,8 @@ class MaskedNDImage(AbstractNDImage):
         grad_image._enforce_ownership_of_all_landmarks()
         return grad_image
 
-    def constrain_mask_to_landmarks(self, group=None, label=None):
+    def constrain_mask_to_landmarks(self, group=None, label=None,
+                                    trilist=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
         around the landmarks chosen.
@@ -388,7 +389,14 @@ class MaskedNDImage(AbstractNDImage):
 
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
-             label is passed, the convex hull of all landmarks is used.
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: None
+
+        trilist: (t, 3) ndarray, Optional
+            Triangle list to be used on the landmarked points in selecting
+            the mask region. If None defaults to performing Delaunay
+            triangulation on the points.
 
             Default: None
         """
@@ -400,8 +408,7 @@ class MaskedNDImage(AbstractNDImage):
 
         pc = self._all_landmarks_with_group_and_label(group, label)
 
-        # Delaunay as no trilist provided
-        pwa = PiecewiseAffineTransform(pc.points, pc.points)
+        pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
         try:
             pwa.apply(self.mask.all_indices)
         except TriangleContainmentError, e:
