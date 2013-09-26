@@ -4,9 +4,9 @@ from pybug.warp import scipy_warp
 from pybug.io import auto_import
 from pybug import data_path_to
 from pybug.transform import AffineTransform
-from pybug.align.lucaskanade.image import ImageInverseCompositional, \
+from pybug.lucaskanade.image import ImageInverseCompositional, \
     ImageForwardAdditive
-from pybug.align.lucaskanade.residual import *
+from pybug.lucaskanade.residual import *
 
 
 # Setup the static assets (the takeo image)
