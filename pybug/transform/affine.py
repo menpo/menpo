@@ -16,23 +16,15 @@ class AffineTransform(Transform):
 
     Parameters
     ----------
-    homogeneous_matrix : (D + 1, D + 1) ndarray
+    homogeneous_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
 
     def __init__(self, homogeneous_matrix):
         super(AffineTransform, self).__init__()
-        shape = homogeneous_matrix.shape
-        if len(shape) != 2 and shape[0] != shape[1]:
-            raise Exception("You need to provide a square homogeneous matrix.")
+        self._homogeneous_matrix = None
+        # let the setter handle initialization
         self.homogeneous_matrix = homogeneous_matrix
-        if self.n_dims not in [2, 3]:
-            raise DimensionalityError("Affine Transforms can only be 2D or "
-                                      "3D")
-
-    @property
-    def n_dims(self):
-        return self.homogeneous_matrix.shape[0] - 1
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -55,85 +47,76 @@ class AffineTransform(Transform):
         Returns
         -------
 
-        alignment_transform: :class:`pybug.transform.Transform`
-            A Transform object that is_alignment.
+        alignment_transform: :class:`pybug.transform.AffineTransform`
+            An AffineTransform object that is_alignment.
 
 
         Notes
         -----
 
-        The affine transform is defined as:
+        We want to find the optimal transform M which satisfies
 
-            X = a*x + b*y + tx
-            Y = c*x + d*y + ty
+            M a = b
 
-        These equations can be transformed to the following form::
+        where `a` and `b` are the source and target homogeneous vectors
+        respectively.
 
-            a*x + b*y + tx - X = 0
-            c*x + d*y + ty - Y = 0
+           (M a)' = b'
+           a' M' = b'
+           a a' M' = a b'
 
-        which can be written in matrix form as:
+           `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
+           to solve for M.
 
-            A x = 0
-
-        where::
-
-            A   = [[x y 1 0 0 0 X]
-                   [0 0 0 x y 1 Y]
-                    ...
-                    ...
-                  ]
-            x.T = [a b tx c d ty c6]
-
-        Using total least-squares, the solution of the previous homogeneous
-        system of equations is the right singular vector of A which
-        corresponds to the smallest singular value normalized by the
-        coefficient c6.
-
-
-        :return: The AffineTransform object relating the previous two vectors.
+           This approach is the analytical linear least squares solution to
+           the problem at hand. It will have a solution as long as `(a a')`
+           is non-singular, which generally means at least 2 corresponding
+           points are required.
         """
-        n_dims = source.shape[1]
-        if n_dims == 2:
-            n_points = source.shape[0]
-            xs = source[:, 0]
-            ys = source[:, 1]
-            xd = target[:, 0]
-            yd = target[:, 1]
+        return cls(cls._optimal_alignment_homogeneous_matrix(source, target))
 
-            # parameters: a, b, tx, c, d, ty
-            A = np.zeros((n_points * 2, 7))
-            # a
-            A[:n_points, 0] = xs
-            # b
-            A[:n_points, 1] = ys
-            # tx
-            A[:n_points, 2] = 1
-            # c
-            A[n_points:, 3] = xs
-            # d
-            A[n_points:, 4] = ys
-            # ty
-            A[n_points:, 5] = 1
-            # target
-            A[:n_points, 6] = xd
-            A[n_points:, 6] = yd
-            # the parameters of the affine transform are given by the least
-            # significant right singular vector normalized by coefficient c6.
-            _, _, V = np.linalg.svd(A)
-            a, b, tx, c, d, ty = - V[-1, :-1] / V[-1, -1]
-            # build homogeneous matrix
-            homogeneous_matrix = np.array([[a, b, tx],
-                                           [c, d, ty],
-                                           [0, 0,  1]])
-            return homogeneous_matrix
-        elif n_dims == 3:
-            raise NotImplementedError("3D affine transforms cannot be "
-                                      "inferred yet.")
-        else:
-            raise DimensionalityError("Only 2D and 3D affine transforms "
-                                      "are currently supported.")
+    @staticmethod
+    def _optimal_alignment_homogeneous_matrix(source, target):
+        r"""
+        See _align() for details. This is a separate method just so it can
+        be shared by _update_from_target().
+        """
+        def _homogeneous_points(pc):
+            r"""
+            Pulls out the points from a pointcloud as homogeneous points of
+            shape (n_dims + 1, n_points)
+            """
+            return np.concatenate((pc.points.T, np.ones(pc.n_points)[None, :]))
+        a = _homogeneous_points(source)
+        b = _homogeneous_points(target)
+        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
+    def _update_from_target(self, old_target):
+        self.homogeneous_matrix = self._optimal_alignment_homogeneous_matrix(
+            self.source, self.target)
+
+    @property
+    def homogeneous_matrix(self):
+        return self._homogeneous_matrix
+
+    @homogeneous_matrix.setter
+    def homogeneous_matrix(self, value):
+        shape = value.shape
+        if len(shape) != 2 and shape[0] != shape[1]:
+            raise ValueError("You need to provide a square homogeneous matrix")
+        if self.homogeneous_matrix is not None:
+            # already have a matrix set! The update better be the same size
+            if self.n_dims != shape[0] - 1:
+                raise ValueError("Trying to update the homogeneous matrix to a"
+                                 " different dimension")
+        elif shape[0] - 1 not in [2, 3]:
+            raise ValueError("Affine Transforms can only be 2D or 3D")
+        # TODO add a check here that the matrix is valid
+        self._homogeneous_matrix = value
+
+    @property
+    def n_dims(self):
+        return self.homogeneous_matrix.shape[0] - 1
 
     @property
     def linear_component(self):
@@ -426,89 +409,6 @@ class AffineTransform(Transform):
         :type: :class:`AffineTransform`
         """
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        pass
-
-    @classmethod
-    def _estimate(cls, source, target):
-        """
-        Infers the affine transform relating two vectors with the same
-        dimensionality.
-
-        The affine transform is defined as:
-
-            X = a*x + b*y + tx
-            Y = c*x + d*y + ty
-
-        These equations can be transformed to the following form::
-
-            a*x + b*y + tx - X = 0
-            c*x + d*y + ty - Y = 0
-
-        which can be written in matrix form as:
-
-            A x = 0
-
-        where::
-
-            A   = [[x y 1 0 0 0 X]
-                   [0 0 0 x y 1 Y]
-                    ...
-                    ...
-                  ]
-            x.T = [a b tx c d ty c6]
-
-        Using total least-squares, the solution of the previous homogeneous
-        system of equations is the right singular vector of A which
-        corresponds to the smallest singular value normalized by the
-        coefficient c6.
-
-        :param source: A n_points x n_dims ndarray.
-        :param target: A n_points x n_dims ndarray.
-        :return: The AffineTransform object relating the previous two vectors.
-        """
-        n_dims = source.shape[1]
-        if n_dims == 2:
-            n_points = source.shape[0]
-            xs = source[:, 0]
-            ys = source[:, 1]
-            xd = target[:, 0]
-            yd = target[:, 1]
-
-            # parameters: a, b, tx, c, d, ty
-            A = np.zeros((n_points * 2, 7))
-            # a
-            A[:n_points, 0] = xs
-            # b
-            A[:n_points, 1] = ys
-            # tx
-            A[:n_points, 2] = 1
-            # c
-            A[n_points:, 3] = xs
-            # d
-            A[n_points:, 4] = ys
-            # ty
-            A[n_points:, 5] = 1
-            # target
-            A[:n_points, 6] = xd
-            A[n_points:, 6] = yd
-            # the parameters of the affine transform are given by the least
-            # significant right singular vector normalized by coefficient c6.
-            _, _, V = np.linalg.svd(A)
-            a, b, tx, c, d, ty = - V[-1, :-1] / V[-1, -1]
-            # build homogeneous matrix
-            homogeneous_matrix = np.array([[a, b, tx],
-                                           [c, d, ty],
-                                           [0, 0,  1]])
-            return homogeneous_matrix
-        elif n_dims == 3:
-            raise NotImplementedError("3D affine transforms cannot be "
-                                      "inferred yet.")
-        else:
-            raise DimensionalityError("Only 2D and 3D affine transforms "
-                                      "are currently supported.")
 
 
 class SimilarityTransform(AffineTransform):

@@ -1,7 +1,6 @@
 import abc
 import numpy as np
 from scipy.spatial import Delaunay
-from pybug.shape import TriMesh
 from pybug.transform import AffineTransform
 from pybug.transform.fastpwa import CLookupPWA
 from pybug.transform.base import AlignmentTransform
@@ -541,3 +540,4 @@ class CachedPWATransform(AbstractPWATransform):
 
 
 PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
+from pybug.shape import TriMesh  # to avoid circular import

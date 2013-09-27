@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
+from pybug.shape.base import Shape
 
 
 # TODO: sort of pointfields?
