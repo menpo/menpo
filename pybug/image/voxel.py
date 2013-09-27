@@ -1,3 +1,4 @@
+import numpy as np
 from pybug.image import MaskedNDImage
 
 
@@ -17,3 +18,36 @@ class VoxelImage(MaskedNDImage):
                              " you must provide a numpy array of size (X, Y,"
                              " Z, K), where K is the number of channels."
                              .format(self.n_channels))
+
+    @classmethod
+    def blank(cls, shape, fill=0, dtype=np.float, mask=None):
+        r"""
+        Returns a blank Voxel
+
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image
+
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Returns
+        -------
+        blank_image : :class:`VoxelImage`
+            A new masked image of the requested size.
+        """
+        # just enforce n_channels is 3
+        return MaskedNDImage.blank(shape, n_channels=3, fill=fill,
+                                   dtype=dtype, mask=mask)
