@@ -286,11 +286,9 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
         self.pixels = self.pixels[slices]
-        lm_translation = Translation(-min_indices)
         # update all our landmarks
-        for manager in self.landmarks.values():
-            for label, landmarks in manager:
-                lm_translation.apply(landmarks)
+        lm_translation = Translation(-min_indices)
+        lm_translation.apply(self.landmarks)
         return self
 
     def cropped_copy(self, min_indices, max_indices,
