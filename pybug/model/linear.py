@@ -297,16 +297,7 @@ class PCAModel(LinearModel):
     ----------
     samples: list of :class:`pybug.base.Vectorizable`
         List of samples to build the model from.
-    n_components: int, optional
-        The number of components to internally keep.
 
-        .. note::
-
-            The number of components utilized in the model can be
-            curtailed on invocation of methods like reconstruct and instance -
-            setting a low number of components here permanently removes other
-            components, and should only be used as a memory and performance
-            saving measure.
     PCA: specific class implementing PCA, optional
 
         Default: `PybugPCA`
@@ -318,18 +309,12 @@ class PCAModel(LinearModel):
             this implementation does not support the concept of
             `noise_variance`. Support for this concept is expected on their
             next upcoming release.
-
-
     """
 
-    def __init__(self, samples, n_components=None, PCA=PybugPCA):
+    def __init__(self, samples, PCA=PybugPCA, **kwargs):
         self.samples = samples
         self.n_samples = len(samples)
         self.n_features = len(samples[0].as_vector())
-        self.n_components = n_components
-        if self.n_components is None:
-            # -1 to prevent us from getting noise in the final component
-            self.n_components = min(self.n_samples, self.n_features) - 1
 
         # create and populate the data matrix
         data = np.zeros((self.n_samples, self.n_features))
@@ -337,7 +322,7 @@ class PCAModel(LinearModel):
             data[i] = sample.as_vector()
 
         # build PCA object.
-        self._pca = PCA(n_components=self.n_components)
+        self._pca = PCA(**kwargs)
         # compute PCA
         self._pca.fit(data)
 
@@ -383,7 +368,7 @@ class PCAModel(LinearModel):
         """
         The mean vector of the samples.
 
-        :type: (N,) ndarray
+        :type: (n_features,) ndarray
         """
         return self._pca.mean_
 
@@ -397,8 +382,33 @@ class PCAModel(LinearModel):
         return self._pca.components_
 
     @property
+    def n_components(self):
+        """
+        The number of kept principal components.
+
+        :type: int
+        """
+        return self._pca.n_components_
+
+    @property
     def _jacobian(self):
         return self.components
+
+    def component(self, index):
+        """
+        A particular principal component.
+
+        :type: ``self.sample_data_class``
+        """
+        return self.template_sample.from_vector(self._component(index))
+
+    def _component(self, index):
+        """
+        A particular principal component.
+
+        :type: (n_features,) ndarray
+        """
+        return self._pca.components_[index, :]
 
     def _instance(self, weights):
         if weights.shape[-1] > self.n_components:
