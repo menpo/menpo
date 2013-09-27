@@ -372,7 +372,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             Raised if constrain_to_boundary is False, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self._all_landmarks_with_group_and_label(group, label)
+        pc = self.landmarks[group][label].lms
         min_indices, max_indices = pc.bounds(boundary=boundary)
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)

@@ -406,7 +406,7 @@ class MaskedNDImage(AbstractNDImage):
         if self.n_dims != 2:
             raise ValueError("can only constrain mask on 2D images.")
 
-        pc = self._all_landmarks_with_group_and_label(group, label)
+        pc = self.landmarks[group][label].lms
 
         pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
         try:
