@@ -177,7 +177,7 @@ class RGBImage(Abstract2DImage):
             pixels = self.pixels[..., channel]
         mask = deepcopy(self.mask)
         greyscale = IntensityImage(pixels, mask=mask)
-        greyscale.landmarks =self.landmarks
+        greyscale.landmarks = self.landmarks
         return greyscale
 
 
