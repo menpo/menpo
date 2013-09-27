@@ -94,20 +94,29 @@ class LandmarkManager(Transformable, Viewable):
         self._landmark_groups[group_label]._group_label = group_label
         self._landmark_groups[group_label]._target = self._target
 
-    def __getitem__(self, group_label):
+    def __getitem__(self, group_label=None):
         """
         Returns the group for the provided label.
 
         Parameters
         ---------
-        group_label : String
-            The label of the group.
+        group_label : String, optional
+            The label of the group. If None is provided, and if there is only
+            one group, the unambiguous group will be returned.
+
+            Default: None
 
         Returns
         -------
         lmark_group : :class:`LandmarkGroup`
             The matching landmark group.
         """
+        if group_label is None:
+            if self.n_groups == 1:
+                group_label = self.group_labels[0]
+            else:
+                raise ValueError("Cannot use None as a key as there are {} "
+                                 "landmark groups".format(self.n_groups))
         return self._landmark_groups[group_label]
 
     @property
@@ -306,21 +315,31 @@ class LandmarkGroup(Viewable):
         """
         return self._pointcloud.n_points
 
-    def with_labels(self, labels):
+    def with_labels(self, labels=None):
         """
-        Returns a new landmark group that contains only the given label.
+        Returns a new landmark group that contains only the given labels.
 
         Parameters
         ----------
-        label : String
-            Label to filter on.
+        labels : String or List of strings, optional
+            Labels that should be kept in the returned landmark group. If
+            None is passed, and if there is only one label on this group,
+            the label will be substituted automatically.
 
+            Default: None
         Returns
         -------
         landmark_group : :class:`LandmarkGroup`
             A new landmark group with the same group label but containing only
             the given label.
         """
+        # make it easier by allowing None when there is only one label
+        if labels is None:
+            if self.n_labels == 1:
+                labels = self.labels
+            else:
+                raise ValueError("Cannot use None as there are "
+                                 "{} labels".format(self.n_labels))
         # Make it easier to use by accepting a single string as well as a list
         if isinstance(labels, str):
             labels = [labels]

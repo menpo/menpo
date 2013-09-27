@@ -369,8 +369,7 @@ class MaskedNDImage(AbstractNDImage):
             np.logical_and(~eroded_mask, self.mask. mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
-        grad_image.landmarks = deepcopy(self.landmarks)
-        grad_image._enforce_ownership_of_all_landmarks()
+        grad_image.landmarks = self.landmarks
         return grad_image
 
     def constrain_mask_to_landmarks(self, group=None, label=None,
@@ -406,7 +405,7 @@ class MaskedNDImage(AbstractNDImage):
         if self.n_dims != 2:
             raise ValueError("can only constrain mask on 2D images.")
 
-        pc = self._all_landmarks_with_group_and_label(group, label)
+        pc = self.landmarks[group][label].lms
 
         pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
         try:
