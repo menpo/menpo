@@ -342,5 +342,5 @@ class TPS(AlignmentTransform):
     def from_vector(self, flattened):
         raise NotImplementedError("TPS from_vector is not implemented yet.")
 
-    def _update_from_target(self, old_target):
+    def _update_from_target(self, new_target):
         pass

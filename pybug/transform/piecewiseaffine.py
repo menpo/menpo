@@ -442,12 +442,13 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
             x_transformed[tri_index == i] = x_t
         return x_transformed
 
-    def _update_from_target(self, old_target):
+    def _update_from_target(self, new_target):
         r"""
         DiscreteAffinePWATransform is particularly inefficient to update
         from target - we just have to manually go through and rebuild all
         the affine transforms.
         """
+        self._target = new_target
         self._produce_affine_transforms_per_tri()
 
 
@@ -530,12 +531,13 @@ class CachedPWATransform(AbstractPWATransform):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-    def _update_from_target(self, old_target):
+    def _update_from_target(self, new_target):
         r"""
         CachedPWATransform is particularly efficient to update
-        from target - we don't have to do much at all, just rebuld the target
+        from target - we don't have to do much at all, just rebuild the target
         vectors.
         """
+        self._target = new_target
         self._rebuild_target_vectors()
 
 

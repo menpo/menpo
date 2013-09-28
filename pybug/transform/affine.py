@@ -73,27 +73,43 @@ class AffineTransform(Transform):
            is non-singular, which generally means at least 2 corresponding
            points are required.
         """
-        return cls(cls._optimal_alignment_homogeneous_matrix(source, target))
+        optimal_h = cls._optimal_alignment_homogeneous_matrix(source, target)
+        affine_transform = cls(optimal_h)
+        affine_transform._source = source
+        affine_transform._target = target
+        return affine_transform
 
-    @staticmethod
-    def _optimal_alignment_homogeneous_matrix(source, target):
-        r"""
-        See _align() for details. This is a separate method just so it can
-        be shared by _update_from_target().
-        """
-        def _homogeneous_points(pc):
-            r"""
-            Pulls out the points from a pointcloud as homogeneous points of
-            shape (n_dims + 1, n_points)
-            """
-            return np.concatenate((pc.points.T, np.ones(pc.n_points)[None, :]))
-        a = _homogeneous_points(source)
-        b = _homogeneous_points(target)
-        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
-
-    def _update_from_target(self, old_target):
+    def _update_from_target(self, new_target):
         self.homogeneous_matrix = self._optimal_alignment_homogeneous_matrix(
-            self.source, self.target)
+            self.source, new_target)
+        self._target = new_target
+
+    @property
+    def n_dims(self):
+        return self.homogeneous_matrix.shape[0] - 1
+
+    @property
+    def n_parameters(self):
+        r"""
+        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
+        the homogeneous part.
+
+        :type: int
+
+        Examples
+        --------
+        2D Affine: 6 parameters::
+
+            [p1, p3, p5]
+            [p2, p4, p6]
+
+        3D Affine: 12 parameters::
+
+            [p1, p4, p7, p10]
+            [p2, p5, p8, p11]
+            [p3, p6, p9, p12]
+        """
+        return self.n_dims * (self.n_dims + 1)
 
     @property
     def homogeneous_matrix(self):
@@ -111,12 +127,8 @@ class AffineTransform(Transform):
                                  " different dimension")
         elif shape[0] - 1 not in [2, 3]:
             raise ValueError("Affine Transforms can only be 2D or 3D")
-        # TODO add a check here that the matrix is valid
+        # TODO add a check here that the matrix is actually valid
         self._homogeneous_matrix = value
-
-    @property
-    def n_dims(self):
-        return self.homogeneous_matrix.shape[0] - 1
 
     @property
     def linear_component(self):
@@ -136,6 +148,15 @@ class AffineTransform(Transform):
         :type: (D,) ndarray
         """
         return self.homogeneous_matrix[:-1, -1]
+
+    @property
+    def inverse(self):
+        r"""
+        The inverse of the matrix.
+
+        :type: :class:`AffineTransform`
+        """
+        return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
 
     def __eq__(self, other):
         return np.allclose(self.homogeneous_matrix, other.homogeneous_matrix)
@@ -195,25 +216,6 @@ class AffineTransform(Transform):
         # representation to normal
         return AffineTransform(np.dot(self.homogeneous_matrix,
                                       affine_transform.homogeneous_matrix))
-
-    def decompose(self):
-        r"""
-        Uses an SVD to decompose this transform into discrete Affine
-        Transforms.
-
-        Returns
-        -------
-        transforms: list of :class`DiscreteAffineTransform` that
-            Equivalent to this affine transform, such that:
-
-            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
-        """
-        U, S, V = np.linalg.svd(self.linear_component)
-        rotation_2 = Rotation(U)
-        rotation_1 = Rotation(V)
-        scale = Scale(S)
-        translation = Translation(self.translation_component)
-        return [rotation_1, scale, rotation_2, translation]
 
     def jacobian(self, points):
         r"""
@@ -294,29 +296,6 @@ class AffineTransform(Transform):
         """
         return self.linear_component[None, ...]
 
-    @property
-    def n_parameters(self):
-        r"""
-        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
-        the homogeneous part.
-
-        :type: int
-
-        Examples
-        --------
-        2D Affine: 6 parameters::
-
-            [p1, p3, p5]
-            [p2, p4, p6]
-
-        3D Affine: 12 parameters::
-
-            [p1, p4, p7, p10]
-            [p2, p5, p8, p11]
-            [p3, p6, p9, p12]
-        """
-        return self.n_dims * (self.n_dims + 1)
-
     def as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
@@ -389,26 +368,66 @@ class AffineTransform(Transform):
         # to it's usual role in building novel instances where some kind of
         # state needs to be stolen from a pre-existing instance (hence the
         # need for this to in general be an instance method).
-        if p.shape[0] is 6:  # 2D affine
-            homo_matrix = np.eye(3)
-            homo_matrix[:2, :] += matlab.reshape(p, [2, 3])
-            return AffineTransform(homo_matrix)
-        elif p.shape[0] is 12:  # 3D affine
-            homo_matrix = np.eye(4)
-            homo_matrix[:3, :] += matlab.reshape(p, [3, 4])
-            return AffineTransform(homo_matrix)
-        else:
-            raise DimensionalityError("Affine Transforms can only be 2D or "
-                                      "3D")
+        return AffineTransform(cls._homogeneous_matrix_from_parameters(p))
 
-    @property
-    def inverse(self):
+    def update_from_vector(self, p):
         r"""
-        The inverse of the matrix.
-
-        :type: :class:`AffineTransform`
+        Updates this AffineTransform in-place from the new parameters. See
+        from_vector for details of the parameter format
         """
-        return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
+        self.homogeneous_matrix = self._homogeneous_matrix_from_parameters(p)
+
+    @staticmethod
+    def _homogeneous_matrix_from_parameters(p):
+        r"""
+        See from_vector for details of the parameter format expected.
+        """
+        homogeneous_matrix = None
+        if p.shape[0] is 6:  # 2D affine
+            homogeneous_matrix = np.eye(3)
+            homogeneous_matrix[:2, :] += matlab.reshape(p, [2, 3])
+        elif p.shape[0] is 12:  # 3D affine
+            homogeneous_matrix = np.eye(4)
+            homogeneous_matrix[:3, :] += matlab.reshape(p, [3, 4])
+        else:
+            ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
+                       "homogeneous matrices are supported.")
+        return homogeneous_matrix
+
+    @staticmethod
+    def _optimal_alignment_homogeneous_matrix(source, target):
+        r"""
+        See _align() for details. This is a separate method just so it can
+        be shared by _update_from_target().
+        """
+        def _homogeneous_points(pc):
+            r"""
+            Pulls out the points from a pointcloud as homogeneous points of
+            shape (n_dims + 1, n_points)
+            """
+            return np.concatenate((pc.points.T, np.ones(pc.n_points)[None, :]))
+        a = _homogeneous_points(source)
+        b = _homogeneous_points(target)
+        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
+
+    def decompose(self):
+        r"""
+        Uses an SVD to decompose this transform into discrete Affine
+        Transforms.
+
+        Returns
+        -------
+        transforms: list of :class`DiscreteAffineTransform` that
+            Equivalent to this affine transform, such that:
+
+            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
+        """
+        U, S, V = np.linalg.svd(self.linear_component)
+        rotation_2 = Rotation(U)
+        rotation_1 = Rotation(V)
+        scale = Scale(S)
+        translation = Translation(self.translation_component)
+        return [rotation_1, scale, rotation_2, translation]
 
 
 class SimilarityTransform(AffineTransform):
@@ -425,6 +444,65 @@ class SimilarityTransform(AffineTransform):
     def __init__(self, homogeneous_matrix):
         #TODO check that I am a similarity transform
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
+
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        """
+        Infers the similarity transform relating two vectors with the same
+        dimensionality. This is simply the procrustes alignment of the
+        source to the target.
+
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+
+        This is called automatically by align once verification of source and
+        target is performed.
+
+        Returns
+        -------
+
+        alignment_transform: :class:`pybug.transform.SimilarityTransform`
+            A SimilarityTransform object that is_alignment.
+        """
+        similarity = cls._procrustes_alignment(source, target)
+        similarity._source = source
+        similarity._target = target
+        return similarity
+
+    @staticmethod
+    def _procrustes_alignment(source, target):
+        r"""
+        Returns the similarity transform that aligns the source to the target.
+        """
+        target_translation = Translation(-target.centre)
+        centred_target = target_translation.apply_nondestructive(target)
+        # now translate the source to the origin
+        translation = Translation(-source.centre)
+        # apply the translation to the source
+        aligned_source = translation.apply_nondestructive(source)
+        scale = UniformScale(target.norm() / source.norm(), source.n_dims)
+        scale.apply(aligned_source)
+        # calculate the correlation along each dimension + find the optimal
+        # rotation to maximise it
+        correlation = np.dot(centred_target.points.T,
+                             aligned_source.points)
+        U, D, Vt = np.linalg.svd(correlation)
+        rotation = Rotation(np.dot(U, Vt))
+        rotation.apply(aligned_source)
+        # finally, move the source back out to where the target is
+        inv_target_translation = target_translation.inverse
+        inv_target_translation.apply(aligned_source)
+        return translation.compose(scale).compose(
+            rotation).compose(inv_target_translation)
+
+    def _update_from_target(self, new_target):
+        similarity = self._procrustes_alignment(self.source, new_target)
+        self.homogeneous_matrix = similarity.homogeneous_matrix
+        self._target = new_target
 
     @property
     def n_parameters(self):
@@ -451,8 +529,8 @@ class SimilarityTransform(AffineTransform):
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
-            raise DimensionalityError("Only 2D and 3D Similarity transforms "
-                                      "are currently supported.")
+            raise ValueError("Only 2D and 3D Similarity transforms "
+                             "are currently supported.")
 
     def jacobian(self, points):
         r"""
@@ -629,84 +707,6 @@ class SimilarityTransform(AffineTransform):
                                               self.homogeneous_matrix))
         else:
             return super(SimilarityTransform, self).compose(transform)
-
-    @classmethod
-    def _estimate(cls, source, target):
-        """
-        Infers the affine transform relating two vectors with the same
-        dimensionality.
-
-        The affine transform is defined as:
-
-            X = a*x - b*y + tx
-            Y = b*x + a*y + ty
-
-        These equations can be transformed to the following form::
-
-            a*x - b*y + tx - X = 0
-            b*x + a*y + ty - Y = 0
-
-        which can be written in matrix form as:
-
-            A x = 0
-
-        where::
-
-            A   = [[x -y 1 0 X]
-                   [y  x 0 1 Y]
-                    ...
-                    ...
-                  ]
-            x.T = [a b tx ty c4]
-
-        Using total least-squares, the solution of the previous homogeneous
-        system of equations is the right singular vector of A which
-        corresponds to the smallest singular value normalized by the
-        coefficient c4.
-
-        :param source: A n_points x n_dims ndarray.
-        :param target: A n_points x n_dims ndarray.
-        :return: The SimilarityTransform object relating the previous two
-            vectors.
-        """
-        n_dims = source.shape[1]
-        if n_dims == 2:
-            n_points = source.shape[0]
-            xs = source[:, 0]
-            ys = source[:, 1]
-            xd = target[:, 0]
-            yd = target[:, 1]
-            # parameters: a, b, tx, ty
-            A = np.zeros((n_points * 2, 5))
-            # a
-            A[:n_points, 0] = xs
-            A[n_points:, 0] = ys
-            # b
-            A[:n_points, 1] = -ys
-            A[n_points:, 1] = xs
-            # tx
-            A[:n_points, 2] = 1
-            # ty
-            A[n_points:, 3] = 1
-            # target
-            A[:n_points, 4] = xd
-            A[n_points:, 4] = yd
-            # the parameters of the similarity transform are given by the
-            # least significant right singular vector normalized by
-            # coefficient c4.
-            _, _, V = np.linalg.svd(A)
-            a, b, tx, ty = - V[-1, :-1] / V[-1, -1]
-            # build homogeneous matrix
-            homogeneous_matrix = np.array([[a, -b, tx],
-                                           [b,  a, ty],
-                                           [0,  0,  1]])
-            return homogeneous_matrix
-        elif n_dims == 3:
-            raise NotImplementedError("3D similarity transforms cannot be "
-                                      "inferred yet.")
-        else:
-            raise DimensionalityError("Only 2D and 3D similarity transforms "
-                                      "are currently supported.")
 
     @property
     def inverse(self):
@@ -1106,7 +1106,24 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
-        super(NonUniformScale, self).__init__(homogeneous_matrix)
+        AffineTransform.__init__(self, homogeneous_matrix)
+
+    @classmethod
+    def _align(cls, source, target, **kwargs):
+        #TODO scale per dim should be used.
+        pass
+
+    @property
+    def n_parameters(self):
+        """
+        The number of parameters: ``n_dims``.
+
+        :type: int
+
+        ``n_dims`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
+        representing the scale across each axis.
+        """
+        return self.scale.size
 
     @property
     def scale(self):
@@ -1129,18 +1146,6 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     def _transform_str(self):
         message = 'NonUniformScale by %s ' % self.scale
         return message
-
-    @property
-    def n_parameters(self):
-        """
-        The number of parameters: ``n_dims``.
-
-        :type: int
-
-        ``n_dims`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
-        representing the scale across each axis.
-        """
-        return self.scale.size
 
     def as_vector(self):
         r"""
@@ -1192,11 +1197,6 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         # See affine from_vector with regards to classmethod decorator
         return NonUniformScale(p)
 
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        #TODO scale per dim should be used.
-        pass
-
 
 class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     r"""
@@ -1205,14 +1205,23 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     code duplication.
     """
     def __init__(self, scale, n_dims):
-        homogeneous_matrix = np.eye(n_dims)
+        homogeneous_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
-        super(UniformScale, self).__init__(homogeneous_matrix)
+        SimilarityTransform.__init__(self, homogeneous_matrix)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
-        return cls(target.norm()/source.norm())
+        uniform_scale = cls(target.norm()/source.norm(), source.n_dims)
+        uniform_scale._source = source
+        uniform_scale._target = target
+        return uniform_scale
+
+    def _update_from_target(self, new_target):
+        new_scale = new_target.norm()/self.source.norm()
+        np.fill_diagonal(self.homogeneous_matrix, new_scale)
+        self.homogeneous_matrix[-1, -1] = 1
+        self._target = new_target
 
     @property
     def n_parameters(self):
@@ -1239,7 +1248,11 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
         :type: type(self)
         """
-        return type(self)(1.0 / self.scale)
+        return type(self)(1.0 / self.scale, self.n_dims)
+
+    def _transform_str(self):
+        message = 'UniformScale by %f ' % self.scale
+        return message
 
     def as_vector(self):
         r"""
@@ -1277,10 +1290,9 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return UniformScale(p, self.n_dims)
 
-    def _transform_str(self):
-        message = 'UniformScale by %f ' % self.scale
-        return message
-
+    def update_from_vector(self, p):
+        np.fill_diagonal(self.homogeneous_matrix, p)
+        self.homogeneous_matrix[-1, -1] = 1
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
     r"""
@@ -1295,11 +1307,19 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     def __init__(self, translation):
         homogeneous_matrix = np.eye(translation.shape[0] + 1)
         homogeneous_matrix[:-1, -1] = translation
-        super(Translation, self).__init__(homogeneous_matrix)
+        SimilarityTransform.__init__(self, homogeneous_matrix)
 
     @classmethod
-    def _align(cls, source, target):
-        return cls(target.centre - source.centre)
+    def _align(cls, source, target, **kwargs):
+        translation = cls(target.centre - source.centre)
+        translation._source = source
+        translation._target = target
+        return translation
+
+    def _update_from_target(self, new_target):
+        translation = new_target.centre - self.source.centre
+        self.homogeneous_matrix[:-1, -1] = translation
+        self._target = new_target
 
     @property
     def n_parameters(self):
@@ -1343,7 +1363,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         ts : (D,) ndarray
             The translation in each axis.
         """
-        return self.homogeneous_matrix[:self.n_dims, self.n_dims]
+        return self.homogeneous_matrix[:-1, -1]
 
     @classmethod
     def from_vector(cls, p):
@@ -1368,3 +1388,6 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
             The transform initialised to the given parameters.
         """
         return Translation(p)
+
+    def update_from_vector(self, p):
+        self.homogeneous_matrix[:-1, -1] = p
