@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from pybug.align.nonrigid.tps import TPS
+from pybug.groupalign.nonrigid.tps import TPS
 
 square_src_landmarks = np.array([[-1.0, -1.0],
                                  [-1,  1],

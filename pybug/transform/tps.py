@@ -326,13 +326,13 @@ class TPS(AlignmentTransform):
     @property
     def n_parameters(self):
         """
-        Number of parameters: ``(2 * n_landmarks) + 6``.
+        Number of parameters: ``(2 * n_points) + 6``.
 
         :type: int
 
         There is a parameter for each dimension, and thus two parameters per
         landmark + the parameters of a 2D affine transform
-        ``(2 * n_landmarks) + 6``
+        ``(2 * n_points) + 6``
         """
         return (2 * self.n_points) + 6
 

@@ -161,7 +161,7 @@ class StatisticallyDrivenTransform(Transform):
             # dX/dq is the Jacobian of the global transform evaluated at the
             # mean of the model.
             dX_dq = self.global_transform.jacobian(self.model.mean.points)
-            # dX_dq:  n_landmarks  x  n_global_params  x  n_dims
+            # dX_dq:  n_points  x  n_global_params  x  n_dims
 
             # by application of the chain rule dX_db is the Jacobian of the
             # model transformed by the linear component of the global transform
@@ -169,15 +169,15 @@ class StatisticallyDrivenTransform(Transform):
             dX_dS = self.global_transform.jacobian_points(
                 self.model.mean.points)
             dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
-            # dS_db:  n_landmarks  x     n_weights     x  n_dims
-            # dX_dS:  n_landmarks  x     n_dims        x  n_dims
-            # dX_db:  n_landmarks  x     n_weights     x  n_dims
+            # dS_db:  n_points  x     n_weights     x  n_dims
+            # dX_dS:  n_points  x     n_dims        x  n_dims
+            # dX_db:  n_points  x     n_weights     x  n_dims
 
             # dX/dp is simply the concatenation of the previous two terms
             dX_dp = np.hstack((dX_dq, dX_db))
 
-        # dW_dX:    n_points   x    n_landmarks    x  n_dims
-        # dX_dp:  n_landmarks  x     n_params      x  n_dims
+        # dW_dX:    n_points   x    n_points    x  n_dims
+        # dX_dp:  n_points  x     n_params      x  n_dims
         dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
         # dW_dp:    n_points   x     n_params      x  n_dims
 
@@ -324,23 +324,23 @@ class StatisticallyDrivenTransform(Transform):
             # the Jacobian of the model
             dW_dp_0 = model_jacobian
             dW_dp = dW_dp_0
-            # dW_dp_0:  n_landmarks  x     n_params     x  n_dims
-            # dW_dp:    n_landmarks  x     n_params     x  n_dims
+            # dW_dp_0:  n_points  x     n_params     x  n_dims
+            # dW_dp:    n_points  x     n_params     x  n_dims
         else:
             # dW/dq when p=0 and when p!=0 are the same and given by the
             # Jacobian of the global transform evaluated at the mean of the
             # model
             dW_dq = self.global_transform.jacobian(self.model.mean.points)
-            # dW_dq:  n_landmarks  x  n_global_params  x  n_dims
+            # dW_dq:  n_points  x  n_global_params  x  n_dims
 
             # dW/db when p=0, is the Jacobian of the model
             dW_db_0 = model_jacobian
-            # dW_db_0:  n_landmarks  x     n_weights     x  n_dims
+            # dW_db_0:  n_points  x     n_weights     x  n_dims
 
             # dW/dp when p=0, is simply the concatenation of the previous
             # two terms
             dW_dp_0 = np.hstack((dW_dq, dW_db_0))
-            # dW_dp_0:  n_landmarks  x     n_params      x  n_dims
+            # dW_dp_0:  n_points  x     n_params      x  n_dims
 
             # by application of the chain rule dW_db when p!=0,
             # is the Jacobian of the global transform wrt the points times
@@ -348,16 +348,16 @@ class StatisticallyDrivenTransform(Transform):
             dW_dS = self.global_transform.jacobian_points(
                 self.model.mean.points)
             dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
-            # dW_dS:  n_landmarks  x      n_dims       x  n_dims
-            # dW_db:  n_landmarks  x     n_weights     x  n_dims
+            # dW_dS:  n_points  x      n_dims       x  n_dims
+            # dW_db:  n_points  x     n_weights     x  n_dims
 
             # dW/dp is simply the concatenation of dX_dq with dX_db
             dW_dp = np.hstack((dW_dq, dW_db))
-            # dW_dp:    n_landmarks  x     n_params     x  n_dims
+            # dW_dp:    n_points  x     n_params     x  n_dims
 
         dW_dx = self.transform.jacobian_points(self.model.mean.points)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
-        # dW_dx:  n_landmarks  x  n_dims  x  n_dims
+        # dW_dx:  n_points  x  n_dims  x  n_dims
 
         #TODO: Can we do this without splitting across the two dimensions?
         dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
@@ -368,9 +368,9 @@ class StatisticallyDrivenTransform(Transform):
         dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0, (self.model.mean.n_points,
                                                    self.n_parameters,
                                                    self.n_dims))
-        # dW_dx:          n_landmarks  x  n_dims    x  n_dims
-        # dW_dp_0:        n_landmarks  x  n_params  x  n_dims
-        # dW_dx_dW_dp_0:  n_landmarks  x  n_params  x  n_dims
+        # dW_dx:          n_points  x  n_dims    x  n_dims
+        # dW_dp_0:        n_points  x  n_params  x  n_dims
+        # dW_dx_dW_dp_0:  n_points  x  n_params  x  n_dims
 
         J = np.einsum('ijk, ilk -> jl', dW_dp, dW_dx_dW_dp_0)
         H = np.einsum('ijk, ilk -> jl', dW_dp, dW_dp)

@@ -21,7 +21,7 @@ class LucasKanade(object):
         .. note:: Only the image is expected within the base class because
             different algorithms expect different kinds of template
             (image/model)
-    residual : :class:`pybug.align.lucaskanade.residual.Residual`
+    residual : :class:`pybug.lucaskanade.residual.Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
     transform : :class:`pybug.transform.base.Transform`

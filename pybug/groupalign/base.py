@@ -22,21 +22,13 @@ class MultipleAlignment(object):
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
-        self.n_landmarks, self.n_dims = sources[0].shape
+        self.n_points, self.n_dims = sources[0].
         self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = sum(self.sources) / self.n_sources
+            self.target = sum([s.points for s in self.sources]) / self\
+                .n_sources
         else:
-            assert self.n_dims, self.n_landmarks == target.shape
+            assert self.n_dims, self.n_points == target.shape
             self.target = target
 
-    @abc.abstractproperty
-    def transforms(self):
-        r"""
-        Returns a list of transforms, one for each source, which aligns it to
-        the target.
-
-        :type: list of :class:`pybug.transform.base.Transform`
-        """
-        pass

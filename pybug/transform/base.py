@@ -1,5 +1,6 @@
 import abc
 from copy import deepcopy
+import numpy as np
 from pybug.base import Vectorizable
 from pybug.visualize import AlignmentViewer2d
 from pybug.visualize.base import Viewable
@@ -325,6 +326,23 @@ class Transform(Alignment, Vectorizable):
         :type: :class:`Transform`
         """
         pass
+
+    @property
+    def aligned_source(self):
+        if not self.is_alignment_transform:
+            raise ValueError("This is not an alignment transform")
+        else:
+            return self.apply_nondestructive(self.source)
+
+    @property
+    def alignment_error(self):
+        r"""
+        The Frobenius Norm of the difference between the target and
+        the aligned source.
+
+        :type: float
+        """
+        return np.linalg.norm(self.target.points - self.aligned_source.points)
 
 
 class AlignmentTransform(Transform, Viewable):
