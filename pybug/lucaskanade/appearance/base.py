@@ -1,4 +1,4 @@
-from pybug.warp.base import scipy_warp
+from pybug.interpolation.base import scipy_warp
 from pybug.lucaskanade.base import LucasKanade
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_approx_equal
-from pybug.warp import scipy_warp
+from pybug.interpolation import scipy_warp
 from pybug.io import auto_import
 from pybug import data_path_to
 from pybug.transform import AffineTransform

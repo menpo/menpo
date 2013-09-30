@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from scipy.linalg import solve
-from pybug.warp.base import scipy_warp
+from pybug.interpolation.base import scipy_warp
 
 
 class LucasKanade(object):
@@ -36,7 +36,7 @@ class LucasKanade(object):
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
-        :doc:`pybug.warp`.
+        :doc:`pybug.interpolation`.
     optimisation : ('GN',) | ('LM', float), optional
         The optimisation technique used to calculate the Hessian approximation.
         Note that for 'LM' the float is used to set the update step.

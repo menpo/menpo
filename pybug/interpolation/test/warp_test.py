@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from pybug.transform import AffineTransform
-from pybug.warp import scipy_warp, cinterp2_warp
-from pybug.warp.cinterp import interp2
+from pybug.interpolation import scipy_warp, cinterp2_warp
+from pybug.interpolation.cinterp import interp2
 from pybug.io import auto_import
 from pybug import data_path_to
 
