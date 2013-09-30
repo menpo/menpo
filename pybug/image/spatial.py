@@ -250,8 +250,8 @@ class ShapeImage(AbstractSpatialImage):
 
         Returns
         -------
-        blank_image : :class:`RGBImage`
-            A new masked image of the requested size.
+        blank_image : :class:`ShapeImage`
+            A new shape image of the requested size.
         """
         n_channels = kwargs.get('n_channels', 3)
         if n_channels != 3:
@@ -317,7 +317,7 @@ class DepthImage(AbstractSpatialImage):
     @classmethod
     def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
         r"""
-        Returns a blank IntensityImage
+        Returns a blank DepthImage
 
         Parameters
         ----------
@@ -340,8 +340,8 @@ class DepthImage(AbstractSpatialImage):
 
         Returns
         -------
-        blank_image : :class:`RGBImage`
-            A new masked image of the requested size.
+        blank_image : :class:`DepthImage`
+            A new depth image of the requested size.
         """
         n_channels = kwargs.get('n_channels', 1)
         if n_channels != 1:

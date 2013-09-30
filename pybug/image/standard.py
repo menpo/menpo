@@ -116,7 +116,7 @@ class RGBImage(Abstract2DImage):
         Returns
         -------
         blank_image : :class:`RGBImage`
-            A new masked image of the requested size.
+            A new RGB image of the requested size.
         """
         n_channels = kwargs.get('n_channels', 3)
         if n_channels != 3:

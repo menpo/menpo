@@ -22,7 +22,7 @@ class VoxelImage(MaskedNDImage):
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
         r"""
-        Returns a blank Voxel
+        Returns a blank VoxelImage
 
         Parameters
         ----------
@@ -50,7 +50,7 @@ class VoxelImage(MaskedNDImage):
         Returns
         -------
         blank_image : :class:`VoxelImage`
-            A new masked image of the requested size.
+            A new voxel image of the requested size.
         """
         if len(shape) != 3:
             raise ValueError('VoxelImage needs a 3-dimensional shape')
