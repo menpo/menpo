@@ -96,7 +96,7 @@ class RGBImage(Abstract2DImage):
                              " 3)".format(self.n_channels))
 
     @classmethod
-    def blank(cls, shape, fill=0, dtype=np.float, mask=None):
+    def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
         r"""
         Returns a blank RGBImage
 
@@ -124,9 +124,12 @@ class RGBImage(Abstract2DImage):
         blank_image : :class:`RGBImage`
             A new masked image of the requested size.
         """
-        # just enforce n_channels is 3
-        return MaskedNDImage.blank(shape, n_channels=3, fill=fill,
-                                   dtype=dtype, mask=mask)
+        n_channels = kwargs.get('n_channels', 3)
+        if n_channels != 3:
+            raise ValueError('The number of channels of a RGBImage must be '
+                             'set to 3')
+        return super(RGBImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=dtype, mask=mask)
 
     def __str__(self):
         return ('{} RGBImage. '
@@ -222,6 +225,42 @@ class IntensityImage(Abstract2DImage):
             raise ValueError("IntensityImage must be constructed with 3 "
                              "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
+
+    @classmethod
+    def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
+        r"""
+        Returns a blank IntensityImage
+
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image
+
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Returns
+        -------
+        blank_image : :class:`RGBImage`
+            A new masked image of the requested size.
+        """
+        n_channels = kwargs.get('n_channels', 1)
+        if n_channels != 1:
+            raise ValueError('The number of channels of a IntensityImage '
+                             'must be set to 1')
+        return super(IntensityImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=dtype, mask=mask)
 
     def __str__(self):
         return ('{} IntensityImage. '

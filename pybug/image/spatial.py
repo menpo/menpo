@@ -224,6 +224,45 @@ class ShapeImage(AbstractSpatialImage):
                              "- has to have exactly 3 (for X, Y, "
                              "Z)".format(self.n_channels))
 
+    @classmethod
+    def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
+        r"""
+        Returns a blank ShapeImage
+
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image
+
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Returns
+        -------
+        blank_image : :class:`RGBImage`
+            A new masked image of the requested size.
+        """
+        n_channels = kwargs.get('n_channels', 3)
+        if n_channels != 3:
+            raise ValueError('The number of channels of a ShapeImage must be '
+                             'set to 3')
+        blank_image = super(AbstractSpatialImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=dtype, mask=mask)
+        blank_image.pixels[:, :, :2] = np.reshape(
+            blank_image.mask.all_indices, (shape[0], shape[1], 2))
+        return blank_image
+
     def _generate_points(self):
         return self.masked_pixels
 
@@ -274,6 +313,42 @@ class DepthImage(AbstractSpatialImage):
             raise ValueError("Trying to build a DepthImage with {} channels "
                              "- has to have exactly 1 (for Z values)"
                              .format(self.n_channels))
+
+    @classmethod
+    def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
+        r"""
+        Returns a blank IntensityImage
+
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image
+
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Returns
+        -------
+        blank_image : :class:`RGBImage`
+            A new masked image of the requested size.
+        """
+        n_channels = kwargs.get('n_channels', 1)
+        if n_channels != 1:
+            raise ValueError('The number of channels of a DepthImage must be '
+                             'set to 1')
+        return super(DepthImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=dtype, mask=mask)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
