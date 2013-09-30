@@ -89,6 +89,16 @@ class MaskedNDImage(AbstractNDImage):
 
              Default: all True :class:`BooleanNDImage`
 
+        Notes
+        -----
+        Subclasses of `MaskedNDImage` need to overwrite this method and
+        explicitly call this superclass method:
+
+            super(SubClass, cls).blank(shape,**kwargs)
+
+        in order to appropriately propagate the SubClass type to cls.
+
+
         Returns
         -------
         blank_image : :class:`MaskedNDImage`
