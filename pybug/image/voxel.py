@@ -20,15 +20,19 @@ class VoxelImage(MaskedNDImage):
                              .format(self.n_channels))
 
     @classmethod
-    def blank(cls, shape, fill=0, dtype=np.float, mask=None):
+    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
         r"""
-        Returns a blank Voxel
+        Returns a blank VoxelImage
 
         Parameters
         ----------
         shape : tuple or list
             The shape of the image
 
+        n_channels: int, optional
+            The number of channels to create the image with
+
+            Default: 1
         fill : int, optional
             The value to fill all pixels with
 
@@ -39,15 +43,16 @@ class VoxelImage(MaskedNDImage):
             Default: np.float
         mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
             An optional mask that can be applied to the image. Has to have a
-             shape equal to that of the image.
+            shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+            Default: all True :class:`BooleanNDImage`
 
         Returns
         -------
         blank_image : :class:`VoxelImage`
-            A new masked image of the requested size.
+            A new voxel image of the requested size.
         """
-        # just enforce n_channels is 3
-        return MaskedNDImage.blank(shape, n_channels=3, fill=fill,
+        if len(shape) != 3:
+            raise ValueError('VoxelImage needs a 3-dimensional shape')
+        return MaskedNDImage.blank(shape, n_channels=n_channels, fill=fill,
                                    dtype=dtype, mask=mask)

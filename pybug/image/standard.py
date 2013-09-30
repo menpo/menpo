@@ -31,7 +31,6 @@ class Abstract2DImage(MaskedNDImage):
         Mask is not the same shape as the image
     """
 
-    # noinspection PyTypeChecker
     def __init__(self, image_data, mask=None):
         image = np.asarray(image_data)
         if image.ndim != 3:
@@ -39,10 +38,9 @@ class Abstract2DImage(MaskedNDImage):
                              "{} dims".format(image.ndim - 1))
         # ensure pixels are np.float [0,1]
         if image.dtype == np.uint8:
-            image = image.astype(np.float64) / 255
-        elif image.dtype != np.float64:
-            # convert to double
-            image = image.astype(np.float64)
+            image = image.astype(np.float) / 255
+        # ensure that anything else is cast to float
+        image = np.require(image, dtype=np.float)
         # Ensure values are between 0 and 1 inclusive
         if np.any(image > 1.0) or np.any(image < 0.0):
             raise ValueError("2D Images can only have values in the "
@@ -96,7 +94,7 @@ class RGBImage(Abstract2DImage):
                              " 3)".format(self.n_channels))
 
     @classmethod
-    def blank(cls, shape, fill=0, dtype=np.float, mask=None):
+    def blank(cls, shape, fill=0, mask=None, **kwargs):
         r"""
         Returns a blank RGBImage
 
@@ -109,10 +107,6 @@ class RGBImage(Abstract2DImage):
             The value to fill all pixels with
 
             Default: 0
-        dtype: numpy datatype, optional
-            The datatype of the image.
-
-            Default: np.float
         mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
@@ -122,11 +116,15 @@ class RGBImage(Abstract2DImage):
         Returns
         -------
         blank_image : :class:`RGBImage`
-            A new masked image of the requested size.
+            A new RGB image of the requested size.
         """
-        # just enforce n_channels is 3
-        return MaskedNDImage.blank(shape, n_channels=3, fill=fill,
-                                   dtype=dtype, mask=mask)
+        n_channels = kwargs.get('n_channels', 3)
+        if n_channels != 3:
+            raise ValueError('The number of channels of a RGBImage must be '
+                             'set to 3')
+        return super(RGBImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=np.float,
+            mask=mask)
 
     def __str__(self):
         return ('{} RGBImage. '
@@ -222,6 +220,39 @@ class IntensityImage(Abstract2DImage):
             raise ValueError("IntensityImage must be constructed with 3 "
                              "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
+
+    @classmethod
+    def blank(cls, shape, fill=0, mask=None, **kwargs):
+        r"""
+        Returns a blank IntensityImage
+
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image
+
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Returns
+        -------
+        blank_image : :class:`IntensityImage`
+            A new intensity image of the requested size.
+        """
+        n_channels = kwargs.get('n_channels', 1)
+        if n_channels != 1:
+            raise ValueError('The number of channels of a IntensityImage '
+                             'must be set to 1')
+        return super(IntensityImage, cls).blank(
+            shape, n_channels=n_channels, fill=fill, dtype=np.float,
+            mask=mask)
 
     def __str__(self):
         return ('{} IntensityImage. '
