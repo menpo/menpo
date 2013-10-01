@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from copy import deepcopy
 from pybug.image.masked import MaskedNDImage
 from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
 
@@ -262,6 +263,24 @@ class ShapeImage(AbstractSpatialImage):
         blank_image.pixels[:, :, :2] = np.reshape(
             blank_image.mask.all_indices, (shape[0], shape[1], 2))
         return blank_image
+
+    def as_depth_image(self):
+        """
+        Convert the shape image to a depth image by stripping off the z-values.
+        Copies all associated data including landmarks and texture information.
+
+        Returns
+        -------
+        depth_image : :class:`DepthImage`
+            The depth image created by taking the z-values of this shape image.
+        """
+        depth_image = DepthImage(deepcopy(self.pixels[:, :, 2]),
+                                 deepcopy(self.mask),
+                                 trilist=deepcopy(self._trilist),
+                                 tcoords=deepcopy(self._tcoords),
+                                 texture=deepcopy(self._texture))
+        depth_image.landmarks = self.landmarks
+        return depth_image
 
     def _generate_points(self):
         return self.masked_pixels
