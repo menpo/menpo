@@ -101,7 +101,7 @@ class AbstractSpatialImage(MaskedNDImage):
             # Delaunay the 2D surface.
             trilist = Delaunay(points[..., :2]).simplices
         else:
-            trilist = self.trilist
+            trilist = self._trilist
 
         if self._texture is None:
             return TriMesh(points, trilist)
