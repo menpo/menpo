@@ -19,7 +19,7 @@ class StatisticallyDrivenTransform(Transform):
     model : :class:`pybug.model.base.StatisticalModel`
         A linear statistical shape model.
     transform_constructor : func
-        A function that returns a :class:`pybug.transform.base.Transform`
+        A function that returns a :class:`pybug.transform.base.AlignableTransform`
         object. It will be fed the source landmarks as the first
         argument and the target landmarks as the second. The target is
         set to the points generated from the model using the
@@ -256,7 +256,7 @@ class StatisticallyDrivenTransform(Transform):
     # TODO: Could be implemented as optimization option in LK???
     # Problems:
     #   - This method needs to be explicitly overwritten in order to match
-    #     the common interface defined for Transform objects
+    #     the common interface defined for AlignableTransform objects
     def compose(self, statistically_driven_transform):
         if self.composition is 'model':
             return self._compose_model(statistically_driven_transform)

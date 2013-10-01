@@ -150,7 +150,7 @@ class Residual(object):
         ----------
         image : :class:`pybug.image.base.Image`
             The image to calculate the gradients for
-        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.Transform>`, ``warp``), optional
+        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.AlignableTransform>`, ``warp``), optional
             A tuple containing the extra parameters required for the function
             ``warp`` (which should be passed as a function handle).
 

@@ -1,13 +1,13 @@
 import abc
 import copy
-from pybug.transform.base import Transform
+from pybug.transform.base import AlignableTransform
 from pybug.exceptions import DimensionalityError
 #TODO remove matlab here
 import pybug.matlab as matlab
 import numpy as np
 
 
-class AffineTransform(Transform):
+class AffineTransform(AlignableTransform):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent

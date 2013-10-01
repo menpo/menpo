@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.spatial import distance
 from pybug.shape import PointCloud
-from pybug.transform.base import AlignmentTransform
+from pybug.transform.base import PureAlignmentTransform
 from pybug.basis.rbf import R2LogR2
 
 
-class TPS(AlignmentTransform):
+class TPS(PureAlignmentTransform):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.

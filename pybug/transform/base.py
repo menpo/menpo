@@ -6,161 +6,18 @@ from pybug.visualize import AlignmentViewer2d
 from pybug.visualize.base import Viewable
 
 
-class Alignment(object):
-    r"""
-    Abstract interface for alignements.
-    """
-
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self):
-        self._target = None
-        self._source = None
-
-    @classmethod
-    def align(cls, source, target, **kwargs):
-        r"""
-        Alternative Transform constructor. Constructs a Transform by finding
-        the optimal transform to align source to target.
-
-        Parameters
-        ----------
-
-        source: :class:`pybug.shape.PointCloud`
-            The source pointcloud instance used in the alignment
-
-        target: :class:`pybug.shape.PointCloud`
-            The target pointcloud instance used in the alignment
-
-        Returns
-        -------
-
-        alignment_transform: :class:`pybug.transform.Transform`
-            A Transform object that is_alignment.
-        """
-        cls._verify_source_and_target(source, target)
-        return cls._align(source, target, **kwargs)
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        r"""
-        Alternative Transform constructor. Constructs a Transform by finding
-        the optimal transform to align source to target.
-
-        Parameters
-        ----------
-
-        source: :class:`pybug.shape.PointCloud`
-            The source pointcloud instance used in the alignment
-
-        target: :class:`pybug.shape.PointCloud`
-            The target pointcloud instance used in the alignment
-
-        This is called automatically by align once verification of source and
-        target is performed.
-
-        Returns
-        -------
-
-        alignment_transform: :class:`pybug.transform.Transform`
-            A Transform object that is_alignment.
-        """
-        pass
-
-    @staticmethod
-    def _verify_source_and_target(source, target):
-        if source.n_dims != target.n_dims:
-            raise ValueError("Source and target must have the same "
-                             "dimensionality")
-        elif source.n_points != target.n_points:
-            raise ValueError("Source and target must have the same number of"
-                             " points")
-        else:
-            return True
-
-    @property
-    def is_alignment_transform(self):
-        return self.source is not None and self.target is not None
-
-    @property
-    def source(self):
-        return self._source
-
-    @property
-    def target(self):
-        return self._target
-
-    @target.setter
-    def target(self, value):
-        r"""
-        Updates this alignment transform to point to a new target.
-        """
-        if not self.is_alignment_transform:
-            raise NotImplementedError("Cannot update target for Transforms "
-                                      "not built with the align constructor")
-        else:
-            if value.n_dims != self.target.n_dims:
-                raise ValueError(
-                    "The current target is {}D, the new target is {}D - new "
-                    "target has to have the same dimensionality as the "
-                    "old".format(self.target.n_dims, value.n_dims))
-            elif value.n_points != self.target.n_points:
-                raise ValueError(
-                    "The current target has {} points, the new target has {} "
-                    "- new target has to have the same number of points as the"
-                    " old".format(self.target.n_points, value.n_points))
-            else:
-                old_target = self._target
-                self._target = value
-                self._update_from_target(old_target)
-
-    @abc.abstractmethod
-    def _update_from_target(self, new_target):
-        r"""
-        Updates this alignment transform based on the new target.
-
-        It is the responsibility of this method to leave the object in the
-        updated state, including setting new_target to self._target as
-        appropriate. Note that this method is called by the target setter,
-        so this behavior must be respected.
-        """
-        pass
-
-    def from_target(self, target):
-        r"""
-        Returns a new instance of this alignment transform with the source
-        unchanged but the target set to a newly provided target.
-
-        This default implementation simply deep copy's the current
-        transform, and then changes the target in place. If there is a more
-        efficient way for transforms to perform this operation, they can
-        just subclass this method.
-
-        Parameters
-        ----------
-
-        target: :class:`pybug.shape.PointCloud`
-            The new target that should be used in this align transform.
-        """
-        new_transform = deepcopy(self)
-        # If this method is overridden in a subclass verification of target
-        # will have to be called manually (right now it is called in the
-        # target setter here).
-        new_transform.target = target
-        return new_transform
-
-
-class Transform(Alignment, Vectorizable):
+class AbstractTransform(Vectorizable):
     r"""
     An abstract representation of any N-dimensional transform.
     Provides a unified interface to apply the transform (:meth:`apply`). All
-    transforms are Vectorizable.
+    transforms are Vectorizable. Transform's know how to take their own
+    jacobians, be composed, and construct their pseduoinverse.
     """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        Alignment.__init__(self)
+        self._pseudoinverse = None
 
     @abc.abstractproperty
     def n_dims(self):
@@ -179,6 +36,93 @@ class Transform(Alignment, Vectorizable):
         :type: int
         """
         pass
+
+    @abc.abstractmethod
+    def _apply(self, x, **kwargs):
+        r"""
+        Applies the transform to the array ``x``, returning the result.
+
+        Parameters
+        ----------
+        x : (N, D) ndarray
+
+        Returns
+        -------
+        transformed : (N, D) ndarray
+            Transformed array.
+        """
+        pass
+
+    @abc.abstractmethod
+    def jacobian(self, points):
+        r"""
+        Calculates the Jacobian of the warp, may be constant.
+
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to calculate the Jacobian over.
+
+        Returns
+        -------
+        dW_dp : (N, P, D) ndarray
+            A (``n_points``, ``n_params``, ``n_dims``) array representing
+            the Jacobian of the transform.
+        """
+        pass
+
+    @abc.abstractmethod
+    def jacobian_points(self, points):
+        r"""
+        Calculates the Jacobian of the warp with respect to the points.
+
+        Returns
+        -------
+        dW_dx : (N, D, D) ndarray
+            The jacobian with respect to the points
+        """
+        pass
+
+    @abc.abstractmethod
+    def compose(self, a):
+        r"""
+        Composes two transforms together::
+
+            W(x;p) <- W(x;p) o W(x;delta_p)
+
+        Parameters
+        ----------
+        a : :class:`AlignableTransform`
+            Transform to be applied *FOLLOWING* self
+
+        Returns
+        --------
+        transform : :class:`AlignableTransform`
+            The resulting transform.
+        """
+        pass
+
+    @abc.abstractmethod
+    def _build_pseduoinverse(self):
+        r"""
+        Returns this transform's inverse if it has one. if not,
+        the pseduoinverse is given.
+        """
+        pass
+
+    @property
+    def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping source and target, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: :class:`AlignableTransform`
+        """
+        if self._pseudoinverse is None:
+            self._pseudoinverse = self._build_pseudoinverse()
+        return self._pseudoinverse
 
     def apply(self, x, **kwargs):
         r"""
@@ -253,79 +197,122 @@ class Transform(Alignment, Vectorizable):
         except AttributeError:
             return self._apply(x, **kwargs)
 
-    @abc.abstractmethod
-    def _apply(self, x, **kwargs):
+
+class AlignableTransform(AbstractTransform):
+    r"""
+    Abstract interface for all transform's that can be constructed from an
+    optimisation aligning a source PointCloud to a target PointCloud.
+    Construction from the align class method enables certain features of hte
+    class, like the from_target() and update_from_target() method. If the
+    instance is just constructed with it's regular constructor, it functions
+    as a normal Transform - attempting to call alignment methods listed here
+    will simply yield an Exception.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        AbstractTransform.__init__(self)
+        self._target = None
+        self._source = None
+
+    @classmethod
+    def _align(cls, source, target, **kwargs):
         r"""
-        Applies the transform to the array ``x``, returning the result.
+        Alternative Transform constructor. Constructs a Transform by finding
+        the optimal transform to align source to target.
 
         Parameters
         ----------
-        x : (N, D) ndarray
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
+
+        This is called automatically by align once verification of source and
+        target is performed.
 
         Returns
         -------
-        transformed : (N, D) ndarray
-            Transformed array.
+
+        alignment_transform: :class:`pybug.transform.AlignableTransform`
+            A Transform object that is_alignment.
         """
         pass
 
     @abc.abstractmethod
-    def jacobian(self, points):
+    def _update_from_target(self, new_target):
         r"""
-        Calculates the Jacobian of the warp, may be constant.
+        Updates this alignment transform based on the new target.
+
+        It is the responsibility of this method to leave the object in the
+        updated state, including setting new_target to self._target as
+        appropriate. Note that this method is called by the target setter,
+        so this behavior must be respected.
+        """
+        pass
+
+    @classmethod
+    def align(cls, source, target, **kwargs):
+        r"""
+        Alternative Transform constructor. Constructs a Transform by finding
+        the optimal transform to align source to target.
 
         Parameters
         ----------
-        points : (N, D) ndarray
-            The points to calculate the Jacobian over.
+
+        source: :class:`pybug.shape.PointCloud`
+            The source pointcloud instance used in the alignment
+
+        target: :class:`pybug.shape.PointCloud`
+            The target pointcloud instance used in the alignment
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
-        """
-        pass
 
-    @abc.abstractmethod
-    def jacobian_points(self, points):
+        alignment_transform: :class:`pybug.transform.AlignableTransform`
+            A Transform object that is_alignment.
+        """
+        cls._verify_source_and_target(source, target)
+        return cls._align(source, target, **kwargs)
+
+    @property
+    def is_alignment_transform(self):
+        return self.source is not None and self.target is not None
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, value):
         r"""
-        Calculates the Jacobian of the warp with respect to the points.
-
-        Returns
-        -------
-        dW_dx : (N, D, D) ndarray
-            The jacobian with respect to the points
+        Updates this alignment transform to point to a new target.
         """
-        pass
-
-    @abc.abstractmethod
-    def compose(self, a):
-        r"""
-        Composes two transforms together::
-
-            W(x;p) <- W(x;p) o W(x;delta_p)
-
-        Parameters
-        ----------
-        a : :class:`Transform`
-            Transform to be applied *FOLLOWING* self
-
-        Returns
-        --------
-        transform : :class:`Transform`
-            The resulting transform.
-        """
-        pass
-
-    @abc.abstractproperty
-    def inverse(self):
-        r"""
-        The inverse of the transform.
-
-        :type: :class:`Transform`
-        """
-        pass
+        if not self.is_alignment_transform:
+            raise NotImplementedError("Cannot update target for Transforms "
+                                      "not built with the align constructor")
+        else:
+            if value.n_dims != self.target.n_dims:
+                raise ValueError(
+                    "The current target is {}D, the new target is {}D - new "
+                    "target has to have the same dimensionality as the "
+                    "old".format(self.target.n_dims, value.n_dims))
+            elif value.n_points != self.target.n_points:
+                raise ValueError(
+                    "The current target has {} points, the new target has {} "
+                    "- new target has to have the same number of points as the"
+                    " old".format(self.target.n_points, value.n_points))
+            else:
+                old_target = self._target
+                self._target = value
+                self._update_from_target(old_target)
 
     @property
     def aligned_source(self):
@@ -344,23 +331,60 @@ class Transform(Alignment, Vectorizable):
         """
         return np.linalg.norm(self.target.points - self.aligned_source.points)
 
+    def from_target(self, target):
+        r"""
+        Returns a new instance of this alignment transform with the source
+        unchanged but the target set to a newly provided target.
 
-class AlignmentTransform(Transform, Viewable):
+        This default implementation simply deep copy's the current
+        transform, and then changes the target in place. If there is a more
+        efficient way for transforms to perform this operation, they can
+        just subclass this method.
+
+        Parameters
+        ----------
+
+        target: :class:`pybug.shape.PointCloud`
+            The new target that should be used in this align transform.
+        """
+        new_transform = deepcopy(self)
+        # If this method is overridden in a subclass verification of target
+        # will have to be called manually (right now it is called in the
+        # target setter here).
+        new_transform.target = target
+        return new_transform
+
+    @staticmethod
+    def _verify_source_and_target(source, target):
+        if source.n_dims != target.n_dims:
+            raise ValueError("Source and target must have the same "
+                             "dimensionality")
+        elif source.n_points != target.n_points:
+            raise ValueError("Source and target must have the same number of"
+                             " points")
+        else:
+            return True
+
+
+class PureAlignmentTransform(AlignableTransform, Viewable):
     r"""
-    :class:`Transform`s that are solely defined in terms of a source and
-    target.
+    :class:`AlignableTransform`s that are solely defined in terms of a source
+    and target alignment.
 
     All transforms include support for alignments - all have a source and
     target property the alignment constructor, and methods like
     from_target(). However, for most transforms this is an optional
     interface - if the alignment constructor is not used, is_alignment is
-    false, and all alignment methods will fail. This class is for transforms
-    that solely make sense as alignments. It just simplifies the interface down
-    slightly, to remove code repetition.
+    false, and all alignment methods will fail.
+
+    This class is for transforms that solely make sense as alignments. It
+    simplifies the interface down, so that :class:`PureAlignmentTransform`
+    subclasses only have to override :meth:`_update_from_target()`
+    to satisfy the AlignableTransform interface.
     """
 
     def __init__(self, source, target):
-        Transform.__init__(self)
+        AlignableTransform.__init__(self)
         if self._verify_source_and_target(source, target):
             self._source = source
             self._target = target
@@ -375,8 +399,8 @@ class AlignmentTransform(Transform, Viewable):
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
-        View the AlignmentTransform. This plots the source points and vectors
-        that represent the shift from source to target.
+        View the PureAlignmentTransform. This plots the source points and
+        vectors that represent the shift from source to target.
 
         Parameters
         ----------
@@ -395,7 +419,7 @@ class AlignmentTransform(Transform, Viewable):
         r"""
         Alternative Transform constructor. Constructs a Transform by finding
         the optimal transform to align source to target. Note that for
-        AlignmentTransform's we know that align == __init__. To save
+        PureAlignmentTransform's we know that align == __init__. To save
         repetition we share the align method here.
 
         Parameters
@@ -410,7 +434,7 @@ class AlignmentTransform(Transform, Viewable):
         Returns
         -------
 
-        alignment_transform: :class:`pybug.transform.Transform`
+        alignment_transform: :class:`pybug.transform.AlignableTransform`
             A Transform object that is_alignment.
         """
         return cls(source, target, **kwargs)

@@ -24,7 +24,7 @@ class LucasKanade(object):
     residual : :class:`pybug.lucaskanade.residual.Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
-    transform : :class:`pybug.transform.base.Transform`
+    transform : :class:`pybug.transform.base.AlignableTransform`
         The transformation type used to warp the image in to the appropriate
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
@@ -32,7 +32,7 @@ class LucasKanade(object):
         A function that takes 3 arguments,
         ``warp(`` :class:`image <pybug.image.base.Image>`,
         :class:`template <pybug.image.base.Image>`,
-        :class:`transform <pybug.transform.base.Transform>` ``)``
+        :class:`transform <pybug.transform.base.AlignableTransform>` ``)``
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
@@ -154,7 +154,7 @@ class LucasKanade(object):
 
         Returns
         -------
-        transform : :class:`pybug.transform.base.Transform`
+        transform : :class:`pybug.transform.base.AlignableTransform`
             The final transform that optimally aligns the source to the
             target.
         """
@@ -176,7 +176,7 @@ class LucasKanade(object):
         r"""
         The final transform that was applied is by definition the optimal.
 
-        :type: :class:`pybug.transform.base.Transform`
+        :type: :class:`pybug.transform.base.AlignableTransform`
         """
         return self.transforms[-1]
 

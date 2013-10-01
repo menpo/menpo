@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 from pybug.transform import AffineTransform
 from pybug.transform.fastpwa import CLookupPWA
-from pybug.transform.base import AlignmentTransform
+from pybug.transform.base import PureAlignmentTransform
 # TODO View is broken for PWA (TriangleContainmentError)
 
 
@@ -21,7 +21,7 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class AbstractPWATransform(AlignmentTransform):
+class AbstractPWATransform(PureAlignmentTransform):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -61,37 +61,6 @@ class AbstractPWATransform(AlignmentTransform):
             raise ValueError("source and target must be 2 "
                              "dimensional")
 
-    @property
-    def n_parameters(self):
-        """
-        Number of parameters: ``n_tris * 6``.
-
-        :type: int
-
-        There is a 2D affine transformation per triangle, therefore, there are
-        number of triangles * parameters for 2D affine transform number of
-        parameters for a PieceWiseAffine transform: ``n_tris * 6``.
-        """
-        return self.n_tris * 6
-
-    @property
-    def n_tris(self):
-        r"""
-        The number of triangles in the triangle list.
-
-        :type: int
-        """
-        return self.source.n_tris
-
-    @property
-    def trilist(self):
-        r"""
-        The triangle list.
-
-        :type: (``n_tris``, 3) ndarray
-        """
-        return self.source.trilist
-
     @abc.abstractmethod
     def index_alpha_beta(self, points):
         """
@@ -127,6 +96,37 @@ class AbstractPWATransform(AlignmentTransform):
         ``error.points_outside_source_domain`` to handle this case.
         """
         pass
+
+    @property
+    def n_parameters(self):
+        """
+        Number of parameters: ``n_tris * 6``.
+
+        :type: int
+
+        There is a 2D affine transformation per triangle, therefore, there are
+        number of triangles * parameters for 2D affine transform number of
+        parameters for a PieceWiseAffine transform: ``n_tris * 6``.
+        """
+        return self.n_tris * 6
+
+    @property
+    def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
+        return self.source.n_tris
+
+    @property
+    def trilist(self):
+        r"""
+        The triangle list.
+
+        :type: (``n_tris``, 3) ndarray
+        """
+        return self.source.trilist
 
     def weight_points(self, points):
         """
@@ -372,6 +372,42 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         index = self._containment_from_alpha_beta(alpha, beta)
         return index, alpha[each_point, index], beta[each_point, index]
 
+    def _apply(self, x, **kwargs):
+        """
+        Applies this transform to a new set of vectors.
+
+        Parameters
+        ----------
+        x : (K, 2) ndarray
+            Points to apply this transform to.
+
+        Returns
+        -------
+        transformed : (K, 2) ndarray
+            The transformed array.
+        """
+        tri_index, alpha, beta = self.index_alpha_beta(x)
+        # build a list of points in each triangle for each triangle
+        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
+        # zip the transforms and the list to apply to make the transformed x
+        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
+                                                     self.transforms)]
+        x_transformed = np.ones_like(x) * np.nan
+        # loop through each triangle, indexing into the x_transformed array
+        # for points in that triangle and replacing the value of x with x_t
+        for i, x_t in enumerate(x_per_tri_tran):
+            x_transformed[tri_index == i] = x_t
+        return x_transformed
+
+    def _update_from_target(self, new_target):
+        r"""
+        DiscreteAffinePWATransform is particularly inefficient to update
+        from target - we just have to manually go through and rebuild all
+        the affine transforms.
+        """
+        self._target = new_target
+        self._produce_affine_transforms_per_tri()
+
     @staticmethod
     def _containment_from_alpha_beta(alpha, beta):
         r"""
@@ -414,42 +450,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         index = np.zeros(alpha.shape[0])
         index[point_index] = tri_index
         return index.astype(np.uint32)
-
-    def _apply(self, x, **kwargs):
-        """
-        Applies this transform to a new set of vectors.
-
-        Parameters
-        ----------
-        x : (K, 2) ndarray
-            Points to apply this transform to.
-
-        Returns
-        -------
-        transformed : (K, 2) ndarray
-            The transformed array.
-        """
-        tri_index, alpha, beta = self.index_alpha_beta(x)
-        # build a list of points in each triangle for each triangle
-        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
-        # zip the transforms and the list to apply to make the transformed x
-        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
-                                                     self.transforms)]
-        x_transformed = np.ones_like(x) * np.nan
-        # loop through each triangle, indexing into the x_transformed array
-        # for points in that triangle and replacing the value of x with x_t
-        for i, x_t in enumerate(x_per_tri_tran):
-            x_transformed[tri_index == i] = x_t
-        return x_transformed
-
-    def _update_from_target(self, new_target):
-        r"""
-        DiscreteAffinePWATransform is particularly inefficient to update
-        from target - we just have to manually go through and rebuild all
-        the affine transforms.
-        """
-        self._target = new_target
-        self._produce_affine_transforms_per_tri()
 
 
 class CachedPWATransform(AbstractPWATransform):
