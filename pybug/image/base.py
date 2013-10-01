@@ -412,14 +412,18 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        template_image : :class:`pybug.image.boolean.BooleanNDImage`
-            The template image. Defines the shape of the result, and what
-            pixels should be sampled.
+        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+            Defines the shape of the result, and what pixels should be
+            sampled.
         transform : :class:`pybug.transform.base.Transform`
             Transform **from the template space back to this image**.
-            Defines, for each pixel location on the template, which pixel
+            Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
 
+            Default: ``True``
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 
@@ -427,11 +431,6 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
-        warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
-            as self, but with each landmark updated to the warped position.
-
-            Default: ``True``
 
         Returns
         -------

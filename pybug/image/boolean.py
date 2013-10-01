@@ -291,14 +291,18 @@ class BooleanNDImage(AbstractNDImage):
 
         Parameters
         ----------
-        template_image : :class:`pybug.image.boolean.BooleanNDImage`
-            The template image. Defines the shape of the result, and what
-            pixels should be sampled.
+        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+            Defines the shape of the result, and what pixels should be
+            sampled.
         transform : :class:`pybug.transform.base.Transform`
             Transform **from the template space back to this image**.
-            Defines, for each pixel location on the template, which pixel
+            Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
 
+            Default: ``True``
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 
@@ -306,18 +310,18 @@ class BooleanNDImage(AbstractNDImage):
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
-        warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
-            as self, but with each landmark updated to the warped position.
-
-            Default: ``True``
 
         Returns
         -------
         warped_image : type(self)
             A copy of this image, warped.
         """
-        # enforce the order as 0, then call super
+        # enforce the order as 0, for this boolean data, then call super
+        manually_set_order = kwargs.get('order', 0)
+        if manually_set_order != 0:
+            raise ValueError(
+                "The order of the interpolation on a boolean image has to be "
+                "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
         AbstractNDImage.warp_to(self, template_mask, transform,
                                 warp_landmarks=warp_landmarks,
