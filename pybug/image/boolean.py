@@ -284,7 +284,7 @@ class BooleanNDImage(AbstractNDImage):
         return self.inverted_copy().bounds_true(
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
-    def warp_to(self, template_mask, transform, warp_landmarks=True,
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
                 interpolator='scipy', **kwargs):
         r"""
         Warps this BooleanNDImage into a different reference space.
@@ -302,7 +302,7 @@ class BooleanNDImage(AbstractNDImage):
             If ``True``, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``True``
+            Default: ``False``
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 

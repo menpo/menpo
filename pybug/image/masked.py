@@ -335,7 +335,7 @@ class MaskedNDImage(AbstractNDImage):
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
-    def warp_to(self, template_mask, transform, warp_landmarks=True,
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
                 warp_mask=True, interpolator='scipy', **kwargs):
         r"""
         Warps this image into a different reference space.
@@ -353,7 +353,7 @@ class MaskedNDImage(AbstractNDImage):
             If ``True``, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``True``
+            Default: ``False``
         warp_mask : bool, optional
             If ``True``, sample the ``image.mask`` at all ``template_image``
             points, setting the returned image mask to the sampled value
@@ -383,7 +383,7 @@ class MaskedNDImage(AbstractNDImage):
             A copy of this image, warped.
         """
         warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
-                                               warp_landmarks=True,
+                                               warp_landmarks=warp_landmarks,
                                                interpolator='scipy', **kwargs)
         # note that _build_warped_image for MaskedNDImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
@@ -391,7 +391,7 @@ class MaskedNDImage(AbstractNDImage):
         # mask separately and reattach.
         if warp_mask:
             warped_mask = self.mask.warp_to(template_mask, transform,
-                                            warp_landmarks=False,
+                                            warp_landmarks=warp_landmarks,
                                             interpolator=interpolator,
                                             **kwargs)
             warped_image.mask = warped_mask

@@ -405,7 +405,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def warp_to(self, template_mask, transform, warp_landmarks=True,
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
                 interpolator='scipy', **kwargs):
         r"""
         Warps this image into a different reference space.
@@ -423,7 +423,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             If ``True``, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``True``
+            Default: ``False``
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 
@@ -466,8 +466,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                                                 sampled_pixel_values)
 
         if warp_landmarks:
+            raise Exception("Warp Landmarks is not supported until Transform"
+                            ".pseudoinverse is")
             warped_image.landmarks = self.landmarks
-            transform.apply(warped_image.landmarks)
+            transform.pseudoinverse.apply(warped_image.landmarks)
         return warped_image
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
