@@ -336,7 +336,7 @@ class MaskedNDImage(AbstractNDImage):
                   constrain_to_boundary=constrain_to_boundary)
 
     def warp_to(self, template_mask, transform, warp_landmarks=False,
-                warp_mask=True, interpolator='scipy', **kwargs):
+                warp_mask=False, interpolator='scipy', **kwargs):
         r"""
         Warps this image into a different reference space.
 
