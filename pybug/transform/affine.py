@@ -73,14 +73,15 @@ class AffineTransform(AlignableTransform):
            is non-singular, which generally means at least 2 corresponding
            points are required.
         """
-        optimal_h = cls._optimal_alignment_homogeneous_matrix(source, target)
-        affine_transform = cls(optimal_h)
+        optimal_h = AffineTransform._build_alignment_homogeneous_matrix(source,
+                                                                        target)
+        affine_transform = AffineTransform(optimal_h)
         affine_transform._source = source
         affine_transform._target = target
         return affine_transform
 
     def _update_from_target(self, new_target):
-        self.homogeneous_matrix = self._optimal_alignment_homogeneous_matrix(
+        self.homogeneous_matrix = self._build_alignment_homogeneous_matrix(
             self.source, new_target)
         self._target = new_target
 
@@ -150,12 +151,10 @@ class AffineTransform(AlignableTransform):
         return self.homogeneous_matrix[:-1, -1]
 
     @property
-    def inverse(self):
-        r"""
-        The inverse of the matrix.
+    def has_true_inverse(self):
+        return True
 
-        :type: :class:`AffineTransform`
-        """
+    def _build_pseduoinverse(self):
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
 
     def __eq__(self, other):
@@ -395,7 +394,7 @@ class AffineTransform(AlignableTransform):
         return homogeneous_matrix
 
     @staticmethod
-    def _optimal_alignment_homogeneous_matrix(source, target):
+    def _build_alignment_homogeneous_matrix(source, target):
         r"""
         See _align() for details. This is a separate method just so it can
         be shared by _update_from_target().
@@ -1134,8 +1133,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         return self.homogeneous_matrix.diagonal()[:-1]
 
-    @property
-    def inverse(self):
+    def _build_pseduoinverse(self):
         """
         The inverse scale.
 
@@ -1241,8 +1239,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.homogeneous_matrix[0, 0]
 
-    @property
-    def inverse(self):
+    def _build_pseduoinverse(self):
         r"""
         The inverse scale.
 
@@ -1294,6 +1291,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
 
+
 class Translation(DiscreteAffineTransform, SimilarityTransform):
     r"""
     An N-dimensional translation transform.
@@ -1330,8 +1328,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.n_dims
 
-    @property
-    def inverse(self):
+    def _build_pseduoinverse(self):
         r"""
         The inverse translation (negated).
 

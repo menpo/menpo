@@ -34,12 +34,10 @@ class TPS(PureAlignmentTransform):
         super(TPS, self).__init__(source, target)
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
-        self.v = self.target.points.T.copy()
-        self.y = np.hstack([self.v, np.zeros([2, 3])])
-        self.pairwise_norms = self.source.distance_to(self.source)
         if kernel is None:
             kernel = R2LogR2()
         self.kernel = kernel
+        self.pairwise_norms = self.source.distance_to(self.source)
         self.k = self.kernel.phi(self.pairwise_norms)
         self.p = np.concatenate(
             [np.ones([self.n_points, 1]), self.source.points], axis=1)
@@ -47,7 +45,33 @@ class TPS(PureAlignmentTransform):
         top_l = np.concatenate([self.k, self.p], axis=1)
         bot_l = np.concatenate([self.p.T, o], axis=1)
         self.l = np.concatenate([top_l, bot_l], axis=0)
+        self.v, self.y, self.coefficients = None, None, None
+        self._build_coefficients()
+
+    def _build_coefficients(self):
+        self.v = self.target.points.T.copy()
+        self.y = np.hstack([self.v, np.zeros([2, 3])])
         self.coefficients = np.linalg.solve(self.l, self.y.T)
+
+    @property
+    def n_parameters(self):
+        """
+        Number of parameters: ``(2 * n_points) + 6``.
+
+        :type: int
+
+        There is a parameter for each dimension, and thus two parameters per
+        landmark + the parameters of a 2D affine transform
+        ``(2 * n_points) + 6``
+        """
+        return (2 * self.n_points) + 6
+
+    @property
+    def has_true_inverse(self):
+        return False
+
+    def _build_pseduoinverse(self):
+        return TPS(self.target, self.source, kernel=self.kernel)
 
     def _apply(self, points, affine_free=False):
         """
@@ -112,6 +136,35 @@ class TPS(PureAlignmentTransform):
             The Jacobian of the transform evaluated at the previous points.
         """
         pass
+
+    # TODO: this is needed for composition
+    def jacobian_points(self, points):
+        """
+        Calculates the Jacobian of the TPS warp wrt to the the points to which
+        the warp is applied to.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the transform wrt the points to which the
+            transform is applied to.
+        """
+        vec_dist = np.subtract(self.source.points[:, None],
+                               self.source.points)
+
+        dk_dx = np.zeros((self.n_points + 3,
+                          self.n_points,
+                          self.n_dims))
+        kernel_derivative = (self.kernel.derivative(self.pairwise_norms) /
+                             self.pairwise_norms)
+        dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
+
+        affine_derivative = np.array([[0, 0],
+                                     [1, 0],
+                                     [0, 1]])
+        dk_dx[-3:, :] = affine_derivative[:, np.newaxis]
+
+        return np.einsum('ij, ikl -> klj', self.coefficients, dk_dx)
 
     # TODO: revise me
     def jacobian_source(self, points):
@@ -181,53 +234,6 @@ class TPS(PureAlignmentTransform):
 
         return dW_dx
 
-    def jacobian_target(self, points):
-        """
-        Calculates the Jacobian of the TPS warp wrt to the target landmarks.
-
-        Parameters
-        ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the transform wrt to the target landmarks evaluated
-            at the previous points.
-        """
-        raise NotImplementedError("TPS jacobian_target is not implemented "
-                                  "yet.")
-
-    # TODO: this is needed for composition
-    def jacobian_points(self, points):
-        """
-        Calculates the Jacobian of the TPS warp wrt to the the points to which
-        the warp is applied to.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the transform wrt the points to which the
-            transform is applied to.
-        """
-        vec_dist = np.subtract(self.source.points[:, None],
-                               self.source.points)
-
-        dk_dx = np.zeros((self.n_points + 3,
-                          self.n_points,
-                          self.n_dims))
-        kernel_derivative = (self.kernel.derivative(self.pairwise_norms) /
-                             self.pairwise_norms)
-        dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
-
-        affine_derivative = np.array([[0, 0],
-                                     [1, 0],
-                                     [0, 1]])
-        dk_dx[-3:, :] = affine_derivative[:, np.newaxis]
-
-        return np.einsum('ij, ikl -> klj', self.coefficients, dk_dx)
-
     # TODO: revise this function and try to speed it up!!!
     def weight_points(self, points):
         """
@@ -294,53 +300,14 @@ class TPS(PureAlignmentTransform):
 
         return dW_dx
 
-    def compose(self, a):
-        """
-        Composes two transforms together::
-
-            ``W(x;p) <- W(x;p) o W(x;delta_p)``
-
-        Parameters
-        ----------
-        a : :class:`TPSTransform`
-            TPS transform to compose with.
-
-        Returns
-        -------
-        composed : :class:`TPSTransform`
-            The result of the composition.
-        """
-        raise NotImplementedError("TPS compose is not implemented yet.")
-
-    def inverse(self):
-        """
-        Returns the inverse of the transform, if applicable.
-
-        Returns
-        -------
-        inverse : :class:`TPSTransform`
-            The inverse of the transform.
-        """
-        raise NotImplementedError("TPS inverse is not implemented yet.")
-
-    @property
-    def n_parameters(self):
-        """
-        Number of parameters: ``(2 * n_points) + 6``.
-
-        :type: int
-
-        There is a parameter for each dimension, and thus two parameters per
-        landmark + the parameters of a 2D affine transform
-        ``(2 * n_points) + 6``
-        """
-        return (2 * self.n_points) + 6
-
     def as_vector(self):
         raise NotImplementedError("TPS as_vector is not implemented yet.")
 
     def from_vector(self, flattened):
         raise NotImplementedError("TPS from_vector is not implemented yet.")
 
-    def _update_from_target(self, new_target):
+    def update_from_vector(self, vector):
         pass
+
+    def _update_from_target(self, new_target):
+

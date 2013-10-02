@@ -128,6 +128,16 @@ class AbstractPWATransform(PureAlignmentTransform):
         """
         return self.source.trilist
 
+    @property
+    def has_true_inverse(self):
+        return True
+
+    def _build_pseduoinverse(self):
+        from pybug.shape import PointCloud
+        new_source = TriMesh(self.target.points, self.source.trilist)
+        new_target = PointCloud(self.source.points)
+        return type(self)(new_source, new_target)
+
     def weight_points(self, points):
         """
         Returns the jacobian of the warp at each point given in relation to the
@@ -181,6 +191,9 @@ class AbstractPWATransform(PureAlignmentTransform):
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
+    def jacobian(self, shape):
+        raise NotImplementedError("PWA jacobian is not implemented yet.")
+
     def jacobian_points(self, points):
         """
         Calculates the Jacobian of the PWA warp with respect to the the points
@@ -204,15 +217,6 @@ class AbstractPWATransform(PureAlignmentTransform):
 
     def from_vector(self, flattened):
         raise NotImplementedError("PWA from_vector is not implemented yet.")
-
-    def compose(self, a):
-        raise NotImplementedError("PWA compose is not implemented yet.")
-
-    def inverse(self):
-        raise NotImplementedError("PWA inverse is not implemented yet.")
-
-    def jacobian(self, shape):
-        raise NotImplementedError("PWA jacobian is not implemented yet.")
 
 
 class DiscreteAffinePWATransform(AbstractPWATransform):

@@ -56,7 +56,7 @@ class AbstractTransform(Vectorizable):
     @abc.abstractmethod
     def jacobian(self, points):
         r"""
-        Calculates the Jacobian of the warp, may be constant.
+        Calculates the Jacobian at the points provided.
 
         Parameters
         ----------
@@ -83,30 +83,29 @@ class AbstractTransform(Vectorizable):
         """
         pass
 
-    @abc.abstractmethod
-    def compose(self, a):
-        r"""
-        Composes two transforms together::
-
-            W(x;p) <- W(x;p) o W(x;delta_p)
-
-        Parameters
-        ----------
-        a : :class:`AlignableTransform`
-            Transform to be applied *FOLLOWING* self
-
-        Returns
-        --------
-        transform : :class:`AlignableTransform`
-            The resulting transform.
-        """
-        pass
 
     @abc.abstractmethod
     def _build_pseduoinverse(self):
         r"""
         Returns this transform's inverse if it has one. if not,
         the pseduoinverse is given.
+
+        This method is called by the pseudoinverse property and must be
+        overridden.
+
+
+        Returns
+        -------
+        pseudoinverse: type(self)
+        """
+        pass
+
+    @abc.abstractproperty
+    def has_true_inverse(self):
+        r"""
+        True if the psuedoinverse is an exact inverse.
+
+        :type: Boolean
         """
         pass
 
@@ -310,9 +309,7 @@ class AlignableTransform(AbstractTransform):
                     "- new target has to have the same number of points as the"
                     " old".format(self.target.n_points, value.n_points))
             else:
-                old_target = self._target
-                self._target = value
-                self._update_from_target(old_target)
+                self._update_from_target(value)
 
     @property
     def aligned_source(self):
