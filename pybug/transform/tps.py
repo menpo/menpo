@@ -56,15 +56,11 @@ class TPS(PureAlignmentTransform):
     @property
     def n_parameters(self):
         """
-        Number of parameters: ``(2 * n_points) + 6``.
 
         :type: int
-
-        There is a parameter for each dimension, and thus two parameters per
-        landmark + the parameters of a 2D affine transform
-        ``(2 * n_points) + 6``
         """
-        return (2 * self.n_points) + 6
+        raise NotImplementedError("n_parameters for TPS needs to be "
+                                  "implemented")
 
     @property
     def has_true_inverse(self):
@@ -72,6 +68,12 @@ class TPS(PureAlignmentTransform):
 
     def _build_pseduoinverse(self):
         return TPS(self.target, self.source, kernel=self.kernel)
+
+    def _update_from_target(self, new_target):
+        self._target = new_target
+        # now the target is updated, we only have to rebuild the
+        # coefficients.
+        self._build_coefficients()
 
     def _apply(self, points, affine_free=False):
         """
@@ -122,8 +124,10 @@ class TPS(PureAlignmentTransform):
 
     def jacobian(self, points):
         """
-        Calculates the Jacobian of the TPS warp wrt to the parameters - this
-        may be constant.
+        Calculates the Jacobian of the TPS warp wrt to the parameters.
+
+        This isn't implemented yet, and can't be implemented until
+        n_parameters is fixed and a suitable parametrisation chosen for TPS.
 
         Parameters
         ----------
@@ -135,9 +139,9 @@ class TPS(PureAlignmentTransform):
         dW/dp : (N, P, D) ndarray
             The Jacobian of the transform evaluated at the previous points.
         """
-        pass
+        raise NotImplementedError("n_parameters for TPS needs to be "
+                                  "implemented")
 
-    # TODO: this is needed for composition
     def jacobian_points(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the the points to which
@@ -308,6 +312,3 @@ class TPS(PureAlignmentTransform):
 
     def update_from_vector(self, vector):
         pass
-
-    def _update_from_target(self, new_target):
-

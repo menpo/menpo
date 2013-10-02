@@ -1,6 +1,5 @@
 import abc
 import numpy as np
-from scipy.spatial import Delaunay
 from pybug.transform import AffineTransform
 from pybug.transform.fastpwa import CLookupPWA
 from pybug.transform.base import PureAlignmentTransform
@@ -100,15 +99,12 @@ class AbstractPWATransform(PureAlignmentTransform):
     @property
     def n_parameters(self):
         """
-        Number of parameters: ``n_tris * 6``.
 
         :type: int
 
-        There is a 2D affine transformation per triangle, therefore, there are
-        number of triangles * parameters for 2D affine transform number of
-        parameters for a PieceWiseAffine transform: ``n_tris * 6``.
+
         """
-        return self.n_tris * 6
+        raise NotImplementedError("n_parameters for PWA is not fixed yet.")
 
     @property
     def n_tris(self):
@@ -137,6 +133,27 @@ class AbstractPWATransform(PureAlignmentTransform):
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
+
+    def jacobian(self, shape):
+        raise NotImplementedError("PWA jacobian is not implemented yet.")
+
+    def jacobian_points(self, points):
+        """
+        Calculates the Jacobian of the PWA warp with respect to the the points
+        to which the warp is applied to. Expected to return a
+        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
+        as necessary.
+
+        The derivative of a piecewise affine warp with respect to the points
+        is simply the identity matrix for every point in the warp.
+
+        Returns
+        -------
+        dW/dx: (N, D, D) ndarray
+            The Jacobian of the transform with respect to the points to which
+            the transform is applied to.
+        """
+        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
 
     def weight_points(self, points):
         """
@@ -191,32 +208,15 @@ class AbstractPWATransform(PureAlignmentTransform):
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
-    def jacobian(self, shape):
-        raise NotImplementedError("PWA jacobian is not implemented yet.")
-
-    def jacobian_points(self, points):
-        """
-        Calculates the Jacobian of the PWA warp with respect to the the points
-        to which the warp is applied to. Expected to return a
-        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
-        as necessary.
-
-        The derivative of a piecewise affine warp with respect to the points
-        is simply the identity matrix for every point in the warp.
-
-        Returns
-        -------
-        dW/dx: (N, D, D) ndarray
-            The Jacobian of the transform with respect to the points to which
-            the transform is applied to.
-        """
-        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
-
     def as_vector(self):
-        raise NotImplementedError("PWA as_vector is not implemented yet.")
+        raise NotImplementedError("PWA as_vector() is not implemented yet.")
 
-    def from_vector(self, flattened):
-        raise NotImplementedError("PWA from_vector is not implemented yet.")
+    def from_vector(self, vector):
+        raise NotImplementedError("PWA from_vector() is not implemented yet.")
+
+    def update_from_vector(self, vector):
+        raise NotImplementedError("PWA update_from_vector() is not "
+                                  "implemented yet.")
 
 
 class DiscreteAffinePWATransform(AbstractPWATransform):
@@ -303,40 +303,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
 
-    def alpha_beta(self, points):
-        r"""
-        Calculates the alpha and beta values (barycentric coordinates) for each
-        triangle for all points provided. Note that this does not raise a
-        TriangleContainmentError.
-
-        Parameters
-        ----------
-        points : (K, 2) ndarray
-            Points to calculate the barycentric coordinates for.
-
-        Returns
-        --------
-        alpha : (K, ``n_tris``)
-            The alpha for each point and triangle. Alpha can be interpreted
-            as the contribution of the ij vector to the position of the
-            point in question.
-        beta : (K, ``n_tris``)
-            The beta for each point and triangle. Beta can be interpreted as
-             the contribution of the ik vector to the position of the point
-             in question.
-        """
-        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
-        dot_jj = np.einsum('dt, dt -> t', ij, ij)
-        dot_kk = np.einsum('dt, dt -> t', ik, ik)
-        dot_jk = np.einsum('dt, dt -> t', ij, ik)
-        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
-
-        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
-        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        return alpha, beta
-
     def index_alpha_beta(self, points):
         """
         Finds for each input point the index of it's bounding triangle
@@ -376,6 +342,49 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         index = self._containment_from_alpha_beta(alpha, beta)
         return index, alpha[each_point, index], beta[each_point, index]
 
+    def alpha_beta(self, points):
+        r"""
+        Calculates the alpha and beta values (barycentric coordinates) for each
+        triangle for all points provided. Note that this does not raise a
+        TriangleContainmentError.
+
+        Parameters
+        ----------
+        points : (K, 2) ndarray
+            Points to calculate the barycentric coordinates for.
+
+        Returns
+        --------
+        alpha : (K, ``n_tris``)
+            The alpha for each point and triangle. Alpha can be interpreted
+            as the contribution of the ij vector to the position of the
+            point in question.
+        beta : (K, ``n_tris``)
+            The beta for each point and triangle. Beta can be interpreted as
+             the contribution of the ik vector to the position of the point
+             in question.
+        """
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        return alpha, beta
+
+    def _update_from_target(self, new_target):
+        r"""
+        DiscreteAffinePWATransform is particularly inefficient to update
+        from target - we just have to manually go through and rebuild all
+        the affine transforms.
+        """
+        self._target = new_target
+        self._produce_affine_transforms_per_tri()
+
     def _apply(self, x, **kwargs):
         """
         Applies this transform to a new set of vectors.
@@ -402,15 +411,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         for i, x_t in enumerate(x_per_tri_tran):
             x_transformed[tri_index == i] = x_t
         return x_transformed
-
-    def _update_from_target(self, new_target):
-        r"""
-        DiscreteAffinePWATransform is particularly inefficient to update
-        from target - we just have to manually go through and rebuild all
-        the affine transforms.
-        """
-        self._target = new_target
-        self._produce_affine_transforms_per_tri()
 
     @staticmethod
     def _containment_from_alpha_beta(alpha, beta):

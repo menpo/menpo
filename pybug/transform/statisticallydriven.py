@@ -1,8 +1,8 @@
 import numpy as np
-from pybug.transform import Transform
+from pybug.transform.base import AlignableTransform
 
 
-class StatisticallyDrivenTransform(Transform):
+class StatisticallyDrivenTransform(AlignableTransform):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model together with a global similarity transform,
@@ -34,46 +34,31 @@ class StatisticallyDrivenTransform(Transform):
     """
 
     #TODO: Rethink this transform so it knows how to deal with complex shapes
-    def __init__(self, model, transform_constructor,
-                 source=None, weights=None, global_transform=None,
-                 composition='both', speed_up=None):
-        self.model = model
-        self.transform_constructor = transform_constructor
+    def __init__(self, model, transform_cls, source=None, weights=None,
+                 global_transform=None, composition='both'):
+        super(StatisticallyDrivenTransform, self).__init__()
 
-        # source
+        self.model = model
+        self.global_transform = global_transform
+        self.composition = composition
         if source is None:
             # set the source to the model's mean
             source = self.model.mean
-        self.source = source
+        self._source = source
 
-        # weights
         if weights is None:
             # set all weights to 0 (yielding the mean)
             weights = np.zeros(self.model.n_components)
-        self.weights = weights
+        self._weights = weights
 
-        # global transform
-        self.global_transform = global_transform
-
-        # composition
-        self.composition = composition
-
-        # speed up
-        if speed_up is not None:
-            self._cached_points = speed_up[0]
-            self.dW_dX = speed_up[1]
-        else:
-            self._cached_points = None
-            self.dW_dX = None
-
-        # generate target
-        self.target = self.model.instance(self.weights)
+        target = self.model.instance(self.weights)
         if self.global_transform is not None:
-            self.target = self.global_transform.apply(self.target)
-
-        # build transform
-        self.transform = transform_constructor(self.source.points,
-                                               self.target.points)
+            target = self.global_transform.apply(target)
+        self._target = target
+        # by providing _source and _target we conform to the
+        # AlignmentTransform interface
+        # utilize the align constructor to build the transform
+        self.transform = transform_cls.align(self.source, self.target)
 
     @property
     def n_dims(self):
@@ -83,24 +68,6 @@ class StatisticallyDrivenTransform(Transform):
         :type: int
         """
         return self.transform.n_dims
-
-    @property
-    def n_weights(self):
-        r"""
-        The number of parameters in the linear model.
-
-        :type: int
-        """
-        return self.model.n_components
-
-    @property
-    def n_global_parameters(self):
-        r"""
-        The number of parameters in the ``global_transform``
-
-        :type: int
-        """
-        return self.global_transform.n_parameters
 
     @property
     def n_parameters(self):
@@ -114,6 +81,24 @@ class StatisticallyDrivenTransform(Transform):
         return self.n_weights + self.n_global_parameters
 
     @property
+    def n_global_parameters(self):
+        r"""
+        The number of parameters in the ``global_transform``
+
+        :type: int
+        """
+        return self.global_transform.n_parameters
+
+    @property
+    def n_weights(self):
+        r"""
+        The number of parameters in the linear model.
+
+        :type: int
+        """
+        return self.model.n_components
+
+    @property
     def global_parameters(self):
         r"""
         The parameters for the global transform.
@@ -121,6 +106,29 @@ class StatisticallyDrivenTransform(Transform):
         :type: (``n_global_parameters``,) ndarray
         """
         return self.global_transform.as_vector()
+
+    @property
+    def has_true_inverse(self):
+        return False
+
+    def _build_pseduoinverse(self):
+        return self.from_vector(-self.as_vector())
+
+    @property
+    def weights(self):
+        return self._weights
+
+    @weights.setter
+    def weights(self, value):
+        r"""
+        Setting the weights value automatically triggers a recalculation of
+        the target.
+        """
+        self._weights = value
+        target = self.model.instance(value)
+        if self.global_transform is not None:
+            target = self.global_transform.apply(target)
+        self.target = target
 
     def jacobian(self, points):
         """
@@ -195,33 +203,6 @@ class StatisticallyDrivenTransform(Transform):
         """
         pass
 
-    def from_vector(self, flattened):
-        """
-        Build a new transform from the given parameter vector. This vector
-        is expected to have ``n_parameters`` values in it. Both the global
-        transform and the linear model are initialised with the appropriate
-        parameters.
-
-        Parameters
-        ----------
-        flattened : (``n_parameters``,) ndarray
-            The flattened vector of parameters.
-
-        Returns
-        -------
-        transform : :class:`StatisticallyDrivenTransform`
-            A new transform initialised with the given parameter vector.
-        """
-        global_transform = self.global_transform.from_vector(
-            flattened[:self.n_global_parameters])
-        weights = flattened[self.n_global_parameters:]
-
-        return StatisticallyDrivenTransform(
-            self.model, self.transform_constructor,
-            source=self.source, weights=weights,
-            global_transform=global_transform, composition=self.composition,
-            speed_up=(self._cached_points, self.dW_dX))
-
     def as_vector(self):
         r"""
         Return the current parameters of this transform. This is the
@@ -234,6 +215,24 @@ class StatisticallyDrivenTransform(Transform):
             The vector of parameters
         """
         return np.hstack((self.global_parameters, self.weights))
+
+    def update_from_vector(self, vector):
+        r"""
+        Updates the StatisticallyDrivenTransform's state from it's
+        vectorized form.
+        """
+        self.global_transform.update_from_vector(
+            vector[:self.n_global_parameters])
+        # setting the weights will trigger the update to the target.
+        self.weights = vector[self.n_global_parameters:]
+
+    def _update_from_target(self, new_target):
+        # TODO check this is correct
+        self.global_transform.target = new_target
+        aligned_target = self.global_transform.pseudoinverse\
+            .apply_nondestructive(
+            new_target)
+        self.weights = self.model.project(aligned_target)
 
     def _apply(self, x, **kwargs):
         r"""
@@ -381,16 +380,3 @@ class StatisticallyDrivenTransform(Transform):
         p = self.as_vector() + np.dot(Jp, stat_driven_transform.as_vector())
 
         return self.from_vector(p)
-
-    def estimate(self, target):
-        global_transform = self.global_transform.estimate(
-            self.model.mean.points, target.points)
-        global_parameters = global_transform.as_vector()
-        aligned_target = global_transform.inverse.apply(target)
-        weights = self.model.project(aligned_target)
-        parameters = np.hstack((global_parameters, weights))
-        return self.from_vector(parameters)
-
-    @property
-    def inverse(self):
-        return self.from_vector(-self.as_vector())
