@@ -327,7 +327,8 @@ class PCAModel(LinearModel):
         self._pca.fit(data)
 
         # store inverse noise variance
-        self.inv_noise_variance = 1 / self.noise_variance
+        self.inv_noise_variance = (1.0 / self.noise_variance
+                                   if self.noise_variance else 0.0)
         # pre-compute whiten components: U * L^{-1/2}
         self.whitened_components = \
             (self.explained_variance ** (-1 / 2))[..., None] * self.components
