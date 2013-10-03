@@ -684,6 +684,44 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
 
+    def update_from_vector(self, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Supports rebuilding from 2D parameter sets.
+
+        2D Similarity: 4 parameters::
+
+            [a, b, tx, ty]
+
+        Parameters
+        ----------
+        p : (P,) ndarray
+            The array of parameters.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Only 2D transforms are supported.
+        """
+        # See affine from_vector with regards to classmethod decorator
+        if p.shape[0] == 4:
+            homo = np.eye(3)
+            homo[0, 0] += p[0]
+            homo[1, 1] += p[0]
+            homo[0, 1] = -p[1]
+            homo[1, 0] = p[1]
+            homo[:2, 2] = p[2:]
+            self.homogeneous_matrix = homo
+        elif p.shape[0] == 7:
+            raise NotImplementedError("3D similarity transforms cannot be "
+                                      "vectorized yet.")
+        else:
+            raise DimensionalityError("Only 2D and 3D Similarity transforms "
+                                      "are currently supported.")
+
+
     def compose(self, transform):
         r"""
         Chains this similarity transform with another one. If the second
