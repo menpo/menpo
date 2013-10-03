@@ -106,6 +106,15 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
+        # Compute steepest descent images, VT_dW_dp
+        J = self.residual.steepest_descent_images(self.template,
+                                                  self._dW_dp)
+        # Project out appearance model from VT_dW_dp
+        self._J = (self.appearance_model._to_subspace(J.T) +
+                   self.appearance_model._within_subspace(J.T)).T
+        # Compute Hessian and inverse
+        self._H = self.residual.calculate_hessian(self._J, J2=J)
+
         pass
 
     def _align(self, max_iters=50, project=True):
@@ -118,17 +127,6 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
             IWxp = self.image.warp_to(self.template.mask,
                                       self.optimal_transform,
                                       interpolator=self._interpolator)
-
-            # Compute steepest descent images, VT_dW_dp
-            J = self.residual.steepest_descent_images(self.template,
-                                                      self._dW_dp)
-
-            # Project out appearance model from VT_dW_dp
-            self._J = (self.appearance_model._to_subspace(J.T) +
-                       self.appearance_model._within_subspace(J.T)).T
-
-            # Compute Hessian and inverse
-            self._H = self.residual.calculate_hessian(self._J, J2=J)
 
             # Compute steepest descent parameter updates
             sd_delta_p = self.residual.steepest_descent_update(
