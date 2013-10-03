@@ -12,8 +12,9 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
             # Compute appearance
             self.template = self.appearance_model.reconstruct(IWxp)
@@ -26,7 +27,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             self._J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
-                                            self._warp))
+                                            self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -65,8 +66,9 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
             # Compute template by projection
             self.template = self.appearance_model.reconstruct(IWxp)
@@ -111,8 +113,9 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
             # Compute appearance
             self.template = self.appearance_model.reconstruct(IWxp)
