@@ -601,7 +601,7 @@ class SimilarityTransform(AffineTransform):
         ones = np.ones_like(points)
 
         # Build a mask and apply it to the points to build the jacobian
-        # Do this for each paramter - [a, b, tx, ty] respectively
+        # Do this for each parameter - [a, b, tx, ty] respectively
         self._apply_jacobian_mask(jac, np.array([1, 1]), 0, points)
         self._apply_jacobian_mask(jac, np.array([-1, 1]), 1, points[:, ::-1])
         self._apply_jacobian_mask(jac, np.array([1, 0]), 2, ones)
