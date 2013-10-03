@@ -223,14 +223,8 @@ class MaskedNDImage(AbstractNDImage):
         ----------
         flattened : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
-
-        Returns
-        -------
-        image : :class:`MaskedNDImage`
-            This image after being updated
         """
         self.masked_pixels = flattened.reshape((-1, self.n_channels))
-        return self
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, **kwargs):

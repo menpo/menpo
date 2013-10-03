@@ -178,14 +178,8 @@ class BooleanNDImage(AbstractNDImage):
         ----------
         flattened : (``n_pixels``,) np.bool ndarray
             A flattened vector of all the pixels of a BooleanImage.
-
-        Returns
-        -------
-        image : :class:`BooleanNDImage`
-            This image after update from vectorized data
         """
         self.pixels = flattened.reshape(self.pixels.shape)
-        return self
 
     def invert(self):
         r"""
