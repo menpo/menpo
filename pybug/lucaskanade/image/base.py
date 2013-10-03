@@ -1,34 +1,34 @@
 from scipy.linalg import norm
 import numpy as np
-from pybug.warp.base import scipy_warp
 from pybug.lucaskanade.base import LucasKanade
 
 
 class ImageLucasKanade(LucasKanade):
 
     def __init__(self, template, residual, transform,
-                 warp=scipy_warp, optimisation=('GN',), eps=10 ** -6):
+                 interpolator='scipy', optimisation=('GN',), eps=10 ** -6):
         super(ImageLucasKanade, self).__init__(
             residual, transform,
-            warp, optimisation, eps)
+            interpolator=interpolator, optimisation=optimisation, eps=eps)
+
         # in image alignment, we align a template image to the target image
         self.template = template
-
         # pre-compute
         self._precompute()
 
 
 class ImageForwardAdditive(ImageLucasKanade):
 
-    def _align(self, max_iters=30):
+    def _align(self, max_iters=50):
         # Initial error > eps
         error = self.eps + 1
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
             # Compute the Jacobian of the warp
             dW_dp = self.optimal_transform.jacobian(
@@ -39,7 +39,7 @@ class ImageForwardAdditive(ImageLucasKanade):
             self._J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
                                             self.optimal_transform,
-                                            self._warp))
+                                            self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -73,15 +73,16 @@ class ImageForwardCompositional(ImageLucasKanade):
         self._dW_dp = self.initial_transform.jacobian(
             self.template.mask.true_indices)
 
-    def _align(self, max_iters=30):
+    def _align(self, max_iters=50):
         # Initial error > eps
         error = self.eps + 1
 
         # Forward Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
             # TODO: add "forward_compositional" kwarg with options
             # In the forward compositional algorithm there are two different
@@ -132,17 +133,18 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J)
 
-    def _align(self, max_iters=30):
+    def _align(self, max_iters=50):
         # Initial error > eps
         error = self.eps + 1
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self._warp(self.image, self.template,
-                              self.optimal_transform)
+            IWxp = self.image.warp_to(self.template.mask,
+                                      self.optimal_transform,
+                                      interpolator=self._interpolator)
 
-            # Compute steepest descent parameter updates
+            # Compute steepest descent parameter updates.
             sd_delta_p = self.residual.steepest_descent_update(
                 self._J, IWxp, self.template)
 

@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = pybug/warp/cpp/interp2.cpp
+# distutils: sources = pybug/interpolation/cpp/interp2.cpp
 
 import numpy as np
 cimport numpy as np
