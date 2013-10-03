@@ -42,7 +42,7 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
 
             # Update warp parameters
             params = self.transform.as_vector() + delta_p
-            self.transform.update_from_vector(params)
+            self.transform.from_vector_inplace(params)
             self.parameters.append(params)
 
             # Test convergence
@@ -182,7 +182,7 @@ class ToSubspaceForwardAdditive(AppearanceLucasKanade):
 
             # Update warp parameters
             params = self.transform.as_vector() + delta_p
-            self.transform.update_from_vector(params)
+            self.transform.from_vector_inplace(params)
             self.parameters.append(params)
 
             # Test convergence
@@ -323,7 +323,7 @@ class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
 
             # Update warp parameters
             params = self.transform.as_vector() + delta_p
-            self.transform.update_from_vector(params)
+            self.transform.from_vector_inplace(params)
             self.parameters.append(params)
 
             # Test convergence

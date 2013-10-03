@@ -53,7 +53,7 @@ class ImageForwardAdditive(ImageLucasKanade):
 
             # Update warp parameters
             params = self.transform.as_vector() + delta_p
-            self.transform.update_from_vector(params)
+            self.transform.from_vector_inplace(params)
             self.parameters.append(params)
 
             # Test convergence
@@ -155,6 +155,6 @@ class ImageInverseCompositional(ImageLucasKanade):
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
-            error = np.abs(norm(self.delta_p))
+            error = np.abs(norm(delta_p))
 
         return self.transform

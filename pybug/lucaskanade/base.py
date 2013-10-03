@@ -157,7 +157,7 @@ class LucasKanade(object):
             target.
         """
         # TODO: define a consistent multi-resolution logic
-        self.transform.update_from_vector(params)
+        self.transform.from_vector_inplace(params)
         self.parameters = [params]
         self.image = image
         return self._align(max_iters, **kwargs)

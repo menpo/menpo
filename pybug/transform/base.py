@@ -9,7 +9,8 @@ from pybug.visualize.base import Viewable
 class AbstractTransform(Vectorizable):
     r"""
     An abstract representation of any N-dimensional transform.
-    Provides a unified interface to apply the transform (:meth:`apply`). All
+    Provides a unified interface to apply the transform (
+    :meth:`apply_inplace`, :meth:`apply`). All
     transforms are Vectorizable. Transform's know how to take their own
     jacobians, be composed, and construct their pseduoinverse.
     """
@@ -121,11 +122,11 @@ class AbstractTransform(Vectorizable):
         """
         return self._build_pseudoinverse()
 
-    def apply(self, x, **kwargs):
+    def apply_inplace(self, x, **kwargs):
         r"""
         Applies this transform to ``x``. If ``x`` is :class:`Transformable`,
         ``x`` will be handed this transform object to transform itself
-        destructively. If not, ``x`` is assumed to be a numpy array. The
+        inplace. If not, ``x`` is assumed to be a numpy array. The
         transformation will be non destructive, returning the transformed
         version. Any ``kwargs`` will be passed to the specific transform
         :meth:`_apply` methods.
@@ -154,11 +155,11 @@ class AbstractTransform(Vectorizable):
             return self._apply(x_, **kwargs)
 
         try:
-            return x._transform(transform)
+            x._transform_inplace(transform)
         except AttributeError:
-            return self._apply(x, **kwargs)
+            x[...] = self._apply(x, **kwargs)
 
-    def apply_nondestructive(self, x, **kwargs):
+    def apply(self, x, **kwargs):
         r"""
         Applies this transform to ``x``. If ``x`` is :class:`Transformable`,
         ``x`` will be handed this transform object to transform itself
@@ -190,7 +191,7 @@ class AbstractTransform(Vectorizable):
             return self._apply(x_, **kwargs)
 
         try:
-            return x._transform_nondestructive(transform)
+            return x._transform(transform)
         except AttributeError:
             return self._apply(x, **kwargs)
 
@@ -240,7 +241,7 @@ class AlignableTransform(AbstractTransform):
         pass
 
     @abc.abstractmethod
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         r"""
         Updates this alignment transform based on the new target.
 
@@ -307,14 +308,14 @@ class AlignableTransform(AbstractTransform):
                     "- new target has to have the same number of points as the"
                     " old".format(self.target.n_points, value.n_points))
             else:
-                self._update_from_target(value)
+                self._target_setter(value)
 
     @property
     def aligned_source(self):
         if not self.is_alignment_transform:
             raise ValueError("This is not an alignment transform")
         else:
-            return self.apply_nondestructive(self.source)
+            return self.apply(self.source)
 
     @property
     def alignment_error(self):
@@ -374,7 +375,7 @@ class PureAlignmentTransform(AlignableTransform, Viewable):
 
     This class is for transforms that solely make sense as alignments. It
     simplifies the interface down, so that :class:`PureAlignmentTransform`
-    subclasses only have to override :meth:`_update_from_target()`
+    subclasses only have to override :meth:`_target_setter()`
     to satisfy the AlignableTransform interface.
     """
 
@@ -437,15 +438,16 @@ class PureAlignmentTransform(AlignableTransform, Viewable):
 
 class Transformable(object):
     r"""
-    Interface for transformable objects. When :meth:`apply` is called on
-    an object, if the object has the method :meth:`_transform`,
-    the method is called, passing in the transforms :meth:`apply` method.
+    Interface for transformable objects. When :meth:`apply_inplace` is called
+    on an object, if the object has the method :meth:`_transform_inplace`,
+    the method is called, passing in the transforms :meth:`apply_inplace`
+    method.
     This allows for the object to define how it should transform itself.
     """
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def _transform(self, transform):
+    def _transform_inplace(self, transform):
         r"""
         Apply the transform given to the Transformable object.
 
@@ -461,7 +463,7 @@ class Transformable(object):
         """
         pass
 
-    def _transform_nondestructive(self, transform):
+    def _transform(self, transform):
         r"""
         Apply the transform given in a non destructive manor - returning the
         transformed object and leaving this object as it was.
@@ -478,5 +480,5 @@ class Transformable(object):
         """
         copy_of_self = deepcopy(self)
         # transform the copy destructively
-        copy_of_self._transform(transform)
+        copy_of_self._transform_inplace(transform)
         return copy_of_self

@@ -69,7 +69,7 @@ class TPS(PureAlignmentTransform):
     def _build_pseudoinverse(self):
         return TPS(self.target, self.source, kernel=self.kernel)
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         self._target = new_target
         # now the target is updated, we only have to rebuild the
         # coefficients.
@@ -225,7 +225,7 @@ class TPS(PureAlignmentTransform):
             # new bit
             aux3 = np.zeros((self.y.shape[1], n_pts))
             aux4 = np.zeros((self.y.shape[1], n_pts))
-            aux5 = (points - self.source[i, :])
+            aux5 = (points - self.source.points[i, :])
             # TODO this is hardcoded and should be set based on kernel
             aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
             aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
@@ -310,5 +310,5 @@ class TPS(PureAlignmentTransform):
     def from_vector(self, flattened):
         raise NotImplementedError("TPS from_vector is not implemented yet.")
 
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         pass

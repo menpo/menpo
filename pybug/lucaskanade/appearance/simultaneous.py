@@ -60,7 +60,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
 
             # Update warp parameters
             params = self.transform.as_vector() + delta_p[:n_params]
-            self.transform.update_from_vector(params)
+            self.transform.from_vector_inplace(params)
             self.parameters.append(params)
 
             # Update appearance weights

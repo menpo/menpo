@@ -170,14 +170,14 @@ class StatisticallyDrivenTransform(AlignableTransform):
         """
         return self.weights
 
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         r"""
         Updates the StatisticallyDrivenTransform's state from it's
         vectorized form.
         """
         self.weights = vector
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         r"""
         On a new target being set, we need to:
 
@@ -213,7 +213,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         x : (N, D) ndarray or a transformable object
             The object to be transformed.
         kwargs : dict
-            Passed through to transforms ``apply`` method.
+            Passed through to transforms ``apply_inplace`` method.
 
         Returns
         --------
@@ -266,7 +266,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
             temp_sdt = self.from_vector(sdt_parameters)
             self.target = self._compose_warp(temp_sdt.target)
         elif self.composition is 'both':
-            self.update_from_vector(self._compose_both(sdt_parameters))
+            self.from_vector_inplace(self._compose_both(sdt_parameters))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
@@ -292,9 +292,9 @@ class StatisticallyDrivenTransform(AlignableTransform):
         from pybug.shape import PointCloud
         return PointCloud(composed_target)
 
-    # TODO: The call to transform.apply will not work properly for PWA
+    # TODO: The call to transform.apply_inplace will not work properly for PWA
     #   - Define a new function in TPS & PWA called .apply_to_target
-    #   - For TPS this function should ne the same as the normal .apply()
+    #   - For TPS this function should ne the same as the normal .apply_inplace()
     #     method
     #   - For PWA it should implement Bakers algorithmic approach to
     #     composition
@@ -564,11 +564,11 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         """
         return np.hstack((self.global_parameters, self.weights))
 
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         # the only extra step we have to take in
         global_params = vector[:self.n_global_parameters]
         model_params = vector[self.n_global_parameters:]
-        self.global_transform.update_from_vector(global_params)
+        self.global_transform.from_vector_inplace(global_params)
         self.weights = model_params
 
     def _compose_model(self, other_target):

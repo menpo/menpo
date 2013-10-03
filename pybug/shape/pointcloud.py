@@ -67,7 +67,7 @@ class PointCloud(Shape):
         """
         return self.points.flatten()
 
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         r"""
         Updates this PointCloud in-place with a new vector of parameters
         """
@@ -150,7 +150,7 @@ class PointCloud(Shape):
         return PointCloudViewer(figure_id, new_figure,
                                 self.points).render(**kwargs)
 
-    def _transform_self(self, transform):
+    def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
         return self
 

@@ -35,7 +35,7 @@ def test_align_2d_translation():
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
-    target = translation.apply_nondestructive(source)
+    target = translation.apply(source)
     # estimate the transform from source and target
     estimate = Translation.align(source, target)
     # check the estimates is correct
@@ -67,7 +67,7 @@ def test_align_2d_rotation():
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
-    target = rotation.apply_nondestructive(source)
+    target = rotation.apply(source)
     # estimate the transform from source and target
     estimate = Rotation2D.align(source, target)
     # check the estimates is correct
@@ -153,7 +153,7 @@ def test_align_2d_affine():
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
-    target = affine.apply_nondestructive(source)
+    target = affine.apply(source)
     # estimate the transform from source and target
     estimate = AffineTransform.align(source, target)
     # check the estimates is correct
@@ -227,7 +227,7 @@ def test_align_2d_similarity():
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
-    target = similarity.apply_nondestructive(source)
+    target = similarity.apply(source)
     # estimate the transform from source and target
     estimate = SimilarityTransform.align(source, target)
     # check the estimates is correct
@@ -571,7 +571,7 @@ def test_uniformscale2d_update_from_vector():
                      [0, new_scale, 0],
                      [0, 0, 1]])
 
-    uniform_scale.update_from_vector(new_scale)
+    uniform_scale.from_vector_inplace(new_scale)
     assert_equal(uniform_scale.homogeneous_matrix, homo)
 
 
@@ -598,7 +598,7 @@ def test_nonuniformscale2d_update_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
     tr = NonUniformScale(np.array([1, 2]))
-    tr.update_from_vector(scale)
+    tr.from_vector_inplace(scale)
     assert_equal(tr.homogeneous_matrix, homo)
 
 

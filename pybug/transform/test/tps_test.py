@@ -2,6 +2,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 from pybug.transform.tps import TPS
 from pybug.shape import PointCloud
+from nose.tools import raises
+
 
 square_src_landmarks = np.array([[-1.0, -1.0],
                                  [-1,  1],
@@ -77,7 +79,7 @@ def test_tps_jacobian_manual_sample_b():
          [-0.03122042,  1.00073478]])
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
 
-
+@raises(NotImplementedError)
 def test_tps_n_parameters():
     tps = TPS(src, tgt_perturbed)
     assert(tps.n_parameters == 14)

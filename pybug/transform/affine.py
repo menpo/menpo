@@ -80,7 +80,7 @@ class AffineTransform(AlignableTransform):
         affine_transform._target = target
         return affine_transform
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         self.homogeneous_matrix = self._build_alignment_homogeneous_matrix(
             self.source, new_target)
         self._target = new_target
@@ -213,8 +213,32 @@ class AffineTransform(AlignableTransform):
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        return AffineTransform(np.dot(self.homogeneous_matrix,
-                                      affine_transform.homogeneous_matrix))
+        new_self = copy.deepcopy(self)
+        new_self.compose_inplace(affine_transform)
+        return new_self
+
+    def compose_inplace(self, affine_transform):
+        r"""
+        Chains this affine transform with another one, updating this affine
+        transform to be the composition of the two.
+
+        Parameters
+        ----------
+        affine_transform : :class:`AffineTransform`
+            Transform to be applied *FOLLOWING* self
+        """
+        # note we dot this way as we have our data in the transposed
+        # representation to normal
+        self.homogeneous_matrix = np.dot(
+            self.homogeneous_matrix, affine_transform.homogeneous_matrix)
+
+    def compose_from_vector_inplace(self, vector):
+        r"""
+        General solution to compose_from_vector_inplace - a deepcopy
+        followed by compose_inplace.
+        """
+        new_transform = self.from_vector(vector)
+        return self.compose_inplace(new_transform)
 
     def jacobian(self, points):
         r"""
@@ -369,7 +393,7 @@ class AffineTransform(AlignableTransform):
         # need for this to in general be an instance method).
         return AffineTransform(cls._homogeneous_matrix_from_parameters(p))
 
-    def update_from_vector(self, p):
+    def from_vector_inplace(self, p):
         r"""
         Updates this AffineTransform in-place from the new parameters. See
         from_vector for details of the parameter format
@@ -397,7 +421,7 @@ class AffineTransform(AlignableTransform):
     def _build_alignment_homogeneous_matrix(source, target):
         r"""
         See _align() for details. This is a separate method just so it can
-        be shared by _update_from_target().
+        be shared by _target_setter().
         """
         def _homogeneous_points(pc):
             r"""
@@ -478,27 +502,27 @@ class SimilarityTransform(AffineTransform):
         Returns the similarity transform that aligns the source to the target.
         """
         target_translation = Translation(-target.centre)
-        centred_target = target_translation.apply_nondestructive(target)
+        centred_target = target_translation.apply(target)
         # now translate the source to the origin
         translation = Translation(-source.centre)
         # apply the translation to the source
-        aligned_source = translation.apply_nondestructive(source)
+        aligned_source = translation.apply(source)
         scale = UniformScale(target.norm() / source.norm(), source.n_dims)
-        scale.apply(aligned_source)
+        scale.apply_inplace(aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
         correlation = np.dot(centred_target.points.T,
                              aligned_source.points)
         U, D, Vt = np.linalg.svd(correlation)
         rotation = Rotation(np.dot(U, Vt))
-        rotation.apply(aligned_source)
+        rotation.apply_inplace(aligned_source)
         # finally, move the source back out to where the target is
         inv_target_translation = target_translation.inverse
-        inv_target_translation.apply(aligned_source)
+        inv_target_translation.apply_inplace(aligned_source)
         return translation.compose(scale).compose(
             rotation).compose(inv_target_translation)
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         similarity = self._procrustes_alignment(self.source, new_target)
         self.homogeneous_matrix = similarity.homogeneous_matrix
         self._target = new_target
@@ -684,7 +708,7 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
 
-    def update_from_vector(self, p):
+    def from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -721,29 +745,25 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
 
-
-    def compose(self, transform):
+    def compose_inplace(self, transform):
         r"""
-        Chains this similarity transform with another one. If the second
-        transform is also a Similarity transform, the result will be a
-        :class:`SimilarityTransform`.
-        If not, the result will be an :class:`AffineTransform`.
+        Chains this similarity transform with another one, updating this
+        similarity transform to be the composition of the two.
+
+        If instead composition is performed with an affine transform,
+        an affine transfore
 
         Parameters
         ----------
-        transform : :class:`AffineTransform` or :class:`SimilarityTransform`
+        affine_transform : :class:`AffineTransform`
             Transform to be applied *FOLLOWING* self
-
-        Returns
-        -------
-        transform : :class:`AffineTransform` or :class:`SimilarityTransform`
-            The resulting transform
         """
         if isinstance(transform, SimilarityTransform):
-            return SimilarityTransform(np.dot(transform.homogeneous_matrix,
-                                              self.homogeneous_matrix))
+            # ok, we can proceed as normal
+            AffineTransform.compose_inplace(self, transform)
         else:
-            return super(SimilarityTransform, self).compose(transform)
+            raise ValueError("Trying to compose a Similarity transform with "
+                             "something other than a Similarity transform")
 
     @property
     def inverse(self):
@@ -1225,7 +1245,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         return NonUniformScale(vector)
 
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         r"""
         Updates the NonUniformScale inplace.
 
@@ -1258,7 +1278,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         uniform_scale._target = target
         return uniform_scale
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         new_scale = new_target.norm()/self.source.norm()
         np.fill_diagonal(self.homogeneous_matrix, new_scale)
         self.homogeneous_matrix[-1, -1] = 1
@@ -1330,7 +1350,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return UniformScale(p, self.n_dims)
 
-    def update_from_vector(self, p):
+    def from_vector_inplace(self, p):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
 
@@ -1357,7 +1377,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         translation._target = target
         return translation
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         translation = new_target.centre - self.source.centre
         self.homogeneous_matrix[:-1, -1] = translation
         self._target = new_target
@@ -1429,5 +1449,5 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         """
         return Translation(p)
 
-    def update_from_vector(self, p):
+    def from_vector_inplace(self, p):
         self.homogeneous_matrix[:-1, -1] = p

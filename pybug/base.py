@@ -24,7 +24,7 @@ class Vectorizable(object):
         pass
 
     @abc.abstractmethod
-    def update_from_vector(self, vector):
+    def from_vector_inplace(self, vector):
         """
         Update the state of this object from the provided 1D flattened
         array.
@@ -43,7 +43,7 @@ class Vectorizable(object):
         rebuild a full object from it's standardized flattened state.
 
         A default implementation is provided where a deepcopy of the object
-        is made followed by an update_from_vector(). This method can be
+        is made followed by an from_vector_inplace(). This method can be
         overridden for a performance benefit if desired.
 
         Parameters
@@ -57,5 +57,5 @@ class Vectorizable(object):
             An instance of the class.
         """
         self_copy = deepcopy(self)
-        self_copy.update_from_vector(vector)
+        self_copy.from_vector_inplace(vector)
         return self_copy

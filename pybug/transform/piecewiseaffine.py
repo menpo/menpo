@@ -214,8 +214,8 @@ class AbstractPWATransform(PureAlignmentTransform):
     def from_vector(self, vector):
         raise NotImplementedError("PWA from_vector() is not implemented yet.")
 
-    def update_from_vector(self, vector):
-        raise NotImplementedError("PWA update_from_vector() is not "
+    def from_vector_inplace(self, vector):
+        raise NotImplementedError("PWA from_vector_inplace() is not "
                                   "implemented yet.")
 
 
@@ -248,7 +248,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         Source and target must both be 2D.
 
     TriangleContainmentError
-        All points to apply must be contained in a source triangle. Check
+        All points to apply_inplace must be contained in a source triangle. Check
         ``error.points_outside_source_domain`` to handle this case.
     """
     def __init__(self, source, target):
@@ -376,7 +376,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
         return alpha, beta
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         r"""
         DiscreteAffinePWATransform is particularly inefficient to update
         from target - we just have to manually go through and rebuild all
@@ -535,7 +535,7 @@ class CachedPWATransform(AbstractPWATransform):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-    def _update_from_target(self, new_target):
+    def _target_setter(self, new_target):
         r"""
         CachedPWATransform is particularly efficient to update
         from target - we don't have to do much at all, just rebuild the target
