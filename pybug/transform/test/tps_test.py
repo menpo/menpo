@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from pybug.groupalign.nonrigid.tps import TPS
+from pybug.transform.tps import TPS
+from pybug.shape import PointCloud
 
 square_src_landmarks = np.array([[-1.0, -1.0],
                                  [-1,  1],
@@ -23,15 +24,19 @@ xx, yy = np.meshgrid(x, y)
 square_sample_points = np.array([xx.flatten(1), yy.flatten(1)]).T
 
 
+src = PointCloud(square_src_landmarks)
+tgt = PointCloud(square_tgt_landmarks)
+tgt_perturbed = PointCloud(perturbed_tgt_landmarks)
+
+
 def test_tps_maps_src_to_tgt():
-    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
-    assert_allclose(tps.transform.apply(square_src_landmarks),
-                    perturbed_tgt_landmarks)
+    tps = TPS(src, tgt_perturbed)
+    assert_allclose(tps.apply(square_src_landmarks), perturbed_tgt_landmarks)
 
 
 def test_tps_jacobian_manual_corner_value_check():
-    tps = TPS(square_src_landmarks, square_tgt_landmarks)
-    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    tps = TPS(src, tgt)
+    dW_dxy = tps.jacobian_source(square_sample_points)
     jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
     dwdx_corner = np.array(
         [[1.,  0.99619633,  0.99231034,  0.98835616, 0.98434133],
@@ -44,16 +49,16 @@ def test_tps_jacobian_manual_corner_value_check():
 
 
 def test_tps_jacobian_unitary_x_y():
-    tps = TPS(square_src_landmarks, square_tgt_landmarks)
-    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    tps = TPS(src, tgt)
+    dW_dxy = tps.jacobian_source(square_sample_points)
     jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
     # both the x and y derivatives summed over all values should equal 1
     assert_allclose(jacobian_image.sum(axis=2), 1)
 
 
 def test_tps_jacobian_manual_sample_a():
-    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
-    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    tps = TPS(src, tgt_perturbed)
+    dW_dxy = tps.jacobian_source(square_sample_points)
     onetwothreefour = np.array(
         [[0.78665966,  0.62374388],
          [0.09473867, -0.68910365],
@@ -63,8 +68,8 @@ def test_tps_jacobian_manual_sample_a():
 
 
 def test_tps_jacobian_manual_sample_b():
-    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
-    dW_dxy = tps.transform.jacobian_source(square_sample_points)
+    tps = TPS(src, tgt_perturbed)
+    dW_dxy = tps.jacobian_source(square_sample_points)
     threesixfouronethree = np.array(
         [[0.67244171, -0.0098011 ],
          [-0.77028611, -1.19256858],
@@ -74,5 +79,5 @@ def test_tps_jacobian_manual_sample_b():
 
 
 def test_tps_n_parameters():
-    tps = TPS(square_src_landmarks, perturbed_tgt_landmarks)
-    assert(tps.transform.n_parameters == 14)
+    tps = TPS(src, tgt_perturbed)
+    assert(tps.n_parameters == 14)

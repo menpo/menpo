@@ -111,7 +111,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
     def has_true_inverse(self):
         return False
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         return self.from_vector(-self.as_vector())
 
     @property
@@ -228,7 +228,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
 
     def _update_from_target(self, new_target):
         # TODO check this is correct
-        self.global_transform.target = new_target
+        self.global_transform.align(self.source, new_target)
         aligned_target = self.global_transform.pseudoinverse\
             .apply_nondestructive(
             new_target)

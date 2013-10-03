@@ -22,7 +22,7 @@ class MultipleAlignment(object):
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
-        self.n_points, self.n_dims = sources[0].
+        self.n_points, self.n_dims = sources[0].n_points, sources[0].n_dims
         self.sources = sources
         if target is None:
             # set the target to the mean source position

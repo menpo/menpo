@@ -154,7 +154,7 @@ class AffineTransform(AlignableTransform):
     def has_true_inverse(self):
         return True
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
 
     def __eq__(self, other):
@@ -1133,7 +1133,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         return self.homogeneous_matrix.diagonal()[:-1]
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         """
         The inverse scale.
 
@@ -1244,7 +1244,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.homogeneous_matrix[0, 0]
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         r"""
         The inverse scale.
 
@@ -1333,7 +1333,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.n_dims
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         r"""
         The inverse translation (negated).
 

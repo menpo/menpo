@@ -155,7 +155,8 @@ class ImageInverseCompositional(ImageLucasKanade):
             delta_p_transform = self.initial_transform.from_vector(
                 self.delta_p)
             self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform.inverse))
+                self.optimal_transform.compose(
+                    delta_p_transform.pseudoinverse))
 
             # Test convergence
             error = np.abs(norm(self.delta_p))

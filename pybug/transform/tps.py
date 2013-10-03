@@ -66,7 +66,7 @@ class TPS(PureAlignmentTransform):
     def has_true_inverse(self):
         return False
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         return TPS(self.target, self.source, kernel=self.kernel)
 
     def _update_from_target(self, new_target):

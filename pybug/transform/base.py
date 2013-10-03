@@ -85,7 +85,7 @@ class AbstractTransform(Vectorizable):
 
 
     @abc.abstractmethod
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         r"""
         Returns this transform's inverse if it has one. if not,
         the pseduoinverse is given.
@@ -103,7 +103,7 @@ class AbstractTransform(Vectorizable):
     @abc.abstractproperty
     def has_true_inverse(self):
         r"""
-        True if the psuedoinverse is an exact inverse.
+        True if the pseudoinverse is an exact inverse.
 
         :type: Boolean
         """

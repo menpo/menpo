@@ -128,7 +128,7 @@ class AbstractPWATransform(PureAlignmentTransform):
     def has_true_inverse(self):
         return True
 
-    def _build_pseduoinverse(self):
+    def _build_pseudoinverse(self):
         from pybug.shape import PointCloud
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
