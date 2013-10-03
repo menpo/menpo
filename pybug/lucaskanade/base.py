@@ -1,7 +1,6 @@
 import abc
 import numpy as np
 from scipy.linalg import solve
-from pybug.interpolation.base import scipy_warp
 
 
 class LucasKanade(object):
@@ -82,7 +81,7 @@ class LucasKanade(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, residual, transform,
-                 warp=scipy_warp, optimisation=('GN',), eps=1**-10):
+                 interpolator='scipy', optimisation=('GN',), eps=1**-10):
         # set basic state for all Lucas Kanade algorithms
         self.initial_transform = transform
         self.TransformClass = transform.__class__
@@ -91,7 +90,7 @@ class LucasKanade(object):
 
         # select the optimisation approach and warp function
         self._calculate_delta_p = self._select_optimisation(optimisation)
-        self._warp = warp
+        self._interpolator = interpolator
 
     def _select_optimisation(self, optimisation):
         if optimisation[0] == 'GD':
