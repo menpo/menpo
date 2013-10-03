@@ -17,7 +17,7 @@ class AbstractTransform(Vectorizable):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self._pseudoinverse = None
+        pass
 
     @abc.abstractproperty
     def n_dims(self):
@@ -119,9 +119,7 @@ class AbstractTransform(Vectorizable):
 
         :type: :class:`AlignableTransform`
         """
-        if self._pseudoinverse is None:
-            self._pseudoinverse = self._build_pseudoinverse()
-        return self._pseudoinverse
+        return self._build_pseudoinverse()
 
     def apply(self, x, **kwargs):
         r"""

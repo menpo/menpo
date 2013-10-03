@@ -38,6 +38,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
                  global_transform=None, composition='both'):
         super(StatisticallyDrivenTransform, self).__init__()
 
+        self._cached_points = None
         self.model = model
         self.global_transform = global_transform
         self.composition = composition
