@@ -13,17 +13,17 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.optimal_transform.jacobian(
+            dW_dp = self.transform.jacobian(
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
-                                            self.optimal_transform,
+                                            self.transform,
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
@@ -40,24 +40,22 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            new_params = self.optimal_transform.as_vector() + delta_p
-            self.initial_transform.update_from_vector(new_params)
-            self.transforms.append(self.initial_transform)
+            params = self.transform.as_vector() + delta_p
+            self.transform.update_from_vector(params)
+            self.parameters.append(params)
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ProjectOutForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
-
-        pass
 
     def _align(self, max_iters=30):
         # Initial error > eps
@@ -67,7 +65,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -87,21 +85,20 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.initial_transform.update_from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(self.initial_transform))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ProjectOutInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        dW_dp = self.initial_transform.jacobian(
+        dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
@@ -124,7 +121,7 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent parameter updates
@@ -132,15 +129,13 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.initial_transform.update_from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(
-                    self.initial_transform.pseudoinverse))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform

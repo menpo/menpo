@@ -13,7 +13,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -26,17 +26,17 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.optimal_transform.jacobian(
+            dW_dp = self.transform.jacobian(
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J_aux = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
-                                            self.optimal_transform,
+                                            self.transform,
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
@@ -53,9 +53,9 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.optimal_transform.as_vector() + delta_p
-            self.initial_transform.update_from_vector(params)
-            self.transforms.append(self.initial_transform)
+            params = self.transform.as_vector() + delta_p
+            self.transform.update_from_vector(params)
+            self.parameters.append(params)
 
             # Update appearance weights
             error_img = self.template.from_vector(
@@ -66,14 +66,14 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class AdaptiveForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -86,7 +86,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -99,7 +99,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -119,9 +119,8 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.initial_transform.update_from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(self.initial_transform))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights
             error_img = self.template.from_vector(
@@ -132,14 +131,14 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class AdaptiveInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -152,7 +151,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -165,7 +164,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VT_dW_dp
@@ -183,13 +182,11 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.initial_transform.update_from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(
-                    self.initial_transform.pseudoinverse))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Update appearance parameters
             error_img = self.template.from_vector(
@@ -200,4 +197,4 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
