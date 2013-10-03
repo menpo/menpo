@@ -144,7 +144,7 @@ class Residual(object):
         Calculates the gradients of the given method.
 
         If ``forward`` is provided, then the gradients are warped
-        (as is required in the forward additive algorithm)
+        (as required in the forward additive algorithm)
 
         Parameters
         ----------
@@ -156,13 +156,18 @@ class Residual(object):
 
             Default: ``None``
         """
-        # Calculate the gradient over the image
-        gradient = image.gradient()
-
-        # Warp image for forward additive, if we've been given a transform
         if forward:
-            template, transform, warp = forward
-            gradient = warp(gradient, template, transform)
+            # Calculate the gradient over the image
+            gradient = image.gradient()
+            # Warp gradient for forward additive, if we've been given a
+            # transform
+            template, transform, interpolator = forward
+            gradient = gradient.warp_to(template.mask, transform,
+                                        interpolator=interpolator)
+        else:
+            # Calculate the gradient over the image and remove one pixels at
+            # the borders of the image mask
+            gradient = image.gradient(nullify_values_at_mask_boundaries=True)
 
         return gradient
 
