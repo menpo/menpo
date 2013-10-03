@@ -124,10 +124,10 @@ class AffineTransform(AlignableTransform):
         if self.homogeneous_matrix is not None:
             # already have a matrix set! The update better be the same size
             if self.n_dims != shape[0] - 1:
-                raise ValueError("Trying to update the homogeneous matrix to a"
-                                 " different dimension")
+                raise DimensionalityError("Trying to update the homogeneous "
+                                          "matrix to a different dimension")
         elif shape[0] - 1 not in [2, 3]:
-            raise ValueError("Affine Transforms can only be 2D or 3D")
+            raise DimensionalityError("Affine Transforms can only be 2D or 3D")
         # TODO add a check here that the matrix is actually valid
         self._homogeneous_matrix = value
 
@@ -1171,29 +1171,34 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         return self.scale
 
     @classmethod
-    def from_vector(cls, p):
+    def from_vector(cls, vector):
         r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        2D non uniform scale: 2 parameters::
-
-            [s0, s1]
-
-        Other dimensionalities are similar to the 2D case.
+        Returns a NonUniformScale from the given parameters.
 
         Parameters
         ----------
-        p : (D,) ndarray
-            The array of parameters.
+        vector : (D,) ndarray
+            A vector of scale values, one per dimension.
 
         Returns
         -------
         transform : :class:`NonUniformScale`
             The transform initialised to the given parameters.
         """
-        # See affine from_vector with regards to classmethod decorator
-        return NonUniformScale(p)
+        return NonUniformScale(vector)
+
+    def update_from_vector(self, vector):
+        r"""
+        Updates the NonUniformScale inplace.
+
+        Parameters
+        ----------
+        vector : (D,) ndarray
+            The array of parameters.
+
+        """
+        np.fill_diagonal(self.homogeneous_matrix, vector)
+        self.homogeneous_matrix[-1, -1] = 1
 
 
 class UniformScale(DiscreteAffineTransform, SimilarityTransform):

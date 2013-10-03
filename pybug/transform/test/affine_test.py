@@ -1,10 +1,12 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
+from pybug.shape import PointCloud
 from pybug.transform.affine import Rotation, Translation, \
     AffineTransform, SimilarityTransform, NonUniformScale, \
-    Rotation2D, Rotation3D, UniformScale2D, UniformScale3D, UniformScale, Scale
+    Rotation2D, Rotation3D, UniformScale, Scale
 from pybug.exceptions import DimensionalityError
 from nose.tools import raises
+
 
 @raises(DimensionalityError)
 def test_1d():
@@ -26,16 +28,16 @@ def test_translation():
     assert_allclose(starting_vector + t_vec, transformed)
 
 
-def test_estimate_2d_translation():
+def test_align_2d_translation():
     t_vec = np.array([1, 2])
     translation = Translation(t_vec)
-    source = np.array([[0, 1],
-                       [1, 1],
-                       [-1, -5],
-                       [3, -5]])
-    target = translation.apply(source)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = translation.apply_nondestructive(source)
     # estimate the transform from source and target
-    estimate = Translation.estimate(source, target)
+    estimate = Translation.align(source, target)
     # check the estimates is correct
     assert_allclose(translation.homogeneous_matrix,
                     estimate.homogeneous_matrix)
@@ -57,17 +59,17 @@ def test_basic_2d_rotation_axis_angle():
     assert_allclose((90 * np.pi)/180, angle)
 
 
-def test_estimate_2d_rotation():
+def test_align_2d_rotation():
     rotation_matrix = np.array([[0, 1],
                                 [-1, 0]])
     rotation = Rotation(rotation_matrix)
-    source = np.array([[0, 1],
-                       [1, 1],
-                       [-1, -5],
-                       [3, -5]])
-    target = rotation.apply(source)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = rotation.apply_nondestructive(source)
     # estimate the transform from source and target
-    estimate = Rotation2D.estimate(source, target)
+    estimate = Rotation2D.align(source, target)
     # check the estimates is correct
     assert_allclose(rotation.homogeneous_matrix,
                     estimate.homogeneous_matrix)
@@ -139,7 +141,7 @@ def test_basic_2d_affine():
         assert_allclose(solution, r)
 
 
-def test_estimate_2d_affine():
+def test_align_2d_affine():
     linear_component = np.array([[1, -6],
                                  [-3, 2]])
     translation_component = np.array([7, -8])
@@ -147,13 +149,13 @@ def test_estimate_2d_affine():
     homogeneous_matrix[:-1, :-1] = linear_component
     homogeneous_matrix[:-1, -1] = translation_component
     affine = AffineTransform(homogeneous_matrix)
-    source = np.array([[0, 1],
-                       [1, 1],
-                       [-1, -5],
-                       [3, -5]])
-    target = affine.apply(source)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = affine.apply_nondestructive(source)
     # estimate the transform from source and target
-    estimate = AffineTransform.estimate(source, target)
+    estimate = AffineTransform.align(source, target)
     # check the estimates is correct
     assert_allclose(affine.homogeneous_matrix, estimate.homogeneous_matrix)
 
@@ -213,7 +215,7 @@ def test_basic_2d_similarity():
         assert_allclose(solution, r)
 
 
-def test_estimate_2d_similarity():
+def test_align_2d_similarity():
     linear_component = np.array([[2, -6],
                                  [6, 2]])
     translation_component = np.array([7, -8])
@@ -221,13 +223,13 @@ def test_estimate_2d_similarity():
     homogeneous_matrix[:-1, :-1] = linear_component
     homogeneous_matrix[:-1, -1] = translation_component
     similarity = SimilarityTransform(homogeneous_matrix)
-    source = np.array([[0, 1],
-                       [1, 1],
-                       [-1, -5],
-                       [3, -5]])
-    target = similarity.apply(source)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = similarity.apply_nondestructive(source)
     # estimate the transform from source and target
-    estimate = SimilarityTransform.estimate(source, target)
+    estimate = SimilarityTransform.align(source, target)
     # check the estimates is correct
     assert_allclose(similarity.homogeneous_matrix,
                     estimate.homogeneous_matrix)
@@ -442,6 +444,7 @@ sim_jac_solution2d = np.array([[[0.,  0.],
                               [1.,  0.],
                               [0.,  1.]]])
 
+
 def test_affine_jacobian_2d_with_positions():
     params = np.array([0, 0.1, 0.2, 0, 30, 70])
     t = AffineTransform.from_vector(params)
@@ -560,20 +563,21 @@ def test_translation_3d_as_vector():
     assert_allclose(vec, params)
 
 
-def test_uniformscale2d_from_vector():
-    scale = 2
-    homo = np.array([[scale, 0, 0],
-                     [0, scale, 0],
+def test_uniformscale2d_update_from_vector():
+    # make a uniform scale of 1, 2 dimensional
+    uniform_scale = UniformScale(1, 2)
+    new_scale = 2
+    homo = np.array([[new_scale, 0, 0],
+                     [0, new_scale, 0],
                      [0, 0, 1]])
 
-    tr = UniformScale2D.from_vector(scale)
-
-    assert_equal(tr.homogeneous_matrix, homo)
+    uniform_scale.update_from_vector(new_scale)
+    assert_equal(uniform_scale.homogeneous_matrix, homo)
 
 
 def test_uniformscale2d_as_vector():
     scale = 2
-    vec = UniformScale2D(scale).as_vector()
+    vec = UniformScale(scale, 2).as_vector()
     assert_allclose(vec, scale)
 
 
@@ -585,6 +589,16 @@ def test_nonuniformscale2d_from_vector():
 
     tr = NonUniformScale.from_vector(scale)
 
+    assert_equal(tr.homogeneous_matrix, homo)
+
+
+def test_nonuniformscale2d_update_from_vector():
+    scale = np.array([3, 4])
+    homo = np.array([[scale[0], 0, 0],
+                     [0, scale[1], 0],
+                     [0, 0, 1]])
+    tr = NonUniformScale(np.array([1, 2]))
+    tr.update_from_vector(scale)
     assert_equal(tr.homogeneous_matrix, homo)
 
 
@@ -601,16 +615,14 @@ def test_uniformscale3d_from_vector():
                      [0, 0, scale, 0],
                      [0, 0, 0, 1]])
 
-    tr = UniformScale3D.from_vector(scale)
-
+    uniform_scale = UniformScale(1, 3)
+    tr = uniform_scale.from_vector(scale)
     assert_equal(tr.homogeneous_matrix, homo)
 
 
 def test_uniformscale3d_as_vector():
     scale = 2
-
-    vec = UniformScale3D(scale).as_vector()
-
+    vec = UniformScale(scale, 3).as_vector()
     assert_allclose(vec, scale)
 
 
@@ -621,8 +633,6 @@ def test_uniformscale_build_2d():
                      [0, 0, 1]])
 
     tr = UniformScale(scale, 2)
-
-    assert(isinstance(tr, UniformScale2D))
     assert_equal(tr.homogeneous_matrix, homo)
 
 
