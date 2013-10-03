@@ -450,6 +450,7 @@ class MaskedNDImage(AbstractNDImage):
         grad_image.landmarks = self.landmarks
         return grad_image
 
+    # TODO maybe we should be stricter about the trilist here, feels flakey
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -484,8 +485,11 @@ class MaskedNDImage(AbstractNDImage):
             raise ValueError("can only constrain mask on 2D images.")
 
         pc = self.landmarks[group][label].lms
+        if trilist is not None:
+            from pybug.shape import TriMesh
+            pc = TriMesh(pc.points, trilist)
 
-        pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
+        pwa = PiecewiseAffineTransform(pc, pc)
         try:
             pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
