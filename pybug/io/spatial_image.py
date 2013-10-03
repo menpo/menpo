@@ -280,7 +280,7 @@ class BNTImporter(SpatialImageImporter):
         scale_1 = depth_image_shape[1] / original_shape[1]
         scale = Scale(np.array([scale_0, scale_1]))
 
-        scale.apply_inplace(lmark_group.landmarks)
+        scale.apply_inplace(lmark_group.lms)
 
         return lmark_group
 
