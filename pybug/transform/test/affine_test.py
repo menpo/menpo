@@ -645,8 +645,9 @@ def test_uniformscale_build_3d():
 
     tr = UniformScale(scale, 3)
 
-    assert(isinstance(tr, UniformScale3D))
+    assert(isinstance(tr, UniformScale))
     assert_equal(tr.homogeneous_matrix, homo)
+
 
 @raises(DimensionalityError)
 def test_uniformscale_build_4d_raise_dimensionalityerror():
@@ -658,7 +659,7 @@ def test_scale_build_2d_uniform_pass_dim():
     ndim = 2
     tr = Scale(scale, ndim)
 
-    assert(isinstance(tr, UniformScale2D))
+    assert(isinstance(tr, UniformScale))
 
 
 def test_scale_build_3d_uniform_pass_dim():
@@ -666,7 +667,7 @@ def test_scale_build_3d_uniform_pass_dim():
     ndim = 3
     tr = Scale(scale, ndim)
 
-    assert(isinstance(tr, UniformScale3D))
+    assert(isinstance(tr, UniformScale))
 
 
 def test_scale_build_2d_nonuniform():
@@ -680,7 +681,7 @@ def test_scale_build_2d_uniform_from_vec():
     scale = np.array([2, 2])
     tr = Scale(scale)
 
-    assert(isinstance(tr, UniformScale2D))
+    assert(isinstance(tr, UniformScale))
 
 
 @raises(ValueError)
@@ -748,13 +749,13 @@ def test_similarity_3d_n_parameters_raises_notimplementederror():
 
 def test_uniformscale2d_n_parameters():
     scale = 2
-    t = UniformScale2D(scale)
+    t = UniformScale(scale, 2)
     assert(t.n_parameters == 1)
 
 
 def test_uniformscale3d_n_parameters():
     scale = 2
-    t = UniformScale3D(scale)
+    t = UniformScale(scale, 3)
     assert(t.n_parameters == 1)
 
 
