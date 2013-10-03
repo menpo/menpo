@@ -246,10 +246,9 @@ class GaborFourier(Residual):
         sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
 
         # make sdi images
-        # sdi_img:  height  x  width  x  n_channels  x  n_params
-        sdi_img_shape = (gradient_img.height, gradient_img.width)
+        # sdi_img:  shape  x  n_channels  x  n_params
         sdi_img_channels = image.n_channels * dW_dp.shape[1]
-        sdi_img = MaskedNDImage.blank(sdi_img_shape,
+        sdi_img = MaskedNDImage.blank(gradient_img.shape,
                                       n_channels=sdi_img_channels,
                                       mask=gradient_img.mask)
         sdi_img = sdi_img.update_from_vector(sdi.flatten())
