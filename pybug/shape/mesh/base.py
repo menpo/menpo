@@ -1,4 +1,4 @@
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh.exceptions import TriFieldError
 from pybug.visualize import TriMeshViewer

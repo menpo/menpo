@@ -4,7 +4,7 @@ from pybug.shape import PointCloud
 from pybug.transform.affine import Rotation, Translation, \
     AffineTransform, SimilarityTransform, NonUniformScale, \
     Rotation2D, Rotation3D, UniformScale, Scale
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 from nose.tools import raises
 
 
