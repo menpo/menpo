@@ -1,1 +1,2 @@
-from affine import AffineTransform, Rotation, Translation, Scale
+from affine import \
+    AffineTransform, SimilarityTransform, Rotation, Translation, Scale

@@ -26,6 +26,9 @@ class AffineTransform(AlignableTransform):
         # let the setter handle initialization
         self.homogeneous_matrix = homogeneous_matrix
 
+    def _init_with_homogeneous(self, homogeneous_matrix):
+        self  = self.__init__(homogeneous_matrix)
+
     @classmethod
     def _align(cls, source, target, **kwargs):
         r"""
@@ -196,14 +199,22 @@ class AffineTransform(AlignableTransform):
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
-    def compose(self, affine_transform):
+    def compose(self, transform):
         r"""
-        Chains this affine transform with another one, producing a new affine
-        transform.
+        Chains an affine family transform with another transform of the
+        same family, producing a new transform that is the composition of
+        the two.
+
+        .. note::
+
+            This will succeed if and only if transform is a transform of
+            that belongs to the affine family of transforms. The type of the
+            returned transform is always the first common ancestor between
+            self and transform.
 
         Parameters
         ----------
-        affine_transform : :class:`AffineTransform`
+        transform : :class:`AffineTransform`
             Transform to be applied *FOLLOWING* self
 
         Returns
@@ -213,14 +224,27 @@ class AffineTransform(AlignableTransform):
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        new_self = copy.deepcopy(self)
-        new_self.compose_inplace(affine_transform)
+        if isinstance(transform, type(self)):
+            new_self = copy.deepcopy(self)
+            new_self.compose_inplace(transform)
+        elif isinstance(self, type(transform)):
+            new_self = transform.compose(self)
+        elif (isinstance(self, SimilarityTransform) and
+              isinstance(transform, SimilarityTransform)):
+            new_self = SimilarityTransform(self.homogeneous_matrix)
+            new_self.compose_inplace(transform)
+        elif isinstance(transform, AffineTransform):
+            new_self = AffineTransform(self.homogeneous_matrix)
+            new_self.compose_inplace(transform)
+        else:
+            raise ValueError("Trying to compose a {} with "
+                             " a {}".format(type(self), type(transform)))
         return new_self
 
-    def compose_inplace(self, affine_transform):
+    def compose_inplace(self, transform):
         r"""
-        Chains this affine transform with another one, updating this affine
-        transform to be the composition of the two.
+        Chains an affine family transform with another transform of the
+        exact same type, updating the first to be the composition of the two.
 
         Parameters
         ----------
@@ -229,8 +253,12 @@ class AffineTransform(AlignableTransform):
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        self.homogeneous_matrix = np.dot(
-            self.homogeneous_matrix, affine_transform.homogeneous_matrix)
+        if isinstance(transform, type(self)):
+            self.homogeneous_matrix = np.dot(
+                self.homogeneous_matrix, transform.homogeneous_matrix)
+        else:
+            raise ValueError("Trying to compose_inplace a {} with "
+                             " a {}".format(type(self), type(transform)))
 
     def compose_from_vector_inplace(self, vector):
         r"""
@@ -744,26 +772,6 @@ class SimilarityTransform(AffineTransform):
         else:
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
-
-    def compose_inplace(self, transform):
-        r"""
-        Chains this similarity transform with another one, updating this
-        similarity transform to be the composition of the two.
-
-        If instead composition is performed with an affine transform,
-        an affine transfore
-
-        Parameters
-        ----------
-        affine_transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
-        """
-        if isinstance(transform, SimilarityTransform):
-            # ok, we can proceed as normal
-            AffineTransform.compose_inplace(self, transform)
-        else:
-            raise ValueError("Trying to compose a Similarity transform with "
-                             "something other than a Similarity transform")
 
     @property
     def inverse(self):
