@@ -213,7 +213,7 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return type(self)._init_with_channel(image_data, mask=self.mask)
 
-    def update_from_vector(self, flattened):
+    def from_vector_inplace(self, flattened):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -223,14 +223,8 @@ class MaskedNDImage(AbstractNDImage):
         ----------
         flattened : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
-
-        Returns
-        -------
-        image : :class:`MaskedNDImage`
-            This image after being updated
         """
         self.masked_pixels = flattened.reshape((-1, self.n_channels))
-        return self
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, **kwargs):
@@ -401,12 +395,12 @@ class MaskedNDImage(AbstractNDImage):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use
-        the usual update_from_vector method. All other Image classes share
+        the usual from_vector_inplace method. All other Image classes share
         this implementation.
         """
         warped_image = self.blank(template_mask.shape, mask=template_mask,
                                   n_channels=self.n_channels)
-        warped_image.update_from_vector(sampled_pixel_values.flatten())
+        warped_image.from_vector_inplace(sampled_pixel_values.flatten())
         return warped_image
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
@@ -456,6 +450,7 @@ class MaskedNDImage(AbstractNDImage):
         grad_image.landmarks = self.landmarks
         return grad_image
 
+    # TODO maybe we should be stricter about the trilist here, feels flakey
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -490,9 +485,12 @@ class MaskedNDImage(AbstractNDImage):
             raise ValueError("can only constrain mask on 2D images.")
 
         pc = self.landmarks[group][label].lms
+        if trilist is not None:
+            from pybug.shape import TriMesh
+            pc = TriMesh(pc.points, trilist)
 
-        pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
+        pwa = PiecewiseAffineTransform(pc, pc)
         try:
-            pwa.apply(self.mask.all_indices)
+            pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
-            self.mask.update_from_vector(~e.points_outside_source_domain)
+            self.mask.from_vector_inplace(~e.points_outside_source_domain)

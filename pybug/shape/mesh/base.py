@@ -15,11 +15,14 @@ class TriMesh(PointCloud):
     ----------
     points : (N, D) ndarray
         The set coordinates for the mesh.
-    trilist : (M, 3) ndarray
-        The triangle list.
+    trilist : (M, 3) ndarray, optional
+        The triangle list. If None is provided, a Delaunay triangulation of
+        the points will be used instead.
+
+        Default: None
     """
 
-    def __init__(self, points, trilist):
+    def __init__(self, points, trilist=None):
         #TODO add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points)
         if trilist is None:

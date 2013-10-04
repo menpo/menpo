@@ -1,4 +1,4 @@
-from pybug.align.rigid import Procrustes
+from pybug.groupalign.rigid import Procrustes
 import numpy as np
 
 

@@ -170,9 +170,9 @@ class LandmarkManager(Transformable, Viewable):
         new_landmark_manager._target = self.__target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
-    def _transform(self, transform):
+    def _transform_inplace(self, transform):
         for group in self._landmark_groups.itervalues():
-            group.lms._transform(transform)
+            group.lms._transform_inplace(transform)
         return self
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):

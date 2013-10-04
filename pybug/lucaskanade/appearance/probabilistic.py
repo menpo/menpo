@@ -13,17 +13,17 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.optimal_transform.jacobian(
+            dW_dp = self.transform.jacobian(
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
-                                            self.optimal_transform,
+                                            self.transform,
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
@@ -41,21 +41,21 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.optimal_transform.as_vector() + delta_p
-            self.transforms.append(
-                self.initial_transform.from_vector(params))
+            params = self.transform.as_vector() + delta_p
+            self.transform.from_vector_inplace(params)
+            self.parameters.append(params)
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ProbabilisticForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -68,7 +68,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -89,21 +89,20 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ProbabilisticInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
@@ -125,7 +124,7 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent parameter updates
@@ -133,17 +132,16 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform.inverse))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ToSubspaceForwardAdditive(AppearanceLucasKanade):
@@ -156,17 +154,17 @@ class ToSubspaceForwardAdditive(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.optimal_transform.jacobian(
+            dW_dp = self.transform.jacobian(
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
-                                            self.optimal_transform,
+                                            self.transform,
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
@@ -183,21 +181,21 @@ class ToSubspaceForwardAdditive(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.optimal_transform.as_vector() + delta_p
-            self.transforms.append(
-                self.initial_transform.from_vector(params))
+            params = self.transform.as_vector() + delta_p
+            self.transform.from_vector_inplace(params)
+            self.parameters.append(params)
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ToSubspaceForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -210,7 +208,7 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -230,21 +228,21 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
+
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class ToSubspaceInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -257,7 +255,7 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VT_dW_dp
@@ -275,17 +273,16 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform.inverse))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
@@ -298,17 +295,17 @@ class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.optimal_transform.jacobian(
+            dW_dp = self.transform.jacobian(
                 self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
                 self.image, dW_dp, forward=(self.template,
-                                            self.optimal_transform,
+                                            self.transform,
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
@@ -325,21 +322,21 @@ class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.optimal_transform.as_vector() + delta_p
-            self.transforms.append(
-                self.initial_transform.from_vector(params))
+            params = self.transform.as_vector() + delta_p
+            self.transform.from_vector_inplace(params)
+            self.parameters.append(params)
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -352,7 +349,7 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -372,21 +369,20 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform
 
 
 class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
 
     def _precompute(self):
         # Compute warp Jacobian
-        self._dW_dp = self.initial_transform.jacobian(
+        self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
         pass
@@ -399,7 +395,7 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
         while self.n_iters < (max_iters - 1) and error > self.eps:
             # Compute warped image with current parameters
             IWxp = self.image.warp_to(self.template.mask,
-                                      self.optimal_transform,
+                                      self.transform,
                                       interpolator=self._interpolator)
 
             # Compute steepest descent images, VT_dW_dp
@@ -417,14 +413,13 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            delta_p_transform = self.initial_transform.from_vector(delta_p)
-            self.transforms.append(
-                self.optimal_transform.compose(delta_p_transform.inverse))
+            self.transform.compose_from_vector_inplace(delta_p)
+            self.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
 
-        return self.optimal_transform
+        return self.transform

@@ -20,10 +20,10 @@ class LucasKanade(object):
         .. note:: Only the image is expected within the base class because
             different algorithms expect different kinds of template
             (image/model)
-    residual : :class:`pybug.align.lucaskanade.residual.Residual`
+    residual : :class:`pybug.lucaskanade.residual.Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
-    transform : :class:`pybug.transform.base.Transform`
+    transform : :class:`pybug.transform.base.AlignableTransform`
         The transformation type used to warp the image in to the appropriate
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
@@ -31,7 +31,7 @@ class LucasKanade(object):
         A function that takes 3 arguments,
         ``warp(`` :class:`image <pybug.image.base.Image>`,
         :class:`template <pybug.image.base.Image>`,
-        :class:`transform <pybug.transform.base.Transform>` ``)``
+        :class:`transform <pybug.transform.base.AlignableTransform>` ``)``
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
@@ -68,8 +68,8 @@ class LucasKanade(object):
 
     Attributes
     ----------
-    optimal_transform
-    transform_parameters
+    transform
+    parameters
     n_iters
 
     References
@@ -83,8 +83,7 @@ class LucasKanade(object):
     def __init__(self, residual, transform,
                  interpolator='scipy', optimisation=('GN',), eps=1**-10):
         # set basic state for all Lucas Kanade algorithms
-        self.initial_transform = transform
-        self.TransformClass = transform.__class__
+        self.transform = transform
         self.residual = residual
         self.eps = eps
 
@@ -153,12 +152,13 @@ class LucasKanade(object):
 
         Returns
         -------
-        transform : :class:`pybug.transform.base.Transform`
+        transform : :class:`pybug.transform.base.AlignableTransform`
             The final transform that optimally aligns the source to the
             target.
         """
         # TODO: define a consistent multi-resolution logic
-        self.transforms = [self.initial_transform.from_vector(params)]
+        self.transform.from_vector_inplace(params)
+        self.parameters = [params]
         self.image = image
         return self._align(max_iters, **kwargs)
 
@@ -171,25 +171,13 @@ class LucasKanade(object):
         pass
 
     @property
-    def optimal_transform(self):
+    def transforms(self):
         r"""
-        The final transform that was applied is by definition the optimal.
-
-        :type: :class:`pybug.transform.base.Transform`
-        """
-        return self.transforms[-1]
-
-    @property
-    def transform_parameters(self):
-        r"""
-         The parameters of every transform calculated during alignment.
+         The transform as applied at each step of the alignment.
 
         :type: list of (P,) ndarrays
-
-        The parameters are obtained by calling the ``as_vector()`` method on
-        each transform.
         """
-        return [x.as_vector() for x in self.transforms]
+        return [self.transform.from_vector(x) for x in self.parameters]
 
     @property
     def n_iters(self):
@@ -198,6 +186,6 @@ class LucasKanade(object):
 
         :type: int
         """
-        # nb at 0'th iteration we still have one transform
-        # (self.initial_transform)
-        return len(self.transforms) - 1
+        # nb at 0'th iteration we still have one parameters
+        # (self.transform)
+        return len(self.parameters) - 1
