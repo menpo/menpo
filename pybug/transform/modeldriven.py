@@ -2,7 +2,7 @@ import numpy as np
 from pybug.transform.base import AlignableTransform
 
 
-class StatisticallyDrivenTransform(AlignableTransform):
+class ModelDrivenTransform(AlignableTransform):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -31,14 +31,14 @@ class StatisticallyDrivenTransform(AlignableTransform):
         generate an instance of the target landmarks.
     composition: 'both', 'warp' or 'model', optional
         The composition approximation employed by this
-        StatisticallyDrivenTransform.
+        ModelDrivenTransform.
 
         Default: 'both'
     """
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform_cls, source=None, weights=None,
                  composition='both'):
-        super(StatisticallyDrivenTransform, self).__init__()
+        super(ModelDrivenTransform, self).__init__()
 
         self._cached_points = None
         self.model = model
@@ -110,7 +110,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
 
     def jacobian(self, points):
         """
-        Calculates the Jacobian of the StatisticallyDrivenTransform wrt to
+        Calculates the Jacobian of the ModelDrivenTransform wrt to
         its parameters (the weights). This is done by chaining the relative
         weight of each point wrt the source landmarks, i.e. the Jacobian of
         the warp wrt the source landmarks when the target is assumed to be
@@ -125,7 +125,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         Returns
         -------
         dW/dp : (N, P, D) ndarray
-            The Jacobian of the StatisticallyDrivenTransform evaluated at the
+            The Jacobian of the ModelDrivenTransform evaluated at the
             previous points.
         """
         # check if re-computation of dW/dx can be avoided
@@ -172,7 +172,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
 
     def from_vector_inplace(self, vector):
         r"""
-        Updates the StatisticallyDrivenTransform's state from it's
+        Updates the ModelDrivenTransform's state from it's
         vectorized form.
         """
         self.weights = vector
@@ -247,15 +247,15 @@ class StatisticallyDrivenTransform(AlignableTransform):
 
     def compose_from_vector_inplace(self, sdt_parameters):
         r"""
-        Compose this StatisticallyDrivenTransform with another inplace.
-        Rather than requiring a new StatisticallyDrivenTransform to compose
+        Compose this ModelDrivenTransform with another inplace.
+        Rather than requiring a new ModelDrivenTransform to compose
         with, this method only requires the parameters of the new transform.
 
         Parameters
         ----------
 
         sdt_parameters: (P,) ndarray
-            The parameters of the StatisticallyDrivenTransform that we are
+            The parameters of the ModelDrivenTransform that we are
             composing with, as found from as_vector().
 
         """
@@ -278,7 +278,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         Parameters
         ----------
         other_target : :class:`PointCloud`
-            the target of the StatisticallyDrivenTransform we are
+            the target of the ModelDrivenTransform we are
             composing with.
 
         Returns
@@ -306,7 +306,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         Parameters
         ----------
         other_target : :class:`PointCloud`
-            the target of the StatisticallyDrivenTransform we are
+            the target of the ModelDrivenTransform we are
             composing with.
 
         Returns
@@ -325,7 +325,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         Parameters
         ----------
         new_sdt_parameters : (P,) ndarray
-            the parameters of the StatisticallyDrivenTransform we are
+            the parameters of the ModelDrivenTransform we are
             composing with, as provided by .as_vector().
 
         Returns
@@ -420,7 +420,7 @@ class StatisticallyDrivenTransform(AlignableTransform):
         return self.model.project(target)
 
 
-class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
+class GlobalMDTransform(ModelDrivenTransform):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model together with a global similarity transform,
@@ -455,13 +455,13 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         # need to set the global transform right away - self
         # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
-        super(StatisticallyDrivenAndGlobalTransform, self).__init__(
+        super(GlobalMDTransform, self).__init__(
             model, transform_cls, source=source, weights=weights,
             composition=composition)
         # after construction, we want our global_transform() to be an align
         # transform. This is a little hacky, but is ok as long as the
         # superclasses __init__ doesn't use _weights_for_target.
-        self.global_transform = global_transform.align(self.source,
+        self.global_transform = global_transform.align(self.model.mean,
                                                        self.target)
 
     @property
@@ -495,7 +495,7 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
 
     def jacobian(self, points):
         """
-        Calculates the Jacobian of the StatisticallyDrivenTransform wrt to
+        Calculates the Jacobian of the ModelDrivenTransform wrt to
         its parameters (the weights). This is done by chaining the relative
         weight of each point wrt the source landmarks, i.e. the Jacobian of
         the warp wrt the source landmarks when the target is assumed to be
@@ -511,7 +511,7 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         Returns
         -------
         dW/dp : (N, P, D) ndarray
-            The Jacobian of the StatisticallyDrivenTransform evaluated at the
+            The Jacobian of the ModelDrivenTransform evaluated at the
             previous points.
         """
         # check if re-computation of dW/dx can be avoided
@@ -578,7 +578,7 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         Parameters
         ----------
         other_target : :class:`PointCloud`
-            the target of the StatisticallyDrivenTransform we are
+            the target of the ModelDrivenTransform we are
             composing with.
 
         Returns
@@ -603,7 +603,7 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         Parameters
         ----------
         new_sdt_parameters : (P,) ndarray
-            the parameters of the StatisticallyDrivenTransform we are
+            the parameters of the ModelDrivenTransform we are
             composing with, as provided by .as_vector().
 
         Returns
@@ -719,7 +719,7 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
             PointCloud to the requested target
         """
 
-        self.global_transform.target = target
+        #self.global_transform.target = target
         projected_target = self.global_transform.pseudoinverse.apply(target)
         # now we have the target in model space, project it to recover the
         # weights
@@ -727,6 +727,6 @@ class StatisticallyDrivenAndGlobalTransform(StatisticallyDrivenTransform):
         # TODO investigate the impact of this, could be problematic
         # the model can't perfectly reproduce the target we asked for -
         # reset the global_transform.target to what it CAN produce
-        refined_target = self._target_for_weights(new_weights)
-        self.global_transform.target = refined_target
+        #refined_target = self._target_for_weights(new_weights)
+        #self.global_transform.target = refined_target
         return new_weights

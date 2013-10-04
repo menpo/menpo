@@ -255,7 +255,7 @@ class AffineTransform(AlignableTransform):
         # representation to normal
         if isinstance(transform, type(self)):
             self.homogeneous_matrix = np.dot(
-                self.homogeneous_matrix, transform.homogeneous_matrix)
+                transform.homogeneous_matrix, self.homogeneous_matrix)
         else:
             raise ValueError("Trying to compose_inplace a {} with "
                              " a {}".format(type(self), type(transform)))
@@ -536,17 +536,15 @@ class SimilarityTransform(AffineTransform):
         # apply the translation to the source
         aligned_source = translation.apply(source)
         scale = UniformScale(target.norm() / source.norm(), source.n_dims)
-        scale.apply_inplace(aligned_source)
+        scaled_aligned_source = scale.apply(aligned_source)
         # calculate the correlation along each dimension + find the optimal
         # rotation to maximise it
         correlation = np.dot(centred_target.points.T,
-                             aligned_source.points)
+                             scaled_aligned_source.points)
         U, D, Vt = np.linalg.svd(correlation)
         rotation = Rotation(np.dot(U, Vt))
-        rotation.apply_inplace(aligned_source)
         # finally, move the source back out to where the target is
-        inv_target_translation = target_translation.inverse
-        inv_target_translation.apply_inplace(aligned_source)
+        inv_target_translation = target_translation.pseudoinverse
         return translation.compose(scale).compose(
             rotation).compose(inv_target_translation)
 
@@ -773,8 +771,7 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
 
-    @property
-    def inverse(self):
+    def _build_pseudoinverse(self):
         return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
 
 
