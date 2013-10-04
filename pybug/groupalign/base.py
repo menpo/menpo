@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from pybug.shape import PointCloud
 
 
 class MultipleAlignment(object):
@@ -26,9 +27,8 @@ class MultipleAlignment(object):
         self.sources = sources
         if target is None:
             # set the target to the mean source position
-            self.target = sum([s.points for s in self.sources]) / self\
-                .n_sources
+            self.target = PointCloud(
+                sum([s.points for s in self.sources]) / self.n_sources)
         else:
             assert self.n_dims, self.n_points == target.shape
             self.target = target
-

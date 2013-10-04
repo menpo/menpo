@@ -33,7 +33,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         rescale = UniformScale(
             self.initial_target_scale / new_target.norm(), self.n_dims)
         centre = Translation(-new_target.centre)
-        rescale_about_centre = centre.compose(rescale).compose(centre.inverse)
+        rescale_about_centre = centre.compose(rescale).compose(
+            centre.pseudoinverse)
         rescale_about_centre.apply_inplace(new_target)
         # check to see if  we have converged yet
         delta_target = np.linalg.norm(self.target.points - new_target.points)
@@ -42,7 +43,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         else:
             self.n_iterations += 1
             for t in self.transforms:
-                t.update_target(new_target)
+                t.target = new_target
+            self.target = new_target
             return self._recursive_procrustes()
 
     @property
