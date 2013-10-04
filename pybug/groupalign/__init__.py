@@ -1,0 +1,1 @@
+from pybug.groupalign.procrustes import GeneralizedProcrustesAnalysis

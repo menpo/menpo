@@ -144,25 +144,30 @@ class Residual(object):
         Calculates the gradients of the given method.
 
         If ``forward`` is provided, then the gradients are warped
-        (as is required in the forward additive algorithm)
+        (as required in the forward additive algorithm)
 
         Parameters
         ----------
         image : :class:`pybug.image.base.Image`
             The image to calculate the gradients for
-        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.Transform>`, ``warp``), optional
+        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.AlignableTransform>`, ``warp``), optional
             A tuple containing the extra parameters required for the function
             ``warp`` (which should be passed as a function handle).
 
             Default: ``None``
         """
-        # Calculate the gradient over the image
-        gradient = image.gradient()
-
-        # Warp image for forward additive, if we've been given a transform
         if forward:
-            template, transform, warp = forward
-            gradient = warp(gradient, template, transform)
+            # Calculate the gradient over the image
+            gradient = image.gradient()
+            # Warp gradient for forward additive, if we've been given a
+            # transform
+            template, transform, interpolator = forward
+            gradient = gradient.warp_to(template.mask, transform,
+                                        interpolator=interpolator)
+        else:
+            # Calculate the gradient over the image and remove one pixels at
+            # the borders of the image mask
+            gradient = image.gradient(nullify_values_at_mask_boundaries=True)
 
         return gradient
 
@@ -241,13 +246,12 @@ class GaborFourier(Residual):
         sdi = np.sum(dW_dp[:, None, :, :] * gradient[:, :, None, :], axis=3)
 
         # make sdi images
-        # sdi_img:  height  x  width  x  n_channels  x  n_params
-        sdi_img_shape = (gradient_img.height, gradient_img.width)
+        # sdi_img:  shape  x  n_channels  x  n_params
         sdi_img_channels = image.n_channels * dW_dp.shape[1]
-        sdi_img = MaskedNDImage.blank(sdi_img_shape,
+        sdi_img = MaskedNDImage.blank(gradient_img.shape,
                                       n_channels=sdi_img_channels,
                                       mask=gradient_img.mask)
-        sdi_img = sdi_img.update_from_vector(sdi.flatten())
+        sdi_img.from_vector_inplace(sdi.flatten())
 
         # compute FFT over each channel, parameter and dimension
         # fft_sdi:  height  x  width  x  n_channels  x  n_params

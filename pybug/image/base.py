@@ -69,6 +69,9 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         """
         return cls(image_data_with_channel)
 
+    def blank(*args, **kwargs):
+        raise NotImplementedError
+
     @property
     def n_dims(self):
         r"""
@@ -288,7 +291,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         self.pixels = self.pixels[slices]
         # update all our landmarks
         lm_translation = Translation(-min_indices)
-        lm_translation.apply(self.landmarks)
+        lm_translation.apply_inplace(self.landmarks)
         return self
 
     def cropped_copy(self, min_indices, max_indices,
@@ -401,3 +404,79 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         over_image = (shape - bounded_points) < 0
         bounded_points[over_image] = shape[over_image]
         return bounded_points
+
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
+                interpolator='scipy', **kwargs):
+        r"""
+        Warps this image into a different reference space.
+
+        Parameters
+        ----------
+        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+            Defines the shape of the result, and what pixels should be
+            sampled.
+        transform : :class:`pybug.transform.base.Transform`
+            Transform **from the template space back to this image**.
+            Defines, for each True pixel location on the template, which pixel
+            location should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+            Default: ``False``
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        warped_image : type(self)
+            A copy of this image, warped.
+        """
+        from pybug.interpolation import c_interpolation, scipy_interpolation
+        # configure the interpolator we are going to use for the warp
+        if interpolator == 'scipy':
+            _interpolator = scipy_interpolation
+        elif interpolator == 'c':
+            _interpolator = c_interpolation
+        else:
+            raise ValueError("Don't understand interpolator '{}': needs to "
+                             "be either 'scipy' or 'c'".format(interpolator))
+
+        if self.n_dims != transform.n_dims:
+            raise ValueError(
+                "Trying to warp a {}D image with a {}D transform "
+                "(they must match)".format(self.n_dims, transform.n_dims))
+
+        template_points = template_mask.true_indices
+        points_to_sample = transform.apply(template_points).T
+        # we want to sample each channel in turn, returning a vector of sampled
+        # pixels. Store those in a (n_pixels, n_channels) array.
+        sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
+                                             **kwargs)
+
+        # Set all NaN pixels to 0
+        sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
+        # build a warped version of the image
+        warped_image = self._build_warped_image(template_mask,
+                                                sampled_pixel_values)
+
+        if warp_landmarks:
+            raise Exception("Warp Landmarks is not supported until Transform"
+                            ".pseudoinverse is")
+            warped_image.landmarks = self.landmarks
+            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+        return warped_image
+
+    def _build_warped_image(self, template_mask, sampled_pixel_values):
+        r"""
+        Builds the warped image from the template mask and
+        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        the usual from_vector_inplace method. All other Image classes share
+        the MaskedNDImage implementation.
+        """
+        raise NotImplementedError

@@ -213,7 +213,7 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return type(self)._init_with_channel(image_data, mask=self.mask)
 
-    def update_from_vector(self, flattened):
+    def from_vector_inplace(self, flattened):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -223,14 +223,8 @@ class MaskedNDImage(AbstractNDImage):
         ----------
         flattened : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
-
-        Returns
-        -------
-        image : :class:`MaskedNDImage`
-            This image after being updated
         """
         self.masked_pixels = flattened.reshape((-1, self.n_channels))
-        return self
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, **kwargs):
@@ -335,6 +329,80 @@ class MaskedNDImage(AbstractNDImage):
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
+                warp_mask=False, interpolator='scipy', **kwargs):
+        r"""
+        Warps this image into a different reference space.
+
+        Parameters
+        ----------
+        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+            Defines the shape of the result, and what pixels should be
+            sampled.
+        transform : :class:`pybug.transform.base.Transform`
+            Transform **from the template space back to this image**.
+            Defines, for each pixel location on the template, which pixel
+            location should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+            Default: ``False``
+        warp_mask : bool, optional
+            If ``True``, sample the ``image.mask`` at all ``template_image``
+            points, setting the returned image mask to the sampled value
+            **within the masked region of ``template_image``**.
+
+            Default: ``False``
+
+            .. note::
+
+                This is most commonly set ``True`` in combination with an all
+                True ``template_mask``, as this is then a warp of the image
+                and it's full mask. If ``template_mask``
+                has False mask values, only the True region of the mask
+                will be updated, which is rarely the desired behavior,
+                but is possible for completion.
+        interpolator : 'scipy' or 'cinterp' or func, optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        warped_image : type(self)
+            A copy of this image, warped.
+        """
+        warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
+                                               warp_landmarks=warp_landmarks,
+                                               interpolator='scipy', **kwargs)
+        # note that _build_warped_image for MaskedNDImage classes attaches
+        # the template mask by default. If the user doesn't want to warp the
+        # mask, we are done. If they do want to warp the mask, we warp the
+        # mask separately and reattach.
+        if warp_mask:
+            warped_mask = self.mask.warp_to(template_mask, transform,
+                                            warp_landmarks=warp_landmarks,
+                                            interpolator=interpolator,
+                                            **kwargs)
+            warped_image.mask = warped_mask
+        return warped_image
+
+    def _build_warped_image(self, template_mask, sampled_pixel_values):
+        r"""
+        Builds the warped image from the template mask and
+        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        the usual from_vector_inplace method. All other Image classes share
+        this implementation.
+        """
+        warped_image = self.blank(template_mask.shape, mask=template_mask,
+                                  n_channels=self.n_channels)
+        warped_image.from_vector_inplace(sampled_pixel_values.flatten())
+        return warped_image
+
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
         Returns a MaskedNDImage which is the gradient of this one. In the case
@@ -382,6 +450,7 @@ class MaskedNDImage(AbstractNDImage):
         grad_image.landmarks = self.landmarks
         return grad_image
 
+    # TODO maybe we should be stricter about the trilist here, feels flakey
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -416,9 +485,12 @@ class MaskedNDImage(AbstractNDImage):
             raise ValueError("can only constrain mask on 2D images.")
 
         pc = self.landmarks[group][label].lms
+        if trilist is not None:
+            from pybug.shape import TriMesh
+            pc = TriMesh(pc.points, trilist)
 
-        pwa = PiecewiseAffineTransform(pc.points, pc.points, trilist=trilist)
+        pwa = PiecewiseAffineTransform(pc, pc)
         try:
-            pwa.apply(self.mask.all_indices)
+            pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
-            self.mask.update_from_vector(~e.points_outside_source_domain)
+            self.mask.from_vector_inplace(~e.points_outside_source_domain)

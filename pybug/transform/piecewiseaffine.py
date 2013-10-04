@@ -1,10 +1,9 @@
 import abc
 import numpy as np
-from scipy.spatial import Delaunay
-from pybug.exceptions import DimensionalityError
-from pybug.shape import TriMesh
-from pybug.transform import AffineTransform, Transform
+from pybug.transform import AffineTransform
 from pybug.transform.fastpwa import CLookupPWA
+from pybug.transform.base import PureAlignmentTransform
+# TODO View is broken for PWA (TriangleContainmentError)
 
 
 class TriangleContainmentError(Exception):
@@ -21,7 +20,7 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class AbstractPWATransform(Transform):
+class AbstractPWATransform(PureAlignmentTransform):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -33,66 +32,33 @@ class AbstractPWATransform(Transform):
 
     Parameters
     ----------
-    source : (N, 2) ndarray
-        The source points.
-    target : (N, 2) ndarray
-        The target points.
-    trilist : (M, 3) ndarray, optional
-        A common triangulation for the ``source`` and ``target``.
-
-        Default: Delaunay triangulation of the source
+    source : :class:`pybug.shape.PointCloud` or :class:`pybug.shape.TriMesh`
+        The source points. If a TriMesh is provided, the triangulation on
+        the TriMesh is used. If a :class:`pybug.shape.PointCloud`
+        is provided, a Delaunay triangulation of the source is performed
+        automatically.
+    target : :class:`PointCloud`
+        The target points. Note that the trilist is entirely decided by
+        the source.
 
     Raises
     ------
-    DimensionalityError
+    ValueError
         Source and target must both be 2D.
 
     TriangleContainmentError
         All points to apply must be contained in a source triangle. Check
         ``error.points_outside_source_domain`` to handle this case.
     """
-
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, source, target, trilist=None):
-        if trilist is None:
-            trilist = Delaunay(source).simplices
-        self.source = TriMesh(source, trilist)
-        self.target = TriMesh(target, trilist)
-        self.n_dims = self.source.n_dims
-        if self.source.n_dims != self.target.n_dims:
-            raise DimensionalityError("source and target must have the same "
-                                      "dimension")
-        if self.source.n_dims != 2:
-            raise DimensionalityError("source and target must be 2 "
-                                      "dimensional")
-
-    @property
-    def n_tris(self):
-        r"""
-        The number of triangles in the triangle list.
-
-        :type: int
-        """
-        return self.source.n_tris
-
-    @property
-    def n_points(self):
-        r"""
-        The number of points in the source and target.
-
-        :type: int
-        """
-        return self.source.n_points
-
-    @property
-    def trilist(self):
-        r"""
-        The triangle list.
-
-        :type: (``n_tris``, 3) ndarray
-        """
-        return self.source.trilist
+    def __init__(self, source, target):
+        if not isinstance(source, TriMesh):
+            source = TriMesh(source.points)
+        super(AbstractPWATransform, self).__init__(source, target)
+        if self.n_dims != 2:
+            raise ValueError("source and target must be 2 "
+                             "dimensional")
 
     @abc.abstractmethod
     def index_alpha_beta(self, points):
@@ -129,6 +95,65 @@ class AbstractPWATransform(Transform):
         ``error.points_outside_source_domain`` to handle this case.
         """
         pass
+
+    @property
+    def n_parameters(self):
+        """
+
+        :type: int
+
+
+        """
+        raise NotImplementedError("n_parameters for PWA is not fixed yet.")
+
+    @property
+    def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
+        return self.source.n_tris
+
+    @property
+    def trilist(self):
+        r"""
+        The triangle list.
+
+        :type: (``n_tris``, 3) ndarray
+        """
+        return self.source.trilist
+
+    @property
+    def has_true_inverse(self):
+        return True
+
+    def _build_pseudoinverse(self):
+        from pybug.shape import PointCloud
+        new_source = TriMesh(self.target.points, self.source.trilist)
+        new_target = PointCloud(self.source.points)
+        return type(self)(new_source, new_target)
+
+    def jacobian(self, shape):
+        raise NotImplementedError("PWA jacobian is not implemented yet.")
+
+    def jacobian_points(self, points):
+        """
+        Calculates the Jacobian of the PWA warp with respect to the the points
+        to which the warp is applied to. Expected to return a
+        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
+        as necessary.
+
+        The derivative of a piecewise affine warp with respect to the points
+        is simply the identity matrix for every point in the warp.
+
+        Returns
+        -------
+        dW/dx: (N, D, D) ndarray
+            The Jacobian of the transform with respect to the points to which
+            the transform is applied to.
+        """
+        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
 
     def weight_points(self, points):
         """
@@ -183,51 +208,15 @@ class AbstractPWATransform(Transform):
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
 
-    def jacobian_points(self, points):
-        """
-        Calculates the Jacobian of the PWA warp with respect to the the points
-        to which the warp is applied to. Expected to return a
-        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
-        as necessary.
-
-        The derivative of a piecewise affine warp with respect to the points
-        is simply the identity matrix for every point in the warp.
-
-        Returns
-        -------
-        dW/dx: (N, D, D) ndarray
-            The Jacobian of the transform with respect to the points to which
-            the transform is applied to.
-        """
-        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
-
-    @property
-    def n_parameters(self):
-        """
-        Number of parameters: ``n_tris * 6``.
-
-        :type: int
-
-        There is a 2D affine transformation per triangle, therefore, there are
-        number of triangles * parameters for 2D affine transform number of
-        parameters for a PieceWiseAffine transform: ``n_tris * 6``.
-        """
-        return self.n_tris * 6
-
     def as_vector(self):
-        raise NotImplementedError("PWA as_vector is not implemented yet.")
+        raise NotImplementedError("PWA as_vector() is not implemented yet.")
 
-    def compose(self, a):
-        raise NotImplementedError("PWA compose is not implemented yet.")
+    def from_vector(self, vector):
+        raise NotImplementedError("PWA from_vector() is not implemented yet.")
 
-    def from_vector(self, flattened):
-        raise NotImplementedError("PWA from_vector is not implemented yet.")
-
-    def inverse(self):
-        raise NotImplementedError("PWA inverse is not implemented yet.")
-
-    def jacobian(self, shape):
-        raise NotImplementedError("PWA jacobian is not implemented yet.")
+    def from_vector_inplace(self, vector):
+        raise NotImplementedError("PWA from_vector_inplace() is not "
+                                  "implemented yet.")
 
 
 class DiscreteAffinePWATransform(AbstractPWATransform):
@@ -244,26 +233,27 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
 
     Parameters
     ----------
-    source : (N, 2) ndarray
-        The source points.
-    target : (N, 2) ndarray
-        The target points.
-    trilist : (M, 3) ndarray, optional
-        A common triangulation for the ``source`` and ``target``.
-
-        Default: Delaunay triangulation of the source
+    source : :class:`pybug.shape.PointCloud` or :class:`pybug.shape.TriMesh`
+        The source points. If a TriMesh is provided, the triangulation on
+        the TriMesh is used. If a :class:`pybug.shape.PointCloud`
+        is provided, a Delaunay triangulation of the source is performed
+        automatically.
+    target : :class:`PointCloud`
+        The target points. Note that the trilist is entirely decided by
+        the source.
 
     Raises
     ------
-    DimensionalityError
-        Source and target must have the same dimensionality.
+    ValueError
+        Source and target must both be 2D.
 
-        Source and target must be 2D.
+    TriangleContainmentError
+        All points to apply_inplace must be contained in a source triangle. Check
+        ``error.points_outside_source_domain`` to handle this case.
     """
-
-    def __init__(self, source, target, trilist=None):
+    def __init__(self, source, target):
         super(DiscreteAffinePWATransform, self).__init__(
-            source, target, trilist)
+            source, target)
         self._produce_affine_transforms_per_tri()
 
     def _produce_affine_transforms_per_tri(self):
@@ -273,9 +263,9 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         """
         # we permute the axes of the indexed point set to have shape
         # [3, n_dims, n_tris] for ease of indexing in.
-        s = np.transpose(self.source.points[self.source.trilist],
+        s = np.transpose(self.source.points[self.trilist],
                          axes=[1, 2, 0])
-        t = np.transpose(self.target.points[self.target.trilist],
+        t = np.transpose(self.target.points[self.trilist],
                          axes=[1, 2, 0])
         # sik
         # ^^^
@@ -304,7 +294,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         ht[:2, 1] = c_y
         ht[:2, 2] = c_t
         transforms = []
-        for i in range(self.source.n_tris):
+        for i in range(self.n_tris):
             transforms.append(AffineTransform(ht[..., i]))
 
         # store our state out
@@ -312,40 +302,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         self.s, self.t = s, t
         self.sij, self.sik = sij, sik
         self.tij, self.tik = tij, tik
-
-    def alpha_beta(self, points):
-        r"""
-        Calculates the alpha and beta values (barycentric coordinates) for each
-        triangle for all points provided. Note that this does not raise a
-        TriangleContainmentError.
-
-        Parameters
-        ----------
-        points : (K, 2) ndarray
-            Points to calculate the barycentric coordinates for.
-
-        Returns
-        --------
-        alpha : (K, ``n_tris``)
-            The alpha for each point and triangle. Alpha can be interpreted
-            as the contribution of the ij vector to the position of the
-            point in question.
-        beta : (K, ``n_tris``)
-            The beta for each point and triangle. Beta can be interpreted as
-             the contribution of the ik vector to the position of the point
-             in question.
-        """
-        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
-        dot_jj = np.einsum('dt, dt -> t', ij, ij)
-        dot_kk = np.einsum('dt, dt -> t', ik, ik)
-        dot_jk = np.einsum('dt, dt -> t', ij, ik)
-        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
-        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
-
-        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
-        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
-        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
-        return alpha, beta
 
     def index_alpha_beta(self, points):
         """
@@ -386,7 +342,78 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         index = self._containment_from_alpha_beta(alpha, beta)
         return index, alpha[each_point, index], beta[each_point, index]
 
-    def _containment_from_alpha_beta(self, alpha, beta):
+    def alpha_beta(self, points):
+        r"""
+        Calculates the alpha and beta values (barycentric coordinates) for each
+        triangle for all points provided. Note that this does not raise a
+        TriangleContainmentError.
+
+        Parameters
+        ----------
+        points : (K, 2) ndarray
+            Points to calculate the barycentric coordinates for.
+
+        Returns
+        --------
+        alpha : (K, ``n_tris``)
+            The alpha for each point and triangle. Alpha can be interpreted
+            as the contribution of the ij vector to the position of the
+            point in question.
+        beta : (K, ``n_tris``)
+            The beta for each point and triangle. Beta can be interpreted as
+             the contribution of the ik vector to the position of the point
+             in question.
+        """
+        ip, ij, ik = (points[..., None] - self.s[0]), self.sij, self.sik
+        dot_jj = np.einsum('dt, dt -> t', ij, ij)
+        dot_kk = np.einsum('dt, dt -> t', ik, ik)
+        dot_jk = np.einsum('dt, dt -> t', ij, ik)
+        dot_pj = np.einsum('vdt, dt -> vt', ip, ij)
+        dot_pk = np.einsum('vdt, dt -> vt', ip, ik)
+
+        d = 1.0/(dot_jj * dot_kk - dot_jk * dot_jk)
+        alpha = (dot_kk * dot_pj - dot_jk * dot_pk) * d
+        beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
+        return alpha, beta
+
+    def _target_setter(self, new_target):
+        r"""
+        DiscreteAffinePWATransform is particularly inefficient to update
+        from target - we just have to manually go through and rebuild all
+        the affine transforms.
+        """
+        self._target = new_target
+        self._produce_affine_transforms_per_tri()
+
+    def _apply(self, x, **kwargs):
+        """
+        Applies this transform to a new set of vectors.
+
+        Parameters
+        ----------
+        x : (K, 2) ndarray
+            Points to apply this transform to.
+
+        Returns
+        -------
+        transformed : (K, 2) ndarray
+            The transformed array.
+        """
+        tri_index, alpha, beta = self.index_alpha_beta(x)
+        # build a list of points in each triangle for each triangle
+        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
+        # zip the transforms and the list to apply to make the transformed x
+        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
+                                                     self.transforms)]
+        x_transformed = np.ones_like(x) * np.nan
+        # loop through each triangle, indexing into the x_transformed array
+        # for points in that triangle and replacing the value of x with x_t
+        for i, x_t in enumerate(x_per_tri_tran):
+            x_transformed[tri_index == i] = x_t
+        return x_transformed
+
+    @staticmethod
+    def _containment_from_alpha_beta(alpha, beta):
         r"""
         Check ``alpha`` and ``beta`` are within a triangle (``alpha >= 0``,
         ``beta >= 0``, ``alpha + beta <= 1``). Returns the indices of the
@@ -422,39 +449,11 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         point_in_a_triangle = np.any(point_containment, axis=1)
         if np.any(~point_in_a_triangle):
             raise TriangleContainmentError(~point_in_a_triangle)
-        else:
-            point_index, tri_index = np.nonzero(point_containment)
-            # don't want duplicates! ensure that here:
-            index = np.zeros(alpha.shape[0])
-            index[point_index] = tri_index
-            return index.astype(np.uint32)
-
-    def _apply(self, x, **kwargs):
-        """
-        Applies this transform to a new set of vectors.
-
-        Parameters
-        ----------
-        x : (K, 2) ndarray
-            Points to apply this transform to.
-
-        Returns
-        -------
-        transformed : (K, 2) ndarray
-            The transformed array.
-        """
-        tri_index, alpha, beta = self.index_alpha_beta(x)
-        # build a list of points in each triangle for each triangle
-        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
-        # zip the transforms and the list to apply to make the transformed x
-        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
-                                                     self.transforms)]
-        x_transformed = np.ones_like(x) * np.nan
-        # loop through each triangle, indexing into the x_transformed array
-        # for points in that triangle and replacing the value of x with x_t
-        for i, x_t in enumerate(x_per_tri_tran):
-            x_transformed[tri_index == i] = x_t
-        return x_transformed
+        point_index, tri_index = np.nonzero(point_containment)
+        # don't want duplicates! ensure that here:
+        index = np.zeros(alpha.shape[0])
+        index[point_index] = tri_index
+        return index.astype(np.uint32)
 
 
 class CachedPWATransform(AbstractPWATransform):
@@ -467,36 +466,46 @@ class CachedPWATransform(AbstractPWATransform):
 
     Parameters
     ----------
-    source : (N, 2) ndarray
-        The source points.
-    target : (N, 2) ndarray
-        The target points.
-    trilist : (M, 3) ndarray, optional
-        A common triangulation for the ``source`` and ``target``.
+    source : :class:`pybug.shape.PointCloud` or :class:`pybug.shape.TriMesh`
+        The source points. If a TriMesh is provided, the triangulation on
+        the TriMesh is used. If a :class:`pybug.shape.PointCloud`
+        is provided, a Delaunay triangulation of the source is performed
+        automatically.
+    target : :class:`PointCloud`
+        The target points. Note that the trilist is entirely decided by
+        the source.
 
-        Default: Delaunay triangulation of the source
     Raises
     ------
-    DimensionalityError
-        Source and target must have the same dimensionality.
+    ValueError
+        Source and target must both be 2D.
 
-        Source and target must be 2D.
+    TriangleContainmentError
+        All points to apply must be contained in a source triangle. Check
+        ``error.points_outside_source_domain`` to handle this case.
     """
-
-    def __init__(self, source, target, trilist=None):
-        super(CachedPWATransform, self).__init__(source, target,
-                                                 trilist)
-        t = target[self.trilist]
-        # get vectors ij ik for the target
-        self.tij, self.tik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
-        # target i'th vertex positions
-        self.ti = t[:, 0]
+    def __init__(self, source, target):
+        super(CachedPWATransform, self).__init__(source, target)
         # make sure the source and target satisfy the c requirements
-        source_c = np.require(source, dtype=np.float64, requirements=['C'])
+        source_c = np.require(self.source.points, dtype=np.float64,
+                              requirements=['C'])
         trilist_c = np.require(self.trilist, dtype=np.uint32,
                                requirements=['C'])
         # build the cython wrapped C object and store it locally
         self._fastpwa = CLookupPWA(source_c, trilist_c)
+        self.ti, self.tij, self.tik = None, None, None
+        self._rebuild_target_vectors()
+
+    def _rebuild_target_vectors(self):
+        r"""
+        Rebuild the vectors that are used in the apply method. This needs to
+        be called whenever the target is changed.
+        """
+        t = self.target.points[self.trilist]
+        # get vectors ij ik for the target
+        self.tij, self.tik = t[:, 1] - t[:, 0], t[:, 2] - t[:, 0]
+        # target i'th vertex positions
+        self.ti = t[:, 0]
 
     def index_alpha_beta(self, points):
         points_c = np.require(points, dtype=np.float64, requirements=['C'])
@@ -526,5 +535,15 @@ class CachedPWATransform(AbstractPWATransform):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
+    def _target_setter(self, new_target):
+        r"""
+        CachedPWATransform is particularly efficient to update
+        from target - we don't have to do much at all, just rebuild the target
+        vectors.
+        """
+        self._target = new_target
+        self._rebuild_target_vectors()
+
 
 PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
+from pybug.shape import TriMesh  # to avoid circular import

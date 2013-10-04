@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
+from pybug.shape.base import Shape
 
 
 # TODO: sort of pointfields?
@@ -67,23 +67,11 @@ class PointCloud(Shape):
         """
         return self.points.flatten()
 
-    def from_vector(self, flattened):
+    def from_vector_inplace(self, vector):
         r"""
-        Builds a new :class:`PointCloud` given then ``flattened`` vector.
-        This allows rebuilding pointclouds with the correct number of
-        dimensions from a vector.
-
-        Parameters
-        ----------
-        flattened : (N,) ndarray
-            Vector representing a set of points.
-
-        Returns
-        --------
-        pointcloud : :class:`PointCloud`
-            A new pointcloud created from the vector.
+        Updates this PointCloud in-place with a new vector of parameters
         """
-        return PointCloud(flattened.reshape([-1, self.n_dims]))
+        self.points = vector.reshape([-1, self.n_dims])
 
     def __str__(self):
         message = (str(type(self)) + ': n_points: ' + str(self.n_points) +
@@ -162,7 +150,7 @@ class PointCloud(Shape):
         return PointCloudViewer(figure_id, new_figure,
                                 self.points).render(**kwargs)
 
-    def _transform_self(self, transform):
+    def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
         return self
 

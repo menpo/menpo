@@ -161,3 +161,66 @@ class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
     def _render(self, include_labels=True, **kwargs):
         self._plot_landmarks(include_labels, True, **kwargs)
         return self
+
+
+class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
+
+    def __init__(self, figure_id, new_figure, alignment_transform):
+        super(MatplotlibAlignmentViewer2d, self).__init__(figure_id,
+                                                          new_figure)
+        self.alignment_transform = alignment_transform
+
+    def _render(self, image=False, **kwargs):
+        r"""
+        Visualize how points are affected by the warp in 2 dimensions.
+        """
+        from matplotlib import pyplot
+        source = self.alignment_transform.source.points
+        target = self.alignment_transform.target.points
+        # a factor by which the minimum and maximum x and y values of the warp
+        # will be increased by.
+        x_margin_factor, y_margin_factor = 0.5, 0.5
+        # the number of x and y samples to take
+        n_x, n_y = 50, 50
+        # {x y}_{min max} is the actual bounds on either source or target
+        # landmarks
+        x_min, y_min = np.vstack(
+            [target.min(0), source.min(0)]).min(0)
+        x_max, y_max = np.vstack(
+            [target.max(0), source.max(0)]).max(0)
+        x_margin = x_margin_factor * (x_max - x_min)
+        y_margin = y_margin_factor * (y_max - y_min)
+        # {x y}_{min max}_m is the bound once it has been grown by the factor
+        # of the spread in that dimension
+        x_min_m = x_min - x_margin
+        x_max_m = x_max + x_margin
+        y_min_m = y_min - y_margin
+        y_max_m = y_max + y_margin
+        # build sample points for the selected region
+        x = np.linspace(x_min_m, x_max_m, n_x)
+        y = np.linspace(y_min_m, y_max_m, n_y)
+        xx, yy = np.meshgrid(x, y)
+        sample_points = np.concatenate(
+            [xx.reshape([-1, 1]), yy.reshape([-1, 1])], axis=1)
+        warped_points = self.alignment_transform.apply(sample_points)
+        delta = warped_points - sample_points
+        # plot the sample points result
+        x, y, = 0, 1
+        if image:
+            # if we are overlaying points onto an image,
+            # we have to account for the fact that axis 0 is typically
+            # called 'y' and axis 1 is typically called 'x'. Flip them here
+            x, y = y, x
+        pyplot.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
+                      delta[:, y])
+        delta = target - source
+        # plot how the landmarks move from source to target
+        pyplot.quiver(source[:, x], source[:, y], delta[:, x],
+                      delta[:, y], angles='xy', scale_units='xy', scale=1)
+        # rescale to the bounds
+        pyplot.xlim((x_min_m, x_max_m))
+        pyplot.ylim((y_min_m, y_max_m))
+        if image:
+            # if we are overlaying points on an image, axis0 (the 'y' axis)
+            # is flipped.
+            pyplot.gca().invert_yaxis()
