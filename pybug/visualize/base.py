@@ -181,7 +181,8 @@ from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d
+    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d, \
+    MatplotlibAlignmentViewer2d
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -195,6 +196,7 @@ LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 VectorViewer3d = MayaviVectorViewer3d
 DepthImageHeightViewer = MayaviSurfaceViewer3d
+AlignmentViewer2d = MatplotlibAlignmentViewer2d
 
 
 class LandmarkViewer(object):

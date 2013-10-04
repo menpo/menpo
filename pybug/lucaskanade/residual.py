@@ -150,7 +150,7 @@ class Residual(object):
         ----------
         image : :class:`pybug.image.base.Image`
             The image to calculate the gradients for
-        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.Transform>`, ``warp``), optional
+        forward : (:class:`template <pybug.image.base.Image>`, :class:`template <pybug.transform.base.AlignableTransform>`, ``warp``), optional
             A tuple containing the extra parameters required for the function
             ``warp`` (which should be passed as a function handle).
 
@@ -251,7 +251,7 @@ class GaborFourier(Residual):
         sdi_img = MaskedNDImage.blank(gradient_img.shape,
                                       n_channels=sdi_img_channels,
                                       mask=gradient_img.mask)
-        sdi_img = sdi_img.update_from_vector(sdi.flatten())
+        sdi_img.from_vector_inplace(sdi.flatten())
 
         # compute FFT over each channel, parameter and dimension
         # fft_sdi:  height  x  width  x  n_channels  x  n_params

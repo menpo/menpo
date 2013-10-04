@@ -6,9 +6,8 @@ from nose.tools import raises
 
 def update_im_from_vector(im):
     new_values = np.random.random(im.pixels.shape)
-    same_im = im.update_from_vector(new_values.flatten())
-    assert same_im is im
-    assert same_im.pixels.shape == new_values.shape
+    im.from_vector_inplace(new_values.flatten())
+    assert im.pixels.shape == new_values.shape
     return new_values
 
 

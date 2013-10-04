@@ -1,5 +1,5 @@
 import abc
-
+from copy import deepcopy
 
 class Vectorizable(object):
     """
@@ -24,15 +24,31 @@ class Vectorizable(object):
         pass
 
     @abc.abstractmethod
-    def from_vector(self, flattened):
+    def from_vector_inplace(self, vector):
+        """
+        Update the state of this object from the provided 1D flattened
+        array.
+
+        Parameters
+        ----------
+        vector : (N,) ndarray
+            Flattened representation of the object.
+        """
+        pass
+
+    def from_vector(self, vector):
         """
         Build a new instance of the object from the provided 1D flattened
         array, using ``self`` to fill out the missing state required to
         rebuild a full object from it's standardized flattened state.
 
+        A default implementation is provided where a deepcopy of the object
+        is made followed by an from_vector_inplace(). This method can be
+        overridden for a performance benefit if desired.
+
         Parameters
         ----------
-        flattened : (N,) ndarray
+        vector : (N,) ndarray
             Flattened representation of the object.
 
         Returns
@@ -40,4 +56,6 @@ class Vectorizable(object):
         object : :class:`Vectorizable`
             An instance of the class.
         """
-        pass
+        self_copy = deepcopy(self)
+        self_copy.from_vector_inplace(vector)
+        return self_copy

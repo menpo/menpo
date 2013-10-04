@@ -165,7 +165,7 @@ class BooleanNDImage(AbstractNDImage):
         """
         return BooleanNDImage(flattened.reshape(self.shape))
 
-    def update_from_vector(self, flattened):
+    def from_vector_inplace(self, flattened):
         r"""
         Takes a flattened vector and update this Boolean image by
         reshaping the vector to the correct dimensions. Note that this is
@@ -178,14 +178,8 @@ class BooleanNDImage(AbstractNDImage):
         ----------
         flattened : (``n_pixels``,) np.bool ndarray
             A flattened vector of all the pixels of a BooleanImage.
-
-        Returns
-        -------
-        image : :class:`BooleanNDImage`
-            This image after update from vectorized data
         """
         self.pixels = flattened.reshape(self.pixels.shape)
-        return self
 
     def invert(self):
         r"""
@@ -331,7 +325,7 @@ class BooleanNDImage(AbstractNDImage):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use
-        the usual update_from_vector method.
+        the usual from_vector_inplace method.
         """
         warped_image = BooleanNDImage.blank(template_mask.shape)
         # As we are a mask image, we have to implement the update a little

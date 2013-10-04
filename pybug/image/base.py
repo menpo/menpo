@@ -291,7 +291,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         self.pixels = self.pixels[slices]
         # update all our landmarks
         lm_translation = Translation(-min_indices)
-        lm_translation.apply(self.landmarks)
+        lm_translation.apply_inplace(self.landmarks)
         return self
 
     def cropped_copy(self, min_indices, max_indices,
@@ -469,14 +469,14 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             raise Exception("Warp Landmarks is not supported until Transform"
                             ".pseudoinverse is")
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse.apply(warped_image.landmarks)
+            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use
-        the usual update_from_vector method. All other Image classes share
+        the usual from_vector_inplace method. All other Image classes share
         the MaskedNDImage implementation.
         """
         raise NotImplementedError
