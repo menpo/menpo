@@ -49,7 +49,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
     @property
     def mean_aligned_shape(self):
-        return np.mean([t.target for t in self.transforms], axis=0)
+        return PointCloud(np.mean([t.target.points for t in self.transforms],
+                                  axis=0))
 
     @property
     def av_alignment_error(self):
