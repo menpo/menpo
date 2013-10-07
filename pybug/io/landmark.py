@@ -56,6 +56,28 @@ class LandmarkImporter(Importer):
         pass
 
 
+def _indices_to_mask(n_points, indices):
+    """
+    Helper function to turn an array of indices in to a boolean mask.
+
+    Parameters
+    ----------
+    n_points : int
+        The total number of points for the mask
+    indices : ndarray of ints
+        An array of integers representing the ``True`` indices.
+
+    Returns
+    -------
+    boolean_mask : ndarray of bools
+        The mask for the set of landmarks where each index from indices is set
+        to ``True`` and the rest are ``False``
+    """
+    mask = np.zeros(n_points, dtype=np.bool)
+    mask[indices] = True
+    return mask
+
+
 class ASFImporter(LandmarkImporter):
     r"""
     Abstract base class for an importer for the ASF file format.
@@ -397,3 +419,58 @@ class LANImporter(LandmarkImporter):
         self.pointcloud = PointCloud(landmarks)
         self.labels_to_masks = {'all': np.ones(landmarks.shape[0],
                                                dtype=np.bool)}
+
+
+class BNDImporter(LandmarkImporter):
+    r"""
+    Importer for the BND file format for the BU-3DFE dataset. This is a 3D
+    landmark type and so it is assumed it only applies to meshes.
+
+    Landmark set label: BND
+
+    Landmark labels:
+
+    +---------------+
+    | label         |
+    +===============+
+    | left_eye      |
+    | right_eye     |
+    | left_eyebrow  |
+    | right_eyebrow |
+    | nose          |
+    | mouth         |
+    | chin          |
+    +---------------+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(BNDImporter, self).__init__(filepath)
+
+    def _parse_format(self, **kwargs):
+        with open(self.filepath, 'r') as f:
+            landmarks = f.read()
+
+        # Remove blank lines
+        landmark_text = [l for l in landmarks.splitlines() if l.rstrip()]
+        landmark_text = [l.split() for l in landmark_text]
+
+        n_points = len(landmark_text)
+        landmarks = np.zeros([n_points, 3])
+        for i, l in enumerate(landmark_text):
+            # Skip the first number as it's an index into the mesh
+            landmarks[i, :] = np.array([float(l[1]), float(l[2]), float(l[3])],
+                                       dtype=np.float)
+
+        self.group_label = 'BND'
+        self.pointcloud = PointCloud(landmarks)
+        self.labels_to_masks = {
+            'left_eye': _indices_to_mask(n_points, np.arange(8)),
+            'right_eye': _indices_to_mask(n_points, np.arange(8, 16)),
+            'left_eyebrow': _indices_to_mask(n_points, np.arange(16, 26)),
+            'right_eyebrow': _indices_to_mask(n_points, np.arange(26, 36)),
+            'nose': _indices_to_mask(n_points, np.arange(36, 48)),
+            'mouth': _indices_to_mask(n_points, np.arange(48, 68)),
+            'chin': _indices_to_mask(n_points, np.arange(68, 83))
+        }
