@@ -130,8 +130,10 @@ class ASFImporter(LandmarkImporter):
         # TODO: Use connectivity and create a graph type instead of PointCloud
         # edges = scaled_points[connectivity]
 
-        self.label = 'ASF'
-        self.landmark_dict = {'all': PointCloud(scaled_points)}
+        self.group_label = 'ASF'
+        self.pointcloud = PointCloud(scaled_points)
+        self.labels_to_masks = {'all': np.ones(scaled_points.shape[0],
+                                               dtype=np.bool)}
 
 
 class PTSImporter(LandmarkImporter):
