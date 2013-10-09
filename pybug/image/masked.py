@@ -70,7 +70,9 @@ class MaskedNDImage(AbstractNDImage):
         Parameters
         ----------
         shape : tuple or list
-            The shape of the image
+            The shape of the image. Floating point elements in shape are
+            map to the smallest following integer.
+
         n_channels: int, optional
             The number of channels to create the image with
 
@@ -98,14 +100,13 @@ class MaskedNDImage(AbstractNDImage):
 
         in order to appropriately propagate the SubClass type to cls.
 
-
         Returns
         -------
         blank_image : :class:`MaskedNDImage`
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(shape)
+        shape = tuple(np.ceil(shape))
         if fill == 0:
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
@@ -378,7 +379,8 @@ class MaskedNDImage(AbstractNDImage):
         """
         warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
                                                warp_landmarks=warp_landmarks,
-                                               interpolator='scipy', **kwargs)
+                                               interpolator=interpolator,
+                                               **kwargs)
         # note that _build_warped_image for MaskedNDImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
@@ -390,6 +392,15 @@ class MaskedNDImage(AbstractNDImage):
                                             **kwargs)
             warped_image.mask = warped_mask
         return warped_image
+
+    #ToDo: Per channel normalization
+    def normalize(self):
+        r"""
+        Normalizes the image data to have zero mean and unit variance.
+        """
+        centered_pixels = self.masked_pixels - np.mean(self.masked_pixels)
+        self.masked_pixels = centered_pixels / np.std(centered_pixels)
+        return self
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""
