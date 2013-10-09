@@ -41,7 +41,8 @@ class BooleanNDImage(AbstractNDImage):
         Parameters
         ----------
         shape : tuple or list
-            The shape of the mask image image
+            The shape of the image. Any floating point values are rounded up
+            to the nearest integer.
 
         fill : True or False, optional
             The mask value to be set everywhere

@@ -70,8 +70,8 @@ class MaskedNDImage(AbstractNDImage):
         Parameters
         ----------
         shape : tuple or list
-            The shape of the image. Floating point elements in shape are
-            map to the smallest following integer.
+            The shape of the image. Any floating point values are rounded up
+            to the nearest integer.
 
         n_channels: int, optional
             The number of channels to create the image with
