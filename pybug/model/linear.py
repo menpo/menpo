@@ -68,7 +68,6 @@ class LinearModel(StatisticalModel):
         """
         return self._project(instance.as_vector()).flatten()
 
-
     @abc.abstractmethod
     def _project(self, vec_instance):
         """
@@ -162,8 +161,7 @@ class LinearModel(StatisticalModel):
         vec_instance = self._project_out(instance.as_vector())
         return instance.from_vector(vec_instance)
 
-    @abc.abstractmethod
-    def _project_out(self, novel_vectorized_instance):
+    def _project_out(self, vec_instance):
         """
         Returns a version of ``instance`` where all the basis of the model
         have been projected out.
@@ -179,81 +177,11 @@ class LinearModel(StatisticalModel):
             A copy of ``vec_instance`` with all basis of the model projected
             out.
         """
-        pass
-
-    def to_subspace(self, instance):
-        """
-        Returns a version of ``instance`` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the ``noise_variance``
-
-        Parameters
-        ----------
-        instance : :class:`pybug.base.Vectorizable`
-            A novel instance.
-
-        Returns
-        -------
-        scaled_projected_out : ``self.sample_data_class``
-            A copy of ``instance``, with all basis of the model projected out
-            and scaled by the inverse of the ``noise_variance``.
-        """
-        vec_instance = self._to_subspace(instance.as_vector())
-        return instance.from_vector(vec_instance)
-
-    @abc.abstractmethod
-    def _to_subspace(self, vec_instance):
-        """
-        Returns a version of ``instance`` where all the basis of the model
-        have been projected out and which has been scaled by the inverse of
-        the ``noise_variance``.
-
-        Parameters
-        ----------
-        vec_instance : (n_features,) ndarray
-            A novel vector.
-
-        Returns
-        -------
-        scaled_projected_out: (n_features,) ndarray
-            A copy of ``vec_instance`` with all basis of the model projected
-            out and scaled by the inverse of the ``noise_variance``.
-        """
-        pass
-
-    def within_subspace(self, instance):
-        """
-        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
-
-        Parameters
-        ----------
-        instance : :class:`pybug.base.Vectorizable`
-            A novel instance.
-
-        Returns
-        -------
-        sheared_reconstruction : ``self.sample_data_class``
-            A sheared (non-orthogonal) reconstruction of ``instance``.
-        """
-        vec_instance = self._within_subspace(instance.as_vector())
-        return instance.from_vector(vec_instance)
-
-    @abc.abstractmethod
-    def _within_subspace(self, vec_instance):
-        """
-        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
-
-        Parameters
-        ----------
-        vec_instance : (n_features,) ndarray
-            A novel vector.
-
-        Returns
-        -------
-        sheared_reconstruction : (n_features,) ndarray
-            A sheared (non-orthogonal) reconstruction of ``vec_instance``
-        """
-        pass
+        weights = dgemm(alpha=1.0, a=vec_instance.T, b=self.components.T,
+                        trans_a=True)
+        return (vec_instance -
+                dgemm(alpha=1.0, a=weights.T, b=self.components.T,
+                      trans_a=True, trans_b=True))
 
     @property
     def jacobian(self):
@@ -285,6 +213,15 @@ class LinearModel(StatisticalModel):
             The Jacobian of the model in matrix form.
         """
         pass
+
+    def orthonormalize_against_inplace(self, linear_model):
+        """
+        """
+        Q = (np.linalg.qr(np.hstack((linear_model.components.T,
+                                     self.components.T)))[0]).T
+
+        linear_model.components = Q[:linear_model.n_components, :]
+        self.components = Q[linear_model.n_components:, :]
 
 
 #TODO: give a description of what it means to be a PCA model
@@ -381,6 +318,18 @@ class PCAModel(LinearModel):
         """
         return self._pca.components_
 
+    @components.setter
+    def components(self, components):
+        r"""
+        Setting the weights value automatically triggers a recalculation of
+        the target, and an update of the transform
+        """
+        if self.components.shape == components.shape:
+            self._pca.components_ = components
+        else:
+            raise ValueError('the new components must be of the same shape '
+                             'as the original components')
+
     @property
     def n_components(self):
         """
@@ -427,18 +376,136 @@ class PCAModel(LinearModel):
     def _project(self, vec_instance):
         return self._pca.transform(vec_instance)
 
-    def _project_out(self, vec_instance):
-        weights = dgemm(alpha=1.0, a=vec_instance.T, b=self.components.T,
-                        trans_a=True)
-        return (vec_instance -
-                dgemm(alpha=1.0, a=weights.T, b=self.components.T,
-                      trans_a=True, trans_b=True))
+    def to_subspace(self, instance):
+        """
+        Returns a version of ``instance`` where all the basis of the model
+        have been projected out and which has been scaled by the inverse of
+        the ``noise_variance``
+
+        Parameters
+        ----------
+        instance : :class:`pybug.base.Vectorizable`
+            A novel instance.
+
+        Returns
+        -------
+        scaled_projected_out : ``self.sample_data_class``
+            A copy of ``instance``, with all basis of the model projected out
+            and scaled by the inverse of the ``noise_variance``.
+        """
+        vec_instance = self._to_subspace(instance.as_vector())
+        return instance.from_vector(vec_instance)
 
     def _to_subspace(self, vec_instance):
+        """
+        Returns a version of ``instance`` where all the basis of the model
+        have been projected out and which has been scaled by the inverse of
+        the ``noise_variance``.
+
+        Parameters
+        ----------
+        vec_instance : (n_features,) ndarray
+            A novel vector.
+
+        Returns
+        -------
+        scaled_projected_out: (n_features,) ndarray
+            A copy of ``vec_instance`` with all basis of the model projected
+            out and scaled by the inverse of the ``noise_variance``.
+        """
         return self.inv_noise_variance * self._project_out(vec_instance)
 
+    def within_subspace(self, instance):
+        """
+        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
+
+        Parameters
+        ----------
+        instance : :class:`pybug.base.Vectorizable`
+            A novel instance.
+
+        Returns
+        -------
+        sheared_reconstruction : ``self.sample_data_class``
+            A sheared (non-orthogonal) reconstruction of ``instance``.
+        """
+        vec_instance = self._within_subspace(instance.as_vector())
+        return instance.from_vector(vec_instance)
+
     def _within_subspace(self, vec_instance):
+        """
+        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
+
+        Parameters
+        ----------
+        vec_instance : (n_features,) ndarray
+            A novel vector.
+
+        Returns
+        -------
+        sheared_reconstruction : (n_features,) ndarray
+            A sheared (non-orthogonal) reconstruction of ``vec_instance``
+        """
         weights = dgemm(alpha=1.0, a=vec_instance.T,
                         b=self.whitened_components.T, trans_a=True)
         return dgemm(alpha=1.0, a=weights.T, b=self.whitened_components.T,
                      trans_a=True, trans_b=True)
+
+
+#TODO: give a description of what it means to be a Similarity Model
+#TODO: note this is 2D only
+class SimilarityModel(LinearModel):
+
+    def __init__(self, mean):
+        self.mean = mean
+        components = np.zeros((4, self.mean.as_vector().shape[0]))
+        components[0, :] = self.mean.as_vector()
+        aux = self.mean.points[:, [1, 0]]
+        aux[:, 0] = -aux[:, 0]
+        components[1, :] = aux.flatten()
+        components[2, ::2] = 1
+        components[3, 1::2] = 1
+        self._components = components
+
+    @property
+    def template_sample(self):
+        return self.mean
+
+    @property
+    def n_components(self):
+        """
+        The number of kept principal components.
+
+        :type: int
+        """
+        return self.components.shape[0]
+
+    @property
+    def components(self):
+        """
+        The principal components.
+
+        :type: (``n_components``, ``n_features``) ndarray
+        """
+        return self._components
+
+    @components.setter
+    def components(self, components):
+        r"""
+        """
+        if self.components.shape == components.shape:
+            self._components = components
+        else:
+            raise ValueError('the new components must be of the same shape '
+                             'as the original components')
+
+    @property
+    def _jacobian(self):
+        return self._components
+
+    def _instance(self, weights):
+        return self.mean.as_vector() + np.dot(weights, self.components)
+
+    def _project(self, vec_instance):
+        return np.dot(self.components, (vec_instance - self.mean.as_vector()))
+

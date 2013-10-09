@@ -1,4 +1,6 @@
+from copy import deepcopy
 import numpy as np
+from pybug.model.linear import PCAModel, SimilarityModel
 from pybug.transform.base import AlignableTransform
 
 
@@ -87,7 +89,6 @@ class ModelDrivenTransform(AlignableTransform):
         :type: int
         """
         return self.model.n_components
-
 
     @property
     def has_true_inverse(self):
@@ -452,6 +453,8 @@ class GlobalMDTransform(ModelDrivenTransform):
     """
     def __init__(self, model, transform_cls, source=None, weights=None,
                  global_transform=None, composition='both'):
+        # TODO global_transform shouldn't be optional, need to refac as
+        # position of argument needs to change
         # need to set the global transform right away - self
         # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
@@ -528,13 +531,13 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         # dX/dq is the Jacobian of the global transform evaluated at the
         # mean of the model.
-        dX_dq = self.global_transform.jacobian(self.model.mean.points)
+        dX_dq = self._global_transform_jacobian(self.model.mean.points)
         # dX_dq:  n_points  x  n_global_params  x  n_dims
 
         # by application of the chain rule dX_db is the Jacobian of the
         # model transformed by the linear component of the global transform
         dS_db = model_jacobian
-        dX_dS = self.global_transform.jacobian_points(
+        dX_dS = self._global_transform_jacobian_points(
             self.model.mean.points)
         dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
         # dS_db:  n_points  x     n_weights     x  n_dims
@@ -550,6 +553,12 @@ class GlobalMDTransform(ModelDrivenTransform):
         # dW_dp:    n_points   x     n_params      x  n_dims
 
         return dW_dp
+
+    def _global_transform_jacobian(self, points):
+        return self.global_transform.jacobian(points)
+
+    def _global_transform_jacobian_points(self, points):
+        return self.global_transform.jacobian_points(points)
 
     def as_vector(self):
         r"""
@@ -568,8 +577,16 @@ class GlobalMDTransform(ModelDrivenTransform):
         # the only extra step we have to take in
         global_params = vector[:self.n_global_parameters]
         model_params = vector[self.n_global_parameters:]
-        self.global_transform.from_vector_inplace(global_params)
+        self._update_global_weights(global_params)
         self.weights = model_params
+
+    def _update_global_weights(self, global_weights):
+        r"""
+        Hook that allows for overriding behavior when the global weights are
+        set. Default implementation simply asks global_transform to
+        update itself from vector.
+        """
+        self.global_transform.from_vector_inplace(global_weights)
 
     def _compose_model(self, other_target):
         r"""
@@ -629,7 +646,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # dW/dq when p=0 and when p!=0 are the same and given by the
         # Jacobian of the global transform evaluated at the mean of the
         # model
-        dW_dq = self.global_transform.jacobian(self.model.mean.points)
+        dW_dq = self._global_transform_jacobian(self.model.mean.points)
         # dW_dq:  n_points  x  n_global_params  x  n_dims
 
         # dW/db when p=0, is the Jacobian of the model
@@ -644,7 +661,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-        dW_dS = self.global_transform.jacobian_points(
+        dW_dS = self._global_transform_jacobian_points(
             self.model.mean.points)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
         # dW_dS:  n_points  x      n_dims       x  n_dims
@@ -719,7 +736,7 @@ class GlobalMDTransform(ModelDrivenTransform):
             PointCloud to the requested target
         """
 
-        #self.global_transform.target = target
+        self._update_global_transform(target)
         projected_target = self.global_transform.pseudoinverse.apply(target)
         # now we have the target in model space, project it to recover the
         # weights
@@ -730,3 +747,44 @@ class GlobalMDTransform(ModelDrivenTransform):
         #refined_target = self._target_for_weights(new_weights)
         #self.global_transform.target = refined_target
         return new_weights
+
+    def _update_global_transform(self, target):
+        self.global_transform.target = target
+
+
+class OrthoMDTransform(GlobalMDTransform):
+
+    def __init__(self, model, transform_cls, source=None,
+                 weights=None, global_transform=None, composition='both'):
+        # 1. Construct similarity model from the mean of the model
+        self.similarity_model = SimilarityModel(model.mean)
+        # 2. orthonormalize model and similarity model
+        model = deepcopy(model)
+        model.orthonormalize_against_inplace(self.similarity_model)
+        self.similarity_weights = self.similarity_model.project(
+            global_transform.apply(model.mean))
+
+        super(OrthoMDTransform, self).__init__(
+            model, transform_cls, source=source, weights=weights,
+            global_transform=global_transform, composition=composition)
+
+    def _update_global_transform(self, target):
+        self.similarity_weights = self.similarity_model.project(target)
+        self._update_global_weights(self.similarity_weights)
+
+    def _update_global_weights(self, global_weights):
+        self.similarity_weights = global_weights
+        new_target = self.similarity_model.instance(global_weights)
+        self.global_transform.target = new_target
+
+    def _global_transform_jacobian(self, points):
+        return self.similarity_model.jacobian
+
+    @property
+    def global_parameters(self):
+        r"""
+        The parameters for the global transform.
+
+        :type: (``n_global_parameters``,) ndarray
+        """
+        return self.similarity_weights
