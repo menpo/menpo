@@ -124,7 +124,7 @@ class PCA(object):
 
             # compute final eigenvectors
             # eigenvectors:  n_samples  x  n_features
-            w = (n_samples * eigenvalues) ** (-1 / aux)
+            w = (N * eigenvalues) ** (-1 / aux)
             eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
                                      trans_b=True)
 
