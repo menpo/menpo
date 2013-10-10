@@ -5,14 +5,11 @@ from pybug.decomposition import PCA as PybugPCA
 from pybug.model.base import StatisticalModel
 
 
-# TODO: better document what a linear model does.
 #noinspection PyNoneFunctionAssignment
-class LinearModel(StatisticalModel):
+class LinearModel(object):
     r"""
     Abstract base class representing a linear model.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractproperty
     def n_components(self):
@@ -22,6 +19,16 @@ class LinearModel(StatisticalModel):
         type: int
         """
         pass
+
+    @property
+    def n_features(self):
+        r"""
+        The number of components on the linear model
+
+        type: int
+        """
+        return self._component(0).size
+
 
     @abc.abstractproperty
     def components(self):
@@ -40,6 +47,33 @@ class LinearModel(StatisticalModel):
         """
         pass
 
+    @abc.abstractproperty
+    def template_instance(self):
+        r"""
+        An instantiated vectorizable class. This is used to rebuild objects
+        from the statistical model.
+
+        type: :class:`pybug.base.Vectorizable`
+        """
+        pass
+
+    def component(self, index):
+        r"""
+        Return a particular component of the linear model.
+
+        :type: ``type(self.template_instance)``
+        """
+        return self.template_instance.from_vector(self._component(index))
+
+    @abc.abstractmethod
+    def _component(self, index):
+        """
+        A particular component of the model, in vectorized form.
+
+        :type: (n_features,) ndarray
+        """
+        pass
+
     def instance(self, weights):
         """
         Creates a new instance of the model using the first ``len(weights)``
@@ -53,11 +87,11 @@ class LinearModel(StatisticalModel):
 
         Returns
         -------
-        instance : ``self.sample_data_class``
+        instance : ``type(self.template_instance)``
             An instance of the model. Created via a linear combination of the
             model vectors and the ``weights``.
         """
-        return self.template_sample.from_vector(self._instance(weights))
+        return self.template_instance.from_vector(self._instance(weights))
 
     @abc.abstractmethod
     def _instance(self, weights):
@@ -135,7 +169,7 @@ class LinearModel(StatisticalModel):
 
         Returns
         -------
-        reconstructed : ``self.sample_data_class``
+        reconstructed : ``self.instance_class``
             The reconstructed object.
         """
         vec_reconstruction = self._reconstruct(instance.as_vector(),
@@ -182,7 +216,7 @@ class LinearModel(StatisticalModel):
 
         Returns
         -------
-        projected_out : ``self.sample_data_class``
+        projected_out : ``self.instance_class``
             A copy of ``instance``, with all basis of the model projected out.
         """
         vec_instance = self._project_out(instance.as_vector())
@@ -225,7 +259,7 @@ class LinearModel(StatisticalModel):
             The Jacobian of the model in the standard Jacobian shape.
         """
         jacobian = self._jacobian.reshape(self.n_components, -1,
-                                          self.template_sample.n_dims)
+                                          self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
 
     @abc.abstractproperty
@@ -252,7 +286,7 @@ class LinearModel(StatisticalModel):
 
 
 #TODO: give a description of what it means to be a PCA model
-class PCAModel(LinearModel):
+class PCAModel(LinearModel, StatisticalModel):
     """
     A Linear model based around PCA. Automatically mean centres the input
     data.
@@ -276,23 +310,14 @@ class PCAModel(LinearModel):
     """
 
     def __init__(self, samples, PCA=PybugPCA, **kwargs):
-        self.samples = samples
-        self.n_samples = len(samples)
-        self.n_features = len(samples[0].as_vector())
-
-        # create and populate the data matrix
+        StatisticalModel.__init__(self, samples)
         data = np.zeros((self.n_samples, self.n_features))
         for i, sample in enumerate(self.samples):
             data[i] = sample.as_vector()
 
-        # build PCA object.
         self._pca = PCA(**kwargs)
-        # compute PCA
         self._pca.fit(data)
-
-        # store inverse noise variance
         self.inv_noise_variance = 1 / self.noise_variance
-        # pre-compute whiten components: U * L^{-1/2}
         self.whitened_components = \
             (self.explained_variance ** (-1 / 2))[..., None] * self.components
 
@@ -323,9 +348,9 @@ class PCAModel(LinearModel):
         """
         The mean of the sample vectors.
 
-        :type: ``self.sample_data_class``
+        :type: ``self.instance_class``
         """
-        return self.template_sample.from_vector(self._mean)
+        return self.template_instance.from_vector(self._mean)
 
     @property
     def _mean(self):
@@ -335,6 +360,15 @@ class PCAModel(LinearModel):
         :type: (n_features,) ndarray
         """
         return self._pca.mean_
+
+    @property
+    def n_components(self):
+        """
+        The number of kept principal components.
+
+        :type: int
+        """
+        return self._pca.n_components_
 
     @property
     def components(self):
@@ -358,25 +392,8 @@ class PCAModel(LinearModel):
                              'as the original components')
 
     @property
-    def n_components(self):
-        """
-        The number of kept principal components.
-
-        :type: int
-        """
-        return self._pca.n_components_
-
-    @property
     def _jacobian(self):
         return self.components
-
-    def component(self, index):
-        """
-        A particular principal component.
-
-        :type: ``self.sample_data_class``
-        """
-        return self.template_sample.from_vector(self._component(index))
 
     def _component(self, index):
         """
@@ -416,7 +433,7 @@ class PCAModel(LinearModel):
 
         Returns
         -------
-        scaled_projected_out : ``self.sample_data_class``
+        scaled_projected_out : ``self.instance_class``
             A copy of ``instance``, with all basis of the model projected out
             and scaled by the inverse of the ``noise_variance``.
         """
@@ -453,7 +470,7 @@ class PCAModel(LinearModel):
 
         Returns
         -------
-        sheared_reconstruction : ``self.sample_data_class``
+        sheared_reconstruction : ``self.instance_class``
             A sheared (non-orthogonal) reconstruction of ``instance``.
         """
         vector_instance = self._within_subspace(instance.as_vector())
@@ -496,7 +513,7 @@ class SimilarityModel(LinearModel):
         self._components = components
 
     @property
-    def template_sample(self):
+    def template_instance(self):
         return self.mean
 
     @property

@@ -537,7 +537,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dX_db is the Jacobian of the
         # model transformed by the linear component of the global transform
         dS_db = model_jacobian
-        dX_dS = self._global_transform_jacobian_points(
+        dX_dS = self.global_transform.jacobian_points(
             self.model.mean.points)
         dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
         # dS_db:  n_points  x     n_weights     x  n_dims
@@ -556,9 +556,6 @@ class GlobalMDTransform(ModelDrivenTransform):
 
     def _global_transform_jacobian(self, points):
         return self.global_transform.jacobian(points)
-
-    def _global_transform_jacobian_points(self, points):
-        return self.global_transform.jacobian_points(points)
 
     def as_vector(self):
         r"""
