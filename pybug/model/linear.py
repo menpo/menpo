@@ -6,12 +6,39 @@ from pybug.model.base import StatisticalModel
 
 
 # TODO: better document what a linear model does.
+#noinspection PyNoneFunctionAssignment
 class LinearModel(StatisticalModel):
     r"""
     Abstract base class representing a linear model.
     """
 
     __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def n_components(self):
+        r"""
+        The number of components on the linear model
+
+        type: int
+        """
+        pass
+
+    @abc.abstractproperty
+    def components(self):
+        r"""
+        The components of the linear model.
+
+        type: (n_features, n_components) ndarray
+        """
+        pass
+
+    @components.setter
+    @abc.abstractmethod
+    def components(self, components):
+        r"""
+        Update the components of this linear model
+        """
+        pass
 
     def instance(self, weights):
         """
@@ -69,14 +96,14 @@ class LinearModel(StatisticalModel):
         return self._project(instance.as_vector()).flatten()
 
     @abc.abstractmethod
-    def _project(self, vec_instance):
+    def _project(self, vector_instance):
         """
-        Projects the ``vec_instance`` onto the model, retrieving the optimal
-         linear reconstruction weights
+        Projects the ``vector_instance`` onto the model, retrieving the optimal
+        linear reconstruction weights
 
         Parameters
         -----------
-        vec_instance : (n_features,) ndarray
+        vector_instance : (n_features,) ndarray
             A vectorized novel instance.
 
         Returns
@@ -115,18 +142,18 @@ class LinearModel(StatisticalModel):
                                                n_components)
         return instance.from_vector(vec_reconstruction)
 
-    def _reconstruct(self, vec_instance, n_components=None):
+    def _reconstruct(self, vector_instance, n_components=None):
         """
         Project a flattened ``novel_instance`` onto the linear space and
         rebuild from the weights found.
 
         Syntactic sugar for:
 
-            >>> pca._instance(pca._project(novel_vectorized_instance)[:n_components])
+            >>> pca._instance(pca._project(vector_instance)[:n_components])
 
         Parameters
         ----------
-        vec_instance : (n_features, ) ndarray
+        vector_instance : (n_features, ) ndarray
             A vectorized novel instance to project
         n_components : int, optional
             The number of components to use in the reconstruction
@@ -138,7 +165,7 @@ class LinearModel(StatisticalModel):
         reconstructed : (n_features,) ndarray
             The reconstructed vector.
         """
-        weights = self._project(vec_instance)
+        weights = self._project(vector_instance)
         if n_components is not None:
             weights = weights[..., :n_components]
         return self._instance(weights)
@@ -161,25 +188,25 @@ class LinearModel(StatisticalModel):
         vec_instance = self._project_out(instance.as_vector())
         return instance.from_vector(vec_instance)
 
-    def _project_out(self, vec_instance):
+    def _project_out(self, vector_instance):
         """
-        Returns a version of ``instance`` where all the basis of the model
-        have been projected out.
+        Returns a version of ``vector_instance`` where all the basis of the
+        model have been projected out.
 
         Parameters
         ----------
-        vec_instance : (n_features,) ndarray
+        vector_instance : (n_features,) ndarray
             A novel vector.
 
         Returns
         -------
         projected_out : (n_features,) ndarray
-            A copy of ``vec_instance`` with all basis of the model projected
-            out.
+            A copy of ``vector_instance`` with all basis of the model
+            projected out.
         """
-        weights = dgemm(alpha=1.0, a=vec_instance.T, b=self.components.T,
+        weights = dgemm(alpha=1.0, a=vector_instance.T, b=self.components.T,
                         trans_a=True)
-        return (vec_instance -
+        return (vector_instance -
                 dgemm(alpha=1.0, a=weights.T, b=self.components.T,
                       trans_a=True, trans_b=True))
 
@@ -373,8 +400,8 @@ class PCAModel(LinearModel):
             weights = full_weights
         return self._pca.inverse_transform(weights)
 
-    def _project(self, vec_instance):
-        return self._pca.transform(vec_instance)
+    def _project(self, vector_instance):
+        return self._pca.transform(vector_instance)
 
     def to_subspace(self, instance):
         """
@@ -396,7 +423,7 @@ class PCAModel(LinearModel):
         vec_instance = self._to_subspace(instance.as_vector())
         return instance.from_vector(vec_instance)
 
-    def _to_subspace(self, vec_instance):
+    def _to_subspace(self, vector_instance):
         """
         Returns a version of ``instance`` where all the basis of the model
         have been projected out and which has been scaled by the inverse of
@@ -404,20 +431,20 @@ class PCAModel(LinearModel):
 
         Parameters
         ----------
-        vec_instance : (n_features,) ndarray
+        vector_instance : (n_features,) ndarray
             A novel vector.
 
         Returns
         -------
         scaled_projected_out: (n_features,) ndarray
-            A copy of ``vec_instance`` with all basis of the model projected
+            A copy of ``vector_instance`` with all basis of the model projected
             out and scaled by the inverse of the ``noise_variance``.
         """
-        return self.inv_noise_variance * self._project_out(vec_instance)
+        return self.inv_noise_variance * self._project_out(vector_instance)
 
     def within_subspace(self, instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
+        Returns a sheared (non-orthogonal) reconstruction of ``instance``.
 
         Parameters
         ----------
@@ -429,24 +456,25 @@ class PCAModel(LinearModel):
         sheared_reconstruction : ``self.sample_data_class``
             A sheared (non-orthogonal) reconstruction of ``instance``.
         """
-        vec_instance = self._within_subspace(instance.as_vector())
-        return instance.from_vector(vec_instance)
+        vector_instance = self._within_subspace(instance.as_vector())
+        return instance.from_vector(vector_instance)
 
-    def _within_subspace(self, vec_instance):
+    def _within_subspace(self, vector_instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of ``vec_instance``.
+        Returns a sheared (non-orthogonal) reconstruction of
+        ``vector_instance``.
 
         Parameters
         ----------
-        vec_instance : (n_features,) ndarray
+        vector_instance : (n_features,) ndarray
             A novel vector.
 
         Returns
         -------
         sheared_reconstruction : (n_features,) ndarray
-            A sheared (non-orthogonal) reconstruction of ``vec_instance``
+            A sheared (non-orthogonal) reconstruction of ``vector_instance``
         """
-        weights = dgemm(alpha=1.0, a=vec_instance.T,
+        weights = dgemm(alpha=1.0, a=vector_instance.T,
                         b=self.whitened_components.T, trans_a=True)
         return dgemm(alpha=1.0, a=weights.T, b=self.whitened_components.T,
                      trans_a=True, trans_b=True)
@@ -506,6 +534,5 @@ class SimilarityModel(LinearModel):
     def _instance(self, weights):
         return self.mean.as_vector() + np.dot(weights, self.components)
 
-    def _project(self, vec_instance):
-        return np.dot(self.components, (vec_instance - self.mean.as_vector()))
-
+    def _project(self, vector_instance):
+        return np.dot(self.components, (vector_instance - self.mean.as_vector()))
