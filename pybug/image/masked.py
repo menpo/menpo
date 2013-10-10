@@ -419,14 +419,21 @@ class MaskedNDImage(AbstractNDImage):
             pixels = AbstractNDImage.as_vector(self, keep_channels=True)
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
-            normalized_pixels = centered_pixels / np.std(centered_pixels)
+            std_dev = np.std(centered_pixels)
+
         elif mode == 'per_channel':
             centered_pixels = pixels - np.mean(pixels, axis=0)
-            normalized_pixels = (centered_pixels /
-                                 np.std(centered_pixels, axis=0))
+            std_dev = np.std(centered_pixels, axis=0)
         else:
             raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
                              "was provided instead".format(mode))
+
+        if np.any(std_dev == 0):
+            raise ValueError("Image has 0 variance - can't be "
+                             "normalized")
+        else:
+            normalized_pixels = centered_pixels / std_dev
+
         if limit_to_mask:
             self.from_vector_inplace(normalized_pixels.flatten())
         else:
