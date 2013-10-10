@@ -1,6 +1,7 @@
 import abc
 from copy import deepcopy
 
+
 class Vectorizable(object):
     """
     Abstract interface that guarantees subclasses can be flattened and
@@ -10,6 +11,15 @@ class Vectorizable(object):
     """
 
     __metaclass__ = abc.ABCMeta
+
+    @property
+    def n_parameters(self):
+        r"""
+        The length of the vector that this Vectorizable object produces.
+
+        type: int
+        """
+        return (self.as_vector()).shape[0]
 
     @abc.abstractmethod
     def as_vector(self):
