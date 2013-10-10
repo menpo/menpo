@@ -11,14 +11,18 @@ class LinearModel(object):
     Abstract base class representing a linear model.
     """
 
-    @abc.abstractproperty
+    def __init__(self, components, template_instance):
+        self._components = components
+        self._template_instance = template_instance
+
+    @property
     def n_components(self):
         r"""
         The number of components on the linear model
 
         type: int
         """
-        pass
+        self.components.shape[0]
 
     @property
     def n_features(self):
@@ -29,25 +33,24 @@ class LinearModel(object):
         """
         return self._component(0).size
 
-
-    @abc.abstractproperty
+    @property
     def components(self):
         r"""
         The components of the linear model.
 
         type: (n_features, n_components) ndarray
         """
-        pass
+        return self._components
 
     @components.setter
     @abc.abstractmethod
-    def components(self, components):
+    def components(self, value):
         r"""
         Update the components of this linear model
         """
-        pass
+        self._components = value
 
-    @abc.abstractproperty
+    @property
     def template_instance(self):
         r"""
         An instantiated vectorizable class. This is used to rebuild objects
@@ -55,7 +58,7 @@ class LinearModel(object):
 
         type: :class:`pybug.base.Vectorizable`
         """
-        pass
+        return self._template_instance
 
     def component(self, index):
         r"""
@@ -72,7 +75,7 @@ class LinearModel(object):
 
         :type: (n_features,) ndarray
         """
-        pass
+        return self.components[:, index]
 
     def instance(self, weights):
         """
@@ -129,7 +132,6 @@ class LinearModel(object):
         """
         return self._project(instance.as_vector()).flatten()
 
-    @abc.abstractmethod
     def _project(self, vector_instance):
         """
         Projects the ``vector_instance`` onto the model, retrieving the optimal
@@ -145,7 +147,8 @@ class LinearModel(object):
         projected : (n_components,)
             A vector of optimal linear weights
         """
-        pass
+        return np.dot(self.components,
+                      (vector_instance - self.mean.as_vector()))
 
     def reconstruct(self, instance, n_components=None):
         """
@@ -219,8 +222,8 @@ class LinearModel(object):
         projected_out : ``self.instance_class``
             A copy of ``instance``, with all basis of the model projected out.
         """
-        vec_instance = self._project_out(instance.as_vector())
-        return instance.from_vector(vec_instance)
+        vector_instance = self._project_out(instance.as_vector())
+        return instance.from_vector(vector_instance)
 
     def _project_out(self, vector_instance):
         """
@@ -262,7 +265,6 @@ class LinearModel(object):
                                           self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
 
-    @abc.abstractproperty
     def _jacobian(self):
         """
         Returns the Jacobian of the PCA model, i.e. the components of the
@@ -273,7 +275,7 @@ class LinearModel(object):
         jacobian : (n_features x n_dims, n_components) ndarray
             The Jacobian of the model in matrix form.
         """
-        pass
+        self.components
 
     def orthonormalize_against_inplace(self, linear_model):
         """
@@ -390,10 +392,6 @@ class PCAModel(LinearModel, StatisticalModel):
         else:
             raise ValueError('the new components must be of the same shape '
                              'as the original components')
-
-    @property
-    def _jacobian(self):
-        return self.components
 
     def _component(self, index):
         """
@@ -517,15 +515,6 @@ class SimilarityModel(LinearModel):
         return self.mean
 
     @property
-    def n_components(self):
-        """
-        The number of kept principal components.
-
-        :type: int
-        """
-        return self.components.shape[0]
-
-    @property
     def components(self):
         """
         The principal components.
@@ -544,12 +533,6 @@ class SimilarityModel(LinearModel):
             raise ValueError('the new components must be of the same shape '
                              'as the original components')
 
-    @property
-    def _jacobian(self):
-        return self._components
-
     def _instance(self, weights):
         return self.mean.as_vector() + np.dot(weights, self.components)
 
-    def _project(self, vector_instance):
-        return np.dot(self.components, (vector_instance - self.mean.as_vector()))
