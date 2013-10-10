@@ -393,7 +393,6 @@ class MaskedNDImage(AbstractNDImage):
             warped_image.mask = warped_mask
         return warped_image
 
-    #ToDo: Per channel normalization
     def normalize_inplace(self, mode='all', limit_to_mask=True):
         r"""
         Normalizes this image such that it's pixel values have zero mean and
