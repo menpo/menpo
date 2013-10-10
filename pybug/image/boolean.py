@@ -41,7 +41,8 @@ class BooleanNDImage(AbstractNDImage):
         Parameters
         ----------
         shape : tuple or list
-            The shape of the mask image image
+            The shape of the image. Any floating point values are rounded up
+            to the nearest integer.
 
         fill : True or False, optional
             The mask value to be set everywhere
@@ -55,7 +56,7 @@ class BooleanNDImage(AbstractNDImage):
             A blank mask of the requested size
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(shape)
+        shape = tuple(np.ceil(shape))
         if fill:
             mask = np.ones(shape, dtype=np.bool)
         else:
@@ -164,22 +165,6 @@ class BooleanNDImage(AbstractNDImage):
             New BooleanImage of same shape as this image
         """
         return BooleanNDImage(flattened.reshape(self.shape))
-
-    def from_vector_inplace(self, flattened):
-        r"""
-        Takes a flattened vector and update this Boolean image by
-        reshaping the vector to the correct dimensions. Note that this is
-        rebuilding a boolean image **itself** from boolean values. The mask
-        is in no way interpreted in performing the operation, in contrast to
-        MaskedNDImage, where only the masked region is used in from_vector()
-        and as_vector().
-
-        Parameters
-        ----------
-        flattened : (``n_pixels``,) np.bool ndarray
-            A flattened vector of all the pixels of a BooleanImage.
-        """
-        self.pixels = flattened.reshape(self.pixels.shape)
 
     def invert(self):
         r"""

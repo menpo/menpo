@@ -70,7 +70,9 @@ class MaskedNDImage(AbstractNDImage):
         Parameters
         ----------
         shape : tuple or list
-            The shape of the image
+            The shape of the image. Any floating point values are rounded up
+            to the nearest integer.
+
         n_channels: int, optional
             The number of channels to create the image with
 
@@ -98,14 +100,13 @@ class MaskedNDImage(AbstractNDImage):
 
         in order to appropriately propagate the SubClass type to cls.
 
-
         Returns
         -------
         blank_image : :class:`MaskedNDImage`
             A new masked image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(shape)
+        shape = tuple(np.ceil(shape))
         if fill == 0:
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
@@ -213,7 +214,7 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return type(self)._init_with_channel(image_data, mask=self.mask)
 
-    def from_vector_inplace(self, flattened):
+    def from_vector_inplace(self, vector):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -221,10 +222,10 @@ class MaskedNDImage(AbstractNDImage):
 
         Parameters
         ----------
-        flattened : (``n_pixels``,)
+        vector : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
         """
-        self.masked_pixels = flattened.reshape((-1, self.n_channels))
+        self.masked_pixels = vector.reshape((-1, self.n_channels))
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, **kwargs):
@@ -378,7 +379,8 @@ class MaskedNDImage(AbstractNDImage):
         """
         warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
                                                warp_landmarks=warp_landmarks,
-                                               interpolator='scipy', **kwargs)
+                                               interpolator=interpolator,
+                                               **kwargs)
         # note that _build_warped_image for MaskedNDImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
@@ -390,6 +392,52 @@ class MaskedNDImage(AbstractNDImage):
                                             **kwargs)
             warped_image.mask = warped_mask
         return warped_image
+
+    def normalize_inplace(self, mode='all', limit_to_mask=True):
+        r"""
+        Normalizes this image such that it's pixel values have zero mean and
+        unit variance.
+
+        Parameters
+        ----------
+
+        mode: {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+
+        limit_to_mask: Boolean
+            If True, the normalization is only performed wrt the masked
+            pixels.
+            If False, the normalization is wrt all pixels, regardless of
+            their masking value.
+        """
+        if limit_to_mask:
+            pixels = self.as_vector(keep_channels=True)
+        else:
+            pixels = AbstractNDImage.as_vector(self, keep_channels=True)
+        if mode == 'all':
+            centered_pixels = pixels - np.mean(pixels)
+            std_dev = np.std(centered_pixels)
+
+        elif mode == 'per_channel':
+            centered_pixels = pixels - np.mean(pixels, axis=0)
+            std_dev = np.std(centered_pixels, axis=0)
+        else:
+            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
+                             "was provided instead".format(mode))
+
+        if np.any(std_dev == 0):
+            raise ValueError("Image has 0 variance - can't be "
+                             "normalized")
+        else:
+            normalized_pixels = centered_pixels / std_dev
+
+        if limit_to_mask:
+            self.from_vector_inplace(normalized_pixels.flatten())
+        else:
+            AbstractNDImage.from_vector_inplace(self,
+                                                normalized_pixels.flatten())
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""
