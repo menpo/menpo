@@ -139,7 +139,7 @@ class RGBImage(Abstract2DImage):
         ----------
         mode : {'average', 'luminosity', 'channel'}
             'luminosity' - Calculates the luminance using the CCIR 601 formula
-                ``Y' = 0.299 R' + 0.587 G' + 0.114 B'``
+                ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
 
