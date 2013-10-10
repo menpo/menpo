@@ -1,29 +1,26 @@
 import abc
 
 
-# TODO: this class seems a bit bare? Needs to be documented better.
 class StatisticalModel(object):
     r"""
-    Abstract base class representing a statistical model.
+    Abstract interface for a model that is constructed from a set of sample
+    data
     """
 
     __metaclass__ = abc.ABCMeta
-    samples = None
+
+    def __init__(self, samples):
+        self.samples = samples
 
     @property
-    def sample_data_class(self):
-        r"""
-        The class of the sample data
-
-        :type: class type
-        """
-        return self.template_sample.__class__
-
-    @property
-    def template_sample(self):
+    def template_instance(self):
         r"""
         The first sample.
 
-        :type: ``self.sample_data_class``
+        :type: ``self.instance_class``
         """
         return self.samples[0]
+
+    @property
+    def n_samples(self):
+        return len(self.samples)
