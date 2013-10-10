@@ -214,7 +214,7 @@ class MaskedNDImage(AbstractNDImage):
         # classes expect a channel axis and some don't.
         return type(self)._init_with_channel(image_data, mask=self.mask)
 
-    def from_vector_inplace(self, flattened):
+    def from_vector_inplace(self, vector):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -222,10 +222,10 @@ class MaskedNDImage(AbstractNDImage):
 
         Parameters
         ----------
-        flattened : (``n_pixels``,)
+        vector : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
         """
-        self.masked_pixels = flattened.reshape((-1, self.n_channels))
+        self.masked_pixels = vector.reshape((-1, self.n_channels))
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, **kwargs):
@@ -394,13 +394,44 @@ class MaskedNDImage(AbstractNDImage):
         return warped_image
 
     #ToDo: Per channel normalization
-    def normalize(self):
+    def normalize_inplace(self, mode='all', limit_to_mask=True):
         r"""
-        Normalizes the image data to have zero mean and unit variance.
+        Normalizes this image such that it's pixel values have zero mean and
+        unit variance.
+
+        Parameters
+        ----------
+
+        mode: {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+
+        limit_to_mask: Boolean
+            If True, the normalization is only performed wrt the masked
+            pixels.
+            If False, the normalization is wrt all pixels, regardless of
+            their masking value.
         """
-        centered_pixels = self.masked_pixels - np.mean(self.masked_pixels)
-        self.masked_pixels = centered_pixels / np.std(centered_pixels)
-        return self
+        if limit_to_mask:
+            pixels = self.as_vector(keep_channels=True)
+        else:
+            pixels = AbstractNDImage.as_vector(self, keep_channels=True)
+        if mode == 'all':
+            centered_pixels = pixels - np.mean(pixels)
+            normalized_pixels = centered_pixels / np.std(centered_pixels)
+        elif mode == 'per_channel':
+            centered_pixels = pixels - np.mean(pixels, axis=0)
+            normalized_pixels = (centered_pixels /
+                                 np.std(centered_pixels, axis=0))
+        else:
+            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
+                             "was provided instead".format(mode))
+        if limit_to_mask:
+            self.from_vector_inplace(normalized_pixels.flatten())
+        else:
+            AbstractNDImage.from_vector_inplace(self,
+                                                normalized_pixels.flatten())
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""

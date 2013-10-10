@@ -166,22 +166,6 @@ class BooleanNDImage(AbstractNDImage):
         """
         return BooleanNDImage(flattened.reshape(self.shape))
 
-    def from_vector_inplace(self, flattened):
-        r"""
-        Takes a flattened vector and update this Boolean image by
-        reshaping the vector to the correct dimensions. Note that this is
-        rebuilding a boolean image **itself** from boolean values. The mask
-        is in no way interpreted in performing the operation, in contrast to
-        MaskedNDImage, where only the masked region is used in from_vector()
-        and as_vector().
-
-        Parameters
-        ----------
-        flattened : (``n_pixels``,) np.bool ndarray
-            A flattened vector of all the pixels of a BooleanImage.
-        """
-        self.pixels = flattened.reshape(self.pixels.shape)
-
     def invert(self):
         r"""
         Inverts the current mask in place, setting all True values to False,
