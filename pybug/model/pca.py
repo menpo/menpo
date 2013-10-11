@@ -149,7 +149,7 @@ class PCAModel(MeanInstanceLinearModel):
             out and scaled by the inverse of the ``noise_variance``.
         """
         return (self.inverse_noise_variance *
-                self.project_out_vector(vector_instance))
+                self.project_out_vectors(vector_instance))
 
     def project_whitened(self, instance):
         """

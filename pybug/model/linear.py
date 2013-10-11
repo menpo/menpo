@@ -105,7 +105,7 @@ class LinearModel(object):
 
         Returns
         -------
-        instance : (n_features,) ndarray
+        vector : (n_features,) ndarray
             The instance vector for the weighting provided.
         """
         # just call the plural version and adapt
@@ -119,7 +119,7 @@ class LinearModel(object):
 
         Parameters
         ----------
-        weights : (n_instances, n_weights) ndarray
+        weights : (n_vectors, n_weights) ndarray
             The weightings for the first n_weights components that
             should be used per instance that is to be produced
 
@@ -132,7 +132,7 @@ class LinearModel(object):
 
         Returns
         -------
-        instance : (n_instances, n_features) ndarray
+        vectors : (n_vectors, n_features) ndarray
             The instance vectors for the weighting provided.
         """
         weights = np.asarray(weights)  # if eg a list is provided
@@ -164,7 +164,7 @@ class LinearModel(object):
 
         Returns
         -------
-        projected : (n_components,)
+        weights : (n_components,)
             A vector of optimal linear weights
         """
         return self.project_vectors(vector_instance[None, :]).flatten()
@@ -180,12 +180,36 @@ class LinearModel(object):
 
         Returns
         -------
-        projected: (n_samples, n_components) ndarray
+        weights : (n_samples, n_components) ndarray
             The matrix of optimal linear weights
 
         """
         return dgemm(alpha=1.0, a=vector_instances.T, b=self.components.T,
-                     trans_a=True)
+                     trans_a=True, trans_b=True)
+
+    def reconstruct_vector(self, vector, n_components=None):
+        """
+        Project a  ``vector`` onto the linear space and
+        rebuild from the weights found.
+
+        Parameters
+        ----------
+        vector : (n_features, ) ndarray
+            A vectorized novel instance to project
+        n_components : int, optional
+            The number of components to use in the reconstruction
+
+            Default: self.n_components
+
+        Returns
+        -------
+        reconstructed : (n_features,) ndarray
+            The reconstructed vector.
+        """
+        weights = self.project_vector(vector)
+        if n_components is not None:
+            weights = weights[..., :n_components]
+        return self.instance_vectors(weights)
 
     def reconstruct_vectors(self, instance_vectors, n_components=None):
         """
@@ -211,34 +235,50 @@ class LinearModel(object):
             weights = weights[..., :n_components]
         return self.instance_vectors(weights)
 
-    def project_out_vector(self, instance_vector):
+    def project_out_vector(self, vector):
         """
-        Returns a version of ``instance_vector`` where all the basis of the
+        Returns a version of ``vector`` where all the basis of the
         model have been projected out.
 
         Parameters
         ----------
-        instance_vector : (n_features,) ndarray
+        vector : (n_features,) ndarray
             A novel vector.
 
         Returns
         -------
         projected_out : (n_features,) ndarray
-            A copy of ``instance_vector`` with all basis of the model
+            A copy of ``vector`` with all basis of the model
             projected out.
         """
-        weights = dgemm(alpha=1.0, a=instance_vector.T, b=self.components.T,
-                        trans_a=True)
-        return (instance_vector -
+        return self.project_out_vectors(vector[None, :])
+
+    def project_out_vectors(self, vectors):
+        """
+        Returns a version of ``vectors`` where all the basis of the
+        model have been projected out.
+
+        Parameters
+        ----------
+        vectors : (n_vectors, n_features) ndarray
+            A matrix of novel vectors.
+
+        Returns
+        -------
+        projected_out : (n_vectors, n_features) ndarray
+            A copy of ``vectors`` with all basis of the model
+            projected out.
+        """
+        weights = self.project_vectors(vectors)
+        return (vectors -
                 dgemm(alpha=1.0, a=weights.T, b=self.components.T,
-                      trans_a=True, trans_b=True))
+                      trans_a=True, trans_b=False))
 
     def orthonormalize_inplace(self):
         r"""
         Enforces that this models components are orthonormalized
 
-        s.t. component_vector(i).dot(component_vector(j) = d_ij (the dirac
-        delta)
+        s.t. component_vector(i).dot(component_vector(j) = dirac_delta
 
         """
         # TODO ask Joan
