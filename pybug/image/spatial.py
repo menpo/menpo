@@ -59,10 +59,24 @@ class AbstractSpatialImage(MaskedNDImage):
     def rebuild_mesh(self):
         self._mesh = None
 
-    def from_vector_inplace(self, flattened):
-        # Regenerate mesh and then call the base class update method
+    def from_vector_inplace(self, vector):
+        r"""
+        Takes a flattened vector and updates this SpatialImage.
+
+        Done by reshaping the vector to the correct pixels and channels.
+        Note that the only region of the image that will be filled is the
+        masked region.
+
+        Calling this method will cause a cache invalidation on this spatial
+        images' mesh.
+
+        Parameters
+        ----------
+        vector : (``n_pixels``,)
+            A flattened vector of all pixels and channels of an image.
+        """
         self.rebuild_mesh()
-        MaskedNDImage.from_vector_inplace(self, flattened)
+        MaskedNDImage.from_vector_inplace(self, vector)
 
     @abc.abstractmethod
     def _generate_points(self):
