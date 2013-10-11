@@ -1,11 +1,12 @@
 import abc
 from copy import deepcopy
 
+
 class Vectorizable(object):
     """
-    Abstract interface that guarantees subclasses can be flattened and
-    restored from flattened (vectorized) representations. Useful for
-    statistically analyzing objects, which almost always requires the data
+    Interface that provides methods for 'flattening' an object into a
+    vector, and restoring from the same vectorized form. Useful for
+    statistical analysis of objects, which commonly requires the data
     to be provided as a single vector.
     """
 
@@ -14,37 +15,40 @@ class Vectorizable(object):
     @abc.abstractmethod
     def as_vector(self):
         """
-        Returns a flattened representation of the object as a single vector.
+        Returns a flattened representation of the object as a single
+        vector.
 
         Returns
         -------
         vector : (N,) ndarray
-            The flattened vector.
+            The core representation of the object, flattened into a
+            single vector.
         """
         pass
 
     @abc.abstractmethod
     def from_vector_inplace(self, vector):
         """
-        Update the state of this object from the provided 1D flattened
-        array.
+        Update the state of this object from it's vectorized state
 
         Parameters
         ----------
         vector : (N,) ndarray
-            Flattened representation of the object.
+            Flattened representation of this object.
         """
         pass
 
     def from_vector(self, vector):
         """
-        Build a new instance of the object from the provided 1D flattened
-        array, using ``self`` to fill out the missing state required to
-        rebuild a full object from it's standardized flattened state.
+        Build a new instance of the object from it's vectorized state.
 
-        A default implementation is provided where a deepcopy of the object
-        is made followed by an from_vector_inplace(). This method can be
-        overridden for a performance benefit if desired.
+
+        ``self`` is used to fill out the missing state required to
+        rebuild a full object from it's standardized flattened state. This
+        is the default implementation, which is which is a
+        ``deepcopy`` of the object followed by a call to
+        :meth:`from_vector_inplace()`. This method can be overridden for a
+        performance benefit if desired.
 
         Parameters
         ----------

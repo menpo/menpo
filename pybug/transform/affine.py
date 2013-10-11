@@ -1,7 +1,7 @@
 import abc
 import copy
 from pybug.transform.base import AlignableTransform
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 #TODO remove matlab here
 import pybug.matlab as matlab
 import numpy as np

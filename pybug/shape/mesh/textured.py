@@ -1,5 +1,5 @@
 import numpy as np
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d

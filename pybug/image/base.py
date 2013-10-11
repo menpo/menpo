@@ -7,7 +7,7 @@ from pybug.transform.affine import Translation
 from pybug.visualize.base import Viewable, ImageViewer
 
 
-class ImageBoundaryError(Exception):
+class ImageBoundaryError(ValueError):
     r"""
     Exception that is thrown when an attempt is made to crop an image beyond
     the edge of it's boundary.
@@ -34,15 +34,19 @@ class ImageBoundaryError(Exception):
 
 class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
     r"""
-    An abstract representation of an image. All images can be
-    vectorized/built from vector, viewed, all have a ``shape``,
-    all are ``n_dimensional``, and all have ``n_channels``.
+    An abstract representation of a n-dimensional image.
 
-    Images are also :class:`pybug.landmark.Landmarkable`.
+    Images are n-dimensional homogeneous regular arrays of data. Each
+    spatially distinct location in the array is referred to as a `pixel`.
+    At a pixel, ``k`` distinct pieces of information can be stored. Each
+    datum at a pixel is refereed to as being in a `channel`. All pixels in
+    the image have the  same number of channels, and all channels have the
+    same data-type.
+
 
     Parameters
     -----------
-    image_data: (M, N, ..., C) ndarray
+    image_data: (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
         channels.
     """
@@ -70,6 +74,12 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return cls(image_data_with_channel)
 
     def blank(*args, **kwargs):
+        r"""
+        Construct a blank image of a particular shape.
+
+        This is an alternative constructor that all image classes have to
+        implement.
+        """
         raise NotImplementedError
 
     @property
@@ -167,7 +177,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
         Useful for aligning shapes and images.
 
-        :type: (D,) ndarray
+        :type: (n_dims,) ndarray
         """
         # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
@@ -185,25 +195,26 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
     def as_vector(self, keep_channels=False):
         r"""
-        Convert the Image to a vectorized form.
+        The vectorized form of this image.
 
         Parameters
         ----------
         keep_channels : bool, optional
 
-            ========== =================
+            ========== =================================
             Value      Return shape
-            ========== =================
-            ``True``   (``n_pixels``,``n_channels``)
-            ``False``  (``n_pixels`` x ``n_channels``,)
-            ========== =================
+            ========== =================================
+            ``False``  (``n_pixels``  x ``n_channels``,)
+            ``True``   (``n_pixels``, ``n_channels``)
+            ========== =================================
 
             Default: ``False``
 
         Returns
         -------
-        vectorized_image : (shape given by ``keep_channels``) ndarray
-            Vectorized image
+        (shape given by keep_channels) ndarray
+            Flattened representation of this image, containing all pixel
+            and channel information
         """
         if keep_channels:
             return self.pixels.reshape([-1, self.n_channels])
@@ -428,7 +439,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
     def warp_to(self, template_mask, transform, warp_landmarks=False,
                 interpolator='scipy', **kwargs):
         r"""
-        Warps this image into a different reference space.
+        Return a copy of this image warped into a different reference space.
 
         Parameters
         ----------
