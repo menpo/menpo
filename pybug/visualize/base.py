@@ -1,5 +1,5 @@
 # This has to go above the default importers to prevent cyclical importing
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 import abc
 
 
