@@ -29,15 +29,6 @@ class AbstractTransform(Vectorizable):
         """
         pass
 
-    @abc.abstractproperty
-    def n_parameters(self):
-        r"""
-        The number of parameters that determine the transform.
-
-        :type: int
-        """
-        pass
-
     @abc.abstractmethod
     def _apply(self, x, **kwargs):
         r"""
