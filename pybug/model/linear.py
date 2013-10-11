@@ -11,7 +11,8 @@ class LinearModel(object):
 
     def __init__(self, components):
         self._components = components  # getter/setter variable
-        self.n_components = self.n_available_components
+        self._n_components = self.n_available_components
+
 
     @property
     def n_available_components(self):
@@ -21,6 +22,24 @@ class LinearModel(object):
         type: int
         """
         return self._components.shape[0]
+
+    @property
+    def n_components(self):
+        r"""
+        The number of components currently in use on this model.
+        """
+        return self._n_components
+
+    @n_components.setter
+    def n_components(self, value):
+        value = round(value)
+        if 0 < value <= self.n_available_components:
+            self._n_components = value
+        else:
+            raise ValueError(
+                "Tried setting n_components as {} - has to be an int and "
+                "0 < n_components <= n_available_components "
+                "(which is {}) ".format(value, self.n_available_components))
 
     @property
     def n_features(self):

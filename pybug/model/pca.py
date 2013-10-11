@@ -1,5 +1,6 @@
 import numpy as np
-from pybug.decomposition.base import principal_component_decomposition
+from scipy.linalg.blas import dgemm
+from pybug.decomposition import principal_component_decomposition
 from pybug.model.base import MeanInstanceLinearModel
 
 

@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from scipy.linalg.blas import dgemm
 
 
 def eigenvalue_decomposition(S, eps=10**-10):
