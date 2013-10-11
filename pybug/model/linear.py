@@ -74,6 +74,7 @@ class LinearModel(object):
                 n_components, self.n_available_components))
         else:
             self._components = self._components[:n_components]
+            self.n_components = n_components
 
     def component_vector(self, index):
         """
@@ -152,14 +153,14 @@ class LinearModel(object):
         return dgemm(alpha=1.0, a=full_weights.T, b=self.components.T,
                   trans_a=True, trans_b=True)
 
-    def project_vector(self, vector_instance):
+    def project_vector(self, vector):
         """
-        Projects the ``vector_instance`` onto the model, retrieving the optimal
+        Projects the ``vector`` onto the model, retrieving the optimal
         linear reconstruction weights
 
         Parameters
         -----------
-        vector_instance : (n_features,) ndarray
+        vector : (n_features,) ndarray
             A vectorized novel instance.
 
         Returns
@@ -167,16 +168,16 @@ class LinearModel(object):
         weights : (n_components,)
             A vector of optimal linear weights
         """
-        return self.project_vectors(vector_instance[None, :]).flatten()
+        return self.project_vectors(vector[None, :]).flatten()
 
-    def project_vectors(self, vector_instances):
+    def project_vectors(self, vectors):
         """
-        Projects each of the ``vector_instances`` onto the model, retrieving
+        Projects each of the ``vectors`` onto the model, retrieving
         the optimal linear reconstruction weights for each instance.
 
         Parameters
         ----------
-        vector_instances : (n_samples, n_features) ndarray
+        vectors : (n_samples, n_features) ndarray
 
         Returns
         -------
@@ -184,56 +185,42 @@ class LinearModel(object):
             The matrix of optimal linear weights
 
         """
-        return dgemm(alpha=1.0, a=vector_instances.T, b=self.components.T,
+        return dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
                      trans_a=True, trans_b=True)
 
-    def reconstruct_vector(self, vector, n_components=None):
+    def reconstruct_vector(self, vector):
         """
-        Project a  ``vector`` onto the linear space and
+        Project a ``vector`` onto the linear space and
         rebuild from the weights found.
 
         Parameters
         ----------
         vector : (n_features, ) ndarray
             A vectorized novel instance to project
-        n_components : int, optional
-            The number of components to use in the reconstruction
-
-            Default: self.n_components
 
         Returns
         -------
         reconstructed : (n_features,) ndarray
             The reconstructed vector.
         """
-        weights = self.project_vector(vector)
-        if n_components is not None:
-            weights = weights[..., :n_components]
-        return self.instance_vectors(weights)
+        return self.reconstruct_vectors(vector[None, :]).flatten()
 
-    def reconstruct_vectors(self, instance_vectors, n_components=None):
+    def reconstruct_vectors(self, vectors):
         """
-        Project a  ``novel_instance`` onto the linear space and
-        rebuild from the weights found.
+        Projects the ``vectors`` onto the linear space and
+        rebuilds vectors from the weights found.
 
         Parameters
         ----------
-        instance_vectors : (n_features, ) ndarray
-            A vectorized novel instance to project
-        n_components : int, optional
-            The number of components to use in the reconstruction
-
-            Default: ``weights.shape[0]``
+        vectors : (n_vectors, n_features) ndarray
+            A set of vectors to project
 
         Returns
         -------
-        reconstructed : (n_features,) ndarray
-            The reconstructed vector.
+        reconstructed : (n_vectors, n_features) ndarray
+            The reconstructed vectors.
         """
-        weights = self.project_vector(instance_vectors)
-        if n_components is not None:
-            weights = weights[..., :n_components]
-        return self.instance_vectors(weights)
+        return self.instance_vectors(self.project_vectors(vectors))
 
     def project_out_vector(self, vector):
         """
@@ -279,7 +266,6 @@ class LinearModel(object):
         Enforces that this models components are orthonormalized
 
         s.t. component_vector(i).dot(component_vector(j) = dirac_delta
-
         """
         # TODO ask Joan
         Q, r = np.linalg.qr(self.components.T).T
@@ -305,14 +291,14 @@ class MeanLinearModel(LinearModel):
     def component_vector(self, index):
         return self.component_vector(index) + self.mean_vector
 
-    def project_vectors(self, vector_instances):
+    def project_vectors(self, vectors):
         """
-        Projects each of the ``vector_instances`` onto the model, retrieving
+        Projects each of the ``vectors`` onto the model, retrieving
         the optimal linear reconstruction weights for each instance.
 
         Parameters
         ----------
-        vector_instances : (n_samples, n_features) ndarray
+        vectors : (n_samples, n_features) ndarray
 
         Returns
         -------
@@ -320,7 +306,7 @@ class MeanLinearModel(LinearModel):
             The matrix of optimal linear weights
 
         """
-        X = vector_instances - self.mean_vector
+        X = vectors - self.mean_vector
         return dgemm(alpha=1.0, a=X.T, b=self.components.T, trans_a=True)
 
     def _instance_vectors_for_full_weights(self, full_weights):
