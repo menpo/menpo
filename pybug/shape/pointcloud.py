@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from pybug.shape import Shape
 from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
+from pybug.shape.base import Shape
 
 
 # TODO: sort of pointfields?
@@ -67,23 +67,11 @@ class PointCloud(Shape):
         """
         return self.points.flatten()
 
-    def from_vector(self, flattened):
+    def from_vector_inplace(self, vector):
         r"""
-        Builds a new :class:`PointCloud` given then ``flattened`` vector.
-        This allows rebuilding pointclouds with the correct number of
-        dimensions from a vector.
-
-        Parameters
-        ----------
-        flattened : (N,) ndarray
-            Vector representing a set of points.
-
-        Returns
-        --------
-        pointcloud : :class:`PointCloud`
-            A new pointcloud created from the vector.
+        Updates this PointCloud in-place with a new vector of parameters
         """
-        return PointCloud(flattened.reshape([-1, self.n_dims]))
+        self.points = vector.reshape([-1, self.n_dims])
 
     def __str__(self):
         message = (str(type(self)) + ': n_points: ' + str(self.n_points) +
@@ -98,9 +86,9 @@ class PointCloud(Shape):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         return message
 
-    def max_min_bounds(self, boundary=0):
+    def bounds(self, boundary=0):
         r"""
-        The maximum and minimum extent of the :class:`PointCloud`.
+        The minimum to maximum extent of the :class:`PointCloud`.
         An optional boundary argument can be provided to expand the bounds
         by a constant margin.
 
@@ -108,33 +96,40 @@ class PointCloud(Shape):
         ----------
         boundary: b float
             A optional padding distance that is added to the bounds. Default
-             is zero, meaning the max/min of tightest possible containing
-             square/cube/hypercube is returned.
+            is zero, meaning the max/min of tightest possible containing
+            square/cube/hypercube is returned.
 
         Returns
         --------
-        max_b : (D,) ndarray
-            The maximum extent of the :class:`PointCloud` and boundary along
-            each dimension
-
         min_b : (D,) ndarray
             The minimum extent of the :class:`PointCloud` and boundary along
             each dimension
-        """
-        max_b = np.max(self.points, axis=0) + boundary
-        min_b = np.min(self.points, axis=0) - boundary
-        return max_b, min_b
 
-    def range_bounds(self):
+        max_b : (D,) ndarray
+            The maximum extent of the :class:`PointCloud` and boundary along
+            each dimension
+        """
+        min_b = np.min(self.points, axis=0) - boundary
+        max_b = np.max(self.points, axis=0) + boundary
+        return min_b, max_b
+
+    def range(self, boundary=0):
         r"""
         The range of the extent of the :class:`PointCloud`.
 
+        Parameters
+        ----------
+        boundary: b float
+            A optional padding distance that is used to extend the bounds
+            from which the range is computed. Default is zero, no extension
+            is performed.
+
         Returns
         --------
-        range_b : (D,) ndarray
+        range : (D,) ndarray
             The range of the :class:`PointCloud`s extent in each dimension.
         """
-        max_b, min_b = self.max_min_bounds()
+        min_b, max_b = self.bounds(boundary)
         return max_b - min_b
 
     def add_pointfield(self, name, field):
@@ -152,14 +147,14 @@ class PointCloud(Shape):
             self.pointfields[name] = field
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointCloudViewer(figure_id, new_figure, self.points).render(**kwargs)
+        return PointCloudViewer(figure_id, new_figure,
+                                self.points).render(**kwargs)
 
-    def _transform_self(self, transform):
+    def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
         return self
 
     def distance_to(self, pointcloud, **kwargs):
-
         r"""
         Returns a distance matrix between this point cloud and another.
         By default the Euclidian distance is calculated - see
@@ -168,9 +163,9 @@ class PointCloud(Shape):
 
         Parameters
         ----------
-        pointcloud : PointCloud (M points, D dim)
+        pointcloud : :class:`PointCloud`
             The second pointcloud to compute distances between. This must be
-             of the same dimension as this PointCloud.
+            of the same dimension as this PointCloud.
 
         Returns
         -------
@@ -184,3 +179,57 @@ class PointCloud(Shape):
             raise ValueError("The two PointClouds must be of the same "
                              "dimensionality.")
         return cdist(self.points, pointcloud.points, **kwargs)
+
+    def norm(self, **kwargs):
+        r"""
+        Returns the norm of this point cloud. This is a translation and
+        rotation invariant measure of the point cloud's intrinsic size - in
+        other words, it is always taken around the point cloud's centre.
+
+        By default, the Frobenius norm is taken, but this can be changed by
+        setting kwargs - see numpy.linalg.norm for valid options.
+
+        Returns
+        -------
+        norm: float
+            The norm of this :class:`PointCloud`
+        """
+        return np.linalg.norm(self.points - self.centre, **kwargs)
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud and returns a new pointcloud containing only those
+        points that were `True` in the mask.
+
+        Parameters
+        ----------
+        mask : (N,) ndarray
+            1D array of booleans
+
+        Returns
+        -------
+        pointcloud : :class:`PointCloud`
+            A new pointcloud that has been masked.
+        """
+        return PointCloud(self.points[mask, :])
+
+    def update_from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud. The same pointcloud is updated in place.
+
+        Parameters
+        ----------
+        mask : (N,) ndarray
+            1D array of booleans
+
+        Returns
+        -------
+        pointcloud : :class:`PointCloud`
+            A pointer to self.
+        """
+        self.points = self.points[mask, :]
+        return self

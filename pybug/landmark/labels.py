@@ -1,12 +1,14 @@
+import copy
 import numpy as np
 from pybug.landmark import LandmarkManager
+from pybug.landmark.base import LandmarkGroup
 from pybug.landmark.exceptions import LabellingError
 
 
-def imm_58_points(landmarks):
+def imm_58_points(landmark_group):
     """
     Apply the 58 point semantic labels from the
-    IMM dataset to the landmarks in the given landmark manager.
+    IMM dataset to the landmarks in the given landmark group.
 
     The label applied to this new manager will be 'imm_58_points'.
 
@@ -22,51 +24,51 @@ def imm_58_points(landmarks):
 
     Parameters
     ----------
-    landmarks: :class:`pybug.landmark.base.LandmarkManager`
-        The landmarks to apply semantic labels to.
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
-        New landmark manager with label 'imm_58_points'
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark group with group label 'imm_58_points'
 
     Raises
     ------
     :class:`pybug.landmark.exceptions.LabellingError`
-        If the given landmark set contains less than 58 points
+        If the given landmark group contains less than 58 points
 
     References
     -----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
-    # TODO: This should probably be some sort of graph that maintains the
-    # connectivity defined in the IMM dataset (and not thus not a PointCloud)
-    from pybug.shape import PointCloud
+    group_label = 'imm_58_points'
+    n_points = landmark_group.lms.n_points
 
-    label = 'imm_58_points'
-    points = landmarks.all_landmarks.points
-    try:
-        landmark_dict = {'chin': PointCloud(points[:13]),
-                         'leye': PointCloud(points[13:21]),
-                         'reye': PointCloud(points[21:29]),
-                         'leyebrow': PointCloud(points[29:34]),
-                         'reyebrow': PointCloud(points[34:39]),
-                         'mouth': PointCloud(points[39:47]),
-                         'nose': PointCloud(points[47:])}
-    except IndexError as e:
-        raise LabellingError("IMM's 58 points mark-up expects at least 58 "
-                             "points. However, {0}".format(e.message))
+    if n_points != 58:
+        raise LabellingError("{0} mark-up expects exactly 58 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    new_landmark_group = LandmarkGroup(landmark_group._target, group_label,
+                                       copy.deepcopy(landmark_group.lms),
+                                       {})
+    new_landmark_group['chin'] = np.arange(13)
+    new_landmark_group['leye'] = np.arange(13, 21)
+    new_landmark_group['reye'] = np.arange(21, 29)
+    new_landmark_group['leyebrow'] = np.arange(29, 34)
+    new_landmark_group['reyebrow'] = np.arange(34, 39)
+    new_landmark_group['mouth'] = np.arange(39, 47)
+    new_landmark_group['nose'] = np.arange(47, 58)
+
+    return new_landmark_group
 
 
-def ibug_68_points(landmarks):
+def ibug_68_points(landmark_group):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of multiPIE) to the landmarks in
-    the given landmark manager.
+    original semantic labels of multiPIE) to the landmark group.
 
-    The label applied to this new manager will be 'ibug_68_points'.
+    The group label will be 'ibug_68_points'.
 
     The semantic labels applied are as follows:
 
@@ -80,53 +82,57 @@ def ibug_68_points(landmarks):
 
     Parameters
     ----------
-    landmarks: :class:`pybug.landmark.base.LandmarkManager`
-        The landmarks to apply semantic labels to.
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
-        New landmark manager with label 'ibug_68_points'
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark group with group label 'ibug_68_points'. The pointcloud
+        is also copied.
 
     Raises
     ------
     :class:`pybug.landmark.exceptions.LabellingError`
-        If the given landmark set contains less than 68 points
+        If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-    # TODO: might have to rethink what's the v=bes way of implementing this
-    # functions
     # TODO: This should probably be some sort of graph that maintains the
-    # connectivity defined by ibug (and not thus not a PointCloud)
-    from pybug.shape import PointCloud
+    # connectivity defined by ibug (and thus not a PointCloud)
+    group_label = 'ibug_68_points'
+    n_points = landmark_group.lms.n_points
 
-    label = 'ibug_68_points'
-    points = landmarks.all_landmarks.points
-    try:
-        landmark_dict = {'chin': PointCloud(points[:17]),
-                         'leye': PointCloud(points[36:42]),
-                         'reye': PointCloud(points[42:48]),
-                         'leyebrow': PointCloud(points[17:22]),
-                         'reyebrow': PointCloud(points[22:27]),
-                         'mouth': PointCloud(points[48:]),
-                         'nose': PointCloud(points[27:36])}
-    except IndexError as e:
-        raise LabellingError("ibug's 68 points mark-up expects at least 68 "
-                             "points. However, {0}".format(e.message))
+    if n_points != 68:
+        raise LabellingError("{0} mark-up expects exactly 68 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        copy.deepcopy(landmark_group.lms),
+        {'all': np.ones(n_points, dtype=np.bool)})
+
+    new_landmark_group['chin'] = np.arange(17)
+    new_landmark_group['leye'] = np.arange(36, 42)
+    new_landmark_group['reye'] = np.arange(42, 48)
+    new_landmark_group['leyebrow'] = np.arange(17, 22)
+    new_landmark_group['reyebrow'] = np.arange(22, 27)
+    new_landmark_group['mouth'] = np.arange(48, 68)
+    new_landmark_group['nose'] = np.arange(27, 36)
+
+    return new_landmark_group.without_labels('all')
 
 
-def ibug_68_contour(landmarks):
+def ibug_68_contour(landmark_group):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
     original semantic labels of multiPIE) to the landmarks in
     the given landmark manager.
 
-    The label applied to this new manager will be 'ibug_68_contour'.
+    The label applied to this new group will be 'ibug_68_contour'.
 
     The semantic labels applied are as follows:
 
@@ -134,13 +140,13 @@ def ibug_68_contour(landmarks):
 
     Parameters
     ----------
-    landmarks: :class:`pybug.landmark.base.LandmarkManager`
-        The landmarks to apply semantic labels to.
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
-        New landmark manager with label 'ibug_68_contour'
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark group with label 'ibug_68_contour'
 
     Raises
     ------
@@ -152,32 +158,34 @@ def ibug_68_contour(landmarks):
     .. [1] http://www.multipie.org/
     """
     # TODO: This should probably be some sort of graph that maintains the
-    # connectivity defined by ibug (and not thus not a PointCloud)
-    from pybug.shape import PointCloud
+    # connectivity defined by ibug (and thus not a PointCloud)
+    group_label = 'ibug_68_contour'
+    n_points = landmark_group.lms.n_points
 
-    label = 'ibug_68_contour'
-    points = landmarks.all_landmarks.points
-    try:
-        landmark_dict = {'contour': PointCloud(np.concatenate([points[:17],
-                                                               points[
-                                                               26:21:-1],
-                                                               points[
-                                                               21:16:-1],
-                                                               points[:1]]))}
-    except IndexError as e:
-        raise LabellingError("ibug's 68 points mark-up expects at least 68 "
-                             "points. However, {0}".format(e.message))
+    if n_points != 68:
+        raise LabellingError("{0} mark-up expects exactly 68 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        copy.deepcopy(landmark_group.lms),
+        {'all': np.ones(n_points, dtype=np.bool)})
+    new_landmark_group['contour'] = np.concatenate([np.arange(17),
+                                                    np.arange(16, 21),
+                                                    np.arange(21, 26),
+                                                    np.arange(1)])
+
+    return new_landmark_group.without_labels('all')
 
 
-def ibug_68_trimesh(landmarks):
+def ibug_68_trimesh(landmark_group):
     """
     Apply the ibug's "standard" 68 point semantic labels (based on the
     original semantic labels of multiPIE) to the landmarks in
-    the given landmark manager.
+    the given landmark group.
 
-    The label applied to this new manager will be 'ibug_68_trimesh'.
+    The label applied to this new group will be 'ibug_68_trimesh'.
 
     The semantic labels applied are as follows:
 
@@ -185,28 +193,33 @@ def ibug_68_trimesh(landmarks):
 
     Parameters
     ----------
-    landmarks: :class:`pybug.landmark.base.LandmarkManager`
-        The landmarks to apply semantic labels to.
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_manager : :class:`pybug.landmark.base.LandmarkManager`
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
         New landmark manager with label 'ibug_68_trimesh'
 
     Raises
     ------
     :class:`pybug.landmark.exceptions.LabellingError`
-        If the given landmark set contains less than 68 points
+        If the given landmark group contains less than 68 points
 
     References
     ----------
     .. [1] http://www.multipie.org/
     """
-
     from pybug.shape import TriMesh
 
-    label = 'ibug_68_trimesh'
-    points = landmarks.all_landmarks.points
+    group_label = 'ibug_68_trimesh'
+    n_points = landmark_group.lms.n_points
+
+    if n_points != 68:
+        raise LabellingError("{0} mark-up expects exactly 68 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
     tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21], [47, 28,42],
                         [49, 61, 60], [40, 41, 37], [37, 19, 20], [28, 40, 39],
                         [38, 21, 39], [36,  1, 	0], [48, 59,  4], [49, 60, 48],
@@ -234,36 +247,33 @@ def ibug_68_trimesh(landmarks):
                         [43, 47, 42], [46, 35, 47], [26, 45, 44], [46, 47, 44],
                         [25, 44, 24], [25, 26, 44], [16, 15, 45], [16, 45, 26],
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
-    try:
-        landmark_dict = {'tri': TriMesh(points, tri_list)}
-    except IndexError as e:
-        raise LabellingError("ibug's 68 points mark-up expects at least 68 "
-                             "points. However, {0}".format(e.message))
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        TriMesh(copy.deepcopy(landmark_group.lms.points), tri_list),
+        {'tri': np.ones(n_points, dtype=np.bool)})
 
-    return LandmarkManager(landmarks.shape, label, landmark_dict)
+    return new_landmark_group
 
 # TODO: ibug_68_all? imports points, contour and trimesh?
 
 
-def labeller(landmarkables, label, label_func):
+def labeller(landmarkables, group_label, label_func):
     """
-    Takes a list of landmarkable objects and a label indicating which set of
-    landmarks should have semantic meaning attached to them. The labelling
-    function will add a new set of landmarks to each object that have been
-    semantically annotated. For example, the different components of the face
-    will be separated in to separate pointclouds and given a label that
-    identifies their semantic meaning.
+    Takes a list of landmarkable objects and a group label indicating which
+    set of landmarks should have semantic meaning attached to them.
+    The labelling function will add a new landmark group to each object that
+    have been semantically annotated.
 
     Parameters
     ----------
     landmarkables: list of :class:`pybug.landmark.base.Landmarkable`
         List of landmarkable objects
-    label: string
-        The label of the landmark set to apply semantic labels to.
+    group_label: string
+        The group label of the landmark group to apply semantic labels to.
     label_func: func
         A labelling function taken from this module. ``func`` should take a
-        :class:`pybug.landmark.base.LandmarkManager` and
-        return a new LandmarkManager with semantic labels applied.
+        :class:`pybug.landmark.base.LandmarkGroup` and
+        return a new LandmarkGroup with semantic labels applied.
 
     Returns
     -------
@@ -271,10 +281,10 @@ def labeller(landmarkables, label, label_func):
         The list of modified landmarkables (this is just for convenience,
         the list will actually be modified in place)
     """
-    landmarks = [label_func(l.get_landmark_set(label))
-                 for l in landmarkables]
+    landmark_groups = [label_func(landmarkable.landmarks[group_label])
+                       for landmarkable in landmarkables]
 
-    for (obj, lmarks) in zip(landmarkables, landmarks):
-        obj.add_landmark_set(lmarks.label, lmarks.landmark_dict)
+    for (lanmarkable, group) in zip(landmarkables, landmark_groups):
+        lanmarkable.landmarks[group.group_label] = group
 
     return landmarkables

@@ -178,10 +178,11 @@ class Viewable(object):
 
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d, MayaviVectorViewer3d
+    MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d
+    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d, \
+    MatplotlibAlignmentViewer2d
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -194,6 +195,8 @@ LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 VectorViewer3d = MayaviVectorViewer3d
+DepthImageHeightViewer = MayaviSurfaceViewer3d
+AlignmentViewer2d = MatplotlibAlignmentViewer2d
 
 
 class LandmarkViewer(object):
@@ -207,20 +210,22 @@ class LandmarkViewer(object):
         a figure in a given framework (string, int, etc)
     new_figure : bool
         Whether the rendering engine should create a new figure.
-    label : string
+    group_label : string
         The main label of the landmark set.
-    landmark_dict : dict (string, :class:`pybug.shape.pointcloud.PointCloud`)
-        The landmark dictionary containing pointclouds.
-    parent_shape : :class:`pybug.base.Shape`
+    pointcloud : :class:`pybug.shape.pointcloud.PointCloud`
+        The pointclouds representing the landmarks.
+    labels_to_masks : dict(string, ndarray)
+        A dictionary of labels to masks into the pointcloud that represent
+        which points belong to the given label.
+    target : :class:`pybug.landmarks.base.Landmarkable`
         The parent shape that we are drawing the landmarks for.
     """
     def __init__(self, figure_id, new_figure,
-                 label, landmark_dict, parent_shape):
-        if landmark_dict is None:
-            landmark_dict = {}
-        self.landmark_dict = landmark_dict
-        self.label = label
-        self.shape = parent_shape
+                 group_label, pointcloud, labels_to_masks, target):
+        self.pointcloud = pointcloud
+        self.group_label = group_label
+        self.labels_to_masks = labels_to_masks
+        self.target = target
         self.figure_id = figure_id
         self.new_figure = new_figure
 
@@ -243,25 +248,24 @@ class LandmarkViewer(object):
         DimensionalityError
             Only 2D and 3D viewers are supported.
         """
-        if self.landmark_dict:
-            item = self.landmark_dict.values()[0]
-            if item.n_dims == 2:
-                from pybug.image import Image
-                if type(self.shape) is Image:
-                    return LandmarkViewer2dImage(
-                        self.figure_id, self.new_figure,
-                        self.label, self.landmark_dict).render(**kwargs)
-                else:
-                    return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                            self.label,
-                                            self.landmark_dict).render(**kwargs)
-            elif item.n_dims == 3:
-                return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                        self.label,
-                                        self.landmark_dict).render(**kwargs)
+        if self.pointcloud.n_dims == 2:
+            from pybug.image.base import AbstractNDImage
+            if isinstance(self.target, AbstractNDImage):
+                return LandmarkViewer2dImage(
+                    self.figure_id, self.new_figure,
+                    self.group_label, self.pointcloud,
+                    self.labels_to_masks).render(**kwargs)
             else:
-                raise DimensionalityError("Only 2D and 3D landmarks are "
-                                          "currently supported")
+                return LandmarkViewer2d(self.figure_id, self.new_figure,
+                                        self.group_label, self.pointcloud,
+                                        self.labels_to_masks).render(**kwargs)
+        elif self.pointcloud.n_dims == 3:
+            return LandmarkViewer3d(self.figure_id, self.new_figure,
+                                    self.group_label, self.pointcloud,
+                                    self.labels_to_masks).render(**kwargs)
+        else:
+            raise DimensionalityError("Only 2D and 3D landmarks are "
+                                      "currently supported")
 
 
 class PointCloudViewer(object):
@@ -329,10 +333,21 @@ class ImageViewer(object):
         The number of dimensions in the image
     pixels : (N, D) ndarray
         The pixels to render.
+    channel: int
+        A specific channel of pixels to render. If None, render all.
+    mask: (N, D) ndarray
+        A boolean mask to be applied to the image. All points outside the
+        mask are set to 0.
     """
-    def __init__(self, figure_id, new_figure, dimensions, pixels):
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 channel=None, mask=None):
+        pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
+        if channel is not None:
+            pixels = pixels[..., channel]
+        if mask is not None:
+            pixels[~mask] = 0.
         self.pixels = pixels
         self.dimensions = dimensions
 

@@ -1,7 +1,5 @@
-from mayavi import mlab
-from tvtk.api import tvtk
-import numpy as np
 import abc
+import numpy as np
 from pybug.visualize.base import Renderer
 
 
@@ -35,6 +33,7 @@ class MayaviViewer(Renderer):
         figure : Mayavi figure object
             The figure we will be rendering on.
         """
+        from mayavi import mlab
         if self.new_figure or self.figure_id is not None:
             self.figure = mlab.figure(self.figure_id)
         else:
@@ -52,28 +51,49 @@ class MayaviPointCloudViewer3d(MayaviViewer):
         self.points = points
 
     def _render(self, **kwargs):
+        from mayavi import mlab
         mlab.points3d(
             self.points[:, 0], self.points[:, 1], self.points[:, 2],
             figure=self.figure, scale_factor=1)
         return self
 
 
-class MayaviLandmarkViewer3d(MayaviViewer):
+class MayaviSurfaceViewer3d(MayaviViewer):
 
-    def __init__(self, figure_id, new_figure, label, landmark_dict):
-        super(MayaviLandmarkViewer3d, self).__init__(figure_id, new_figure)
-        self.label = label
-        self.landmark_dict = landmark_dict
+    def __init__(self, figure_id, new_figure, values, mask=None):
+        super(MayaviSurfaceViewer3d, self).__init__(figure_id, new_figure)
+        if mask is not None:
+            values[~mask] = np.nan
+        self.values = values
 
     def _render(self, **kwargs):
+        from mayavi import mlab
+        warp_scale = kwargs.get('warp_scale', 'auto')
+        mlab.surf(self.values, warp_scale=warp_scale)
+        return self
+
+
+class MayaviLandmarkViewer3d(MayaviViewer):
+
+    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+                 labels_to_masks):
+        super(MayaviLandmarkViewer3d, self).__init__(figure_id, new_figure)
+        self.label = group_label
+        self.pointcloud = pointcloud
+        self.labels_to_masks = labels_to_masks
+
+    def _render(self, **kwargs):
+        from mayavi import mlab
         # disabling the rendering greatly speeds up this for loop
         self.figure.scene.disable_render = True
         positions = []
-        for label, pcloud in self.landmark_dict.iteritems():
-            for i, p in enumerate(pcloud.points):
+        for label, mask in self.labels_to_masks.iteritems():
+            p = self.pointcloud.from_mask(mask)
+            for i, p in enumerate(p.points):
                 positions.append(p)
                 l = '%s_%d' % (label, i)
-                # TODO: This is due to a bug in mayavi that won't allow rendering text to an empty figure
+                # TODO: This is due to a bug in mayavi that won't allow
+                # rendering text to an empty figure
                 mlab.points3d(p[0], p[1], p[2])
                 mlab.text3d(p[0], p[1], p[2], l, figure=self.figure)
         positions = np.array(positions)
@@ -94,6 +114,7 @@ class MayaviTriMeshViewer3d(MayaviViewer):
         self.trilist = trilist
 
     def _render(self, normals=None, **kwargs):
+        from mayavi import mlab
         if normals is not None:
             MayaviVectorViewer3d(self.figure_id, False,
                                  self.points, normals)._render(**kwargs)
@@ -118,6 +139,7 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
         self.tcoords_per_point = tcoords_per_point
 
     def _render(self, normals=None, **kwargs):
+        from tvtk.api import tvtk
         if normals is not None:
             MayaviVectorViewer3d(self.figure_id, False,
                                  self.points, normals)._render(**kwargs)
@@ -150,6 +172,7 @@ class MayaviVectorViewer3d(MayaviViewer):
         self.vectors = vectors
 
     def _render(self, **kwargs):
+        from mayavi import mlab
         # Only get every nth vector. 1 means get every vector.
         mask_points = kwargs.get('mask_points', 1)
         mlab.quiver3d(self.points[:, 0],
