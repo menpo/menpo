@@ -210,6 +210,26 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         else:
             return self.pixels.flatten()
 
+    def from_vector_inplace(self, vector):
+        r"""
+        Takes a flattened vector and update this image by
+        reshaping the vector to the correct dimensions.
+
+        Parameters
+        ----------
+        vector : (``n_pixels``,) np.bool ndarray
+            A vector vector of all the pixels of a BooleanImage.
+
+
+        Notes
+        -----
+        For BooleanNDImage's this is rebuilding a boolean image **itself**
+        from boolean values. The mask is in no way interpreted in performing
+        the operation, in contrast to MaskedNDImage, where only the masked
+        region is used in from_vector{_inplace}() and as_vector().
+        """
+        self.pixels = vector.reshape(self.pixels.shape)
+
     def _view(self, figure_id=None, new_figure=False, channel=None, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
