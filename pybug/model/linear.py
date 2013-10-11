@@ -101,7 +101,7 @@ class LinearModel(object):
 
         :type: (n_features,) ndarray
         """
-        return self.components[:, index]
+        return self.components[index]
 
     def instance_vector(self, weights):
         r"""
@@ -308,7 +308,7 @@ class MeanLinearModel(LinearModel):
         self.mean_vector = mean_vector
 
     def component_vector(self, index):
-        return self.component_vector(index) + self.mean_vector
+        return self.components[index] + self.mean_vector
 
     def project_vectors(self, vectors):
         """
