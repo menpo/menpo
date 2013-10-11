@@ -2,6 +2,7 @@ import abc
 import os
 from glob import glob
 import sys
+import collections
 
 
 def auto_import(pattern, meshes=True, images=True,
@@ -330,7 +331,13 @@ def _multi_import(filepaths, extensions_map, keep_importers=False):
 
     objects = []
     for i, importer in enumerate(importers):
-        objects.append(importer.build())
+        built_objects = importer.build()
+        if isinstance(built_objects, collections.Iterable):
+            for x in built_objects:
+                x.filepath = importer.filepath  # save the filepath
+        else:
+            built_objects.filepath = importer.filepath
+        objects.append(built_objects)
 
         # Cheeky carriage return so we print on the same line
         sys.stdout.write('\rCreating importer for %s (%d of %d)'
