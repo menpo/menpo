@@ -205,7 +205,7 @@ class LinearModel(object):
 
         """
         return dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
-                     trans_a=True, trans_b=True)
+                     trans_a=True)
 
     def reconstruct_vector(self, vector):
         """
