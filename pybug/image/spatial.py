@@ -76,8 +76,8 @@ class AbstractSpatialImage(MaskedNDImage):
         vector : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
         """
-        self.rebuild_mesh()
         MaskedNDImage.from_vector_inplace(self, vector)
+        self.rebuild_mesh()
 
     @abc.abstractmethod
     def _generate_points(self):
