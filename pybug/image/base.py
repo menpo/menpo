@@ -321,7 +321,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                   zip(list(min_bounded), list(max_bounded))]
         self.pixels = self.pixels[slices]
         # update all our landmarks
-        lm_translation = Translation(-min_indices)
+        lm_translation = Translation(-min_bounded)
         lm_translation.apply_inplace(self.landmarks)
         return self
 
@@ -497,8 +497,6 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                                                 sampled_pixel_values)
 
         if warp_landmarks:
-            raise Exception("Warp Landmarks is not supported until Transform"
-                            ".pseudoinverse is")
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
