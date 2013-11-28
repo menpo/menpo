@@ -1,6 +1,7 @@
 from pybug.image.masked import MaskedNDImage
 import pybug.features as fc
 from pybug.visualize.base import ImageViewer
+import numpy as np
 
 
 class FeatureNDImage(MaskedNDImage):
@@ -80,9 +81,14 @@ class HOG2DImage(FeatureNDImage):
                        'padding': padding,
                        'verbose': verbose}
         hog, window_centres = fc.hog(image_data, **self.params)
+        if mask is not None:
+            if not isinstance(mask, np.ndarray):
+                # assume that the mask is a boolean image then!
+                mask = mask.pixels
+            mask = mask[..., 0][window_centres[:, :, 0],
+                                window_centres[:, :, 1]]
         super(HOG2DImage, self).__init__(hog, mask=mask)
         self.window_centres = window_centres
-        self.mask = self.mask()
 
     @classmethod
     def blank(cls):
@@ -107,7 +113,7 @@ class HOG2DImage(FeatureNDImage):
         """
         pixels_to_view = self.pixels
         if vector:
-            channel = 1  # Vectorized images always have 1 channel
+            channel = 0  # Vectorized images always have 1 channel
             if block_size is None:
                 block_size = self.params['block_size']
             if num_bins is None:
@@ -115,9 +121,10 @@ class HOG2DImage(FeatureNDImage):
             hog_vector_image = fc.hog_vector_image(self.pixels,
                                                    block_size=block_size,
                                                    num_bins=num_bins)
-            pixels_to_view = hog_vector_image
+            pixels_to_view = hog_vector_image[..., None]
         mask = None
         if masked:
+            # TODO: make the visualization work for hog vector and mask
             mask = self.mask.mask
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channel=channel,
