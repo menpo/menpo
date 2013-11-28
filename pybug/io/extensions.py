@@ -1,8 +1,9 @@
 # A list of extensions that different importers support.
-from pybug.io.landmark import LM3Importer
+from pybug.io.spatial_image import BNTImporter, FIMImporter, ABSImporter
+from pybug.io.landmark import LM3Importer, LANImporter, LM2Importer, \
+    BNDImporter
 from pybug.io.landmark_mesh import MeshPTSImporter
-from pybug.io.mesh import AssimpImporter, WRLImporter, FIMImporter, \
-    BNTImporter, ABSImporter
+from pybug.io.mesh import AssimpImporter, WRLImporter
 from pybug.io.image import PILImporter
 from pybug.io.landmark_image import ImageASFImporter, ImagePTSImporter
 
@@ -50,11 +51,11 @@ mesh_types = {'.dae': AssimpImporter,
               '.pk3': AssimpImporter,
               '.mdc': AssimpImporter,
               # '.blend': AssimpImporter,
-              '.wrl': WRLImporter,
-              '.fim': FIMImporter,
-              '.bnt': BNTImporter,
-              '.abs': ABSImporter}
+              '.wrl': WRLImporter}
 
+spatial_image_types = {'.bnt': BNTImporter,
+                       '.fim': FIMImporter,
+                       '.abs': ABSImporter}
 
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,
@@ -79,8 +80,15 @@ image_types = {'.bmp': PILImporter,
                # '.pdf': PILImporter,
                '.xpm': PILImporter}
 
+all_image_types = {}
+all_image_types.update(spatial_image_types)
+all_image_types.update(image_types)
+
 image_landmark_types = {'.asf': ImageASFImporter,
+                        '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter}
 
-mesh_landmark_types = {'.pts': MeshPTSImporter,
-                       '.lm3': LM3Importer}
+mesh_landmark_types = {'.pts3': MeshPTSImporter,
+                       '.lm3': LM3Importer,
+                       '.lan': LANImporter,
+                       '.bnd': BNDImporter}

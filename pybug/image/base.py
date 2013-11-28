@@ -1,30 +1,124 @@
+import abc
 import numpy as np
-import PIL.Image as PILImage
-from pybug.exceptions import DimensionalityError
-from pybug.transform.affine import Translation
-from pybug.landmark import Landmarkable
+from copy import deepcopy
 from pybug.base import Vectorizable
-from skimage.morphology import diamond, binary_erosion
-import itertools
+from pybug.landmark import Landmarkable
+from pybug.transform.affine import Translation
 from pybug.visualize.base import Viewable, ImageViewer
 
 
-class AbstractImage(Vectorizable, Landmarkable, Viewable):
+class ImageBoundaryError(ValueError):
     r"""
-    An abstract representation of an image. All images can be
-    vectorized/built from vector, viewed, all have a ``shape``,
-    all are ``n_dimensional``.
+    Exception that is thrown when an attempt is made to crop an image beyond
+    the edge of it's boundary.
 
-    Images are also :class:`pybug.landmark.Landmarkable`.
+    requested_min : (d,) ndarray
+        The per-dimension minimum index requested for the crop
+    requested_max : (d,) ndarray
+        The per-dimension maximum index requested for the crop
+    snapped_min : (d,) ndarray
+        The per-dimension minimum index that could be used if the crop was
+        constrained to the image boundaries.
+    requested_max : (d,) ndarray
+        The per-dimension maximum index that could be used if the crop was
+        constrained to the image boundaries.
+    """
+    def __init__(self, requested_min, requested_max, snapped_min,
+                 snapped_max):
+        super(ImageBoundaryError, self).__init__()
+        self.requested_min = requested_min
+        self.requested_max = requested_max
+        self.snapped_min = snapped_min
+        self.snapped_max = snapped_max
+
+
+class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
+    r"""
+    An abstract representation of a n-dimensional image.
+
+    Images are n-dimensional homogeneous regular arrays of data. Each
+    spatially distinct location in the array is referred to as a `pixel`.
+    At a pixel, ``k`` distinct pieces of information can be stored. Each
+    datum at a pixel is refereed to as being in a `channel`. All pixels in
+    the image have the  same number of channels, and all channels have the
+    same data-type.
+
 
     Parameters
     -----------
-    image_data: (M, N, ...) ndarray
-        Array representing the image pixels.
+    image_data: (M, N ..., Q, C) ndarray
+        Array representing the image pixels, with the last axis being
+        channels.
     """
+
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, image_data):
         Landmarkable.__init__(self)
-        self.pixels = np.array(image_data)
+        # asarray will pass through ndarrays unchanged
+        image_data = np.asarray(image_data)
+        if image_data.ndim < 3:
+            raise ValueError("Abstract Images have to build from at least 3D"
+                             " image data arrays (2D + n_channels) - a {} "
+                             "dim array was provided".format(image_data.ndim))
+        self.pixels = image_data
+
+    @classmethod
+    def _init_with_channel(cls, image_data_with_channel):
+        r"""
+        Constructor that always requires the image has a
+        channel on the last axis. Only used by from_vector. By default,
+        just calls the constructor. Subclasses with constructors that don't
+        require channel axes need to overwrite this.
+        """
+        return cls(image_data_with_channel)
+
+    def blank(*args, **kwargs):
+        r"""
+        Construct a blank image of a particular shape.
+
+        This is an alternative constructor that all image classes have to
+        implement.
+        """
+        raise NotImplementedError
+
+    @property
+    def n_dims(self):
+        r"""
+        The number of dimensions in the image. The minimum possible n_dims is
+        2.
+
+        :type: int
+        """
+        return len(self.shape)
+
+    @property
+    def n_pixels(self):
+        r"""
+        Total number of pixels in the image (``prod(shape)``)
+
+        :type: int
+        """
+        return self.pixels[..., 0].size
+
+    @property
+    def n_elements(self):
+        r"""
+        Total number of data points in the image (``prod(shape) x
+        n_channels``)
+
+        :type: int
+        """
+        return self.pixels.size
+
+    @property
+    def n_channels(self):
+        """
+        The number of channels on each pixel in the image.
+
+        :type: int
+        """
+        return self.pixels.shape[-1]
 
     @property
     def width(self):
@@ -51,74 +145,103 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
         return self.pixels.shape[0]
 
     @property
-    def n_pixels(self):
+    def depth(self):
         r"""
-        Total number of pixels in the image (``prod(shape)``)
+        The depth of the image.
+
+        This is the depth according to image semantics, and is thus the size
+        of the **third** dimension. If the n_dim of the image is 2, this is 0.
 
         :type: int
         """
-        return self.pixels.size
+        if self.n_dims == 2:
+            return 0
+        else:
+            return self.pixels.shape[0]
 
     @property
     def shape(self):
         r"""
-        The shape of the pixels array.
-
-        This is a tuple of the form ``(M, N, ...)``
+        The shape of the image
+        (with ``n_channel`` values at each point).
 
         :type: tuple
         """
-        return self.pixels.shape
+        return self.pixels.shape[:-1]
 
     @property
-    def n_dims(self):
+    def centre(self):
         r"""
-        The number of dimensions in the image.
+        The geometric centre of the Image - the subpixel that is in the
+        middle.
 
-        :type: int
+        Useful for aligning shapes and images.
+
+        :type: (n_dims,) ndarray
         """
-        return len(self.shape)
+        # noinspection PyUnresolvedReferences
+        return np.array(self.shape, dtype=np.double) / 2
 
-    def as_vector(self):
+    @property
+    def _str_shape(self):
+        if self.n_dims > 3:
+            return reduce(lambda x, y: str(x) + ' x ' + str(y),
+                          self.shape) + ' (in memory)'
+        elif self.n_dims == 3:
+            return (str(self.width) + 'W x ' + str(self.height) + 'H x ' +
+                    str(self.depth) + 'D')
+        elif self.n_dims == 2:
+            return str(self.width) + 'W x ' + str(self.height) + 'H'
+
+    def as_vector(self, keep_channels=False):
         r"""
-        Convert :class:`AbstractImage` to a vectorized form.
-
-        Returns
-        --------
-        vectorized_image : (``n_pixels``,) ndarray
-            A 1D array representing a vectorized form of the image
-        """
-        return self.pixels.flatten()
-
-    @classmethod
-    def blank(cls, shape, fill=0, dtype=None):
-        r"""
-        Returns a blank image
+        The vectorized form of this image.
 
         Parameters
         ----------
-        shape : tuple or list
-            The shape of the image
-        fill : int, optional
-            The value to fill all pixels with
+        keep_channels : bool, optional
 
-            Default: 0
-        dtype : numpy.dtype, optional
-            The numpy datatype to use
+            ========== =================================
+            Value      Return shape
+            ========== =================================
+            ``False``  (``n_pixels``  x ``n_channels``,)
+            ``True``   (``n_pixels``, ``n_channels``)
+            ========== =================================
 
-            Default: ``np.float``
+            Default: ``False``
 
         Returns
         -------
-        blank_image : :class:`AbstractImage`
-            A blank image of the requested size
+        (shape given by keep_channels) ndarray
+            Flattened representation of this image, containing all pixel
+            and channel information
         """
-        if dtype is None:
-            dtype = np.float
-        pixels = np.ones(shape, dtype=dtype) * fill
-        return cls(pixels)
+        if keep_channels:
+            return self.pixels.reshape([-1, self.n_channels])
+        else:
+            return self.pixels.flatten()
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def from_vector_inplace(self, vector):
+        r"""
+        Takes a flattened vector and update this image by
+        reshaping the vector to the correct dimensions.
+
+        Parameters
+        ----------
+        vector : (``n_pixels``,) np.bool ndarray
+            A vector vector of all the pixels of a BooleanImage.
+
+
+        Notes
+        -----
+        For BooleanNDImage's this is rebuilding a boolean image **itself**
+        from boolean values. The mask is in no way interpreted in performing
+        the operation, in contrast to MaskedNDImage, where only the masked
+        region is used in from_vector{_inplace}() and as_vector().
+        """
+        self.pixels = vector.reshape(self.pixels.shape)
+
+    def _view(self, figure_id=None, new_figure=False, channel=None, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -133,523 +256,256 @@ class AbstractImage(Vectorizable, Landmarkable, Viewable):
         DimensionalityError
             If Image is not 2D
         """
-        return ImageViewer(figure_id, new_figure,
-                           self.n_dims, self.pixels).render(**kwargs)
+        pixels_to_view = self.pixels
+        return ImageViewer(figure_id, new_figure, self.n_dims,
+                           pixels_to_view, channel=channel).render(**kwargs)
 
-    def copy(self):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=True):
         r"""
-        Return a copy of this image by instantiating an image with the same
-        pixels
-
-        Returns
-        -------
-        image_copy :
-            A copy of the image
-        """
-        return type(self)(self.pixels)
-
-    def from_vector(self, flattened):
-        r"""
-        Takes a flattened vector and returns a new image formed by reshaping
-        the vector to the correct pixels.
-
-        Parameters
-        ----------
-        flattened : (``n_pixels``,) ndarray
-            A flattened vector of all pixels of an abstract image
-
-        Returns
-        -------
-        image : :class:`AbstractImage`
-            A new image built from the vector
-        """
-        return type(self)(flattened.reshape(self.shape))
-
-    def crop(self, *slice_args):
-        r"""
-        Crops the image using the given slice objects. Expects
-        ``len(args) == self.n_dims``.
-
-        Also returns the
-        :class:`Translation <pybug.transform.affine.Translation>` that would
-        translate the cropped portion back in to the original reference
-        position.
-
-        .. note::
-            Only 2D and 3D images are currently supported.
+        Crops this image using the given minimum and maximum indices.
+        Landmarks are correctly adjusted so they maintain their position
+        relative to the newly cropped image.
 
         Parameters
         -----------
-        slice_args: The slices to take over each axis
-        slice_args: List of slice objects
+        min_indices: (n_dims, ) ndarray
+            The minimum index over each dimension
+
+        max_indices: (n_dims, ) ndarray
+            The maximum index over each dimension
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
 
         Returns
         -------
-        cropped_image : :class:`Image`
-            Cropped portion of the image, including cropped mask.
-        translation : :class:`pybug.transform.affine.Translation`
-            Translation transform that repositions the cropped image in the
-            reference frame of the original.
-        """
-        assert(self.n_dims == len(slice_args))
-        cropped_image = self.pixels[slice_args]
-        translation = np.array([x.start for x in slice_args])
-        return type(self)(cropped_image), Translation(translation)
-
-
-class MaskImage(AbstractImage):
-    r"""
-    A mask image made from binary pixels.
-
-    Parameters
-    -----------
-    mask_data : (M, N) ndarray
-        The pixel values. Are automatically coerced in to boolean values.
-    """
-
-    def __init__(self, mask_data):
-        super(MaskImage, self).__init__(mask_data)
-        self.pixels = self.pixels.astype(np.bool)  # enforce boolean pixels
-
-    @property
-    def n_true(self):
-        r"""
-        The number of ``True`` values in the mask
-
-        :type: int
-
-        """
-        return np.sum(self.pixels)
-
-    @property
-    def n_false(self):
-        r"""
-        The number of ``False`` values in the mask
-
-        :type: int
-        """
-        return self.n_pixels - self.n_true
-
-    @property
-    def true_indices(self):
-        r"""
-        The indices of pixels that are true.
-
-        :type: ndarray
-        """
-        return np.vstack(np.nonzero(self.pixels)).T
-
-    @property
-    def false_indices(self):
-        r"""
-        The indices of pixels that are false.
-
-        :type: ndarray
-        """
-        return np.vstack(np.nonzero(~self.pixels)).T
-
-    def true_bounding_extent(self, boundary=0):
-        r"""
-        Returns the maximum and minimum values along all dimensions that the
-        mask includes.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            A number of pixels that should be added to the extent.
-
-            Default: 0
-
-            .. note::
-                The bounding extent is snapped to not go beyond
-                the edge of the image.
-
-        Returns
-        -------
-        bounding_extent : (``n_dims``, 2) ndarray
-            The bounding extent where
-            ``[k, :] = [min_bounding_dim_k, max_bounding_dim_k]``
-        """
-        mpi = self.true_indices
-        maxes = np.max(mpi, axis=0) + boundary
-        mins = np.min(mpi, axis=0) - boundary
-        # check we don't stray under any edges
-        mins[mins < 0] = 0
-        # check we don't stray over any edges
-        over_image = self.shape - maxes < 0
-        maxes[over_image] = np.array(self.shape)[over_image]
-        return np.vstack((mins, maxes)).T
-
-    def true_bounding_extent_slicer(self, boundary=0):
-        r"""
-        Returns a slice object that can be used to retrieve the bounding
-        extent.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`true_bounding_extent`. The number of
-            pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_extent : slice
-            Bounding extent slice object
-        """
-        extents = self.true_bounding_extent(boundary)
-        return [slice(x[0], x[1]) for x in list(extents)]
-
-    def mask_bounding_extent_meshgrids(self, boundary=0):
-        r"""
-        Returns a list of meshgrids, the ``i`` th item being the meshgrid over
-        the bounding extent of the ``i`` th dimension.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`true_bounding_extent`. The number of
-            pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_extent : list of ndarrays
-            output of ``np.meshgrid``
-        """
-        extents = self.true_bounding_extent(boundary)
-        return np.meshgrid(*[np.arange(*list(x)) for x in list(extents)])
-
-
-class Image(AbstractImage):
-    r"""
-    Represents an 2-dimensional image with a number of channels, of size
-    ``(M, N, C)``. Images can be masked in order to identify a region of
-    interest. All images implicitly have a mask that is defined as the the
-    entire image. Supports construction from a ``PILImage``.
-
-    .. note::
-        ``np.uint8`` pixel data is converted to ``np.float64``
-        and scaled between ``0`` and ``1`` by dividing each pixel by ``255``.
-
-    Parameters
-    ----------
-    image_data :  ndarray or ``PILImage``
-        The pixel data for the image, where the last axis represents the
-        number of channels.
-    mask : (M, N, C) ``np.bool`` ndarray or :class:`MaskImage`, optional
-        A binary array representing the mask. Must be the same
-        shape as the image. Only one mask is supported for an image (so the
-        mask is applied to every channel equally).
-
-        Default: :class:`MaskImage` covering the whole image
-
-    Raises
-    -------
-    ValueError
-        Mask is not the same shape as the image
-    """
-
-    def __init__(self, image_data, mask=None):
-        if not isinstance(image_data, np.ndarray):
-            image_data = np.array(image_data)
-        # Correct for intensity images having no channel
-        if len(image_data.shape) == 2:
-            image_data = image_data[..., np.newaxis]
-
-        # ensure datatype is float [0,1]
-        if image_data.dtype == np.uint8:
-            image_data = image_data.astype(np.float64) / 255
-        elif image_data.dtype != np.float64:
-            # convert to double
-            image_data = image_data.astype(np.float64)
-
-        # now we let super have our data
-        super(Image, self).__init__(image_data)
-
-        if mask is not None:
-            if self.shape != mask.shape:
-                raise ValueError("The mask is not of the same shape as the "
-                                "image")
-            if isinstance(mask, MaskImage):
-                # have a MaskImage object - pull out the mask itself
-                mask = mask.pixels
-            self.mask = MaskImage(mask)
-        else:
-            self.mask = MaskImage(np.ones(self.shape))
-
-    @property
-    def shape(self):
-        r"""
-        Returns the shape of the image
-        (with ``n_channel`` values at each point).
-
-        :type: tuple
-        """
-        return self.pixels.shape[:-1]
-
-    @property
-    def n_channels(self):
-        """
-        The total number of channels.
-
-        :type: int
-        """
-        return self.pixels.shape[-1]
-
-    def as_vector(self, keep_channels=False):
-        r"""
-        Convert image to a vectorized form.
-
-        Parameters
-        ----------
-        keep_channels : bool, optional
-            ========== =================
-            Value      Return shape
-            ========== =================
-            ``True``   (``n_pixels``,``n_channels``)
-            ``False``  (``n_pixels``,)
-            ========== =================
-
-            Default: ``False``
-
-        Returns
-        -------
-        vectorized_image : (shape given by ``keep_channels``) ndarray
-            Vectorized image
-        """
-        if keep_channels:
-            return self.masked_pixels.reshape([-1, self.n_channels])
-        else:
-            return self.masked_pixels.flatten()
-
-    @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, mask=None):
-        r"""
-        Returns a blank image
-
-        Parameters
-        ----------
-        shape : tuple or list
-            The shape of the image
-        fill : int, optional
-            The value to fill all pixels with
-
-            Default: 0
-        mask: (M, N) boolean ndarray or :class:`MaskImage`
-            An optional mask that can be applied.
-
-        Returns
-        -------
-        blank_image : :class:`Image`
-            A new Image of the requested size.
-        """
-        pixels = np.ones(shape + (n_channels,)) * fill
-        return Image(pixels, mask=mask)
-
-    def copy(self):
-        r"""
-        Return a copy of this image by instantiating an image with the same
-        pixel and mask data
-
-        Returns
-        -------
-        copy_image : :class:`Image`
-            A copy of this image
-        """
-        return Image(self.pixels, mask=self.mask)
-
-    @property
-    def masked_pixels(self):
-        r"""
-        Get the pixels covered by the ``True`` values in the mask.
-
-        :type: (``mask.n_true``, ``n_channels``) ndarray
-        """
-        return self.pixels[self.mask.pixels]
-
-    def mask_bounding_pixels(self, boundary=0):
-        r"""
-        Returns the pixels inside the bounding extent of the mask.
-
-        Parameters
-        ----------
-        boundary : int >= 0, optional
-            Passed through to :meth:`mask_bounding_extent_slicer`. The
-            number of pixels that should be added to the extent.
-
-            Default: 0
-
-        Returns
-        -------
-        bounding_pixels : (M, N, C) ndarray
-            Pixels inside the bounding extent of the mask
-        """
-        return self.pixels[self.mask.true_bounding_extent_slicer(boundary)]
-
-    def from_vector(self, flattened, n_channels=-1):
-        r"""
-        Takes a flattened vector and returns a new image formed by reshaping
-        the vector to the correct pixels and channels.
-
-        The ``n_channels`` argument is useful for when we want to add an extra
-        channel to an image but maintain the shape. For example, when
-        calculating the gradient.
-
-        Parameters
-        ----------
-        flattened : (``n_pixels``,)
-            A flattened vector of all pixels and channels of an image.
-        n_channels : int, optional
-            If given, will assume that flattened is the same
-            shape as this image, but with a possibly different number of
-            channels
-
-            Default: -1 (use the existing image channels)
-
-        Returns
-        -------
-        image : :class:`Image`
-            New image of same shape as this image and the number of
-            specified channels.
-        """
-        # This is useful for when we want to add an extra channel to an image
-        # but maintain the shape. For example, when calculating the gradient
-        n_channels = self.n_channels if n_channels == -1 else n_channels
-        # Creates zeros of size (M x N x n_channels)
-        image_data = np.zeros(self.shape + (n_channels,))
-        pixels_per_channel = flattened.reshape((-1, n_channels))
-        mask_array = self.mask.pixels  # the 'pixels' of a MaskImage is the
-        # numpy mask array itself
-        image_data[mask_array] = pixels_per_channel
-        return Image(image_data, mask=mask_array)
-
-    # TODO: can we do this mathematically and consistently ourselves?
-    def as_greyscale(self):
-        r"""
-        Returns a greyscale copy of the image. This uses PIL in order to
-        achieve this and so is only guaranteed to work for 3-channel 2D images.
-        The output image is guaranteed to have 1 channel. If a single channel
-        image is passed in, then this method returns a copy of the image.
-
-        Returns
-        -------
-        greyscale : :class:`Image`
-            A greyscale copy of the image
+        cropped_image : :class:`type(self)`
+            This image, but cropped.
 
         Raises
         ------
-        DimensionalityError
-            Only 2-dimensional greyscale (1-channel) and RGB (3-channel)
-            images are supported.
+        ValueError
+            min_indices and max_indices both have to be of length n_dims.
+            All max_indices must be greater than min_indices.
+
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+
         """
-        if self.n_channels == 1:
-            return Image(self.pixels, self.mask.pixels)
-        if self.n_channels != 3 or self.n_dims != 2:
-            raise DimensionalityError("Trying to perform RGB-> greyscale "
-                                      "conversion on a non-2D-RGB Image.")
+        min_indices = np.floor(min_indices)
+        max_indices = np.ceil(max_indices)
+        if not (min_indices.size == max_indices.size == self.n_dims):
+            raise ValueError("Both min and max indices should be 1D numpy "
+                             "arrays of length n_dims ({})".format(
+                             self.n_dims))
+        elif not np.all(max_indices > min_indices):
+            raise ValueError("All max indices must be greater that the min "
+                             "indices")
+        min_bounded = self.constrain_points_to_bounds(min_indices)
+        max_bounded = self.constrain_points_to_bounds(max_indices)
+        if not constrain_to_boundary and not (
+                np.all(min_bounded == min_indices) or
+                np.all(max_bounded == max_indices)):
+            # points have been constrained and the user didn't want this -
+            raise ImageBoundaryError(min_indices, max_indices,
+                                     min_bounded, max_bounded)
+        # noinspection PyArgumentList
+        slices = [slice(min_i, max_i)
+                  for min_i, max_i in
+                  zip(list(min_bounded), list(max_bounded))]
+        self.pixels = self.pixels[slices]
+        # update all our landmarks
+        lm_translation = Translation(-min_bounded)
+        lm_translation.apply_inplace(self.landmarks)
+        return self
 
-        pil_image = self.as_PILImage()
-        pil_bw_image = pil_image.convert('L')
-        return Image(pil_bw_image, mask=self.mask.pixels)
-
-    def as_PILImage(self):
+    def cropped_copy(self, min_indices, max_indices,
+                     constrain_to_boundary=False):
         r"""
-        Return a PIL copy of the image. Scales the image by ``255`` and
-        converts to ``np.uint8``.
+        Return a cropped copy of this image using the given minimum and
+        maximum indices. Landmarks are correctly adjusted so they maintain
+        their position relative to the newly cropped image.
+
+        Parameters
+        -----------
+        min_indices: (n_dims, ) ndarray
+            The minimum index over each dimension
+
+        max_indices: (n_dims, ) ndarray
+            The maximum index over each dimension
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
 
         Returns
         -------
-        pil_image : ``PILImage``
-            PIL copy of image as ``np.uint8``
+        cropped_image : :class:`type(self)`
+            A new instance of self, but cropped.
+
+
+        Raises
+        ------
+        ValueError
+            min_indices and max_indices both have to be of length n_dims.
+            All max_indices must be greater than min_indices.
+
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
         """
-        return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
+        cropped_image = deepcopy(self)
+        return cropped_image.crop(min_indices, max_indices,
+                                  constrain_to_boundary=constrain_to_boundary)
 
-    def crop(self, *slice_args):
+    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+                          constrain_to_boundary=True):
         r"""
-        Crops the image using the given slice objects. Expects
-        ``len(args) == self.n_dims``. Maintains the cropped portion of the
-        mask. Also returns the
-        :class:`pybug.transform.affine.Translation` that would
-        translate the cropped portion back in to the original reference
-        position.
-
-        .. note::
-            Only 2D and 3D images are currently supported.
+        Crop this image to be bounded just around a set of landmarks
 
         Parameters
         ----------
-        slice_args: The slices to take over each axis
-        slice_args: List of slice objects
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
 
-        Returns
-        -------
-        cropped_image : :class:`Image`:
-            Cropped portion of the image, including cropped mask.
-        translation : :class:`pybug.transform.affine.Translation`
-            Translation transform that repositions the cropped image
-            in the reference frame of the original.
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             all landmarks in the group are used.
+
+            Default: None
+
+        boundary: int, Optional
+            An extra padding to be added all around the landmarks bounds.
+
+            Default: 0
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
         """
-        # crop our image
-        cropped_image, translation = super(Image, self).crop(*slice_args)
-        # crop our mask
-        cropped_mask, mask_translation = self.mask.crop(*slice_args)
-        cropped_image.mask = cropped_mask  # assign the mask
-        # sanity check
-        assert (translation == mask_translation)
-        return cropped_image, translation
-        # assert(self.n_dims == len(slice_args))
-        # cropped_image = self.pixels[slice_args]
-        # cropped_mask = self.mask.pixels[slice_args]
-        # translation = np.array([x.start for x in slice_args])
-        # return (Image(cropped_image, mask=cropped_mask),
-        #         Translation(translation))
+        pc = self.landmarks[group][label].lms
+        min_indices, max_indices = pc.bounds(boundary=boundary)
+        self.crop(min_indices, max_indices,
+                  constrain_to_boundary=constrain_to_boundary)
 
-    # TODO this kwarg could be False for higher perf True for debug
-    # TODO something is fishy about this method, kwarg seems to be making diff
-    # TODO make a unit test for gradient of masked images (inc_masked_pixels)
-    def gradient(self, inc_unmasked_pixels=False):
+    def constrain_points_to_bounds(self, points):
         r"""
-        Returns an Image which is the gradient of this one. In the case of
-        multiple channels, it returns the gradient over each axis over each
-        channel as a flat list.
+        Constrains the points provided to be within the bounds of this
+        image.
 
         Parameters
         ----------
-        inc_unmasked_pixels : bool, optional
-            If ``True``, the gradient is taken over the entire image and not
-            just the masked area.
+
+        points: (d,) ndarray
+            points to be snapped to the image boundaries
 
         Returns
         -------
-        gradient : list of (M, N) ndarrays
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length ``2``.
-            The length of a 2D, 3-channel image, will have length ``6``.
+
+        bounded_points: (d,) ndarray
+            points snapped to not stray outside the image edges
+
         """
-        if inc_unmasked_pixels:
-            gradients = [np.gradient(g) for g in
-                         np.rollaxis(self.pixels, -1)]
-            # Flatten the lists
-            gradients = list(itertools.chain.from_iterable(gradients))
-            # Add an extra axis for broadcasting
-            gradients = [g[..., None] for g in gradients]
-            # Concatenate gradient list into an array (the new_image)
-            new_image = np.concatenate(gradients, axis=-1)
+        bounded_points = points.copy()
+        # check we don't stray under any edges
+        bounded_points[bounded_points < 0] = 0
+        # check we don't stray over any edges
+        shape = np.array(self.shape)
+        over_image = (shape - bounded_points) < 0
+        bounded_points[over_image] = shape[over_image]
+        return bounded_points
+
+    def warp_to(self, template_mask, transform, warp_landmarks=False,
+                interpolator='scipy', **kwargs):
+        r"""
+        Return a copy of this image warped into a different reference space.
+
+        Parameters
+        ----------
+        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+            Defines the shape of the result, and what pixels should be
+            sampled.
+        transform : :class:`pybug.transform.base.Transform`
+            Transform **from the template space back to this image**.
+            Defines, for each True pixel location on the template, which pixel
+            location should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+            Default: ``False``
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        warped_image : type(self)
+            A copy of this image, warped.
+        """
+        from pybug.interpolation import c_interpolation, scipy_interpolation
+        # configure the interpolator we are going to use for the warp
+        if interpolator == 'scipy':
+            _interpolator = scipy_interpolation
+        elif interpolator == 'c':
+            _interpolator = c_interpolation
         else:
-            gradients = [np.gradient(g) for g in np.rollaxis(self.pixels, -1)]
-            gradients = list(itertools.chain.from_iterable(gradients))
-            gradients = [g[..., None] for g in gradients]
-            gradient_array = np.concatenate(gradients, axis=-1)
+            raise ValueError("Don't understand interpolator '{}': needs to "
+                             "be either 'scipy' or 'c'".format(interpolator))
 
-            # Erode the edge of the mask so that the gradients are not
-            # affected by the outlying pixels
-            diamond_structure = diamond(1)
-            mask = binary_erosion(self.mask.pixels, diamond_structure)
+        if self.n_dims != transform.n_dims:
+            raise ValueError(
+                "Trying to warp a {}D image with a {}D transform "
+                "(they must match)".format(self.n_dims, transform.n_dims))
 
-            new_image = np.zeros((self.shape + (len(gradients),)))
-            new_image[mask] = gradient_array[mask]
+        template_points = template_mask.true_indices
+        points_to_sample = transform.apply(template_points).T
+        # we want to sample each channel in turn, returning a vector of sampled
+        # pixels. Store those in a (n_pixels, n_channels) array.
+        sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
+                                             **kwargs)
 
-        return Image(new_image, mask=self.mask)
+        # Set all NaN pixels to 0
+        sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
+        # build a warped version of the image
+        warped_image = self._build_warped_image(template_mask,
+                                                sampled_pixel_values)
+
+        if warp_landmarks:
+            warped_image.landmarks = self.landmarks
+            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+        return warped_image
+
+    def _build_warped_image(self, template_mask, sampled_pixel_values):
+        r"""
+        Builds the warped image from the template mask and
+        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        the usual from_vector_inplace method. All other Image classes share
+        the MaskedNDImage implementation.
+        """
+        raise NotImplementedError

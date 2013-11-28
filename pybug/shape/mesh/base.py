@@ -1,8 +1,9 @@
-from pybug.exceptions import DimensionalityError
+from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh.exceptions import TriFieldError
 from pybug.visualize import TriMeshViewer
 from pybug.shape.mesh.normals import compute_normals
+from scipy.spatial import Delaunay
 
 
 class TriMesh(PointCloud):
@@ -14,14 +15,18 @@ class TriMesh(PointCloud):
     ----------
     points : (N, D) ndarray
         The set coordinates for the mesh.
-    trilist : (M, 3) ndarray
-        The triangle list.
+    trilist : (M, 3) ndarray, optional
+        The triangle list. If None is provided, a Delaunay triangulation of
+        the points will be used instead.
+
+        Default: None
     """
 
-    def __init__(self, points, trilist):
-        #TODO Delaunay triangulate if no trilist added
+    def __init__(self, points, trilist=None):
         #TODO add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points)
+        if trilist is None:
+            trilist = Delaunay(points).simplices
         self.trilist = trilist
         self.trifields = {}
 
@@ -37,6 +42,25 @@ class TriMesh(PointCloud):
                 message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
         message += '\nn_tris: ' + str(self.n_tris)
         return message
+
+    def from_vector(self, flattened):
+        r"""
+        Builds a new :class:`TriMesh` given then ``flattened`` vector.
+        This allows rebuilding pointclouds with the correct number of
+        dimensions from a vector. Note that the trilist will be drawn from
+        self.
+
+        Parameters
+        ----------
+        flattened : (N,) ndarray
+            Vector representing a set of points.
+
+        Returns
+        --------
+        trimesh : :class:`TriMesh`
+            A new trimesh created from the vector with self's trilist.
+        """
+        return TriMesh(flattened.reshape([-1, self.n_dims]), self.trilist)
 
     @property
     def vertex_normals(self):

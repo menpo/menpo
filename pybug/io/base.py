@@ -2,10 +2,12 @@ import abc
 import os
 from glob import glob
 import sys
+import collections
 
 
 def auto_import(pattern, meshes=True, images=True,
-                include_texture_images=False):
+                include_texture_images=False,
+                max_meshes=None, max_images=None):
     r"""
     Smart data importer. Will match all files found on the glob pattern
     passed in, build the relevant importers, and then call ``build()`` on them
@@ -33,6 +35,16 @@ def auto_import(pattern, meshes=True, images=True,
         If this is the case, it won't import these images separately.
 
         Default: ``False``
+    max_meshes: positive integer, optional
+        If not ``None``, only import the first max_mesh meshes found. Else,
+        import all.
+
+        Default: ``None``
+    max_images: positive integer, optional
+        If not ``None``, only import the first max_images found. Else,
+        import all.
+
+        Default: ``None``
 
     Examples
     --------
@@ -54,10 +66,14 @@ def auto_import(pattern, meshes=True, images=True,
     mesh_objects, image_objects = [], []
     if meshes:
         mesh_paths = _glob_matching_extension(pattern, mesh_types)
+        if max_meshes:
+            mesh_paths = mesh_paths[:max_meshes]
         mesh_objects, mesh_importers = _multi_mesh_import(mesh_paths,
                                                           keep_importers=True)
     if images:
-        image_files = _glob_matching_extension(pattern, image_types)
+        image_files = _glob_matching_extension(pattern, all_image_types)
+        if max_images:
+            image_files = image_files[:max_images]
         if meshes and not include_texture_images:
             texture_paths = [m.texture_path for m in mesh_importers
                              if m.texture_path is not None]
@@ -89,7 +105,7 @@ def _multi_image_import(image_filepaths, keep_importers=False):
         ``True`` then the importer for each image is returned as a tuple of s
         lists.
     """
-    return _multi_import(image_filepaths, image_types, keep_importers)
+    return _multi_import(image_filepaths, all_image_types, keep_importers)
 
 
 def _multi_mesh_import(mesh_filepaths, keep_importers=False):
@@ -315,7 +331,13 @@ def _multi_import(filepaths, extensions_map, keep_importers=False):
 
     objects = []
     for i, importer in enumerate(importers):
-        objects.append(importer.build())
+        built_objects = importer.build()
+        if isinstance(built_objects, collections.Iterable):
+            for x in built_objects:
+                x.filepath = importer.filepath  # save the filepath
+        else:
+            built_objects.filepath = importer.filepath
+        objects.append(built_objects)
 
         # Cheeky carriage return so we print on the same line
         sys.stdout.write('\rCreating importer for %s (%d of %d)'
@@ -429,4 +451,4 @@ class Importer(object):
         pass
 
 # Avoid circular imports
-from pybug.io.extensions import mesh_types, image_types
+from pybug.io.extensions import mesh_types, all_image_types

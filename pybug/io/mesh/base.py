@@ -10,11 +10,11 @@ from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
 from scipy.spatial import Delaunay
 import numpy as np
-import re
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
-                               output_filetype=None, export_flags=None):
+                               output_filetype=None, export_flags=None,
+                               meshlab_command='meshlabserver'):
     r"""
     Interface to `meshlabserver` to perform prepossessing on meshes before
     import. Returns a path to the result of the meshlabserver call, ready for
@@ -41,6 +41,10 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
         Flags passed to the ``-om`` parameter. Allows for choosing
         what aspects of the model will be exported (normals,
         texture coords etc)
+    meshlab_command : string, optional
+        The meshlabserver executable to run.
+
+        Default: 'meshlabserver'
 
     Returns
     -------
@@ -56,7 +60,7 @@ def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
     else:
         output_filename = filename
     output_path = path.join(output_dir, output_filename)
-    command = ('meshlabserver -i ' + file_path + ' -o ' +
+    command = (meshlab_command + ' -i ' + file_path + ' -o ' +
                output_path)
     if script_path is not None:
         command += ' -s ' + script_path
@@ -258,9 +262,9 @@ class MeshImporter(Importer):
                 new_mesh = TriMesh(mesh.points, mesh.trilist)
 
             if self.landmark_importer is not None:
-                label, l_dict = self.landmark_importer.build(
+                lmark_group = self.landmark_importer.build(
                     scale_factors=np.max(mesh.points))
-                new_mesh.add_landmark_set(label, l_dict)
+                new_mesh.landmarks[lmark_group.group_label] = lmark_group
 
             meshes.append(new_mesh)
 
@@ -295,6 +299,11 @@ class WRLImporter(MeshImporter):
     Uses a fork of PyVRML97 to do (hopefully) more robust parsing of VRML
     files. It should be noted that, unfortunately, this is a lot slower than
     the C++-based assimp importer.
+
+    VRML allows non-triangular polygons, whilst our importer pipeline doesn't.
+    Therefore, any non-triangular polygons are dropped. VRML also allows
+    separate texture coordinate indices, which we do not support. To have
+    a better formed mesh, try exporting the WRL as OBJ from Meshlab.
 
     Parameters
     ----------
@@ -345,12 +354,15 @@ class WRLImporter(MeshImporter):
 
         self.mesh.points = shape.geometry.coord.point
         self.mesh.tcoords = shape.geometry.texCoord.point
-        # Drop the -1 delimiters
-        self.mesh.trilist = shape.geometry.coordIndex.reshape([-1, 4])[:, :3]
+
+        self.mesh.trilist = self._filter_non_triangular_polygons(
+                shape.geometry.coordIndex)
+
         # See if we have a seperate texture index, if not just create an empty
         # array
         try:
-            tex_trilist = shape.geometry.texCoordIndex.reshape([-1, 4])[:, :3]
+            tex_trilist = self._filter_non_triangular_polygons(
+                shape.geometry.texCoordIndex)
         except AttributeError:
             tex_trilist = np.array([-1])
 
@@ -370,179 +382,20 @@ class WRLImporter(MeshImporter):
         # Assumes a single mesh per file
         self.meshes = [self.mesh]
 
+    def _filter_non_triangular_polygons(self, coord_list):
+        # VRML allows arbitrary polygon coordinates, whilst we only support
+        # triangles. They are delimited by -1, so we split on them and filter
+        # out non-triangle polygons
+        index_list = coord_list
+        index_list = np.split(index_list, np.where(index_list == -1)[0])
+        # The first polygon is missing the -1 at the beginning
+        # Have to cast to int32 because that's the default, but on 64bit
+        # machines a single number defaults to int64
+        np.insert(index_list[0], 0, np.array([-1], dtype=np.int32))
+        # Filter out those coordinates that are not triangles
+        index_list = [i for i in index_list if len(i[1:]) == 3]
+        # Convert to 2D array
+        index_list = np.array(index_list)
+        # Slice of -1 delimiters
+        return index_list[:, 1:]
 
-class FIMImporter(MeshImporter):
-    r"""
-    Allows importing floating point images as meshes.
-    This reads in the shape in to 3 channels and then triangulates the
-    ``x`` and ``y`` coordinates to create a surface.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the mesh.
-    """
-
-    def __init__(self, filepath):
-        # Setup class before super class call
-        super(FIMImporter, self).__init__(filepath)
-
-    def _parse_format(self):
-        r"""
-        Read the file and parse it as necessary. Since the data lies on a grid
-        we can triangulate the 2D coordinates to get a valid triangulation. One
-        mesh is assumed per file.
-        """
-        with open(self.filepath, 'rb') as f:
-            size = np.fromfile(f, dtype=np.uint32, count=3)
-            data = np.fromfile(f, dtype=np.float32, count=np.product(size))
-            data = data.reshape([size[0] * size[1], size[2]])
-
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
-        self.mesh.points = data
-        # Triangulate just the 2D coordinates, as this is a surface
-        self.mesh.trilist = Delaunay(data[:, :2]).simplices
-
-        # Impossible to know where the texture is in this format
-        self.relative_texture_path = None
-        # Assumes a single mesh per file
-        self.meshes = [self.mesh]
-
-
-class BNTImporter(MeshImporter):
-    r"""
-    Allows importing the BNT file format from the bosphorus dataset.
-    This reads in the 5 channels (3D coordinates and texture coordinates),
-    splits them appropriately and then triangulates the ``x`` and ``y``
-    coordinates to create a surface. The texture path is also given in the file
-    format.
-
-    The z-min plane is removed and the 2D coordinates are triangulated to form
-    the mesh.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the mesh.
-    """
-
-    def __init__(self, filepath):
-        # Setup class before super class call
-        super(BNTImporter, self).__init__(filepath)
-
-    def _parse_format(self):
-        r"""
-        Read the file in and parse appropriately. Includes reading the texture
-        path. Remove the z-min plane and triangulate the 2D gridded
-        coordinates. A single mesh is assumed per file.
-        """
-        with open(self.filepath, 'rb') as f:
-            # Currently these are unused, but they are in the format
-            # Could possibly store as metadata?
-            n_rows = np.fromfile(f, dtype=np.uint16, count=1)
-            n_cols = np.fromfile(f, dtype=np.uint16, count=1)
-            z_min = np.fromfile(f, dtype=np.float64, count=1)
-
-            # Get integers and convert to valid string
-            image_path_len = np.fromfile(f, dtype=np.uint16, count=1)
-            texture_path = np.fromfile(f, dtype=np.uint8, count=image_path_len)
-            texture_path = ''.join(map(chr, texture_path))
-
-            # Get data and reshape (reshape in an odd order due to Matlab's
-            # Fortran ordering). First three columns are 3D coordinates
-            # and last two are 2D texture coordinates
-            coords_len = np.fromfile(f, dtype=np.uint32, count=1)
-            data = np.fromfile(f, dtype=np.float64, count=coords_len * 5.0)
-            data = data.reshape([5, coords_len/5.0]).T
-
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
-        # Get the 3D coordinates
-        points = data[:, :3]
-        # We want to remove the z-min plane because otherwise the mesh is not
-        # renderable. We assume that if any point has a z-coordinate of the
-        # z-min value then the whole point is worthless, so we drop it.
-        valid_indices = points[:, 2] != z_min
-        points = points[valid_indices, :]
-        self.mesh.points = points
-
-        # Apparently the texture coordinates are upside down?
-        self.mesh.tcoords = np.flipud(data[:, -2:])
-        # We also filter the texture coordinate by the valid points. Because
-        # the mesh is actually laid out as an image, each point has one
-        # texture coordinate, so this mapping is valid.
-        self.mesh.tcoords = self.mesh.tcoords[valid_indices]
-
-        # Triangulate just the 2D coordinates, as this is a surface
-        self.mesh.trilist = Delaunay(points[:, :2]).simplices
-
-        self.relative_texture_path = texture_path
-        # Assumes a single mesh per file
-        self.meshes = [self.mesh]
-
-
-class ABSImporter(MeshImporter):
-    r"""
-    Allows importing the ABS file format from the FRGC dataset.
-    This file format also includes a mask that we don't currently expose.
-
-    The z-min value is stripped from the mesh to make it renderable. We are
-    currently unable to texture these meshes as we don't have texture
-    coordinates.
-
-    Parameters
-    ----------
-    filepath : string
-        Absolute filepath of the mesh.
-    """
-
-    def __init__(self, filepath):
-        # Setup class before super class call
-        super(ABSImporter, self).__init__(filepath)
-
-    def _parse_format(self):
-        r"""
-        Read in the file and remove the z-min. Triangulate the 2D gridded
-        coordinates to create a valid triangulation.
-        """
-        with open(self.filepath, 'r') as f:
-            # Currently these are unused, but they are in the format
-            # Could possibly store as metadata?
-            # Assume first result for regexes
-            re_rows = re.compile(u'([0-9]+) rows')
-            n_rows = int(re_rows.findall(f.readline())[0])
-            re_cols = re.compile(u'([0-9]+) columns')
-            n_cols = int(re_cols.findall(f.readline())[0])
-
-        # Currently this also loads the mask, which we don't use
-        # The mask is located at
-        #   >>> image_data[:, 0]
-        image_data = np.loadtxt(self.filepath, skiprows=3, unpack=True)
-
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
-        # Get the 3D coordinates
-        points = np.hstack([image_data[:, 1][..., None],
-                            image_data[:, 2][..., None],
-                            image_data[:, 3][..., None]])
-        # We want to remove the z-min plane because otherwise the mesh is not
-        # renderable. We assume that if any point has a z-coordinate of the
-        # z-min value then the whole point is worthless, so we drop it.
-        valid_indices = points[:, 2] != np.min(points[:, 2])
-        points = points[valid_indices, :]
-        self.mesh.points = points
-
-        # Triangulate just the 2D coordinates, as this is a surface
-        self.mesh.trilist = Delaunay(points[:, :2]).simplices
-
-        # TODO: Although texture exist for this dataset, there is no texture
-        # coordinate set, so we can't currently use them
-        self.mesh.tcoords = []
-
-        self.relative_texture_path = None
-        # Assumes a single mesh per file
-        self.meshes = [self.mesh]
