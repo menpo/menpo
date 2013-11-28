@@ -1,6 +1,6 @@
 from pybug.image.masked import MaskedNDImage
 import pybug.features as fc
-import numpy as np
+from pybug.visualize.base import ImageViewer
 
 
 class FeatureNDImage(MaskedNDImage):
@@ -79,10 +79,76 @@ class HOG2DImage(FeatureNDImage):
                        'window_step_unit': window_step_unit,
                        'padding': padding,
                        'verbose': verbose}
-        descriptors, window_centres = fc.hog(image_data, **self.params)
-        super(HOG2DImage, self).__init__(descriptors, mask=mask)
+        hog, window_centres = fc.hog(image_data, **self.params)
+        super(HOG2DImage, self).__init__(hog, mask=mask)
         self.window_centres = window_centres
+        self.mask = self.mask()
 
     @classmethod
     def blank(cls):
         pass
+
+    def _view(self, figure_id=None, new_figure=False, channel=None,
+              masked=True, vector=True, block_size=None, num_bins=None,
+              **kwargs):
+        r"""
+        View the image using the default image viewer. Currently only
+        supports the rendering of 2D images.
+
+        Returns
+        -------
+        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
+            The viewer the image is being shown within
+
+        Raises
+        ------
+        DimensionalityError
+            If Image is not 2D
+        """
+        pixels_to_view = self.pixels
+        if vector:
+            channel = 1  # Vectorized images always have 1 channel
+            if block_size is None:
+                block_size = self.params['block_size']
+            if num_bins is None:
+                num_bins = self.params['num_bins']
+            hog_vector_image = fc.hog_vector_image(self.pixels,
+                                                   block_size=block_size,
+                                                   num_bins=num_bins)
+            pixels_to_view = hog_vector_image
+        mask = None
+        if masked:
+            mask = self.mask.mask
+        return ImageViewer(figure_id, new_figure, self.n_dims,
+                           pixels_to_view, channel=channel,
+                           mask=mask).render(**kwargs)
+
+    def __str__(self):
+        header = (
+            '{} 2D HOGImage with {} channels. '
+            'Attached mask {:.1%} true'.format(self._str_shape,
+                                               self.n_channels,
+                                               self.mask.proportion_true))
+        info = str(self.params)
+        return '\n'.join([header, info])
+#void HOG::print_information() {
+#	cout << endl << "HOG options" << endl << "-----------" << endl;
+#	if (this->method==1) {
+#		cout << "Method of Dalal & Triggs" << endl;
+#		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
+#		cout << "Block = " << this->blockHeightAndWidthInCells << "x" << this->blockHeightAndWidthInCells << " cells" << endl;
+#		if (this->enableSignedGradients == true)
+#			cout << this->numberOfOrientationBins << " orientation bins and signed gradients" << endl;
+#		else
+#			cout << this->numberOfOrientationBins << " orientation bins and unsigned gradients" << endl;
+#		cout << "L2-norm clipped at " << this->l2normClipping << endl;
+#		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
+#		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
+#	}
+#	else {
+#		cout << "Method of Zhu & Ramanan" << endl;
+#		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
+#		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
+#		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
+#	}
+#}
