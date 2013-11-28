@@ -14,8 +14,8 @@ from scipy.misc import imrotate
 # -> padding : boolean to enable or disable padding
 #
 # HOG-Related Options:
-# -> type : 'dense' or 'sparse', in the sparse case, the window is the whole image
-# -> method : 'dalaltriggs' or 'zhuramanan', the computation method
+# -> method : 'dense' or 'sparse', in the sparse case, the window is the whole image
+# -> algorithm : 'dalaltriggs' or 'zhuramanan', the computation method
 # -> num_bins : the number of orientation bins
 # -> cell_size : the height and width of the rectangular cell in pixels
 # -> block_size : the height and width of the rectangular block
@@ -33,16 +33,16 @@ from scipy.misc import imrotate
 #
 
 
-def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
+def hog(image, method='dense', algorithm='dalaltriggs', num_bins=9, cell_size=8,
         block_size=2, signed_gradient=True, l2_norm_clip=0.2,
         window_height=1, window_width=1, window_unit='blocks',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
 
     # Parse options
-    if type not in ['dense', 'sparse']:
-        raise ValueError("Type must be either dense or sparse.")
-    if type is 'dense':
+    if method not in ['dense', 'sparse']:
+        raise ValueError("Method must be either dense or sparse.")
+    if method is 'dense':
         if window_height <= 0:
             raise ValueError("Window height must be > 0.")
         if window_width <= 0:
@@ -55,8 +55,8 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
             raise ValueError("Vertical window step must be > 0.")
         if window_step_unit not in ['pixels', 'cells']:
             raise ValueError("Window step unit must be either pixels or cells.")
-    if method not in ['dalaltriggs', 'zhuramanan']:
-        raise ValueError("Method must be either dalaltriggs or zhuramanan.")
+    if algorithm not in ['dalaltriggs', 'zhuramanan']:
+        raise ValueError("Algorithm must be either dalaltriggs or zhuramanan.")
     if num_bins <= 0:
         raise ValueError("Number of orientation bins must be > 0.")
     if cell_size <= 0:
@@ -71,17 +71,17 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
     if image.shape[2] == 3:
         image *= 255.
     elif image.shape[2] == 1:
-        if method == 'dalaltriggs':
+        if algorithm == 'dalaltriggs':
             image = image
-        elif method == 'zhuramanan':
+        elif algorithm == 'zhuramanan':
             image *= 255.
             image = np.tile(image, [1, 1, 3])
 
     # Dense case
-    if type == 'dense':
+    if method == 'dense':
         # Create iterator
-        if method == 'dalaltriggs':
-            method = 1
+        if algorithm == 'dalaltriggs':
+            algorithm = 1
             if window_unit == 'blocks':
                 block_in_pixels = cell_size * block_size
                 window_height = np.uint32(window_height * block_in_pixels)
@@ -89,8 +89,8 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
             if window_step_unit == 'cells':
                 window_step_vertical = np.uint32(window_step_vertical * cell_size)
                 window_step_horizontal = np.uint32(window_step_horizontal * cell_size)
-        elif method == 'zhuramanan':
-            method = 2
+        elif algorithm == 'zhuramanan':
+            algorithm = 2
             if window_unit == 'blocks':
                 block_in_pixels = 3*cell_size
                 window_height = np.uint32(window_height * block_in_pixels)
@@ -104,25 +104,25 @@ def hog(image, type='dense', method='dalaltriggs', num_bins=9, cell_size=8,
         if verbose:
             print iterator
         # Compute HOG
-        output_image, windows_centers = iterator.HOG(method, num_bins, cell_size, block_size, signed_gradient,
+        output_image, windows_centers = iterator.HOG(algorithm, num_bins, cell_size, block_size, signed_gradient,
                                                      l2_norm_clip, verbose)
         # Destroy iterator and return
         del iterator
         return np.ascontiguousarray(output_image), np.ascontiguousarray(windows_centers)
     # Sparse case
-    elif type == 'sparse':
+    elif method == 'sparse':
         # Create iterator
-        if method == 'dalaltriggs':
-            method = 1
+        if algorithm == 'dalaltriggs':
+            algorithm = 1
             window_size = cell_size * block_size
             step = cell_size
         else:
-            method = 2
+            algorithm = 2
             window_size = 3*cell_size
             step = cell_size
         iterator = CppImageWindowIterator(image, window_size, window_size, step, step, False)
         # Compute HOG
-        output_image, windows_centers = iterator.HOG(method, num_bins, cell_size, block_size, signed_gradient,
+        output_image, windows_centers = iterator.HOG(algorithm, num_bins, cell_size, block_size, signed_gradient,
                                                      l2_norm_clip, verbose)
         # Destroy iterator and return
         del iterator
