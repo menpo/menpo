@@ -42,34 +42,10 @@ HOG::~HOG() {
 }
 
 
-void HOG::print_information() {
-	cout << endl << "HOG options" << endl << "-----------" << endl;
-	if (this->method==1) {
-		cout << "Method of Dalal & Triggs" << endl;
-		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
-		cout << "Block = " << this->blockHeightAndWidthInCells << "x" << this->blockHeightAndWidthInCells << " cells" << endl;
-		if (this->enableSignedGradients == true)
-			cout << this->numberOfOrientationBins << " orientation bins and signed gradients" << endl;
-		else
-			cout << this->numberOfOrientationBins << " orientation bins and unsigned gradients" << endl;
-		cout << "L2-norm clipped at " << this->l2normClipping << endl;
-		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
-		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
-	}
-	else {
-		cout << "Method of Zhu & Ramanan" << endl;
-		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
-		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
-		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
-	}
-}
-
-
 void HOG::apply(double *windowImage, bool imageIsGrayscale, double *descriptorVector) {
 	if (this->method == 1)
 		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
 	else
-		//ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, descriptorMatrix);
 		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, descriptorVector);
 }
 

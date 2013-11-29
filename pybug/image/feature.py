@@ -2,6 +2,7 @@ from pybug.image.masked import MaskedNDImage
 import pybug.features as fc
 from pybug.visualize.base import ImageViewer
 import numpy as np
+import math
 
 
 class FeatureNDImage(MaskedNDImage):
@@ -58,14 +59,14 @@ class HOG2DImage(FeatureNDImage):
     ValueError
         Mask is not the same shape as the image
     """
-    def __init__(self, image_data, mask=None, method='dense',
+    def __init__(self, image_data, mask=None, mode='dense',
                  algorithm='dalaltriggs', num_bins=9, cell_size=8,
                  block_size=2, signed_gradient=True, l2_norm_clip=0.2,
                  window_height=1, window_width=1, window_unit='blocks',
                  window_step_vertical=1, window_step_horizontal=1,
                  window_step_unit='pixels', padding=True, verbose=False
                  ):
-        self.params = {'method': method,
+        self.params = {'mode': mode,
                        'algorithm': algorithm,
                        'num_bins': num_bins,
                        'cell_size': cell_size,
@@ -79,8 +80,27 @@ class HOG2DImage(FeatureNDImage):
                        'window_step_horizontal': window_step_horizontal,
                        'window_step_unit': window_step_unit,
                        'padding': padding,
-                       'verbose': verbose}
-        hog, window_centres = fc.hog(image_data, **self.params)
+                       'verbose': verbose,
+                       'original_image_height': image_data.shape[0],
+                       'original_image_width': image_data.shape[1],
+                       'original_image_channels': image_data.shape[2]}
+        #hog, window_centres = fc.hog(image_data, **self.params)
+        hog, window_centres = fc.hog(image_data,
+                                     self.params['mode'],
+                                     self.params['algorithm'],
+                                     self.params['num_bins'],
+                                     self.params['cell_size'],
+                                     self.params['block_size'],
+                                     self.params['signed_gradient'],
+                                     self.params['l2_norm_clip'],
+                                     self.params['window_height'],
+                                     self.params['window_width'],
+                                     self.params['window_unit'],
+                                     self.params['window_step_vertical'],
+                                     self.params['window_step_horizontal'],
+                                     self.params['window_step_unit'],
+                                     self.params['padding'],
+                                     self.params['verbose'])
         if mask is not None:
             if not isinstance(mask, np.ndarray):
                 # assume that the mask is a boolean image then!
@@ -133,29 +153,117 @@ class HOG2DImage(FeatureNDImage):
     def __str__(self):
         header = (
             '{} 2D HOGImage with {} channels. '
-            'Attached mask {:.1%} true'.format(self._str_shape,
-                                               self.n_channels,
-                                               self.mask.proportion_true))
-        info = str(self.params)
-        return '\n'.join([header, info])
-#void HOG::print_information() {
-#	cout << endl << "HOG options" << endl << "-----------" << endl;
-#	if (this->method==1) {
-#		cout << "Method of Dalal & Triggs" << endl;
-#		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
-#		cout << "Block = " << this->blockHeightAndWidthInCells << "x" << this->blockHeightAndWidthInCells << " cells" << endl;
-#		if (this->enableSignedGradients == true)
-#			cout << this->numberOfOrientationBins << " orientation bins and signed gradients" << endl;
-#		else
-#			cout << this->numberOfOrientationBins << " orientation bins and unsigned gradients" << endl;
-#		cout << "L2-norm clipped at " << this->l2normClipping << endl;
-#		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
-#		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
-#	}
-#	else {
-#		cout << "Method of Zhu & Ramanan" << endl;
-#		cout << "Cell = " << this->cellHeightAndWidthInPixels << "x" << this->cellHeightAndWidthInPixels << " pixels" << endl;
-#		cout << "Number of blocks per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << endl;
-#		cout << "Descriptor length per window = " << this->numberOfBlocksPerWindowVertically << "x" << this->numberOfBlocksPerWindowHorizontally << "x" << this->descriptorLengthPerBlock << " = " << this->descriptorLengthPerWindow << endl;
-#	}
-#}
+            'Attached mask {:.1%} true.'.format(self._str_shape,
+                                                self.n_channels,
+                                                self.mask.proportion_true))
+        info_str = 'Mode is %s.\nWindow Iterator:\n  - Input image is ' \
+                   '%dW x %dH with %d channels.\n' % \
+                   (self.params['mode'], self.params['original_image_width'],
+                    self.params['original_image_height'],
+                    self.params['original_image_channels'])
+        cell_pixels = self.params['cell_size']
+        block_pixels = self.params['block_size'] * cell_pixels
+        if self.params['mode'] == 'dense':
+            if self.params['window_unit'] == 'blocks':
+                window_height = self.params['window_height'] * block_pixels
+                window_width = self.params['window_width'] * block_pixels
+            else:
+                window_height = self.params['window_height']
+                window_width = self.params['window_width']
+            if self.params['window_step_unit'] == 'cells':
+                window_step_vertical = \
+                    self.params['window_step_vertical'] * cell_pixels
+                window_step_horizontal = \
+                    self.params['window_step_horizontal'] * cell_pixels
+            else:
+                window_step_vertical = self.params['window_step_vertical']
+                window_step_horizontal = self.params['window_step_horizontal']
+            pad_flag = self.params['padding']
+        else:
+            if self.params['algorithm'] == 'dalaltriggs':
+                window_height = block_pixels
+                window_width = block_pixels
+                window_step_vertical = cell_pixels
+                window_step_horizontal = cell_pixels
+            else:
+                window_height = 3*cell_pixels
+                window_width = 3*cell_pixels
+                window_step_vertical = cell_pixels
+                window_step_horizontal = cell_pixels
+            pad_flag = False
+        info_str = '%s  - Window of size %dW x %dH and step (%dW,%dH).\n' % \
+                   (info_str, window_width, window_height,
+                    window_step_horizontal, window_step_vertical)
+        if pad_flag:
+            info_str = '%s  - Padding is enabled.\n' % info_str
+        else:
+            info_str = '%s  - Padding is disabled.\n' % info_str
+        info_str = '%s  - Number of windows is %dW x %dH.\n' % \
+                   (info_str, self.pixels.shape[1], self.pixels.shape[0])
+        if self.params['algorithm'] == 'dalaltriggs':
+            info_str = '%sHOG features:\n  - Algorithm of Dalal & Triggs.\n' \
+                       % info_str
+            info_str = '%s  - Cell is %dx%d pixels.\n' % \
+                           (info_str, self.params['cell_size'],
+                            self.params['cell_size'])
+            info_str = '%s  - Block is %dx%d cells.\n' % \
+                       (info_str, self.params['block_size'],
+                        self.params['block_size'])
+            if self.params['signed_gradient']:
+                info_str = '%s  - %d orientation bins and signed angles.\n' \
+                           % (info_str, self.params['num_bins'])
+            else:
+                info_str = '%s  - %d orientation bins and unsigned angles.\n' \
+                           % (info_str, self.params['num_bins'])
+            info_str = '%s  - L2-norm clipped at %.1f\n' \
+                       % (info_str, self.params['l2_norm_clip'])
+            descriptor_length_per_block = \
+                self.params['block_size'] * self.params['block_size'] * \
+                self.params['num_bins']
+            hist1 = 2 + math.ceil(-0.5 + window_height/cell_pixels)
+            hist2 = 2 + math.ceil(-0.5 + window_width/cell_pixels)
+            descriptor_length_per_window = \
+                (hist1-2-(self.params['block_size']-1)) * \
+                (hist2-2-(self.params['block_size']-1)) * \
+                descriptor_length_per_block
+            num_blocks_per_window_vertically = \
+                hist1-2-(self.params['block_size']-1)
+            num_blocks_per_window_horizontally = \
+                hist2-2-(self.params['block_size']-1)
+            info_str = '%s  - Number of blocks per window = %dW x %dH.\n' \
+                       % (info_str, num_blocks_per_window_horizontally,
+                          num_blocks_per_window_vertically)
+            info_str = '%s  - Descriptor length per window = ' \
+                       '%dW x %dH x %d = %d x 1.\n' \
+                       % (info_str, num_blocks_per_window_horizontally,
+                          num_blocks_per_window_vertically,
+                          descriptor_length_per_block,
+                          descriptor_length_per_window)
+        else:
+            info_str = '%sHOG features:\n  - Algorithm of Zhu & Ramanan.\n' \
+                       % info_str
+            info_str = '%s  - Cell is %dx%d pixels.\n' % \
+                           (info_str, self.params['cell_size'],
+                            self.params['cell_size'])
+            info_str = '%s  - Block is %dx%d cells.\n' % \
+                       (info_str, self.params['block_size'],
+                        self.params['block_size'])
+            hist1 = round(window_height/cell_pixels)
+            hist2 = round(window_width/cell_pixels)
+            num_blocks_per_window_vertically = max(hist1-2, 0)
+            num_blocks_per_window_horizontally = max(hist2-2, 0)
+            descriptor_length_per_block = 27+4
+            descriptor_length_per_window = \
+                num_blocks_per_window_horizontally * \
+                num_blocks_per_window_vertically * \
+                descriptor_length_per_block
+            info_str = '%s  - Number of blocks per window = %dW x %dH.\n' \
+                       % (info_str, num_blocks_per_window_horizontally,
+                          num_blocks_per_window_vertically)
+            info_str = '%s  - Descriptor length per window = ' \
+                       '%dW x %dH x %d = %d x 1.\n' \
+                       % (info_str, num_blocks_per_window_horizontally,
+                          num_blocks_per_window_vertically,
+                          descriptor_length_per_block,
+                          descriptor_length_per_window)
+        return '\n'.join([header, info_str])

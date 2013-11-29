@@ -14,7 +14,6 @@ public:
 			unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale);
 	virtual ~ImageWindowIterator();
 	void apply(double *outputImage, int *windowsCenters, WindowFeature *windowFeature);
-	void print_information();
 private:
 	double *_image;
 };

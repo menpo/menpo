@@ -37,19 +37,6 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 ImageWindowIterator::~ImageWindowIterator() {
 }
 
-void ImageWindowIterator::print_information() {
-	std::cout << std::endl << "Image Window Iterator" << std::endl << "---------------------" << std::endl;
-    if (_imageIsGrayscale)
-    	std::cout << "Input image is GRAY with size " << _imageHeight << "x" << _imageWidth << std::endl;
-    else
-    	std::cout << std::endl << "Image is RGB with size " << _imageHeight << "x" << _imageWidth << std::endl;
-    std::cout << "Window of size " << _windowHeight << "x" << _windowWidth << " and step (" << _windowStepHorizontal << "," << _windowStepVertical << ")" << std::endl;
-    if (_enablePadding)
-    	std::cout << "Padding is enabled" << std::endl;
-    else
-    	std::cout << "Padding is disabled" << std::endl;
-    std::cout << "Number of windows is " << _numberOfWindowsVertically << "x" << _numberOfWindowsHorizontally << std::endl;
-}
 
 void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, WindowFeature *windowFeature) {
 	int rowCenter, rowFrom, rowTo, columnCenter, columnFrom, columnTo, i, j, k;
