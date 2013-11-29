@@ -131,21 +131,26 @@ class HOG2DImage(FeatureNDImage):
         DimensionalityError
             If Image is not 2D
         """
-        pixels_to_view = self.pixels
         if vector:
             channel = 0  # Vectorized images always have 1 channel
             if block_size is None:
                 block_size = self.params['block_size']
             if num_bins is None:
                 num_bins = self.params['num_bins']
-            hog_vector_image = fc.hog_vector_image(self.pixels,
-                                                   block_size=block_size,
-                                                   num_bins=num_bins)
+            hog_vector_image, mask_to_view = fc.hog_vector_image(
+                self.pixels, self.mask.mask,
+                block_size=block_size, num_bins=num_bins)
             pixels_to_view = hog_vector_image[..., None]
-        mask = None
-        if masked:
-            # TODO: make the visualization work for hog vector and mask
-            mask = self.mask.mask
+            if masked:
+                mask = mask_to_view
+            else:
+                mask = None
+        else:
+            pixels_to_view = self.pixels
+            if masked:
+                mask = self.mask.mask
+            else:
+                mask = None
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channel=channel,
                            mask=mask).render(**kwargs)

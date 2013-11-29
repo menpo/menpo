@@ -132,24 +132,30 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9, cell_size
         windows_centers)
 
 
-def hog_vector_image(hog_data, block_size=10, num_bins=9):
+def hog_vector_image(hog_data, mask_data, block_size=10, num_bins=9):
     hog_data = hog_data[:, :, 0:num_bins]
     negative_weights = -hog_data
     scale = np.maximum(hog_data.max(), negative_weights.max())
-    pos = _hog_picture(hog_data, block_size, num_bins) * 255/scale
-    neg = _hog_picture(-hog_data, block_size, num_bins) * 255/scale
+    pos, mask_pos = _hog_picture(hog_data, mask_data, block_size, num_bins)
+    neg, mask_neg = _hog_picture(-hog_data, mask_data, block_size, num_bins)
+    pos = pos * 255/scale
+    neg = neg * 255/scale
     if hog_data.min() < 0:
         hog_image = np.concatenate((pos, neg))
+        mask_image = np.concatenate((mask_pos, mask_neg))
     else:
         hog_image = pos
-    return hog_image
+        mask_image = mask_pos
+    return hog_image, mask_image
 
 
-def _hog_picture(hog_data, block_size, num_bins):
+def _hog_picture(hog_data, mask_data, block_size, num_bins):
     # construct a "glyph" for each orientation
     block_image_temp = np.zeros((block_size, block_size))
     block_image_temp[:, round(block_size/2)-1:round(block_size/2)+1] = 1
-    block_image = np.zeros((block_image_temp.shape[0], block_image_temp.shape[1], num_bins))
+    block_image = np.zeros((block_image_temp.shape[0],
+                            block_image_temp.shape[1],
+                            num_bins))
     block_image[:, :, 0] = block_image_temp
     for i in range(2, num_bins+1):
         block_image[:, :, i-1] = imrotate(block_image_temp, -(i-1)*block_size)
@@ -157,10 +163,13 @@ def _hog_picture(hog_data, block_size, num_bins):
     s = hog_data.shape
     hog_data[hog_data < 0] = 0
     hog_picture = np.zeros((block_size*s[0], block_size*s[1]))
+    mask_picture = np.zeros((block_size*s[0], block_size*s[1]), dtype='bool')
     for i in range(1, s[0]+1):
         for j in range(1, s[1]+1):
-            for k in range(1, 10):
+            if mask_data[i-1, j-1]:
+                mask_picture[(i-1)*block_size:i*block_size][:, (j-1)*block_size:j*block_size] = True
+            for k in range(1, num_bins+1):
                 hog_picture[(i-1)*block_size:i*block_size][:, (j-1)*block_size:j*block_size] = \
                     hog_picture[(i-1)*block_size:i*block_size][:, (j-1)*block_size:j*block_size] + \
                     block_image[:, :, k-1] * hog_data[i-1, j-1, k-1]
-    return hog_picture
+    return hog_picture, mask_picture
