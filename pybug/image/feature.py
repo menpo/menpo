@@ -7,11 +7,8 @@ import math
 
 class FeatureNDImage(MaskedNDImage):
     r"""
-    Represents a 2-dimensional image with k number of channels, of size
-    ``(M, N, C)``. ``np.uint8`` pixel data is converted to ``np.float64``
-    and scaled between ``0`` and ``1`` by dividing each pixel by ``255``.
-    All Image2D instances have values for channels between 0-1,
-    and have a dtype of np.float.
+    Represents a 2-dimensional features image with k number of channels, of
+    size ``(M, N, C)`` and data type ``np.float``.
 
     Parameters
     ----------
@@ -30,17 +27,17 @@ class FeatureNDImage(MaskedNDImage):
     ValueError
         Mask is not the same shape as the image
     """
-
-    pass
+    def blank(cls):
+        r"""
+        Replaces the blank function of the MaskedNDImage.
+        """
+        pass
 
 
 class HOG2DImage(FeatureNDImage):
     r"""
-    Represents a 2-dimensional image with k number of channels, of size
-    ``(M, N, C)``. ``np.uint8`` pixel data is converted to ``np.float64``
-    and scaled between ``0`` and ``1`` by dividing each pixel by ``255``.
-    All Image2D instances have values for channels between 0-1,
-    and have a dtype of np.float.
+    Represents a 2-dimensional HOG features image with k number of channels, of
+    size ``(M, N, C)`` and data type ``np.float``.
 
     Parameters
     ----------
@@ -53,11 +50,120 @@ class HOG2DImage(FeatureNDImage):
         mask is applied to every channel equally).
 
         Default: :class:`BooleanNDImage` covering the whole image
+    mode : 'dense' or 'sparse'
+        The 'sparse' case refers to the traditional usage of HOGs, so default
+        parameters values are passed to the ImageWindowIterator. The sparse
+        case of 'dalaltriggs' algorithm sets the window height and width equal
+        to block size and the window step horizontal and vertical equal to cell
+        size. Thse sparse case of 'zhuramanan' algorithm sets the window height
+        and width equal to 3 times the cell size and the window step horizontal
+        and vertical equal to cell size. In the 'dense' case, the user can
+        change the ImageWindowIterator related parameters (window_height,
+        window_width, window_unit, window_step_vertical,
+        window_step_horizontal, window_step_unit, padding).
+
+        Default: 'dense'
+    window_height : float
+        Defines the height of the window for the ImageWindowIterator object.
+        The metric unit is defined by window_unit.
+
+        Default: 1
+    window_width : float
+        Defines the width of the window for the ImageWindowIterator object.
+        The metric unit is defined by window_unit.
+
+        Default: 1
+    window_unit : 'blocks' or 'pixels'
+        Defines the metric unit of the window_height and window_width
+        parameters for the ImageWindowIterator object.
+
+        Default: 'blocks'
+    window_step_vertical : float
+        Defines the vertical step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_horizontal : float
+        Defines the horizontal step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_unit : 'pixels' or 'cells'
+        Defines the metric unit of the window_step_vertical and
+        window_step_horizontal parameters for the ImageWindowIterator object.
+
+        Default: 'pixels'
+    padding : bool
+        Enables/disables padding for the close-to-boundary windows in the
+        ImageWindowIterator object. When padding is enabled, the
+        out-of-boundary pixels are set to zero.
+
+        Default: True
+    algorithm : 'dalaltriggs' or 'zhuramanan'
+        Specifies the algorithm used to compute HOGs.
+
+        Default: 'dalaltriggs'
+    cell_size : float
+        Defines the cell size in pixels. This value is set to both the width
+        and height of the cell. This option is valid for both algorithms.
+
+        Default: 8
+    block_size : float
+        Defines the block size in cells. This value is set to both the width
+        and height of the block. This option is valid only for the
+        'dalaltriggs' algorithm.
+
+        Default: 2
+    num_bins : float
+        Defines the number of orientation histogram bins. This option is valid
+        only for the 'dalaltriggs' algorithm.
+
+        Default: 9
+    signed_gradient : bool
+        Flag that defines whether we use signed or unsigned gradient angles.
+        This option is valid only for the 'dalaltriggs' algorithm.
+
+        Default: True
+    l2_norm_clip : float
+        Defines the clipping value of the gradients' L2-norm. This option is
+        valid only for the 'dalaltriggs' algorithm.
+
+        Default: 0.2
+    verbose : bool
+        Flag to print HOG related information.
+
+        Default: False
 
     Raises
     -------
     ValueError
         Mask is not the same shape as the image
+    ValueError
+        HOG features mode must be either dense or sparse
+    ValueError
+        Algorithm must be either dalaltriggs or zhuramanan
+    ValueError
+        Number of orientation bins must be > 0
+    ValueError
+        Cell size (in pixels) must be > 0
+    ValueError
+        Block size (in cells) must be > 0
+    ValueError
+        Value for L2-norm clipping must be > 0.0
+    ValueError
+        Window height must be >= block size and <= image height
+    ValueError
+        Window width must be >= block size and <= image width
+    ValueError
+        Window unit must be either pixels or blocks
+    ValueError
+        Horizontal window step must be > 0
+    ValueError
+        Vertical window step must be > 0
+    ValueError
+        Window step unit must be either pixels or cells
     """
     def __init__(self, image_data, mask=None, mode='dense',
                  algorithm='dalaltriggs', num_bins=9, cell_size=8,
@@ -109,10 +215,6 @@ class HOG2DImage(FeatureNDImage):
                                 window_centres[:, :, 1]]
         super(HOG2DImage, self).__init__(hog, mask=mask)
         self.window_centres = window_centres
-
-    @classmethod
-    def blank(cls):
-        pass
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
               masked=True, glyph=True, block_size=None, num_bins=None,

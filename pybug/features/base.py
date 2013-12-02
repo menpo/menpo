@@ -2,59 +2,143 @@ from pybug.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
 from scipy.misc import imrotate
 
-# HOG Features
-# hog function first creates an iterator object and then applies the hog computation
-#
-# Window-Related Options:
-# -> image : input image
-# -> window_height, window_width : size of the window
-# -> window_unit : 'pixels' or 'blocks', the metric unit of window_height, window_width
-# -> window_step_vertical, window_step_horizontal : the sampling step of the window (image down-sampling factor)
-# -> window_step_unit : 'pixels' or 'cells' : the metric unit of window_step_vertical, window_step_horizontal
-# -> padding : boolean to enable or disable padding
-#
-# HOG-Related Options:
-# -> method : 'dense' or 'sparse', in the sparse case, the window is the whole image
-# -> algorithm : 'dalaltriggs' or 'zhuramanan', the computation method
-# -> num_bins : the number of orientation bins
-# -> cell_size : the height and width of the rectangular cell in pixels
-# -> block_size : the height and width of the rectangular block
-# -> signed_gradient : boolean for use of signed or unsigned gradients
-# -> l2_norm_clip : the clipping value of L2-norm
-#
-# General Options:
-# -> verbose : boolean to print information
-#
-# In the DENSE type all options have an effect.
-# In the SPARSE type, all the Window-Related options have no effect.
-#
-# TO-DO:
-# -> Maybe we should remove the type option, since the classic sparse hog can be easily obtained from the dense hog
-#
-
 
 def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9, cell_size=8,
         block_size=2, signed_gradient=True, l2_norm_clip=0.2,
         window_height=1, window_width=1, window_unit='blocks',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
+    r"""
+    Computes a 2-dimensional HOG features image with k number of channels, of
+    size ``(M, N, C)`` and data type ``np.float``.
 
+    Parameters
+    ----------
+    image_data :  ndarray
+        The pixel data for the image, where the last axis represents the
+        number of channels.
+    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanNDImage`, optional
+        A binary array representing the mask. Must be the same
+        shape as the image. Only one mask is supported for an image (so the
+        mask is applied to every channel equally).
+
+        Default: :class:`BooleanNDImage` covering the whole image
+    mode : 'dense' or 'sparse'
+        The 'sparse' case refers to the traditional usage of HOGs, so default
+        parameters values are passed to the ImageWindowIterator. The sparse
+        case of 'dalaltriggs' algorithm sets the window height and width equal
+        to block size and the window step horizontal and vertical equal to cell
+        size. Thse sparse case of 'zhuramanan' algorithm sets the window height
+        and width equal to 3 times the cell size and the window step horizontal
+        and vertical equal to cell size. In the 'dense' case, the user can
+        change the ImageWindowIterator related parameters (window_height,
+        window_width, window_unit, window_step_vertical,
+        window_step_horizontal, window_step_unit, padding).
+
+        Default: 'dense'
+    window_height : float
+        Defines the height of the window for the ImageWindowIterator object.
+        The metric unit is defined by window_unit.
+
+        Default: 1
+    window_width : float
+        Defines the width of the window for the ImageWindowIterator object.
+        The metric unit is defined by window_unit.
+
+        Default: 1
+    window_unit : 'blocks' or 'pixels'
+        Defines the metric unit of the window_height and window_width
+        parameters for the ImageWindowIterator object.
+
+        Default: 'blocks'
+    window_step_vertical : float
+        Defines the vertical step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_horizontal : float
+        Defines the horizontal step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_unit : 'pixels' or 'cells'
+        Defines the metric unit of the window_step_vertical and
+        window_step_horizontal parameters for the ImageWindowIterator object.
+
+        Default: 'pixels'
+    padding : bool
+        Enables/disables padding for the close-to-boundary windows in the
+        ImageWindowIterator object. When padding is enabled, the
+        out-of-boundary pixels are set to zero.
+
+        Default: True
+    algorithm : 'dalaltriggs' or 'zhuramanan'
+        Specifies the algorithm used to compute HOGs.
+
+        Default: 'dalaltriggs'
+    cell_size : float
+        Defines the cell size in pixels. This value is set to both the width
+        and height of the cell. This option is valid for both algorithms.
+
+        Default: 8
+    block_size : float
+        Defines the block size in cells. This value is set to both the width
+        and height of the block. This option is valid only for the
+        'dalaltriggs' algorithm.
+
+        Default: 2
+    num_bins : float
+        Defines the number of orientation histogram bins. This option is valid
+        only for the 'dalaltriggs' algorithm.
+
+        Default: 9
+    signed_gradient : bool
+        Flag that defines whether we use signed or unsigned gradient angles.
+        This option is valid only for the 'dalaltriggs' algorithm.
+
+        Default: True
+    l2_norm_clip : float
+        Defines the clipping value of the gradients' L2-norm. This option is
+        valid only for the 'dalaltriggs' algorithm.
+
+        Default: 0.2
+    verbose : bool
+        Flag to print HOG related information.
+
+        Default: False
+
+    Raises
+    -------
+    ValueError
+        HOG features mode must be either dense or sparse
+    ValueError
+        Algorithm must be either dalaltriggs or zhuramanan
+    ValueError
+        Number of orientation bins must be > 0
+    ValueError
+        Cell size (in pixels) must be > 0
+    ValueError
+        Block size (in cells) must be > 0
+    ValueError
+        Value for L2-norm clipping must be > 0.0
+    ValueError
+        Window height must be >= block size and <= image height
+    ValueError
+        Window width must be >= block size and <= image width
+    ValueError
+        Window unit must be either pixels or blocks
+    ValueError
+        Horizontal window step must be > 0
+    ValueError
+        Vertical window step must be > 0
+    ValueError
+        Window step unit must be either pixels or cells
+    """
     # Parse options
     if mode not in ['dense', 'sparse']:
-        raise ValueError("Mode must be either dense or sparse")
-    if mode is 'dense':
-        if window_height <= 0:
-            raise ValueError("Window height must be > 0")
-        if window_width <= 0:
-            raise ValueError("Window width must be > 0")
-        if window_unit not in ['pixels', 'blocks']:
-            raise ValueError("Window unit must be either pixels or blocks")
-        if window_step_horizontal <= 0:
-            raise ValueError("Horizontal window step must be > 0")
-        if window_step_vertical <= 0:
-            raise ValueError("Vertical window step must be > 0")
-        if window_step_unit not in ['pixels', 'cells']:
-            raise ValueError("Window step unit must be either pixels or cells")
+        raise ValueError("HOG features mode must be either dense or sparse")
     if algorithm not in ['dalaltriggs', 'zhuramanan']:
         raise ValueError("Algorithm must be either dalaltriggs or zhuramanan")
     if num_bins <= 0:
@@ -65,6 +149,23 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9, cell_size
         raise ValueError("Block size (in cells) must be > 0")
     if l2_norm_clip <= 0.0:
         raise ValueError("Value for L2-norm clipping must be > 0.0")
+    if mode is 'dense':
+        if window_height < block_size*cell_size or \
+           window_height > image_data.shape[0]:
+            raise ValueError("Window height must be >= block size and <= "
+                             "image height")
+        if window_width < block_size*cell_size or \
+           window_width > image_data.shape[1]:
+            raise ValueError("Window width must be >= block size and <= "
+                             "image width")
+        if window_unit not in ['pixels', 'blocks']:
+            raise ValueError("Window unit must be either pixels or blocks")
+        if window_step_horizontal <= 0:
+            raise ValueError("Horizontal window step must be > 0")
+        if window_step_vertical <= 0:
+            raise ValueError("Vertical window step must be > 0")
+        if window_step_unit not in ['pixels', 'cells']:
+            raise ValueError("Window step unit must be either pixels or cells")
 
     # Correct input image_data
     image_data = np.asfortranarray(image_data)
