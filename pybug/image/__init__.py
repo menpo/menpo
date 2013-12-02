@@ -5,4 +5,3 @@ from pybug.image.standard import RGBImage, IntensityImage
 from pybug.image.voxel import VoxelImage
 
 from pybug.image.base import ImageBoundaryError
-

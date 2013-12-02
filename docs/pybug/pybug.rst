@@ -17,10 +17,10 @@ pybug Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`exceptions` Module
+:mod:`exception` Module
 ------------------------
 
-.. automodule:: pybug.exceptions
+.. automodule:: pybug.exception
     :members:
     :undoc-members:
     :show-inheritance:

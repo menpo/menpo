@@ -325,7 +325,7 @@ class MaskedNDImage(AbstractNDImage):
             made to crop the image in a way that violates the image bounds.
         """
         min_indices, max_indices = self.mask.bounds_true(
-            boundary=boundary, constrain_to_boundary=False)
+            boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)

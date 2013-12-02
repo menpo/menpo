@@ -310,7 +310,6 @@ class MeanLinearModel(LinearModel):
     2. A projection operation is performed
 
     """
-
     def __init__(self, components, mean_vector):
         super(MeanLinearModel, self).__init__(components)
         self.mean_vector = mean_vector
