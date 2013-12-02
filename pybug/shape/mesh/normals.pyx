@@ -107,12 +107,4 @@ cpdef compute_normals(np.ndarray[FLOAT64_T, ndim=2] vertex,
     # Normalize
     vertex_normal = normalise(vertex_normal)
 
-    # Enforce that the normals are outward
-    cdef np.ndarray[FLOAT64_T, ndim=2] v = vertex - np.mean(vertex)[..., None]
-    cdef np.ndarray[FLOAT64_T, ndim=1] s = np.sum(v * vertex_normal, axis=1)
-    if np.sum(np.greater(s, 0)) < np.sum(np.less(s, 0)):
-        # Flip
-        vertex_normal = -vertex_normal
-        face_normal = -face_normal
-
     return vertex_normal, face_normal
