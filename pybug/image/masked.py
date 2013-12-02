@@ -5,6 +5,7 @@ from scipy.ndimage import binary_erosion
 from pybug.image.base import AbstractNDImage
 from pybug.image.boolean import BooleanNDImage
 from pybug.visualize.base import ImageViewer
+from pybug.transform.affine import UniformScale
 
 
 class MaskedNDImage(AbstractNDImage):
@@ -392,6 +393,56 @@ class MaskedNDImage(AbstractNDImage):
                                             **kwargs)
             warped_image.mask = warped_mask
         return warped_image
+
+    def rescale(self, scale, warp_landmarks=True, warp_mask=False,
+                interpolator='scipy', **kwargs):
+        r"""
+        Rescales this image by a given factor.
+
+        Parameters
+        ----------
+        scale : int
+            The scale factor.
+        warp_landmarks : bool, optional
+            If ``True``, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+            Default: ``False``
+        warp_mask : bool, optional
+            If ``True``, sample the ``image.mask`` at all ``template_image``
+            points, setting the returned image mask to the sampled value
+            **within the masked region of ``template_image``**.
+
+            Default: ``False``
+
+            .. note::
+
+                This is most commonly set ``True`` in combination with an all
+                True ``template_mask``, as this is then a warp of the image
+                and it's full mask. If ``template_mask``
+                has False mask values, only the True region of the mask
+                will be updated, which is rarely the desired behavior,
+                but is possible for completion.
+        interpolator : 'scipy' or 'cinterp' or func, optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        transform = UniformScale(scale, self.n_dims)
+        template_mask = BooleanNDImage.blank(transform.apply(self.shape))
+
+        return self.warp_to(template_mask, transform.pseudoinverse,
+                            warp_landmarks=warp_landmarks,
+                            warp_mask=warp_mask, interpolator=interpolator,
+                            **kwargs)
 
     def normalize_inplace(self, mode='all', limit_to_mask=True):
         r"""
