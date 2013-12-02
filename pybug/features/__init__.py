@@ -1,1 +1,1 @@
-from pybug.features.base import hog, hog_vector_image
+from pybug.features.base import hog

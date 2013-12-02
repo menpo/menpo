@@ -1,6 +1,8 @@
 # This has to go above the default importers to prevent cyclical importing
 from pybug.exception import DimensionalityError
 import abc
+import numpy as np
+from scipy.misc import imrotate
 
 
 class Renderer(object):
@@ -180,9 +182,9 @@ from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
     MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
-    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d, \
-    MatplotlibAlignmentViewer2d
+    MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
+    MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
+    MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -194,6 +196,7 @@ LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
+ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
 VectorViewer3d = MayaviVectorViewer3d
 DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
@@ -333,23 +336,32 @@ class ImageViewer(object):
         The number of dimensions in the image
     pixels : (N, D) ndarray
         The pixels to render.
-    channel: int
-        A specific channel of pixels to render. If None, render all.
+    channels: int or list or 'all' or None
+        A specific selection of channels to render. The user can choose either
+        a single or multiple channels. If all, render all channels in subplot
+        mode. If None, render all channels in the most appropriate mode.
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
     """
     def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 channel=None, mask=None):
+                 channels=None, mask=None):
         pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
-        if channel is not None:
-            pixels = pixels[..., channel]
+        if channels is not None and channels is not 'all':
+            pixels = pixels[..., channels]
+        elif channels is None and pixels.shape[2] > 36:
+            # limit the number of channels to visualize to avoid crash!
+            pixels = pixels[..., range(0, 36)]
         if mask is not None:
-            pixels[~mask] = 0.
+            val = 0.
+            if pixels.min() < 0.:
+                val = pixels.min()
+            pixels[~mask] = val
         self.pixels = pixels
         self.dimensions = dimensions
+        self.channels = channels
 
     def render(self, **kwargs):
         r"""
@@ -372,10 +384,136 @@ class ImageViewer(object):
             Only 2D images are supported.
         """
         if self.dimensions == 2:
-            return ImageViewer2d(self.figure_id, self.new_figure,
-                                 self.pixels).render(**kwargs)
+            from collections import Iterable
+            if isinstance(self.channels, Iterable) or \
+                    self.channels == 'all' or \
+                    (self.channels is None and
+                     self.pixels.shape[2] not in [1, 3]):
+                return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
+                                             self.pixels).render(**kwargs)
+            else:
+                return ImageViewer2d(self.figure_id, self.new_figure,
+                                     self.pixels).render(**kwargs)
         else:
             raise DimensionalityError("Only 2D images are currently supported")
+
+
+class FeatureImageViewer(ImageViewer):
+    r"""
+    Base Feature Image viewer that plots a feature image either as glyph or
+    multichannel image.
+
+    Parameters
+    ----------
+    figure_id : object
+        A figure id. Could be any valid object that identifies
+        a figure in a given framework (string, int, etc)
+    new_figure : bool
+        Whether the rendering engine should create a new figure.
+    dimensions : {2, 3} int
+        The number of dimensions in the image
+    pixels : (N, D) ndarray
+        The pixels to render.
+    channels: int or list or 'all' or None
+        A specific selection of channels to render. The user can choose either
+        a single or multiple channels. If all, render all channels in subplot
+        mode. If None, render all channels in the most appropriate mode.
+    mask: (N, D) ndarray
+        A boolean mask to be applied to the image. All points outside the
+        mask are set to 0.
+    glyph: bool
+        Defines whether to plot as glyph or as multichannel image.
+
+        Default: True
+    vectors_block_size: int
+        Defines the size of each vectors' block in the glyph image.
+
+        Default: 10
+    """
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 channels=None, mask=None, glyph=True, vectors_block_size=10,
+                 use_negative=False):
+        pixels = pixels.copy()
+        self.figure_id = figure_id
+        self.new_figure = new_figure
+        if glyph and channels is None:
+            if pixels.shape[2] > 9:
+                channels = range(0, 9)
+            else:
+                channels = range(0, pixels.shape[2])
+        if channels is not None and channels is not 'all':
+            pixels = pixels[..., channels]
+        elif channels is None and pixels.shape[2] > 36:
+            # limit the number of channels to visualize to avoid crash!
+            pixels = pixels[..., range(0, 36)]
+        if glyph:
+            pixels, mask = self._feature_glyph_image(pixels, mask,
+                                                     vectors_block_size,
+                                                     use_negative)
+            self.channels = 0
+        else:
+            self.channels = channels
+        if mask is not None:
+            val = 0.
+            if pixels.min() < 0.:
+                val = pixels.min()
+            pixels[~mask] = val
+        self.pixels = pixels
+        self.dimensions = dimensions
+
+    def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
+                             use_negative):
+        negative_weights = -feature_data
+        scale = np.maximum(feature_data.max(), negative_weights.max())
+        pos, mask_pos = self._create_feature_glyph(feature_data, mask_data,
+                                                   vectors_block_size)
+        pos = pos * 255/scale
+        glyph_image = pos
+        mask_image = mask_pos
+        if use_negative and feature_data.min() < 0:
+            neg, mask_neg = self._create_feature_glyph(negative_weights,
+                                                       mask_data,
+                                                       vectors_block_size)
+            neg = neg * 255/scale
+            glyph_image = np.concatenate((pos, neg))
+            mask_image = np.concatenate((mask_pos, mask_neg))
+        return glyph_image, mask_image
+
+    def _create_feature_glyph(self, feature_data, mask_data,
+                              vectors_block_size):
+        num_bins = feature_data.shape[2]
+        # construct a "glyph" for each orientation
+        block_image_temp = np.zeros((vectors_block_size, vectors_block_size))
+        block_image_temp[:, round(vectors_block_size/2)-1:round(vectors_block_size/2)+1] = 1
+        block_image = np.zeros((block_image_temp.shape[0],
+                                block_image_temp.shape[1],
+                                num_bins))
+        block_image[:, :, 0] = block_image_temp
+        for i in range(2, num_bins+1):
+            block_image[:, :, i-1] = imrotate(block_image_temp, -(i-1)*vectors_block_size)
+        # make pictures of positive feature_data by adding up weighted glyphs
+        s = feature_data.shape
+        feature_data[feature_data < 0] = 0
+        glyph_picture = np.zeros((vectors_block_size*s[0], vectors_block_size*s[1]))
+        if mask_data is not None:
+            mask_picture = np.zeros((vectors_block_size*s[0], vectors_block_size*s[1]), dtype='bool')
+            for i in range(1, s[0]+1):
+                for j in range(1, s[1]+1):
+                    if mask_data[i-1, j-1]:
+                        mask_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = True
+                    for k in range(1, num_bins+1):
+                        glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = \
+                            glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] + \
+                            block_image[:, :, k-1] * feature_data[i-1, j-1, k-1]
+        else:
+            mask_picture = None
+            for i in range(1, s[0]+1):
+                for j in range(1, s[1]+1):
+                    for k in range(1, num_bins+1):
+                        glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = \
+                            glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] + \
+                            block_image[:, :, k-1] * feature_data[i-1, j-1, k-1]
+        return glyph_picture, mask_picture
 
 
 class TriMeshViewer(object):

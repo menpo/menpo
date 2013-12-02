@@ -258,7 +258,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         """
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channel=channel).render(**kwargs)
+                           pixels_to_view, channels=channel).render(**kwargs)
 
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=True):

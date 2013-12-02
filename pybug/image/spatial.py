@@ -174,7 +174,7 @@ class AbstractSpatialImage(MaskedNDImage):
         if mode is 'image':
             return ImageViewer(figure_id, new_figure,
                                self.n_dims, pixels,
-                               channel=channel, mask=mask).render(**kwargs)
+                               channels=channel, mask=mask).render(**kwargs)
         if mode is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)

@@ -248,7 +248,7 @@ class MaskedNDImage(AbstractNDImage):
             mask = self.mask.mask
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channel=channel,
+                           pixels_to_view, channels=channel,
                            mask=mask).render(**kwargs)
 
     def crop(self, min_indices, max_indices,

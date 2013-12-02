@@ -1,6 +1,6 @@
 from pybug.image.masked import MaskedNDImage
 import pybug.features as fc
-from pybug.visualize.base import ImageViewer
+from pybug.visualize.base import FeatureImageViewer
 import numpy as np
 import math
 
@@ -32,6 +32,34 @@ class FeatureNDImage(MaskedNDImage):
         Replaces the blank function of the MaskedNDImage.
         """
         pass
+
+    def _view(self, figure_id=None, new_figure=False, channels=None,
+              masked=True, glyph=True, vectors_block_size=10,
+              use_negative=False, **kwargs):
+        r"""
+        View the image using the default image viewer. Currently only
+        supports the rendering of 2D images.
+
+        Returns
+        -------
+        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
+            The viewer the image is being shown within
+
+        Raises
+        ------
+        DimensionalityError
+            If Image is not 2D
+        """
+        pixels_to_view = self.pixels
+        if masked:
+            mask = self.mask.mask
+        else:
+            mask = None
+        return FeatureImageViewer(figure_id, new_figure, self.n_dims,
+                                  pixels_to_view, channels=channels, mask=mask,
+                                  glyph=glyph,
+                                  vectors_block_size=vectors_block_size,
+                                  use_negative=use_negative).render(**kwargs)
 
 
 class HOG2DImage(FeatureNDImage):
@@ -215,47 +243,6 @@ class HOG2DImage(FeatureNDImage):
                                 window_centres[:, :, 1]]
         super(HOG2DImage, self).__init__(hog, mask=mask)
         self.window_centres = window_centres
-
-    def _view(self, figure_id=None, new_figure=False, channel=None,
-              masked=True, glyph=True, block_size=None, num_bins=None,
-              **kwargs):
-        r"""
-        View the image using the default image viewer. Currently only
-        supports the rendering of 2D images.
-
-        Returns
-        -------
-        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
-            The viewer the image is being shown within
-
-        Raises
-        ------
-        DimensionalityError
-            If Image is not 2D
-        """
-        if glyph:
-            channel = 0  # Vectorized images always have 1 channel
-            if block_size is None:
-                block_size = self.params['block_size']
-            if num_bins is None:
-                num_bins = self.params['num_bins']
-            hog_vector_image, mask_to_view = fc.hog_vector_image(
-                self.pixels, self.mask.mask,
-                block_size=block_size, num_bins=num_bins)
-            pixels_to_view = hog_vector_image[..., None]
-            if masked:
-                mask = mask_to_view
-            else:
-                mask = None
-        else:
-            pixels_to_view = self.pixels
-            if masked:
-                mask = self.mask.mask
-            else:
-                mask = None
-        return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channel=channel,
-                           mask=mask).render(**kwargs)
 
     def __str__(self):
         header = (
