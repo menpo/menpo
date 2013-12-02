@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.linalg.blas import dgemm
-from pybug.model.instancebacked import InstanceBackedModel
 
 
 class LinearModel(object):
@@ -96,7 +95,7 @@ class LinearModel(object):
             self.n_components = n_components
 
     def component_vector(self, index):
-        """
+        r"""
         A particular component of the model, in vectorized form.
 
         :type: (n_features,) ndarray
@@ -302,12 +301,26 @@ class LinearModel(object):
 
 
 class MeanLinearModel(LinearModel):
+    r"""
+    A Linear Model containing a matrix of vector components, each component
+    vector being made up of `features`. The model additionally has a mean
+    component which is handled accordingly when either:
+
+    1. A component of the model is selected
+    2. A projection operation is performed
+
+    """
 
     def __init__(self, components, mean_vector):
         super(MeanLinearModel, self).__init__(components)
         self.mean_vector = mean_vector
 
     def component_vector(self, index):
+        r"""
+        A particular component of the model, in vectorized form.
+
+        :type: (n_features,) ndarray
+        """
         return self.components[index] + self.mean_vector
 
     def project_vectors(self, vectors):

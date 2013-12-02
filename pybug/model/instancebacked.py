@@ -2,6 +2,25 @@ __author__ = 'jab08'
 
 
 class InstanceBackedModel(object):
+    r"""
+    Mixin for models constructed from a set of Vectorizable objects.
+    Allows for models where visualizing the meaning of a set of components
+    is trivial. Requires that the following attributes to be present:
+
+    n_components
+    components
+
+    and the following methods implemented:
+
+    component_vector(index)
+    instance_vectors(weightings)
+    project_vector(vector)
+    reconstruct_vectors(vectors, n_components)
+    project_out_vector(vector)
+
+    The constructor takes an instance of Vectorizable. This is used for all
+    conversions to and from numpy vectors and instances.
+    """
 
     def __init__(self, template_instance):
         self.template_instance = template_instance
