@@ -115,7 +115,7 @@ class HOG2DImage(FeatureNDImage):
         pass
 
     def _view(self, figure_id=None, new_figure=False, channel=None,
-              masked=True, vector=True, block_size=None, num_bins=None,
+              masked=True, glyph=True, block_size=None, num_bins=None,
               **kwargs):
         r"""
         View the image using the default image viewer. Currently only
@@ -131,7 +131,7 @@ class HOG2DImage(FeatureNDImage):
         DimensionalityError
             If Image is not 2D
         """
-        if vector:
+        if glyph:
             channel = 0  # Vectorized images always have 1 channel
             if block_size is None:
                 block_size = self.params['block_size']

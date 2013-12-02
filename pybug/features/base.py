@@ -137,15 +137,18 @@ def hog_vector_image(hog_data, mask_data, block_size=10, num_bins=9):
     negative_weights = -hog_data
     scale = np.maximum(hog_data.max(), negative_weights.max())
     pos, mask_pos = _hog_picture(hog_data, mask_data, block_size, num_bins)
-    neg, mask_neg = _hog_picture(-hog_data, mask_data, block_size, num_bins)
+    #neg, mask_neg = _hog_picture(-hog_data, mask_data, block_size, num_bins)
+    #pos = pos * 255/scale
+    #neg = neg * 255/scale
+    #if hog_data.min() < 0:
+    #    hog_image = np.concatenate((pos, neg))
+    #    mask_image = np.concatenate((mask_pos, mask_neg))
+    #else:
+    #    hog_image = pos
+    #    mask_image = mask_pos
     pos = pos * 255/scale
-    neg = neg * 255/scale
-    if hog_data.min() < 0:
-        hog_image = np.concatenate((pos, neg))
-        mask_image = np.concatenate((mask_pos, mask_neg))
-    else:
-        hog_image = pos
-        mask_image = mask_pos
+    hog_image = pos
+    mask_image = mask_pos
     return hog_image, mask_image
 
 
