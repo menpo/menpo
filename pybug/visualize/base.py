@@ -522,10 +522,10 @@ class FeatureImageViewer(ImageViewer):
                 # If we want a mask and the mask pixel is set
                 #   -> create a block of true masked values
                 if mask_data is not None and mask_data[i, j]:
-                    mask_im[i_slice][:, j_slice] = True
+                    mask_im[i_slice, j_slice] = True
                 for k in range(num_bins):
-                    glyph_im[i_slice][:, j_slice] = (
-                        glyph_im[i_slice][:, j_slice] +
+                    glyph_im[i_slice, j_slice] = (
+                        glyph_im[i_slice, j_slice] +
                         block_im[..., k] * features[i, j, k]
                     )
         return glyph_im, mask_im
