@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-from pybug.model.linear import PCAModel, SimilarityModel
+from pybug.model import Similarity2dInstanceModel
 from pybug.transform.base import AlignableTransform
 
 
@@ -809,7 +809,7 @@ class OrthoMDTransform(GlobalMDTransform):
     def __init__(self, model, transform_cls, global_transform, source=None,
                  weights=None, composition='both'):
         # 1. Construct similarity model from the mean of the model
-        self.similarity_model = SimilarityModel(model.mean)
+        self.similarity_model = Similarity2dInstanceModel(model.mean)
         # 2. orthonormalize model and similarity model
         model = deepcopy(model)
         model.orthonormalize_against_inplace(self.similarity_model)

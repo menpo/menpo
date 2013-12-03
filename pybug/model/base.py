@@ -41,7 +41,7 @@ def Similarity2dInstanceModel(shape):
 
     """
     shape_vector = shape.as_vector()
-    components = np.zeros(4, shape_vector.shape[0])
+    components = np.zeros((4, shape_vector.shape[0]))
     components[0, :] = shape_vector  # Comp. 1 - just the shape
     rotated_ccw = shape.points[:, ::-1]  # flip x,y -> y,x
     rotated_ccw[:, 0] = -rotated_ccw[:, 0]  # negate (old) y
