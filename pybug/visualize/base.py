@@ -499,29 +499,19 @@ class FeatureImageViewer(ImageViewer):
             block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
 
         # make pictures of positive feature_data by adding up weighted glyphs
-        s = features.shape
         features[features < 0] = 0
-        glyph_im = np.zeros((vbs * s[0], vbs * s[1]))
 
-        # Return no mask if we weren't given one in the first place
         if mask_data is not None:
-            mask_im = np.zeros((vbs * s[0], vbs * s[1]), dtype='bool')
+            ones_mask = np.ones(block_im.shape[:2])
+            mask_im = (ones_mask[None, None, :, :] *
+                       np.squeeze(mask_data)[:, :, None, None])
+            mask_im = np.bmat(mask_im.tolist()).astype(np.bool)
         else:
             mask_im = None
 
-        for i in range(s[0]):
-            i_slice = slice(i * vbs, (i + 1) * vbs)
-            for j in range(s[1]):
-                j_slice = slice(j * vbs, (j + 1) * vbs)
-                # If we want a mask and the mask pixel is set
-                #   -> create a block of true masked values
-                if mask_data is not None and mask_data[i, j]:
-                    mask_im[i_slice, j_slice] = True
-                for k in range(num_bins):
-                    glyph_im[i_slice, j_slice] = (
-                        glyph_im[i_slice, j_slice] +
-                        block_im[..., k] * features[i, j, k]
-                    )
+        glyph_im = np.sum(block_im[None, None, :, :, :] *
+                          features[:, :, None, None, :], axis=-1)
+        glyph_im = np.bmat(glyph_im.tolist())
         return glyph_im, mask_im
 
 
