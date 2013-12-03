@@ -423,11 +423,11 @@ class ModelDrivenTransform(AlignableTransform):
 
 class GlobalMDTransform(ModelDrivenTransform):
     r"""
-    A transform that couples a traditional landmark-based transform to a
+    A transform that couples an alignment transform to a
     statistical model together with a global similarity transform,
     such that the parameters of the transform are fully specified by
     both the weights of statistical model and the parameters of the
-    similarity transform.. The model is assumed to
+    similarity transform. The model is assumed to
     generate an instance which is then transformed by the similarity
     transform; the result defines the target landmarks of the transform.
     If no source is provided, the mean of the model is defined as the
@@ -437,24 +437,34 @@ class GlobalMDTransform(ModelDrivenTransform):
     ----------
     model : :class:`pybug.model.base.StatisticalModel`
         A linear statistical shape model.
-    transform_constructor : func
-        A function that returns a :class:`pybug.transform.base.AlignableTransform`
-        object. It will be fed the source landmarks as the first
-        argument and the target landmarks as the second. The target is
+    transform_cls : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The align constructor will be called on this with the source
+        and target landmarks. The target is
         set to the points generated from the model using the
         provide weights - the source is either given or set to the
         model's mean.
-    source : :class:`pybug.shape.base.PointCloud`
+    global_transform : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The global transform that should be applied to the model output.
+        Doesn't have to have been constructed from the .align() constructor.
+        Note that the GlobalMDTransform isn't guaranteed to hold on to the
+        exact object passed in here - so don't expect external changes to
+        the global_transform to be reflected in the behavior of this object.
+    source : :class:`pybug.shape.base.PointCloud`, optional
         The source landmarks of the transform. If no ``source`` is provided the
         mean of the model is used.
-    weights : (P,) ndarray
+    weights : (P,) ndarray, optional
         The reconstruction weights that will be fed to the model in order to
         generate an instance of the target landmarks.
+    composition: 'both', 'warp' or 'model', optional
+        The composition approximation employed by this
+        ModelDrivenTransform.
+
+        Default: `both`
     """
-    def __init__(self, model, transform_cls, source=None, weights=None,
-                 global_transform=None, composition='both'):
-        # TODO global_transform shouldn't be optional, need to refac as
-        # position of argument needs to change
+    def __init__(self, model, transform_cls, global_transform, source=None,
+                 weights=None, composition='both'):
         # need to set the global transform right away - self
         # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
@@ -750,9 +760,54 @@ class GlobalMDTransform(ModelDrivenTransform):
 
 
 class OrthoMDTransform(GlobalMDTransform):
+    r"""
+    A transform that couples an alignment transform to a
+    statistical model together with a global similarity transform,
+    such that the parameters of the transform are fully specified by
+    both the weights of statistical model and the parameters of the
+    similarity transform. The model is assumed to
+    generate an instance which is then transformed by the similarity
+    transform; the result defines the target landmarks of the transform.
+    If no source is provided, the mean of the model is defined as the
+    source landmarks of the transform.
 
-    def __init__(self, model, transform_cls, source=None,
-                 weights=None, global_transform=None, composition='both'):
+    This transform (in contrast to the :class:`GlobalMDTransform`)
+    additionally orthonormalizes both the global and the model basis against
+    each other, ensuring that orthogonality and normalization is enforced
+    across the unified bases.
+
+    Parameters
+    ----------
+    model : :class:`pybug.model.base.StatisticalModel`
+        A linear statistical shape model.
+    transform_cls : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The align constructor will be called on this with the source
+        and target landmarks. The target is
+        set to the points generated from the model using the
+        provide weights - the source is either given or set to the
+        model's mean.
+    global_transform : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The global transform that should be applied to the model output.
+        Doesn't have to have been constructed from the .align() constructor.
+        Note that the GlobalMDTransform isn't guaranteed to hold on to the
+        exact object passed in here - so don't expect external changes to
+        the global_transform to be reflected in the behavior of this object.
+    source : :class:`pybug.shape.base.PointCloud`, optional
+        The source landmarks of the transform. If no ``source`` is provided the
+        mean of the model is used.
+    weights : (P,) ndarray, optional
+        The reconstruction weights that will be fed to the model in order to
+        generate an instance of the target landmarks.
+    composition: 'both', 'warp' or 'model', optional
+        The composition approximation employed by this
+        ModelDrivenTransform.
+
+        Default: `both`
+    """
+    def __init__(self, model, transform_cls, global_transform, source=None,
+                 weights=None, composition='both'):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = SimilarityModel(model.mean)
         # 2. orthonormalize model and similarity model
@@ -762,8 +817,8 @@ class OrthoMDTransform(GlobalMDTransform):
             global_transform.apply(model.mean))
 
         super(OrthoMDTransform, self).__init__(
-            model, transform_cls, source=source, weights=weights,
-            global_transform=global_transform, composition=composition)
+            model, transform_cls, global_transform, source=source,
+            weights=weights, composition=composition)
 
     def _update_global_transform(self, target):
         self.similarity_weights = self.similarity_model.project(target)
