@@ -156,7 +156,7 @@ class LinearModel(object):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights > self.n_components:
+        if n_weights >= self.n_components:
             raise ValueError(
                 "Number of weightings cannot be greater than {}".format(
                     self.n_components))
@@ -290,13 +290,32 @@ class LinearModel(object):
         self.components[...] = Q
 
     def orthonormalize_against_inplace(self, linear_model):
-        #TODO document and check
         r"""
+        Enforces that the union of this model's components and another are
+        both mutually orthonormal.
+
+        Note that the model passed in is guaranteed to not have it's number
+        of available components changed. This model, however, may loose some
+        dimensionality due to reaching a degenerate state.
+
+        Paramerters
+        -----------
+        linear_model : :class:`LinearModel`
+            A second linear model to orthonormalize this against.
         """
+        # take the QR decomposition of the model components
         Q = (np.linalg.qr(np.hstack((linear_model._components.T,
                                      self._components.T)))[0]).T
-
+        # the model passed to us went first, so all it's components will
+        # survive. Pull them off, and update the other model.
         linear_model.components = Q[:linear_model.n_available_components, :]
+        # it's possible that all of our components didn't survive due to
+        # degeneracy. We need to trim our components down before replacing
+        # them to ensure the number of components is consistent (otherwise
+        # the components setter will complain at us)
+        self.trim_components(
+            n_components=Q.shape[0] - linear_model.n_available_components)
+        # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_available_components:, :]
 
 
