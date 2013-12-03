@@ -5,6 +5,7 @@ import numpy as np
 from scipy.misc import imrotate
 
 from pybug.exception import DimensionalityError
+from collections import Iterable
 
 
 class Renderer(object):
@@ -361,7 +362,8 @@ class ImageViewer(object):
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
-        self.channels, pixels = self._parse_channels(channels, pixels, 36)
+        self.channels, pixels, self.use_subplots = \
+            self._parse_channels(channels, pixels, 36)
         self.pixels = self._masked_pixels(pixels, mask)
 
     def _parse_channels(self, channels, pixels, upper_limit):
@@ -369,7 +371,8 @@ class ImageViewer(object):
         Parse channels parameter. If channels is int or list, keep it as is. If
         channels is all, return a list of all the image's channels. If channels
         is None, return the minimum between an upper_limit and the image's
-        number of channels.
+        number of channels. If image is grayscale or RGB and channels is None,
+        then do not plot channels in different subplots.
 
         Parameters
         ----------
@@ -380,6 +383,12 @@ class ImageViewer(object):
         upper_limit: int
             The upper limit of subplots for the channels=None case.
         """
+        # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
+        use_subplots = True
+        if (isinstance(channels, Iterable) is False and channels is not None) or \
+                ((pixels.shape[2] == 3 or pixels.shape[2] == 1)
+                 and channels is None):
+            use_subplots = False
         if channels is None:
             # Default number of channels to visualize
             channels = range(min(pixels.shape[2], upper_limit))
@@ -387,7 +396,7 @@ class ImageViewer(object):
             # Visualize all channels
             channels = range(pixels.shape[2])
         pixels = pixels[..., channels]
-        return channels, pixels
+        return channels, pixels, use_subplots
 
     def _masked_pixels(self, pixels, mask):
         r"""
@@ -429,12 +438,7 @@ class ImageViewer(object):
             Only 2D images are supported.
         """
         if self.dimensions == 2:
-            from collections import Iterable
-
-            if isinstance(self.channels, Iterable) or \
-                            self.channels == 'all' or \
-                    (self.channels is None and
-                             self.pixels.shape[2] not in [1, 3]):
+            if self.use_subplots:
                 return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
                                              self.pixels).render(**kwargs)
             else:
@@ -492,15 +496,18 @@ class FeatureImageViewer(ImageViewer):
         self.figure_id = figure_id
         self.new_figure = new_figure
         if glyph:
-            channels, pixels = super(FeatureImageViewer, self).\
-                _parse_channels(channels, pixels, 9)
+            channels, pixels, use_subplots = \
+                super(FeatureImageViewer, self)._parse_channels(channels,
+                                                                pixels, 9)
             self.channels = 0
+            self.use_subplots = False
             pixels, mask = self._feature_glyph_image(pixels, mask,
                                                      vectors_block_size,
                                                      use_negative)
         else:
-            self.channels, pixels = super(FeatureImageViewer, self).\
-                _parse_channels(channels, pixels, 36)
+            self.channels, pixels, self.use_subplots = \
+                super(FeatureImageViewer, self)._parse_channels(channels,
+                                                                pixels, 36)
         self.pixels = super(FeatureImageViewer, self)._masked_pixels(pixels,
                                                                      mask)
         self.dimensions = dimensions
