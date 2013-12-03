@@ -329,7 +329,8 @@ class PointCloudViewer(object):
 
 class ImageViewer(object):
     r"""
-    Base Image viewer that abstracts away dimensionality.
+    Base Image viewer that abstracts away dimensionality. It can visualize
+    multiple channels of an image in subplots.
 
     Parameters
     ----------
@@ -345,7 +346,10 @@ class ImageViewer(object):
     channels: int or list or 'all' or None
         A specific selection of channels to render. The user can choose either
         a single or multiple channels. If all, render all channels in subplot
-        mode. If None, render all channels in the most appropriate mode.
+        mode. If None and channels are less than 36, render them all. If None
+        and channels are more than 36, render the first 36.
+
+        Default: None
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
