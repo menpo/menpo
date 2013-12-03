@@ -365,6 +365,21 @@ class ImageViewer(object):
         self.pixels = self._masked_pixels(pixels, mask)
 
     def _parse_channels(self, channels, pixels, upper_limit):
+        r"""
+        Parse channels parameter. If channels is int or list, keep it as is. If
+        channels is all, return a list of all the image's channels. If channels
+        is None, return the minimum between an upper_limit and the image's
+        number of channels.
+
+        Parameters
+        ----------
+        channels: int or list or 'all' or None
+            A specific selection of channels to render.
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        upper_limit: int
+            The upper limit of subplots for the channels=None case.
+        """
         if channels is None:
             # Default number of channels to visualize
             channels = range(min(pixels.shape[2], upper_limit))
@@ -375,6 +390,20 @@ class ImageViewer(object):
         return channels, pixels
 
     def _masked_pixels(self, pixels, mask):
+        r"""
+        Return the masked pixels using a given boolean mask. In order to make
+        sure that the non-masked pixels are visualized in black, their value
+        is set to the minimum between min(pixels) and 0.
+
+        Parameters
+        ----------
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        mask: (N, D) ndarray
+            A boolean mask to be applied to the image. All points outside the
+            mask are set to 0. If mask is None, then the initial pixels are
+            returned.
+        """
         if mask is not None:
             pixels[~mask] = min(pixels.min(), 0)
         return pixels
