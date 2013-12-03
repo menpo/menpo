@@ -356,19 +356,24 @@ class ImageViewer(object):
         pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
-        if channels is not None and channels is not 'all':
-            pixels = pixels[..., channels]
-        elif channels is None and pixels.shape[2] > 36:
-            # limit the number of channels to visualize to avoid crash!
-            pixels = pixels[..., range(0, 36)]
-        if mask is not None:
-            val = 0.
-            if pixels.min() < 0.:
-                val = pixels.min()
-            pixels[~mask] = val
-        self.pixels = pixels
         self.dimensions = dimensions
-        self.channels = channels
+        self.channels, pixels = self._parse_channels(channels, pixels, 36)
+        self.pixels = self._masked_pixels(pixels, mask)
+
+    def _parse_channels(self, channels, pixels, upper_limit):
+        if channels is None:
+            # Default number of channels to visualize
+            channels = range(min(pixels.shape[2], upper_limit))
+        elif channels is 'all':
+            # Visualize all channels
+            channels = range(pixels.shape[2])
+        pixels = pixels[..., channels]
+        return channels, pixels
+
+    def _masked_pixels(self, pixels, mask):
+        if mask is not None:
+            pixels[~mask] = min(pixels.min(), 0)
+        return pixels
 
     def render(self, **kwargs):
         r"""
@@ -445,29 +450,18 @@ class FeatureImageViewer(ImageViewer):
         pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
-        if glyph and channels is None:
-            if pixels.shape[2] > 9:
-                channels = range(0, 9)
-            else:
-                channels = range(0, pixels.shape[2])
-        if channels is not None and channels is not 'all':
-            pixels = pixels[..., channels]
-        elif channels is None and pixels.shape[2] > 36:
-            # limit the number of channels to visualize to avoid crash!
-            pixels = pixels[..., range(0, 36)]
         if glyph:
+            channels, pixels = super(FeatureImageViewer, self).\
+                _parse_channels(channels, pixels, 9)
+            self.channels = 0
             pixels, mask = self._feature_glyph_image(pixels, mask,
                                                      vectors_block_size,
                                                      use_negative)
-            self.channels = 0
         else:
-            self.channels = channels
-        if mask is not None:
-            val = 0.
-            if pixels.min() < 0.:
-                val = pixels.min()
-            pixels[~mask] = val
-        self.pixels = pixels
+            self.channels, pixels = super(FeatureImageViewer, self).\
+                _parse_channels(channels, pixels, 36)
+        self.pixels = super(FeatureImageViewer, self)._masked_pixels(pixels,
+                                                                     mask)
         self.dimensions = dimensions
 
     def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
