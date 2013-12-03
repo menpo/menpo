@@ -1,8 +1,10 @@
 # This has to go above the default importers to prevent cyclical importing
-from pybug.exception import DimensionalityError
 import abc
+
 import numpy as np
 from scipy.misc import imrotate
+
+from pybug.exception import DimensionalityError
 
 
 class Renderer(object):
@@ -178,6 +180,7 @@ class Viewable(object):
         """
         pass
 
+
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
     MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
@@ -223,6 +226,7 @@ class LandmarkViewer(object):
     target : :class:`pybug.landmarks.base.Landmarkable`
         The parent shape that we are drawing the landmarks for.
     """
+
     def __init__(self, figure_id, new_figure,
                  group_label, pointcloud, labels_to_masks, target):
         self.pointcloud = pointcloud
@@ -253,6 +257,7 @@ class LandmarkViewer(object):
         """
         if self.pointcloud.n_dims == 2:
             from pybug.image.base import AbstractNDImage
+
             if isinstance(self.target, AbstractNDImage):
                 return LandmarkViewer2dImage(
                     self.figure_id, self.new_figure,
@@ -285,6 +290,7 @@ class PointCloudViewer(object):
     points : (N, D) ndarray
         The points to render.
     """
+
     def __init__(self, figure_id, new_figure, points):
         self.figure_id = figure_id
         self.new_figure = new_figure
@@ -344,6 +350,7 @@ class ImageViewer(object):
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
     """
+
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channels=None, mask=None):
         pixels = pixels.copy()
@@ -385,10 +392,11 @@ class ImageViewer(object):
         """
         if self.dimensions == 2:
             from collections import Iterable
+
             if isinstance(self.channels, Iterable) or \
-                    self.channels == 'all' or \
+                            self.channels == 'all' or \
                     (self.channels is None and
-                     self.pixels.shape[2] not in [1, 3]):
+                             self.pixels.shape[2] not in [1, 3]):
                 return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
                                              self.pixels).render(**kwargs)
             else:
@@ -430,6 +438,7 @@ class FeatureImageViewer(ImageViewer):
 
         Default: 10
     """
+
     def __init__(self, figure_id, new_figure, dimensions, pixels,
                  channels=None, mask=None, glyph=True, vectors_block_size=10,
                  use_negative=False):
@@ -467,53 +476,59 @@ class FeatureImageViewer(ImageViewer):
         scale = np.maximum(feature_data.max(), negative_weights.max())
         pos, mask_pos = self._create_feature_glyph(feature_data, mask_data,
                                                    vectors_block_size)
-        pos = pos * 255/scale
+        pos = pos * 255 / scale
         glyph_image = pos
         mask_image = mask_pos
         if use_negative and feature_data.min() < 0:
             neg, mask_neg = self._create_feature_glyph(negative_weights,
                                                        mask_data,
                                                        vectors_block_size)
-            neg = neg * 255/scale
+            neg = neg * 255 / scale
             glyph_image = np.concatenate((pos, neg))
             mask_image = np.concatenate((mask_pos, mask_neg))
         return glyph_image, mask_image
 
-    def _create_feature_glyph(self, feature_data, mask_data,
-                              vectors_block_size):
-        num_bins = feature_data.shape[2]
+    def _create_feature_glyph(self, features, mask_data, vbs):
+        # vbs = Vector block size
+        num_bins = features.shape[2]
         # construct a "glyph" for each orientation
-        block_image_temp = np.zeros((vectors_block_size, vectors_block_size))
-        block_image_temp[:, round(vectors_block_size/2)-1:round(vectors_block_size/2)+1] = 1
-        block_image = np.zeros((block_image_temp.shape[0],
-                                block_image_temp.shape[1],
-                                num_bins))
-        block_image[:, :, 0] = block_image_temp
-        for i in range(2, num_bins+1):
-            block_image[:, :, i-1] = imrotate(block_image_temp, -(i-1)*vectors_block_size)
+        block_image_temp = np.zeros((vbs, vbs))
+        # Create a vertical line of ones, to be the first vector
+        block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
+        block_im = np.zeros((block_image_temp.shape[0],
+                             block_image_temp.shape[1],
+                             num_bins))
+        # First vector as calculated above
+        block_im[:, :, 0] = block_image_temp
+        # Number of bins rotations to create an 'asterisk' shape
+        for i in range(1, num_bins):
+            block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
+
         # make pictures of positive feature_data by adding up weighted glyphs
-        s = feature_data.shape
-        feature_data[feature_data < 0] = 0
-        glyph_picture = np.zeros((vectors_block_size*s[0], vectors_block_size*s[1]))
+        s = features.shape
+        features[features < 0] = 0
+        glyph_im = np.zeros((vbs * s[0], vbs * s[1]))
+
+        # Return no mask if we weren't given one in the first place
         if mask_data is not None:
-            mask_picture = np.zeros((vectors_block_size*s[0], vectors_block_size*s[1]), dtype='bool')
-            for i in range(1, s[0]+1):
-                for j in range(1, s[1]+1):
-                    if mask_data[i-1, j-1]:
-                        mask_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = True
-                    for k in range(1, num_bins+1):
-                        glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = \
-                            glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] + \
-                            block_image[:, :, k-1] * feature_data[i-1, j-1, k-1]
+            mask_im = np.zeros((vbs * s[0], vbs * s[1]), dtype='bool')
         else:
-            mask_picture = None
-            for i in range(1, s[0]+1):
-                for j in range(1, s[1]+1):
-                    for k in range(1, num_bins+1):
-                        glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] = \
-                            glyph_picture[(i-1)*vectors_block_size:i*vectors_block_size][:, (j-1)*vectors_block_size:j*vectors_block_size] + \
-                            block_image[:, :, k-1] * feature_data[i-1, j-1, k-1]
-        return glyph_picture, mask_picture
+            mask_im = None
+
+        for i in range(s[0]):
+            i_slice = slice(i * vbs, (i + 1) * vbs)
+            for j in range(s[1]):
+                j_slice = slice(j * vbs, (j + 1) * vbs)
+                # If we want a mask and the mask pixel is set
+                #   -> create a block of true masked values
+                if mask_data is not None and mask_data[i, j]:
+                    mask_im[i_slice][:, j_slice] = True
+                for k in range(num_bins):
+                    glyph_im[i_slice][:, j_slice] = (
+                        glyph_im[i_slice][:, j_slice] +
+                        block_im[..., k] * features[i, j, k]
+                    )
+        return glyph_im, mask_im
 
 
 class TriMeshViewer(object):
@@ -532,6 +547,7 @@ class TriMeshViewer(object):
     trilist : (M, 3) ndarray
         The triangulation for the points.
     """
+
     def __init__(self, figure_id, new_figure, points, trilist):
         self.figure_id = figure_id
         self.new_figure = new_figure
