@@ -447,7 +447,7 @@ class ImageViewer(object):
 class FeatureImageViewer(ImageViewer):
     r"""
     Base Feature Image viewer that plots a feature image either as glyph or
-    multichannel image.
+    multichannel image (using ImageViewer class).
 
     Parameters
     ----------
@@ -462,19 +462,27 @@ class FeatureImageViewer(ImageViewer):
         The pixels to render.
     channels: int or list or 'all' or None
         A specific selection of channels to render. The user can choose either
-        a single or multiple channels. If all, render all channels in subplot
-        mode. If None, render all channels in the most appropriate mode.
+        a single or multiple channels. If all, render all channels. If None,
+        in the case of glyph=True, render the first min(pixels.shape[2], 9)
+        and in the case of glyph=False subplot the first
+        min(pixels.shape[2], 36).
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
     glyph: bool
-        Defines whether to plot as glyph or as multichannel image.
+        Defines whether to plot the glyph image or the different channels in
+        subplots.
 
         Default: True
     vectors_block_size: int
-        Defines the size of each vectors' block in the glyph image.
+        Defines the size of each block with vectors of the glyph image.
+    use_negative: bool
+        If this flag is enabled and if the feature pixels have negative values
+        and if in glyph mode, then there will be created an image containing
+        the glyph of positive and negative values concatenated one on top
+        of the other.
 
-        Default: 10
+        Default: False
     """
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
@@ -499,6 +507,25 @@ class FeatureImageViewer(ImageViewer):
 
     def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
                              use_negative):
+        r"""
+        Create glyph of a feature image. If feature_data has negative values,
+        the use_negative flag controls whether there will be created a glyph of
+        both positive and negative values concatenated the one on top of the
+        other.
+
+        Parameters
+        ----------
+        feature_data : (N, D) ndarray
+            The feature pixels to use.
+        mask_data: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vectors_block_size: int
+            Defines the size of each block with vectors of the glyph image.
+        use_negative: bool
+            Defines whether to take into account possible negative values of
+            feature_data.
+        """
         negative_weights = -feature_data
         scale = np.maximum(feature_data.max(), negative_weights.max())
         pos, mask_pos = self._create_feature_glyph(feature_data, mask_data,
@@ -516,6 +543,19 @@ class FeatureImageViewer(ImageViewer):
         return glyph_image, mask_image
 
     def _create_feature_glyph(self, features, mask_data, vbs):
+        r"""
+        Create glyph of feature pixels.
+
+        Parameters
+        ----------
+        features : (N, D) ndarray
+            The feature pixels to use.
+        mask: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vbs: int
+            Defines the size of each block with vectors of the glyph image.
+        """
         # vbs = Vector block size
         num_bins = features.shape[2]
         # construct a "glyph" for each orientation
