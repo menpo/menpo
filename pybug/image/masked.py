@@ -401,7 +401,7 @@ class MaskedNDImage(AbstractNDImage):
 
         Parameters
         ----------
-        scale : int
+        scale : float
             The scale factor.
         warp_landmarks : bool, optional
             If ``True``, warped_image will have the same landmark dictionary
@@ -436,6 +436,9 @@ class MaskedNDImage(AbstractNDImage):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
+        if scale < 0:
+            raise ValueError("Scale has to be a positive float")
+
         transform = UniformScale(scale, self.n_dims)
         template_mask = BooleanNDImage.blank(transform.apply(self.shape))
 
