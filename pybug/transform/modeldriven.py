@@ -668,8 +668,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-        dW_dS = self._global_transform_jacobian_points(
-            self.model.mean.points)
+        dW_dS = self.global_transform.jacobian_points(self.model.mean.points)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
         # dW_dS:  n_points  x      n_dims       x  n_dims
         # dW_db:  n_points  x     n_weights     x  n_dims
