@@ -70,23 +70,26 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
                                                               new_figure)
         self.image = image
         self.num_subplots = self.image.shape[2]
+        self.plot_layout = self._subplot_layout(self.num_subplots)
 
     def _render(self, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
-        p, n = self._subplots(self.num_subplots)
-        for i in range(0, self.image.shape[2]):
-            plt.subplot(p[0], p[1], 1+i)
+        p = self.plot_layout
+        for i in range(self.image.shape[2]):
+            plt.subplot(p[0], p[1], 1 + i)
+            # Hide the x and y labels
+            plt.axis('off')
             plt.imshow(self.image[:, :, i], cmap=cm.Greys_r, **kwargs)
         return self
 
-    def _subplots(self, num_subplots):
+    def _subplot_layout(self, num_subplots):
         while self._is_prime(num_subplots) and num_subplots > 4:
-            num_subplots = num_subplots + 1
+            num_subplots += 1
         p = self._factor(num_subplots)
         if len(p) == 1:
             p.insert(0, 1)
-            return p, num_subplots
+            return p
         while len(p) > 2:
             if len(p) >= 4:
                 p[0] = p[0] * p[-2]
@@ -98,10 +101,9 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
             p.sort()
         # Reformat if the column/row ratio is too large: we want a roughly
         # square design
-        while p[1]/p[0] > 2.5:
-            n = num_subplots + 1
-            p, num_subplots = self._subplots(n)
-        return p, num_subplots
+        while (p[1] / p[0]) > 2.5:
+            p = self._subplot_layout(num_subplots + 1)
+        return p
 
     def _factor(self, n):
         gaps = [1, 2, 2, 4, 2, 4, 2, 4, 6, 2, 6]
