@@ -40,7 +40,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -106,7 +106,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             J_aux = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -172,7 +172,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
                                                           self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
