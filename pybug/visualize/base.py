@@ -362,11 +362,11 @@ class ImageViewer(object):
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
-        self.channels, pixels, self.use_subplots = \
-            self._parse_channels(channels, pixels, 36)
+        pixels, self.use_subplots = \
+            self._parse_channels(channels, pixels)
         self.pixels = self._masked_pixels(pixels, mask)
 
-    def _parse_channels(self, channels, pixels, upper_limit):
+    def _parse_channels(self, channels, pixels):
         r"""
         Parse channels parameter. If channels is int or list, keep it as is. If
         channels is all, return a list of all the image's channels. If channels
@@ -385,18 +385,13 @@ class ImageViewer(object):
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
-        if (isinstance(channels, Iterable) is False and channels is not None) or \
-                ((pixels.shape[2] == 3 or pixels.shape[2] == 1)
-                 and channels is None):
+        if isinstance(channels, Iterable) is False and channels is not 'all':
             use_subplots = False
-        if channels is None:
-            # Default number of channels to visualize
-            channels = range(min(pixels.shape[2], upper_limit))
-        elif channels is 'all':
-            # Visualize all channels
-            channels = range(pixels.shape[2])
-        pixels = pixels[..., channels]
-        return channels, pixels, use_subplots
+        if channels is None and pixels.shape[2] not in [1, 3]:
+            pixels = pixels[..., 0]
+        elif channels not in ['all', None]:
+            pixels = pixels[..., channels]
+        return pixels, use_subplots
 
     def _masked_pixels(self, pixels, mask):
         r"""
@@ -496,21 +491,41 @@ class FeatureImageViewer(ImageViewer):
         self.figure_id = figure_id
         self.new_figure = new_figure
         if glyph:
-            channels, pixels, use_subplots = \
-                super(FeatureImageViewer, self)._parse_channels(channels,
-                                                                pixels, 9)
+            pixels = self._parse_channels(channels, pixels)
             self.channels = 0
             self.use_subplots = False
             pixels, mask = self._feature_glyph_image(pixels, mask,
                                                      vectors_block_size,
                                                      use_negative)
         else:
-            self.channels, pixels, self.use_subplots = \
-                super(FeatureImageViewer, self)._parse_channels(channels,
-                                                                pixels, 36)
+            pixels, self.use_subplots = super(FeatureImageViewer, self).\
+                _parse_channels(channels, pixels)
         self.pixels = super(FeatureImageViewer, self)._masked_pixels(pixels,
                                                                      mask)
         self.dimensions = dimensions
+
+    def _parse_channels(self, channels, pixels):
+        r"""
+        Parse channels parameter. If channels is int or list, keep it as is. If
+        channels is all, return a list of all the image's channels. If channels
+        is None, return the minimum between an upper_limit and the image's
+        number of channels. If image is grayscale or RGB and channels is None,
+        then do not plot channels in different subplots.
+
+        Parameters
+        ----------
+        channels: int or list or 'all' or None
+            A specific selection of channels to render.
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        upper_limit: int
+            The upper limit of subplots for the channels=None case.
+        """
+        if channels is None and pixels.shape[2] not in [1, 3]:
+            pixels = pixels[..., range(min(pixels.shape[2], 9))]
+        elif channels not in ['all', None]:
+            pixels = pixels[..., channels]
+        return pixels
 
     def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
                              use_negative):
