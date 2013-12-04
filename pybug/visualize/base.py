@@ -5,6 +5,7 @@ import numpy as np
 from scipy.misc import imrotate
 
 from pybug.exception import DimensionalityError
+from collections import Iterable
 
 
 class Renderer(object):
@@ -329,7 +330,8 @@ class PointCloudViewer(object):
 
 class ImageViewer(object):
     r"""
-    Base Image viewer that abstracts away dimensionality.
+    Base Image viewer that abstracts away dimensionality. It can visualize
+    multiple channels of an image in subplots.
 
     Parameters
     ----------
@@ -345,7 +347,10 @@ class ImageViewer(object):
     channels: int or list or 'all' or None
         A specific selection of channels to render. The user can choose either
         a single or multiple channels. If all, render all channels in subplot
-        mode. If None, render all channels in the most appropriate mode.
+        mode. If None and channels are less than 36, render them all. If None
+        and channels are more than 36, render the first 36.
+
+        Default: None
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
@@ -357,10 +362,33 @@ class ImageViewer(object):
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.dimensions = dimensions
-        self.channels, pixels = self._parse_channels(channels, pixels, 36)
+        self.channels, pixels, self.use_subplots = \
+            self._parse_channels(channels, pixels, 36)
         self.pixels = self._masked_pixels(pixels, mask)
 
     def _parse_channels(self, channels, pixels, upper_limit):
+        r"""
+        Parse channels parameter. If channels is int or list, keep it as is. If
+        channels is all, return a list of all the image's channels. If channels
+        is None, return the minimum between an upper_limit and the image's
+        number of channels. If image is grayscale or RGB and channels is None,
+        then do not plot channels in different subplots.
+
+        Parameters
+        ----------
+        channels: int or list or 'all' or None
+            A specific selection of channels to render.
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        upper_limit: int
+            The upper limit of subplots for the channels=None case.
+        """
+        # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
+        use_subplots = True
+        if (isinstance(channels, Iterable) is False and channels is not None) or \
+                ((pixels.shape[2] == 3 or pixels.shape[2] == 1)
+                 and channels is None):
+            use_subplots = False
         if channels is None:
             # Default number of channels to visualize
             channels = range(min(pixels.shape[2], upper_limit))
@@ -368,9 +396,23 @@ class ImageViewer(object):
             # Visualize all channels
             channels = range(pixels.shape[2])
         pixels = pixels[..., channels]
-        return channels, pixels
+        return channels, pixels, use_subplots
 
     def _masked_pixels(self, pixels, mask):
+        r"""
+        Return the masked pixels using a given boolean mask. In order to make
+        sure that the non-masked pixels are visualized in black, their value
+        is set to the minimum between min(pixels) and 0.
+
+        Parameters
+        ----------
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        mask: (N, D) ndarray
+            A boolean mask to be applied to the image. All points outside the
+            mask are set to 0. If mask is None, then the initial pixels are
+            returned.
+        """
         if mask is not None:
             pixels[~mask] = min(pixels.min(), 0)
         return pixels
@@ -396,12 +438,7 @@ class ImageViewer(object):
             Only 2D images are supported.
         """
         if self.dimensions == 2:
-            from collections import Iterable
-
-            if isinstance(self.channels, Iterable) or \
-                            self.channels == 'all' or \
-                    (self.channels is None and
-                             self.pixels.shape[2] not in [1, 3]):
+            if self.use_subplots:
                 return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
                                              self.pixels).render(**kwargs)
             else:
@@ -414,7 +451,7 @@ class ImageViewer(object):
 class FeatureImageViewer(ImageViewer):
     r"""
     Base Feature Image viewer that plots a feature image either as glyph or
-    multichannel image.
+    multichannel image (using ImageViewer class).
 
     Parameters
     ----------
@@ -429,19 +466,27 @@ class FeatureImageViewer(ImageViewer):
         The pixels to render.
     channels: int or list or 'all' or None
         A specific selection of channels to render. The user can choose either
-        a single or multiple channels. If all, render all channels in subplot
-        mode. If None, render all channels in the most appropriate mode.
+        a single or multiple channels. If all, render all channels. If None,
+        in the case of glyph=True, render the first min(pixels.shape[2], 9)
+        and in the case of glyph=False subplot the first
+        min(pixels.shape[2], 36).
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
     glyph: bool
-        Defines whether to plot as glyph or as multichannel image.
+        Defines whether to plot the glyph image or the different channels in
+        subplots.
 
         Default: True
     vectors_block_size: int
-        Defines the size of each vectors' block in the glyph image.
+        Defines the size of each block with vectors of the glyph image.
+    use_negative: bool
+        If this flag is enabled and if the feature pixels have negative values
+        and if in glyph mode, then there will be created an image containing
+        the glyph of positive and negative values concatenated one on top
+        of the other.
 
-        Default: 10
+        Default: False
     """
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
@@ -451,21 +496,43 @@ class FeatureImageViewer(ImageViewer):
         self.figure_id = figure_id
         self.new_figure = new_figure
         if glyph:
-            channels, pixels = super(FeatureImageViewer, self).\
-                _parse_channels(channels, pixels, 9)
+            channels, pixels, use_subplots = \
+                super(FeatureImageViewer, self)._parse_channels(channels,
+                                                                pixels, 9)
             self.channels = 0
+            self.use_subplots = False
             pixels, mask = self._feature_glyph_image(pixels, mask,
                                                      vectors_block_size,
                                                      use_negative)
         else:
-            self.channels, pixels = super(FeatureImageViewer, self).\
-                _parse_channels(channels, pixels, 36)
+            self.channels, pixels, self.use_subplots = \
+                super(FeatureImageViewer, self)._parse_channels(channels,
+                                                                pixels, 36)
         self.pixels = super(FeatureImageViewer, self)._masked_pixels(pixels,
                                                                      mask)
         self.dimensions = dimensions
 
     def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
                              use_negative):
+        r"""
+        Create glyph of a feature image. If feature_data has negative values,
+        the use_negative flag controls whether there will be created a glyph of
+        both positive and negative values concatenated the one on top of the
+        other.
+
+        Parameters
+        ----------
+        feature_data : (N, D) ndarray
+            The feature pixels to use.
+        mask_data: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vectors_block_size: int
+            Defines the size of each block with vectors of the glyph image.
+        use_negative: bool
+            Defines whether to take into account possible negative values of
+            feature_data.
+        """
         negative_weights = -feature_data
         scale = np.maximum(feature_data.max(), negative_weights.max())
         pos, mask_pos = self._create_feature_glyph(feature_data, mask_data,
@@ -483,6 +550,19 @@ class FeatureImageViewer(ImageViewer):
         return glyph_image, mask_image
 
     def _create_feature_glyph(self, features, mask_data, vbs):
+        r"""
+        Create glyph of feature pixels.
+
+        Parameters
+        ----------
+        features : (N, D) ndarray
+            The feature pixels to use.
+        mask: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vbs: int
+            Defines the size of each block with vectors of the glyph image.
+        """
         # vbs = Vector block size
         num_bins = features.shape[2]
         # construct a "glyph" for each orientation

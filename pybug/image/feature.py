@@ -37,13 +37,48 @@ class FeatureNDImage(MaskedNDImage):
               masked=True, glyph=True, vectors_block_size=10,
               use_negative=False, **kwargs):
         r"""
-        View the image using the default image viewer. Currently only
-        supports the rendering of 2D images.
+        View feature image using the default feature image viewer. It can be
+        visualized in glyph mode or subplots mode.
 
-        Returns
-        -------
-        image_viewer : :class:`pybug.visualize.viewimage.ViewerImage`
-            The viewer the image is being shown within
+        Parameters
+        ----------
+        figure_id : object
+            A figure id. Could be any valid object that identifies
+            a figure in a given framework (string, int, etc)
+
+            Default: None
+        new_figure : bool
+            Whether the rendering engine should create a new figure.
+
+            Default: False
+        channels: int or list or 'all' or None
+            A specific selection of channels to render. The user can choose
+            either a single or multiple channels. If all, render all channels.
+            If None, in the case of glyph=True, render the first
+            min(pixels.shape[2], 9) and in the case of glyph=False subplot the
+            first min(pixels.shape[2], 36).
+
+            Default: None
+        masked : bool
+            Whether to render the masked feature image.
+
+            Default: True
+        glyph: bool
+            Defines whether to plot the glyph image or the different channels
+            in subplots.
+
+            Default: True
+        vectors_block_size: int
+            Defines the size of each block with vectors of the glyph image.
+
+            Default: 10
+        use_negative: bool
+            If this flag is enabled and if the feature pixels have negative
+            values and if the glyph mode is selected, then there will be
+            created an image containing the glyph of positive and negative
+            values concatenated one on top of the other.
+
+            Default: False
 
         Raises
         ------
