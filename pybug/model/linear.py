@@ -161,7 +161,7 @@ class LinearModel(object):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights >= self.n_components:
+        if n_weights > self.n_components:
             raise ValueError(
                 "Number of weightings cannot be greater than {}".format(
                     self.n_components))
