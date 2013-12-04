@@ -6,36 +6,24 @@ from pybug.model.base import MeanInstanceLinearModel
 
 class PCAModel(MeanInstanceLinearModel):
     """
-    A Mean Linear Model where the components are Principal Components
+    A :class:`MeanLinearInstanceModel` where the components are Principal
+    Components.
+
+    Principal Component Analysis (PCA) by Eigenvalue Decomposition of the
+    data's scatter matrix.
+
+    For details of the implementation of PCA, see :func:`pybug.decomposition
+    .principal_component_decomposition`.
 
     Parameters
     ----------
     samples: list of :class:`pybug.base.Vectorizable`
         List of samples to build the model from.
 
-    Principal Component Analysis (PCA) by Eigenvalue Decomposition of the
-    data's scatter matrix.
-
-    This implementation uses the scipy.linalg.eig implementation of
-    eigenvalue decomposition. Similar to Scikit-Learn PCA implementation,
-    it only works for dense arrays, however, this one should scale better to
-    large dimensional data.
-
-    The class interface augments the one defined by Scikit-Learn PCA class.
-
-    Parameters
-    -----------
-    n_components : int or None
-        Number of components to be retained.
-        if n_components is not set all components
-
-    whiten : bool, optional
-        When True (False by default) transforms the `components_` to ensure
-        that they covariance is the identity matrix.
-
     center : bool, optional
         When True (True by default) PCA is performed after mean centering the
-        data
+        data. If False the data is assumed to be centred, and the mean will
+        be 0.
 
     bias: bool, optional
         When True (False by default) a biased estimator of the covariance
