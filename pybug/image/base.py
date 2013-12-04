@@ -386,8 +386,12 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
             Default: None
 
-        boundary: int, Optional
-            An extra padding to be added all around the landmarks bounds.
+        boundary: int or float within range (0,1) Optional
+            An extra padding to be added all around the landmarks bounds. If
+            defined as int it specifies the particular number of pixels that
+            need to be added. If defined as float between 0 and 1 the it
+            specified the number of pixels to be added as a percentage of
+            the landmarks range..
 
             Default: 0
 
@@ -405,6 +409,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
+
+        if 0 < boundary < 1:
+            boundary = boundary * np.max(pc.range())
+
         min_indices, max_indices = pc.bounds(boundary=boundary)
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
