@@ -2,7 +2,6 @@ from pybug.image.masked import MaskedNDImage
 import pybug.features as fc
 from pybug.visualize.base import FeatureImageViewer
 import numpy as np
-import math
 
 
 class FeatureNDImage(MaskedNDImage):
@@ -333,8 +332,8 @@ class HOG2DImage(FeatureNDImage):
             descriptor_length_per_block = \
                 self.params['block_size'] * self.params['block_size'] * \
                 self.params['num_bins']
-            hist1 = 2 + math.ceil(-0.5 + window_height/cell_pixels)
-            hist2 = 2 + math.ceil(-0.5 + window_width/cell_pixels)
+            hist1 = 2 + np.ceil(-0.5 + window_height/cell_pixels)
+            hist2 = 2 + np.ceil(-0.5 + window_width/cell_pixels)
             descriptor_length_per_window = \
                 (hist1-2-(self.params['block_size']-1)) * \
                 (hist2-2-(self.params['block_size']-1)) * \
