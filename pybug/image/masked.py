@@ -5,7 +5,6 @@ from scipy.ndimage import binary_erosion
 from pybug.image.base import AbstractNDImage
 from pybug.image.boolean import BooleanNDImage
 from pybug.visualize.base import ImageViewer
-from pybug.transform.affine import UniformScale
 
 
 class MaskedNDImage(AbstractNDImage):
