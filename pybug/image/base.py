@@ -511,24 +511,16 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         """
         raise NotImplementedError
 
-    def rescale(self, scale, warp_landmarks=True, interpolator='scipy',
-                **kwargs):
+    def rescale(self, scale, interpolator='scipy', **kwargs):
         r"""
-        Rescales this image by a given factor.
+        Return a copy of this image, rescaled by a given factor.
+        All image information (landmarks, the mask the case of
+        :class:`MaskedNDImage`) is rescaled appropriately.
 
         Parameters
         ----------
         scale : float
             The scale factor.
-        warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
-            as self, but with each landmark updated to the warped position.
-
-            Default: ``False``
-        interpolator : 'scipy' or 'cinterp' or func, optional
-            The interpolator that should be used to perform the warp.
-
-            Default: 'scipy'
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
@@ -538,26 +530,14 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        # as this is an unmasked image, definitely don't warp landmarks!
-        return self._rescale(scale, warp_landmarks=warp_landmarks,
-                             warp_mask=False, interpolator=interpolator,
-                             **kwargs)
-
-    def _rescale(self, scale, warp_landmarks=True, warp_mask=False,
-                 interpolator='scipy', **kwargs):
-        r"""
-        Actual rescale method. All code can be shared, just the
-        documentation and signature should be separate (MaskedNDImage
-        version actually deals with warp mask that's all)
-        """
         if scale < 0:
             raise ValueError("Scale has to be a positive float")
 
         transform = UniformScale(scale, self.n_dims)
         template_mask = BooleanNDImage.blank(transform.apply(self.shape))
-
+        # Note here we pass warp_mask to warp_to. In the case of
+        # AbstractNDImages that aren't MaskedNDImages this kwarg will
+        # harmlessly fall through so we are fine.
         return self.warp_to(template_mask, transform.pseudoinverse,
-                            warp_landmarks=warp_landmarks,
-                            warp_mask=warp_mask, interpolator=interpolator,
-                            **kwargs)
-
+                            warp_landmarks=True, warp_mask=True,
+                            interpolator=interpolator, **kwargs)
