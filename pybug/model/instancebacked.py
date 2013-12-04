@@ -29,6 +29,11 @@ class InstanceBackedModel(object):
         r"""
         Return a particular component of the linear model.
 
+        Parameters
+        ----------
+        index : int
+            The component that is to be returned
+
         :type: ``type(self.template_instance)``
         """
         return self.template_instance.from_vector(self.component_vector(index))

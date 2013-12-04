@@ -20,6 +20,30 @@ class MeanInstanceLinearModel(MeanLinearModel, InstanceBackedModel):
     def mean(self):
         return self.template_instance.from_vector(self.mean_vector)
 
+    def component(self, index, with_mean=True, scale=1.0):
+        r"""
+        Return a particular component of the linear model.
+
+        Parameters
+        ----------
+        index : int
+            The component that is to be returned
+
+        with_mean: boolean (optional)
+            If True, the component will be blended with the mean vector
+            before being returned. If not, the component is returned on it's
+            own.
+
+            Default: True
+        scale : float
+            A scale factor that should be applied to the component. Only
+            valid in the case where with_mean is True. See
+            :meth:`component_vector` for how this scale factor is interpreted.
+
+        :type: ``type(self.template_instance)``
+        """
+        return self.component_vector(index, with_mean=with_mean, scale=scale)
+
 
 #noinspection PyPep8Naming
 def Similarity2dInstanceModel(shape):

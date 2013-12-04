@@ -98,6 +98,11 @@ class LinearModel(object):
         r"""
         A particular component of the model, in vectorized form.
 
+        Parameters
+        ----------
+        index : int
+            The component that is to be returned
+
         :type: (n_features,) ndarray
         """
         return self.components[index]
@@ -333,13 +338,31 @@ class MeanLinearModel(LinearModel):
         super(MeanLinearModel, self).__init__(components)
         self.mean_vector = mean_vector
 
-    def component_vector(self, index):
+    def component_vector(self, index, with_mean=True, scale=1.0):
         r"""
         A particular component of the model, in vectorized form.
 
+        Parameters
+        ----------
+        index : int
+            The component that is to be returned
+
+        with_mean: boolean (optional)
+            If True, the component will be blended with the mean vector
+            before being returned. If not, the component is returned on it's
+            own.
+
+            Default: True
+        scale : float
+            A scale factor that should be directly applied to the component.
+            Only valid in the case where with_mean is True.
+
         :type: (n_features,) ndarray
         """
-        return self.components[index] + self.mean_vector
+        if with_mean:
+            return (scale * self.components[index]) + self.mean_vector
+        else:
+            return self.components[index]
 
     def project_vectors(self, vectors):
         """

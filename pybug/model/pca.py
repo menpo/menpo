@@ -66,7 +66,8 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def whitened_components(self):
-        return self.components * (np.sqrt(self.eigenvalues)[:, None])
+        return self.components / (
+            np.sqrt(self.eigenvalues + self.noise_variance)[:, None])
 
     @property
     def n_samples(self):
@@ -95,6 +96,37 @@ class PCAModel(MeanInstanceLinearModel):
                              "inverse")
         else:
             return 1.0 / noise_variance
+
+    def component_vector(self, index, with_mean=True, scale=1.0):
+        r"""
+        A particular component of the model, in vectorized form.
+
+        Parameters
+        ----------
+        index : int
+            The component that is to be returned
+
+        with_mean: boolean (optional)
+            If True, the component will be blended with the mean vector
+            before being returned. If not, the component is returned on it's
+            own.
+
+            Default: True
+        scale : float
+            A scale factor that should be applied to the component. Only
+            valid in the case where with_mean is True. The scale is applied
+            in units of standard deviations (so a scale of 1.0
+            with_mean visualizes the mean plus 1 std. dev of the component
+            in question).
+
+        :type: (n_features,) ndarray
+        """
+        if with_mean:
+            # on PCA, scale is in units of std. deviations...
+            scaled_eigval = scale * np.sqrt(self.eigenvalues[index])
+            return (scaled_eigval * self.components[index]) + self.mean_vector
+        else:
+            return self.components[index]
 
     def trim_components(self, n_components=None):
         r"""
