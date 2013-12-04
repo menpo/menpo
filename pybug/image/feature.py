@@ -233,8 +233,7 @@ class HOG2DImage(FeatureNDImage):
                  block_size=2, signed_gradient=True, l2_norm_clip=0.2,
                  window_height=1, window_width=1, window_unit='blocks',
                  window_step_vertical=1, window_step_horizontal=1,
-                 window_step_unit='pixels', padding=True, verbose=False
-                 ):
+                 window_step_unit='pixels', padding=True, verbose=False):
         self.params = {'mode': mode,
                        'algorithm': algorithm,
                        'num_bins': num_bins,
@@ -280,16 +279,6 @@ class HOG2DImage(FeatureNDImage):
         self.window_centres = window_centres
 
     def __str__(self):
-        header = (
-            '{} 2D HOGImage with {} channels. '
-            'Attached mask {:.1%} true.'.format(self._str_shape,
-                                                self.n_channels,
-                                                self.mask.proportion_true))
-        info_str = 'Mode is %s.\nWindow Iterator:\n  - Input image is ' \
-                   '%dW x %dH with %d channels.\n' % \
-                   (self.params['mode'], self.params['original_image_width'],
-                    self.params['original_image_height'],
-                    self.params['original_image_channels'])
         cell_pixels = self.params['cell_size']
         block_pixels = self.params['block_size'] * cell_pixels
         if self.params['mode'] == 'dense':
@@ -320,32 +309,27 @@ class HOG2DImage(FeatureNDImage):
                 window_step_vertical = cell_pixels
                 window_step_horizontal = cell_pixels
             pad_flag = False
-        info_str = '%s  - Window of size %dW x %dH and step (%dW,%dH).\n' % \
-                   (info_str, window_width, window_height,
-                    window_step_horizontal, window_step_vertical)
+
+        info_str = "{} 2D HOGImage with {} channels. " \
+                   "Attached mask {:.1%} true.\n" \
+                   "Mode is {}.\n" \
+                   "Window Iterator:\n" \
+                   "  - Input image is {}W x {}H with {} channels.\n" \
+                   "  - Window of size {}W x {}H and step ({}W,{}H).\n"\
+            .format(self._str_shape, self.n_channels,
+                    self.mask.proportion_true, self.params['mode'],
+                    self.params['original_image_width'],
+                    self.params['original_image_height'],
+                    self.params['original_image_channels'], window_width,
+                    window_height, window_step_horizontal,
+                    window_step_vertical)
         if pad_flag:
-            info_str = '%s  - Padding is enabled.\n' % info_str
+            info_str = "{}  - Padding is enabled.\n".format(info_str)
         else:
-            info_str = '%s  - Padding is disabled.\n' % info_str
-        info_str = '%s  - Number of windows is %dW x %dH.\n' % \
-                   (info_str, self.pixels.shape[1], self.pixels.shape[0])
+            info_str = "{}  - Padding is disabled.\n".format(info_str)
+        info_str = "{}  - Number of windows is {}W x {}H.\n"\
+            .format(info_str, self.pixels.shape[1], self.pixels.shape[0])
         if self.params['algorithm'] == 'dalaltriggs':
-            info_str = '%sHOG features:\n  - Algorithm of Dalal & Triggs.\n' \
-                       % info_str
-            info_str = '%s  - Cell is %dx%d pixels.\n' % \
-                           (info_str, self.params['cell_size'],
-                            self.params['cell_size'])
-            info_str = '%s  - Block is %dx%d cells.\n' % \
-                       (info_str, self.params['block_size'],
-                        self.params['block_size'])
-            if self.params['signed_gradient']:
-                info_str = '%s  - %d orientation bins and signed angles.\n' \
-                           % (info_str, self.params['num_bins'])
-            else:
-                info_str = '%s  - %d orientation bins and unsigned angles.\n' \
-                           % (info_str, self.params['num_bins'])
-            info_str = '%s  - L2-norm clipped at %.1f\n' \
-                       % (info_str, self.params['l2_norm_clip'])
             descriptor_length_per_block = \
                 self.params['block_size'] * self.params['block_size'] * \
                 self.params['num_bins']
@@ -359,24 +343,29 @@ class HOG2DImage(FeatureNDImage):
                 hist1-2-(self.params['block_size']-1)
             num_blocks_per_window_horizontally = \
                 hist2-2-(self.params['block_size']-1)
-            info_str = '%s  - Number of blocks per window = %dW x %dH.\n' \
-                       % (info_str, num_blocks_per_window_horizontally,
-                          num_blocks_per_window_vertically)
-            info_str = '%s  - Descriptor length per window = ' \
-                       '%dW x %dH x %d = %d x 1.\n' \
-                       % (info_str, num_blocks_per_window_horizontally,
-                          num_blocks_per_window_vertically,
-                          descriptor_length_per_block,
-                          descriptor_length_per_window)
-        else:
-            info_str = '%sHOG features:\n  - Algorithm of Zhu & Ramanan.\n' \
-                       % info_str
-            info_str = '%s  - Cell is %dx%d pixels.\n' % \
-                           (info_str, self.params['cell_size'],
-                            self.params['cell_size'])
-            info_str = '%s  - Block is %dx%d cells.\n' % \
-                       (info_str, self.params['block_size'],
+            # complete info_str
+            info_str = "{0}HOG features:\n" \
+                       "  - Algorithm of Dalal & Triggs.\n" \
+                       "  - Cell is {1}x{1} pixels.\n" \
+                       "  - Block is {2}x{2} cells.\n"\
+                .format(info_str, self.params['cell_size'],
                         self.params['block_size'])
+            if self.params['signed_gradient']:
+                info_str = "{}  - {} orientation bins and signed angles.\n"\
+                    .format(info_str, self.params['num_bins'])
+            else:
+                info_str = "{}  - {} orientation bins and unsigned angles.\n"\
+                    .format(info_str, self.params['num_bins'])
+            info_str = "{0}  - L2-norm clipped at {1:.1}.\n" \
+                       "  - Number of blocks per window = {2}W x {3}H.\n" \
+                       "  - Descriptor length per window " \
+                       "= {2}W x {3}H x {4} = {5} x 1.\n"\
+                .format(info_str, self.params['l2_norm_clip'],
+                        int(num_blocks_per_window_horizontally),
+                        int(num_blocks_per_window_vertically),
+                        int(descriptor_length_per_block),
+                        int(descriptor_length_per_window))
+        else:
             hist1 = round(window_height/cell_pixels)
             hist2 = round(window_width/cell_pixels)
             num_blocks_per_window_vertically = max(hist1-2, 0)
@@ -386,13 +375,18 @@ class HOG2DImage(FeatureNDImage):
                 num_blocks_per_window_horizontally * \
                 num_blocks_per_window_vertically * \
                 descriptor_length_per_block
-            info_str = '%s  - Number of blocks per window = %dW x %dH.\n' \
-                       % (info_str, num_blocks_per_window_horizontally,
-                          num_blocks_per_window_vertically)
-            info_str = '%s  - Descriptor length per window = ' \
-                       '%dW x %dH x %d = %d x 1.\n' \
-                       % (info_str, num_blocks_per_window_horizontally,
-                          num_blocks_per_window_vertically,
-                          descriptor_length_per_block,
-                          descriptor_length_per_window)
-        return '\n'.join([header, info_str])
+            # complete info_str
+            info_str = "{0}HOG features:\n" \
+                       "  - Algorithm of Zhu & Ramanan.\n" \
+                       "  - Cell is {1}x{1} pixels.\n" \
+                       "  - Block is {2}x{2} cells.\n" \
+                       "  - Number of blocks per window = {3}W x {4}H.\n" \
+                       "  - Descriptor length per window " \
+                       "{3}W x {4}H x {5} = {6} x 1.\n"\
+                .format(info_str, self.params['cell_size'],
+                        self.params['block_size'],
+                        int(num_blocks_per_window_horizontally),
+                        int(num_blocks_per_window_vertically),
+                        int(descriptor_length_per_block),
+                        int(descriptor_length_per_window))
+        return info_str

@@ -2,8 +2,8 @@ from pybug.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
 
 
-def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9, cell_size=8,
-        block_size=2, signed_gradient=True, l2_norm_clip=0.2,
+def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
+        cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
         window_height=1, window_width=1, window_unit='blocks',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):

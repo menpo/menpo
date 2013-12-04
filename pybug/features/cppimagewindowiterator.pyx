@@ -119,50 +119,37 @@ cdef class CppImageWindowIterator:
         if verbose:
             info_str = "HOG features:\n"
             if method == 1:
-                info_str = "{}  - Algorithm of Dalal & Triggs.\n" \
-                           "  - Cell is {}x{} pixels.\n" \
-                           "  - Block is {}x{} cells.\n"\
+                info_str = "{0}  - Algorithm of Dalal & Triggs.\n" \
+                           "  - Cell is {1}x{1} pixels.\n" \
+                           "  - Block is {2}x{2} cells.\n"\
                     .format(info_str, <int>cellHeightAndWidthInPixels,
-                            <int>cellHeightAndWidthInPixels,
-                            <int>blockHeightAndWidthInCells,
                             <int>blockHeightAndWidthInCells)
                 if enableSignedGradients:
-                    info_str = "{}  - %d orientation bins and signed " \
+                    info_str = "{}  - {} orientation bins and signed " \
                                "angles.\n"\
                         .format(info_str, <int>numberOfOrientationBins)
                 else:
-                    info_str = "{}  - %d orientation bins and unsigned " \
+                    info_str = "{}  - {} orientation bins and unsigned " \
                                "angles.\n"\
                         .format(info_str, <int>numberOfOrientationBins)
-                info_str = "{}  - L2-norm clipped at {1:.1g}.\n" \
-                           "  - Number of blocks per window = {}W x {}H.\n" \
+                info_str = "{0}  - L2-norm clipped at {1:.1}.\n" \
+                           "  - Number of blocks per window = {2}W x {3}H.\n" \
                            "  - Descriptor length per window = " \
-                           "{}W x {}H x {} = {} x 1.\n"\
+                           "{2}W x {3}H x {4} = {5} x 1.\n"\
                     .format(info_str, l2normClipping,
-                            <int>hog.numberOfBlocksPerWindowHorizontally,
-                            <int>hog.numberOfBlocksPerWindowVertically
                             <int>hog.numberOfBlocksPerWindowHorizontally,
                             <int>hog.numberOfBlocksPerWindowVertically,
                             <int>hog.descriptorLengthPerBlock,
                             <int>hog.descriptorLengthPerWindow)
             else:
-                info_str = "{}  - Algorithm of Zhu & Ramanan.\n" \
-                           "  - Cell is {}x{} pixels.\n" \
-                           "  - Block is {}x{} cells.\n"\
-                           "  - Number of blocks per window = {}W x {}H.\n" \
+                info_str = "{0}  - Algorithm of Zhu & Ramanan.\n" \
+                           "  - Cell is {1}x{1} pixels.\n" \
+                           "  - Block is {2}x{2} cells.\n"\
+                           "  - Number of blocks per window = {3}W x {4}H.\n" \
                            "  - Descriptor length per window = " \
-                           "{}W x {}H x {} = {} x 1.\n"\
+                           "{3}W x {4}H x {5} = {6} x 1.\n"\
                     .format(info_str, <int>cellHeightAndWidthInPixels,
-                            <int>cellHeightAndWidthInPixels,
                             <int>blockHeightAndWidthInCells,
-                            <int>blockHeightAndWidthInCells)
-                info_str = "{}  - L2-norm clipped at {1:.1g}.\n" \
-                           "  - Number of blocks per window = {}W x {}H.\n" \
-                           "  - Descriptor length per window = " \
-                           "{}W x {}H x {} = {} x 1.\n"\
-                    .format(info_str, l2normClipping,
-                            <int>hog.numberOfBlocksPerWindowHorizontally,
-                            <int>hog.numberOfBlocksPerWindowVertically
                             <int>hog.numberOfBlocksPerWindowHorizontally,
                             <int>hog.numberOfBlocksPerWindowVertically,
                             <int>hog.descriptorLengthPerBlock,
