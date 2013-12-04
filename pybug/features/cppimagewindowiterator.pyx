@@ -22,8 +22,10 @@ cdef extern from "cpp/ImageWindowIterator.h":
                             bool enablePadding, bool imageIsGrayscale)
         void apply(double *outputImage, int *windowsCenters,
                    WindowFeature *windowFeature)
-        unsigned int _numberOfWindowsHorizontally, _numberOfWindowsVertically, _numberOfWindows, _imageWidth, \
-            _imageHeight, _windowHeight, _windowWidth, _windowStepHorizontal, _windowStepVertical, _numberOfChannels
+        unsigned int _numberOfWindowsHorizontally, \
+            _numberOfWindowsVertically, _numberOfWindows, _imageWidth, \
+            _imageHeight, _windowHeight, _windowWidth, _windowStepHorizontal, \
+            _windowStepVertical, _numberOfChannels
         bool _enablePadding, _imageIsGrayscale
 
 cdef extern from "cpp/WindowFeature.h":
@@ -63,25 +65,28 @@ cdef class CppImageWindowIterator:
                                                 windowStepVertical,
                                                 enablePadding,
                                                 imageIsGrayscale)
-        if self.iterator._numberOfWindowsHorizontally == 0 or self.iterator._numberOfWindowsVertically == 0:
-            raise ValueError("The window-related options are wrong. The number of windows is 0.")
+        if self.iterator._numberOfWindowsHorizontally == 0 or \
+                        self.iterator._numberOfWindowsVertically == 0:
+            raise ValueError("The window-related options are wrong. "
+                             "The number of windows is 0.")
 
     def __str__(self):
-        info_str = 'Window Iterator:\n  - Input image is %dW x %dH with %d channels.\n' % \
-                   (<int>self.iterator._imageWidth,
+        info_str = "Window Iterator:\n" \
+                   "  - Input image is {}W x {}H with {} channels.\n" \
+                   "  - Window of size {}W x {}H and step ({}W,{}H).\n"\
+            .format(<int>self.iterator._imageWidth,
                     <int>self.iterator._imageHeight,
-                    <int>self.iterator._numberOfChannels)
-        info_str = '%s  - Window of size %uW x %uH and step (%dW,%dH).\n' % \
-                   (info_str, <int>self.iterator._windowWidth,
+                    <int>self.iterator._numberOfChannels,
+                    <int>self.iterator._windowWidth,
                     <int>self.iterator._windowHeight,
                     <int>self.iterator._windowStepHorizontal,
                     <int>self.iterator._windowStepVertical)
         if self.iterator._enablePadding:
-            info_str = '%s  - Padding is enabled.\n' % info_str
+            info_str = "{}  - Padding is enabled.\n".format(info_str)
         else:
-            info_str = '%s  - Padding is disabled.\n' % info_str
-        info_str = '%s  - Number of windows is %dW x %dH.' % \
-                   (info_str, <int>self.iterator._numberOfWindowsHorizontally,
+            info_str = "{}  - Padding is disabled.\n".format(info_str)
+        info_str = "{}  - Number of windows is {}W x {}H."\
+            .format(info_str, <int>self.iterator._numberOfWindowsHorizontally,
                     <int>self.iterator._numberOfWindowsVertically)
         return info_str
 
@@ -111,59 +116,62 @@ cdef class CppImageWindowIterator:
         #    np.empty((self.iterator._numberOfWindowsVertically,
         #             self.iterator._numberOfWindowsHorizontally, 2),
         #             order='F', dtype=np.int32)
-        info_str = 'HOG features:\n'
         if verbose:
+            info_str = "HOG features:\n"
             if method == 1:
-                info_str = '%s  - Algorithm of Dalal & Triggs.\n' % info_str
-                info_str = '%s  - Cell is %dx%d pixels.\n' % \
-                           (info_str, <int>cellHeightAndWidthInPixels,
-                            <int>cellHeightAndWidthInPixels)
-                info_str = '%s  - Block is %dx%d cells.\n' % \
-                           (info_str, <int>blockHeightAndWidthInCells,
+                info_str = "{}  - Algorithm of Dalal & Triggs.\n" \
+                           "  - Cell is {}x{} pixels.\n" \
+                           "  - Block is {}x{} cells.\n"\
+                    .format(info_str, <int>cellHeightAndWidthInPixels,
+                            <int>cellHeightAndWidthInPixels,
+                            <int>blockHeightAndWidthInCells,
                             <int>blockHeightAndWidthInCells)
                 if enableSignedGradients:
-                    info_str = '%s  - %d orientation bins and signed ' \
-                               'angles.\n' % (info_str,
-                                              <int>numberOfOrientationBins)
+                    info_str = "{}  - %d orientation bins and signed " \
+                               "angles.\n"\
+                        .format(info_str, <int>numberOfOrientationBins)
                 else:
-                    info_str = '%s  - %d orientation bins and unsigned ' \
-                               'angles.\n' % (info_str,
-                                              <int>numberOfOrientationBins)
-                info_str = '%s  - L2-norm clipped at %.1f\n' % (info_str,
-                                                                l2normClipping)
-                info_str = '%s  - Number of blocks per window = %dW x %dH.\n' % \
-                           (info_str, <int>hog.numberOfBlocksPerWindowHorizontally,
-                            <int>hog.numberOfBlocksPerWindowVertically)
-                info_str = '%s  - Descriptor length per window = %dW x %dH x ' \
-                           '%d = %d x 1.\n' % \
-                           (info_str,
+                    info_str = "{}  - %d orientation bins and unsigned " \
+                               "angles.\n"\
+                        .format(info_str, <int>numberOfOrientationBins)
+                info_str = "{}  - L2-norm clipped at {1:.1g}.\n" \
+                           "  - Number of blocks per window = {}W x {}H.\n" \
+                           "  - Descriptor length per window = " \
+                           "{}W x {}H x {} = {} x 1.\n"\
+                    .format(info_str, l2normClipping,
+                            <int>hog.numberOfBlocksPerWindowHorizontally,
+                            <int>hog.numberOfBlocksPerWindowVertically
                             <int>hog.numberOfBlocksPerWindowHorizontally,
                             <int>hog.numberOfBlocksPerWindowVertically,
                             <int>hog.descriptorLengthPerBlock,
                             <int>hog.descriptorLengthPerWindow)
             else:
-                info_str = '%s  - Algorithm of Zhu & Ramanan.\n' % info_str
-                info_str = '%s  - Cell is %dx%d pixels.\n' % \
-                           (info_str, <int>cellHeightAndWidthInPixels,
-                            <int>cellHeightAndWidthInPixels)
-                info_str = '%s  - Block is %dx%d cells.\n' % \
-                           (info_str, <int>blockHeightAndWidthInCells,
+                info_str = "{}  - Algorithm of Zhu & Ramanan.\n" \
+                           "  - Cell is {}x{} pixels.\n" \
+                           "  - Block is {}x{} cells.\n"\
+                           "  - Number of blocks per window = {}W x {}H.\n" \
+                           "  - Descriptor length per window = " \
+                           "{}W x {}H x {} = {} x 1.\n"\
+                    .format(info_str, <int>cellHeightAndWidthInPixels,
+                            <int>cellHeightAndWidthInPixels,
+                            <int>blockHeightAndWidthInCells,
                             <int>blockHeightAndWidthInCells)
-                info_str = '%s  - Number of blocks per window = %dW x %dH.\n' % \
-                           (info_str, <int>hog.numberOfBlocksPerWindowHorizontally,
-                            <int>hog.numberOfBlocksPerWindowVertically)
-                info_str = '%s  - Descriptor length per window = %dW x %dH x ' \
-                           '%d = %d x 1.\n' % \
-                           (info_str,
+                info_str = "{}  - L2-norm clipped at {1:.1g}.\n" \
+                           "  - Number of blocks per window = {}W x {}H.\n" \
+                           "  - Descriptor length per window = " \
+                           "{}W x {}H x {} = {} x 1.\n"\
+                    .format(info_str, l2normClipping,
+                            <int>hog.numberOfBlocksPerWindowHorizontally,
+                            <int>hog.numberOfBlocksPerWindowVertically
                             <int>hog.numberOfBlocksPerWindowHorizontally,
                             <int>hog.numberOfBlocksPerWindowVertically,
                             <int>hog.descriptorLengthPerBlock,
                             <int>hog.descriptorLengthPerWindow)
-            info_str = '%sOutput image size %dW x %dH x %d.' \
-                       % (info_str,
-                          <int>self.iterator._numberOfWindowsHorizontally,
-                          <int>self.iterator._numberOfWindowsVertically,
-                          <int>hog.descriptorLengthPerWindow)
+            info_str = "{}Output image size {}W x {}H x {}."\
+                .format(info_str,
+                        <int>self.iterator._numberOfWindowsHorizontally,
+                        <int>self.iterator._numberOfWindowsVertically,
+                        <int>hog.descriptorLengthPerWindow)
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
