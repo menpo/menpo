@@ -114,7 +114,7 @@ class LinearModel(object):
 
         Parameters
         ----------
-        weights : (n_weights,) ndarray
+        weights : (n_weights,) ndarray or list
             The weightings for the first n_weights components that
             should be used.
 
@@ -143,7 +143,7 @@ class LinearModel(object):
 
         Parameters
         ----------
-        weights : (n_vectors, n_weights) ndarray
+        weights : (n_vectors, n_weights) ndarray or list of lists
             The weightings for the first n_weights components that
             should be used per instance that is to be produced
 

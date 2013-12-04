@@ -45,7 +45,7 @@ class InstanceBackedModel(object):
 
         Parameters
         ----------
-        weights : (n_weights,) ndarray-like
+        weights : (n_weights,) ndarray or list
             ``weights[i]`` is the linear contribution of the i'th component
             to the instance vector.
 
