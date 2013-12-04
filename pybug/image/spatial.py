@@ -133,7 +133,7 @@ class AbstractSpatialImage(MaskedNDImage):
             return TexturedTriMesh(points, trilist, tcoords, self._texture)
 
     def _view(self, figure_id=None, new_figure=False, mode='image',
-              channel=None, masked=True, **kwargs):
+              channels=None, masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -174,7 +174,7 @@ class AbstractSpatialImage(MaskedNDImage):
         if mode is 'image':
             return ImageViewer(figure_id, new_figure,
                                self.n_dims, pixels,
-                               channels=channel, mask=mask).render(**kwargs)
+                               channels=channels, mask=mask).render(**kwargs)
         if mode is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)

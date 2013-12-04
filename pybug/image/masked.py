@@ -227,7 +227,7 @@ class MaskedNDImage(AbstractNDImage):
         """
         self.masked_pixels = vector.reshape((-1, self.n_channels))
 
-    def _view(self, figure_id=None, new_figure=False, channel=None,
+    def _view(self, figure_id=None, new_figure=False, channels=None,
               masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
@@ -248,7 +248,7 @@ class MaskedNDImage(AbstractNDImage):
             mask = self.mask.mask
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channels=channel,
+                           pixels_to_view, channels=channels,
                            mask=mask).render(**kwargs)
 
     def crop(self, min_indices, max_indices,
