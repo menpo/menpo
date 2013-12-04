@@ -386,12 +386,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
             Default: None
 
-        boundary: int or float within range (0,1) Optional
-            An extra padding to be added all around the landmarks bounds. If
-            defined as int it specifies the particular number of pixels that
-            need to be added. If defined as float between 0 and 1 the it
-            specified the number of pixels to be added as a percentage of
-            the landmarks range..
+        boundary: int, Optional
+            An extra padding to be added all around the landmarks bounds.
 
             Default: 0
 
@@ -409,13 +405,64 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
-
-        if 0 < boundary < 1:
-            boundary = boundary * np.max(pc.range())
-
         min_indices, max_indices = pc.bounds(boundary=boundary)
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
+
+    def crop_to_landmarks_proportion(self, group=None, label=None,
+                                     boundary=0, minimum=True,
+                                     constrain_to_boundary=True):
+        r"""
+        Crop this image to be bounded just around a set of landmarks
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+             all landmarks in the group are used.
+
+            Default: None
+
+        boundary: float, Optional
+            An extra padding to be added all around the landmarks bounds
+            defined as a percentage of the landmarks' range.
+
+            Default: 0
+
+        minimum: bool, Optional
+            If True the specified percentage is computed wrt the minimum
+            value of the landmarks' range; if false wrt the maximum value.
+
+            Default: True
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+        """
+        if boundary is not 0:
+            pc = self.landmarks[group][label].lms
+            if minimum:
+                boundary = boundary * np.min(pc.range())
+            else:
+                boundary = boundary * np.max(pc.range())
+
+        self.crop_to_landmarks(group=group, label=label, boundary=boundary,
+                               constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
