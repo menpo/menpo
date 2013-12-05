@@ -414,15 +414,22 @@ class FeatureExtraction(object):
                          verbose=verbose)
         # correct landmarks
         hog.landmarks = self._image.landmarks
-        xs = np.array(range(hog.window_centres[:, :, 0].min(), hog.window_centres[:, :, 0].max()+1, hog.window_centres[1, 0, 0]-hog.window_centres[0, 0, 0]))
-        ys = np.array(range(hog.window_centres[:, :, 1].min(), hog.window_centres[:, :, 1].max()+1, hog.window_centres[0, 1, 1]-hog.window_centres[0, 0, 1]))
+        xs = np.array(range(hog.window_centres[:, :, 0].min(),
+                            hog.window_centres[:, :, 0].max() + 1,
+                            hog.window_centres[1, 0, 0] -
+                            hog.window_centres[0, 0, 0]))
+        ys = np.array(range(hog.window_centres[:, :, 1].min(),
+                            hog.window_centres[:, :, 1].max() + 1,
+                            hog.window_centres[0, 1, 1] -
+                            hog.window_centres[0, 0, 1]))
         for l_type in hog.landmarks:
             l = hog.landmarks[l_type[0]]
             for p in range(l.lms.n_points):
                 # landmark initial coords
                 x = l.lms.points[p, 0]
                 y = l.lms.points[p, 1]
-                # indices of sorted distances between landmark point and sampled points
+                # indices of sorted distances between landmark point and
+                # sampled points
                 x_diff = np.argsort(abs(xs - x))
                 y_diff = np.argsort(abs(ys - y))
                 # keep the first two indices' coords
@@ -431,9 +438,9 @@ class FeatureExtraction(object):
                 x_init = np.sort(xs[[x_diff[0], x_diff[1]]])
                 y_init = np.sort(ys[[y_diff[0], y_diff[1]]])
                 # ratio
-                ratioX = float((x-x_init[0]))/float((x_init[1]-x_init[0]))
-                ratioY = float((y-y_init[0]))/float((y_init[1]-y_init[0]))
+                ratio_x = float((x-x_init[0]))/float((x_init[1]-x_init[0]))
+                ratio_y = float((y-y_init[0]))/float((y_init[1]-y_init[0]))
                 # scaled coords
-                l.lms.points[p, 0] = ratioX*x_feat[1] + (1-ratioX)*x_feat[0]
-                l.lms.points[p, 1] = ratioY*y_feat[1] + (1-ratioY)*y_feat[0]
+                l.lms.points[p, 0] = ratio_x*x_feat[1] + (1-ratio_x)*x_feat[0]
+                l.lms.points[p, 1] = ratio_y*y_feat[1] + (1-ratio_y)*y_feat[0]
         return hog
