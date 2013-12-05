@@ -528,7 +528,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        if scale < 0:
+        if scale <= 0:
             raise ValueError("Scale has to be a positive float")
 
         transform = UniformScale(scale, self.n_dims)
