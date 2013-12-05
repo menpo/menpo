@@ -150,14 +150,14 @@ class TPS(PureAlignmentTransform):
             The Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
+        points_pc = PointCloud(points)
         vec_dist = np.subtract(self.source.points[:, None],
-                               self.source.points)
-
+                               points)
+        dist = self.source.distance_to(points_pc)
         dk_dx = np.zeros((self.n_points + 3,
                           self.n_points,
                           self.n_dims))
-        kernel_derivative = (self.kernel.derivative(self.pairwise_norms) /
-                             self.pairwise_norms)
+        kernel_derivative = self.kernel.derivative(dist) / dist
         # Avoid division by zero
         kernel_derivative[np.isnan(kernel_derivative)] = 0
         dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
