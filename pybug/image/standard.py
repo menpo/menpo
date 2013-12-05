@@ -3,6 +3,7 @@ import numpy as np
 import PIL.Image as PILImage
 import scipy.linalg
 from pybug.image.masked import MaskedNDImage
+from pybug.image.feature import FeatureExtraction
 
 
 class Abstract2DImage(MaskedNDImage):
@@ -46,6 +47,8 @@ class Abstract2DImage(MaskedNDImage):
             raise ValueError("2D Images can only have values in the "
                              "range [0-1]")
         super(Abstract2DImage, self).__init__(image, mask=mask)
+        # add FeatureExtraction functionality
+        self.features = FeatureExtraction(self)
 
     # noinspection PyUnresolvedReferences
     def as_PILImage(self):

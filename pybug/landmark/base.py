@@ -145,7 +145,7 @@ class LandmarkManager(Transformable, Viewable):
 
         :type: int
         """
-        return self.n_groups == 0
+        return self.n_groups != 0
 
     @property
     def group_labels(self):
