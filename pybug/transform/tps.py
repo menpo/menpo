@@ -158,7 +158,7 @@ class TPS(PureAlignmentTransform):
                           self.n_dims))
         kernel_derivative = (self.kernel.derivative(self.pairwise_norms) /
                              self.pairwise_norms)
-        # Avoid division by zerotp  
+        # Avoid division by zero
         kernel_derivative[np.isnan(kernel_derivative)] = 0
         dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
 
@@ -227,7 +227,7 @@ class TPS(PureAlignmentTransform):
             # new bit
             aux3 = np.zeros((self.y.shape[1], n_pts))
             aux4 = np.zeros((self.y.shape[1], n_pts))
-            aux5 = (points - self.source.points[i, :])
+            aux5 = (self.source.points[i, :] - points)
             # TODO this is hardcoded and should be set based on kernel
             aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
             aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
@@ -263,7 +263,7 @@ class TPS(PureAlignmentTransform):
         """
         points_pc = PointCloud(points)
         n_lms = self.n_points
-        n_pts = points.n_points
+        n_pts = points_pc.n_points
 
         # TPS kernel (nonlinear + affine)
         dist = self.source.distance_to(points_pc)
