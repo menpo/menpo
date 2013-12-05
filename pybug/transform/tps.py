@@ -35,10 +35,9 @@ class TPS(PureAlignmentTransform):
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
-            kernel = R2LogR2()
+            kernel = R2LogR2(source.points)
         self.kernel = kernel
-        self.pairwise_norms = self.source.distance_to(self.source)
-        self.k = self.kernel.phi(self.pairwise_norms)
+        self.k = self.kernel.apply(self.source.points)
         self.p = np.concatenate(
             [np.ones([self.n_points, 1]), self.source.points], axis=1)
         o = np.zeros([3, 3])
@@ -95,11 +94,10 @@ class TPS(PureAlignmentTransform):
         f_affine_free : (N, D) ndarray
             The transformed points without the affine components applied.
         """
-        points = PointCloud(points)
-        if points.n_dims != self.n_dims:
+        if points.shape[1] != self.n_dims:
             raise ValueError('TPS can only be applied to 2D data.')
-        x = points.points[..., 0][:, None]
-        y = points.points[..., 1][:, None]
+        x = points[..., 0][:, None]
+        y = points[..., 1][:, None]
         # calculate the affine coefficients of the warp
         # (C = Constant component, then X, Y respectively)
         c_affine_c = self.coefficients[-3]
@@ -109,14 +107,11 @@ class TPS(PureAlignmentTransform):
         f_affine = c_affine_c + c_affine_x * x + c_affine_y * y
         # calculate a distance matrix (for L2 Norm) between every source
         # and the target
-        dist = self.source.distance_to(points)
-        kernel_dist = self.kernel.phi(dist)
+        kernel_dist = self.kernel.apply(points)
         # grab the affine free components of the warp
         c_affine_free = self.coefficients[:-3]
         # build the affine free warp component
-        f_affine_free = np.sum(c_affine_free[:, None, :] *
-                               kernel_dist[..., None],
-                               axis=0)
+        f_affine_free = kernel_dist.dot(c_affine_free)
         return f_affine + f_affine_free
 
     def jacobian(self, points):
@@ -150,22 +145,15 @@ class TPS(PureAlignmentTransform):
             The Jacobian of the transform wrt the points to which the
             transform is applied to.
         """
-        points_pc = PointCloud(points)
-        vec_dist = np.subtract(self.source.points[:, None],
-                               points)
-        dist = self.source.distance_to(points_pc)
-        dk_dx = np.zeros((self.n_points + 3,
-                          self.n_points,
-                          self.n_dims))
-        kernel_derivative = self.kernel.derivative(dist) / dist
-        # Avoid division by zero
-        kernel_derivative[np.isnan(kernel_derivative)] = 0
-        dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
+        dk_dx = np.zeros((points.shape[0] + 3,
+                          self.source.n_points,
+                          self.source.n_dims))
+        dk_dx[:-3, :] = self.kernel.jacobian(points)
 
         affine_derivative = np.array([[0, 0],
-                                     [1, 0],
-                                     [0, 1]])
-        dk_dx[-3:, :] = affine_derivative[:, np.newaxis]
+                                      [1, 0],
+                                      [0, 1]])
+        dk_dx[-3:, :] = affine_derivative[:, None]
 
         return np.einsum('ij, ikl -> klj', self.coefficients, dk_dx)
 
@@ -189,24 +177,16 @@ class TPS(PureAlignmentTransform):
         n_lms = self.n_points
         n_pts = points_pc.n_points
 
-        # TPS kernel (nonlinear + affine)
-        dist = self.source.distance_to(points_pc)
-        kernel_dist = self.kernel.phi(dist)
-        k = np.concatenate([kernel_dist, np.ones((1, n_pts)),
-                            points.T],
-                           axis=0)
+        kernel_dist = self.kernel.apply(points)
+        k = np.concatenate([kernel_dist, np.ones([n_pts, 1]), points], axis=1)
         inv_L = np.linalg.inv(self.l)
 
         dL_dx = np.zeros(self.l.shape + (n_lms,))
         dL_dy = np.zeros(self.l.shape + (n_lms,))
-        s = self.source.points[:, np.newaxis, :] - self.source.points
-        r = distance.squareform(distance.pdist(self.source.points))
-        r[r == 0] = 1
-        aux = 2 * (1 + np.log(r**2))[..., None] * s
+        aux = self.kernel.jacobian(self.source.points)
         dW_dx = np.zeros((n_pts, n_lms, 2))
 
         # Fix log(0)
-        dist[dist == 0] = 1
         for i in np.arange(n_lms):
             dK_dxyi = np.zeros((self.k.shape + (2,)))
             dK_dxyi[i] = aux[i]
@@ -225,18 +205,15 @@ class TPS(PureAlignmentTransform):
             dL_dy[:n_lms, n_lms:, i] = dP_dyi
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
-            aux3 = np.zeros((self.y.shape[1], n_pts))
-            aux4 = np.zeros((self.y.shape[1], n_pts))
-            aux5 = (self.source.points[i, :] - points)
+            aux3 = np.zeros((n_pts, self.y.shape[1], 2))
             # TODO this is hardcoded and should be set based on kernel
-            aux3[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 0]
-            aux4[i, :] = 2 * (1 + np.log(dist[i, :]**2)) * aux5[:, 1]
-            dW_dx[:, i, 0] = (self.y[0].dot(
-                (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T +
-                self.coefficients[:, 0].dot(aux3))
-            dW_dx[:, i, 1] = (self.y[1].dot(
-                (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T +
-                self.coefficients[:, 1].dot(aux4))
+            aux3[:, i, :] = self.kernel.jacobian(points)[:, i, :]
+            omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
+            dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
+                              aux3[..., 0].dot(self.coefficients[:, 0]))
+            omega_y = -inv_L.dot(dL_dy[..., i].dot(inv_L))
+            dW_dx[:, i, 1] = (k.dot(omega_y).dot(self.y[1]) +
+                              aux3[..., 1].dot(self.coefficients[:, 1]))
 
         return dW_dx
 
@@ -266,9 +243,8 @@ class TPS(PureAlignmentTransform):
         n_pts = points_pc.n_points
 
         # TPS kernel (nonlinear + affine)
-        dist = self.source.distance_to(points_pc)
-        kernel_dist = self.kernel.phi(dist)
-        k = np.concatenate([kernel_dist, np.ones((1, n_pts)), points.T], axis=0)
+        kernel_dist = self.kernel.apply(points)
+        k = np.concatenate([kernel_dist, np.ones([n_pts, 1]), points], axis=1)
         inv_L = np.linalg.inv(self.l)
 
         dL_dx = np.zeros(self.l.shape + (n_lms,))
@@ -276,7 +252,7 @@ class TPS(PureAlignmentTransform):
         s = self.source.points[:, np.newaxis, :] - self.source.points
         r = distance.squareform(distance.pdist(self.source.points))
         r[r == 0] = 1
-        aux = 2 * (1 + np.log(r**2))[..., None] * s
+        aux = 2 * (1 + np.log(r ** 2))[..., None] * s
         dW_dx = np.zeros((n_pts, n_lms, 2))
 
         pseudo_target = np.hstack([self.source.points.T, np.zeros([2, 3])])
@@ -299,10 +275,10 @@ class TPS(PureAlignmentTransform):
             dL_dy[:n_lms, n_lms:, i] = dP_dyi
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
 
-            dW_dx[:, i, 0] = (pseudo_target[0].dot(
-                (-inv_L.dot(dL_dx[..., i].dot(inv_L)))).dot(k).T)
-            dW_dx[:, i, 1] = (pseudo_target[1].dot(
-                (-inv_L.dot(dL_dy[..., i].dot(inv_L)))).dot(k).T)
+            omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
+            dW_dx[:, i, 0] = k.dot(omega_x).dot(pseudo_target[0])
+            omega_y = -inv_L.dot(dL_dy[..., i].dot(inv_L))
+            dW_dx[:, i, 1] = k.dot(omega_y).dot(pseudo_target[1])
 
         return dW_dx
 

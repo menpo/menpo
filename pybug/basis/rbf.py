@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from scipy.spatial.distance import cdist
 
 
 class BasisFunction(object):
@@ -12,8 +13,11 @@ class BasisFunction(object):
 
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, c):
+        self.c = c
+
     @abc.abstractmethod
-    def phi(self, r):
+    def apply(self, x):
         r"""
         Calculate the basis function on the given residuals. These are expected
         to be a square distance matrix representing the euclidean distance
@@ -36,7 +40,7 @@ class BasisFunction(object):
         pass
 
     @abc.abstractmethod
-    def derivative(self, r):
+    def jacobian(self, x):
         r"""
         Calculate the derivative of the basis function on the given residuals.
         These are expected to be a square distance matrix representing the
@@ -66,10 +70,10 @@ class R2LogR2(BasisFunction):
     The derivative of this function is :math:`2 r (\log{r^2} + 1)`.
     """
 
-    def __init__(self):
-        super(R2LogR2, self).__init__()
+    def __init__(self, c):
+        super(R2LogR2, self).__init__(c)
 
-    def phi(self, x):
+    def apply(self, x):
         """
         Apply the basis function.
 
@@ -79,7 +83,7 @@ class R2LogR2(BasisFunction):
 
         Parameters
         ----------
-        r : (N, N) ndarray
+        x : (N, D) ndarray
             Square distance matrix of pairwise euclidean distances.
 
         Returns
@@ -87,15 +91,16 @@ class R2LogR2(BasisFunction):
         U : (N, N) ndarray
             The basis function applied to each distance.
         """
-        r = x.copy()
-        mask = r == 0
-        r[mask] = 1
-        U = r ** 2 * (2 * np.log(r))
-        # reset singularities to 0
+        euclidean_distance = cdist(x, self.c)
+        mask = euclidean_distance == 0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            U = (euclidean_distance ** 2 *
+                 (2 * np.log(euclidean_distance)))
+            # reset singularities to 0
         U[mask] = 0
         return U
 
-    def derivative(self, x):
+    def jacobian(self, x):
         """
         Apply the derivative of the basis function.
 
@@ -106,7 +111,7 @@ class R2LogR2(BasisFunction):
 
         Parameters
         ----------
-        r : (N, N) ndarray
+        x : (N, D) ndarray
             Square distance matrix of pairwise euclidean distances.
 
         Returns
@@ -114,12 +119,12 @@ class R2LogR2(BasisFunction):
         dUdr : (N, N) ndarray
             The derivative of the basis function applied to each distance.
         """
-        r = x.copy()
-        mask = r == 0
-        r[mask] = 1
-        dUdr = 2 * r * (2 * np.log(r) + 1)
-        # reset singularities to 0
-        dUdr[mask] = 0
+        euclidean_distance = cdist(x, self.c)
+        component_distances = x[..., None, ...] - self.c
+        # Avoid log(0) and set to 1 so that log(1) = 0
+        euclidean_distance[euclidean_distance == 0] = 1
+        dUdr = (2 * component_distances *
+                (2 * np.log(euclidean_distance[..., None]) + 1))
         return dUdr
 
 
@@ -130,10 +135,10 @@ class R2LogR(BasisFunction):
     The derivative of this function is :math:`r (1 + 2 \log{r})`.
     """
 
-    def __init__(self):
-        super(R2LogR, self).__init__()
+    def __init__(self, c):
+        super(R2LogR, self).__init__(c)
 
-    def phi(self, x):
+    def apply(self, x):
         """
         Apply the basis function :math:`r^2 \log{r}`.
 
@@ -147,15 +152,15 @@ class R2LogR(BasisFunction):
         U : (N, N) ndarray
             The basis function applied to each distance.
         """
-        r = x.copy()
-        mask = r == 0
-        r[mask] = 1
-        U = r ** 2 * np.log(r)
+        euclidean_distance = cdist(x, self.c)
+        mask = euclidean_distance == 0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            U = euclidean_distance ** 2 * np.log(euclidean_distance)
         # reset singularities to 0
         U[mask] = 0
         return U
 
-    def derivative(self, x):
+    def jacobian(self, x):
         """
         Apply the derivative of the basis function :math:`r (1 + 2 \log{r})`.
 
@@ -169,10 +174,10 @@ class R2LogR(BasisFunction):
         dUdr : (N, N) ndarray
             The derivative of the basis function applied to each distance.
         """
-        r = x.copy()
-        mask = r == 0
-        r[mask] = 1
-        dUdr = r * (1 + 2 * np.log(r))
-        # reset singularities to 0
-        dUdr[mask] = 0
+        euclidean_distance = cdist(x, self.c)
+        component_distances = x[..., None, ...] - self.c
+        # Avoid log(0) and set to 1 so that log(1) = 0
+        euclidean_distance[euclidean_distance == 0] = 1
+        dUdr = (component_distances *
+                (1 + 2 * np.log(euclidean_distance[..., None])))
         return dUdr
