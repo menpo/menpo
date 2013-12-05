@@ -75,7 +75,7 @@ class TPS(PureAlignmentTransform):
         # coefficients.
         self._build_coefficients()
 
-    def _apply(self, points, affine_free=False):
+    def _apply(self, points):
         """
         Performs a TPS transform on the given points.
 
@@ -117,10 +117,7 @@ class TPS(PureAlignmentTransform):
         f_affine_free = np.sum(c_affine_free[:, None, :] *
                                kernel_dist[..., None],
                                axis=0)
-        if affine_free:
-            return f_affine + f_affine_free, f_affine_free
-        else:
-            return f_affine + f_affine_free
+        return f_affine + f_affine_free
 
     def jacobian(self, points):
         """
