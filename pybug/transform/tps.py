@@ -205,6 +205,9 @@ class TPS(PureAlignmentTransform):
         r[r == 0] = 1
         aux = 2 * (1 + np.log(r**2))[..., None] * s
         dW_dx = np.zeros((n_pts, n_lms, 2))
+
+        # Fix log(0)
+        dist[dist == 0] = 1
         for i in np.arange(n_lms):
             dK_dxyi = np.zeros((self.k.shape + (2,)))
             dK_dxyi[i] = aux[i]

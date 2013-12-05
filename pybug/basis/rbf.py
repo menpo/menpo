@@ -69,7 +69,7 @@ class R2LogR2(BasisFunction):
     def __init__(self):
         super(R2LogR2, self).__init__()
 
-    def phi(self, r):
+    def phi(self, x):
         """
         Apply the basis function.
 
@@ -87,6 +87,7 @@ class R2LogR2(BasisFunction):
         U : (N, N) ndarray
             The basis function applied to each distance.
         """
+        r = x.copy()
         mask = r == 0
         r[mask] = 1
         U = r ** 2 * (2 * np.log(r))
@@ -94,7 +95,7 @@ class R2LogR2(BasisFunction):
         U[mask] = 0
         return U
 
-    def derivative(self, r):
+    def derivative(self, x):
         """
         Apply the derivative of the basis function.
 
@@ -113,6 +114,7 @@ class R2LogR2(BasisFunction):
         dUdr : (N, N) ndarray
             The derivative of the basis function applied to each distance.
         """
+        r = x.copy()
         mask = r == 0
         r[mask] = 1
         dUdr = 2 * r * (2 * np.log(r) + 1)
@@ -131,7 +133,7 @@ class R2LogR(BasisFunction):
     def __init__(self):
         super(R2LogR, self).__init__()
 
-    def phi(self, r):
+    def phi(self, x):
         """
         Apply the basis function :math:`r^2 \log{r}`.
 
@@ -145,6 +147,7 @@ class R2LogR(BasisFunction):
         U : (N, N) ndarray
             The basis function applied to each distance.
         """
+        r = x.copy()
         mask = r == 0
         r[mask] = 1
         U = r ** 2 * np.log(r)
@@ -152,7 +155,7 @@ class R2LogR(BasisFunction):
         U[mask] = 0
         return U
 
-    def derivative(self, r):
+    def derivative(self, x):
         """
         Apply the derivative of the basis function :math:`r (1 + 2 \log{r})`.
 
@@ -166,6 +169,7 @@ class R2LogR(BasisFunction):
         dUdr : (N, N) ndarray
             The derivative of the basis function applied to each distance.
         """
+        r = x.copy()
         mask = r == 0
         r[mask] = 1
         dUdr = r * (1 + 2 * np.log(r))
