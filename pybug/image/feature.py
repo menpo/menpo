@@ -4,7 +4,7 @@ from pybug.visualize.base import FeatureImageViewer
 import numpy as np
 
 
-class FeatureNDImage(MaskedNDImage):
+class Feature2DImage(MaskedNDImage):
     r"""
     Represents a 2-dimensional features image with k number of channels, of
     size ``(M, N, C)`` and data type ``np.float``.
@@ -96,7 +96,7 @@ class FeatureNDImage(MaskedNDImage):
                                   use_negative=use_negative).render(**kwargs)
 
 
-class HOG2DImage(FeatureNDImage):
+class HOG2DImage(Feature2DImage):
     r"""
     Represents a 2-dimensional HOG features image with k number of channels, of
     size ``(M, N, C)`` and data type ``np.float``.
