@@ -158,6 +158,8 @@ class TPS(PureAlignmentTransform):
                           self.n_dims))
         kernel_derivative = (self.kernel.derivative(self.pairwise_norms) /
                              self.pairwise_norms)
+        # Avoid division by zerotp  
+        kernel_derivative[np.isnan(kernel_derivative)] = 0
         dk_dx[:-3, :] = kernel_derivative[..., None] * vec_dist
 
         affine_derivative = np.array([[0, 0],
