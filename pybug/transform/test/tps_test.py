@@ -61,20 +61,22 @@ def test_tps_jacobian_unitary_x_y():
 def test_tps_jacobian_manual_sample_a():
     tps = TPS(src, tgt_perturbed)
     dW_dxy = tps.jacobian_source(square_sample_points)
-    onetwothreefour = np.array([[0.79641476, 0.54082559],
-                                [0.11218034, 0.03472567],
-                                [0.02858224, 0.01380962],
-                                [-0.00093218, 0.07808401]])
+    onetwothreefour = np.array(
+        [[0.78665966, 0.62374388],
+         [0.09473867, -0.68910365],
+         [0.68788235, 0.18713078],
+         [-0.80552584, 1.11078411]])
     assert_allclose(dW_dxy[1234], onetwothreefour, rtol=10 ** -6)
 
 
 def test_tps_jacobian_manual_sample_b():
     tps = TPS(src, tgt_perturbed)
     dW_dxy = tps.jacobian_source(square_sample_points)
-    threesixfouronethree = np.array([[0.09406137, 0.05216822],
-                                     [-0.00402943, -0.01160705],
-                                     [0.88186413, 1.01594663],
-                                     [0.02749696, 0.08572215]])
+    threesixfouronethree = np.array(
+        [[0.67244171, -0.0098011],
+         [-0.77028611, -1.19256858],
+         [0.8296718, 0.95940495],
+         [-0.03122042, 1.00073478]])
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
 
 
