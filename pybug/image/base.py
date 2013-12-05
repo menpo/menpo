@@ -2,7 +2,6 @@ import abc
 import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
-from pybug.image import BooleanNDImage
 from pybug.landmark import Landmarkable
 from pybug.transform.affine import Translation, UniformScale
 from pybug.visualize.base import Viewable, ImageViewer
@@ -490,9 +489,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         # pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
                                              **kwargs)
-
-        # Set all NaN pixels to 0
-        sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
+        # set any nan values to 0
+        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image
         warped_image = self._build_warped_image(template_mask,
                                                 sampled_pixel_values)
@@ -534,6 +532,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             raise ValueError("Scale has to be a positive float")
 
         transform = UniformScale(scale, self.n_dims)
+        from pybug.image.boolean import BooleanNDImage
         template_mask = BooleanNDImage.blank(transform.apply(self.shape))
         # Note here we pass warp_mask to warp_to. In the case of
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
