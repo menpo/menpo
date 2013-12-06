@@ -399,7 +399,8 @@ class FeatureExtraction(object):
             cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
             window_height=1, window_width=1, window_unit='blocks',
             window_step_vertical=1, window_step_horizontal=1,
-            window_step_unit='pixels', padding=True, verbose=False):
+            window_step_unit='pixels', padding=True, verbose=False,
+            accurate_landmarks=True):
         # compute hog features
         hog = HOG2DImage(self._image.pixels, mask=self._image.mask,
                          mode=mode, algorithm=algorithm, cell_size=cell_size,
@@ -414,33 +415,54 @@ class FeatureExtraction(object):
                          verbose=verbose)
         # correct landmarks
         hog.landmarks = self._image.landmarks
-        xs = np.array(range(hog.window_centres[:, :, 0].min(),
-                            hog.window_centres[:, :, 0].max() + 1,
-                            hog.window_centres[1, 0, 0] -
-                            hog.window_centres[0, 0, 0]))
-        ys = np.array(range(hog.window_centres[:, :, 1].min(),
-                            hog.window_centres[:, :, 1].max() + 1,
-                            hog.window_centres[0, 1, 1] -
-                            hog.window_centres[0, 0, 1]))
-        for l_type in hog.landmarks:
-            l = hog.landmarks[l_type[0]]
-            for p in range(l.lms.n_points):
-                # landmark initial coords
-                x = l.lms.points[p, 0]
-                y = l.lms.points[p, 1]
-                # indices of sorted distances between landmark point and
-                # sampled points
-                x_diff = np.argsort(abs(xs - x))
-                y_diff = np.argsort(abs(ys - y))
-                # keep the first two indices' coords
-                x_feat = np.sort(x_diff[0:2])
-                y_feat = np.sort(y_diff[0:2])
-                x_init = np.sort(xs[[x_diff[0], x_diff[1]]])
-                y_init = np.sort(ys[[y_diff[0], y_diff[1]]])
-                # ratio
-                ratio_x = float((x-x_init[0]))/float((x_init[1]-x_init[0]))
-                ratio_y = float((y-y_init[0]))/float((y_init[1]-y_init[0]))
-                # scaled coords
-                l.lms.points[p, 0] = ratio_x*x_feat[1] + (1-ratio_x)*x_feat[0]
-                l.lms.points[p, 1] = ratio_y*y_feat[1] + (1-ratio_y)*y_feat[0]
+        if hog.landmarks.has_landmarks:
+            # coordinates of original image sampled in hogs image
+            # thus xs/ys have length equal to hogs image width/height with
+            # coordinates referring to the original image
+            xs = np.array(range(hog.window_centres[:, :, 0].min(),
+                                hog.window_centres[:, :, 0].max() + 1,
+                                hog.window_centres[1, 0, 0] -
+                                hog.window_centres[0, 0, 0]))
+            ys = np.array(range(hog.window_centres[:, :, 1].min(),
+                                hog.window_centres[:, :, 1].max() + 1,
+                                hog.window_centres[0, 1, 1] -
+                                hog.window_centres[0, 0, 1]))
+            for l_group in hog.landmarks:
+                l = hog.landmarks[l_group[0]]
+                for p in range(l.lms.n_points):
+                    # coordinates in original image space
+                    x = l.lms.points[p, 0]
+                    y = l.lms.points[p, 1]
+                    if accurate_landmarks:
+                        # indices of sorted absolute distances between landmark
+                        # point and sampled points
+                        x_diff = np.argsort(abs(xs - x))
+                        y_diff = np.argsort(abs(ys - y))
+                        # keep the first two indices' coordinates (they must be
+                        # consecutive indices) and sort them.
+                        # these indices are the neighbour int points in the hog
+                        # image space ...
+                        x_feat = np.sort(x_diff[0:2])
+                        y_feat = np.sort(y_diff[0:2])
+                        # ... these indices are the neighbour int points in the
+                        # original image space
+                        x_init = np.sort(xs[[x_diff[0], x_diff[1]]])
+                        y_init = np.sort(ys[[y_diff[0], y_diff[1]]])
+                        # relative position of landmark wrt the two neighbours
+                        # in the original image space
+                        ratio_x = float((x-x_init[0])) / \
+                            float((x_init[1]-x_init[0]))
+                        ratio_y = float((y-y_init[0])) / \
+                            float((y_init[1]-y_init[0]))
+                        # relative position of landmark wrt the two neighbours
+                        # in the hogs image space
+                        l.lms.points[p, 0] = ratio_x * x_feat[1] + \
+                            (1-ratio_x) * x_feat[0]
+                        l.lms.points[p, 1] = ratio_y * y_feat[1] + \
+                            (1-ratio_y) * y_feat[0]
+                    else:
+                        # index of min of absolute distances between landmark
+                        # point and sampled points
+                        l.lms.points[p, 0] = np.argmin(abs(xs - x))
+                        l.lms.points[p, 1] = np.argmin(abs(ys - y))
         return hog
