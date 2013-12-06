@@ -186,6 +186,37 @@ class AbstractTransform(Vectorizable):
         except AttributeError:
             return self._apply(x, **kwargs)
 
+    def compose_from_vector_inplace(self, vector):
+        r"""
+        General solution to compose_from_vector_inplace - a deepcopy
+        followed by compose_inplace.
+        """
+        new_transform = self.from_vector(vector)
+        return self.compose_inplace(new_transform)
+
+    def pseudoinverse_vector(self, vector):
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
+
+        Syntactic sugar for
+
+        self.from_vector(vector).pseudoinverse.as_vector()
+
+        Can be much faster than the explict call as object creation can be
+        entirely avoided in some cases.
+
+        Parameters
+        ----------
+        vector :  (P,) ndarray
+            A vectorized version of self
+
+        Returns
+        -------
+        pseudoinverse_vector : (N,) ndarray
+            The pseudoinverse of the vector provided
+        """
+        return self.from_vector(vector).pseduoinverse.as_vector()
+
 
 class AlignableTransform(AbstractTransform):
     r"""
