@@ -6,9 +6,15 @@ from scipy.spatial.distance import cdist
 class BasisFunction(object):
     r"""
     An abstract base class for Basis functions. In the case, radial basis
-    functions. They provide two methods, :meth:`phi`, which calculates the
-    basis itself, and :meth:`derivative`, which calculates the derivative
+    functions. They provide two methods, :meth:`apply`, which calculates the
+    basis itself, and :meth:`jacobian`, which calculates the derivative
     of the basis.
+
+    Parameters
+    ----------
+    c : (L, D) ndarray
+        The set of centers that make the basis. Usually represents a set of
+        source landamrks.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -19,9 +25,10 @@ class BasisFunction(object):
     @abc.abstractmethod
     def apply(self, x):
         r"""
-        Calculate the basis function on the given residuals. These are expected
-        to be a square distance matrix representing the euclidean distance
-        between the points in the space.
+        Calculate the basis function on the given residuals. The input is the
+        set of points the basis should be calculated for. The euclidean
+        distance between ``x`` and the centers, ``c``, will be used as the
+        residual.
 
         .. note::
 
@@ -29,13 +36,14 @@ class BasisFunction(object):
 
         Parameters
         ----------
-        r : (N, N) ndarray
-            Square distance matrix of pairwise euclidean distances.
+        x : (N, D) ndarray
+            Set of points to apply the basis to.
 
         Returns
         -------
-        U : (N, N) ndarray
-            The basis function applied to each distance.
+        u : (N, L) ndarray
+            The basis function applied to each distance,
+            :math:`\lVert x - c \rVert`.
         """
         pass
 
@@ -43,8 +51,6 @@ class BasisFunction(object):
     def jacobian(self, x):
         r"""
         Calculate the derivative of the basis function on the given residuals.
-        These are expected to be a square distance matrix representing the
-        euclidean distance between the points in the space.
 
         .. note::
 
@@ -52,13 +58,14 @@ class BasisFunction(object):
 
         Parameters
         ----------
-        r : (N, N) ndarray
-            Square distance matrix of pairwise euclidean distances.
+        x : (N, D) ndarray
+            Set of points to apply the basis to.
 
         Returns
         -------
-        dUdr : (N, N) ndarray
-            The derivative of the basis function applied to each distance.
+        dudx : (N, L, D) ndarray
+            The jacobian tensor representing the first order partial derivative
+            of each points with respect to the centers, over each dimension.
         """
         pass
 
@@ -68,6 +75,16 @@ class R2LogR2(BasisFunction):
     Calculates the :math:`r^2 \log{r^2}` basis function.
 
     The derivative of this function is :math:`2 r (\log{r^2} + 1)`.
+
+    .. note::
+
+        :math:`r = \lVert x - c \rVert`
+
+    Parameters
+    ----------
+    c : (L, D) ndarray
+        The set of centers that make the basis. Usually represents a set of
+        source landamrks.
     """
 
     def __init__(self, c):
@@ -84,48 +101,58 @@ class R2LogR2(BasisFunction):
         Parameters
         ----------
         x : (N, D) ndarray
-            Square distance matrix of pairwise euclidean distances.
+            Set of points to apply the basis to.
 
         Returns
         -------
-        U : (N, N) ndarray
-            The basis function applied to each distance.
+        u : (N, L) ndarray
+            The basis function applied to each distance,
+            :math:`\lVert x - c \rVert`.
         """
         euclidean_distance = cdist(x, self.c)
         mask = euclidean_distance == 0
         with np.errstate(divide='ignore', invalid='ignore'):
-            U = (euclidean_distance ** 2 *
+            u = (euclidean_distance ** 2 *
                  (2 * np.log(euclidean_distance)))
             # reset singularities to 0
-        U[mask] = 0
-        return U
+        u[mask] = 0
+        return u
 
     def jacobian(self, x):
         """
-        Apply the derivative of the basis function.
+        Apply the derivative of the basis function. This is applied over
+        each dimension of the input vector, ``x``.
 
         .. note::
 
-            :math:`2 r (\log{r^2} + 1) === 2 r (2 \log{r} + 1)`
+            ..math::
+
+                2 (x - c)^T (\log{r^2_{x, l}} + 1) ===
+                2 (x - c)^T (2 \log{r_{x, l}} + 1)
+
+            where:
+
+            :math:`r_{x, l} = \lVert x - c \rVert``
 
 
         Parameters
         ----------
         x : (N, D) ndarray
-            Square distance matrix of pairwise euclidean distances.
+            Set of points to apply the basis to.
 
         Returns
         -------
-        dUdr : (N, N) ndarray
-            The derivative of the basis function applied to each distance.
+        dudx : (N, L, D) ndarray
+            The jacobian tensor representing the first order partial derivative
+            of each points with respect to the centers, over each dimension.
         """
         euclidean_distance = cdist(x, self.c)
         component_distances = x[..., None, ...] - self.c
         # Avoid log(0) and set to 1 so that log(1) = 0
         euclidean_distance[euclidean_distance == 0] = 1
-        dUdr = (2 * component_distances *
+        dudx = (2 * component_distances *
                 (2 * np.log(euclidean_distance[..., None]) + 1))
-        return dUdr
+        return dudx
 
 
 class R2LogR(BasisFunction):
@@ -133,6 +160,16 @@ class R2LogR(BasisFunction):
     Calculates the :math:`r^2 \log{r}` basis function.
 
     The derivative of this function is :math:`r (1 + 2 \log{r})`.
+
+    .. note::
+
+        :math:`r = \lVert x - c \rVert`
+
+    Parameters
+    ----------
+    c : (L, D) ndarray
+        The set of centers that make the basis. Usually represents a set of
+        source landamrks.
     """
 
     def __init__(self, c):
@@ -144,40 +181,47 @@ class R2LogR(BasisFunction):
 
         Parameters
         ----------
-        r : (N, N) ndarray
-            Square distance matrix of pairwise euclidean distances.
+        x : (N, D) ndarray
+            Set of points to apply the basis to.
 
         Returns
         -------
-        U : (N, N) ndarray
-            The basis function applied to each distance.
+        u : (N, L) ndarray
+            The basis function applied to each distance,
+            :math:`\lVert x - c \rVert`.
         """
         euclidean_distance = cdist(x, self.c)
         mask = euclidean_distance == 0
         with np.errstate(divide='ignore', invalid='ignore'):
-            U = euclidean_distance ** 2 * np.log(euclidean_distance)
+            u = euclidean_distance ** 2 * np.log(euclidean_distance)
         # reset singularities to 0
-        U[mask] = 0
-        return U
+        u[mask] = 0
+        return u
 
     def jacobian(self, x):
         """
-        Apply the derivative of the basis function :math:`r (1 + 2 \log{r})`.
+        Apply the derivative of the basis function
+        :math:`(x - c)^T (1 + 2 \log{r_{x, l}})`.
+
+        .. note::
+
+            :math:`r_{x, l} = \lVert x - c \rVert``
 
         Parameters
         ----------
-        r : (N, N) ndarray
-            Square distance matrix of pairwise euclidean distances.
+        x : (N, D) ndarray
+            Set of points to apply the basis to.
 
         Returns
         -------
-        dUdr : (N, N) ndarray
-            The derivative of the basis function applied to each distance.
+        dudx : (N, L, D) ndarray
+            The jacobian tensor representing the first order partial derivative
+            of each points with respect to the centers, over each dimension.
         """
         euclidean_distance = cdist(x, self.c)
         component_distances = x[..., None, ...] - self.c
         # Avoid log(0) and set to 1 so that log(1) = 0
         euclidean_distance[euclidean_distance == 0] = 1
-        dUdr = (component_distances *
+        dudx = (component_distances *
                 (1 + 2 * np.log(euclidean_distance[..., None])))
-        return dUdr
+        return dudx
