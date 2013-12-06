@@ -10,8 +10,9 @@ class TPS(PureAlignmentTransform):
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
 
-    ``kernel`` can be used to specify an alternative kernel function. If
-    ``None`` is supplied, the ``r**2 log(r**2)`` kernel will be used.
+    `kernel` can be used to specify an alternative kernel function. If
+    `None` is supplied, the :class:`pybug.basis.rbf.R2LogR2` kernel will be
+    used.
 
     Parameters
     ----------
@@ -22,12 +23,12 @@ class TPS(PureAlignmentTransform):
     kernel : func, optional
         The kernel function to apply.
 
-        Default: ``r**2 log(r**2)``
+        Default: :class:`pybug.basis.rbf.R2LogR2`
 
     Raises
     ------
     ValueError
-        TPS is only supported on 2-dimensional data
+        TPS is only with on 2-dimensional data
     """
 
     def __init__(self, source, target, kernel=None):
@@ -82,17 +83,11 @@ class TPS(PureAlignmentTransform):
         ----------
         points : (N, D) ndarray
             The points to transform.
-        affine_free : bool, optional
-            If ``True`` the affine free component is also returned separately.
-
-            Default: ``False``
 
         Returns
         --------
         f : (N, D) ndarray
             The transformed points
-        f_affine_free : (N, D) ndarray
-            The transformed points without the affine components applied.
         """
         if points.shape[1] != self.n_dims:
             raise ValueError('TPS can only be applied to 2D data.')
@@ -136,13 +131,13 @@ class TPS(PureAlignmentTransform):
 
     def jacobian_points(self, points):
         """
-        Calculates the Jacobian of the TPS warp wrt to the the points to which
-        the warp is applied to.
+        Calculates the Jacobian of the TPS warp wrt to the spatial dimensions.
 
         Returns
         -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the transform wrt the points to which the
+        dW/dx : (N, D, D) ndarray
+            The Jacobian of the transform wrt the spatial dimension to which
+            the
             transform is applied to.
         """
         dk_dx = np.zeros((points.shape[0] + 3,
