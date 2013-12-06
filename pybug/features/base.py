@@ -16,12 +16,6 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanNDImage`, optional
-        A binary array representing the mask. Must be the same
-        shape as the image. Only one mask is supported for an image (so the
-        mask is applied to every channel equally).
-
-        Default: :class:`BooleanNDImage` covering the whole image
     mode : 'dense' or 'sparse'
         The 'sparse' case refers to the traditional usage of HOGs, so default
         parameters values are passed to the ImageWindowIterator. The sparse
