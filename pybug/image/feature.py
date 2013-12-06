@@ -411,8 +411,7 @@ class FeatureExtraction(object):
             cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
             window_height=1, window_width=1, window_unit='blocks',
             window_step_vertical=1, window_step_horizontal=1,
-            window_step_unit='pixels', padding=True, verbose=False,
-            accurate_landmarks=True):
+            window_step_unit='pixels', padding=True, verbose=False):
         r"""
         Represents a 2-dimensional HOG features image with k number of
         channels. It returns an image object with potential landmarks of the
@@ -420,15 +419,8 @@ class FeatureExtraction(object):
 
         Parameters
         ----------
-        For a HOG parameters explanation, please refer to HOG2DImage class of
+        For the parameters explanation, please refer to HOG2DImage class of
         this file.
-
-        accurate_landmarks :  bool
-            If this flag is enabled, the returned landmark coordinates have
-            float accuracy. If it is disabled, the landmark coordinates are
-            int of the closest hog image discrete location to each landmark.
-
-            Default: True
         """
         # compute hog features
         hog = HOG2DImage(self._image.pixels, mask=self._image.mask,
@@ -445,53 +437,23 @@ class FeatureExtraction(object):
         # correct landmarks
         hog.landmarks = self._image.landmarks
         if hog.landmarks.has_landmarks:
-            # coordinates of original image sampled in hogs image
-            # thus xs/ys have length equal to hogs image width/height with
-            # coordinates referring to the original image
-            xs = np.array(range(hog.window_centres[:, :, 0].min(),
-                                hog.window_centres[:, :, 0].max() + 1,
-                                hog.window_centres[1, 0, 0] -
-                                hog.window_centres[0, 0, 0]))
-            ys = np.array(range(hog.window_centres[:, :, 1].min(),
-                                hog.window_centres[:, :, 1].max() + 1,
-                                hog.window_centres[0, 1, 1] -
-                                hog.window_centres[0, 0, 1]))
             for l_group in hog.landmarks:
                 l = hog.landmarks[l_group[0]]
-                for p in range(l.lms.n_points):
-                    # coordinates in original image space
-                    x = l.lms.points[p, 0]
-                    y = l.lms.points[p, 1]
-                    if accurate_landmarks:
-                        # indices of sorted absolute distances between landmark
-                        # point and sampled points
-                        x_diff = np.argsort(abs(xs - x))
-                        y_diff = np.argsort(abs(ys - y))
-                        # keep the first two indices' coordinates (they must be
-                        # consecutive indices) and sort them.
-                        # these indices are the neighbour int points in the hog
-                        # image space ...
-                        x_feat = np.sort(x_diff[0:2])
-                        y_feat = np.sort(y_diff[0:2])
-                        # ... these indices are the neighbour int points in the
-                        # original image space
-                        x_init = np.sort(xs[[x_diff[0], x_diff[1]]])
-                        y_init = np.sort(ys[[y_diff[0], y_diff[1]]])
-                        # relative position of landmark wrt the two neighbours
-                        # in the original image space
-                        ratio_x = float((x-x_init[0])) / \
-                            float((x_init[1]-x_init[0]))
-                        ratio_y = float((y-y_init[0])) / \
-                            float((y_init[1]-y_init[0]))
-                        # relative position of landmark wrt the two neighbours
-                        # in the hogs image space
-                        l.lms.points[p, 0] = ratio_x * x_feat[1] + \
-                            (1-ratio_x) * x_feat[0]
-                        l.lms.points[p, 1] = ratio_y * y_feat[1] + \
-                            (1-ratio_y) * y_feat[0]
-                    else:
-                        # index of min of absolute distances between landmark
-                        # point and sampled points
-                        l.lms.points[p, 0] = int(np.argmin(abs(xs - x)))
-                        l.lms.points[p, 1] = int(np.argmin(abs(ys - y)))
+                # make sure window steps are in pixels mode
+                window_step_vertical = (hog.window_centres[1, 0, 0] -
+                                        hog.window_centres[0, 0, 0])
+                window_step_horizontal = (hog.window_centres[0, 1, 1] -
+                                          hog.window_centres[0, 0, 1])
+                print hog.window_centres[0, 1, 1] - hog.window_centres[0, 0, 1]
+                print hog.window_centres[1, 0, 0] - hog.window_centres[0, 0, 0]
+                print hog.window_centres[:, :, 0].min()
+                print hog.window_centres[:, :, 1].min()
+                # convert points by subtracting offset (controlled by padding)
+                # and dividing with step at each direction
+                l.lms.points[:, 0] = (l.lms.points[:, 0] -
+                                      hog.window_centres[:, :, 0].min()) / \
+                    window_step_vertical
+                l.lms.points[:, 1] = (l.lms.points[:, 1] -
+                                      hog.window_centres[:, :, 1].min()) / \
+                    window_step_horizontal
         return hog
