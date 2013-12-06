@@ -441,7 +441,7 @@ class ModelDrivenTransform(AlignableTransform):
         pseudoinverse_vector : (N,) ndarray
             The pseudoinverse of the vector provided
         """
-        # just have to reverse the parameters!
+        # just have to negate the parameters!
         return -vector
 
 
