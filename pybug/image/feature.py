@@ -392,6 +392,18 @@ class HOG2DImage(Feature2DImage):
 
 
 class FeatureExtraction(object):
+    r"""
+    Class that given an image object, it adds the feature extraction
+    functionality of Feature2DImage class. The feature extraction also includes
+    potential correction of landmarks. Currently it is used by Abstract2DImage
+    class.
+
+    Parameters
+    ----------
+    image :  Abstract2DImage object
+        The object created by Abstract2DImage class.
+    """
+
     def __init__(self, image):
         self._image = image
 
@@ -401,6 +413,23 @@ class FeatureExtraction(object):
             window_step_vertical=1, window_step_horizontal=1,
             window_step_unit='pixels', padding=True, verbose=False,
             accurate_landmarks=True):
+        r"""
+        Represents a 2-dimensional HOG features image with k number of
+        channels. It returns an image object with potential landmarks of the
+        same type as the input image object.
+
+        Parameters
+        ----------
+        For a HOG parameters explanation, please refer to HOG2DImage class of
+        this file.
+
+        accurate_landmarks :  bool
+            If this flag is enabled, the returned landmark coordinates have
+            float accuracy. If it is disabled, the landmark coordinates are
+            int of the closest hog image discrete location to each landmark.
+
+            Default: True
+        """
         # compute hog features
         hog = HOG2DImage(self._image.pixels, mask=self._image.mask,
                          mode=mode, algorithm=algorithm, cell_size=cell_size,
@@ -463,6 +492,6 @@ class FeatureExtraction(object):
                     else:
                         # index of min of absolute distances between landmark
                         # point and sampled points
-                        l.lms.points[p, 0] = np.argmin(abs(xs - x))
-                        l.lms.points[p, 1] = np.argmin(abs(ys - y))
+                        l.lms.points[p, 0] = int(np.argmin(abs(xs - x)))
+                        l.lms.points[p, 1] = int(np.argmin(abs(ys - y)))
         return hog
