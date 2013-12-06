@@ -59,7 +59,7 @@ class InstanceBackedModel(object):
             An instance of the model.
         """
         return self.template_instance.from_vector(
-            self.instance_vectors(weights))
+            self.instance_vector(weights))
 
     def project(self, instance):
         """
@@ -104,7 +104,7 @@ class InstanceBackedModel(object):
             The reconstructed object.
         """
         reconstruction_vector = self.reconstruct_vectors(
-            instance.as_vector(), n_components)
+            instance.as_vector())
         return instance.from_vector(reconstruction_vector)
 
     def project_out(self, instance):

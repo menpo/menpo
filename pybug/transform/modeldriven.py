@@ -809,7 +809,7 @@ class OrthoMDTransform(GlobalMDTransform):
                  weights=None, composition='both'):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
-        # 2. orthonormalize model and similarity model
+        # 2. Orthonormalize model and similarity model
         model = deepcopy(model)
         model.orthonormalize_against_inplace(self.similarity_model)
         self.similarity_weights = self.similarity_model.project(

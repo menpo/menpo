@@ -85,7 +85,7 @@ class LinearModel(object):
         if n_components is None:
             n_components = self.n_components
 
-        if not n_components < self.n_available_components:
+        if not n_components <= self.n_available_components:
             raise ValueError(
                 "n_components ({}) needs to be less than "
                 "n_available_components ({})".format(
