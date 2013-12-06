@@ -370,7 +370,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
     def crop_to_landmarks(self, group=None, label=None, boundary=0,
                           constrain_to_boundary=True):
         r"""
-        Crop this image to be bounded just around a set of landmarks
+        Crop this image to be bounded around a set of landmarks with an
+        optional n_pixel boundary
 
         Parameters
         ----------
@@ -381,7 +382,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             Default: None
 
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
+            The label of of the landmark manager that you wish to use. If None
              all landmarks in the group are used.
 
             Default: None
@@ -408,6 +409,60 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         min_indices, max_indices = pc.bounds(boundary=boundary)
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
+
+    def crop_to_landmarks_proportion(self, boundary_proportion,
+                                     group=None, label=None,
+                                     minimum=True,
+                                     constrain_to_boundary=True):
+        r"""
+        Crop this image to be bounded around a set of landmarks with a
+        border proportional to the landmark spread or range.
+
+        Parameters
+        ----------
+        boundary_proportion: float
+            Additional padding to be added all around the landmarks
+            bounds defined as a proportion of the landmarks' range. See
+            minimum for a definition of how the range is calculated.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If None
+             all landmarks in the group are used.
+
+            Default: None
+
+        minimum: bool, Optional
+            If True the specified proportion is relative to the minimum
+            value of the landmarks' per-dimension range; if False wrt the
+            maximum value of the landmarks' per-dimension range.
+
+            Default: True
+
+        constrain_to_boundary: boolean, optional
+            If True the crop will be snapped to not go beyond this images
+            boundary. If False, an ImageBoundaryError will be raised if an
+            attempt is made to go beyond the edge of the image.
+
+            Default: True
+
+        Raises
+        ------
+        ImageBoundaryError
+            Raised if constrain_to_boundary is False, and an attempt is made
+            to crop the image in a way that violates the image bounds.
+        """
+        pc = self.landmarks[group][label].lms
+        if minimum:
+            boundary = boundary_proportion * np.min(pc.range())
+        else:
+            boundary = boundary_proportion * np.max(pc.range())
+        self.crop_to_landmarks(group=group, label=label, boundary=boundary,
+                               constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
