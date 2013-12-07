@@ -226,22 +226,22 @@ class AffineTransform(AlignableTransform):
         # representation to normal
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
             new_self = transform.compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
                   isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.homogeneous_matrix)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         elif isinstance(transform, AffineTransform):
             new_self = AffineTransform(self.homogeneous_matrix)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         else:
             raise ValueError("Trying to compose_before a {} with "
                              " a {}".format(type(self), type(transform)))
         return new_self
 
-    def compose_inplace(self, transform):
+    def compose_before_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         exact same type, updating the first to be the composition of the two.
@@ -257,7 +257,7 @@ class AffineTransform(AlignableTransform):
             self.homogeneous_matrix = np.dot(
                 transform.homogeneous_matrix, self.homogeneous_matrix)
         else:
-            raise ValueError("Trying to compose_inplace a {} with "
+            raise ValueError("Trying to compose_before_inplace a {} with "
                              " a {}".format(type(self), type(transform)))
 
     def jacobian(self, points):

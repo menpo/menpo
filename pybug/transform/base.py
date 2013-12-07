@@ -189,7 +189,7 @@ class AbstractTransform(Vectorizable):
     def compose_from_vector_inplace(self, vector):
         r"""
         General solution to compose_from_vector_inplace - a deepcopy
-        followed by compose_inplace.
+        followed by compose_before_inplace.
         """
         new_transform = self.from_vector(vector)
         return self.compose_inplace(new_transform)
