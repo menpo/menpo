@@ -1,13 +1,13 @@
 import abc
 import copy
-from pybug.transform.base import AlignableTransform
+from pybug.transform.base import AlignableTransform, ComposableTransform
 from pybug.exception import DimensionalityError
 #TODO remove matlab here
 import pybug.matlab as matlab
 import numpy as np
 
 
-class AffineTransform(AlignableTransform):
+class AffineTransform(AlignableTransform, ComposableTransform):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -222,15 +222,13 @@ class AffineTransform(AlignableTransform):
         transform : :class:`AffineTransform`
             The resulting affine transform.
         """
-        # note we dot this way as we have our data in the transposed
-        # representation to normal
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
             new_self.compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
             new_self = transform.compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
-                  isinstance(transform, SimilarityTransform)):
+              isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.homogeneous_matrix)
             new_self.compose_before_inplace(transform)
         elif isinstance(transform, AffineTransform):

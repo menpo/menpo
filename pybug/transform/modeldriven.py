@@ -1,10 +1,10 @@
 from copy import deepcopy
 import numpy as np
 from pybug.model import Similarity2dInstanceModel
-from pybug.transform.base import AlignableTransform
+from pybug.transform.base import AlignableTransform, ComposableTransform
 
 
-class ModelDrivenTransform(AlignableTransform):
+class ModelDrivenTransform(AlignableTransform, ComposableTransform):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -228,25 +228,22 @@ class ModelDrivenTransform(AlignableTransform):
     # Problems:
     #   - This method needs to be explicitly overwritten in order to match
     #     the common interface defined for AlignableTransform objects
-    def compose(self, statistically_driven_transform):
+    def compose_before(self, md_transform):
         if self.composition is 'model':
             # TODO this seems to be the same, revisit
-            new_target = self._compose_model(
-                statistically_driven_transform.target)
+            new_target = self._compose_model(md_transform.target)
             return self.from_target(new_target)
         elif self.composition is 'warp':
-            new_target = self._compose_warp(
-                statistically_driven_transform.target)
+            new_target = self._compose_warp(md_transform.target)
             return self.from_target(new_target)
         elif self.composition is 'both':
-            new_params = self._compose_both(
-                statistically_driven_transform.as_vector())
+            new_params = self._compose_after_both(md_transform.as_vector())
             return self.from_vector(new_params)
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
 
-    def compose_from_vector_inplace(self, sdt_parameters):
+    def compose_after_from_vector_inplace(self, mdt_vector):
         r"""
         Compose this ModelDrivenTransform with another inplace.
         Rather than requiring a new ModelDrivenTransform to compose_before
@@ -255,19 +252,19 @@ class ModelDrivenTransform(AlignableTransform):
         Parameters
         ----------
 
-        sdt_parameters: (P,) ndarray
+        mdt_vector: (P,) ndarray
             The parameters of the ModelDrivenTransform that we are
             composing with, as found from as_vector().
 
         """
         if self.composition is 'model':
-            temp_sdt = self.from_vector(sdt_parameters)
-            self.target = self._compose_model(temp_sdt.target)
+            new_mdtransform = self.from_vector(mdt_vector)
+            self.target = self._compose_model(new_mdtransform.target)
         elif self.composition is 'warp':
-            temp_sdt = self.from_vector(sdt_parameters)
-            self.target = self._compose_warp(temp_sdt.target)
+            new_mdtransform = self.from_vector(mdt_vector)
+            self.target = self._compose_warp(new_mdtransform.target)
         elif self.composition is 'both':
-            self.from_vector_inplace(self._compose_both(sdt_parameters))
+            self.from_vector_inplace(self._compose_after_both(mdt_vector))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
@@ -318,21 +315,24 @@ class ModelDrivenTransform(AlignableTransform):
         """
         return self.transform.apply(other_target)
 
-    def _compose_both(self, new_sdt_parameters):
+    def _compose_after_both(self, mdt_vector):
         r"""
         Composes two statistically driven transforms together based on the
         first order approximation proposed by Papandreou and Maragos.
 
+        The resulting vector of parameters is equivalent to
+
+            self.compose_after_from_vector(mdt_vector)
+
         Parameters
         ----------
-        new_sdt_parameters : (P,) ndarray
+        mdt_vector : (P,) ndarray
             the parameters of the ModelDrivenTransform we are
             composing with, as provided by .as_vector().
 
         Returns
         -------
-
-        parameters: (P,) ndarray
+        vector: (P,) ndarray
             The new parameters of the composed result
 
         References
@@ -378,7 +378,7 @@ class ModelDrivenTransform(AlignableTransform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, new_sdt_parameters)
+        return self.as_vector() + np.dot(Jp, mdt_vector)
 
     def _target_for_weights(self, weights):
         r"""
@@ -643,7 +643,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         from pybug.shape import PointCloud
         return PointCloud(composed_target)
 
-    def _compose_both(self, new_sdt_parameters):
+    def _compose_after_both(self, mdt_vector):
         r"""
         Composes two statistically driven transforms together based on the
         first order approximation proposed by Papandreou and Maragos.
@@ -724,7 +724,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, new_sdt_parameters)
+        return self.as_vector() + np.dot(Jp, mdt_vector)
 
     def _target_for_weights(self, weights):
         r"""

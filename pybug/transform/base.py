@@ -6,7 +6,7 @@ from pybug.visualize import AlignmentViewer2d
 from pybug.visualize.base import Viewable
 
 
-class AbstractTransform(Vectorizable):
+class Transform(Vectorizable):
     r"""
     An abstract representation of any N-dimensional transform.
     Provides a unified interface to apply the transform (
@@ -109,7 +109,7 @@ class AbstractTransform(Vectorizable):
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
 
-        :type: :class:`AlignableTransform`
+        :type: :class:`Transform`
         """
         return self._build_pseudoinverse()
 
@@ -186,14 +186,6 @@ class AbstractTransform(Vectorizable):
         except AttributeError:
             return self._apply(x, **kwargs)
 
-    def compose_from_vector_inplace(self, vector):
-        r"""
-        General solution to compose_from_vector_inplace - a deepcopy
-        followed by compose_before_inplace.
-        """
-        new_transform = self.from_vector(vector)
-        return self.compose_inplace(new_transform)
-
     def pseudoinverse_vector(self, vector):
         r"""
         The vectorized pseudoinverse of a provided vector instance.
@@ -218,7 +210,63 @@ class AbstractTransform(Vectorizable):
         return self.from_vector(vector).pseudoinverse.as_vector()
 
 
-class AlignableTransform(AbstractTransform):
+class ComposableTransform(object):
+    r"""
+    """
+    __metaclass__ = abc.ABCMeta
+
+    def compose_before(self, transform):
+        r"""
+
+        Parameters
+        ----------
+        transform : :class:`AffineTransform`
+            Transform to be applied *FOLLOWING* self
+
+        Returns
+        --------
+        transform : :class:`AffineTransform`
+            The resulting affine transform.
+        """
+        new_transform = deepcopy(self)
+        return new_transform.compose_before_inplace(transform)
+
+    @abc.abstractmethod
+    def compose_before_inplace(self, transform):
+        pass
+
+    def compose_before_from_vector_inplace(self, vector):
+        r"""
+        Naive solution - from_vector() followed by compose_before_inplace.
+        """
+        return self.compose_before_inplace(self.from_vector(vector))
+
+    def compose_after(self, transform):
+        r"""
+        Naive solution - flip the arguments and compose_before
+        """
+        return transform.compose_before(self)
+
+    def compose_after_inplace(self, transform):
+        r"""
+        Naive solution - transfer state using Vectorizable interface,
+        then compose_before_from_vector_inplace
+        """
+        self_vector = self.as_vector().copy()
+        # update self to be equal to transform
+        self.update_from_vector(transform.as_vector())
+        # compose before from vector inplace
+        return self.compose_before_from_vector_inplace(self_vector)
+
+    def compose_after_from_vector_inplace(self, vector):
+        self_vector = self.as_vector().copy()
+        # update self to be equal to vector
+        self.update_from_vector(vector)
+        # compose before from vector inplace
+        return self.compose_before_from_vector_inplace(self_vector)
+
+
+class AlignableTransform(Transform):
     r"""
     Abstract interface for all transform's that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
@@ -232,7 +280,7 @@ class AlignableTransform(AbstractTransform):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        AbstractTransform.__init__(self)
+        Transform.__init__(self)
         self._target = None
         self._source = None
 

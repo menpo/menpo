@@ -85,7 +85,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -135,7 +135,7 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
             inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(inv_delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence

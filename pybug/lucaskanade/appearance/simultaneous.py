@@ -129,7 +129,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p[:n_params])
+            self.transform.compose_after_from_vector_inplace(delta_p[:n_params])
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights
@@ -199,7 +199,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p[:n_params])
+            self.transform.compose_after_from_vector_inplace(delta_p[:n_params])
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights
