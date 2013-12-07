@@ -27,7 +27,7 @@ class AffineTransform(AlignableTransform):
         self.homogeneous_matrix = homogeneous_matrix
 
     def _init_with_homogeneous(self, homogeneous_matrix):
-        self  = self.__init__(homogeneous_matrix)
+        self = self.__init__(homogeneous_matrix)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -131,7 +131,7 @@ class AffineTransform(AlignableTransform):
                                           "matrix to a different dimension")
         elif shape[0] - 1 not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
-        # TODO add a check here that the matrix is actually valid
+            # TODO add a check here that the matrix is actually valid
         self._homogeneous_matrix = value.copy()
 
     @property
@@ -230,7 +230,7 @@ class AffineTransform(AlignableTransform):
         elif isinstance(self, type(transform)):
             new_self = transform.compose(self)
         elif (isinstance(self, SimilarityTransform) and
-              isinstance(transform, SimilarityTransform)):
+                  isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.homogeneous_matrix)
             new_self.compose_inplace(transform)
         elif isinstance(transform, AffineTransform):
@@ -293,12 +293,13 @@ class AffineTransform(AlignableTransform):
                 "Trying to sample jacobian in incorrect dimensions "
                 "(transform is {0}D, sampling at {1}D)".format(
                     self.n_dims, points_n_dim))
-        # prealloc the jacobian
+            # prealloc the jacobian
         jac = np.zeros((n_points, self.n_parameters, self.n_dims))
         # a mask that we can apply at each iteration
         dim_mask = np.eye(self.n_dims, dtype=np.bool)
 
-        for i, s in enumerate(range(0, self.n_dims * self.n_dims, self.n_dims)):
+        for i, s in enumerate(
+                range(0, self.n_dims * self.n_dims, self.n_dims)):
             # i is current axis
             # s is slicing offset
             # make a mask for a single points jacobian
@@ -308,7 +309,7 @@ class AffineTransform(AlignableTransform):
             # assign the ith axis points to this mask, broadcasting over all
             # points
             jac[:, full_mask] = points[:, i][..., None]
-        # finally, just repeat the same but for the ones at the end
+            # finally, just repeat the same but for the ones at the end
         full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=bool)
         full_mask[slice(s + self.n_dims, s + 2 * self.n_dims)] = dim_mask
         jac[:, full_mask] = 1
@@ -443,12 +444,14 @@ class AffineTransform(AlignableTransform):
         See _align() for details. This is a separate method just so it can
         be shared by _target_setter().
         """
+
         def _homogeneous_points(pc):
             r"""
             Pulls out the points from a pointcloud as homogeneous points of
             shape (n_dims + 1, n_points)
             """
             return np.concatenate((pc.points.T, np.ones(pc.n_points)[None, :]))
+
         a = _homogeneous_points(source)
         b = _homogeneous_points(target)
         return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
@@ -1156,6 +1159,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     scale : (D,) ndarray
         A scale for each axis.
     """
+
     def __init__(self, scale):
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
@@ -1194,7 +1198,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
 
         :type: :class:`NonUniformScale`
         """
-        return NonUniformScale(1.0/self.scale)
+        return NonUniformScale(1.0 / self.scale)
 
     def _transform_str(self):
         message = 'NonUniformScale by %s ' % self.scale
@@ -1262,6 +1266,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     applied to all dimensions. This is abstracted out to remove unnecessary
     code duplication.
     """
+
     def __init__(self, scale, n_dims):
         homogeneous_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
@@ -1270,13 +1275,13 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
     @classmethod
     def _align(cls, source, target, **kwargs):
-        uniform_scale = cls(target.norm()/source.norm(), source.n_dims)
+        uniform_scale = cls(target.norm() / source.norm(), source.n_dims)
         uniform_scale._source = source
         uniform_scale._target = target
         return uniform_scale
 
     def _target_setter(self, new_target):
-        new_scale = new_target.norm()/self.source.norm()
+        new_scale = new_target.norm() / self.source.norm()
         np.fill_diagonal(self.homogeneous_matrix, new_scale)
         self.homogeneous_matrix[-1, -1] = 1
         self._target = new_target
