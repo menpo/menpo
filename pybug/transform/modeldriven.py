@@ -420,6 +420,30 @@ class ModelDrivenTransform(AlignableTransform):
         """
         return self.model.project(target)
 
+    def pseudoinverse_vector(self, vector):
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
+
+        Syntactic sugar for
+
+        self.from_vector(vector).pseudoinverse.as_vector()
+
+        On ModelDrivenTransform this is especially fast - we just negate the
+        vector provided.
+
+        Parameters
+        ----------
+        vector :  (P,) ndarray
+            A vectorized version of self
+
+        Returns
+        -------
+        pseudoinverse_vector : (N,) ndarray
+            The pseudoinverse of the vector provided
+        """
+        # just have to negate the parameters!
+        return -vector
+
 
 class GlobalMDTransform(ModelDrivenTransform):
     r"""
