@@ -215,7 +215,7 @@ class AbstractTransform(Vectorizable):
         pseudoinverse_vector : (N,) ndarray
             The pseudoinverse of the vector provided
         """
-        return self.from_vector(vector).pseduoinverse.as_vector()
+        return self.from_vector(vector).pseudoinverse.as_vector()
 
 
 class AlignableTransform(AbstractTransform):
