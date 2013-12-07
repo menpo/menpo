@@ -260,14 +260,6 @@ class AffineTransform(AlignableTransform):
             raise ValueError("Trying to compose_inplace a {} with "
                              " a {}".format(type(self), type(transform)))
 
-    def compose_from_vector_inplace(self, vector):
-        r"""
-        General solution to compose_from_vector_inplace - a deepcopy
-        followed by compose_inplace.
-        """
-        new_transform = self.from_vector(vector)
-        return self.compose_inplace(new_transform)
-
     def jacobian(self, points):
         r"""
         Computes the Jacobian of the transform w.r.t the parameters. This is
