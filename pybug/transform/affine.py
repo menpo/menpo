@@ -132,7 +132,7 @@ class AffineTransform(AlignableTransform):
         elif shape[0] - 1 not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
         # TODO add a check here that the matrix is actually valid
-        self._homogeneous_matrix = value
+        self._homogeneous_matrix = value.copy()
 
     @property
     def linear_component(self):

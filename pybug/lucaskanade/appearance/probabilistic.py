@@ -27,8 +27,8 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = (self.appearance_model._to_subspace(J.T) +
-                       self.appearance_model._within_subspace(J.T)).T
+            self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                       self.appearance_model.project_whitened_vector(J.T)).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -75,8 +75,8 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = (self.appearance_model._to_subspace(J.T) +
-                       self.appearance_model._within_subspace(J.T)).T
+            self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                       self.appearance_model.project_whitened_vector(J.T)).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -109,8 +109,8 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
         J = self.residual.steepest_descent_images(self.template,
                                                   self._dW_dp)
         # Project out appearance model from VT_dW_dp
-        self._J = (self.appearance_model._to_subspace(J.T) +
-                   self.appearance_model._within_subspace(J.T)).T
+        self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                   self.appearance_model.project_whitened_vector(J.T)).T
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J, J2=J)
 
@@ -168,7 +168,7 @@ class ToSubspaceForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -215,7 +215,7 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -263,7 +263,7 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
                                                           self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -309,7 +309,7 @@ class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -356,7 +356,7 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -403,7 +403,7 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
                                                       self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
