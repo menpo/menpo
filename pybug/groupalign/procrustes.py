@@ -33,7 +33,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         rescale = UniformScale(
             self.initial_target_scale / new_target.norm(), self.n_dims)
         centre = Translation(-new_target.centre)
-        rescale_about_centre = centre.compose(rescale).compose(
+        rescale_about_centre = centre.compose_before(rescale).compose_before(
             centre.pseudoinverse)
         rescale_about_centre.apply_inplace(new_target)
         # check to see if  we have converged yet

@@ -199,7 +199,7 @@ class AffineTransform(AlignableTransform):
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
-    def compose(self, transform):
+    def compose_before(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         same family, producing a new transform that is the composition of
@@ -228,7 +228,7 @@ class AffineTransform(AlignableTransform):
             new_self = copy.deepcopy(self)
             new_self.compose_inplace(transform)
         elif isinstance(self, type(transform)):
-            new_self = transform.compose(self)
+            new_self = transform.compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
                   isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.homogeneous_matrix)
@@ -237,7 +237,7 @@ class AffineTransform(AlignableTransform):
             new_self = AffineTransform(self.homogeneous_matrix)
             new_self.compose_inplace(transform)
         else:
-            raise ValueError("Trying to compose a {} with "
+            raise ValueError("Trying to compose_before a {} with "
                              " a {}".format(type(self), type(transform)))
         return new_self
 
@@ -540,8 +540,8 @@ class SimilarityTransform(AffineTransform):
         rotation = Rotation(np.dot(U, Vt))
         # finally, move the source back out to where the target is
         inv_target_translation = target_translation.pseudoinverse
-        return translation.compose(scale).compose(
-            rotation).compose(inv_target_translation)
+        return translation.compose_before(scale).compose_before(
+            rotation).compose_before(inv_target_translation)
 
     def _target_setter(self, new_target):
         similarity = self._procrustes_alignment(self.source, new_target)
@@ -985,7 +985,7 @@ class Rotation2D(AbstractRotation):
         homogeneous_matrix = super(Rotation2D, cls)._estimate(source, target)
         similarity = SimilarityTransform(homogeneous_matrix)
         r1, s, r2, t = similarity.decompose()
-        return r1.compose(r2).homogeneous_matrix[:-1, :-1]
+        return r1.compose_before(r2).homogeneous_matrix[:-1, :-1]
 
 
 class Rotation3D(AbstractRotation):

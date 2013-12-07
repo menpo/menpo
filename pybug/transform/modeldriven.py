@@ -249,7 +249,7 @@ class ModelDrivenTransform(AlignableTransform):
     def compose_from_vector_inplace(self, sdt_parameters):
         r"""
         Compose this ModelDrivenTransform with another inplace.
-        Rather than requiring a new ModelDrivenTransform to compose
+        Rather than requiring a new ModelDrivenTransform to compose_before
         with, this method only requires the parameters of the new transform.
 
         Parameters
