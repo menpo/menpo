@@ -222,6 +222,9 @@ class AffineTransform(AlignableTransform, Composable):
         transform : :class:`AffineTransform`
             The resulting affine transform.
         """
+        # note that this overload of the basic compose_before is just to
+        # deal with the complexities of maintaining the correct class of
+        # transform upon composition
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
             new_self.compose_before_inplace(transform)
@@ -242,7 +245,8 @@ class AffineTransform(AlignableTransform, Composable):
     def compose_before_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
-        exact same type, updating the first to be the composition of the two.
+        exact same type, updating the first to be the compose_before of the
+        two.
 
         Parameters
         ----------
@@ -256,6 +260,26 @@ class AffineTransform(AlignableTransform, Composable):
                 transform.homogeneous_matrix, self.homogeneous_matrix)
         else:
             raise ValueError("Trying to compose_before_inplace a {} with "
+                             " a {}".format(type(self), type(transform)))
+
+    def compose_after_inplace(self, transform):
+        r"""
+        Chains an affine family transform with another transform of the
+        exact same type, updating the first to be the compose_after of the
+        two.
+
+        Parameters
+        ----------
+        affine_transform : :class:`AffineTransform`
+            Transform to be applied *BEFORE* self
+        """
+        # note we dot this way as we have our data in the transposed
+        # representation to normal
+        if isinstance(transform, type(self)):
+            self.homogeneous_matrix = np.dot(self.homogeneous_matrix,
+                                             transform.homogeneous_matrix)
+        else:
+            raise ValueError("Trying to compose_after_inplace a {} with "
                              " a {}".format(type(self), type(transform)))
 
     def jacobian(self, points):

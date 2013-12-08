@@ -394,11 +394,9 @@ class Composable(object):
         transform : self
             self, updated to the result of the composition
         """
-        # naive approach - update self to be equal to vector state and
-        # compose_before_from_vector_inplace
-        self_vector = self.as_vector().copy()
-        self.update_from_vector(vector)
-        return self.compose_before_from_vector_inplace(self_vector)
+        # naive approach - use the vector to build an object,
+        # then compose_after_inplace
+        return self.compose_after_inplace(self.from_vector(vector))
 
 
 class AlignableTransform(Transform):

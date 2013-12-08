@@ -223,18 +223,13 @@ class ModelDrivenTransform(AlignableTransform, Composable):
         """
         return self.transform._apply(x, **kwargs)
 
-    # TODO: Could be implemented as optimization option in LK???
-    # i.e. make this a function pointer
-    # Problems:
-    #   - This method needs to be explicitly overwritten in order to match
-    #     the common interface defined for AlignableTransform objects
-    def compose_before(self, md_transform):
+    def compose_after(self, md_transform):
         if self.composition is 'model':
             # TODO this seems to be the same, revisit
-            new_target = self._compose_model(md_transform.target)
+            new_target = self._compose_after_model(md_transform.target)
             return self.from_target(new_target)
         elif self.composition is 'warp':
-            new_target = self._compose_warp(md_transform.target)
+            new_target = self._compose_after_warp(md_transform.target)
             return self.from_target(new_target)
         elif self.composition is 'both':
             new_params = self._compose_after_both(md_transform.as_vector())
@@ -245,8 +240,8 @@ class ModelDrivenTransform(AlignableTransform, Composable):
 
     def compose_after_from_vector_inplace(self, mdt_vector):
         r"""
-        Compose this ModelDrivenTransform with another inplace.
-        Rather than requiring a new ModelDrivenTransform to compose_before
+        Compose_after this ModelDrivenTransform with another inplace.
+        Rather than requiring a new ModelDrivenTransform to compose_after
         with, this method only requires the parameters of the new transform.
 
         Parameters
@@ -259,17 +254,17 @@ class ModelDrivenTransform(AlignableTransform, Composable):
         """
         if self.composition is 'model':
             new_mdtransform = self.from_vector(mdt_vector)
-            self.target = self._compose_model(new_mdtransform.target)
+            self.target = self._compose_after_model(new_mdtransform.target)
         elif self.composition is 'warp':
             new_mdtransform = self.from_vector(mdt_vector)
-            self.target = self._compose_warp(new_mdtransform.target)
+            self.target = self._compose_after_warp(new_mdtransform.target)
         elif self.composition is 'both':
             self.from_vector_inplace(self._compose_after_both(mdt_vector))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
 
-    def _compose_model(self, other_target):
+    def _compose_after_model(self, other_target):
         r"""
         Composes two statistically driven transforms together.
 
@@ -296,7 +291,7 @@ class ModelDrivenTransform(AlignableTransform, Composable):
     #     method
     #   - For PWA it should implement Bakers algorithmic approach to
     #     composition
-    def _compose_warp(self, other_target):
+    def _compose_after_warp(self, other_target):
         r"""
         Composes two statistically driven transforms together. This approach
         composes the
@@ -619,7 +614,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         """
         self.global_transform.from_vector_inplace(global_weights)
 
-    def _compose_model(self, other_target):
+    def _compose_after_model(self, other_target):
         r"""
         Composes two statistically driven transforms together.
 
