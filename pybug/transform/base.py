@@ -276,7 +276,7 @@ class Composable(object):
         transform : :class:`Composable`
             The resulting transform.
         """
-        # standard approach  - deepcopy followed by the inplace operation
+        # naive approach  - deepcopy followed by the inplace operation
         new_transform = deepcopy(self)
         return new_transform.compose_before_inplace(transform)
 
@@ -322,6 +322,8 @@ class Composable(object):
         transform : self
             self, updated to the result of the composition
         """
+        # naive approach - use the vector to build an object,
+        # then compose_before_inplace
         return self.compose_before_inplace(self.from_vector(vector))
 
     def compose_after(self, transform):
@@ -344,6 +346,7 @@ class Composable(object):
         transform : :class:`Composable`
             The resulting transform.
         """
+        # naive approach - just flip the object order and compose_before
         return transform.compose_before(self)
 
     def compose_after_inplace(self, transform):
@@ -365,10 +368,10 @@ class Composable(object):
         transform : self
             self, updated to the result of the composition
         """
+        # naive approach - update self to be equal to transform and
+        # compose_before_from_vector_inplace
         self_vector = self.as_vector().copy()
-        # update self to be equal to transform
         self.update_from_vector(transform.as_vector())
-        # compose before from vector inplace
         return self.compose_before_from_vector_inplace(self_vector)
 
     def compose_after_from_vector_inplace(self, vector):
@@ -391,10 +394,10 @@ class Composable(object):
         transform : self
             self, updated to the result of the composition
         """
+        # naive approach - update self to be equal to vector state and
+        # compose_before_from_vector_inplace
         self_vector = self.as_vector().copy()
-        # update self to be equal to vector
         self.update_from_vector(vector)
-        # compose before from vector inplace
         return self.compose_before_from_vector_inplace(self_vector)
 
 
