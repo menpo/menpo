@@ -1,10 +1,10 @@
 from copy import deepcopy
 import numpy as np
 from pybug.model import Similarity2dInstanceModel
-from pybug.transform.base import AlignableTransform, ComposableTransform
+from pybug.transform.base import AlignableTransform, Composable
 
 
-class ModelDrivenTransform(AlignableTransform, ComposableTransform):
+class ModelDrivenTransform(AlignableTransform, Composable):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform

@@ -210,47 +210,117 @@ class Transform(Vectorizable):
         return self.from_vector(vector).pseudoinverse.as_vector()
 
 
-class ComposableTransform(object):
+class Composable(object):
     r"""
+    Mixin for Transform objects that can be composed together, such that
+    behavior of multiple Transforms is compounded together in some way.
     """
     __metaclass__ = abc.ABCMeta
 
     def compose_before(self, transform):
         r"""
+        c = a.compose_before(b)
+        c.apply(p) == b.apply(a.apply(p))
+
+        a and b are left unchanged.
 
         Parameters
         ----------
-        transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
+        transform : :class:`Composable`
+            Transform to be applied **before** self
 
         Returns
         --------
-        transform : :class:`AffineTransform`
-            The resulting affine transform.
+        transform : :class:`Composable`
+            The resulting transform.
         """
         new_transform = deepcopy(self)
         return new_transform.compose_before_inplace(transform)
 
     @abc.abstractmethod
     def compose_before_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_inplace(b)
+        a.apply(p) == b.apply(a_orig.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
         pass
 
     def compose_before_from_vector_inplace(self, vector):
         r"""
-        Naive solution - from_vector() followed by compose_before_inplace.
+        a_orig = deepcopy(a)
+        a.compose_before_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == b.apply(a.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        Parameters
+        ----------
+        vector : (N,) ndarray
+            Vectorized transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
         """
         return self.compose_before_inplace(self.from_vector(vector))
 
     def compose_after(self, transform):
         r"""
-        Naive solution - flip the arguments and compose_before
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : :class:`Composable`
+            The resulting transform.
         """
         return transform.compose_before(self)
 
     def compose_after_inplace(self, transform):
         r"""
-        Naive solution - transfer state using Vectorizable interface,
-        then compose_before_from_vector_inplace
+        a_orig = deepcopy(a)
+        a.compose_after_inplace(b)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
         """
         self_vector = self.as_vector().copy()
         # update self to be equal to transform
@@ -259,6 +329,25 @@ class ComposableTransform(object):
         return self.compose_before_from_vector_inplace(self_vector)
 
     def compose_after_from_vector_inplace(self, vector):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        Parameters
+        ----------
+        vector : (N,) ndarray
+            Vectorized transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
         self_vector = self.as_vector().copy()
         # update self to be equal to vector
         self.update_from_vector(vector)
