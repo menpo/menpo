@@ -10,8 +10,6 @@ class LinearModel(object):
 
     def __init__(self, components):
         self._components = components  # getter/setter variable
-        self._n_components = self.n_available_components
-
 
     @property
     def n_available_components(self):
@@ -27,18 +25,7 @@ class LinearModel(object):
         r"""
         The number of components currently in use on this model.
         """
-        return self._n_components
-
-    @n_components.setter
-    def n_components(self, value):
-        value = round(value)
-        if 0 < value <= self.n_available_components:
-            self._n_components = value
-        else:
-            raise ValueError(
-                "Tried setting n_components as {} - has to be an int and "
-                "0 < n_components <= n_available_components "
-                "(which is {}) ".format(value, self.n_available_components))
+        return self.n_available_components
 
     @property
     def n_features(self):
@@ -71,20 +58,16 @@ class LinearModel(object):
         else:
             np.copyto(self._components, value, casting='safe')
 
-    def trim_components(self, n_components=None):
+    def trim_components(self, n_components):
         r"""
         Permanently trims the components down to a certain amount.
 
         Parameters
         ----------
 
-        n_components: int, optional
-            The number of components that are kept. If None,
-            self.n_components is used.
+        n_components: int
+            The number of components that are kept.
         """
-        if n_components is None:
-            n_components = self.n_components
-
         if not n_components < self.n_available_components:
             raise ValueError(
                 "n_components ({}) needs to be less than "
@@ -92,7 +75,6 @@ class LinearModel(object):
                 n_components, self.n_available_components))
         else:
             self._components = self._components[:n_components]
-            self.n_components = n_components
 
     def component_vector(self, index):
         r"""
@@ -318,8 +300,9 @@ class LinearModel(object):
         # degeneracy. We need to trim our components down before replacing
         # them to ensure the number of components is consistent (otherwise
         # the components setter will complain at us)
-        self.trim_components(
-            n_components=Q.shape[0] - linear_model.n_available_components)
+        n_available_components = Q.shape[0] - linear_model.n_available_components
+        if n_available_components < self.n_available_components:
+            self.trim_components(n_components=n_available_components)
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_available_components:, :]
 

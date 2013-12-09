@@ -51,6 +51,26 @@ class PCAModel(MeanInstanceLinearModel):
                                               center=center, bias=bias)
         self._eigenvalues = eigenvalues
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        self._n_components = self.n_available_components
+
+    @property
+    def n_components(self):
+        r"""
+        The number of components currently in use on this model.
+        """
+        return self._n_components
+
+    @n_components.setter
+    def n_components(self, value):
+        value = round(value)
+        if 0 < value <= self.n_available_components:
+            self._n_components = value
+        else:
+            raise ValueError(
+                "Tried setting n_components as {} - has to be an int and "
+                "0 < n_components <= n_available_components "
+                "(which is {}) ".format(value, self.n_available_components))
+
 
     @property
     def whitened_components(self):
@@ -127,9 +147,16 @@ class PCAModel(MeanInstanceLinearModel):
             The number of components that are kept. If None,
             self.n_components is used.
         """
-        # trim the super version
-        super(PCAModel, self).trim_components(n_components=n_components)
-        # .. and make sure that the eigenvalues are trimmed too
+        if n_components is None:
+            # by default trim using self.n_components
+            n_components = self.n_components
+
+        # trim the super version version
+        super(PCAModel, self).trim_components(n_components)
+        if self.n_components > self.n_available_components:
+            # set n_components if necessary
+            self.n_components = self.n_available_components
+        # make sure that the eigenvalues are trimmed too
         self._eigenvalues = self._eigenvalues[:self.n_available_components]
 
     def distance_to_subspace(self, instance):

@@ -59,7 +59,7 @@ class InstanceBackedModel(object):
             An instance of the model.
         """
         return self.template_instance.from_vector(
-            self.instance_vectors(weights))
+            self.instance_vector(weights))
 
     def project(self, instance):
         """
@@ -78,14 +78,14 @@ class InstanceBackedModel(object):
         """
         return self.project_vector(instance.as_vector())
 
-    def reconstruct(self, instance, n_components=None):
+    def reconstruct(self, instance):
         """
         Projects a ``instance`` onto the linear space and rebuilds from the
         weights found.
 
         Syntactic sugar for:
 
-            >>> instance(project(instance)[:n_components])
+            >>> instance(project(instance))
 
         but faster, as it avoids the conversion that takes place each time.
 
@@ -93,18 +93,13 @@ class InstanceBackedModel(object):
         ----------
         instance : :class:`pybug.base.Vectorizable`
             A novel instance of Vectorizable
-        n_components : int, optional
-            The number of components to use in the reconstruction.
-
-            Default: ``weights.shape[0]``
 
         Returns
         -------
         reconstructed : ``self.instance_class``
             The reconstructed object.
         """
-        reconstruction_vector = self.reconstruct_vectors(
-            instance.as_vector(), n_components)
+        reconstruction_vector = self.reconstruct_vector(instance.as_vector())
         return instance.from_vector(reconstruction_vector)
 
     def project_out(self, instance):
