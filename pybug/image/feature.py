@@ -444,10 +444,6 @@ class FeatureExtraction(object):
                                         hog.window_centres[0, 0, 0])
                 window_step_horizontal = (hog.window_centres[0, 1, 1] -
                                           hog.window_centres[0, 0, 1])
-                print hog.window_centres[0, 1, 1] - hog.window_centres[0, 0, 1]
-                print hog.window_centres[1, 0, 0] - hog.window_centres[0, 0, 0]
-                print hog.window_centres[:, :, 0].min()
-                print hog.window_centres[:, :, 1].min()
                 # convert points by subtracting offset (controlled by padding)
                 # and dividing with step at each direction
                 l.lms.points[:, 0] = (l.lms.points[:, 0] -
@@ -457,3 +453,26 @@ class FeatureExtraction(object):
                                       hog.window_centres[:, :, 1].min()) / \
                     window_step_horizontal
         return hog
+
+    def igo(self, double_angles=False, verbose=False):
+        r"""
+        Represents a 2-dimensional IGO features image with k=[2,4] number of
+        channels. It returns an image object with potential landmarks of the
+        same type as the input image object.
+
+        Parameters
+        ----------
+        For the parameters explanation, please refer to HOG2DImage class of
+        this file.
+        """
+        # compute igo features
+        if self._image.n_channels == 3:
+            grad = self._image.as_greyscale().gradient()
+        else:
+            grad = self._image.gradient()
+        grad_orient = np.angle(grad.pixels[..., 0] + 1j*grad.pixels[..., 1])
+        igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
+                              np.sin(grad_orient)[..., np.newaxis]), 2)
+        # correct landmarks
+        #igo.landmarks = self._image.landmarks
+        return igo
