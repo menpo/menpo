@@ -385,6 +385,72 @@ class HOG2DImage(Feature2DImage):
         return info_str
 
 
+class IGO2DImage(Feature2DImage):
+    r"""
+    Represents a 2-dimensional IGO features image with k=[2,4] number of
+    channels, of size ``(M, N, C)`` and data type ``np.float``.
+
+    Parameters
+    ----------
+    image :  class:`Abstract2DImage`
+        An image object that contains pixels and mask fields.
+    double_angles : bool
+        Assume that phi represents the gradient orientations. If this flag is
+        disabled, the features image is the concatenation of cos(phi) and
+        sin(phi), thus 2 channels. If it is enabled, the features image is
+        the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
+
+        Default: False
+    verbose : bool
+        Flag to print IGO related information.
+
+        Default: False
+
+    Raises
+    -------
+    ValueError
+        Mask is not the same shape as the image
+    """
+    def __init__(self, image, double_angles=False, verbose=False):
+        self.params = {'double_angles': double_angles,
+                       'verbose': verbose,
+                       'original_image_height': image.pixels.shape[0],
+                       'original_image_width': image.pixels.shape[1],
+                       'original_image_channels': image.pixels.shape[2]}
+        # compute igo
+        if image.n_channels == 3:
+            grad = image.as_greyscale().gradient()
+        else:
+            grad = image.gradient()
+        grad_orient = np.angle(grad.pixels[..., 0] + 1j*grad.pixels[..., 1])
+        if double_angles:
+            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
+                                  np.sin(grad_orient)[..., np.newaxis],
+                                  np.cos(2*grad_orient)[..., np.newaxis],
+                                  np.sin(2*grad_orient)[..., np.newaxis]), 2)
+        else:
+            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
+                                  np.sin(grad_orient)[..., np.newaxis]), 2)
+        super(IGO2DImage, self).__init__(igo, mask=image.mask)
+        if verbose:
+            print self.__str__()
+
+    def __str__(self):
+        info_str = "{} 2D IGOImage with {} channels. " \
+                   "Attached mask {:.1%} true.\n" \
+                   "  - Input image is {}W x {}H with {} channels.\n" \
+            .format(self._str_shape, self.n_channels,
+                    self.mask.proportion_true,
+                    self.params['original_image_width'],
+                    self.params['original_image_height'],
+                    self.params['original_image_channels'])
+        if self.params['double_angles']:
+            info_str = "{}  - Double angles are enabled.\n".format(info_str)
+        else:
+            info_str = "{}  - Double angles are disabled.\n".format(info_str)
+        return info_str
+
+
 class FeatureExtraction(object):
     r"""
     Class that given an image object, it adds the feature extraction
@@ -460,13 +526,8 @@ class FeatureExtraction(object):
         this file.
         """
         # compute igo features
-        if self._image.n_channels == 3:
-            grad = self._image.as_greyscale().gradient()
-        else:
-            grad = self._image.gradient()
-        grad_orient = np.angle(grad.pixels[..., 0] + 1j*grad.pixels[..., 1])
-        igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
-                              np.sin(grad_orient)[..., np.newaxis]), 2)
+        igo = IGO2DImage(self._image, double_angles=double_angles,
+                         verbose=verbose)
         # correct landmarks
-        #igo.landmarks = self._image.landmarks
+        igo.landmarks = self._image.landmarks
         return igo
