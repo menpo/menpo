@@ -215,7 +215,7 @@ class AffineTransform(AlignableTransform, Composable):
         Parameters
         ----------
         transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
+            Transform to be applied **after** self
 
         Returns
         --------
@@ -251,7 +251,7 @@ class AffineTransform(AlignableTransform, Composable):
         Parameters
         ----------
         affine_transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
+            Transform to be applied **after** self
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
@@ -271,7 +271,7 @@ class AffineTransform(AlignableTransform, Composable):
         Parameters
         ----------
         affine_transform : :class:`AffineTransform`
-            Transform to be applied *BEFORE* self
+            Transform to be applied **before** self
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal

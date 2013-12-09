@@ -223,43 +223,120 @@ class ModelDrivenTransform(AlignableTransform, Composable):
         """
         return self.transform._apply(x, **kwargs)
 
-    def compose_after(self, md_transform):
+    def compose_before_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_inplace(b)
+        a.apply(p) == b.apply(a_orig.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        # naive approach - update self to be equal to transform and
+        # compose_before_from_vector_inplace
+        self_vector = self.as_vector().copy()
+        self.update_from_vector(transform.as_vector())
+        return self.compose_after_from_vector_inplace(self_vector)
+
+    def compose_after(self, transform):
+        r"""
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : :class:`ModelDrivenTransform`
+            The resulting ModelDrivenTransform.
+        """
+        self_copy = deepcopy(self)
+        self_copy.compose_after_inplace(transform)
+        return self_copy
+
+    def compose_after_inplace(self, md_transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_inplace(b)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
         if self.composition is 'model':
             # TODO this seems to be the same, revisit
-            new_target = self._compose_after_model(md_transform.target)
-            return self.from_target(new_target)
+            self.target = self._compose_after_model(md_transform.target)
         elif self.composition is 'warp':
-            new_target = self._compose_after_warp(md_transform.target)
-            return self.from_target(new_target)
+            self.target = self._compose_after_warp(md_transform.target)
         elif self.composition is 'both':
             new_params = self._compose_after_both(md_transform.as_vector())
-            return self.from_vector(new_params)
+            self.from_vector_inplace(new_params)
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
+        return self
 
-    def compose_after_from_vector_inplace(self, mdt_vector):
+    def compose_after_from_vector_inplace(self, vector):
         r"""
-        Compose_after this ModelDrivenTransform with another inplace.
+        a_orig = deepcopy(a)
+        a.compose_after_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        compose_after this :class:`ModelDrivenTransform` with another inplace.
         Rather than requiring a new ModelDrivenTransform to compose_after
         with, this method only requires the parameters of the new transform.
 
         Parameters
         ----------
+        vector : (N,) ndarray
+            Vectorized :class:`ModelDrivenTransform` to be applied **before**
+            self
 
-        mdt_vector: (P,) ndarray
-            The parameters of the ModelDrivenTransform that we are
-            composing with, as found from as_vector().
-
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
         """
         if self.composition is 'model':
-            new_mdtransform = self.from_vector(mdt_vector)
+            new_mdtransform = self.from_vector(vector)
             self.target = self._compose_after_model(new_mdtransform.target)
         elif self.composition is 'warp':
-            new_mdtransform = self.from_vector(mdt_vector)
+            new_mdtransform = self.from_vector(vector)
             self.target = self._compose_after_warp(new_mdtransform.target)
         elif self.composition is 'both':
-            self.from_vector_inplace(self._compose_after_both(mdt_vector))
+            self.from_vector_inplace(self._compose_after_both(vector))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')

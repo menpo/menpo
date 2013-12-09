@@ -269,7 +269,7 @@ class Composable(object):
         Parameters
         ----------
         transform : :class:`Composable`
-            Transform to be applied **before** self
+            Transform to be applied **after** self
 
         Returns
         --------
@@ -293,7 +293,7 @@ class Composable(object):
         Parameters
         ----------
         transform : :class:`Composable`
-            Transform to be applied **before** self
+            Transform to be applied **after** self
 
         Returns
         --------
@@ -315,7 +315,7 @@ class Composable(object):
         Parameters
         ----------
         vector : (N,) ndarray
-            Vectorized transform to be applied **before** self
+            Vectorized transform to be applied **after** self
 
         Returns
         --------
@@ -339,7 +339,7 @@ class Composable(object):
         Parameters
         ----------
         transform : :class:`Composable`
-            Transform to be applied **after** self
+            Transform to be applied **before** self
 
         Returns
         --------
@@ -361,7 +361,7 @@ class Composable(object):
         Parameters
         ----------
         transform : :class:`Composable`
-            Transform to be applied **after** self
+            Transform to be applied **before** self
 
         Returns
         --------
@@ -387,7 +387,7 @@ class Composable(object):
         Parameters
         ----------
         vector : (N,) ndarray
-            Vectorized transform to be applied **after** self
+            Vectorized transform to be applied **before** self
 
         Returns
         --------
