@@ -54,14 +54,14 @@ class PCAModel(MeanInstanceLinearModel):
         self._n_components = self.n_available_components
 
     @property
-    def n_components(self):
+    def n_active_components(self):
         r"""
         The number of components currently in use on this model.
         """
         return self._n_components
 
-    @n_components.setter
-    def n_components(self, value):
+    @n_active_components.setter
+    def n_active_components(self, value):
         value = round(value)
         if 0 < value <= self.n_available_components:
             self._n_components = value
@@ -83,7 +83,7 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def eigenvalues(self):
-        return self._eigenvalues[:self.n_components]
+        return self._eigenvalues[:self.n_active_components]
 
     @property
     def eigenvalues_ratio(self):
@@ -91,10 +91,10 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def noise_variance(self):
-        if self.n_components == self.n_available_components:
+        if self.n_active_components == self.n_available_components:
             return 0
         else:
-            return self._eigenvalues[self.n_components:].mean()
+            return self._eigenvalues[self.n_active_components:].mean()
 
     @property
     def inverse_noise_variance(self):
@@ -136,6 +136,44 @@ class PCAModel(MeanInstanceLinearModel):
         else:
             return self.components[index]
 
+    def instance_vectors(self, weights):
+        """
+        Creates new vectorized instances of the model using the first
+        components in a particular weighting.
+
+        Parameters
+        ----------
+        weights : (n_vectors, n_weights) ndarray or list of lists
+            The weightings for the first n_weights components that
+            should be used per instance that is to be produced
+
+            ``weights[i, j]`` is the linear contribution of the j'th
+            principal component to the i'th instance vector produced. Note
+            that if n_weights < n_components, only the first n_weight
+            components are used in the reconstruction (i.e. unspecified
+            weights are implicitly 0)
+
+        Raises
+        ------
+        ValueError: If n_weights > n_components
+
+        Returns
+        -------
+        vectors : (n_vectors, n_features) ndarray
+            The instance vectors for the weighting provided.
+        """
+        weights = np.asarray(weights)  # if eg a list is provided
+        n_instances, n_weights = weights.shape
+        if n_weights > self.n_active_components:
+            raise ValueError(
+                "Number of weightings cannot be greater than {}".format(
+                    self.n_active_components))
+        else:
+            full_weights = np.zeros((n_instances, self.n_active_components))
+            full_weights[..., :n_weights] = weights
+            weights = full_weights
+        return self._instance_vectors_for_full_weights(weights)
+
     def trim_components(self, n_components=None):
         r"""
         Permanently trims the components down to a certain amount.
@@ -149,13 +187,19 @@ class PCAModel(MeanInstanceLinearModel):
         """
         if n_components is None:
             # by default trim using self.n_components
-            n_components = self.n_components
+            n_components = self.n_active_components
 
-        # trim the super version version
-        super(PCAModel, self).trim_components(n_components)
-        if self.n_components > self.n_available_components:
+        # trim components
+        if not n_components < self.n_available_components:
+            raise ValueError(
+                "n_components ({}) needs to be less than "
+                "n_available_components ({})".format(
+                n_components, self.n_available_components))
+        else:
+            self._components = self._components[:n_components]
+        if self.n_active_components > self.n_available_components:
             # set n_components if necessary
-            self.n_components = self.n_available_components
+            self.n_active_components = self.n_available_components
         # make sure that the eigenvalues are trimmed too
         self._eigenvalues = self._eigenvalues[:self.n_available_components]
 

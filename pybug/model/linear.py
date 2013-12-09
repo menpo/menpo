@@ -21,13 +21,6 @@ class LinearModel(object):
         return self._components.shape[0]
 
     @property
-    def n_components(self):
-        r"""
-        The number of components currently in use on this model.
-        """
-        return self.n_available_components
-
-    @property
     def n_features(self):
         r"""
         The number of elements in each linear component.
@@ -41,9 +34,9 @@ class LinearModel(object):
         r"""
         The component matrix of the linear model.
 
-        type: (n_components, n_features) ndarray
+        type: (n_available_components, n_features) ndarray
         """
-        return self._components[:self.n_components]
+        return self._components
 
     @components.setter
     def components(self, value):
@@ -57,24 +50,6 @@ class LinearModel(object):
                 "shape {}".format(self.components.shape, value.shape))
         else:
             np.copyto(self._components, value, casting='safe')
-
-    def trim_components(self, n_components):
-        r"""
-        Permanently trims the components down to a certain amount.
-
-        Parameters
-        ----------
-
-        n_components: int
-            The number of components that are kept.
-        """
-        if not n_components < self.n_available_components:
-            raise ValueError(
-                "n_components ({}) needs to be less than "
-                "n_available_components ({})".format(
-                n_components, self.n_available_components))
-        else:
-            self._components = self._components[:n_components]
 
     def component_vector(self, index):
         r"""
@@ -101,13 +76,7 @@ class LinearModel(object):
             should be used.
 
             ``weights[j]`` is the linear contribution of the j'th principal
-            component to the instance vector. Note that if n_weights <
-            n_components, only the first n_weight components are used in the
-            reconstruction (i.e. unspecified weights are implicitly 0)
-
-        Raises
-        ------
-        ValueError: If n_weights > n_components
+            component to the instance vector.
 
         Returns
         -------
@@ -120,21 +89,21 @@ class LinearModel(object):
 
     def instance_vectors(self, weights):
         """
-        Creates new vectorized instances of the model using the first
-        components in a particular weighting.
+        Creates new vectorized instances of the model using all the
+        components of the linear model.
 
         Parameters
         ----------
         weights : (n_vectors, n_weights) ndarray or list of lists
-            The weightings for the first n_weights components that
-            should be used per instance that is to be produced
+            The weightings for all components of the linear model. All
+            components will be used to produce the instance.
 
             ``weights[i, j]`` is the linear contribution of the j'th
             principal component to the i'th instance vector produced.
 
         Raises
         ------
-        ValueError: If n_weights > n_components
+        ValueError: If n_weights > n_available_components
 
         Returns
         -------
@@ -143,20 +112,16 @@ class LinearModel(object):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights > self.n_components:
+        if not n_weights == self.n_available_components:
             raise ValueError(
-                "Number of weightings cannot be greater than {}".format(
-                    self.n_components))
-        else:
-            full_weights = np.zeros((n_instances, self.n_components))
-            full_weights[..., :n_weights] = weights
-            weights = full_weights
+                "Number of weightings has to match number of available "
+                "components = {}".format(self.n_available_components))
         return self._instance_vectors_for_full_weights(weights)
 
     # TODO check this is right
     def _instance_vectors_for_full_weights(self, full_weights):
         return dgemm(alpha=1.0, a=full_weights.T, b=self.components.T,
-                  trans_a=True, trans_b=True)
+                     trans_a=True, trans_b=True)
 
     def project_vector(self, vector):
         """

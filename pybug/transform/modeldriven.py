@@ -52,7 +52,7 @@ class ModelDrivenTransform(AlignableTransform):
 
         if weights is None:
             # set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.model.n_components)
+            weights = np.zeros(self.model.n_active_components)
         self._weights = weights
 
         self._target = self._target_for_weights(self._weights)
@@ -88,7 +88,7 @@ class ModelDrivenTransform(AlignableTransform):
 
         :type: int
         """
-        return self.model.n_components
+        return self.model.n_active_components
 
     @property
     def has_true_inverse(self):
