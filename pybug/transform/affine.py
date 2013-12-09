@@ -1,13 +1,13 @@
 import abc
 import copy
-from pybug.transform.base import AlignableTransform
+from pybug.transform.base import AlignableTransform, Composable
 from pybug.exception import DimensionalityError
 #TODO remove matlab here
 import pybug.matlab as matlab
 import numpy as np
 
 
-class AffineTransform(AlignableTransform):
+class AffineTransform(AlignableTransform, Composable):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -199,7 +199,7 @@ class AffineTransform(AlignableTransform):
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
-    def compose(self, transform):
+    def compose_before(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         same family, producing a new transform that is the composition of
@@ -215,41 +215,43 @@ class AffineTransform(AlignableTransform):
         Parameters
         ----------
         transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
+            Transform to be applied **after** self
 
         Returns
         --------
         transform : :class:`AffineTransform`
             The resulting affine transform.
         """
-        # note we dot this way as we have our data in the transposed
-        # representation to normal
+        # note that this overload of the basic compose_before is just to
+        # deal with the complexities of maintaining the correct class of
+        # transform upon composition
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
-            new_self = transform.compose(self)
+            new_self = transform.compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
-                  isinstance(transform, SimilarityTransform)):
+              isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.homogeneous_matrix)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         elif isinstance(transform, AffineTransform):
             new_self = AffineTransform(self.homogeneous_matrix)
-            new_self.compose_inplace(transform)
+            new_self.compose_before_inplace(transform)
         else:
-            raise ValueError("Trying to compose a {} with "
+            raise ValueError("Trying to compose_before a {} with "
                              " a {}".format(type(self), type(transform)))
         return new_self
 
-    def compose_inplace(self, transform):
+    def compose_before_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
-        exact same type, updating the first to be the composition of the two.
+        exact same type, updating the first to be the compose_before of the
+        two.
 
         Parameters
         ----------
         affine_transform : :class:`AffineTransform`
-            Transform to be applied *FOLLOWING* self
+            Transform to be applied **after** self
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
@@ -257,7 +259,27 @@ class AffineTransform(AlignableTransform):
             self.homogeneous_matrix = np.dot(
                 transform.homogeneous_matrix, self.homogeneous_matrix)
         else:
-            raise ValueError("Trying to compose_inplace a {} with "
+            raise ValueError("Trying to compose_before_inplace a {} with "
+                             " a {}".format(type(self), type(transform)))
+
+    def compose_after_inplace(self, transform):
+        r"""
+        Chains an affine family transform with another transform of the
+        exact same type, updating the first to be the compose_after of the
+        two.
+
+        Parameters
+        ----------
+        affine_transform : :class:`AffineTransform`
+            Transform to be applied **before** self
+        """
+        # note we dot this way as we have our data in the transposed
+        # representation to normal
+        if isinstance(transform, type(self)):
+            self.homogeneous_matrix = np.dot(self.homogeneous_matrix,
+                                             transform.homogeneous_matrix)
+        else:
+            raise ValueError("Trying to compose_after_inplace a {} with "
                              " a {}".format(type(self), type(transform)))
 
     def jacobian(self, points):
@@ -540,8 +562,8 @@ class SimilarityTransform(AffineTransform):
         rotation = Rotation(np.dot(U, Vt))
         # finally, move the source back out to where the target is
         inv_target_translation = target_translation.pseudoinverse
-        return translation.compose(scale).compose(
-            rotation).compose(inv_target_translation)
+        return translation.compose_before(scale).compose_before(
+            rotation).compose_before(inv_target_translation)
 
     def _target_setter(self, new_target):
         similarity = self._procrustes_alignment(self.source, new_target)
@@ -985,7 +1007,7 @@ class Rotation2D(AbstractRotation):
         homogeneous_matrix = super(Rotation2D, cls)._estimate(source, target)
         similarity = SimilarityTransform(homogeneous_matrix)
         r1, s, r2, t = similarity.decompose()
-        return r1.compose(r2).homogeneous_matrix[:-1, :-1]
+        return r1.compose_before(r2).homogeneous_matrix[:-1, :-1]
 
 
 class Rotation3D(AbstractRotation):

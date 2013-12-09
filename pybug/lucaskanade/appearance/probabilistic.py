@@ -89,7 +89,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -138,7 +138,7 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
             inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(inv_delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -231,7 +231,7 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
 
@@ -282,7 +282,7 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
             inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(inv_delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -375,7 +375,7 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -425,7 +425,7 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
             inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(inv_delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence

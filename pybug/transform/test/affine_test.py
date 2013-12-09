@@ -72,7 +72,7 @@ def test_align_2d_rotation():
     estimate = Rotation2D.align(source, target)
     # check the estimates is correct
     assert_allclose(rotation.homogeneous_matrix,
-                    estimate.homogeneous_matrix)
+                    estimate.homogeneous_matrix, atol=1e-10)
 
 
 def test_basic_3d_rotation():
@@ -109,7 +109,7 @@ def test_3d_rotation_inverse_eye():
                                 [0, a, b],
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
-    transformed = rotation.compose(rotation.inverse)
+    transformed = rotation.compose_before(rotation.inverse)
     print transformed.homogeneous_matrix
     assert_allclose(np.eye(4), transformed.homogeneous_matrix, atol=1e-15)
 
