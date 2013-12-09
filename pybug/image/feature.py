@@ -103,15 +103,8 @@ class HOG2DImage(Feature2DImage):
 
     Parameters
     ----------
-    image_data :  ndarray
-        The pixel data for the image, where the last axis represents the
-        number of channels.
-    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanNDImage`, optional
-        A binary array representing the mask. Must be the same
-        shape as the image. Only one mask is supported for an image (so the
-        mask is applied to every channel equally).
-
-        Default: :class:`BooleanNDImage` covering the whole image
+    image :  class:`Abstract2DImage`
+        An image object that contains pixels and mask fields.
     mode : 'dense' or 'sparse'
         The 'sparse' case refers to the traditional usage of HOGs, so default
         parameters values are passed to the ImageWindowIterator. The sparse
@@ -227,12 +220,12 @@ class HOG2DImage(Feature2DImage):
     ValueError
         Window step unit must be either pixels or cells
     """
-    def __init__(self, image_data, mask=None, mode='dense',
-                 algorithm='dalaltriggs', num_bins=9, cell_size=8,
-                 block_size=2, signed_gradient=True, l2_norm_clip=0.2,
-                 window_height=1, window_width=1, window_unit='blocks',
-                 window_step_vertical=1, window_step_horizontal=1,
-                 window_step_unit='pixels', padding=True, verbose=False):
+    def __init__(self, image, mode='dense', algorithm='dalaltriggs',
+                 num_bins=9, cell_size=8, block_size=2, signed_gradient=True,
+                 l2_norm_clip=0.2, window_height=1, window_width=1,
+                 window_unit='blocks', window_step_vertical=1,
+                 window_step_horizontal=1, window_step_unit='pixels',
+                 padding=True, verbose=False):
         self.params = {'mode': mode,
                        'algorithm': algorithm,
                        'num_bins': num_bins,
@@ -248,11 +241,11 @@ class HOG2DImage(Feature2DImage):
                        'window_step_unit': window_step_unit,
                        'padding': padding,
                        'verbose': verbose,
-                       'original_image_height': image_data.shape[0],
-                       'original_image_width': image_data.shape[1],
-                       'original_image_channels': image_data.shape[2]}
+                       'original_image_height': image.pixels.shape[0],
+                       'original_image_width': image.pixels.shape[1],
+                       'original_image_channels': image.pixels.shape[2]}
         #hog, window_centres = fc.hog(image_data, **self.params)
-        hog, window_centres = fc.hog(image_data,
+        hog, window_centres = fc.hog(image.pixels,
                                      self.params['mode'],
                                      self.params['algorithm'],
                                      self.params['num_bins'],
@@ -268,6 +261,7 @@ class HOG2DImage(Feature2DImage):
                                      self.params['window_step_unit'],
                                      self.params['padding'],
                                      self.params['verbose'])
+        mask = image.mask
         if mask is not None:
             if not isinstance(mask, np.ndarray):
                 # assume that the mask is a boolean image then!
@@ -423,7 +417,7 @@ class FeatureExtraction(object):
         this file.
         """
         # compute hog features
-        hog = HOG2DImage(self._image.pixels, mask=self._image.mask,
+        hog = HOG2DImage(self._image,
                          mode=mode, algorithm=algorithm, cell_size=cell_size,
                          block_size=block_size, num_bins=num_bins,
                          signed_gradient=signed_gradient,
