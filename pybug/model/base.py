@@ -42,7 +42,8 @@ class MeanInstanceLinearModel(MeanLinearModel, InstanceBackedModel):
 
         :type: ``type(self.template_instance)``
         """
-        return self.component_vector(index, with_mean=with_mean, scale=scale)
+        return self.template_instance.from_vector(self.component_vector(
+            index, with_mean=with_mean, scale=scale))
 
 
 #noinspection PyPep8Naming
