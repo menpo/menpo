@@ -120,11 +120,10 @@ class InstanceBackedModel(object):
         vector_instance = self.project_out_vector(instance.as_vector())
         return instance.from_vector(vector_instance)
 
-#TODO think about if non-InstanceLM's should have a Jacobian
     @property
     def jacobian(self):
         """
-        Returns the Jacobian of the PCA model. In this case, simply the
+        Returns the Jacobian of the linear model. In this case, simply the
         components of the model reshaped to have the standard Jacobian shape:
 
             n_points    x  n_params      x  n_dims
@@ -138,3 +137,4 @@ class InstanceBackedModel(object):
         jacobian = self.components.reshape(self.n_components, -1,
                                            self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
+

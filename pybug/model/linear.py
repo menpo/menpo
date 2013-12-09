@@ -12,7 +12,7 @@ class LinearModel(object):
         self._components = components  # getter/setter variable
 
     @property
-    def n_available_components(self):
+    def n_components(self):
         r"""
         The number of bases of the model
 
@@ -112,10 +112,10 @@ class LinearModel(object):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if not n_weights == self.n_available_components:
+        if not n_weights == self.n_components:
             raise ValueError(
                 "Number of weightings has to match number of available "
-                "components = {}".format(self.n_available_components))
+                "components = {}".format(self.n_components))
         return self._instance_vectors_for_full_weights(weights)
 
     # TODO check this is right
@@ -260,16 +260,16 @@ class LinearModel(object):
                                      self._components.T)))[0]).T
         # the model passed to us went first, so all it's components will
         # survive. Pull them off, and update the other model.
-        linear_model.components = Q[:linear_model.n_available_components, :]
+        linear_model.components = Q[:linear_model.n_components, :]
         # it's possible that all of our components didn't survive due to
         # degeneracy. We need to trim our components down before replacing
         # them to ensure the number of components is consistent (otherwise
         # the components setter will complain at us)
-        n_available_components = Q.shape[0] - linear_model.n_available_components
-        if n_available_components < self.n_available_components:
+        n_available_components = Q.shape[0] - linear_model.n_components
+        if n_available_components < self.n_components:
             self.trim_components(n_components=n_available_components)
         # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_available_components:, :]
+        self.components = Q[linear_model.n_components:, :]
 
 
 class MeanLinearModel(LinearModel):

@@ -51,7 +51,7 @@ class PCAModel(MeanInstanceLinearModel):
                                               center=center, bias=bias)
         self._eigenvalues = eigenvalues
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
-        self._n_components = self.n_available_components
+        self._n_components = self.n_components
 
     @property
     def n_active_components(self):
@@ -63,13 +63,13 @@ class PCAModel(MeanInstanceLinearModel):
     @n_active_components.setter
     def n_active_components(self, value):
         value = round(value)
-        if 0 < value <= self.n_available_components:
+        if 0 < value <= self.n_components:
             self._n_components = value
         else:
             raise ValueError(
                 "Tried setting n_components as {} - has to be an int and "
                 "0 < n_components <= n_available_components "
-                "(which is {}) ".format(value, self.n_available_components))
+                "(which is {}) ".format(value, self.n_components))
 
 
     @property
@@ -91,7 +91,7 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def noise_variance(self):
-        if self.n_active_components == self.n_available_components:
+        if self.n_active_components == self.n_components:
             return 0
         else:
             return self._eigenvalues[self.n_active_components:].mean()
@@ -104,6 +104,24 @@ class PCAModel(MeanInstanceLinearModel):
                              "inverse")
         else:
             return 1.0 / noise_variance
+
+    @property
+    def jacobian(self):
+        """
+        Returns the Jacobian of the PCA model. In this case, simply the
+        components of the model reshaped to have the standard Jacobian shape:
+
+            n_points    x  n_params      x  n_dims
+            n_features  x  n_components  x  n_dims
+
+        Returns
+        -------
+        jacobian : (n_features, n_components, n_dims) ndarray
+            The Jacobian of the model in the standard Jacobian shape.
+        """
+        jacobian = self.components.reshape(self.n_active_components, -1,
+                                           self.template_instance.n_dims)
+        return jacobian.swapaxes(0, 1)
 
     def component_vector(self, index, with_mean=True, scale=1.0):
         r"""
@@ -190,18 +208,18 @@ class PCAModel(MeanInstanceLinearModel):
             n_components = self.n_active_components
 
         # trim components
-        if not n_components < self.n_available_components:
+        if not n_components < self.n_components:
             raise ValueError(
                 "n_components ({}) needs to be less than "
                 "n_available_components ({})".format(
-                n_components, self.n_available_components))
+                n_components, self.n_components))
         else:
             self._components = self._components[:n_components]
-        if self.n_active_components > self.n_available_components:
+        if self.n_active_components > self.n_components:
             # set n_components if necessary
-            self.n_active_components = self.n_available_components
+            self.n_active_components = self.n_components
         # make sure that the eigenvalues are trimmed too
-        self._eigenvalues = self._eigenvalues[:self.n_available_components]
+        self._eigenvalues = self._eigenvalues[:self.n_components]
 
     def distance_to_subspace(self, instance):
         """
