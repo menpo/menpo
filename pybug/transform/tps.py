@@ -142,7 +142,7 @@ class TPS(PureAlignmentTransform):
         -------
         dW/dx : (N, D, D) ndarray
             The Jacobian of the transform wrt the coordinate system in
-            whcih the transform is applied. Axis 0: points, Axis 1: direction
+            which the transform is applied. Axis 0: points, Axis 1: direction
             of derivative (x or y) Axis 2: Component in which we are
             evaluating derivative (x or y)
 
@@ -211,7 +211,6 @@ class TPS(PureAlignmentTransform):
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
             aux3 = np.zeros((n_pts, self.y.shape[1], 2))
-            # TODO this is hardcoded and should be set based on kernel
             aux3[:, i, :] = self.kernel.jacobian_points(points)[:, i, :]
             omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
             dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
