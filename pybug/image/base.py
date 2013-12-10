@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation
+from pybug.transform.affine import Translation, UniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 
 
@@ -544,9 +544,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         # pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
                                              **kwargs)
-
-        # Set all NaN pixels to 0
-        sampled_pixel_values = np.nan_to_num(sampled_pixel_values)
+        # set any nan values to 0
+        sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image
         warped_image = self._build_warped_image(template_mask,
                                                 sampled_pixel_values)
@@ -564,3 +563,41 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         the MaskedNDImage implementation.
         """
         raise NotImplementedError
+
+    def rescale(self, scale, interpolator='scipy', **kwargs):
+        r"""
+        Return a copy of this image, rescaled by a given factor.
+        All image information (landmarks, the mask the case of
+        :class:`MaskedNDImage`) is rescaled appropriately.
+
+        Parameters
+        ----------
+        scale : float
+            The scale factor.
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        if scale <= 0:
+            raise ValueError("Scale has to be a positive float")
+
+        transform = UniformScale(scale, self.n_dims)
+        from pybug.image.boolean import BooleanNDImage
+        # use the scale factor to make the template mask bigger
+        template_mask = BooleanNDImage.blank(transform.apply(self.shape))
+        # due to image indexing, we can't just apply the pseduoinverse
+        # transform to achieve the scaling we want though!
+        # (consider e.g. a 2x2 image doubled. That's [0-1] -scale> [0-3])
+        # -> need to make the correct inverse by adding 1 to acount
+        inverse_transform = UniformScale(scale + 1, self.n_dims).pseudoinverse
+        # Note here we pass warp_mask to warp_to. In the case of
+        # AbstractNDImages that aren't MaskedNDImages this kwarg will
+        # harmlessly fall through so we are fine.
+        return self.warp_to(template_mask, inverse_transform,
+                            warp_landmarks=True, warp_mask=True,
+                            interpolator=interpolator, **kwargs)
