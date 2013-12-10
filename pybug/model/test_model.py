@@ -12,7 +12,7 @@ def test_linear_model_creation():
 def test_linear_model_basics():
     data = np.random.random((3, 120))
     linear_model = LinearModel(data)
-    assert(linear_model.n_available_components == 3)
+    assert(linear_model.n_components == 3)
     assert(linear_model.n_components == 3)
     assert(linear_model.n_features == 120)
 

@@ -59,7 +59,7 @@ class InstanceBackedModel(object):
             An instance of the model.
         """
         return self.template_instance.from_vector(
-            self.instance_vectors(weights))
+            self.instance_vector(weights))
 
     def project(self, instance):
         """
@@ -78,14 +78,14 @@ class InstanceBackedModel(object):
         """
         return self.project_vector(instance.as_vector())
 
-    def reconstruct(self, instance, n_components=None):
+    def reconstruct(self, instance):
         """
         Projects a ``instance`` onto the linear space and rebuilds from the
         weights found.
 
         Syntactic sugar for:
 
-            >>> instance(project(instance)[:n_components])
+            >>> instance(project(instance))
 
         but faster, as it avoids the conversion that takes place each time.
 
@@ -93,18 +93,13 @@ class InstanceBackedModel(object):
         ----------
         instance : :class:`pybug.base.Vectorizable`
             A novel instance of Vectorizable
-        n_components : int, optional
-            The number of components to use in the reconstruction.
-
-            Default: ``weights.shape[0]``
 
         Returns
         -------
         reconstructed : ``self.instance_class``
             The reconstructed object.
         """
-        reconstruction_vector = self.reconstruct_vectors(
-            instance.as_vector(), n_components)
+        reconstruction_vector = self.reconstruct_vector(instance.as_vector())
         return instance.from_vector(reconstruction_vector)
 
     def project_out(self, instance):
@@ -125,11 +120,10 @@ class InstanceBackedModel(object):
         vector_instance = self.project_out_vector(instance.as_vector())
         return instance.from_vector(vector_instance)
 
-#TODO think about if non-InstanceLM's should have a Jacobian
     @property
     def jacobian(self):
         """
-        Returns the Jacobian of the PCA model. In this case, simply the
+        Returns the Jacobian of the linear model. In this case, simply the
         components of the model reshaped to have the standard Jacobian shape:
 
             n_points    x  n_params      x  n_dims
@@ -143,3 +137,4 @@ class InstanceBackedModel(object):
         jacobian = self.components.reshape(self.n_components, -1,
                                            self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
+

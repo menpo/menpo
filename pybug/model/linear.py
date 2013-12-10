@@ -10,35 +10,15 @@ class LinearModel(object):
 
     def __init__(self, components):
         self._components = components  # getter/setter variable
-        self._n_components = self.n_available_components
-
 
     @property
-    def n_available_components(self):
+    def n_components(self):
         r"""
         The number of bases of the model
 
         type: int
         """
         return self._components.shape[0]
-
-    @property
-    def n_components(self):
-        r"""
-        The number of components currently in use on this model.
-        """
-        return self._n_components
-
-    @n_components.setter
-    def n_components(self, value):
-        value = round(value)
-        if 0 < value <= self.n_available_components:
-            self._n_components = value
-        else:
-            raise ValueError(
-                "Tried setting n_components as {} - has to be an int and "
-                "0 < n_components <= n_available_components "
-                "(which is {}) ".format(value, self.n_available_components))
 
     @property
     def n_features(self):
@@ -54,9 +34,9 @@ class LinearModel(object):
         r"""
         The component matrix of the linear model.
 
-        type: (n_components, n_features) ndarray
+        type: (n_available_components, n_features) ndarray
         """
-        return self._components[:self.n_components]
+        return self._components
 
     @components.setter
     def components(self, value):
@@ -70,29 +50,6 @@ class LinearModel(object):
                 "shape {}".format(self.components.shape, value.shape))
         else:
             np.copyto(self._components, value, casting='safe')
-
-    def trim_components(self, n_components=None):
-        r"""
-        Permanently trims the components down to a certain amount.
-
-        Parameters
-        ----------
-
-        n_components: int, optional
-            The number of components that are kept. If None,
-            self.n_components is used.
-        """
-        if n_components is None:
-            n_components = self.n_components
-
-        if not n_components < self.n_available_components:
-            raise ValueError(
-                "n_components ({}) needs to be less than "
-                "n_available_components ({})".format(
-                n_components, self.n_available_components))
-        else:
-            self._components = self._components[:n_components]
-            self.n_components = n_components
 
     def component_vector(self, index):
         r"""
@@ -119,13 +76,7 @@ class LinearModel(object):
             should be used.
 
             ``weights[j]`` is the linear contribution of the j'th principal
-            component to the instance vector. Note that if n_weights <
-            n_components, only the first n_weight components are used in the
-            reconstruction (i.e. unspecified weights are implicitly 0)
-
-        Raises
-        ------
-        ValueError: If n_weights > n_components
+            component to the instance vector.
 
         Returns
         -------
@@ -138,21 +89,21 @@ class LinearModel(object):
 
     def instance_vectors(self, weights):
         """
-        Creates new vectorized instances of the model using the first
-        components in a particular weighting.
+        Creates new vectorized instances of the model using all the
+        components of the linear model.
 
         Parameters
         ----------
         weights : (n_vectors, n_weights) ndarray or list of lists
-            The weightings for the first n_weights components that
-            should be used per instance that is to be produced
+            The weightings for all components of the linear model. All
+            components will be used to produce the instance.
 
             ``weights[i, j]`` is the linear contribution of the j'th
             principal component to the i'th instance vector produced.
 
         Raises
         ------
-        ValueError: If n_weights > n_components
+        ValueError: If n_weights > n_available_components
 
         Returns
         -------
@@ -161,20 +112,16 @@ class LinearModel(object):
         """
         weights = np.asarray(weights)  # if eg a list is provided
         n_instances, n_weights = weights.shape
-        if n_weights > self.n_components:
+        if not n_weights == self.n_components:
             raise ValueError(
-                "Number of weightings cannot be greater than {}".format(
-                    self.n_components))
-        else:
-            full_weights = np.zeros((n_instances, self.n_components))
-            full_weights[..., :n_weights] = weights
-            weights = full_weights
+                "Number of weightings has to match number of available "
+                "components = {}".format(self.n_components))
         return self._instance_vectors_for_full_weights(weights)
 
     # TODO check this is right
     def _instance_vectors_for_full_weights(self, full_weights):
         return dgemm(alpha=1.0, a=full_weights.T, b=self.components.T,
-                  trans_a=True, trans_b=True)
+                     trans_a=True, trans_b=True)
 
     def project_vector(self, vector):
         """
@@ -290,38 +237,37 @@ class LinearModel(object):
 
         s.t. component_vector(i).dot(component_vector(j) = dirac_delta
         """
-        # TODO ask Joan
-        Q, r = np.linalg.qr(self.components.T).T
+        Q = np.linalg.qr(self.components.T)[0].T
         self.components[...] = Q
 
+    # TODO: Investigate the meaning and consequences of trying to
+    # orthonormalize two identical vectors
     def orthonormalize_against_inplace(self, linear_model):
         r"""
         Enforces that the union of this model's components and another are
         both mutually orthonormal.
 
-        Note that the model passed in is guaranteed to not have it's number
-        of available components changed. This model, however, may loose some
-        dimensionality due to reaching a degenerate state.
+        Both models keep its number of components unchanged or else a
+        value error is raised.
 
-        Paramerters
+        Parameters
         -----------
         linear_model : :class:`LinearModel`
             A second linear model to orthonormalize this against.
         """
+        n_components_sum = self.n_components + linear_model.n_components
+        if not self.n_features >= n_components_sum:
+            raise ValueError(
+                "The number of features must be greater or equal than the "
+                "sum of the number of components in both linear models {} < "
+                "{})".format(self.n_features, n_components_sum))
         # take the QR decomposition of the model components
         Q = (np.linalg.qr(np.hstack((linear_model._components.T,
                                      self._components.T)))[0]).T
-        # the model passed to us went first, so all it's components will
-        # survive. Pull them off, and update the other model.
-        linear_model.components = Q[:linear_model.n_available_components, :]
-        # it's possible that all of our components didn't survive due to
-        # degeneracy. We need to trim our components down before replacing
-        # them to ensure the number of components is consistent (otherwise
-        # the components setter will complain at us)
-        self.trim_components(
-            n_components=Q.shape[0] - linear_model.n_available_components)
-        # now we can set our own components with the updated orthogonal ones
-        self.components = Q[linear_model.n_available_components:, :]
+        # set the orthonormalized components of the model being passed
+        linear_model.components = Q[:linear_model.n_components, :]
+        # set the orthonormalized components of this model
+        self.components = Q[linear_model.n_components:, :]
 
 
 class MeanLinearModel(LinearModel):

@@ -51,6 +51,26 @@ class PCAModel(MeanInstanceLinearModel):
                                               center=center, bias=bias)
         self._eigenvalues = eigenvalues
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        self._n_components = self.n_components
+
+    @property
+    def n_active_components(self):
+        r"""
+        The number of components currently in use on this model.
+        """
+        return self._n_components
+
+    @n_active_components.setter
+    def n_active_components(self, value):
+        value = round(value)
+        if 0 < value <= self.n_components:
+            self._n_components = value
+        else:
+            raise ValueError(
+                "Tried setting n_components as {} - has to be an int and "
+                "0 < n_components <= n_available_components "
+                "(which is {}) ".format(value, self.n_components))
+
 
     @property
     def whitened_components(self):
@@ -63,7 +83,7 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def eigenvalues(self):
-        return self._eigenvalues[:self.n_components]
+        return self._eigenvalues[:self.n_active_components]
 
     @property
     def eigenvalues_ratio(self):
@@ -71,10 +91,10 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def noise_variance(self):
-        if self.n_components == self.n_available_components:
+        if self.n_active_components == self.n_components:
             return 0
         else:
-            return self._eigenvalues[self.n_components:].mean()
+            return self._eigenvalues[self.n_active_components:].mean()
 
     @property
     def inverse_noise_variance(self):
@@ -84,6 +104,24 @@ class PCAModel(MeanInstanceLinearModel):
                              "inverse")
         else:
             return 1.0 / noise_variance
+
+    @property
+    def jacobian(self):
+        """
+        Returns the Jacobian of the PCA model. In this case, simply the
+        components of the model reshaped to have the standard Jacobian shape:
+
+            n_points    x  n_params      x  n_dims
+            n_features  x  n_components  x  n_dims
+
+        Returns
+        -------
+        jacobian : (n_features, n_components, n_dims) ndarray
+            The Jacobian of the model in the standard Jacobian shape.
+        """
+        jacobian = self.components.reshape(self.n_active_components, -1,
+                                           self.template_instance.n_dims)
+        return jacobian.swapaxes(0, 1)
 
     def component_vector(self, index, with_mean=True, scale=1.0):
         r"""
@@ -116,9 +154,53 @@ class PCAModel(MeanInstanceLinearModel):
         else:
             return self.components[index]
 
+    def instance_vectors(self, weights):
+        """
+        Creates new vectorized instances of the model using the first
+        components in a particular weighting.
+
+        Parameters
+        ----------
+        weights : (n_vectors, n_weights) ndarray or list of lists
+            The weightings for the first n_weights components that
+            should be used per instance that is to be produced
+
+            ``weights[i, j]`` is the linear contribution of the j'th
+            principal component to the i'th instance vector produced. Note
+            that if n_weights < n_components, only the first n_weight
+            components are used in the reconstruction (i.e. unspecified
+            weights are implicitly 0)
+
+        Raises
+        ------
+        ValueError: If n_weights > n_components
+
+        Returns
+        -------
+        vectors : (n_vectors, n_features) ndarray
+            The instance vectors for the weighting provided.
+        """
+        weights = np.asarray(weights)  # if eg a list is provided
+        n_instances, n_weights = weights.shape
+        if n_weights > self.n_active_components:
+            raise ValueError(
+                "Number of weightings cannot be greater than {}".format(
+                    self.n_active_components))
+        else:
+            full_weights = np.zeros((n_instances, self.n_active_components))
+            full_weights[..., :n_weights] = weights
+            weights = full_weights
+        return self._instance_vectors_for_full_weights(weights)
+
     def trim_components(self, n_components=None):
         r"""
         Permanently trims the components down to a certain amount.
+
+        This will reduce `n_available_components` down to `n_components`
+        (either provided or as currently set), freeing up memory in the
+        process.
+
+        Once the model is trimmed, the trimmed components cannot be recovered.
 
         Parameters
         ----------
@@ -127,10 +209,23 @@ class PCAModel(MeanInstanceLinearModel):
             The number of components that are kept. If None,
             self.n_components is used.
         """
-        # trim the super version
-        super(PCAModel, self).trim_components(n_components=n_components)
-        # .. and make sure that the eigenvalues are trimmed too
-        self._eigenvalues = self._eigenvalues[:self.n_available_components]
+        if n_components is None:
+            # by default trim using self.n_components
+            n_components = self.n_active_components
+
+        # trim components
+        if not n_components < self.n_components:
+            raise ValueError(
+                "n_components ({}) needs to be less than "
+                "n_available_components ({})".format(
+                n_components, self.n_components))
+        else:
+            self._components = self._components[:n_components]
+        if self.n_active_components > self.n_components:
+            # set n_components if necessary
+            self.n_active_components = self.n_components
+        # make sure that the eigenvalues are trimmed too
+        self._eigenvalues = self._eigenvalues[:self.n_components]
 
     def distance_to_subspace(self, instance):
         """
@@ -209,3 +304,41 @@ class PCAModel(MeanInstanceLinearModel):
                         b=whitened_components.T, trans_a=True)
         return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
                      trans_a=True, trans_b=True)
+
+    def orthonormalize_against_inplace(self, linear_model):
+        r"""
+        Enforces that the union of this model's components and another are
+        both mutually orthonormal.
+
+        Note that the model passed in is guaranteed to not have it's number
+        of available components changed. This model, however, may loose some
+        dimensionality due to reaching a degenerate state.
+
+        The removed components will always be trimmed from the end of
+        components (i.e. the components which capture the least variance).
+        If trimming is performed, `n_components` and
+        `n_available_components` would be altered - see
+        :meth:`trim_components` for details.
+
+        Parameters
+        -----------
+        linear_model : :class:`LinearModel`
+            A second linear model to orthonormalize this against.
+        """
+        # take the QR decomposition of the model components
+        Q = (np.linalg.qr(np.hstack((linear_model._components.T,
+                                     self._components.T)))[0]).T
+        # the model passed to us went first, so all it's components will
+        # survive. Pull them off, and update the other model.
+        linear_model.components = Q[:linear_model.n_components, :]
+        # it's possible that all of our components didn't survive due to
+        # degeneracy. We need to trim our components down before replacing
+        # them to ensure the number of components is consistent (otherwise
+        # the components setter will complain at us)
+        n_available_components = Q.shape[0] - linear_model.n_components
+        if n_available_components < self.n_components:
+            # oh dear, we've lost some components from the end of our model.
+            # call trim_components to update our state.
+            self.trim_components(n_components=n_available_components)
+        # now we can set our own components with the updated orthogonal ones
+        self.components = Q[linear_model.n_components:, :]

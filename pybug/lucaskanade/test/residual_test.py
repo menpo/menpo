@@ -64,7 +64,7 @@ def residual_wrapper(residual, algorithm, interpolator, expected_error):
 def test_2d_ls_ic_map_coords():
     residual_wrapper(LSIntensity(), ImageInverseCompositional,
                      'scipy',
-                     0.5470207993885552)
+                     0.33450925088722977)
 
 
 def test_2d_ls_fa_map_coords():
@@ -76,7 +76,7 @@ def test_2d_ls_fa_map_coords():
 def test_2d_ecc_ic_map_coords():
     residual_wrapper(ECC(), ImageInverseCompositional,
                      'scipy',
-                     0.0002234343558694913)
+                     0.00012855026074710274)
 
 
 def test_2d_ecc_fa_map_coords():
@@ -89,7 +89,7 @@ def test_2d_gabor_ic_map_coords():
     global target_shape
     residual_wrapper(GaborFourier(target_shape), ImageInverseCompositional,
                      'scipy',
-                     8.514546094166729)
+                     8.089827782035554)
 
 
 def test_2d_gabor_fa_map_coords():
@@ -102,22 +102,22 @@ def test_2d_gabor_fa_map_coords():
 def test_2d_gradientimages_ic_map_coords():
     residual_wrapper(GradientImages(), ImageInverseCompositional,
                      'scipy',
-                     10.990483894459013)
+                     11.092589991835462)
 
 
 def test_2d_gradientimages_fa_map_coords():
     residual_wrapper(GradientImages(), ImageForwardAdditive,
                      'scipy',
-                     10.753320121441979)
+                     10.685518152615705)
 
 
 def test_2d_gradientcorrelation_ic_map_coords():
     residual_wrapper(GradientCorrelation(), ImageInverseCompositional,
                      'scipy',
-                     8.755365214854102)
+                     8.63126181477196)
 
 
 def test_2d_gradientcorrelation_fa_map_coords():
     residual_wrapper(GradientCorrelation(), ImageForwardAdditive,
                      'scipy',
-                     10.494169974979323)
+                     2.6699528027972064)
