@@ -72,7 +72,8 @@ def test_align_2d_rotation():
     estimate = Rotation2D.align(source, target)
     # check the estimates is correct
     assert_allclose(rotation.homogeneous_matrix,
-                    estimate.homogeneous_matrix, atol=1e-10)
+                    estimate.homogeneous_matrix, atol=1e-14)
+
 
 
 def test_basic_3d_rotation():
