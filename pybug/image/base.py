@@ -588,10 +588,16 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
         transform = UniformScale(scale, self.n_dims)
         from pybug.image.boolean import BooleanNDImage
+        # use the scale factor to make the template mask bigger
         template_mask = BooleanNDImage.blank(transform.apply(self.shape))
+        # due to image indexing, we can't just apply the pseduoinverse
+        # transform to achieve the scaling we want though!
+        # (consider e.g. a 2x2 image doubled. That's [0-1] -scale> [0-3])
+        # -> need to make the correct inverse by adding 1 to acount
+        inverse_transform = UniformScale(scale + 1, self.n_dims).pseudoinverse
         # Note here we pass warp_mask to warp_to. In the case of
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
         # harmlessly fall through so we are fine.
-        return self.warp_to(template_mask, transform.pseudoinverse,
+        return self.warp_to(template_mask, inverse_transform,
                             warp_landmarks=True, warp_mask=True,
                             interpolator=interpolator, **kwargs)
