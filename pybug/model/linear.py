@@ -237,38 +237,36 @@ class LinearModel(object):
 
         s.t. component_vector(i).dot(component_vector(j) = dirac_delta
         """
-        # TODO ask Joan
-        Q, r = np.linalg.qr(self.components.T).T
+        Q = np.linalg.qr(self.components.T)[0].T
         self.components[...] = Q
 
+    # TODO: Investigate the meaning and consequences of trying to
+    # orthonormalize two identical vectors
     def orthonormalize_against_inplace(self, linear_model):
         r"""
         Enforces that the union of this model's components and another are
         both mutually orthonormal.
 
-        Note that the model passed in is guaranteed to not have it's number
-        of available components changed. This model, however, may loose some
-        dimensionality due to reaching a degenerate state.
+        Both models keep its number of components unchanged or else a
+        value error is raised.
 
-        Paramerters
+        Parameters
         -----------
         linear_model : :class:`LinearModel`
             A second linear model to orthonormalize this against.
         """
+        n_components_sum = self.n_components + linear_model.n_components
+        if not self.n_features >= n_components_sum:
+            raise ValueError(
+                "The number of features must be greater or equal than the "
+                "sum of the number of components in both linear models {} < "
+                "{})".format(self.n_features, n_components_sum))
         # take the QR decomposition of the model components
         Q = (np.linalg.qr(np.hstack((linear_model._components.T,
                                      self._components.T)))[0]).T
-        # the model passed to us went first, so all it's components will
-        # survive. Pull them off, and update the other model.
+        # set the orthonormalized components of the model being passed
         linear_model.components = Q[:linear_model.n_components, :]
-        # it's possible that all of our components didn't survive due to
-        # degeneracy. We need to trim our components down before replacing
-        # them to ensure the number of components is consistent (otherwise
-        # the components setter will complain at us)
-        n_available_components = Q.shape[0] - linear_model.n_components
-        if n_available_components < self.n_components:
-            self.trim_components(n_components=n_available_components)
-        # now we can set our own components with the updated orthogonal ones
+        # set the orthonormalized components of this model
         self.components = Q[linear_model.n_components:, :]
 
 
