@@ -7,14 +7,14 @@ class BasisFunction(object):
     r"""
     An abstract base class for Basis functions. In the case, radial basis
     functions. They provide two methods, :meth:`apply`, which calculates the
-    basis itself, and :meth:`jacobian`, which calculates the derivative
-    of the basis.
+    basis itself, and :meth:`jacobian_points`, which calculates the derivative
+    of the basis wrt the coordinate system.
 
     Parameters
     ----------
     c : (L, D) ndarray
         The set of centers that make the basis. Usually represents a set of
-        source landamrks.
+        source landmarks.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -48,9 +48,10 @@ class BasisFunction(object):
         pass
 
     @abc.abstractmethod
-    def jacobian(self, x):
+    def jacobian_points(self, x):
         r"""
-        Calculate the derivative of the basis function on the given residuals.
+        Calculate the derivative of the basis function wrt the
+        coordinate system.
 
         .. note::
 
@@ -64,7 +65,7 @@ class BasisFunction(object):
         Returns
         -------
         dudx : (N, L, D) ndarray
-            The jacobian tensor representing the first order partial derivative
+            Tensor representing the first order partial derivative
             of each points with respect to the centers, over each dimension.
         """
         pass
@@ -72,7 +73,7 @@ class BasisFunction(object):
 
 class R2LogR2(BasisFunction):
     r"""
-    Calculates the :math:`r^2 \log{r^2}` basis function.
+    The :math:`r^2 \log{r^2}` basis function.
 
     The derivative of this function is :math:`2 r (\log{r^2} + 1)`.
 
@@ -84,7 +85,7 @@ class R2LogR2(BasisFunction):
     ----------
     c : (L, D) ndarray
         The set of centers that make the basis. Usually represents a set of
-        source landamrks.
+        source landmarks.
     """
 
     def __init__(self, c):
@@ -118,10 +119,10 @@ class R2LogR2(BasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian(self, x):
+    def jacobian_points(self, x):
         """
-        Apply the derivative of the basis function. This is applied over
-        each dimension of the input vector, ``x``.
+        Apply the derivative of the basis function wrt the coordinate system.
+        This is applied over each dimension of the input vector, `x`.
 
         .. note::
 
@@ -144,7 +145,7 @@ class R2LogR2(BasisFunction):
         -------
         dudx : (N, L, D) ndarray
             The jacobian tensor representing the first order partial derivative
-            of each points with respect to the centers, over each dimension.
+            of each point wrt the coordinate system
         """
         euclidean_distance = cdist(x, self.c)
         component_distances = x[..., None, ...] - self.c
@@ -169,7 +170,7 @@ class R2LogR(BasisFunction):
     ----------
     c : (L, D) ndarray
         The set of centers that make the basis. Usually represents a set of
-        source landamrks.
+        source landmarks.
     """
 
     def __init__(self, c):
@@ -198,9 +199,11 @@ class R2LogR(BasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian(self, x):
+    def jacobian_points(self, x):
         """
-        Apply the derivative of the basis function
+        The derivative of the basis function wrt the coordinate system
+        evaluated at `x`.
+
         :math:`(x - c)^T (1 + 2 \log{r_{x, l}})`.
 
         .. note::
@@ -216,7 +219,7 @@ class R2LogR(BasisFunction):
         -------
         dudx : (N, L, D) ndarray
             The jacobian tensor representing the first order partial derivative
-            of each points with respect to the centers, over each dimension.
+            of each points wrt the coordinate system
         """
         euclidean_distance = cdist(x, self.c)
         component_distances = x[..., None, ...] - self.c

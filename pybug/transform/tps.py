@@ -20,8 +20,8 @@ class TPS(PureAlignmentTransform):
         The source points to apply the tps from
     target : (N, 2) ndarray
         The target points to apply the tps to
-    kernel : func, optional
-        The kernel function to apply.
+    kernel : :class:`pybug.basis.rbf.BasisFunction`, optional
+        The kernel to apply.
 
         Default: :class:`pybug.basis.rbf.R2LogR2`
 
@@ -131,19 +131,28 @@ class TPS(PureAlignmentTransform):
 
     def jacobian_points(self, points):
         """
-        Calculates the Jacobian of the TPS warp wrt to the spatial dimensions.
+        Calculates the Jacobian of the TPS warp wrt to the coordinate system.
+
+        Parameters
+        ----------
+        points : (N, D)
+            Points at which the Jacobian will be evaluated.
 
         Returns
         -------
         dW/dx : (N, D, D) ndarray
-            The Jacobian of the transform wrt the spatial dimension to which
-            the
-            transform is applied to.
+            The Jacobian of the transform wrt the coordinate system in
+            whcih the transform is applied. Axis 0: points, Axis 1: direction
+            of derivative (x or y) Axis 2: Component in which we are
+            evaluating derivative (x or y)
+
+            e.g. [7, 0, 1] = derivative wrt x on the y coordinate of the
+            8th point.
         """
-        dk_dx = np.zeros((points.shape[0] + 3,
-                          self.source.n_points,
-                          self.source.n_dims))
-        dk_dx[:-3, :] = self.kernel.jacobian(points)
+        dk_dx = np.zeros((points.shape[0] + 3,   # i
+                          self.source.n_points,  # k
+                          self.source.n_dims))   # l
+        dk_dx[:-3, :] = self.kernel.jacobian_points(points)
 
         affine_derivative = np.array([[0, 0],
                                       [1, 0],
@@ -155,7 +164,8 @@ class TPS(PureAlignmentTransform):
     # TODO: revise me
     def jacobian_source(self, points):
         """
-        Calculates the Jacobian of the TPS warp wrt to the source landmarks.
+        Calculates the Jacobian of the TPS warp wrt to the source landmark
+        position.
 
         Parameters
         ----------
@@ -178,7 +188,7 @@ class TPS(PureAlignmentTransform):
 
         dL_dx = np.zeros(self.l.shape + (n_lms,))
         dL_dy = np.zeros(self.l.shape + (n_lms,))
-        aux = self.kernel.jacobian(self.source.points)
+        aux = self.kernel.jacobian_points(self.source.points)
         dW_dx = np.zeros((n_pts, n_lms, 2))
 
         # Fix log(0)
@@ -202,7 +212,7 @@ class TPS(PureAlignmentTransform):
             # new bit
             aux3 = np.zeros((n_pts, self.y.shape[1], 2))
             # TODO this is hardcoded and should be set based on kernel
-            aux3[:, i, :] = self.kernel.jacobian(points)[:, i, :]
+            aux3[:, i, :] = self.kernel.jacobian_points(points)[:, i, :]
             omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
             dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
                               aux3[..., 0].dot(self.coefficients[:, 0]))

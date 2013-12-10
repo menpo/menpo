@@ -16,7 +16,7 @@ def test_rbf_r2logr2_apply():
 
 
 def test_rbf_r2logr2_jacobian():
-    result = R2LogR2(centers).jacobian(points)
+    result = R2LogR2(centers).jacobian_points(points)
     expected = np.array([[[0.60684441, -0.50570368],
                           [3.46630038, -14.44291827],
                           [-5.02037904, -1.79299252],
@@ -46,7 +46,7 @@ def test_rbf_r2logr_apply():
 
 
 def test_rbf_r2logr_jacobian():
-    result = R2LogR(centers).jacobian(points)
+    result = R2LogR(centers).jacobian_points(points)
     expected = np.array([[[0.30342221, -0.25285184],
                           [1.73315019, -7.22145913],
                           [-2.51018952, -0.89649626],
