@@ -196,6 +196,12 @@ class PCAModel(MeanInstanceLinearModel):
         r"""
         Permanently trims the components down to a certain amount.
 
+        This will reduce `n_available_components` down to `n_components`
+        (either provided or as currently set), freeing up memory in the
+        process.
+
+        Once the model is trimmed, the trimmed components cannot be recovered.
+
         Parameters
         ----------
 
@@ -308,6 +314,12 @@ class PCAModel(MeanInstanceLinearModel):
         of available components changed. This model, however, may loose some
         dimensionality due to reaching a degenerate state.
 
+        The removed components will always be trimmed from the end of
+        components (i.e. the components which capture the least variance).
+        If trimming is performed, `n_components` and
+        `n_available_components` would be altered - see
+        :meth:`trim_components` for details.
+
         Parameters
         -----------
         linear_model : :class:`LinearModel`
@@ -325,6 +337,8 @@ class PCAModel(MeanInstanceLinearModel):
         # the components setter will complain at us)
         n_available_components = Q.shape[0] - linear_model.n_components
         if n_available_components < self.n_components:
+            # oh dear, we've lost some components from the end of our model.
+            # call trim_components to update our state.
             self.trim_components(n_components=n_available_components)
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
