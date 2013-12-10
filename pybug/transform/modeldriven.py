@@ -52,7 +52,7 @@ class ModelDrivenTransform(AlignableTransform, Composable):
 
         if weights is None:
             # set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.model.n_components)
+            weights = np.zeros(self.model.n_active_components)
         self._weights = weights
 
         self._target = self._target_for_weights(self._weights)
@@ -88,7 +88,7 @@ class ModelDrivenTransform(AlignableTransform, Composable):
 
         :type: int
         """
-        return self.model.n_components
+        return self.model.n_active_components
 
     @property
     def has_true_inverse(self):
@@ -905,7 +905,7 @@ class OrthoMDTransform(GlobalMDTransform):
                  weights=None, composition='both'):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
-        # 2. orthonormalize model and similarity model
+        # 2. Orthonormalize model and similarity model
         model = deepcopy(model)
         model.orthonormalize_against_inplace(self.similarity_model)
         self.similarity_weights = self.similarity_model.project(

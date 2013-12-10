@@ -20,7 +20,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -93,7 +93,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -158,7 +158,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:

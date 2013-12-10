@@ -23,7 +23,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -100,7 +100,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -169,7 +169,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = -self.appearance_model._jacobian.T
