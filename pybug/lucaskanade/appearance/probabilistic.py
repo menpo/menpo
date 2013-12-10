@@ -27,8 +27,8 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = (self.appearance_model._to_subspace(J.T) +
-                       self.appearance_model._within_subspace(J.T)).T
+            self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                       self.appearance_model.project_whitened_vector(J.T)).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -75,8 +75,8 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = (self.appearance_model._to_subspace(J.T) +
-                       self.appearance_model._within_subspace(J.T)).T
+            self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                       self.appearance_model.project_whitened_vector(J.T)).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -89,7 +89,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -109,8 +109,8 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
         J = self.residual.steepest_descent_images(self.template,
                                                   self._dW_dp)
         # Project out appearance model from VT_dW_dp
-        self._J = (self.appearance_model._to_subspace(J.T) +
-                   self.appearance_model._within_subspace(J.T)).T
+        self._J = (self.appearance_model.distance_to_subspace_vector(J.T) +
+                   self.appearance_model.project_whitened_vector(J.T)).T
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J, J2=J)
 
@@ -132,10 +132,13 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Request the pesudoinverse vector from the transform
+            inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -168,7 +171,7 @@ class ToSubspaceForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -215,7 +218,7 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -228,7 +231,7 @@ class ToSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
 
@@ -263,7 +266,7 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
                                                           self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._to_subspace(J.T).T
+            self._J = self.appearance_model.distance_to_subspace_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -273,10 +276,13 @@ class ToSubspaceInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Request the pesudoinverse vector from the transform
+            inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -309,7 +315,7 @@ class WithinSubspaceForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -356,7 +362,7 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -369,7 +375,7 @@ class WithinSubspaceForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence
@@ -403,7 +409,7 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
                                                       self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._within_subspace(J.T).T
+            self._J = self.appearance_model.project_whitened_vector(J.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J, J2=J)
@@ -413,10 +419,13 @@ class WithinSubspaceInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Request the pesudoinverse vector from the transform
+            inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Test convergence

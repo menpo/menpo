@@ -167,6 +167,15 @@ class PTSImporter(LandmarkImporter):
     ``x`` and ``y`` axes are flipped such that the first axis is ``y`` (height
     in the image domain).
 
+    Note that PTS has a very loose format definition. Here we make the
+    assumption (as is common) that PTS landmarks are 1-based. That is,
+    landmarks on a 480x480 image are in the range [1-480]. As PyBug is
+    consistently 0-based, we *subtract 1* off each landmark value
+    automatically.
+
+    If you want to use PTS landmarks that are 0-based, you will have to
+    manually add one back on to landmarks post importing.
+
     Landmark set label: PTS
 
     Landmark labels:
@@ -205,8 +214,8 @@ class PTSImporter(LandmarkImporter):
                 ys.append(ypos)
         xs = np.array(xs, dtype=np.float).reshape((-1, 1))
         ys = np.array(ys, dtype=np.float).reshape((-1, 1))
-
-        points = self._build_points(xs, ys)
+        # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
+        points = self._build_points(xs - 1, ys - 1)
 
         self.group_label = 'PTS'
         self.pointcloud = PointCloud(points)

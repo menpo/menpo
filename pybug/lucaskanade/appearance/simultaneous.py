@@ -23,7 +23,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -100,7 +100,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -129,7 +129,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p[:n_params])
+            self.transform.compose_after_from_vector_inplace(delta_p[:n_params])
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights
@@ -169,7 +169,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = -self.appearance_model._jacobian.T
@@ -199,7 +199,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p[:n_params])
+            self.transform.compose_after_from_vector_inplace(delta_p[:n_params])
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights

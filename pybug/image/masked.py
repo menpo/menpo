@@ -325,7 +325,7 @@ class MaskedNDImage(AbstractNDImage):
             made to crop the image in a way that violates the image bounds.
         """
         min_indices, max_indices = self.mask.bounds_true(
-            boundary=boundary, constrain_to_boundary=False)
+            boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
@@ -385,6 +385,8 @@ class MaskedNDImage(AbstractNDImage):
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
         # mask separately and reattach.
+        # TODO an optimisation could be added here for the case where mask
+        # is all true/all false.
         if warp_mask:
             warped_mask = self.mask.warp_to(template_mask, transform,
                                             warp_landmarks=warp_landmarks,

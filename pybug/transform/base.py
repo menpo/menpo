@@ -6,7 +6,7 @@ from pybug.visualize import AlignmentViewer2d
 from pybug.visualize.base import Viewable
 
 
-class AbstractTransform(Vectorizable):
+class Transform(Vectorizable):
     r"""
     An abstract representation of any N-dimensional transform.
     Provides a unified interface to apply the transform (
@@ -24,15 +24,6 @@ class AbstractTransform(Vectorizable):
     def n_dims(self):
         r"""`
         The dimensionality of the transform.
-
-        :type: int
-        """
-        pass
-
-    @abc.abstractproperty
-    def n_parameters(self):
-        r"""
-        The number of parameters that determine the transform.
 
         :type: int
         """
@@ -118,7 +109,7 @@ class AbstractTransform(Vectorizable):
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
 
-        :type: :class:`AlignableTransform`
+        :type: :class:`Transform`
         """
         return self._build_pseudoinverse()
 
@@ -195,8 +186,220 @@ class AbstractTransform(Vectorizable):
         except AttributeError:
             return self._apply(x, **kwargs)
 
+    def pseudoinverse_vector(self, vector):
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
 
-class AlignableTransform(AbstractTransform):
+        Syntactic sugar for
+
+        self.from_vector(vector).pseudoinverse.as_vector()
+
+        Can be much faster than the explict call as object creation can be
+        entirely avoided in some cases.
+
+        Parameters
+        ----------
+        vector :  (P,) ndarray
+            A vectorized version of self
+
+        Returns
+        -------
+        pseudoinverse_vector : (N,) ndarray
+            The pseudoinverse of the vector provided
+        """
+        return self.from_vector(vector).pseudoinverse.as_vector()
+
+
+class Composable(object):
+    r"""
+    Mixin for Transform objects that can be composed together, such that
+    behavior of multiple Transforms is compounded together in some way.
+
+    There are two useful forms of composition. Firstly, the mathematical
+    composition symbol `o` has the definition
+
+        let a(x) and b(x) be two transforms on x.
+        (a o b)(x) == a(b(x))
+
+    This functionality is provided by the compose_after() family of methods.
+
+        (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
+
+    Equally useful is an inversion the order of composition - so that over
+    time a large chains of transforms can be built up that do a useful job,
+    and composing on this chain adds another transform to the end (after all
+    other preceding transforms have been performed).
+
+    For instance, let's say we want to rescale a
+    :class:`pybug.shape.PointCloud` p around it's mean, and then translate
+    it some place else. It would be nice to be able to do something like
+
+        t = Translation(-p.centre)  # translate to centre
+        s = Scale(2.0)  # rescale
+        move = Translate([10, 0 ,0]) # budge along the x axis
+
+        t.compose(s).compose(-t).compose(move)
+
+    in PyBug, this functionality is provided by the compose_before() family
+    of methods.
+
+        (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
+
+    within each family there are three methods, some of which may provide
+    performance benefits for certain situations. they are
+
+        compose_x(transform)
+        compose_x_inplace(transform)
+        compose_x_from_vector_inplace(vectorized_transform)
+
+    where x = {after, before}
+
+    See specific subclasses for more information about the performance of
+    these methods.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    def compose_before(self, transform):
+        r"""
+        c = a.compose_before(b)
+        c.apply(p) == b.apply(a.apply(p))
+
+        a and b are left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : :class:`Composable`
+            The resulting transform.
+        """
+        # naive approach  - deepcopy followed by the inplace operation
+        new_transform = deepcopy(self)
+        return new_transform.compose_before_inplace(transform)
+
+    @abc.abstractmethod
+    def compose_before_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_inplace(b)
+        a.apply(p) == b.apply(a_orig.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        pass
+
+    def compose_before_from_vector_inplace(self, vector):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == b.apply(a.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        Parameters
+        ----------
+        vector : (N,) ndarray
+            Vectorized transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        # naive approach - use the vector to build an object,
+        # then compose_before_inplace
+        return self.compose_before_inplace(self.from_vector(vector))
+
+    def compose_after(self, transform):
+        r"""
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : :class:`Composable`
+            The resulting transform.
+        """
+        # naive approach - just flip the object order and compose_before
+        return transform.compose_before(self)
+
+    def compose_after_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_inplace(b)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        # naive approach - update self to be equal to transform and
+        # compose_before_from_vector_inplace
+        self_vector = self.as_vector().copy()
+        self.update_from_vector(transform.as_vector())
+        return self.compose_before_from_vector_inplace(self_vector)
+
+    def compose_after_from_vector_inplace(self, vector):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        Parameters
+        ----------
+        vector : (N,) ndarray
+            Vectorized transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        # naive approach - use the vector to build an object,
+        # then compose_after_inplace
+        return self.compose_after_inplace(self.from_vector(vector))
+
+
+class AlignableTransform(Transform):
     r"""
     Abstract interface for all transform's that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
@@ -210,7 +413,7 @@ class AlignableTransform(AbstractTransform):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        AbstractTransform.__init__(self)
+        Transform.__init__(self)
         self._target = None
         self._source = None
 

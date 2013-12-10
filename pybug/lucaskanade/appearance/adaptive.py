@@ -20,7 +20,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -40,7 +40,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
                                             self._interpolator))
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -93,7 +93,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Forward Additive Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -106,7 +106,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             J_aux = self.residual.steepest_descent_images(IWxp, self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -119,7 +119,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance weights
@@ -158,7 +158,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
             self.template = self.appearance_model.instance(weights)
         else:
             # Set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.appearance_model.n_components)
+            weights = np.zeros(self.appearance_model.n_active_components)
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while self.n_iters < (max_iters - 1) and error > self.eps:
@@ -172,7 +172,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
                                                           self._dW_dp)
 
             # Project out appearance model from VT_dW_dp
-            self._J = self.appearance_model._project_out(J_aux.T).T
+            self._J = self.appearance_model.project_out_vectors(J_aux.T).T
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -182,10 +182,13 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
                 self._J, IWxp, self.template)
 
             # Compute gradient descent parameter updates
-            delta_p = -np.real(self._calculate_delta_p(sd_delta_p))
+            delta_p = np.real(self._calculate_delta_p(sd_delta_p))
+
+            # Request the pesudoinverse vector from the transform
+            inv_delta_p = self.transform.pseudoinverse_vector(delta_p)
 
             # Update warp parameters
-            self.transform.compose_from_vector_inplace(delta_p)
+            self.transform.compose_after_from_vector_inplace(inv_delta_p)
             self.parameters.append(self.transform.as_vector())
 
             # Update appearance parameters

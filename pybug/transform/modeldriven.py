@@ -1,8 +1,10 @@
+from copy import deepcopy
 import numpy as np
-from pybug.transform.base import AlignableTransform
+from pybug.model import Similarity2dInstanceModel
+from pybug.transform.base import AlignableTransform, Composable
 
 
-class ModelDrivenTransform(AlignableTransform):
+class ModelDrivenTransform(AlignableTransform, Composable):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -50,7 +52,7 @@ class ModelDrivenTransform(AlignableTransform):
 
         if weights is None:
             # set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.model.n_components)
+            weights = np.zeros(self.model.n_active_components)
         self._weights = weights
 
         self._target = self._target_for_weights(self._weights)
@@ -86,8 +88,7 @@ class ModelDrivenTransform(AlignableTransform):
 
         :type: int
         """
-        return self.model.n_components
-
+        return self.model.n_active_components
 
     @property
     def has_true_inverse(self):
@@ -222,56 +223,125 @@ class ModelDrivenTransform(AlignableTransform):
         """
         return self.transform._apply(x, **kwargs)
 
-    # TODO: Could be implemented as optimization option in LK???
-    # i.e. make this a function pointer
-    # Problems:
-    #   - This method needs to be explicitly overwritten in order to match
-    #     the common interface defined for AlignableTransform objects
-    def compose(self, statistically_driven_transform):
+    def compose_before_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_inplace(b)
+        a.apply(p) == b.apply(a_orig.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        # naive approach - update self to be equal to transform and
+        # compose_before_from_vector_inplace
+        self_vector = self.as_vector().copy()
+        self.update_from_vector(transform.as_vector())
+        return self.compose_after_from_vector_inplace(self_vector)
+
+    def compose_after(self, transform):
+        r"""
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : :class:`ModelDrivenTransform`
+            The resulting ModelDrivenTransform.
+        """
+        self_copy = deepcopy(self)
+        self_copy.compose_after_inplace(transform)
+        return self_copy
+
+    def compose_after_inplace(self, md_transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_inplace(b)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`ModelDrivenTransform`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
         if self.composition is 'model':
             # TODO this seems to be the same, revisit
-            new_target = self._compose_model(
-                statistically_driven_transform.target)
-            return self.from_target(new_target)
+            self.target = self._compose_after_model(md_transform.target)
         elif self.composition is 'warp':
-            new_target = self._compose_warp(
-                statistically_driven_transform.target)
-            return self.from_target(new_target)
+            self.target = self._compose_after_warp(md_transform.target)
         elif self.composition is 'both':
-            new_params = self._compose_both(
-                statistically_driven_transform.as_vector())
-            return self.from_vector(new_params)
+            new_params = self._compose_after_both(md_transform.as_vector())
+            self.from_vector_inplace(new_params)
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
+        return self
 
-    def compose_from_vector_inplace(self, sdt_parameters):
+    def compose_after_from_vector_inplace(self, vector):
         r"""
-        Compose this ModelDrivenTransform with another inplace.
-        Rather than requiring a new ModelDrivenTransform to compose
+        a_orig = deepcopy(a)
+        a.compose_after_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
+
+        compose_after this :class:`ModelDrivenTransform` with another inplace.
+        Rather than requiring a new ModelDrivenTransform to compose_after
         with, this method only requires the parameters of the new transform.
 
         Parameters
         ----------
+        vector : (N,) ndarray
+            Vectorized :class:`ModelDrivenTransform` to be applied **before**
+            self
 
-        sdt_parameters: (P,) ndarray
-            The parameters of the ModelDrivenTransform that we are
-            composing with, as found from as_vector().
-
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
         """
         if self.composition is 'model':
-            temp_sdt = self.from_vector(sdt_parameters)
-            self.target = self._compose_model(temp_sdt.target)
+            new_mdtransform = self.from_vector(vector)
+            self.target = self._compose_after_model(new_mdtransform.target)
         elif self.composition is 'warp':
-            temp_sdt = self.from_vector(sdt_parameters)
-            self.target = self._compose_warp(temp_sdt.target)
+            new_mdtransform = self.from_vector(vector)
+            self.target = self._compose_after_warp(new_mdtransform.target)
         elif self.composition is 'both':
-            self.from_vector_inplace(self._compose_both(sdt_parameters))
+            self.from_vector_inplace(self._compose_after_both(vector))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
 
-    def _compose_model(self, other_target):
+    def _compose_after_model(self, other_target):
         r"""
         Composes two statistically driven transforms together.
 
@@ -298,7 +368,7 @@ class ModelDrivenTransform(AlignableTransform):
     #     method
     #   - For PWA it should implement Bakers algorithmic approach to
     #     composition
-    def _compose_warp(self, other_target):
+    def _compose_after_warp(self, other_target):
         r"""
         Composes two statistically driven transforms together. This approach
         composes the
@@ -317,21 +387,24 @@ class ModelDrivenTransform(AlignableTransform):
         """
         return self.transform.apply(other_target)
 
-    def _compose_both(self, new_sdt_parameters):
+    def _compose_after_both(self, mdt_vector):
         r"""
         Composes two statistically driven transforms together based on the
         first order approximation proposed by Papandreou and Maragos.
 
+        The resulting vector of parameters is equivalent to
+
+            self.compose_after_from_vector(mdt_vector)
+
         Parameters
         ----------
-        new_sdt_parameters : (P,) ndarray
+        mdt_vector : (P,) ndarray
             the parameters of the ModelDrivenTransform we are
             composing with, as provided by .as_vector().
 
         Returns
         -------
-
-        parameters: (P,) ndarray
+        vector: (P,) ndarray
             The new parameters of the composed result
 
         References
@@ -377,7 +450,7 @@ class ModelDrivenTransform(AlignableTransform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, new_sdt_parameters)
+        return self.as_vector() + np.dot(Jp, mdt_vector)
 
     def _target_for_weights(self, weights):
         r"""
@@ -419,14 +492,38 @@ class ModelDrivenTransform(AlignableTransform):
         """
         return self.model.project(target)
 
+    def pseudoinverse_vector(self, vector):
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
+
+        Syntactic sugar for
+
+        self.from_vector(vector).pseudoinverse.as_vector()
+
+        On ModelDrivenTransform this is especially fast - we just negate the
+        vector provided.
+
+        Parameters
+        ----------
+        vector :  (P,) ndarray
+            A vectorized version of self
+
+        Returns
+        -------
+        pseudoinverse_vector : (N,) ndarray
+            The pseudoinverse of the vector provided
+        """
+        # just have to negate the parameters!
+        return -vector
+
 
 class GlobalMDTransform(ModelDrivenTransform):
     r"""
-    A transform that couples a traditional landmark-based transform to a
+    A transform that couples an alignment transform to a
     statistical model together with a global similarity transform,
     such that the parameters of the transform are fully specified by
     both the weights of statistical model and the parameters of the
-    similarity transform.. The model is assumed to
+    similarity transform. The model is assumed to
     generate an instance which is then transformed by the similarity
     transform; the result defines the target landmarks of the transform.
     If no source is provided, the mean of the model is defined as the
@@ -436,22 +533,34 @@ class GlobalMDTransform(ModelDrivenTransform):
     ----------
     model : :class:`pybug.model.base.StatisticalModel`
         A linear statistical shape model.
-    transform_constructor : func
-        A function that returns a :class:`pybug.transform.base.AlignableTransform`
-        object. It will be fed the source landmarks as the first
-        argument and the target landmarks as the second. The target is
+    transform_cls : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The align constructor will be called on this with the source
+        and target landmarks. The target is
         set to the points generated from the model using the
         provide weights - the source is either given or set to the
         model's mean.
-    source : :class:`pybug.shape.base.PointCloud`
+    global_transform : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The global transform that should be applied to the model output.
+        Doesn't have to have been constructed from the .align() constructor.
+        Note that the GlobalMDTransform isn't guaranteed to hold on to the
+        exact object passed in here - so don't expect external changes to
+        the global_transform to be reflected in the behavior of this object.
+    source : :class:`pybug.shape.base.PointCloud`, optional
         The source landmarks of the transform. If no ``source`` is provided the
         mean of the model is used.
-    weights : (P,) ndarray
+    weights : (P,) ndarray, optional
         The reconstruction weights that will be fed to the model in order to
         generate an instance of the target landmarks.
+    composition: 'both', 'warp' or 'model', optional
+        The composition approximation employed by this
+        ModelDrivenTransform.
+
+        Default: `both`
     """
-    def __init__(self, model, transform_cls, source=None, weights=None,
-                 global_transform=None, composition='both'):
+    def __init__(self, model, transform_cls, global_transform, source=None,
+                 weights=None, composition='both'):
         # need to set the global transform right away - self
         # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
@@ -528,7 +637,7 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         # dX/dq is the Jacobian of the global transform evaluated at the
         # mean of the model.
-        dX_dq = self.global_transform.jacobian(self.model.mean.points)
+        dX_dq = self._global_transform_jacobian(self.model.mean.points)
         # dX_dq:  n_points  x  n_global_params  x  n_dims
 
         # by application of the chain rule dX_db is the Jacobian of the
@@ -551,6 +660,9 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         return dW_dp
 
+    def _global_transform_jacobian(self, points):
+        return self.global_transform.jacobian(points)
+
     def as_vector(self):
         r"""
         Return the current parameters of this transform. This is the
@@ -568,10 +680,18 @@ class GlobalMDTransform(ModelDrivenTransform):
         # the only extra step we have to take in
         global_params = vector[:self.n_global_parameters]
         model_params = vector[self.n_global_parameters:]
-        self.global_transform.from_vector_inplace(global_params)
+        self._update_global_weights(global_params)
         self.weights = model_params
 
-    def _compose_model(self, other_target):
+    def _update_global_weights(self, global_weights):
+        r"""
+        Hook that allows for overriding behavior when the global weights are
+        set. Default implementation simply asks global_transform to
+        update itself from vector.
+        """
+        self.global_transform.from_vector_inplace(global_weights)
+
+    def _compose_after_model(self, other_target):
         r"""
         Composes two statistically driven transforms together.
 
@@ -595,7 +715,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         from pybug.shape import PointCloud
         return PointCloud(composed_target)
 
-    def _compose_both(self, new_sdt_parameters):
+    def _compose_after_both(self, mdt_vector):
         r"""
         Composes two statistically driven transforms together based on the
         first order approximation proposed by Papandreou and Maragos.
@@ -629,7 +749,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # dW/dq when p=0 and when p!=0 are the same and given by the
         # Jacobian of the global transform evaluated at the mean of the
         # model
-        dW_dq = self.global_transform.jacobian(self.model.mean.points)
+        dW_dq = self._global_transform_jacobian(self.model.mean.points)
         # dW_dq:  n_points  x  n_global_params  x  n_dims
 
         # dW/db when p=0, is the Jacobian of the model
@@ -644,8 +764,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-        dW_dS = self.global_transform.jacobian_points(
-            self.model.mean.points)
+        dW_dS = self.global_transform.jacobian_points(self.model.mean.points)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
         # dW_dS:  n_points  x      n_dims       x  n_dims
         # dW_db:  n_points  x     n_weights     x  n_dims
@@ -677,7 +796,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, new_sdt_parameters)
+        return self.as_vector() + np.dot(Jp, mdt_vector)
 
     def _target_for_weights(self, weights):
         r"""
@@ -719,7 +838,7 @@ class GlobalMDTransform(ModelDrivenTransform):
             PointCloud to the requested target
         """
 
-        #self.global_transform.target = target
+        self._update_global_transform(target)
         projected_target = self.global_transform.pseudoinverse.apply(target)
         # now we have the target in model space, project it to recover the
         # weights
@@ -730,3 +849,89 @@ class GlobalMDTransform(ModelDrivenTransform):
         #refined_target = self._target_for_weights(new_weights)
         #self.global_transform.target = refined_target
         return new_weights
+
+    def _update_global_transform(self, target):
+        self.global_transform.target = target
+
+
+class OrthoMDTransform(GlobalMDTransform):
+    r"""
+    A transform that couples an alignment transform to a
+    statistical model together with a global similarity transform,
+    such that the parameters of the transform are fully specified by
+    both the weights of statistical model and the parameters of the
+    similarity transform. The model is assumed to
+    generate an instance which is then transformed by the similarity
+    transform; the result defines the target landmarks of the transform.
+    If no source is provided, the mean of the model is defined as the
+    source landmarks of the transform.
+
+    This transform (in contrast to the :class:`GlobalMDTransform`)
+    additionally orthonormalizes both the global and the model basis against
+    each other, ensuring that orthogonality and normalization is enforced
+    across the unified bases.
+
+    Parameters
+    ----------
+    model : :class:`pybug.model.base.StatisticalModel`
+        A linear statistical shape model.
+    transform_cls : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The align constructor will be called on this with the source
+        and target landmarks. The target is
+        set to the points generated from the model using the
+        provide weights - the source is either given or set to the
+        model's mean.
+    global_transform : :class:`pybug.transform.AlignableTransform`
+        A class of :class:`pybug.transform.base.AlignableTransform`
+        The global transform that should be applied to the model output.
+        Doesn't have to have been constructed from the .align() constructor.
+        Note that the GlobalMDTransform isn't guaranteed to hold on to the
+        exact object passed in here - so don't expect external changes to
+        the global_transform to be reflected in the behavior of this object.
+    source : :class:`pybug.shape.base.PointCloud`, optional
+        The source landmarks of the transform. If no ``source`` is provided the
+        mean of the model is used.
+    weights : (P,) ndarray, optional
+        The reconstruction weights that will be fed to the model in order to
+        generate an instance of the target landmarks.
+    composition: 'both', 'warp' or 'model', optional
+        The composition approximation employed by this
+        ModelDrivenTransform.
+
+        Default: `both`
+    """
+    def __init__(self, model, transform_cls, global_transform, source=None,
+                 weights=None, composition='both'):
+        # 1. Construct similarity model from the mean of the model
+        self.similarity_model = Similarity2dInstanceModel(model.mean)
+        # 2. Orthonormalize model and similarity model
+        model = deepcopy(model)
+        model.orthonormalize_against_inplace(self.similarity_model)
+        self.similarity_weights = self.similarity_model.project(
+            global_transform.apply(model.mean))
+
+        super(OrthoMDTransform, self).__init__(
+            model, transform_cls, global_transform, source=source,
+            weights=weights, composition=composition)
+
+    def _update_global_transform(self, target):
+        self.similarity_weights = self.similarity_model.project(target)
+        self._update_global_weights(self.similarity_weights)
+
+    def _update_global_weights(self, global_weights):
+        self.similarity_weights = global_weights
+        new_target = self.similarity_model.instance(global_weights)
+        self.global_transform.target = new_target
+
+    def _global_transform_jacobian(self, points):
+        return self.similarity_model.jacobian
+
+    @property
+    def global_parameters(self):
+        r"""
+        The parameters for the global transform.
+
+        :type: (``n_global_parameters``,) ndarray
+        """
+        return self.similarity_weights
