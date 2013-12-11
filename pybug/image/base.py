@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation, UniformScale
+from pybug.transform.affine import Translation, UniformScale, NonUniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 
 
@@ -592,9 +592,15 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         template_mask = BooleanNDImage.blank(transform.apply(self.shape))
         # due to image indexing, we can't just apply the pseduoinverse
         # transform to achieve the scaling we want though!
-        # (consider e.g. a 2x2 image doubled. That's [0-1] -scale> [0-3])
-        # -> need to make the correct inverse by adding 1 to acount
-        inverse_transform = UniformScale(scale + 1, self.n_dims).pseudoinverse
+        # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
+        #    H 2 -> 6 so [0-1] -> [0-5] = 5/1 = 5x
+        #    W 4 -> 12 [0-3] -> [0-11] = 11/3 = 3.67x
+        # => need to make the correct scale per dimension!
+        shape = np.array(self.shape, dtype=np.float)
+        # scale factors = max_index_after / current_max_index
+        # (note that max_index = length - 1, as 0 based)
+        scale_factors = (scale * shape - 1) / (shape - 1)
+        inverse_transform = NonUniformScale(scale_factors).pseudoinverse
         # Note here we pass warp_mask to warp_to. In the case of
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
         # harmlessly fall through so we are fine.
