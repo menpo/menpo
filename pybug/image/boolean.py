@@ -152,7 +152,7 @@ class BooleanNDImage(AbstractNDImage):
         rebuilding a boolean image **itself** from boolean values. The mask
         is in no way interpreted in performing the operation, in contrast to
         MaskedNDImage, where only the masked region is used in from_vector()
-        and as_vector().
+        and as_vector(). Any image landmarks are transferred in the process.
 
         Parameters
         ----------
@@ -164,7 +164,9 @@ class BooleanNDImage(AbstractNDImage):
         image : :class:`BooleanNDImage`
             New BooleanImage of same shape as this image
         """
-        return BooleanNDImage(flattened.reshape(self.shape))
+        mask = BooleanNDImage(flattened.reshape(self.shape))
+        mask.landmarks = self.landmarks
+        return mask
 
     def invert(self):
         r"""

@@ -186,6 +186,8 @@ class MaskedNDImage(AbstractNDImage):
         channel to an image but maintain the shape. For example, when
         calculating the gradient.
 
+        Note that landmarks are transferred in the process.
+
         Parameters
         ----------
         flattened : (``n_pixels``,)
