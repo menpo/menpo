@@ -186,6 +186,8 @@ class MaskedNDImage(AbstractNDImage):
         channel to an image but maintain the shape. For example, when
         calculating the gradient.
 
+        Note that landmarks are transferred in the process.
+
         Parameters
         ----------
         flattened : (``n_pixels``,)
@@ -212,7 +214,9 @@ class MaskedNDImage(AbstractNDImage):
         image_data[self.mask.mask] = pixels_per_channel
         # call the constructor accounting for the fact that some image
         # classes expect a channel axis and some don't.
-        return type(self)._init_with_channel(image_data, mask=self.mask)
+        new_image = type(self)._init_with_channel(image_data, mask=self.mask)
+        new_image.landmarks = self.landmarks
+        return new_image
 
     def from_vector_inplace(self, vector):
         r"""
