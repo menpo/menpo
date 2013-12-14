@@ -71,6 +71,14 @@ class PCAModel(MeanInstanceLinearModel):
                 "0 < n_components <= n_available_components "
                 "(which is {}) ".format(value, self.n_components))
 
+    @MeanInstanceLinearModel.components.getter
+    def components(self):
+        r"""
+        The matrix containing the active components on this model.
+
+        type: (n_active_components, n_features) ndarray
+        """
+        return self._components[:self.n_active_components, :]
 
     @property
     def whitened_components(self):
