@@ -314,6 +314,138 @@ def ibug_68_closed_mouth(landmark_group):
     return new_landmark_group
 
 
+<<<<<<< Updated upstream
+=======
+def ibug_66_points(landmark_group):
+    """
+    Apply the ibug's "standard" 66 point semantic labels (based on the
+    original semantic labels of multiPIE but ignoring the 2 points
+    describing the inner mouth corners) to the landmark group.
+
+    The group label will be 'ibug_66_points'.
+
+    The semantic labels applied are as follows:
+
+      - chin
+      - leye
+      - reye
+      - leyebrow
+      - reyebrow
+      - mouth
+      - nose
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark group with group label 'ibug_66_points'. The pointcloud
+        is also copied.
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 68 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    """
+    group_label = 'ibug_66_points'
+    n_points = landmark_group.lms.n_points
+
+    if landmark_group.lms.n_points != 68:
+        raise LabellingError("{0} mark-up expects exactly 68 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    # Ignore the 2 inner mouth corners
+    new_landmarks = copy.deepcopy(landmark_group.lms)
+    ind = np.hstack((np.arange(0, 60), np.arange(61, 64),
+                     np.arange(65, 68)))
+    new_landmarks.points = new_landmarks.points[ind]
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label, new_landmarks,
+        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+
+    new_landmark_group['chin'] = np.arange(17)
+    new_landmark_group['leye'] = np.arange(36, 42)
+    new_landmark_group['reye'] = np.arange(42, 48)
+    new_landmark_group['leyebrow'] = np.arange(17, 22)
+    new_landmark_group['reyebrow'] = np.arange(22, 27)
+    new_landmark_group['mouth'] = np.arange(48, 66)
+    new_landmark_group['nose'] = np.arange(27, 36)
+
+    return new_landmark_group
+
+
+def ibug_51_points(landmark_group):
+    """
+    Apply the ibug's "standard" 51 point semantic labels (based on the
+    original semantic labels of multiPIE but removing the annotations
+    corresponding to the chin region) to the landmark group.
+
+    The group label will be 'ibug_51_points'.
+
+    The semantic labels applied are as follows:
+
+      - leye
+      - reye
+      - leyebrow
+      - reyebrow
+      - mouth
+      - nose
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark group with group label 'ibug_51_points'. The pointcloud
+        is also copied.
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 68 points
+
+    References
+    ----------
+    .. [1] http://www.multipie.org/
+    """
+    group_label = 'ibug_51_points'
+    n_points = landmark_group.lms.n_points
+
+    if landmark_group.lms.n_points != 68:
+        raise LabellingError("{0} mark-up expects exactly 68 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    # Ignore the 2 inner mouth corners
+    new_landmarks = copy.deepcopy(landmark_group.lms)
+    ind = np.arange(17, 68)
+    new_landmarks.points = new_landmarks.points[ind]
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label, new_landmarks,
+        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+
+    new_landmark_group['leye'] = np.arange(19, 25)
+    new_landmark_group['reye'] = np.arange(25, 31)
+    new_landmark_group['leyebrow'] = np.arange(0, 5)
+    new_landmark_group['reyebrow'] = np.arange(5, 10)
+    new_landmark_group['mouth'] = np.arange(31, 51)
+    new_landmark_group['nose'] = np.arange(10, 19)
+
+    return new_landmark_group
+
+
+>>>>>>> Stashed changes
 def labeller(landmarkables, group_label, label_func):
     """
     Takes a list of landmarkable objects and a group label indicating which
