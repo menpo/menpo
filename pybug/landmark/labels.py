@@ -313,9 +313,6 @@ def ibug_68_closed_mouth(landmark_group):
 
     return new_landmark_group
 
-
-<<<<<<< Updated upstream
-=======
 def ibug_66_points(landmark_group):
     """
     Apply the ibug's "standard" 66 point semantic labels (based on the
@@ -444,8 +441,6 @@ def ibug_51_points(landmark_group):
 
     return new_landmark_group
 
-
->>>>>>> Stashed changes
 def labeller(landmarkables, group_label, label_func):
     """
     Takes a list of landmarkable objects and a group label indicating which
