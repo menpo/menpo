@@ -175,6 +175,18 @@ def test_rescale_tuple():
     assert_allclose(new_image.shape, (60, 240))
 
 
+@raises(ValueError)
+def test_rescale_negative():
+    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image.rescale([0.5, -0.5])
+
+
+@raises(ValueError)
+def test_rescale_negative_single_num():
+    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image.rescale(-0.5)
+
+
 def test_resize():
     image = MaskedNDImage(np.random.randn(120, 120, 3))
     new_size = (250, 250)

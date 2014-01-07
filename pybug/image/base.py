@@ -595,6 +595,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             If less scales than dimensions are provided.
             If any scale is less than or equal to 0.
         """
+        # Pythonic way of converting to list if we are passed a single float
         try:
             if len(scale) < self.n_dims:
                 raise ValueError(
@@ -603,13 +604,14 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                         len(scale), self.n_dims
                     )
                 )
-        except TypeError:
+        except TypeError:  # Thrown when len() is called on a float
             scale = [scale] * self.n_dims
-            for s in scale:
-                if s <= 0:
-                    raise ValueError("Scales must be positive floats.")
+
         # Make sure we have a numpy array
         scale = np.asarray(scale)
+        for s in scale:
+            if s <= 0:
+                raise ValueError('Scales must be positive floats.')
 
         transform = NonUniformScale(scale)
         from pybug.image.boolean import BooleanNDImage
