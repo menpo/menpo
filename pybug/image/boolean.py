@@ -34,29 +34,35 @@ class BooleanNDImage(AbstractNDImage):
         return cls(image_data_with_channel[..., 0])
 
     @classmethod
-    def blank(cls, shape, fill=True, **kwargs):
+    def blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
         Returns a blank :class:`BooleanNDImage` of the requested shape
 
         Parameters
         ----------
         shape : tuple or list
-            The shape of the image. Any floating point values are rounded up
-            to the nearest integer.
+            The shape of the image. Any floating point values are rounded
+            according to the ``round`` kwarg.
 
         fill : True or False, optional
             The mask value to be set everywhere
 
-        Default: True (masked region is the whole image - meaning the whole
+            Default: True (masked region is the whole image - meaning the whole
                  image is exposed)
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
 
         Returns
         -------
         blank_image : :class:`BooleanNDImage`
             A blank mask of the requested size
         """
+        if round not in ['ceil', 'round', 'floor']:
+            raise ValueError('round must be either ceil, round or floor')
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape))
+        shape = tuple(getattr(np, round)(shape))
         if fill:
             mask = np.ones(shape, dtype=np.bool)
         else:

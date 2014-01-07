@@ -26,6 +26,21 @@ def test_mask_blank():
     assert(np.all(mask.pixels))
 
 
+def test_mask_blank_rounding_floor():
+    mask = BooleanNDImage.blank((56.1, 12.1), round='floor')
+    assert_allclose(mask.shape, (56, 12))
+
+
+def test_mask_blank_rounding_ceil():
+    mask = BooleanNDImage.blank((56.1, 12.1), round='ceil')
+    assert_allclose(mask.shape, (57, 13))
+
+
+def test_mask_blank_rounding_round():
+    mask = BooleanNDImage.blank((56.1, 12.6), round='round')
+    assert_allclose(mask.shape, (56, 13))
+
+
 def test_mask_blank_false_fill():
     mask = BooleanNDImage.blank((56, 12, 3), fill=False)
     assert(np.all(~mask.pixels))
@@ -146,3 +161,22 @@ def test_normalize_masked():
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
     assert_allclose(
         np.std(image.as_vector(keep_channels=True), axis=0), 1)
+
+
+def test_rescale_single_num():
+    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    new_image = image.rescale(0.5)
+    assert_allclose(new_image.shape, (60, 60))
+
+
+def test_rescale_tuple():
+    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    new_image = image.rescale([0.5, 2.0])
+    assert_allclose(new_image.shape, (60, 240))
+
+
+def test_resize():
+    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    new_size = (250, 250)
+    new_image = image.resize(new_size)
+    assert_allclose(new_image.shape, new_size)
