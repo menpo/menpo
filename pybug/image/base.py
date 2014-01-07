@@ -666,10 +666,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             raise ValueError(
                 'Dimensions must match.'
                 '{} dimensions provided, {} were expected.'.format(
-                    shape.shape, self.n_dims
-                )
-            )
-
+                    shape.shape, self.n_dims))
         scales = shape.astype(np.float) / self.shape
         # Have to round the shape when scaling to deal with floating point
         # errors. For example, if we want (250, 250), we need to ensure that
