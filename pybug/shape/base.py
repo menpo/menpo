@@ -1,51 +1,56 @@
 import abc
-from pybug.shape.landmarks import LandmarkManager
+from pybug.base import Vectorizable
+from pybug.landmark import Landmarkable
+from pybug.transform.base import Transformable
+from pybug.visualize.base import Viewable
 
 
-class Shape(object):
-    """ Abstract representation of shape. All subclasses will have some
-     data where semantic meaning can be assigned to the i'th item. Shape
-     couples a LandmarkManager to this item of data, meaning,
-     all subclasses are landmarkable. Note this does not mean that all
-     subclasses need have a spatial meaning (i.e. the 7'th node of a Graph
-     can still be landmarked)
+class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
     """
+    Abstract representation of shape. Shapes are vectorizable, viewable,
+    landmarkable and transformable. This base class handles transforming
+    landmarks when the shape is transformed. Therefore, implementations of
+    Shape have to implement the abstract :meth:`_transform_self_inplace` method that
+    handles transforming the Shape itself.
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self.landmarks = LandmarkManager(self)
+        super(Shape, self).__init__()
 
-    @abc.abstractproperty
-    def _n_landmarkable_items(self):
+    def _transform_inplace(self, transform):
         """
-        The number of items that can be landmarked on this Shape.
-        """
-        pass
+        Transform the landmarks and the shape itself.
 
-    @abc.abstractmethod
-    def _landmark_at_index(self, index):
-        """
-        Retrieve the item at the index position
+        Parameters
+        ----------
+        transform : func
+            A function to transform the spatial data with
 
-        :param index: Index position
+        Returns
+        -------
+        self : ``self``
+            A pointer to ``self`` (the result of :meth:`_transform_self_inplace`).
         """
-        pass
-
-    @abc.abstractmethod
-    def _add_meta_landmark_item(self, item):
-        """
-        Adds the item as a new meta item, returning the index into the meta
-        items (the meta_index). If this Shape is not capable of adding meta
-        items, instead return False.
-        :param item: The new item to be added
-        :return meta_index: The index into the meta landmarks of the added
-        item OR False (if meta items cannot be added)
-        """
-        pass
+        self.landmarks._transform_inplace(transform)
+        return self._transform_self_inplace(transform)
 
     @abc.abstractmethod
-    def _meta_landmark_at_meta_index(self, index):
+    def _transform_self_inplace(self, transform):
         """
-        Returns the meta item at the meta index position.
+        Implement this method to transform the concrete implementation of a
+        shape. This is then called by the Shape's :meth:`_transform_inplace` method,
+        which will have updated the landmarks beforehand.
+
+        Parameters
+        ----------
+        transform : func
+            A function to transform the spatial data with
+
+        Returns
+        -------
+        self : ``self``
+            A pointer to ``self``.
         """
         pass

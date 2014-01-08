@@ -1,19 +1,32 @@
-import numpy as np
+from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
-from pybug.shape.landmarks import ReferenceLandmark
 from pybug.shape.mesh.exceptions import TriFieldError
-from pybug.visualize import TriMeshViewer3d
+from pybug.visualize import TriMeshViewer
+from pybug.shape.mesh.normals import compute_normals
+from scipy.spatial import Delaunay
 
 
 class TriMesh(PointCloud):
-    """A piecewise planar 3D manifold composed from triangles with vertices
-    indexed from points.
+    r"""
+    A pointcloud with a connectivity defined by a triangle list. These are
+    designed to be explicitly 2D or 3D.
+
+    Parameters
+    ----------
+    points : (N, D) ndarray
+        The set coordinates for the mesh.
+    trilist : (M, 3) ndarray, optional
+        The triangle list. If None is provided, a Delaunay triangulation of
+        the points will be used instead.
+
+        Default: None
     """
 
-    def __init__(self, points, trilist):
-        #TODO Delaunay triangulate if no trilist added
+    def __init__(self, points, trilist=None):
         #TODO add inheritance from Graph once implemented
-        PointCloud.__init__(self, points)
+        super(TriMesh, self).__init__(points)
+        if trilist is None:
+            trilist = Delaunay(points).simplices
         self.trilist = trilist
         self.trifields = {}
 
@@ -30,101 +43,99 @@ class TriMesh(PointCloud):
         message += '\nn_tris: ' + str(self.n_tris)
         return message
 
+    def from_vector(self, flattened):
+        r"""
+        Builds a new :class:`TriMesh` given then ``flattened`` vector.
+        This allows rebuilding pointclouds with the correct number of
+        dimensions from a vector. Note that the trilist will be drawn from
+        self.
+
+        Parameters
+        ----------
+        flattened : (N,) ndarray
+            Vector representing a set of points.
+
+        Returns
+        --------
+        trimesh : :class:`TriMesh`
+            A new trimesh created from the vector with self's trilist.
+        """
+        return TriMesh(flattened.reshape([-1, self.n_dims]), self.trilist)
+
+    @property
+    def vertex_normals(self):
+        r"""
+        Normal at each point.
+
+        :type: (``n_points``, 3) ndarray
+
+        Compute the per-vertex normals from the current set of points and
+        triangle list. Only valid for 3D dimensional meshes.
+
+        Raises
+        ------
+        DimensionalityError
+            If mesh is not 3D
+        """
+        if self.n_dims != 3:
+            raise DimensionalityError("Normals are only valid for 3D meshes")
+        return compute_normals(self.points, self.trilist)[0]
+
+    @property
+    def face_normals(self):
+        r"""
+        Normal at each face.
+
+        :type: (``n_tris``, 3) ndarray
+
+        Compute the face normals from the current set of points and
+        triangle list. Only valid for 3D dimensional meshes.
+
+        Raises
+        ------
+        DimensionalityError
+            If mesh is not 3D
+        """
+        if self.n_dims != 3:
+            raise DimensionalityError("Normals are only valid for 3D meshes")
+        return compute_normals(self.points, self.trilist)[1]
+
     @property
     def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
         return len(self.trilist)
 
     def add_trifield(self, name, field):
         if field.shape[0] != self.n_tris:
             raise TriFieldError("Trying to add a field with " +
                                 str(field.shape[0]) + " values (need one "
-                                                      "field value per tri => " +
+                                "field value per tri => " +
                                 str(self.n_tris) + ")")
         else:
             self.trifields[name] = field
 
-    def view(self, textured=True):
-        """ Visualize the TriMesh. By default, if the mesh has a texture a
-        textured view will be provided. This can be overridden using the
-        boolean kwarg `textured`
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
         """
-        viewer = TriMeshViewer3d(self.points, self.trilist,
-                                 color_per_tri=self.trifields.get('color'),
-                                 color_per_point=self.pointfields.get(
-                                     'color'))
-        return viewer.view()
+        Visualize the TriMesh.
 
-    def new_trimesh(self, pointmask=None, astype='self'):
-        """ Builds a new trimesh from this one.
-        keep. Transfers across all fields, rebuilds a suitable trilist, and
-        handles landmark and metapoint translation (or will do, still TODO!)
-        By default will return a mesh of type(self) (i.e. FastTriMeshes will
-        produce FastTriMeshes) but this can be overridden using the kwarg
-        `astype`.
-        kwargs: pointmask: a boolean mask of points that we wish to keep
+        Parameters
+        ----------
+        kwargs : dict
+            Passed through to the viewer.
+
+        Returns
+        -------
+        viewer : :class:`pybug.visualize.base.Renderer`
+            The viewer object.
+
+        Raises
+        ------
+        DimensionalityError
+            If ``not self.n_dims in [2, 3]``.
         """
-        #TODO this is broken due to Landmark Manager changes. Fix after new
-        # LM manager is finished.
-        orig_point_index = np.arange(self.n_points)
-        if pointmask is not None:
-            kept_points_orig_index = orig_point_index[pointmask]
-        else:
-            kept_points_orig_index = orig_point_index
-        trilist_mask = np.in1d(self.trilist, kept_points_orig_index).reshape(
-            self.trilist.shape)
-        # remove any triangle missing any number of points
-        tris_mask = np.all(trilist_mask, axis=1)
-        kept_tris_orig_index = self.trilist[tris_mask]
-        # some additional points will have to be removed as they no longer
-        # form part of a triangle
-        kept_points_orig_index = np.unique(kept_tris_orig_index)
-        # the new points are easy to get
-        new_points = self.points[kept_points_orig_index]
-        # now we need to transfer the trilist over. First we make a new
-        # point index
-        kept_points_new_index = np.arange(kept_points_orig_index.shape[0])
-        # now we build a mapping from the orig point index to the new
-        pi_map = np.zeros(self.n_points) # point_index_mapping
-        pi_map[kept_points_orig_index] = kept_points_new_index
-        # trivial to now pull out the new trilist
-        new_trilist = pi_map[kept_tris_orig_index].astype(np.uint32)
-        if astype == 'self':
-            trimeshcls = type(self)
-        elif issubclass(astype, TriMesh):
-            trimeshcls = astype
-        else:
-            raise Exception('The mesh type ' + str(astype) + ' is not '
-                                                             'understood '
-                                                             '(needs to be an'
-                                                             ' instance of '
-                                                             'TriMesh)')
-        newtrimesh = trimeshcls(new_points, new_trilist)
-        # now we just map over point fields and trifields respectively
-        # (note that as tcoords are simply fields, this will inherently map
-        # over our textures too)
-        for name, field in self.pointfields.iteritems():
-            newtrimesh.add_pointfield(name, field[kept_points_orig_index])
-        for name, field in self.trifields.iteritems():
-            newtrimesh.add_trifield(name, field[tris_mask])
-        newtrimesh.texture = self.texture
-        # TODO transfer metapoints and points.
-        # also, convert reference landmarks to meta landmarks if their point is
-        # removed.
-        # TODO make this more solid - don't want to directly touch the all
-        # landmarks
-        for lm in self.landmarks.reference_landmarks():
-            old_index = lm.index
-            if np.all(np.in1d(old_index, kept_points_orig_index)):
-                # referenced point still exists, in the new mesh. add it!
-                new_index = pi_map[old_index]
-                newlm = ReferenceLandmark(newtrimesh, new_index,
-                                          lm.label,
-                                          lm.label_index)
-                newtrimesh.landmarks.all_landmarks.append(newlm)
-            else:
-                print 'the point for landmark: ' + str(
-                    lm.numbered_label) + ' no longer will exist.'
-        return newtrimesh
-        #new_landmarks = self.landmarks.copy()
-        #for feature in new_landmarks:
-        #    new_landmarks[feature] = list(pi_map[new_landmarks[feature]])
+        return TriMeshViewer(figure_id, new_figure,
+                             self.points, self.trilist).render(**kwargs)

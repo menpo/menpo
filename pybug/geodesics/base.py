@@ -4,8 +4,16 @@ from pybug.geodesics.exceptions import TriMeshGeodesicsError
 
 
 class TriMeshGeodesics(object):
-    """A number of geodesics algorithms for TriMeshes, including
+    r"""
+    A number of geodesics algorithms for TriMeshes, including
     an exact geodesic method.
+
+    Parameters
+    ----------
+    points : (N, D) ndarray
+        The cartesian points that make up the mesh
+    trilist : (M, 3) ndarray
+        The triangulation of the given points
     """
 
     def __init__(self, points, trilist):
@@ -15,12 +23,38 @@ class TriMeshGeodesics(object):
 
     @property
     def n_points(self):
+        r"""
+        The number of points in the mesh
+
+        :type: (N, D) ndarray
+        """
         return self.points.shape[0]
 
     def geodesics(self, source_indexes, method='exact'):
-        """Calculate the geodesic distance for all points from the
-        source_indexes. kwarg 'method' can be used to choose the algorithm
-        (default method='exact' giving exact geodesics)
+        r"""
+        Calculate the geodesic distance for all points from the
+        given ``source_indexes``.
+
+        Parameters
+        -----------
+        source_indexes : (N,) list
+            List of indexes to calculate the geodesics for
+        method : {'exact'}
+            The method using to calculate the geodesics. Only the 'exact'
+            method is currently supported
+
+            Default: exact
+
+        Returns
+        -------
+        TODO: document these?
+        phi : UNKNOWN
+        best_source : UNKNOWN
+
+        Raises
+        -------
+        TriMeshGeodesicsError
+            When indexes are out of the range of the number of points
         """
         if not isinstance(source_indexes, collections.Iterable):
             source_indexes = [source_indexes]
