@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <GLFW/glfw3.h>
 #include "glr.h"
 
 void glr_check_error(void) {
@@ -248,7 +248,7 @@ void glr_render_scene(glr_scene* scene) {
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-	glutSwapBuffers();
+	glfwSwapBuffers(scene->config.window);
 }
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,

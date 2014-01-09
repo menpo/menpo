@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <GLFW/glfw3.h>
 #include "glrasterizer.h"
 #include "glr.h"
-#include "glrglut.h"
+#include "glrglfw.h"
 #include "shaders.h"
 
 glr_scene scene;
@@ -33,13 +34,13 @@ void return_FB_pixels(uint8_t *pixels, int width, int height)
     glr_math_float_matrix_eye(scene.camera.perspective);
     glr_math_float_matrix_eye(scene.camera.rotation);
     // set the glut config
-	scene.config = glr_build_glut_config(width, height);
-	// start glut
-	glr_glut_init(scene.config);
+	scene.config = glr_build_glfw_config(width, height);
+	// start glfr
+	glr_glfw_init(scene.config);
 	// call the init
 	init();
 	// start the glut loop
-	glutMainLoop();
+	glfwWaitEvents();
 }
 
 
@@ -199,7 +200,6 @@ void display(void)
 	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
 	glr_render_scene(&scene);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glutLeaveMainLoop();
 }
 
 

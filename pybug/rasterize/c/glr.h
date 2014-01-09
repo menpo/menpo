@@ -1,5 +1,5 @@
 #pragma once
-#include "glrglut.h"
+#include "glrglfw.h"
 
 
 typedef struct {
@@ -58,7 +58,7 @@ typedef struct {
 	glr_textured_mesh mesh;
 	glr_camera camera;
 	glr_light light;
-	glr_glut_config config;
+	glr_glfw_config config;
 	GLuint program;
 	GLuint fbo;
 	// texture that is to be rendered to on the FrameBuffer
