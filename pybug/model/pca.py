@@ -50,8 +50,10 @@ class PCAModel(MeanInstanceLinearModel):
             principal_component_decomposition(data, whiten=False,
                                               center=center, bias=bias)
         self._eigenvalues = eigenvalues
+
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
         self._n_components = self.n_components
+        self._trimmed_variance = 0
 
     @property
     def n_active_components(self):
@@ -100,9 +102,10 @@ class PCAModel(MeanInstanceLinearModel):
     @property
     def noise_variance(self):
         if self.n_active_components == self.n_components:
-            return 0
+            return self._trimmed_variance
         else:
-            return self._eigenvalues[self.n_active_components:].mean()
+            return (self._eigenvalues[self.n_active_components:].mean() +
+                    self._trimmed_variance)
 
     @property
     def inverse_noise_variance(self):
@@ -232,6 +235,9 @@ class PCAModel(MeanInstanceLinearModel):
         if self.n_active_components > self.n_components:
             # set n_components if necessary
             self.n_active_components = self.n_components
+        # store the amount of variance captured by the discarded components
+        self._trimmed_variance = \
+            self._eigenvalues[self.n_active_components:].mean()
         # make sure that the eigenvalues are trimmed too
         self._eigenvalues = self._eigenvalues[:self.n_components]
 
@@ -310,7 +316,7 @@ class PCAModel(MeanInstanceLinearModel):
         whitened_components = self.whitened_components
         weights = dgemm(alpha=1.0, a=vector_instance.T,
                         b=whitened_components.T, trans_a=True)
-        return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
+        return dgemm(alpha=1.0, a=weights.T, b=self.components.T,
                      trans_a=True, trans_b=True)
 
     def orthonormalize_against_inplace(self, linear_model):
