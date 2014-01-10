@@ -1,6 +1,5 @@
 import copy
 import numpy as np
-from pybug.landmark import LandmarkManager
 from pybug.landmark.base import LandmarkGroup
 from pybug.landmark.exceptions import LabellingError
 
