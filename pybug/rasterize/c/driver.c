@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "glrasterizer.h"
+#include "glr.h"
 
 void init_points(double* points) 
 {
@@ -87,12 +88,13 @@ int main(int argc, char** argv)
     init_tcoords(tcoords);
     init_texture(texture, t_w * t_h);
 
-    init_scene(points, n_points, trilist, n_tris, tcoords, texture, t_w, t_h);
+    glr_scene scene = init_scene(points, n_points, trilist, n_tris, tcoords, 
+            texture, t_w, t_h);
 
     int output_w = 128;
     int output_h = 128;
     uint8_t pixels [output_w * output_h * 4];
-    return_FB_pixels(pixels, output_w, output_h);
+    return_FB_pixels(&scene, pixels, output_w, output_h);
     return(0);
 }
 
