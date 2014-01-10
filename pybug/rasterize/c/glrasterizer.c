@@ -36,7 +36,7 @@ void return_FB_pixels(uint8_t *pixels, int width, int height)
     // set the glfw config
 	scene.config = glr_build_glfw_config(width, height);
 	// start glfw
-	glr_glfw_init(scene.config);
+	glr_glfw_init(&scene.config);
 	// call the init
 	init();
 

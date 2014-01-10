@@ -16,20 +16,22 @@ glr_glfw_config glr_build_glfw_config(int width, int height){
     return config;
 }
 
-void glr_glfw_init(glr_glfw_config config)
+void glr_glfw_init(glr_glfw_config* config)
 {
 	printf("glr_glfw_init(...)\n");
 	// Fire up glfw
     if (!glfwInit())
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_VISIBLE, 0);
-    config.window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
-    if (!config.window)
+    config->window = glfwCreateWindow(
+            config->WINDOW_WIDTH, config->WINDOW_HEIGHT,
+            config->title, NULL, NULL);
+    if (!config->window)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-    glfwMakeContextCurrent(config.window);
+    glfwMakeContextCurrent(config->window);
 
     printf("Have context.\n");
 	// Fire up GLEW

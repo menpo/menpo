@@ -15,5 +15,5 @@ typedef struct {
 
 glr_glfw_config glr_build_glfw_config(int width, int height);
 
-void glr_glfw_init(glr_glfw_config config);
+void glr_glfw_init(glr_glfw_config* config);
 

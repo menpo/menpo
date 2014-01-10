@@ -1,9 +1,10 @@
 # distutils: language = c
-# distutils: sources = ./pybug/rasterize/c/glrasterizer.c ./pybug/rasterize/c/glr.c ./pybug/rasterize/c/glrglut.c
-# distutils: libraries = m GLU GL glut GLEW
+# distutils: sources = ./pybug/rasterize/c/glrasterizer.c ./pybug/rasterize/c/glr.c ./pybug/rasterize/c/glrglfw.c
+# distutils: libraries = m GLU GL glfw GLEW
 from libc.stdint cimport uint8_t
 import numpy as np
 cimport numpy as np
+
 
 
 # externally declare the C++ classes
