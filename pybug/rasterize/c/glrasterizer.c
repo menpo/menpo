@@ -33,14 +33,30 @@ void return_FB_pixels(uint8_t *pixels, int width, int height)
 	memset(scene.camera.translation, 0, sizeof(float) * 4);
     glr_math_float_matrix_eye(scene.camera.perspective);
     glr_math_float_matrix_eye(scene.camera.rotation);
-    // set the glut config
+    // set the glfw config
 	scene.config = glr_build_glfw_config(width, height);
-	// start glfr
+	// start glfw
 	glr_glfw_init(scene.config);
 	// call the init
 	init();
-	// start the glut loop
-	glfwWaitEvents();
+
+	// render the content
+	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
+	glr_render_scene(&scene);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // grab the framebuffer content
+	glr_get_framebuffer(scene.fb_texture.unit, scene.fb_texture.texture_ID,
+			scene.fb_texture.format, scene.fb_texture.type,
+			scene.fb_texture.data);
+
+    // clear up our OpenGL state
+	glr_destroy_program();
+	glr_destroy_vbos_on_trianglar_mesh(scene.mesh);
+
+    // clear up our GLFW state
+    glfwDestroyWindow(scene.config.window);
+    glfwTerminate();
 }
 
 
@@ -83,80 +99,6 @@ void _init_program_and_shaders(void)
 	glDeleteShader(shaders[0]);
 	glDeleteShader(shaders[1]);
 }
-//
-//	glGenFramebuffers(1, &_fbo);
-//	glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-//	// first, build a texture:
-//	_texture_fb = glr_build_rgba_texture(_fb_texture_pixels, WINDOW_WIDTH,
-//			WINDOW_HEIGHT);
-//	// assign it to a new unit
-//	_texture_fb.unit = 2;
-//	// and initialise it
-//	glr_init_texture(_texture_fb);
-//	// now we can bind to the active framebuffer.
-//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-//		GL_TEXTURE_2D, _texture_fb.texture_ID, 0);
-//
-////	// repeat for the position rendering
-////	_texture_fb_color = glr_build_rgb_float_texture(_fbo_color_pixels,
-////			WINDOW_WIDTH, WINDOW_HEIGHT);
-////    _texture_fb_color.unit = 3;
-////    glr_init_texture(_texture_fb_color);
-////	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
-////		GL_TEXTURE_2D, _texture_fb_color.texture_ID, 0);
-//
-////	// make a new texture (as normal)
-////	glBindTexture(GL_TEXTURE_2D, 0);
-////	_fb_texture_unit = 2;
-////	glActiveTexture(GL_TEXTURE0 + _fb_texture_unit);
-////	glGenTextures(1, &_fb_texture);
-////	glBindTexture(GL_TEXTURE_2D, _fb_texture);
-////	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-////	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-////	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-////	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-////	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
-////		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-////	glBindTexture(GL_TEXTURE_2D, 0);
-////
-////	// attach the texture to the framebuffer
-////	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-////		GL_TEXTURE_2D, _fb_texture, 0);
-////    // THIS BEING GL_COLOR_ATTACHMENT0 means that anything rendered to
-////    // layout(location = 0) in the fragment shader will end up here.
-////	glr_check_error();
-////	glBindTexture(GL_TEXTURE_2D, 0);
-//
-//
-//
-//	glGenTextures(1, &_fb_color_id);
-//
-
-
-
-//	// repeat for the position rendering
-	//	_texture_fb_color = glr_build_rgb_float_texture(_fbo_color_pixels,
-	//			WINDOW_WIDTH, WINDOW_HEIGHT);
-	//    _texture_fb_color.unit = 3;
-	//    glr_init_texture(_texture_fb_color);
-	//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
-	//		GL_TEXTURE_2D, _texture_fb_color.texture_ID, 0);
-	//	// make a new texture (as normal)
-	//	glBindTexture(GL_TEXTURE_2D, 0);
-	//	scene.fb_texture_unit = 2;
-	//	glActiveTexture(GL_TEXTURE0 + scene.fb_texture_unit);
-	//	glGenTextures(1, &_fb_texture);
-	//	glBindTexture(GL_TEXTURE_2D, _fb_texture);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WINDOW_WIDTH, WINDOW_HEIGHT, 0,
-	//		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	//	glBindTexture(GL_TEXTURE_2D, 0);
-	//
-
-
 
 void _init_frame_buffer(void)
 {
@@ -194,21 +136,3 @@ void _init_frame_buffer(void)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void display(void)
-{
-	printf("display()\n");
-	glBindFramebuffer(GL_FRAMEBUFFER, scene.fbo);
-	glr_render_scene(&scene);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-void grab_framebuffer_and_cleanup(void)
-{
-	printf("grab_framebuffer_and_cleanup()\n");
-	glr_get_framebuffer(scene.fb_texture.unit, scene.fb_texture.texture_ID,
-			scene.fb_texture.format, scene.fb_texture.type,
-			scene.fb_texture.data);
-	glr_destroy_program();
-	glr_destroy_vbos_on_trianglar_mesh(scene.mesh);
-}

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "glrglfw.h"
@@ -21,6 +22,7 @@ void glr_glfw_init(glr_glfw_config config)
 	// Fire up glfw
     if (!glfwInit())
         exit(EXIT_FAILURE);
+    glfwWindowHint(GLFW_VISIBLE, 0);
     config.window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
     if (!config.window)
     {
@@ -28,8 +30,8 @@ void glr_glfw_init(glr_glfw_config config)
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(config.window);
-	glr_glfw_set_callbacks();
 
+    printf("Have context.\n");
 	// Fire up GLEW
 	GLenum status = glewInit();
 	if (status != GLEW_OK) {
@@ -44,23 +46,5 @@ void glr_glfw_init(glr_glfw_config config)
 	   fprintf(stdout, "  - Float (X,Y,Z) rendering not supported\n");
 
 	fprintf(stdout,"  - OpenGL Version: %s\n",glGetString(GL_VERSION));
-}
-
-void glr_glfw_set_callbacks(void)
-{
-	glfwReshapeFunc(glr_glfw_reshape);
-	glfwDisplayFunc(display);
-	glfwCloseFunc(grab_framebuffer_and_cleanup);
-}
-
-void glr_glfw_reshape(int width, int height) {
-	printf("glr_glfw_reshape(...)\n");
-	glViewport(0, 0, (GLsizei) width, (GLsizei) height);
-}
-
-void glr_glfw_cleanup(void) {
-	printf("glr_glfw_cleanup()\n");
-	grab_framebuffer_and_cleanup();
-    glfwTerminate();
 }
 
