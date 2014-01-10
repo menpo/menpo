@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation, UniformScale
+from pybug.transform.affine import Translation, UniformScale, NonUniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 
 
@@ -564,7 +564,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         """
         raise NotImplementedError
 
-    def rescale(self, scale, interpolator='scipy', **kwargs):
+    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
         All image information (landmarks, the mask the case of
@@ -572,8 +572,14 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        scale : float
-            The scale factor.
+        scale : float or tuple
+            The scale factor. If a tuple, the scale to apply to each dimension.
+            If a single float, the scale will be applied uniformly across
+            each dimension.
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
@@ -582,22 +588,88 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         -------
         rescaled_image : type(self)
             A copy of this image, rescaled.
-        """
-        if scale <= 0:
-            raise ValueError("Scale has to be a positive float")
 
-        transform = UniformScale(scale, self.n_dims)
+        Raises
+        ------
+        ValueError:
+            If less scales than dimensions are provided.
+            If any scale is less than or equal to 0.
+        """
+        # Pythonic way of converting to list if we are passed a single float
+        try:
+            if len(scale) < self.n_dims:
+                raise ValueError(
+                    'Must provide a scale per dimension.'
+                    '{} scales were provided, {} were expected.'.format(
+                        len(scale), self.n_dims
+                    )
+                )
+        except TypeError:  # Thrown when len() is called on a float
+            scale = [scale] * self.n_dims
+
+        # Make sure we have a numpy array
+        scale = np.asarray(scale)
+        for s in scale:
+            if s <= 0:
+                raise ValueError('Scales must be positive floats.')
+
+        transform = NonUniformScale(scale)
         from pybug.image.boolean import BooleanNDImage
         # use the scale factor to make the template mask bigger
-        template_mask = BooleanNDImage.blank(transform.apply(self.shape))
+        template_mask = BooleanNDImage.blank(transform.apply(self.shape),
+                                             round=round)
         # due to image indexing, we can't just apply the pseduoinverse
         # transform to achieve the scaling we want though!
-        # (consider e.g. a 2x2 image doubled. That's [0-1] -scale> [0-3])
-        # -> need to make the correct inverse by adding 1 to acount
-        inverse_transform = UniformScale(scale + 1, self.n_dims).pseudoinverse
+        # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
+        #    H 2 -> 6 so [0-1] -> [0-5] = 5/1 = 5x
+        #    W 4 -> 12 [0-3] -> [0-11] = 11/3 = 3.67x
+        # => need to make the correct scale per dimension!
+        shape = np.array(self.shape, dtype=np.float)
+        # scale factors = max_index_after / current_max_index
+        # (note that max_index = length - 1, as 0 based)
+        scale_factors = (scale * shape - 1) / (shape - 1)
+        inverse_transform = NonUniformScale(scale_factors).pseudoinverse
         # Note here we pass warp_mask to warp_to. In the case of
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
         # harmlessly fall through so we are fine.
         return self.warp_to(template_mask, inverse_transform,
                             warp_landmarks=True, warp_mask=True,
                             interpolator=interpolator, **kwargs)
+
+    def resize(self, shape, **kwargs):
+        r"""
+        Return a copy of this image, resized to a particular shape.
+        All image information (landmarks, the mask the case of
+        :class:`MaskedNDImage`) is resized appropriately.
+
+        Parameters
+        ----------
+        shape : tuple
+            The new shape to resize to.
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        resized_image : type(self)
+            A copy of this image, resized.
+
+        Raises
+        ------
+        ValueError:
+            If the number of dimensions of the new shape does not match
+            the number of dimensions of the image.
+        """
+        shape = np.asarray(shape)
+        if len(shape) != self.n_dims:
+            raise ValueError(
+                'Dimensions must match.'
+                '{} dimensions provided, {} were expected.'.format(
+                    shape.shape, self.n_dims))
+        scales = shape.astype(np.float) / self.shape
+        # Have to round the shape when scaling to deal with floating point
+        # errors. For example, if we want (250, 250), we need to ensure that
+        # we get (250, 250) even if the number we obtain is 250 to some
+        # floating point inaccuracy.
+        return self.rescale(scales, round='round', **kwargs)
