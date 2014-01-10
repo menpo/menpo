@@ -164,7 +164,7 @@ void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment);
 
 
 void glr_register_draw_framebuffers(GLuint fbo, size_t n_attachments,
-		GLuint* attachments);
+		GLenum* attachments);
 
 
 void glr_global_state_settings(void);

@@ -34,7 +34,7 @@ void return_FB_pixels(uint8_t *pixels, int width, int height)
     glr_math_float_matrix_eye(scene.camera.perspective);
     glr_math_float_matrix_eye(scene.camera.rotation);
     // set the glfw config
-	scene.config = glr_build_glfw_config(width, height);
+	scene.config = glr_build_glfw_config_offscreen(width, height);
 	// start glfw
 	glr_glfw_init(&scene.config);
 	// call the init
@@ -113,7 +113,7 @@ void _init_frame_buffer(void)
 			GL_COLOR_ATTACHMENT0);
 	// We set the framebuffer to GL_COLOR_ATTACHMENT0 - anything rendered to
 	// layout(location = 0) in the fragment shader will end up here.
-	const GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
+	GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
 	glr_register_draw_framebuffers(scene.fbo, 1, buffers);
 	// now, the depth buffer
 	GLuint depth_buffer;

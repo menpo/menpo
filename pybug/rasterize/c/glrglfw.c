@@ -5,35 +5,25 @@
 #include "glrglfw.h"
 #include "glrasterizer.h"
 
-glr_glfw_config glr_build_glfw_config(int width, int height){
+glr_glfw_config glr_build_glfw_config_offscreen(int width, int height){
 	glr_glfw_config config;
-	config.title = "Generic Viewer";
-    config.WINDOW_WIDTH = width;
-    config.WINDOW_HEIGHT = height;
-    config.WINDOW_X_POSITION = 0;
-    config.WINDOW_Y_POSITION = 0;
-    //config.display_mode = GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH GLFW_VISIBLE;
+	config.title = "Offscreen Viewer";
+    config.window_width= width;
+    config.window_height = height;
+    config.offscreen = true;
     return config;
 }
 
-void glr_glfw_init(glr_glfw_config* config)
-{
-	printf("glr_glfw_init(...)\n");
-	// Fire up glfw
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_VISIBLE, 0);
-    config->window = glfwCreateWindow(
-            config->WINDOW_WIDTH, config->WINDOW_HEIGHT,
-            config->title, NULL, NULL);
-    if (!config->window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-    glfwMakeContextCurrent(config->window);
+glr_glfw_config glr_build_glfw_config_onscreen(int width, int height){
+	glr_glfw_config config;
+	config.title = "Onscreen Viewer";
+    config.window_width= width;
+    config.window_height = height;
+    config.offscreen = false;
+    return config;
+}
 
-    printf("Have context.\n");
+void _glr_glew_init() {
 	// Fire up GLEW
 	GLenum status = glewInit();
 	if (status != GLEW_OK) {
@@ -48,5 +38,25 @@ void glr_glfw_init(glr_glfw_config* config)
 	   fprintf(stdout, "  - Float (X,Y,Z) rendering not supported\n");
 
 	fprintf(stdout,"  - OpenGL Version: %s\n",glGetString(GL_VERSION));
+}
+
+void glr_glfw_init(glr_glfw_config* config)
+{
+	printf("glr_glfw_init(...)\n");
+	// Fire up glfw
+    if (!glfwInit())
+        exit(EXIT_FAILURE);
+    glfwWindowHint(GLFW_VISIBLE, !config->offscreen);
+    config->window = glfwCreateWindow(
+            config->window_width, config->window_height,
+            config->title, NULL, NULL);
+    if (!config->window)
+    {
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+    glfwMakeContextCurrent(config->window);
+    printf("Have context.\n");
+    _glr_glew_init();
 }
 
