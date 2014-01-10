@@ -316,7 +316,7 @@ class PCAModel(MeanInstanceLinearModel):
         whitened_components = self.whitened_components
         weights = dgemm(alpha=1.0, a=vector_instance.T,
                         b=whitened_components.T, trans_a=True)
-        return dgemm(alpha=1.0, a=weights.T, b=self.components.T,
+        return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
                      trans_a=True, trans_b=True)
 
     def orthonormalize_against_inplace(self, linear_model):
