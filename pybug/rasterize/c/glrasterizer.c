@@ -7,6 +7,13 @@
 #include "glrglfw.h"
 #include "shaders.h"
 
+glr_glfw_context init_offscreen_context(int width, int height) {
+    glr_glfw_context context = glr_build_glfw_context_offscreen(width, height);
+    // initialize glfw and glew
+    glr_glfw_init(&context);
+    return context;
+}
+
 glr_scene init_scene(double* points, size_t n_points, unsigned int* trilist,
 		size_t n_tris, float* tcoords, uint8_t* texture, size_t texture_width,
 		size_t texture_height)
@@ -24,17 +31,14 @@ glr_scene init_scene(double* points, size_t n_points, unsigned int* trilist,
 }
 
 
-void return_FB_pixels(glr_scene* scene, uint8_t *pixels, int width, int height)
+void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 {
 	printf("return_FB_pixels(...)\n");
-	scene->fb_texture = glr_build_rgba_texture(pixels, width, height);
+	scene->fb_texture = glr_build_rgba_texture(pixels, scene->context->window_width,
+            scene->context->window_height);
 	memset(scene->camera.translation, 0, sizeof(float) * 4);
     glr_math_float_matrix_eye(scene->camera.perspective);
     glr_math_float_matrix_eye(scene->camera.rotation);
-    // set the glfw config
-	scene->config = glr_build_glfw_config_offscreen(width, height);
-	// start glfw
-	glr_glfw_init(&scene->config);
 	// call the init
 	init(scene);
 
@@ -51,10 +55,6 @@ void return_FB_pixels(glr_scene* scene, uint8_t *pixels, int width, int height)
     // clear up our OpenGL state
 	glr_destroy_program();
 	glr_destroy_vbos_on_trianglar_mesh(scene->mesh);
-
-    // clear up our GLFW state
-    glfwDestroyWindow(scene->config.window);
-    glfwTerminate();
 }
 
 

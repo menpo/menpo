@@ -248,7 +248,7 @@ void glr_render_scene(glr_scene* scene) {
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-	glfwSwapBuffers(scene->config.window);
+	glfwSwapBuffers(scene->context->window);
 }
 
 void glr_get_framebuffer(unsigned int texture_unit_offset,

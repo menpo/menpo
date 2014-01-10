@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 #include "glrasterizer.h"
 #include "glr.h"
 
@@ -88,13 +89,25 @@ int main(int argc, char** argv)
     init_tcoords(tcoords);
     init_texture(texture, t_w * t_h);
 
-    glr_scene scene = init_scene(points, n_points, trilist, n_tris, tcoords, 
-            texture, t_w, t_h);
-
     int output_w = 128;
     int output_h = 128;
+
+    clock_t start = clock(), diff;
+    glr_glfw_context context = init_offscreen_context(128, 128);
+    diff = clock() - start;
+    int msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Time taken for context: %d ms\n", msec);
+    start = clock();
+    glr_scene scene = init_scene(points, n_points, trilist, n_tris, tcoords, 
+            texture, t_w, t_h);
+    // attach the context to the scene
+    scene.context = &context;
+
     uint8_t pixels [output_w * output_h * 4];
-    return_FB_pixels(&scene, pixels, output_w, output_h);
+    return_FB_pixels(&scene, pixels);
+    diff = clock() - start;
+    msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Time taken: %d ms\n", msec);
     return(0);
 }
 
