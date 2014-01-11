@@ -25,6 +25,9 @@ glr_glfw_context glr_build_glfw_context_onscreen(int width, int height){
 
 void _glr_glew_init() {
 	// Fire up GLEW
+    // Flag is required for use with Core Profiles (which we need for OS X)
+    // http://www.opengl.org/wiki/OpenGL_Loading_Library#GLEW
+    glewExperimental = true;
 	GLenum status = glewInit();
 	if (status != GLEW_OK) {
 	   fprintf(stderr, "GLEW Failed to start! Error: %s\n",
@@ -38,6 +41,12 @@ void _glr_glew_init() {
 	   fprintf(stdout, "  - Float (X,Y,Z) rendering not supported\n");
 
 	fprintf(stdout,"  - OpenGL Version: %s\n",glGetString(GL_VERSION));
+    // GLEW initialization sometimes sets the GL_INVALID_ENUM state even
+    // though all is fine - swallow it here (and warn the user)
+    // http://www.opengl.org/wiki/OpenGL_Loading_Library#GLEW
+    GLenum err = glGetError();
+    if (err == GL_INVALID_ENUM)
+        fprintf(stdout,"swallowing GL_INVALID_ENUM error\n");
 }
 
 void glr_glfw_init(glr_glfw_context* context)
@@ -47,6 +56,15 @@ void glr_glfw_init(glr_glfw_context* context)
     if (!glfwInit())
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_VISIBLE, !context->offscreen);
+    // ask for at least OpenGL 3.3 (might be able to
+    // relax this in future to 3.2/3.1)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // OS X will only give us such a profile if we ask for a forward
+    // compatable core proflile. Not that the forward copatibility is
+    // a noop as we ask for 3.3, but unfortunately OS X needs it.
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     context->window = glfwCreateWindow(
             context->window_width, context->window_height,
             context->title, NULL, NULL);
