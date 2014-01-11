@@ -1,9 +1,11 @@
 import abc
 import copy
+
+import numpy as np
+
 from pybug.transform.base import Transformable
 from pybug.visualize import LandmarkViewer
 from pybug.visualize.base import Viewable
-import numpy as np
 
 
 class Landmarkable(object):
@@ -81,6 +83,7 @@ class LandmarkManager(Transformable, Viewable):
             The new landmark group to set.
         """
         from pybug.shape import PointCloud
+
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
                 None, None, value,
@@ -189,6 +192,16 @@ class LandmarkManager(Transformable, Viewable):
         for group in self._landmark_groups.itervalues():
             group._view(figure_id=figure_id, new_figure=new_figure, **kwargs)
 
+    def __str__(self):
+        out_string = '{}: n_groups: {}'.format(type(self).__name__,
+                                               self.n_groups)
+        if self.has_landmarks:
+            for label, group in self:
+                out_string += '\n'
+                out_string += '({}): {}'.format(label, group.__str__())
+
+        return out_string
+
 
 class LandmarkGroup(Viewable):
     """
@@ -225,7 +238,7 @@ class LandmarkGroup(Viewable):
         if np.any(unlabelled_points):
             raise ValueError('Every point in the landmark pointcloud must be '
                              'labelled. Points {0} were unlabelled.'.format(
-                             np.nonzero(unlabelled_points)))
+                np.nonzero(unlabelled_points)))
 
         self._group_label = group_label
         self._target = target
@@ -340,7 +353,7 @@ class LandmarkGroup(Viewable):
             else:
                 raise ValueError("Cannot use None as there are "
                                  "{} labels".format(self.n_labels))
-        # Make it easier to use by accepting a single string as well as a list
+            # Make it easier to use by accepting a single string as well as a list
         if isinstance(labels, str):
             labels = [labels]
         return self._new_group_with_only_labels(labels)
@@ -386,7 +399,7 @@ class LandmarkGroup(Viewable):
         if len(set_difference) > 0:
             raise ValueError('Labels {0} do not exist in the landmark '
                              'group. Available labels are: {1}'.format(
-                             list(set_difference), self.labels))
+                list(set_difference), self.labels))
 
         masks_to_keep = [self._labels_to_masks[l] for l in labels
                          if l in self._labels_to_masks]
@@ -418,3 +431,8 @@ class LandmarkGroup(Viewable):
                                          self._labels_to_masks, self._target)
 
         return landmark_viewer.render(include_labels=include_labels, **kwargs)
+
+    def __str__(self):
+        return '{}: label: {}, n_labels: {}, n_points: {}'.format(
+            type(self).__name__, self.group_label, self.n_labels,
+            self.n_landmarks)
