@@ -96,3 +96,7 @@ class TexturedTriMesh(TriMesh):
             return super(TexturedTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,
                                                       **kwargs)
+
+    def __str__(self):
+        return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(
+            TriMesh.__str__(self), self.texture.shape, self.texture.n_channels)
