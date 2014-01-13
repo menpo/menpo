@@ -226,7 +226,8 @@ class LinearModel(object):
             A copy of ``vectors`` with all basis of the model
             projected out.
         """
-        weights = self.project_vectors(vectors)
+        weights = dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
+                        trans_a=True)
         return (vectors -
                 dgemm(alpha=1.0, a=weights.T, b=self.components.T,
                       trans_a=True, trans_b=False))
