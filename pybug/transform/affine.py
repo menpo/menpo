@@ -2,8 +2,6 @@ import abc
 import copy
 from pybug.transform.base import AlignableTransform, Composable
 from pybug.exception import DimensionalityError
-#TODO remove matlab here
-import pybug.matlab as matlab
 import numpy as np
 
 
@@ -451,10 +449,10 @@ class AffineTransform(AlignableTransform, Composable):
         homogeneous_matrix = None
         if p.shape[0] is 6:  # 2D affine
             homogeneous_matrix = np.eye(3)
-            homogeneous_matrix[:2, :] += matlab.reshape(p, [2, 3])
+            homogeneous_matrix[:2, :] += p.reshape((2, 3), order='F')
         elif p.shape[0] is 12:  # 3D affine
             homogeneous_matrix = np.eye(4)
-            homogeneous_matrix[:3, :] += matlab.reshape(p, [3, 4])
+            homogeneous_matrix[:3, :] += p.reshape((3, 4), order='F')
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
