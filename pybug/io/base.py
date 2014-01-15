@@ -63,28 +63,32 @@ def auto_import(pattern, meshes=True, images=True,
 
     Will create a mesh object that **includes** the landmarks automatically.
     """
-    mesh_objects, image_objects = [], []
+    texture_paths = []
     if meshes:
         mesh_paths = _glob_matching_extension(pattern, mesh_types)
         if max_meshes:
             mesh_paths = mesh_paths[:max_meshes]
-        mesh_objects, mesh_importers = _multi_mesh_import(mesh_paths,
-                                                          keep_importers=True)
+        mesh_generator = _mesh_import_generator(mesh_paths,
+                                                keep_importers=True)
+        for mesh, mesh_i in mesh_generator:
+            # need to keep track of texture images to not accidentally
+            # double import
+            if (images and not include_texture_images and mesh_i.texture_path
+            is not None):
+                texture_paths.append(mesh_i.texture_path)
+            yield mesh
     if images:
         image_files = _glob_matching_extension(pattern, all_image_types)
         if max_images:
             image_files = image_files[:max_images]
         if meshes and not include_texture_images:
-            texture_paths = [m.texture_path for m in mesh_importers
-                             if m.texture_path is not None]
             image_files = _images_unrelated_to_meshes(image_files,
                                                       texture_paths)
-            image_objects = _multi_image_import(image_files)
+        for image in _image_import_generator(image_files):
+            yield image
 
-    return mesh_objects + image_objects
 
-
-def _multi_image_import(image_filepaths, keep_importers=False):
+def _image_import_generator(image_filepaths, keep_importers=False):
     r"""
     Creates importers for all the image filepaths passed in,
     and then calls build on them, returning a list of
@@ -108,7 +112,7 @@ def _multi_image_import(image_filepaths, keep_importers=False):
     return _multi_import(image_filepaths, all_image_types, keep_importers)
 
 
-def _multi_mesh_import(mesh_filepaths, keep_importers=False):
+def _mesh_import_generator(mesh_filepaths, keep_importers=False):
     r"""
     Creates importers for all the mesh filepaths passed in,
     and then calls build on them, returning a list of
@@ -130,20 +134,22 @@ def _multi_mesh_import(mesh_filepaths, keep_importers=False):
         ``True`` then the importer for each mesh is returned as a tuple of
         lists.
     """
-    result = _multi_import(mesh_filepaths, mesh_types, keep_importers)
-    # meshes come back as a nested list - unpack this for convenience
-    if keep_importers:
-        meshes = result[0]
-    else:
-        meshes = result
-    meshes = [mesh for mesh_grp in meshes for mesh in mesh_grp]
-    if keep_importers:
-        return meshes, result[1]
-    else:
-        return meshes
+    return _multi_import(mesh_filepaths, mesh_types, keep_importers)
+
+    # for result in _multi_import(mesh_filepaths, mesh_types, keep_importers):
+    #     # meshes come back as a nested list - unpack this for convenience
+    #     if keep_importers:
+    #         meshes = result[0]
+    #     else:
+    #         meshes = result
+    #     meshes = [mesh for mesh in meshes]
+    #     if keep_importers:
+    #         return meshes, result[1]
+    #     else:
+    #         return meshes
 
 
-def map_filepaths_to_importers(filepaths, extensions_map):
+def map_filepath_to_importer(filepath, extensions_map):
     r"""
     Given a list of filepaths, return the appropriate importers for each path
     as mapped by the extension map.
@@ -163,12 +169,9 @@ def map_filepaths_to_importers(filepaths, extensions_map):
         The list of instantiated importers as found in the ``extensions_map``.
 
     """
-    importers = []
-    for f in sorted(filepaths):
-        ext = os.path.splitext(f)[1]
-        importer_type = extensions_map.get(ext)
-        importers.append(importer_type(f))
-    return importers
+    ext = os.path.splitext(filepath)[1]
+    importer_type = extensions_map.get(ext)
+    return importer_type(filepath)
 
 
 def find_extensions_from_basename(filepath):
@@ -259,45 +262,6 @@ def find_alternative_files(file_type, filepath, extensions_map):
                                                extensions_map, e.message))
 
 
-def get_importer(path, extensions_map):
-    r"""
-    Given the absolute path to a file, try and find an appropriate importer
-    using the extension map. If more than one importer is found, an error
-    is printed and the first importer is returned.
-
-    Parameters
-    ----------
-    path : string
-        Absolute path to a file
-    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
-
-    Returns
-    -------
-    importer : :class:`pybug.io.base.Importer`
-        The first importer that was found for the given path.
-
-    Raises
-    ------
-    ImportError
-        If no importer is found
-    """
-    try:
-        importers = map_filepaths_to_importers([path], extensions_map)
-        if len(importers) > 1:
-            print "Warning: More than one importer was found for " \
-                  "{0}. Taking the first importer by default".format(
-                  path)
-        return importers[0]
-    except Exception as e:
-        raise ImportError("Failed to find importer for {0} "
-                          "for types {1}. Reason: {2}".format(path,
-                                                              extensions_map,
-                                                              e.message))
-
-
 def _multi_import(filepaths, extensions_map, keep_importers=False):
     r"""
     Creates importers for all the filepaths passed in, and then calls build on
@@ -326,32 +290,31 @@ def _multi_import(filepaths, extensions_map, keep_importers=False):
         ``True`` then the importer for each object is returned as a tuple of
         lists.
     """
-    object_count = len(filepaths)
-    importers = map_filepaths_to_importers(filepaths, extensions_map)
-
-    objects = []
-    for i, importer in enumerate(importers):
+    for f in sorted(filepaths):
+        importer = map_filepath_to_importer(f, extensions_map)
         built_objects = importer.build()
         if isinstance(built_objects, collections.Iterable):
             for x in built_objects:
                 x.filepath = importer.filepath  # save the filepath
         else:
             built_objects.filepath = importer.filepath
-        objects.append(built_objects)
-
+        if keep_importers:
+            yield built_objects, importer
+        else:
+            yield built_objects
         # Cheeky carriage return so we print on the same line
-        sys.stdout.write('\rCreating importer for %s (%d of %d)'
-                         % (repr(importer), i + 1, object_count))
-        sys.stdout.flush()
+        # sys.stdout.write('\rCreating importer for %s (%d of %d)'
+        #                  % (repr(importer), i + 1, object_count))
+        # sys.stdout.flush()
 
     # New line to clear for the next print
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+    #sys.stdout.write('\n')
+    #sys.stdout.flush()
 
-    if keep_importers:
-        return objects, importers
-    else:
-        return objects
+    #if keep_importers:
+    #    return objects, importers
+    #else:
+    #    return objects
 
 
 def _glob_matching_extension(pattern, extensions_map):
