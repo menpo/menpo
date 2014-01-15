@@ -399,7 +399,8 @@ class MaskedNDImage(AbstractNDImage):
             warped_image.mask = warped_mask
         return warped_image
 
-    def normalize_inplace(self, mode='all', limit_to_mask=True):
+    def normalize_std_inplace(self, mode='all', limit_to_mask=True):
+
         r"""
         Normalizes this image such that it's pixel values have zero mean and
         unit variance.
@@ -418,17 +419,48 @@ class MaskedNDImage(AbstractNDImage):
             If False, the normalization is wrt all pixels, regardless of
             their masking value.
         """
+        self._normalize_inplace(np.std, mode=mode,
+                                limit_to_mask=limit_to_mask)
+
+    def normalize_norm_inplace(self, mode='all', limit_to_mask=True,
+                               **kwargs):
+
+        r"""
+        Normalizes this image such that it's pixel values have zero mean and
+        its norm equals 1.
+
+        Parameters
+        ----------
+
+        mode: {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+
+        limit_to_mask: Boolean
+            If True, the normalization is only performed wrt the masked
+            pixels.
+            If False, the normalization is wrt all pixels, regardless of
+            their masking value.
+        """
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        self._normalize_inplace(scale_func, mode=mode,
+                                limit_to_mask=limit_to_mask)
+
+    def _normalize_inplace(self, scale_func, mode='all', limit_to_mask=True):
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
         else:
             pixels = AbstractNDImage.as_vector(self, keep_channels=True)
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
-            std_dev = np.std(centered_pixels)
+            std_dev = scale_func(centered_pixels)
 
         elif mode == 'per_channel':
             centered_pixels = pixels - np.mean(pixels, axis=0)
-            std_dev = np.std(centered_pixels, axis=0)
+            std_dev = scale_func(centered_pixels, axis=0)
         else:
             raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
                              "was provided instead".format(mode))
