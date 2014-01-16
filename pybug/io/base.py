@@ -114,6 +114,11 @@ def import_meshes(pattern, max_meshes=None):
         yield asset
 
 
+def import_builtin_asset(asset_name):
+    asset_path = data_path_to(asset_name)
+    return _import(asset_path, all_mesh_and_image_types)
+
+
 def _import_glob_generator(pattern, extension_map, max_assets=None):
     filepaths = _glob_matching_extension(pattern, extension_map)
     if max_assets:
@@ -379,6 +384,8 @@ def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
     images : list of strings
         List of absolute filepaths to images that are unrelated to meshes.
     """
+    if len(mesh_texture_paths) == 0:
+        return image_paths
     image_filenames = [os.path.splitext(f)[0] for f in image_paths]
     mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
     images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
@@ -434,4 +441,5 @@ def _norm_path(filepath):
         os.path.expandvars(os.path.expanduser(filepath))))
 
 # Avoid circular imports
-from pybug.io.extensions import mesh_types, all_image_types
+from pybug.io.extensions import (mesh_types, all_image_types,
+                                 all_mesh_and_image_types)
