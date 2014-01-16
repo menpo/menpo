@@ -319,7 +319,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         slices = [slice(min_i, max_i)
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
-        self.pixels = self.pixels[slices]
+        self.pixels = self.pixels[slices].copy()
         # update all our landmarks
         lm_translation = Translation(-min_bounded)
         lm_translation.apply_inplace(self.landmarks)
