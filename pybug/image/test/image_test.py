@@ -116,39 +116,68 @@ def test_2d_crop_with_mask():
     assert(np.alltrue(cropped_im.shape))
 
 
-def test_normalize_default():
+def test_normalize_std_default():
     pixels = np.ones((120, 120, 3))
     pixels[..., 0] = 0.5
     pixels[..., 1] = 0.2345
     image = RGBImage(pixels)
-    image.normalize_inplace()
+    image.normalize_std_inplace()
     assert_allclose(np.mean(image.pixels), 0, atol=1e-10)
     assert_allclose(np.std(image.pixels), 1)
 
 
-@raises(ValueError)
-def test_normalize_no_variance_exception():
+def test_normalize_norm_default():
     pixels = np.ones((120, 120, 3))
     pixels[..., 0] = 0.5
     pixels[..., 1] = 0.2345
     image = RGBImage(pixels)
-    image.normalize_inplace(mode='per_channel')
+    image.normalize_norm_inplace()
+    assert_allclose(np.mean(image.pixels), 0, atol=1e-10)
+    assert_allclose(np.linalg.norm(image.pixels), 1)
 
 
-def test_normalize_per_channel():
+@raises(ValueError)
+def test_normalize_std_no_variance_exception():
+    pixels = np.ones((120, 120, 3))
+    pixels[..., 0] = 0.5
+    pixels[..., 1] = 0.2345
+    image = RGBImage(pixels)
+    image.normalize_std_inplace(mode='per_channel')
+
+@raises(ValueError)
+def test_normalize_norm_zero_norm_exception():
+    pixels = np.zeros((120, 120, 3))
+    image = RGBImage(pixels)
+    image.normalize_norm_inplace(mode='per_channel')
+
+
+def test_normalize_std_per_channel():
     pixels = np.random.randn(120, 120, 3)
     pixels[..., 1] *= 7
     pixels[..., 0] += -14
     pixels[..., 2] /= 130
     image = MaskedNDImage(pixels)
-    image.normalize_inplace(mode='per_channel')
+    image.normalize_std_inplace(mode='per_channel')
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
     assert_allclose(
         np.std(image.as_vector(keep_channels=True), axis=0), 1)
 
 
-def test_normalize_masked():
+def test_normalize_norm_per_channel():
+    pixels = np.random.randn(120, 120, 3)
+    pixels[..., 1] *= 7
+    pixels[..., 0] += -14
+    pixels[..., 2] /= 130
+    image = MaskedNDImage(pixels)
+    image.normalize_norm_inplace(mode='per_channel')
+    assert_allclose(
+        np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
+    assert_allclose(
+        np.linalg.norm(image.as_vector(keep_channels=True), axis=0), 1)
+
+
+def test_normalize_std_masked():
     pixels = np.random.randn(120, 120, 3)
     pixels[..., 1] *= 7
     pixels[..., 0] += -14
@@ -156,11 +185,26 @@ def test_normalize_masked():
     mask = np.zeros((120, 120))
     mask[30:50, 20:30] = 1
     image = MaskedNDImage(pixels, mask=mask)
-    image.normalize_inplace(mode='per_channel', limit_to_mask=True)
+    image.normalize_std_inplace(mode='per_channel', limit_to_mask=True)
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
     assert_allclose(
         np.std(image.as_vector(keep_channels=True), axis=0), 1)
+
+
+def test_normalize_norm_masked():
+    pixels = np.random.randn(120, 120, 3)
+    pixels[..., 1] *= 7
+    pixels[..., 0] += -14
+    pixels[..., 2] /= 130
+    mask = np.zeros((120, 120))
+    mask[30:50, 20:30] = 1
+    image = MaskedNDImage(pixels, mask=mask)
+    image.normalize_norm_inplace(mode='per_channel', limit_to_mask=True)
+    assert_allclose(
+        np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
+    assert_allclose(
+        np.linalg.norm(image.as_vector(keep_channels=True), axis=0), 1)
 
 
 def test_rescale_single_num():
