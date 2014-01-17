@@ -65,9 +65,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
         if image_data.ndim == 2:
             image_data = image_data[..., None]
         if image_data.ndim < 2:
-            raise ValueError("Abstract Images have to build from at least 2D"
-                             " image data arrays (2D + n_channels) - a {} "
-                             "dim array was provided".format(image_data.ndim))
+            raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
+                             "1 channel) or 3D+ (2D+ shape, n_channels) "
+                             " - a {}D array "
+                             "was provided".format(image_data.ndim))
         self.pixels = image_data
 
     @classmethod
@@ -351,9 +352,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         min_indices = np.floor(min_indices)
         max_indices = np.ceil(max_indices)
         if not (min_indices.size == max_indices.size == self.n_dims):
-            raise ValueError("Both min and max indices should be 1D numpy "
-                             "arrays of length n_dims ({})".format(
-                self.n_dims))
+            raise ValueError(
+                "Both min and max indices should be 1D numpy arrays of"
+                " length n_dims ({})".format(self.n_dims))
         elif not np.all(max_indices > min_indices):
             raise ValueError("All max indices must be greater that the min "
                              "indices")
