@@ -1,9 +1,7 @@
-from pybug.io import import_auto
+import pybug.io as pio
 from pybug.shape import TriMesh
-from pybug import data_path_to
 
 
-def test_assimp_obj_import():
-    meshes = import_auto(data_path_to('bunny.obj'))
-    mesh = meshes[0]
+def test_import_asset_bunny():
+    mesh = pio.import_builtin_asset('bunny.obj')
     assert(isinstance(mesh, TriMesh))
