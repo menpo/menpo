@@ -6,11 +6,40 @@ from pybug import pybug_src_dir_path
 
 
 def data_dir_path():
+    r"""A path to the Pybug built in ./data folder on this machine.
+
+    Returns
+    -------
+    string
+        The path to the local PyBug ./data folder
+
+    """
     return os.path.join(pybug_src_dir_path(), 'data')
 
 
-def data_path_to(data):
-    return os.path.join(data_dir_path(), data)
+def data_path_to(asset_filename):
+    r"""The path to a builtin asset in the ./data folder on this machine.
+
+    Parameters:
+    asset_filename : string
+        The filename (with extension) of a file builtin to PyBug. The full
+        set of allowed names is given by ls_ls_builtin_assets()
+    Returns
+    -------
+    string
+        The path to a given asset in the ./data folder
+
+    Raises
+    ------
+    ValueError
+        If the asset_filename doesn't exist in the ./data folder.
+
+    """
+    asset_path = os.path.join(data_dir_path(), asset_filename)
+    if not os.path.isfile(asset_path):
+        raise ValueError("{} is not a builtin asset: {}".format(
+            asset_filename, ls_builtin_assets()))
+    return asset_path
 
 
 def import_auto(pattern, max_meshes=None, max_images=None):
