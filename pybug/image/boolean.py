@@ -1,9 +1,9 @@
 from copy import deepcopy
 import numpy as np
-from pybug.image.base import AbstractNDImage
+from pybug.image.base import Image
 
 
-class BooleanNDImage(AbstractNDImage):
+class BooleanImage(Image):
     r"""
     A mask image made from binary pixels. The region of the image that is
     left exposed by the mask is referred to as the 'masked region'. The
@@ -21,7 +21,7 @@ class BooleanNDImage(AbstractNDImage):
     def __init__(self, mask_data):
         # Enforce boolean pixels, and add a channel dim
         mask_data = np.asarray(mask_data[..., None], dtype=np.bool)
-        super(BooleanNDImage, self).__init__(mask_data)
+        super(BooleanImage, self).__init__(mask_data)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel):
@@ -170,7 +170,7 @@ class BooleanNDImage(AbstractNDImage):
         image : :class:`BooleanNDImage`
             New BooleanImage of same shape as this image
         """
-        mask = BooleanNDImage(flattened.reshape(self.shape))
+        mask = BooleanImage(flattened.reshape(self.shape))
         mask.landmarks = self.landmarks
         return mask
 
@@ -310,7 +310,7 @@ class BooleanNDImage(AbstractNDImage):
                 "The order of the interpolation on a boolean image has to be "
                 "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
-        return AbstractNDImage.warp_to(self, template_mask, transform,
+        return Image.warp_to(self, template_mask, transform,
                                        warp_landmarks=warp_landmarks,
                                        interpolator=interpolator, **kwargs)
 
@@ -320,7 +320,7 @@ class BooleanNDImage(AbstractNDImage):
         sampled pixel values. Overridden for BooleanNDImage as we can't use
         the usual from_vector_inplace method.
         """
-        warped_image = BooleanNDImage.blank(template_mask.shape)
+        warped_image = BooleanImage.blank(template_mask.shape)
         # As we are a mask image, we have to implement the update a little
         # more manually than other image classes.
         warped_image.pixels[warped_image.mask] = sampled_pixel_values

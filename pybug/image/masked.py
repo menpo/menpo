@@ -2,12 +2,12 @@ from copy import deepcopy
 import itertools
 import numpy as np
 from scipy.ndimage import binary_erosion
-from pybug.image.base import AbstractNDImage
-from pybug.image.boolean import BooleanNDImage
+from pybug.image.base import Image
+from pybug.image.boolean import BooleanImage
 from pybug.visualize.base import ImageViewer
 
 
-class MaskedNDImage(AbstractNDImage):
+class MaskedImage(Image):
     r"""
     Represents an n-dimensional k-channel image, which has a mask.
     Images can be masked in order to identify a region of interest. All
@@ -33,10 +33,10 @@ class MaskedNDImage(AbstractNDImage):
         Mask is not the same shape as the image
     """
     def __init__(self, image_data, mask=None):
-        super(MaskedNDImage, self).__init__(image_data)
+        super(MaskedImage, self).__init__(image_data)
         if mask is not None:
-            if not isinstance(mask, BooleanNDImage):
-                mask_image = BooleanNDImage(mask)
+            if not isinstance(mask, BooleanImage):
+                mask_image = BooleanImage(mask)
             else:
                 mask_image = mask
             # have a BooleanNDImage object that we definitely own
@@ -49,7 +49,7 @@ class MaskedNDImage(AbstractNDImage):
                                                    mask.shape))
         else:
             # no mask provided - make the default.
-            self.mask = BooleanNDImage.blank(self.shape, fill=True)
+            self.mask = BooleanImage.blank(self.shape, fill=True)
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -294,7 +294,7 @@ class MaskedNDImage(AbstractNDImage):
 
         """
         # crop our image
-        super(MaskedNDImage, self).crop(
+        super(MaskedImage, self).crop(
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
@@ -381,7 +381,7 @@ class MaskedNDImage(AbstractNDImage):
         warped_image : type(self)
             A copy of this image, warped.
         """
-        warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
+        warped_image = Image.warp_to(self, template_mask, transform,
                                                warp_landmarks=warp_landmarks,
                                                interpolator=interpolator,
                                                **kwargs)
@@ -453,7 +453,7 @@ class MaskedNDImage(AbstractNDImage):
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
         else:
-            pixels = AbstractNDImage.as_vector(self, keep_channels=True)
+            pixels = Image.as_vector(self, keep_channels=True)
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
             scale_factor = scale_func(centered_pixels)
@@ -474,7 +474,7 @@ class MaskedNDImage(AbstractNDImage):
         if limit_to_mask:
             self.from_vector_inplace(normalized_pixels.flatten())
         else:
-            AbstractNDImage.from_vector_inplace(self,
+            Image.from_vector_inplace(self,
                                                 normalized_pixels.flatten())
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
@@ -521,7 +521,7 @@ class MaskedNDImage(AbstractNDImage):
         grad_per_channel = [g[..., None] for g in grad_per_channel]
         # Concatenate gradient list into an array (the new_image)
         grad_image_pixels = np.concatenate(grad_per_channel, axis=-1)
-        grad_image = MaskedNDImage(grad_image_pixels,
+        grad_image = MaskedImage(grad_image_pixels,
                                    mask=deepcopy(self.mask))
 
         if nullify_values_at_mask_boundaries:

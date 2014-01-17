@@ -32,9 +32,9 @@ class ImageBoundaryError(ValueError):
         self.snapped_max = snapped_max
 
 
-class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
+class Image(Vectorizable, Landmarkable, Viewable):
     r"""
-    An abstract representation of a n-dimensional image.
+    An n-dimensional image.
 
     Images are n-dimensional homogeneous regular arrays of data. Each
     spatially distinct location in the array is referred to as a `pixel`.
@@ -614,9 +614,9 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                 raise ValueError('Scales must be positive floats.')
 
         transform = NonUniformScale(scale)
-        from pybug.image.boolean import BooleanNDImage
+        from pybug.image.boolean import BooleanImage
         # use the scale factor to make the template mask bigger
-        template_mask = BooleanNDImage.blank(transform.apply(self.shape),
+        template_mask = BooleanImage.blank(transform.apply(self.shape),
                                              round=round)
         # due to image indexing, we can't just apply the pseduoinverse
         # transform to achieve the scaling we want though!

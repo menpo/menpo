@@ -2,52 +2,52 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from nose.tools import raises
 
-from pybug.image import BooleanNDImage, DepthImage, ShapeImage, MaskedNDImage
+from pybug.image import BooleanImage, DepthImage, ShapeImage, MaskedImage
 from pybug.image import RGBImage, IntensityImage
 
 
 def mask_image_3d_test():
     mask_shape = (120, 121, 13)
     mask_region = np.ones(mask_shape)
-    return BooleanNDImage(mask_region)
+    return BooleanImage(mask_region)
 
 
 def test_mask_creation_basics():
     mask_shape = (120, 121, 3)
     mask_region = np.ones(mask_shape)
-    mask = BooleanNDImage(mask_region)
+    mask = BooleanImage(mask_region)
     assert_equal(mask.n_channels, 1)
     assert_equal(mask.n_dims, 3)
     assert_equal(mask.shape, mask_shape)
 
 
 def test_mask_blank():
-    mask = BooleanNDImage.blank((56, 12, 3))
+    mask = BooleanImage.blank((56, 12, 3))
     assert(np.all(mask.pixels))
 
 
 def test_mask_blank_rounding_floor():
-    mask = BooleanNDImage.blank((56.1, 12.1), round='floor')
+    mask = BooleanImage.blank((56.1, 12.1), round='floor')
     assert_allclose(mask.shape, (56, 12))
 
 
 def test_mask_blank_rounding_ceil():
-    mask = BooleanNDImage.blank((56.1, 12.1), round='ceil')
+    mask = BooleanImage.blank((56.1, 12.1), round='ceil')
     assert_allclose(mask.shape, (57, 13))
 
 
 def test_mask_blank_rounding_round():
-    mask = BooleanNDImage.blank((56.1, 12.6), round='round')
+    mask = BooleanImage.blank((56.1, 12.6), round='round')
     assert_allclose(mask.shape, (56, 13))
 
 
 def test_mask_blank_false_fill():
-    mask = BooleanNDImage.blank((56, 12, 3), fill=False)
+    mask = BooleanImage.blank((56, 12, 3), fill=False)
     assert(np.all(~mask.pixels))
 
 
 def test_mask_n_true_n_false():
-    mask = BooleanNDImage.blank((64, 14), fill=False)
+    mask = BooleanImage.blank((64, 14), fill=False)
     assert_equal(mask.n_true, 0)
     assert_equal(mask.n_false, 64 * 14)
     mask.mask[0, 0] = True
@@ -57,7 +57,7 @@ def test_mask_n_true_n_false():
 
 
 def test_mask_true_indices():
-    mask = BooleanNDImage.blank((64, 14, 51), fill=False)
+    mask = BooleanImage.blank((64, 14, 51), fill=False)
     mask.mask[0, 2, 5] = True
     mask.mask[5, 13, 4] = True
     true_indices = mask.true_indices
@@ -66,7 +66,7 @@ def test_mask_true_indices():
 
 
 def test_mask_false_indices():
-    mask = BooleanNDImage.blank((64, 14, 51), fill=True)
+    mask = BooleanImage.blank((64, 14, 51), fill=True)
     mask.mask[0, 2, 5] = False
     mask.mask[5, 13, 4] = False
     false_indices = mask.false_indices
@@ -75,7 +75,7 @@ def test_mask_false_indices():
 
 
 def test_mask_true_bounding_extent():
-    mask = BooleanNDImage.blank((64, 14, 51), fill=False)
+    mask = BooleanImage.blank((64, 14, 51), fill=False)
     mask.mask[0, 13, 5] = True
     mask.mask[5, 2, 4] = True
     tbe = mask.bounds_true()
@@ -156,7 +156,7 @@ def test_normalize_std_per_channel():
     pixels[..., 1] *= 7
     pixels[..., 0] += -14
     pixels[..., 2] /= 130
-    image = MaskedNDImage(pixels)
+    image = MaskedImage(pixels)
     image.normalize_std_inplace(mode='per_channel')
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
@@ -169,7 +169,7 @@ def test_normalize_norm_per_channel():
     pixels[..., 1] *= 7
     pixels[..., 0] += -14
     pixels[..., 2] /= 130
-    image = MaskedNDImage(pixels)
+    image = MaskedImage(pixels)
     image.normalize_norm_inplace(mode='per_channel')
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
@@ -184,7 +184,7 @@ def test_normalize_std_masked():
     pixels[..., 2] /= 130
     mask = np.zeros((120, 120))
     mask[30:50, 20:30] = 1
-    image = MaskedNDImage(pixels, mask=mask)
+    image = MaskedImage(pixels, mask=mask)
     image.normalize_std_inplace(mode='per_channel', limit_to_mask=True)
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
@@ -199,7 +199,7 @@ def test_normalize_norm_masked():
     pixels[..., 2] /= 130
     mask = np.zeros((120, 120))
     mask[30:50, 20:30] = 1
-    image = MaskedNDImage(pixels, mask=mask)
+    image = MaskedImage(pixels, mask=mask)
     image.normalize_norm_inplace(mode='per_channel', limit_to_mask=True)
     assert_allclose(
         np.mean(image.as_vector(keep_channels=True), axis=0), 0, atol=1e-10)
@@ -208,31 +208,31 @@ def test_normalize_norm_masked():
 
 
 def test_rescale_single_num():
-    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image = MaskedImage(np.random.randn(120, 120, 3))
     new_image = image.rescale(0.5)
     assert_allclose(new_image.shape, (60, 60))
 
 
 def test_rescale_tuple():
-    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image = MaskedImage(np.random.randn(120, 120, 3))
     new_image = image.rescale([0.5, 2.0])
     assert_allclose(new_image.shape, (60, 240))
 
 
 @raises(ValueError)
 def test_rescale_negative():
-    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image = MaskedImage(np.random.randn(120, 120, 3))
     image.rescale([0.5, -0.5])
 
 
 @raises(ValueError)
 def test_rescale_negative_single_num():
-    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image = MaskedImage(np.random.randn(120, 120, 3))
     image.rescale(-0.5)
 
 
 def test_resize():
-    image = MaskedNDImage(np.random.randn(120, 120, 3))
+    image = MaskedImage(np.random.randn(120, 120, 3))
     new_size = (250, 250)
     new_image = image.resize(new_size)
     assert_allclose(new_image.shape, new_size)

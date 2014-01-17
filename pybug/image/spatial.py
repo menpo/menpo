@@ -1,11 +1,11 @@
 import abc
 import numpy as np
 from copy import deepcopy
-from pybug.image.masked import MaskedNDImage
+from pybug.image.masked import MaskedImage
 from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
 
 
-class AbstractSpatialImage(MaskedNDImage):
+class AbstractSpatialImage(MaskedImage):
     r"""
     A 2D image that represents spatial data in some fashion in it's channel
     data. As a result, it contains a :class:`pybug.shape.mesh.base.TriMesh`,
@@ -76,7 +76,7 @@ class AbstractSpatialImage(MaskedNDImage):
         vector : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
         """
-        MaskedNDImage.from_vector_inplace(self, vector)
+        MaskedImage.from_vector_inplace(self, vector)
         self.rebuild_mesh()
 
     @abc.abstractmethod

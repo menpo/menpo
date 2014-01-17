@@ -39,5 +39,5 @@ def test_rgbimage_update_from_vector():
 
 
 def test_maskedndimage_update_from_vector():
-    im = MaskedNDImage.blank((10, 10), n_channels=10)
+    im = MaskedImage.blank((10, 10), n_channels=10)
     update_im_from_vector(im)

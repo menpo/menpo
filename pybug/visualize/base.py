@@ -249,8 +249,8 @@ class LandmarkViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.pointcloud.n_dims == 2:
-            from pybug.image.base import AbstractNDImage
-            if isinstance(self.target, AbstractNDImage):
+            from pybug.image.base import Image
+            if isinstance(self.target, Image):
                 return LandmarkViewer2dImage(
                     self.figure_id, self.new_figure,
                     self.group_label, self.pointcloud,

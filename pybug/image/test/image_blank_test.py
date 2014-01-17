@@ -77,10 +77,10 @@ def test_blank_rgbimage_bad_channels():
 
 def test_blank_maskedndimage():
     mask = np.zeros((10, 10))
-    im = MaskedNDImage.blank((10, 10), mask=mask, n_channels=10)
+    im = MaskedImage.blank((10, 10), mask=mask, n_channels=10)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 10
     assert np.all(im.mask.pixels == 0.0)
 
-    im = MaskedNDImage.blank((10, 10), fill=2.0, n_channels=10)
+    im = MaskedImage.blank((10, 10), fill=2.0, n_channels=10)
     assert np.all(im.pixels == 2.0)
