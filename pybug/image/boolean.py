@@ -61,7 +61,7 @@ class BooleanImage(Image):
         """
         if round not in ['ceil', 'round', 'floor']:
             raise ValueError('round must be either ceil, round or floor')
-        # Ensure that the '+' operator means concatenate tuples
+            # Ensure that the '+' operator means concatenate tuples
         shape = tuple(getattr(np, round)(shape))
         if fill:
             mask = np.ones(shape, dtype=np.bool)
@@ -311,8 +311,8 @@ class BooleanImage(Image):
                 "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
         return Image.warp_to(self, template_mask, transform,
-                                       warp_landmarks=warp_landmarks,
-                                       interpolator=interpolator, **kwargs)
+                             warp_landmarks=warp_landmarks,
+                             interpolator=interpolator, **kwargs)
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""

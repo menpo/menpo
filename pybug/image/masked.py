@@ -32,6 +32,7 @@ class MaskedImage(Image):
     ValueError
         Mask is not the same shape as the image
     """
+
     def __init__(self, image_data, mask=None):
         super(MaskedImage, self).__init__(image_data)
         if mask is not None:
@@ -39,7 +40,7 @@ class MaskedImage(Image):
                 mask_image = BooleanImage(mask)
             else:
                 mask_image = mask
-            # have a BooleanNDImage object that we definitely own
+                # have a BooleanNDImage object that we definitely own
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
@@ -145,8 +146,8 @@ class MaskedImage(Image):
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
-                self._str_shape, self.n_dims, self.n_channels,
-                self.mask.proportion_true))
+            self._str_shape, self.n_dims, self.n_channels,
+            self.mask.proportion_true))
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -382,9 +383,9 @@ class MaskedImage(Image):
             A copy of this image, warped.
         """
         warped_image = Image.warp_to(self, template_mask, transform,
-                                               warp_landmarks=warp_landmarks,
-                                               interpolator=interpolator,
-                                               **kwargs)
+                                     warp_landmarks=warp_landmarks,
+                                     interpolator=interpolator,
+                                     **kwargs)
         # note that _build_warped_image for MaskedNDImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
@@ -443,6 +444,7 @@ class MaskedImage(Image):
             If False, the normalization is wrt all pixels, regardless of
             their masking value.
         """
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
@@ -475,7 +477,7 @@ class MaskedImage(Image):
             self.from_vector_inplace(normalized_pixels.flatten())
         else:
             Image.from_vector_inplace(self,
-                                                normalized_pixels.flatten())
+                                      normalized_pixels.flatten())
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""
@@ -516,13 +518,13 @@ class MaskedImage(Image):
                                     np.rollaxis(self.pixels, -1)]
         # Flatten out the separate dims
         grad_per_channel = list(itertools.chain.from_iterable(
-                                grad_per_dim_per_channel))
+            grad_per_dim_per_channel))
         # Add a channel axis for broadcasting
         grad_per_channel = [g[..., None] for g in grad_per_channel]
         # Concatenate gradient list into an array (the new_image)
         grad_image_pixels = np.concatenate(grad_per_channel, axis=-1)
         grad_image = MaskedImage(grad_image_pixels,
-                                   mask=deepcopy(self.mask))
+                                 mask=deepcopy(self.mask))
 
         if nullify_values_at_mask_boundaries:
             # Erode the edge of the mask in by one pixel
@@ -530,7 +532,7 @@ class MaskedImage(Image):
 
             # replace the eroded mask with the diff between the two
             # masks. This is only true in the region we want to nullify.
-            np.logical_and(~eroded_mask, self.mask. mask, out=eroded_mask)
+            np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
         grad_image.landmarks = self.landmarks
@@ -573,6 +575,7 @@ class MaskedImage(Image):
         pc = self.landmarks[group][label].lms
         if trilist is not None:
             from pybug.shape import TriMesh
+
             pc = TriMesh(pc.points, trilist)
 
         pwa = PiecewiseAffineTransform(pc, pc)

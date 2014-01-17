@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation, UniformScale, NonUniformScale
+from pybug.transform.affine import Translation, NonUniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 
 

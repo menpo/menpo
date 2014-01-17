@@ -1,6 +1,8 @@
 import abc
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+
 from pybug.image.masked import MaskedImage
 from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
 
@@ -45,7 +47,7 @@ class AbstractSpatialImage(MaskedImage):
         if self.n_dims != 2:
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
-                             .format(self.n_dims))
+            .format(self.n_dims))
         self._trilist = trilist
         self._tcoords = tcoords
         self._texture = texture
@@ -110,6 +112,7 @@ class AbstractSpatialImage(MaskedImage):
         """
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
         from scipy.spatial import Delaunay
+
         points = self._generate_points()
 
         if self._trilist is None:
@@ -162,6 +165,7 @@ class AbstractSpatialImage(MaskedImage):
             The viewer the image is being shown within
         """
         import scipy.stats
+
         pixels = self.pixels.copy()
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
@@ -230,6 +234,7 @@ class ShapeImage(AbstractSpatialImage):
 
         Default: None (no texture)
     """
+
     def __init__(self, image_data, mask=None, trilist=None,
                  tcoords=None, texture=None):
         super(ShapeImage, self).__init__(image_data, mask, trilist, tcoords,
@@ -345,7 +350,7 @@ class DepthImage(AbstractSpatialImage):
         if self.n_channels != 1:
             raise ValueError("Trying to build a DepthImage with {} channels "
                              "- has to have exactly 1 (for Z values)"
-                             .format(self.n_channels))
+            .format(self.n_channels))
 
     @classmethod
     def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
@@ -386,7 +391,7 @@ class DepthImage(AbstractSpatialImage):
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
         if image_data_with_channel.ndim != 3 or \
-           image_data_with_channel.shape[-1] != 1:
+                        image_data_with_channel.shape[-1] != 1:
             raise ValueError("DepthImage must be constructed with 3 "
                              "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
