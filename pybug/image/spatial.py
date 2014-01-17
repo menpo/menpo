@@ -19,7 +19,7 @@ class AbstractSpatialImage(MaskedImage):
     image_data: (M, N, ..., C) ndarray
         Array representing the spatial image pixels, with the last axis being
         channels.
-    mask: (M, N, ..., L) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N, ..., L) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -213,7 +213,7 @@ class ShapeImage(AbstractSpatialImage):
     image_data: (M, N, 3) ndarray
         Array representing the spatial image pixels, with the last axis being
         the spatial data per pixel.
-    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -262,11 +262,11 @@ class ShapeImage(AbstractSpatialImage):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Returns
         -------
@@ -321,7 +321,7 @@ class DepthImage(AbstractSpatialImage):
     image_data: (M, N) ndarray
         Array representing the spatial image pixels. There is no channel
         axis - each pixel position stores a single depth value.
-    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -370,11 +370,11 @@ class DepthImage(AbstractSpatialImage):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Returns
         -------

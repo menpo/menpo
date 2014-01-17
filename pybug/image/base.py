@@ -103,11 +103,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Notes
         -----
@@ -283,9 +283,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Notes
         -----
-        For BooleanNDImage's this is rebuilding a boolean image **itself**
+        For BooleanImage's this is rebuilding a boolean image **itself**
         from boolean values. The mask is in no way interpreted in performing
-        the operation, in contrast to MaskedNDImage, where only the masked
+        the operation, in contrast to MaskedImage, where only the masked
         region is used in from_vector{_inplace}() and as_vector().
         """
         self.pixels = vector.reshape(self.pixels.shape)
@@ -548,7 +548,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+        template_mask : :class:`pybug.image.boolean.BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
         transform : :class:`pybug.transform.base.Transform`
@@ -609,7 +609,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             **kwargs):
         r"""
         Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method. All other Image classes share
         the Image implementation.
         """
@@ -683,7 +683,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         scale_factors = (scale * shape - 1) / (shape - 1)
         inverse_transform = NonUniformScale(scale_factors).pseudoinverse
         # Note here we pass warp_mask to warp_to. In the case of
-        # AbstractNDImages that aren't MaskedNDImages this kwarg will
+        # Images that aren't MaskedImages this kwarg will
         # harmlessly fall through so we are fine.
         return self.warp_to(template_mask, inverse_transform,
                             warp_landmarks=True,
@@ -692,8 +692,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def resize(self, shape, **kwargs):
         r"""
         Return a copy of this image, resized to a particular shape.
-        All image information (landmarks, the mask the case of
-        :class:`MaskedNDImage`) is resized appropriately.
+        All image information (landmarks, the mask in the case of
+        :class:`MaskedImage`) is resized appropriately.
 
         Parameters
         ----------

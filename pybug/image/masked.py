@@ -13,19 +13,19 @@ class MaskedImage(Image):
     Images can be masked in order to identify a region of interest. All
     images implicitly have a mask that is defined as the the entire image.
     The mask is an instance of
-    :class:`BooleanNDImage`.
+    :class:`BooleanImage`.
 
     Parameters
     ----------
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanNDImage`, optional
+    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanImage`, optional
         A binary array representing the mask. Must be the same
         shape as the image. Only one mask is supported for an image (so the
         mask is applied to every channel equally).
 
-        Default: :class:`BooleanNDImage` covering the whole image
+        Default: :class:`BooleanImage` covering the whole image
 
     Raises
     ------
@@ -40,7 +40,7 @@ class MaskedImage(Image):
                 mask_image = BooleanImage(mask)
             else:
                 mask_image = mask
-                # have a BooleanNDImage object that we definitely own
+                # have a BooleanImage object that we definitely own
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
@@ -197,7 +197,7 @@ class MaskedImage(Image):
 
         Returns
         -------
-        image : :class:`MaskedNDImage`
+        image : :class:`MaskedImage`
             New image of same shape as this image and the number of
             specified channels.
         """
@@ -335,7 +335,7 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+        template_mask : :class:`pybug.image.boolean.BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
         transform : :class:`pybug.transform.base.Transform`
@@ -379,7 +379,7 @@ class MaskedImage(Image):
                                      warp_landmarks=warp_landmarks,
                                      interpolator=interpolator,
                                      **kwargs)
-        # note that _build_warped_image for MaskedNDImage classes attaches
+        # note that _build_warped_image for MaskedImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
         # mask separately and reattach.
@@ -476,7 +476,7 @@ class MaskedImage(Image):
                             **kwargs):
         r"""
         Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method.
         """
         return super(MaskedImage, self)._build_warped_image(
@@ -484,7 +484,7 @@ class MaskedImage(Image):
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
-        Returns a MaskedNDImage which is the gradient of this one. In the case
+        Returns a MaskedImage which is the gradient of this one. In the case
         of multiple channels, it returns the gradient over each axis over
         each channel as a flat list.
 
@@ -500,7 +500,7 @@ class MaskedImage(Image):
 
         Returns
         -------
-        gradient : :class:``MaskedNDImage``
+        gradient : :class:``MaskedImage``
             The gradient over each axis over each channel. Therefore, the
             gradient of a 2D, single channel image, will have length ``2``.
             The length of a 2D, 3-channel image, will have length ``6``.

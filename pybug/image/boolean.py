@@ -36,7 +36,7 @@ class BooleanImage(Image):
     @classmethod
     def blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
-        Returns a blank :class:`BooleanNDImage` of the requested shape
+        Returns a blank :class:`BooleanImage` of the requested shape
 
         Parameters
         ----------
@@ -56,7 +56,7 @@ class BooleanImage(Image):
 
         Returns
         -------
-        blank_image : :class:`BooleanNDImage`
+        blank_image : :class:`BooleanImage`
             A blank mask of the requested size
         """
         if round not in ['ceil', 'round', 'floor']:
@@ -153,11 +153,11 @@ class BooleanImage(Image):
     def from_vector(self, flattened):
         r"""
         Takes a flattened vector and returns a new
-        :class:`BooleanNDImage` formed by
+        :class:`BooleanImage` formed by
         reshaping the vector to the correct dimensions. Note that this is
         rebuilding a boolean image **itself** from boolean values. The mask
         is in no way interpreted in performing the operation, in contrast to
-        MaskedNDImage, where only the masked region is used in from_vector()
+        MaskedImage, where only the masked region is used in from_vector()
         and as_vector(). Any image landmarks are transferred in the process.
 
         Parameters
@@ -167,7 +167,7 @@ class BooleanImage(Image):
 
         Returns
         -------
-        image : :class:`BooleanNDImage`
+        image : :class:`BooleanImage`
             New BooleanImage of same shape as this image
         """
         mask = BooleanImage(flattened.reshape(self.shape))
@@ -274,11 +274,11 @@ class BooleanImage(Image):
     def warp_to(self, template_mask, transform, warp_landmarks=False,
                 interpolator='scipy', **kwargs):
         r"""
-        Warps this BooleanNDImage into a different reference space.
+        Warps this BooleanImage into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+        template_mask : :class:`pybug.image.boolean.BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
         transform : :class:`pybug.transform.base.Transform`
@@ -318,7 +318,7 @@ class BooleanImage(Image):
                             **kwargs):
         r"""
         Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method.
         """
         warped_image = BooleanImage.blank(template_mask.shape)
