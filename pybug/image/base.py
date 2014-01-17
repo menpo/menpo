@@ -244,7 +244,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         self.pixels = vector.reshape(self.pixels.shape)
 
-    def _view(self, figure_id=None, new_figure=False, channel=None, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, channels=None, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -261,7 +261,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channel=channel).render(**kwargs)
+                           pixels_to_view, channels=channels).render(**kwargs)
 
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=True):
