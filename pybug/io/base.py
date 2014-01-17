@@ -80,7 +80,8 @@ def import_auto(pattern, max_meshes=None, max_images=None):
     for mesh, mesh_i in _multi_import_generator(mesh_paths, mesh_types,
                                                 keep_importers=True):
         # need to keep track of texture images to not double import
-        texture_paths.append(mesh_i.texture_path)
+        if mesh_i.texture_path is not None:
+            texture_paths.append(mesh_i.texture_path)
         yield mesh
 
     # IMAGES
@@ -117,6 +118,10 @@ def import_meshes(pattern, max_meshes=None):
 def import_builtin_asset(asset_name):
     asset_path = data_path_to(asset_name)
     return _import(asset_path, all_mesh_and_image_types)
+
+
+def ls_builtin_assets():
+    return os.listdir(data_dir_path())
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None):
@@ -384,8 +389,6 @@ def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
     images : list of strings
         List of absolute filepaths to images that are unrelated to meshes.
     """
-    if len(mesh_texture_paths) == 0:
-        return image_paths
     image_filenames = [os.path.splitext(f)[0] for f in image_paths]
     mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
     images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
