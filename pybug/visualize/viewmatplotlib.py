@@ -56,10 +56,8 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
-        if len(self.image.shape) == 2 or self.image.shape[2] == 1:
-            im = self.image
-            im = im if len(im.shape) == 2 else im[..., 0]
-            plt.imshow(im, cmap=cm.Greys_r, **kwargs)
+        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
+            plt.imshow(self.image, cmap=cm.Greys_r, **kwargs)
         else:
             plt.imshow(self.image, **kwargs)
 
@@ -87,6 +85,8 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
         return self
 
     def _subplot_layout(self, num_subplots):
+        if num_subplots < 2:
+            return [1, 1]
         while self._is_prime(num_subplots) and num_subplots > 4:
             num_subplots += 1
         p = self._factor(num_subplots)

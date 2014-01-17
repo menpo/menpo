@@ -384,12 +384,20 @@ class ImageViewer(object):
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
-        if isinstance(channels, Iterable) is False and channels is not 'all':
-            use_subplots = False
-        if channels is None and pixels.shape[2] not in [1, 3]:
-            pixels = pixels[..., 0]
-        elif channels not in ['all', None]:
-            pixels = pixels[..., channels]
+        n_channels = pixels.shape[2]
+        if channels is None:
+            if n_channels == 1:
+                pixels = pixels[..., 0]
+                use_subplots = False
+            elif n_channels == 3:
+                use_subplots = False
+        elif channels != 'all':
+            if isinstance(channels, Iterable):
+                pixels = pixels[..., channels]
+            else:
+                pixels = pixels[..., channels]
+                use_subplots = False
+
         return pixels, use_subplots
 
     def _masked_pixels(self, pixels, mask):
