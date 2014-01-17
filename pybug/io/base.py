@@ -23,7 +23,7 @@ def data_path_to(asset_filename):
     Parameters:
     asset_filename : string
         The filename (with extension) of a file builtin to PyBug. The full
-        set of allowed names is given by ls_ls_builtin_assets()
+        set of allowed names is given by :func:`ls_builtin_assets()`
     Returns
     -------
     string
@@ -43,23 +43,23 @@ def data_path_to(asset_filename):
 
 
 def import_auto(pattern, max_meshes=None, max_images=None):
-    r"""
-    Smart data importer generator. Matches all files found on the glob pattern
-    passed in, builds the relevant importers, and calls ``build()`` on
-    them to return instantiated objects.
+    r"""Smart mixed asset import generator.
 
     Makes it's best effort to import and attach relevant related
     information such as landmarks. It searches the directory for files that
     begin with the same filename and end in a supported extension.
+    Furthermore, this method attempts to handle mixed assets (e.g. textured
+    meshes in the same folder as images) without 'double importing' anything.
 
     Note that this is a generator function. This allows for pre-processing
     of data to take place as data is imported (e.g. cropping images to
     landmarks as they are imported for memory efficiency).
 
+
     Parameters
     ----------
     pattern : String
-        The glob style pattern to search for textures and meshes.
+        The glob path pattern to search for textures and meshes.
     max_meshes: positive integer, optional
         If not ``None``, only import the first max_mesh meshes found. Else,
         import all.
@@ -70,6 +70,11 @@ def import_auto(pattern, max_meshes=None, max_images=None):
         import all.
 
         Default: ``None``
+
+    Yields
+    ------
+    asset
+        Assets found to match the glob pattern provided.
 
     Examples
     --------
@@ -90,13 +95,6 @@ def import_auto(pattern, max_meshes=None, max_images=None):
         >>> bunny = list(import_auto('bunny.obj'))
 
     Will create a mesh object that **includes** the landmarks automatically.
-
-    Import a crop of the top 100 square pixels of all images from a huge
-    collection
-
-        >>> images = []
-        >>> for im in import_auto('./massive_image_db/*'):
-        >>>    images.append(im.crop((0, 0), (100, 100)))
 
     """
     texture_paths = []
@@ -125,31 +123,161 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
 
 def import_image(filepath):
+    r"""Single image (and associated landmarks) importer.
+
+    Iff an image file is found at `filepath`, returns a :class:`pybug.image
+    .MaskedImage` representing it. Landmark files sharing the same filename
+    will be imported and attached too. If the image defines a mask,
+    this mask will be imported.
+
+    This method is valid for both traditional images and spatial image types.
+
+    Parameters
+    ----------
+    filepath : String
+        A relative or absolute filepath to an image file.
+
+    Returns
+    -------
+    :class:`pybug.image.Image`
+        An instantiated image class built from the image file.
+
+    """
     return _import(filepath, all_image_types)
 
 
 def import_mesh(filepath):
+    r"""Single mesh (and associated landmarks and texture) importer.
+
+    Iff an mesh file is found at `filepath`, returns a :class:`pybug.shape
+    .TriMesh` representing it. Landmark files sharing the same filename
+    will be imported and attached too. If texture coordinates and a suitable
+    texture are found the object returned will be a :class:`pybug.shape
+    .TexturedTriMesh`.
+
+    Parameters
+    ----------
+    filepath : String
+        A relative or absolute filepath to an image file.
+
+    Returns
+    -------
+    :class:`pybug.shape.TriMesh`
+        An instantiated trimesh (or textured trimesh) file object
+
+    """
     return _import(filepath, mesh_types)
 
 
 def import_images(pattern, max_images=None):
+    r"""Multiple image import generator.
+
+    Makes it's best effort to import and attach relevant related
+    information such as landmarks. It searches the directory for files that
+    begin with the same filename and end in a supported extension.
+
+    Note that this is a generator function. This allows for pre-processing
+    of data to take place as data is imported (e.g. cropping images to
+    landmarks as they are imported for memory efficiency).
+
+
+    Parameters
+    ----------
+    pattern : String
+        The glob path pattern to search for images.
+    max_images: positive integer, optional
+        If not ``None``, only import the first max_images found. Else,
+        import all.
+
+        Default: ``None``
+
+    Yields
+    ------
+    :class:`pybug.image.MaskedImage`
+        Images found to match the glob pattern provided.
+
+    Examples
+    --------
+    Import crops of the top 100 square pixels from a huge collection of images
+
+        >>> images = []
+        >>> for im in import_images('./massive_image_db/*'):
+        >>>    im.crop((0, 0), (100, 100))  # crop to a sensible size as we go
+        >>>    images.append(im)
+        >>>
+
+    """
     for asset in _import_glob_generator(pattern, all_image_types,
                                         max_assets=max_images):
         yield asset
 
 
 def import_meshes(pattern, max_meshes=None):
+    r"""Multiple mesh import generator.
+
+    Makes it's best effort to import and attach relevant related
+    information such as landmarks. It searches the directory for files that
+    begin with the same filename and end in a supported extension.
+
+    If texture coordinates and a suitable texture are found the object
+    returned will be a :class:`pybug.shape.TexturedTriMesh`.
+
+    Note that this is a generator function. This allows for pre-processing
+    of data to take place as data is imported (e.g. cleaning meshes
+    as they are imported for memory efficiency).
+
+    Parameters
+    ----------
+    pattern : String
+        The glob path pattern to search for textures and meshes.
+    max_meshes: positive integer, optional
+        If not ``None``, only import the first max_mesh meshes found. Else,
+        import all.
+
+        Default: ``None``
+
+    Yields
+    ------
+    :class:`pybug.shape.TriMesh` or :class:`pybug.shape.TexturedTriMesh`
+        Meshes found to match the glob pattern provided.
+
+    """
     for asset in _import_glob_generator(pattern, mesh_types,
                                         max_assets=max_meshes):
         yield asset
 
 
 def import_builtin_asset(asset_name):
+    r"""Single builtin asset (mesh or image) importer.
+
+    Imports the relevant builtin asset from the ./data directory that
+    ships with PyBug.
+
+    Parameters
+    ----------
+    asset_name : String
+        The filename of a builtin asset (see :func:`ls_ls_builtin_assets()`
+        for allowed values)
+
+    Returns
+    -------
+    asset
+        An instantiated asset (mesh, trimesh, or image)
+
+    """
     asset_path = data_path_to(asset_name)
     return _import(asset_path, all_mesh_and_image_types)
 
 
 def ls_builtin_assets():
+    r"""List all the builtin asset examples provided in PyBug.
+
+    Returns
+    -------
+    list of strings
+        Filenames of all assets in the data directory shipped with PyBug
+
+    """
     return os.listdir(data_dir_path())
 
 
