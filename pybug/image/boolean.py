@@ -314,7 +314,8 @@ class BooleanImage(Image):
                              warp_landmarks=warp_landmarks,
                              interpolator=interpolator, **kwargs)
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values):
+    def _build_warped_image(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use

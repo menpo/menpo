@@ -86,15 +86,15 @@ class MaskedImage(Image):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Notes
         -----
-        Subclasses of `MaskedNDImage` need to overwrite this method and
+        Subclasses of `MaskedImage` need to overwrite this method and
         explicitly call this superclass method:
 
             super(SubClass, cls).blank(shape,**kwargs)
@@ -103,16 +103,11 @@ class MaskedImage(Image):
 
         Returns
         -------
-        blank_image : :class:`MaskedNDImage`
+        blank_image : :class:`MaskedImage`
             A new masked image of the requested size.
         """
-        # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape))
-        if fill == 0:
-            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
-        else:
-            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, mask=mask)
+        return super(MaskedImage, cls).blank(shape, n_channels=n_channels,
+                                             fill=fill, dtype=dtype, mask=mask)
 
     @property
     def n_true_pixels(self):
@@ -477,17 +472,15 @@ class MaskedImage(Image):
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values):
+    def _build_warped_image(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use
-        the usual from_vector_inplace method. All other Image classes share
-        this implementation.
+        the usual from_vector_inplace method.
         """
-        warped_image = self.blank(template_mask.shape, mask=template_mask,
-                                  n_channels=self.n_channels)
-        warped_image.from_vector_inplace(sampled_pixel_values.flatten())
-        return warped_image
+        return super(MaskedImage, self)._build_warped_image(
+            template_mask, sampled_pixel_values, mask=template_mask)
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
@@ -581,3 +574,11 @@ class MaskedImage(Image):
             pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
+
+    # We have to redefine rescale in order to pass the warp_mask flag!
+    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
+        return super(MaskedImage, self).rescale(scale,
+                                                interpolator=interpolator,
+                                                round=round,
+                                                warp_mask=True,
+                                                **kwargs)

@@ -1,7 +1,9 @@
 import abc
+from copy import deepcopy
+
 import numpy as np
 import scipy.linalg
-from copy import deepcopy
+
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
 from pybug.transform.affine import Translation, NonUniformScale
@@ -24,6 +26,7 @@ class ImageBoundaryError(ValueError):
         The per-dimension maximum index that could be used if the crop was
         constrained to the image boundaries.
     """
+
     def __init__(self, requested_min, requested_max, snapped_min,
                  snapped_max):
         super(ImageBoundaryError, self).__init__()
@@ -68,23 +71,65 @@ class Image(Vectorizable, Landmarkable, Viewable):
         self.pixels = image_data
 
     @classmethod
-    def _init_with_channel(cls, image_data_with_channel):
+    def _init_with_channel(cls, image_data_with_channel, **kwargs):
         r"""
         Constructor that always requires the image has a
         channel on the last axis. Only used by from_vector. By default,
         just calls the constructor. Subclasses with constructors that don't
         require channel axes need to overwrite this.
         """
-        return cls(image_data_with_channel)
+        return cls(image_data_with_channel, **kwargs)
 
-    def blank(*args, **kwargs):
+    @classmethod
+    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, **kwargs):
         r"""
-        Construct a blank image of a particular shape.
+        Returns a blank image
 
-        This is an alternative constructor that all image classes have to
-        implement.
+        Parameters
+        ----------
+        shape : tuple or list
+            The shape of the image. Any floating point values are rounded up
+            to the nearest integer.
+
+        n_channels: int, optional
+            The number of channels to create the image with
+
+            Default: 1
+        fill : int, optional
+            The value to fill all pixels with
+
+            Default: 0
+        dtype: numpy datatype, optional
+            The datatype of the image.
+
+            Default: np.float
+        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+            An optional mask that can be applied to the image. Has to have a
+             shape equal to that of the image.
+
+             Default: all True :class:`BooleanNDImage`
+
+        Notes
+        -----
+        Subclasses of `Image` need to overwrite this method and
+        explicitly call this superclass method:
+
+            super(SubClass, cls).blank(shape,**kwargs)
+
+        in order to appropriately propagate the SubClass type to cls.
+
+        Returns
+        -------
+        blank_image : :class:`Image`
+            A new image of the requested size.
         """
-        raise NotImplementedError
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(np.ceil(shape))
+        if fill == 0:
+            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
+        else:
+            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
+        return cls._init_with_channel(pixels, **kwargs)
 
     @property
     def n_dims(self):
@@ -308,7 +353,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         if not (min_indices.size == max_indices.size == self.n_dims):
             raise ValueError("Both min and max indices should be 1D numpy "
                              "arrays of length n_dims ({})".format(
-                             self.n_dims))
+                self.n_dims))
         elif not np.all(max_indices > min_indices):
             raise ValueError("All max indices must be greater that the min "
                              "indices")
@@ -320,7 +365,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
-        # noinspection PyArgumentList
+            # noinspection PyArgumentList
         slices = [slice(min_i, max_i)
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
@@ -560,20 +605,23 @@ class Image(Vectorizable, Landmarkable, Viewable):
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values):
+    def _build_warped_image(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanNDImage as we can't use
         the usual from_vector_inplace method. All other Image classes share
-        the MaskedNDImage implementation.
+        the Image implementation.
         """
-        raise NotImplementedError
+        warped_image = self.blank(template_mask.shape,
+                                  n_channels=self.n_channels, **kwargs)
+        warped_image.from_vector_inplace(sampled_pixel_values.ravel())
+        return warped_image
 
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
-        All image information (landmarks, the mask the case of
-        :class:`MaskedNDImage`) is rescaled appropriately.
+        All image information (landmarks) are rescaled appropriately.
 
         Parameters
         ----------
@@ -622,7 +670,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         from pybug.image.boolean import BooleanImage
         # use the scale factor to make the template mask bigger
         template_mask = BooleanImage.blank(transform.apply(self.shape),
-                                             round=round)
+                                           round=round)
         # due to image indexing, we can't just apply the pseduoinverse
         # transform to achieve the scaling we want though!
         # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
@@ -638,7 +686,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
         # harmlessly fall through so we are fine.
         return self.warp_to(template_mask, inverse_transform,
-                            warp_landmarks=True, warp_mask=True,
+                            warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
     def resize(self, shape, **kwargs):
