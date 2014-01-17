@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+import scipy.linalg
 from copy import deepcopy
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
@@ -676,3 +677,54 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
         return self.rescale(scales, round='round', **kwargs)
+
+    def as_greyscale(self, mode='luminosity', channel=None):
+        r"""
+        Returns a greyscale version of the image. If the image does *not*
+        represent a 2D RGB image, then the 'luminosity' mode will fail.
+
+        Parameters
+        ----------
+        mode : {'average', 'luminosity', 'channel'}
+            'luminosity' - Calculates the luminance using the CCIR 601 formula
+                ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
+            'average' - intensity is an equal average of all three channels
+            'channel' - a specific channel is used
+
+            Default 'luminosity'
+
+        channel: int, optional
+            The channel to be taken. Only used if mode is 'channel'.
+
+            Default: None
+
+        Returns
+        -------
+        greyscale_image: :class:`IntensityImage`
+            A copy of this image in greyscale.
+        """
+        greyscale = deepcopy(self)
+        if mode == 'luminosity':
+            if self.n_dims != 2:
+                raise ValueError("The 'luminosity' mode only works on 2D RGB"
+                                 "images. {} dimensions found, "
+                                 "2 expected.".format(self.n_dims))
+            elif self.n_channels != 3:
+                raise ValueError("The 'luminosity' mode only works on RGB"
+                                 "images. {} channels found, "
+                                 "3 expected.".format(self.n_channels))
+
+            # Invert the transformation matrix to get more precise values
+            T = scipy.linalg.inv(np.array([[1.0, 0.956, 0.621],
+                                           [1.0, -0.272, -0.647],
+                                           [1.0, -1.106, 1.703]]))
+            coef = T[0, :]
+            greyscale.pixels = np.dot(greyscale.pixels, coef.T)
+        elif mode == 'average':
+            greyscale.pixels = np.mean(greyscale.pixels, axis=-1)
+        elif mode == 'channel':
+            if channel is None:
+                raise ValueError("For the 'channel' mode you have to provide"
+                                 " a channel index")
+            greyscale.pixels = greyscale.pixels[..., channel].copy()
+        return greyscale
