@@ -248,9 +248,7 @@ class MaskedImage(Image):
         DimensionalityError
             If Image is not 2D
         """
-        mask = None
-        if masked:
-            mask = self.mask.mask
+        mask = self.mask.mask if masked else None
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channels=channels,
