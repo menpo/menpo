@@ -41,38 +41,26 @@ def test_blank_shapeimage_bad_channels():
     DepthImage.blank((10, 10), mask=mask, n_channels=2)
 
 
-def test_blank_intensityimage():
+def test_blank_1_channel_image():
     mask = np.zeros((10, 10))
-    im = IntensityImage.blank((10, 10), mask=mask)
+    im = MaskedImage.blank((10, 10), mask=mask)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 1
     assert np.all(im.mask.pixels == 0.0)
 
-    im = IntensityImage.blank((10, 10), fill=0.5)
+    im = MaskedImage.blank((10, 10), fill=0.5)
     assert np.all(im.pixels == 0.5)
 
 
-@raises(ValueError)
-def test_blank_intensityimage_bad_channels():
-    mask = np.ones((10, 10))
-    IntensityImage.blank((10, 10), mask=mask, n_channels=2)
-
-
-def test_blank_rgbimage():
+def test_blank_3_channel_image():
     mask = np.zeros((10, 10))
-    im = RGBImage.blank((10, 10), mask=mask, n_channels=3)
+    im = MaskedImage.blank((10, 10), mask=mask, n_channels=3)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 3
     assert np.all(im.mask.pixels == 0.0)
 
-    im = RGBImage.blank((10, 10), fill=0.5, n_channels=3)
+    im = MaskedImage.blank((10, 10), fill=0.5, n_channels=3)
     assert np.all(im.pixels == 0.5)
-
-
-@raises(ValueError)
-def test_blank_rgbimage_bad_channels():
-    mask = np.ones((10, 10))
-    RGBImage.blank((10, 10), mask=mask, n_channels=2)
 
 
 def test_blank_maskedndimage():

@@ -749,7 +749,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Returns
         -------
-        greyscale_image: :class:`IntensityImage`
+        greyscale_image: :class:`MaskedImage`
             A copy of this image in greyscale.
         """
         greyscale = deepcopy(self)
@@ -768,12 +768,17 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                            [1.0, -0.272, -0.647],
                                            [1.0, -1.106, 1.703]]))
             coef = T[0, :]
-            greyscale.pixels = np.dot(greyscale.pixels, coef.T)
+            pixels = np.dot(greyscale.pixels, coef.T)
         elif mode == 'average':
-            greyscale.pixels = np.mean(greyscale.pixels, axis=-1)[..., None]
+            pixels = np.mean(greyscale.pixels, axis=-1)
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            greyscale.pixels = greyscale.pixels[..., channel].copy()[..., None]
+            pixels = greyscale.pixels[..., channel].copy()
+        else:
+            raise ValueError("Unknown mode {} - expected 'luminosity', "
+                             "'average' or 'channel'.".format(mode))
+
+        greyscale.pixels = pixels[..., None]
         return greyscale
