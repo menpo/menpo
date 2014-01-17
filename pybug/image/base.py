@@ -55,10 +55,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     def __init__(self, image_data):
         Landmarkable.__init__(self)
-        # asarray will pass through ndarrays unchanged
         image_data = np.asarray(image_data)
-        if image_data.ndim < 3:
-            raise ValueError("Abstract Images have to build from at least 3D"
+        # This is the degenerate case whereby we can just put the extra axis
+        # on ourselves
+        if image_data.ndim == 2:
+            image_data = image_data[..., None]
+        if image_data.ndim < 2:
+            raise ValueError("Abstract Images have to build from at least 2D"
                              " image data arrays (2D + n_channels) - a {} "
                              "dim array was provided".format(image_data.ndim))
         self.pixels = image_data
