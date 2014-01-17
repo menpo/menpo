@@ -42,7 +42,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     At a pixel, ``k`` distinct pieces of information can be stored. Each
     datum at a pixel is refereed to as being in a `channel`. All pixels in
     the image have the  same number of channels, and all channels have the
-    same data-type.
+    same data-type (float).
 
 
     Parameters
@@ -245,7 +245,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         self.pixels = vector.reshape(self.pixels.shape)
 
-    def _view(self, figure_id=None, new_figure=False, channels=None, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, channels=None,
+              **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.
@@ -721,10 +722,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             coef = T[0, :]
             greyscale.pixels = np.dot(greyscale.pixels, coef.T)
         elif mode == 'average':
-            greyscale.pixels = np.mean(greyscale.pixels, axis=-1)
+            greyscale.pixels = np.mean(greyscale.pixels, axis=-1)[..., None]
         elif mode == 'channel':
             if channel is None:
                 raise ValueError("For the 'channel' mode you have to provide"
                                  " a channel index")
-            greyscale.pixels = greyscale.pixels[..., channel].copy()
+            greyscale.pixels = greyscale.pixels[..., channel].copy()[..., None]
         return greyscale
