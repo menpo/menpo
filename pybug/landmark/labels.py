@@ -289,6 +289,7 @@ def ibug_68_closed_mouth(landmark_group):
     .. [1] http://www.multipie.org/
     """
     group_label = 'ibug_68_closed_mouth'
+    n_points = landmark_group.lms.n_points
 
     if landmark_group.lms.n_points != 68:
         raise LabellingError("{0} mark-up expects exactly 68 "
@@ -311,6 +312,7 @@ def ibug_68_closed_mouth(landmark_group):
     new_landmark_group['nose'] = np.arange(27, 36)
 
     return new_landmark_group
+
 
 def ibug_66_points(landmark_group):
     """
