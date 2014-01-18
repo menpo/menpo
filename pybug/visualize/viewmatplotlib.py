@@ -251,7 +251,7 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         r"""
         Visualize how points are affected by the warp in 2 dimensions.
         """
-        from matplotlib import pyplot
+        import matplotlib.pyplot as plt
 
         source = self.alignment_transform.source.points
         target = self.alignment_transform.target.points
@@ -289,16 +289,16 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
             # we have to account for the fact that axis 0 is typically
             # called 'y' and axis 1 is typically called 'x'. Flip them here
             x, y = y, x
-        pyplot.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
-                      delta[:, y])
+        plt.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
+                   delta[:, y])
         delta = target - source
         # plot how the landmarks move from source to target
-        pyplot.quiver(source[:, x], source[:, y], delta[:, x],
-                      delta[:, y], angles='xy', scale_units='xy', scale=1)
+        plt.quiver(source[:, x], source[:, y], delta[:, x],
+                   delta[:, y], angles='xy', scale_units='xy', scale=1)
         # rescale to the bounds
-        pyplot.xlim((x_min_m, x_max_m))
-        pyplot.ylim((y_min_m, y_max_m))
+        plt.xlim((x_min_m, x_max_m))
+        plt.ylim((y_min_m, y_max_m))
         if image:
             # if we are overlaying points on an image, axis0 (the 'y' axis)
             # is flipped.
-            pyplot.gca().invert_yaxis()
+            plt.gca().invert_yaxis()
