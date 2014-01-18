@@ -575,8 +575,37 @@ class MaskedImage(Image):
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 
-    # We have to redefine rescale in order to pass the warp_mask flag!
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
+        r"""A copy of this MaskedImage, rescaled by a given factor.
+
+        All image information (landmarks and mask) are rescaled appropriately.
+
+        Parameters
+        ----------
+        scale : float or tuple
+            The scale factor. If a tuple, the scale to apply to each dimension.
+            If a single float, the scale will be applied uniformly across
+            each dimension.
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+
+        Raises
+        ------
+        ValueError:
+            If less scales than dimensions are provided.
+            If any scale is less than or equal to 0.
+        """
+        # just call normal Image version, passing the warp_mask=True flag
         return super(MaskedImage, self).rescale(scale,
                                                 interpolator=interpolator,
                                                 round=round,
