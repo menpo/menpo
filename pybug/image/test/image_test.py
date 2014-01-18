@@ -22,7 +22,7 @@ def test_mask_creation_basics():
 
 def test_mask_blank():
     mask = BooleanImage.blank((56, 12, 3))
-    assert(np.all(mask.pixels))
+    assert (np.all(mask.pixels))
 
 
 def test_mask_blank_rounding_floor():
@@ -42,7 +42,7 @@ def test_mask_blank_rounding_round():
 
 def test_mask_blank_false_fill():
     mask = BooleanImage.blank((56, 12, 3), fill=False)
-    assert(np.all(~mask.pixels))
+    assert (np.all(~mask.pixels))
 
 
 def test_mask_n_true_n_false():
@@ -100,9 +100,9 @@ def test_2d_crop_without_mask():
 
     cropped_im = im.cropped_copy([10, 50], [20, 60])
 
-    assert(cropped_im.shape == (10, 10))
-    assert(cropped_im.n_channels == 3)
-    assert(np.alltrue(cropped_im.shape))
+    assert (cropped_im.shape == (10, 10))
+    assert (cropped_im.n_channels == 3)
+    assert (np.alltrue(cropped_im.shape))
 
 
 def test_2d_crop_with_mask():
@@ -111,8 +111,8 @@ def test_2d_crop_with_mask():
     mask[10:100, 20:30] = 1
     im = MaskedImage(pixels, mask=mask)
     cropped_im = im.cropped_copy([0, 0], [20, 60])
-    assert(cropped_im.shape == (20, 60))
-    assert(np.alltrue(cropped_im.shape))
+    assert (cropped_im.shape == (20, 60))
+    assert (np.alltrue(cropped_im.shape))
 
 
 def test_normalize_std_default():
@@ -142,6 +142,7 @@ def test_normalize_std_no_variance_exception():
     pixels[..., 1] = 0.2345
     image = MaskedImage(pixels)
     image.normalize_std_inplace(mode='per_channel')
+
 
 @raises(ValueError)
 def test_normalize_norm_zero_norm_exception():
@@ -240,28 +241,35 @@ def test_resize():
 def test_as_greyscale_luminosity():
     image = MaskedImage(np.ones([120, 120, 3]))
     new_image = image.as_greyscale(mode='luminosity')
-    assert(new_image.shape == image.shape)
-    assert(new_image.n_channels == 1)
+    assert (new_image.shape == image.shape)
+    assert (new_image.n_channels == 1)
 
 
 def test_as_greyscale_average():
     image = MaskedImage(np.ones([120, 120, 3]))
     new_image = image.as_greyscale(mode='average')
-    assert(new_image.shape == image.shape)
-    assert(new_image.n_channels == 1)
+    assert (new_image.shape == image.shape)
+    assert (new_image.n_channels == 1)
 
 
 @raises(ValueError)
 def test_as_greyscale_channels_no_index():
     image = MaskedImage(np.ones([120, 120, 3]))
     new_image = image.as_greyscale(mode='channel')
-    assert(new_image.shape == image.shape)
-    assert(new_image.n_channels == 1)
+    assert (new_image.shape == image.shape)
+    assert (new_image.n_channels == 1)
 
 
 def test_as_greyscale_channels():
     image = MaskedImage(np.random.randn(120, 120, 3))
     new_image = image.as_greyscale(mode='channel', channel=0)
-    assert(new_image.shape == image.shape)
-    assert(new_image.n_channels == 1)
+    assert (new_image.shape == image.shape)
+    assert (new_image.n_channels == 1)
     assert_allclose(new_image.pixels[..., 0], image.pixels[..., 0])
+
+
+def test_as_pil_image_3channels():
+    im = MaskedImage(np.random.randn(120, 120, 3))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    (im.pixels * 255).astype(np.uint8))

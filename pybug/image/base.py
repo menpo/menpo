@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 import scipy.linalg
+import PIL.Image as PILImage
 
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
@@ -763,6 +764,27 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         greyscale.pixels = pixels[..., None]
         return greyscale
+
+    def as_PILImage(self):
+        r"""
+        Return a PIL copy of the image. Scales the image by ``255`` and
+        converts to ``np.uint8``. Image must only have 1 or 3 channels and
+        be two dimensional.
+
+        Returns
+        -------
+        pil_image : ``PILImage``
+            PIL copy of image as ``np.uint8``
+
+        Raises
+        ------
+        ValueError if image is not 2D and 1 channel or 3 channels.
+        """
+        if self.n_dims != 2 or self.n_channels not in [1, 3]:
+            raise ValueError('Can only convert greyscale or RGB 2D images. '
+                             'Received a {} channel {}D image.'.format(
+                self.n_channels, self.ndims))
+        return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
 
     def __str__(self):
         return ('{} {}D Image with {} channels'.format(
