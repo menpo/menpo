@@ -347,7 +347,6 @@ class Image(Vectorizable, Landmarkable, Viewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
-            # noinspection PyArgumentList
         slices = [slice(min_i, max_i)
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
