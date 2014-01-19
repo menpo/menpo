@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 from copy import deepcopy
+from skimage.transform import pyramid_gaussian
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
 from pybug.transform.affine import Translation, UniformScale, NonUniformScale
@@ -367,7 +368,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         return cropped_image.crop(min_indices, max_indices,
                                   constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+    def crop_to_landmarks(self, group=None, label='all', boundary=0,
                           constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
@@ -410,9 +411,8 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion(self, boundary_proportion,
-                                     group=None, label=None,
-                                     minimum=True,
+    def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
+                                     label='all', minimum=True,
                                      constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
@@ -576,6 +576,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             The scale factor. If a tuple, the scale to apply to each dimension.
             If a single float, the scale will be applied uniformly across
             each dimension.
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
         round: {'ceil', 'floor', 'round'}
             Rounding function to be applied to floating point shapes.
 
@@ -633,10 +637,53 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         # AbstractNDImages that aren't MaskedNDImages this kwarg will
         # harmlessly fall through so we are fine.
         return self.warp_to(template_mask, inverse_transform,
-                            warp_landmarks=True, warp_mask=True,
+                            warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
-    def resize(self, shape, **kwargs):
+    def rescale_to_reference_landmarks(self, reference_landmarks, group=None,
+                                       label='all', interpolator='scipy',
+                                       round='ceil', **kwargs):
+        r"""
+        Return a copy of this image, rescaled so that the scale of a
+        particular group of landmarks matches the scale of the passed
+        reference landmarks.
+
+        Parameters
+        ----------
+        reference_landmarks: :class:`pybug.shape.pointcloud`
+            The reference landmarks to which the scale has to be matched.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If None
+             all landmarks in the group are used.
+
+            Default: None
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        pc = self.landmarks[group][label].lms
+        scale = UniformScale.align(pc, reference_landmarks).as_vector()
+        return self.rescale(scale, interpolator=interpolator,
+                            round=round, **kwargs)
+
+    def resize(self, shape, interpolator='scipy', **kwargs):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, the mask the case of
@@ -646,6 +693,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         ----------
         shape : tuple
             The new shape to resize to.
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
@@ -672,4 +723,66 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, round='round', **kwargs)
+        return self.rescale(scales, interpolator=interpolator,
+                            round='round', **kwargs)
+
+    def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None,
+                         order=1, mode='reflect', cval=0):
+        r"""
+        Return the gaussian pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+        downscale : float, optional
+            Downscale factor.
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+        order : int, optional
+            Order of splines used in interpolation of downsampling. See
+            `scipy.ndimage.map_coordinates` for detail.
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        max_layer = n_levels - 1
+        pyramid = pyramid_gaussian(self.pixels, max_layer=max_layer,
+                                   downscale=downscale, sigma=sigma,
+                                   order=order, mode=mode, cval=cval)
+
+        return self._gaussian_pyramid(pyramid, downscale)
+
+    def _gaussian_pyramid(self, pyramid, downscale):
+        # TODO: This if should disappear once the image package is refactored
+        from pybug.image import IntensityImage, DepthImage
+        if self.__class__ is IntensityImage or self.__class__ is DepthImage:
+            for j, image_data in enumerate(pyramid):
+                image = self.__class__(image_data.squeeze(axis=(2,)))
+                # rescale and reassign existent landmark
+                image.landmarks = self.landmarks
+                transform = UniformScale(downscale ** j, self.n_dims)
+                transform.pseudoinverse.apply_inplace(image.landmarks)
+                yield image
+        else:
+            for j, image_data in enumerate(pyramid):
+                image = self.__class__(image_data)
+                # rescale and reassign existent landmark
+                image.landmarks = self.landmarks
+                transform = UniformScale(downscale ** j, self.n_dims)
+                transform.pseudoinverse.apply_inplace(image.landmarks)
+                yield image
+

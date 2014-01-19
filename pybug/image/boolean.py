@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+from skimage.transform import pyramid_gaussian
 from pybug.image.base import AbstractNDImage
 
 
@@ -310,9 +311,15 @@ class BooleanNDImage(AbstractNDImage):
                 "The order of the interpolation on a boolean image has to be "
                 "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
+
+        # TODO: Revise this, there might be better options
+        relevant_args = {k: v if k is not 'warp_mask' else ''
+                         for (k, v) in kwargs.iteritems()}
+
         return AbstractNDImage.warp_to(self, template_mask, transform,
                                        warp_landmarks=warp_landmarks,
-                                       interpolator=interpolator, **kwargs)
+                                       interpolator=interpolator,
+                                       **relevant_args)
 
     def _build_warped_image(self, template_mask, sampled_pixel_values):
         r"""

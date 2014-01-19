@@ -1,3 +1,4 @@
+from __future__ import division
 from copy import deepcopy
 import itertools
 import numpy as np
@@ -537,7 +538,7 @@ class MaskedNDImage(AbstractNDImage):
         return grad_image
 
     # TODO maybe we should be stricter about the trilist here, feels flakey
-    def constrain_mask_to_landmarks(self, group=None, label=None,
+    def constrain_mask_to_landmarks(self, group=None, label='all',
                                     trilist=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
@@ -550,13 +551,11 @@ class MaskedNDImage(AbstractNDImage):
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
-
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: None
-
         trilist: (t, 3) ndarray, Optional
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
@@ -580,3 +579,85 @@ class MaskedNDImage(AbstractNDImage):
             pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
+
+    def build_mask_around_landmarks(self, patch_size, group=None,
+                                    label='all'):
+        r"""
+        Restricts this image's mask to be equal to the convex hull
+        around the landmarks chosen.
+
+        Parameters
+        ----------
+        patch_size: tuple
+            The size of the patch. Any floating point values are rounded up
+            to the nearest integer.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: None
+        """
+        pc = self.landmarks[group][label].lms
+        patch_size = np.ceil(patch_size)
+        patch_half_size = patch_size / 2
+        mask = np.zeros(self.shape)
+        max_x = self.shape[0] - 1
+        max_y = self.shape[1] - 1
+
+        for i, point in enumerate(pc.points):
+            start = np.floor(point - patch_half_size).astype(int)
+            finish = np.floor(point + patch_half_size).astype(int)
+            x, y = np.mgrid[start[0]:finish[0], start[1]:finish[1]]
+            # deal with boundary cases
+            x[x > max_x] = max_x
+            y[y > max_y] = max_y
+            x[x < 0] = 0
+            y[y < 0] = 0
+            mask[x.flatten(), y.flatten()] = True
+
+        self.mask = BooleanNDImage(mask)
+
+    def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None, order=1,
+                         mode='reflect', cval=0, tight_mask=True):
+        r"""
+        Return the gaussian pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+        downscale : float, optional
+            Downscale factor.
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+        order : int, optional
+            Order of splines used in interpolation of downsampling. See
+            `scipy.ndimage.map_coordinates` for detail.
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        image_pyramid = AbstractNDImage.gaussian_pyramid(
+            self, n_levels=n_levels, downscale=downscale, sigma=sigma,
+            order=order, mode=mode, cval=cval)
+        for j, image in enumerate(image_pyramid):
+            image.mask = self.mask.rescale(1/downscale**j)
+            yield image
