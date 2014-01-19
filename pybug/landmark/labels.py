@@ -48,9 +48,11 @@ def imm_58_points(landmark_group):
                              "points. However, the given landmark group only "
                              "has {1} points".format(group_label, n_points))
 
-    new_landmark_group = LandmarkGroup(landmark_group._target, group_label,
-                                       copy.deepcopy(landmark_group.lms),
-                                       {})
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        copy.deepcopy(landmark_group.lms),
+        {'all': np.ones(n_points, dtype=np.bool)})
+
     new_landmark_group['chin'] = np.arange(13)
     new_landmark_group['leye'] = np.arange(13, 21)
     new_landmark_group['reye'] = np.arange(21, 29)
@@ -122,7 +124,7 @@ def ibug_68_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(48, 68)
     new_landmark_group['nose'] = np.arange(27, 36)
 
-    return new_landmark_group.without_labels('all')
+    return new_landmark_group
 
 
 def ibug_68_contour(landmark_group):
@@ -166,16 +168,15 @@ def ibug_68_contour(landmark_group):
                              "points. However, the given landmark group only "
                              "has {1} points".format(group_label, n_points))
 
+    new_landmarks = copy.deepcopy(landmark_group.lms)
+    ind = np.hstack((np.arange(17), np.arange(16, 21),
+                     np.arange(21, 26), np.arange(1)))
+    new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        copy.deepcopy(landmark_group.lms),
-        {'all': np.ones(n_points, dtype=np.bool)})
-    new_landmark_group['contour'] = np.concatenate([np.arange(17),
-                                                    np.arange(16, 21),
-                                                    np.arange(21, 26),
-                                                    np.arange(1)])
+        landmark_group._target, group_label, new_landmarks,
+        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
 
-    return new_landmark_group.without_labels('all')
+    return new_landmark_group
 
 
 def ibug_68_trimesh(landmark_group):
@@ -249,7 +250,7 @@ def ibug_68_trimesh(landmark_group):
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
         TriMesh(copy.deepcopy(landmark_group.lms.points), tri_list),
-        {'tri': np.ones(n_points, dtype=np.bool)})
+        {'all': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
 
