@@ -117,5 +117,39 @@ cdef class OpenGLRasterizer:
         return_FB_pixels(&self.scene, &pixels[0, 0, 0])
         return pixels
 
+    cpdef get_model_matrix(self):
+        return _copy_float_mat4(self.scene.modelMatrix)
+
+    cpdef get_view_matrix(self):
+        return _copy_float_mat4(self.scene.camera.viewMatrix)
+
+    cpdef get_projection_matrix(self):
+        return _copy_float_mat4(self.scene.camera.projectionMatrix)
+
+    def set_model_matrix(self,
+                           np.ndarray[float, ndim=2, mode="c"] m not None):
+        return _set_float_mat4(m, self.scene.modelMatrix)
+
+    def set_view_matrix(self,
+                          np.ndarray[float, ndim=2, mode="c"] m not None):
+        return _set_float_mat4(m, self.scene.camera.viewMatrix)
+
+    def set_projection_matrix(self,
+                    np.ndarray[float, ndim=2, mode="c"] m not None):
+        return _set_float_mat4(m, self.scene.camera.projectionMatrix)
+
     def __del__(self):
         glr_glfw_terminate(&self.context)
+
+cdef _copy_float_mat4(float* src):
+    cdef np.ndarray[float, ndim=2, mode='c'] tgt = np.empty((4, 4),
+                                                            dtype=np.float32)
+    for i in range(4):
+        for j in range(4):
+            tgt[i, j] = src[i * 4 + j]
+    return tgt
+
+cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
+    for i in range(4):
+        for j in range(4):
+            tgt[i * 4 + j] = src[i, j]
