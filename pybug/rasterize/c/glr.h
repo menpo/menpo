@@ -144,7 +144,7 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 /*
  * Return an orthographic glr_camera at the origin
  */
-glr_camera glr_build_othographic_camera_at_origin();
+glr_camera glr_build_othographic_camera_at_origin(void);
 
 
 /*

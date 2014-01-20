@@ -12,4 +12,3 @@ void main() {
    output_color = texture(texture_image, tcoord).rgb;
    output_linear_mapping = linear_mapping_coord;
 }
-

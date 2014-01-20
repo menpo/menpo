@@ -23,7 +23,7 @@ glr_glfw_context glr_build_glfw_context_onscreen(int width, int height){
     return context;
 }
 
-void _glr_glew_init() {
+void _glr_glew_init(void) {
 	// Fire up GLEW
     // Flag is required for use with Core Profiles (which we need for OS X)
     // http://www.opengl.org/wiki/OpenGL_Loading_Library#GLEW

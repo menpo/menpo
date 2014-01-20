@@ -20,6 +20,7 @@ glr_scene init_scene(double* points, size_t n_points, unsigned int* trilist,
 {
 	printf("init_scene(...)\n");
 	glr_scene scene;
+	glr_math_float_matrix_eye(scene.modelMatrix);
 	scene.mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
 											 tcoords, texture, texture_width,
 											 texture_height);

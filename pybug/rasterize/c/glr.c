@@ -130,7 +130,7 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 	return textured_mesh;
 }
 
-glr_camera glr_build_othographic_camera_at_origin()
+glr_camera glr_build_othographic_camera_at_origin(void)
 {
 	glr_camera camera;
 	// set the camera's matrices to I
@@ -322,4 +322,13 @@ void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x,
 	matrix[2]  =  sin(angle_y);
 	matrix[8]  = -sin(angle_y);
 	matrix[10] =  cos(angle_y);
+}
+
+void glr_print_matrix(float* matrix) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            printf("%f\t", matrix[i *4 + j]);
+        }
+        printf("\n");
+    }
 }
