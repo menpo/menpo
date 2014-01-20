@@ -1,9 +1,8 @@
 from __future__ import division
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from pybug.shape import PointCloud, TriMesh
-from pybug.landmark.labels import labeller
-from pybug.transform .affine import Translation
+from pybug.transform .affine import Translation, SimilarityTransform
 from pybug.image import MaskedNDImage
 
 
@@ -94,7 +93,47 @@ def _build_reference_frame(landmarks, boundary=3, group='source'):
     return reference_frame
 
 
-def compute_features(image, features_dic):
+# TODO: Should this be a method on SimilarityTransform? AlignableTransforms?
+def noisy_align(source, target, noise_std=0.05, rotation=False):
+    r"""
+    Constructs and perturbs the optimal similarity transform between source
+    to the target by adding white noise to its parameters.
+
+    Parameters
+    ----------
+    source: :class:`pybug.shape.PointCloud`
+        The source pointcloud instance used in the alignment
+
+    target: :class:`pybug.shape.PointCloud`
+        The target pointcloud instance used in the alignment
+
+    noise_std: float
+        The standard deviation of the white noise
+
+        Default: 0.05
+    rotation: boolean
+        If False the second parameter of the SimilarityTransform,
+        which captures captures inplane rotations, is set to 0.
+
+        Default:False
+
+    Returns
+    -------
+    noisy_transform : :class: `pybug.transform.SimilarityTransform`
+        The noisy Similarity Transform
+    """
+    transform = SimilarityTransform.align(source, target)
+    parameters = transform.as_vector()
+    if not rotation:
+        parameters[1] = 0
+    parameter_range = np.hstack((parameters[:2], target.range()))
+    noise = (parameter_range * noise_std *
+             np.random.randn(transform.n_parameters))
+    parameters += noise
+    return SimilarityTransform.from_vector(parameters)
+
+
+def compute_features(image, features):
     r"""
     Compute feature images.
 
@@ -102,32 +141,32 @@ def compute_features(image, features_dic):
     ----------
     image: :class:`pybug.image.MaskedNDImage`
         The original image from which the features will be computed
-    features_dic: dic
+    features_dic: dictionary
         ['type'] : string
             String specifying the type of features to compute
         ['options']: **kwargs:
             Passed through to the particular feature method being used. See
-            `pybug/image/MaskedNDImage` for details on feature options.
+            `pybug.image.MaskedNDImage` for details on feature options.
 
     Returns
     -------
     feature_image: :class:`pybug.image.MaskedNDImage`
         The resulting feature image.
     """
-    if features_dic is not None:
-        if features_dic['type'] is 'normalize_std':
-            image.normalize_std_inplace(**features_dic['options'])
-        elif features_dic['type'] is 'normalize_norm':
-            image.normalize_norm_inplace(**features_dic['options'])
-        elif features_dic['type'] is 'euler':
+    if features is not None:
+        if features[0] is 'normalize_std':
+            image.normalize_std_inplace(**features[1])
+        elif features[0] is 'normalize_norm':
+            image.normalize_norm_inplace(**features[1])
+        elif features[0] is 'euler':
             raise NotImplementedError("Euler features not implemented yet")
-        elif features_dic['type'] is 'igo':
+        elif features[0] is 'igo':
             raise NotImplementedError("IGO features not implemented yet")
-        elif features_dic['type'] is 'es':
+        elif features[0] is 'es':
             raise NotImplementedError("ES features not implemented yet")
-        elif features_dic['type'] is 'hog':
+        elif features[0] is 'hog':
             raise NotImplementedError("HoG features not implemented yet")
-        elif features_dic['type'] is 'sift':
+        elif features[0] is 'sift':
             raise NotImplementedError("Sift features not implemented yet")
 
     # TODO: These should disappear with the new image refactoring
@@ -174,8 +213,18 @@ def compute_error_me17(fitted, ground_truth, leye, reye):
             compute_error_p2p(leye, reye))
 
 
-def plot_ced(fitted_shapes, original_shape, error_type='face_size',
-             label=None):
+def cumulative_error_distribution(fitted_shapes, original_shape,
+                                  error_type='face_size', label=None):
+    r"""
+    Plots Cumulative Error Distribution (CED)
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
 
     if error_type is 'rms':
         errors = [compute_error_rms(f.points, o.points)
@@ -215,6 +264,61 @@ def plot_ced(fitted_shapes, original_shape, error_type='face_size',
         error_median, error_mean, error_std)
 
     plt.plot(error_axis, proportion_axis, label=text)
+
+    plt.title('Cumulative Error Distribution')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+    return errors, error_median, error_mean, error_std
+
+
+def error_histogram(fitted_shapes, original_shape, error_type='face_size',
+                    label=None):
+    r"""
+    Plots Error Histogram (EH)
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    if error_type is 'rms':
+        errors = [compute_error_rms(f.points, o.points)
+                  for f, o in zip(fitted_shapes, original_shape)]
+        stop = 0.1
+        step = 0.001
+    elif error_type is 'p2p':
+        errors = [compute_error_p2p(f.points, o.points)
+                  for f, o in zip(fitted_shapes, original_shape)]
+        stop = 0.1
+        step = 0.001
+    elif error_type is 'face_size':
+        errors = [compute_error_facesize(f.points, o.points)
+                  for f, o in zip(fitted_shapes, original_shape)]
+        stop = 0.1
+        step = 0.001
+
+        plt.xlabel('point-to-point error normalized by face size')
+        plt.ylabel('proportion of images')
+
+    elif error_type is 'me17':
+        errors = [compute_error_me17(f.points, o.points)
+                  for f, o in zip(fitted_shapes, original_shape)]
+        stop = 0.1
+        step = 0.001
+
+    error_median = np.median(errors)
+    error_mean = np.mean(errors)
+    error_std = np.std(errors)
+
+    text = label + '  median = {}  mean = {}  std = {}'.format(
+        error_median, error_mean, error_std)
+
+    plt.hist(errors, 50, histtype='step', label=text)
 
     plt.title('Cumulative Error Distribution')
     plt.grid(True)

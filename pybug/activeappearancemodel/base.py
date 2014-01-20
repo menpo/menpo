@@ -1,82 +1,74 @@
 from __future__ import division
 import numpy as np
-from copy import deepcopy
 import matplotlib.pyplot as plt
 from pybug.shape import TriMesh
 from pybug.transform .affine import Scale, SimilarityTransform, UniformScale, \
     AffineTransform, Translation
 from pybug.groupalign import GeneralizedProcrustesAnalysis
-from pybug.transform.modeldriven import OrthoMDTransform
+from pybug.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
 from pybug.transform.tps import TPS
 from pybug.model import PCAModel
 from pybug.lucaskanade.residual import LSIntensity
 from pybug.lucaskanade.appearance import AlternatingInverseCompositional
-from pybug.activeappearancemodel.functions import mean_pointcloud,\
-    build_reference_frame, build_patch_reference_frame, compute_features,\
-    compute_error_facesize, compute_error_me17, compute_error_p2p, \
-    compute_error_rms
+from pybug.activeappearancemodel.functions import \
+    (mean_pointcloud, build_reference_frame, build_patch_reference_frame,
+     noisy_align, compute_features, compute_error_facesize,
+     compute_error_me17, compute_error_p2p, compute_error_rms)
 
 
 class AAM(object):
     r"""
-    An Active Appearance Model (AAM)
-
+    Active Appearance Model (AAM) class.
 
     Parameters
     -----------
-    shape_model:
-    reference_frame:
-    appearance_model_pyramid:
+    shape_model_pyramid: list of :class:`pybug.model.PCA`
+        A list containing the shape models of the AAM.
+    appearance_model_pyramid: list of :class:`pybug.model.PCA`
+        A list containing the appearance models of the AAM.
+    reference_shape: :class:`pybug.shape.PointCloud`
+        The reference shape used to build the AAM.
+    features: (str, dictionary)
+        Tuple specifying the type of features used to build the AAM.
+        The first element of the tuple is a string specifying the type of
+        features. The second element is a dictionary specifying the
+        possible feature options and which is passed through to the
+        particular feature method being used. See `pybug.image
+        .MaskedNDImage` for details on feature options.
+    downscale: float
+        The downscale factor used to create the different pyramidal levels
+        of the AAM.
+    transform_cls: :class:`pybug.transform.PureAlignmentTransform`
+        The :class:`pybug.transform.PureAlignmentTransform` used to warp the
+        images from which the AAM was constructed.
+    interpolator:'scipy' or 'cinterp' or func
+        The interpolator used in the previous warps.
+    patch_size: tuple or None
+        If None, the AAM does not use a Patch-Based representation for its
+        appearance models. If tuple, it specifies the size of the patches
+        used to build the AAM.
     """
 
     def __init__(self, shape_model_pyramid, appearance_model_pyramid,
-                 reference_shape, features_dic, downscale, transform_cls,
-                 interpolator, patches, patch_size=(16, 16)):
+                 reference_shape, features, downscale, transform_cls,
+                 interpolator, patch_size):
         self.shape_model_pyramid = shape_model_pyramid
         self.appearance_model_pyramid = appearance_model_pyramid
         self.reference_shape = reference_shape
-        self.features_dic = features_dic
+        self.features = features
         self.downscale = downscale
         self.transform_cls = transform_cls
         self.interpolator = interpolator
-        self.patches = patches
-        if patches:
-            self.patch_size = patch_size
+        self.patch_size = patch_size
 
     @property
     def n_levels(self):
         return len(self.appearance_model_pyramid)
 
-    def _prepare_image(self, image, group, label):
-        r"""
-        Prepare an image to be be fitted by the AAM. The image is first
-        rescaled wrt the reference landmarks, then a gaussian
-        pyramid is computed and finally features are extracted
-        from each pyramid element.
-
-        Parameters
-        -----------
-        image: :class:`pybug.image.IntensityImage`
-            The image to be fitted.
-
-        Returns
-        -------
-        image_pyramid: :class:`pybug.image.IntensityImage`
-            The image representation used by the fitting algorithm.
-        """
-        image = image.rescale_to_reference_landmarks(self.reference_shape,
-                                                     group=group, label=label)
-        pyramid = image.gaussian_pyramid(n_levels=self.n_levels)
-        image_pyramid = [compute_features(p, self.features_dic)
-                         for p in pyramid]
-        image_pyramid.reverse()
-        return image_pyramid
-
     def instance(self, shape_weights=None, appearance_weights=None, level=-1):
         r"""
-        Create a novel AAM instance using the given shape and appearance
-        weights.
+        Creates a novel AAM instance.
 
         Parameters
         -----------
@@ -91,14 +83,13 @@ class AAM(object):
 
             Default: None
         level: int, optional
-            Index representing the appearance model to be used to create
-            the instance.
+            Index representing the pyramidal level to be used.
 
             Default: -1
 
         Returns
         -------
-        cropped_image: :class:`pybug.image.masked.MaskedNDImage`
+        image: :class:`pybug.image.masked.MaskedNDImage`
             The novel AAM instance.
         """
         sm = self.shape_model_pyramid[level]
@@ -121,7 +112,7 @@ class AAM(object):
         appearance_instance = am.instance(appearance_weights)
 
         # build reference frame
-        if self.patches:
+        if self.patch_size:
             reference_frame = build_patch_reference_frame(
                 shape_instance, patch_size=self.patch_size)
         else:
@@ -138,56 +129,106 @@ class AAM(object):
         return appearance_instance.warp_to(reference_frame.mask, transform,
                                            self.interpolator)
 
-    def initialize_lk(self, md_transform_cls=OrthoMDTransform,
-                      global_transform_cls=SimilarityTransform,
-                      lk_algorithm=AlternatingInverseCompositional,
-                      residual_dic={'type': LSIntensity, 'options': None},
+    def initialize_lk(self, lk_algorithm=AlternatingInverseCompositional,
+                      residual=(LSIntensity,),
+                      transform_cls=(OrthoMDTransform, SimilarityTransform),
                       n_shape=None, n_appearance=None):
         r"""
-        Initializes the Lucas-Kanade fitting procedure.
+        Initializes Lucas-Kanade fitting procedure.
 
         Parameters
         -----------
-        md_transform_cls: :class:`pybug.transform.base.modeldriven`
+        lk_algorithm: :class:`pybug.lucakanade.appearance`, optional
+            The :class:`pybug.lucakanade.appearance` algorithm to be used.
 
-            Default: OrthoMDTransform
-        transform_cls: :class:`pybug.transform.base.PureAlignmentTransform`
-
-            Default: PieceWiseAffineTransform
-        global_transform_cls: :class:`pybug.transform.base.affine`
-
-            Default: SimilarityTransform
-        lk_algorithm: :class:`pybug.lucakanade.appearance`
-
-            Default: PieceWiseAffineTransform
-        residual: :class:`pybug.lucakanade.residual`
+            Default: AlternatingInverseCompositional
+        residual: :class:`pybug.lucakanade.residual`, optional
+            The :class:`pybug.lucakanade.residual` residual to be used
 
             Default: 'LSIntensity'
+        md_transform_cls: tuple, optional
+                          (:class:`pybug.transform.ModelDrivenTransform`,
+                           :class:`pybug.transform.Affine`)
+            The first element of the tuple is the
+            :class:`pybug.transform.ModelDrivenTransform` to be used by the
+            LK objects. In case this first element is one of the Global
+            version of the ModelDrivenTransform the second element is the
+            :class:`pybug.transform.Affine` to be used as a global transform.
+
+            Default: (OrthoMDTransform, SimilarityTransform)
+        n_shape: int or list of ints, optional
+            The number of shape components to be used at each pyramidal
+            level.
+        n_appearance: int or list of ints, optional
+            The number of appearance components to be used at each pyramidal
+            level.
         """
+        if len(n_shape) is not 1:
+            if len(n_shape) is not self.n_levels:
+                ValueError('n_shape must contain either 1 '
+                           'or {} elements'.format(self.n_levels))
+        if len(n_appearance) is not 1:
+            if len(n_appearance) is not self.n_levels:
+                ValueError('n_appearance must contain either 1 '
+                           'or {} elements'.format(self.n_levels))
+
+        if len(n_shape) is 1 and self.n_levels > 1:
+            n_shape = [n_shape for _ in range(self.n_levels)]
+        if len(n_appearance) is 1 and self.n_levels > 1:
+            n_appearance = [n_appearance for _ in range(self.n_levels)]
+
         self._lk_pyramid = []
 
-        for am, sm, n_s, n_a in zip(self.appearance_model_pyramid,
-                                    self.shape_model_pyramid,
-                                    n_shape, n_appearance):
-
-            global_transform = global_transform_cls(np.eye(3, 3))
-            source = am.mean.landmarks['source'].lms
+        for j, (am, sm) in enumerate(zip(self.appearance_model_pyramid,
+                                         self.shape_model_pyramid)):
 
             if n_shape is not None:
-                sm.n_active_components = n_s
-            md_transform = md_transform_cls(
-                sm, self.transform_cls, global_transform, source=source)
-
+                sm.n_active_components = n_shape[j]
             if n_appearance is not None:
-                am.n_active_components = n_a
+                am.n_active_components = n_appearance[j]
 
-            if residual_dic['options'] is None:
-                residual = residual_dic['type']()
+            if transform_cls[0] is not ModelDrivenTransform:
+                # ToDo: Do we need a blank (identity) method for Transforms?
+                global_transform = transform_cls[1](np.eye(3, 3))
+                md_transform = transform_cls[0](
+                    sm, self.transform_cls, global_transform,
+                    source=am.mean.landmarks['source'].lms)
             else:
-                residual = residual_dic['type'](**residual_dic['options'])
+                md_transform = transform_cls[0](
+                    sm, self.transform_cls,
+                    source=am.mean.landmarks['source'].lms)
 
-            self._lk_pyramid.append(lk_algorithm(am, residual,
-                                                 md_transform))
+            if len(residual) == 1:
+                res = residual[0]()
+            else:
+                res = residual[0](residual[1])
+
+            self._lk_pyramid.append(lk_algorithm(am, res, md_transform))
+
+    def _prepare_image(self, image, group, label):
+        r"""
+        Prepares an image to be be fitted by the AAM. The image is first
+        rescaled wrt the reference landmarks, then a gaussian
+        pyramid is computed and, finally, features are extracted
+        from each pyramidal element.
+
+        Parameters
+        -----------
+        image: :class:`pybug.image.IntensityImage`
+            The image to be fitted.
+
+        Returns
+        -------
+        image_pyramid: list of :class:`pybug.image.MaskedNDImage`
+            The image representation used by the fitting algorithm.
+        """
+        image = image.rescale_to_reference_landmarks(self.reference_shape,
+                                                     group=group, label=label)
+        pyramid = image.gaussian_pyramid(n_levels=self.n_levels)
+        image_pyramid = [compute_features(p, self.features)
+                         for p in pyramid]
+        image_pyramid.reverse()
+        return image_pyramid
 
     def _lk_fit(self, image_pyramid, initial_landmarks, max_iters=20):
         r"""
@@ -195,51 +236,81 @@ class AAM(object):
 
         Parameters
         -----------
-        image_pyramid:
+        image_pyramid: :class:`pybug.image.MaskedNDImage` or list
+            The image representation used by the fitting algorithm.
         initial_landmarks: :class:`pybug.shape.PointCloud`
+            The initial position of the landmarks from which the fitting
+            procedure is going to start from.
         max_iters: int, optional
-            The number of iterations per pyramidal level
+            The maximum number of iterations per pyramidal level
 
             Default: 20
 
         Returns
         -------
-        md_tranform_pyramid:
+        optimal_transforms: list of
+                             :class:`pybug.transform.ModelDrivenTransform`
             A list containing the optimal transform per pyramidal level.
         """
 
         target = initial_landmarks
-        md_transform_pyramid = []
+        optimal_transforms = []
 
         for i, lk in zip(image_pyramid, self._lk_pyramid):
             lk.transform.target = target
             md_transform = lk.align(i, lk.transform.as_vector(),
                                     max_iters=max_iters)
-            md_transform_pyramid.append(md_transform)
+            optimal_transforms.append(md_transform)
             target = Scale(self.downscale, n_dims=md_transform.n_dims).apply(
                 md_transform.target)
 
-        return md_transform_pyramid
+        return optimal_transforms
 
     def lk_fit_landmarked_image(self, image, group=None, label='all',
-                                runs=10, noise_std=0.05, max_iters=20,
-                                verbose=True, view=False):
+                                runs=10, noise_std=0.05, rotation=False,
+                                max_iters=20, verbose=True, view=False):
         r"""
         Fit the AAM to an image using Lucas-Kanade.
 
         Parameters
         -----------
-        image:
-        noise_std: :class:`pybug.shape.PointCloud`
-        group:
+        image: :class:`pybug.image.IntensityImage`
+            The landmarked image to be fitted.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: 'all'
+        noise_std: float
+            The standard deviation of the white noise used to perturb the
+            landmarks.
+
+            Default: 0.05
+        rotation: boolean
+            If False the second parameter of the SimilarityTransform,
+            which captures captures inplane rotations, is set to 0.
+
+            Default:False
         max_iters: int, optional
             The number of iterations per pyramidal level
 
             Default: 20
+        verbose: boolean
+            If True the error between the ground truth landmarks and the
+            result of the fitting is displayed.
+        view: boolean
+            If True the final result of the fitting procedure is shown.
 
         Returns
         -------
-        md_transform_pyramid:
+        optimal_transforms: list of
+                             :class:`pybug.transform.ModelDrivenTransform`
+            A list containing the optimal transform per pyramidal level.
         """
 
         scale = self.downscale ** (self.n_levels-1)
@@ -257,7 +328,7 @@ class AAM(object):
             scaled_landmarks = image_pyramid[0].landmarks[group][label].lms
 
             transform = noisy_align(reference_landmarks, scaled_landmarks,
-                                    noise_std=noise_std)
+                                    noise_std=noise_std, rotation=rotation)
             initial_landmarks = transform.apply(reference_landmarks)
 
             optimal_transforms.append(self._lk_fit(
@@ -285,22 +356,51 @@ class AAM(object):
         return optimal_transforms
 
     def lk_fit_landmarked_database(self, images, group=None, label='all',
-                                   runs=10, noise_std=0.5, max_iters=20,
-                                   verbose=True, view=False):
+                                   runs=10, noise_std=0.5, rotation=False,
+                                   max_iters=20, verbose=True, view=False):
         r"""
         Fit the AAM to a list of landmark images using Lukas-Kanade.
 
         Parameters
         -----------
-        images:
-        runs:
-        noise_std:
-        group:
-        max_iters:
+        images: list of :class:`pybug.image.IntensityImage`
+            The list of landmarked images to be fitted.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: 'all'
+        noise_std: float
+            The standard deviation of the white noise used to perturb the
+            landmarks.
+
+            Default: 0.05
+        rotation: boolean
+            If False the second parameter of the SimilarityTransform,
+            which captures captures inplane rotations, is set to 0.
+
+            Default:False
+        max_iters: int, optional
+            The number of iterations per pyramidal level
+
+            Default: 20
+        verbose: boolean
+            If True the error between the ground truth landmarks and the
+            result of the fitting is displayed.
+        view: boolean
+            If True the final result of the fitting procedure is shown.
 
         Returns
         -------
-        optimal_transforms:
+        optimal_transforms: list of list
+                             :class:`pybug.transform.ModelDrivenTransform`
+            A list containing the optimal transform per pyramidal level for
+            all images.
         """
         n_images = len(images)
         optimal_transforms = []
@@ -308,59 +408,20 @@ class AAM(object):
             if verbose:
                 print '- fitting image {} of {}'.format(j+1, n_images)
             optimal_transforms.append(self.lk_fit_landmarked_image(
-                i, runs=runs, label=label, noise_std=noise_std, group=group,
-                max_iters=max_iters, verbose=verbose, view=view))
+                i, runs=runs, label=label, noise_std=noise_std,
+                rotation=rotation, group=group, max_iters=max_iters,
+                verbose=verbose, view=view))
 
         return optimal_transforms
-
-
-# TODO: Should this be a method on SimilarityTransform? AlignableTransforms?
-def noisy_align(source, target, noise_std=0.05, rotation=False):
-    r"""
-    Constructs and perturbs the optimal similarity transform between source
-    to the target by adding white noise to its parameters.
-
-    Parameters
-    ----------
-    source: :class:`pybug.shape.PointCloud`
-        The source pointcloud instance used in the alignment
-
-    target: :class:`pybug.shape.PointCloud`
-        The target pointcloud instance used in the alignment
-
-    noise_std: float
-        The standard deviation of the white noise
-
-        Default: 0.05
-    rotation: boolean
-        If False the second parameter of the SimilarityTransform,
-        which captures captures inplane rotations, is set to 0.
-
-        Default:False
-
-    Returns
-    -------
-    noisy_transform : :class: `pybug.transform.SimilarityTransform`
-        The noisy Similarity Transform
-    """
-    transform = SimilarityTransform.align(source, target)
-    parameters = transform.as_vector()
-    if not rotation:
-        parameters[1] = 0
-    parameter_range = np.hstack((parameters[:2], target.range()))
-    noise = (parameter_range * noise_std *
-             np.random.randn(transform.n_parameters))
-    parameters += noise
-    return SimilarityTransform.from_vector(parameters)
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
                 reference_shape=None, scale=1,
                 boundary=3, trilist=None,
-                patches=False, patch_size=(16, 16), n_levels=3,
+                patch_size=None, n_levels=3,
                 scaled_reference_frames=False, downscale=2,
                 transform_cls=PiecewiseAffineTransform,
-                features_dic=None,
+                features=None,
                 max_shape_components=None, max_appearance_components=None):
 
     r"""
@@ -414,7 +475,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     aam : :class:`pybug.activeappearancemodel.AAM`
     """
 
-    if patches is True:
+    if patch[0] is True:
         transform_cls = TPS
 
     if reference_shape is None:
@@ -433,7 +494,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                 for i in images]
 
     print '- Computing features'
-    images = [compute_features(p.next(), features_dic)
+    images = [compute_features(p.next(), features)
               for p in pyramids]
     # extract potentially rescaled shapes
     shapes = [i.landmarks[group][label].lms for i in images]
@@ -457,7 +518,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
     print '- Building reference frame'
     reference_shape = mean_pointcloud(aligned_shapes)
-    if patches:
+    if patch_size is not None:
         # build patch based reference frame
         reference_frame = build_patch_reference_frame(
             reference_shape, boundary=boundary, patch_size=patch_size)
@@ -475,7 +536,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         if j != 0:
             print ' - Computing features'
-            images = [compute_features(p.next(), features_dic)
+            images = [compute_features(p.next(), features)
                       for p in pyramids]
 
             print ' - Building shape model'
@@ -497,7 +558,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
                 print ' - Building reference frame'
                 reference_shape = mean_pointcloud(aligned_shapes)
-                if patches:
+                if patch_size is not None:
                     # build patch based reference frame
                     reference_frame = build_patch_reference_frame(
                         reference_shape, boundary=boundary,
@@ -522,7 +583,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         for i in images:
             i.landmarks['source'] = reference_frame.landmarks['source']
-        if patches:
+        if patch_size:
             for i in images:
                 i.build_mask_around_landmarks(patch_size, group='source')
         else:
@@ -544,5 +605,5 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     appearance_model_pyramid.reverse()
 
     return AAM(shape_model_pyramid, appearance_model_pyramid,
-               reference_shape, features_dic, downscale, transform_cls,
-               interpolator, patches, patch_size)
+               reference_shape, features, downscale, transform_cls,
+               interpolator, patch_size)
