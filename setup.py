@@ -42,11 +42,9 @@ setup(name='pybug',
                         'Sphinx>=1.2b1',
                         'numpydoc>=0.4',
                         'tornado>=3.0.1'],
-      extras_require={'mlabwrap': 'mlabwrap>=1.2',
-                      '3d': 'mayavi>=4.3.0'},
+      extras_require={'3d': 'mayavi>=4.3.0'},
       dependency_links=[
-        'https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4',
-        'https://github.com/patricksnape/mlabwrap/tarball/master#egg=mlabwrap-1.2']
+        'https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4']
       )
 
 # NOTE: Have to include the egg name in the dependency_links as well

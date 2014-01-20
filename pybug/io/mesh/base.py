@@ -2,7 +2,7 @@ import abc
 import commands
 import os.path as path
 import tempfile
-from pybug.io.base import Importer, find_alternative_files, get_importer
+from pybug.io.base import Importer, find_alternative_files
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
 from pybug.shape import TexturedTriMesh, TriMesh
@@ -245,7 +245,8 @@ class MeshImporter(Importer):
         Returns
         -------
         meshes : list of :class:`pybug.shape.mesh.textured.TexturedTriMesh` or :class:`pybug.shape.mesh.base.Trimesh`
-            List of meshes
+            If more than one mesh, returns a list of meshes. If only one
+            mesh, returns the single mesh.
         """
         #
         self._parse_format()
@@ -267,8 +268,10 @@ class MeshImporter(Importer):
                 new_mesh.landmarks[lmark_group.group_label] = lmark_group
 
             meshes.append(new_mesh)
-
-        return meshes
+        if len(meshes) == 1:
+            return meshes[0]
+        else:
+            return meshes
 
 
 class AssimpImporter(AIImporter, MeshImporter):

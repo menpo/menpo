@@ -1,9 +1,9 @@
-from pybug.exception import DimensionalityError
-from pybug.shape import PointCloud
-from pybug.shape.mesh.exceptions import TriFieldError
-from pybug.visualize import TriMeshViewer
 from pybug.shape.mesh.normals import compute_normals
 from scipy.spatial import Delaunay
+
+from pybug.exception import DimensionalityError
+from pybug.shape import PointCloud
+from pybug.visualize import TriMeshViewer
 
 
 class TriMesh(PointCloud):
@@ -28,20 +28,10 @@ class TriMesh(PointCloud):
         if trilist is None:
             trilist = Delaunay(points).simplices
         self.trilist = trilist
-        self.trifields = {}
 
     def __str__(self):
-        message = PointCloud.__str__(self)
-        if len(self.trifields) != 0:
-            message += '\n  trifields:'
-            for k, v in self.trifields.iteritems():
-                try:
-                    field_dim = v.shape[1]
-                except IndexError:
-                    field_dim = 1
-                message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
-        message += '\nn_tris: ' + str(self.n_tris)
-        return message
+        return '{}, n_tris: {}'.format(PointCloud.__str__(self),
+                                       self.n_tris)
 
     def from_vector(self, flattened):
         r"""
@@ -108,15 +98,6 @@ class TriMesh(PointCloud):
         :type: int
         """
         return len(self.trilist)
-
-    def add_trifield(self, name, field):
-        if field.shape[0] != self.n_tris:
-            raise TriFieldError("Trying to add a field with " +
-                                str(field.shape[0]) + " values (need one "
-                                "field value per tri => " +
-                                str(self.n_tris) + ")")
-        else:
-            self.trifields[name] = field
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         """

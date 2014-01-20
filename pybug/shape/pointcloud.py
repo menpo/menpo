@@ -1,11 +1,9 @@
 import numpy as np
 from scipy.spatial.distance import cdist
-from pybug.shape.exceptions import PointFieldError
 from pybug.visualize import PointCloudViewer
 from pybug.shape.base import Shape
 
 
-# TODO: sort of pointfields?
 class PointCloud(Shape):
     r"""
     An N-dimensional point cloud. This is internally represented as an ndarray
@@ -24,7 +22,6 @@ class PointCloud(Shape):
     def __init__(self, points):
         super(PointCloud, self).__init__()
         self.points = points
-        self.pointfields = {}
 
     @property
     def n_points(self):
@@ -74,17 +71,9 @@ class PointCloud(Shape):
         self.points = vector.reshape([-1, self.n_dims])
 
     def __str__(self):
-        message = (str(type(self)) + ': n_points: ' + str(self.n_points) +
-                   ', n_dims: ' + str(self.n_dims))
-        if len(self.pointfields) != 0:
-            message += '\n  pointfields:'
-            for k, v in self.pointfields.iteritems():
-                try:
-                    field_dim = v.shape[1]
-                except IndexError:
-                    field_dim = 1
-                message += '\n    ' + str(k) + '(' + str(field_dim) + 'D)'
-        return message
+        return '{}: n_points: {}, n_dims: {}'.format(type(self).__name__,
+                                                     self.n_points,
+                                                     self.n_dims)
 
     def bounds(self, boundary=0):
         r"""
@@ -131,20 +120,6 @@ class PointCloud(Shape):
         """
         min_b, max_b = self.bounds(boundary)
         return max_b - min_b
-
-    def add_pointfield(self, name, field):
-        """
-        Add another set of field values (of arbitrary dimension) to each
-        point.
-        """
-        if field.shape[0] != self.n_points:
-            raise PointFieldError("Trying to add a field with " +
-                                  str(field.shape[0]) + " values (need one "
-                                                        "field value per point"
-                                                        " => "
-                                  + str(self.n_points) + " values required")
-        else:
-            self.pointfields[name] = field
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return PointCloudViewer(figure_id, new_figure,
