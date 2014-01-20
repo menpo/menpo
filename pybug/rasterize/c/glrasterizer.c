@@ -23,9 +23,8 @@ glr_scene init_scene(double* points, size_t n_points, unsigned int* trilist,
 	scene.mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
 											 tcoords, texture, texture_width,
 											 texture_height);
-	glr_math_float_matrix_eye(scene.camera.perspective);
-	glr_math_float_matrix_eye(scene.camera.rotation);
-	memset(scene.camera.translation, 0, sizeof(float) * 4);
+    // by default, make a
+    scene.camera = glr_build_othographic_camera_at_origin();
 	scene.light.position[2] = 1.0;
     return scene;
 }
@@ -36,9 +35,6 @@ void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 	printf("return_FB_pixels(...)\n");
 	scene->fb_texture = glr_build_rgba_texture(pixels, scene->context->window_width,
             scene->context->window_height);
-	memset(scene->camera.translation, 0, sizeof(float) * 4);
-    glr_math_float_matrix_eye(scene->camera.perspective);
-    glr_math_float_matrix_eye(scene->camera.rotation);
 	// call the init
 	init(scene);
 

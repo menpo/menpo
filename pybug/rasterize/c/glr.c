@@ -130,6 +130,25 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 	return textured_mesh;
 }
 
+glr_camera glr_build_othographic_camera_at_origin()
+{
+	glr_camera camera;
+	// set the camera's matrices to I
+	glr_math_float_matrix_eye(camera.projectionMatrix);
+    glr_math_float_matrix_eye(camera.viewMatrix);
+	return camera;
+}
+
+glr_camera glr_build_camera(float* projectionMatrix, float* viewMatrix) {
+    glr_camera camera;
+    memcpy(camera.projectionMatrix, projectionMatrix,
+           sizeof(camera.projectionMatrix));
+    // copy the modelMatrix
+    memcpy(camera.viewMatrix, viewMatrix,
+           sizeof(camera.viewMatrix));
+    return camera;
+}
+
 void glr_init_array_buffer_from_vectorset(glr_vectorset *vector) {
 	glGenBuffers(1, &(vector->vbo));
 	glBindBuffer(GL_ARRAY_BUFFER, vector->vbo);
@@ -228,20 +247,24 @@ void glr_render_scene(glr_scene* scene) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(scene->program);
 	glBindVertexArray(scene->mesh.vao);
-	scene->camera.perspective_unif = glGetUniformLocation(scene->program,
-			"perspective");
-	glUniformMatrix4fv(scene->camera.perspective_unif, 1, GL_FALSE,
-			scene->camera.perspective);
-	scene->camera.rotation_unif = glGetUniformLocation(scene->program,
-			"rotation");
-	glUniformMatrix4fv(scene->camera.rotation_unif, 1, GL_FALSE,
-			scene->camera.rotation);
-	scene->camera.translation_unif = glGetUniformLocation(scene->program,
-			"translation");
-	glUniform4fv(scene->camera.translation_unif, 1, scene->camera.translation);
-	scene->light.position_unif = glGetUniformLocation(scene->program,
-			"light_position");
-	glUniform3fv(scene->light.position_unif, 1, scene->light.position);
+    GLuint uniform;
+
+	// CAMERA UNIFORMS
+    uniform = glGetUniformLocation(scene->program, "viewMatrix");
+    glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.viewMatrix);
+
+	uniform = glGetUniformLocation(scene->program, "projectionMatrix");
+	glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.projectionMatrix);
+
+	// MODEL UNIFORMS
+    uniform = glGetUniformLocation(scene->program, "modelMatrix");
+    glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->modelMatrix);
+
+    // LIGHT UNIFORMS
+    uniform = glGetUniformLocation(scene->program, "lightPosition");
+    glUniform3fv(uniform, 1, scene->light.position);
+
+	// BIND VBO + TEXTURES, DRAW
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
 	glActiveTexture(GL_TEXTURE0 + scene->mesh.texture.unit);
 	glBindTexture(GL_TEXTURE_2D, scene->mesh.texture.texture_ID);

@@ -39,18 +39,13 @@ typedef struct {
 
 
 typedef struct {
-	float perspective [16];
-	float rotation [16];
-	float translation [4];
-	GLuint perspective_unif;
-	GLuint rotation_unif;
-	GLuint translation_unif;
+	float projectionMatrix [16];  // how the camera projects (ortho, persp)
+    float viewMatrix [16];  // how the camera is positioned in world space
 } glr_camera;
 
 
 typedef struct {
 	float position [3];
-	GLuint position_unif;
 } glr_light;
 
 
@@ -58,6 +53,7 @@ typedef struct {
 	glr_textured_mesh mesh;
 	glr_camera camera;
 	glr_light light;
+    float modelMatrix [16];  // adjust the model in the world
 	glr_glfw_context* context;
 	GLuint program;
 	GLuint fbo;
@@ -143,6 +139,18 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
 glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 		unsigned int* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height);
+
+
+/*
+ * Return an orthographic glr_camera at the origin
+ */
+glr_camera glr_build_othographic_camera_at_origin();
+
+
+/*
+ * Return a new glr_camera with a projection_matrix and model matrix
+ */
+glr_camera glr_build_camera(float* projectionMatrix, float* modelMatrix);
 
 
 void glr_init_array_buffer_from_vectorset(glr_vectorset* vector);
