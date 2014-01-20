@@ -153,6 +153,12 @@ glr_camera glr_build_othographic_camera_at_origin(void);
 glr_camera glr_build_camera(float* projectionMatrix, float* modelMatrix);
 
 
+/*
+ * Return a scene struct with a default camera and no mesh 
+ */
+glr_scene glr_build_scene(void);
+
+
 void glr_init_array_buffer_from_vectorset(glr_vectorset* vector);
 
 

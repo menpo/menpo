@@ -149,6 +149,15 @@ glr_camera glr_build_camera(float* projectionMatrix, float* viewMatrix) {
     return camera;
 }
 
+glr_scene glr_build_scene(void)
+{
+	glr_scene scene;
+	glr_math_float_matrix_eye(scene.modelMatrix);
+    scene.camera = glr_build_othographic_camera_at_origin();
+	scene.light.position[2] = 1.0;
+    return scene;
+}
+
 void glr_init_array_buffer_from_vectorset(glr_vectorset *vector) {
 	glGenBuffers(1, &(vector->vbo));
 	glBindBuffer(GL_ARRAY_BUFFER, vector->vbo);

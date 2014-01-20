@@ -7,30 +7,6 @@
 #include "glrglfw.h"
 #include "shaders.h"
 
-glr_glfw_context init_offscreen_context(int width, int height) {
-    glr_glfw_context context = glr_build_glfw_context_offscreen(width, height);
-    // initialize glfw and glew
-    glr_glfw_init(&context);
-    return context;
-}
-
-glr_scene init_scene(double* points, size_t n_points, unsigned int* trilist,
-		size_t n_tris, float* tcoords, uint8_t* texture, size_t texture_width,
-		size_t texture_height)
-{
-	printf("init_scene(...)\n");
-	glr_scene scene;
-	glr_math_float_matrix_eye(scene.modelMatrix);
-	scene.mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris,
-											 tcoords, texture, texture_width,
-											 texture_height);
-    // by default, make a
-    scene.camera = glr_build_othographic_camera_at_origin();
-	scene.light.position[2] = 1.0;
-    return scene;
-}
-
-
 void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 {
 	printf("return_FB_pixels(...)\n");

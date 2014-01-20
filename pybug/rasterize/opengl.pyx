@@ -16,7 +16,10 @@ cdef extern from "./c/glrglfw.h":
         bool offscreen
         void*window
 
-    cdef void glr_glfw_terminate(glr_glfw_context*context)
+    cdef glr_glfw_context glr_build_glfw_context_offscreen(int width,
+                                                           int height)
+    cdef void glr_glfw_init(glr_glfw_context* context)
+    cdef void glr_glfw_terminate(glr_glfw_context* context)
 
 
 # we need to be able to hold onto a scene reference
@@ -42,17 +45,16 @@ cdef extern from "./c/glr.h":
         unsigned int fbo
         glr_texture fb_texture
 
+    glr_textured_mesh glr_build_textured_mesh(
+            double* points, size_t n_points, unsigned int* trilist,
+            size_t n_tris, float* tcoords, uint8_t* texture,
+            size_t texture_width, size_t texture_height)
+
+    glr_scene glr_build_scene()
+
 # externally declare the C structs we need
 cdef extern from "./c/glrasterizer.h":
-    glr_glfw_context init_offscreen_context(int width, int height)
-
-    cdef glr_scene init_scene(double*points, size_t n_points,
-                              unsigned int*trilist, size_t n_tris,
-                              float*tcoords, uint8_t*texture,
-                              size_t texture_width,
-                              size_t texture_height)
-
-    cdef void return_FB_pixels(glr_scene*scene, uint8_t*pixels)
+    void return_FB_pixels(glr_scene*scene, uint8_t*pixels)
 
 
 cdef class OpenGLRasterizer:
@@ -66,34 +68,25 @@ cdef class OpenGLRasterizer:
     cdef int height
 
     def __cinit__(self, int width, int height):
-        self.context = init_offscreen_context(width, height)
+        self.scene = glr_build_scene()
+        self.context = glr_build_glfw_context_offscreen(width, height)
+        # init our context
+        glr_glfw_init(&self.context)
+        self.scene.context = &self.context
         self.width = width
         self.height = height
-        print self.scene.fbo
-
-    cdef _setup_scene(self,
-                      np.ndarray[double, ndim=2, mode="c"] points,
-                      np.ndarray[unsigned, ndim=2, mode="c"] trilist,
-                      np.ndarray[float, ndim=2, mode="c"] tcoords,
-                      np.ndarray[uint8_t, ndim=3, mode="c"] texture):
-        self.scene = init_scene(
-            &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
-            &tcoords[0, 0], &texture[0, 0, 0],
-            texture.shape[1], texture.shape[0])
-        self.scene.context = &self.context
 
     def render_offscreen_rgb(self,
-                             np.ndarray[double, ndim=2,
-                                        mode="c"] points not None,
-                             np.ndarray[unsigned, ndim=2,
-                                        mode="c"] trilist not None,
-                             np.ndarray[float, ndim=2,
-                                        mode="c"] tcoords not None,
-                             np.ndarray[uint8_t, ndim=3,
-                                        mode="c"] texture not None):
+            np.ndarray[double, ndim=2, mode="c"] points not None,
+            np.ndarray[unsigned, ndim=2, mode="c"] trilist not None,
+            np.ndarray[float, ndim=2, mode="c"] tcoords not None,
+            np.ndarray[uint8_t, ndim=3, mode="c"] texture not None):
         cdef np.ndarray[uint8_t, ndim=3, mode='c'] pixels = \
             np.empty((self.width, self.height, 4), dtype=np.uint8)
-        self._setup_scene(points, trilist, tcoords, texture)
+        self.scene.mesh = glr_build_textured_mesh(
+            &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
+            &tcoords[0, 0], &texture[0, 0, 0], texture.shape[1],
+            texture.shape[0])
         return_FB_pixels(&self.scene, &pixels[0, 0, 0])
         return pixels
 
