@@ -117,7 +117,6 @@ class AAM(object):
         if patches:
             reference_frame = build_patch_reference_frame(
                 shape_instance, patch_size=patch_size)
-
         else:
             if type(landmarks) == TriMesh:
                 trilist = template.landmarks['source'].lms.trilist
@@ -173,19 +172,17 @@ class AAM(object):
         """
         self._lk_pyramid = []
 
-        for am, n_s, n_a in zip(self.appearance_model_pyramid, n_shape,
-                                n_appearance):
+        for am, sm, n_s, n_a in zip(self.appearance_model_pyramid,
+                                    self.shape_model_pyramid,
+                                    n_shape, n_appearance):
 
             global_transform = global_transform_cls(np.eye(3, 3))
-            source = self.reference_frame.landmarks['source'].lms
+            source = am.mean.landmarks['source'].lms
 
-            sm = self.shape_model
             if n_shape is not None:
                 sm.n_active_components = n_s
-            md_transform = md_transform_cls(sm,
-                                            transform_cls,
-                                            global_transform,
-                                            source=source)
+            md_transform = md_transform_cls(
+                sm, transform_cls, global_transform, source=source)
 
             if n_appearance is not None:
                 am.n_active_components = n_a
@@ -228,11 +225,11 @@ class AAM(object):
             target = Scale(self.downscale, n_dims=md_transform.n_dims).apply(
                 md_transform.target)
 
-        return deepcopy(md_transform_pyramid)
+        return md_transform_pyramid
 
-    def lk_fit_landmarked_image(self, image, runs=5, noise_std=0.05,
-                                group='PTS', max_iters=20, verbose=True,
-                                view=False):
+    def lk_fit_landmarked_image(self, image, group=None, label='all',
+                                runs=10, noise_std=0.05, max_iters=20,
+                                verbose=True, view=False):
         r"""
         Fit the AAM to an image using Lucas-Kanade.
 
@@ -251,49 +248,59 @@ class AAM(object):
         md_transform_pyramid:
         """
 
-        scale = 2 ** (self.n_levels-1)
+        scale = self.downscale ** (self.n_levels-1)
 
-        feature_pyramid = self._feature_pyramid(image, self.shape_model.mean)
+        image = image.rescale_to_reference_landmarks(
+            self.shape_model_pyramid[-1].mean)
+        pyramid = image.gaussian_pyramid(n_levels=self.n_levels,
+                                         downscale=self.downscale)
+        image_pyramid = [compute_features(p, self.features_dic)
+                         for p in pyramid]
+        image_pyramid.reverse()
 
         original_landmarks = image.landmarks[group].lms
 
         affine_correction = AffineTransform.align(
-            feature_pyramid[-1].landmarks[group].lms, original_landmarks)
+            image_pyramid[-1].landmarks[group].lms, original_landmarks)
 
         optimal_transforms = []
         for j in range(runs):
-            transform = noisy_align(
-                self.shape_model.mean, feature_pyramid[0].landmarks[group].lms,
-                noise_std=noise_std)
-            initial_landmarks = transform.apply(self.shape_model.mean)
-            optimal_transforms.append(self._lk_fit(feature_pyramid,
-                                                   initial_landmarks,
-                                                   max_iters=max_iters))
+            reference_landmarks = self.shape_model_pyramid[0].mean
+            transform = noisy_align(reference_landmarks,
+                                    image_pyramid[0].landmarks[group].lms,
+                                    noise_std=noise_std)
+            initial_landmarks = transform.apply(reference_landmarks)
+            optimal_transforms.append(self._lk_fit(
+                image_pyramid, initial_landmarks, max_iters=max_iters))
+
             fitted_landmarks = optimal_transforms[j][-1].target
             fitted_landmarks = affine_correction.apply(fitted_landmarks)
-
-            image.landmarks['initial_{}'.format(j)] = \
-                affine_correction.apply(UniformScale(scale, 2).apply(
-                    initial_landmarks))
-            image.landmarks['fitted_{}'.format(j)] = fitted_landmarks
 
             if verbose:
                 error = compute_error_facesize(fitted_landmarks.points,
                                                original_landmarks.points)
                 print ' - run {} of {} with error: {}'.format(j+1, runs,
                                                               error)
+
+            # ToDo: This will need to change with the new LK structure
+            image.landmarks['initial_{}'.format(j)] = \
+                affine_correction.apply(UniformScale(scale, 2).apply(
+                    initial_landmarks))
+            image.landmarks['fitted_{}'.format(j)] = fitted_landmarks
             if view:
+                image.landmarks['initial_{}'.format(j)].view(
+                    include_labels=False)
                 image.landmarks['fitted_{}'.format(j)].view(
                     include_labels=False)
                 plt.show()
 
         return optimal_transforms
 
-    def lk_fit_landmarked_database(self, images, runs=10, noise_std=0.5,
-                                  group='PTS', max_iters=20, verbose=True,
-                                  view=False):
+    def lk_fit_landmarked_database(self, images, group=None, label='all',
+                                   runs=10, noise_std=0.5, max_iters=20,
+                                   verbose=True, view=False):
         r"""
-        Fit the AAM to an image using Lucas-Kanade.
+        Fit the AAM to a list of landmark images using Lukas-Kanade.
 
         Parameters
         -----------
@@ -305,19 +312,16 @@ class AAM(object):
 
         Returns
         -------
-        md_transform_pyramid:
+        optimal_transforms:
         """
         n_images = len(images)
         optimal_transforms = []
         for j, i in enumerate(images):
             if verbose:
                 print '- fitting image {} of {}'.format(j+1, n_images)
-
-            optimal_transforms.append(
-                self.lk_fit_landmarked_image(i, runs=runs,
-                                             noise_std=noise_std,
-                                            group=group, max_iters=max_iters,
-                                            verbose=verbose, view=view))
+            optimal_transforms.append(self.lk_fit_landmarked_image(
+                i, runs=runs, label=label, noise_std=noise_std, group=group,
+                max_iters=max_iters, verbose=verbose, view=view))
 
         return optimal_transforms
 

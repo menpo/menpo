@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from copy import deepcopy
 from scipy.linalg import solve
 
 
@@ -156,11 +157,10 @@ class LucasKanade(object):
             The final transform that optimally aligns the source to the
             target.
         """
-        # TODO: define a consistent multi-resolution logic
         self.transform.from_vector_inplace(params)
         self.parameters = [params]
         self.image = image
-        return self._align(max_iters, **kwargs)
+        return deepcopy(self._align(max_iters, **kwargs))
 
     @abc.abstractmethod
     def _align(self, **kwargs):
