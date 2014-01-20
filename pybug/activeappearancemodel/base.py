@@ -31,38 +31,49 @@ class AAM(object):
     """
 
     def __init__(self, shape_model_pyramid, appearance_model_pyramid,
-                 features_dic, downscale):
+                 reference_shape, features_dic, downscale, transform_cls,
+                 interpolator, patches, patch_size=(16, 16)):
         self.shape_model_pyramid = shape_model_pyramid
         self.appearance_model_pyramid = appearance_model_pyramid
+        self.reference_shape = reference_shape
         self.features_dic = features_dic
         self.downscale = downscale
+        self.transform_cls = transform_cls
+        self.interpolator = interpolator
+        self.patches = patches
+        if patches:
+            self.patch_size = patch_size
 
     @property
     def n_levels(self):
         return len(self.appearance_model_pyramid)
 
-    def _feature_pyramid(self, image, reference_landmarks):
+    def _prepare_image(self, image, group, label):
         r"""
-        Compute to an image using Lucas-Kanade.
+        Prepare an image to be be fitted by the AAM. The image is first
+        rescaled wrt the reference landmarks, then a gaussian
+        pyramid is computed and finally features are extracted
+        from each pyramid element.
 
         Parameters
         -----------
         image: :class:`pybug.image.IntensityImage`
-            The image to which the
+            The image to be fitted.
 
         Returns
         -------
-        feature_pyramid:
+        image_pyramid: :class:`pybug.image.IntensityImage`
+            The image representation used by the fitting algorithm.
         """
-        image = image.rescale_to_reference_landmarks(reference_landmarks)
+        image = image.rescale_to_reference_landmarks(self.reference_shape,
+                                                     group=group, label=label)
         pyramid = image.gaussian_pyramid(n_levels=self.n_levels)
-        image_pyramid = [compute_features(p.next(), self.features_dic)
+        image_pyramid = [compute_features(p, self.features_dic)
                          for p in pyramid]
-        return image_pyramid.reverse()
+        image_pyramid.reverse()
+        return image_pyramid
 
-    def instance(self, shape_weights, appearance_weights, level=-1,
-                 transform_cls=PiecewiseAffineTransform, patches=False,
-                 patch_size=(16, 16), interpolator='scipy', **warp_kwargs):
+    def instance(self, shape_weights=None, appearance_weights=None, level=-1):
         r"""
         Create a novel AAM instance using the given shape and appearance
         weights.
@@ -71,86 +82,69 @@ class AAM(object):
         -----------
         shape_weights: (n_weights,) ndarray or list
             Weights of the shape model that should be used to create
-            a novel shape instance.
+            a novel shape instance. If None random weights will be used.
 
+            Default: None
         appearance_weights: (n_weights,) ndarray or list
             Weights of the appearance model that should be used to create
-            a novel appearance instance.
+            a novel appearance instance. If None random weights will be used.
 
+            Default: None
         level: int, optional
             Index representing the appearance model to be used to create
             the instance.
 
             Default: -1
-        transform_cls: :class:`pybug.transform.base.PureAlignmentTransform`
-            Class of transform that should be used to warp the appearance
-            instance onto the reference frame defined by the shape instance.
-
-            Default: PieceWiseAffineTransform
-        interpolator: 'scipy' or 'c', optional
-            The interpolator that should be used to perform the warp.
-
-            Default: 'scipy'
-        kwargs: dict
-            Passed through to the interpolator. See `pybug.interpolation`
-            for details.
 
         Returns
         -------
         cropped_image: :class:`pybug.image.masked.MaskedNDImage`
             The novel AAM instance.
         """
-        if patches:
-            transform_cls = TPS
+        sm = self.shape_model_pyramid[level]
+        am = self.appearance_model_pyramid[level]
 
-        template = self.appearance_model_pyramid[level].mean
+        template = am.mean
         landmarks = template.landmarks['source'].lms
 
-        # multiply weights by std
+        if shape_weights is None:
+            shape_weights = np.random.randn(sm.n_active_components)
+        if appearance_weights is None:
+            appearance_weights = np.random.randn(am.n_active_components)
+
         n_shape_weights = len(shape_weights)
-        shape_weights *= self.shape_model_pyramid[level].eigenvalues[
-            :n_shape_weights] ** 0.5
-        # compute shape instance
-        shape_instance = \
-            self.shape_model_pyramid[level].instance(shape_weights)
-        # build reference frame using to shape instance
-        if patches:
+        shape_weights *= sm.eigenvalues[:n_shape_weights] ** 0.5
+        shape_instance = sm.instance(shape_weights)
+
+        n_appearance_weights = len(appearance_weights)
+        appearance_weights *= am.eigenvalues[:n_appearance_weights] ** 0.5
+        appearance_instance = am.instance(appearance_weights)
+
+        # build reference frame
+        if self.patches:
             reference_frame = build_patch_reference_frame(
-                shape_instance, patch_size=patch_size)
+                shape_instance, patch_size=self.patch_size)
         else:
             if type(landmarks) == TriMesh:
                 trilist = template.landmarks['source'].lms.trilist
             else:
                 trilist = None
-            reference_frame = build_reference_frame(shape_instance,
-                                                    trilist=trilist)
+            reference_frame = build_reference_frame(
+                shape_instance, trilist=trilist)
 
-        # select appearance model
-        n_appearance_weights = len(appearance_weights)
-        appearance_model = self.appearance_model_pyramid[level]
-        # multiply weights by std
-        appearance_weights *= appearance_model.eigenvalues[
-            :n_appearance_weights] ** 0.5
-        # compute appearance instance
-        appearance_instance = appearance_model.instance(appearance_weights)
+        transform = self.transform_cls(
+            reference_frame.landmarks['source'].lms, landmarks)
 
-        # compute transform mapping appearance instance to previous
-        # reference frame
-        transform = transform_cls(reference_frame.landmarks['source'].lms,
-                                  landmarks)
-        # return warped appearance
         return appearance_instance.warp_to(reference_frame.mask, transform,
-                                           interpolator, **warp_kwargs)
+                                           self.interpolator)
 
     def initialize_lk(self, md_transform_cls=OrthoMDTransform,
-                      transform_cls=PiecewiseAffineTransform,
                       global_transform_cls=SimilarityTransform,
                       lk_algorithm=AlternatingInverseCompositional,
                       residual_dic={'type': LSIntensity, 'options': None},
                       n_shape=None, n_appearance=None):
         r"""
-        Initialize a particular Lucas-Kanade algorithm for fitting this AAM
-        onto images.
+        Initializes the Lucas-Kanade fitting procedure.
 
         Parameters
         -----------
@@ -182,7 +176,7 @@ class AAM(object):
             if n_shape is not None:
                 sm.n_active_components = n_s
             md_transform = md_transform_cls(
-                sm, transform_cls, global_transform, source=source)
+                sm, self.transform_cls, global_transform, source=source)
 
             if n_appearance is not None:
                 am.n_active_components = n_a
@@ -250,46 +244,40 @@ class AAM(object):
 
         scale = self.downscale ** (self.n_levels-1)
 
-        image = image.rescale_to_reference_landmarks(
-            self.shape_model_pyramid[-1].mean)
-        pyramid = image.gaussian_pyramid(n_levels=self.n_levels,
-                                         downscale=self.downscale)
-        image_pyramid = [compute_features(p, self.features_dic)
-                         for p in pyramid]
-        image_pyramid.reverse()
+        image_pyramid = self._prepare_image(image, group=group, label=label)
 
-        original_landmarks = image.landmarks[group].lms
+        original_landmarks = image.landmarks[group][label].lms
 
         affine_correction = AffineTransform.align(
-            image_pyramid[-1].landmarks[group].lms, original_landmarks)
+            image_pyramid[-1].landmarks[group][label].lms, original_landmarks)
 
         optimal_transforms = []
         for j in range(runs):
             reference_landmarks = self.shape_model_pyramid[0].mean
-            transform = noisy_align(reference_landmarks,
-                                    image_pyramid[0].landmarks[group].lms,
+            scaled_landmarks = image_pyramid[0].landmarks[group][label].lms
+
+            transform = noisy_align(reference_landmarks, scaled_landmarks,
                                     noise_std=noise_std)
             initial_landmarks = transform.apply(reference_landmarks)
+
             optimal_transforms.append(self._lk_fit(
                 image_pyramid, initial_landmarks, max_iters=max_iters))
 
+            # ToDo: All this will need to change with the new LK structure
             fitted_landmarks = optimal_transforms[j][-1].target
             fitted_landmarks = affine_correction.apply(fitted_landmarks)
-
             if verbose:
                 error = compute_error_facesize(fitted_landmarks.points,
                                                original_landmarks.points)
                 print ' - run {} of {} with error: {}'.format(j+1, runs,
                                                               error)
-
-            # ToDo: This will need to change with the new LK structure
             image.landmarks['initial_{}'.format(j)] = \
                 affine_correction.apply(UniformScale(scale, 2).apply(
                     initial_landmarks))
             image.landmarks['fitted_{}'.format(j)] = fitted_landmarks
             if view:
-                image.landmarks['initial_{}'.format(j)].view(
-                    include_labels=False)
+                # image.landmarks['initial_{}'.format(j)].view(
+                #    include_labels=False)
                 image.landmarks['fitted_{}'.format(j)].view(
                     include_labels=False)
                 plt.show()
@@ -426,6 +414,9 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     aam : :class:`pybug.activeappearancemodel.AAM`
     """
 
+    if patches is True:
+        transform_cls = TPS
+
     if reference_shape is None:
         print '- Computing reference shape'
         shapes = [i.landmarks[group][label].lms for i in images]
@@ -509,7 +500,8 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                 if patches:
                     # build patch based reference frame
                     reference_frame = build_patch_reference_frame(
-                        reference_shape, boundary=boundary, patch_size=patch_size)
+                        reference_shape, boundary=boundary,
+                        patch_size=patch_size)
                 else:
                     # build reference frame
                     reference_frame = build_reference_frame(
@@ -532,8 +524,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
             i.landmarks['source'] = reference_frame.landmarks['source']
         if patches:
             for i in images:
-                i.build_mask_around_landmarks(patch_size, group=group,
-                                              label=label)
+                i.build_mask_around_landmarks(patch_size, group='source')
         else:
             for i in images:
                 i.constrain_mask_to_landmarks(group='source', trilist=trilist)
@@ -553,4 +544,5 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     appearance_model_pyramid.reverse()
 
     return AAM(shape_model_pyramid, appearance_model_pyramid,
-               features_dic, downscale)
+               reference_shape, features_dic, downscale, transform_cls,
+               interpolator, patches, patch_size)
