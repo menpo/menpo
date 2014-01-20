@@ -2,7 +2,8 @@ import abc
 import commands
 import os.path as path
 import tempfile
-from pybug.io.base import Importer, find_alternative_files
+from pybug.io.base import Importer, find_alternative_files, \
+    map_filepath_to_importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
 from pybug.shape import TexturedTriMesh, TriMesh
@@ -102,16 +103,16 @@ class MeshImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_types
-            self.texture_importer = get_importer(self.texture_path,
-                                                 image_types)
+            self.texture_importer = map_filepath_to_importer(self.texture_path,
+                                                             image_types)
 
         if self.landmark_path is None or not path.exists(self.landmark_path):
             self.landmark_importer = None
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import mesh_landmark_types
-            self.landmark_importer = get_importer(self.landmark_path,
-                                                  mesh_landmark_types)
+            self.landmark_importer = map_filepath_to_importer(
+                self.landmark_path, mesh_landmark_types)
 
     def _search_for_texture(self):
         r"""
