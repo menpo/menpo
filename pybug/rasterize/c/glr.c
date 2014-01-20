@@ -153,8 +153,8 @@ glr_scene glr_build_scene(void)
 {
 	glr_scene scene;
 	glr_math_float_matrix_eye(scene.modelMatrix);
+    glr_math_float_vector4_0001(scene.light.position);
     scene.camera = glr_build_othographic_camera_at_origin();
-	scene.light.position[2] = 1.0;
     return scene;
 }
 
@@ -271,7 +271,7 @@ void glr_render_scene(glr_scene* scene) {
 
     // LIGHT UNIFORMS
     uniform = glGetUniformLocation(scene->program, "lightPosition");
-    glUniform3fv(uniform, 1, scene->light.position);
+    glUniform4fv(uniform, 1, scene->light.position);
 
 	// BIND VBO + TEXTURES, DRAW
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
@@ -313,11 +313,16 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh) {
 }
 
 void glr_math_float_matrix_eye(float* matrix) {
-    memset(matrix,0, sizeof(float) * 16);
+    memset(matrix, 0, sizeof(float) * 16);
     matrix[0] = 1.0;
     matrix[5] = 1.0;
     matrix[10] = 1.0;
     matrix[15] = 1.0;
+}
+
+void glr_math_float_vector4_0001(float* vector) {
+    memset(vector, 0, sizeof(float) * 3);
+    vector[3] = 1.0;
 }
 
 void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x, 

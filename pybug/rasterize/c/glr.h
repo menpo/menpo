@@ -45,7 +45,7 @@ typedef struct {
 
 
 typedef struct {
-	float position [3];
+	float position [4];
 } glr_light;
 
 
@@ -200,7 +200,15 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh);
 
 void glr_math_float_matrix_eye(float *matrix);
 
+/*
+ * Set the float vector to
+ * [0, 0, 0, 1]
+ */
+void glr_math_float_vector4_0001(float *matrix);
+
 
 void glr_math_float_matrix_rotation_for_angles(float *matrix, float angle_x,
                                                float angle_y);
 
+
+void glr_print_matrix(float* matrix);
