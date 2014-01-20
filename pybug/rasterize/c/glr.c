@@ -108,7 +108,7 @@ glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points) {
 	return tcoords_tmp;
 }
 
-glr_vectorset glr_build_trilist(unsigned int* trilist, size_t n_tris) {
+glr_vectorset glr_build_trilist(unsigned* trilist, size_t n_tris) {
 	glr_vectorset trilist_tmp;
 	trilist_tmp.datatype = GL_UNSIGNED_INT;
 	trilist_tmp.n_dims = 3;
@@ -119,7 +119,7 @@ glr_vectorset glr_build_trilist(unsigned int* trilist, size_t n_tris) {
 }
 
 glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
-		unsigned int* trilist, size_t n_tris, float* tcoords,
+		unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height) {
 	glr_textured_mesh textured_mesh;
 	textured_mesh.h_points = glr_build_h_points(points, n_points);
@@ -283,7 +283,7 @@ void glr_render_scene(glr_scene* scene) {
 	glfwSwapBuffers(scene->context->window);
 }
 
-void glr_get_framebuffer(unsigned int texture_unit_offset,
+void glr_get_framebuffer(unsigned texture_unit_offset,
 		             GLuint texture_framebuffer, GLenum texture_specification,
 		             GLenum texture_datatype, void* texture) {
 	glActiveTexture(GL_TEXTURE0 + texture_unit_offset);

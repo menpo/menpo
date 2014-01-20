@@ -93,12 +93,14 @@ int main(int argc, char** argv)
     int output_h = 128;
 
     clock_t start = clock(), diff;
-    glr_glfw_context context = init_offscreen_context(128, 128);
+    glr_glfw_context context = glr_build_glfw_context_offscreen(128, 128);
+    glr_glfw_init(&context);
     diff = clock() - start;
     int msec = diff * 1000 / CLOCKS_PER_SEC;
     printf("Time taken for context: %d ms\n", msec);
     start = clock();
-    glr_scene scene = init_scene(points, n_points, trilist, n_tris, tcoords, 
+    glr_scene scene = glr_build_scene();
+    scene.mesh = glr_build_textured_mesh(points, n_points, trilist, n_tris, tcoords, 
             texture, t_w, t_h);
     // attach the context to the scene
     scene.context = &context;

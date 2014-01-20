@@ -3,7 +3,7 @@
 
 
 typedef struct {
-	unsigned int unit;
+	unsigned unit;
 	GLint internal_format;
 	GLsizei width;
 	GLsizei height;
@@ -19,13 +19,13 @@ typedef struct {
 
 
 typedef struct {
-	void* vectors;
-	unsigned int n_vectors;
-	unsigned int n_dims;
-	unsigned int size;
+	GLvoid* vectors;
+	unsigned n_vectors;
+	unsigned n_dims;
+	unsigned size;
 	GLenum datatype;
 	GLuint vbo;
-	unsigned int attribute_pointer;
+	GLuint attribute_pointer;
 } glr_vectorset;
 
 
@@ -111,7 +111,7 @@ glr_vectorset glr_build_tcoords(float *tcoords, size_t n_points);
  * Returns a glr_vectorset configured for a set of (v1, v2, v3) triangluation
  * indices (a triangle list).
  */
-glr_vectorset glr_build_trilist(unsigned int *trilist, size_t n_tris);
+glr_vectorset glr_build_trilist(unsigned *trilist, size_t n_tris);
 
 /*
  * Returns a glr_texture configured for an 8-bit RGBA texture. Note that the
@@ -132,12 +132,12 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
 /*
  * Returns a glr_textured_mesh configured for a mesh with:
  * - a set of double points @ .points (attribute_pointer needs to be set after)
- * - an unsigned int triangle list @ .trilist
+ * - an unsigned triangle list @ .trilist
  * - an 8-bit RGBA texture @ .texture (unit need to be set)
  * - a set of float texture coords @ .tcoords (attribute_pointer as points)
  */
 glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
-		unsigned int* trilist, size_t n_tris, float* tcoords,
+		unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height);
 
 
@@ -187,7 +187,7 @@ void glr_global_state_settings(void);
 void glr_render_scene(glr_scene* scene);
 
 
-void glr_get_framebuffer(unsigned int texture_unit_offset,
+void glr_get_framebuffer(unsigned texture_unit_offset,
 		             GLuint texture_framebuffer, GLenum texture_specification,
 		             GLenum texture_datatype, void* texture);
 

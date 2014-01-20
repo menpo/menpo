@@ -24,29 +24,56 @@ cdef extern from "./c/glrglfw.h":
 
 # we need to be able to hold onto a scene reference
 cdef extern from "./c/glr.h":
-    ctypedef struct glr_textured_mesh:
-        pass
-
-    ctypedef struct glr_camera:
-        pass
-
-    ctypedef struct glr_light:
-        pass
 
     ctypedef struct glr_texture:
-        pass
+        int internal_format
+        int width
+        int height
+        int format
+        int type
+        void* data
+        unsigned texture_ID
+        unsigned texture_unit
+        unsigned sampler
+        unsigned uniform
+
+
+    ctypedef struct glr_vectorset:
+        void* vectors
+        unsigned n_vectors
+        unsigned n_dims
+        unsigned size
+        int datatype
+        unsigned vbo
+        unsigned attribute_pointer
+
+    ctypedef struct glr_textured_mesh:
+        glr_vectorset h_points
+        glr_vectorset tcoords
+        glr_vectorset trilist
+        glr_vectorset texture
+        unsigned vao
+
+
+    ctypedef struct glr_camera:
+        float projectionMatrix [16]
+        float viewMatrix [16]
+
+    ctypedef struct glr_light:
+        float position [4]
 
     ctypedef struct glr_scene:
         glr_textured_mesh mesh
         glr_camera camera
         glr_light light
-        glr_glfw_context*context
-        unsigned int program
-        unsigned int fbo
+        float modelMatrix [16]
+        glr_glfw_context* context
+        unsigned program
+        unsigned fbo
         glr_texture fb_texture
 
     glr_textured_mesh glr_build_textured_mesh(
-            double* points, size_t n_points, unsigned int* trilist,
+            double* points, size_t n_points, unsigned* trilist,
             size_t n_tris, float* tcoords, uint8_t* texture,
             size_t texture_width, size_t texture_height)
 
