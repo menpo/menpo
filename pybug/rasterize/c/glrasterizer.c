@@ -9,6 +9,7 @@
 
 void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 {
+    glr_print_matrix(scene->modelMatrix);
 	printf("return_FB_pixels(...)\n");
 	scene->fb_texture = glr_build_rgba_texture(pixels, scene->context->window_width,
             scene->context->window_height);
