@@ -555,7 +555,7 @@ class MaskedNDImage(AbstractNDImage):
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
-            Default: None
+            Default: 'all'
         trilist: (t, 3) ndarray, Optional
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
@@ -597,10 +597,10 @@ class MaskedNDImage(AbstractNDImage):
 
             Default: None
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks are used.
 
-            Default: None
+            Default: 'all'
         """
         pc = self.landmarks[group][label].lms
         patch_size = np.ceil(patch_size)

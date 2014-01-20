@@ -383,10 +383,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             Default: None
 
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If None
-             all landmarks in the group are used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
 
-            Default: None
+            Default: 'all'
 
         boundary: int, Optional
             An extra padding to be added all around the landmarks bounds.
@@ -431,10 +431,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             Default: None
 
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If None
-             all landmarks in the group are used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
 
-            Default: None
+            Default: 'all'
 
         minimum: bool, Optional
             If True the specified proportion is relative to the minimum
@@ -658,10 +658,10 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
 
             Default: None
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If None
-             all landmarks in the group are used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
 
-            Default: None
+            Default: 'all'
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 
