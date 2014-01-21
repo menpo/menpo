@@ -8,8 +8,10 @@ import pybug.io as pio
 rgb_image = pio.import_builtin_asset('takeo.ppm')
 gray_image = rgb_image.as_greyscale()
 
-gray_template = gray_image.cropped_copy([70, 30], [169, 129])
-rgb_template = rgb_image.cropped_copy([70, 30], [169, 129])
+gray_template = gray_image.cropped_copy(np.array([70, 30]),
+                                        np.array([169, 129]))
+rgb_template = rgb_image.cropped_copy(np.array([70, 30]),
+                                      np.array([169, 129]))
 template_mask = gray_template.mask
 
 initial_params = np.array([0, 0, 0, 0, 70, 30])

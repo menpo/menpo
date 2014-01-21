@@ -609,7 +609,8 @@ class PureAlignmentTransform(AlignableTransform, Viewable):
             Default: ``False``
         """
         if self.n_dims == 2:
-            return AlignmentViewer2d(figure_id, new_figure, self)
+            return AlignmentViewer2d(figure_id, new_figure, self).render(
+                **kwargs)
         else:
             raise ValueError("Only 2D alignments can be viewed currently.")
 
