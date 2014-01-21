@@ -29,7 +29,8 @@ typedef struct {
 
 
 typedef struct {
-	glr_vectorset h_points;
+	glr_vectorset h_points; // float vec4 (homogeneous vertex data)
+	glr_vectorset f3v_data; // float vec3 - arbitray per-vertex data. Written out to fb_f3v_target
 	glr_vectorset tcoords;
 	glr_vectorset trilist;
 	glr_texture texture;
@@ -56,8 +57,10 @@ typedef struct {
 	glr_glfw_context* context;
 	GLuint program;
 	GLuint fbo;
-	// texture that is to be rendered to on the FrameBuffer
-	glr_texture fb_texture;
+    // RGB texture FB target for colour values
+	glr_texture fb_rgb_target;
+    // 3 channel float FB target (writes out f3v_data)
+    glr_texture fb_f3v_target;
 } glr_scene;
 
 

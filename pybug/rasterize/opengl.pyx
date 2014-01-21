@@ -6,8 +6,8 @@
 from libc.stdint cimport uint8_t
 from libcpp cimport bool
 cimport numpy as np
-
 import numpy as np
+
 
 # we need to be able to hold onto a context reference
 cdef extern from "./c/glrglfw.h":
@@ -50,6 +50,7 @@ cdef extern from "./c/glr.h":
 
     ctypedef struct glr_textured_mesh:
         glr_vectorset h_points
+        glr_vectorset f3v_data
         glr_vectorset tcoords
         glr_vectorset trilist
         glr_vectorset texture
@@ -70,7 +71,8 @@ cdef extern from "./c/glr.h":
         glr_glfw_context* context
         unsigned program
         unsigned fbo
-        glr_texture fb_texture
+        glr_texture fb_rgb_target
+        glr_texture fb_f3v_target
 
     glr_textured_mesh glr_build_textured_mesh(
             double* points, size_t n_points, unsigned* trilist,

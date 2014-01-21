@@ -23,17 +23,17 @@ void init_program_to_texture_shader(glr_scene* scene)
 void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 {
 	printf("init_frame_buffer()\n");
-    // set the fb_texture to a rgba_texture
-	scene->fb_texture = glr_build_rgba_texture(pixels,
+    // set the fb_rgb_target to a rgba_texture
+	scene->fb_rgb_target = glr_build_rgba_texture(pixels,
             scene->context->window_width,
             scene->context->window_height);
 	// for a framebuffer we don't actually care about the texture unit.
 	// however, glr_init_texture will bind the unit before performing the
 	// initialization for consistency. We can safely set a (usually illegal)
 	// value of zero here so that the unit binding is basically a no op.
-	scene->fb_texture.unit = 0;
-	glr_init_texture(&scene->fb_texture);
-	glr_init_framebuffer(&scene->fbo, &scene->fb_texture, GL_COLOR_ATTACHMENT0);
+	scene->fb_rgb_target.unit = 0;
+	glr_init_texture(&scene->fb_rgb_target);
+	glr_init_framebuffer(&scene->fbo, &scene->fb_rgb_target, GL_COLOR_ATTACHMENT0);
 	// We set the framebuffer to GL_COLOR_ATTACHMENT0 - anything rendered to
 	// layout(location = 0) in the fragment shader will end up here.
 	GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
@@ -43,7 +43,7 @@ void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 	glGenRenderbuffers(1, &depth_buffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,
-			scene->fb_texture.width, scene->fb_texture.height);
+			scene->fb_rgb_target.width, scene->fb_rgb_target.height);
 	glBindFramebuffer(GL_FRAMEBUFFER, scene->fbo);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 			GL_RENDERBUFFER, depth_buffer);

@@ -342,7 +342,7 @@ void glr_render_to_framebuffer(glr_scene* scene)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // grab the framebuffer content
-	glr_get_framebuffer(&(scene->fb_texture));
+	glr_get_framebuffer(&(scene->fb_rgb_target));
 }
 
 void glr_get_framebuffer(glr_texture* texture)
