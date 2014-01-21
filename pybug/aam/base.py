@@ -11,7 +11,7 @@ from pybug.transform.tps import TPS
 from pybug.model import PCAModel
 from pybug.lucaskanade.residual import LSIntensity
 from pybug.lucaskanade.appearance import AlternatingInverseCompositional
-from pybug.activeappearancemodel.functions import \
+from pybug.aam.functions import \
     (mean_pointcloud, build_reference_frame, build_patch_reference_frame,
      noisy_align, compute_features, compute_error_facesize,
      compute_error_me17, compute_error_p2p, compute_error_rms)
@@ -595,7 +595,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
     Returns
     -------
-    aam : :class:`pybug.activeappearancemodel.AAM`
+    aam : :class:`pybug.aam.AAM`
         The AAM object
     """
 
