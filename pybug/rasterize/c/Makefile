@@ -11,13 +11,15 @@ UNAME := $(shell uname -s)
 
 # OS X overrides
 ifeq ($(UNAME),Darwin)
-	GLFWFLAGS = -L /usr/local/Cellar/glfw3/3.0.3/lib/ -lglfw3 -framework IOKit -framework CoreVideo
+	GLFWFLAGS = -L /usr/local/Cellar/glfw3/3.0.3/lib/ -lglfw3
+	#GLFWFLAGS = -L /usr/local/Cellar/glfw3/3.0.3/lib/ -lglfw3 -framework IOKit -framework CoreVideo
 	OPENGLFLAGS = -framework Cocoa -framework OpenGL
 endif
 
 driver:
 	python shaders.py
-	gcc $(CFLAGS) $(FILES) $(OPENGLFLAGS) $(GLFWFLAGS) $(LDFLAGS) -o driver.exe
+	cc $(CFLAGS) $(FILES) $(GLFWFLAGS) $(LDFLAGS) -o driver.exe
+	#gcc $(CFLAGS) $(FILES) $(OPENGLFLAGS) $(GLFWFLAGS) $(LDFLAGS) -o driver.exe
 
 clean:
 	rm -f *.exe

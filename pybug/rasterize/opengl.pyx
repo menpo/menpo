@@ -1,6 +1,9 @@
 # distutils: language = c
 # distutils: sources = ./pybug/rasterize/c/glrasterizer.c ./pybug/rasterize/c/glr.c ./pybug/rasterize/c/glrglfw.c
-# distutils: libraries = m GLU GL glfw GLEW
+# distutils: libraries = m glfw3 GLEW
+# distutils: extra_compile_args = -std=c99
+
+
 from libc.stdint cimport uint8_t
 from libcpp cimport bool
 
@@ -109,7 +112,7 @@ cdef class OpenGLRasterizer:
             np.ndarray[float, ndim=2, mode="c"] tcoords not None,
             np.ndarray[uint8_t, ndim=3, mode="c"] texture not None):
         cdef np.ndarray[uint8_t, ndim=3, mode='c'] pixels = \
-            np.empty((self.width, self.height, 4), dtype=np.uint8)
+            np.empty((self.height, self.width, 4), dtype=np.uint8)
         self.scene.mesh = glr_build_textured_mesh(
             &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
             &tcoords[0, 0], &texture[0, 0, 0], texture.shape[1],

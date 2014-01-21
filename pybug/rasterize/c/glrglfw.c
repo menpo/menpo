@@ -76,6 +76,9 @@ void glr_glfw_init(glr_glfw_context* context)
     glfwMakeContextCurrent(context->window);
     printf("Have context.\n");
     _glr_glew_init();
+    // trigger a viewport resize (seems to be required in 10.9)
+	glViewport(0, 0, (GLsizei) context->window_width, 
+                     (GLsizei) context->window_height);
 }
 
 
