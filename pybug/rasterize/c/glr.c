@@ -232,7 +232,7 @@ void glr_init_texture(glr_texture *texture) {
     // 2. Get a handle on a piece of OpenGL memory where we can store our
     // texture
 	glGenTextures(1, &(texture->id));
-    // 3. Set the currently active GL_TEXTURE_2D to the texture->id 
+    // 3. Set the currently active GL_TEXTURE_2D to the texture->id
 	glBindTexture(GL_TEXTURE_2D, texture->id);
     // 4. fill the currently active GL_TEXTURE_2D (texture->id thanks to 3.)
     // with our actual pixels
@@ -323,13 +323,12 @@ void glr_render_scene(glr_scene* scene) {
 	glfwSwapBuffers(scene->context->window);
 }
 
-void glr_get_framebuffer(unsigned texture_unit_offset,
-		             GLuint texture_framebuffer, GLenum texture_specification,
-		             GLenum texture_datatype, void* texture) {
-	glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
-	glBindTexture(GL_TEXTURE_2D, texture_framebuffer);
-	glGetTexImage(GL_TEXTURE_2D, 0, texture_specification,
-			      texture_datatype, texture);
+void glr_get_framebuffer(glr_texture* texture)
+{
+	glActiveTexture(GL_TEXTURE0 + texture->unit);
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+	glGetTexImage(GL_TEXTURE_2D, 0, texture->format, texture->type,
+            texture->data);
 	glActiveTexture(GL_TEXTURE0);
 }
 

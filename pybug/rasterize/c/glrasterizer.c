@@ -34,9 +34,7 @@ void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // grab the framebuffer content
-	glr_get_framebuffer(scene->fb_texture.unit, scene->fb_texture.id,
-			scene->fb_texture.format, scene->fb_texture.type,
-			scene->fb_texture.data);
+	glr_get_framebuffer(&(scene->fb_texture));
 
     // clear up our OpenGL state
 	glr_destroy_program();

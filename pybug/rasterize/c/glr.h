@@ -183,9 +183,7 @@ void glr_global_state_settings(void);
 void glr_render_scene(glr_scene* scene);
 
 
-void glr_get_framebuffer(unsigned texture_unit_offset,
-		             GLuint texture_framebuffer, GLenum texture_specification,
-		             GLenum texture_datatype, void* texture);
+void glr_get_framebuffer(glr_texture* texture);
 
 
 void glr_destroy_program(void);
