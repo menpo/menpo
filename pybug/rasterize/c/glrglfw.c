@@ -79,6 +79,8 @@ void glr_glfw_init(glr_glfw_context* context)
     // trigger a viewport resize (seems to be required in 10.9)
 	glViewport(0, 0, (GLsizei) context->window_width, 
                      (GLsizei) context->window_height);
+    // set the global state to the sensible defaults
+    glr_global_state_settings();
 }
 
 

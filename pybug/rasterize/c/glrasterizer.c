@@ -7,6 +7,19 @@
 #include "glrglfw.h"
 #include "shaders.h"
 
+void init_program_to_texture_shader(glr_scene* scene)
+{
+	printf("init_program_and_shaders()\n");
+	GLuint shaders [2];
+	shaders[0] = glr_create_shader_from_string(
+			GL_VERTEX_SHADER, texture_shader_vert_str);
+	shaders[1] = glr_create_shader_from_string(
+			GL_FRAGMENT_SHADER, texture_shader_frag_str);
+	scene->program = glr_create_program(shaders, 2);
+	glDeleteShader(shaders[0]);
+	glDeleteShader(shaders[1]);
+}
+
 void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 {
 	printf("return_FB_pixels(...)\n");
@@ -34,8 +47,6 @@ void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 void init(glr_scene* scene)
 {
 	printf("init()\n");
-	glr_global_state_settings();
-	_init_program_and_shaders(scene);
 	glUseProgram(scene->program);
 	glr_check_error();
 	// now we have an instantiated glr_textured_mesh, we have to choose
@@ -51,25 +62,10 @@ void init(glr_scene* scene)
 	glr_check_error();
 	glr_init_texture(&scene->mesh.texture);
 	glr_check_error();
-	glr_bind_texture_to_program(&scene->mesh.texture, scene->program);
-	glr_check_error();
 	_init_frame_buffer(scene);
 	glr_check_error();
 }
 
-
-void _init_program_and_shaders(glr_scene* scene)
-{
-	printf("init_program_and_shaders()\n");
-	GLuint shaders [2];
-	shaders[0] = glr_create_shader_from_string(
-			GL_VERTEX_SHADER, texture_shader_vert_str);
-	shaders[1] = glr_create_shader_from_string(
-			GL_FRAGMENT_SHADER, texture_shader_frag_str);
-	scene->program = glr_create_program(shaders, 2);
-	glDeleteShader(shaders[0]);
-	glDeleteShader(shaders[1]);
-}
 
 void _init_frame_buffer(glr_scene* scene)
 {

@@ -35,8 +35,8 @@ cdef extern from "./c/glr.h":
         int format
         int type
         void* data
+        unsigned unit
         unsigned texture_ID
-        unsigned texture_unit
         unsigned sampler
         unsigned uniform
 
@@ -84,7 +84,8 @@ cdef extern from "./c/glr.h":
 
 # externally declare the C structs we need
 cdef extern from "./c/glrasterizer.h":
-    void return_FB_pixels(glr_scene*scene, uint8_t*pixels)
+    void return_FB_pixels(glr_scene* scene, uint8_t* pixels)
+    void init_program_to_texture_shader(glr_scene* scene)
 
 
 cdef class OpenGLRasterizer:
@@ -103,6 +104,8 @@ cdef class OpenGLRasterizer:
         # init our context
         glr_glfw_init(&self.context)
         self.scene.context = &self.context
+        # build the program and set it
+        init_program_to_texture_shader(&self.scene)
         self.width = width
         self.height = height
 
@@ -156,3 +159,4 @@ cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
     for i in range(4):
         for j in range(4):
             tgt[i * 4 + j] = src[i, j]
+

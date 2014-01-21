@@ -262,15 +262,6 @@ void glr_init_buffers_from_textured_mesh(glr_textured_mesh *mesh) {
 	glBindVertexArray(0);
 }
 
-void glr_bind_texture_to_program(glr_texture *texture, GLuint program) {
-    // bind the texture to a uniform called "texture_image" which can be
-    // accessed from shaders.
-    // this uniform is pointed to texture->unit, which has an active
-    // bound GL_TEXTURE_2D  texture (on texture_ID).
-	texture->uniform = glGetUniformLocation(program, "texture_image");
-	glUniform1i(texture->uniform, texture->unit);
-}
-
 void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
 {
 	glGenFramebuffers(1, fbo);
@@ -320,10 +311,12 @@ void glr_render_scene(glr_scene* scene) {
     uniform = glGetUniformLocation(scene->program, "lightPosition");
     glUniform4fv(uniform, 1, scene->light.position);
 
+    // TEXTURE UNIFORM
+	uniform = glGetUniformLocation(scene->program, "texture_image");
+	glUniform1i(uniform, scene->mesh.texture.unit);
+
 	// BIND VBO + TEXTURES, DRAW
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
-	glActiveTexture(GL_TEXTURE0 + scene->mesh.texture.unit);
-	glBindTexture(GL_TEXTURE_2D, scene->mesh.texture.texture_ID);
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);

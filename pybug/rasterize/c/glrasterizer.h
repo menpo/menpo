@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include "glr.h"
 
+void init_program_to_texture_shader(glr_scene* scene);
+
 void return_FB_pixels(glr_scene* scene, uint8_t *pixels);
 
 void init(glr_scene* scene);
-
-void _init_program_and_shaders(glr_scene* scene);
 
 void _init_frame_buffer(glr_scene* scene);
 

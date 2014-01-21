@@ -3,7 +3,6 @@
 
 
 typedef struct {
-	unsigned unit;
 	GLint internal_format;
 	GLsizei width;
 	GLsizei height;
@@ -11,6 +10,7 @@ typedef struct {
 	GLenum type;
 	GLvoid* data;
 	// texture binding variables
+	GLenum unit;
 	GLuint texture_ID;
 	GLuint texture_unit;
 	GLuint sampler; // stores texture traits.
@@ -169,9 +169,6 @@ void glr_init_buffers_from_textured_mesh(glr_textured_mesh* mesh);
 
 
 void glr_init_texture(glr_texture *texture);
-
-
-void glr_bind_texture_to_program(glr_texture *texture, GLuint program);
 
 
 void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment);
