@@ -1,23 +1,40 @@
 from setuptools import setup, find_packages
+import sys
 from Cython.Build import cythonize
 import numpy as np
 from pybug.rasterize.c.shaders import build_c_shaders
 
-build_c_shaders()
-
-cpp_cython_modules = ["pybug/geodesics/kirsanov.pyx",
+# ---- C/C++ EXTENSIONS ---- #
+cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/cpptrimesh.pyx",
                   "pybug/shape/mesh/normals.pyx",
                   "pybug/io/mesh/assimp.pyx",
                   "pybug/interpolation/cinterp.pyx",
                   "pybug/transform/fastpwa.pyx"]
-c_cython_modules = ["pybug/rasterize/opengl.pyx"]
 
-cpp_exts = cythonize(cpp_cython_modules, nthreads=2, quiet=True,
-                     language='c++')
-c_exts = cythonize(c_cython_modules, nthreads=2, quiet=True, language='c')
-for c_ext in c_exts:
-    c_ext.extra_compile_args += ['-std=c99']
+cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
+
+
+# ---- OPENGL C EXTENSIONS ---- #
+# first, convert the plain text shaders into C string literals
+build_c_shaders()
+
+opengl_c_cython_modules = ["pybug/rasterize/opengl.pyx"]
+opengl_c_exts = cythonize(opengl_c_cython_modules, nthreads=2, quiet=True)
+
+# unfortunately, OpenGL is just different on OS X/Linux
+if sys.platform.startswith('linux'):
+    # need to add the right libs
+    for c_ext in opengl_c_exts:
+        print c_ext.libraries
+        c_ext.libraries += ['GL', 'GLU']
+elif sys.platform == 'darwin':
+    pass
+    # TODO why does it compile without these on OS X?!
+    # for c_ext in opengl_c_exts:
+    #     c_ext.extra_compile_args += ['-framework OpenGL',
+    #                                  '-framework Cocoa', '-framework IOKit',
+    #                                  '-framework CoreVideo']
 
 setup(name='pybug',
       version='0.2',
@@ -25,7 +42,7 @@ setup(name='pybug',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=[np.get_include()],
-      ext_modules=cpp_exts + c_exts,
+      ext_modules=cython_exts + opengl_c_exts,
       packages=find_packages(),
       install_requires=['Cython>=0.18',
                         'decorator>=3.4.0',
