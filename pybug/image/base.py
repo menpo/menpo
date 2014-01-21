@@ -61,7 +61,7 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             raise ValueError("Abstract Images have to build from at least 3D"
                              " image data arrays (2D + n_channels) - a {} "
                              "dim array was provided".format(image_data.ndim))
-        self.pixels = image_data
+        self.pixels = image_data.copy()
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel):
