@@ -158,7 +158,7 @@ glr_scene glr_build_scene(void)
     return scene;
 }
 
-void glr_init_array_buffer_from_vectorset(glr_vectorset *vector) {
+void glr_init_and_bind_array_buffer(glr_vectorset *vector) {
 	glGenBuffers(1, &(vector->vbo));
 	glBindBuffer(GL_ARRAY_BUFFER, vector->vbo);
 	glBufferData(GL_ARRAY_BUFFER,
@@ -167,16 +167,14 @@ void glr_init_array_buffer_from_vectorset(glr_vectorset *vector) {
 	glEnableVertexAttribArray(vector->attribute_pointer);
 	glVertexAttribPointer(vector->attribute_pointer, vector->n_dims,
 						  vector->datatype, GL_FALSE, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void glr_init_element_buffer_from_vectorset(glr_vectorset *vector) {
+void glr_init_and_bind_element_buffer(glr_vectorset *vector) {
 	glGenBuffers(1, &(vector->vbo));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vector->vbo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 			(vector->size) * (vector->n_vectors) * (vector->n_dims),
 			vector->vectors, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // TODO make the texture sampler a seperate customizable thing.
@@ -252,14 +250,23 @@ void glr_init_texture(glr_texture *texture) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void glr_init_buffers_from_textured_mesh(glr_textured_mesh *mesh) {
-	printf("glr_init_buffers_from_textured_mesh(...)\n");
+void glr_init_vao(glr_textured_mesh *mesh) {
+	printf("glr_init_vao(...)\n");
+    // for simplicity, all our VBO/attribute bindings are wrapped in a
+    // Vertex Array object.
+    // 1. Generate and bind a VAO.
 	glGenVertexArrays(1, &(mesh->vao));
 	glBindVertexArray(mesh->vao);
-	glr_init_array_buffer_from_vectorset(&mesh->h_points);
-	glr_init_array_buffer_from_vectorset(&mesh->tcoords);
-	glr_init_element_buffer_from_vectorset(&mesh->trilist);
+    // 2. Make all our intialization code run. The VAO will track buffer
+    // attribute bindings for us.
+	glr_init_and_bind_array_buffer(&mesh->h_points);
+	glr_init_and_bind_array_buffer(&mesh->tcoords);
+	glr_init_and_bind_element_buffer(&mesh->trilist);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->trilist.vbo);
+    // 3. Unbind the VAO.
 	glBindVertexArray(0);
+    // now before rendering we only need to glBindVertexArray(mesh->vao)
+    // - all the above attributes will be set for us.
 }
 
 void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
@@ -293,13 +300,16 @@ void glr_global_state_settings(void) {
 void glr_render_scene(glr_scene* scene) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(scene->program);
+    // this call to bind vertex array means trilist, points,
+    // and tcoords are all bound to the attributes and ready to go
 	glBindVertexArray(scene->mesh.vao);
+
+    // BIND UNIFORMS
     GLuint uniform;
 
 	// CAMERA UNIFORMS
     uniform = glGetUniformLocation(scene->program, "viewMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.viewMatrix);
-
 	uniform = glGetUniformLocation(scene->program, "projectionMatrix");
 	glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.projectionMatrix);
 
@@ -316,9 +326,10 @@ void glr_render_scene(glr_scene* scene) {
 	glUniform1i(uniform, scene->mesh.texture.unit);
 
 	// BIND VBO + TEXTURES, DRAW
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
+    // now we're done, can disable the vertex array (for safety)
 	glBindVertexArray(0);
 	glfwSwapBuffers(scene->context->window);
 }
@@ -337,17 +348,13 @@ void glr_destroy_program(void) {
 }
 
 void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh) {
-	glDisableVertexAttribArray(mesh->h_points.attribute_pointer);
-	glDisableVertexAttribArray(mesh->tcoords.attribute_pointer);
-	// TODO this needs to be the color array
-	glDisableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &(mesh->h_points.vbo)); // _points_buffer
-	//glDeleteBuffers(1, &_color_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &(mesh->trilist.vbo));
-	// now are buffers are all cleared, we can unbind and delete the vao
+    // ensure the VAO is unbound.
 	glBindVertexArray(0);
+    // delete our buffers
+	glDeleteBuffers(1, &(mesh->h_points.vbo));
+	glDeleteBuffers(1, &(mesh->trilist.vbo));
+	glDeleteBuffers(1, &(mesh->tcoords.vbo));
+	// now the buffers are all cleared, we can unbind and delete the vao
 	glDeleteVertexArrays(1, &(mesh->vao));
 }
 

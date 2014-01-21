@@ -91,10 +91,10 @@ void init(glr_scene* scene)
 	// input 1...
 	scene->mesh.h_points.attribute_pointer = 0;
 	scene->mesh.tcoords.attribute_pointer = 1;
-	// assign the meshes texture to be on unit 1 in initialize the buffer for
+	// assign the meshes texture to be on unit 1 and initialize the buffer for
 	// it
 	scene->mesh.texture.unit = 1;
-	glr_init_buffers_from_textured_mesh(&scene->mesh);
+	glr_init_vao(&scene->mesh);
 	glr_check_error();
 	glr_init_texture(&scene->mesh.texture);
 	glr_check_error();

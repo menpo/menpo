@@ -158,13 +158,13 @@ glr_camera glr_build_camera(float* projectionMatrix, float* modelMatrix);
 glr_scene glr_build_scene(void);
 
 
-void glr_init_array_buffer_from_vectorset(glr_vectorset* vector);
+void glr_init_and_bind_array_buffer(glr_vectorset* vector);
 
 
-void glr_init_element_buffer_from_vectorset(glr_vectorset* vector);
+void glr_init_and_bind_element_buffer(glr_vectorset* vector);
 
 
-void glr_init_buffers_from_textured_mesh(glr_textured_mesh* mesh);
+void glr_init_vao(glr_textured_mesh* mesh);
 
 
 void glr_init_texture(glr_texture *texture);
