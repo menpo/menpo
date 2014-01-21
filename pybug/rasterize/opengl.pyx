@@ -83,6 +83,7 @@ cdef extern from "./c/glr.h":
 cdef extern from "./c/glrasterizer.h":
     void return_FB_pixels(glr_scene* scene, uint8_t* pixels)
     void init_program_to_texture_shader(glr_scene* scene)
+    void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 
 
 cdef class OpenGLRasterizer:
@@ -94,6 +95,8 @@ cdef class OpenGLRasterizer:
     cdef glr_scene scene
     cdef int width
     cdef int height
+    # store the pixels perminantly
+    cdef uint8_t[:, :, ::1] pixels
 
     def __cinit__(self, int width, int height):
         self.scene = glr_build_scene()
@@ -105,20 +108,21 @@ cdef class OpenGLRasterizer:
         init_program_to_texture_shader(&self.scene)
         self.width = width
         self.height = height
+        # store out the FB pixels and wire up the Framebuffer
+        self.pixels = np.empty((self.height, self.width, 4), dtype=np.uint8)
+        init_frame_buffer(&self.scene, &self.pixels[0, 0, 0])
 
     def render_offscreen_rgb(self,
             np.ndarray[double, ndim=2, mode="c"] points not None,
             np.ndarray[unsigned, ndim=2, mode="c"] trilist not None,
             np.ndarray[float, ndim=2, mode="c"] tcoords not None,
             np.ndarray[uint8_t, ndim=3, mode="c"] texture not None):
-        cdef np.ndarray[uint8_t, ndim=3, mode='c'] pixels = \
-            np.empty((self.height, self.width, 4), dtype=np.uint8)
         self.scene.mesh = glr_build_textured_mesh(
             &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
             &tcoords[0, 0], &texture[0, 0, 0], texture.shape[1],
             texture.shape[0])
-        return_FB_pixels(&self.scene, &pixels[0, 0, 0])
-        return pixels
+        return_FB_pixels(&self.scene, &self.pixels[0, 0, 0])
+        return np.array(self.pixels)
 
     cpdef get_model_matrix(self):
         return _copy_float_mat4(self.scene.modelMatrix)
