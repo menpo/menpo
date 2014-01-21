@@ -16,5 +16,5 @@ smooth out vec3 linearMappingCoord;
 void main() {
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * point;
     tcoord = tcoordIn;
-    linearMappingCoord = linearMappingCoordIn;
+    linearMappingCoord = point.xyz;
 }

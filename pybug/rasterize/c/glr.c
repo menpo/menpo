@@ -79,7 +79,7 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
 	glr_texture texture_tmp;
 	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
 	// 999 as a safety - must be changed!
-	texture_tmp.internal_format = GL_RGB32F_ARB;
+	texture_tmp.internal_format = GL_RGB32F;
 	texture_tmp.width = width;
 	texture_tmp.height = height;
 	texture_tmp.format = GL_RGB;
@@ -96,6 +96,16 @@ glr_vectorset glr_build_vertices(double* points, size_t n_points) {
 	points_tmp.size = sizeof(GLdouble);
 	points_tmp.vectors = points;
 	return points_tmp;
+}
+
+glr_vectorset glr_build_f3v_data(float* f3v_data, size_t n_points) {
+	glr_vectorset f3v_data_tmp;
+	f3v_data_tmp.datatype = GL_FLOAT;
+	f3v_data_tmp.n_dims = 3;
+	f3v_data_tmp.n_vectors = n_points;
+	f3v_data_tmp.size = sizeof(GLfloat);
+	f3v_data_tmp.vectors = f3v_data;
+	return f3v_data_tmp;
 }
 
 glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points) {
@@ -118,11 +128,12 @@ glr_vectorset glr_build_trilist(unsigned* trilist, size_t n_tris) {
 	return trilist_tmp;
 }
 
-glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
-		unsigned* trilist, size_t n_tris, float* tcoords,
+glr_textured_mesh glr_build_textured_mesh(double* points, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height) {
 	glr_textured_mesh textured_mesh;
 	textured_mesh.vertices = glr_build_vertices(points, n_points);
+	textured_mesh.f3v_data = glr_build_f3v_data(f3v_data, n_points);
 	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
 	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
 	textured_mesh.texture = glr_build_rgba_texture(texture,
@@ -260,6 +271,7 @@ void glr_init_vao(glr_textured_mesh *mesh) {
     // 2. Make all our intialization code run. The VAO will track buffer
     // attribute bindings for us.
 	glr_init_and_bind_array_buffer(&mesh->vertices);
+	glr_init_and_bind_array_buffer(&mesh->f3v_data);
 	glr_init_and_bind_array_buffer(&mesh->tcoords);
 	glr_init_and_bind_element_buffer(&mesh->trilist);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->trilist.vbo);
@@ -341,7 +353,8 @@ void glr_render_to_framebuffer(glr_scene* scene)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // grab the framebuffer content
-	glr_get_framebuffer(&(scene->fb_rgb_target));
+	glr_get_framebuffer(&scene->fb_rgb_target);
+	glr_get_framebuffer(&scene->fb_f3v_target);
 }
 
 void glr_get_framebuffer(glr_texture* texture)
@@ -358,6 +371,7 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh) {
 	glBindVertexArray(0);
     // delete our buffers
 	glDeleteBuffers(1, &(mesh->vertices.vbo));
+	glDeleteBuffers(1, &(mesh->f3v_data.vbo));
 	glDeleteBuffers(1, &(mesh->trilist.vbo));
 	glDeleteBuffers(1, &(mesh->tcoords.vbo));
 	// now the buffers are all cleared, we can unbind and delete the vao

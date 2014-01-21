@@ -102,6 +102,13 @@ GLuint glr_create_program(GLuint *shaders, size_t n_shaders);
 glr_vectorset glr_build_vertices(double *points, size_t n_points);
 
 /*
+ * Returns a glr_vectorset configured for a set of aribrary (X, Y, Z)
+ * points of type float.
+ * Note that the attribute_pointer needs to be set before being bound to the
+ * OpenGL context.
+ */
+glr_vectorset glr_build_f3v_data(float* f3v_data, size_t n_points);
+/*
  * Returns a glr_vectorset configured for a set of float (S,T) texture
  * coordinates.
  * Note that the attribute_pointer needs to be set before being bound to the
@@ -138,8 +145,8 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
  * - an 8-bit RGBA texture @ .texture (unit need to be set)
  * - a set of float texture coords @ .tcoords (attribute_pointer as points)
  */
-glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
-		unsigned* trilist, size_t n_tris, float* tcoords,
+glr_textured_mesh glr_build_textured_mesh(double* points, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height);
 
 

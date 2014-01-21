@@ -75,7 +75,8 @@ cdef extern from "./c/glr.h":
         glr_texture fb_f3v_target
 
     glr_textured_mesh glr_build_textured_mesh(
-            double* points, size_t n_points, unsigned* trilist,
+            double* points, float* f3v_data,
+            size_t n_points, unsigned* trilist,
             size_t n_tris, float* tcoords, uint8_t* texture,
             size_t texture_width, size_t texture_height)
 
@@ -115,22 +116,24 @@ cdef class OpenGLRasterizer:
         # store out the FB pixels and wire up the Framebuffer
         self.rgb_pixels = np.empty((self.height, self.width, 4),
                                    dtype=np.uint8)
-        self.f3v_pixels = np.empty((self.height, self.width, 4),
+        self.f3v_pixels = np.empty((self.height, self.width, 3),
                                    dtype=np.float32)
         init_frame_buffer(&self.scene, &self.rgb_pixels[0, 0, 0],
                           &self.f3v_pixels[0, 0, 0])
 
     def render_offscreen_rgb(self,
             np.ndarray[double, ndim=2, mode="c"] points not None,
+            np.ndarray[float, ndim=2, mode="c"] f3v_data not None,
             np.ndarray[unsigned, ndim=2, mode="c"] trilist not None,
             np.ndarray[float, ndim=2, mode="c"] tcoords not None,
             np.ndarray[uint8_t, ndim=3, mode="c"] texture not None):
         self.scene.mesh = glr_build_textured_mesh(
-            &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
-            &tcoords[0, 0], &texture[0, 0, 0], texture.shape[1],
-            texture.shape[0])
+            &points[0, 0], &f3v_data[0, 0], points.shape[0],
+            &trilist[0, 0], trilist.shape[0], &tcoords[0, 0],
+            &texture[0, 0, 0], texture.shape[1], texture.shape[0])
         render_texture_shader_to_fb(&self.scene)
-        return np.array(self.rgb_pixels), np.array(self.f3v_pixels)
+        return np.array(self.rgb_pixels), np.array(self.f3v_pixels, dtype=np
+        .float32)
 
     cpdef get_model_matrix(self):
         return _copy_float_mat4(self.scene.modelMatrix)
@@ -180,3 +183,4 @@ cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
             # note that we transpose the matrix in and out of OpenGL, see
             # http://stackoverflow.com/a/17718408
             tgt[i * 4 + j] = src[j, i]
+

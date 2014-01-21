@@ -49,7 +49,7 @@ void init_frame_buffer(glr_scene* scene, uint8_t* rgb_pixels, float* f3v_pixels)
 	// The float framebuffer is attached to GL_COLOR_ATTACHMENT1 - anything rendered to
 	// layout(location = 1) in the fragment shader will end up here.
 	GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-	glr_register_draw_framebuffers(scene->fbo, 1, buffers);
+	glr_register_draw_framebuffers(scene->fbo, 2, buffers);
 	// now, the depth buffer
 	GLuint depth_buffer;
 	glGenRenderbuffers(1, &depth_buffer);
@@ -95,9 +95,10 @@ void init(glr_scene* scene)
 	// now we have an instantiated glr_textured_mesh, we have to choose
 	// some the OpenGL properties and set them. We decide that the vertices
 	// should be bound to input 0 into the shader, while tcoords should be
-	// input 1...
+	// input 1, and the float 3 vec is 2.
 	scene->mesh.vertices.attribute_pointer = 0;
 	scene->mesh.tcoords.attribute_pointer = 1;
+	scene->mesh.f3v_data.attribute_pointer = 2;
 	// assign the meshes texture to be on unit 1 and initialize the buffer for
 	// it
 	scene->mesh.texture.unit = 1;
