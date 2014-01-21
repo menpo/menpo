@@ -3,11 +3,10 @@
 # distutils: libraries = m GLEW
 # distutils: extra_compile_args = -std=c99
 
-
 from libc.stdint cimport uint8_t
 from libcpp cimport bool
-
 cimport numpy as np
+
 import numpy as np
 
 # we need to be able to hold onto a context reference
@@ -17,7 +16,7 @@ cdef extern from "./c/glrglfw.h":
         int window_height
         const char*title
         bool offscreen
-        void*window
+        void* window
 
     cdef glr_glfw_context glr_build_glfw_context_offscreen(int width,
                                                            int height)
@@ -40,7 +39,6 @@ cdef extern from "./c/glr.h":
         unsigned sampler
         unsigned uniform
 
-
     ctypedef struct glr_vectorset:
         void* vectors
         unsigned n_vectors
@@ -56,7 +54,6 @@ cdef extern from "./c/glr.h":
         glr_vectorset trilist
         glr_vectorset texture
         unsigned vao
-
 
     ctypedef struct glr_camera:
         float projectionMatrix [16]
@@ -82,7 +79,7 @@ cdef extern from "./c/glr.h":
 
     glr_scene glr_build_scene()
 
-# externally declare the C structs we need
+
 cdef extern from "./c/glrasterizer.h":
     void return_FB_pixels(glr_scene* scene, uint8_t* pixels)
     void init_program_to_texture_shader(glr_scene* scene)
@@ -132,31 +129,42 @@ cdef class OpenGLRasterizer:
     cpdef get_projection_matrix(self):
         return _copy_float_mat4(self.scene.camera.projectionMatrix)
 
-    def set_model_matrix(self,
-                           np.ndarray[float, ndim=2, mode="c"] m not None):
+    cpdef set_model_matrix(self,
+                           np.ndarray[float, ndim=2, mode="c"] m):
         return _set_float_mat4(m, self.scene.modelMatrix)
 
-    def set_view_matrix(self,
-                          np.ndarray[float, ndim=2, mode="c"] m not None):
+    cpdef set_view_matrix(self,
+                          np.ndarray[float, ndim=2, mode="c"] m):
         return _set_float_mat4(m, self.scene.camera.viewMatrix)
 
-    def set_projection_matrix(self,
-                    np.ndarray[float, ndim=2, mode="c"] m not None):
+    cpdef set_projection_matrix(self,
+                    np.ndarray[float, ndim=2, mode="c"] m):
         return _set_float_mat4(m, self.scene.camera.projectionMatrix)
 
     def __del__(self):
         glr_glfw_terminate(&self.context)
 
 cdef _copy_float_mat4(float* src):
-    cdef np.ndarray[float, ndim=2, mode='c'] tgt = np.empty((4, 4),
-                                                            dtype=np.float32)
+    r"""Copy a 4x4 float OpenGL matrix from C to Numpy
+
+    Deals with transposing the array so as to be correct in Numpy
+    """
+    cdef np.ndarray[float, ndim=2, mode='c'] tgt
+    tgt = np.empty((4, 4), dtype=np.float32)
     for i in range(4):
         for j in range(4):
-            tgt[i, j] = src[i * 4 + j]
+            # note that we transpose the matrix in and out of OpenGL, see
+            # http://stackoverflow.com/a/17718408
+            tgt[j, i] = src[i * 4 + j]
     return tgt
 
 cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
+    r"""Set a 4x4 float OpenGL matrix from numpy array.
+
+    Deals with transposing the array so as to be correct in OpenGL
+    """
     for i in range(4):
         for j in range(4):
-            tgt[i * 4 + j] = src[i, j]
-
+            # note that we transpose the matrix in and out of OpenGL, see
+            # http://stackoverflow.com/a/17718408
+            tgt[i * 4 + j] = src[j, i]
