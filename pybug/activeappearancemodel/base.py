@@ -44,20 +44,22 @@ class AAM(object):
         images from which the AAM was constructed.
     interpolator:'scipy' or 'cinterp' or func
         The interpolator used in the previous warps.
-    patch_size: tuple or None
+    patch_size: tuple of ints or None
         If None, the AAM does not use a Patch-Based representation for its
         appearance models. If tuple, it specifies the size of the patches
         used to build the AAM.
     """
 
     def __init__(self, shape_model_pyramid, appearance_model_pyramid,
-                 reference_shape, features, downscale, transform_cls,
-                 interpolator, patch_size):
+                 reference_shape, features, downscale,
+                 scaled_reference_frames, transform_cls, interpolator,
+                 patch_size):
         self.shape_model_pyramid = shape_model_pyramid
         self.appearance_model_pyramid = appearance_model_pyramid
         self.reference_shape = reference_shape
         self.features = features
         self.downscale = downscale
+        self.scaled_reference_frame = scaled_reference_frames
         self.transform_cls = transform_cls
         self.interpolator = interpolator
         self.patch_size = patch_size
@@ -142,10 +144,12 @@ class AAM(object):
             The :class:`pybug.lucakanade.appearance` algorithm to be used.
 
             Default: AlternatingInverseCompositional
+
         residual: :class:`pybug.lucakanade.residual`, optional
             The :class:`pybug.lucakanade.residual` residual to be used
 
             Default: 'LSIntensity'
+
         md_transform_cls: tuple, optional
                           (:class:`pybug.transform.ModelDrivenTransform`,
                            :class:`pybug.transform.Affine`)
@@ -156,21 +160,32 @@ class AAM(object):
             :class:`pybug.transform.Affine` to be used as a global transform.
 
             Default: (OrthoMDTransform, SimilarityTransform)
-        n_shape: int or list of ints, optional
-            The number of shape components to be used at each pyramidal
-            level.
-        n_appearance: int or list of ints, optional
-            The number of appearance components to be used at each pyramidal
-            level.
+
+        n_shape: list, optional
+            List containing the number of shape components to be used at each
+            pyramidal level.
+
+            Default: None
+
+        n_appearance: list, optional
+            List containing the number of appearance components to be used at
+            each pyramidal level.
+
+            Default: None
         """
-        if len(n_shape) is not 1:
-            if len(n_shape) is not self.n_levels:
-                ValueError('n_shape must contain either 1 '
-                           'or {} elements'.format(self.n_levels))
-        if len(n_appearance) is not 1:
-            if len(n_appearance) is not self.n_levels:
-                ValueError('n_appearance must contain either 1 '
-                           'or {} elements'.format(self.n_levels))
+        if n_shape is None:
+            n_shape = [sm.n_active_components
+                       for sm in self.shape_model_pyramid]
+        if n_appearance is None:
+            n_appearance = [am.n_active_components
+                            for am in self.appearance_model_pyramid]
+
+        if len(n_shape) is not self.n_levels:
+            ValueError('n_shape must contain'
+                       '{} elements'.format(self.n_levels))
+        if len(n_appearance) is not self.n_levels:
+                ValueError('n_appearance must contain'
+                           '{} elements'.format(self.n_levels))
 
         if len(n_shape) is 1 and self.n_levels > 1:
             n_shape = [n_shape for _ in range(self.n_levels)]
@@ -178,7 +193,6 @@ class AAM(object):
             n_appearance = [n_appearance for _ in range(self.n_levels)]
 
         self._lk_pyramid = []
-
         for j, (am, sm) in enumerate(zip(self.appearance_model_pyramid,
                                          self.shape_model_pyramid)):
 
@@ -205,42 +219,19 @@ class AAM(object):
 
             self._lk_pyramid.append(lk_algorithm(am, res, md_transform))
 
-    def _prepare_image(self, image, group, label):
-        r"""
-        Prepares an image to be be fitted by the AAM. The image is first
-        rescaled wrt the reference landmarks, then a gaussian
-        pyramid is computed and, finally, features are extracted
-        from each pyramidal element.
-
-        Parameters
-        -----------
-        image: :class:`pybug.image.IntensityImage`
-            The image to be fitted.
-
-        Returns
-        -------
-        image_pyramid: list of :class:`pybug.image.MaskedNDImage`
-            The image representation used by the fitting algorithm.
-        """
-        image = image.rescale_to_reference_landmarks(self.reference_shape,
-                                                     group=group, label=label)
-        pyramid = image.gaussian_pyramid(n_levels=self.n_levels)
-        image_pyramid = [compute_features(p, self.features)
-                         for p in pyramid]
-        image_pyramid.reverse()
-        return image_pyramid
-
     def _lk_fit(self, image_pyramid, initial_landmarks, max_iters=20):
         r"""
-        Fit the AAM to an image using Lucas-Kanade.
+        Fits the AAM to an image using Lucas-Kanade.
 
         Parameters
         -----------
         image_pyramid: :class:`pybug.image.MaskedNDImage` or list
             The image representation used by the fitting algorithm.
+
         initial_landmarks: :class:`pybug.shape.PointCloud`
             The initial position of the landmarks from which the fitting
             procedure is going to start from.
+
         max_iters: int, optional
             The maximum number of iterations per pyramidal level
 
@@ -261,50 +252,96 @@ class AAM(object):
             md_transform = lk.align(i, lk.transform.as_vector(),
                                     max_iters=max_iters)
             optimal_transforms.append(md_transform)
-            target = Scale(self.downscale, n_dims=md_transform.n_dims).apply(
-                md_transform.target)
+
+            if not self.scaled_reference_frame:
+                target = Scale(
+                    self.downscale, n_dims=md_transform.n_dims).apply(
+                        md_transform.target)
 
         return optimal_transforms
+
+    def _prepare_image(self, image, group, label):
+        r"""
+        Prepares an image to be be fitted by the AAM. The image is first
+        rescaled wrt the reference landmarks, then a gaussian
+        pyramid is computed and, finally, features are extracted
+        from each pyramidal element.
+
+        Parameters
+        -----------
+        image: :class:`pybug.image.IntensityImage`
+            The image to be fitted.
+
+        Returns
+        -------
+        image_pyramid: list of :class:`pybug.image.MaskedNDImage`
+            The image representation used by the fitting algorithm.
+        """
+        image = image.rescale_to_reference_landmarks(self.reference_shape,
+                                                     group=group, label=label)
+
+        if self.scaled_reference_frame:
+            pyramid = image.smoothing_pyramid(n_levels=self.n_levels,
+                                              downscale=self.downscale)
+        else:
+            pyramid = image.gaussian_pyramid(n_levels=self.n_levels,
+                                             downscale=self.downscale)
+
+        image_pyramid = [compute_features(p, self.features)
+                         for p in pyramid]
+        image_pyramid.reverse()
+        return image_pyramid
 
     def lk_fit_landmarked_image(self, image, group=None, label='all',
                                 runs=10, noise_std=0.05, rotation=False,
                                 max_iters=20, verbose=True, view=False):
         r"""
-        Fit the AAM to an image using Lucas-Kanade.
+        Fits the AAM to an image using Lucas-Kanade.
 
         Parameters
         -----------
         image: :class:`pybug.image.IntensityImage`
             The landmarked image to be fitted.
+
         group : string, Optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
+
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: 'all'
+
         noise_std: float
             The standard deviation of the white noise used to perturb the
             landmarks.
 
             Default: 0.05
+
         rotation: boolean
             If False the second parameter of the SimilarityTransform,
             which captures captures inplane rotations, is set to 0.
 
             Default:False
+
         max_iters: int, optional
             The number of iterations per pyramidal level
 
             Default: 20
+
         verbose: boolean
             If True the error between the ground truth landmarks and the
             result of the fitting is displayed.
+
+            Default: True
+
         view: boolean
             If True the final result of the fitting procedure is shown.
+
+            Default: False
 
         Returns
         -------
@@ -312,8 +349,6 @@ class AAM(object):
                              :class:`pybug.transform.ModelDrivenTransform`
             A list containing the optimal transform per pyramidal level.
         """
-
-        scale = self.downscale ** (self.n_levels-1)
 
         image_pyramid = self._prepare_image(image, group=group, label=label)
 
@@ -342,13 +377,17 @@ class AAM(object):
                                                original_landmarks.points)
                 print ' - run {} of {} with error: {}'.format(j+1, runs,
                                                               error)
+            if self.scaled_reference_frame:
+                scale = 1
+            else:
+                scale = self.downscale ** (self.n_levels-1)
             image.landmarks['initial_{}'.format(j)] = \
                 affine_correction.apply(UniformScale(scale, 2).apply(
                     initial_landmarks))
             image.landmarks['fitted_{}'.format(j)] = fitted_landmarks
             if view:
-                # image.landmarks['initial_{}'.format(j)].view(
-                #    include_labels=False)
+                image.landmarks['initial_{}'.format(j)].view(
+                    include_labels=False)
                 image.landmarks['fitted_{}'.format(j)].view(
                     include_labels=False)
                 plt.show()
@@ -359,41 +398,52 @@ class AAM(object):
                                    runs=10, noise_std=0.5, rotation=False,
                                    max_iters=20, verbose=True, view=False):
         r"""
-        Fit the AAM to a list of landmark images using Lukas-Kanade.
+        Fits the AAM to a list of landmark images using Lukas-Kanade.
 
         Parameters
         -----------
         images: list of :class:`pybug.image.IntensityImage`
             The list of landmarked images to be fitted.
+
         group : string, Optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
+
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: 'all'
+
         noise_std: float
             The standard deviation of the white noise used to perturb the
             landmarks.
 
             Default: 0.05
+
         rotation: boolean
             If False the second parameter of the SimilarityTransform,
             which captures captures inplane rotations, is set to 0.
 
             Default:False
+
         max_iters: int, optional
             The number of iterations per pyramidal level
 
             Default: 20
+
         verbose: boolean
             If True the error between the ground truth landmarks and the
             result of the fitting is displayed.
+
+            Default: True
+
         view: boolean
             If True the final result of the fitting procedure is shown.
+
+            Default: False
 
         Returns
         -------
@@ -416,66 +466,140 @@ class AAM(object):
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
-                reference_shape=None, scale=1,
-                boundary=3, trilist=None,
-                patch_size=None, n_levels=3,
-                scaled_reference_frames=False, downscale=2,
-                transform_cls=PiecewiseAffineTransform,
-                features=None,
+                reference_shape=None, scale=1, boundary=3,
+                transform_cls=PiecewiseAffineTransform, trilist=None,
+                patch_size=None, n_levels=3, downscale=2,
+                scaled_reference_frames=False, features=None,
                 max_shape_components=None, max_appearance_components=None):
 
     r"""
+    Builds an AAM object from a set of landmark images.
 
     Parameters
     ----------
-    images: list
-        The images from which to build the Active Appearance Model
-    group: str, optional
+    images: list of :class:`pybug.image.IntensityImage`
+        The set of landmarked images from which to build the AAM
 
-        Default: 'PTS'
-    label: tr, optional
+    group : string, Optional
+        The key of the landmark set that should be used. If None,
+        and if there is only one set of landmarks, this set will be used.
+
+        Default: None
+
+    label: string, Optional
+        The label of of the landmark manager that you wish to use. If no
+        label is passed, the convex hull of all landmarks is used.
 
         Default: 'all'
-    interpolator: str, optional
+
+    interpolator:'scipy' or 'cinterp' or func, Optional
+        The interpolator that should be used to perform the warps.
 
         Default: 'scipy'
-    reference_landmarks: optional
+
+    reference_landmarks: :class:`pybug.shape.PointCloud`, Optional
+        Particular set of reference landmarks that will be used to rescale
+        all images and build the reference frame. If None the mean of the
+        all landmarks will be used instead.
 
         Default: None
-    scale: float, optional
+
+    scale: float, Optional
+        Scale factor to be applied to the previous reference landmarks.
+        Allows us to control the size of the reference frame (ie the number
+        of pixels constituting the appearance models).
 
         Default: 1
-    crop_boundary: float, optional
 
-        Default: 0.2
-    reference_frame_boundary: int, optional
-
-        Default: 3
-    trilist: (Nt, 3) ndarray, optional
-
-        Default: None
-    n_levels: int, optional
+    boundary: int, Optional
+        The number of pixels to be left as a "save" margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
 
         Default: 3
-    transform_cls: optional
+
+    transform_cls: :class:`pybug.transform.PureAlignmentTransform`, Optional
+        The :class:`pybug.transform.PureAlignmentTransform` that will be
+        used to warp the images.
 
         Default: PieceWiseAffine
-    feature_space: dictionary, optional
+
+    trilist: (t, 3) ndarray, Optional
+        Triangle list that will be used to build the reference frame. If None
+        defaults to performing Delaunay triangulation on the points.
 
         Default: None
-    max_shape_components: float, optional
 
-        Default: 0.95
-    max_appearance_components: float, optional
+        .. note::
 
-        Deafult: 0.95
+            This kwarg will be completely ignored if the kwarg transform_cls
+            is not set :class:`pybug.transform.PiecewiseAffineTransform` or
+            if the kwarg patch_size is not set to None.
+
+    patch_size: tuple of ints or None, Optional
+        If tuple, the appearance model of the AAM will be obtained from by
+        sampling the appearance patches around the landmarks. If None, the
+        standard representation for the AAMs' appearance model will be used
+        instead.
+
+        Default: None
+
+        .. note::
+
+            If tuple, the kwarg transform_cls will be automatically set to
+            :class:`pybug.transform.TPS`.
+
+    n_levels: int, Optional
+        The number of multi-resolution pyramidal levels to be used.
+
+        Default: 3
+
+    downscale: float > 1, Optional
+        The downscale factor that will be used to create the different AAM
+        pyramidal levels.
+
+        Default: 2
+
+    scaled_reference_frames: boolean, Optional
+        If False, the resolution of all reference frame used to build the
+        appearance model will be fixed (the original images will be
+        both smooth and scaled using a Gaussian pyramid). consequently, all
+        appearance models will have the same dimensionality.
+        If True, the reference frames used to create the appearance model
+        will be themselves scaled (the original images will only be smooth).
+        Consequently the dimensionality of all appearance models will be
+        different.
+
+        Default: False
+
+    features: tuple or None, Optional
+        If tuple, the first element is a string that specifies the type of
+        features that will be used to build the AAM. The second element is a
+        dictionary that specifies possible feature options and which is passed
+        through to the particular feature method being used. See
+        `pybug.image.MaskedNDImage` for details on feature options.
+
+        Default: None
+
+    max_shape_components: 0 < int < n_components, Optional
+        If int, it specifies the specific number of components of the
+        original shape model to be retained.
+
+        Default: None
+
+    max_appearance_components: 0 < int < n_components, Optional
+        If int, it specifies the specific number of components of the
+        original appearance model to be retained.
+
+        Default: None
 
     Returns
     -------
     aam : :class:`pybug.activeappearancemodel.AAM`
+        The AAM object
     """
 
-    if patch[0] is True:
+    if patch_size is not None:
         transform_cls = TPS
 
     if reference_shape is None:
@@ -489,13 +613,19 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                                                interpolator=interpolator)
               for i in images]
 
-    print '- Setting gaussian pyramid generators'
-    pyramids = [i.gaussian_pyramid(n_levels=n_levels, downscale=downscale)
-                for i in images]
+    if scaled_reference_frames:
+        print '- Setting gaussian smoothing generators'
+        generator = [i.smoothing_pyramid(n_levels=n_levels,
+                                         downscale=downscale)
+                     for i in images]
+    else:
+        print '- Setting gaussian pyramid generators'
+        generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                        downscale=downscale)
+                     for i in images]
 
     print '- Computing features'
-    images = [compute_features(p.next(), features)
-              for p in pyramids]
+    images = [compute_features(g.next(), features) for g in generator]
     # extract potentially rescaled shapes
     shapes = [i.landmarks[group][label].lms for i in images]
 
@@ -536,12 +666,13 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         if j != 0:
             print ' - Computing features'
-            images = [compute_features(p.next(), features)
-                      for p in pyramids]
+            images = [compute_features(g.next(), features) for g in generator]
 
             print ' - Building shape model'
             if scaled_reference_frames:
-                shapes = [i.landmarks[group][label].lms for i in images]
+                shapes = [Scale(1/downscale,
+                                n_dims=reference_shape.n_dims).apply(s)
+                          for s in shapes]
                 centered_shapes = [Translation(-s.centre).apply(s)
                                    for s in shapes]
                 gpa = GeneralizedProcrustesAnalysis(centered_shapes)
@@ -605,5 +736,6 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     appearance_model_pyramid.reverse()
 
     return AAM(shape_model_pyramid, appearance_model_pyramid,
-               reference_shape, features, downscale, transform_cls,
+               reference_shape, features, downscale,
+               scaled_reference_frames, transform_cls,
                interpolator, patch_size)
