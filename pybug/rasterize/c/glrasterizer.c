@@ -61,19 +61,15 @@ void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 }
 
 
-void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
+
+void render_texture_shader_to_fb(glr_scene* scene)
 {
-	printf("return_FB_pixels(...)\n");
+	printf("render_texture_shader_to_fb(...)\n");
 	// call the init
 	init(scene);
 
-	// render the content
-	glBindFramebuffer(GL_FRAMEBUFFER, scene->fbo);
-	glr_render_scene(scene);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // grab the framebuffer content
-	glr_get_framebuffer(&(scene->fb_texture));
+    // render to the framebuffer, and pull off the state
+    glr_render_to_framebuffer(scene);
 
     // clear up our OpenGL state
 	glr_destroy_vbos_on_trianglar_mesh(&(scene->mesh));

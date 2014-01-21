@@ -183,6 +183,9 @@ void glr_set_global_settings(void);
 void glr_render_scene(glr_scene* scene);
 
 
+void glr_render_to_framebuffer(glr_scene* scene);
+
+
 void glr_get_framebuffer(glr_texture* texture);
 
 
