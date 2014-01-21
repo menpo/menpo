@@ -312,7 +312,7 @@ void glr_render_scene(glr_scene* scene) {
     glUniform4fv(uniform, 1, scene->light.position);
 
     // TEXTURE UNIFORM
-	uniform = glGetUniformLocation(scene->program, "texture_image");
+	uniform = glGetUniformLocation(scene->program, "textureImage");
 	glUniform1i(uniform, scene->mesh.texture.unit);
 
 	// BIND VBO + TEXTURES, DRAW

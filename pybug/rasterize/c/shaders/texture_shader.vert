@@ -7,14 +7,14 @@ uniform mat4 modelMatrix;
 uniform vec4 lightDirection;
 
 layout(location = 0) in vec4 point;
-layout(location = 1) in vec2 tcoord_in;
-layout(location = 2) in vec3 linear_mapping_coord_in;
+layout(location = 1) in vec2 tcoordIn;
+layout(location = 2) in vec3 linearMappingCoordIn;
 
 smooth out vec2 tcoord;
-smooth out vec3 linear_mapping_coord;
+smooth out vec3 linearMappingCoord;
 
 void main() {
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * point;
-    tcoord = tcoord_in;
-    linear_mapping_coord = linear_mapping_coord_in;
+    tcoord = tcoordIn;
+    linearMappingCoord = linearMappingCoordIn;
 }
