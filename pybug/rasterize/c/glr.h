@@ -11,8 +11,7 @@ typedef struct {
 	GLvoid* data;
 	// texture binding variables
 	GLenum unit;
-	GLuint texture_ID;
-	GLuint texture_unit;
+	GLuint id;
 	GLuint sampler; // stores texture traits.
 	GLuint uniform;
 } glr_texture;

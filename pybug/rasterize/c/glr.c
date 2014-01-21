@@ -186,9 +186,9 @@ void glr_init_texture(glr_texture *texture) {
     //
     // a. Many textures can be stored in memory, I just need to use glGenTextures
     // to get some handles that I am allowed to store textures in. Call one of these
-    // handles a texture_ID.
+    // handles a texture *id*.
     //
-    // b. To fill one of these out, I BIND the texture_ID I got from glGenTextures
+    // b. To fill one of these out, I BIND the texture id I got from glGenTextures
     // to a system texture type (like GL_TEXTURE_2D). Then I'm free to actually
     // store some pixels and metadata by the glTexImage call.
     //
@@ -206,7 +206,7 @@ void glr_init_texture(glr_texture *texture) {
     // many different types of textures on the go, and I'd have to manage all this
     // state. To make things a little easier, TEXTURE UNITS were introduced. A
     // TEXTURE UNIT just holds a set of currently bound textures - so, on a unit,
-    // you can leave your texture_ID bound to GL_TEXTURE_2D for instance. All
+    // you can leave your texture id bound to GL_TEXTURE_2D for instance. All
     // sampling calls are also bound to a unit - so making a unit active sets
     // up all the sampler state as it last was when the unit was actice.
     //
@@ -231,10 +231,10 @@ void glr_init_texture(glr_texture *texture) {
 	glActiveTexture(GL_TEXTURE0 + texture->unit);
     // 2. Get a handle on a piece of OpenGL memory where we can store our
     // texture
-	glGenTextures(1, &(texture->texture_ID));
-    // 3. Set the currently active GL_TEXTURE_2D to the texture_ID
-	glBindTexture(GL_TEXTURE_2D, texture->texture_ID);
-    // 4. fill the currently active GL_TEXTURE_2D (texture_ID thanks to 3.)
+	glGenTextures(1, &(texture->id));
+    // 3. Set the currently active GL_TEXTURE_2D to the texture->id 
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+    // 4. fill the currently active GL_TEXTURE_2D (texture->id thanks to 3.)
     // with our actual pixels
 	glTexImage2D(GL_TEXTURE_2D, 0, texture->internal_format,
 		texture->width, texture->height, 0, texture->format,
@@ -267,7 +267,7 @@ void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
 	glGenFramebuffers(1, fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D,
-			texture->texture_ID, 0);
+			texture->id, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glr_check_error();
 }
