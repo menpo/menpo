@@ -271,7 +271,6 @@ void glr_init_vao(glr_textured_mesh *mesh) {
 
 void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
 {
-	glGenFramebuffers(1, fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D,
 			texture->id, 0);

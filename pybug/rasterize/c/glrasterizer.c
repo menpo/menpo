@@ -20,11 +20,15 @@ void init_program_to_texture_shader(glr_scene* scene)
 	glDeleteShader(shaders[1]);
 }
 
-void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
+void init_frame_buffer(glr_scene* scene, uint8_t* rgb_pixels, float* f3v_pixels)
 {
 	printf("init_frame_buffer()\n");
     // set the fb_rgb_target to a rgba_texture
-	scene->fb_rgb_target = glr_build_rgba_texture(pixels,
+	scene->fb_rgb_target = glr_build_rgba_texture(rgb_pixels,
+            scene->context->window_width,
+            scene->context->window_height);
+    // set the fb_f3v_target to a rgb_float texture
+	scene->fb_f3v_target = glr_build_rgb_float_texture(f3v_pixels,
             scene->context->window_width,
             scene->context->window_height);
 	// for a framebuffer we don't actually care about the texture unit.
@@ -32,11 +36,19 @@ void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 	// initialization for consistency. We can safely set a (usually illegal)
 	// value of zero here so that the unit binding is basically a no op.
 	scene->fb_rgb_target.unit = 0;
+	scene->fb_f3v_target.unit = 0;
 	glr_init_texture(&scene->fb_rgb_target);
+	glr_init_texture(&scene->fb_f3v_target);
+    // ask OpenGL to make us a framebuffer object for the fbo
+	glGenFramebuffers(1, &scene->fbo);
+    // init the two framebuffer textures
 	glr_init_framebuffer(&scene->fbo, &scene->fb_rgb_target, GL_COLOR_ATTACHMENT0);
-	// We set the framebuffer to GL_COLOR_ATTACHMENT0 - anything rendered to
+	glr_init_framebuffer(&scene->fbo, &scene->fb_f3v_target, GL_COLOR_ATTACHMENT1);
+	// We set the RGB framebuffer to GL_COLOR_ATTACHMENT0 - anything rendered to
 	// layout(location = 0) in the fragment shader will end up here.
-	GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
+	// The float framebuffer is attached to GL_COLOR_ATTACHMENT1 - anything rendered to
+	// layout(location = 1) in the fragment shader will end up here.
+	GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 	glr_register_draw_framebuffers(scene->fbo, 1, buffers);
 	// now, the depth buffer
 	GLuint depth_buffer;
@@ -59,7 +71,6 @@ void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glr_check_error();
 }
-
 
 
 void render_texture_shader_to_fb(glr_scene* scene)
