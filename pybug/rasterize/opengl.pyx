@@ -74,7 +74,7 @@ cdef extern from "./c/glr.h":
         glr_texture fb_rgb_target
         glr_texture fb_f3v_target
 
-    glr_textured_mesh glr_build_textured_mesh(
+    glr_textured_mesh glr_build_d4_f3_rgba_uint8_mesh(
             double* points, float* f3v_data,
             size_t n_points, unsigned* trilist,
             size_t n_tris, float* tcoords, uint8_t* texture,
@@ -127,7 +127,7 @@ cdef class OpenGLRasterizer:
             np.ndarray[unsigned, ndim=2, mode="c"] trilist not None,
             np.ndarray[float, ndim=2, mode="c"] tcoords not None,
             np.ndarray[uint8_t, ndim=3, mode="c"] texture not None):
-        self.scene.mesh = glr_build_textured_mesh(
+        self.scene.mesh = glr_build_d4_f3_rgba_uint8_mesh(
             &points[0, 0], &f3v_data[0, 0], points.shape[0],
             &trilist[0, 0], trilist.shape[0], &tcoords[0, 0],
             &texture[0, 0, 0], texture.shape[1], texture.shape[0])

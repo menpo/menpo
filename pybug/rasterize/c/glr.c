@@ -60,83 +60,145 @@ GLuint glr_create_program(GLuint *shaders, size_t n_shaders) {
 	return program;
 }
 
-glr_texture glr_build_rgba_texture(uint8_t* texture, size_t width,
-								   size_t height) {
+glr_texture glr_build_uint_rgb_texture(uint8_t* texture, size_t w, size_t h)
+{
+	glr_texture texture_tmp;
+	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
+	// 999 as a safety - must be changed!
+	texture_tmp.internal_format = GL_RGB8;
+	texture_tmp.width = w;
+	texture_tmp.height = h;
+	texture_tmp.format = GL_RGB;
+	texture_tmp.type = GL_UNSIGNED_BYTE;
+	texture_tmp.data = texture;
+	return texture_tmp;
+}
+
+glr_texture glr_build_uint_rgba_texture(uint8_t* texture, size_t w, size_t h)
+{
 	glr_texture texture_tmp;
 	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
 	// 999 as a safety - must be changed!
 	texture_tmp.internal_format = GL_RGBA8;
-	texture_tmp.width = width;
-	texture_tmp.height = height;
+	texture_tmp.width = w;
+	texture_tmp.height = h;
 	texture_tmp.format = GL_RGBA;
 	texture_tmp.type = GL_UNSIGNED_BYTE;
 	texture_tmp.data = texture;
 	return texture_tmp;
 }
 
-glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
-								   	    size_t height) {
+
+glr_texture glr_build_float_rgb_texture(float* texture, size_t w, size_t h)
+{
 	glr_texture texture_tmp;
 	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
 	// 999 as a safety - must be changed!
 	texture_tmp.internal_format = GL_RGB32F;
-	texture_tmp.width = width;
-	texture_tmp.height = height;
+	texture_tmp.width = w;
+	texture_tmp.height = h;
 	texture_tmp.format = GL_RGB;
 	texture_tmp.type = GL_FLOAT;
 	texture_tmp.data = texture;
 	return texture_tmp;
 }
 
-glr_vectorset glr_build_vertices(double* points, size_t n_points) {
-	glr_vectorset points_tmp;
-	points_tmp.datatype = GL_DOUBLE;
-	points_tmp.n_dims = 4;
-	points_tmp.n_vectors = n_points;
-	points_tmp.size = sizeof(GLdouble);
-	points_tmp.vectors = points;
-	return points_tmp;
+glr_texture glr_build_float_rgba_texture(float* texture, size_t w, size_t h)
+{
+	glr_texture texture_tmp;
+	texture_tmp.unit = 999; // the texture unit this texture binds to. Set to
+	// 999 as a safety - must be changed!
+	texture_tmp.internal_format = GL_RGBA32F;
+	texture_tmp.width = w;
+	texture_tmp.height = h;
+	texture_tmp.format = GL_RGBA;
+	texture_tmp.type = GL_FLOAT;
+	texture_tmp.data = texture;
+	return texture_tmp;
 }
 
-glr_vectorset glr_build_f3v_data(float* f3v_data, size_t n_points) {
-	glr_vectorset f3v_data_tmp;
-	f3v_data_tmp.datatype = GL_FLOAT;
-	f3v_data_tmp.n_dims = 3;
-	f3v_data_tmp.n_vectors = n_points;
-	f3v_data_tmp.size = sizeof(GLfloat);
-	f3v_data_tmp.vectors = f3v_data;
-	return f3v_data_tmp;
+glr_vectorset glr_build_double_3v(double* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_DOUBLE;
+	vector_tmp.n_dims = 3;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLdouble);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
 }
 
-glr_vectorset glr_build_tcoords(float* tcoords, size_t n_points) {
-	glr_vectorset tcoords_tmp;
-	tcoords_tmp.datatype = GL_FLOAT;
-	tcoords_tmp.n_dims = 2;
-	tcoords_tmp.n_vectors = n_points;
-	tcoords_tmp.size = sizeof(float);
-	tcoords_tmp.vectors = tcoords;
-	return tcoords_tmp;
+glr_vectorset glr_build_double_4v(double* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_DOUBLE;
+	vector_tmp.n_dims = 4;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLdouble);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
 }
 
-glr_vectorset glr_build_trilist(unsigned* trilist, size_t n_tris) {
-	glr_vectorset trilist_tmp;
-	trilist_tmp.datatype = GL_UNSIGNED_INT;
-	trilist_tmp.n_dims = 3;
-	trilist_tmp.n_vectors = n_tris;
-	trilist_tmp.size = sizeof(GLuint);
-	trilist_tmp.vectors = trilist;
-	return trilist_tmp;
+glr_vectorset glr_build_float_2v(float* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_FLOAT;
+	vector_tmp.n_dims = 2;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLfloat);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
 }
 
-glr_textured_mesh glr_build_textured_mesh(double* points, float* f3v_data,
+glr_vectorset glr_build_float_3v(float* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_FLOAT;
+	vector_tmp.n_dims = 3;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLfloat);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
+}
+
+glr_vectorset glr_build_float_4v(float* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_FLOAT;
+	vector_tmp.n_dims = 4;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLfloat);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
+}
+
+glr_vectorset glr_build_unsigned_3v(unsigned* vectors, size_t n_vectors) {
+	glr_vectorset vector_tmp;
+	vector_tmp.datatype = GL_UNSIGNED_INT;
+	vector_tmp.n_dims = 3;
+	vector_tmp.n_vectors = n_vectors;
+	vector_tmp.size = sizeof(GLuint);
+	vector_tmp.vectors = vectors;
+	return vector_tmp;
+}
+
+glr_textured_mesh glr_build_d4_f3_rgba_uint8_mesh(double* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height) {
 	glr_textured_mesh textured_mesh;
-	textured_mesh.vertices = glr_build_vertices(points, n_points);
-	textured_mesh.f3v_data = glr_build_f3v_data(f3v_data, n_points);
-	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
-	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
-	textured_mesh.texture = glr_build_rgba_texture(texture,
+	textured_mesh.vertices = glr_build_double_4v(vertices, n_points);
+	textured_mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
+	textured_mesh.tcoords = glr_build_float_2v(tcoords, n_points);
+	textured_mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
+	textured_mesh.texture = glr_build_uint_rgba_texture(
+            texture, texture_width, texture_height);
+	return textured_mesh;
+}
+
+glr_textured_mesh glr_build_f3_f3_rgb_uint8_mesh(float* vertices, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
+		uint8_t* texture, size_t texture_width, size_t texture_height) {
+	glr_textured_mesh textured_mesh;
+	textured_mesh.vertices = glr_build_float_3v(vertices, n_points);
+	textured_mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
+	textured_mesh.tcoords = glr_build_float_2v(tcoords, n_points);
+	textured_mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
+	textured_mesh.texture = glr_build_uint_rgb_texture(texture,
 			texture_width, texture_height);
 	return textured_mesh;
 }

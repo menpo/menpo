@@ -24,11 +24,11 @@ void init_frame_buffer(glr_scene* scene, uint8_t* rgb_pixels, float* f3v_pixels)
 {
 	printf("init_frame_buffer()\n");
     // set the fb_rgb_target to a rgba_texture
-	scene->fb_rgb_target = glr_build_rgba_texture(rgb_pixels,
+	scene->fb_rgb_target = glr_build_uint_rgba_texture(rgb_pixels,
             scene->context->window_width,
             scene->context->window_height);
     // set the fb_f3v_target to a rgb_float texture
-	scene->fb_f3v_target = glr_build_rgb_float_texture(f3v_pixels,
+	scene->fb_f3v_target = glr_build_float_rgb_texture(f3v_pixels,
             scene->context->window_width,
             scene->context->window_height);
 	// for a framebuffer we don't actually care about the texture unit.

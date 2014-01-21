@@ -94,49 +94,34 @@ GLuint glr_create_shader_from_string(GLenum shader_type, const GLchar *string);
 GLuint glr_create_program(GLuint *shaders, size_t n_shaders);
 
 /*
- * Returns a glr_vectorset configured for a set of homogeneous (X, Y, Z, W)
- * points of type double.
+ * VECTORSET CONSTRUCTORS
+ *
+ * The following methods build glr_vectorset's of 2,3,4 vecs of floats/doubles.
+ *
  * Note that the attribute_pointer needs to be set before being bound to the
  * OpenGL context.
  */
-glr_vectorset glr_build_vertices(double *points, size_t n_points);
+glr_vectorset glr_build_double_3v(double* vectors, size_t n_vectors);
+glr_vectorset glr_build_double_4v(double* vectors, size_t n_vectors);
+glr_vectorset glr_build_float_2v(float* vectors, size_t n_vectors);
+glr_vectorset glr_build_float_3v(float* vectors, size_t n_vectors);
+glr_vectorset glr_build_float_4v(float* vectors, size_t n_vectors);
+// final unsigned varient useful for triangle list
+glr_vectorset glr_build_unsigned_3v(unsigned* vectors, size_t n_vectors);
 
 /*
- * Returns a glr_vectorset configured for a set of aribrary (X, Y, Z)
- * points of type float.
- * Note that the attribute_pointer needs to be set before being bound to the
- * OpenGL context.
+ * TEXTURE CONSTRUCTORS
+ *
+ * The following methods build glr_textures's of RGB(A) uints/floats.
+ *
+ * Returns a glr_texture configured for an 8-bit RGBA texture. 
+ * Note that the texture unit is initialised to 999, and should be changed 
+ * before attempting to bind to the OpenGL context.
  */
-glr_vectorset glr_build_f3v_data(float* f3v_data, size_t n_points);
-/*
- * Returns a glr_vectorset configured for a set of float (S,T) texture
- * coordinates.
- * Note that the attribute_pointer needs to be set before being bound to the
- * OpenGL context.
- */
-glr_vectorset glr_build_tcoords(float *tcoords, size_t n_points);
-
-/*
- * Returns a glr_vectorset configured for a set of (v1, v2, v3) triangluation
- * indices (a triangle list).
- */
-glr_vectorset glr_build_trilist(unsigned *trilist, size_t n_tris);
-
-/*
- * Returns a glr_texture configured for an 8-bit RGBA texture. Note that the
- * texture unit is initialised to 999, and should be changed before attempting
- * to bind to the OpenGL context.
- */
-glr_texture glr_build_rgba_texture(uint8_t* texture, size_t width,
-								   size_t height);
-
-/*
- * Returns a glr_texture configured for a float RGB texture. Note that the
- * texture unit is initialised to 999, and should be changed before attempting
- * to bind to the OpenGL context.
- */
-glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
-								   	    size_t height);
+glr_texture glr_build_uint_rgba_texture(uint8_t* texture, size_t w, size_t h);
+glr_texture glr_build_uint_rgb_texture(uint8_t* texture, size_t w, size_t h);
+glr_texture glr_build_float_rgb_texture(float* texture, size_t w, size_t h);
+glr_texture glr_build_float_rgba_texture(float* texture, size_t w, size_t h);
 
 /*
  * Returns a glr_textured_mesh configured for a mesh with:
@@ -145,10 +130,13 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
  * - an 8-bit RGBA texture @ .texture (unit need to be set)
  * - a set of float texture coords @ .tcoords (attribute_pointer as points)
  */
-glr_textured_mesh glr_build_textured_mesh(double* points, float* f3v_data,
+glr_textured_mesh glr_build_d4_f3_rgba_uint8_mesh(double* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height);
 
+glr_textured_mesh glr_build_f3_f3_rgb_uint8_mesh(float* vertices, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
+		uint8_t* texture, size_t texture_width, size_t texture_height);
 
 /*
  * Return an orthographic glr_camera at the origin
