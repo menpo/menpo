@@ -325,8 +325,7 @@ void glr_render_scene(glr_scene* scene) {
 	uniform = glGetUniformLocation(scene->program, "textureImage");
 	glUniform1i(uniform, scene->mesh.texture.unit);
 
-	// BIND VBO + TEXTURES, DRAW
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene->mesh.trilist.vbo);
+	// DRAW
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
     // now we're done, can disable the vertex array (for safety)
