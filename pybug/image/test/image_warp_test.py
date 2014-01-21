@@ -1,13 +1,11 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from pybug.transform import AffineTransform
-from pybug.io import auto_import
-from pybug import data_path_to
+import pybug.io as pio
 
 
 # Setup the static assets (the takeo image)
-takeo_path = data_path_to('takeo.ppm')
-rgb_image = auto_import(takeo_path)[0]
+rgb_image = pio.import_builtin_asset('takeo.ppm')
 gray_image = rgb_image.as_greyscale()
 
 gray_template = gray_image.cropped_copy(np.array([70, 30]),

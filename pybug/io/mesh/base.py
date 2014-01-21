@@ -2,7 +2,8 @@ import abc
 import commands
 import os.path as path
 import tempfile
-from pybug.io.base import Importer, find_alternative_files, get_importer
+from pybug.io.base import Importer, find_alternative_files, \
+    map_filepath_to_importer
 from pybug.io.mesh.assimp import AIImporter
 from pybug.io.exceptions import MeshImportError
 from pybug.shape import TexturedTriMesh, TriMesh
@@ -102,16 +103,16 @@ class MeshImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_types
-            self.texture_importer = get_importer(self.texture_path,
-                                                 image_types)
+            self.texture_importer = map_filepath_to_importer(self.texture_path,
+                                                             image_types)
 
         if self.landmark_path is None or not path.exists(self.landmark_path):
             self.landmark_importer = None
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import mesh_landmark_types
-            self.landmark_importer = get_importer(self.landmark_path,
-                                                  mesh_landmark_types)
+            self.landmark_importer = map_filepath_to_importer(
+                self.landmark_path, mesh_landmark_types)
 
     def _search_for_texture(self):
         r"""
@@ -245,7 +246,8 @@ class MeshImporter(Importer):
         Returns
         -------
         meshes : list of :class:`pybug.shape.mesh.textured.TexturedTriMesh` or :class:`pybug.shape.mesh.base.Trimesh`
-            List of meshes
+            If more than one mesh, returns a list of meshes. If only one
+            mesh, returns the single mesh.
         """
         #
         self._parse_format()
@@ -267,8 +269,10 @@ class MeshImporter(Importer):
                 new_mesh.landmarks[lmark_group.group_label] = lmark_group
 
             meshes.append(new_mesh)
-
-        return meshes
+        if len(meshes) == 1:
+            return meshes[0]
+        else:
+            return meshes
 
 
 class AssimpImporter(AIImporter, MeshImporter):

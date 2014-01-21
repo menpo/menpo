@@ -2,7 +2,8 @@ import abc
 import os.path as path
 import numpy as np
 import PIL.Image as PILImage
-from pybug.io.base import Importer, get_importer, find_alternative_files
+from pybug.io.base import (Importer, find_alternative_files,
+                           map_filepath_to_importer)
 from pybug.image import MaskedImage
 
 
@@ -35,8 +36,8 @@ class ImageImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_landmark_types
-            self.landmark_importer = get_importer(self.landmark_path,
-                                                  image_landmark_types)
+            self.landmark_importer = map_filepath_to_importer(
+                self.landmark_path, image_landmark_types)
 
     def _search_for_landmarks(self):
         r"""

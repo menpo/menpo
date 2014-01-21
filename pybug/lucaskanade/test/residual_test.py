@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.testing import assert_approx_equal
-from pybug.io import auto_import
-from pybug import data_path_to
+import pybug.io as pio
 from pybug.transform import AffineTransform
 from pybug.lucaskanade.image import ImageInverseCompositional, \
     ImageForwardAdditive
@@ -9,8 +8,7 @@ from pybug.lucaskanade.residual import *
 
 
 # Setup the static assets (the takeo image)
-takeo_path = data_path_to('takeo.ppm')
-takeo = auto_import(takeo_path)[0]
+takeo = pio.import_builtin_asset('takeo.ppm')
 image = takeo.as_greyscale()
 template_image = image.cropped_copy([70, 30], [169, 129])
 template_mask = template_image.mask
