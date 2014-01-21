@@ -1,11 +1,13 @@
 import abc
-import numpy as np
 from copy import deepcopy
-from pybug.image.masked import MaskedNDImage
+
+import numpy as np
+
+from pybug.image.masked import MaskedImage
 from pybug.visualize.base import ImageViewer, DepthImageHeightViewer
 
 
-class AbstractSpatialImage(MaskedNDImage):
+class AbstractSpatialImage(MaskedImage):
     r"""
     A 2D image that represents spatial data in some fashion in it's channel
     data. As a result, it contains a :class:`pybug.shape.mesh.base.TriMesh`,
@@ -17,7 +19,7 @@ class AbstractSpatialImage(MaskedNDImage):
     image_data: (M, N, ..., C) ndarray
         Array representing the spatial image pixels, with the last axis being
         channels.
-    mask: (M, N, ..., L) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N, ..., L) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -45,7 +47,7 @@ class AbstractSpatialImage(MaskedNDImage):
         if self.n_dims != 2:
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
-                             .format(self.n_dims))
+            .format(self.n_dims))
         self._trilist = trilist
         self._tcoords = tcoords
         self._texture = texture
@@ -76,7 +78,7 @@ class AbstractSpatialImage(MaskedNDImage):
         vector : (``n_pixels``,)
             A flattened vector of all pixels and channels of an image.
         """
-        MaskedNDImage.from_vector_inplace(self, vector)
+        MaskedImage.from_vector_inplace(self, vector)
         self.rebuild_mesh()
 
     @abc.abstractmethod
@@ -110,6 +112,7 @@ class AbstractSpatialImage(MaskedNDImage):
         """
         from pybug.shape.mesh import TriMesh, TexturedTriMesh
         from scipy.spatial import Delaunay
+
         points = self._generate_points()
 
         if self._trilist is None:
@@ -134,7 +137,7 @@ class AbstractSpatialImage(MaskedNDImage):
             return TexturedTriMesh(points, trilist, tcoords, self._texture)
 
     def _view(self, figure_id=None, new_figure=False, mode='image',
-              channel=None, masked=True, **kwargs):
+              channels=None, masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Before the image is
         rendered the depth values are normalised between 0 and 1. The range
@@ -162,6 +165,7 @@ class AbstractSpatialImage(MaskedNDImage):
             The viewer the image is being shown within
         """
         import scipy.stats
+
         pixels = self.pixels.copy()
         pixels[np.isinf(pixels)] = np.nan
         pixels = np.abs(pixels)
@@ -175,7 +179,7 @@ class AbstractSpatialImage(MaskedNDImage):
         if mode is 'image':
             return ImageViewer(figure_id, new_figure,
                                self.n_dims, pixels,
-                               channel=channel, mask=mask).render(**kwargs)
+                               channels=channels, mask=mask).render(**kwargs)
         if mode is 'mesh':
             return self.mesh._view(figure_id=figure_id, new_figure=new_figure,
                                    **kwargs)
@@ -209,7 +213,7 @@ class ShapeImage(AbstractSpatialImage):
     image_data: (M, N, 3) ndarray
         Array representing the spatial image pixels, with the last axis being
         the spatial data per pixel.
-    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -230,6 +234,7 @@ class ShapeImage(AbstractSpatialImage):
 
         Default: None (no texture)
     """
+
     def __init__(self, image_data, mask=None, trilist=None,
                  tcoords=None, texture=None):
         super(ShapeImage, self).__init__(image_data, mask, trilist, tcoords,
@@ -257,11 +262,11 @@ class ShapeImage(AbstractSpatialImage):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Returns
         -------
@@ -316,7 +321,7 @@ class DepthImage(AbstractSpatialImage):
     image_data: (M, N) ndarray
         Array representing the spatial image pixels. There is no channel
         axis - each pixel position stores a single depth value.
-    mask: (M, N) boolean ndarray or :class:`BooleanNDImage`, optional
+    mask: (M, N) boolean ndarray or :class:`BooleanImage`, optional
         A suitable mask for the spatial data
 
         Default: All true mask
@@ -345,7 +350,7 @@ class DepthImage(AbstractSpatialImage):
         if self.n_channels != 1:
             raise ValueError("Trying to build a DepthImage with {} channels "
                              "- has to have exactly 1 (for Z values)"
-                             .format(self.n_channels))
+            .format(self.n_channels))
 
     @classmethod
     def blank(cls, shape, fill=0, dtype=np.float, mask=None, **kwargs):
@@ -365,11 +370,11 @@ class DepthImage(AbstractSpatialImage):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Returns
         -------
@@ -386,7 +391,7 @@ class DepthImage(AbstractSpatialImage):
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, mask):
         if image_data_with_channel.ndim != 3 or \
-           image_data_with_channel.shape[-1] != 1:
+                        image_data_with_channel.shape[-1] != 1:
             raise ValueError("DepthImage must be constructed with 3 "
                              "dimensions and 1 channel.")
         return cls(image_data_with_channel[..., 0], mask)
