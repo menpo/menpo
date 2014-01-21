@@ -623,7 +623,7 @@ class MaskedNDImage(AbstractNDImage):
         self.mask = BooleanNDImage(mask)
 
     def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None, order=1,
-                         mode='reflect', cval=0, tight_mask=True):
+                         mode='reflect', cval=0):
         r"""
         Return the gaussian pyramid of this image. The first image of the
         pyramid will be the original, unmodified, image.
@@ -635,20 +635,35 @@ class MaskedNDImage(AbstractNDImage):
             number of levels will be build.
 
             Default: 3
+
         downscale : float, optional
             Downscale factor.
+
+            Default: 2
+
         sigma : float, optional
             Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
             corresponds to a filter mask twice the size of the scale factor
             that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
         order : int, optional
             Order of splines used in interpolation of downsampling. See
             `scipy.ndimage.map_coordinates` for detail.
+
+            Default: 1
+
         mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
             The mode parameter determines how the array borders are handled,
             where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
         cval : float, optional
             Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
 
         Returns
         -------
@@ -660,4 +675,53 @@ class MaskedNDImage(AbstractNDImage):
             order=order, mode=mode, cval=cval)
         for j, image in enumerate(image_pyramid):
             image.mask = self.mask.rescale(1/downscale**j)
+            yield image
+
+    def smoothing_pyramid(self, n_levels=3, downscale=2, sigma=None,
+                          mode='reflect', cval=0):
+        r"""
+        Return the smoothing pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+
+        downscale : float, optional
+            Downscale factor.
+
+            Default: 2
+
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        image_pyramid = AbstractNDImage.smoothing_pyramid(
+            self, n_levels=n_levels, downscale=downscale, sigma=sigma,
+            mode=mode, cval=cval)
+        for image in image_pyramid:
+            image.mask = self.mask
             yield image

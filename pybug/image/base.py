@@ -1,7 +1,9 @@
+from __future__ import division
 import abc
 import numpy as np
 from copy import deepcopy
 from skimage.transform import pyramid_gaussian
+from skimage.transform.pyramids import _smooth
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
 from pybug.transform.affine import Translation, UniformScale, NonUniformScale
@@ -739,20 +741,35 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
             number of levels will be build.
 
             Default: 3
+
         downscale : float, optional
             Downscale factor.
+
+            Default: 2
+
         sigma : float, optional
             Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
             corresponds to a filter mask twice the size of the scale factor
             that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
         order : int, optional
             Order of splines used in interpolation of downsampling. See
             `scipy.ndimage.map_coordinates` for detail.
+
+            Default: 1
+
         mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
             The mode parameter determines how the array borders are handled,
             where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
         cval : float, optional
             Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
 
         Returns
         -------
@@ -764,25 +781,84 @@ class AbstractNDImage(Vectorizable, Landmarkable, Viewable):
                                    downscale=downscale, sigma=sigma,
                                    order=order, mode=mode, cval=cval)
 
-        return self._gaussian_pyramid(pyramid, downscale)
+        for j, image_data in enumerate(pyramid):
 
-    def _gaussian_pyramid(self, pyramid, downscale):
-        # TODO: This if should disappear once the image package is refactored
-        from pybug.image import IntensityImage, DepthImage
-        if self.__class__ is IntensityImage or self.__class__ is DepthImage:
-            for j, image_data in enumerate(pyramid):
+            # TODO: This should disappear once the image package is refactored
+            from pybug.image import IntensityImage, DepthImage
+            if (self.__class__ is IntensityImage or
+                self.__class__ is DepthImage):
                 image = self.__class__(image_data.squeeze(axis=(2,)))
-                # rescale and reassign existent landmark
-                image.landmarks = self.landmarks
-                transform = UniformScale(downscale ** j, self.n_dims)
-                transform.pseudoinverse.apply_inplace(image.landmarks)
-                yield image
-        else:
-            for j, image_data in enumerate(pyramid):
+            else:
                 image = self.__class__(image_data)
+
+            # rescale and reassign existent landmark
+            image.landmarks = self.landmarks
+            transform = UniformScale(downscale ** j, self.n_dims)
+            transform.pseudoinverse.apply_inplace(image.landmarks)
+            yield image
+
+    def smoothing_pyramid(self, n_levels=3, downscale=2, sigma=None,
+                          mode='reflect', cval=0):
+        r"""
+        Return the smoothing pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+
+        downscale : float, optional
+            Downscale factor.
+
+            Default: 2
+
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        for j in range(n_levels):
+            if j is 0:
+                yield self
+            else:
+                if sigma is None:
+                    sigma_aux = 2 * downscale**j / 6.0
+                else:
+                    sigma_aux = sigma
+
+                image_data = _smooth(self.pixels, sigma=sigma_aux,
+                                     mode=mode, cval=cval)
+
+                # TODO: This should disappear once the image package is refactored
+                from pybug.image import IntensityImage, DepthImage
+                if (self.__class__ is IntensityImage or
+                    self.__class__ is DepthImage):
+                    image = self.__class__(image_data.squeeze(axis=(2,)))
+                else:
+                    image = self.__class__(image_data)
+
                 # rescale and reassign existent landmark
                 image.landmarks = self.landmarks
-                transform = UniformScale(downscale ** j, self.n_dims)
-                transform.pseudoinverse.apply_inplace(image.landmarks)
                 yield image
-
