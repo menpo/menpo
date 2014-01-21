@@ -336,19 +336,19 @@ void glr_destroy_program(void) {
 	glUseProgram(0);
 }
 
-void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh) {
-	glDisableVertexAttribArray(mesh.h_points.attribute_pointer);
-	glDisableVertexAttribArray(mesh.tcoords.attribute_pointer);
+void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh) {
+	glDisableVertexAttribArray(mesh->h_points.attribute_pointer);
+	glDisableVertexAttribArray(mesh->tcoords.attribute_pointer);
 	// TODO this needs to be the color array
 	glDisableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &(mesh.h_points.vbo)); // _points_buffer
+	glDeleteBuffers(1, &(mesh->h_points.vbo)); // _points_buffer
 	//glDeleteBuffers(1, &_color_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &(mesh.trilist.vbo));
+	glDeleteBuffers(1, &(mesh->trilist.vbo));
 	// now are buffers are all cleared, we can unbind and delete the vao
 	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &(mesh.vao));
+	glDeleteVertexArrays(1, &(mesh->vao));
 }
 
 void glr_math_float_matrix_eye(float* matrix) {

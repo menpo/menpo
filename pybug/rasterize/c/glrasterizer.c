@@ -76,8 +76,7 @@ void return_FB_pixels(glr_scene* scene, uint8_t *pixels)
 	glr_get_framebuffer(&(scene->fb_texture));
 
     // clear up our OpenGL state
-	glr_destroy_program();
-	glr_destroy_vbos_on_trianglar_mesh(scene->mesh);
+	glr_destroy_vbos_on_trianglar_mesh(&(scene->mesh));
 }
 
 

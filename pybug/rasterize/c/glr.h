@@ -189,7 +189,7 @@ void glr_get_framebuffer(glr_texture* texture);
 void glr_destroy_program(void);
 
 
-void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh mesh);
+void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh);
 
 
 void glr_math_float_matrix_eye(float *matrix);
