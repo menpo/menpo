@@ -93,10 +93,10 @@ void init(glr_scene* scene)
 	glUseProgram(scene->program);
 	glr_check_error();
 	// now we have an instantiated glr_textured_mesh, we have to choose
-	// some the OpenGL properties and set them. We decide that the h_points
+	// some the OpenGL properties and set them. We decide that the vertices
 	// should be bound to input 0 into the shader, while tcoords should be
 	// input 1...
-	scene->mesh.h_points.attribute_pointer = 0;
+	scene->mesh.vertices.attribute_pointer = 0;
 	scene->mesh.tcoords.attribute_pointer = 1;
 	// assign the meshes texture to be on unit 1 and initialize the buffer for
 	// it

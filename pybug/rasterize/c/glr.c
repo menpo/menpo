@@ -88,7 +88,7 @@ glr_texture glr_build_rgb_float_texture(float* texture, size_t width,
 	return texture_tmp;
 }
 
-glr_vectorset glr_build_h_points(double* points, size_t n_points) {
+glr_vectorset glr_build_vertices(double* points, size_t n_points) {
 	glr_vectorset points_tmp;
 	points_tmp.datatype = GL_DOUBLE;
 	points_tmp.n_dims = 4;
@@ -122,7 +122,7 @@ glr_textured_mesh glr_build_textured_mesh(double* points, size_t n_points,
 		unsigned* trilist, size_t n_tris, float* tcoords,
 		uint8_t* texture, size_t texture_width, size_t texture_height) {
 	glr_textured_mesh textured_mesh;
-	textured_mesh.h_points = glr_build_h_points(points, n_points);
+	textured_mesh.vertices = glr_build_vertices(points, n_points);
 	textured_mesh.tcoords = glr_build_tcoords(tcoords, n_points);
 	textured_mesh.trilist = glr_build_trilist(trilist, n_tris);
 	textured_mesh.texture = glr_build_rgba_texture(texture,
@@ -259,7 +259,7 @@ void glr_init_vao(glr_textured_mesh *mesh) {
 	glBindVertexArray(mesh->vao);
     // 2. Make all our intialization code run. The VAO will track buffer
     // attribute bindings for us.
-	glr_init_and_bind_array_buffer(&mesh->h_points);
+	glr_init_and_bind_array_buffer(&mesh->vertices);
 	glr_init_and_bind_array_buffer(&mesh->tcoords);
 	glr_init_and_bind_element_buffer(&mesh->trilist);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->trilist.vbo);
@@ -357,7 +357,7 @@ void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh) {
     // ensure the VAO is unbound.
 	glBindVertexArray(0);
     // delete our buffers
-	glDeleteBuffers(1, &(mesh->h_points.vbo));
+	glDeleteBuffers(1, &(mesh->vertices.vbo));
 	glDeleteBuffers(1, &(mesh->trilist.vbo));
 	glDeleteBuffers(1, &(mesh->tcoords.vbo));
 	// now the buffers are all cleared, we can unbind and delete the vao

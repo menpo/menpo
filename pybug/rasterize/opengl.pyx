@@ -49,7 +49,7 @@ cdef extern from "./c/glr.h":
         unsigned attribute_pointer
 
     ctypedef struct glr_textured_mesh:
-        glr_vectorset h_points
+        glr_vectorset vertices
         glr_vectorset f3v_data
         glr_vectorset tcoords
         glr_vectorset trilist

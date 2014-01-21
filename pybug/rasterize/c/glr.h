@@ -29,7 +29,7 @@ typedef struct {
 
 
 typedef struct {
-	glr_vectorset h_points; // float vec4 (homogeneous vertex data)
+	glr_vectorset vertices; // float vec4 (homogeneous vertex data)
 	glr_vectorset f3v_data; // float vec3 - arbitray per-vertex data. Written out to fb_f3v_target
 	glr_vectorset tcoords;
 	glr_vectorset trilist;
@@ -99,7 +99,7 @@ GLuint glr_create_program(GLuint *shaders, size_t n_shaders);
  * Note that the attribute_pointer needs to be set before being bound to the
  * OpenGL context.
  */
-glr_vectorset glr_build_h_points(double *points, size_t n_points);
+glr_vectorset glr_build_vertices(double *points, size_t n_points);
 
 /*
  * Returns a glr_vectorset configured for a set of float (S,T) texture
