@@ -7,7 +7,8 @@ cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/normals.pyx",
                   "pybug/io/mesh/assimp.pyx",
                   "pybug/interpolation/cinterp.pyx",
-                  "pybug/transform/fastpwa.pyx"]
+                  "pybug/transform/fastpwa.pyx",
+                  "pybug/features/cppimagewindowiterator.pyx"]
 
 setup(name='pybug',
       version='0.2',
