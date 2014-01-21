@@ -153,7 +153,7 @@ glr_camera glr_build_camera(float* projectionMatrix, float* modelMatrix);
 
 
 /*
- * Return a scene struct with a default camera and no mesh 
+ * Return a scene struct with a default camera and no mesh
  */
 glr_scene glr_build_scene(void);
 
@@ -174,10 +174,10 @@ void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment);
 
 
 void glr_register_draw_framebuffers(GLuint fbo, size_t n_attachments,
-		GLenum* attachments);
+		                            GLenum* attachments);
 
 
-void glr_global_state_settings(void);
+void glr_set_global_settings(void);
 
 
 void glr_render_scene(glr_scene* scene);
@@ -186,12 +186,15 @@ void glr_render_scene(glr_scene* scene);
 void glr_get_framebuffer(glr_texture* texture);
 
 
-void glr_destroy_program(void);
-
-
 void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh);
 
-
+/*
+ * set the float matrix to
+ * [1, 0, 0, 1]
+ * [0, 1, 0, 0]
+ * [0, 0, 1, 0]
+ * [0, 0, 0, 1]
+ */
 void glr_math_float_matrix_eye(float *matrix);
 
 /*
@@ -201,8 +204,5 @@ void glr_math_float_matrix_eye(float *matrix);
 void glr_math_float_vector4_0001(float *matrix);
 
 
-void glr_math_float_matrix_rotation_for_angles(float *matrix, float angle_x,
-                                               float angle_y);
-
-
 void glr_print_matrix(float* matrix);
+

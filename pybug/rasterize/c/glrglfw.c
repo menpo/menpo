@@ -80,7 +80,7 @@ void glr_glfw_init(glr_glfw_context* context)
 	glViewport(0, 0, (GLsizei) context->window_width, 
                      (GLsizei) context->window_height);
     // set the global state to the sensible defaults
-    glr_global_state_settings();
+    glr_set_global_settings();
 }
 
 

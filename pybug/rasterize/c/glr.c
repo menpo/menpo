@@ -288,7 +288,7 @@ void glr_register_draw_framebuffers(GLuint fbo, size_t n_attachments,
 	glr_check_error();
 }
 
-void glr_global_state_settings(void) {
+void glr_set_global_settings(void) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -300,34 +300,31 @@ void glr_global_state_settings(void) {
 void glr_render_scene(glr_scene* scene) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(scene->program);
-    // this call to bind vertex array means trilist, points,
-    // and tcoords are all bound to the attributes and ready to go
-	glBindVertexArray(scene->mesh.vao);
 
-    // BIND UNIFORMS
+    // 1. SETUP UNIFORMS
     GLuint uniform;
-
-	// CAMERA UNIFORMS
+	// a. camera uniforms
     uniform = glGetUniformLocation(scene->program, "viewMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.viewMatrix);
 	uniform = glGetUniformLocation(scene->program, "projectionMatrix");
 	glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.projectionMatrix);
-
-	// MODEL UNIFORMS
+	// b. modelMatrix
     uniform = glGetUniformLocation(scene->program, "modelMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->modelMatrix);
-
-    // LIGHT UNIFORMS
+	// c. lightPosition
     uniform = glGetUniformLocation(scene->program, "lightPosition");
     glUniform4fv(uniform, 1, scene->light.position);
-
-    // TEXTURE UNIFORM
+    // d. textureImage
 	uniform = glGetUniformLocation(scene->program, "textureImage");
 	glUniform1i(uniform, scene->mesh.texture.unit);
 
-	// DRAW
+	// 2. BIND VAO AND DRAW
+    // this call to bind vertex array means trilist, points,
+    // and tcoords are all bound to the attributes and ready to go
+	glBindVertexArray(scene->mesh.vao);
 	glDrawElements(GL_TRIANGLES, scene->mesh.trilist.n_vectors * 3,
 			GL_UNSIGNED_INT, 0);
+    // 3. DETATCH + SWAP BUFFERS
     // now we're done, can disable the vertex array (for safety)
 	glBindVertexArray(0);
 	glfwSwapBuffers(scene->context->window);
@@ -340,10 +337,6 @@ void glr_get_framebuffer(glr_texture* texture)
 	glGetTexImage(GL_TEXTURE_2D, 0, texture->format, texture->type,
             texture->data);
 	glActiveTexture(GL_TEXTURE0);
-}
-
-void glr_destroy_program(void) {
-	glUseProgram(0);
 }
 
 void glr_destroy_vbos_on_trianglar_mesh(glr_textured_mesh* mesh) {
@@ -370,19 +363,6 @@ void glr_math_float_vector4_0001(float* vector) {
     vector[3] = 1.0;
 }
 
-void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x,
-                                               float angle_y) {
-    glr_math_float_matrix_eye(matrix);
-	matrix[5]  =  cos(angle_x);
-	matrix[6]  = -sin(angle_x);
-	matrix[9]  =  sin(angle_x);
-	matrix[10] =  cos(angle_x);
-	matrix[0]  =  cos(angle_y);
-	matrix[2]  =  sin(angle_y);
-	matrix[8]  = -sin(angle_y);
-	matrix[10] =  cos(angle_y);
-}
-
 void glr_print_matrix(float* matrix) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -391,3 +371,4 @@ void glr_print_matrix(float* matrix) {
         printf("\n");
     }
 }
+
