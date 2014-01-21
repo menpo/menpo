@@ -182,20 +182,72 @@ void glr_init_element_buffer_from_vectorset(glr_vectorset *vector) {
 // TODO make the texture sampler a seperate customizable thing.
 void glr_init_texture(glr_texture *texture) {
 	printf("glr_init_texture(...)\n");
-	// activate this textures unit
+    // OpenGL texturing works as follows.
+    //
+    // a. Many textures can be stored in memory, I just need to use glGenTextures
+    // to get some handles that I am allowed to store textures in. Call one of these
+    // handles a texture_ID.
+    //
+    // b. To fill one of these out, I BIND the texture_ID I got from glGenTextures
+    // to a system texture type (like GL_TEXTURE_2D). Then I'm free to actually
+    // store some pixels and metadata by the glTexImage call.
+    //
+    // c. At this point I could unbind the textureID from GL_TEXTURE_2D. If in the
+    // future I want to use this texture in shaders, or change it's state, I would
+    // just have to rebind it - then subsequent calls using GL_TEXTURE_2D would
+    // change this texture.
+    //
+    // d. We also have to worry about metadata (how the texture should be sampled).
+    // This is dictated by calls to glSampler*. If I wanted different sampling
+    // behavior around different texture sets, I'd have to keep flicking all this
+    // state on and off around the correct rendering calls.
+    //
+    // d. If I was writing a game, this could be a challanging task. I may have
+    // many different types of textures on the go, and I'd have to manage all this
+    // state. To make things a little easier, TEXTURE UNITS were introduced. A
+    // TEXTURE UNIT just holds a set of currently bound textures - so, on a unit,
+    // you can leave your texture_ID bound to GL_TEXTURE_2D for instance. All
+    // sampling calls are also bound to a unit - so making a unit active sets
+    // up all the sampler state as it last was when the unit was actice.
+    //
+    // Now the usage pattern is something like:
+    //
+    //   - use glActiveTexture to set my texture->unit as the active one. Set an
+    //   GL_TEXTURE_2D texture, my mipmap and normal textures...everything. Also
+    //   set all my sampler state for these family of textures.
+    //
+    //   - unblind the texture unit, and know all my binds won't be disturbed.
+    //     Do whatever else we need to with textures (binding to GL_TEXTURE_2D,
+    //     changing sampler state - not of it will affect the texture unit you
+    //     have).
+    //
+    //   - before rendering use glActiveTexture to set my texture->unit as active.
+    //     I previously panstakingly setup all my textures just so on this unit
+    //     so I'm good to go.
+    //
+    // In order then, the first thing to do is choose our texture unit
+    //
+    // 1. Set the unit to texture->unit
 	glActiveTexture(GL_TEXTURE0 + texture->unit);
+    // 2. Get a handle on a piece of OpenGL memory where we can store our
+    // texture
 	glGenTextures(1, &(texture->texture_ID));
+    // 3. Set the currently active GL_TEXTURE_2D to the texture_ID
 	glBindTexture(GL_TEXTURE_2D, texture->texture_ID);
+    // 4. fill the currently active GL_TEXTURE_2D (texture_ID thanks to 3.)
+    // with our actual pixels
 	glTexImage2D(GL_TEXTURE_2D, 0, texture->internal_format,
 		texture->width, texture->height, 0, texture->format,
 		texture->type, texture->data);
-	// Create the description of the texture (sampler) and bind it to the
-	// correct texture unit
+	// Create the description of the texture (sampler)
 	glGenSamplers(1, &(texture->sampler));
 	glSamplerParameteri(texture->sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glSamplerParameteri(texture->sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glSamplerParameteri(texture->sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // Bind this metadata to the unit
 	glBindSampler(texture->unit, texture->sampler);
+    // UNBIND THE TEXTURE UNIT. Now all our texture information is safe! Just
+    // bind the right unit before rendering and we are good to go.
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -211,17 +263,12 @@ void glr_init_buffers_from_textured_mesh(glr_textured_mesh *mesh) {
 }
 
 void glr_bind_texture_to_program(glr_texture *texture, GLuint program) {
-	glActiveTexture(GL_TEXTURE0 + texture->unit);
-	glBindTexture(GL_TEXTURE_2D, texture->texture_ID);
-	// bind the texture to a uniform called "texture" which can be
-	// accessed from shaders
+    // bind the texture to a uniform called "texture_image" which can be
+    // accessed from shaders.
+    // this uniform is pointed to texture->unit, which has an active
+    // bound GL_TEXTURE_2D  texture (on texture_ID).
 	texture->uniform = glGetUniformLocation(program, "texture_image");
 	glUniform1i(texture->uniform, texture->unit);
-	// set the active Texture to 0 - as long as this is not changed back
-	// to textureImageUnit, we know our shaders will find textureImage bound to
-	// GL_TEXTURE_2D when they look in textureImageUnit
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void glr_init_framebuffer(GLuint* fbo, glr_texture* texture, GLuint attachment)
@@ -325,7 +372,7 @@ void glr_math_float_vector4_0001(float* vector) {
     vector[3] = 1.0;
 }
 
-void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x, 
+void glr_math_float_matrix_rotation_for_angles(float* matrix, float angle_x,
                                                float angle_y) {
     glr_math_float_matrix_eye(matrix);
 	matrix[5]  =  cos(angle_x);
