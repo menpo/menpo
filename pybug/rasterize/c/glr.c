@@ -306,14 +306,18 @@ void glr_render_scene(glr_scene* scene) {
 	// a. camera uniforms
     uniform = glGetUniformLocation(scene->program, "viewMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.viewMatrix);
+
 	uniform = glGetUniformLocation(scene->program, "projectionMatrix");
 	glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->camera.projectionMatrix);
+
 	// b. modelMatrix
     uniform = glGetUniformLocation(scene->program, "modelMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, scene->modelMatrix);
+
 	// c. lightPosition
     uniform = glGetUniformLocation(scene->program, "lightPosition");
     glUniform4fv(uniform, 1, scene->light.position);
+
     // d. textureImage
 	uniform = glGetUniformLocation(scene->program, "textureImage");
 	glUniform1i(uniform, scene->mesh.texture.unit);
@@ -328,6 +332,17 @@ void glr_render_scene(glr_scene* scene) {
     // now we're done, can disable the vertex array (for safety)
 	glBindVertexArray(0);
 	glfwSwapBuffers(scene->context->window);
+}
+
+void glr_render_to_framebuffer(glr_scene* scene)
+{
+	// bind the framebuffer and render as normal
+	glBindFramebuffer(GL_FRAMEBUFFER, scene->fbo);
+	glr_render_scene(scene);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // grab the framebuffer content
+	glr_get_framebuffer(&(scene->fb_texture));
 }
 
 void glr_get_framebuffer(glr_texture* texture)

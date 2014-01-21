@@ -81,7 +81,7 @@ cdef extern from "./c/glr.h":
 
 
 cdef extern from "./c/glrasterizer.h":
-    void return_FB_pixels(glr_scene* scene, uint8_t* pixels)
+    void render_texture_shader_to_fb(glr_scene* scene)
     void init_program_to_texture_shader(glr_scene* scene)
     void init_frame_buffer(glr_scene* scene, uint8_t* pixels)
 
@@ -121,7 +121,7 @@ cdef class OpenGLRasterizer:
             &points[0, 0], points.shape[0], &trilist[0, 0], trilist.shape[0],
             &tcoords[0, 0], &texture[0, 0, 0], texture.shape[1],
             texture.shape[0])
-        return_FB_pixels(&self.scene, &self.pixels[0, 0, 0])
+        render_texture_shader_to_fb(&self.scene)
         return np.array(self.pixels)
 
     cpdef get_model_matrix(self):
