@@ -1,6 +1,6 @@
 # distutils: language = c
 # distutils: sources = ./pybug/rasterize/c/glrasterizer.c ./pybug/rasterize/c/glr.c ./pybug/rasterize/c/glrglfw.c
-# distutils: libraries = m glfw3 GLEW
+# distutils: libraries = m GLEW
 # distutils: extra_compile_args = -std=c99
 
 

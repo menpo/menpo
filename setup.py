@@ -24,17 +24,15 @@ opengl_c_exts = cythonize(opengl_c_cython_modules, nthreads=2, quiet=True)
 
 # unfortunately, OpenGL is just different on OS X/Linux
 if sys.platform.startswith('linux'):
-    # need to add the right libs
     for c_ext in opengl_c_exts:
-        print c_ext.libraries
-        c_ext.libraries += ['GL', 'GLU']
+        c_ext.libraries += ['GL', 'GLU', 'glfw']
 elif sys.platform == 'darwin':
-    pass
-    # TODO why does it compile without these on OS X?!
-    # for c_ext in opengl_c_exts:
-    #     c_ext.extra_compile_args += ['-framework OpenGL',
-    #                                  '-framework Cocoa', '-framework IOKit',
-    #                                  '-framework CoreVideo']
+    for c_ext in opengl_c_exts:
+        c_ext.libraries += ['glfw3']
+        # TODO why does it compile without these on OS X?!
+        #c_ext.extra_compile_args += ['-framework OpenGL',
+        #                             '-framework Cocoa', '-framework IOKit',
+        #                             '-framework CoreVideo']
 
 setup(name='pybug',
       version='0.2',
