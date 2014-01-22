@@ -14,7 +14,14 @@ smooth out vec2 tcoord;
 smooth out vec3 linearMappingCoord;
 
 void main() {
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * point;
+    // position is what we would normally pass straight through
+    vec4 position = projectionMatrix * viewMatrix * modelMatrix * point;
+    // flip the y axis to deal with textures being passed in flipped!
+    // note that this in effect 'flips' the triangles from being CCW to CW.
+    // this will only work when used with the global flag glFrontFace(GL_CW)
+    // set.
+    position.y = -1.0 * position.y;
+    gl_Position = position;
     tcoord = vec2(tcoordIn.s, 1.0 - tcoordIn.t);
     linearMappingCoord = point.xyz;
 }
