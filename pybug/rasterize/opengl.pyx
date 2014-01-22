@@ -196,4 +196,3 @@ cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
             # note that we transpose the matrix in and out of OpenGL, see
             # http://stackoverflow.com/a/17718408
             tgt[i * 4 + j] = src[j, i]
-
