@@ -340,18 +340,27 @@ class WRLImporter(MeshImporter):
 
         # I assume these tuples are always built in this order
         scenegraph = vrml_tuple[1][1]
-        transform = None
-        for child in scenegraph.children:
-            if type(child) is basenodes.Transform:
-                transform = child
+        shape_container = None
 
-        if transform is None:
-            raise MeshImportError('Unable to find transform in scenegraph')
+        # Let's check if
+        for child in scenegraph.children:
+            if type(child) in [basenodes.Transform, basenodes.Group]:
+                # Only fetch the first container (unknown what do do with more
+                # than one container at this time)
+                shape_container = child
+                break
+
+        if shape_container is None:
+            raise MeshImportError('Unable to find shape container in '
+                                  'scenegraph')
 
         shape = None
-        for child in transform.children:
+        for child in shape_container.children:
             if type(child) is basenodes.Shape:
+                # Only fetch the first shape (unknown what do do with more
+                # than one shape at this time)
                 shape = child
+                break
 
         if shape is None:
             raise MeshImportError('Unable to find shape in transform')
