@@ -132,11 +132,15 @@ glr_texture glr_build_float_rgba_texture(float* texture, size_t w, size_t h);
  */
 glr_textured_mesh glr_build_d4_f3_rgba_uint8_mesh(double* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
-		uint8_t* texture, size_t texture_width, size_t texture_height);
+		uint8_t* texture, size_t tex_width, size_t tex_height);
 
 glr_textured_mesh glr_build_f3_f3_rgb_uint8_mesh(float* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
-		uint8_t* texture, size_t texture_width, size_t texture_height);
+		uint8_t* texture, size_t tex_width, size_t tex_height);
+
+glr_textured_mesh glr_build_f3_f3_rgb_float_mesh(float* vertices, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
+		float* texture, size_t tex_width, size_t tex_height);
 
 /*
  * Return an orthographic glr_camera at the origin

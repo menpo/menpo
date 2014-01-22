@@ -20,17 +20,9 @@ void init_program_to_texture_shader(glr_scene* scene)
 	glDeleteShader(shaders[1]);
 }
 
-void init_frame_buffer(glr_scene* scene, uint8_t* rgb_pixels, float* f3v_pixels)
+void init_frame_buffer(glr_scene* scene)
 {
 	printf("init_frame_buffer()\n");
-    // set the fb_rgb_target to a rgba_texture
-	scene->fb_rgb_target = glr_build_uint_rgba_texture(rgb_pixels,
-            scene->context->window_width,
-            scene->context->window_height);
-    // set the fb_f3v_target to a rgb_float texture
-	scene->fb_f3v_target = glr_build_float_rgb_texture(f3v_pixels,
-            scene->context->window_width,
-            scene->context->window_height);
 	// for a framebuffer we don't actually care about the texture unit.
 	// however, glr_init_texture will bind the unit before performing the
 	// initialization for consistency. We can safely set a (usually illegal)

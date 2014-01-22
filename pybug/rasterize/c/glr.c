@@ -179,28 +179,38 @@ glr_vectorset glr_build_unsigned_3v(unsigned* vectors, size_t n_vectors) {
 
 glr_textured_mesh glr_build_d4_f3_rgba_uint8_mesh(double* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
-		uint8_t* texture, size_t texture_width, size_t texture_height) {
-	glr_textured_mesh textured_mesh;
-	textured_mesh.vertices = glr_build_double_4v(vertices, n_points);
-	textured_mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
-	textured_mesh.tcoords = glr_build_float_2v(tcoords, n_points);
-	textured_mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
-	textured_mesh.texture = glr_build_uint_rgba_texture(
-            texture, texture_width, texture_height);
-	return textured_mesh;
+		uint8_t* texture, size_t tex_width, size_t tex_height) {
+	glr_textured_mesh mesh;
+	mesh.vertices = glr_build_double_4v(vertices, n_points);
+	mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
+	mesh.tcoords = glr_build_float_2v(tcoords, n_points);
+	mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
+	mesh.texture = glr_build_uint_rgba_texture(texture, tex_width, tex_height);
+	return mesh;
 }
 
 glr_textured_mesh glr_build_f3_f3_rgb_uint8_mesh(float* vertices, float* f3v_data,
         size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
-		uint8_t* texture, size_t texture_width, size_t texture_height) {
-	glr_textured_mesh textured_mesh;
-	textured_mesh.vertices = glr_build_float_3v(vertices, n_points);
-	textured_mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
-	textured_mesh.tcoords = glr_build_float_2v(tcoords, n_points);
-	textured_mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
-	textured_mesh.texture = glr_build_uint_rgb_texture(texture,
-			texture_width, texture_height);
-	return textured_mesh;
+		uint8_t* texture, size_t tex_width, size_t tex_height) {
+	glr_textured_mesh mesh;
+	mesh.vertices = glr_build_float_3v(vertices, n_points);
+	mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
+	mesh.tcoords = glr_build_float_2v(tcoords, n_points);
+	mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
+	mesh.texture = glr_build_uint_rgb_texture(texture, tex_width, tex_height);
+	return mesh;
+}
+
+glr_textured_mesh glr_build_f3_f3_rgb_float_mesh(float* vertices, float* f3v_data,
+        size_t n_points, unsigned* trilist, size_t n_tris, float* tcoords,
+		float* texture, size_t tex_width, size_t tex_height) {
+	glr_textured_mesh mesh;
+	mesh.vertices = glr_build_float_3v(vertices, n_points);
+	mesh.f3v_data = glr_build_float_3v(f3v_data, n_points);
+	mesh.tcoords = glr_build_float_2v(tcoords, n_points);
+	mesh.trilist = glr_build_unsigned_3v(trilist, n_tris);
+	mesh.texture = glr_build_float_rgb_texture(texture, tex_width, tex_height);
+	return mesh;
 }
 
 glr_camera glr_build_othographic_camera_at_origin(void)
@@ -424,7 +434,7 @@ void glr_get_framebuffer(glr_texture* texture)
 	glActiveTexture(GL_TEXTURE0 + texture->unit);
     glBindTexture(GL_TEXTURE_2D, texture->id);
 	glGetTexImage(GL_TEXTURE_2D, 0, texture->format, texture->type,
-            texture->data);
+                  texture->data);
 	glActiveTexture(GL_TEXTURE0);
 }
 
