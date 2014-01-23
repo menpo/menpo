@@ -377,7 +377,15 @@ void glr_set_global_settings(void) {
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);  // as we do a flip in the fragment shader!
 	glDepthFunc(GL_LEQUAL);
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+}
+
+void glr_set_clear_color(float* cv) {
+    glClearColor(cv[0], cv[1], cv[2], cv[3]);
+}
+
+void glr_get_clear_color(float* cv) {
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, cv);
 }
 
 void glr_render_scene(glr_scene* scene) {

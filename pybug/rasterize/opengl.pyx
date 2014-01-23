@@ -94,6 +94,10 @@ cdef extern from "./c/glr.h":
 
     glr_scene glr_build_scene()
 
+    # utilities
+    void glr_set_clear_color(float* clear_colour_4_vec)
+    void glr_get_clear_color(float* clear_colour_4_vec)
+
 
 cdef extern from "./c/glrasterizer.h":
     void render_texture_shader_to_fb(glr_scene* scene)
@@ -125,11 +129,11 @@ cdef class OpenGLRasterizer:
         self.width = width
         self.height = height
         # store out the FB pixels and wire up the Framebuffer
-        self.rgb_pixels = np.empty((self.height, self.width, 3),
+        self.rgb_pixels = np.empty((self.height, self.width, 4),
                                    dtype=np.float32)
         self.f3v_pixels = np.empty((self.height, self.width, 3),
                                    dtype=np.float32)
-        self.scene.fb_rgb_target = glr_build_float_rgb_texture(
+        self.scene.fb_rgb_target = glr_build_float_rgba_texture(
             &self.rgb_pixels[0, 0, 0], self.width, self.height)
         self.scene.fb_f3v_target = glr_build_float_rgb_texture(
             &self.f3v_pixels[0, 0, 0], self.width, self.height)
@@ -148,6 +152,17 @@ cdef class OpenGLRasterizer:
         render_texture_shader_to_fb(&self.scene)
         return np.array(self.rgb_pixels), np.array(self.f3v_pixels)
 
+    cpdef set_clear_color(self, np.ndarray[float, ndim=1, mode='c'] clear_c):
+        if clear_c.size != 4:
+            raise ValueError("colour vector must be 4 elements long")
+        glr_set_clear_color(&clear_c[0])
+
+    cpdef get_clear_color(self):
+        cdef np.ndarray[float, ndim=1, mode='c'] clear_color
+        clear_color = np.empty(4, dtype=np.float32)
+        glr_get_clear_color(&clear_color[0])
+        return clear_color
+
     cpdef get_model_matrix(self):
         return _copy_float_mat4(self.scene.modelMatrix)
 
@@ -156,6 +171,13 @@ cdef class OpenGLRasterizer:
 
     cpdef get_projection_matrix(self):
         return _copy_float_mat4(self.scene.camera.projectionMatrix)
+
+
+    def get_compound_matrix(self):
+        M = self.get_model_matrix()
+        V = self.get_view_matrix()
+        P = self.get_projection_matrix()
+        return np.dot(P, np.dot(V, M))
 
     cpdef set_model_matrix(self,
                            np.ndarray[float, ndim=2, mode="c"] m):

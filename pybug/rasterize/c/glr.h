@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
 	GLvoid* vectors;
-	unsigned n_vectors;
+    unsigned n_vectors;
 	unsigned n_dims;
 	unsigned size;
 	GLenum datatype;
@@ -114,8 +114,8 @@ glr_vectorset glr_build_unsigned_3v(unsigned* vectors, size_t n_vectors);
  *
  * The following methods build glr_textures's of RGB(A) uints/floats.
  *
- * Returns a glr_texture configured for an 8-bit RGBA texture. 
- * Note that the texture unit is initialised to 999, and should be changed 
+ * Returns a glr_texture configured for an 8-bit RGBA texture.
+ * Note that the texture unit is initialised to 999, and should be changed
  * before attempting to bind to the OpenGL context.
  */
 glr_texture glr_build_uint_rgba_texture(uint8_t* texture, size_t w, size_t h);
@@ -210,4 +210,12 @@ void glr_math_float_vector4_0001(float *matrix);
 
 
 void glr_print_matrix(float* matrix);
+
+// set the clear colour to a new value
+// (takes four value float array)
+void glr_set_clear_color(float* clear_color_4_vec);
+
+// get the clear colour
+// (fills the four value float array passed i)
+void glr_get_clear_color(float* clear_color_4_vec);
 
