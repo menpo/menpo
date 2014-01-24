@@ -1,0 +1,16 @@
+PyBug has received contributions from the following:
+
+Institutions
+------------
+Imperial College London
+
+Individuals
+-----------
+James Booth             <jabooth@gmail.com>
+Patrick Snape           <p.snape@imperial.ac.uk>
+Joan Alabort-i-Medina   <ja310@imperial.ac.uk>
+Epameinondas Antonakos  <e.antonakos@imperial.ac.uk>
+
+With special thanks to Stefanos Zafeiriou <s.zafeiriou@imperial.ac.uk>
+for his support
+
