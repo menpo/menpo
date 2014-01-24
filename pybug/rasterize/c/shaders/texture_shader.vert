@@ -22,6 +22,9 @@ void main() {
     // set.
     position.y = -1.0 * position.y;
     gl_Position = position;
+    // same idea, but for the texture space. This deals with the texuture
+    // being upside down
     tcoord = vec2(tcoordIn.s, 1.0 - tcoordIn.t);
-    linearMappingCoord = point.xyz;
+    linearMappingCoord = point;
 }
+
