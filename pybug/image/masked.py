@@ -3,44 +3,45 @@ from copy import deepcopy
 import itertools
 import numpy as np
 from scipy.ndimage import binary_erosion
-from pybug.image.base import AbstractNDImage
-from pybug.image.boolean import BooleanNDImage
+from pybug.image.base import Image
+from pybug.image.boolean import BooleanImage
 from pybug.visualize.base import ImageViewer
 
 
-class MaskedNDImage(AbstractNDImage):
+class MaskedImage(Image):
     r"""
     Represents an n-dimensional k-channel image, which has a mask.
     Images can be masked in order to identify a region of interest. All
     images implicitly have a mask that is defined as the the entire image.
     The mask is an instance of
-    :class:`BooleanNDImage`.
+    :class:`BooleanImage`.
 
     Parameters
     ----------
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanNDImage`, optional
+    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanImage`, optional
         A binary array representing the mask. Must be the same
         shape as the image. Only one mask is supported for an image (so the
         mask is applied to every channel equally).
 
-        Default: :class:`BooleanNDImage` covering the whole image
+        Default: :class:`BooleanImage` covering the whole image
 
     Raises
     ------
     ValueError
         Mask is not the same shape as the image
     """
+
     def __init__(self, image_data, mask=None):
-        super(MaskedNDImage, self).__init__(image_data)
+        super(MaskedImage, self).__init__(image_data)
         if mask is not None:
-            if not isinstance(mask, BooleanNDImage):
-                mask_image = BooleanNDImage(mask)
+            if not isinstance(mask, BooleanImage):
+                mask_image = BooleanImage(mask)
             else:
                 mask_image = mask
-            # have a BooleanNDImage object that we definitely own
+                # have a BooleanImage object that we definitely own
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
@@ -50,7 +51,7 @@ class MaskedNDImage(AbstractNDImage):
                                                    mask.shape))
         else:
             # no mask provided - make the default.
-            self.mask = BooleanNDImage.blank(self.shape, fill=True)
+            self.mask = BooleanImage.blank(self.shape, fill=True)
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -86,15 +87,15 @@ class MaskedNDImage(AbstractNDImage):
             The datatype of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanNDImage`
+        mask: (M, N) boolean ndarray or :class:`BooleanImage`
             An optional mask that can be applied to the image. Has to have a
              shape equal to that of the image.
 
-             Default: all True :class:`BooleanNDImage`
+             Default: all True :class:`BooleanImage`
 
         Notes
         -----
-        Subclasses of `MaskedNDImage` need to overwrite this method and
+        Subclasses of `MaskedImage` need to overwrite this method and
         explicitly call this superclass method:
 
             super(SubClass, cls).blank(shape,**kwargs)
@@ -103,16 +104,11 @@ class MaskedNDImage(AbstractNDImage):
 
         Returns
         -------
-        blank_image : :class:`MaskedNDImage`
+        blank_image : :class:`MaskedImage`
             A new masked image of the requested size.
         """
-        # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape))
-        if fill == 0:
-            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
-        else:
-            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, mask=mask)
+        return super(MaskedImage, cls).blank(shape, n_channels=n_channels,
+                                             fill=fill, dtype=dtype, mask=mask)
 
     @property
     def n_true_pixels(self):
@@ -146,8 +142,8 @@ class MaskedNDImage(AbstractNDImage):
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
-                self._str_shape, self.n_dims, self.n_channels,
-                self.mask.proportion_true))
+            self._str_shape, self.n_dims, self.n_channels,
+            self.mask.proportion_true))
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -202,7 +198,7 @@ class MaskedNDImage(AbstractNDImage):
 
         Returns
         -------
-        image : :class:`MaskedNDImage`
+        image : :class:`MaskedImage`
             New image of same shape as this image and the number of
             specified channels.
         """
@@ -232,7 +228,7 @@ class MaskedNDImage(AbstractNDImage):
         """
         self.masked_pixels = vector.reshape((-1, self.n_channels))
 
-    def _view(self, figure_id=None, new_figure=False, channel=None,
+    def _view(self, figure_id=None, new_figure=False, channels=None,
               masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
@@ -248,12 +244,10 @@ class MaskedNDImage(AbstractNDImage):
         DimensionalityError
             If Image is not 2D
         """
-        mask = None
-        if masked:
-            mask = self.mask.mask
+        mask = self.mask.mask if masked else None
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
-                           pixels_to_view, channel=channel,
+                           pixels_to_view, channels=channels,
                            mask=mask).render(**kwargs)
 
     def crop(self, min_indices, max_indices,
@@ -295,7 +289,7 @@ class MaskedNDImage(AbstractNDImage):
 
         """
         # crop our image
-        super(MaskedNDImage, self).crop(
+        super(MaskedImage, self).crop(
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
@@ -342,7 +336,7 @@ class MaskedNDImage(AbstractNDImage):
 
         Parameters
         ----------
-        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+        template_mask : :class:`pybug.image.boolean.BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
         transform : :class:`pybug.transform.base.Transform`
@@ -382,11 +376,11 @@ class MaskedNDImage(AbstractNDImage):
         warped_image : type(self)
             A copy of this image, warped.
         """
-        warped_image = AbstractNDImage.warp_to(self, template_mask, transform,
-                                               warp_landmarks=warp_landmarks,
-                                               interpolator=interpolator,
-                                               **kwargs)
-        # note that _build_warped_image for MaskedNDImage classes attaches
+        warped_image = Image.warp_to(self, template_mask, transform,
+                                     warp_landmarks=warp_landmarks,
+                                     interpolator=interpolator,
+                                     **kwargs)
+        # note that _build_warped_image for MaskedImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
         # mask separately and reattach.
@@ -444,6 +438,7 @@ class MaskedNDImage(AbstractNDImage):
             If False, the normalization is wrt all pixels, regardless of
             their masking value.
         """
+
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
@@ -454,7 +449,7 @@ class MaskedNDImage(AbstractNDImage):
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
         else:
-            pixels = AbstractNDImage.as_vector(self, keep_channels=True)
+            pixels = Image.as_vector(self, keep_channels=True)
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
             scale_factor = scale_func(centered_pixels)
@@ -475,24 +470,22 @@ class MaskedNDImage(AbstractNDImage):
         if limit_to_mask:
             self.from_vector_inplace(normalized_pixels.flatten())
         else:
-            AbstractNDImage.from_vector_inplace(self,
-                                                normalized_pixels.flatten())
+            Image.from_vector_inplace(self,
+                                      normalized_pixels.flatten())
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values):
+    def _build_warped_image(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanNDImage as we can't use
-        the usual from_vector_inplace method. All other Image classes share
-        this implementation.
+        sampled pixel values. Overridden for BooleanImage as we can't use
+        the usual from_vector_inplace method.
         """
-        warped_image = self.blank(template_mask.shape, mask=template_mask,
-                                  n_channels=self.n_channels)
-        warped_image.from_vector_inplace(sampled_pixel_values.flatten())
-        return warped_image
+        return super(MaskedImage, self)._build_warped_image(
+            template_mask, sampled_pixel_values, mask=template_mask)
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
-        Returns a MaskedNDImage which is the gradient of this one. In the case
+        Returns a MaskedImage which is the gradient of this one. In the case
         of multiple channels, it returns the gradient over each axis over
         each channel as a flat list.
 
@@ -508,7 +501,7 @@ class MaskedNDImage(AbstractNDImage):
 
         Returns
         -------
-        gradient : :class:``MaskedNDImage``
+        gradient : :class:``MaskedImage``
             The gradient over each axis over each channel. Therefore, the
             gradient of a 2D, single channel image, will have length ``2``.
             The length of a 2D, 3-channel image, will have length ``6``.
@@ -517,13 +510,13 @@ class MaskedNDImage(AbstractNDImage):
                                     np.rollaxis(self.pixels, -1)]
         # Flatten out the separate dims
         grad_per_channel = list(itertools.chain.from_iterable(
-                                grad_per_dim_per_channel))
+            grad_per_dim_per_channel))
         # Add a channel axis for broadcasting
         grad_per_channel = [g[..., None] for g in grad_per_channel]
         # Concatenate gradient list into an array (the new_image)
         grad_image_pixels = np.concatenate(grad_per_channel, axis=-1)
-        grad_image = MaskedNDImage(grad_image_pixels,
-                                   mask=deepcopy(self.mask))
+        grad_image = MaskedImage(grad_image_pixels,
+                                 mask=deepcopy(self.mask))
 
         if nullify_values_at_mask_boundaries:
             # Erode the edge of the mask in by one pixel
@@ -531,7 +524,7 @@ class MaskedNDImage(AbstractNDImage):
 
             # replace the eroded mask with the diff between the two
             # masks. This is only true in the region we want to nullify.
-            np.logical_and(~eroded_mask, self.mask. mask, out=eroded_mask)
+            np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
         grad_image.landmarks = self.landmarks
@@ -551,11 +544,13 @@ class MaskedNDImage(AbstractNDImage):
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
+
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
-            Default: 'all'
+            Default: None
+
         trilist: (t, 3) ndarray, Optional
             Triangle list to be used on the landmarked points in selecting
             the mask region. If None defaults to performing Delaunay
@@ -572,6 +567,7 @@ class MaskedNDImage(AbstractNDImage):
         pc = self.landmarks[group][label].lms
         if trilist is not None:
             from pybug.shape import TriMesh
+
             pc = TriMesh(pc.points, trilist)
 
         pwa = PiecewiseAffineTransform(pc, pc)
@@ -579,6 +575,43 @@ class MaskedNDImage(AbstractNDImage):
             pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
+
+    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
+        r"""A copy of this MaskedImage, rescaled by a given factor.
+
+        All image information (landmarks and mask) are rescaled appropriately.
+
+        Parameters
+        ----------
+        scale : float or tuple
+            The scale factor. If a tuple, the scale to apply to each dimension.
+            If a single float, the scale will be applied uniformly across
+            each dimension.
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+
+        Raises
+        ------
+        ValueError:
+            If less scales than dimensions are provided.
+            If any scale is less than or equal to 0.
+        """
+        # just call normal Image version, passing the warp_mask=True flag
+        return super(MaskedImage, self).rescale(scale,
+                                                interpolator=interpolator,
+                                                round=round,
+                                                warp_mask=True,
+                                                **kwargs)
 
     def build_mask_around_landmarks(self, patch_size, group=None,
                                     label='all'):

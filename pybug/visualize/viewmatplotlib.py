@@ -1,5 +1,7 @@
-import numpy as np
 import abc
+
+import numpy as np
+
 from pybug.visualize.base import Renderer
 
 
@@ -34,6 +36,7 @@ class MatplotlibRenderer(Renderer):
             The figure we will be rendering on.
         """
         import matplotlib.pyplot as plt
+
         if self.new_figure or self.figure_id is not None:
             self.figure = plt.figure(self.figure_id)
         else:
@@ -45,7 +48,6 @@ class MatplotlibRenderer(Renderer):
 
 
 class MatplotlibImageViewer2d(MatplotlibRenderer):
-
     def __init__(self, figure_id, new_figure, image):
         super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
         self.image = image
@@ -53,25 +55,103 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
     def _render(self, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
-        if len(self.image.shape) == 2 or self.image.shape[2] == 1:
-            im = self.image
-            im = im if len(im.shape) == 2 else im[..., 0]
-            plt.imshow(im, cmap=cm.Greys_r, **kwargs)
+
+        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
+            plt.imshow(self.image, cmap=cm.Greys_r, **kwargs)
         else:
             plt.imshow(self.image, **kwargs)
 
         return self
 
 
-class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
+class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
+    def __init__(self, figure_id, new_figure, image):
+        super(MatplotlibImageSubplotsViewer2d, self).__init__(figure_id,
+                                                              new_figure)
+        self.image = image
+        self.num_subplots = self.image.shape[2]
+        self.plot_layout = self._subplot_layout(self.num_subplots)
 
+    def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
+        p = self.plot_layout
+        for i in range(self.image.shape[2]):
+            plt.subplot(p[0], p[1], 1 + i)
+            # Hide the x and y labels
+            plt.axis('off')
+            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r, **kwargs)
+        return self
+
+    def _subplot_layout(self, num_subplots):
+        if num_subplots < 2:
+            return [1, 1]
+        while self._is_prime(num_subplots) and num_subplots > 4:
+            num_subplots += 1
+        p = self._factor(num_subplots)
+        if len(p) == 1:
+            p.insert(0, 1)
+            return p
+        while len(p) > 2:
+            if len(p) >= 4:
+                p[0] = p[0] * p[-2]
+                p[1] = p[1] * p[-1]
+                del p[-2:]
+            else:
+                p[0] = p[0] * p[1]
+                del p[1]
+            p.sort()
+            # Reformat if the column/row ratio is too large: we want a roughly
+        # square design
+        while (p[1] / p[0]) > 2.5:
+            p = self._subplot_layout(num_subplots + 1)
+        return p
+
+    def _factor(self, n):
+        gaps = [1, 2, 2, 4, 2, 4, 2, 4, 6, 2, 6]
+        length, cycle = 11, 3
+        f, fs, next_ind = 2, [], 0
+        while f * f <= n:
+            while n % f == 0:
+                fs.append(f)
+                n /= f
+            f += gaps[next_ind]
+            next_ind += 1
+            if next_ind == length:
+                next_ind = cycle
+        if n > 1:
+            fs.append(n)
+        return fs
+
+    def _is_prime(self, n):
+        if n == 2 or n == 3:
+            return True
+        if n < 2 or n % 2 == 0:
+            return False
+        if n < 9:
+            return True
+        if n % 3 == 0:
+            return False
+        r = int(n ** 0.5)
+        f = 5
+        while f <= r:
+            if n % f == 0:
+                return False
+            if n % (f + 2) == 0:
+                return False
+            f += 6
+        return True
+
+
+class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, points):
         super(MatplotlibPointCloudViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
 
     def _render(self, image_view=False, cmap=None,
-                      colour_array='b', label=None, **kwargs):
+                colour_array='b', label=None, **kwargs):
         import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
@@ -81,7 +161,6 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
-
     def __init__(self, figure_id, new_figure, points, trilist):
         super(MatplotlibTriMeshViewer2d, self).__init__(figure_id, new_figure)
         self.points = points
@@ -98,7 +177,6 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-
     def __init__(self, figure_id, new_figure, group_label, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
@@ -109,6 +187,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
     def _plot_landmarks(self, include_labels, image_view, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
+
         colours = kwargs.get(
             'colours', np.random.random([3, len(self.labels_to_masks)]))
         halign = kwargs.get('halign', 'center')
@@ -152,7 +231,6 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
-
     def __init__(self, figure_id, new_figure, group_label, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2dImage, self).__init__(
@@ -164,7 +242,6 @@ class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
 
 
 class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
-
     def __init__(self, figure_id, new_figure, alignment_transform):
         super(MatplotlibAlignmentViewer2d, self).__init__(figure_id,
                                                           new_figure)
@@ -174,7 +251,8 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         r"""
         Visualize how points are affected by the warp in 2 dimensions.
         """
-        from matplotlib import pyplot
+        import matplotlib.pyplot as plt
+
         source = self.alignment_transform.source.points
         target = self.alignment_transform.target.points
         # a factor by which the minimum and maximum x and y values of the warp
@@ -211,16 +289,16 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
             # we have to account for the fact that axis 0 is typically
             # called 'y' and axis 1 is typically called 'x'. Flip them here
             x, y = y, x
-        pyplot.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
-                      delta[:, y])
+        plt.quiver(sample_points[:, x], sample_points[:, y], delta[:, x],
+                   delta[:, y])
         delta = target - source
         # plot how the landmarks move from source to target
-        pyplot.quiver(source[:, x], source[:, y], delta[:, x],
-                      delta[:, y], angles='xy', scale_units='xy', scale=1)
+        plt.quiver(source[:, x], source[:, y], delta[:, x],
+                   delta[:, y], angles='xy', scale_units='xy', scale=1)
         # rescale to the bounds
-        pyplot.xlim((x_min_m, x_max_m))
-        pyplot.ylim((y_min_m, y_max_m))
+        plt.xlim((x_min_m, x_max_m))
+        plt.ylim((y_min_m, y_max_m))
         if image:
             # if we are overlaying points on an image, axis0 (the 'y' axis)
             # is flipped.
-            pyplot.gca().invert_yaxis()
+            plt.gca().invert_yaxis()

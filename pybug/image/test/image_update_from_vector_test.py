@@ -28,16 +28,16 @@ def test_shapeimage_update_from_vector():
     assert_allclose(im.mesh.points.flatten(), new_values.flatten())
 
 
-def test_intensityimage_update_from_vector():
-    im = IntensityImage.blank((10, 10))
+def test_1channel_update_from_vector():
+    im = MaskedImage.blank((10, 10))
     update_im_from_vector(im)
 
 
-def test_rgbimage_update_from_vector():
-    im = RGBImage.blank((10, 10), n_channels=3)
+def test_3channel_update_from_vector():
+    im = MaskedImage.blank((10, 10), n_channels=3)
     update_im_from_vector(im)
 
 
 def test_maskedndimage_update_from_vector():
-    im = MaskedNDImage.blank((10, 10), n_channels=10)
+    im = MaskedImage.blank((10, 10), n_channels=10)
     update_im_from_vector(im)

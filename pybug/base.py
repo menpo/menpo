@@ -1,5 +1,6 @@
 import abc
 from copy import deepcopy
+import os.path
 
 
 class Vectorizable(object):
@@ -72,3 +73,7 @@ class Vectorizable(object):
         self_copy = deepcopy(self)
         self_copy.from_vector_inplace(vector)
         return self_copy
+
+
+def pybug_src_dir_path():
+    return os.path.split(os.path.abspath(__file__))[0][:-5]

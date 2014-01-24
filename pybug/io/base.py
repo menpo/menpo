@@ -1,40 +1,65 @@
 import abc
 import os
 from glob import glob
-import sys
 import collections
+from pybug import pybug_src_dir_path
 
 
-def auto_import(pattern, meshes=True, images=True,
-                include_texture_images=False,
-                max_meshes=None, max_images=None):
-    r"""
-    Smart data importer. Will match all files found on the glob pattern
-    passed in, build the relevant importers, and then call ``build()`` on them
-    to return a list of usable objects.
+def data_dir_path():
+    r"""A path to the Pybug built in ./data folder on this machine.
 
-    It makes it's best effort to import and attach relevant related
+    Returns
+    -------
+    string
+        The path to the local PyBug ./data folder
+
+    """
+    return os.path.join(pybug_src_dir_path(), 'data')
+
+
+def data_path_to(asset_filename):
+    r"""The path to a builtin asset in the ./data folder on this machine.
+
+    Parameters:
+    asset_filename : string
+        The filename (with extension) of a file builtin to PyBug. The full
+        set of allowed names is given by :func:`ls_builtin_assets()`
+    Returns
+    -------
+    string
+        The path to a given asset in the ./data folder
+
+    Raises
+    ------
+    ValueError
+        If the asset_filename doesn't exist in the ./data folder.
+
+    """
+    asset_path = os.path.join(data_dir_path(), asset_filename)
+    if not os.path.isfile(asset_path):
+        raise ValueError("{} is not a builtin asset: {}".format(
+            asset_filename, ls_builtin_assets()))
+    return asset_path
+
+
+def import_auto(pattern, max_meshes=None, max_images=None):
+    r"""Smart mixed asset import generator.
+
+    Makes it's best effort to import and attach relevant related
     information such as landmarks. It searches the directory for files that
     begin with the same filename and end in a supported extension.
+    Furthermore, this method attempts to handle mixed assets (e.g. textured
+    meshes in the same folder as images) without 'double importing' anything.
+
+    Note that this is a generator function. This allows for pre-processing
+    of data to take place as data is imported (e.g. cropping images to
+    landmarks as they are imported for memory efficiency).
+
 
     Parameters
     ----------
     pattern : String
-        The glob style pattern to search for textures and meshes.
-    meshes: bool, optional
-        If ``True``, include mesh types in results
-
-        Default: ``True``
-    images: bool, optional
-        If ``True``, include image types in results
-
-        Default: ``True``
-    include_texture_images: bool, optional
-        If ``True``, check if the images found in the glob pattern are actually
-        textures of the meshes it found.
-        If this is the case, it won't import these images separately.
-
-        Default: ``False``
+        The glob path pattern to search for textures and meshes.
     max_meshes: positive integer, optional
         If not ``None``, only import the first max_mesh meshes found. Else,
         import all.
@@ -46,136 +71,380 @@ def auto_import(pattern, meshes=True, images=True,
 
         Default: ``None``
 
+    Yields
+    ------
+    asset
+        Assets found to match the glob pattern provided.
+
     Examples
     --------
-    Look for all meshes that have file extension ``.obj``:
+    Import all meshes that have file extension ``.obj``:
 
-        >>> auto_import('*.obj')
+        >>> meshes = list(import_auto('*.obj'))
+
+    (note the cast to a list as auto_import is a generator and we want to
+    exhaust it's values)
 
     Look for all files that begin with the string ``test``:
 
-        >>> auto_import('test.*')
+        >>> test_images = list(import_auto('test.*'))
 
     Assuming that in the current directory that are two files, ``bunny.obj``
     and ``bunny.pts``, which represent a mesh and it's landmarks, calling
 
-        >>> auto_import('bunny.obj')
+        >>> bunny = list(import_auto('bunny.obj'))
 
     Will create a mesh object that **includes** the landmarks automatically.
+
     """
-    mesh_objects, image_objects = [], []
-    if meshes:
-        mesh_paths = _glob_matching_extension(pattern, mesh_types)
-        if max_meshes:
-            mesh_paths = mesh_paths[:max_meshes]
-        mesh_objects, mesh_importers = _multi_mesh_import(mesh_paths,
-                                                          keep_importers=True)
-    if images:
-        image_files = _glob_matching_extension(pattern, all_image_types)
-        if max_images:
-            image_files = image_files[:max_images]
-        if meshes and not include_texture_images:
-            texture_paths = [m.texture_path for m in mesh_importers
-                             if m.texture_path is not None]
-            image_files = _images_unrelated_to_meshes(image_files,
-                                                      texture_paths)
-            image_objects = _multi_image_import(image_files)
+    texture_paths = []
 
-    return mesh_objects + image_objects
+    # MESHES
+    #  find all meshes that we can import
+    mesh_paths = _glob_matching_extension(pattern, mesh_types)
+    if max_meshes:
+        mesh_paths = mesh_paths[:max_meshes]
+    for mesh, mesh_i in _multi_import_generator(mesh_paths, mesh_types,
+                                                keep_importers=True):
+        # need to keep track of texture images to not double import
+        if mesh_i.texture_path is not None:
+            texture_paths.append(mesh_i.texture_path)
+        yield mesh
+
+    # IMAGES
+    # find all images that we can import
+    image_files = _glob_matching_extension(pattern, all_image_types)
+    image_files = _images_unrelated_to_meshes(image_files,
+                                              texture_paths)
+    if max_images:
+        image_files = image_files[:max_images]
+    for image in _multi_import_generator(image_files, all_image_types):
+        yield image
 
 
-def _multi_image_import(image_filepaths, keep_importers=False):
-    r"""
-    Creates importers for all the image filepaths passed in,
-    and then calls build on them, returning a list of
-    :class:`pybug.image.base.Image`.
+def import_image(filepath):
+    r"""Single image (and associated landmarks) importer.
+
+    Iff an image file is found at `filepath`, returns a :class:`pybug.image
+    .MaskedImage` representing it. Landmark files sharing the same filename
+    will be imported and attached too. If the image defines a mask,
+    this mask will be imported.
+
+    This method is valid for both traditional images and spatial image types.
 
     Parameters
     ----------
-    image_filepaths: list of strings
-        List of filepaths
-    keep_importers: bool, optional
-        Returns the :class:`pybug.io.base.Importer` as well as the images
-        themselves
+    filepath : String
+        A relative or absolute filepath to an image file.
 
     Returns
     -------
-    images : list of :class:`pybug.image.base.Image` or tuple of ([:class:`pybug.image.base.Image`], [:class:`pybug.io.base.Importer`])
-        The list of images found in the filepaths. If ``keep_importers`` is
-        ``True`` then the importer for each image is returned as a tuple of s
-        lists.
+    :class:`pybug.image.Image`
+        An instantiated image class built from the image file.
+
     """
-    return _multi_import(image_filepaths, all_image_types, keep_importers)
+    return _import(filepath, all_image_types)
 
 
-def _multi_mesh_import(mesh_filepaths, keep_importers=False):
-    r"""
-    Creates importers for all the mesh filepaths passed in,
-    and then calls build on them, returning a list of
-    :class:`pybug.shape.mesh.base.Trimesh` or
-    :class:`pybug.shape.mesh.textured.TexturedTriMesh`.
+def import_mesh(filepath):
+    r"""Single mesh (and associated landmarks and texture) importer.
+
+    Iff an mesh file is found at `filepath`, returns a :class:`pybug.shape
+    .TriMesh` representing it. Landmark files sharing the same filename
+    will be imported and attached too. If texture coordinates and a suitable
+    texture are found the object returned will be a :class:`pybug.shape
+    .TexturedTriMesh`.
 
     Parameters
     ----------
-    mesh_filepaths : list of strings
-        List of filepaths to the meshes
+    filepath : String
+        A relative or absolute filepath to an image file.
+
+    Returns
+    -------
+    :class:`pybug.shape.TriMesh`
+        An instantiated trimesh (or textured trimesh) file object
+
+    """
+    return _import(filepath, mesh_types)
+
+
+def import_images(pattern, max_images=None):
+    r"""Multiple image import generator.
+
+    Makes it's best effort to import and attach relevant related
+    information such as landmarks. It searches the directory for files that
+    begin with the same filename and end in a supported extension.
+
+    Note that this is a generator function. This allows for pre-processing
+    of data to take place as data is imported (e.g. cropping images to
+    landmarks as they are imported for memory efficiency).
+
+
+    Parameters
+    ----------
+    pattern : String
+        The glob path pattern to search for images.
+    max_images: positive integer, optional
+        If not ``None``, only import the first max_images found. Else,
+        import all.
+
+        Default: ``None``
+
+    Yields
+    ------
+    :class:`pybug.image.MaskedImage`
+        Images found to match the glob pattern provided.
+
+    Examples
+    --------
+    Import crops of the top 100 square pixels from a huge collection of images
+
+        >>> images = []
+        >>> for im in import_images('./massive_image_db/*'):
+        >>>    im.crop((0, 0), (100, 100))  # crop to a sensible size as we go
+        >>>    images.append(im)
+        >>>
+
+    """
+    for asset in _import_glob_generator(pattern, all_image_types,
+                                        max_assets=max_images):
+        yield asset
+
+
+def import_meshes(pattern, max_meshes=None):
+    r"""Multiple mesh import generator.
+
+    Makes it's best effort to import and attach relevant related
+    information such as landmarks. It searches the directory for files that
+    begin with the same filename and end in a supported extension.
+
+    If texture coordinates and a suitable texture are found the object
+    returned will be a :class:`pybug.shape.TexturedTriMesh`.
+
+    Note that this is a generator function. This allows for pre-processing
+    of data to take place as data is imported (e.g. cleaning meshes
+    as they are imported for memory efficiency).
+
+    Parameters
+    ----------
+    pattern : String
+        The glob path pattern to search for textures and meshes.
+    max_meshes: positive integer, optional
+        If not ``None``, only import the first max_mesh meshes found. Else,
+        import all.
+
+        Default: ``None``
+
+    Yields
+    ------
+    :class:`pybug.shape.TriMesh` or :class:`pybug.shape.TexturedTriMesh`
+        Meshes found to match the glob pattern provided.
+
+    """
+    for asset in _import_glob_generator(pattern, mesh_types,
+                                        max_assets=max_meshes):
+        yield asset
+
+
+def import_builtin_asset(asset_name):
+    r"""Single builtin asset (mesh or image) importer.
+
+    Imports the relevant builtin asset from the ./data directory that
+    ships with PyBug.
+
+    Parameters
+    ----------
+    asset_name : String
+        The filename of a builtin asset (see :func:`ls_ls_builtin_assets()`
+        for allowed values)
+
+    Returns
+    -------
+    asset
+        An instantiated asset (mesh, trimesh, or image)
+
+    """
+    asset_path = data_path_to(asset_name)
+    return _import(asset_path, all_mesh_and_image_types)
+
+
+def ls_builtin_assets():
+    r"""List all the builtin asset examples provided in PyBug.
+
+    Returns
+    -------
+    list of strings
+        Filenames of all assets in the data directory shipped with PyBug
+
+    """
+    return os.listdir(data_dir_path())
+
+
+def _import_glob_generator(pattern, extension_map, max_assets=None):
+    filepaths = _glob_matching_extension(pattern, extension_map)
+    if max_assets:
+        filepaths = filepaths[:max_assets]
+    for asset in _multi_import_generator(filepaths, extension_map):
+        yield asset
+
+
+def _import(filepath, extensions_map, keep_importer=False):
+    r"""
+    Creates an importer for the filepath passed in, and then calls build on
+    it, returning a list of assets or a single asset, depending on the
+    file type.
+
+    The type of assets returned are specified by the ``extensions_map``.
+
+    Parameters
+    ----------
+    filepath : string
+        The filepath to import
+    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
+        A map from extensions to importers. The importers are expected to be
+        non-instantiated classes. The extensions are expected to
+        contain the leading period eg. ``.obj``.
     keep_importers : bool, optional
         If ``True``, return the :class:`pybug.io.base.Importer` for each mesh
         as well as the meshes.
 
     Returns
     -------
-    meshes : list of :class:`pybug.shape.mesh.base.Trimesh` or tuple of ([:class:`pybug.shape.mesh.base.Trimesh`], [:class:`pybug.io.base.Importer`])
-        The list of meshes found in the filepaths. If ``keep_importers`` is
-        ``True`` then the importer for each mesh is returned as a tuple of
-        lists.
+    assets : list of assets or tuple of (assets, [:class:`pybug.io.base
+    .Importer`])
+        The asset or list of assets found in the filepath. If
+        `keep_importers` is `True` then the importer is returned.
     """
-    result = _multi_import(mesh_filepaths, mesh_types, keep_importers)
-    # meshes come back as a nested list - unpack this for convenience
-    if keep_importers:
-        meshes = result[0]
+    filepath = _norm_path(filepath)
+    if not os.path.isfile(filepath):
+        raise ValueError("{} is not a file".format(filepath))
+    # below could raise ValueError as well...
+    importer = map_filepath_to_importer(filepath, extensions_map)
+    built_objects = importer.build()
+    if isinstance(built_objects, collections.Iterable):
+        for x in built_objects:
+            x.filepath = importer.filepath  # save the filepath
     else:
-        meshes = result
-    meshes = [mesh for mesh_grp in meshes for mesh in mesh_grp]
-    if keep_importers:
-        return meshes, result[1]
+        built_objects.filepath = importer.filepath
+    if keep_importer:
+        return built_objects, importer
     else:
-        return meshes
+        return built_objects
 
 
-def map_filepaths_to_importers(filepaths, extensions_map):
+def _multi_import_generator(filepaths, extensions_map, keep_importers=False):
     r"""
-    Given a list of filepaths, return the appropriate importers for each path
-    as mapped by the extension map.
+    Generator yielding assets from the filepaths provided.
+
+    Note that if a single file yields multiple assets, each is yielded in
+    turn (this function will never yield an iterable of assets in one go).
+    Assets are yielded in alphabetical order from the filepaths provided.
 
     Parameters
     ----------
     filepaths : list of strings
-        The filepaths to get importers for
+        The filepaths to import. Assets are imported in alphabetical order
+    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
+        A map from extensions to importers. The importers are expected to be
+        non-instantiated classes. The extensions are expected to
+        contain the leading period eg. ``.obj``.
+    keep_importers : bool, optional
+        If ``True``, return the :class:`pybug.io.base.Importer` for each mesh
+        as well as the meshes.
+
+    Yields
+    ------
+    asset :
+        An asset found at one of the filepaths.
+    importer: :class:`pybug.io.base.Importer`
+        Only if ``keep_importers`` is ``True``. The importer used for the
+        yielded asset.
+    """
+    importer = None
+    for f in sorted(filepaths):
+        imported = _import(f, extensions_map, keep_importer=keep_importers)
+        if keep_importers:
+            assets, importer = imported
+        else:
+            assets = imported
+        # could be that there are many assets returned from one file.
+        if isinstance(assets, collections.Iterable):
+            # there are multiple assets, and one importer.
+            # -> yield each asset in turn with the shared importer (if
+            # requested)
+            for asset in assets:
+                if keep_importers:
+                    yield asset, importer
+                else:
+                    yield asset
+        else:
+            # assets is a single item. Rather than checking (again! for
+            # importers, just yield the imported tuple
+            yield imported
+
+
+def _glob_matching_extension(pattern, extensions_map):
+    r"""
+    Filters the results from the glob pattern passed in to only those files
+    that have an importer given in ``extensions_map``.
+
+    Parameters
+    ----------
+    pattern : string
+        A UNIX style glob pattern to match against.
     extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
         contain the leading period eg. ``.obj``.
 
     Returns
+    -------
+    filepaths : list of string
+        The list of filepaths that have valid extensions.
+    """
+    pattern = _norm_path(pattern)
+    files = glob(pattern)
+    exts = [os.path.splitext(f)[1] for f in files]
+    matches = [ext in extensions_map for ext in exts]
+    return [f for f, does_match in zip(files, matches)
+            if does_match]
+
+
+def map_filepath_to_importer(filepath, extensions_map):
+    r"""
+    Given a filepath, return the appropriate importer as mapped by the
+    extension map.
+
+    Parameters
+    ----------
+    filepath : string
+        The filepath to get importers for
+    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
+        A map from extensions to importers. The importers are expected to be
+        a subclass of :class:`Importer`. The extensions are expected to
+        contain the leading period eg. ``.obj``.
+
+    Returns
     --------
-    importers : list of :class:`pybug.io.base.Importer`
-        The list of instantiated importers as found in the ``extensions_map``.
+    importer: :class:`pybug.io.base.Importer` instance
+        Importer as found in the ``extensions_map`` instantiated for the
+        filepath provided.
 
     """
-    importers = []
-    for f in sorted(filepaths):
-        ext = os.path.splitext(f)[1]
-        importer_type = extensions_map.get(ext)
-        importers.append(importer_type(f))
-    return importers
+    ext = os.path.splitext(filepath)[1]
+    importer_type = extensions_map.get(ext)
+    if importer_type is None:
+        raise ValueError("{} does not have a suitable importer.".format(ext))
+    return importer_type(filepath)
 
 
 def find_extensions_from_basename(filepath):
     r"""
-    Given a filepath, find all the files that share the same name. This is
-    used to find all potential matching images and landmark files for a given
-    file.
+    Given a filepath, find all the files that share the same name.
+
+    Can be used to find all potential matching images and landmark files for a
+    given mesh for instance.
 
     Parameters
     ----------
@@ -187,6 +456,7 @@ def find_extensions_from_basename(filepath):
     files : list of strings
         A list of absolute filepaths to files that share the same basename
         as filepath. These files are found using ``glob``.
+
     """
     basename = os.path.splitext(os.path.basename(filepath))[0] + '*'
     basepath = os.path.join(os.path.dirname(filepath), basename)
@@ -259,134 +529,6 @@ def find_alternative_files(file_type, filepath, extensions_map):
                                                extensions_map, e.message))
 
 
-def get_importer(path, extensions_map):
-    r"""
-    Given the absolute path to a file, try and find an appropriate importer
-    using the extension map. If more than one importer is found, an error
-    is printed and the first importer is returned.
-
-    Parameters
-    ----------
-    path : string
-        Absolute path to a file
-    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
-
-    Returns
-    -------
-    importer : :class:`pybug.io.base.Importer`
-        The first importer that was found for the given path.
-
-    Raises
-    ------
-    ImportError
-        If no importer is found
-    """
-    try:
-        importers = map_filepaths_to_importers([path], extensions_map)
-        if len(importers) > 1:
-            print "Warning: More than one importer was found for " \
-                  "{0}. Taking the first importer by default".format(
-                  path)
-        return importers[0]
-    except Exception as e:
-        raise ImportError("Failed to find importer for {0} "
-                          "for types {1}. Reason: {2}".format(path,
-                                                              extensions_map,
-                                                              e.message))
-
-
-def _multi_import(filepaths, extensions_map, keep_importers=False):
-    r"""
-    Creates importers for all the filepaths passed in, and then calls build on
-    them, returning a list of objects. Expects every file type in the filepaths
-    list to have a supported importer. The type of objects returned are
-    specified implicitly by the ``extensions_map``.
-
-    Prints out the current progress of importing to stdout.
-
-    Parameters
-    ----------
-    filepaths : list of strings
-        The filepaths to import
-    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
-    keep_importers : bool, optional
-        If ``True``, return the :class:`pybug.io.base.Importer` for each mesh
-        as well as the meshes.
-
-    Returns
-    -------
-    objs : list of objects or tuple of ([object], [:class:`pybug.io.base.Importer`])
-        The list of objects found in the filepaths. If ``keep_importers`` is
-        ``True`` then the importer for each object is returned as a tuple of
-        lists.
-    """
-    object_count = len(filepaths)
-    importers = map_filepaths_to_importers(filepaths, extensions_map)
-
-    objects = []
-    for i, importer in enumerate(importers):
-        built_objects = importer.build()
-        if isinstance(built_objects, collections.Iterable):
-            for x in built_objects:
-                x.filepath = importer.filepath  # save the filepath
-        else:
-            built_objects.filepath = importer.filepath
-        objects.append(built_objects)
-
-        # Cheeky carriage return so we print on the same line
-        sys.stdout.write('\rCreating importer for %s (%d of %d)'
-                         % (repr(importer), i + 1, object_count))
-        sys.stdout.flush()
-
-    # New line to clear for the next print
-    sys.stdout.write('\n')
-    sys.stdout.flush()
-
-    if keep_importers:
-        return objects, importers
-    else:
-        return objects
-
-
-def _glob_matching_extension(pattern, extensions_map):
-    r"""
-    Filters the results from the glob pattern passed in to only those files
-    that have an importer given in ``extensions_map``.
-
-    Prints out to stdout how many files that were found by the glob have a
-    valid importer in the ``extensions_map``.
-
-    Parameters
-    ----------
-    pattern : string
-        A UNIX style glob pattern to match against.
-    extensions_map : dictionary (String, :class:`pybug.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
-
-    Returns
-    -------
-    filepaths : list of string
-        The list of filepaths that have valid extensions.
-    """
-    files = glob(os.path.expanduser(pattern))
-    exts = [os.path.splitext(f)[1] for f in files]
-    matches = [ext in extensions_map for ext in exts]
-
-    print 'Found {0} files. ({1}/{0}) are importable'.format(
-        len(exts), len(filter(lambda x: x, matches)))
-
-    return [f for f, does_match in zip(files, matches)
-            if does_match]
-
-
 def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
     r"""
     Find the set of images that do not correspond to textures for the given
@@ -450,5 +592,14 @@ class Importer(object):
         """
         pass
 
+
+def _norm_path(filepath):
+    r"""
+    Uses all the tricks in the book to expand a path out to an absolute one.
+    """
+    return os.path.abspath(os.path.normpath(
+        os.path.expandvars(os.path.expanduser(filepath))))
+
 # Avoid circular imports
-from pybug.io.extensions import mesh_types, all_image_types
+from pybug.io.extensions import (mesh_types, all_image_types,
+                                 all_mesh_and_image_types)
