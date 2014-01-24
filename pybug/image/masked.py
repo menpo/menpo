@@ -653,7 +653,7 @@ class MaskedImage(Image):
             y[y < 0] = 0
             mask[x.flatten(), y.flatten()] = True
 
-        self.mask = BooleanNDImage(mask)
+        self.mask = BooleanImage(mask)
 
     def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None, order=1,
                          mode='reflect', cval=0):
@@ -703,7 +703,7 @@ class MaskedImage(Image):
         image_pyramid:
             Generator yielding pyramid layers as pybug image objects.
         """
-        image_pyramid = AbstractNDImage.gaussian_pyramid(
+        image_pyramid = Image.gaussian_pyramid(
             self, n_levels=n_levels, downscale=downscale, sigma=sigma,
             order=order, mode=mode, cval=cval)
         for j, image in enumerate(image_pyramid):
@@ -752,7 +752,7 @@ class MaskedImage(Image):
         image_pyramid:
             Generator yielding pyramid layers as pybug image objects.
         """
-        image_pyramid = AbstractNDImage.smoothing_pyramid(
+        image_pyramid = Image.smoothing_pyramid(
             self, n_levels=n_levels, downscale=downscale, sigma=sigma,
             mode=mode, cval=cval)
         for image in image_pyramid:

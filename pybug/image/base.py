@@ -9,7 +9,7 @@ import PIL.Image as PILImage
 
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation, NonUniformScale
+from pybug.transform.affine import Translation, NonUniformScale, UniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 
 
@@ -816,14 +816,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                    order=order, mode=mode, cval=cval)
 
         for j, image_data in enumerate(pyramid):
-
-            # TODO: This should disappear once the image package is refactored
-            from pybug.image import IntensityImage, DepthImage
-            if (self.__class__ is IntensityImage or
-                self.__class__ is DepthImage):
-                image = self.__class__(image_data.squeeze(axis=(2,)))
-            else:
-                image = self.__class__(image_data)
+            image = self.__class__(image_data)
 
             # rescale and reassign existent landmark
             image.landmarks = self.landmarks
@@ -884,14 +877,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
                 image_data = _smooth(self.pixels, sigma=sigma_aux,
                                      mode=mode, cval=cval)
-
-                # TODO: This should disappear once the image package is refactored
-                from pybug.image import IntensityImage, DepthImage
-                if (self.__class__ is IntensityImage or
-                    self.__class__ is DepthImage):
-                    image = self.__class__(image_data.squeeze(axis=(2,)))
-                else:
-                    image = self.__class__(image_data)
+                image = self.__class__(image_data)
 
                 # rescale and reassign existent landmark
                 image.landmarks = self.landmarks

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pybug.shape import PointCloud, TriMesh
 from pybug.transform .affine import Translation, SimilarityTransform
-from pybug.image import MaskedNDImage
+from pybug.image import MaskedImage
 
 
 def build_reference_frame(landmarks, boundary=3, group='source',
@@ -87,7 +87,7 @@ def _build_reference_frame(landmarks, boundary=3, group='source'):
     landmarks = Translation(-minimum).apply(landmarks)
 
     resolution = landmarks.range(boundary=boundary)
-    reference_frame = MaskedNDImage.blank(resolution)
+    reference_frame = MaskedImage.blank(resolution)
     reference_frame.landmarks[group] = landmarks
 
     return reference_frame
@@ -170,7 +170,7 @@ def compute_features(image, features):
             raise NotImplementedError("Sift features not implemented yet")
 
     # TODO: These should disappear with the new image refactoring
-    nd_image = MaskedNDImage(image.pixels, mask=image.mask)
+    nd_image = MaskedImage(image.pixels, mask=image.mask)
     nd_image.landmarks = image.landmarks
 
     return nd_image
