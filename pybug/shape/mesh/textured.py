@@ -1,12 +1,14 @@
+from collections import namedtuple
 import numpy as np
 from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d
 from pybug.transform.affine import Scale
+from pybug.rasterize import Rasterizable
 
 
-class TexturedTriMesh(TriMesh):
+class TexturedTriMesh(TriMesh, Rasterizable):
     r"""
     Combines a :class:`pybug.shape.mesh.base.TriMesh` with a texture. Also
     encapsulates the texture coordinates required to render the texture on the
@@ -100,3 +102,15 @@ class TexturedTriMesh(TriMesh):
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(
             TriMesh.__str__(self), self.texture.shape, self.texture.n_channels)
+
+    @property
+    def _rasterize_type_texture(self):
+        return True  # TexturedTriMesh can specify texture rendering params
+
+    def _rasterize_generate_textured_mesh(self):
+        R = namedtuple('R', ['points', 'trilist', 'tcoords', 'texture'])
+        R.points = self.points
+        R.trilist = self.trilist
+        R.texture = self.texture.pixels
+        R.tcoords = self.tcoords.points
+        return R

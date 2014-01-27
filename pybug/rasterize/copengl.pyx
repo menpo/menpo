@@ -105,7 +105,7 @@ cdef extern from "./c/glrasterizer.h":
     void init_frame_buffer(glr_scene* scene)
 
 
-cdef class OpenGLRasterizer:
+cdef class COpenGLRasterizer:
     cdef unsigned t_width
     cdef unsigned t_height
     cdef unsigned n_points
@@ -114,7 +114,7 @@ cdef class OpenGLRasterizer:
     cdef glr_scene scene
     cdef int width
     cdef int height
-    # store the pixels perminantly
+    # store the pixels permanently
     cdef float[:, :, ::1] rgb_pixels
     cdef float[:, :, ::1] f3v_pixels
 
@@ -218,3 +218,4 @@ cdef _set_float_mat4(np.ndarray[float, ndim=2, mode="c"] src, float* tgt):
             # note that we transpose the matrix in and out of OpenGL, see
             # http://stackoverflow.com/a/17718408
             tgt[i * 4 + j] = src[j, i]
+

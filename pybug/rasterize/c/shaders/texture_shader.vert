@@ -25,6 +25,6 @@ void main() {
     // same idea, but for the texture space. This deals with the texuture
     // being upside down
     tcoord = vec2(tcoordIn.s, 1.0 - tcoordIn.t);
-    linearMappingCoord = point;
+    linearMappingCoord = linearMappingCoordIn;
 }
 

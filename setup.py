@@ -19,7 +19,7 @@ cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 # first, convert the plain text shaders into C string literals
 build_c_shaders()
 
-opengl_c_cython_modules = ["pybug/rasterize/opengl.pyx"]
+opengl_c_cython_modules = ["pybug/rasterize/copengl.pyx"]
 opengl_c_exts = cythonize(opengl_c_cython_modules, nthreads=2, quiet=True)
 
 # unfortunately, OpenGL is just different on OS X/Linux
