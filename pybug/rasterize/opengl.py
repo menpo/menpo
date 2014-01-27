@@ -9,6 +9,18 @@ class GLRasterizer(object):
     def __init__(self, width, height):
         self._opengl = COpenGLRasterizer(width, height)
 
+    @classmethod
+    def from_mayavi_viewer(cls, viewer=None):
+        r"""Build a rasterizer that perfectly matches a Mayavi viewer. If no
+        viewer is provided, the current viewer is used.
+        """
+        vm, p, view_dims = extract_state_from_mayavi_viewer(viewer=viewer)
+        rasterizer = GLRasterizer(*view_dims)
+        rasterizer.set_view_matrix(vm)
+        rasterizer.set_model_matrix(np.eye(4))
+        rasterizer.set_projection_matrix(p)
+        return rasterizer
+
     @property
     def model_matrix(self):
         return self._opengl.get_model_matrix()
@@ -40,6 +52,12 @@ class GLRasterizer(object):
         elif rasterizable._rasterize_type_color():
             raise ValueError("Color Mesh rasterizations are not supported "
                              "yet")
+
+    def set_matrices_from_mayavi_viewer(self, viewer=None):
+        vm, p, _ = extract_state_from_mayavi_viewer(viewer=viewer)
+        self.set_view_matrix(vm)
+        self.set_model_matrix(np.eye(4))
+        self.set_projection_matrix(p)
 
     def rasterize_with_f3v_interpolant(self, rasterizable,
                                        f3v_interpolant):
@@ -101,7 +119,7 @@ class GLRasterizer(object):
         interp = np.require(per_vertex_f3v, dtype=np.float32, requirements='c')
         rgb_fb, f3v_fb = self._opengl.render_offscreen_rgb(
             points, interp, trilist, tcoords, texture)
-        mask_array = ~rgb_fb[..., 3].astype(np.bool)
+        mask_array = rgb_fb[..., 3].astype(np.bool)
         return (MaskedImage(rgb_fb[..., :3].copy(), mask=mask_array),
                 MaskedImage(f3v_fb.copy(), mask=mask_array))
 
@@ -110,3 +128,21 @@ def _verify_opengl_homogeneous_matrix(matrix):
     if matrix.shape != (4, 4):
         raise ValueError("OpenGL matrices must have shape (4,4)")
     return np.require(matrix, dtype=np.float32, requirements='C')
+
+
+def extract_state_from_mayavi_viewer(viewer=None):
+    r"""Retries a modelview and projection matrix along with the viewing dims
+    for a mayavi viewer. If no viewer is provided, works off the current
+    scene.
+    """
+    if viewer is None:
+        import mayavi.mlab as mlab
+        scene = mlab.gcf().scene
+    else:
+        scene = viewer.figure.None
+    vm = scene.camera.view_transform_matrix.to_array().astype(np.float32)
+    scene_size = tuple(scene.get_size())
+    aspect_ratio = float(scene_size[0]) / float(scene_size[1])
+    p = scene.camera.get_perspective_transform_matrix(
+        aspect_ratio, -1, 1).to_array().astype(np.float32)
+    return vm, p, scene_size
