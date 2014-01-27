@@ -1,10 +1,11 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
-from collections import Iterable
 
 import numpy as np
+from scipy.misc import imrotate
 
 from pybug.exception import DimensionalityError
+from collections import Iterable
 
 
 class Renderer(object):
@@ -448,6 +449,173 @@ class ImageViewer(object):
                                      self.pixels).render(**kwargs)
         else:
             raise DimensionalityError("Only 2D images are currently supported")
+
+
+class FeatureImageViewer(ImageViewer):
+    r"""
+    Base Feature Image viewer that plots a feature image either as glyph or
+    multichannel image (using ImageViewer class).
+
+    Parameters
+    ----------
+    figure_id : object
+        A figure id. Could be any valid object that identifies
+        a figure in a given framework (string, int, etc)
+    new_figure : bool
+        Whether the rendering engine should create a new figure.
+    dimensions : {2, 3} int
+        The number of dimensions in the image
+    pixels : (N, D) ndarray
+        The pixels to render.
+    channels: int or list or 'all' or None
+        A specific selection of channels to render. The user can choose either
+        a single or multiple channels. If all, render all channels. If None,
+        in the case of glyph=True, render the first min(pixels.shape[2], 9)
+        and in the case of glyph=False subplot the first
+        min(pixels.shape[2], 36).
+    mask: (N, D) ndarray
+        A boolean mask to be applied to the image. All points outside the
+        mask are set to 0.
+    glyph: bool
+        Defines whether to plot the glyph image or the different channels in
+        subplots.
+
+        Default: True
+    vectors_block_size: int
+        Defines the size of each block with vectors of the glyph image.
+    use_negative: bool
+        If this flag is enabled and if the feature pixels have negative values
+        and if in glyph mode, then there will be created an image containing
+        the glyph of positive and negative values concatenated one on top
+        of the other.
+
+        Default: False
+    """
+
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 channels=None, mask=None, glyph=True, vectors_block_size=10,
+                 use_negative=False):
+        pixels = pixels.copy()
+        self.figure_id = figure_id
+        self.new_figure = new_figure
+        if glyph:
+            pixels = self._parse_channels(channels, pixels)
+            self.channels = 0
+            self.use_subplots = False
+            pixels, mask = self._feature_glyph_image(pixels, mask,
+                                                     vectors_block_size,
+                                                     use_negative)
+        else:
+            pixels, self.use_subplots = super(FeatureImageViewer, self).\
+                _parse_channels(channels, pixels)
+        self.pixels = super(FeatureImageViewer, self)._masked_pixels(pixels,
+                                                                     mask)
+        self.dimensions = dimensions
+
+    def _parse_channels(self, channels, pixels):
+        r"""
+        Parse channels parameter. If channels is int or list, keep it as is. If
+        channels is all, return a list of all the image's channels. If channels
+        is None, return the minimum between an upper_limit and the image's
+        number of channels. If image is grayscale or RGB and channels is None,
+        then do not plot channels in different subplots.
+
+        Parameters
+        ----------
+        channels: int or list or 'all' or None
+            A specific selection of channels to render.
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        upper_limit: int
+            The upper limit of subplots for the channels=None case.
+        """
+        if channels is None and pixels.shape[2] not in [1, 3]:
+            pixels = pixels[..., range(min(pixels.shape[2], 9))]
+        elif channels not in ['all', None]:
+            pixels = pixels[..., channels]
+        return pixels
+
+    def _feature_glyph_image(self, feature_data, mask_data, vectors_block_size,
+                             use_negative):
+        r"""
+        Create glyph of a feature image. If feature_data has negative values,
+        the use_negative flag controls whether there will be created a glyph of
+        both positive and negative values concatenated the one on top of the
+        other.
+
+        Parameters
+        ----------
+        feature_data : (N, D) ndarray
+            The feature pixels to use.
+        mask_data: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vectors_block_size: int
+            Defines the size of each block with vectors of the glyph image.
+        use_negative: bool
+            Defines whether to take into account possible negative values of
+            feature_data.
+        """
+        negative_weights = -feature_data
+        scale = np.maximum(feature_data.max(), negative_weights.max())
+        pos, mask_pos = self._create_feature_glyph(feature_data, mask_data,
+                                                   vectors_block_size)
+        pos = pos * 255 / scale
+        glyph_image = pos
+        mask_image = mask_pos
+        if use_negative and feature_data.min() < 0:
+            neg, mask_neg = self._create_feature_glyph(negative_weights,
+                                                       mask_data,
+                                                       vectors_block_size)
+            neg = neg * 255 / scale
+            glyph_image = np.concatenate((pos, neg))
+            mask_image = np.concatenate((mask_pos, mask_neg))
+        return glyph_image, mask_image
+
+    def _create_feature_glyph(self, features, mask_data, vbs):
+        r"""
+        Create glyph of feature pixels.
+
+        Parameters
+        ----------
+        features : (N, D) ndarray
+            The feature pixels to use.
+        mask: (N, D) ndarray
+            The original boolean mask corresponding to the image. All points
+            outside the mask are set to 0.
+        vbs: int
+            Defines the size of each block with vectors of the glyph image.
+        """
+        # vbs = Vector block size
+        num_bins = features.shape[2]
+        # construct a "glyph" for each orientation
+        block_image_temp = np.zeros((vbs, vbs))
+        # Create a vertical line of ones, to be the first vector
+        block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
+        block_im = np.zeros((block_image_temp.shape[0],
+                             block_image_temp.shape[1],
+                             num_bins))
+        # First vector as calculated above
+        block_im[:, :, 0] = block_image_temp
+        # Number of bins rotations to create an 'asterisk' shape
+        for i in range(1, num_bins):
+            block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
+
+        # make pictures of positive feature_data by adding up weighted glyphs
+        features[features < 0] = 0
+
+        if mask_data is not None:
+            ones_mask = np.ones(block_im.shape[:2])
+            mask_im = (ones_mask[None, None, :, :] *
+                       np.squeeze(mask_data)[:, :, None, None])
+            mask_im = np.bmat(mask_im.tolist()).astype(np.bool)
+        else:
+            mask_im = None
+
+        glyph_im = np.sum(block_im[None, None, :, :, :] *
+                          features[:, :, None, None, :], axis=-1)
+        glyph_im = np.bmat(glyph_im.tolist())
+        return glyph_im, mask_im
 
 
 class TriMeshViewer(object):

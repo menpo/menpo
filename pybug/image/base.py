@@ -9,6 +9,7 @@ from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
 from pybug.transform.affine import Translation, NonUniformScale
 from pybug.visualize.base import Viewable, ImageViewer
+from pybug.image.feature import FeatureExtraction
 
 
 class ImageBoundaryError(ValueError):
@@ -71,6 +72,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
                              " - a {}D array "
                              "was provided".format(image_data.ndim))
         self.pixels = image_data
+        # add FeatureExtraction functionality
+        self.features = FeatureExtraction(self)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, **kwargs):
