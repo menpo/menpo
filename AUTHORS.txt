@@ -6,11 +6,9 @@ Imperial College London
 
 Individuals
 -----------
-James Booth             <jabooth@gmail.com>
-Patrick Snape           <p.snape@imperial.ac.uk>
-Joan Alabort-i-Medina   <ja310@imperial.ac.uk>
-Epameinondas Antonakos  <e.antonakos@imperial.ac.uk>
-
-With special thanks to Stefanos Zafeiriou <s.zafeiriou@imperial.ac.uk>
-for his support
+James Booth             <jabooth@gmail.com> <james.booth@imperial.ac.uk>
+Patrick Snape           <patricksnape@gmail.com> <p.snape@imperial.ac.uk>
+Joan Alabort-i-Medina   <joan.alabort@gmail.com> <ja310@imperial.ac.uk>
+Epameinondas Antonakos  <antonakosn@gmail.com> <e.antonakos@imperial.ac.uk>
+Stefanos Zafeiriou      <s.zafeiriou@imperial.ac.uk>
 
