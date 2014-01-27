@@ -41,11 +41,23 @@ class GLRasterizer(object):
             raise ValueError("Color Mesh rasterizations are not supported "
                              "yet")
 
-    def rasterize_with_vertex_interpolant(self, rasterizable,
-                                          vertex_interpolant):
-        pass
+    def rasterize_with_f3v_interpolant(self, rasterizable,
+                                       f3v_interpolant):
+        if rasterizable._rasterize_type_texture:
+            # request the textured info for rasterizing
+            r = rasterizable._rasterize_generate_textured_mesh()
+            return self._rasterize_texture_with_interp(r, f3v_interpolant)
+        elif rasterizable._rasterize_type_color():
+            raise ValueError("Color Mesh rasterizations are not supported "
+                             "yet")
 
-    def _rasterize_texture_with_interp(self, r, per_vertex_f3v):
+    def rasterize_with_shape_image(self, rasterizable):
+        return self.rasterize_with_f3v_interpolant(rasterizable, None)
+
+    def rasterize(self, rasterizable):
+        return self.rasterize_with_shape_image(rasterizable)[0]
+
+    def _rasterize_texture_with_interp(self, r, per_vertex_f3v=None):
         r"""Rasterizes a textured mesh along with it's interpolant data
         through OpenGL.
 
@@ -60,7 +72,7 @@ class GLRasterizer(object):
         per_vertex_f3v: ndarray, shape (n_points, 3)
             A matrix specifying arbitrary 3 floating point numbers per
             vertex. This data will be linearly interpolated across triangles
-            and returned in the f3v image
+            and returned in the f3v image. If none, the shape information is used
 
         Returns
         -------
@@ -84,6 +96,8 @@ class GLRasterizer(object):
         trilist = np.require(r.trilist, dtype=np.uint32, requirements='c')
         texture = np.require(r.texture, dtype=np.float32, requirements='c')
         tcoords = np.require(r.tcoords, dtype=np.float32, requirements='c')
+        if per_vertex_f3v is None:
+            per_vertex_f3v = points
         interp = np.require(per_vertex_f3v, dtype=np.float32, requirements='c')
         rgb_fb, f3v_fb = self._opengl.render_offscreen_rgb(
             points, interp, trilist, tcoords, texture)
