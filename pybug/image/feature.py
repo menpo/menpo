@@ -1,6 +1,3 @@
-import numpy as np
-
-#from pybug.image.masked import MaskedImage
 import pybug.features as fc
 
 
@@ -467,6 +464,22 @@ class FeatureExtraction(object):
     def __init__(self, image):
         self._image = image
 
+    def _init_feature_image(self, feature_pixels, window_centres):
+        from pybug.image import MaskedImage, Image
+        if isinstance(self._image, MaskedImage):
+            # if we have a MaskedImage object
+            feature_image = MaskedImage(feature_pixels)
+            feature_image.window_centres = window_centres
+            # fix mask
+            self.transfer_mask(feature_image)
+        else:
+            # if we have an Image object
+            feature_image = Image(feature_pixels)
+            feature_image.window_centres = window_centres
+        # fix landmarks
+        self.transfer_landmarks(feature_image)
+        return feature_image
+
     def hog(self, mode='dense', algorithm='dalaltriggs', num_bins=9,
             cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
             window_height=1, window_width=1, window_unit='blocks',
@@ -482,7 +495,7 @@ class FeatureExtraction(object):
         For the parameters explanation, please refer to HOG2DImage class of
         this file.
         """
-        # compute hog features
+        # compute hog features and windows_centres
         hog, window_centres = fc.hog(self._image.pixels, mode=mode,
                                      algorithm=algorithm, cell_size=cell_size,
                                      block_size=block_size, num_bins=num_bins,
@@ -496,108 +509,29 @@ class FeatureExtraction(object):
                                      window_step_horizontal,
                                      window_step_unit=window_step_unit,
                                      padding=padding, verbose=verbose)
-        mask = self._image.mask
-        if mask is not None:
-            if not isinstance(mask, np.ndarray):
-                # assume that the mask is a boolean image then!
-                mask = mask.pixels
-            mask = mask[..., 0][window_centres[:, :, 0],
-                                window_centres[:, :, 1]]
-        super(HOG2DImage, self).__init__(hog, mask=mask)
-        self.window_centres = window_centres
-
-        # hog = HOG2DImage(self._image,
-        #                  mode=mode, algorithm=algorithm, cell_size=cell_size,
-        #                  block_size=block_size, num_bins=num_bins,
-        #                  signed_gradient=signed_gradient,
-        #                  l2_norm_clip=l2_norm_clip,
-        #                  window_height=window_height,
-        #                  window_width=window_width, window_unit=window_unit,
-        #                  window_step_vertical=window_step_vertical,
-        #                  window_step_horizontal=window_step_horizontal,
-        #                  window_step_unit=window_step_unit, padding=padding,
-        #                  verbose=verbose)
-        # correct landmarks
-        # hog.landmarks = self._image.landmarks
-        # if hog.landmarks.has_landmarks:
-        #     for l_group in hog.landmarks:
-        #         l = hog.landmarks[l_group[0]]
-        #         # make sure window steps are in pixels mode
-        #         window_step_vertical = (hog.window_centres[1, 0, 0] -
-        #                                 hog.window_centres[0, 0, 0])
-        #         window_step_horizontal = (hog.window_centres[0, 1, 1] -
-        #                                   hog.window_centres[0, 0, 1])
-        #         # convert points by subtracting offset (controlled by padding)
-        #         # and dividing with step at each direction
-        #         l.lms.points[:, 0] = (l.lms.points[:, 0] -
-        #                               hog.window_centres[:, :, 0].min()) / \
-        #             window_step_vertical
-        #         l.lms.points[:, 1] = (l.lms.points[:, 1] -
-        #                               hog.window_centres[:, :, 1].min()) / \
-        #             window_step_horizontal
-        return hog
-
-
-
-
-
-#     def __init__(self, image, mode='dense', algorithm='dalaltriggs',
-#                  num_bins=9, cell_size=8, block_size=2, signed_gradient=True,
-#                  l2_norm_clip=0.2, window_height=1, window_width=1,
-#                  window_unit='blocks', window_step_vertical=1,
-#                  window_step_horizontal=1, window_step_unit='pixels',
-#                  padding=True, verbose=False):
-#         self.params = {'mode': mode,
-#                        'algorithm': algorithm,
-#                        'num_bins': num_bins,
-#                        'cell_size': cell_size,
-#                        'block_size': block_size,
-#                        'signed_gradient': signed_gradient,
-#                        'l2_norm_clip': l2_norm_clip,
-#                        'window_height': window_height,
-#                        'window_width': window_width,
-#                        'window_unit': window_unit,
-#                        'window_step_vertical': window_step_vertical,
-#                        'window_step_horizontal': window_step_horizontal,
-#                        'window_step_unit': window_step_unit,
-#                        'padding': padding,
-#                        'verbose': verbose,
-#                        'original_image_height': image.pixels.shape[0],
-#                        'original_image_width': image.pixels.shape[1],
-#                        'original_image_channels': image.pixels.shape[2]}
-#         #hog, window_centres = fc.hog(image_data, **self.params)
-#         hog, window_centres = fc.hog(image.pixels,
-#                                      self.params['mode'],
-#                                      self.params['algorithm'],
-#                                      self.params['num_bins'],
-#                                      self.params['cell_size'],
-#                                      self.params['block_size'],
-#                                      self.params['signed_gradient'],
-#                                      self.params['l2_norm_clip'],
-#                                      self.params['window_height'],
-#                                      self.params['window_width'],
-#                                      self.params['window_unit'],
-#                                      self.params['window_step_vertical'],
-#                                      self.params['window_step_horizontal'],
-#                                      self.params['window_step_unit'],
-#                                      self.params['padding'],
-#                                      self.params['verbose'])
-#         mask = image.mask
-#         if mask is not None:
-#             if not isinstance(mask, np.ndarray):
-#                 # assume that the mask is a boolean image then!
-#                 mask = mask.pixels
-#             mask = mask[..., 0][window_centres[:, :, 0],
-#                                 window_centres[:, :, 1]]
-#         super(HOG2DImage, self).__init__(hog, mask=mask)
-#         self.window_centres = window_centres
-
-
-
-
-
-
-
+        # create hog image object
+        hog_image = self._init_feature_image(hog, window_centres)
+        # store parameters
+        hog_image.parameters = {'mode': mode, 'algorithm': algorithm,
+                                'num_bins': num_bins, 'cell_size': cell_size,
+                                'block_size': block_size,
+                                'signed_gradient': signed_gradient,
+                                'l2_norm_clip': l2_norm_clip,
+                                'window_height': window_height,
+                                'window_width': window_width,
+                                'window_unit': window_unit,
+                                'window_step_vertical': window_step_vertical,
+                                'window_step_horizontal':
+                                window_step_horizontal,
+                                'window_step_unit': window_step_unit,
+                                'padding': padding, 'verbose': verbose,
+                                'original_image_height':
+                                self._image.pixels.shape[0],
+                                'original_image_width':
+                                self._image.pixels.shape[1],
+                                'original_image_channels':
+                                self._image.pixels.shape[2]}
+        return hog_image
 
     # def igo(self, double_angles=False, verbose=False):
     #     r"""
@@ -616,3 +550,33 @@ class FeatureExtraction(object):
     #     # correct landmarks
     #     igo.landmarks = self._image.landmarks
     #     return igo
+
+    def transfer_landmarks(self, target_image):
+        target_image.landmarks = self._image.landmarks
+        if target_image.landmarks.has_landmarks:
+            for l_group in target_image.landmarks:
+                l = target_image.landmarks[l_group[0]]
+                # make sure window steps are in pixels mode
+                window_step_vertical = \
+                    (target_image.window_centres[1, 0, 0] -
+                     target_image.window_centres[0, 0, 0])
+                window_step_horizontal = \
+                    (target_image.window_centres[0, 1, 1] -
+                     target_image.window_centres[0, 0, 1])
+                # convert points by subtracting offset (controlled by padding)
+                # and dividing with step at each direction
+                l.lms.points[:, 0] = \
+                    (l.lms.points[:, 0] -
+                     target_image.window_centres[:, :, 0].min()) / \
+                    window_step_vertical
+                l.lms.points[:, 1] = \
+                    (l.lms.points[:, 1] -
+                     target_image.window_centres[:, :, 1].min()) / \
+                    window_step_horizontal
+
+    def transfer_mask(self, target_image):
+        from pybug.image import BooleanImage
+        mask = self._image.mask.pixels
+        mask = mask[..., 0][target_image.window_centres[:, :, 0],
+                            target_image.window_centres[:, :, 1]]
+        target_image.mask = BooleanImage(mask)

@@ -611,3 +611,4 @@ class MaskedImage(Image):
                                                 round=round,
                                                 warp_mask=True,
                                                 **kwargs)
+
