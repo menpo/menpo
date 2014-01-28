@@ -1,3 +1,4 @@
+import numpy as np
 import pybug.features as fc
 
 
@@ -524,7 +525,7 @@ class FeatureExtraction(object):
                                 'window_step_horizontal':
                                 window_step_horizontal,
                                 'window_step_unit': window_step_unit,
-                                'padding': padding, 'verbose': verbose,
+                                'padding': padding,
                                 'original_image_height':
                                 self._image.pixels.shape[0],
                                 'original_image_width':
@@ -533,23 +534,46 @@ class FeatureExtraction(object):
                                 self._image.pixels.shape[2]}
         return hog_image
 
-    # def igo(self, double_angles=False, verbose=False):
-    #     r"""
-    #     Represents a 2-dimensional IGO features image with k=[2,4] number of
-    #     channels. It returns an image object with potential landmarks of the
-    #     same type as the input image object.
-    #
-    #     Parameters
-    #     ----------
-    #     For the parameters explanation, please refer to HOG2DImage class of
-    #     this file.
-    #     """
-    #     # compute igo features
-    #     igo = IGO2DImage(self._image, double_angles=double_angles,
-    #                      verbose=verbose)
-    #     # correct landmarks
-    #     igo.landmarks = self._image.landmarks
-    #     return igo
+    def igo(self, double_angles=False, verbose=False):
+        r"""
+        Represents a 2-dimensional IGO features image with k=[2,4] number of
+        channels. It returns an image object with potential landmarks of the
+        same type as the input image object.
+
+        Parameters
+        ----------
+        For the parameters explanation, please refer to HOG2DImage class of
+        this file.
+        """
+        # compute igo
+        if self._image.n_channels == 3:
+            grad = self._image.as_greyscale().gradient()
+        else:
+            grad = self._image.gradient()
+        grad_orient = np.angle(grad.pixels[..., 0] + 1j*grad.pixels[..., 1])
+        if double_angles:
+            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
+                                  np.sin(grad_orient)[..., np.newaxis],
+                                  np.cos(2*grad_orient)[..., np.newaxis],
+                                  np.sin(2*grad_orient)[..., np.newaxis]), 2)
+        else:
+            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
+                                  np.sin(grad_orient)[..., np.newaxis]), 2)
+        # compute windows_centres
+        x, y = np.meshgrid(range(0, igo.shape[1]), range(0, igo.shape[0]))
+        window_centers = np.concatenate((y[..., np.newaxis],
+                                         x[..., np.newaxis]), 2)
+        # create igo image object
+        igo_image = self._init_feature_image(igo, window_centers)
+        # store parameters
+        igo_image.parameters = {'double_angles': double_angles,
+                                'original_image_height':
+                                self._image.pixels.shape[0],
+                                'original_image_width':
+                                self._image.pixels.shape[1],
+                                'original_image_channels':
+                                self._image.pixels.shape[2]}
+        return igo_image
 
     def transfer_landmarks(self, target_image):
         target_image.landmarks = self._image.landmarks
