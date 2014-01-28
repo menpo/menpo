@@ -612,20 +612,3 @@ class MaskedImage(Image):
                                                 warp_mask=True,
                                                 **kwargs)
 
-    def glyph(self, vectors_block_size=10, use_negative=False, channels=None):
-        r"""
-        Create glyph of a feature image. If feature_data has negative values,
-        the use_negative flag controls whether there will be created a glyph of
-        both positive and negative values concatenated the one on top of the
-        other.
-
-        Parameters
-        ----------
-        vectors_block_size: int
-            Defines the size of each block with vectors of the glyph image.
-        use_negative: bool
-            Defines whether to take into account possible negative values of
-            feature_data.
-        """
-        glyph_image = Image.glyph(self, vectors_block_size=vectors_block_size,
-                                  use_negative=use_negative, channels=channels)
