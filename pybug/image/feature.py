@@ -255,7 +255,8 @@ class FeatureExtraction(object):
                                      window_step_unit=window_step_unit,
                                      padding=padding, verbose=verbose)
         # create hog image object
-        hog_image = self._init_feature_image(hog, window_centres)
+        hog_image = self._init_feature_image(hog,
+                                             window_centres=window_centres)
         # store parameters
         hog_image.parameters = {'mode': mode, 'algorithm': algorithm,
                                 'num_bins': num_bins, 'cell_size': cell_size,
@@ -289,10 +290,10 @@ class FeatureExtraction(object):
         image :  class:`Abstract2DImage`
             An image object that contains pixels and mask fields.
         double_angles : bool
-            Assume that phi represents the gradient orientations. If this flag is
-            disabled, the features image is the concatenation of cos(phi) and
-            sin(phi), thus 2 channels. If it is enabled, the features image is
-            the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
+            Assume that phi represents the gradient orientations. If this flag
+            is disabled, the features image is the concatenation of cos(phi)
+            and sin(phi), thus 2 channels. If it is enabled, the features image
+            is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
 
             Default: False
         verbose : bool
@@ -322,18 +323,16 @@ class FeatureExtraction(object):
                         self._image.pixels.shape[0],
                         self._image.pixels.shape[2])
             if double_angles:
-                info_str = "{}  - Double angles are enabled.\n".format(info_str)
+                info_str = "{}  - Double angles are enabled.\n"\
+                    .format(info_str)
             else:
-                info_str = "{}  - Double angles are disabled.\n".format(info_str)
+                info_str = "{}  - Double angles are disabled.\n"\
+                    .format(info_str)
             info_str = "{}Output image size {}W x {}H x {}."\
                 .format(info_str, igo.shape[0], igo.shape[1], igo.shape[2])
             print info_str
-        # compute windows_centres
-        x, y = np.meshgrid(range(0, igo.shape[1]), range(0, igo.shape[0]))
-        window_centers = np.concatenate((y[..., np.newaxis],
-                                         x[..., np.newaxis]), 2)
         # create igo image object
-        igo_image = self._init_feature_image(igo, window_centers)
+        igo_image = self._init_feature_image(igo)
         # store parameters
         igo_image.parameters = {'double_angles': double_angles,
                                 'original_image_height':
@@ -344,7 +343,7 @@ class FeatureExtraction(object):
                                 self._image.pixels.shape[2]}
         return igo_image
 
-    def _init_feature_image(self, feature_pixels, window_centres):
+    def _init_feature_image(self, feature_pixels, window_centres=None):
         r"""
         Creates a new image object to store the feature_pixels. If the original
         object is of MaskedImage class, then the features object is of
@@ -364,63 +363,73 @@ class FeatureExtraction(object):
         if isinstance(self._image, MaskedImage):
             # if we have a MaskedImage object
             feature_image = MaskedImage(feature_pixels)
-            feature_image.window_centres = window_centres
             # fix mask
-            self.transfer_mask(feature_image)
+            self.transfer_mask(feature_image, window_centres=window_centres)
         else:
             # if we have an Image object
             feature_image = Image(feature_pixels)
-            feature_image.window_centres = window_centres
         # fix landmarks
-        self.transfer_landmarks(feature_image)
+        self.transfer_landmarks(feature_image, window_centres=window_centres)
+        if window_centres is not None:
+            feature_image.window_centres = window_centres
         return feature_image
 
-    def transfer_landmarks(self, target_image):
+    def transfer_landmarks(self, target_image, window_centres=None):
         r"""
         Transfers its own landmarks to the target_image object after
         appropriately correcting them. The landmarks correction is achieved
         based on the windows_centres of the features object.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         target_image :  Either MaskedImage or Image class.
             The target image object that includes the windows_centres.
+
+        window_centres : ndarray, optional
+            If set, use these window centres to rescale the landmarks
+            appropriately. If None, no scaling is applied.
         """
         target_image.landmarks = self._image.landmarks
-        if target_image.landmarks.has_landmarks:
-            for l_group in target_image.landmarks:
-                l = target_image.landmarks[l_group[0]]
-                # make sure window steps are in pixels mode
-                window_step_vertical = \
-                    (target_image.window_centres[1, 0, 0] -
-                     target_image.window_centres[0, 0, 0])
-                window_step_horizontal = \
-                    (target_image.window_centres[0, 1, 1] -
-                     target_image.window_centres[0, 0, 1])
-                # convert points by subtracting offset (controlled by padding)
-                # and dividing with step at each direction
-                l.lms.points[:, 0] = \
-                    (l.lms.points[:, 0] -
-                     target_image.window_centres[:, :, 0].min()) / \
-                    window_step_vertical
-                l.lms.points[:, 1] = \
-                    (l.lms.points[:, 1] -
-                     target_image.window_centres[:, :, 1].min()) / \
-                    window_step_horizontal
+        if window_centres is not None:
+            if target_image.landmarks.has_landmarks:
+                for l_group in target_image.landmarks:
+                    l = target_image.landmarks[l_group[0]]
+                    # make sure window steps are in pixels mode
+                    window_step_vertical = \
+                        (window_centres[1, 0, 0] -
+                         window_centres[0, 0, 0])
+                    window_step_horizontal = \
+                        (window_centres[0, 1, 1] -
+                         window_centres[0, 0, 1])
+                    # convert points by subtracting offset (controlled by
+                    # padding)
+                    # and dividing with step at each direction
+                    l.lms.points[:, 0] = \
+                        (l.lms.points[:, 0] -
+                         window_centres[:, :, 0].min()) / \
+                        window_step_vertical
+                    l.lms.points[:, 1] = \
+                        (l.lms.points[:, 1] -
+                         window_centres[:, :, 1].min()) / \
+                        window_step_horizontal
 
-    def transfer_mask(self, target_image):
+    def transfer_mask(self, target_image, window_centres=None):
         r"""
         Transfers its own mask to the target_image object after
         appropriately correcting it. The mask correction is achieved based on
         the windows_centres of the features object.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         target_image :  Either MaskedImage or Image class.
             The target image object that includes the windows_centres.
+
+        window_centres : ndarray, optional
+            If set, use these window centres to rescale the landmarks
+            appropriately. If None, no scaling is applied.
         """
         from pybug.image import BooleanImage
-        mask = self._image.mask.pixels
-        mask = mask[..., 0][target_image.window_centres[:, :, 0],
-                            target_image.window_centres[:, :, 1]]
-        target_image.mask = BooleanImage(mask)
+        mask = self._image.mask.mask  # don't want a channel axis!
+        if window_centres is not None:
+            mask = mask[window_centres[..., 0], window_centres[..., 1]]
+        target_image.mask = BooleanImage(mask.copy())
