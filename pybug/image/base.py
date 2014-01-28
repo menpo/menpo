@@ -4,6 +4,7 @@ from copy import deepcopy
 import numpy as np
 import scipy.linalg
 import PIL.Image as PILImage
+from scipy.misc import imrotate
 
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
@@ -295,6 +296,48 @@ class Image(Vectorizable, Landmarkable, Viewable):
         pixels_to_view = self.pixels
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channels=channels).render(**kwargs)
+
+    def glyph(self, vectors_block_size=10, use_negative=False, channels=None):
+        r"""
+        Create glyph of a feature image. If feature_data has negative values,
+        the use_negative flag controls whether there will be created a glyph of
+        both positive and negative values concatenated the one on top of the
+        other.
+
+        Parameters
+        ----------
+        vectors_block_size: int
+            Defines the size of each block with vectors of the glyph image.
+        use_negative: bool
+            Defines whether to take into account possible negative values of
+            feature_data.
+        """
+        # first, choose the appropriate channels
+        if channels is None:
+            pixels = self.pixels[..., :4]
+        elif channels != 'all':
+            pixels = self.pixels[..., channels]
+        else:
+            pixels = self.pixels
+        # compute the glyph
+        negative_weights = -pixels
+        scale = np.maximum(pixels.max(), negative_weights.max())
+        pos = _create_feature_glyph(pixels, vectors_block_size)
+        pos = pos * 255 / scale
+        glyph_image = pos
+        if use_negative and pixels.min() < 0:
+            neg = _create_feature_glyph(negative_weights, vectors_block_size)
+            neg = neg * 255 / scale
+            glyph_image = np.concatenate((pos, neg))
+        glyph = Image(glyph_image)
+        # correct landmarks
+        from pybug.transform.affine import NonUniformScale
+        image_shape = np.array(self.shape, dtype=np.double)
+        glyph_shape = np.array(glyph.shape, dtype=np.double)
+        nus = NonUniformScale(glyph_shape / image_shape)
+        glyph.landmarks = self.landmarks
+        nus.apply_inplace(glyph.landmarks)
+        return glyph
 
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=True):
@@ -792,3 +835,37 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def __str__(self):
         return ('{} {}D Image with {} channels'.format(
             self._str_shape, self.n_dims, self.n_channels))
+
+
+def _create_feature_glyph(features, vbs):
+    r"""
+    Create glyph of feature pixels.
+
+    Parameters
+    ----------
+    features : (N, D) ndarray
+        The feature pixels to use.
+    vbs: int
+        Defines the size of each block with vectors of the glyph image.
+    """
+    # vbs = Vector block size
+    num_bins = features.shape[2]
+    # construct a "glyph" for each orientation
+    block_image_temp = np.zeros((vbs, vbs))
+    # Create a vertical line of ones, to be the first vector
+    block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
+    block_im = np.zeros((block_image_temp.shape[0],
+                         block_image_temp.shape[1],
+                         num_bins))
+    # First vector as calculated above
+    block_im[:, :, 0] = block_image_temp
+    # Number of bins rotations to create an 'asterisk' shape
+    for i in range(1, num_bins):
+        block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
+
+    # make pictures of positive feature_data by adding up weighted glyphs
+    features[features < 0] = 0
+    glyph_im = np.sum(block_im[None, None, :, :, :] *
+                      features[:, :, None, None, :], axis=-1)
+    glyph_im = np.bmat(glyph_im.tolist())
+    return glyph_im
