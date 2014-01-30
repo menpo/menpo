@@ -1,24 +1,31 @@
 import os
 import glob
 
+from pybug import pybug_src_dir_path
+
 """
-This short script finds all GLSL shader files in this directory and
-creates a header of string literals.
+This short script finds all GLSL shader files in the
+pybug/rasterize/c/shaders/
+directory and creates a header of string literals.
 Shader files are considered as all files in the shader subdirectory.
 
 For example,
 
-./shader/myshader.frag
+pybug/rasterize/c/shaders/myshader.frag
 
 generates:
 
 const GLchar myshader_frag_str [] = "shader contents here"...
 
-in the header file 'shaders.h'
+in the header file
+
+pybug/rasterize/c/shaders.h
+
 """
 
 header_file = 'shaders.h'
-c_folder = os.path.dirname(os.path.abspath(__file__))
+pybug_dir = pybug_src_dir_path()
+c_folder = reduce(os.path.join, [pybug_dir, 'pybug', 'rasterize', 'c'])
 shaders_folder = os.path.join(c_folder, 'shaders')
 header_filepath = os.path.join(c_folder, header_file)
 

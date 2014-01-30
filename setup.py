@@ -1,8 +1,10 @@
-from setuptools import setup, find_packages
 import sys
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
-from pybug.rasterize.c.shaders import build_c_shaders
+
+from buildhelpers.shaders import build_c_shaders
+
 
 # ---- C/C++ EXTENSIONS ---- #
 cython_modules = ["pybug/geodesics/kirsanov.pyx",
