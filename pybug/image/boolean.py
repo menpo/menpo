@@ -1,9 +1,9 @@
 from copy import deepcopy
 import numpy as np
-from pybug.image.base import AbstractNDImage
+from pybug.image.base import Image
 
 
-class BooleanNDImage(AbstractNDImage):
+class BooleanImage(Image):
     r"""
     A mask image made from binary pixels. The region of the image that is
     left exposed by the mask is referred to as the 'masked region'. The
@@ -21,7 +21,7 @@ class BooleanNDImage(AbstractNDImage):
     def __init__(self, mask_data):
         # Enforce boolean pixels, and add a channel dim
         mask_data = np.asarray(mask_data[..., None], dtype=np.bool)
-        super(BooleanNDImage, self).__init__(mask_data)
+        super(BooleanImage, self).__init__(mask_data)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel):
@@ -36,7 +36,7 @@ class BooleanNDImage(AbstractNDImage):
     @classmethod
     def blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
-        Returns a blank :class:`BooleanNDImage` of the requested shape
+        Returns a blank :class:`BooleanImage` of the requested shape
 
         Parameters
         ----------
@@ -56,12 +56,12 @@ class BooleanNDImage(AbstractNDImage):
 
         Returns
         -------
-        blank_image : :class:`BooleanNDImage`
+        blank_image : :class:`BooleanImage`
             A blank mask of the requested size
         """
         if round not in ['ceil', 'round', 'floor']:
             raise ValueError('round must be either ceil, round or floor')
-        # Ensure that the '+' operator means concatenate tuples
+            # Ensure that the '+' operator means concatenate tuples
         shape = tuple(getattr(np, round)(shape))
         if fill:
             mask = np.ones(shape, dtype=np.bool)
@@ -153,11 +153,11 @@ class BooleanNDImage(AbstractNDImage):
     def from_vector(self, flattened):
         r"""
         Takes a flattened vector and returns a new
-        :class:`BooleanNDImage` formed by
+        :class:`BooleanImage` formed by
         reshaping the vector to the correct dimensions. Note that this is
         rebuilding a boolean image **itself** from boolean values. The mask
         is in no way interpreted in performing the operation, in contrast to
-        MaskedNDImage, where only the masked region is used in from_vector()
+        MaskedImage, where only the masked region is used in from_vector()
         and as_vector(). Any image landmarks are transferred in the process.
 
         Parameters
@@ -167,10 +167,10 @@ class BooleanNDImage(AbstractNDImage):
 
         Returns
         -------
-        image : :class:`BooleanNDImage`
+        image : :class:`BooleanImage`
             New BooleanImage of same shape as this image
         """
-        mask = BooleanNDImage(flattened.reshape(self.shape))
+        mask = BooleanImage(flattened.reshape(self.shape))
         mask.landmarks = self.landmarks
         return mask
 
@@ -274,11 +274,11 @@ class BooleanNDImage(AbstractNDImage):
     def warp_to(self, template_mask, transform, warp_landmarks=False,
                 interpolator='scipy', **kwargs):
         r"""
-        Warps this BooleanNDImage into a different reference space.
+        Warps this BooleanImage into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`pybug.image.boolean.BooleanNDImage`
+        template_mask : :class:`pybug.image.boolean.BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
         transform : :class:`pybug.transform.base.Transform`
@@ -310,17 +310,18 @@ class BooleanNDImage(AbstractNDImage):
                 "The order of the interpolation on a boolean image has to be "
                 "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
-        return AbstractNDImage.warp_to(self, template_mask, transform,
-                                       warp_landmarks=warp_landmarks,
-                                       interpolator=interpolator, **kwargs)
+        return Image.warp_to(self, template_mask, transform,
+                             warp_landmarks=warp_landmarks,
+                             interpolator=interpolator, **kwargs)
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values):
+    def _build_warped_image(self, template_mask, sampled_pixel_values,
+                            **kwargs):
         r"""
         Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanNDImage as we can't use
+        sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method.
         """
-        warped_image = BooleanNDImage.blank(template_mask.shape)
+        warped_image = BooleanImage.blank(template_mask.shape)
         # As we are a mask image, we have to implement the update a little
         # more manually than other image classes.
         warped_image.pixels[warped_image.mask] = sampled_pixel_values

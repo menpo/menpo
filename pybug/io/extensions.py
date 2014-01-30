@@ -84,6 +84,10 @@ all_image_types = {}
 all_image_types.update(spatial_image_types)
 all_image_types.update(image_types)
 
+all_mesh_and_image_types = {}
+all_mesh_and_image_types.update(all_image_types)
+all_mesh_and_image_types.update(mesh_types)
+
 image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter}

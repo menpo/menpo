@@ -1,6 +1,10 @@
 # This has to go above the default importers to prevent cyclical importing
-from pybug.exception import DimensionalityError
 import abc
+from collections import Iterable
+
+import numpy as np
+
+from pybug.exception import DimensionalityError
 
 
 class Renderer(object):
@@ -176,13 +180,14 @@ class Viewable(object):
         """
         pass
 
+
 from pybug.visualize.viewmayavi import MayaviPointCloudViewer3d, \
     MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
     MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d
 from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
-    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d, \
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d, \
-    MatplotlibAlignmentViewer2d
+    MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
+    MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
+    MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -194,6 +199,7 @@ LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
+ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
 VectorViewer3d = MayaviVectorViewer3d
 DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
@@ -220,6 +226,7 @@ class LandmarkViewer(object):
     target : :class:`pybug.landmarks.base.Landmarkable`
         The parent shape that we are drawing the landmarks for.
     """
+
     def __init__(self, figure_id, new_figure,
                  group_label, pointcloud, labels_to_masks, target):
         self.pointcloud = pointcloud
@@ -249,8 +256,9 @@ class LandmarkViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.pointcloud.n_dims == 2:
-            from pybug.image.base import AbstractNDImage
-            if isinstance(self.target, AbstractNDImage):
+            from pybug.image.base import Image
+
+            if isinstance(self.target, Image):
                 return LandmarkViewer2dImage(
                     self.figure_id, self.new_figure,
                     self.group_label, self.pointcloud,
@@ -282,6 +290,7 @@ class PointCloudViewer(object):
     points : (N, D) ndarray
         The points to render.
     """
+
     def __init__(self, figure_id, new_figure, points):
         self.figure_id = figure_id
         self.new_figure = new_figure
@@ -320,7 +329,8 @@ class PointCloudViewer(object):
 
 class ImageViewer(object):
     r"""
-    Base Image viewer that abstracts away dimensionality.
+    Base Image viewer that abstracts away dimensionality. It can visualize
+    multiple channels of an image in subplots.
 
     Parameters
     ----------
@@ -333,23 +343,81 @@ class ImageViewer(object):
         The number of dimensions in the image
     pixels : (N, D) ndarray
         The pixels to render.
-    channel: int
-        A specific channel of pixels to render. If None, render all.
+    channels: int or list or 'all' or None
+        A specific selection of channels to render. The user can choose either
+        a single or multiple channels. If all, render all channels in subplot
+        mode. If None and channels are less than 36, render them all. If None
+        and channels are more than 36, render the first 36.
+
+        Default: None
     mask: (N, D) ndarray
         A boolean mask to be applied to the image. All points outside the
         mask are set to 0.
     """
+
     def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 channel=None, mask=None):
+                 channels=None, mask=None):
         pixels = pixels.copy()
         self.figure_id = figure_id
         self.new_figure = new_figure
-        if channel is not None:
-            pixels = pixels[..., channel]
-        if mask is not None:
-            pixels[~mask] = 0.
-        self.pixels = pixels
         self.dimensions = dimensions
+        pixels, self.use_subplots = \
+            self._parse_channels(channels, pixels)
+        self.pixels = self._masked_pixels(pixels, mask)
+
+    def _parse_channels(self, channels, pixels):
+        r"""
+        Parse channels parameter. If channels is int or list, keep it as is. If
+        channels is all, return a list of all the image's channels. If channels
+        is None, return the minimum between an upper_limit and the image's
+        number of channels. If image is grayscale or RGB and channels is None,
+        then do not plot channels in different subplots.
+
+        Parameters
+        ----------
+        channels: int or list or 'all' or None
+            A specific selection of channels to render.
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        upper_limit: int
+            The upper limit of subplots for the channels=None case.
+        """
+        # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
+        use_subplots = True
+        n_channels = pixels.shape[2]
+        if channels is None:
+            if n_channels == 1:
+                pixels = pixels[..., 0]
+                use_subplots = False
+            elif n_channels == 3:
+                use_subplots = False
+        elif channels != 'all':
+            if isinstance(channels, Iterable):
+                pixels = pixels[..., channels]
+            else:
+                pixels = pixels[..., channels]
+                use_subplots = False
+
+        return pixels, use_subplots
+
+    def _masked_pixels(self, pixels, mask):
+        r"""
+        Return the masked pixels using a given boolean mask. In order to make
+        sure that the non-masked pixels are visualized in black, their value
+        is set to the minimum between min(pixels) and 0.
+
+        Parameters
+        ----------
+        pixels : (N, D) ndarray
+            The image's pixels to render.
+        mask: (N, D) ndarray
+            A boolean mask to be applied to the image. All points outside the
+            mask are set to 0. If mask is None, then the initial pixels are
+            returned.
+        """
+        if mask is not None:
+            pixels[~mask] = min(pixels.min(), 0)
+        return pixels
 
     def render(self, **kwargs):
         r"""
@@ -372,8 +440,12 @@ class ImageViewer(object):
             Only 2D images are supported.
         """
         if self.dimensions == 2:
-            return ImageViewer2d(self.figure_id, self.new_figure,
-                                 self.pixels).render(**kwargs)
+            if self.use_subplots:
+                return ImageSubplotsViewer2d(self.figure_id, self.new_figure,
+                                             self.pixels).render(**kwargs)
+            else:
+                return ImageViewer2d(self.figure_id, self.new_figure,
+                                     self.pixels).render(**kwargs)
         else:
             raise DimensionalityError("Only 2D images are currently supported")
 
@@ -394,6 +466,7 @@ class TriMeshViewer(object):
     trilist : (M, 3) ndarray
         The triangulation for the points.
     """
+
     def __init__(self, figure_id, new_figure, points, trilist):
         self.figure_id = figure_id
         self.new_figure = new_figure

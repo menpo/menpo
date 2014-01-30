@@ -2,8 +2,9 @@ import abc
 import os.path as path
 import numpy as np
 import PIL.Image as PILImage
-from pybug.io.base import Importer, get_importer, find_alternative_files
-from pybug.image import RGBImage, IntensityImage
+from pybug.io.base import (Importer, find_alternative_files,
+                           map_filepath_to_importer)
+from pybug.image import MaskedImage
 
 
 class ImageImporter(Importer):
@@ -35,8 +36,8 @@ class ImageImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_landmark_types
-            self.landmark_importer = get_importer(self.landmark_path,
-                                                  image_landmark_types)
+            self.landmark_importer = map_filepath_to_importer(
+                self.landmark_path, image_landmark_types)
 
     def _search_for_landmarks(self):
         r"""
@@ -130,15 +131,11 @@ class PILImporter(ImageImporter):
     def _build_image(self):
         r"""
         Read the image using PIL and then use the
-        :class:`pybug.image.base.Image` constructor to create a class.
+        :class:`pybug.image.base.MaskedImage` constructor to create a class.
+        Normalise between 0 and 1.0
 
         Sets the newly built Image to ``self.image``.
         """
         self._pil_image = PILImage.open(self.filepath)
-        image_pixels = np.array(self._pil_image)
-        if image_pixels.ndim == 2:
-            self.image = IntensityImage(image_pixels)
-        elif image_pixels.shape[2] == 1:
-            self.image = IntensityImage(image_pixels[..., 0])
-        else:
-            self.image = RGBImage(image_pixels)
+        image_pixels = np.array(self._pil_image, dtype=np.float) / 255.0
+        self.image = MaskedImage(image_pixels)

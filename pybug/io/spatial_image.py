@@ -3,7 +3,8 @@ import abc
 import os.path as path
 import numpy as np
 from pybug.image import ShapeImage
-from pybug.io.base import Importer, get_importer, find_alternative_files
+from pybug.io.base import (Importer, find_alternative_files,
+                           map_filepath_to_importer)
 from scipy.spatial import Delaunay
 from pybug.transform.affine import Scale
 import re
@@ -46,7 +47,7 @@ class SpatialImageImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_types
-            self.texture_importer = get_importer(self.texture_path,
+            self.texture_importer = map_filepath_to_importer(self.texture_path,
                                                  image_types)
 
         if (self.image_landmark_path is None or not
@@ -55,7 +56,7 @@ class SpatialImageImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import image_landmark_types
-            self.image_landmark_importer = get_importer(
+            self.image_landmark_importer = map_filepath_to_importer(
                 self.image_landmark_path, image_landmark_types)
 
         if (self.mesh_landmark_path is None or not
@@ -64,8 +65,8 @@ class SpatialImageImporter(Importer):
         else:
             # This import is here to avoid circular dependencies
             from pybug.io.extensions import mesh_landmark_types
-            self.mesh_landmark_importer = get_importer(self.mesh_landmark_path,
-                                                       mesh_landmark_types)
+            self.mesh_landmark_importer = map_filepath_to_importer(
+                self.mesh_landmark_path, mesh_landmark_types)
 
     def _search_for_texture(self):
         r"""
