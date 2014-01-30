@@ -165,25 +165,27 @@ class FeatureExtraction(object):
         hog_image = self._init_feature_image(hog,
                                              window_centres=window_centres)
         # store parameters
-        hog_image.parameters = {'mode': mode, 'algorithm': algorithm,
-                                'num_bins': num_bins, 'cell_size': cell_size,
-                                'block_size': block_size,
-                                'signed_gradient': signed_gradient,
-                                'l2_norm_clip': l2_norm_clip,
-                                'window_height': window_height,
-                                'window_width': window_width,
-                                'window_unit': window_unit,
-                                'window_step_vertical': window_step_vertical,
-                                'window_step_horizontal':
-                                window_step_horizontal,
-                                'window_step_unit': window_step_unit,
-                                'padding': padding,
-                                'original_image_height':
-                                self._image.pixels.shape[0],
-                                'original_image_width':
-                                self._image.pixels.shape[1],
-                                'original_image_channels':
-                                self._image.pixels.shape[2]}
+        hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
+                                    'num_bins': num_bins,
+                                    'cell_size': cell_size,
+                                    'block_size': block_size,
+                                    'signed_gradient': signed_gradient,
+                                    'l2_norm_clip': l2_norm_clip,
+                                    'window_height': window_height,
+                                    'window_width': window_width,
+                                    'window_unit': window_unit,
+                                    'window_step_vertical':
+                                    window_step_vertical,
+                                    'window_step_horizontal':
+                                    window_step_horizontal,
+                                    'window_step_unit': window_step_unit,
+                                    'padding': padding,
+                                    'original_image_height':
+                                    self._image.pixels.shape[0],
+                                    'original_image_width':
+                                    self._image.pixels.shape[1],
+                                    'original_image_channels':
+                                    self._image.pixels.shape[2]}
         return hog_image
 
     def igo(self, double_angles=False, verbose=False):
@@ -241,13 +243,13 @@ class FeatureExtraction(object):
         # create igo image object
         igo_image = self._init_feature_image(igo)
         # store parameters
-        igo_image.parameters = {'double_angles': double_angles,
-                                'original_image_height':
-                                self._image.pixels.shape[0],
-                                'original_image_width':
-                                self._image.pixels.shape[1],
-                                'original_image_channels':
-                                self._image.pixels.shape[2]}
+        igo_image.igo_parameters = {'double_angles': double_angles,
+                                    'original_image_height':
+                                    self._image.pixels.shape[0],
+                                    'original_image_width':
+                                    self._image.pixels.shape[1],
+                                    'original_image_channels':
+                                    self._image.pixels.shape[2]}
         return igo_image
 
     def _init_feature_image(self, feature_pixels, window_centres=None):
