@@ -173,7 +173,6 @@ cdef class COpenGLRasterizer:
     cpdef get_projection_matrix(self):
         return _copy_float_mat4(self.scene.camera.projectionMatrix)
 
-
     def get_compound_matrix(self):
         M = self.get_model_matrix()
         V = self.get_view_matrix()
@@ -191,6 +190,12 @@ cdef class COpenGLRasterizer:
     cpdef set_projection_matrix(self,
                     np.ndarray[float, ndim=2, mode="c"] m):
         return _set_float_mat4(m, self.scene.camera.projectionMatrix)
+
+    def get_width(self):
+        return self.scene.context.window_width
+
+    def get_height(self):
+        return self.scene.context.window_height
 
     def __del__(self):
         glr_glfw_terminate(&self.context)
