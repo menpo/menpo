@@ -98,13 +98,13 @@ class GLRasterizer(object):
         value = _verify_opengl_homogeneous_matrix(value)
         self._opengl.set_projection_matrix(value)
 
-    def rasterize_with_f3v_interpolant(self, rasterizable,
+    def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
                                        per_vertex_f3v=None):
         r"""Rasterize the object to an image and generate an interpolated
         3-float image from a per vertex float 3 vector.
 
         If no per_vertex_f3v is provided, the model's shape is used (making
-        this method equivalent to rasterize_with_shape_image)
+        this method equivalent to rasterize_mesh_with_shape_image)
 
         Parameters
         ----------
@@ -138,7 +138,7 @@ class GLRasterizer(object):
             raise ValueError("Color Mesh rasterizations are not supported "
                              "yet")
 
-    def rasterize_with_shape_image(self, rasterizable):
+    def rasterize_mesh_with_shape_image(self, rasterizable):
         r"""Rasterize the object to an image and generate an interpolated
         3-float image from the shape information on the rasterizable object.
 
@@ -165,9 +165,9 @@ class GLRasterizer(object):
             buffer).
 
         """
-        return self.rasterize_with_f3v_interpolant(rasterizable)
+        return self.rasterize_mesh_with_f3v_interpolant(rasterizable)
 
-    def rasterize(self, rasterizable):
+    def rasterize_mesh(self, rasterizable):
         r"""Rasterize the object to an image and generate an interpolated
         3-float image from the shape information on the rasterizable object.
 
@@ -194,7 +194,7 @@ class GLRasterizer(object):
             buffer).
 
         """
-        return self.rasterize_with_shape_image(rasterizable)[0]
+        return self.rasterize_mesh_with_shape_image(rasterizable)[0]
 
     def _rasterize_texture_with_interp(self, r, per_vertex_f3v=None):
         r"""Rasterizes a textured mesh along with it's interpolant data
