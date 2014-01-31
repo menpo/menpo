@@ -7,6 +7,56 @@ from pybug.image import MaskedImage
 class GLRasterizer(object):
 
     def __init__(self, width, height):
+        r"""Offscreen OpenGL rasterizer of fixed width and height.
+
+        Parameters
+        ----------
+
+        width : int
+            The width of the rasterize target
+
+        height: int
+            The height of hte rasterize target
+
+
+        Notes
+        -----
+
+        For a given vertex v = (x, y, z, 1), it's position in image space
+        v' = (s, t) is calculated from
+
+        v' = P * V * M * v
+
+        where:
+
+        M is the model matrix
+        V is the view matrix (view the world from the position of the camera)
+        P is the projection matrix (usually an orthographic or perspective
+        matrix)
+
+        All matrices are 4x4 floats, as in OpenGL all points are treated as
+        homogeneous.
+
+        Note that this is the raw code written in the shader. The usual
+        pipeline of OpenGL applies - perspective division is performed to
+        form a clip space, and z-buffering is used to mask pixels
+        appropriately.
+
+        Texture information in the form of a texture map and normalized
+        per-vertex texture coordinates) are used to source colour values.
+
+        An arbitrary float 3-vector (f3v) can also be set on each vertex.
+        This value is passed through the same pipeline and interpolated but
+        note that the MATRICES ABOVE ARE NOT APPLIED TO THIS DATA.
+
+        This can be useful for example for passing through the shape
+        information of
+        the object into the rendered image domain. Note that because of the
+        above statement, the shape information rendered would be in the
+        objects original space, not in camera space (i.e. the z value will
+        not correlate to a depth buffer).
+
+        """
         self._opengl = COpenGLRasterizer(width, height)
 
     @classmethod
@@ -45,14 +95,6 @@ class GLRasterizer(object):
         value = _verify_opengl_homogeneous_matrix(value)
         self._opengl.set_projection_matrix(value)
 
-    def rasterize(self, rasterizable):
-        if rasterizable._rasterize_type_texture:
-            # request the
-            r = rasterizable._rasterize_generate_textured_mesh()
-        elif rasterizable._rasterize_type_color():
-            raise ValueError("Color Mesh rasterizations are not supported "
-                             "yet")
-
     def set_matrices_from_mayavi_viewer(self, viewer=None):
         vm, p, _ = extract_state_from_mayavi_viewer(viewer=viewer)
         self.set_view_matrix(vm)
@@ -60,19 +102,101 @@ class GLRasterizer(object):
         self.set_projection_matrix(p)
 
     def rasterize_with_f3v_interpolant(self, rasterizable,
-                                       f3v_interpolant):
+                                       per_vertex_f3v=None):
+        r"""Rasterize the object to an image and generate an interpolated
+        3-float image from a per vertex float 3 vector.
+
+        If no per_vertex_f3v is provided, the model's shape is used (making
+        this method equivalent to rasterize_with_shape_image)
+
+        Parameters
+        ----------
+        rasterizable : object implementing the Rasterizable interface.
+            Will be queried for some state to rasterize via the Rasterizable
+            interface. Note that currently, color mesh rasterizations are
+            not supported.
+
+        per_vertex_f3v : optional, ndarray (n_points, 3)
+            A per-vertex 3 vector of floats that will be interpolated across
+            the image.
+
+
+        Returns
+        -------
+        rgb_image : 3 channel MaskedImage of shape (width, height)
+            The result of the rasterization. Mask is true iff the pixel was
+            rendered to by OpenGL.
+
+        interp_image: 3 channel MaskedImage of shape (width, height)
+            The result of interpolating the per_vertex_f3v across the
+            visible primitives.
+
+        """
         if rasterizable._rasterize_type_texture:
             # request the textured info for rasterizing
             r = rasterizable._rasterize_generate_textured_mesh()
-            return self._rasterize_texture_with_interp(r, f3v_interpolant)
+            return self._rasterize_texture_with_interp(
+                r, per_vertex_f3v=per_vertex_f3v)
         elif rasterizable._rasterize_type_color():
             raise ValueError("Color Mesh rasterizations are not supported "
                              "yet")
 
     def rasterize_with_shape_image(self, rasterizable):
-        return self.rasterize_with_f3v_interpolant(rasterizable, None)
+        r"""Rasterize the object to an image and generate an interpolated
+        3-float image from the shape information on the rasterizable object.
+
+        Parameters
+        ----------
+        rasterizable : object implementing the Rasterizable interface.
+            Will be queried for some state to rasterize via the Rasterizable
+            interface. Note that currently, color mesh rasterizations are
+            not supported.
+
+
+        Returns
+        -------
+        rgb_image : 3 channel MaskedImage of shape (width, height)
+            The result of the rasterization. Mask is true iff the pixel was
+            rendered to by OpenGL.
+
+        shape_image: 3 channel MaskedImage of shape (width, height)
+            The result of interpolating the spatial information of each vertex
+            across the visible primitives. Note that the shape information
+            is *NOT* adjusted by the P,V,M matrices, and so the resulting
+            shape image is always in the original objects reference shape
+            (i.e. the z value will not necessarily correspond to a depth
+            buffer).
+
+        """
+        return self.rasterize_with_f3v_interpolant(rasterizable)
 
     def rasterize(self, rasterizable):
+        r"""Rasterize the object to an image and generate an interpolated
+        3-float image from the shape information on the rasterizable object.
+
+        Parameters
+        ----------
+        rasterizable : object implementing the Rasterizable interface.
+            Will be queried for some state to rasterize via the Rasterizable
+            interface. Note that currently, color mesh rasterizations are
+            not supported.
+
+
+        Returns
+        -------
+        rgb_image : 3 channel MaskedImage of shape (width, height)
+            The result of the rasterization. Mask is true iff the pixel was
+            rendered to by OpenGL.
+
+        shape_image: 3 channel MaskedImage of shape (width, height)
+            The result of interpolating the spatial information of each vertex
+            across the visible primitives. Note that the shape information
+            is *NOT* adjusted by the P,V,M matrices, and so the resulting
+            shape image is always in the original objects reference shape
+            (i.e. the z value will not necessarily correspond to a depth
+            buffer).
+
+        """
         return self.rasterize_with_shape_image(rasterizable)[0]
 
     def _rasterize_texture_with_interp(self, r, per_vertex_f3v=None):
@@ -90,7 +214,8 @@ class GLRasterizer(object):
         per_vertex_f3v: ndarray, shape (n_points, 3)
             A matrix specifying arbitrary 3 floating point numbers per
             vertex. This data will be linearly interpolated across triangles
-            and returned in the f3v image. If none, the shape information is used
+            and returned in the f3v image. If none, the shape information is
+            used
 
         Returns
         -------
@@ -100,7 +225,7 @@ class GLRasterizer(object):
             rotation and view matrices that may be set on this class,
             as well as the width and height of the rasterization, which is
             determined on the creation of this class. The mask is True if a
-            triangle is visable at that pixel in the output, and False if not.
+            triangle is visible at that pixel in the output, and False if not.
 
         f3v_image : MaskedImage
             The rasterized image returned from OpenGL. Note that the

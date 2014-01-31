@@ -97,6 +97,7 @@ cdef extern from "./c/glr.h":
     # utilities
     void glr_set_clear_color(float* clear_colour_4_vec)
     void glr_get_clear_color(float* clear_colour_4_vec)
+    void glr_check_error()
 
 
 cdef extern from "./c/glrasterizer.h":
