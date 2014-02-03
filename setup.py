@@ -12,7 +12,8 @@ cython_modules = ["pybug/geodesics/kirsanov.pyx",
                   "pybug/shape/mesh/normals.pyx",
                   "pybug/io/mesh/assimp.pyx",
                   "pybug/interpolation/cinterp.pyx",
-                  "pybug/transform/fastpwa.pyx"]
+                  "pybug/transform/fastpwa.pyx",
+		  "pybug/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 
@@ -65,3 +66,4 @@ setup(name='pybug',
       )
 
 # NOTE: Have to include the egg name in the dependency_links as well
+
