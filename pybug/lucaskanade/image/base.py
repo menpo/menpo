@@ -8,8 +8,8 @@ class ImageLucasKanade(LucasKanade):
     def __init__(self, template, residual, transform,
                  interpolator='scipy', optimisation=('GN',), eps=10 ** -6):
         super(ImageLucasKanade, self).__init__(
-            residual, transform,
-            interpolator=interpolator, optimisation=optimisation, eps=eps)
+            residual, transform, interpolator=interpolator,
+            optimisation=optimisation, eps=eps)
 
         # in image alignment, we align a template image to the target image
         self.template = template
@@ -19,16 +19,21 @@ class ImageLucasKanade(LucasKanade):
 
 class ImageForwardAdditive(ImageLucasKanade):
 
-    def _align(self, max_iters=50):
+    @property
+    def type(self):
+        return 'ImgFA'
+
+    def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
+        image = lk_fitting.image
+        n_iters = 0
 
         # Forward Additive Algorithm
-        while self.n_iters < (max_iters - 1) and error > self.eps:
+        while n_iters < max_iters and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self.image.warp_to(self.template.mask,
-                                      self.transform,
-                                      interpolator=self._interpolator)
+            IWxp = image.warp_to(self.template.mask, self.transform,
+                                 interpolator=self._interpolator)
 
             # Compute the Jacobian of the warp
             dW_dp = self.transform.jacobian(
@@ -37,9 +42,8 @@ class ImageForwardAdditive(ImageLucasKanade):
             # TODO: rename kwarg "forward" to "forward_additive"
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(
-                self.image, dW_dp, forward=(self.template,
-                                            self.transform,
-                                            self._interpolator))
+                image, dW_dp, forward=(self.template, self.transform,
+                                       self._interpolator))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -52,17 +56,23 @@ class ImageForwardAdditive(ImageLucasKanade):
             delta_p = np.real(self._calculate_delta_p(sd_delta_p))
 
             # Update warp parameters
-            params = self.transform.as_vector() + delta_p
-            self.transform.from_vector_inplace(params)
-            self.parameters.append(params)
+            parameters = self.transform.as_vector() + delta_p
+            self.transform.from_vector_inplace(parameters)
+            lk_fitting.parameters.append(parameters)
 
             # Test convergence
             error = np.abs(norm(delta_p))
+            n_iters += 1
 
-        return self.transform
+        lk_fitting.status = 'completed'
+        return lk_fitting
 
 
 class ImageForwardCompositional(ImageLucasKanade):
+
+    @property
+    def type(self):
+        return 'ImgFC'
 
     def _precompute(self):
         r"""
@@ -73,16 +83,17 @@ class ImageForwardCompositional(ImageLucasKanade):
         self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
-    def _align(self, max_iters=50):
+    def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
+        image = lk_fitting.image
+        n_iters = 0
 
         # Forward Compositional Algorithm
-        while self.n_iters < (max_iters - 1) and error > self.eps:
+        while n_iters < max_iters and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self.image.warp_to(self.template.mask,
-                                      self.transform,
-                                      interpolator=self._interpolator)
+            IWxp = image.warp_to(self.template.mask, self.transform,
+                                 interpolator=self._interpolator)
 
             # TODO: add "forward_compositional" kwarg with options
             # In the forward compositional algorithm there are two different
@@ -104,15 +115,21 @@ class ImageForwardCompositional(ImageLucasKanade):
 
             # Update warp parameters
             self.transform.compose_after_from_vector_inplace(delta_p)
-            self.parameters.append(self.transform.as_vector())
+            lk_fitting.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
+            n_iters += 1
 
-        return self.transform
+        lk_fitting.status = 'completed'
+        return lk_fitting
 
 
 class ImageInverseCompositional(ImageLucasKanade):
+
+    @property
+    def type(self):
+        return 'ImgIC'
 
     def _precompute(self):
         r"""
@@ -132,16 +149,17 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J)
 
-    def _align(self, max_iters=50):
+    def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
+        image = lk_fitting.image
+        n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm
-        while self.n_iters < (max_iters - 1) and error > self.eps:
+        while n_iters < max_iters and error > self.eps:
             # Compute warped image with current parameters
-            IWxp = self.image.warp_to(self.template.mask,
-                                      self.transform,
-                                      interpolator=self._interpolator)
+            IWxp = image.warp_to(self.template.mask, self.transform,
+                                 interpolator=self._interpolator)
 
             # Compute steepest descent parameter updates.
             sd_delta_p = self.residual.steepest_descent_update(
@@ -155,9 +173,11 @@ class ImageInverseCompositional(ImageLucasKanade):
 
             # Update warp parameters
             self.transform.compose_after_from_vector_inplace(inv_delta_p)
-            self.parameters.append(self.transform.as_vector())
+            lk_fitting.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
+            n_iters += 1
 
-        return self.transform
+        lk_fitting.status = 'completed'
+        return lk_fitting
