@@ -209,6 +209,11 @@ class FeatureExtraction(object):
             Flag to print IGO related information.
 
             Default: False
+
+        Raises
+        -------
+        ValueError
+            Image has to be 2D in order to extract IGOs.
         """
         # compute igo features
         igo = fc.igo(self._image.pixels, double_angles=double_angles,
