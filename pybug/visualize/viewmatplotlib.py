@@ -334,17 +334,22 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
                    borderaxespad=0.)
 
 
-class MatplotlibMultipleImageViewer2d(MatplotlibRenderer):
+class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, image_list):
-        super(MatplotlibMultipleImageViewer2d, self).__init__(figure_id,
-                                                              new_figure)
+        super(MatplotlibMultiImageViewer2d, self).__init__(figure_id,
+                                                           new_figure)
         self.image_list = image_list
 
-    def _render(self, **kwargs):
+    def _render(self, interval=40, **kwargs):
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
         import matplotlib.animation as animation
 
-        _ax = plt.imshow(self.image_list[0])
+        if len(self.image_list[0].shape) == 2:  # Single channels are viewed
+        # in Gray
+            _ax = plt.imshow(self.image_list[0], cmap=cm.Greys_r, **kwargs)
+        else:
+            _ax = plt.imshow(self.image_list[0], **kwargs)
 
         def init():
             return _ax,
@@ -356,6 +361,5 @@ class MatplotlibMultipleImageViewer2d(MatplotlibRenderer):
         self._ani = animation.FuncAnimation(self.figure, animate,
                                             init_func=init,
                                             frames=len(self.image_list),
-                                            interval=20, blit=True)
-
+                                            interval=interval, blit=True)
         return self
