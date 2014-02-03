@@ -5,6 +5,7 @@ from scipy.ndimage import binary_erosion
 from pybug.image.base import Image
 from pybug.image.boolean import BooleanImage
 from pybug.visualize.base import ImageViewer
+import pybug.features as fc
 
 
 class MaskedImage(Image):
@@ -505,15 +506,7 @@ class MaskedImage(Image):
             gradient of a 2D, single channel image, will have length ``2``.
             The length of a 2D, 3-channel image, will have length ``6``.
         """
-        grad_per_dim_per_channel = [np.gradient(g) for g in
-                                    np.rollaxis(self.pixels, -1)]
-        # Flatten out the separate dims
-        grad_per_channel = list(itertools.chain.from_iterable(
-            grad_per_dim_per_channel))
-        # Add a channel axis for broadcasting
-        grad_per_channel = [g[..., None] for g in grad_per_channel]
-        # Concatenate gradient list into an array (the new_image)
-        grad_image_pixels = np.concatenate(grad_per_channel, axis=-1)
+        grad_image_pixels = fc.gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
                                  mask=deepcopy(self.mask))
 

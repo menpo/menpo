@@ -1,5 +1,38 @@
+import itertools
 from pybug.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
+
+
+def gradient(image_data):
+    r"""
+    Calculates the gradient of an input image. The image is assumed to have
+    channel information on the last axis. In the case of multiple channels,
+    it returns the gradient over each axis over each channel as the last axis.
+
+    Parameters
+    ----------
+    image_data : ndarray, shape (X, Y, ..., Z, C)
+        An array where the last dimension is interpreted as channels. This
+        means an N-dimensional image is represented by an N+1 dimensional array.
+
+    Returns
+    -------
+    gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
+        The gradient over each axis over each channel. Therefore, the
+        last axis of the gradient of a 2D, single channel image, will have
+        length ``2``. The last axis of the gradient of a 2D, 3-channel image,
+        will have length ``6``, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
+        Bd_x, Bd_y].
+    """
+    grad_per_dim_per_channel = [np.gradient(g) for g in
+                                    np.rollaxis(image_data, -1)]
+    # Flatten out the separate dims
+    grad_per_channel = list(itertools.chain.from_iterable(
+        grad_per_dim_per_channel))
+    # Add a channel axis for broadcasting
+    grad_per_channel = [g[..., None] for g in grad_per_channel]
+    # Concatenate gradient list into an array (the new_image)
+    return np.concatenate(grad_per_channel, axis=-1)
 
 
 def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
@@ -229,3 +262,64 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
     del iterator
     return np.ascontiguousarray(output_image), np.ascontiguousarray(
         windows_centers)
+
+
+def igo(image_data, double_angles=False, verbose=False):
+        r"""
+        Represents a 2-dimensional IGO features image with k=[2,4] number of
+        channels.
+
+        Parameters
+        ----------
+        image_data :  ndarray
+            The pixel data for the image, where the last axis represents the
+            number of channels.
+        double_angles : bool
+            Assume that phi represents the gradient orientations. If this flag
+            is disabled, the features image is the concatenation of cos(phi)
+            and sin(phi), thus 2 channels. If it is enabled, the features image
+            is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
+
+            Default: False
+        verbose : bool
+            Flag to print IGO related information.
+
+            Default: False
+        """
+        # check number of dimensions
+        if len(image_data.shape) != 3:
+            raise ValueError('IGOs only work on 2D images. Expects image data '
+                             'to be 3D, shape + channels.')
+        # feature channels per image channel
+        feat_channels = 2
+        if double_angles:
+            feat_channels = 4
+        # compute gradients
+        grad = gradient(image_data)
+        # compute angles
+        grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
+        # compute igo image
+        igo_data = np.empty((image_data.shape[0], image_data.shape[1],
+                             image_data.shape[-1] * feat_channels))
+        igo_data[..., ::feat_channels] = np.cos(grad_orient)
+        igo_data[..., 1::feat_channels] = np.sin(grad_orient)
+        if double_angles:
+            igo_data[..., 2::feat_channels] = np.cos(2 * grad_orient)
+            igo_data[..., 3::feat_channels] = np.sin(2 * grad_orient)
+        # print information
+        if verbose:
+            info_str = "IGO Features:\n" \
+                       "  - Input image is {}W x {}H with {} channels.\n"\
+                .format(image_data.shape[1], image_data.shape[0],
+                        image_data.shape[2])
+            if double_angles:
+                info_str = "{}  - Double angles are enabled.\n"\
+                    .format(info_str)
+            else:
+                info_str = "{}  - Double angles are disabled.\n"\
+                    .format(info_str)
+            info_str = "{}Output image size {}W x {}H x {}."\
+                .format(info_str, igo_data.shape[0], igo_data.shape[1],
+                        igo_data.shape[2])
+            print info_str
+        return igo_data

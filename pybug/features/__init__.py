@@ -1,1 +1,1 @@
-from pybug.features.base import hog
+from pybug.features.base import gradient, hog, igo

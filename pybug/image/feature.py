@@ -210,36 +210,9 @@ class FeatureExtraction(object):
 
             Default: False
         """
-        # compute igo
-        if self._image.n_channels == 3:
-            grad = self._image.as_greyscale().gradient()
-        else:
-            grad = self._image.gradient()
-        grad_orient = np.angle(grad.pixels[..., 0] + 1j*grad.pixels[..., 1])
-        if double_angles:
-            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
-                                  np.sin(grad_orient)[..., np.newaxis],
-                                  np.cos(2*grad_orient)[..., np.newaxis],
-                                  np.sin(2*grad_orient)[..., np.newaxis]), 2)
-        else:
-            igo = np.concatenate((np.cos(grad_orient)[..., np.newaxis],
-                                  np.sin(grad_orient)[..., np.newaxis]), 2)
-        # print information
-        if verbose:
-            info_str = "IGO Features:\n" \
-                       "  - Input image is {}W x {}H with {} channels.\n"\
-                .format(self._image.pixels.shape[1],
-                        self._image.pixels.shape[0],
-                        self._image.pixels.shape[2])
-            if double_angles:
-                info_str = "{}  - Double angles are enabled.\n"\
-                    .format(info_str)
-            else:
-                info_str = "{}  - Double angles are disabled.\n"\
-                    .format(info_str)
-            info_str = "{}Output image size {}W x {}H x {}."\
-                .format(info_str, igo.shape[0], igo.shape[1], igo.shape[2])
-            print info_str
+        # compute igo features
+        igo = fc.igo(self._image.pixels, double_angles=double_angles,
+                     verbose=verbose)
         # create igo image object
         igo_image = self._init_feature_image(igo)
         # store parameters
