@@ -166,36 +166,36 @@ class MayaviTriMeshViewer3d(MayaviViewer):
         self.points = points
         self.trilist = trilist
 
-    def _render(self, normals=None, **kwargs):
+    def _render_mesh(self):
         from mayavi import mlab
-        if normals is not None:
-            MayaviVectorViewer3d(self.figure_id, False,
-                                 self.points, normals)._render(**kwargs)
         mlab.triangular_mesh(self.points[:, 0],
                              self.points[:, 1],
                              self.points[:, 2],
                              self.trilist,
                              color=(0.5, 0.5, 0.5),
                              figure=self.figure)
+
+    def _render(self, normals=None, **kwargs):
+        if normals is not None:
+            MayaviVectorViewer3d(self.figure_id, False,
+                                 self.points, normals)._render(**kwargs)
+        self._render_mesh()
         return self
 
 
-class MayaviTexturedTriMeshViewer3d(MayaviViewer):
+class MayaviTexturedTriMeshViewer3d(MayaviTriMeshViewer3d):
 
     def __init__(self, figure_id, new_figure, points,
                  trilist, texture, tcoords_per_point):
         super(MayaviTexturedTriMeshViewer3d, self).__init__(figure_id,
-                                                            new_figure)
-        self.points = points
-        self.trilist = trilist
+                                                            new_figure,
+                                                            points,
+                                                            trilist)
         self.texture = texture
         self.tcoords_per_point = tcoords_per_point
 
-    def _render(self, normals=None, **kwargs):
+    def _render_mesh(self):
         from tvtk.api import tvtk
-        if normals is not None:
-            MayaviVectorViewer3d(self.figure_id, False,
-                                 self.points, normals)._render(**kwargs)
         pd = tvtk.PolyData()
         pd.points = self.points
         pd.polys = self.trilist
@@ -213,7 +213,26 @@ class MayaviTexturedTriMeshViewer3d(MayaviViewer):
         actor.texture = texture
         self.figure.scene.add_actors(actor)
 
-        return self
+
+class MayaviColouredTriMeshViewer3d(MayaviTriMeshViewer3d):
+
+    def __init__(self, figure_id, new_figure, points,
+                 trilist, colour_per_point):
+        super(MayaviColouredTriMeshViewer3d, self).__init__(figure_id,
+                                                            new_figure,
+                                                            points,
+                                                            trilist)
+        self.colour_per_point = colour_per_point
+
+    def _render_mesh(self):
+        from tvtk.api import tvtk
+        pd = tvtk.PolyData()
+        pd.points = self.points
+        pd.polys = self.trilist
+        pd.point_data.scalars = (self.colour_per_point * 255.).astype(np.uint8)
+        mapper = tvtk.PolyDataMapper(input=pd)
+        actor = tvtk.Actor(mapper=mapper)
+        self.figure.scene.add_actors(actor)
 
 
 class MayaviVectorViewer3d(MayaviViewer):

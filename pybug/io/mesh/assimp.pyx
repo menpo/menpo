@@ -166,6 +166,11 @@ cdef class AITriMeshImporter:
         self.thisptr.tcoords(0, &tcoords[0, 0])
         return tcoords
 
+    @property
+    def colour_per_vertex(self):
+        # TODO: Support colour per vertex in assimp
+        return None
+
     def __str__(self):
         msg = 'n_points: %d\n' % self.n_points
         msg += 'n_tris:   %d\n' % self.n_tris
