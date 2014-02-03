@@ -344,14 +344,18 @@ class MatplotlibMultipleImageViewer2d(MatplotlibRenderer):
         import matplotlib.pyplot as plt
         import matplotlib.animation as animation
 
+        _ax = plt.imshow(self.image_list[0])
+
         def init():
-            p = plt.imshow(self.image_list[0])
-            return [p]
+            return _ax,
 
         def animate(j):
-            p = plt.imshow(self.image_list[j])
-            return [p]
+            _ax.set_data(self.image_list[j])
+            return _ax,
 
-        animation.FuncAnimation(self.figure, animate,
-                                init_func=init,
-                                frames=len(self.image_list), interval=20, blit=True)
+        self._ani = animation.FuncAnimation(self.figure, animate,
+                                            init_func=init,
+                                            frames=len(self.image_list),
+                                            interval=20, blit=True)
+
+        return self

@@ -9,13 +9,7 @@ from pybug.lucaskanade.appearance.alternating import \
 from pybug.lucaskanade.appearance.probabilistic import \
     (ProbabilisticForwardAdditive,
      ProbabilisticForwardCompositional,
-     ProbabilisticInverseCompositional,
-     ToSubspaceForwardAdditive,
-     ToSubspaceForwardCompositional,
-     ToSubspaceInverseCompositional,
-     WithinSubspaceForwardAdditive,
-     WithinSubspaceForwardCompositional,
-     WithinSubspaceInverseCompositional)
+     ProbabilisticInverseCompositional)
 from pybug.lucaskanade.appearance.projectout import \
     (ProjectOutForwardAdditive,
      ProjectOutForwardCompositional,
