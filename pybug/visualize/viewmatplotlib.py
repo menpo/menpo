@@ -302,3 +302,56 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
             # if we are overlaying points on an image, axis0 (the 'y' axis)
             # is flipped.
             plt.gca().invert_yaxis()
+
+
+class MatplotlibGraphPlotter(MatplotlibRenderer):
+
+    def __init__(self, figure_id, new_figure, x_axis, y_axis,
+                 title=None, legend=None, x_label=None, y_label=None,
+                 axis_limits=None):
+        super(MatplotlibGraphPlotter, self).__init__(figure_id, new_figure)
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+        self.title = title
+        self.legend = legend
+        self.x_label = x_label
+        self.y_label = y_label
+        self.axis_limits = axis_limits
+
+    def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+
+        ax = plt.gca()
+        ax.set_xlabel(self.x_label)
+        ax.set_ylabel(self.y_label)
+        plt.plot(self.x_axis, self.y_axis, **kwargs)
+        if self.axis_limits is not None:
+            plt.axis(self.axis_limits)
+
+        plt.grid(True)
+        plt.title(self.title)
+        plt.legend(self.legend, bbox_to_anchor=(1.05, 1), loc=2,
+                   borderaxespad=0.)
+
+
+class MatplotlibMultipleImageViewer2d(MatplotlibRenderer):
+    def __init__(self, figure_id, new_figure, image_list):
+        super(MatplotlibMultipleImageViewer2d, self).__init__(figure_id,
+                                                              new_figure)
+        self.image_list = image_list
+
+    def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.animation as animation
+
+        def init():
+            p = plt.imshow(self.image_list[0])
+            return [p]
+
+        def animate(j):
+            p = plt.imshow(self.image_list[j])
+            return [p]
+
+        animation.FuncAnimation(self.figure, animate,
+                                init_func=init,
+                                frames=len(self.image_list), interval=20, blit=True)
