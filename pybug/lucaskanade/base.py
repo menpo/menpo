@@ -2,6 +2,9 @@ import abc
 import numpy as np
 from copy import deepcopy
 from scipy.linalg import solve
+from pybug.aam.functions import compute_error
+from pybug.visualize.base import\
+    MultipleImageViewer, GraphPlotter, FittingViewer, Viewable
 
 
 class LucasKanade(object):
@@ -141,7 +144,7 @@ class LucasKanade(object):
         """
         pass
 
-    def align(self, image, params, max_iters=30, **kwargs):
+    def align(self, image, parameters, max_iters=20, **kwargs):
         r"""
         Perform an alignment using the Lukas-Kanade framework.
 
@@ -157,10 +160,9 @@ class LucasKanade(object):
             The final transform that optimally aligns the source to the
             target.
         """
-        self.transform.from_vector_inplace(params)
-        self.parameters = [params]
-        self.image = image
-        return deepcopy(self._align(max_iters, **kwargs))
+        self.transform.from_vector_inplace(parameters)
+        lk_fitting = LKFitting(self, image, [parameters], [], 'incomplete')
+        return self._align(lk_fitting, max_iters=max_iters, **kwargs)
 
     @abc.abstractmethod
     def _align(self, **kwargs):
@@ -170,22 +172,176 @@ class LucasKanade(object):
         """
         pass
 
-    @property
-    def transforms(self):
-        r"""
-         The transform as applied at each step of the alignment.
 
-        :type: list of (P,) ndarrays
-        """
-        return [self.transform.from_vector(x) for x in self.parameters]
+class LKFitting(Viewable):
+
+    def __init__(self, lk, image, parameters, costs, status,
+                 error_type='me_norm'):
+        # self._valid_lists(parameters, costs)
+        self.lk = lk
+        self.image = deepcopy(image)
+        self.parameters = parameters
+        self.costs = costs
+        self.status = status
+        self.error_type = error_type
+
+    # @staticmethod
+    # def _valid_lists(parameters, cost):
+    #     if not (len(parameters) is len(cost)):
+    #         raise ValueError("Lists containing parameters and costs "
+    #                          "must contain the same number of elements")
+
+    @property
+    def algorithm_type(self):
+        return self.lk.type
+
+    @property
+    def residual_type(self):
+        return self.lk.residual.type
+
+    @property
+    def error_type(self):
+        return self._error_type
+
+    @error_type.setter
+    def error_type(self, error_type):
+        if error_type is 'me_norm':
+            self._error_text = 'Point-to-point error normalized by object ' \
+                               'size'
+        elif error_type is 'me':
+            NotImplementedError("me not implemented yet")
+        elif error_type is 'rmse':
+            NotImplementedError("rmse not implemented yet")
+        else:
+            raise ValueError('Unknown error_type string selected. Valid'
+                             'options are: me_norm, me, rmse')
+        self._error_type = error_type
 
     @property
     def n_iters(self):
-        r"""
-        The number of iterations performed.
-
-        :type: int
-        """
-        # nb at 0'th iteration we still have one parameters
-        # (self.transform)
         return len(self.parameters) - 1
+
+    @property
+    def transforms(self):
+        return [self.lk.transform.from_vector(p) for p in self.parameters]
+
+    def targets(self, as_points=False):
+        if as_points:
+            return [self.lk.transform.from_vector(p).target.points
+                    for p in self.parameters]
+
+        else:
+            return [self.lk.transform.from_vector(p).target
+                    for p in self.parameters]
+
+    @property
+    def errors(self):
+        if hasattr(self, 'ground_truth'):
+            return [compute_error(t, self.ground_truth.points,
+                                  self.error_type)
+                    for t in self.targets(as_points=True)]
+        else:
+            raise ValueError('Ground truth has not been set, errors cannot '
+                             'be computed')
+
+    @property
+    def final_transform(self):
+        return self.lk.transform.from_vector(self.parameters[-1])
+
+    @property
+    def initial_transform(self):
+        return self.lk.transform.from_vector(self.parameters[0])
+
+    @property
+    def final_target(self):
+        return self.final_transform.target
+
+    @property
+    def initial_target(self):
+        return self.initial_transform.target
+
+    @property
+    def final_cost(self):
+        return self.costs[-1]
+
+    @property
+    def final_error(self):
+        if hasattr(self, 'ground_truth'):
+            return compute_error(self.final_target.points,
+                                 self.ground_truth.points,
+                                 self.error_type)
+        else:
+            raise ValueError('Ground truth has not been set, final error '
+                             'cannot be computed')
+
+    def set_ground_truth(self, ground_truth, as_target=True):
+        if as_target:
+            self.ground_truth = ground_truth
+        else:
+            transform = self.lk.transform.from_vector(ground_truth)
+            self.ground_truth = transform.target
+
+    def warped_images(self, as_pixels=False):
+        mask = self.lk.template.mask
+        transform = self.lk.transform
+        interpolator = self.lk._interpolator
+        if as_pixels:
+            return [self.image.warp_to(mask, transform.from_vector(p),
+                                       interpolator=interpolator).pixels
+                    for p in self.parameters]
+        else:
+            return [self.image.warp_to(mask, transform.from_vector(p),
+                                       interpolator=interpolator)
+                    for p in self.parameters]
+
+    def plot_cost(self, figure_id=None, new_figure=False, **kwargs):
+        legend = self.algorithm_type
+        x_label = 'Number of iterations'
+        y_label = 'Normalized cost'
+        return GraphPlotter(figure_id, new_figure, range(0, self.n_iters+1),
+                            self.costs, legend=legend, x_label=x_label,
+                            y_label=y_label).render(**kwargs)
+
+    def plot_error(self, figure_id=None, new_figure=False, **kwargs):
+        if hasattr(self, 'ground_truth'):
+            legend = [self.algorithm_type]
+            x_label = 'Number of iterations'
+            y_label = self._error_text
+            return GraphPlotter(figure_id, new_figure,
+                                range(0, self.n_iters+1), self.errors,
+                                legend=legend, x_label=x_label,
+                                y_label=y_label).render(**kwargs)
+        else:
+            raise ValueError('Ground truth has not been set, error '
+                             'cannot be plotted')
+
+    def view_warped_images(self, figure_id=None, new_figure=False,
+                           channels=None, masked=True, **kwargs):
+        pixels_to_view_list = self.warped_images(as_pixels=True)
+        mask = self.lk.template.mask.mask if masked else None
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_to_view_list, channels=channels,
+                                   mask=mask).render(**kwargs)
+
+    def view_error_images(self, figure_id=None, new_figure=False,
+                          channels=None, masked=None, **kwargs):
+        warped_images = self.warped_images(as_pixels=True)
+        pixels_to_view_list = [self.lk.template.pixels - i
+                               for i in warped_images]
+        mask = self.lk.template.mask.mask if masked else None
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_to_view_list, channels=channels,
+                                   mask=mask).render(**kwargs)
+
+    def view_final_fitting(self, figure_id=None, new_figure=False, **kwargs):
+        image = deepcopy(self.image)
+        image.landmarks['fitting'] = self.final_target
+        return image.landmarks['fitting'].view(
+            figure_id=figure_id, new_figure=new_figure).render(**kwargs)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        pixels_to_view = self.image.pixels
+        targets_to_view = self.targets(as_points=True)
+        return FittingViewer(figure_id, new_figure, self.image.n_dims,
+                             pixels_to_view, targets_to_view).render(**kwargs)
+
