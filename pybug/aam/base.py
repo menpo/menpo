@@ -1,9 +1,10 @@
 from __future__ import division
 import numpy as np
-import matplotlib.pyplot as plt
+from copy import deepcopy
+from pybug.landmark import labeller
 from pybug.shape import TriMesh
-from pybug.transform .affine import Scale, SimilarityTransform, UniformScale, \
-    AffineTransform, Translation
+from pybug.transform .affine import \
+    Scale, SimilarityTransform, AffineTransform, Translation
 from pybug.groupalign import GeneralizedProcrustesAnalysis
 from pybug.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
@@ -12,9 +13,11 @@ from pybug.model import PCAModel
 from pybug.lucaskanade.residual import LSIntensity
 from pybug.lucaskanade.appearance import AlternatingInverseCompositional
 from pybug.aam.functions import \
-    (mean_pointcloud, build_reference_frame, build_patch_reference_frame,
-     noisy_align, compute_features, compute_error_facesize,
-     compute_error_me17, compute_error_p2p, compute_error_rms)
+    mean_pointcloud, build_reference_frame, build_patch_reference_frame, \
+    noisy_align, compute_features, compute_error
+from pybug.visualize.base import \
+    MultipleImageViewer, GraphPlotter, FittingViewer, \
+    Viewable
 
 
 class AAM(object):
@@ -59,7 +62,7 @@ class AAM(object):
         self.reference_shape = reference_shape
         self.features = features
         self.downscale = downscale
-        self.scaled_reference_frame = scaled_reference_frames
+        self.scaled_reference_frames = scaled_reference_frames
         self.transform_cls = transform_cls
         self.interpolator = interpolator
         self.patch_size = patch_size
@@ -219,7 +222,8 @@ class AAM(object):
 
             self._lk_pyramid.append(lk_algorithm(am, res, md_transform))
 
-    def _lk_fit(self, image_pyramid, initial_landmarks, max_iters=20):
+    def _lk_fit(self, image_pyramid, initial_landmarks, max_iters=20,
+                ground_truth_pyramid=None):
         r"""
         Fits the AAM to an image using Lucas-Kanade.
 
@@ -243,22 +247,24 @@ class AAM(object):
                              :class:`pybug.transform.ModelDrivenTransform`
             A list containing the optimal transform per pyramidal level.
         """
-
         target = initial_landmarks
-        optimal_transforms = []
-
-        for i, lk in zip(image_pyramid, self._lk_pyramid):
+        lk_fittings = []
+        for j, (i, lk) in enumerate(zip(image_pyramid, self._lk_pyramid)):
             lk.transform.target = target
-            md_transform = lk.align(i, lk.transform.as_vector(),
-                                    max_iters=max_iters)
-            optimal_transforms.append(md_transform)
 
-            if not self.scaled_reference_frame:
-                target = Scale(
-                    self.downscale, n_dims=md_transform.n_dims).apply(
-                        md_transform.target)
+            lk_fitting = lk.align(i, lk.transform.as_vector(),
+                                  max_iters=max_iters)
 
-        return optimal_transforms
+            if ground_truth_pyramid is not None:
+                lk_fitting.set_ground_truth(ground_truth_pyramid[j])
+            lk_fittings.append(lk_fitting)
+
+            target = lk_fitting.final_target
+            if not self.scaled_reference_frames:
+                Scale(self.downscale,
+                      n_dims=lk.transform.n_dims).apply_inplace(target)
+
+        return lk_fittings
 
     def _prepare_image(self, image, group, label):
         r"""
@@ -280,7 +286,7 @@ class AAM(object):
         image = image.rescale_to_reference_landmarks(self.reference_shape,
                                                      group=group, label=label)
 
-        if self.scaled_reference_frame:
+        if self.scaled_reference_frames:
             pyramid = image.smoothing_pyramid(n_levels=self.n_levels,
                                               downscale=self.downscale)
         else:
@@ -352,47 +358,32 @@ class AAM(object):
 
         image_pyramid = self._prepare_image(image, group=group, label=label)
 
-        original_landmarks = image.landmarks[group][label].lms
+        ground_truth = image.landmarks[group][label].lms
+        ground_truth_pyramid = [i.landmarks[group][label].lms
+                                for i in image_pyramid]
+        ground_truth_pyramid.reverse()
 
-        affine_correction = AffineTransform.align(
-            image_pyramid[-1].landmarks[group][label].lms, original_landmarks)
+        # TODO: relate the affine to the resolution instead of the shapes
+        affine_correction = AffineTransform.align(ground_truth_pyramid[-1],
+                                                  ground_truth)
 
-        optimal_transforms = []
+        aam_fittings = []
         for j in range(runs):
             reference_landmarks = self.shape_model_pyramid[0].mean
-            scaled_landmarks = image_pyramid[0].landmarks[group][label].lms
-
-            transform = noisy_align(reference_landmarks, scaled_landmarks,
+            initial_landmarks = ground_truth_pyramid[0]
+            transform = noisy_align(reference_landmarks, initial_landmarks,
                                     noise_std=noise_std, rotation=rotation)
             initial_landmarks = transform.apply(reference_landmarks)
 
-            optimal_transforms.append(self._lk_fit(
-                image_pyramid, initial_landmarks, max_iters=max_iters))
+            lk_fittings = self._lk_fit(
+                image_pyramid, initial_landmarks, max_iters=max_iters,
+                ground_truth_pyramid=ground_truth_pyramid)
 
-            # ToDo: All this will need to change with the new LK structure
-            fitted_landmarks = optimal_transforms[j][-1].target
-            fitted_landmarks = affine_correction.apply(fitted_landmarks)
-            if verbose:
-                error = compute_error_facesize(fitted_landmarks.points,
-                                               original_landmarks.points)
-                print ' - run {} of {} with error: {}'.format(j+1, runs,
-                                                              error)
-            if self.scaled_reference_frame:
-                scale = 1
-            else:
-                scale = self.downscale ** (self.n_levels-1)
-            image.landmarks['initial_{}'.format(j)] = \
-                affine_correction.apply(UniformScale(scale, 2).apply(
-                    initial_landmarks))
-            image.landmarks['fitted_{}'.format(j)] = fitted_landmarks
-            if view:
-                image.landmarks['initial_{}'.format(j)].view(
-                    include_labels=False)
-                image.landmarks['fitted_{}'.format(j)].view(
-                    include_labels=False)
-                plt.show()
+            aam_fittings.append(AAMFitting(image, self, lk_fittings,
+                                           affine_correction,
+                                           ground_truth=ground_truth))
 
-        return optimal_transforms
+        return FittingList(aam_fittings)
 
     def lk_fit_landmarked_database(self, images, group=None, label='all',
                                    runs=10, noise_std=0.5, rotation=False,
@@ -453,16 +444,399 @@ class AAM(object):
             all images.
         """
         n_images = len(images)
-        optimal_transforms = []
+        fitting_list = []
         for j, i in enumerate(images):
             if verbose:
                 print '- fitting image {} of {}'.format(j+1, n_images)
-            optimal_transforms.append(self.lk_fit_landmarked_image(
+            fitting_list.append(self.lk_fit_landmarked_image(
                 i, runs=runs, label=label, noise_std=noise_std,
                 rotation=rotation, group=group, max_iters=max_iters,
                 verbose=verbose, view=view))
 
-        return optimal_transforms
+        return FittingList(fitting_list)
+
+
+class FittingList(list, Viewable):
+
+    def __init__(self, fitting_list, error_type='me_norm'):
+        super(FittingList, self).__init__(fitting_list)
+        self._valid_list(fitting_list)
+        self.error_type = error_type
+
+    def _valid_list(self, fitting_list):
+        for f in fitting_list:
+            self._valid_item(f)
+
+    def _valid_item(self, fitting):
+        if not isinstance(fitting, Fitting):
+            raise ValueError("Object must be of type "
+                             ":class: `pybug.aam.base.Fitting`.")
+        elif not all([s is 'completed' for s in fitting.status]):
+            raise ValueError(":class: `pybug.aam.base.Fitting` object "
+                             "not correctly fitted")
+
+    def append(self, fitting):
+        self._valid_item(fitting)
+        super(FittingList, self).append(fitting)
+
+    def __add__(self, fitting_list):
+        self._valid_list(fitting_list)
+        super(FittingList, self).__add__(fitting_list)
+
+    @property
+    def algorithm_type(self):
+        return self[0].algorithm_type
+
+    @property
+    def error_type(self):
+        return self._error_type
+
+    @error_type.setter
+    def error_type(self, error_type):
+        if error_type is 'me_norm':
+            for f in self:
+                f.error_type = error_type
+            self._error_stop = 0.1
+            self._error_step = 0.001
+            self._error_text = 'Point-to-point error normalized by object ' \
+                               'size'
+        elif error_type is 'me':
+            NotImplementedError("me not implemented yet")
+        elif error_type is 'rmse':
+            NotImplementedError("rmse not implemented yet")
+        else:
+            raise ValueError('Unknown error_type string selected. Valid'
+                             'options are: me_norm, me, rmse')
+        self._error_type = error_type
+
+    @property
+    def final_errors(self):
+        return np.array([f.final_error for f in self])
+
+    @property
+    def mean_error(self):
+        return np.mean(self.final_errors)
+
+    @property
+    def std_error(self):
+        return np.std(self.final_errors)
+
+    @property
+    def var_error(self):
+        return np.var(self.final_errors)
+
+    @property
+    def median_error(self):
+        return np.median(self.final_errors)
+
+    @property
+    def initial_errors(self):
+        return np.array([f.initial_error for f in self])
+
+    @property
+    def convergence(self):
+        return np.sum(self.initial_errors > self.final_errors) / len(self)
+
+    @property
+    def _error_dist(self):
+        errors = self.final_errors
+        n_errors = len(errors)
+        x_axis = np.arange(0, self._error_stop, self._error_step)
+        y_axis = np.array([np.count_nonzero(limit-self._error_step <
+                                            errors[errors < limit])
+                           for limit in x_axis]) / n_errors
+        return x_axis, y_axis
+
+    @property
+    def _cumulative_error_dist(self):
+        x_axis, y_axis = self._error_dist
+        y_axis = np.array([np.sum(y_axis[:j]) for j, _ in enumerate(y_axis)])
+        return x_axis, y_axis
+
+    @property
+    def labels_errors(self):
+        raise ValueError('labels_errors not implemented yet')
+
+    @property
+    def labels_mean_error(self):
+        raise ValueError('labels_mean_error not implemented yet')
+
+    @property
+    def labels_std_error(self):
+        raise ValueError('labels_std_error not implemented yet')
+
+    @property
+    def labels_var_error(self):
+        raise ValueError('labels_var_error not implemented yet')
+
+    @property
+    def labels_median_error(self):
+        raise ValueError('labels_median_error not implemented yet')
+
+    @property
+    def labels_initial_errors(self):
+        raise ValueError('labels_initial_errors not implemented yet')
+
+    @property
+    def labels_convergence(self):
+        raise ValueError('llabels_convergence not implemented yet')
+
+    @property
+    def _labels_error_dist(self):
+        raise ValueError('labels_convergence not implemented yet')
+
+    @property
+    def _labels_cumulative_error_dist(self):
+        raise ValueError('_labels_error_dist not implemented yet')
+
+    def plot_error_dist(self, figure_id=None, new_figure=False, labels=False,
+                        **kwargs):
+        title = 'Error Distribution'
+        if labels is False:
+            x_axis, y_axis = self._error_dist
+        else:
+            raise ValueError('labels=True not implemented yet')
+
+        return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
+                               new_figure=new_figure, labels=labels, **kwargs)
+
+    def plot_cumulative_error_dist(self, figure_id=None, new_figure=False,
+                                   labels=False, **kwargs):
+        title = 'Cumulative Error Distribution'
+        if labels is False:
+            x_axis, y_axis = self._cumulative_error_dist
+        else:
+            raise ValueError('labels=True not implemented yet')
+
+        return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
+                               new_figure=new_figure, labels=labels, **kwargs)
+
+    def _plot_dist(self, x_axis, y_axis, title, figure_id=None,
+                   new_figure=False, labels=False, **kwargs):
+        if labels is False:
+            legend = [self.algorithm_type +
+                      '\nmean: {0:.4f}'.format(self.mean_error) +
+                      ', std: {0:.4f}'.format(self.std_error) +
+                      ', median: {0:.4f}'.format(self.median_error) +
+                      ', convergence: {0:.2f}'.format(self.convergence)]
+        else:
+            raise ValueError('labels=True not implemented yet')
+
+        x_label = self._error_text
+        y_label = 'Proportion of images'
+        axis_limits = [0, self._error_stop, 0, 1]
+        return GraphPlotter(figure_id, new_figure, x_axis, y_axis,
+                            title=title, legend=legend,
+                            x_label=x_label, y_label=y_label,
+                            axis_limits=axis_limits).render(**kwargs)
+
+    def view_final_fittings(self, figure_id=None, new_figure=False, **kwargs):
+        for f in self:
+            f.view_final_fitting(figure_id=figure_id, new_figure=new_figure,
+                                 **kwargs)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        for f in self:
+            f.view(figure_id=figure_id, new_figure=False, **kwargs)
+
+
+class Fitting(Viewable):
+
+    def __init__(self, image, fitter, basic_fittings, affine_correction,
+                 error_type='me_norm', ground_truth=None):
+        self.fitter = fitter
+        self.image = deepcopy(image)
+        self.basic_fittings = basic_fittings
+        self.affine_correction = affine_correction
+        self.error_type = error_type
+        self.ground_truth = ground_truth
+
+    @property
+    def algorithm_type(self):
+        return self.basic_fittings[-1].algorithm_type
+
+    @property
+    def residual_type(self):
+        return self.basic_fittings[-1].residual.type
+
+    @property
+    def scaled(self):
+        return self.fitter.scaled_reference_frames
+
+    @property
+    def status(self):
+        return set([f.status for f in self.basic_fittings])
+
+    @property
+    def error_type(self):
+        return self._error_type
+
+    @error_type.setter
+    def error_type(self, error_type):
+        if error_type is 'me_norm':
+            for f in self.basic_fittings:
+                f.error_type = error_type
+            self._error_text = 'Point-to-point error normalized by object ' \
+                               'size'
+        elif error_type is 'me':
+            NotImplementedError("me not implemented yet")
+        elif error_type is 'rmse':
+            NotImplementedError("rmse not implemented yet")
+        else:
+            raise ValueError('Unknown error_type string selected. Valid'
+                             'options are: me_norm, me, rmse')
+        self._error_type = error_type
+
+    @property
+    def n_iters(self):
+        n_iters = 0
+        for f in self.basic_fittings:
+            n_iters += f.n_iters
+        return n_iters
+
+    def targets(self, as_points=False):
+        downscale = self.fitter.downscale
+        n = self.fitter.n_levels - 1
+        targets = []
+        for j, f in enumerate(self.basic_fittings):
+            if not self.scaled:
+                transform = Scale(downscale**(n-j), 2)
+            basic_targets = f.targets(as_points=as_points)
+            for k, t in enumerate(basic_targets):
+                if not self.scaled:
+                    transform.apply_inplace(t)
+                self.affine_correction.apply_inplace(t)
+            targets.append(basic_targets)
+        return targets
+
+    @property
+    def costs(self):
+        return [f.costs for f in self.basic_fittings]
+
+    @property
+    def errors(self):
+        if self.ground_truth is not None:
+            return [[compute_error(t, self.ground_truth.points,
+                                   self.error_type)
+                     for t in basic_targets]
+                    for basic_targets in self.targets(as_points=True)]
+        else:
+            raise ValueError('Ground truth has not been set, errors cannot '
+                             'be computed')
+
+    @property
+    def final_target(self):
+        return \
+            self.affine_correction.apply(self.basic_fittings[-1].final_target)
+
+    @property
+    def initial_target(self):
+        downscale = self.fitter.downscale
+        n = self.fitter.n_levels - 1
+        initial_target = self.basic_fittings[0].initial_target
+        if not self.scaled:
+            transform = Scale(downscale**n, 2)
+            transform.apply_inplace(initial_target)
+
+        return self.affine_correction.apply(initial_target)
+
+    @property
+    def final_cost(self):
+        return self.basic_fittings[-1].final_costs
+
+    @property
+    def final_error(self):
+        if self.ground_truth is not None:
+            return compute_error(self.final_target.points,
+                                 self.ground_truth.points,
+                                 self.error_type)
+        else:
+            raise ValueError('Ground truth has not been set, final error '
+                             'cannot be computed')
+
+    @property
+    def initial_error(self):
+        if self.ground_truth is not None:
+            return compute_error(self.initial_target.points,
+                                 self.ground_truth.points,
+                                 self.error_type)
+        else:
+            raise ValueError('Ground truth has not been set, final error '
+                             'cannot be computed')
+
+    def set_ground_truth(self, ground_truth):
+        self.ground_truth = ground_truth
+
+    def warped_images(self, as_pixels=False):
+        return [f.warped_images(as_pixels=as_pixels)
+                for f in self.basic_fittings]
+
+    def plot_cost(self, figure_id=None, new_figure=False, **kwargs):
+        legend = self.algorithm_type
+        x_label = 'Number of iterations'
+        y_label = 'Normalized cost'
+        costs = [c for cost in self.costs for c in cost]
+        return GraphPlotter(figure_id, new_figure,
+                            range(0, self.n_iters+1), costs,
+                            legend=legend, x_label=x_label,
+                            y_label=y_label).render(**kwargs)
+
+    def plot_error(self, figure_id=None, new_figure=False, **kwargs):
+        if self.ground_truth is not None:
+            legend = [self.algorithm_type]
+            x_label = 'Number of iterations'
+            y_label = self._error_text
+            errors = [e for error in self.errors for e in error]
+            return GraphPlotter(figure_id, new_figure,
+                                range(0, self.n_iters+1), errors,
+                                legend=legend, x_label=x_label,
+                                y_label=y_label).render(**kwargs)
+        else:
+            raise ValueError('Ground truth has not been set, error '
+                             'cannot be plotted')
+
+    def view_warped_images(self, figure_id=None, new_figure=False,
+                           channels=None, **kwargs):
+        pixels_to_view_list = self.warped_images(as_pixels=True)
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_to_view_list, channels=channels,
+                                   mask=None).render(**kwargs)
+
+    def view_error_images(self, figure_id=None, new_figure=False,
+                          channels=None, **kwargs):
+        warped_images = self.warped_images(as_pixels=True)
+        pixels_to_view_list = [[f.template.pixels - i for i in images]
+                               for f, images in zip(self.basic_fittings,
+                                                    warped_images)]
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_to_view_list, channels=channels,
+                                   mask=None).render(**kwargs)
+
+    def view_final_fitting(self, figure_id=None, new_figure=False, **kwargs):
+        image = deepcopy(self.image)
+        image.landmarks['fitting'] = self.final_target
+        return image.landmarks['fitting'].view(
+            figure_id=figure_id, new_figure=new_figure, **kwargs)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        pixels_to_view = self.image.pixels
+        targets_to_view = self.targets(as_points=True)
+        return FittingViewer(figure_id, new_figure,
+                             self.image.n_dims, pixels_to_view,
+                             targets_to_view).render(**kwargs)
+
+
+class AAMFitting(Fitting):
+
+    def __init__(self, image, aam, lk_states, affine_correction,
+                 error_type='me_norm', ground_truth=None):
+        super(AAMFitting, self).__init__(
+            image, aam, lk_states, affine_correction, error_type=error_type,
+            ground_truth=ground_truth)
+
+    def view_appearance(self, figure_id=None, new_figure=False,
+                        channels=None, **kwargs):
+        raise ValueError('view_apperance not implemented yet')
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
