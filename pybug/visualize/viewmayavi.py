@@ -43,6 +43,59 @@ class MayaviViewer(Renderer):
 
         return self.figure
 
+    @property
+    def width(self):
+        r"""The width scene in pixels
+        """
+        return self.figure.scene.get_size()[0]
+
+    @property
+    def height(self):
+        return self.figure.scene.get_size()[1]
+
+    @property
+    def modelview_matrix(self):
+        r"""Retrieves the modelview matrix for this scene.
+        """
+        camera = self.figure.scene.camera
+        return camera.view_transform_matrix.to_array().astype(np.float32)
+
+    @property
+    def projection_matrix(self):
+        r"""Retrieves the projection matrix for this scene.
+        """
+        scene = self.figure.scene
+        scene_size = tuple(scene.get_size())
+        aspect_ratio = float(scene_size[0]) / float(scene_size[1])
+        p = scene.camera.get_perspective_transform_matrix(
+            aspect_ratio, -1, 1).to_array().astype(np.float32)
+        return p
+
+    @property
+    def renderer_settings(self):
+        r"""Returns all the information required to construct an identical
+        renderer to this one
+
+        Returns
+
+        width: int
+            The width of the render window
+
+        height: int
+            The height of the render window
+        model_matrix: ndarray of shape (4,4)
+            The model array - always identity
+        view_matrix: ndarray of shape (4,4)
+            The view array - actually combined modelview
+        projection_matrix: ndarray of shape (4,4)
+            The projection array.
+        """
+        return {'width': self.width,
+                'height': self.height,
+                'model_matrix': np.eye(4, dtype=np.float32),
+                'view_matrix': self.modelview_matrix,
+                'projection_matrix': self.projection_matrix}
+
 
 class MayaviPointCloudViewer3d(MayaviViewer):
 
