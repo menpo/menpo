@@ -188,7 +188,7 @@ from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
     MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
     MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d, \
-    MatplotlibGraphPlotter, MatplotlibMultipleImageViewer2d
+    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d
     #MatplotlibFitterStateListViewer, MatplotlibFitterStateListSubplotsViewer
 
 # Default importer types
@@ -206,7 +206,7 @@ VectorViewer3d = MayaviVectorViewer3d
 DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
-MultipleImageViewer2d = MatplotlibMultipleImageViewer2d
+MultipleImageViewer2d = MatplotlibMultiImageViewer2d
 #MultipleImageSubplotsViewer2d = MultipleMatplotlibImageSubplotsViewer2d
 
 #FitterStateListViewer = MatplotlibFitterStateListViewer
