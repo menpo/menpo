@@ -471,7 +471,7 @@ class FittingList(list, Viewable):
         if not isinstance(fitting, Fitting):
             raise ValueError("Object must be of type "
                              ":class: `pybug.aam.base.Fitting`.")
-        elif not all([s is 'completed' for s in fitting.status]):
+        elif not all([s for s in fitting.fitted]):
             raise ValueError(":class: `pybug.aam.base.Fitting` object "
                              "not correctly fitted")
 
@@ -496,8 +496,8 @@ class FittingList(list, Viewable):
         if error_type is 'me_norm':
             for f in self:
                 f.error_type = error_type
-            self._error_stop = 0.1
-            self._error_step = 0.001
+            self._error_stop = 0.25
+            self._error_step = 0.005
             self._error_text = 'Point-to-point error normalized by object ' \
                                'size'
         elif error_type is 'me':
@@ -664,8 +664,8 @@ class Fitting(Viewable):
         return self.fitter.scaled_reference_frames
 
     @property
-    def status(self):
-        return set([f.status for f in self.basic_fittings])
+    def fitted(self):
+        return set([f.fitted for f in self.basic_fittings])
 
     @property
     def error_type(self):
@@ -676,6 +676,7 @@ class Fitting(Viewable):
         if error_type is 'me_norm':
             for f in self.basic_fittings:
                 f.error_type = error_type
+            self._error_stop = 0.25
             self._error_text = 'Point-to-point error normalized by object ' \
                                'size'
         elif error_type is 'me':
@@ -693,6 +694,10 @@ class Fitting(Viewable):
         for f in self.basic_fittings:
             n_iters += f.n_iters
         return n_iters
+
+    @property
+    def n_levels(self):
+        return self.fitter.n_levels
 
     def targets(self, as_points=False):
         downscale = self.fitter.downscale
@@ -767,49 +772,86 @@ class Fitting(Viewable):
     def set_ground_truth(self, ground_truth):
         self.ground_truth = ground_truth
 
-    def warped_images(self, as_pixels=False):
-        return [f.warped_images(as_pixels=as_pixels)
+    def warped_images(self, from_basic_fittings=False, as_pixels=False):
+        if from_basic_fittings:
+            warped_images = [f.warped_images(as_pixels=as_pixels)
+                             for f in self.basic_fittings]
+        else:
+            mask = self.basic_fittings[-1].lk.template.mask
+            transform = self.basic_fittings[-1].lk.transform
+            interpolator = self.basic_fittings[-1].lk._interpolator
+            warped_images = []
+            for targets in self.targets():
+                wi = []
+                for t in targets:
+                    transform.target = t
+                    if as_pixels:
+                        i = self.image.warp_to(
+                            mask, transform, interpolator=interpolator).pixels
+                    else:
+                        i = self.image.warp_to(mask, transform,
+                                               interpolator=interpolator)
+                    wi.append(i)
+                warped_images.append(wi)
+
+        return warped_images
+
+    def appearances(self, as_pixels=False):
+        return [f.appearances(as_pixels=as_pixels)
                 for f in self.basic_fittings]
 
     def plot_cost(self, figure_id=None, new_figure=False, **kwargs):
+        title = 'Cost evolution'
         legend = self.algorithm_type
         x_label = 'Number of iterations'
         y_label = 'Normalized cost'
         costs = [c for cost in self.costs for c in cost]
+        total_n_iters = self.n_iters + self.n_levels
+        axis_limits = [0, total_n_iters, 0, max(costs)]
         return GraphPlotter(figure_id, new_figure,
-                            range(0, self.n_iters+1), costs,
-                            legend=legend, x_label=x_label,
-                            y_label=y_label).render(**kwargs)
+                            range(0, self.n_iters+self.n_levels), costs,
+                            title=title, legend=legend, x_label=x_label,
+                            y_label=y_label,
+                            axis_limits=axis_limits).render(**kwargs)
 
     def plot_error(self, figure_id=None, new_figure=False, **kwargs):
         if self.ground_truth is not None:
+            title = 'Error evolution'
             legend = [self.algorithm_type]
             x_label = 'Number of iterations'
             y_label = self._error_text
             errors = [e for error in self.errors for e in error]
+            total_n_iters = self.n_iters + self.n_levels
+            axis_limits = [0, total_n_iters, 0, self._error_stop]
             return GraphPlotter(figure_id, new_figure,
-                                range(0, self.n_iters+1), errors,
-                                legend=legend, x_label=x_label,
-                                y_label=y_label).render(**kwargs)
+                                range(0, total_n_iters),
+                                errors, title=title, legend=legend,
+                                x_label=x_label, y_label=y_label,
+                                axis_limits=axis_limits).render(**kwargs)
         else:
             raise ValueError('Ground truth has not been set, error '
                              'cannot be plotted')
 
     def view_warped_images(self, figure_id=None, new_figure=False,
-                           channels=None, **kwargs):
-        pixels_to_view_list = self.warped_images(as_pixels=True)
+                           channels=None, from_basic_fittings=False,
+                           **kwargs):
+        warped_images = self.warped_images(
+            from_basic_fittings=from_basic_fittings, as_pixels=True)
+        pixels_list = [i for images in warped_images for i in images]
         return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
-                                   pixels_to_view_list, channels=channels,
+                                   pixels_list, channels=channels,
                                    mask=None).render(**kwargs)
 
     def view_error_images(self, figure_id=None, new_figure=False,
                           channels=None, **kwargs):
-        warped_images = self.warped_images(as_pixels=True)
-        pixels_to_view_list = [[f.template.pixels - i for i in images]
-                               for f, images in zip(self.basic_fittings,
-                                                    warped_images)]
+        warped_images = self.warped_images(from_basic_fittings=True,
+                                           as_pixels=True)
+        error_images = [[f.lk.template.pixels - i for i in images]
+                        for f, images in zip(self.basic_fittings,
+                                             warped_images)]
+        pixels_list = [i for images in error_images for i in images]
         return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
-                                   pixels_to_view_list, channels=channels,
+                                   pixels_list, channels=channels,
                                    mask=None).render(**kwargs)
 
     def view_final_fitting(self, figure_id=None, new_figure=False, **kwargs):
@@ -834,9 +876,13 @@ class AAMFitting(Fitting):
             image, aam, lk_states, affine_correction, error_type=error_type,
             ground_truth=ground_truth)
 
-    def view_appearance(self, figure_id=None, new_figure=False,
-                        channels=None, **kwargs):
-        raise ValueError('view_apperance not implemented yet')
+    def view_appearances(self, figure_id=None, new_figure=False,
+                         channels=None, **kwargs):
+        appearances = self.appearances(as_pixels=True)
+        pixels_list = [i for images in appearances for i in images]
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_list, channels=channels,
+                                   mask=None).render(**kwargs)
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
