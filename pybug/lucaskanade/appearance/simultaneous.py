@@ -13,6 +13,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Number of shape parameters
@@ -29,6 +30,8 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -69,12 +72,13 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             # Update appearance weights
             weights -= delta_p[n_params:]
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return self.transform
 
 
@@ -93,6 +97,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Number of shape parameters
@@ -109,6 +114,8 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = self.appearance_model._jacobian.T
@@ -142,12 +149,13 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             # Update appearance weights
             weights -= delta_p[n_params:]
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return self.transform
 
 
@@ -166,6 +174,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Number of shape parameters
@@ -182,6 +191,8 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
         appearance_jacobian = -self.appearance_model._jacobian.T
@@ -216,10 +227,11 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             # Update appearance weights
             weights -= delta_p[n_params:]
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return self.transform

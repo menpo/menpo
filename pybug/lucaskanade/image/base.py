@@ -64,7 +64,7 @@ class ImageForwardAdditive(ImageLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting
 
 
@@ -121,7 +121,7 @@ class ImageForwardCompositional(ImageLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting
 
 
@@ -179,5 +179,5 @@ class ImageInverseCompositional(ImageLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting

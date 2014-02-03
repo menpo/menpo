@@ -13,6 +13,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Initial appearance weights
@@ -26,6 +27,8 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
@@ -65,13 +68,13 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
                 self.residual._error_img - np.dot(J_aux, delta_p))
             weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
-
+        lk_fitting.fitted = True
         return self.transform
 
 
@@ -90,6 +93,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Initial appearance weights
@@ -103,6 +107,8 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
@@ -135,12 +141,13 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
                 self.residual._error_img - np.dot(J_aux, delta_p))
             weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return self.transform
 
 
@@ -159,6 +166,7 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Initial appearance weights
@@ -172,6 +180,8 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
         else:
             # Set all weights to 0 (yielding the mean)
             weights = np.zeros(self.appearance_model.n_active_components)
+
+        lk_fitting.weights.append(weights)
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
@@ -208,10 +218,11 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
                 self.residual._error_img - np.dot(J_aux, delta_p))
             weights -= self.appearance_model.project(error_img)
             self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return self.transform

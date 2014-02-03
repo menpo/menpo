@@ -161,7 +161,7 @@ class LucasKanade(object):
             target.
         """
         self.transform.from_vector_inplace(parameters)
-        lk_fitting = LKFitting(self, image, [parameters], [], 'incomplete')
+        lk_fitting = LKFitting(self, image, parameters=[parameters])
         return self._align(lk_fitting, max_iters=max_iters, **kwargs)
 
     @abc.abstractmethod
@@ -175,14 +175,15 @@ class LucasKanade(object):
 
 class LKFitting(Viewable):
 
-    def __init__(self, lk, image, parameters, costs, status,
-                 error_type='me_norm'):
+    def __init__(self, lk, image, parameters=None, weights=None, costs=None,
+                 error_type='me_norm', fitted=False):
         # self._valid_lists(parameters, costs)
         self.lk = lk
         self.image = deepcopy(image)
         self.parameters = parameters
+        self.weights = weights
         self.costs = costs
-        self.status = status
+        self.fitted = fitted
         self.error_type = error_type
 
     # @staticmethod
@@ -294,6 +295,20 @@ class LKFitting(Viewable):
                                        interpolator=interpolator)
                     for p in self.parameters]
 
+    def appearances(self, as_pixels=False):
+        if self.weights:
+            if as_pixels:
+                return [self.lk.appearance_model.instance(w).pixels
+                        for w in self.weights]
+            else:
+                return [self.lk.appearance_model.instance(w)
+                        for w in self.weights]
+        else:
+            if as_pixels:
+                return [self.lk.template.pixels for _ in self.parameters]
+            else:
+                return [self.lk.template for _ in self.parameters]
+
     def plot_cost(self, figure_id=None, new_figure=False, **kwargs):
         legend = self.algorithm_type
         x_label = 'Number of iterations'
@@ -317,20 +332,28 @@ class LKFitting(Viewable):
 
     def view_warped_images(self, figure_id=None, new_figure=False,
                            channels=None, masked=True, **kwargs):
-        pixels_to_view_list = self.warped_images(as_pixels=True)
+        pixels_list = self.warped_images(as_pixels=True)
         mask = self.lk.template.mask.mask if masked else None
         return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
-                                   pixels_to_view_list, channels=channels,
+                                   pixels_list, channels=channels,
+                                   mask=mask).render(**kwargs)
+
+    def view_appearances(self, figure_id=None, new_figure=False,
+                         channels=None, masked=True, **kwargs):
+        pixels_list = self.appearances(as_pixels=True)
+        mask = self.lk.template.mask.mask if masked else None
+        return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
+                                   pixels_list, channels=channels,
                                    mask=mask).render(**kwargs)
 
     def view_error_images(self, figure_id=None, new_figure=False,
                           channels=None, masked=None, **kwargs):
         warped_images = self.warped_images(as_pixels=True)
-        pixels_to_view_list = [self.lk.template.pixels - i
-                               for i in warped_images]
+        appearances = self.appearances(as_pixels=True)
+        pixels_list = [a - i for a, i in zip(appearances, warped_images)]
         mask = self.lk.template.mask.mask if masked else None
         return MultipleImageViewer(figure_id, new_figure, self.image.n_dims,
-                                   pixels_to_view_list, channels=channels,
+                                   pixels_list, channels=channels,
                                    mask=mask).render(**kwargs)
 
     def view_final_fitting(self, figure_id=None, new_figure=False, **kwargs):

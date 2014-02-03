@@ -13,6 +13,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -22,7 +23,9 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
                                  interpolator=self._interpolator)
 
             # Compute appearance
-            self.template = self.appearance_model.reconstruct(IWxp)
+            weights = self.appearance_model.project(IWxp)
+            self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.apend(weights)
 
             # Compute warp Jacobian
             dW_dp = self.transform.jacobian(
@@ -52,7 +55,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting
 
 
@@ -71,6 +74,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -80,7 +84,9 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
                                  interpolator=self._interpolator)
 
             # Compute template by projection
-            self.template = self.appearance_model.reconstruct(IWxp)
+            weights = self.appearance_model.project(IWxp)
+            self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
@@ -103,7 +109,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting
 
 
@@ -122,6 +128,7 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
+        lk_fitting.weights = []
         n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm
@@ -131,7 +138,9 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
                                  interpolator=self._interpolator)
 
             # Compute appearance
-            self.template = self.appearance_model.reconstruct(IWxp)
+            weights = self.appearance_model.project(IWxp)
+            self.template = self.appearance_model.instance(weights)
+            lk_fitting.weights.append(weights)
 
             # Compute steepest descent images, VT_dW_dp
             self._J = self.residual.steepest_descent_images(self.template,
@@ -158,5 +167,5 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.status = 'completed'
+        lk_fitting.fitted = True
         return lk_fitting
