@@ -10,6 +10,7 @@ from pybug.io.exceptions import MeshImportError
 from pybug.shape import TexturedTriMesh, TriMesh
 from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
+from pyvrml.node import NullNode
 from scipy.spatial import Delaunay
 import numpy as np
 from pybug.shape.mesh.textured import ColouredTriMesh
@@ -372,10 +373,11 @@ class WRLImporter(MeshImporter):
         mesh_trilist = self._filter_non_triangular_polygons(
                     shape.geometry.coordIndex)
 
-        if shape.geometry.colorPerVertex == 1:  # Colour per-vertex
+        if type(shape.geometry.texCoord) is NullNode:  # Colour per-vertex
             mesh_colour_per_vertex = shape.geometry.color.color
             mesh_tcoords = None
         else:  # Texture coordinates
+            mesh_colour_per_vertex = None
             mesh_tcoords = shape.geometry.texCoord.point
 
             # See if we have a seperate texture index, if not just create an
@@ -388,9 +390,9 @@ class WRLImporter(MeshImporter):
 
             # Fix texture coordinates - we can only have one index so we choose
             # to use the triangle index
-            if np.max(tex_trilist) > np.max(self.mesh.trilist):
-                new_tcoords = np.zeros([self.mesh.points.shape[0], 2])
-                new_tcoords[self.mesh.trilist] = self.mesh.tcoords[tex_trilist]
+            if np.max(tex_trilist) > np.max(mesh_trilist):
+                new_tcoords = np.zeros([mesh_points.shape[0], 2])
+                new_tcoords[mesh_trilist] = mesh_tcoords[tex_trilist]
                 mesh_tcoords = new_tcoords
 
             # Get the texture path - it's fine not to have one defined
