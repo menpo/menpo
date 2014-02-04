@@ -1,11 +1,12 @@
-from collections import namedtuple
 import numpy as np
 from pybug.exception import DimensionalityError
+from pybug.rasterize.base import TextureRasterInfo, ColourRasterInfo
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d
 from pybug.transform.affine import Scale
 from pybug.rasterize import Rasterizable
+from pybug.visualize.base import ColouredTriMeshViewer3d
 
 
 class TexturedTriMesh(TriMesh, Rasterizable):
@@ -108,9 +109,76 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         return True  # TexturedTriMesh can specify texture rendering params
 
     def _rasterize_generate_textured_mesh(self):
-        R = namedtuple('R', ['points', 'trilist', 'tcoords', 'texture'])
-        R.points = self.points
-        R.trilist = self.trilist
-        R.texture = self.texture.pixels
-        R.tcoords = self.tcoords.points
-        return R
+        return TextureRasterInfo(self.points, self.trilist,
+                                 self.tcoords.points,
+                                 self.texture.pixels)
+
+
+class ColouredTriMesh(TriMesh, Rasterizable):
+    r"""
+    Combines a :class:`pybug.shape.mesh.base.TriMesh` with a colour per vertex.
+    Due to the colour being per-vertex it is not possible to view the
+    associated 'texture'.
+
+    Parameters
+    ----------
+    points : (N, D) ndarray
+        The coordinates of the mesh.
+    trilist : (M, 3) ndarray
+        The triangle list for the mesh
+    colours : (N, 3) ndarray
+        The floating point RGB colour per vertex.
+
+    Raises
+    ------
+    ValueError
+        If the number of colour values does not match the number of vertices.
+    """
+
+    def __init__(self, points, trilist, colours):
+        super(ColouredTriMesh, self).__init__(points, trilist)
+        if points.shape[0] != colours.shape[0]:
+            raise ValueError('Must provide a colour per-vertex.')
+        self.colours = colours
+
+    def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
+        r"""
+        Visualize the :class:`ColouredTriMesh`. Only 3D objects are currently
+        supported.
+
+        Parameters
+        ----------
+        coloured : bool, optional
+            If ``True``, render the colours.
+
+            Default: ``True``
+
+        Returns
+        -------
+        viewer : :class:`pybug.visualize.base.Renderer`
+            The viewer object.
+
+        Raises
+        ------
+        DimensionalityError
+            If ``self.n_dims != 3``.
+        """
+        if coloured:
+            if self.n_dims == 3:
+                return ColouredTriMeshViewer3d(
+                    figure_id, new_figure, self.points,
+                    self.trilist, self.colours).render(**kwargs)
+            else:
+                raise DimensionalityError("Only viewing of 3D coloured meshes"
+                                          "is currently supported.")
+        else:
+            return super(ColouredTriMesh, self)._view(figure_id=figure_id,
+                                                      new_figure=new_figure,
+                                                      **kwargs)
+
+    @property
+    def _rasterize_type_texture(self):
+        return False
+
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.colours)
