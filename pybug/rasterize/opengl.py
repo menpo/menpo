@@ -4,6 +4,9 @@ from pybug.image import MaskedImage
 
 
 # noinspection PyProtectedMember
+from pybug.rasterize.base import TexRasterInfo
+
+
 class GLRasterizer(object):
 
     def __init__(self, width=1024, height=768, model_matrix=None,
@@ -99,7 +102,7 @@ class GLRasterizer(object):
         self._opengl.set_projection_matrix(value)
 
     def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
-                                       per_vertex_f3v=None):
+                                            per_vertex_f3v=None):
         r"""Rasterize the object to an image and generate an interpolated
         3-float image from a per vertex float 3 vector.
 
@@ -134,9 +137,26 @@ class GLRasterizer(object):
             r = rasterizable._rasterize_generate_textured_mesh()
             return self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
-        elif rasterizable._rasterize_type_color():
-            raise ValueError("Color Mesh rasterizations are not supported "
-                             "yet")
+        elif rasterizable._rasterize_type_color:
+            #TODO: This should use a different shader!
+            # But I'm hacking it here to work quickly.
+            colour_r = rasterizable._rasterize_generate_color_mesh()
+
+            # Fake some texture coordinates and a texture as required by the
+            # shader
+            fake_tcoords = np.random.randn(colour_r.points.shape[0], 2)
+            fake_texture = np.zeros([2, 2, 3])
+            r = TexRasterInfo(colour_r.points, colour_r.trilist,
+                              fake_tcoords, fake_texture)
+
+            # The RGB image is going to be broken due to the fake texture
+            # information we passed in
+            _, rgb_image = self._rasterize_texture_with_interp(
+                r, per_vertex_f3v=colour_r.colours)
+            _, f3v_image = self._rasterize_texture_with_interp(
+                r, per_vertex_f3v=per_vertex_f3v)
+
+            return rgb_image, f3v_image
 
     def rasterize_mesh_with_shape_image(self, rasterizable):
         r"""Rasterize the object to an image and generate an interpolated

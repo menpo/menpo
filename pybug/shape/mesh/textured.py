@@ -1,6 +1,6 @@
-from collections import namedtuple
 import numpy as np
 from pybug.exception import DimensionalityError
+from pybug.rasterize.base import TexRasterInfo, ColourRasterInfo
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
 from pybug.visualize import TexturedTriMeshViewer3d
@@ -109,15 +109,11 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         return True  # TexturedTriMesh can specify texture rendering params
 
     def _rasterize_generate_textured_mesh(self):
-        R = namedtuple('R', ['points', 'trilist', 'tcoords', 'texture'])
-        R.points = self.points
-        R.trilist = self.trilist
-        R.texture = self.texture.pixels
-        R.tcoords = self.tcoords.points
-        return R
+        return TexRasterInfo(self.points, self.trilist, self.tcoords.points,
+                          self.texture.pixels)
 
 
-class ColouredTriMesh(TriMesh):
+class ColouredTriMesh(TriMesh, Rasterizable):
     r"""
     Combines a :class:`pybug.shape.mesh.base.TriMesh` with a colour per vertex.
     Due to the colour being per-vertex it is not possible to view the
@@ -178,3 +174,10 @@ class ColouredTriMesh(TriMesh):
             return super(ColouredTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,
                                                       **kwargs)
+
+    @property
+    def _rasterize_type_texture(self):
+        return False
+
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.colours)
