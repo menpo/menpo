@@ -1,6 +1,5 @@
 import abc
 from copy import deepcopy
-
 import numpy as np
 
 from pybug.image.masked import MaskedImage
@@ -48,9 +47,9 @@ class AbstractSpatialImage(MaskedImage):
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
             .format(self.n_dims))
-        self._trilist = trilist
-        self._tcoords = tcoords
-        self._texture = texture
+        self._trilist = np.array(trilist, copy=True, order='C')
+        self._tcoords = deepcopy(tcoords)
+        self._texture = deepcopy(texture)
         self._mesh = None
 
     @property
@@ -115,16 +114,16 @@ class AbstractSpatialImage(MaskedImage):
 
         points = self._generate_points()
 
-        if self._trilist is None:
+        trilist = self._trilist
+        if trilist is None:
             # Delaunay the 2D surface.
             trilist = Delaunay(points[..., :2]).simplices
-        else:
-            trilist = self._trilist
 
         if self._texture is None:
             return TriMesh(points, trilist)
         else:
-            if self._tcoords is None:
+            tcoords = self._tcoords
+            if tcoords is None:
                 tcoords = self.mask.true_indices.astype(np.float64)
                 # scale to [0, 1]
                 tcoords = tcoords / np.array(self.shape)
@@ -132,8 +131,6 @@ class AbstractSpatialImage(MaskedImage):
                 tcoords = np.fliplr(tcoords)
                 # move origin to top left
                 tcoords[:, 1] = 1.0 - tcoords[:, 1]
-            else:
-                tcoords = self._tcoords
             return TexturedTriMesh(points, trilist, tcoords, self._texture)
 
     def _view(self, figure_id=None, new_figure=False, mode='image',

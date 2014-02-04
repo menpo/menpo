@@ -378,7 +378,7 @@ class WRLImporter(MeshImporter):
         else:  # Texture coordinates
             mesh_tcoords = shape.geometry.texCoord.point
 
-            # See if we have a seperate texture index, if not just create an
+            # See if we have a separate texture index, if not just create an
             # empty array
             try:
                 tex_trilist = self._filter_non_triangular_polygons(
@@ -420,4 +420,3 @@ class WRLImporter(MeshImporter):
         index_list = np.array(index_list)
         # Slice of -1 delimiters
         return index_list[:, 1:]
-

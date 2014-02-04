@@ -1,5 +1,6 @@
 import numpy as np
-from pybug.exception import DimensionalityError
+import copy
+
 from pybug.rasterize.base import TextureRasterInfo, ColourRasterInfo
 from pybug.shape import PointCloud
 from pybug.shape.mesh import TriMesh
@@ -7,6 +8,7 @@ from pybug.visualize import TexturedTriMeshViewer3d
 from pybug.transform.affine import Scale
 from pybug.rasterize import Rasterizable
 from pybug.visualize.base import ColouredTriMeshViewer3d
+from pybug.exception import DimensionalityError
 
 
 class TexturedTriMesh(TriMesh, Rasterizable):
@@ -30,7 +32,7 @@ class TexturedTriMesh(TriMesh, Rasterizable):
     def __init__(self, points, trilist, tcoords, texture):
         super(TexturedTriMesh, self).__init__(points, trilist)
         self.tcoords = PointCloud(tcoords)
-        self.texture = texture
+        self.texture = copy.deepcopy(texture)
 
     def tcoords_pixel_scaled(self):
         r"""
