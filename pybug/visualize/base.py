@@ -1,10 +1,11 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
-from collections import Iterable
 
 import numpy as np
+from scipy.misc import imrotate
 
 from pybug.exception import DimensionalityError
+from collections import Iterable
 
 
 class Renderer(object):
