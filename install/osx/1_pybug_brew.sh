@@ -5,7 +5,7 @@
 # about what this script does please see README.md!
 
 brew install git boost gfortran python cmake pkg-config readline libpng libjpeg freetype
-brew install assimp pyqt glw3
+brew install assimp pyqt glew glw3
 
 brew tap homebrew/versions
 brew tap homebrew/science
