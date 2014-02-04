@@ -21,7 +21,7 @@ class PointCloud(Shape):
 
     def __init__(self, points):
         super(PointCloud, self).__init__()
-        self.points = points
+        self.points = np.array(points, copy=True, order='C')
 
     @property
     def n_points(self):

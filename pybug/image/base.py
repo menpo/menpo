@@ -62,7 +62,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     def __init__(self, image_data):
         Landmarkable.__init__(self)
-        image_data = np.asarray(image_data)
+        image_data = np.array(image_data, copy=True, order='C')
         # This is the degenerate case whereby we can just put the extra axis
         # on ourselves
         if image_data.ndim == 2:
