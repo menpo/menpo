@@ -4,7 +4,7 @@ from pybug.image import MaskedImage
 
 
 # noinspection PyProtectedMember
-from pybug.rasterize.base import TexRasterInfo
+from pybug.rasterize.base import TextureRasterInfo
 
 
 class GLRasterizer(object):
@@ -137,7 +137,7 @@ class GLRasterizer(object):
             r = rasterizable._rasterize_generate_textured_mesh()
             return self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
-        elif rasterizable._rasterize_type_color:
+        elif rasterizable._rasterize_type_colour:
             #TODO: This should use a different shader!
             # But I'm hacking it here to work quickly.
             colour_r = rasterizable._rasterize_generate_color_mesh()
@@ -146,7 +146,7 @@ class GLRasterizer(object):
             # shader
             fake_tcoords = np.random.randn(colour_r.points.shape[0], 2)
             fake_texture = np.zeros([2, 2, 3])
-            r = TexRasterInfo(colour_r.points, colour_r.trilist,
+            r = TextureRasterInfo(colour_r.points, colour_r.trilist,
                               fake_tcoords, fake_texture)
 
             # The RGB image is going to be broken due to the fake texture
