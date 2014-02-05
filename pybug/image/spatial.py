@@ -47,9 +47,12 @@ class AbstractSpatialImage(MaskedImage):
             raise ValueError("Trying to build an AbstractSpatialImage with {} "
                              "dimensions - has to be 2 dimensional"
             .format(self.n_dims))
-        self._trilist = np.array(trilist, copy=True, order='C')
-        self._tcoords = deepcopy(tcoords)
-        self._texture = deepcopy(texture)
+        if trilist is not None:
+            self._trilist = np.array(trilist, copy=True, order='C')
+        if tcoords is not None:
+            self._tcoords = deepcopy(tcoords)
+        if texture is not None:
+            self._texture = deepcopy(texture)
         self._mesh = None
 
     @property
