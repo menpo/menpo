@@ -161,19 +161,15 @@ def compute_features(image, features):
         elif features[0] is 'euler':
             raise NotImplementedError("Euler features not implemented yet")
         elif features[0] is 'igo':
-            raise NotImplementedError("IGO features not implemented yet")
+            image = image.features.igo(**features[1])
         elif features[0] is 'es':
             raise NotImplementedError("ES features not implemented yet")
         elif features[0] is 'hog':
-            raise NotImplementedError("HoG features not implemented yet")
+            image = image.features.hog(**features[1])
         elif features[0] is 'sift':
             raise NotImplementedError("Sift features not implemented yet")
 
-    # TODO: These should disappear with the new image refactoring
-    nd_image = MaskedImage(image.pixels, mask=image.mask)
-    nd_image.landmarks = image.landmarks
-
-    return nd_image
+    return image
 
 
 def mean_pointcloud(pointcloud_list):

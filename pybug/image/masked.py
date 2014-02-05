@@ -1,5 +1,5 @@
+from __future__ import division
 from copy import deepcopy
-import itertools
 import numpy as np
 from scipy.ndimage import binary_erosion
 from pybug.image.base import Image

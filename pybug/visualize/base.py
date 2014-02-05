@@ -189,7 +189,8 @@ from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
     MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
     MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d, \
-    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d
+    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d, \
+    MatplotlibMultiImageSubplotsViewer2d
     #MatplotlibFitterStateListViewer, MatplotlibFitterStateListSubplotsViewer
 
 # Default importer types
@@ -207,8 +208,8 @@ VectorViewer3d = MayaviVectorViewer3d
 DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
-MultipleImageViewer2d = MatplotlibMultiImageViewer2d
-#MultipleImageSubplotsViewer2d = MultipleMatplotlibImageSubplotsViewer2d
+MultiImageViewer2d = MatplotlibMultiImageViewer2d
+MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
 
 #FitterStateListViewer = MatplotlibFitterStateListViewer
 #FitterStateListSubplotsViewer = MatplotlibFitterStateListSubplotsViewer
@@ -532,12 +533,10 @@ class MultipleImageViewer(ImageViewer):
     def render(self, **kwargs):
         if self.dimensions == 2:
             if self.use_subplots:
-                pass
-                # return MultipleImageSubplotsViewer2d(
-                #     self.figure_id, self.new_figure,
-                #     self.pixels_list).render(**kwargs)
+                MultiImageSubplotsViewer2d(self.figure_id, self.new_figure,
+                                           self.pixels_list).render(**kwargs)
             else:
-                return MultipleImageViewer2d(
+                return MultiImageViewer2d(
                     self.figure_id, self.new_figure,
                     self.pixels_list).render(**kwargs)
         else:
