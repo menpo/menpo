@@ -1,8 +1,17 @@
+PyBug
+=====
+
+PyBug is a statistical facial modelling toolkit, providing all the tools 
+required to build, fit, visualize, and test statistical models like Active
+Appearance Models and Morphable Models.
+
+
+
 DEPENDENCIES
 ============
 
-Python
-------
+Python dependencies
+-------------------
 
 See `setup.py` for a full list. All of these bar those noted in the
 installation section below will be installed for you by `pip install`.
@@ -21,36 +30,69 @@ definitely be sufficient to build the version of numpy that ships with your
 version of Ubuntu - and hopefully will be sufficient for the (newer) version
 of numpy pip will download for you when installing pybug.
 
-Optional Dependancies
----------------------
+Direct System Dependencies
+--------------------------
 
-The following Python packages are optional dependancies:
-
-  * ``mlabwrap`` - Matlab/Python interface. Needs Matlab to be installed.
-
-Optional dependancies can be installed via the command:
-
-    pip install -e git+https://github.com/YOURGITHUBACCOUNT/pybug.git#egg=pybug[mlabwrap]
-
-External
---------
-
-The following table lists the dependencies that need to be installed prior to
-installing pybug.
+This table lists all libraries that are direct dependendencies of PyBug itself.
 
 <table>
   <tr>
-    <th>dependency</th><th>ubuntu package</th><th>description</th>
+    <th>Dependency</th><th>apt-get install</th><th>Ubuntu</th>
+    <th>brew install</th><th>Description</th>
   </tr>
   <tr>
     <td>Open Asset Import Library</td>
     <td>libassimp-dev</td>
+    <td>13.10</td>
+    <td>assimp</td>
     <td>Import large number of 3D file formats</td>
   </tr>
   <tr>
     <td>Python bindings for VTK</td>
     <td>python-vtk</td>
-    <td>Required for Mayavi functionality</td>
+    <td>13.04</td>
+    <td>vtk</td>
+    <td>Required by Mayavi</td>
+  </tr>
+    <tr>
+    <td>QT4 Python bindings</td>
+    <td>python-qt4</td>
+    <td>13.10</td>
+    <td>pyqt</td>
+    <td>Required by Mayavi</td>
+  </tr>
+  <tr>
+    <td>GLEW</td>
+    <td>libglew-dev</td>
+    <td>13.04</td>
+    <td>glew</td>
+    <td>The OpenGL Extension Wrangler</td>
+  </tr>
+  <tr>
+    <td>GLFW 3</td>
+    <td>-</td>
+    <td>-</td>
+    <td>glfw3</td>
+    <td>OpenGL context creation library</td>
+  </tr>
+</table>
+
+Indirect Dependencies
+-------------------
+
+This table lists all system dependencies that **python tools that PyBug 
+relies upon** (like Numpy) require.
+
+<table>
+  <tr>
+    <th>Python dependency</th><th>apt-get build-dep</th><th>Ubuntu</th>
+    <th>brew install</th>
+  </tr>
+  <tr>
+    <td>Numpy</td>
+    <td>python-numpy</td>
+    <td>13.10</td>
+    <td>gfortran</td>
   </tr>
 </table>
 
@@ -80,7 +122,7 @@ If this doesn't work for you, file a issue so the README can be updated!
 
 First we get our core dependencies
 
-    sudo apt-get install libassimp-dev python-vtk git
+    sudo apt-get install git libassimp-dev python-vtk python-qt4 libglew-dev
 
 Note you will need to set up git, but this is out of the scope of this README.
 Do that now and come back here.

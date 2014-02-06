@@ -1,9 +1,10 @@
-from pybug.shape.mesh.normals import compute_normals
+import numpy as np
 from scipy.spatial import Delaunay
 
-from pybug.exception import DimensionalityError
 from pybug.shape import PointCloud
+from pybug.shape.mesh.normals import compute_normals
 from pybug.visualize import TriMeshViewer
+from pybug.exception import DimensionalityError
 
 
 class TriMesh(PointCloud):
@@ -27,7 +28,7 @@ class TriMesh(PointCloud):
         super(TriMesh, self).__init__(points)
         if trilist is None:
             trilist = Delaunay(points).simplices
-        self.trilist = trilist
+        self.trilist = np.array(trilist, copy=True, order='C')
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),

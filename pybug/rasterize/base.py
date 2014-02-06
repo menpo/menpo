@@ -1,4 +1,10 @@
 import abc
+from collections import namedtuple
+
+TextureRasterInfo = namedtuple('TextureRasterInfo',
+                               ['points', 'trilist', 'tcoords', 'texture'])
+ColourRasterInfo = namedtuple('ColourRasterInfo', ['points', 'trilist',
+                                                   'colours'])
 
 
 class Rasterizable(object):
@@ -15,5 +21,5 @@ class Rasterizable(object):
         pass
 
     @property
-    def _rasterize_type_color(self):
+    def _rasterize_type_colour(self):
         return not self._rasterize_type_texture

@@ -1,4 +1,5 @@
 import abc
+from collections import namedtuple
 import commands
 import os.path as path
 import tempfile
@@ -9,8 +10,17 @@ from pybug.io.exceptions import MeshImportError
 from pybug.shape import TexturedTriMesh, TriMesh
 from pyvrml import buildVRML97Parser
 import pyvrml.vrml97.basenodes as basenodes
+from pyvrml.node import NullNode
 from scipy.spatial import Delaunay
 import numpy as np
+from pybug.shape.mesh.textured import ColouredTriMesh
+
+# TODO: Disconnect with AssimpImporter
+# This formalises the return type of a mesh importer (before building)
+# However, at the moment there is a disconnect between this and the
+# Assimp type, and at some point they should become the same object
+MeshInfo = namedtuple('MeshInfo', ['points', 'trilist', 'tcoords',
+                                   'colour_per_vertex'])
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -92,6 +102,8 @@ class MeshImporter(Importer):
         self.meshes = []
         self.attempted_texture_search = False
         self.attempted_landmark_search = False
+        self.relative_texture_path = None
+        self.relative_landmark_path = None
 
     def _build_texture_and_landmark_importers(self):
         r"""
@@ -167,10 +179,6 @@ class MeshImporter(Importer):
         texture_path : string
             Absolute filepath to the texture
         """
-        # Avoid attribute not being set
-        if not hasattr(self, 'relative_texture_path'):
-            self.relative_texture_path = None
-
         # Try find a texture path if we can
         if self.relative_texture_path is None and \
                 not self.attempted_texture_search:
@@ -196,10 +204,6 @@ class MeshImporter(Importer):
         landmark_path : string
             Absolute filepath to the landmarks
         """
-        # Avoid attribute not being set
-        if not hasattr(self, 'relative_landmark_path'):
-            self.relative_landmark_path = None
-
         # Try find a texture path if we can
         if self.relative_landmark_path is None and \
                 not self.attempted_landmark_search:
@@ -260,6 +264,9 @@ class MeshImporter(Importer):
                                            mesh.trilist,
                                            mesh.tcoords,
                                            self.texture_importer.build())
+            elif mesh.colour_per_vertex is not None:
+                new_mesh = ColouredTriMesh(mesh.points, mesh.trilist,
+                                           mesh.colour_per_vertex)
             else:
                 new_mesh = TriMesh(mesh.points, mesh.trilist)
 
@@ -335,9 +342,6 @@ class WRLImporter(MeshImporter):
         parser = buildVRML97Parser()
         vrml_tuple = parser.parse(self.text)
 
-        # Build expando object (dynamic object hack)
-        self.mesh = lambda: 0
-
         # I assume these tuples are always built in this order
         scenegraph = vrml_tuple[1][1]
         shape_container = None
@@ -363,36 +367,43 @@ class WRLImporter(MeshImporter):
                 break
 
         if shape is None:
-            raise MeshImportError('Unable to find shape in transform')
+            raise MeshImportError('Unable to find shape in container')
 
-        self.mesh.points = shape.geometry.coord.point
-        self.mesh.tcoords = shape.geometry.texCoord.point
+        mesh_points = shape.geometry.coord.point
+        mesh_trilist = self._filter_non_triangular_polygons(
+                    shape.geometry.coordIndex)
 
-        self.mesh.trilist = self._filter_non_triangular_polygons(
-                shape.geometry.coordIndex)
+        if type(shape.geometry.texCoord) is NullNode:  # Colour per-vertex
+            mesh_colour_per_vertex = shape.geometry.color.color
+            mesh_tcoords = None
+        else:  # Texture coordinates
+            mesh_colour_per_vertex = None
+            mesh_tcoords = shape.geometry.texCoord.point
 
-        # See if we have a seperate texture index, if not just create an empty
-        # array
-        try:
-            tex_trilist = self._filter_non_triangular_polygons(
-                shape.geometry.texCoordIndex)
-        except AttributeError:
-            tex_trilist = np.array([-1])
+            # See if we have a separate texture index, if not just create an
+            # empty array
+            try:
+                tex_trilist = self._filter_non_triangular_polygons(
+                    shape.geometry.texCoordIndex)
+            except AttributeError:
+                tex_trilist = np.array([-1])
 
-        # Fix texture coordinates - we can only have one index so we choose
-        # to use the triangle index
-        if np.max(tex_trilist) > np.max(self.mesh.trilist):
-            new_tcoords = np.zeros([self.mesh.points.shape[0], 2])
-            new_tcoords[self.mesh.trilist] = self.mesh.tcoords[tex_trilist]
-            self.mesh.tcoords = new_tcoords
+            # Fix texture coordinates - we can only have one index so we choose
+            # to use the triangle index
+            if np.max(tex_trilist) > np.max(mesh_trilist):
+                new_tcoords = np.zeros([mesh_points.shape[0], 2])
+                new_tcoords[mesh_trilist] = mesh_tcoords[tex_trilist]
+                mesh_tcoords = new_tcoords
 
-        # Get the texture path - it's fine not to have one defined
-        try:
-            self.relative_texture_path = shape.appearance.texture.url[0]
-        except (AttributeError, IndexError):
-            self.relative_texture_path = None
+            # Get the texture path - it's fine not to have one defined
+            try:
+                self.relative_texture_path = shape.appearance.texture.url[0]
+            except (AttributeError, IndexError):
+                self.relative_texture_path = None
 
         # Assumes a single mesh per file
+        self.mesh = MeshInfo(mesh_points, mesh_trilist, mesh_tcoords,
+                             mesh_colour_per_vertex)
         self.meshes = [self.mesh]
 
     def _filter_non_triangular_polygons(self, coord_list):
@@ -411,4 +422,3 @@ class WRLImporter(MeshImporter):
         index_list = np.array(index_list)
         # Slice of -1 delimiters
         return index_list[:, 1:]
-
