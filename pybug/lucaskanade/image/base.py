@@ -19,9 +19,7 @@ class ImageLucasKanade(LucasKanade):
 
 class ImageForwardAdditive(ImageLucasKanade):
 
-    @property
-    def type(self):
-        return 'ImgFA'
+    type = 'ImgFA'
 
     def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
@@ -70,9 +68,7 @@ class ImageForwardAdditive(ImageLucasKanade):
 
 class ImageForwardCompositional(ImageLucasKanade):
 
-    @property
-    def type(self):
-        return 'ImgFC'
+    type = 'ImgFC'
 
     def _precompute(self):
         r"""
@@ -127,9 +123,7 @@ class ImageForwardCompositional(ImageLucasKanade):
 
 class ImageInverseCompositional(ImageLucasKanade):
 
-    @property
-    def type(self):
-        return 'ImgIC'
+    type = 'ImgIC'
 
     def _precompute(self):
         r"""

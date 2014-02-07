@@ -1,5 +1,4 @@
 from __future__ import division
-import matplotlib.pyplot as plt
 import numpy as np
 from pybug.shape import PointCloud, TriMesh
 from pybug.transform .affine import Translation, SimilarityTransform

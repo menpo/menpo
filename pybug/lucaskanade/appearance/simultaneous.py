@@ -5,9 +5,7 @@ from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 class SimultaneousForwardAdditive(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'SimFA'
+    type = 'SimFA'
 
     def _align(self, lk_fitting, max_iters=20, project=True):
         # Initial error > eps
@@ -84,9 +82,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
 
 class SimultaneousForwardCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'SimFC'
+    type = 'SimFC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -161,9 +157,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
 
 class SimultaneousInverseCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'SimIC'
+    type = 'SimIC'
 
     def _precompute(self):
         # Compute the Jacobian of the warp

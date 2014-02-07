@@ -5,9 +5,7 @@ from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 class AdaptiveForwardAdditive(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AdaFA'
+    type = 'AdaFA'
 
     def _align(self, lk_fitting, max_iters=20, project=True):
         # Initial error > eps
@@ -80,9 +78,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
 
 class AdaptiveForwardCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AdaFC'
+    type = 'AdaFC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -153,9 +149,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
 
 class AdaptiveInverseCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AdaIC'
+    type = 'AdaIC'
 
     def _precompute(self):
         # Compute warp Jacobian

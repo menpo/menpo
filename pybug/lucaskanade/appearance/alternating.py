@@ -5,15 +5,13 @@ from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 class AlternatingForwardAdditive(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AltFA'
+    type = 'AltFA'
 
     def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
-        lk_fitting.weights = []
+        lk_fitting.weights = [[0]]
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -25,7 +23,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             # Compute appearance
             weights = self.appearance_model.project(IWxp)
             self.template = self.appearance_model.instance(weights)
-            lk_fitting.weights.apend(weights)
+            lk_fitting.weights.append(weights)
 
             # Compute warp Jacobian
             dW_dp = self.transform.jacobian(
@@ -61,9 +59,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
 
 class AlternatingForwardCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AltFC'
+    type = 'AltFC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -74,7 +70,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
-        lk_fitting.weights = []
+        lk_fitting.weights = [[0]]
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -115,9 +111,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
 
 class AlternatingInverseCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'AltIC'
+    type = 'AltIC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -128,7 +122,7 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         # Initial error > eps
         error = self.eps + 1
         image = lk_fitting.image
-        lk_fitting.weights = []
+        lk_fitting.weights = [[0]]
         n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm

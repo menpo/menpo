@@ -5,9 +5,7 @@ from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 class ProjectOutForwardAdditive(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'POFA'
+    type = 'POFA'
 
     def _align(self, lk_fitting, max_iters=20):
         # Initial error > eps
@@ -58,9 +56,7 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
 
 class ProjectOutForwardCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'POFC'
+    type = 'POFC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -109,9 +105,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
 
 class ProjectOutInverseCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'POIC'
+    type = 'POIC'
 
     def _precompute(self):
         # Compute warp Jacobian

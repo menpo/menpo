@@ -5,9 +5,7 @@ from pybug.lucaskanade.appearance.base import AppearanceLucasKanade
 
 class ProbabilisticForwardAdditive(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'ProbFA'
+    type = 'ProbFA'
 
     def _align(self, lk_fitting, max_iters=20, project=True):
         # Initial error > eps
@@ -59,9 +57,7 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
 
 class ProbabilisticForwardCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'ProbFC'
+    type = 'ProbFC'
 
     def _precompute(self):
         # Compute warp Jacobian
@@ -111,9 +107,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
 
 class ProbabilisticInverseCompositional(AppearanceLucasKanade):
 
-    @property
-    def type(self):
-        return 'ProbIC'
+    type = 'ProbIC'
 
     def _precompute(self):
         # Compute warp Jacobian

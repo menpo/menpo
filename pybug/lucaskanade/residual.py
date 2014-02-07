@@ -174,6 +174,8 @@ class Residual(object):
 
 class LSIntensity(Residual):
 
+    type = 'SSD'
+
     def steepest_descent_images(self, image, dW_dp, forward=None):
         # compute gradient
         # gradient:  height  x  width  x  (n_channels x n_dims)
@@ -211,6 +213,8 @@ class LSIntensity(Residual):
 
 
 class GaborFourier(Residual):
+
+    type = 'GaborFourier'
 
     def __init__(self, image_shape, **kwargs):
         if 'filter_bank' in kwargs:
@@ -321,6 +325,8 @@ class GaborFourier(Residual):
 
 class ECC(Residual):
 
+    type = 'ECC'
+
     def __normalise_images(self, image):
         # TODO: do we need to copy the image?
         # ToDo: is this supposed to be per channel normalization?
@@ -397,6 +403,8 @@ class ECC(Residual):
 
 class GradientImages(Residual):
 
+    type = 'GradientImages'
+
     def __regularise_gradients(self, gradients):
         pixels = gradients.pixels
         ab = np.sqrt(np.sum(np.square(pixels), -1))
@@ -465,6 +473,8 @@ class GradientImages(Residual):
 
 
 class GradientCorrelation(Residual):
+
+    type = 'GradientCorrelation'
 
     def steepest_descent_images(self, image, dW_dp, forward=None):
         n_dims = image.n_dims
