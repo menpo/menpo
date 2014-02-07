@@ -47,42 +47,9 @@ class MatplotlibRenderer(Renderer):
         return self.figure
 
 
-class MatplotlibImageViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, image):
-        super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
-        self.image = image
+class MatplotlibSubplots(object):
 
-    def _render(self, **kwargs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-
-        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
-            plt.imshow(self.image, cmap=cm.Greys_r, **kwargs)
-        else:
-            plt.imshow(self.image, **kwargs)
-
-        return self
-
-
-class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, image):
-        super(MatplotlibImageSubplotsViewer2d, self).__init__(figure_id,
-                                                              new_figure)
-        self.image = image
-        self.num_subplots = self.image.shape[2]
-        self.plot_layout = self._subplot_layout(self.num_subplots)
-
-    def _render(self, **kwargs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-
-        p = self.plot_layout
-        for i in range(self.image.shape[2]):
-            plt.subplot(p[0], p[1], 1 + i)
-            # Hide the x and y labels
-            plt.axis('off')
-            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r, **kwargs)
-        return self
+    __metaclass__ = abc.ABCMeta
 
     def _subplot_layout(self, num_subplots):
         if num_subplots < 2:
@@ -142,6 +109,44 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer):
                 return False
             f += 6
         return True
+
+
+class MatplotlibImageViewer2d(MatplotlibRenderer):
+    def __init__(self, figure_id, new_figure, image):
+        super(MatplotlibImageViewer2d, self).__init__(figure_id, new_figure)
+        self.image = image
+
+    def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
+        if len(self.image.shape) == 2:  # Single channels are viewed in Gray
+            plt.imshow(self.image, cmap=cm.Greys_r, **kwargs)
+        else:
+            plt.imshow(self.image, **kwargs)
+
+        return self
+
+
+class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
+    def __init__(self, figure_id, new_figure, image):
+        super(MatplotlibImageSubplotsViewer2d, self).__init__(figure_id,
+                                                              new_figure)
+        self.image = image
+        self.num_subplots = self.image.shape[2]
+        self.plot_layout = self._subplot_layout(self.num_subplots)
+
+    def _render(self, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
+        p = self.plot_layout
+        for i in range(self.image.shape[2]):
+            plt.subplot(p[0], p[1], 1 + i)
+            # Hide the x and y labels
+            plt.axis('off')
+            plt.imshow(self.image[:, :, i], cmap=cm.Greys_r, **kwargs)
+        return self
 
 
 class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
@@ -318,13 +323,14 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.y_label = y_label
         self.axis_limits = axis_limits
 
-    def _render(self, **kwargs):
+    def _render(self, color_list=None, marker_list=None, **kwargs):
         import matplotlib.pyplot as plt
 
         ax = plt.gca()
         ax.set_xlabel(self.x_label)
         ax.set_ylabel(self.y_label)
-        plt.plot(self.x_axis, self.y_axis, **kwargs)
+        for y, c, m in zip(self.y_axis, color_list, marker_list):
+            plt.plot(self.x_axis, y, color=c, marker=m, **kwargs)
         if self.axis_limits is not None:
             plt.axis(self.axis_limits)
 
@@ -340,13 +346,13 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
                                                            new_figure)
         self.image_list = image_list
 
-    def _render(self, interval=40, **kwargs):
+    def _render(self, interval=50, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
-        if len(self.image_list[0].shape) == 2:  # Single channels are viewed
-        # in Gray
+        if len(self.image_list[0].shape) == 2:
+            # Single channels are viewed in Gray
             _ax = plt.imshow(self.image_list[0], cmap=cm.Greys_r, **kwargs)
         else:
             _ax = plt.imshow(self.image_list[0], **kwargs)
@@ -365,7 +371,8 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
         return self
 
 
-class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer):
+class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
+                                           MatplotlibSubplots):
     def __init__(self, figure_id, new_figure, image_list):
         super(MatplotlibMultiImageSubplotsViewer2d, self).__init__(figure_id,
                                                                    new_figure)
@@ -373,7 +380,7 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer):
         self.num_subplots = self.image_list[0].shape[2]
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
-    def _render(self, interval=40, **kwargs):
+    def _render(self, interval=50, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
@@ -402,61 +409,77 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer):
                                             interval=interval, blit=True)
         return self
 
-    def _subplot_layout(self, num_subplots):
-        if num_subplots < 2:
-            return [1, 1]
-        while self._is_prime(num_subplots) and num_subplots > 4:
-            num_subplots += 1
-        p = self._factor(num_subplots)
-        if len(p) == 1:
-            p.insert(0, 1)
-            return p
-        while len(p) > 2:
-            if len(p) >= 4:
-                p[0] = p[0] * p[-2]
-                p[1] = p[1] * p[-1]
-                del p[-2:]
-            else:
-                p[0] = p[0] * p[1]
-                del p[1]
-            p.sort()
-            # Reformat if the column/row ratio is too large: we want a roughly
-        # square design
-        while (p[1] / p[0]) > 2.5:
-            p = self._subplot_layout(num_subplots + 1)
-        return p
 
-    def _factor(self, n):
-        gaps = [1, 2, 2, 4, 2, 4, 2, 4, 6, 2, 6]
-        length, cycle = 11, 3
-        f, fs, next_ind = 2, [], 0
-        while f * f <= n:
-            while n % f == 0:
-                fs.append(f)
-                n /= f
-            f += gaps[next_ind]
-            next_ind += 1
-            if next_ind == length:
-                next_ind = cycle
-        if n > 1:
-            fs.append(n)
-        return fs
+class MatplotlibFittingViewer2d(MatplotlibImageViewer2d):
+    def __init__(self, figure_id, new_figure, image, target_list):
+        super(MatplotlibFittingViewer2d, self).__init__(figure_id,
+                                                        new_figure, image)
+        self.target_list = target_list
 
-    def _is_prime(self, n):
-        if n == 2 or n == 3:
-            return True
-        if n < 2 or n % 2 == 0:
-            return False
-        if n < 9:
-            return True
-        if n % 3 == 0:
-            return False
-        r = int(n ** 0.5)
-        f = 5
-        while f <= r:
-            if n % f == 0:
-                return False
-            if n % (f + 2) == 0:
-                return False
-            f += 6
-        return True
+    def _render(self, interval=50, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        import matplotlib.animation as animation
+
+        if len(self.image.shape) == 2:
+            # Single channels are viewed in Gray
+            _ax = plt.imshow(self.image, cmap=cm.Greys_r)
+
+        else:
+            _ax = plt.imshow(self.image)
+
+        _line, = _ax.plot(self.target_list[0][:, 1],
+                             self.target_list[0][:, 0], **kwargs)
+
+        def init():
+            return _line,
+
+        def animate(j):
+            _line.set_data(self.target_list[j][:, 1],
+                           self.target_list[j][:, 0])
+            return _line,
+
+        self._ani = animation.FuncAnimation(self.figure, animate,
+                                            init_func=init,
+                                            frames=len(self.target_list),
+                                            interval=interval, blit=True)
+        return self
+
+
+class MatplotlibFittingSubplotsViewer2d(MatplotlibImageSubplotsViewer2d):
+    def __init__(self, figure_id, new_figure, image, target_list):
+        super(MatplotlibFittingSubplotsViewer2d, self).__init__(
+            figure_id, new_figure, image)
+        self.target_list = target_list
+
+    def _render(self, interval=50, **kwargs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        import matplotlib.animation as animation
+
+        p = self.plot_layout
+        _axs = []
+        for i in range(self.image.shape[2]):
+            plt.subplot(p[0], p[1], 1 + i)
+            # Hide the x and y labels
+            plt.axis('off')
+            plt.scatter(self.target_list[0][:, 0], self.target_list[0][:, 1],
+                        hold=True, **kwargs)
+            _ax = plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
+                             **kwargs)
+            _axs.append(_ax)
+
+        def init():
+            return _axs
+
+        def animate(j):
+            for k, _ax in enumerate(_axs):
+                _ax.set_xdata(self.target_list[j][:, 0])
+                _ax.set_ydata(self.target_list[j][:, 1])
+            return _axs
+
+        self._ani = animation.FuncAnimation(self.figure, animate,
+                                            init_func=init,
+                                            frames=len(self.target_list),
+                                            interval=interval, blit=True)
+        return self

@@ -191,8 +191,8 @@ from pybug.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
     MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
     MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d, \
     MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d, \
-    MatplotlibMultiImageSubplotsViewer2d
-    #MatplotlibFitterStateListViewer, MatplotlibFitterStateListSubplotsViewer
+    MatplotlibMultiImageSubplotsViewer2d, MatplotlibFittingViewer2d, \
+    MatplotlibFittingSubplotsViewer2d
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -212,9 +212,8 @@ AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
-
-#FitterStateListViewer = MatplotlibFitterStateListViewer
-#FitterStateListSubplotsViewer = MatplotlibFitterStateListSubplotsViewer
+FittingViewer2d = MatplotlibFittingViewer2d
+FittingSubplotsViewer2d = MatplotlibFittingSubplotsViewer2d
 
 
 class LandmarkViewer(object):
@@ -524,13 +523,10 @@ class MultipleImageViewer(ImageViewer):
         super(MultipleImageViewer, self).__init__(
             figure_id, new_figure, dimensions, pixels_list[0],
             channels=channels, mask=mask)
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.dimensions = dimensions
-        self.pixels_list = \
-            [self._parse_channels(channels, p)[0] for p in pixels_list]
+        pixels_list = [self._parse_channels(channels, p)[0]
+                       for p in pixels_list]
         self.pixels_list = [self._masked_pixels(p, mask)
-                            for p in self.pixels_list]
+                            for p in pixels_list]
 
     def render(self, **kwargs):
         if self.dimensions == 2:
@@ -538,19 +534,30 @@ class MultipleImageViewer(ImageViewer):
                 MultiImageSubplotsViewer2d(self.figure_id, self.new_figure,
                                            self.pixels_list).render(**kwargs)
             else:
-                return MultiImageViewer2d(
-                    self.figure_id, self.new_figure,
-                    self.pixels_list).render(**kwargs)
+                return MultiImageViewer2d(self.figure_id, self.new_figure,
+                                          self.pixels_list).render(**kwargs)
         else:
             raise DimensionalityError("Only 2D images are currently supported")
 
 
-class FittingViewer(object):
+class FittingViewer(ImageViewer):
 
-    def __init__(self, figure_id, new_figure, subplots=True):
-        self.figure_id = figure_id
-        self.new_figure = new_figure
-        self.subplots = subplots
+    def __init__(self, figure_id, new_figure, dimensions, pixels,
+                 target_list, channels=None, mask=None):
+        super(FittingViewer, self).__init__(
+            figure_id, new_figure, dimensions, pixels,
+            channels=channels, mask=mask)
+        self.target_list = target_list
 
     def render(self, **kwargs):
-        pass
+        if self.dimensions == 2:
+            if self.use_subplots:
+                FittingSubplotsViewer2d(
+                    self.figure_id, self.new_figure, self.pixels,
+                    self.target_list).render(**kwargs)
+            else:
+                return FittingViewer2d(
+                    self.figure_id, self.new_figure, self.pixels,
+                    self.target_list).render(**kwargs)
+        else:
+            raise DimensionalityError("Only 2D images are currently supported")
