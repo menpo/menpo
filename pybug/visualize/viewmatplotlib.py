@@ -416,20 +416,25 @@ class MatplotlibFittingViewer2d(MatplotlibImageViewer2d):
                                                         new_figure, image)
         self.target_list = target_list
 
-    def _render(self, interval=50, **kwargs):
+    def _render(self, interval=50,  marker='s', color='r',
+                markersize=3, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
+        print 'hello'
+
+        _ax = plt.axes()
+        _ax.axis('off')
+
         if len(self.image.shape) == 2:
             # Single channels are viewed in Gray
-            _ax = plt.imshow(self.image, cmap=cm.Greys_r)
-
+            _ax.imshow(self.image, cmap=cm.Greys_r)
         else:
-            _ax = plt.imshow(self.image)
+            _ax.imshow(self.image)
 
-        _line, = _ax.plot(self.target_list[0][:, 1],
-                             self.target_list[0][:, 0], **kwargs)
+        _line, = _ax.plot([], [], linestyle=' ', marker=marker, color=color,
+                          markersize=markersize, **kwargs)
 
         def init():
             return _line,
@@ -452,31 +457,34 @@ class MatplotlibFittingSubplotsViewer2d(MatplotlibImageSubplotsViewer2d):
             figure_id, new_figure, image)
         self.target_list = target_list
 
-    def _render(self, interval=50, **kwargs):
+    def _render(self, interval=50, marker='s', color='r',
+                markersize=3, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
+        print 'adeu'
+
         p = self.plot_layout
-        _axs = []
-        for i in range(self.image.shape[2]):
-            plt.subplot(p[0], p[1], 1 + i)
+        _lines = []
+        for j in range(self.image.shape[2]):
+            plt.subplot(p[0], p[1], 1 + j)
+            _ax = plt.axes()
             # Hide the x and y labels
-            plt.axis('off')
-            plt.scatter(self.target_list[0][:, 0], self.target_list[0][:, 1],
-                        hold=True, **kwargs)
-            _ax = plt.imshow(self.image[:, :, i], cmap=cm.Greys_r,
-                             **kwargs)
-            _axs.append(_ax)
+            _ax.axis('off')
+            _ax.imshow(self.image[:, :, j], cmap=cm.Greys_r)
+            _line, = _ax.plot([], [], linestyle=' ', marker=marker,
+                              color=color, markersize=markersize, **kwargs)
+            _lines.append(_line)
 
         def init():
-            return _axs
+            return _lines
 
         def animate(j):
-            for k, _ax in enumerate(_axs):
-                _ax.set_xdata(self.target_list[j][:, 0])
-                _ax.set_ydata(self.target_list[j][:, 1])
-            return _axs
+            for _line in enumerate(_lines):
+                _line.set_data(self.target_list[j][:, 1],
+                               self.target_list[j][:, 0])
+            return _lines
 
         self._ani = animation.FuncAnimation(self.figure, animate,
                                             init_func=init,

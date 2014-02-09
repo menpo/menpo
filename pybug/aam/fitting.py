@@ -135,7 +135,8 @@ class FittingList(list, Viewable):
         x_axis, y_axis = self._final_error_dist
         y_axis = [y_axis, self._initial_error_dist[1]]
         return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
-                               new_figure=new_figure, labels=labels, **kwargs)
+                               new_figure=new_figure, y_limit=np.max(y_axis),
+                               **kwargs)
 
     def plot_cumulative_error_dist(self, figure_id=None, new_figure=False,
                                    labels=False, **kwargs):
@@ -143,10 +144,10 @@ class FittingList(list, Viewable):
         x_axis, y_axis = self._final_cumulative_error_dist
         y_axis = [y_axis, self._initial_cumulative_error_dist[1]]
         return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
-                               new_figure=new_figure, labels=labels, **kwargs)
+                               new_figure=new_figure, **kwargs)
 
     def _plot_dist(self, x_axis, y_axis, title, figure_id=None,
-                   new_figure=False, labels=False, **kwargs):
+                   new_figure=False, y_limit=1, **kwargs):
         legend = [self.algorithm +
                   '\nmean: {0:.4f}'.format(self.final_mean_error) +
                   'std: {0:.4f}, '.format(self.final_std_error) +
@@ -158,7 +159,7 @@ class FittingList(list, Viewable):
                   'median: {0:.4f}, '.format(self.initial_median_error)]
         x_label = self._error_text
         y_label = 'Proportion of images'
-        axis_limits = [0, self._error_stop, 0, 1]
+        axis_limits = [0, self._error_stop, 0, y_limit]
         return GraphPlotter(figure_id, new_figure, x_axis, y_axis,
                             title=title, legend=legend,
                             x_label=x_label, y_label=y_label,
@@ -340,11 +341,10 @@ class Fitting(Viewable):
             figure_id=figure_id, new_figure=new_figure, **kwargs)
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
-        pixels_to_view = self.image.pixels
-        targets_to_view = self.targets(as_points=True)
-        return FittingViewer(figure_id, new_figure,
-                             self.image.n_dims, pixels_to_view,
-                             targets_to_view).render(**kwargs)
+        pixels = self.image.pixels
+        targets = self.targets(as_points=True)
+        return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
+                             targets).render(**kwargs)
 
 
 class AAMFitting(Fitting):
@@ -587,8 +587,8 @@ class BasicFitting(Viewable):
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         pixels = self.image.pixels
         targets = self.targets(as_points=True)
-        return FittingViewer(figure_id, new_figure, self.image.n_dims,
-                             pixels, targets).render(**kwargs)
+        return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
+                             targets).render(**kwargs)
 
 
 class LKFitting(BasicFitting):
