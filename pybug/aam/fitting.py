@@ -138,7 +138,7 @@ class FittingList(list, Viewable):
                 self.n_fittings)
 
     @property
-    def _final_error_dist(self):
+    def final_error_dist(self):
         r"""
         Computes the final error distribution among all fitting objects.
 
@@ -154,7 +154,7 @@ class FittingList(list, Viewable):
         return self._error_dist(final_error)
 
     @property
-    def _initial_error_dist(self):
+    def initial_error_dist(self):
         r"""
         Computes the initial error distribution among all fitting objects.
 
@@ -178,7 +178,7 @@ class FittingList(list, Viewable):
         return ed, x_axis
 
     @property
-    def _final_cumulative_error_dist(self):
+    def final_cumulative_error_dist(self):
         r"""
         Computes the final cumulative error distribution among all fitting
         objects.
@@ -191,12 +191,12 @@ class FittingList(list, Viewable):
         x_axis: ndarray
             The interval [0, self._error_stop]
         """
-        ed, x_axis = self._final_error_dist
+        ed, x_axis = self.final_error_dist
         ced = self._cumulative_error_dist(ed)
         return ced, x_axis
 
     @property
-    def _initial_cumulative_error_dist(self):
+    def initial_cumulative_error_dist(self):
         r"""
         Computes the initial cumulative error distribution among all fitting
         objects.
@@ -209,7 +209,7 @@ class FittingList(list, Viewable):
         x_axis: ndarray
             The interval [0, self._error_stop]
         """
-        ed, x_axis = self._initial_error_dist
+        ed, x_axis = self.initial_error_dist
         ced = self._cumulative_error_dist(ed)
         return ced, x_axis
 
@@ -223,10 +223,10 @@ class FittingList(list, Viewable):
         Plots the final and initial error distributions.
         """
         title = 'Error Distribution'
-        x_axis, y_axis = self._final_error_dist
-        y_axis = [y_axis, self._initial_error_dist[1]]
-        return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
-                               new_figure=new_figure, y_limit=np.max(y_axis),
+        ed, x_axis = self.final_error_dist
+        ed = [ed, self.initial_error_dist[0]]
+        return self._plot_dist(x_axis, ed, title, figure_id=figure_id,
+                               new_figure=new_figure, y_limit=np.max(ed),
                                **kwargs)
 
     def plot_cumulative_error_dist(self, figure_id=None, new_figure=False,
@@ -235,9 +235,9 @@ class FittingList(list, Viewable):
         Plots the final and initial cumulative error distributions.
         """
         title = 'Cumulative Error Distribution'
-        x_axis, y_axis = self._final_cumulative_error_dist
-        y_axis = [y_axis, self._initial_cumulative_error_dist[1]]
-        return self._plot_dist(x_axis, y_axis, title, figure_id=figure_id,
+        ced, x_axis = self.final_cumulative_error_dist
+        ced = [ced, self.initial_cumulative_error_dist[0]]
+        return self._plot_dist(x_axis, ced, title, figure_id=figure_id,
                                new_figure=new_figure, **kwargs)
 
     def _plot_dist(self, x_axis, y_axis, title, figure_id=None,
@@ -325,21 +325,22 @@ class Fitting(Viewable):
         self.error_type = error_type
         self.gt_shape = gt_shape
 
-    @abc.abstractproperty
+    @property
     def scaled_levels(self):
         r"""
         Returns True if the shape results returned by the basic fittings
         must be scaled.
         """
-        pass
+        return self.fitter.scaled_levels
 
     @property
     def algorithm(self):
         r"""
-        Returns a list containing the type of algorithm used by the
-        basic fitter associated to each basic fitting.
+        Returns the type of algorithm used by the basic fitter
+        associated to each basic fitting.
         """
-        return [f.algorithm for f in self.basic_fittings]
+        # TODO: ensure that all basic_fitting algorithms are the same?
+        return self.basic_fittings[0].algorithm
 
     @property
     def error_type(self):
@@ -410,7 +411,7 @@ class Fitting(Viewable):
         shapes: :class:`pybug.shape.PointCoulds or ndarray list
             A list containing the shapes obtained at each fitting iteration.
         """
-        downscale = self.fitter.downscale
+        downscale = self.fitter._downscale
         n = self.n_levels - 1
 
         shapes = []
@@ -451,7 +452,7 @@ class Fitting(Viewable):
         r"""
         Returns the initial shape from which the fitting started.
         """
-        downscale = self.fitter.downscale
+        downscale = self.fitter._downscale
         n = self.n_levels - 1
 
         initial_target = self.basic_fittings[0].initial_shape
@@ -593,16 +594,13 @@ class AAMFitting(Fitting):
             gt_shape=gt_shape, error_type=error_type,)
 
     @property
-    def scaled_levels(self):
-        return self.fitter.scaled_reference_frames
-
-    @property
     def residual(self):
         r"""
-        Returns a list containing the type of residual used by the basic
-        fitter associated to each basic fitting.
+        Returns the type of residual used by the basic fitter associated to
+        each basic fitting.
         """
-        return [f.residual.type for f in self.basic_fittings]
+        # TODO: ensure that all basic_fitting residuals are the same?
+        return self.basic_fittings[-1].residual.type
 
     @property
     def costs(self):

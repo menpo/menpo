@@ -14,7 +14,7 @@ from pybug.aam.fitting import FittingList, AAMFitting
 
 class Fitter(object):
     r"""
-    Interface that all Fitter objects must implement.
+    Interface that all fitter objects must implement.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -22,6 +22,22 @@ class Fitter(object):
     def _default_shape(self):
         r"""
         Returns the default shape. Typically, the mean of shape model.
+        """
+        pass
+
+
+    @abc.abstractproperty
+    def _downscale(self):
+        r"""
+        Returns the downscale factor used by the fitter.
+        """
+        pass
+
+    @abc.abstractproperty
+    def scaled_levels(self):
+        r"""
+        Returns True if the shape results returned by the basic fittings
+        must be scaled.
         """
         pass
 
@@ -316,7 +332,7 @@ class Fitter(object):
             if verbose:
                 fitting.print_fitting_info()
             if view:
-                fitting.view_final_shape(new_figure=True)
+                fitting.view_final_fitting(new_figure=True)
 
         return FittingList(fittings)
 
@@ -423,6 +439,18 @@ class AAMFitter(Fitter):
 
     def __init__(self, aam):
         self.aam = aam
+
+    @property
+    def _default_shape(self):
+        return self.aam.shape_models[0].mean
+
+    @property
+    def _downscale(self):
+        return self.aam.downscale
+
+    @property
+    def scaled_levels(self):
+        return self.aam.scaled_reference_frames
 
 
 class LucasKanadeAAMFitter(AAMFitter):
@@ -572,11 +600,8 @@ class LucasKanadeAAMFitter(AAMFitter):
                     sm, self.aam.transform_cls,
                     source=am.mean.landmarks['source'].lms)
 
-            self._lk_objects.append(lk_object_cls(am, residual_cls, md_transform))
-
-    @property
-    def _default_shape(self):
-        return self.aam.shape_models[0].mean
+            self._lk_objects.append(lk_object_cls(am, residual_cls(),
+                                                  md_transform))
 
     def _fitting(self, image, basic_fittings, affine_correction,
                  gt_shape=None, error_type='me_norm'):
