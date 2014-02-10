@@ -134,18 +134,18 @@ def noisy_align(source, target, noise_std=0.05, rotation=False):
 
 def compute_features(image, features):
     r"""
-    Compute feature images.
+    Computes a particular feature representation of the given images.
 
     Parameters
     ----------
     image: :class:`pybug.image.MaskedNDImage`
-        The original image from which the features will be computed
-    features_dic: dictionary
-        ['type'] : string
-            String specifying the type of features to compute
-        ['options']: **kwargs:
-            Passed through to the particular feature method being used. See
-            `pybug.image.MaskedNDImage` for details on feature options.
+        The original image from which the features will be computed.
+    features: tuple
+        If tuple, the first element is a string that specifies the type of
+        features that will be used to build the AAM. The second element is a
+        dictionary that specifies possible feature options and which is passed
+        through to the particular feature method being used. See
+        `pybug.image.MaskedNDImage` for details on feature options.
 
     Returns
     -------
@@ -173,18 +173,18 @@ def compute_features(image, features):
 
 def mean_pointcloud(pointcloud_list):
     r"""
-    Compute the mean of a list of Point Cloud objects
+    Compute the mean of a list of point cloud objects
 
     Parameters
     ----------
-    pointcloud_list: list of :class:`pybug.shape.pointcloud`
-        List of PointCloud objects from which we want to
-        compute the mean..
+    pointcloud_list: list of :class:`pybug.shape.PointCloud`
+        List of point cloud objects from which we want to
+        compute the mean.
 
     Returns
     -------
-    mean_pointcloud: class:`pybug.shape.pointcloud`
-        The mean PointCloud
+    mean_pointcloud: class:`pybug.shape.PointCloud`
+        The mean point cloud.
     """
     return PointCloud(np.mean([pc.points for pc in pointcloud_list], axis=0))
 

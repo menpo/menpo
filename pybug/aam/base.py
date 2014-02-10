@@ -18,19 +18,18 @@ class AAM(object):
 
     Parameters
     -----------
-    shape_model_list: list of :class:`pybug.model.PCA`
+    shape_models: :class:`pybug.model.PCA` list
         A list containing the shape models of the AAM.
-    appearance_model_list: list of :class:`pybug.model.PCA`
+    appearance_models: :class:`pybug.model.PCA` list
         A list containing the appearance models of the AAM.
     reference_shape: :class:`pybug.shape.PointCloud`
         The reference shape used to scale the images used to build the AAM.
     features: (str, dictionary)
         Tuple specifying the type of features used to build the AAM.
-        The first element of the tuple is a string that specifies the type of
-        features. The second element is a dictionary specifying possible
-        feature options and which is passed through to the
-        particular feature method being used. See `pybug.image
-        .MaskedNDImage` for details on feature options.
+        The first element is a string that specifies the type of features.
+        The second element is a dictionary specifying possible feature
+        options and which is passed through to the particular feature method
+        being used. See `pybug.image` for details on feature options.
     downscale: float
         The downscale factor used to create the different levels of the AAM.
     scaled_reference_frame: boolean
@@ -50,8 +49,8 @@ class AAM(object):
                  reference_shape, features, downscale,
                  scaled_reference_frames, transform_cls, interpolator,
                  patch_size):
-        self.shape_model_list = shape_model_list
-        self.appearance_model_list = appearance_model_list
+        self.shape_models = shape_model_list
+        self.appearance_models = appearance_model_list
         self.reference_shape = reference_shape
         self.features = features
         self.downscale = downscale
@@ -62,7 +61,7 @@ class AAM(object):
 
     @property
     def n_levels(self):
-        return len(self.appearance_model_list)
+        return len(self.appearance_models)
 
     def instance(self, shape_weights=None, appearance_weights=None, level=-1):
         r"""
@@ -90,8 +89,8 @@ class AAM(object):
         image: :class:`pybug.image.masked.MaskedImage`
             The novel AAM instance.
         """
-        sm = self.shape_model_list[level]
-        am = self.appearance_model_list[level]
+        sm = self.shape_models[level]
+        am = self.appearance_models[level]
 
         template = am.mean
         landmarks = template.landmarks['source'].lms
@@ -321,8 +320,8 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
             mean_shape, boundary=boundary, trilist=trilist)
 
     print '- Building model pyramids'
-    shape_model_pyramid = []
-    appearance_model_pyramid = []
+    shape_models = []
+    appearance_models = []
     # for each level
     for j in range(n_levels):
         print ' - Level {}'.format(j)
@@ -363,7 +362,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                         mean_shape, boundary=boundary, trilist=trilist)
 
         # add shape model to the list
-        shape_model_pyramid.append(shape_model)
+        shape_models.append(shape_model)
 
         print ' - Computing transforms'
         transforms = [transform_cls(reference_frame.landmarks['source'].lms,
@@ -391,14 +390,13 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
             appearance_model.trim_components(max_appearance_components)
 
         # add appearance model to the list
-        appearance_model_pyramid.append(appearance_model)
+        appearance_models.append(appearance_model)
 
     # reverse the list of shape and appearance models so that they are
     # ordered from lower to higher resolution
-    shape_model_pyramid.reverse()
-    appearance_model_pyramid.reverse()
+    shape_models.reverse()
+    appearance_models.reverse()
 
-    return AAM(shape_model_pyramid, appearance_model_pyramid,
-               reference_shape, features, downscale,
-               scaled_reference_frames, transform_cls,
+    return AAM(shape_models, appearance_models, reference_shape, features,
+               downscale, scaled_reference_frames, transform_cls,
                interpolator, patch_size)

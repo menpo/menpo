@@ -158,7 +158,7 @@ class LucasKanade(object):
             target.
         """
         self.transform.from_vector_inplace(parameters)
-        lk_fitting = LKFitting(self, image, parameters=[parameters])
+        lk_fitting = LKFitting(image, self, parameters=[parameters])
         return self._align(lk_fitting, max_iters=max_iters, **kwargs)
 
     @abc.abstractmethod
