@@ -422,8 +422,6 @@ class MatplotlibFittingViewer2d(MatplotlibImageViewer2d):
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
-        print 'hello'
-
         _ax = plt.axes()
         _ax.axis('off')
 
@@ -462,8 +460,6 @@ class MatplotlibFittingSubplotsViewer2d(MatplotlibImageSubplotsViewer2d):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
-
-        print 'adeu'
 
         p = self.plot_layout
         _lines = []
