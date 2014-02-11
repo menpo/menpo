@@ -526,7 +526,7 @@ class SimilarityTransform(AffineTransform):
             The target pointcloud instance used in the alignment
 
         rotation: boolean, optional
-            If False, the rotation part of the similarity transform is not
+            If False, the rotation component of the similarity transform is not
             inferred.
 
             Default: True
