@@ -512,7 +512,7 @@ class SimilarityTransform(AffineTransform):
         super(SimilarityTransform, self).__init__(homogeneous_matrix)
 
     @classmethod
-    def _align(cls, source, target, **kwargs):
+    def _align(cls, source, target, rotation=True, **kwargs):
         """
         Infers the similarity transform relating two vectors with the same
         dimensionality. This is simply the procrustes alignment of the
@@ -525,6 +525,12 @@ class SimilarityTransform(AffineTransform):
         target: :class:`pybug.shape.PointCloud`
             The target pointcloud instance used in the alignment
 
+        rotation: boolean, optional
+            If False, the rotation part of the similarity transform is not
+            inferred.
+
+            Default: True
+
         This is called automatically by align once verification of source and
         target is performed.
 
@@ -534,13 +540,13 @@ class SimilarityTransform(AffineTransform):
         alignment_transform: :class:`pybug.transform.SimilarityTransform`
             A SimilarityTransform object that is_alignment.
         """
-        similarity = cls._procrustes_alignment(source, target)
+        similarity = cls._procrustes_alignment(source, target, rotation)
         similarity._source = source
         similarity._target = target
         return similarity
 
     @staticmethod
-    def _procrustes_alignment(source, target):
+    def _procrustes_alignment(source, target, rotation=True):
         r"""
         Returns the similarity transform that aligns the source to the target.
         """
@@ -552,16 +558,21 @@ class SimilarityTransform(AffineTransform):
         aligned_source = translation.apply(source)
         scale = UniformScale(target.norm() / source.norm(), source.n_dims)
         scaled_aligned_source = scale.apply(aligned_source)
-        # calculate the correlation along each dimension + find the optimal
-        # rotation to maximise it
-        correlation = np.dot(centred_target.points.T,
-                             scaled_aligned_source.points)
-        U, D, Vt = np.linalg.svd(correlation)
-        rotation = Rotation(np.dot(U, Vt))
-        # finally, move the source back out to where the target is
+        # compute the target's inverse translation
         inv_target_translation = target_translation.pseudoinverse
-        return translation.compose_before(scale).compose_before(
-            rotation).compose_before(inv_target_translation)
+        if rotation:
+            # calculate the correlation along each dimension + find the optimal
+            # rotation to maximise it
+            correlation = np.dot(centred_target.points.T,
+                                 scaled_aligned_source.points)
+            U, D, Vt = np.linalg.svd(correlation)
+
+            rotation = Rotation(np.dot(U, Vt))
+            return translation.compose_before(scale).compose_before(
+                rotation).compose_before(inv_target_translation)
+        else:
+            return translation.compose_before(scale).compose_before(
+                inv_target_translation)
 
     def _target_setter(self, new_target):
         similarity = self._procrustes_alignment(self.source, new_target)
