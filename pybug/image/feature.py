@@ -24,7 +24,7 @@ class FeatureExtraction(object):
             window_height=1, window_width=1, window_unit='blocks',
             window_step_vertical=1, window_step_horizontal=1,
             window_step_unit='pixels', padding=True, verbose=False,
-            clip_landmarks=False):
+            constrain_landmarks=True):
         r"""
         Represents a 2-dimensional HOG features image with k number of
         channels. The output object's class is either MaskedImage or Image
@@ -116,11 +116,11 @@ class FeatureExtraction(object):
             is valid only for the 'dalaltriggs' algorithm.
 
             Default: 0.2
-        clip_landmarks : bool
-            Flag that if enabled, it clips landmarks that ended up outside of
-            the features image limits.
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks that ended up outside
+            of the features image bounds.
 
-            Default: False
+            Default: True
         verbose : bool
             Flag to print HOG related information.
 
@@ -170,7 +170,8 @@ class FeatureExtraction(object):
         # create hog image object
         hog_image = self._init_feature_image(hog,
                                              window_centres=window_centres,
-                                             clip_landmarks=clip_landmarks)
+                                             constrain_landmarks=
+                                             constrain_landmarks)
         # store parameters
         hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
                                     'num_bins': num_bins,
@@ -195,7 +196,8 @@ class FeatureExtraction(object):
                                     self._image.pixels.shape[2]}
         return hog_image
 
-    def igo(self, double_angles=False, clip_landmarks=False, verbose=False):
+    def igo(self, double_angles=False, constrain_landmarks=True,
+            verbose=False):
         r"""
         Represents a 2-dimensional IGO features image with k=[2,4] number of
         channels. The output object's class is either MaskedImage or Image
@@ -212,11 +214,11 @@ class FeatureExtraction(object):
             is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
 
             Default: False
-        clip_landmarks : bool
-            Flag that if enabled, it clips landmarks that ended up outside of
-            the features image limits.
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks that ended up outside
+            of the features image bounds.
 
-            Default: False
+            Default: True
         verbose : bool
             Flag to print IGO related information.
 
@@ -231,8 +233,8 @@ class FeatureExtraction(object):
         igo = fc.igo(self._image.pixels, double_angles=double_angles,
                      verbose=verbose)
         # create igo image object
-        igo_image = self._init_feature_image(igo,
-                                             clip_landmarks=clip_landmarks)
+        igo_image = self._init_feature_image(igo, constrain_landmarks=
+                                             constrain_landmarks)
         # store parameters
         igo_image.igo_parameters = {'double_angles': double_angles,
                                     'original_image_height':
@@ -244,15 +246,15 @@ class FeatureExtraction(object):
         return igo_image
 
     def _init_feature_image(self, feature_pixels, window_centres=None,
-                            clip_landmarks=False):
+                            constrain_landmarks=True):
         r"""
         Creates a new image object to store the feature_pixels. If the original
         object is of MaskedImage class, then the features object is of
         MaskedImage as well. If the original object is of any other image
         class, the output object is of Image class.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         feature_pixels :  ndarray.
             The pixels of the features image.
 
@@ -261,8 +263,10 @@ class FeatureExtraction(object):
             size n_rows x n_columns x 2, where window_centres[:, :, 0] are the
             row indices and window_centres[:, :, 1] are the column indices.
 
-        clip_landmarks : bool
-            Flag that if enabled, it clips landmarks to image limits.
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks to image bounds.
+
+            Default: True
         """
         from pybug.image import MaskedImage, Image
         if isinstance(self._image, MaskedImage):
@@ -275,13 +279,13 @@ class FeatureExtraction(object):
             feature_image = Image(feature_pixels)
         # fix landmarks
         self.transfer_landmarks(feature_image, window_centres=window_centres,
-                                clip_landmarks=clip_landmarks)
+                                constrain_landmarks=constrain_landmarks)
         if window_centres is not None:
             feature_image.window_centres = window_centres
         return feature_image
 
     def transfer_landmarks(self, target_image, window_centres=None,
-                           clip_landmarks=False):
+                           constrain_landmarks=True):
         r"""
         Transfers its own landmarks to the target_image object after
         appropriately correcting them. The landmarks correction is achieved
@@ -296,8 +300,10 @@ class FeatureExtraction(object):
             If set, use these window centres to rescale the landmarks
             appropriately. If None, no scaling is applied.
 
-        clip_landmarks : bool
-            Flag that if enabled, it clips landmarks to image limits.
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks to image bounds.
+
+            Default: True
         """
         target_image.landmarks = self._image.landmarks
         if window_centres is not None:
@@ -325,14 +331,9 @@ class FeatureExtraction(object):
                         (l.lms.points[:, 1] -
                          window_centres[:, :, 1].min()) / \
                         step_horizontal
-                    # clip landmarks to image limits if asked
-                    if clip_landmarks:
-                        for k in range(l.lms.points.shape[1]):
-                            tmp = l.lms.points[:, k]
-                            tmp[tmp < 0] = 0
-                            tmp[tmp > window_centres.shape[k] - 1] = \
-                                window_centres.shape[k] - 1
-                            l.lms.points[:, k] = tmp
+        # constrain landmarks to image bounds if asked
+        if constrain_landmarks:
+            target_image.constrain_landmarks_to_bounds()
 
     def transfer_mask(self, target_image, window_centres=None):
         r"""
