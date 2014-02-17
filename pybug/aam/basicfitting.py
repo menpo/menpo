@@ -170,7 +170,7 @@ class BasicFitting(Viewable):
             x_label = 'Number of iterations'
             y_label = self._error_text
             return GraphPlotter(figure_id, new_figure,
-                                range(0, self.n_iters+1), self.errors,
+                                range(0, self.n_iters+1), [self.errors],
                                 legend=legend, x_label=x_label,
                                 y_label=y_label).render(**kwargs)
         else:
@@ -422,7 +422,7 @@ class LKFitting(BasicFitting):
         x_label = 'Number of iterations'
         y_label = 'Normalized cost'
         return GraphPlotter(figure_id, new_figure, range(0, self.n_iters+1),
-                            self.costs, legend=legend, x_label=x_label,
+                            [self.costs], legend=legend, x_label=x_label,
                             y_label=y_label).render(**kwargs)
 
     def view_warped_images(self, figure_id=None, new_figure=False,
