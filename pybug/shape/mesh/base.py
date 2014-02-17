@@ -37,13 +37,14 @@ class TriMesh(PointCloud):
     def toJSON(self):
         r"""
         Convert this TriMesh to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'points' and 'trilist' lists suitable for use in the
+        by the json standard library.
         """
         json_dict = {'points': self.points.tolist(),
-                     'trilist': self.trilist.tolist(),
-                      'modelId': None}
-        # if we know the filename, set that as the modelId
-        if hasattr(self, 'filename'):
-            json_dict['modelId'] = self.filename
+                     'trilist': self.trilist.tolist()}
         return json_dict
 
     def from_vector(self, flattened):
