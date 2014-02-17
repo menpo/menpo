@@ -845,11 +845,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         if self.landmarks.has_landmarks:
             for l_group in self.landmarks:
-                l = self.landmarks[l_group[0]]
-                for k in range(l.lms.points.shape[1]):
-                    if sum(l.lms.points[:, k] < 0) + \
-                            sum(l.lms.points[:, k] > self.shape[k] - 1) > 0:
-                        return True
+                pc = l_group[1].lms.points
+                if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
+                    return True
         return False
 
     def constrain_landmarks_to_bounds(self):
