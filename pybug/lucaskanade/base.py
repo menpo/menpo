@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 from scipy.linalg import solve
-from pybug.aam.fitting import LKFitting
+from pybug.aam.basicfitting import LKFitting
 
 
 class LucasKanade(object):
