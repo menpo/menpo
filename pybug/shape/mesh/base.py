@@ -34,18 +34,17 @@ class TriMesh(PointCloud):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
 
-    def toJSON(self):
+    def tojson(self):
         r"""
         Convert this TriMesh to a dictionary JSON representation.
 
         Returns
         -------
-        dictionary with 'points' and 'trilist' lists suitable for use in the
-        by the json standard library.
+        dictionary with 'points' and 'trilist' keys. Both are lists suitable
+        for use in the by the `json` standard library package.
         """
-        json_dict = {'points': self.points.tolist(),
-                     'trilist': self.trilist.tolist()}
-        return json_dict
+        return {'points': self.points.tolist(),
+                'trilist': self.trilist.tolist()}
 
     def from_vector(self, flattened):
         r"""
