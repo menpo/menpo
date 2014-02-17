@@ -324,7 +324,7 @@ def _import(filepath, extensions_map, keep_importer=False):
     built_objects = importer.build()
     if isinstance(built_objects, collections.Iterable):
         for x in built_objects:
-            x.filepath = importer.filepath   # save the filepath
+            x.filepath = importer.filepath  # save the filepath
     else:
         built_objects.filepath = importer.filepath
     if keep_importer:
