@@ -96,3 +96,7 @@ mesh_landmark_types = {'.pts3': MeshPTSImporter,
                        '.lm3': LM3Importer,
                        '.lan': LANImporter,
                        '.bnd': BNDImporter}
+
+all_landmark_types = {}
+all_landmark_types.update(image_landmark_types)
+all_landmark_types.update(mesh_landmark_types)
