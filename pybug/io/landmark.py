@@ -1,8 +1,12 @@
 import abc
+import json
+from collections import OrderedDict
+
+import numpy as np
+
 from pybug.io.base import Importer
 from pybug.landmark.base import LandmarkGroup
 from pybug.shape import PointCloud
-import numpy as np
 from pybug.transform.affine import Scale
 
 
@@ -483,3 +487,47 @@ class BNDImporter(LandmarkImporter):
             'mouth': _indices_to_mask(n_points, np.arange(48, 68)),
             'chin': _indices_to_mask(n_points, np.arange(68, 83))
         }
+
+
+class JSONImporter(LandmarkImporter):
+    r"""
+    Importer for the PyBug JSON format. This is an nD
+    landmark type for both images and meshes that encodes semantic labels in
+    the format
+
+    Landmark set label: JSON
+
+    Landmark labels: decided by file
+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, filepath):
+        super(LandmarkImporter, self).__init__(filepath)
+
+    def _parse_format(self, **kwargs):
+        with open(self.filepath, 'rb') as f:
+            landmarks = json.load(f)  # landmarks is now a dict rep the JSON
+        self.group_label = 'JSON'
+        all_points = []
+        labels = []  # label per group
+        labels_slices = []  # slices into the full pointcloud per label
+        # ensure that we always respect the sorting of keys
+        ordered_groups = OrderedDict(sorted(landmarks['groups'].items(),
+                                            key=lambda t: t[0]))
+        start = 0
+        for label, group in ordered_groups.iteritems():
+            points = group['points']
+            labels.append(label)
+            labels_slices.append(slice(start, len(points)))
+            start = len(points)
+            for p in points:
+                all_points.append(p['point'])
+        self.pointcloud = PointCloud(np.array(all_points))
+        self.labels_to_masks = {}
+        # go through each label and build the appropriate boolean array
+        for label, l_slice in zip(labels, labels_slices):
+            mask = np.zeros(self.pointcloud.n_points, dtype=np.bool)
+            mask[l_slice] = True
+            self.labels_to_masks[label] = mask
