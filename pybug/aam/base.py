@@ -159,7 +159,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         Default: 'scipy'
 
-    reference_landmarks: :class:`pybug.shape.PointCloud`, Optional
+    reference_shape: :class:`pybug.shape.PointCloud`, Optional
         Particular set of reference landmarks that will be used to rescale
         all images and build the reference frame. If None the mean of the
         all landmarks will be used instead.
@@ -167,14 +167,14 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         Default: None
 
     scale: float, Optional
-        Scale factor to be applied to the previous reference landmarks.
+        Scale factor to be applied to the previous reference shape.
         Allows us to control the size of the reference frame (ie the number
         of pixels constituting the appearance models).
 
         Default: 1
 
     boundary: int, Optional
-        The number of pixels to be left as a "save" margin on the boundaries
+        The number of pixels to be left as a "safe" margin on the boundaries
         of the reference frame (has potential effects on the gradient
         computation).
 
@@ -270,9 +270,9 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         reference_shape = mean_pointcloud(shapes)
 
     print '- Rescaling images to reference shape'
-    images = [i.rescale_to_reference_landmarks(reference_shape,
-                                               group=group, label=label,
-                                               interpolator=interpolator)
+    images = [i.rescale_to_reference_shape(reference_shape,
+                                           group=group, label=label,
+                                           interpolator=interpolator)
               for i in images]
 
     if scaled_reference_frames:

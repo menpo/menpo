@@ -722,18 +722,18 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
-    def rescale_to_reference_landmarks(self, reference_landmarks, group=None,
+    def rescale_to_reference_shape(self, reference_shape, group=None,
                                        label='all', interpolator='scipy',
                                        round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
-        reference landmarks.
+        reference pointcloud.
 
         Parameters
         ----------
-        reference_landmarks: :class:`pybug.shape.pointcloud`
-            The reference landmarks to which the scale has to be matched.
+        reference_shape: :class:`pybug.shape.PointCloud`
+            The reference PointCloud to which the scale has to be matched.
         group : string, Optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
@@ -761,7 +761,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label].lms
-        scale = UniformScale.align(pc, reference_landmarks).as_vector()
+        scale = UniformScale.align(pc, reference_shape).as_vector()
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
