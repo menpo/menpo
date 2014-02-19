@@ -28,3 +28,14 @@ def test_json_landmarks_bunny():
     assert_allclose(lms['r_eye'].lms.points, bunny_r_eye, atol=1e-7)
     assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
     assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+
+
+def test_json_landmarks_bunny_direct():
+    lms = pio.import_landmark_file(pio.data_path_to('bunny.json'))
+    assert(lms.group_label == 'JSON')
+    labels = {'r_eye', 'mouth', 'nose', 'l_eye'}
+    assert(len(labels - set(lms.labels)) == 0)
+    assert_allclose(lms['l_eye'].lms.points, bunny_l_eye, atol=1e-7)
+    assert_allclose(lms['r_eye'].lms.points, bunny_r_eye, atol=1e-7)
+    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
