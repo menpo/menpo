@@ -668,3 +668,8 @@ class IOInfo(object):
         self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
         self.extension = os.path.splitext(self.filepath)[1]
         self.dir = os.path.dirname(self.filepath)
+
+    def __str__(self):
+        return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(
+            self.filename, self.extension, self.dir, self.filepath
+        )
