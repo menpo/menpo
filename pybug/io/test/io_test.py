@@ -39,3 +39,32 @@ def test_json_landmarks_bunny_direct():
     assert_allclose(lms['r_eye'].lms.points, bunny_r_eye, atol=1e-7)
     assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
     assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+
+
+def test_breaking_bad_import():
+    img = pio.import_builtin_asset('breakingbad.jpg')
+    assert(img.shape == (1080, 1920))
+    assert(img.n_channels == 3)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
+
+
+def test_breaking_bad_import():
+    img = pio.import_builtin_asset('breakingbad.jpg')
+    assert(img.shape == (1080, 1920))
+    assert(img.n_channels == 3)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
+
+
+def test_takeo_import():
+    img = pio.import_builtin_asset('takeo.ppm')
+    assert(img.shape == (225, 150))
+    assert(img.n_channels == 3)
+    assert(img.landmarks.n_groups == 0)
+
+
+def test_einstein_import():
+    img = pio.import_builtin_asset('einstein.jpg')
+    assert(img.shape == (1024, 817))
+    assert(img.n_channels == 1)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
+
