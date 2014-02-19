@@ -520,8 +520,8 @@ class JSONImporter(LandmarkImporter):
         for label, group in ordered_groups.iteritems():
             points = group['points']
             labels.append(label)
-            labels_slices.append(slice(start, len(points)))
-            start = len(points)
+            labels_slices.append(slice(start, len(points) + start))
+            start = len(points) + start
             for p in points:
                 all_points.append(p['point'])
         self.pointcloud = PointCloud(np.array(all_points))
