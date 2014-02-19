@@ -1,7 +1,7 @@
 # A list of extensions that different importers support.
 from pybug.io.spatial_image import BNTImporter, FIMImporter, ABSImporter
-from pybug.io.landmark import LM3Importer, LANImporter, LM2Importer, \
-    BNDImporter
+from pybug.io.landmark import (LM3Importer, LANImporter, LM2Importer,
+                               BNDImporter, JSONImporter)
 from pybug.io.landmark_mesh import MeshPTSImporter
 from pybug.io.mesh import AssimpImporter, WRLImporter
 from pybug.io.image import PILImporter
@@ -90,12 +90,14 @@ all_mesh_and_image_types.update(mesh_types)
 
 image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
-                        '.pts': ImagePTSImporter}
+                        '.pts': ImagePTSImporter,
+                        '.json': JSONImporter}
 
 mesh_landmark_types = {'.pts3': MeshPTSImporter,
                        '.lm3': LM3Importer,
                        '.lan': LANImporter,
-                       '.bnd': BNDImporter}
+                       '.bnd': BNDImporter,
+                       '.json': JSONImporter}
 
 all_landmark_types = {}
 all_landmark_types.update(image_landmark_types)
