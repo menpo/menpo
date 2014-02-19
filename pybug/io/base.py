@@ -408,11 +408,13 @@ def _import(filepath, extensions_map, keep_importer=False,
     built_objects = importer.build()
     # landmarks are iterable so check for list precisely
     ioinfo = importer.build_ioinfo()
-    if isinstance(built_objects, list):
-        for x in built_objects:
-            x.ioinfo = ioinfo
-    else:
-        built_objects.ioinfo = ioinfo
+    # enforce a list to make processing consistent
+    if not isinstance(built_objects, list):
+        built_objects = [built_objects]
+
+    # attach ioinfo
+    for x in built_objects:
+        x.ioinfo = deepcopy(ioinfo)
 
     # handle landmarks
     if has_landmarks:
@@ -420,20 +422,24 @@ def _import(filepath, extensions_map, keep_importer=False,
             # user isn't customising how landmarks are found.
             for lms in import_landmark_files(
                     os.path.join(ioinfo.dir, ioinfo.filename + '.*')):
-                if isinstance(built_objects, list):
-                    for x in built_objects:
-                        try:
-                            x.landmarks[lms.group_label] = deepcopy(lms)
-                        except DimensionalityError:
-                            pass
-                else:
+                for x in built_objects:
                     try:
-                        built_objects.landmarks[lms.group_label] = deepcopy(lms)
+                        x.landmarks[lms.group_label] = deepcopy(lms)
                     except DimensionalityError:
                         pass
         else:
-            # TODO handle landmark_resolver
-            pass
+            for x in built_objects:
+                lm_paths = landmark_resolver(x)  # use the users fcn to find
+                # paths
+                if isinstance(lm_paths, str):
+                    lm_paths = [lm_paths]
+                for lm_path in lm_paths:
+                    lms = import_landmark_file(lm_path)
+                    x.landmarks[lms.group_label] = lms
+
+    # undo list-if-cation (if we added it!)
+    if len(built_objects) == 1:
+        built_objects = built_objects[0]
 
     if keep_importer:
         return built_objects, importer
