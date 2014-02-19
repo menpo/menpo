@@ -101,14 +101,13 @@ class MeshImporter(Importer):
         super(MeshImporter, self).__init__(filepath)
         self.meshes = []
         self.attempted_texture_search = False
-        self.attempted_landmark_search = False
         self.relative_texture_path = None
-        self.relative_landmark_path = None
+        self.texture_importer = None
 
-    def _build_texture_and_landmark_importers(self):
+    def _build_texture_importer(self):
         r"""
-        Search for a texture and landmark file in the same directory as the
-        mesh. If they exist, create importers for them.
+        Search for a texture in the same directory as the
+        mesh. If it exists, create an importer for it.
         """
         if self.texture_path is None or not path.exists(self.texture_path):
             self.texture_importer = None
@@ -117,14 +116,6 @@ class MeshImporter(Importer):
             from pybug.io.extensions import image_types
             self.texture_importer = map_filepath_to_importer(self.texture_path,
                                                              image_types)
-
-        if self.landmark_path is None or not path.exists(self.landmark_path):
-            self.landmark_importer = None
-        else:
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import mesh_landmark_types
-            self.landmark_importer = map_filepath_to_importer(
-                self.landmark_path, mesh_landmark_types)
 
     def _search_for_texture(self):
         r"""
@@ -145,25 +136,6 @@ class MeshImporter(Importer):
         except ImportError:
             return None
 
-    def _search_for_landmarks(self):
-        """
-        Tries to find a landmark file with the same name as the mesh.
-
-        Returns
-        --------
-        relative_landmark_path : string
-            The relative path to the landmarks or ``None`` if none can be found
-        """
-        # Stop searching every single time we access the property
-        self.attempted_landmark_search = True
-        # This import is here to avoid circular dependencies
-        from pybug.io.extensions import mesh_landmark_types
-        try:
-            return find_alternative_files('landmarks', self.filepath,
-                                          mesh_landmark_types)
-        except ImportError:
-            return None
-
     @property
     def texture_path(self):
         """
@@ -180,37 +152,12 @@ class MeshImporter(Importer):
             Absolute filepath to the texture
         """
         # Try find a texture path if we can
-        if self.relative_texture_path is None and \
-                not self.attempted_texture_search:
+        if (self.relative_texture_path is None and not
+                self.attempted_texture_search):
             self.relative_texture_path = self._search_for_texture()
 
         try:
             return path.join(self.folder, self.relative_texture_path)
-        except AttributeError:
-            return None
-
-    @property
-    def landmark_path(self):
-        """
-        Get the absolute path to the landmarks. Returns None if none can be
-        found. Makes it's best effort to find an appropriate landmark set by
-        searching for landmarks with the same name as the mesh. Will only
-        search for the path the first time ``landmark_path`` is invoked.
-
-        Sets the ``self.relative_landmark_path`` attribute.
-
-        Returns
-        -------
-        landmark_path : string
-            Absolute filepath to the landmarks
-        """
-        # Try find a texture path if we can
-        if self.relative_landmark_path is None and \
-                not self.attempted_landmark_search:
-            self.relative_landmark_path = self._search_for_landmarks()
-
-        try:
-            return path.join(self.folder, self.relative_landmark_path)
         except AttributeError:
             return None
 
@@ -255,7 +202,7 @@ class MeshImporter(Importer):
         """
         #
         self._parse_format()
-        self._build_texture_and_landmark_importers()
+        self._build_texture_importer()
 
         meshes = []
         for mesh in self.meshes:
@@ -269,11 +216,6 @@ class MeshImporter(Importer):
                                            mesh.colour_per_vertex)
             else:
                 new_mesh = TriMesh(mesh.points, mesh.trilist)
-
-            if self.landmark_importer is not None:
-                lmark_group = self.landmark_importer.build(
-                    scale_factors=np.max(mesh.points))
-                new_mesh.landmarks[lmark_group.group_label] = lmark_group
 
             meshes.append(new_mesh)
         if len(meshes) == 1:

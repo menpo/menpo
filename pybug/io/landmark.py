@@ -28,7 +28,7 @@ class LandmarkImporter(Importer):
         self.pointcloud = None
         self.labels_to_masks = None
 
-    def build(self, **kwargs):
+    def build(self, asset=None):
         """
         Overrides the :meth:`build <pybug.io.base.Importer.build>` method.
 
@@ -36,8 +36,10 @@ class LandmarkImporter(Importer):
 
         Parameters
         ----------
-        kwargs : dict, optional
-            Keyword arguments to be passed through when parsing the landmarks
+        asset : object, optional
+            The asset that the landmarks are being built for. Can be used to
+            adjust landmarks as necessary (e.g. rescaling image landmarks
+            from 0-1 to image.shape)
 
         Returns
         -------
@@ -45,12 +47,12 @@ class LandmarkImporter(Importer):
             The landmark group parsed from the file.
             Every point will be labelled.
         """
-        self._parse_format(**kwargs)
+        self._parse_format(asset=asset)
         return LandmarkGroup(None, self.group_label, self.pointcloud,
                              self.labels_to_masks)
 
     @abc.abstractmethod
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         r"""
         Read the landmarks file from disk, parse it in to semantic labels and
         :class:`pybug.shape.base.PointCloud`.
@@ -125,7 +127,7 @@ class ASFImporter(LandmarkImporter):
         """
         pass
 
-    def _parse_format(self, scale_factors=np.array([1.0, 1.0]), **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
@@ -151,15 +153,17 @@ class ASFImporter(LandmarkImporter):
             connectivity[i, ...] = [int(connects_from), int(connects_to)]
 
         points = self._build_points(xs, ys)
-        scaled_points = Scale(np.array(scale_factors)).apply(points)
+        if asset is not None:
+            # we've been given an asset. As ASF files are normalized,
+            # fix that here
+            points = Scale(np.array(asset.shape)).apply(points)
 
         # TODO: Use connectivity and create a graph type instead of PointCloud
         # edges = scaled_points[connectivity]
 
         self.group_label = 'ASF'
-        self.pointcloud = PointCloud(scaled_points)
-        self.labels_to_masks = {'all': np.ones(scaled_points.shape[0],
-                                               dtype=np.bool)}
+        self.pointcloud = PointCloud(points)
+        self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
 
 
 class PTSImporter(LandmarkImporter):
@@ -204,7 +208,7 @@ class PTSImporter(LandmarkImporter):
         """
         pass
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         f = open(self.filepath, 'r')
         for line in f:
             if line.split()[0] == '{':
@@ -268,7 +272,7 @@ class LM3Importer(LandmarkImporter):
     def __init__(self, filepath):
         super(LM3Importer, self).__init__(filepath)
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
@@ -353,7 +357,7 @@ class LM2Importer(LandmarkImporter):
     def __init__(self, filepath):
         super(LM2Importer, self).__init__(filepath)
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
@@ -423,7 +427,7 @@ class LANImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(LANImporter, self).__init__(filepath)
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             landmarks = np.fromfile(
                 f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
@@ -461,7 +465,7 @@ class BNDImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(BNDImporter, self).__init__(filepath)
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'r') as f:
             landmarks = f.read()
 
@@ -506,7 +510,7 @@ class JSONImporter(LandmarkImporter):
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
 
-    def _parse_format(self, **kwargs):
+    def _parse_format(self, asset=None):
         with open(self.filepath, 'rb') as f:
             landmarks = json.load(f)  # landmarks is now a dict rep the JSON
         self.group_label = 'JSON'
