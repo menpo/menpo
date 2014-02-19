@@ -141,8 +141,8 @@ def import_image(filepath, landmark_resolver=None):
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for the
         image. The function should take one argument (the image itself) and
-        provide a string or list of strings detailing the landmarks to be
-        imported.
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+
 
     Returns
     -------
@@ -227,8 +227,8 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         image. The function should take one argument (an image itself) and
-        provide a string or list of strings detailing the landmarks to be
-        imported for that image.
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+
     Yields
     ------
     :class:`pybug.image.MaskedImage`
@@ -278,8 +278,8 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None):
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         mesh. The function should take one argument (a mesh itself) and
-        provide a string or list of strings detailing the landmarks to be
-        imported for that mesh.
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+
     Yields
     ------
     :class:`pybug.shape.TriMesh` or :class:`pybug.shape.TexturedTriMesh`
@@ -390,8 +390,7 @@ def _import(filepath, extensions_map, keep_importer=False,
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         asset. The function should take one argument (the asset itself) and
-        provide a string or list of strings detailing the landmarks to be
-        imported.
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
 
     Returns
     -------
@@ -431,11 +430,11 @@ def _import(filepath, extensions_map, keep_importer=False,
             for x in built_objects:
                 lm_paths = landmark_resolver(x)  # use the users fcn to find
                 # paths
-                if isinstance(lm_paths, str):
-                    lm_paths = [lm_paths]
-                for lm_path in lm_paths:
+                if lm_paths is None:
+                    continue
+                for group_name, lm_path in lm_paths.iteritems():
                     lms = import_landmark_file(lm_path)
-                    x.landmarks[lms.group_label] = lms
+                    x.landmarks[group_name] = lms
 
     # undo list-if-cation (if we added it!)
     if len(built_objects) == 1:
@@ -472,8 +471,8 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         asset. The function should take one argument (the asset itself) and
-        provide a string or list of strings detailing the landmarks to be
-        imported.
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+
     Yields
     ------
     asset :
