@@ -2,7 +2,6 @@ import abc
 from copy import deepcopy
 import os
 from glob import glob
-import collections
 from pybug import pybug_src_dir_path
 from pybug.exception import DimensionalityError
 
@@ -366,7 +365,8 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
 
 
 def _import(filepath, extensions_map, keep_importer=False,
-            has_landmarks=True, landmark_resolver=None):
+            has_landmarks=True, landmark_resolver=None,
+            asset=None):
     r"""
     Creates an importer for the filepath passed in, and then calls build on
     it, returning a list of assets or a single asset, depending on the
@@ -391,6 +391,9 @@ def _import(filepath, extensions_map, keep_importer=False,
         If not None, this function will be used to find landmarks for each
         asset. The function should take one argument (the asset itself) and
         return a dictionary of the form {'group_name': 'landmark_filepath'}
+    asset: object, optional
+        If not None, the asset will be passed to the importer's build method
+        as the asset kwarg
 
     Returns
     -------
@@ -404,7 +407,10 @@ def _import(filepath, extensions_map, keep_importer=False,
         raise ValueError("{} is not a file".format(filepath))
     # below could raise ValueError as well...
     importer = map_filepath_to_importer(filepath, extensions_map)
-    built_objects = importer.build()
+    if asset is not None:
+        built_objects = importer.build(asset=asset)
+    else:
+        built_objects = importer.build()
     # landmarks are iterable so check for list precisely
     ioinfo = importer.build_ioinfo()
     # enforce a list to make processing consistent
@@ -419,8 +425,13 @@ def _import(filepath, extensions_map, keep_importer=False,
     if has_landmarks:
         if landmark_resolver is None:
             # user isn't customising how landmarks are found.
-            for lms in import_landmark_files(
-                    os.path.join(ioinfo.dir, ioinfo.filename + '.*')):
+            lm_pattern = os.path.join(ioinfo.dir, ioinfo.filename + '.*')
+            # find all the landmarks we can
+            lms_paths = _glob_matching_extension(lm_pattern, all_landmark_types)
+            for lm_path in lms_paths:
+                # manually trigger _import (so we can set the asset!)
+                lms = _import(lm_path, all_landmark_types, keep_importer=False,
+                              has_landmarks=False, asset=asset)
                 for x in built_objects:
                     try:
                         x.landmarks[lms.group_label] = deepcopy(lms)
