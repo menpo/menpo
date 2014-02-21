@@ -1,8 +1,7 @@
 from __future__ import division
 import numpy as np
 from pybug.shape import TriMesh
-from pybug.transform .affine import \
-    Scale, Translation
+from pybug.transform .affine import Scale, UniformScale, Translation
 from pybug.groupalign import GeneralizedProcrustesAnalysis
 from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
 from pybug.transform.tps import TPS
@@ -22,22 +21,15 @@ class AAM(object):
         A list containing the shape models of the AAM.
     appearance_models: :class:`pybug.model.PCA` list
         A list containing the appearance models of the AAM.
-    reference_shape: :class:`pybug.shape.PointCloud`
-        The reference shape used to scale the images used to build the AAM.
-    features: (str, dictionary)
-        Tuple specifying the type of features used to build the AAM.
-        The first element is a string that specifies the type of features.
-        The second element is a dictionary specifying possible feature
-        options and which is passed through to the particular feature method
-        being used. See `pybug.image` for details on feature options.
-    downscale: float
-        The downscale factor used to create the different levels of the AAM.
-    scaled_reference_frame: boolean
-        True if the AAM was built using reference frames of different sizes,
-        False instead.
     transform_cls: :class:`pybug.transform.PureAlignmentTransform`
         The transform used to warp the images from which the AAM was
         constructed.
+    feature_type: (str, dictionary)
+        Tuple specifying the type of feature_type used to build the AAM.
+        The first element is a string that specifies the type of feature_type.
+        The second element is a dictionary specifying possible feature
+        options and which is passed through to the particular feature method
+        being used. See `pybug.image` for details on feature options.
     interpolator:'scipy' or 'cinterp' or func
         The interpolator used by the previous warps.
     patch_size: integer tuple or None
@@ -45,19 +37,30 @@ class AAM(object):
         None, the AAM was not build using a Patch-Based representation.
     """
 
-    def __init__(self, shape_model_list, appearance_model_list,
-                 reference_shape, features, downscale,
-                 scaled_reference_frames, transform_cls, interpolator,
-                 patch_size):
-        self.shape_models = shape_model_list
-        self.appearance_models = appearance_model_list
-        self.reference_shape = reference_shape
-        self.features = features
-        self.downscale = downscale
-        self.scaled_reference_frames = scaled_reference_frames
+    def __init__(self, shape_models, appearance_models, transform_cls,
+                 feature_type, interpolator, downscale, patch_size):
+        self.shape_models = shape_models
+        self.appearance_models = appearance_models
         self.transform_cls = transform_cls
+        self.feature_type = feature_type
         self.interpolator = interpolator
+        self.downscale = downscale
         self.patch_size = patch_size
+
+        x, y = self.appearance_models[0].mean.landmarks['source'].lms.range()
+        self.diagonal_range = np.sqrt(x**2 + y**2)
+
+        if len(appearance_models) > 1:
+            difference = UniformScale.align(
+                appearance_models[0].mean.landmarks['source'].lms,
+                appearance_models[1].mean.landmarks['source'].lms).as_vector()
+            if difference == 1:
+                self.scaled_reference_frames = False
+            else:
+                self.scaled_reference_frames = True
+        else:
+            self.downscale = None
+            self.scaled_reference_frames = False
 
     @property
     def n_levels(self):
@@ -128,10 +131,10 @@ class AAM(object):
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
-                reference_shape=None, scale=1, boundary=3,
-                transform_cls=PiecewiseAffineTransform, trilist=None,
-                patch_size=None, n_levels=3, downscale=2,
-                scaled_reference_frames=False, features=None,
+                diagonal_range=150, boundary=3,
+                transform_cls=PiecewiseAffineTransform,
+                trilist=None, patch_size=None, n_levels=3, downscale=2,
+                scaled_reference_frames=False, feature_type=None,
                 max_shape_components=None, max_appearance_components=None):
 
     r"""
@@ -159,19 +162,12 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         Default: 'scipy'
 
-    reference_landmarks: :class:`pybug.shape.PointCloud`, Optional
-        Particular set of reference landmarks that will be used to rescale
-        all images and build the reference frame. If None the mean of the
-        all landmarks will be used instead.
+    diagonal_range: int, Optional
 
-        Default: None
-
-    scale: float, Optional
-        Scale factor to be applied to the previous reference landmarks.
-        Allows us to control the size of the reference frame (ie the number
-        of pixels constituting the appearance models).
-
-        Default: 1
+        Integer specifying the diagonal length (in pixels) of the reference
+        frame.
+        If None, the
+        Default: 150
 
     boundary: int, Optional
         The number of pixels to be left as a "save" margin on the boundaries
@@ -187,7 +183,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         Default: PieceWiseAffine
 
     trilist: (t, 3) ndarray, Optional
-        Triangle list that will be used to build the reference frame. If None
+        Triangle list that will be used to build the reference frame. If None,
         defaults to performing Delaunay triangulation on the points.
 
         Default: None
@@ -234,12 +230,34 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         Default: False
 
-    features: tuple or None, Optional
-        If tuple, the first element is a string that specifies the type of
-        features that will be used to build the AAM. The second element is a
-        dictionary that specifies possible feature options and which is passed
-        through to the particular feature method being used. See
-        `pybug.image.MaskedNDImage` for details on feature options.
+    feature_type: string or closure, Optional
+        If None, the appearance model will be build using the original image
+        representation, i.e. no feature_type will be extracted from the
+        original images.
+        If string or closure, the appearance model will be build from
+        a feature representation of the original images:
+            If string, the `ammbuilder` will try to compute image feature_type by
+            executing:
+
+               feature_image = eval('img.feature_type.' + feature_type + '()')
+
+            For this to work properly the feature_type needs to be one of
+            Pybug's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using its default
+            options.
+
+            Non-default feature options and new experimental feature can be
+            used by defining a closure. In this case, the closure must define a
+            function that receives as an input an image and returns a
+            particular feature representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `pybug.image.MaskedNDImage` for details more details on Pybug's
+            standard image feature_type and feature options.
 
         Default: None
 
@@ -264,16 +282,11 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     if patch_size is not None:
         transform_cls = TPS
 
-    if reference_shape is None:
-        print '- Computing reference shape'
-        shapes = [i.landmarks[group][label].lms for i in images]
-        reference_shape = mean_pointcloud(shapes)
-
-    print '- Rescaling images to reference shape'
-    images = [i.rescale_to_reference_landmarks(reference_shape,
-                                               group=group, label=label,
-                                               interpolator=interpolator)
-              for i in images]
+    if diagonal_range is not None:
+        images = [i.rescale_landmarks_to_diagonal_range(
+                      diagonal_range, group=group, label=label,
+                      interpolator=interpolator)
+                  for i in images]
 
     if scaled_reference_frames:
         print '- Setting gaussian smoothing generators'
@@ -286,90 +299,55 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                                         downscale=downscale)
                      for i in images]
 
-    print '- Computing features'
-    images = [compute_features(g.next(), features) for g in generator]
-    # extract potentially rescaled shapes
-    shapes = [i.landmarks[group][label].lms for i in images]
-
-    print '- Building shape model'
-    # centralize shapes
-    centered_shapes = [Translation(-s.centre).apply(s) for s in shapes]
-    # align centralized shape using Procrustes Analysis
-    gpa = GeneralizedProcrustesAnalysis(centered_shapes)
-    aligned_shapes = [s.aligned_source for s in gpa.transforms]
-    # scale shapes if necessary
-    if scale != 1:
-        aligned_shapes = [Scale(scale, n_dims=reference_shape.n_dims).apply(s)
-                          for s in aligned_shapes]
-
-    # build shape model
-    shape_model = PCAModel(aligned_shapes)
-    if max_shape_components is not None:
-        # trim shape model if required
-        shape_model.trim_components(max_shape_components)
-
-    print '- Building reference frame'
-    mean_shape = mean_pointcloud(aligned_shapes)
-    if patch_size is not None:
-        # build patch based reference frame
-        reference_frame = build_patch_reference_frame(
-            mean_shape, boundary=boundary, patch_size=patch_size)
-    else:
-        # build reference frame
-        reference_frame = build_reference_frame(
-            mean_shape, boundary=boundary, trilist=trilist)
-
     print '- Building model pyramids'
     shape_models = []
     appearance_models = []
     # for each level
-    for j in range(n_levels):
+    for j in np.arange(n_levels):
         print ' - Level {}'.format(j)
 
-        if j != 0:
-            print ' - Computing features'
-            images = [compute_features(g.next(), features) for g in generator]
+        print '  - Computing feature_type'
+        images = [compute_features(g.next(), feature_type) for g in generator]
+        # extract potentially rescaled shapes
+        shapes = [i.landmarks[group][label].lms for i in images]
 
-            print ' - Building shape model'
-            if scaled_reference_frames:
-                shapes = [Scale(1/downscale,
-                                n_dims=reference_shape.n_dims).apply(s)
+        if scaled_reference_frames or j == 0:
+            print '  - Building shape model'
+            if j != 0:
+                shapes = [Scale(1/downscale, n_dims=shapes[0].n_dims).apply(s)
                           for s in shapes]
-                centered_shapes = [Translation(-s.centre).apply(s)
-                                   for s in shapes]
-                gpa = GeneralizedProcrustesAnalysis(centered_shapes)
-                aligned_shapes = [s.aligned_source for s in gpa.transforms]
-                if scale != 1:
-                    aligned_shapes = \
-                        [Scale(scale, n_dims=reference_shape.n_dims).apply(s)
-                         for s in aligned_shapes]
-                # build shape model
-                shape_model = PCAModel(aligned_shapes)
-                if max_shape_components is not None:
-                    # trim shape model if required
-                    shape_model.trim_components(max_shape_components)
+            # centralize shapes
+            centered_shapes = [Translation(-s.centre).apply(s) for s in shapes]
+            # align centralized shape using Procrustes Analysis
+            gpa = GeneralizedProcrustesAnalysis(centered_shapes)
+            aligned_shapes = [s.aligned_source for s in gpa.transforms]
 
-                print ' - Building reference frame'
-                mean_shape = mean_pointcloud(aligned_shapes)
-                if patch_size is not None:
-                    # build patch based reference frame
-                    reference_frame = build_patch_reference_frame(
-                        mean_shape, boundary=boundary,
-                        patch_size=patch_size)
-                else:
-                    # build reference frame
-                    reference_frame = build_reference_frame(
-                        mean_shape, boundary=boundary, trilist=trilist)
+            # build shape model
+            shape_model = PCAModel(aligned_shapes)
+            if max_shape_components is not None:
+                # trim shape model if required
+                shape_model.trim_components(max_shape_components)
+
+            print '  - Building reference frame'
+            mean_shape = mean_pointcloud(aligned_shapes)
+            if patch_size is not None:
+                # build patch based reference frame
+                reference_frame = build_patch_reference_frame(
+                    mean_shape, boundary=boundary, patch_size=patch_size)
+            else:
+                # build reference frame
+                reference_frame = build_reference_frame(
+                    mean_shape, boundary=boundary, trilist=trilist)
 
         # add shape model to the list
         shape_models.append(shape_model)
 
-        print ' - Computing transforms'
+        print '  - Computing transforms'
         transforms = [transform_cls(reference_frame.landmarks['source'].lms,
                                     i.landmarks[group][label].lms)
                       for i in images]
 
-        print ' - Warping images'
+        print '  - Warping images'
         images = [i.warp_to(reference_frame.mask, t,
                             interpolator=interpolator)
                   for i, t in zip(images, transforms)]
@@ -383,7 +361,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
             for i in images:
                 i.constrain_mask_to_landmarks(group='source', trilist=trilist)
 
-        print ' - Building appearance model'
+        print '  - Building appearance model'
         appearance_model = PCAModel(images)
         # trim appearance model if required
         if max_appearance_components is not None:
@@ -397,6 +375,5 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     shape_models.reverse()
     appearance_models.reverse()
 
-    return AAM(shape_models, appearance_models, reference_shape, features,
-               downscale, scaled_reference_frames, transform_cls,
-               interpolator, patch_size)
+    return AAM(shape_models, appearance_models, transform_cls, feature_type,
+               interpolator, downscale, patch_size)

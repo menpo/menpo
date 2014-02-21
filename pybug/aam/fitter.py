@@ -615,8 +615,8 @@ class LucasKanadeAAMFitter(AAMFitter):
         features extracted from each pyramidal element.
         """
         image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_to_reference_landmarks(self.aam.reference_shape,
-                                                     group='initial_shape')
+        image = image.rescale_landmarks_to_diagonal_range(
+            self.aam.diagonal_range, group='initial_shape')
         if gt_shape:
             image.landmarks['gt_shape'] = initial_shape
 
@@ -627,7 +627,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             pyramid = image.gaussian_pyramid(n_levels=self.aam.n_levels,
                                              downscale=self.aam.downscale)
 
-        images = [compute_features(i, self.aam.features) for i in pyramid]
+        images = [compute_features(i, self.aam.feature_type) for i in pyramid]
         images.reverse()
 
         return images
