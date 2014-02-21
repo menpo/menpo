@@ -72,6 +72,9 @@ def principal_component_decomposition(X, whiten=False, center=True,
             # compute covariance matrix
             # S:  n_features  x  n_features
             S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True) / N
+            # S should be perfectly symmetrical, but numerical error can creep
+            # in. Enforce symmetry here to avoid creating complex
+            # eigenvectors from eigendecomposition
             S = (S + S.T) / 2
 
             # perform eigenvalue decomposition
@@ -88,6 +91,9 @@ def principal_component_decomposition(X, whiten=False, center=True,
             # compute covariance matrix
             # S:  n_samples  x  n_samples
             S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True) / N
+            # S should be perfectly symmetrical, but numerical error can creep
+            # in. Enforce symmetry here to avoid creating complex
+            # eigenvectors from eigendecomposition
             S = (S + S.T) / 2
 
             # perform eigenvalue decomposition
