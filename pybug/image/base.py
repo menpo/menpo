@@ -722,18 +722,20 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
-    def rescale_to_reference_landmarks(self, reference_landmarks, group=None,
-                                       label='all', interpolator='scipy',
-                                       round='ceil', **kwargs):
+    def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
+                                            label='all',
+                                            interpolator='scipy',
+                                            round='ceil', **kwargs):
         r"""
-        Return a copy of this image, rescaled so that the scale of a
-        particular group of landmarks matches the scale of the passed
-        reference landmarks.
+        Return a copy of this image, rescaled so that the diagonal_range of the
+        bounding box containing its landmarks matches the specified diagonal_range
+        range.
 
         Parameters
         ----------
-        reference_landmarks: :class:`pybug.shape.pointcloud`
-            The reference landmarks to which the scale has to be matched.
+        diagonal_range: :class:`pybug.shape.pointcloud`
+            The diagonal_range range that we want the landmarks of the returned
+            image to have.
         group : string, Optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
@@ -760,8 +762,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        pc = self.landmarks[group][label].lms
-        scale = UniformScale.align(pc, reference_landmarks).as_vector()
+        x, y = self.landmarks[group][label].lms.range()
+        scale = diagonal_range / np.sqrt(x**2 + y**2)
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
@@ -1017,7 +1019,7 @@ def _create_feature_glyph(features, vbs):
 
     Parameters
     ----------
-    features : (N, D) ndarray
+    feature_type : (N, D) ndarray
         The feature pixels to use.
     vbs: int
         Defines the size of each block with vectors of the glyph image.
