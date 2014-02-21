@@ -19,19 +19,52 @@ class AAM(object):
     -----------
     shape_models: :class:`pybug.model.PCA` list
         A list containing the shape models of the AAM.
+
     appearance_models: :class:`pybug.model.PCA` list
         A list containing the appearance models of the AAM.
+
     transform_cls: :class:`pybug.transform.PureAlignmentTransform`
         The transform used to warp the images from which the AAM was
         constructed.
-    feature_type: (str, dictionary)
-        Tuple specifying the type of feature_type used to build the AAM.
-        The first element is a string that specifies the type of feature_type.
-        The second element is a dictionary specifying possible feature
-        options and which is passed through to the particular feature method
-        being used. See `pybug.image` for details on feature options.
+
+    feature_type: str or closure
+        The feature_type used to build the AAM.
+
+        If None, the appearance model was built using the original image
+        representation, i.e. no features were extracted from the original
+        image representation.
+
+        If string or closure, the appearance model was built from
+        a feature representation of the original images:
+            If string, the was was built using the following feature
+            computation:
+
+               feature_image = eval('img.feature_type.' + feature_type + '()')
+
+            For this to work properly the feature_type needs to be one of
+            Pybug's standard image feature methods. Note that, in this case,
+            the feature computation was carried out using its default options.
+
+            Non-default feature options and new experimental feature could
+            have been used through a closure definition. In this case,
+            the closure must have defined a function that receives as an
+            input an image and returns a particular feature representation
+            of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `pybug.image.MaskedNDImage` for details more details on Pybug's
+            standard image features and feature options.
+
     interpolator:'scipy' or 'cinterp' or func
         The interpolator used by the previous warps.
+
+    downscale: float
+        The downscale factor used to create the different levels of the AAM.
+
     patch_size: integer tuple or None
         Tuple specifying the size of the patches used to build the AAM . If
         None, the AAM was not build using a Patch-Based representation.
@@ -232,11 +265,11 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
     feature_type: string or closure, Optional
         If None, the appearance model will be build using the original image
-        representation, i.e. no feature_type will be extracted from the
-        original images.
-        If string or closure, the appearance model will be build from
-        a feature representation of the original images:
-            If string, the `ammbuilder` will try to compute image feature_type by
+        representation, i.e. no features will be extracted from the original
+        images.
+        If string or closure, the appearance model will be build from a
+        feature representation of the original images:
+            If string, the `ammbuilder` will try to compute image features by
             executing:
 
                feature_image = eval('img.feature_type.' + feature_type + '()')
@@ -257,7 +290,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                     return image.feature_type.igo(double_angles=True)
 
             See `pybug.image.MaskedNDImage` for details more details on Pybug's
-            standard image feature_type and feature options.
+            standard image features and feature options.
 
         Default: None
 
