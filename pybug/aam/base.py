@@ -363,7 +363,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         x, y = reference_shape.range()
         scale = diagonal_range / np.sqrt(x**2 + y**2)
         Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
-    images = [i.rescale_to_reference_landmarks(reference_shape,
+    images = [i.rescale_to_reference_shape(reference_shape,
                                                group=group, label=label,
                                                interpolator=interpolator)
               for i in images]

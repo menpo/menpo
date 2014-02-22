@@ -597,7 +597,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         are extracted from each pyramidal element.
         """
         image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_to_reference_landmarks(self.aam.reference_shape,
+        image = image.rescale_to_reference_shape(self.aam.reference_shape,
                                                      group='initial_shape')
         if gt_shape:
             image.landmarks['gt_shape'] = initial_shape
