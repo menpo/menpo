@@ -320,6 +320,12 @@ class DepthImage(AbstractSpatialImage):
     Will have exactly 1 channel. The numpy array used to build the
     DepthImage is of shape (M, N) - it does not include the channel axis.
 
+    In images, the origin is in the top-left and the first axis represents
+    the y-direction (down the image). For ``DepthImage``, when accessing the
+    mesh property, the origin is interpreted as the bottom-left and the first
+    axis represents the x-direction (across the image). This is to maintain
+    consistency with a right-handed coordinate scheme for meshes.
+
     Parameters
     -----------
     image_data: (M, N) ndarray
@@ -401,7 +407,14 @@ class DepthImage(AbstractSpatialImage):
         return cls(image_data_with_channel[..., 0], mask)
 
     def _generate_points(self):
-        return np.hstack((self.mask.true_indices, self.masked_pixels))
+        # We need to make the axes consistent with a right-handed coordinate
+        # scheme, so we flip the x and y axis (make the first axis the x)
+        points = np.hstack((self.mask.true_indices[:, [1, 0]],
+                            self.masked_pixels))
+        # Then we need to ensure that the origin is in the bottom left,
+        # so we flip the y-axis
+        points[:, 1] = self.mask.height - points[:, 1]
+        return points
 
     def _view_extra(self, figure_id, new_figure, mode, mask, **kwargs):
         r"""

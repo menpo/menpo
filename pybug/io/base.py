@@ -169,6 +169,26 @@ def import_mesh(filepath):
     return _import(filepath, mesh_types)
 
 
+def import_landmark_file(filepath):
+    r"""Single landmark group importer.
+
+    Iff an landmark file is found at `filepath`, returns a :class:`pybug
+    .landmarks.LandmarkGroup` representing it.
+
+    Parameters
+    ----------
+    filepath : String
+        A relative or absolute filepath to an landmark file.
+
+    Returns
+    -------
+    :class:`pybug.shape.LandmarkGroup`
+        The LandmarkGroup that the file format represents.
+
+    """
+    return _import(filepath, all_landmark_types)
+
+
 def import_images(pattern, max_images=None):
     r"""Multiple image import generator.
 
@@ -247,6 +267,32 @@ def import_meshes(pattern, max_meshes=None):
         yield asset
 
 
+def import_landmark_files(pattern, max_landmarks=None):
+    r"""Multiple landmark file import generator.
+
+    Note that this is a generator function.
+
+    Parameters
+    ----------
+    pattern : String
+        The glob path pattern to search for images.
+    max_landmark_files: positive integer, optional
+        If not ``None``, only import the first max_landmark_files found. Else,
+        import all.
+
+        Default: ``None``
+
+    Yields
+    ------
+    :class:`pybug.landmark.LandmarkGroup`
+        Landmark found to match the glob pattern provided.
+
+    """
+    for asset in _import_glob_generator(pattern, all_landmark_types,
+                                        max_assets=max_landmarks):
+        yield asset
+
+
 def import_builtin_asset(asset_name):
     r"""Single builtin asset (mesh or image) importer.
 
@@ -322,11 +368,12 @@ def _import(filepath, extensions_map, keep_importer=False):
     # below could raise ValueError as well...
     importer = map_filepath_to_importer(filepath, extensions_map)
     built_objects = importer.build()
-    if isinstance(built_objects, collections.Iterable):
+    # landmarks are iterable so check for list precisely
+    if isinstance(built_objects, list):
         for x in built_objects:
-            x.filepath = importer.filepath  # save the filepath
+            x.ioinfo = importer.build_ioinfo()
     else:
-        built_objects.filepath = importer.filepath
+        built_objects.ioinfo = importer.build_ioinfo()
     if keep_importer:
         return built_objects, importer
     else:
@@ -369,7 +416,8 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False):
         else:
             assets = imported
         # could be that there are many assets returned from one file.
-        if isinstance(assets, collections.Iterable):
+        # landmarks are iterable so check for list precisely
+        if isinstance(assets, list):
             # there are multiple assets, and one importer.
             # -> yield each asset in turn with the shared importer (if
             # requested)
@@ -585,12 +633,16 @@ class Importer(object):
 
         Returns
         -------
-        object : object
+        object : object or list
             An instantiated class of the expected type. For example, for an
             ``.obj`` importer, this would be a
-            :class:`pybug.shape.mesh.base.Trimesh`.
+            :class:`pybug.shape.mesh.base.Trimesh`. If multiple objects need
+            to be returned from one importer, a list must be returned.
         """
         pass
+
+    def build_ioinfo(self):
+        return IOInfo(self.filepath)
 
 
 def _norm_path(filepath):
@@ -602,4 +654,22 @@ def _norm_path(filepath):
 
 # Avoid circular imports
 from pybug.io.extensions import (mesh_types, all_image_types,
-                                 all_mesh_and_image_types)
+                                 all_mesh_and_image_types,
+                                 all_landmark_types)
+
+
+class IOInfo(object):
+    r"""
+    Simple state object for recording IO information.
+    """
+
+    def __init__(self, filepath):
+        self.filepath = os.path.abspath(os.path.expanduser(filepath))
+        self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
+        self.extension = os.path.splitext(self.filepath)[1]
+        self.dir = os.path.dirname(self.filepath)
+
+    def __str__(self):
+        return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(
+            self.filename, self.extension, self.dir, self.filepath
+        )

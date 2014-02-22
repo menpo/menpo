@@ -1012,6 +1012,34 @@ class Image(Vectorizable, Landmarkable, Viewable):
         return ('{} {}D Image with {} channels'.format(
             self._str_shape, self.n_dims, self.n_channels))
 
+    @property
+    def has_landmarks_outside_bounds(self):
+        """
+        Indicates whether there are landmarks located outside the image bounds.
+
+        :type: bool
+        """
+        if self.landmarks.has_landmarks:
+            for l_group in self.landmarks:
+                pc = l_group[1].lms.points
+                if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
+                    return True
+        return False
+
+    def constrain_landmarks_to_bounds(self):
+        r"""
+        Move landmarks that are located outside the image bounds on the bounds.
+        """
+        if self.has_landmarks_outside_bounds:
+            for l_group in self.landmarks:
+                l = self.landmarks[l_group[0]]
+                for k in range(l.lms.points.shape[1]):
+                    tmp = l.lms.points[:, k]
+                    tmp[tmp < 0] = 0
+                    tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
+                    l.lms.points[:, k] = tmp
+                self.landmarks[l_group[0]] = l
+
 
 def _create_feature_glyph(features, vbs):
     r"""

@@ -64,6 +64,17 @@ class PointCloud(Shape):
         """
         return self.points.flatten()
 
+    def tojson(self):
+        r"""
+        Convert this `PointCloud` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dict with a 'points' key, the value of which is a list suitable
+        for use in the by the `json` standard library package.
+        """
+        return {'points': self.points.tolist()}
+
     def from_vector_inplace(self, vector):
         r"""
         Updates this PointCloud in-place with a new vector of parameters
