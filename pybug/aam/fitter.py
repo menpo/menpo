@@ -25,7 +25,6 @@ class Fitter(object):
         """
         pass
 
-
     @abc.abstractproperty
     def _downscale(self):
         r"""
@@ -115,7 +114,7 @@ class Fitter(object):
 
     @abc.abstractmethod
     def _fit(self, image, initial_shape, gt_shape=None,
-             max_iters=20, **kwargs):
+             max_iters=50, **kwargs):
         r"""
         Fits the AAM to an image using Lucas-Kanade.
 
@@ -133,7 +132,7 @@ class Fitter(object):
             Default: None
 
         max_iters: int, optional
-            The maximum number of iteration per fitting level.
+            The maximum number of iteration.
 
             Default: 20
 
@@ -204,8 +203,8 @@ class Fitter(object):
                            rotation=rotation).apply(default_shape)
 
     def fit_image(self, image, group=None, label='all',
-                  initialization='from_gt_shape', runs=1, noise_std=0.0,
-                  rotation=False, max_iters=20, verbose=True, view=False,
+                  initialization='from_gt_shape', noise_std=0.0,
+                  rotation=False, max_iters=50, verbose=True, view=False,
                   error_type='me_norm', **kwargs):
         r"""
         Fits a single image.
@@ -232,11 +231,6 @@ class Fitter(object):
 
             Default: 'from_gt_shape'
 
-        runs: int, optional
-            The number of times the image must be fitted.
-
-            Default: 1
-
         noise_std: float
             The std of the gaussian noise used to produce the initial shape.
 
@@ -249,7 +243,7 @@ class Fitter(object):
             Default: False
 
         max_iters: int, optional
-            The maximum number of iteration per fitting level.
+            The maximum number of iteration.
 
             Default: 20
 
@@ -284,61 +278,56 @@ class Fitter(object):
             if group or label is not 'all':
                 raise ValueError('The specified group {} and/or '
                                  'label {} do not exist'.format(group,
-                                                                 label))
+                                                                label))
             elif initialization is not 'detection':
                 raise ValueError('Initialization method {} cannot '
                                  'be used because the image is not '
                                  'landmarked'.format(initialization))
             gt_shape = None
 
+        if initialization is 'from_gt_shape':
+            initial_shape = self._noisy_align_from_gt_shape(
+                gt_shape, noise_std=noise_std, rotation=rotation)
+        elif type is 'detection':
+            initial_shape = self._detect_shape(
+                noise_std=noise_std, rotation=rotation)
+        else:
+            raise ValueError('Unknown initialization string selected. '
+                             'Valid options are: "from_gt_shape", '
+                             '"detection"')
 
-        fittings = []
-        for _ in range(runs):
+        images = self._prepare_image(image, initial_shape,
+                                     gt_shape=gt_shape)
 
-            if initialization is 'from_gt_shape':
-                initial_shape = self._noisy_align_from_gt_shape(
-                    gt_shape, noise_std=noise_std, rotation=rotation)
-            elif type is 'detection':
-                initial_shape = self._detect_shape(
-                    noise_std=noise_std, rotation=rotation)
-            else:
-                raise ValueError('Unknown initialization string selected. '
-                                 'Valid options are: "from_gt_shape", '
-                                 '"detection"')
+        if gt_shape:
+            gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
+        else:
+            gt_shapes = None
 
-            images = self._prepare_image(image, initial_shape,
-                                         gt_shape=gt_shape)
+        initial_shapes = [i.landmarks['initial_shape'].lms
+                          for i in images]
 
-            if gt_shape:
-                gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
-            else:
-                gt_shapes = None
+        affine_correction = AffineTransform.align(initial_shapes[-1],
+                                                  initial_shape)
 
-            initial_shapes = [i.landmarks['initial_shape'].lms
-                              for i in images]
+        basic_fittings = self._fit(images, initial_shapes[0],
+                                   max_iters=max_iters,
+                                   gt_shapes=gt_shapes,
+                                   **kwargs)
 
-            affine_correction = AffineTransform.align(initial_shapes[-1],
-                                                      initial_shape)
+        fitting = self._fitting(image, basic_fittings, affine_correction,
+                                gt_shape=gt_shape, error_type=error_type)
 
-            basic_fittings = self._fit(images, initial_shapes[0],
-                                       max_iters=max_iters,
-                                       gt_shapes=gt_shapes,
-                                       **kwargs)
+        if verbose:
+            fitting.print_fitting_info()
+        if view:
+            fitting.view_final_fitting(new_figure=True)
 
-            fitting = self._fitting(image, basic_fittings, affine_correction,
-                                    gt_shape=gt_shape, error_type=error_type)
-            fittings.append(fitting)
-
-            if verbose:
-                fitting.print_fitting_info()
-            if view:
-                fitting.view_final_fitting(new_figure=True)
-
-        return FittingList(fittings)
+        return fitting
 
     def fit_images(self, images, group=None, label='all',
-                   initialization='from_gt_shape', runs=5, noise_std=0.0,
-                   rotation=False, max_iters=20, verbose=True, view=False,
+                   initialization='from_gt_shape', noise_std=0.0,
+                   rotation=False, max_iters=50, verbose=True, view=False,
                    error_type='me_norm', **kwargs):
         r"""
         Fits a list of images.
@@ -365,11 +354,6 @@ class Fitter(object):
 
             Default: 'from_gt_shape'
 
-        runs: int, optional
-            The number of times the image must be fitted.
-
-            Default: 1
-
         noise_std: float
             The std of the gaussian noise used to produce the initial shape.
 
@@ -382,7 +366,7 @@ class Fitter(object):
             Default: False
 
         max_iters: int, optional
-            The maximum number of iteration per fitting level.
+            The maximum number of iteration.
 
             Default: 20
 
@@ -415,13 +399,12 @@ class Fitter(object):
         for j, image in enumerate(images):
             if verbose:
                 print '- fitting image {} of {}'.format(j, n_images)
-            fittings = self.fit_image(image, group=group, label=label,
-                                      initialization=initialization,
-                                      runs=runs, noise_std=noise_std,
-                                      rotation=rotation, max_iters=max_iters,
-                                      verbose=verbose, view=view,
-                                      error_type=error_type, **kwargs)
-            fitting_list.append(fittings)
+            fitting_list.append(
+                self.fit_image(image, group=group, label=label,
+                               initialization=initialization,
+                               noise_std=noise_std, rotation=rotation,
+                               max_iters=max_iters, verbose=verbose,
+                               view=view, error_type=error_type, **kwargs))
 
         return FittingList(fitting_list)
 
@@ -434,7 +417,6 @@ class AAMFitter(Fitter):
     -----------
     aam: :class:`pybug.aam.AAM`
         The Active Appearance Model to be use.
-
     """
 
     def __init__(self, aam):
@@ -565,7 +547,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         if type(n_shape) is int:
             n_shape = [n_shape for _ in range(self.aam.n_levels)]
         elif len(n_shape) is 1 and self.aam.n_levels > 1:
-            n_shape = [n_shape[1] for _ in range(self.aam.n_levels)]
+            n_shape = [n_shape[0] for _ in range(self.aam.n_levels)]
         elif len(n_shape) is not self.aam.n_levels:
             raise ValueError('n_shape can be integer, integer list '
                              'containing 1 or {} elements or '
@@ -574,7 +556,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         if type(n_appearance) is int:
             n_appearance = [n_appearance for _ in range(self.aam.n_levels)]
         elif len(n_appearance) is 1 and self.aam.n_levels > 1:
-            n_appearance = [n_appearance[1] for _ in range(self.aam.n_levels)]
+            n_appearance = [n_appearance[0] for _ in range(self.aam.n_levels)]
         elif len(n_appearance) is not self.aam.n_levels:
             raise ValueError('n_appearance can be integer, integer list '
                              'containing 1 or {} elements or '
@@ -610,29 +592,32 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def _prepare_image(self, image, initial_shape, gt_shape=None):
         r"""
-        The image is first rescaled wrt the reference landmarks,
-        then smoothing or gaussian pyramid are computed and, finally,
-        features extracted from each pyramidal element.
+        The image is first rescaled wrt the reference_landmarks, then
+        smoothing or gaussian pyramid are computed and, finally, features
+        are extracted from each pyramidal element.
         """
         image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_landmarks_to_diagonal_range(
-            self.aam.diagonal_range, group='initial_shape')
+        image = image.rescale_to_reference_landmarks(self.aam.reference_shape,
+                                                     group='initial_shape')
         if gt_shape:
             image.landmarks['gt_shape'] = initial_shape
 
-        if self.aam.scaled_reference_frames:
-            pyramid = image.smoothing_pyramid(n_levels=self.aam.n_levels,
-                                              downscale=self.aam.downscale)
+        if self.aam.n_levels > 1:
+            if self.aam.scaled_reference_frames:
+                pyramid = image.smoothing_pyramid(
+                    n_levels=self.aam.n_levels, downscale=self.aam.downscale)
+            else:
+                pyramid = image.gaussian_pyramid(
+                    n_levels=self.aam.n_levels, downscale=self.aam.downscale)
+            images = [compute_features(i, self.aam.feature_type)
+                      for i in pyramid]
+            images.reverse()
         else:
-            pyramid = image.gaussian_pyramid(n_levels=self.aam.n_levels,
-                                             downscale=self.aam.downscale)
-
-        images = [compute_features(i, self.aam.feature_type) for i in pyramid]
-        images.reverse()
+            images = [compute_features(image, self.aam.feature_type)]
 
         return images
 
-    def _fit(self, images, initial_shape, gt_shapes=None, max_iters=20,
+    def _fit(self, images, initial_shape, gt_shapes=None, max_iters=50,
              **kwargs):
         r"""
         Fits the AAM to an image using Lucas-Kanade.
@@ -652,7 +637,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             Default: None
 
         max_iters: int, optional
-            The maximum number of iterations per fitting level.
+            The maximum number of iterations.
 
             Default: 20
 
@@ -663,19 +648,33 @@ class LucasKanadeAAMFitter(AAMFitter):
             fitting level.
         """
         shape = initial_shape
+        n_levels = self.aam.n_levels
+
+        if type(max_iters) is int:
+            max_iters = [np.round(max_iters/n_levels)
+                         for _ in range(n_levels)]
+        elif len(max_iters) is 1 and n_levels > 1:
+            max_iters = [np.round(max_iters[0]/n_levels)
+                         for _ in range(n_levels)]
+        elif len(max_iters) is not n_levels:
+            raise ValueError('n_shape can be integer, integer list '
+                             'containing 1 or {} elements or '
+                             'None'.format(self.aam.n_levels))
+
         lk_fittings = []
-        for j, (i, lk) in enumerate(zip(images, self._lk_objects)):
+        for j, (i, lk, it) in enumerate(zip(images, self._lk_objects,
+                                            max_iters)):
             lk.transform.target = shape
 
             lk_fitting = lk.align(i, lk.transform.as_vector(),
-                                  max_iters=max_iters, **kwargs)
+                                  max_iters=it, **kwargs)
 
             if gt_shapes is not None:
                 lk_fitting.gt_shape = gt_shapes[j]
             lk_fittings.append(lk_fitting)
 
             shape = lk_fitting.final_shape
-            if not self.aam.scaled_reference_frames:
+            if self.aam.downscale and not self.aam.scaled_reference_frames:
                 Scale(self.aam.downscale,
                       n_dims=lk.transform.n_dims).apply_inplace(shape)
 

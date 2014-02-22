@@ -71,17 +71,16 @@ class AAM(object):
     """
 
     def __init__(self, shape_models, appearance_models, transform_cls,
-                 feature_type, interpolator, downscale, patch_size):
+                 feature_type, reference_shape, downscale, patch_size,
+                 interpolator):
         self.shape_models = shape_models
         self.appearance_models = appearance_models
         self.transform_cls = transform_cls
         self.feature_type = feature_type
-        self.interpolator = interpolator
+        self.reference_shape = reference_shape
         self.downscale = downscale
         self.patch_size = patch_size
-
-        x, y = self.appearance_models[0].mean.landmarks['source'].lms.range()
-        self.diagonal_range = np.sqrt(x**2 + y**2)
+        self.interpolator = interpolator
 
         if len(appearance_models) > 1:
             difference = UniformScale.align(
@@ -93,7 +92,7 @@ class AAM(object):
                 self.scaled_reference_frames = True
         else:
             self.downscale = None
-            self.scaled_reference_frames = False
+            self.scaled_reference_frames = None
 
     @property
     def n_levels(self):
@@ -107,12 +106,14 @@ class AAM(object):
         -----------
         shape_weights: (n_weights,) ndarray or float list
             Weights of the shape model that will be used to create
-            a novel shape instance. If None random weights will be used.
+            a novel shape instance. If None, the mean shape
+            (shape_weights = [0, 0, ..., 0]) will be used.
 
             Default: None
         appearance_weights: (n_weights,) ndarray or float list
             Weights of the appearance model that will be used to create
-            a novel appearance instance. If None random weights will be used.
+            a novel appearance instance. If None, the mean appearance
+            (appearance_weights = [0, 0, ..., 0]) will be used.
 
             Default: None
         level: int, optional
@@ -128,21 +129,52 @@ class AAM(object):
         sm = self.shape_models[level]
         am = self.appearance_models[level]
 
-        template = am.mean
-        landmarks = template.landmarks['source'].lms
-
+        # TODO: this bit of logic should to be transferred down to PCAModel
         if shape_weights is None:
-            shape_weights = np.random.randn(sm.n_active_components)
+            shape_weights = [0]
         if appearance_weights is None:
-            appearance_weights = np.random.randn(am.n_active_components)
-
+            appearance_weights = [0]
         n_shape_weights = len(shape_weights)
         shape_weights *= sm.eigenvalues[:n_shape_weights] ** 0.5
         shape_instance = sm.instance(shape_weights)
-
         n_appearance_weights = len(appearance_weights)
         appearance_weights *= am.eigenvalues[:n_appearance_weights] ** 0.5
         appearance_instance = am.instance(appearance_weights)
+
+        return self._instance(level, shape_instance, appearance_instance)
+
+    def random_instance(self, level=-1):
+        r"""
+        Generates a novel random instance of the AAM.
+
+        Parameters
+        -----------
+        level: int, optional
+            The pyramidal level to be used.
+
+            Default: -1
+
+        Returns
+        -------
+        image: :class:`pybug.image.masked.MaskedImage`
+            The novel AAM instance.
+        """
+        sm = self.shape_models[level]
+        am = self.appearance_models[level]
+
+        # TODO: this bit of logic should to be transferred down to PCAModel
+        shape_weights = (np.random.randn(sm.n_active_components) *
+                         sm.eigenvalues[:sm.n_active_components]**0.5)
+        shape_instance = sm.instance(shape_weights)
+        appearance_weights = (np.random.randn(am.n_active_components) *
+                              am.eigenvalues[:am.n_active_components]**0.5)
+        appearance_instance = am.instance(appearance_weights)
+
+        return self._instance(level, shape_instance, appearance_instance)
+
+    def _instance(self, level, shape_instance, appearance_instance):
+        template = self.appearance_models[level].mean
+        landmarks = template.landmarks['source'].lms
 
         # build reference frame
         if self.patch_size:
@@ -164,7 +196,7 @@ class AAM(object):
 
 
 def aam_builder(images, group=None, label='all', interpolator='scipy',
-                diagonal_range=150, boundary=3,
+                diagonal_range=None, boundary=3,
                 transform_cls=PiecewiseAffineTransform,
                 trilist=None, patch_size=None, n_levels=3, downscale=2,
                 scaled_reference_frames=False, feature_type=None,
@@ -196,11 +228,20 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         Default: 'scipy'
 
     diagonal_range: int, Optional
+        All images will be rescaled to ensure that the scale of their
+        landmarks matches the scale of the mean shape.
 
-        Integer specifying the diagonal length (in pixels) of the reference
-        frame.
-        If None, the
-        Default: 150
+        If int, ensures that the mean shape is scaled so that
+        the diagonal of the bounding box containing it matches the
+        diagonal_range value.
+        If None, the mean landmarks are not rescaled.
+
+        Note that, because the reference frame is computed from the mean
+        landmarks, this kwarg also specifies the diagonal length of the
+        reference frame (provided that features computation does not change
+        the image size).
+
+        Default: None
 
     boundary: int, Optional
         The number of pixels to be left as a "save" margin on the boundaries
@@ -315,11 +356,17 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     if patch_size is not None:
         transform_cls = TPS
 
-    if diagonal_range is not None:
-        images = [i.rescale_landmarks_to_diagonal_range(
-                      diagonal_range, group=group, label=label,
-                      interpolator=interpolator)
-                  for i in images]
+    print '- Rescaling images'
+    shapes = [i.landmarks[group][label].lms for i in images]
+    reference_shape = mean_pointcloud(shapes)
+    if diagonal_range:
+        x, y = reference_shape.range()
+        scale = diagonal_range / np.sqrt(x**2 + y**2)
+        Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
+    images = [i.rescale_to_reference_landmarks(reference_shape,
+                                               group=group, label=label,
+                                               interpolator=interpolator)
+              for i in images]
 
     if scaled_reference_frames:
         print '- Setting gaussian smoothing generators'
@@ -409,4 +456,4 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
     appearance_models.reverse()
 
     return AAM(shape_models, appearance_models, transform_cls, feature_type,
-               interpolator, downscale, patch_size)
+               reference_shape, downscale, patch_size, interpolator)

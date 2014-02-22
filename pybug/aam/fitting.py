@@ -414,7 +414,7 @@ class Fitting(Viewable):
 
         shapes = []
         for j, f in enumerate(self.basic_fittings):
-            if not self.scaled_levels:
+            if downscale and not self.scaled_levels:
                 transform = Scale(downscale**(n-j), 2)
                 for t in f.shapes(as_points=as_points):
                     transform.apply_inplace(t)
@@ -454,7 +454,7 @@ class Fitting(Viewable):
         n = self.n_levels - 1
 
         initial_target = self.basic_fittings[0].initial_shape
-        if not self.scaled_levels:
+        if downscale and not self.scaled_levels:
             Scale(downscale ** n,
                   initial_target.n_dims).apply_inplace(initial_target)
 

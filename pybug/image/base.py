@@ -722,9 +722,51 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
+    def rescale_to_reference_landmarks(self, reference_landmarks, group=None,
+                                       label='all', interpolator='scipy',
+                                       round='ceil', **kwargs):
+        r"""
+        Return a copy of this image, rescaled so that the scale of a
+        particular group of landmarks matches the scale of the passed
+        reference landmarks.
+
+        Parameters
+        ----------
+        reference_landmarks: :class:`pybug.shape.pointcloud`
+            The reference landmarks to which the scale has to be matched.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
+
+            Default: 'all'
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        pc = self.landmarks[group][label].lms
+        scale = UniformScale.align(pc, reference_landmarks).as_vector()
+        return self.rescale(scale, interpolator=interpolator,
+                            round=round, **kwargs)
+
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label='all',
-                                            interpolator='scipy',
+                                            label='all', interpolator='scipy',
                                             round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled so that the diagonal_range of the
