@@ -22,15 +22,9 @@ class SpatialImageImporter(Importer):
         An absolute filepath
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, filepath):
         super(SpatialImageImporter, self).__init__(filepath)
-        self.attempted_image_landmark_search = False
-        self.attempted_mesh_landmark_search = False
         self.attempted_texture_search = False
-        self.relative_mesh_landmark_path = None
-        self.relative_image_landmark_path = None
         self.relative_texture_path = None
         self.trilist = None
         self.mask = None
@@ -50,24 +44,6 @@ class SpatialImageImporter(Importer):
             self.texture_importer = map_filepath_to_importer(self.texture_path,
                                                  image_types)
 
-        if (self.image_landmark_path is None or not
-                path.exists(self.image_landmark_path)):
-            self.image_landmark_importer = None
-        else:
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import image_landmark_types
-            self.image_landmark_importer = map_filepath_to_importer(
-                self.image_landmark_path, image_landmark_types)
-
-        if (self.mesh_landmark_path is None or not
-                path.exists(self.mesh_landmark_path)):
-            self.mesh_landmark_importer = None
-        else:
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import mesh_landmark_types
-            self.mesh_landmark_importer = map_filepath_to_importer(
-                self.mesh_landmark_path, mesh_landmark_types)
-
     def _search_for_texture(self):
         r"""
         Tries to find a texture with the same name as the depth image.
@@ -85,69 +61,6 @@ class SpatialImageImporter(Importer):
             return find_alternative_files('texture', self.filepath,
                                           image_types)
         except ImportError:
-            return None
-
-    def _search_for_landmarks(self, types):
-        r"""
-        Tries to find a set of landmarks with the same name as the image. This
-        is only attempted once.
-
-        Returns
-        -------
-        basename : string
-            The basename of the landmarks file found, eg. ``image.pts``.
-        """
-        try:
-            return find_alternative_files('landmarks', self.filepath,
-                                          types)
-        except ImportError:
-            return None
-
-    @property
-    def image_landmark_path(self):
-        r"""
-        Get the absolute path to the image landmarks.
-
-        Returns ``None`` if none can be found.
-        Makes it's best effort to find an appropriate landmark set by
-        searching for landmarks with the same name as the image.
-        """
-        # Try find a texture path if we can
-        if (self.relative_image_landmark_path is None and not
-                self.attempted_image_landmark_search):
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import image_landmark_types
-            # Stop searching every single time we access the property
-            self.attempted_image_landmark_search = True
-            self.relative_image_landmark_path = self._search_for_landmarks(
-                image_landmark_types)
-
-        try:
-            return path.join(self.folder, self.relative_image_landmark_path)
-        except AttributeError:
-            return None
-
-    @property
-    def mesh_landmark_path(self):
-        r"""
-        Get the absolute path to the mesh landmarks.
-
-        Returns ``None`` if none can be found.
-        Makes it's best effort to find an appropriate landmark set by
-        searching for landmarks with the same name as the image.
-        """
-        # Try find a texture path if we can
-        if self.relative_mesh_landmark_path is None and \
-                not self.attempted_mesh_landmark_search:
-            # This import is here to avoid circular dependencies
-            from pybug.io.extensions import mesh_landmark_types
-            self.attempted_mesh_landmark_search = True
-            self.relative_mesh_landmark_path = self._search_for_landmarks(
-                mesh_landmark_types)
-
-        try:
-            return path.join(self.folder, self.relative_mesh_landmark_path)
-        except AttributeError:
             return None
 
     @property
@@ -231,21 +144,6 @@ class SpatialImageImporter(Importer):
         self.image = ShapeImage(self.shape_image, mask=self.mask,
                                 trilist=self.trilist, tcoords=self.tcoords,
                                 texture=texture)
-
-        if self.image_landmark_importer is not None:
-            lmark_group = self.image_landmark_importer.build(
-                scale_factors=self.image.shape)
-            label = lmark_group.group_label
-            texture.landmarks[label] = lmark_group
-            # Add landmarks to image - may need scaling if original texture
-            # is different in size to depth image
-            self.image.landmarks[label] = self._process_landmarks(texture,
-                                                                  lmark_group)
-
-        if self.mesh_landmark_importer is not None:
-            lmark_group = self.mesh_landmark_importer.build()
-            self.image.mesh.landmarks[lmark_group.group_label] = lmark_group
-
         return self.image
 
 
@@ -271,19 +169,6 @@ class BNTImporter(SpatialImageImporter):
     def __init__(self, filepath):
         # Setup class before super class call
         super(BNTImporter, self).__init__(filepath)
-
-    def _process_landmarks(self, original_image, lmark_group):
-        original_shape = original_image.shape
-        depth_image_shape = self.shape_image.shape
-
-        # Scale the points down to the smaller depth image size
-        scale_0 = depth_image_shape[0] / original_shape[0]
-        scale_1 = depth_image_shape[1] / original_shape[1]
-        scale = Scale(np.array([scale_0, scale_1]))
-
-        scale.apply_inplace(lmark_group.lms)
-
-        return lmark_group
 
     def _build_image_and_mesh(self):
         r"""
@@ -352,13 +237,6 @@ class FIMImporter(SpatialImageImporter):
         # Setup class before super class call
         super(FIMImporter, self).__init__(filepath)
 
-    def _process_landmarks(self, original_image, lmark_group):
-        r"""
-        There are no default landmarks for this dataset so we currently don't
-        perform any processing.
-        """
-        return lmark_group
-
     def _build_image_and_mesh(self):
         r"""
         Read the file and parse it as necessary. Since the data lies on a grid
@@ -394,12 +272,6 @@ class ABSImporter(SpatialImageImporter):
     def __init__(self, filepath):
         # Setup class before super class call
         super(ABSImporter, self).__init__(filepath)
-
-    def _process_landmarks(self, original_image, lmark_group):
-        r"""
-        The original texture and the given texture are the same size.
-        """
-        return lmark_group
 
     def _build_image_and_mesh(self):
         r"""

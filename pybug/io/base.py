@@ -1,8 +1,9 @@
 import abc
+from copy import deepcopy
 import os
 from glob import glob
-import collections
 from pybug import pybug_src_dir_path
+from pybug.exception import DimensionalityError
 
 
 def data_dir_path():
@@ -122,7 +123,7 @@ def import_auto(pattern, max_meshes=None, max_images=None):
         yield image
 
 
-def import_image(filepath):
+def import_image(filepath, landmark_resolver=None):
     r"""Single image (and associated landmarks) importer.
 
     Iff an image file is found at `filepath`, returns a :class:`pybug.image
@@ -136,6 +137,11 @@ def import_image(filepath):
     ----------
     filepath : String
         A relative or absolute filepath to an image file.
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for the
+        image. The function should take one argument (the image itself) and
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+
 
     Returns
     -------
@@ -143,10 +149,11 @@ def import_image(filepath):
         An instantiated image class built from the image file.
 
     """
-    return _import(filepath, all_image_types)
+    return _import(filepath, all_image_types, has_landmarks=True,
+                   landmark_resolver=landmark_resolver)
 
 
-def import_mesh(filepath):
+def import_mesh(filepath, landmark_resolver=None):
     r"""Single mesh (and associated landmarks and texture) importer.
 
     Iff an mesh file is found at `filepath`, returns a :class:`pybug.shape
@@ -159,6 +166,11 @@ def import_mesh(filepath):
     ----------
     filepath : String
         A relative or absolute filepath to an image file.
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for the
+        mesh. The function should take one argument (the mesh itself) and
+        provide a string or list of strings detailing the landmarks to be
+        imported.
 
     Returns
     -------
@@ -166,7 +178,8 @@ def import_mesh(filepath):
         An instantiated trimesh (or textured trimesh) file object
 
     """
-    return _import(filepath, mesh_types)
+    return _import(filepath, mesh_types, has_landmarks=True,
+                   landmark_resolver=landmark_resolver)
 
 
 def import_landmark_file(filepath):
@@ -186,10 +199,10 @@ def import_landmark_file(filepath):
         The LandmarkGroup that the file format represents.
 
     """
-    return _import(filepath, all_landmark_types)
+    return _import(filepath, all_landmark_types, has_landmarks=False)
 
 
-def import_images(pattern, max_images=None):
+def import_images(pattern, max_images=None, landmark_resolver=None):
     r"""Multiple image import generator.
 
     Makes it's best effort to import and attach relevant related
@@ -210,6 +223,10 @@ def import_images(pattern, max_images=None):
         import all.
 
         Default: ``None``
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for each
+        image. The function should take one argument (an image itself) and
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
 
     Yields
     ------
@@ -228,11 +245,13 @@ def import_images(pattern, max_images=None):
 
     """
     for asset in _import_glob_generator(pattern, all_image_types,
-                                        max_assets=max_images):
+                                        max_assets=max_images,
+                                        has_landmarks=True,
+                                        landmark_resolver=landmark_resolver):
         yield asset
 
 
-def import_meshes(pattern, max_meshes=None):
+def import_meshes(pattern, max_meshes=None, landmark_resolver=None):
     r"""Multiple mesh import generator.
 
     Makes it's best effort to import and attach relevant related
@@ -255,6 +274,10 @@ def import_meshes(pattern, max_meshes=None):
         import all.
 
         Default: ``None``
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for each
+        mesh. The function should take one argument (a mesh itself) and
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
 
     Yields
     ------
@@ -263,7 +286,9 @@ def import_meshes(pattern, max_meshes=None):
 
     """
     for asset in _import_glob_generator(pattern, mesh_types,
-                                        max_assets=max_meshes):
+                                        max_assets=max_meshes,
+                                        has_landmarks=True,
+                                        landmark_resolver=landmark_resolver):
         yield asset
 
 
@@ -289,7 +314,8 @@ def import_landmark_files(pattern, max_landmarks=None):
 
     """
     for asset in _import_glob_generator(pattern, all_landmark_types,
-                                        max_assets=max_landmarks):
+                                        max_assets=max_landmarks,
+                                        has_landmarks=False):
         yield asset
 
 
@@ -312,7 +338,7 @@ def import_builtin_asset(asset_name):
 
     """
     asset_path = data_path_to(asset_name)
-    return _import(asset_path, all_mesh_and_image_types)
+    return _import(asset_path, all_mesh_and_image_types, has_landmarks=True)
 
 
 def ls_builtin_assets():
@@ -327,15 +353,20 @@ def ls_builtin_assets():
     return os.listdir(data_dir_path())
 
 
-def _import_glob_generator(pattern, extension_map, max_assets=None):
+def _import_glob_generator(pattern, extension_map, max_assets=None,
+                           has_landmarks=False, landmark_resolver=None):
     filepaths = _glob_matching_extension(pattern, extension_map)
     if max_assets:
         filepaths = filepaths[:max_assets]
-    for asset in _multi_import_generator(filepaths, extension_map):
+    for asset in _multi_import_generator(filepaths, extension_map,
+                                         has_landmarks=has_landmarks,
+                                         landmark_resolver=landmark_resolver):
         yield asset
 
 
-def _import(filepath, extensions_map, keep_importer=False):
+def _import(filepath, extensions_map, keep_importer=False,
+            has_landmarks=True, landmark_resolver=None,
+            asset=None):
     r"""
     Creates an importer for the filepath passed in, and then calls build on
     it, returning a list of assets or a single asset, depending on the
@@ -351,9 +382,18 @@ def _import(filepath, extensions_map, keep_importer=False):
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
         contain the leading period eg. ``.obj``.
-    keep_importers : bool, optional
+    keep_importer : bool, optional
         If ``True``, return the :class:`pybug.io.base.Importer` for each mesh
         as well as the meshes.
+    has_landmarks : bool, optional
+        If `True`, an attempt will be made to find relevant landmarks.
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for each
+        asset. The function should take one argument (the asset itself) and
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
+    asset: object, optional
+        If not None, the asset will be passed to the importer's build method
+        as the asset kwarg
 
     Returns
     -------
@@ -367,20 +407,58 @@ def _import(filepath, extensions_map, keep_importer=False):
         raise ValueError("{} is not a file".format(filepath))
     # below could raise ValueError as well...
     importer = map_filepath_to_importer(filepath, extensions_map)
-    built_objects = importer.build()
-    # landmarks are iterable so check for list precisely
-    if isinstance(built_objects, list):
-        for x in built_objects:
-            x.ioinfo = importer.build_ioinfo()
+    if asset is not None:
+        built_objects = importer.build(asset=asset)
     else:
-        built_objects.ioinfo = importer.build_ioinfo()
+        built_objects = importer.build()
+    # landmarks are iterable so check for list precisely
+    ioinfo = importer.build_ioinfo()
+    # enforce a list to make processing consistent
+    if not isinstance(built_objects, list):
+        built_objects = [built_objects]
+
+    # attach ioinfo
+    for x in built_objects:
+        x.ioinfo = deepcopy(ioinfo)
+
+    # handle landmarks
+    if has_landmarks:
+        if landmark_resolver is None:
+            # user isn't customising how landmarks are found.
+            lm_pattern = os.path.join(ioinfo.dir, ioinfo.filename + '.*')
+            # find all the landmarks we can
+            lms_paths = _glob_matching_extension(lm_pattern, all_landmark_types)
+            for lm_path in lms_paths:
+                # manually trigger _import (so we can set the asset!)
+                lms = _import(lm_path, all_landmark_types, keep_importer=False,
+                              has_landmarks=False, asset=asset)
+                for x in built_objects:
+                    try:
+                        x.landmarks[lms.group_label] = deepcopy(lms)
+                    except DimensionalityError:
+                        pass
+        else:
+            for x in built_objects:
+                lm_paths = landmark_resolver(x)  # use the users fcn to find
+                # paths
+                if lm_paths is None:
+                    continue
+                for group_name, lm_path in lm_paths.iteritems():
+                    lms = import_landmark_file(lm_path)
+                    x.landmarks[group_name] = lms
+
+    # undo list-if-cation (if we added it!)
+    if len(built_objects) == 1:
+        built_objects = built_objects[0]
+
     if keep_importer:
         return built_objects, importer
     else:
         return built_objects
 
 
-def _multi_import_generator(filepaths, extensions_map, keep_importers=False):
+def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
+                            has_landmarks=False, landmark_resolver=None):
     r"""
     Generator yielding assets from the filepaths provided.
 
@@ -399,6 +477,12 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False):
     keep_importers : bool, optional
         If ``True``, return the :class:`pybug.io.base.Importer` for each mesh
         as well as the meshes.
+    has_landmarks : bool, optional
+        If `True`, an attempt will be made to find relevant landmarks.
+    landmark_resolver: function, optional
+        If not None, this function will be used to find landmarks for each
+        asset. The function should take one argument (the asset itself) and
+        return a dictionary of the form {'group_name': 'landmark_filepath'}
 
     Yields
     ------
@@ -410,7 +494,9 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False):
     """
     importer = None
     for f in sorted(filepaths):
-        imported = _import(f, extensions_map, keep_importer=keep_importers)
+        imported = _import(f, extensions_map, keep_importer=keep_importers,
+                           has_landmarks=has_landmarks,
+                           landmark_resolver=landmark_resolver)
         if keep_importers:
             assets, importer = imported
         else:

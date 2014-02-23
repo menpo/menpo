@@ -81,9 +81,19 @@ class LandmarkManager(Transformable, Viewable):
             Label of new group.
         value : LandmarkGroup or PointCloud
             The new landmark group to set.
+
+        Raises
+        ------
+        DimensionalityError
+            If the landmarks and the shape are not of the same dimensionality.
         """
         from pybug.shape import PointCloud
-
+        # firstly, make sure the dim is correct
+        if value.n_dims != self._target.n_dims:
+            from pybug.exception import DimensionalityError
+            raise DimensionalityError(
+                "Trying to set {}D landmarks on a "
+                "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
                 None, None, value,
@@ -327,6 +337,15 @@ class LandmarkGroup(Viewable):
         :type: int
         """
         return self._pointcloud.n_points
+
+    @property
+    def n_dims(self):
+        """
+        The dimensionality of these landmarks.
+
+        :type: int
+        """
+        return self._pointcloud.n_dims
 
     def with_labels(self, labels=None):
         """
