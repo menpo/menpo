@@ -1,19 +1,19 @@
 from __future__ import division
 import numpy as np
 from pybug.shape import TriMesh
-from pybug.transform .affine import Scale, UniformScale, Translation
+from pybug.transform.affine import Scale, UniformScale, Translation
 from pybug.groupalign import GeneralizedProcrustesAnalysis
 from pybug.transform.piecewiseaffine import PiecewiseAffineTransform
 from pybug.transform.tps import TPS
 from pybug.model import PCAModel
-from pybug.aam.functions import \
-    mean_pointcloud, build_reference_frame, build_patch_reference_frame, \
-    compute_features
+from pybug.aam.functions import (mean_pointcloud, build_reference_frame,
+                                 build_patch_reference_frame, compute_features)
 
 
 class AAM(object):
     r"""
-    Active Appearance Model (AAM) class.
+    Active Appearance Model (AAM) data structure. Can generate novel
+    instances of itself from it's appearance and shape parameters.
 
     Parameters
     -----------
@@ -27,47 +27,51 @@ class AAM(object):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    feature_type: str or closure
-        The feature_type used to build the AAM.
+    feature_type: str or function
+        The image feature that was be used to build the appearance_models. Will
+        subsequently be used by fitter objects using this class to fit to
+        novel images.
 
-        If None, the appearance model was built using the original image
-        representation, i.e. no features were extracted from the original
-        image representation.
+        If None, the appearance model was built immediately from the image
+        representation, i.e. intensity.
 
-        If string or closure, the appearance model was built from
-        a feature representation of the original images:
-            If string, the was was built using the following feature
-            computation:
+        If string, the appearance model was built using one of PyBug's default
+        built-in feature representations - those
+        accessible at image.features.some_feature(). Note that this case can
+        only be used with default feature parameters - for custom features,
+        use the functional form of this argument instead.
 
-               feature_image = eval('img.feature_type.' + feature_type + '()')
+        If function, the user can directly provide the feature that was
+        calculated on the images. This class will simply invoke this
+        function, passing in as the sole argument the image to be fitted,
+        and expect as a return type an Image representing the feature
+        calculation ready for further fitting. See the examples for
+        details.
 
-            For this to work properly the feature_type needs to be one of
-            Pybug's standard image feature methods. Note that, in this case,
-            the feature computation was carried out using its default options.
+    downscale: float
+        The constant downscale factor used to create the different levels of
+        the AAM. For example, a factor of 2 would imply that the second level of
+        the AAM pyramid is half the width and half the height of the first.
+        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
+        the original.
 
-            Non-default feature options and new experimental feature could
-            have been used through a closure definition. In this case,
-            the closure must have defined a function that receives as an
-            input an image and returns a particular feature representation
-            of that image. For example:
+    patch_size: integer tuple or None
+        Tuple specifying the size of the patches used to build the AAM. If
+        None, the AAM was not built using a patch-based representation.
+
+    Examples
+    --------
+
+    Lets say you built your AAM using double angle igos on normalized images.
+    An appropriate function_type argument would be:
 
                 def igo_double_from_std_normalized_intensities(image)
                     image = deepcopy(image)
                     image.normalize_std_inplace()
                     return image.feature_type.igo(double_angles=True)
 
-            See `pybug.image.MaskedNDImage` for details more details on Pybug's
+            See `pybug.image.MaskedNDImage` for details more details on PyBug's
             standard image features and feature options.
-
-    interpolator:'scipy' or 'cinterp' or func
-        The interpolator used by the previous warps.
-
-    downscale: float
-        The downscale factor used to create the different levels of the AAM.
-
-    patch_size: integer tuple or None
-        Tuple specifying the size of the patches used to build the AAM . If
-        None, the AAM was not build using a Patch-Based representation.
     """
 
     def __init__(self, shape_models, appearance_models, transform_cls,
@@ -107,13 +111,13 @@ class AAM(object):
         shape_weights: (n_weights,) ndarray or float list
             Weights of the shape model that will be used to create
             a novel shape instance. If None, the mean shape
-            (shape_weights = [0, 0, ..., 0]) will be used.
+            (shape_weights = [0, 0, ..., 0]) is used.
 
             Default: None
         appearance_weights: (n_weights,) ndarray or float list
             Weights of the appearance model that will be used to create
             a novel appearance instance. If None, the mean appearance
-            (appearance_weights = [0, 0, ..., 0]) will be used.
+            (appearance_weights = [0, 0, ..., 0]) is used.
 
             Default: None
         level: int, optional
@@ -207,7 +211,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
     Parameters
     ----------
-    images: list of :class:`pybug.image.IntensityImage`
+    images: list of :class:`pybug.image.Image`
         The set of landmarked images from which to build the AAM
 
     group : string, Optional
@@ -222,7 +226,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
         Default: 'all'
 
-    interpolator:'scipy' or 'cinterp' or func, Optional
+    interpolator:'scipy', Optional
         The interpolator that should be used to perform the warps.
 
         Default: 'scipy'
@@ -244,7 +248,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         Default: None
 
     boundary: int, Optional
-        The number of pixels to be left as a "save" margin on the boundaries
+        The number of pixels to be left as a safe margin on the boundaries
         of the reference frame (has potential effects on the gradient
         computation).
 
@@ -254,7 +258,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         The :class:`pybug.transform.PureAlignmentTransform` that will be
         used to warp the images.
 
-        Default: PieceWiseAffine
+        Default: :class:`pybug.transform.PiecewiseAffineTransform`
 
     trilist: (t, 3) ndarray, Optional
         Triangle list that will be used to build the reference frame. If None,
