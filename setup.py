@@ -52,6 +52,7 @@ setup(name='pybug',
 
                         # Image
                         'Pillow>=2.0.0',
+                        'scikit-image>=0.8.2',
 
                         # 3D import
                         'pyvrml>=2.4',
