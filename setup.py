@@ -45,21 +45,28 @@ setup(name='pybug',
       include_dirs=[np.get_include()],
       ext_modules=cython_exts + opengl_c_exts,
       packages=find_packages(),
-      install_requires=['Cython>=0.18',
-                        'decorator>=3.4.0',
-                        'ipython>=0.13.2',
-                        'matplotlib>=1.2.1',
-                        'nose>=1.3.0',
+      install_requires=[# Core
                         'numpy>=1.8.0',
-                        'Pillow>=2.0.0',
-                        'pyvrml>=2.4',
-                        'pyzmq>=13.0.2',
-                        'scikit-learn>=0.13.1',
-                        'scikit-image>=0.8.2',
                         'scipy>=0.12.0',
+                        'Cython>=0.18',
+
+                        # Image
+                        'Pillow>=2.0.0',
+                        'scikit-image>=0.8.2',
+
+                        # 3D import
+                        'pyvrml>=2.4',
+
+                        # Visualization
+                        'matplotlib>=1.2.1',
+
+                        # Need to decide if this is really needed
+                        'decorator>=3.4.0',
+
+                        # Docs and testing
                         'Sphinx>=1.2b1',
                         'numpydoc>=0.4',
-                        'tornado>=3.0.1'],
+                        'nose>=1.3.0'],
       extras_require={'3d': 'mayavi>=4.3.0'},
       dependency_links=[
         'https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4']
