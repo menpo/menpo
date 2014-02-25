@@ -6,8 +6,8 @@ class AppearanceLucasKanade(LucasKanade):
     def __init__(self, model, residual, transform,
                  interpolator='scipy', optimisation=('GN',), eps=10**-6):
         super(AppearanceLucasKanade, self).__init__(
-            residual, transform,
-            interpolator=interpolator, optimisation=optimisation, eps=eps)
+            residual, transform, interpolator=interpolator,
+            optimisation=optimisation, eps=eps)
 
         # in appearance alignment, target image is aligned to appearance model
         self.appearance_model = model

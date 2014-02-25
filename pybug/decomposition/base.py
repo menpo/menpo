@@ -17,7 +17,7 @@ def eigenvalue_decomposition(S, eps=10**-10):
     pos_eigenvalues: (p,) ndarray
     """
     # compute eigenvalue decomposition
-    eigenvalues, eigenvectors = np.linalg.eig(S)
+    eigenvalues, eigenvectors = np.linalg.eigh(S)
     # sort eigenvalues from largest to smallest
     index = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[index]

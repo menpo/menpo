@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from pybug.image.base import Image
+from skimage.transform import pyramid_gaussian
 
 
 class BooleanImage(Image):

@@ -1,14 +1,16 @@
+from __future__ import division
 import abc
-from copy import deepcopy
-
 import numpy as np
+from copy import deepcopy
+from skimage.transform import pyramid_gaussian
+from skimage.transform.pyramids import _smooth
 import scipy.linalg
 import PIL.Image as PILImage
 from scipy.misc import imrotate
 
 from pybug.base import Vectorizable
 from pybug.landmark import Landmarkable
-from pybug.transform.affine import Translation, NonUniformScale
+from pybug.transform.affine import Translation, NonUniformScale, UniformScale
 from pybug.visualize.base import Viewable, ImageViewer
 from pybug.image.feature import FeatureExtraction
 
@@ -445,7 +447,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         return cropped_image.crop(min_indices, max_indices,
                                   constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label=None, boundary=0,
+    def crop_to_landmarks(self, group=None, label='all', boundary=0,
                           constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
@@ -460,10 +462,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Default: None
 
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If None
-             all landmarks in the group are used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
 
-            Default: None
+            Default: 'all'
 
         boundary: int, Optional
             An extra padding to be added all around the landmarks bounds.
@@ -488,9 +490,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         self.crop(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion(self, boundary_proportion,
-                                     group=None, label=None,
-                                     minimum=True,
+    def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
+                                     label='all', minimum=True,
                                      constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
@@ -509,10 +510,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Default: None
 
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If None
-             all landmarks in the group are used.
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
 
-            Default: None
+            Default: 'all'
 
         minimum: bool, Optional
             If True the specified proportion is relative to the minimum
@@ -657,6 +658,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             The scale factor. If a tuple, the scale to apply to each dimension.
             If a single float, the scale will be applied uniformly across
             each dimension.
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
         round: {'ceil', 'floor', 'round'}
             Rounding function to be applied to floating point shapes.
 
@@ -717,7 +722,95 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
 
-    def resize(self, shape, **kwargs):
+    def rescale_to_reference_shape(self, reference_shape, group=None,
+                                       label='all', interpolator='scipy',
+                                       round='ceil', **kwargs):
+        r"""
+        Return a copy of this image, rescaled so that the scale of a
+        particular group of landmarks matches the scale of the passed
+        reference landmarks.
+
+        Parameters
+        ----------
+        reference_shape: :class:`pybug.shape.pointcloud`
+            The reference shape to which the landmarks scale will be matched
+            against.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
+
+            Default: 'all'
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        pc = self.landmarks[group][label].lms
+        scale = UniformScale.align(pc, reference_shape).as_vector()
+        return self.rescale(scale, interpolator=interpolator,
+                            round=round, **kwargs)
+
+    def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
+                                            label='all', interpolator='scipy',
+                                            round='ceil', **kwargs):
+        r"""
+        Return a copy of this image, rescaled so that the diagonal_range of the
+        bounding box containing its landmarks matches the specified diagonal_range
+        range.
+
+        Parameters
+        ----------
+        diagonal_range: :class:`pybug.shape.pointcloud`
+            The diagonal_range range that we want the landmarks of the returned
+            image to have.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If
+            'all' all landmarks in the group are used.
+
+            Default: 'all'
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+        round: {'ceil', 'floor', 'round'}
+            Rounding function to be applied to floating point shapes.
+
+            Default: 'ceil'
+        kwargs : dict
+            Passed through to the interpolator. See `pybug.interpolation`
+            for details.
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+        """
+        x, y = self.landmarks[group][label].lms.range()
+        scale = diagonal_range / np.sqrt(x**2 + y**2)
+        return self.rescale(scale, interpolator=interpolator,
+                            round=round, **kwargs)
+
+    def resize(self, shape, interpolator='scipy', **kwargs):
         r"""
         Return a copy of this image, resized to a particular shape.
         All image information (landmarks, the mask in the case of
@@ -727,6 +820,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
         ----------
         shape : tuple
             The new shape to resize to.
+        interpolator : 'scipy' or 'c', optional
+            The interpolator that should be used to perform the warp.
+
+            Default: 'scipy'
         kwargs : dict
             Passed through to the interpolator. See `pybug.interpolation`
             for details.
@@ -753,7 +850,129 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, round='round', **kwargs)
+        return self.rescale(scales, interpolator=interpolator,
+                            round='round', **kwargs)
+
+    def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None,
+                         order=1, mode='reflect', cval=0):
+        r"""
+        Return the gaussian pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+
+        downscale : float, optional
+            Downscale factor.
+
+            Default: 2
+
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
+        order : int, optional
+            Order of splines used in interpolation of downsampling. See
+            `scipy.ndimage.map_coordinates` for detail.
+
+            Default: 1
+
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        max_layer = n_levels - 1
+        pyramid = pyramid_gaussian(self.pixels, max_layer=max_layer,
+                                   downscale=downscale, sigma=sigma,
+                                   order=order, mode=mode, cval=cval)
+
+        for j, image_data in enumerate(pyramid):
+            image = self.__class__(image_data)
+
+            # rescale and reassign existent landmark
+            image.landmarks = self.landmarks
+            transform = UniformScale(downscale ** j, self.n_dims)
+            transform.pseudoinverse.apply_inplace(image.landmarks)
+            yield image
+
+    def smoothing_pyramid(self, n_levels=3, downscale=2, sigma=None,
+                          mode='reflect', cval=0):
+        r"""
+        Return the smoothing pyramid of this image. The first image of the
+        pyramid will be the original, unmodified, image.
+
+        Parameters
+        ----------
+        n_levels : int
+            Number of levels in the pyramid. When set to -1 the maximum
+            number of levels will be build.
+
+            Default: 3
+
+        downscale : float, optional
+            Downscale factor.
+
+            Default: 2
+
+        sigma : float, optional
+            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
+            corresponds to a filter mask twice the size of the scale factor
+            that covers more than 99% of the gaussian distribution.
+
+            Default: None
+
+        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
+            The mode parameter determines how the array borders are handled,
+            where cval is the value when mode is equal to 'constant'.
+
+            Default: 'reflect'
+
+        cval : float, optional
+            Value to fill past edges of input if mode is 'constant'.
+
+            Default: 0
+
+        Returns
+        -------
+        image_pyramid:
+            Generator yielding pyramid layers as pybug image objects.
+        """
+        for j in range(n_levels):
+            if j is 0:
+                yield self
+            else:
+                if sigma is None:
+                    sigma_aux = 2 * downscale**j / 6.0
+                else:
+                    sigma_aux = sigma
+
+                image_data = _smooth(self.pixels, sigma=sigma_aux,
+                                     mode=mode, cval=cval)
+                image = self.__class__(image_data)
+
+                # rescale and reassign existent landmark
+                image.landmarks = self.landmarks
+                yield image
 
     def as_greyscale(self, mode='luminosity', channel=None):
         r"""
@@ -871,7 +1090,7 @@ def _create_feature_glyph(features, vbs):
 
     Parameters
     ----------
-    features : (N, D) ndarray
+    feature_type : (N, D) ndarray
         The feature pixels to use.
     vbs: int
         Defines the size of each block with vectors of the glyph image.

@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 from scipy.linalg import solve
+from pybug.aam.basicfitting import LKFitting
 
 
 class LucasKanade(object):
@@ -140,7 +141,7 @@ class LucasKanade(object):
         """
         pass
 
-    def align(self, image, params, max_iters=30, **kwargs):
+    def align(self, image, parameters, max_iters=20, **kwargs):
         r"""
         Perform an alignment using the Lukas-Kanade framework.
 
@@ -156,36 +157,14 @@ class LucasKanade(object):
             The final transform that optimally aligns the source to the
             target.
         """
-        # TODO: define a consistent multi-resolution logic
-        self.transform.from_vector_inplace(params)
-        self.parameters = [params]
-        self.image = image
-        return self._align(max_iters, **kwargs)
+        self.transform.from_vector_inplace(parameters)
+        lk_fitting = LKFitting(image, self, parameters=[parameters])
+        return self._align(lk_fitting, max_iters=max_iters, **kwargs)
 
     @abc.abstractmethod
-    def _align(self, **kwargs):
+    def _align(self, lk_fitting, **kwargs):
         r"""
         Abstract method to be overridden by subclasses that implements the
         alignment algorithm.
         """
         pass
-
-    @property
-    def transforms(self):
-        r"""
-         The transform as applied at each step of the alignment.
-
-        :type: list of (P,) ndarrays
-        """
-        return [self.transform.from_vector(x) for x in self.parameters]
-
-    @property
-    def n_iters(self):
-        r"""
-        The number of iterations performed.
-
-        :type: int
-        """
-        # nb at 0'th iteration we still have one parameters
-        # (self.transform)
-        return len(self.parameters) - 1
