@@ -13,7 +13,7 @@ from pybug.aam.functions import (mean_pointcloud, build_reference_frame,
 class AAM(object):
     r"""
     Active Appearance Model (AAM) data structure. Can generate novel
-    instances of itself from it's appearance and shape parameters.
+    instances of itself from its appearance and shape parameters.
 
     Parameters
     -----------
@@ -38,8 +38,8 @@ class AAM(object):
         If string, the appearance model was built using one of PyBug's default
         built-in feature representations - those
         accessible at image.features.some_feature(). Note that this case can
-        only be used with default feature parameters - for custom features,
-        use the functional form of this argument instead.
+        only be used with default feature parameters - for custom feature
+        parameters, use the functional form of this argument instead.
 
         If function, the user can directly provide the feature that was
         calculated on the images. This class will simply invoke this
@@ -50,8 +50,8 @@ class AAM(object):
 
     downscale: float
         The constant downscale factor used to create the different levels of
-        the AAM. For example, a factor of 2 would imply that the second level of
-        the AAM pyramid is half the width and half the height of the first.
+        the AAM. For example, a factor of 2 would imply that the second level
+        of the AAM pyramid is half the width and half the height of the first.
         The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
         the original.
 
@@ -62,7 +62,7 @@ class AAM(object):
     Examples
     --------
 
-    Lets say you built your AAM using double angle igos on normalized images.
+    Let's say you built your AAM using double angle igos on normalized images.
     An appropriate function_type argument would be:
 
                 def igo_double_from_std_normalized_intensities(image)
@@ -100,6 +100,11 @@ class AAM(object):
 
     @property
     def n_levels(self):
+        """
+        The number of multi-resolution pyramidal levels of the AAM.
+
+        :type: int
+        """
         return len(self.appearance_models)
 
     def instance(self, shape_weights=None, appearance_weights=None, level=-1):
@@ -207,12 +212,12 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
                 max_shape_components=None, max_appearance_components=None):
 
     r"""
-    Builds an AAM object from a set of landmark images.
+    Builds an AAM object from a set of landmarked images.
 
     Parameters
     ----------
     images: list of :class:`pybug.image.Image`
-        The set of landmarked images from which to build the AAM
+        The set of landmarked images from which to build the AAM.
 
     group : string, Optional
         The key of the landmark set that should be used. If None,
@@ -273,7 +278,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
             if the kwarg patch_size is not set to None.
 
     patch_size: tuple of ints or None, Optional
-        If tuple, the appearance model of the AAM will be obtained from by
+        If tuple, the appearance model of the AAM will be obtained by
         sampling the appearance patches around the landmarks. If None, the
         standard representation for the AAMs' appearance model will be used
         instead.
@@ -297,13 +302,13 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         Default: 2
 
     scaled_reference_frames: boolean, Optional
-        If False, the resolution of all reference frame used to build the
+        If False, the resolution of all reference frames used to build the
         appearance model will be fixed (the original images will be
-        both smooth and scaled using a Gaussian pyramid). consequently, all
+        both smoothed and scaled using a Gaussian pyramid). Consequently, all
         appearance models will have the same dimensionality.
         If True, the reference frames used to create the appearance model
-        will be themselves scaled (the original images will only be smooth).
-        Consequently the dimensionality of all appearance models will be
+        will be themselves scaled (the original images will only be smoothed).
+        Consequently, the dimensionality of all appearance models will be
         different.
 
         Default: False
@@ -312,7 +317,7 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         If None, the appearance model will be build using the original image
         representation, i.e. no features will be extracted from the original
         images.
-        If string or closure, the appearance model will be build from a
+        If string or closure, the appearance model will be built from a
         feature representation of the original images:
             If string, the `ammbuilder` will try to compute image features by
             executing:
@@ -321,12 +326,12 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
 
             For this to work properly the feature_type needs to be one of
             Pybug's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using its default
-            options.
+            the feature computation will be carried out using the respective
+            default options.
 
-            Non-default feature options and new experimental feature can be
+            Non-default feature options and new experimental features can be
             used by defining a closure. In this case, the closure must define a
-            function that receives as an input an image and returns a
+            function that receives an image as input and returns a
             particular feature representation of that image. For example:
 
                 def igo_double_from_std_normalized_intensities(image)
@@ -367,9 +372,9 @@ def aam_builder(images, group=None, label='all', interpolator='scipy',
         x, y = reference_shape.range()
         scale = diagonal_range / np.sqrt(x**2 + y**2)
         Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
-    images = [i.rescale_to_reference_shape(reference_shape,
-                                               group=group, label=label,
-                                               interpolator=interpolator)
+    images = [i.rescale_to_reference_shape(reference_shape, group=group,
+                                           label=label,
+                                           interpolator=interpolator)
               for i in images]
 
     if scaled_reference_frames:

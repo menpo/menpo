@@ -545,7 +545,7 @@ class Fitting(Viewable):
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
-        Displays the the whole fitting procedure.
+        Displays the whole fitting procedure.
         """
         pixels = self.image.pixels
         targets = self.shapes(as_points=True)

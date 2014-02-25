@@ -131,10 +131,14 @@ class Fitter(object):
 
             Default: None
 
-        max_iters: int, optional
-            The maximum number of iteration.
+        max_iters: int or list, optional
+            The maximum number of iterations.
+            If int, then this will be the overall maximum number of iterations
+            for all the pyramidal levels.
+            If list, then a maximum number of iterations is specified for each
+            pyramidal level.
 
-            Default: 20
+            Default: 50
 
         Returns
         -------
@@ -242,10 +246,14 @@ class Fitter(object):
 
             Default: False
 
-        max_iters: int, optional
-            The maximum number of iteration.
+        max_iters: int or list, optional
+            The maximum number of iterations.
+            If int, then this will be the overall maximum number of iterations
+            for all the pyramidal levels.
+            If list, then a maximum number of iterations is specified for each
+            pyramidal level.
 
-            Default: 20
+            Default: 50
 
         verbose: boolean
             Whether or not to print information related to the fitting
@@ -365,10 +373,14 @@ class Fitter(object):
 
             Default: False
 
-        max_iters: int, optional
-            The maximum number of iteration.
+        max_iters: int or list, optional
+            The maximum number of iterations.
+            If int, then this will be the overall maximum number of iterations
+            for all the pyramidal levels.
+            If list, then a maximum number of iterations is specified for each
+            pyramidal level.
 
-            Default: 20
+            Default: 50
 
         verbose: boolean
             Whether or not to print information related to the fitting
@@ -636,10 +648,14 @@ class LucasKanadeAAMFitter(AAMFitter):
 
             Default: None
 
-        max_iters: int, optional
+        max_iters: int or list, optional
             The maximum number of iterations.
+            If int, then this will be the overall maximum number of iterations
+            for all the pyramidal levels.
+            If list, then a maximum number of iterations is specified for each
+            pyramidal level.
 
-            Default: 20
+            Default: 50
 
         Returns
         -------
