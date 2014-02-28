@@ -77,7 +77,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class SimultaneousForwardCompositional(AppearanceLucasKanade):
@@ -152,7 +152,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class SimultaneousInverseCompositional(AppearanceLucasKanade):
@@ -228,4 +228,4 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting

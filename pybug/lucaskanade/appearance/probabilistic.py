@@ -52,7 +52,7 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class ProbabilisticForwardCompositional(AppearanceLucasKanade):
@@ -102,7 +102,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class ProbabilisticInverseCompositional(AppearanceLucasKanade):
@@ -154,4 +154,4 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
