@@ -73,7 +73,7 @@ class AdaptiveForwardAdditive(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class AdaptiveForwardCompositional(AppearanceLucasKanade):
@@ -144,7 +144,7 @@ class AdaptiveForwardCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class AdaptiveInverseCompositional(AppearanceLucasKanade):
@@ -219,4 +219,4 @@ class AdaptiveInverseCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting

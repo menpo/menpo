@@ -51,7 +51,7 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class ProjectOutForwardCompositional(AppearanceLucasKanade):
@@ -100,7 +100,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
 
 
 class ProjectOutInverseCompositional(AppearanceLucasKanade):
@@ -153,4 +153,4 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
             n_iters += 1
 
         lk_fitting.fitted = True
-        return self.transform
+        return lk_fitting
