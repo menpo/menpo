@@ -245,6 +245,45 @@ class FeatureExtraction(object):
                                     self._image.pixels.shape[2]}
         return igo_image
 
+    def es(self, constrain_landmarks=True, verbose=False):
+        r"""
+        Represents a 2-dimensional Edge Structure (ES) features image with k=2
+        number of channels. The output object's class is either MaskedImage or
+        Image depending on the input image.
+
+        Parameters
+        ----------
+        image :  class:`Abstract2DImage`
+            An image object that contains pixels and mask fields.
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks that ended up outside
+            of the features image bounds.
+
+            Default: True
+        verbose : bool
+            Flag to print IGO related information.
+
+            Default: False
+
+        Raises
+        -------
+        ValueError
+            Image has to be 2D in order to extract ES features.
+        """
+        # compute es features
+        es = fc.es(self._image.pixels, verbose=verbose)
+        # create es image object
+        es_image = self._init_feature_image(es, constrain_landmarks=
+                                            constrain_landmarks)
+        # store parameters
+        es_image.es_parameters = {'original_image_height':
+                                  self._image.pixels.shape[0],
+                                  'original_image_width':
+                                  self._image.pixels.shape[1],
+                                  'original_image_channels':
+                                  self._image.pixels.shape[2]}
+        return es_image
+
     def _init_feature_image(self, feature_pixels, window_centres=None,
                             constrain_landmarks=True):
         r"""

@@ -323,3 +323,48 @@ def igo(image_data, double_angles=False, verbose=False):
                         igo_data.shape[2])
             print info_str
         return igo_data
+
+
+def es(image_data, verbose=False):
+        r"""
+        Represents a 2-dimensional Edge Structure (ES) features image
+        with k=2 number of channels.
+
+        Parameters
+        ----------
+        image_data :  ndarray
+            The pixel data for the image, where the last axis represents the
+            number of channels.
+        verbose : bool
+            Flag to print IGO related information.
+
+            Default: False
+        """
+        # check number of dimensions
+        if len(image_data.shape) != 3:
+            raise ValueError('ES features only work on 2D images. Expects '
+                             'image data to be 3D, shape + channels.')
+        # feature channels per image channel
+        feat_channels = 2
+        # compute gradients
+        grad = gradient(image_data)
+        # compute magnitude
+        grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
+        # compute es image
+        grad_abs = grad_abs + np.median(grad_abs)
+        es_data = np.empty((image_data.shape[0], image_data.shape[1],
+                            image_data.shape[-1] * feat_channels))
+        es_data[..., ::feat_channels] = grad[..., ::2] / grad_abs
+        es_data[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
+        # print information
+        if verbose:
+            info_str = "ES Features:\n" \
+                       "  - Input image is {}W x {}H with {} channels.\n"\
+                .format(image_data.shape[1], image_data.shape[0],
+                        image_data.shape[2])
+            info_str = "{}Output image size {}W x {}H x {}."\
+                .format(info_str, es_data.shape[0], es_data.shape[1],
+                        es_data.shape[2])
+            print info_str
+        return es_data
+
