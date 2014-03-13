@@ -265,106 +265,212 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
 
 def igo(image_data, double_angles=False, verbose=False):
-        r"""
-        Represents a 2-dimensional IGO features image with k=[2,4] number of
-        channels.
+    r"""
+    Represents a 2-dimensional IGO features image with k=[2,4] number of
+    channels.
 
-        Parameters
-        ----------
-        image_data :  ndarray
-            The pixel data for the image, where the last axis represents the
-            number of channels.
-        double_angles : bool
-            Assume that phi represents the gradient orientations. If this flag
-            is disabled, the features image is the concatenation of cos(phi)
-            and sin(phi), thus 2 channels. If it is enabled, the features image
-            is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
+    Parameters
+    ----------
+    image_data :  ndarray
+        The pixel data for the image, where the last axis represents the
+        number of channels.
+    double_angles : bool
+        Assume that phi represents the gradient orientations. If this flag
+        is disabled, the features image is the concatenation of cos(phi)
+        and sin(phi), thus 2 channels. If it is enabled, the features image
+        is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
 
-            Default: False
-        verbose : bool
-            Flag to print IGO related information.
+        Default: False
+    verbose : bool
+        Flag to print IGO related information.
 
-            Default: False
-        """
-        # check number of dimensions
-        if len(image_data.shape) != 3:
-            raise ValueError('IGOs only work on 2D images. Expects image data '
-                             'to be 3D, shape + channels.')
-        # feature channels per image channel
-        feat_channels = 2
+        Default: False
+    """
+    # check number of dimensions
+    if len(image_data.shape) != 3:
+        raise ValueError('IGOs only work on 2D images. Expects image data '
+                         'to be 3D, shape + channels.')
+    # feature channels per image channel
+    feat_channels = 2
+    if double_angles:
+        feat_channels = 4
+    # compute gradients
+    grad = gradient(image_data)
+    # compute angles
+    grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
+    # compute igo image
+    igo_data = np.empty((image_data.shape[0], image_data.shape[1],
+                         image_data.shape[-1] * feat_channels))
+    igo_data[..., ::feat_channels] = np.cos(grad_orient)
+    igo_data[..., 1::feat_channels] = np.sin(grad_orient)
+    if double_angles:
+        igo_data[..., 2::feat_channels] = np.cos(2 * grad_orient)
+        igo_data[..., 3::feat_channels] = np.sin(2 * grad_orient)
+    # print information
+    if verbose:
+        info_str = "IGO Features:\n" \
+                   "  - Input image is {}W x {}H with {} channels.\n"\
+            .format(image_data.shape[1], image_data.shape[0],
+                    image_data.shape[2])
         if double_angles:
-            feat_channels = 4
-        # compute gradients
-        grad = gradient(image_data)
-        # compute angles
-        grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
-        # compute igo image
-        igo_data = np.empty((image_data.shape[0], image_data.shape[1],
-                             image_data.shape[-1] * feat_channels))
-        igo_data[..., ::feat_channels] = np.cos(grad_orient)
-        igo_data[..., 1::feat_channels] = np.sin(grad_orient)
-        if double_angles:
-            igo_data[..., 2::feat_channels] = np.cos(2 * grad_orient)
-            igo_data[..., 3::feat_channels] = np.sin(2 * grad_orient)
-        # print information
-        if verbose:
-            info_str = "IGO Features:\n" \
-                       "  - Input image is {}W x {}H with {} channels.\n"\
-                .format(image_data.shape[1], image_data.shape[0],
-                        image_data.shape[2])
-            if double_angles:
-                info_str = "{}  - Double angles are enabled.\n"\
-                    .format(info_str)
-            else:
-                info_str = "{}  - Double angles are disabled.\n"\
-                    .format(info_str)
-            info_str = "{}Output image size {}W x {}H x {}."\
-                .format(info_str, igo_data.shape[0], igo_data.shape[1],
-                        igo_data.shape[2])
-            print info_str
-        return igo_data
+            info_str = "{}  - Double angles are enabled.\n"\
+                .format(info_str)
+        else:
+            info_str = "{}  - Double angles are disabled.\n"\
+                .format(info_str)
+        info_str = "{}Output image size {}W x {}H x {}."\
+            .format(info_str, igo_data.shape[0], igo_data.shape[1],
+                    igo_data.shape[2])
+        print info_str
+    return igo_data
 
 
 def es(image_data, verbose=False):
-        r"""
-        Represents a 2-dimensional Edge Structure (ES) features image
-        with k=2 number of channels.
+    r"""
+    Represents a 2-dimensional Edge Structure (ES) features image
+    with k=2 number of channels.
 
-        Parameters
-        ----------
-        image_data :  ndarray
-            The pixel data for the image, where the last axis represents the
-            number of channels.
-        verbose : bool
-            Flag to print IGO related information.
+    Parameters
+    ----------
+    image_data :  ndarray
+        The pixel data for the image, where the last axis represents the
+        number of channels.
+    verbose : bool
+        Flag to print ES related information.
 
-            Default: False
-        """
-        # check number of dimensions
-        if len(image_data.shape) != 3:
-            raise ValueError('ES features only work on 2D images. Expects '
-                             'image data to be 3D, shape + channels.')
-        # feature channels per image channel
-        feat_channels = 2
-        # compute gradients
-        grad = gradient(image_data)
-        # compute magnitude
-        grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
-        # compute es image
-        grad_abs = grad_abs + np.median(grad_abs)
-        es_data = np.empty((image_data.shape[0], image_data.shape[1],
-                            image_data.shape[-1] * feat_channels))
-        es_data[..., ::feat_channels] = grad[..., ::2] / grad_abs
-        es_data[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
-        # print information
-        if verbose:
-            info_str = "ES Features:\n" \
-                       "  - Input image is {}W x {}H with {} channels.\n"\
-                .format(image_data.shape[1], image_data.shape[0],
-                        image_data.shape[2])
-            info_str = "{}Output image size {}W x {}H x {}."\
-                .format(info_str, es_data.shape[0], es_data.shape[1],
-                        es_data.shape[2])
-            print info_str
-        return es_data
+        Default: False
+    """
+    # check number of dimensions
+    if len(image_data.shape) != 3:
+        raise ValueError('ES features only work on 2D images. Expects '
+                         'image data to be 3D, shape + channels.')
+    # feature channels per image channel
+    feat_channels = 2
+    # compute gradients
+    grad = gradient(image_data)
+    # compute magnitude
+    grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
+    # compute es image
+    grad_abs = grad_abs + np.median(grad_abs)
+    es_data = np.empty((image_data.shape[0], image_data.shape[1],
+                        image_data.shape[-1] * feat_channels))
+    es_data[..., ::feat_channels] = grad[..., ::2] / grad_abs
+    es_data[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
+    # print information
+    if verbose:
+        info_str = "ES Features:\n" \
+                   "  - Input image is {}W x {}H with {} channels.\n"\
+            .format(image_data.shape[1], image_data.shape[0],
+                    image_data.shape[2])
+        info_str = "{}Output image size {}W x {}H x {}."\
+            .format(info_str, es_data.shape[0], es_data.shape[1],
+                    es_data.shape[2])
+        print info_str
+    return es_data
+
+
+def lbp(image_data, mapping_type='riu2', verbose=False):
+    r"""
+    Computes a 2-dimensional HOG features image with k number of channels, of
+    size ``(M, N, C)`` and data type ``np.float``.
+
+    Parameters
+    ----------
+    image_data :  ndarray
+        The pixel data for the image, where the last axis represents the
+        number of channels.
+    mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
+        The mapping type. Select 'u2' for uniform-2 mapping, 'ri' for
+        rotation-invariant mapping, 'riu2' for uniform-2 and
+        rotation-invariant mapping and 'none' to use no mapping.
+
+        Default: 'riu2'
+    verbose : bool
+        Flag to print LBP related information.
+
+        Default: False
+    """
+    return 0
+
+
+def get_lbp_mapping(n_samples, mapping_type='riu2'):
+    r"""
+    Returns the mapping table for LBP codes in a neighbourhood of n_samples
+    number of sampling points.
+
+    Parameters
+    ----------
+    n_samples :  int
+        The number of sampling points.
+    mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
+        The mapping type. Select 'u2' for uniform-2 mapping, 'ri' for
+        rotation-invariant mapping, 'riu2' for uniform-2 and
+        rotation-invariant mapping and 'none' to use no mapping.
+
+        Default: 'riu2'
+
+    Raises
+    -------
+    ValueError
+        mapping_type can be 'u2' or 'ri' or 'riu2' or 'none'.
+    """
+    # initialize the output lbp codes mapping table
+    table = range(2**n_samples)
+    # uniform-2 mapping
+    if mapping_type == 'u2':
+        # initialize the number of patterns in the mapping table
+        new_max = n_samples * (n_samples - 1) + 3
+        index = 0
+        for c in range(2**n_samples):
+            # number of 1->0 and 0->1 transitions in a binary string x is equal
+            # to the number of 1-bits in XOR(x, rotate_left(x))
+            num_trans = bin(c ^ circural_rotation_left(c, 1, n_samples)).\
+                count('1')
+            if num_trans <= 2:
+                table[c] = index
+                index += 1
+            else:
+                table[c] = new_max - 1
+    # rotation-invariant mapping
+    elif mapping_type == 'ri':
+        new_max = 0
+        tmp_map = np.zeros(2**n_samples, 1) - 1
+        for c in range(2**n_samples):
+            rm = c
+            r = c
+            for j in range(1, n_samples):
+                r = circural_rotation_left(r, 1, n_samples)
+                rm = min(rm, r)
+            if tmp_map[rm] < 0:
+                tmp_map[rm] = new_max
+                new_max += 1
+            table[c] = tmp_map[rm]
+    # uniform-2 and rotation-invariant mapping
+    elif mapping_type == 'riu2':
+        new_max = n_samples + 2
+        for c in range(2**n_samples):
+            # number of 1->0 and 0->1 transitions in a binary string x is equal
+            # to the number of 1-bits in XOR(x, rotate_left(x))
+            num_trans = bin(c ^ circural_rotation_left(c, 1, n_samples)).\
+                count('1')
+            if num_trans <= 2:
+                table[c] = bin(c).count('1')
+            else:
+                table[c] = n_samples + 1
+    elif mapping_type == 'none':
+        table = 0
+        new_max = 0
+    else:
+        raise ValueError('Wrong mapping type.')
+    return table, new_max
+
+
+def circural_rotation_left(val, rot_bits, max_bits):
+    return (val << rot_bits % max_bits) & (2**max_bits - 1) | \
+           ((val & (2**max_bits - 1)) >> (max_bits - (rot_bits % max_bits)))
+
+
+def circural_rotation_right(val, rot_bits, max_bits):
+    return ((val & (2**max_bits - 1)) >> rot_bits % max_bits) | \
+           (val << (max_bits - (rot_bits % max_bits)) & (2**max_bits - 1))
 
