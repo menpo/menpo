@@ -4,7 +4,7 @@ mesh Package
 :mod:`mesh` Package
 -------------------
 
-.. automodule:: pybug.io.mesh
+.. automodule:: menpo.io.mesh
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ mesh Package
 :mod:`assimp` Module
 --------------------
 
-.. automodule:: pybug.io.mesh.assimp
+.. automodule:: menpo.io.mesh.assimp
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ mesh Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.io.mesh.base
+.. automodule:: menpo.io.mesh.base
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pybug.mesh.face import Face
+from menpo.mesh.face import Face
 from scipy.sparse import linalg 
 
 class LaplacianTest(unittest.TestCase):

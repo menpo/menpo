@@ -4,7 +4,7 @@ image Package
 :mod:`image` Package
 --------------------
 
-.. automodule:: pybug.image
+.. automodule:: menpo.image
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ image Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.image.base
+.. automodule:: menpo.image.base
     :members:
     :undoc-members:
     :show-inheritance:

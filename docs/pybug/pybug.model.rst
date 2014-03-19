@@ -4,7 +4,7 @@ model Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.model.base
+.. automodule:: menpo.model.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ model Package
 :mod:`linear` Module
 --------------------
 
-.. automodule:: pybug.model.linear
+.. automodule:: menpo.model.linear
     :members:
     :undoc-members:
     :show-inheritance:

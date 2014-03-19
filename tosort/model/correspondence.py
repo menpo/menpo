@@ -1,4 +1,4 @@
-from pybug.shape.collection import TriMeshShapeClass
+from menpo.shape.collection import TriMeshShapeClass
 
 
 class CorrespondingTriMeshPair(TriMeshShapeClass):

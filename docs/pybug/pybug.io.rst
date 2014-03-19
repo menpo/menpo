@@ -4,7 +4,7 @@ io Package
 :mod:`io` Package
 -----------------
 
-.. automodule:: pybug.io
+.. automodule:: menpo.io
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ io Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.io.base
+.. automodule:: menpo.io.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ io Package
 :mod:`exceptions` Module
 ------------------------
 
-.. automodule:: pybug.io.exceptions
+.. automodule:: menpo.io.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ io Package
 :mod:`extensions` Module
 ------------------------
 
-.. automodule:: pybug.io.extensions
+.. automodule:: menpo.io.extensions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ io Package
 :mod:`image` Module
 -------------------
 
-.. automodule:: pybug.io.image
+.. automodule:: menpo.io.image
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ io Package
 :mod:`landmark` Module
 ----------------------
 
-.. automodule:: pybug.io.landmark
+.. automodule:: menpo.io.landmark
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ io Package
 :mod:`landmark_image` Module
 ----------------------------
 
-.. automodule:: pybug.io.landmark_image
+.. automodule:: menpo.io.landmark_image
     :members:
     :undoc-members:
     :show-inheritance:
@@ -62,5 +62,5 @@ Subpackages
 
 .. toctree::
 
-    pybug.io.mesh
+    menpo.io.mesh
 

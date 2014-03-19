@@ -1,4 +1,4 @@
-PyBug has received contributions from the following:
+Menpo has received contributions from the following:
 
 Institutions
 ------------

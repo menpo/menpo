@@ -79,7 +79,7 @@ This table lists all libraries that are direct dependendencies of Menpo itself.
 Indirect Dependencies
 -------------------
 
-This table lists all system dependencies that **python tools that PyBug 
+This table lists all system dependencies that **python tools that Menpo 
 relies upon** (like Numpy) require.
 
 <table>
@@ -98,14 +98,14 @@ relies upon** (like Numpy) require.
 INSTALLATION
 ============
 
-In addition to the above dependencies, pybug requires numpy and cython be
+In addition to the above dependencies, menpo requires numpy and cython be
 installed via pip prior to installation.
 
     pip install numpy cython
 
 After that, just run
 
-    pip install -e git+https://github.com/YOURGITHUBACCOUNT/pybug.git#egg=pybug
+    pip install -e git+https://github.com/YOURGITHUBACCOUNT/menpo.git#egg=menpo
 
 to install. We highly recommend you do this inside a virtualenv. Take a look
 at virtualenvwrapper to make your life easier. Note that we recommend that you
@@ -126,7 +126,7 @@ First we get our core dependencies
 Note you will need to set up git, but this is out of the scope of this README.
 Do that now and come back here.
 
-Then we get the build requirements for the python packages that pybug will
+Then we get the build requirements for the python packages that menpo will
 install for us
 
     sudo apt-get build-dep python-numpy python-scipy python-matplotlib cython
@@ -138,9 +138,9 @@ We will use virtualenv to keep everything nice and neat:
 Now close this terminal down and open a new one. You should see the initial
 setup of `virtualenvwrapper` happen.
 
-We make a new virtualenv for pybug
+We make a new virtualenv for menpo
 
-    mkvirtualenv pybug
+    mkvirtualenv menpo
 
 and install numpy and cython
 
@@ -153,9 +153,9 @@ the vtk python bindings we installed earlier
 
 (it should notify you that this ENABLED the global site packages).
 
-Now we are good to install pybug. It should take care of the rest
+Now we are good to install menpo. It should take care of the rest
 
-    pip install -e git+https://github.com/YOURGITHUBACCOUNT/pybug.git#egg=pybug
+    pip install -e git+https://github.com/YOURGITHUBACCOUNT/menpo.git#egg=menpo
 
 The code is installed in the virtualenv we made. First, `cd` to it
 
@@ -163,40 +163,40 @@ The code is installed in the virtualenv we made. First, `cd` to it
 
 Then go to the source folder
 
-    cd src/pybug
+    cd src/menpo
 
 Here you will find all the git repository for the project.
 
 DEVELOPMENT
 ===========
 
-The above installation properly installs pybug just like any other package.
-Afterwards you just need to enable the pybug virutalenv
+The above installation properly installs menpo just like any other package.
+Afterwards you just need to enable the menpo virutalenv
 
-    workon pybug
+    workon menpo
 
-and then you can open up an IPython session and `import pybug` just as you
+and then you can open up an IPython session and `import menpo` just as you
 would expect to be able to `import numpy`. Note that you can start a python
-session from _anywhere_ - so long as the pybug env is activated, you will
-be able to use pybug.
+session from _anywhere_ - so long as the menpo env is activated, you will
+be able to use menpo.
 
-As we installed pybug with the `-e` flag, the install is _editable_ - which
+As we installed menpo with the `-e` flag, the install is _editable_ - which
 means that any changes you make to the source folder will actually change how
-pybug works. Let's say I wanted to print a silly message every time I import
-pybug. I could go the source folder:
+menpo works. Let's say I wanted to print a silly message every time I import
+menpo. I could go the source folder:
 
-    cdvirtualenv && cd src/pybug
+    cdvirtualenv && cd src/menpo
 
-edit the `pybug/__init__.py` to print something
+edit the `menpo/__init__.py` to print something
 
-    echo 'print "Hello world from pybug!"' >> pybug/__init__.py
+    echo 'print "Hello world from menpo!"' >> menpo/__init__.py
 
 
 then, after starting (or restarting) a python session, you should see the
 effect of the print statement immediately on import (try it out!) This means
 the general approach is to, iteratively,
 
-1. Edit/add files in `src/pybug` either using a text editor/IDE like PyCharm
+1. Edit/add files in `src/menpo` either using a text editor/IDE like PyCharm
 2. Restart an IPython session/open the PyCharm IPython to load the changes
 3. Try out your changes
 
@@ -204,7 +204,7 @@ the only extra complication is when developing Cython modules (those that
 bridge C/C++ and Python). If you are doing development with Cython, or
 do a git fetch which includes a change to a Cython file, you will need to
 trigger the recompilation of the C/C++ code. To make this easy, there is a
-Makefile in `src/pybug` - just go there and
+Makefile in `src/menpo` - just go there and
 
     make
 
@@ -219,7 +219,7 @@ TESTING
 For simplicity, we are using
 [nosetests](https://nose.readthedocs.org/en/latest/) to test. Tests are simply
 python files with a name containing `test`. For now, tests are placed next
-to the modules that they test, inside a folder named `test` - see `pybug.shape` 
+to the modules that they test, inside a folder named `test` - see `menpo.shape` 
 for an example. Tests themselves are functions with names starting with `test_` 
 inside one of these test files.
 
@@ -238,11 +238,11 @@ the very top of the repo, so data can be reliably found at `./data/` in
 all tests.
 
 
-Finally, note that nose runs through all of the pybug package looking for
+Finally, note that nose runs through all of the menpo package looking for
 tests, importing everything as it goes (much like how Sphinx works looking
 for docs). As a result, on systems which haven't installed the optional
 `mlabwrap`, you will see an error raised as nosetests attempts to import
-it from the pybug.matlab.wrapper` package - this can be safely ignored.
+it from the menpo.matlab.wrapper` package - this can be safely ignored.
 
 Documentation
 =============
@@ -258,6 +258,6 @@ In order to build the documentation, run
 inside the `docs` directory. This will then output a set of HTML documentation
 pages within the `_build/html` directory.
 
-To add new documentation, add a new `.rst` file with the `docs/pybug` folder. 
+To add new documentation, add a new `.rst` file with the `docs/menpo` folder. 
 The `automodule` Sphinx function is used in order to turn multiline function
 comments into formatted documentation.

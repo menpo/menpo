@@ -1,4 +1,4 @@
-from pybug.groupalign.rigid import Procrustes
+from menpo.groupalign.rigid import Procrustes
 import numpy as np
 
 

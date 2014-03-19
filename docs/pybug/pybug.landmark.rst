@@ -4,7 +4,7 @@ landmark Package
 :mod:`landmark` Package
 -----------------------
 
-.. automodule:: pybug.landmark
+.. automodule:: menpo.landmark
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ landmark Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.landmark.base
+.. automodule:: menpo.landmark.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ landmark Package
 :mod:`exceptions` Module
 ------------------------
 
-.. automodule:: pybug.landmark.exceptions
+.. automodule:: menpo.landmark.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ landmark Package
 :mod:`labels` Module
 --------------------
 
-.. automodule:: pybug.landmark.labels
+.. automodule:: menpo.landmark.labels
     :members:
     :undoc-members:
     :show-inheritance:
