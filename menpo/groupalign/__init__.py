@@ -1,0 +1,1 @@
+from menpo.groupalign.procrustes import GeneralizedProcrustesAnalysis

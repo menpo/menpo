@@ -7,13 +7,13 @@ from buildhelpers.shaders import build_c_shaders
 
 
 # ---- C/C++ EXTENSIONS ---- #
-cython_modules = ["pybug/geodesics/kirsanov.pyx",
-                  "pybug/shape/mesh/cpptrimesh.pyx",
-                  "pybug/shape/mesh/normals.pyx",
-                  "pybug/io/mesh/assimp.pyx",
-                  "pybug/interpolation/cinterp.pyx",
-                  "pybug/transform/fastpwa.pyx",
-		  "pybug/features/cppimagewindowiterator.pyx"]
+cython_modules = ["menpo/geodesics/kirsanov.pyx",
+                  "menpo/shape/mesh/cpptrimesh.pyx",
+                  "menpo/shape/mesh/normals.pyx",
+                  "menpo/io/mesh/assimp.pyx",
+                  "menpo/interpolation/cinterp.pyx",
+                  "menpo/transform/fastpwa.pyx",
+		  "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 
@@ -22,7 +22,7 @@ cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 # first, convert the plain text shaders into C string literals
 build_c_shaders()
 
-opengl_c_cython_modules = ["pybug/rasterize/copengl.pyx"]
+opengl_c_cython_modules = ["menpo/rasterize/copengl.pyx"]
 opengl_c_exts = cythonize(opengl_c_cython_modules, nthreads=2, quiet=True)
 
 # unfortunately, OpenGL is just different on OS X/Linux
@@ -37,7 +37,7 @@ elif sys.platform == 'darwin':
         #                             '-framework Cocoa', '-framework IOKit',
         #                             '-framework CoreVideo']
 
-setup(name='pybug',
+setup(name='menpo',
       version='0.2',
       description='iBUG Facial Modelling Toolkit',
       author='James Booth',

@@ -4,7 +4,7 @@ geodesics Package
 :mod:`geodesics` Package
 ------------------------
 
-.. automodule:: pybug.geodesics
+.. automodule:: menpo.geodesics
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ geodesics Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.geodesics.base
+.. automodule:: menpo.geodesics.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ geodesics Package
 :mod:`exceptions` Module
 ------------------------
 
-.. automodule:: pybug.geodesics.exceptions
+.. automodule:: menpo.geodesics.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ geodesics Package
 :mod:`kirsanov` Module
 ----------------------
 
-.. automodule:: pybug.geodesics.kirsanov
+.. automodule:: menpo.geodesics.kirsanov
     :members:
     :undoc-members:
     :show-inheritance:

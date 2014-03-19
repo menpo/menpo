@@ -1,7 +1,7 @@
-pybug
+menpo
 =====
 
 .. toctree::
    :maxdepth: 4
 
-   pybug
+   menpo

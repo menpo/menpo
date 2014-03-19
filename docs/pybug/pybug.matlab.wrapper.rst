@@ -4,7 +4,7 @@ wrapper Package
 :mod:`wrapper` Package
 ----------------------
 
-.. automodule:: pybug.matlab.wrapper
+.. automodule:: menpo.matlab.wrapper
     :members:
     :undoc-members:
     :show-inheritance:

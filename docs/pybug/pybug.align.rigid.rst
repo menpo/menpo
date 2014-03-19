@@ -4,7 +4,7 @@ rigid Package
 :mod:`rigid` Package
 --------------------
 
-.. automodule:: pybug.align.rigid
+.. automodule:: menpo.align.rigid
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ rigid Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.align.rigid.base
+.. automodule:: menpo.align.rigid.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ rigid Package
 :mod:`procrustes` Module
 ------------------------
 
-.. automodule:: pybug.align.rigid.procrustes
+.. automodule:: menpo.align.rigid.procrustes
     :members:
     :undoc-members:
     :show-inheritance:

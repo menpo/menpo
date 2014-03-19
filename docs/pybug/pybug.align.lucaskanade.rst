@@ -4,7 +4,7 @@ lucaskanade Package
 :mod:`lucaskanade` Package
 --------------------------
 
-.. automodule:: pybug.align.lucaskanade
+.. automodule:: menpo.align.lucaskanade
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ lucaskanade Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.align.lucaskanade.base
+.. automodule:: menpo.align.lucaskanade.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ lucaskanade Package
 :mod:`featurebasedtps` Module
 -----------------------------
 
-.. automodule:: pybug.align.lucaskanade.featurebasedtps
+.. automodule:: menpo.align.lucaskanade.featurebasedtps
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ lucaskanade Package
 :mod:`residual` Module
 ----------------------
 
-.. automodule:: pybug.align.lucaskanade.residual
+.. automodule:: menpo.align.lucaskanade.residual
     :members:
     :undoc-members:
     :show-inheritance:

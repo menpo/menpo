@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = ./pybug/mesh/mesh.cpp ./pybug/mesh/vertex.cpp ./pybug/mesh/halfedge.cpp ./pybug/mesh/vec3.cpp ./pybug/mesh/triangle.cpp
+# distutils: sources = ./menpo/mesh/mesh.cpp ./menpo/mesh/vertex.cpp ./menpo/mesh/halfedge.cpp ./menpo/mesh/vec3.cpp ./menpo/mesh/triangle.cpp
 
 from libcpp.vector cimport vector
 from libcpp.set    cimport set

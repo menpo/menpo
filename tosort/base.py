@@ -4,8 +4,8 @@ import os
 import re
 import tempfile
 import numpy as np
-from pybug.io import metadata
-from pybug.shape import TexturedTriMesh, TriMesh
+from menpo.io import metadata
+from menpo.shape import TexturedTriMesh, TriMesh
 
 
 def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
@@ -66,7 +66,7 @@ class MeshImporter(object):
 
     def import_landmarks(self):
         try:
-            self.landmarks = metadata.json_pybug_landmarks(
+            self.landmarks = metadata.json_menpo_landmarks(
                 self.path_and_filename)
         except metadata.MissingLandmarksError:
             self.landmarks = None

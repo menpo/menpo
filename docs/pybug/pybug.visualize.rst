@@ -4,7 +4,7 @@ visualize Package
 :mod:`visualize` Package
 ------------------------
 
-.. automodule:: pybug.visualize
+.. automodule:: menpo.visualize
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ visualize Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.visualize.base
+.. automodule:: menpo.visualize.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ visualize Package
 :mod:`view2d` Module
 --------------------
 
-.. automodule:: pybug.visualize.view2d
+.. automodule:: menpo.visualize.view2d
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ visualize Package
 :mod:`view3d` Module
 --------------------
 
-.. automodule:: pybug.visualize.view3d
+.. automodule:: menpo.visualize.view3d
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ visualize Package
 :mod:`viewimage` Module
 -----------------------
 
-.. automodule:: pybug.visualize.viewimage
+.. automodule:: menpo.visualize.viewimage
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ visualize Package
 :mod:`viewmatplotlib` Module
 ----------------------------
 
-.. automodule:: pybug.visualize.viewmatplotlib
+.. automodule:: menpo.visualize.viewmatplotlib
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ visualize Package
 :mod:`viewmayavi` Module
 ------------------------
 
-.. automodule:: pybug.visualize.viewmayavi
+.. automodule:: menpo.visualize.viewmayavi
     :members:
     :undoc-members:
     :show-inheritance:

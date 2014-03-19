@@ -4,7 +4,7 @@ warp Package
 :mod:`warp` Package
 -------------------
 
-.. automodule:: pybug.warp
+.. automodule:: menpo.warp
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ warp Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.warp.base
+.. automodule:: menpo.warp.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ warp Package
 :mod:`cinterp` Module
 ---------------------
 
-.. automodule:: pybug.warp.cinterp
+.. automodule:: menpo.warp.cinterp
     :members:
     :undoc-members:
     :show-inheritance:

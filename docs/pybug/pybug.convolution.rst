@@ -4,7 +4,7 @@ convolution Package
 :mod:`convolution` Package
 --------------------------
 
-.. automodule:: pybug.convolution
+.. automodule:: menpo.convolution
     :members:
     :undoc-members:
     :show-inheritance:

@@ -4,7 +4,7 @@ matlab Package
 :mod:`matlab` Package
 ---------------------
 
-.. automodule:: pybug.matlab
+.. automodule:: menpo.matlab
     :members:
     :undoc-members:
     :show-inheritance:
@@ -14,5 +14,5 @@ Subpackages
 
 .. toctree::
 
-    pybug.matlab.wrapper
+    menpo.matlab.wrapper
 

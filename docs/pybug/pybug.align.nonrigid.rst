@@ -4,7 +4,7 @@ nonrigid Package
 :mod:`nonrigid` Package
 -----------------------
 
-.. automodule:: pybug.align.nonrigid
+.. automodule:: menpo.align.nonrigid
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ nonrigid Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.align.nonrigid.base
+.. automodule:: menpo.align.nonrigid.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ nonrigid Package
 :mod:`tps` Module
 -----------------
 
-.. automodule:: pybug.align.nonrigid.tps
+.. automodule:: menpo.align.nonrigid.tps
     :members:
     :undoc-members:
     :show-inheritance:

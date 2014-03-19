@@ -4,7 +4,7 @@ align Package
 :mod:`align` Package
 --------------------
 
-.. automodule:: pybug.align
+.. automodule:: menpo.align
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ align Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.align.base
+.. automodule:: menpo.align.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -22,7 +22,7 @@ Subpackages
 
 .. toctree::
 
-    pybug.align.lucaskanade
-    pybug.align.nonrigid
-    pybug.align.rigid
+    menpo.align.lucaskanade
+    menpo.align.nonrigid
+    menpo.align.rigid
 

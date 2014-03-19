@@ -4,7 +4,7 @@ mesh Package
 :mod:`mesh` Package
 -------------------
 
-.. automodule:: pybug.shape.mesh
+.. automodule:: menpo.shape.mesh
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ mesh Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.shape.mesh.base
+.. automodule:: menpo.shape.mesh.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ mesh Package
 :mod:`cpptrimesh` Module
 ------------------------
 
-.. automodule:: pybug.shape.mesh.cpptrimesh
+.. automodule:: menpo.shape.mesh.cpptrimesh
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ mesh Package
 :mod:`exceptions` Module
 ------------------------
 
-.. automodule:: pybug.shape.mesh.exceptions
+.. automodule:: menpo.shape.mesh.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ mesh Package
 :mod:`textured` Module
 ----------------------
 
-.. automodule:: pybug.shape.mesh.textured
+.. automodule:: menpo.shape.mesh.textured
     :members:
     :undoc-members:
     :show-inheritance:

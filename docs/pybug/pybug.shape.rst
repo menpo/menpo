@@ -4,7 +4,7 @@ shape Package
 :mod:`shape` Package
 --------------------
 
-.. automodule:: pybug.shape
+.. automodule:: menpo.shape
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ shape Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.shape.base
+.. automodule:: menpo.shape.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ shape Package
 :mod:`exceptions` Module
 ------------------------
 
-.. automodule:: pybug.shape.exceptions
+.. automodule:: menpo.shape.exceptions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ shape Package
 :mod:`graph` Module
 -------------------
 
-.. automodule:: pybug.shape.graph
+.. automodule:: menpo.shape.graph
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ shape Package
 :mod:`pointcloud` Module
 ------------------------
 
-.. automodule:: pybug.shape.pointcloud
+.. automodule:: menpo.shape.pointcloud
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ shape Package
 :mod:`tree` Module
 ------------------
 
-.. automodule:: pybug.shape.tree
+.. automodule:: menpo.shape.tree
     :members:
     :undoc-members:
     :show-inheritance:
@@ -54,5 +54,5 @@ Subpackages
 
 .. toctree::
 
-    pybug.shape.mesh
+    menpo.shape.mesh
 

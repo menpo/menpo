@@ -4,7 +4,7 @@ decorator Package
 :mod:`decorator` Package
 ------------------------
 
-.. automodule:: pybug.decorator
+.. automodule:: menpo.decorator
     :members:
     :undoc-members:
     :show-inheritance:

@@ -4,7 +4,7 @@ transform Package
 :mod:`transform` Package
 ------------------------
 
-.. automodule:: pybug.transform
+.. automodule:: menpo.transform
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ transform Package
 :mod:`affine` Module
 --------------------
 
-.. automodule:: pybug.transform.affine
+.. automodule:: menpo.transform.affine
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ transform Package
 :mod:`base` Module
 ------------------
 
-.. automodule:: pybug.transform.base
+.. automodule:: menpo.transform.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ transform Package
 :mod:`piecewiseaffine` Module
 -----------------------------
 
-.. automodule:: pybug.transform.piecewiseaffine
+.. automodule:: menpo.transform.piecewiseaffine
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ transform Package
 :mod:`statisticallydriven` Module
 ---------------------------------
 
-.. automodule:: pybug.transform.statisticallydriven
+.. automodule:: menpo.transform.statisticallydriven
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ transform Package
 :mod:`tps` Module
 -----------------
 
-.. automodule:: pybug.transform.tps
+.. automodule:: menpo.transform.tps
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,6 +1,6 @@
-# whether collections have any role in pybug is not clear.
+# whether collections have any role in menpo is not clear.
 # for now this module remains here.
-# TODO pybug collections - do we need them?
+# TODO menpo collections - do we need them?
 #
 # from . import Shape
 # from .mesh import TriMesh
