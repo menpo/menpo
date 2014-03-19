@@ -1,10 +1,9 @@
-PyBug
+Menpo
 =====
 
-PyBug is a statistical facial modelling toolkit, providing all the tools 
+Menpo is a statistical facial modelling toolkit, providing all the tools 
 required to build, fit, visualize, and test statistical models like Active
 Appearance Models and Morphable Models.
-
 
 
 DEPENDENCIES
@@ -28,12 +27,12 @@ For example, running
 will install all libraries that numpy requires to build. The libraries will
 definitely be sufficient to build the version of numpy that ships with your
 version of Ubuntu - and hopefully will be sufficient for the (newer) version
-of numpy pip will download for you when installing pybug.
+of numpy pip will download for you when installing Menpo.
 
 Direct System Dependencies
 --------------------------
 
-This table lists all libraries that are direct dependendencies of PyBug itself.
+This table lists all libraries that are direct dependendencies of Menpo itself.
 
 <table>
   <tr>
@@ -73,7 +72,7 @@ This table lists all libraries that are direct dependendencies of PyBug itself.
     <td>-</td>
     <td>-</td>
     <td>glfw3</td>
-    <td>OpenGL context creation library</td>
+    <td>OpenGL context creation library. Note we require BUILD_SHARED_LIBS to be selected in CMake</td>
   </tr>
 </table>
 
