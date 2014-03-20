@@ -369,7 +369,7 @@ def es(image_data, verbose=False):
     return es_data
 
 
-def lbp(image_data, mapping_type='riu2', verbose=False):
+def lbp(image_data, radius, samples, mapping_type='riu2', mode='image', verbose=False):
     r"""
     Computes a 2-dimensional HOG features image with k number of channels, of
     size ``(M, N, C)`` and data type ``np.float``.
@@ -393,7 +393,7 @@ def lbp(image_data, mapping_type='riu2', verbose=False):
     return 0
 
 
-def get_lbp_mapping(n_samples, mapping_type='riu2'):
+def _get_lbp_mapping(n_samples, mapping_type='riu2'):
     r"""
     Returns the mapping table for LBP codes in a neighbourhood of n_samples
     number of sampling points.
@@ -434,17 +434,17 @@ def get_lbp_mapping(n_samples, mapping_type='riu2'):
     # rotation-invariant mapping
     elif mapping_type == 'ri':
         new_max = 0
-        tmp_map = np.zeros(2**n_samples, 1) - 1
+        tmp_map = np.zeros((2**n_samples, 1), dtype=np.int) - 1
         for c in range(2**n_samples):
             rm = c
             r = c
             for j in range(1, n_samples):
                 r = circural_rotation_left(r, 1, n_samples)
                 rm = min(rm, r)
-            if tmp_map[rm] < 0:
-                tmp_map[rm] = new_max
+            if tmp_map[rm, 0] < 0:
+                tmp_map[rm, 0] = new_max
                 new_max += 1
-            table[c] = tmp_map[rm]
+            table[c] = tmp_map[rm, 0]
     # uniform-2 and rotation-invariant mapping
     elif mapping_type == 'riu2':
         new_max = n_samples + 2
@@ -466,6 +466,20 @@ def get_lbp_mapping(n_samples, mapping_type='riu2'):
 
 
 def circural_rotation_left(val, rot_bits, max_bits):
+    r"""
+    Applies a circular left shift of 'rot_bits' bits on the given number 'num'
+    keeping 'max_bits' number of bits.
+
+    Parameters
+    ----------
+    val :  int
+        The input number to be shifted.
+    rot_bins : int
+        The number of bits of the left circular shift.
+    max_bits : int
+        The number of bits of the output number. All the bits in positions
+        larger than max_bits are dropped.
+    """
     return (val << rot_bits % max_bits) & (2**max_bits - 1) | \
            ((val & (2**max_bits - 1)) >> (max_bits - (rot_bits % max_bits)))
 
