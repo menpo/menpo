@@ -48,7 +48,7 @@ setup(name='menpo',
       install_requires=[# Core
                         'numpy>=1.8.0',
                         'scipy>=0.12.0',
-                        'Cython>=0.18',
+                        'Cython>=0.20.1', # req on OS X Mavericks
 
                         # Image
                         'Pillow>=2.0.0',
