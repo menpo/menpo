@@ -390,10 +390,25 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image', verbose=
 
         Default: False
     """
+    # Parse options
+    if isinstance(radius, int) and radius < 1:
+        raise ValueError("LBP features radius must be greater than 0")
+    elif isinstance(radius, list) and sum(r < 1 for r in radius) > 0:
+        raise ValueError("LBP features list of radius must be greater than 0")
+    if isinstance(samples, int) and samples < 1:
+        raise ValueError("LBP features samples must be greater than 0")
+    elif isinstance(samples, list) and sum(s < 1 for s in samples) > 0:
+        raise ValueError("LBP features list of samples must be greater than 0")
+    if mapping_type not in ['u2', 'ri', 'riu2', 'none']:
+        raise ValueError("LBP features mapping type must be u2, ri, riu2 or "
+                         "none")
+    if mode not in ['image', 'hist']:
+        raise ValueError("LBP features mode must be either image or hist")
+    #
     return 0
 
 
-def _get_lbp_mapping(n_samples, mapping_type='riu2'):
+def _lbp_mapping_table(n_samples, mapping_type='riu2'):
     r"""
     Returns the mapping table for LBP codes in a neighbourhood of n_samples
     number of sampling points.
