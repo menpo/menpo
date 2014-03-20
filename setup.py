@@ -55,7 +55,7 @@ setup(name='menpo',
                         'scikit-image>=0.8.2',
 
                         # 3D import
-                        'menpo-pyvrml97',
+                        'menpo-pyvrml97==2.3.0a4',
 
                         # Visualization
                         'matplotlib>=1.2.1',
