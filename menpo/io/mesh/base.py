@@ -8,10 +8,9 @@ from menpo.io.base import Importer, find_alternative_files, \
 from menpo.io.mesh.assimp import AIImporter
 from menpo.io.exceptions import MeshImportError
 from menpo.shape import TexturedTriMesh, TriMesh
-from pyvrml import buildVRML97Parser
-import pyvrml.vrml97.basenodes as basenodes
-from pyvrml.node import NullNode
-from scipy.spatial import Delaunay
+from vrml.vrml97.parser import buildParser as buildVRML97Parser
+import vrml.vrml97.basenodes as basenodes
+from vrml.node import NullNode
 import numpy as np
 from menpo.shape.mesh.textured import ColouredTriMesh
 

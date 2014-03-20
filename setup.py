@@ -55,7 +55,7 @@ setup(name='menpo',
                         'scikit-image>=0.8.2',
 
                         # 3D import
-                        'pyvrml>=2.4',
+                        'menpo-pyvrml97>=2.3',
 
                         # Visualization
                         'matplotlib>=1.2.1',
@@ -67,10 +67,7 @@ setup(name='menpo',
                         'Sphinx>=1.2b1',
                         'numpydoc>=0.4',
                         'nose>=1.3.0'],
-      extras_require={'3d': 'mayavi>=4.3.0'},
-      dependency_links=[
-        'https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4']
+      extras_require={'3d': 'mayavi>=4.3.0'}
       )
 
-# NOTE: Have to include the egg name in the dependency_links as well
 
