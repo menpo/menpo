@@ -359,7 +359,7 @@ class AffineTransform(AlignableTransform, Composable):
 
     @classmethod
     def identity(cls, n_dims):
-        return cls(np.eye(n_dims + 1))
+        return AffineTransform(np.eye(n_dims + 1))
 
     def as_vector(self):
         r"""
@@ -714,6 +714,10 @@ class SimilarityTransform(AffineTransform):
     def _build_pseudoinverse(self):
         return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
 
+    @classmethod
+    def identity(cls, n_dims):
+        return SimilarityTransform(np.eye(n_dims + 1))
+
 
 class DiscreteAffineTransform(object):
     r"""
@@ -924,6 +928,10 @@ class Rotation2D(AbstractRotation):
         self.homogeneous_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
                                                     [np.sin(p), np.cos(p)]])
 
+    @classmethod
+    def identity(cls):
+        return Rotation2D(np.array([[0, 0], [0, 0]]))
+
 
 class Rotation3D(AbstractRotation):
     r"""
@@ -1038,6 +1046,10 @@ class Rotation3D(AbstractRotation):
         # TODO: Implement 3D rotation vectorisation
         raise NotImplementedError('3D rotations do not support vectorisation '
                                   'yet.')
+
+    @classmethod
+    def identity(cls):
+        return Rotation3D(np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]))
 
 
 def Scale(scale_factor, n_dims=None):
@@ -1178,6 +1190,10 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         np.fill_diagonal(self.homogeneous_matrix, vector)
         self.homogeneous_matrix[-1, -1] = 1
 
+    @classmethod
+    def identity(cls, n_dims):
+        return NonUniformScale(np.ones(n_dims))
+
 
 class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     r"""
@@ -1258,6 +1274,10 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
 
+    @classmethod
+    def identity(cls, n_dims):
+        return UniformScale(1, n_dims)
+
 
 class Translation(DiscreteAffineTransform, SimilarityTransform):
     r"""
@@ -1331,3 +1351,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def from_vector_inplace(self, p):
         self.homogeneous_matrix[:-1, -1] = p
+
+    @classmethod
+    def identity(cls, n_dims):
+        return Translation(np.zeros(n_dims))

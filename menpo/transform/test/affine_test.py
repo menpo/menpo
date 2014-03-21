@@ -553,7 +553,7 @@ def test_translation_3d_from_vector():
                      [0, 0, 1, params[2]],
                      [0, 0, 0, 1]])
 
-    tr = Translation.identity(2).from_vector(params)
+    tr = Translation.identity(3).from_vector(params)
 
     assert_equal(tr.homogeneous_matrix, homo)
 
@@ -696,7 +696,7 @@ def test_rotation2d_from_vector():
                      [1.0, 0.0, 0.0],
                      [0.0, 0.0, 1.0]], dtype=np.float64)
 
-    tr = Rotation2D.identity(2).from_vector(theta)
+    tr = Rotation2D.identity().from_vector(theta)
 
     assert_allclose(tr.homogeneous_matrix, homo, atol=1**-15)
 
@@ -713,7 +713,7 @@ def test_rotation2d_as_vector():
 
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation3D.identity(3).from_vector(0)
+    Rotation3D.identity().from_vector(0)
 
 
 @raises(NotImplementedError)

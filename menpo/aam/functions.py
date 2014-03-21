@@ -129,7 +129,8 @@ def noisy_align(source, target, noise_std=0.05, rotation=False):
     noise = (parameter_range * noise_std *
              np.random.randn(transform.n_parameters))
     parameters += noise
-    return SimilarityTransform.from_vector(parameters)
+    return SimilarityTransform.identity(source.n_dims).from_vector_inplace(
+        parameters)
 
 
 def compute_features(image, feature_type):
