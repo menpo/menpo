@@ -106,7 +106,7 @@ class BasicFitting(Viewable):
         r"""
         Returns a list containing the error at each fitting iteration.
         """
-        if hasattr(self, 'gt_shape'):
+        if self.gt_shape is not None:
             return [compute_error(t, self.gt_shape.points,
                                   self.error_type)
                     for t in self.shapes(as_points=True)]
@@ -140,7 +140,7 @@ class BasicFitting(Viewable):
         r"""
         Returns the final fitting error.
         """
-        if hasattr(self, 'ground_truth'):
+        if self.gt_shape is not None:
             return compute_error(self.final_shape.points,
                                  self.gt_shape.points,
                                  self.error_type)
@@ -153,7 +153,7 @@ class BasicFitting(Viewable):
         r"""
         Returns the initial fitting error.
         """
-        if hasattr(self, 'ground_truth'):
+        if self.gt_shape is not None:
             return compute_error(self.initial_shape.points,
                                  self.gt_shape.points,
                                  self.error_type)
@@ -165,7 +165,7 @@ class BasicFitting(Viewable):
         r"""
         Plots the error evolution throughout the fitting.
         """
-        if hasattr(self, 'ground_truth'):
+        if self.gt_shape is not None:
             legend = [self.algorithm]
             x_label = 'Number of iterations'
             y_label = self._error_text
