@@ -553,6 +553,13 @@ class AlignableTransform(Transform):
         new_transform.target = target
         return new_transform
 
+    def from_vector(self, vector):
+        new_transform = Transform.from_vector(self, vector)
+        # Reset the target if we had one
+        if new_transform.is_alignment_transform:
+            new_transform.target = new_transform.apply(new_transform.source)
+        return new_transform
+
     @staticmethod
     def _verify_source_and_target(source, target):
         if source.n_dims != target.n_dims:

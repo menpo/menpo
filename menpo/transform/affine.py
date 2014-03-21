@@ -24,9 +24,6 @@ class AffineTransform(AlignableTransform, Composable):
         # let the setter handle initialization
         self.homogeneous_matrix = homogeneous_matrix
 
-    def _init_with_homogeneous(self, homogeneous_matrix):
-        self = self.__init__(homogeneous_matrix)
-
     @classmethod
     def _align(cls, source, target, **kwargs):
         r"""
@@ -360,6 +357,10 @@ class AffineTransform(AlignableTransform, Composable):
         """
         return self.linear_component[None, ...]
 
+    @classmethod
+    def identity(cls, n_dims):
+        return cls(np.eye(n_dims + 1))
+
     def as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
@@ -389,50 +390,6 @@ class AffineTransform(AlignableTransform, Composable):
         """
         params = self.homogeneous_matrix - np.eye(self.n_dims + 1)
         return params[:self.n_dims, :].flatten(order='F')
-
-    @classmethod
-    def from_vector(cls, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        Supports rebuilding from 2D and 3D parameter sets.
-
-        2D Affine: 6 parameters::
-
-            [p1, p3, p5]
-            [p2, p4, p6]
-
-        3D Affine: 12 parameters::
-
-            [p1, p4, p7, p10]
-            [p2, p5, p8, p11]
-            [p3, p6, p9, p12]
-
-        Parameters
-        ----------
-        p : (P,) ndarray
-            The array of parameters.
-
-        Returns
-        -------
-        transform : :class:`AffineTransform`
-            The transform initialised to the given parameters.
-
-        Raises
-        ------
-        DimensionalityError
-            Only 2D and 3D transforms are supported.
-        """
-        # n.b. generally, from_vector should be an instance method. However,
-        # as Python class methods can be called on any instance,
-        # we are free to implement the from_vector method as a class method
-        # where appropriate, as is the case in AffineTransform. This means
-        # we can use from_vector as a constructor to the class in addition
-        # to it's usual role in building novel instances where some kind of
-        # state needs to be stolen from a pre-existing instance (hence the
-        # need for this to in general be an instance method).
-        return AffineTransform(cls._homogeneous_matrix_from_parameters(p))
 
     def from_vector_inplace(self, p):
         r"""
@@ -717,49 +674,6 @@ class SimilarityTransform(AffineTransform):
             raise DimensionalityError("Only 2D and 3D Similarity transforms "
                                       "are currently supported.")
 
-    @classmethod
-    def from_vector(cls, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        Supports rebuilding from 2D parameter sets.
-
-        2D Similarity: 4 parameters::
-
-            [a, b, tx, ty]
-
-        Parameters
-        ----------
-        p : (P,) ndarray
-            The array of parameters.
-
-        Returns
-        -------
-        transform : :class:`SimilarityTransform`
-            The transform initialised to the given parameters.
-
-        Raises
-        ------
-        DimensionalityError, NotImplementedError
-            Only 2D transforms are supported.
-        """
-        # See affine from_vector with regards to classmethod decorator
-        if p.shape[0] == 4:
-            homo = np.eye(3)
-            homo[0, 0] += p[0]
-            homo[1, 1] += p[0]
-            homo[0, 1] = -p[1]
-            homo[1, 0] = p[1]
-            homo[:2, 2] = p[2:]
-            return SimilarityTransform(homo)
-        elif p.shape[0] == 7:
-            raise NotImplementedError("3D similarity transforms cannot be "
-                                      "vectorized yet.")
-        else:
-            raise DimensionalityError("Only 2D and 3D Similarity transforms "
-                                      "are currently supported.")
-
     def from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
@@ -986,8 +900,7 @@ class Rotation2D(AbstractRotation):
         """
         return self.axis_and_angle_of_rotation()[1]
 
-    @classmethod
-    def from_vector(cls, p):
+    def from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
         expected to be in Fortran ordering.
@@ -1008,15 +921,8 @@ class Rotation2D(AbstractRotation):
         transform : :class:`Rotation2D`
             The transform initialised to the given parameters.
         """
-        return Rotation2D(np.array([[np.cos(p), -np.sin(p)],
-                                    [np.sin(p), np.cos(p)]]))
-
-    @classmethod
-    def _estimate(cls, source, target):
-        homogeneous_matrix = super(Rotation2D, cls)._estimate(source, target)
-        similarity = SimilarityTransform(homogeneous_matrix)
-        r1, s, r2, t = similarity.decompose()
-        return r1.compose_before(r2).homogeneous_matrix[:-1, :-1]
+        self.homogeneous_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
+                                                    [np.sin(p), np.cos(p)]])
 
 
 class Rotation3D(AbstractRotation):
@@ -1119,8 +1025,7 @@ class Rotation3D(AbstractRotation):
         raise NotImplementedError('3D rotations do not support vectorisation '
                                   'yet.')
 
-    @classmethod
-    def from_vector(cls, p):
+    def from_vector_inplace(self, p):
         r"""
         Not yet implemented.
 
@@ -1260,23 +1165,6 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         return self.scale
 
-    @classmethod
-    def from_vector(cls, vector):
-        r"""
-        Returns a NonUniformScale from the given parameters.
-
-        Parameters
-        ----------
-        vector : (D,) ndarray
-            A vector of scale values, one per dimension.
-
-        Returns
-        -------
-        transform : :class:`NonUniformScale`
-            The transform initialised to the given parameters.
-        """
-        return NonUniformScale(vector)
-
     def from_vector_inplace(self, vector):
         r"""
         Updates the NonUniformScale inplace.
@@ -1366,23 +1254,6 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         """
         return self.scale
 
-    def from_vector(self, p):
-        r"""
-        Returns a UniformScale from the scale argument
-
-
-        Parameters
-        ----------
-        p : double
-            The parameter.
-
-        Returns
-        -------
-        scale : cls
-            A 2D or 3D scale as appropriate.
-        """
-        return UniformScale(p, self.n_dims)
-
     def from_vector_inplace(self, p):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
@@ -1457,30 +1328,6 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
             The translation in each axis.
         """
         return self.homogeneous_matrix[:-1, -1]
-
-    @classmethod
-    def from_vector(cls, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        2D translation: 2 parameters::
-
-            [t0, t1]
-
-        Other dimensionality translations are similar to the 2D translation.
-
-        Parameters
-        ----------
-        p : double
-            The parameters.
-
-        Returns
-        -------
-        transform : :class:`Translation`
-            The transform initialised to the given parameters.
-        """
-        return Translation(p)
 
     def from_vector_inplace(self, p):
         self.homogeneous_matrix[:-1, -1] = p
