@@ -100,14 +100,22 @@ class MMBuilder(object):
         self.models = models
         self.group = group
         self.label = label
-        self.ra_models, self.ra_mean_lms, self.unwrapper = None
+        # ra = Rigid Aligned
+        self.ra_models, self.ra_mean_lms, self.unwrapper = None, None, None
+        print 'Rigidly aligning...'
         self.rigidly_align()
-        self.u_models, self.u_mean_lms, self.u_2d, self.u_mean_lms_2d = None
+        # u = Unwrapped (infers ra) 
+        self.u_models, self.u_mean_lms = None, None
+        self.u_2d, self.u_mean_lms_2d = None, None
+        print 'Unwrapping and flattening...'
         self.unwrap_and_flatten()
-        self.wu_models_2d = None
+        # w = Warped (infers ra + u)
+        self.w_models_2d = None
+        print 'Warping...'
         self.warp()
         self.r = GLRasterizer()
         self.shape_images = []
+        print 'Rasterizing...'
         self.rasterize()
 
     def lms_for(self, x):
@@ -133,18 +141,18 @@ class MMBuilder(object):
     def warp(self):
         tps_transforms = [TPS(self.lms_for(u), self.u_mean_lms_2d)
                           for u in self.u_2d]
-        self.wu_models_2d = [t.apply(u) for t, u in zip(tps_transforms,
-                                                        self.wu_models_2d)]
+        self.w_models_2d = [t.apply(u) for t, u in zip(tps_transforms,
+                                                        self.w_models_2d)]
 
     def rasterize(self):
         trans_to_clip_space = clip_space_transform(self.u_mean_lms_2d)
-        cs_wu_models_2d = [trans_to_clip_space.apply(m)
-                           for m in self.wu_models_2d]
+        cs_w_models_2d = [trans_to_clip_space.apply(m)
+                           for m in self.w_models_2d]
         add_nill_z = AddNillZ()  # adds an all-zero z axis
-        cs_wu_models = [add_nill_z.apply(m) for m in cs_wu_models_2d]
+        cs_w_models = [add_nill_z.apply(m) for m in cs_w_models_2d]
 
         self.shape_images = []
-        for cs_wu_model, orig in zip(cs_wu_models, self.ra_models):
+        for cs_w_model, orig in zip(cs_w_models, self.ra_models):
             blank, shape_image = self.r.rasterize_mesh_with_f3v_interpolant(
-                cs_wu_model, per_vertex_f3v=orig.points)
+                cs_w_model, per_vertex_f3v=orig.points)
             self.shape_images.append(shape_image)
