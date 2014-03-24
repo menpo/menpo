@@ -789,3 +789,53 @@ def test_rotation3d_n_parameters_raises_notimplementederror():
     t = Rotation3D(rot_matrix)
     # Throws exception
     t.n_parameters
+
+
+def test_rotation2d_identity():
+    assert_allclose(Rotation2D.identity().homogeneous_matrix, np.eye(3))
+
+
+def test_rotation3d_identity():
+    assert_allclose(Rotation3D.identity().homogeneous_matrix, np.eye(4))
+
+
+def test_affine_identity_2d():
+    assert_allclose(AffineTransform.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_affine_identity_3d():
+    assert_allclose(AffineTransform.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_similarity_identity_2d():
+    assert_allclose(SimilarityTransform.identity(2).homogeneous_matrix,
+                    np.eye(3))
+
+
+def test_similarity_identity_3d():
+    assert_allclose(SimilarityTransform.identity(3).homogeneous_matrix,
+                    np.eye(4))
+
+
+def test_uniformscale_identity_2d():
+    assert_allclose(UniformScale.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_uniformscale_identity_3d():
+    assert_allclose(UniformScale.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_nonuniformscale_identity_2d():
+    assert_allclose(NonUniformScale.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_nonuniformscale_identity_3d():
+    assert_allclose(NonUniformScale.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_translation_identity_2d():
+    assert_allclose(Translation.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_translation_identity_3d():
+    assert_allclose(Translation.identity(3).homogeneous_matrix, np.eye(4))
