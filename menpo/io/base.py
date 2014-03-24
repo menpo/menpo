@@ -153,7 +153,7 @@ def import_image(filepath, landmark_resolver=None):
                    landmark_resolver=landmark_resolver)
 
 
-def import_mesh(filepath, landmark_resolver=None):
+def import_mesh(filepath, landmark_resolver=None, texture=True):
     r"""Single mesh (and associated landmarks and texture) importer.
 
     Iff an mesh file is found at `filepath`, returns a :class:`menpo.shape
@@ -172,14 +172,19 @@ def import_mesh(filepath, landmark_resolver=None):
         provide a string or list of strings detailing the landmarks to be
         imported.
 
+    texture: Boolean, optional
+        If False, don't search for textures.
+
+        Default: True
     Returns
     -------
     :class:`menpo.shape.TriMesh`
         An instantiated trimesh (or textured trimesh) file object
 
     """
+    kwargs = {'texture': texture}
     return _import(filepath, mesh_types, has_landmarks=True,
-                   landmark_resolver=landmark_resolver)
+                   landmark_resolver=landmark_resolver, importer_kwargs=kwargs)
 
 
 def import_landmark_file(filepath):
@@ -251,7 +256,8 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
         yield asset
 
 
-def import_meshes(pattern, max_meshes=None, landmark_resolver=None):
+def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
+                  textures=True):
     r"""Multiple mesh import generator.
 
     Makes it's best effort to import and attach relevant related
@@ -278,6 +284,10 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None):
         If not None, this function will be used to find landmarks for each
         mesh. The function should take one argument (a mesh itself) and
         return a dictionary of the form {'group_name': 'landmark_filepath'}
+    texture: Boolean, optional
+        If False, don't search for textures.
+
+        Default: True
 
     Yields
     ------
@@ -285,10 +295,12 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None):
         Meshes found to match the glob pattern provided.
 
     """
+    kwargs = {'texture': textures}
     for asset in _import_glob_generator(pattern, mesh_types,
                                         max_assets=max_meshes,
                                         has_landmarks=True,
-                                        landmark_resolver=landmark_resolver):
+                                        landmark_resolver=landmark_resolver,
+                                        importer_kwargs=kwargs):
         yield asset
 
 
@@ -354,19 +366,21 @@ def ls_builtin_assets():
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
-                           has_landmarks=False, landmark_resolver=None):
+                           has_landmarks=False, landmark_resolver=None,
+                           importer_kwargs=None):
     filepaths = _glob_matching_extension(pattern, extension_map)
     if max_assets:
         filepaths = filepaths[:max_assets]
     for asset in _multi_import_generator(filepaths, extension_map,
                                          has_landmarks=has_landmarks,
-                                         landmark_resolver=landmark_resolver):
+                                         landmark_resolver=landmark_resolver,
+                                         importer_kwargs=importer_kwargs):
         yield asset
 
 
 def _import(filepath, extensions_map, keep_importer=False,
             has_landmarks=True, landmark_resolver=None,
-            asset=None):
+            asset=None, importer_kwargs=None):
     r"""
     Creates an importer for the filepath passed in, and then calls build on
     it, returning a list of assets or a single asset, depending on the
@@ -394,6 +408,8 @@ def _import(filepath, extensions_map, keep_importer=False,
     asset: object, optional
         If not None, the asset will be passed to the importer's build method
         as the asset kwarg
+    importer_kwargs: dict, optional:
+        kwargs that will be supplied to the importer if not None
 
     Returns
     -------
@@ -406,7 +422,8 @@ def _import(filepath, extensions_map, keep_importer=False,
     if not os.path.isfile(filepath):
         raise ValueError("{} is not a file".format(filepath))
     # below could raise ValueError as well...
-    importer = map_filepath_to_importer(filepath, extensions_map)
+    importer = map_filepath_to_importer(filepath, extensions_map,
+                                        importer_kwargs=importer_kwargs)
     if asset is not None:
         built_objects = importer.build(asset=asset)
     else:
@@ -458,7 +475,8 @@ def _import(filepath, extensions_map, keep_importer=False,
 
 
 def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
-                            has_landmarks=False, landmark_resolver=None):
+                            has_landmarks=False, landmark_resolver=None,
+                            importer_kwargs=None):
     r"""
     Generator yielding assets from the filepaths provided.
 
@@ -483,6 +501,8 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
         If not None, this function will be used to find landmarks for each
         asset. The function should take one argument (the asset itself) and
         return a dictionary of the form {'group_name': 'landmark_filepath'}
+    importer_kwargs: dict, optional
+        kwargs to be supplied to the importer if not None
 
     Yields
     ------
@@ -496,7 +516,8 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
     for f in sorted(filepaths):
         imported = _import(f, extensions_map, keep_importer=keep_importers,
                            has_landmarks=has_landmarks,
-                           landmark_resolver=landmark_resolver)
+                           landmark_resolver=landmark_resolver,
+                           importer_kwargs=importer_kwargs)
         if keep_importers:
             assets, importer = imported
         else:
@@ -545,7 +566,7 @@ def _glob_matching_extension(pattern, extensions_map):
             if does_match]
 
 
-def map_filepath_to_importer(filepath, extensions_map):
+def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
     r"""
     Given a filepath, return the appropriate importer as mapped by the
     extension map.
@@ -558,6 +579,8 @@ def map_filepath_to_importer(filepath, extensions_map):
         A map from extensions to importers. The importers are expected to be
         a subclass of :class:`Importer`. The extensions are expected to
         contain the leading period eg. ``.obj``.
+    importer_kwargs: dictionary, optional
+        kwargs that will be supplied to the importer if not None.
 
     Returns
     --------
@@ -570,7 +593,10 @@ def map_filepath_to_importer(filepath, extensions_map):
     importer_type = extensions_map.get(ext)
     if importer_type is None:
         raise ValueError("{} does not have a suitable importer.".format(ext))
-    return importer_type(filepath)
+    if importer_kwargs is not None:
+        return importer_type(filepath, **importer_kwargs)
+    else:
+        return importer_type(filepath)
 
 
 def find_extensions_from_basename(filepath):
