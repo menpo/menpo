@@ -28,9 +28,6 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 	this->_windowStepVertical = windowStepVertical;
 	this->_enablePadding = enablePadding;
 	this->_imageIsGrayscale = imageIsGrayscale;
-	//this->_numberOfChannels = 1;
-	//if (!imageIsGrayscale)
-	//	this->_numberOfChannels = 3;
 	this->_numberOfWindowsHorizontally = numberOfWindowsHorizontally;
 	this->_numberOfWindowsVertically = numberOfWindowsVertically;
 }

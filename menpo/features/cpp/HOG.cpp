@@ -96,37 +96,6 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
                 }
             }
 
-/*            // first color channel
-            double *s = inputImage + min(x,imageWidth-2)*imageHeight + min(y,imageHeight-2);
-            double dy = *(s+1) - *(s-1);
-            double dx = *(s+imageHeight) - *(s-imageHeight);
-            double v = dx*dx + dy*dy;
-
-            // second color channel
-            s += imageHeight*imageWidth;
-            double dy2 = *(s+1) - *(s-1);
-            double dx2 = *(s+imageHeight) - *(s-imageHeight);
-            double v2 = dx2*dx2 + dy2*dy2;
-
-            // third color channel
-            s += imageHeight*imageWidth;
-            double dy3 = *(s+1) - *(s-1);
-            double dx3 = *(s+imageHeight) - *(s-imageHeight);
-            double v3 = dx3*dx3 + dy3*dy3;
-
-            // pick channel with strongest gradient
-            if (v2>v) {
-                v = v2;
-                dx = dx2;
-                dy = dy2;
-            }
-            if (v3>v) {
-                v = v3;
-                dx = dx3;
-                dy = dy3;
-            }
-*/
-
             // snap to one of 18 orientations
             double best_dot = 0;
             int best_o = 0;
@@ -262,7 +231,6 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
 
     double binsSize = (1+(signedOrUnsignedGradients==1))*pi/numberOfOrientationBins;
 
-    //float dx[3], dy[3], gradientOrientation, gradientMagnitude, tempMagnitude;
     float dx[numberOfChannels], dy[numberOfChannels], gradientOrientation, gradientMagnitude, tempMagnitude;
     float Xc, Yc, Oc, blockNorm;
     int x1, x2, y1, y2, bin1;
@@ -275,61 +243,6 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
     //Calculate gradients (zero padding)
     for(unsigned int y=0; y<imageHeight; y++) {
         for(unsigned int x=0; x<imageWidth; x++) {
-/*            if (imageIsGrayscale == true){
-                if(x==0)
-                    dx[0] = inputImage[y +(x+1)*imageHeight];
-                else {
-                    if (x==imageWidth-1)
-                        dx[0] = -inputImage[y + (x-1)*imageHeight];
-                    else
-                        dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
-                }
-                if(y==0)
-                    dy[0] = -inputImage[y+1+x*imageHeight];
-                else {
-                    if (y==imageHeight-1)
-                        dy[0] = inputImage[y-1+x*imageHeight];
-                    else
-                        dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
-                }
-            }
-            else {
-                if(x==0) {
-                    dx[0] = inputImage[y +(x+1)*imageHeight];
-                    dx[1] = inputImage[y +(x+1)*imageHeight + imageHeight*imageWidth];
-                    dx[2] = inputImage[y +(x+1)*imageHeight + 2*imageHeight*imageWidth];
-                }
-                else {
-                    if (x==imageWidth-1) {
-                        dx[0] = -inputImage[y + (x-1)*imageHeight];
-                        dx[1] = -inputImage[y + (x-1)*imageHeight + imageHeight*imageWidth];
-                        dx[2] = -inputImage[y + (x-1)*imageHeight + 2*imageHeight*imageWidth];
-                    }
-                    else {
-                        dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
-                        dx[1] = inputImage[y+(x+1)*imageHeight + imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + imageHeight*imageWidth];
-                        dx[2] = inputImage[y+(x+1)*imageHeight + 2*imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + 2*imageHeight*imageWidth];
-                    }
-                }
-                if(y==0) {
-                    dy[0] = -inputImage[y+1+x*imageHeight];
-                    dy[1] = -inputImage[y+1+x*imageHeight + imageHeight*imageWidth];
-                    dy[2] = -inputImage[y+1+x*imageHeight + 2*imageHeight*imageWidth];
-                }
-                else {
-                    if (y==imageHeight-1) {
-                        dy[0] = inputImage[y-1+x*imageHeight];
-                        dy[1] = inputImage[y-1+x*imageHeight + imageHeight*imageWidth];
-                        dy[2] = inputImage[y-1+x*imageHeight + 2*imageHeight*imageWidth];
-                    }
-                    else {
-                        dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
-                        dy[1] = -inputImage[y+1+x*imageHeight + imageHeight*imageWidth] + inputImage[y-1+x*imageHeight + imageHeight*imageWidth];
-                        dy[2] = -inputImage[y+1+x*imageHeight + 2*imageHeight*imageWidth] + inputImage[y-1+x*imageHeight + 2*imageHeight*imageWidth];
-                    }
-                }
-            }
-*/
             if (x==0) {
                 for (unsigned int z=0; z<numberOfChannels; z++)
                     dx[z] = inputImage[y +(x+1)*imageHeight + z*imageHeight*imageWidth];
@@ -360,20 +273,9 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
                 }
             }
 
+            // choose dominant channel based on magnitude
             gradientMagnitude = sqrt(dx[0]*dx[0] + dy[0]*dy[0]);
             gradientOrientation= atan2(dy[0], dx[0]);
-
-/*            if (imageIsGrayscale == false) {
-                tempMagnitude = gradientMagnitude;
-                for (unsigned int cli=1;cli<3;++cli) {
-                    tempMagnitude= sqrt(dx[cli]*dx[cli] + dy[cli]*dy[cli]);
-                    if (tempMagnitude>gradientMagnitude) {
-                        gradientMagnitude=tempMagnitude;
-                        gradientOrientation= atan2(dy[cli], dx[cli]);
-                    }
-                }
-            }
-*/
             if (numberOfChannels > 1) {
                 tempMagnitude = gradientMagnitude;
                 for (unsigned int cli=1; cli<numberOfChannels; ++cli) {
