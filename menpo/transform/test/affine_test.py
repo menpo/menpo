@@ -448,7 +448,7 @@ sim_jac_solution2d = np.array([[[0.,  0.],
 
 def test_affine_jacobian_2d_with_positions():
     params = np.array([0, 0.1, 0.2, 0, 30, 70])
-    t = AffineTransform.from_vector(params)
+    t = AffineTransform.identity(2).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0],
         [0, 1],
@@ -462,7 +462,7 @@ def test_affine_jacobian_2d_with_positions():
 
 def test_affine_jacobian_3d_with_positions():
     params = np.ones(12)
-    t = AffineTransform.from_vector(params)
+    t = AffineTransform.identity(3).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0, 0],
         [0, 0, 1],
@@ -482,7 +482,7 @@ def test_affine_jacobian_3d_with_positions():
 
 def test_similarity_jacobian_2d():
     params = np.ones(4)
-    t = SimilarityTransform.from_vector(params)
+    t = SimilarityTransform.identity(2).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0],
         [0, 1],
@@ -503,7 +503,7 @@ def test_similarity_jacobian_3d_raises_dimensionalityerror():
 @raises(DimensionalityError)
 def test_similarity_2d_points_raises_dimensionalityerror():
     params = np.ones(4)
-    t = SimilarityTransform.from_vector(params)
+    t = SimilarityTransform.identity(2).from_vector(params)
     t.jacobian(np.ones([2, 3]))
 
 
@@ -513,7 +513,7 @@ def test_similarity_2d_from_vector():
                      [params[1], params[0] + 1, params[3]],
                      [0, 0, 1]])
 
-    sim = SimilarityTransform.from_vector(params)
+    sim = SimilarityTransform.identity(2).from_vector(params)
 
     assert_equal(sim.homogeneous_matrix, homo)
 
@@ -535,7 +535,7 @@ def test_translation_2d_from_vector():
                      [0, 1, params[1]],
                      [0, 0, 1]])
 
-    tr = Translation.from_vector(params)
+    tr = Translation.identity(2).from_vector(params)
 
     assert_equal(tr.homogeneous_matrix, homo)
 
@@ -553,7 +553,7 @@ def test_translation_3d_from_vector():
                      [0, 0, 1, params[2]],
                      [0, 0, 0, 1]])
 
-    tr = Translation.from_vector(params)
+    tr = Translation.identity(3).from_vector(params)
 
     assert_equal(tr.homogeneous_matrix, homo)
 
@@ -588,7 +588,7 @@ def test_nonuniformscale2d_from_vector():
                      [0, scale[1], 0],
                      [0, 0, 1]])
 
-    tr = NonUniformScale.from_vector(scale)
+    tr = NonUniformScale.identity(2).from_vector(scale)
 
     assert_equal(tr.homogeneous_matrix, homo)
 
@@ -696,7 +696,7 @@ def test_rotation2d_from_vector():
                      [1.0, 0.0, 0.0],
                      [0.0, 0.0, 1.0]], dtype=np.float64)
 
-    tr = Rotation2D.from_vector(theta)
+    tr = Rotation2D.identity().from_vector(theta)
 
     assert_allclose(tr.homogeneous_matrix, homo, atol=1**-15)
 
@@ -713,7 +713,7 @@ def test_rotation2d_as_vector():
 
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation3D.from_vector(0)
+    Rotation3D.identity().from_vector(0)
 
 
 @raises(NotImplementedError)
@@ -789,3 +789,53 @@ def test_rotation3d_n_parameters_raises_notimplementederror():
     t = Rotation3D(rot_matrix)
     # Throws exception
     t.n_parameters
+
+
+def test_rotation2d_identity():
+    assert_allclose(Rotation2D.identity().homogeneous_matrix, np.eye(3))
+
+
+def test_rotation3d_identity():
+    assert_allclose(Rotation3D.identity().homogeneous_matrix, np.eye(4))
+
+
+def test_affine_identity_2d():
+    assert_allclose(AffineTransform.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_affine_identity_3d():
+    assert_allclose(AffineTransform.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_similarity_identity_2d():
+    assert_allclose(SimilarityTransform.identity(2).homogeneous_matrix,
+                    np.eye(3))
+
+
+def test_similarity_identity_3d():
+    assert_allclose(SimilarityTransform.identity(3).homogeneous_matrix,
+                    np.eye(4))
+
+
+def test_uniformscale_identity_2d():
+    assert_allclose(UniformScale.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_uniformscale_identity_3d():
+    assert_allclose(UniformScale.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_nonuniformscale_identity_2d():
+    assert_allclose(NonUniformScale.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_nonuniformscale_identity_3d():
+    assert_allclose(NonUniformScale.identity(3).homogeneous_matrix, np.eye(4))
+
+
+def test_translation_identity_2d():
+    assert_allclose(Translation.identity(2).homogeneous_matrix, np.eye(3))
+
+
+def test_translation_identity_3d():
+    assert_allclose(Translation.identity(3).homogeneous_matrix, np.eye(4))
