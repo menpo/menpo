@@ -45,6 +45,7 @@ cdef class AIImporter:
     cdef AssimpImporter* importer
     cdef AssimpScene* scene
     cdef public list meshes
+    cdef bytes filepath
 
     def __cinit__(self, string path):
         self.meshes = []

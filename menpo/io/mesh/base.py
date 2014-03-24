@@ -86,7 +86,8 @@ class MeshImporter(Importer):
     specified by filepath for landmarks and textures with the same basename as
     the mesh. If found, they are automatically attached. If a texture is found
     then a :class:`menpo.shape.mesh.textured.TexturedTriMesh` is built, else a
-    :class:`menpo.shape.mesh.base.Trimesh` is built.
+    :class:`menpo.shape.mesh.base.Trimesh` is built. Note that this behavior
+    can be overridden if desired.
 
     Parameters
     ----------
@@ -96,9 +97,10 @@ class MeshImporter(Importer):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, texture=True):
         super(MeshImporter, self).__init__(filepath)
         self.meshes = []
+        self.import_textures = texture
         self.attempted_texture_search = False
         self.relative_texture_path = None
         self.texture_importer = None
@@ -201,7 +203,8 @@ class MeshImporter(Importer):
         """
         #
         self._parse_format()
-        self._build_texture_importer()
+        if self.import_textures:
+            self._build_texture_importer()
 
         meshes = []
         for mesh in self.meshes:
@@ -223,7 +226,7 @@ class MeshImporter(Importer):
             return meshes
 
 
-class AssimpImporter(AIImporter, MeshImporter):
+class AssimpImporter(MeshImporter):
     """
     Uses assimp to import meshes. The assimp importing is wrapped via cython,
 
@@ -232,17 +235,17 @@ class AssimpImporter(AIImporter, MeshImporter):
     filepath : string
         Absolute filepath of the mesh.
     """
-    def __init__(self, filepath):
-        super(AssimpImporter, self).__init__(filepath)
+    def __init__(self, filepath, texture=True):
+        MeshImporter.__init__(self, filepath, texture=texture)
+        self.ai_importer = AIImporter(filepath)
 
     def _parse_format(self):
         r"""
-        Use assimp to build the mesh. Also, get the relative texture path.
+        Use assimp to build the mesh and get the relative texture path.
         """
-        self.build_scene()
-        # Properties should have different names because of multiple
-        # inheritance
-        self.relative_texture_path = self.assimp_texture_path
+        self.ai_importer.build_scene()
+        self.meshes = self.ai_importer.meshes
+        self.relative_texture_path = self.ai_importer.assimp_texture_path
 
 
 class WRLImporter(MeshImporter):
