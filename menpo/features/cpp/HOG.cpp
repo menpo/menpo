@@ -44,7 +44,7 @@ HOG::~HOG() {
 
 void HOG::apply(double *windowImage, unsigned int numberOfChannels, bool imageIsGrayscale, double *descriptorVector) {
 	if (this->method == 1)
-		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
+		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector, imageIsGrayscale);
 	else
 		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
 }
@@ -262,7 +262,8 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
 
     double binsSize = (1+(signedOrUnsignedGradients==1))*pi/numberOfOrientationBins;
 
-    float dx[3], dy[3], gradientOrientation, gradientMagnitude, tempMagnitude;
+    //float dx[3], dy[3], gradientOrientation, gradientMagnitude, tempMagnitude;
+    float dx[numberOfChannels], dy[numberOfChannels], gradientOrientation, gradientMagnitude, tempMagnitude;
     float Xc, Yc, Oc, blockNorm;
     int x1, x2, y1, y2, bin1;
     unsigned int x, y, i, j, k, bin2;
@@ -274,16 +275,22 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
     //Calculate gradients (zero padding)
     for(unsigned int y=0; y<imageHeight; y++) {
         for(unsigned int x=0; x<imageWidth; x++) {
-            if (imageIsGrayscale == true){
-                if(x==0) dx[0] = inputImage[y +(x+1)*imageHeight];
+/*            if (imageIsGrayscale == true){
+                if(x==0)
+                    dx[0] = inputImage[y +(x+1)*imageHeight];
                 else {
-                    if (x==imageWidth-1) dx[0] = -inputImage[y + (x-1)*imageHeight];
-                    else dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
+                    if (x==imageWidth-1)
+                        dx[0] = -inputImage[y + (x-1)*imageHeight];
+                    else
+                        dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
                 }
-                if(y==0) dy[0] = -inputImage[y+1+x*imageHeight];
+                if(y==0)
+                    dy[0] = -inputImage[y+1+x*imageHeight];
                 else {
-                    if (y==imageHeight-1) dy[0] = inputImage[y-1+x*imageHeight];
-                    else dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
+                    if (y==imageHeight-1)
+                        dy[0] = inputImage[y-1+x*imageHeight];
+                    else
+                        dy[0] = -inputImage[y+1+x*imageHeight] + inputImage[y-1+x*imageHeight];
                 }
             }
             else {
@@ -302,7 +309,6 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
                         dx[0] = inputImage[y+(x+1)*imageHeight] - inputImage[y + (x-1)*imageHeight];
                         dx[1] = inputImage[y+(x+1)*imageHeight + imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + imageHeight*imageWidth];
                         dx[2] = inputImage[y+(x+1)*imageHeight + 2*imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + 2*imageHeight*imageWidth];
-
                     }
                 }
                 if(y==0) {
@@ -323,13 +329,54 @@ void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientati
                     }
                 }
             }
+*/
+            if (x==0) {
+                for (unsigned int z=0; z<numberOfChannels; z++)
+                    dx[z] = inputImage[y +(x+1)*imageHeight + z*imageHeight*imageWidth];
+            }
+            else {
+                if (x==imageWidth-1) {
+                    for (unsigned int z=0; z<numberOfChannels; z++)
+                        dx[z] = -inputImage[y + (x-1)*imageHeight + z*imageHeight*imageWidth];
+                }
+                else {
+                    for (unsigned int z=0; z<numberOfChannels; z++)
+                        dx[z] = inputImage[y+(x+1)*imageHeight + z*imageHeight*imageWidth] - inputImage[y + (x-1)*imageHeight + z*imageHeight*imageWidth];
+                }
+            }
+
+            if(y==0) {
+                for (unsigned int z=0; z<numberOfChannels; z++)
+                    dy[z] = -inputImage[y+1+x*imageHeight + z*imageHeight*imageWidth];
+            }
+            else {
+                if (y==imageHeight-1) {
+                    for (unsigned int z=0; z<numberOfChannels; z++)
+                        dy[z] = inputImage[y-1+x*imageHeight + z*imageHeight*imageWidth];
+                }
+                else {
+                    for (unsigned int z=0; z<numberOfChannels; z++)
+                        dy[z] = -inputImage[y+1+x*imageHeight + z*imageHeight*imageWidth] + inputImage[y-1+x*imageHeight + z*imageHeight*imageWidth];
+                }
+            }
 
             gradientMagnitude = sqrt(dx[0]*dx[0] + dy[0]*dy[0]);
             gradientOrientation= atan2(dy[0], dx[0]);
 
-            if (imageIsGrayscale == false) {
+/*            if (imageIsGrayscale == false) {
                 tempMagnitude = gradientMagnitude;
                 for (unsigned int cli=1;cli<3;++cli) {
+                    tempMagnitude= sqrt(dx[cli]*dx[cli] + dy[cli]*dy[cli]);
+                    if (tempMagnitude>gradientMagnitude) {
+                        gradientMagnitude=tempMagnitude;
+                        gradientOrientation= atan2(dy[cli], dx[cli]);
+                    }
+                }
+            }
+*/
+            if (numberOfChannels > 1) {
+                tempMagnitude = gradientMagnitude;
+                for (unsigned int cli=1; cli<numberOfChannels; ++cli) {
                     tempMagnitude= sqrt(dx[cli]*dx[cli] + dy[cli]*dy[cli]);
                     if (tempMagnitude>gradientMagnitude) {
                         gradientMagnitude=tempMagnitude;
