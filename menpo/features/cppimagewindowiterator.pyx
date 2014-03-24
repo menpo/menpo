@@ -20,18 +20,18 @@ cdef extern from "cpp/ImageWindowIterator.h":
                             unsigned int windowWidth,
                             unsigned int windowStepHorizontal,
                             unsigned int windowStepVertical,
-                            bool enablePadding, bool imageIsGrayscale)
+                            bool enablePadding)
         void apply(double *outputImage, int *windowsCenters,
                    WindowFeature *windowFeature)
         unsigned int _numberOfWindowsHorizontally, \
             _numberOfWindowsVertically, _numberOfWindows, _imageWidth, \
             _imageHeight, _numberOfChannels, _windowHeight, _windowWidth, \
             _windowStepHorizontal, _windowStepVertical, _numberOfChannels
-        bool _enablePadding, _imageIsGrayscale
+        bool _enablePadding
 
 cdef extern from "cpp/WindowFeature.h":
     cdef cppclass WindowFeature:
-        void apply(double *windowImage, bool imageIsGrayscale,
+        void apply(double *windowImage, unsigned int numberOfChannels,
                    double *descriptorVector)
         unsigned int descriptorLengthPerWindow
 
@@ -43,7 +43,7 @@ cdef extern from "cpp/HOG.h":
             unsigned int cellHeightAndWidthInPixels,
             unsigned int blockHeightAndWidthInCells,
             bool enableSignedGradients, double l2normClipping)
-        void apply(double *windowImage, bool imageIsGrayscale,
+        void apply(double *windowImage, unsigned int numberOfChannels,
                    double *descriptorVector)
         unsigned int descriptorLengthPerBlock, \
             numberOfBlocksPerWindowHorizontally, \
@@ -58,15 +58,13 @@ cdef class CppImageWindowIterator:
                   unsigned int windowStepVertical, bool enablePadding):
         cdef np.ndarray[np.float64_t, ndim=3, mode='fortran'] image_f = \
             np.require(image, requirements='F')
-        imageIsGrayscale = image.shape[2] == 1
         self.iterator = new ImageWindowIterator(&image_f[0, 0, 0],
                                                 image.shape[0], image.shape[1],
                                                 image.shape[2], windowHeight,
                                                 windowWidth,
                                                 windowStepHorizontal,
                                                 windowStepVertical,
-                                                enablePadding,
-                                                imageIsGrayscale)
+                                                enablePadding)
         if self.iterator._numberOfWindowsHorizontally == 0 or \
                         self.iterator._numberOfWindowsVertically == 0:
             raise ValueError("The window-related options are wrong. "

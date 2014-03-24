@@ -24,7 +24,7 @@ public:
 	HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int method, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels,
 			unsigned int blockHeightAndWidthInCells, bool enableSignedGradients, double l2normClipping);
 	virtual ~HOG();
-	void apply(double *windowImage, unsigned int numberOfChannels, bool imageIsGrayscale, double *descriptorVector);
+	void apply(double *windowImage, unsigned int numberOfChannels, double *descriptorVector);
 	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally, numberOfBlocksPerWindowVertically;
 private:
     unsigned int method, numberOfOrientationBins, cellHeightAndWidthInPixels, blockHeightAndWidthInCells, windowHeight, windowWidth;
@@ -33,4 +33,4 @@ private:
 };
 
 void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix);
-void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector, bool imageIsGrayscale);
+void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);

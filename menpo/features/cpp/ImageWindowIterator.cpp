@@ -5,7 +5,7 @@
 
 ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels,
 		unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
-		unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale) {
+		unsigned int windowStepVertical, bool enablePadding) {
 	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically;
 
     // Find number of windows
@@ -27,7 +27,6 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 	this->_windowStepHorizontal = windowStepHorizontal;
 	this->_windowStepVertical = windowStepVertical;
 	this->_enablePadding = enablePadding;
-	this->_imageIsGrayscale = imageIsGrayscale;
 	this->_numberOfWindowsHorizontally = numberOfWindowsHorizontally;
 	this->_numberOfWindowsVertically = numberOfWindowsVertically;
 }
@@ -81,7 +80,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
 			}
 
             // Compute descriptor of window
-            windowFeature->apply(windowImage, numberOfChannels, _imageIsGrayscale, descriptorVector);
+            windowFeature->apply(windowImage, numberOfChannels, descriptorVector);
 
             // Store results
             for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)

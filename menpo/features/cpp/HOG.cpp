@@ -42,9 +42,9 @@ HOG::~HOG() {
 }
 
 
-void HOG::apply(double *windowImage, unsigned int numberOfChannels, bool imageIsGrayscale, double *descriptorVector) {
+void HOG::apply(double *windowImage, unsigned int numberOfChannels, double *descriptorVector) {
 	if (this->method == 1)
-		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector, imageIsGrayscale);
+		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
 	else
 		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
 }
@@ -215,7 +215,7 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
 
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
-void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector, bool imageIsGrayscale) {
+void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector) {
 	numberOfOrientationBins = (int)numberOfOrientationBins;
 	cellHeightAndWidthInPixels = (double)cellHeightAndWidthInPixels;
 	blockHeightAndWidthInCells = (int)blockHeightAndWidthInCells;
