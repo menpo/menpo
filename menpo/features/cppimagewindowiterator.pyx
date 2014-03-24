@@ -15,8 +15,9 @@ cdef extern from "math.h":
 cdef extern from "cpp/ImageWindowIterator.h":
     cdef cppclass ImageWindowIterator:
         ImageWindowIterator(double *image, unsigned int imageHeight,
-                            unsigned int imageWidth, unsigned int windowHeight,
+                            unsigned int imageWidth,
                             unsigned int numberOfChannels,
+                            unsigned int windowHeight,
                             unsigned int windowWidth,
                             unsigned int windowStepHorizontal,
                             unsigned int windowStepVertical,
@@ -26,25 +27,24 @@ cdef extern from "cpp/ImageWindowIterator.h":
         unsigned int _numberOfWindowsHorizontally, \
             _numberOfWindowsVertically, _numberOfWindows, _imageWidth, \
             _imageHeight, _numberOfChannels, _windowHeight, _windowWidth, \
-            _windowStepHorizontal, _windowStepVertical, _numberOfChannels
+            _windowStepHorizontal, _windowStepVertical
         bool _enablePadding
 
 cdef extern from "cpp/WindowFeature.h":
     cdef cppclass WindowFeature:
-        void apply(double *windowImage, unsigned int numberOfChannels,
-                   double *descriptorVector)
+        void apply(double *windowImage, double *descriptorVector)
         unsigned int descriptorLengthPerWindow
 
 
 cdef extern from "cpp/HOG.h":
     cdef cppclass HOG(WindowFeature):
         HOG(unsigned int windowHeight, unsigned int windowWidth,
-            unsigned int method, unsigned int numberOfOrientationBins,
+            unsigned int numberOfChannels, unsigned int method,
+            unsigned int numberOfOrientationBins,
             unsigned int cellHeightAndWidthInPixels,
             unsigned int blockHeightAndWidthInCells,
             bool enableSignedGradients, double l2normClipping)
-        void apply(double *windowImage, unsigned int numberOfChannels,
-                   double *descriptorVector)
+        void apply(double *windowImage, double *descriptorVector)
         unsigned int descriptorLengthPerBlock, \
             numberOfBlocksPerWindowHorizontally, \
             numberOfBlocksPerWindowVertically
@@ -94,7 +94,9 @@ cdef class CppImageWindowIterator:
             blockHeightAndWidthInCells, enableSignedGradients,
             l2normClipping, verbose):
 
-        cdef HOG *hog = new HOG(self.iterator._windowHeight, self.iterator._windowWidth, method,
+        cdef HOG *hog = new HOG(self.iterator._windowHeight,
+                                self.iterator._windowWidth,
+                                self.iterator._numberOfChannels, method,
                                 numberOfOrientationBins,
                                 cellHeightAndWidthInPixels,
                                 blockHeightAndWidthInCells,
