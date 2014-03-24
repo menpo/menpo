@@ -29,6 +29,8 @@ class FittingList(list, Viewable):
     def __init__(self, fittings, error_type='me_norm'):
         super(FittingList, self).__init__(fittings)
         self.error_type = error_type
+        self._final_error = None
+        self._initial_error = None
 
     @property
     def algorithm(self):
@@ -80,7 +82,7 @@ class FittingList(list, Viewable):
         r"""
         Returns a ndarray containing the final error of each fitting object.
         """
-        if not hasattr(self, '_final_error'):
+        if self._final_error is None:
             self._final_error = np.array([f.final_error for f in self])
         return self._final_error
 
@@ -89,7 +91,7 @@ class FittingList(list, Viewable):
         r"""
         Returns a ndarray containing the initial error of each fitting object.
         """
-        if not hasattr(self, '_initial_error'):
+        if self._initial_error is None:
             self._initial_error = np.array([f.initial_error for f in self])
         return self._initial_error
 
