@@ -930,7 +930,7 @@ class Rotation2D(AbstractRotation):
 
     @classmethod
     def identity(cls):
-        return Rotation2D(np.array([[0, 0], [0, 0]]))
+        return Rotation2D(np.eye(2))
 
 
 class Rotation3D(AbstractRotation):
@@ -1049,7 +1049,7 @@ class Rotation3D(AbstractRotation):
 
     @classmethod
     def identity(cls):
-        return Rotation3D(np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]))
+        return Rotation3D(np.eye(3))
 
 
 def Scale(scale_factor, n_dims=None):
