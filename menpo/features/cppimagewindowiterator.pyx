@@ -35,7 +35,6 @@ cdef extern from "cpp/WindowFeature.h":
         void apply(double *windowImage, double *descriptorVector)
         unsigned int descriptorLengthPerWindow
 
-
 cdef extern from "cpp/HOG.h":
     cdef cppclass HOG(WindowFeature):
         HOG(unsigned int windowHeight, unsigned int windowWidth,
@@ -48,6 +47,13 @@ cdef extern from "cpp/HOG.h":
         unsigned int descriptorLengthPerBlock, \
             numberOfBlocksPerWindowHorizontally, \
             numberOfBlocksPerWindowVertically
+
+cdef extern from "cpp/LBP.h":
+    cdef cppclass LBP(WindowFeature):
+        HOG(unsigned int windowHeight, unsigned int windowWidth,
+            unsigned int numberOfChannels, unsigned int radius,
+            unsigned int samples)
+        void apply(double *windowImage, double *descriptorVector)
 
 cdef class CppImageWindowIterator:
     cdef ImageWindowIterator* iterator
