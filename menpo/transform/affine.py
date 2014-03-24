@@ -130,7 +130,6 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
             # TODO add a check here that the matrix is actually valid
         self._homogeneous_matrix = value.copy()
-        self._sync_target()  # update the target (if we are an alignment)
 
     @property
     def linear_component(self):
@@ -400,6 +399,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         from_vector for details of the parameter format
         """
         self.homogeneous_matrix = self._homogeneous_matrix_from_parameters(p)
+        self._sync_target()  # update the target (if we are an alignment)
 
     @staticmethod
     def _homogeneous_matrix_from_parameters(p):
@@ -707,6 +707,7 @@ class SimilarityTransform(AffineTransform):
             homo[1, 0] = p[1]
             homo[:2, 2] = p[2:]
             self.homogeneous_matrix = homo
+            self._sync_target()  # update the target (if we are an alignment)
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -930,6 +931,7 @@ class Rotation2D(AbstractRotation):
         """
         self.homogeneous_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
                                                     [np.sin(p), np.cos(p)]])
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls):
@@ -1192,6 +1194,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         np.fill_diagonal(self.homogeneous_matrix, vector)
         self.homogeneous_matrix[-1, -1] = 1
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
@@ -1276,6 +1279,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     def from_vector_inplace(self, p):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
@@ -1354,6 +1358,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def from_vector_inplace(self, p):
         self.homogeneous_matrix[:-1, -1] = p
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
