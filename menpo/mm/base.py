@@ -91,7 +91,7 @@ def clip_space_transform(points):
 
 
 def mean_pointcloud(pointclouds):
-    PointCloud(sum(pointclouds) / len(pointclouds))
+    return PointCloud(sum(pointclouds) / len(pointclouds))
 
 
 class MMBuilder(object):
@@ -119,16 +119,15 @@ class MMBuilder(object):
         self.rasterize()
 
     def lms_for(self, x):
-        return x[self.group][self.label]
+        return x.landmarks[self.group][self.label].lms
 
     def rigidly_align(self):
-        gpa = GeneralizedProcrustesAnalysis(
-            [m.landmarks[self.group][self.label].lms
-             for m in self.models])
+        gpa = GeneralizedProcrustesAnalysis([self.lms_for(m) 
+                                             for m in self.models])
         self.ra_models = [t.apply(m) for t, m in zip(gpa.transforms,
                                                      self.models)]
-        self.ra_mean_lms = mean_pointcloud(self.lms_for(m).points
-                                           for m in self.ra_models)
+        self.ra_mean_lms = mean_pointcloud([self.lms_for(m).points
+                                             for m in self.ra_models])
         self.unwrapper = cylindrical_unwrap_and_translation(self.ra_mean_lms)
 
     def unwrap_and_flatten(self):
@@ -142,7 +141,7 @@ class MMBuilder(object):
         tps_transforms = [TPS(self.lms_for(u), self.u_mean_lms_2d)
                           for u in self.u_2d]
         self.w_models_2d = [t.apply(u) for t, u in zip(tps_transforms,
-                                                        self.w_models_2d)]
+                                                        self.u_2d)]
 
     def rasterize(self):
         trans_to_clip_space = clip_space_transform(self.u_mean_lms_2d)
