@@ -4,7 +4,7 @@
 *.exe
 *.DS_Store
 build/*
-pybug.egg-info/*
+menpo.egg-info/*
 .idea/*
 # Ignore IPython notebook autosave files
 .ipynb_checkpoints
