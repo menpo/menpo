@@ -80,7 +80,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
 			}
 
             // Compute descriptor of window
-            windowFeature->apply(windowImage, numberOfChannels, descriptorVector);
+            windowFeature->apply(windowImage, descriptorVector);
 
             // Store results
             for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)

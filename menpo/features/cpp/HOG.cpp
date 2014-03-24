@@ -1,6 +1,6 @@
 #include "HOG.h"
 
-HOG::HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int method, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels,
+HOG::HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels, unsigned int method, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels,
 		unsigned int blockHeightAndWidthInCells, bool enableSignedGradients, double l2normClipping) {
 	unsigned int descriptorLengthPerBlock = 0, hist1, hist2, descriptorLengthPerWindow = 0, numberOfBlocksPerWindowVertically = 0, numberOfBlocksPerWindowHorizontally = 0;
 
@@ -36,17 +36,18 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int metho
     this->descriptorLengthPerWindow = descriptorLengthPerWindow;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
+    this->numberOfChannels = numberOfChannels;
 }
 
 HOG::~HOG() {
 }
 
 
-void HOG::apply(double *windowImage, unsigned int numberOfChannels, double *descriptorVector) {
+void HOG::apply(double *windowImage, double *descriptorVector) {
 	if (this->method == 1)
-		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
+		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 	else
-		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
+		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
