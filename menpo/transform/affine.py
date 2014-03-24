@@ -1,11 +1,13 @@
 import abc
 import copy
-from menpo.transform.base import AlignableTransform, Composable
+from menpo.base import Vectorizable
+from menpo.transform.base import AlignableTransform, VComposable, VInvertible
 from menpo.exception import DimensionalityError
 import numpy as np
 
 
-class AffineTransform(AlignableTransform, Composable):
+class AffineTransform(AlignableTransform, Vectorizable, VComposable,
+                      VInvertible):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -128,6 +130,7 @@ class AffineTransform(AlignableTransform, Composable):
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
             # TODO add a check here that the matrix is actually valid
         self._homogeneous_matrix = value.copy()
+        self._sync_target()  # update the target (if we are an alignment)
 
     @property
     def linear_component(self):

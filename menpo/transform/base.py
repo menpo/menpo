@@ -6,28 +6,23 @@ from menpo.visualize import AlignmentViewer2d
 from menpo.visualize.base import Viewable
 
 
-class Transform(Vectorizable):
+class Transform(object):
     r"""
     An abstract representation of any N-dimensional transform.
-    Provides a unified interface to apply the transform (
-    :meth:`apply_inplace`, :meth:`apply`). All
-    transforms are Vectorizable. Transform's know how to take their own
-    jacobians, be composed, and construct their pseduoinverse.
+    Provides a unified interface to apply the transform with
+    :meth:`apply_inplace` and :meth:`apply`.
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
-        pass
-
-    @abc.abstractproperty
     def n_dims(self):
         r"""`
-        The dimensionality of the transform.
+        The dimensionality of the transform. None if the transform is not
+        dimension specific.
 
-        :type: int
+        :type: int or None
         """
-        pass
+        return None
 
     @abc.abstractmethod
     def _apply(self, x, **kwargs):
@@ -44,74 +39,6 @@ class Transform(Vectorizable):
             Transformed array.
         """
         pass
-
-    @abc.abstractmethod
-    def jacobian(self, points):
-        r"""
-        Calculates the Jacobian at the points provided.
-
-        Parameters
-        ----------
-        points : (N, D) ndarray
-            The points to calculate the Jacobian over.
-
-        Returns
-        -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
-        """
-        pass
-
-    @abc.abstractmethod
-    def jacobian_points(self, points):
-        r"""
-        Calculates the Jacobian of the warp with respect to the points.
-
-        Returns
-        -------
-        dW_dx : (N, D, D) ndarray
-            The jacobian with respect to the points
-        """
-        pass
-
-
-    @abc.abstractmethod
-    def _build_pseudoinverse(self):
-        r"""
-        Returns this transform's inverse if it has one. if not,
-        the pseduoinverse is given.
-
-        This method is called by the pseudoinverse property and must be
-        overridden.
-
-
-        Returns
-        -------
-        pseudoinverse: type(self)
-        """
-        pass
-
-    @abc.abstractproperty
-    def has_true_inverse(self):
-        r"""
-        True if the pseudoinverse is an exact inverse.
-
-        :type: Boolean
-        """
-        pass
-
-    @property
-    def pseudoinverse(self):
-        r"""
-        The pseudoinverse of the transform - that is, the transform that
-        results from swapping source and target, or more formally, negating
-        the transforms parameters. If the transform has a true inverse this
-        is returned instead.
-
-        :type: :class:`Transform`
-        """
-        return self._build_pseudoinverse()
 
     def apply_inplace(self, x, **kwargs):
         r"""
@@ -186,6 +113,61 @@ class Transform(Vectorizable):
         except AttributeError:
             return self._apply(x, **kwargs)
 
+
+class Invertible(object):
+    r"""
+    Transform Mixin for invertible transforms. Provides an interface for
+    taking the psuedo or true inverse of a transform.
+    """
+
+    @abc.abstractmethod
+    def _build_pseudoinverse(self):
+        r"""
+        Returns this transform's inverse if it has one. if not,
+        the pseduoinverse is given.
+
+        This method is called by the pseudoinverse property and must be
+        overridden.
+
+
+        Returns
+        -------
+        pseudoinverse: type(self)
+        """
+        pass
+
+    @abc.abstractproperty
+    def has_true_inverse(self):
+        r"""
+        True if the pseudoinverse is an exact inverse.
+
+        :type: Boolean
+        """
+        pass
+
+    @property
+    def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping source and target, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: :class:`Transform`
+        """
+        return self._build_pseudoinverse()
+
+
+class VInvertible(Invertible):
+    r"""
+    Transform Mixin for Vectorizable invertible transforms.
+
+    Prefer this Mixin over Invertible if the Transform in question is
+    Vectorizable as this adds from_vector variants to the Invertible
+    interface. These can be tuned for performance, and are for instance
+    needed by some of the machinery of AAMs.
+    """
+
     def pseudoinverse_vector(self, vector):
         r"""
         The vectorized pseudoinverse of a provided vector instance.
@@ -245,12 +227,11 @@ class Composable(object):
 
         (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
 
-    within each family there are three methods, some of which may provide
+    within each family there are two methods, some of which may provide
     performance benefits for certain situations. they are
 
         compose_x(transform)
         compose_x_inplace(transform)
-        compose_x_from_vector_inplace(vectorized_transform)
 
     where x = {after, before}
 
@@ -302,6 +283,62 @@ class Composable(object):
         """
         pass
 
+    def compose_after(self, transform):
+        r"""
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : :class:`Composable`
+            The resulting transform.
+        """
+        # naive approach - just flip the object order and compose_before
+        return transform.compose_before(self)
+
+    @abc.abstractmethod
+    def compose_after_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_after_inplace(b)
+        a.apply(p) == a_orig.apply(b.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+        """
+        pass
+
+
+class VComposable(Composable):
+    r"""
+    Transform Mixin for Vectorizable composable Transforms.
+
+    Prefer this Mixin over Composable if the Transform in question is
+    Vectorizable, as this adds from_vector variants to the Composable
+    interface. These can be tuned for performance, and are for instance
+    needed by some of the machinery of AAMs.
+    """
+
     def compose_before_from_vector_inplace(self, vector):
         r"""
         a_orig = deepcopy(a)
@@ -326,28 +363,29 @@ class Composable(object):
         # then compose_before_inplace
         return self.compose_before_inplace(self.from_vector(vector))
 
-    def compose_after(self, transform):
+    def compose_after_from_vector_inplace(self, vector):
         r"""
-        c = a.compose_after(b)
-        c.apply(p) == a.apply(b.apply(p))
+        a_orig = deepcopy(a)
+        a.compose_after_from_vector_inplace(b_vec)
+        b = self.from_vector(b_vec)
+        a.apply(p) == a_orig.apply(b.apply(p))
 
-        a and b are left unchanged.
-
-        This corresponds to the usual mathematical formalism for the compose
-        operator, `o`.
+        a is permanently altered to be the result of the composition. b_vec
+        is left unchanged.
 
         Parameters
         ----------
-        transform : :class:`Composable`
-            Transform to be applied **before** self
+        vector : (N,) ndarray
+            Vectorized transform to be applied **before** self
 
         Returns
         --------
-        transform : :class:`Composable`
-            The resulting transform.
+        transform : self
+            self, updated to the result of the composition
         """
-        # naive approach - just flip the object order and compose_before
-        return transform.compose_before(self)
+        # naive approach - use the vector to build an object,
+        # then compose_after_inplace
+        return self.compose_after_inplace(self.from_vector(vector))
 
     def compose_after_inplace(self, transform):
         r"""
@@ -374,34 +412,10 @@ class Composable(object):
         self.update_from_vector(transform.as_vector())
         return self.compose_before_from_vector_inplace(self_vector)
 
-    def compose_after_from_vector_inplace(self, vector):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_after_from_vector_inplace(b_vec)
-        b = self.from_vector(b_vec)
-        a.apply(p) == a_orig.apply(b.apply(p))
-
-        a is permanently altered to be the result of the composition. b_vec
-        is left unchanged.
-
-        Parameters
-        ----------
-        vector : (N,) ndarray
-            Vectorized transform to be applied **before** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        # naive approach - use the vector to build an object,
-        # then compose_after_inplace
-        return self.compose_after_inplace(self.from_vector(vector))
-
 
 class AlignableTransform(Transform):
     r"""
-    Abstract interface for all transform's that can be constructed from an
+    Abstract interface for all Transform's that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
     Construction from the align class method enables certain features of hte
     class, like the from_target() and update_from_target() method. If the
@@ -413,7 +427,6 @@ class AlignableTransform(Transform):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        Transform.__init__(self)
         self._target = None
         self._source = None
 
@@ -553,12 +566,19 @@ class AlignableTransform(Transform):
         new_transform.target = target
         return new_transform
 
-    def from_vector(self, vector):
-        new_transform = Transform.from_vector(self, vector)
-        # Reset the target if we had one
-        if new_transform.is_alignment_transform:
-            new_transform.target = new_transform.apply(new_transform.source)
-        return new_transform
+    def _sync_target(self):
+        r"""
+        Syncronizes the target to be correct after changes to
+        AlignableTransforms.
+
+        Needs to be called after any operation that may change the state of
+        the transform (principally an issue on Vectorizable subclasses)
+
+        This is pretty nasty, and will be removed when from_vector is made an
+        underscore interface (in the same vein as _apply() or _view() ).
+        """
+        if self.is_alignment_transform:
+            self.target = self.apply(self.source)
 
     @staticmethod
     def _verify_source_and_target(source, target):
