@@ -16,6 +16,7 @@ cdef extern from "cpp/ImageWindowIterator.h":
     cdef cppclass ImageWindowIterator:
         ImageWindowIterator(double *image, unsigned int imageHeight,
                             unsigned int imageWidth, unsigned int windowHeight,
+                            unsigned int numberOfChannels,
                             unsigned int windowWidth,
                             unsigned int windowStepHorizontal,
                             unsigned int windowStepVertical,
@@ -24,8 +25,8 @@ cdef extern from "cpp/ImageWindowIterator.h":
                    WindowFeature *windowFeature)
         unsigned int _numberOfWindowsHorizontally, \
             _numberOfWindowsVertically, _numberOfWindows, _imageWidth, \
-            _imageHeight, _windowHeight, _windowWidth, _windowStepHorizontal, \
-            _windowStepVertical, _numberOfChannels
+            _imageHeight, _numberOfChannels, _windowHeight, _windowWidth, \
+            _windowStepHorizontal, _windowStepVertical, _numberOfChannels
         bool _enablePadding, _imageIsGrayscale
 
 cdef extern from "cpp/WindowFeature.h":
@@ -60,7 +61,8 @@ cdef class CppImageWindowIterator:
         imageIsGrayscale = image.shape[2] == 1
         self.iterator = new ImageWindowIterator(&image_f[0, 0, 0],
                                                 image.shape[0], image.shape[1],
-                                                windowHeight, windowWidth,
+                                                image.shape[2], windowHeight,
+                                                windowWidth,
                                                 windowStepHorizontal,
                                                 windowStepVertical,
                                                 enablePadding,

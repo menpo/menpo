@@ -42,16 +42,16 @@ HOG::~HOG() {
 }
 
 
-void HOG::apply(double *windowImage, bool imageIsGrayscale, double *descriptorVector) {
+void HOG::apply(double *windowImage, unsigned int numberOfChannels, bool imageIsGrayscale, double *descriptorVector) {
 	if (this->method == 1)
 		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins, this->cellHeightAndWidthInPixels, this->blockHeightAndWidthInCells, this->enableSignedGradients, this->l2normClipping, this->windowHeight, this->windowWidth, descriptorVector, imageIsGrayscale);
 	else
-		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, descriptorVector);
+		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels, this->windowHeight, this->windowWidth, numberOfChannels, descriptorVector);
 }
 
 
 // ZHU & RAMANAN: Face Detection, Pose Estimation and Landmark Localization in the Wild
-void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels, unsigned int imageHeight, unsigned int imageWidth, double *descriptorMatrix) {
+void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix) {
     // unit vectors used to compute gradient orientation
     double uu[9] = {1.0000,0.9397,0.7660,0.500,0.1736,-0.1736,-0.5000,-0.7660,-0.9397};
     double vv[9] = {0.0000,0.3420,0.6428,0.8660,0.9848,0.9848,0.8660,0.6428,0.3420};
@@ -76,7 +76,27 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
 
     for (x=1; x<visible[1]-1; x++) {
         for (y=1; y<visible[0]-1; y++) {
-            // first color channel
+            // compute gradient
+            // first channel
+            double *s = inputImage + min(x,imageWidth-2)*imageHeight + min(y,imageHeight-2);
+            double dy = *(s+1) - *(s-1);
+            double dx = *(s+imageHeight) - *(s-imageHeight);
+            double v = dx*dx + dy*dy;
+            // rest of channels
+            for (unsigned int z=1; z<numberOfChannels; z++) {
+                s += imageHeight*imageWidth;
+                double dy2 = *(s+1) - *(s-1);
+                double dx2 = *(s+imageHeight) - *(s-imageHeight);
+                double v2 = dx2*dx2 + dy2*dy2;
+                // pick channel with strongest gradient
+                if (v2>v) {
+                    v = v2;
+                    dx = dx2;
+                    dy = dy2;
+                }
+            }
+
+/*            // first color channel
             double *s = inputImage + min(x,imageWidth-2)*imageHeight + min(y,imageHeight-2);
             double dy = *(s+1) - *(s-1);
             double dx = *(s+imageHeight) - *(s-imageHeight);
@@ -105,6 +125,7 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
                 dx = dx3;
                 dy = dy3;
             }
+*/
 
             // snap to one of 18 orientations
             double best_dot = 0;
@@ -225,7 +246,7 @@ void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels,
 
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
-void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, double *descriptorVector, bool imageIsGrayscale) {
+void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector, bool imageIsGrayscale) {
 	numberOfOrientationBins = (int)numberOfOrientationBins;
 	cellHeightAndWidthInPixels = (double)cellHeightAndWidthInPixels;
 	blockHeightAndWidthInCells = (int)blockHeightAndWidthInCells;
