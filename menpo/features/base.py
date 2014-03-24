@@ -200,14 +200,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
     # Correct input image_data
     image_data = np.asfortranarray(image_data)
-    if image_data.shape[2] == 3:
-        image_data *= 255.
-    elif image_data.shape[2] == 1:
-        if algorithm == 'dalaltriggs':
-            image_data = image_data
-        elif algorithm == 'zhuramanan':
-            image_data *= 255.
-            image_data = np.tile(image_data, [1, 1, 3])
+    image_data *= 255.
 
     # Dense case
     if mode == 'dense':
