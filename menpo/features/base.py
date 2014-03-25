@@ -1,6 +1,7 @@
 import itertools
 from menpo.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
+from math import ceil, floor
 
 
 def gradient(image_data):
@@ -386,7 +387,7 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
         The metric unit is defined by window_step_unit.
 
         Default: 1
-    window_step_unit : 'pixels' or 'radius'
+    window_step_unit : 'pixels' or 'window'
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters for the ImageWindowIterator object.
 
@@ -429,7 +430,7 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
     ValueError
         Vertical window step must be > 0
     ValueError
-        Window step unit must be either pixels or radius
+        Window step unit must be either pixels or window
     """
     # Parse options
     if (isinstance(radius, int) and isinstance(radius, list)) or \
@@ -456,30 +457,36 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
         raise ValueError("Horizontal window step must be > 0")
     if window_step_vertical <= 0:
         raise ValueError("Vertical window step must be > 0")
-    if window_step_unit not in ['pixels', 'radius']:
-        raise ValueError("Window step unit must be either pixels or radius")
+    if window_step_unit not in ['pixels', 'window']:
+        raise ValueError("Window step unit must be either pixels or window")
 
-    # Correct input image_data
+    # Correct input image_data and inputs
     image_data = np.asfortranarray(image_data)
-
-    # Find window size
-    max_radius = radius
-    max_samples = samples
     if isinstance(radius, list):
-        max_radius = max(radius)
-        max_samples = samples[radius.index(max_radius)]
-    angle_step = 2 * np.pi / max_samples
-    x = max_radius * np.cos([i * angle_step for i in range(max_samples)])
-    y = - max_radius * np.sin([i * angle_step for i in range(max_samples)])
-    print x, y, type(x), type(y)
+        radius = np.array(radius)
+    if isinstance(samples, list):
+        samples = np.array(samples)
+
+    # Find window parameters
+    if isinstance(radius, np.ndarray):
+        window_height = 2 * max(radius) + 1
+    else:
+        window_height = 2 * radius + 1
+    window_height = np.uint32(window_height)
+    window_width = window_height
+    if window_step_unit == 'window':
+        window_step_vertical = np.uint32(window_step_vertical * window_height)
+        window_step_horizontal = np.uint32(window_step_horizontal *
+                                           window_width)
 
     # Create iterator object
-    #iterator = CppImageWindowIterator(image_data, window_height,
-    #                                  window_width, window_step_horizontal,
-    #                                  window_step_vertical, padding)
+    iterator = CppImageWindowIterator(image_data, window_height,
+                                      window_width, window_step_horizontal,
+                                      window_step_vertical, padding)
+
     # Print iterator's info
-    #if verbose:
-    #    print iterator
+    if verbose:
+        print iterator
 
     # Compute LBP
     #output_image, windows_centers = iterator.LBP(algorithm, num_bins,
