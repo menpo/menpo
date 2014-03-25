@@ -25,14 +25,15 @@ def cylindrical_unwrap_and_translation(points):
     return translate_and_unwrap
 
 
-def clip_space_transform(points):
+def clip_space_transform(points, boundary_proportion=0.1):
     r"""
     Produces a transform which fits 2D points into the OpenGL
     clipping space ([-1, 1], [-1, 1])
     """
     centering = Translation(points.centre_of_bounds).pseudoinverse
     scale = Scale(points.range() / 2)
-    return centering.compose_before(scale.pseudoinverse)
+    b_scale = Scale(1 - boundary_proportion, ndims=2)
+    return centering.compose_before(scale.pseudoinverse).compose_before(b_scale)
 
 
 def mean_pointcloud(pointclouds):
