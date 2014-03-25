@@ -1090,6 +1090,10 @@ def Scale(scale_factor, n_dims=None):
     ValueError
         If any of the scale factors is zero
     """
+    from numbers import Number
+    if not isinstance(scale_factor, Number):
+        # some array like thing - make it a numpy array for sure
+        scale_factor = np.asarray(scale_factor)
     if not np.all(scale_factor):
         raise ValueError('Having a zero in one of the scales is invalid')
 
@@ -1100,6 +1104,7 @@ def Scale(scale_factor, n_dims=None):
         else:
             return NonUniformScale(scale_factor)
     else:
+        # interpret as a scalar then
         return UniformScale(scale_factor, n_dims)
 
 
@@ -1114,6 +1119,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     """
 
     def __init__(self, scale):
+        scale = np.asarray(scale)
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
@@ -1297,6 +1303,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     """
 
     def __init__(self, translation):
+        translation = np.asarray(translation)
         homogeneous_matrix = np.eye(translation.shape[0] + 1)
         homogeneous_matrix[:-1, -1] = translation
         SimilarityTransform.__init__(self, homogeneous_matrix)
