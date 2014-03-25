@@ -32,7 +32,7 @@ def clip_space_transform(points, boundary_proportion=0.1):
     """
     centering = Translation(points.centre_of_bounds).pseudoinverse
     scale = Scale(points.range() / 2)
-    b_scale = Scale(1 - boundary_proportion, ndims=2)
+    b_scale = Scale(1 - boundary_proportion, n_dims=2)
     return centering.compose_before(scale.pseudoinverse).compose_before(b_scale)
 
 
