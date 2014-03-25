@@ -1,10 +1,13 @@
 from copy import deepcopy
 import numpy as np
+from menpo.base import Vectorizable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import AlignableTransform, Composable
+from menpo.transform.base import (AlignableTransform,
+                                  VComposable, VInvertible)
 
 
-class ModelDrivenTransform(AlignableTransform, Composable):
+class ModelDrivenTransform(AlignableTransform, Vectorizable,
+                           VComposable, VInvertible):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform

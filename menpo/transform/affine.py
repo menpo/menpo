@@ -1,11 +1,13 @@
 import abc
 import copy
-from menpo.transform.base import AlignableTransform, Composable
+from menpo.base import Vectorizable
+from menpo.transform.base import AlignableTransform, VComposable, VInvertible
 from menpo.exception import DimensionalityError
 import numpy as np
 
 
-class AffineTransform(AlignableTransform, Composable):
+class AffineTransform(AlignableTransform, Vectorizable, VComposable,
+                      VInvertible):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -397,6 +399,7 @@ class AffineTransform(AlignableTransform, Composable):
         from_vector for details of the parameter format
         """
         self.homogeneous_matrix = self._homogeneous_matrix_from_parameters(p)
+        self._sync_target()  # update the target (if we are an alignment)
 
     @staticmethod
     def _homogeneous_matrix_from_parameters(p):
@@ -704,6 +707,7 @@ class SimilarityTransform(AffineTransform):
             homo[1, 0] = p[1]
             homo[:2, 2] = p[2:]
             self.homogeneous_matrix = homo
+            self._sync_target()  # update the target (if we are an alignment)
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -927,6 +931,7 @@ class Rotation2D(AbstractRotation):
         """
         self.homogeneous_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
                                                     [np.sin(p), np.cos(p)]])
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls):
@@ -1085,6 +1090,10 @@ def Scale(scale_factor, n_dims=None):
     ValueError
         If any of the scale factors is zero
     """
+    from numbers import Number
+    if not isinstance(scale_factor, Number):
+        # some array like thing - make it a numpy array for sure
+        scale_factor = np.asarray(scale_factor)
     if not np.all(scale_factor):
         raise ValueError('Having a zero in one of the scales is invalid')
 
@@ -1095,6 +1104,7 @@ def Scale(scale_factor, n_dims=None):
         else:
             return NonUniformScale(scale_factor)
     else:
+        # interpret as a scalar then
         return UniformScale(scale_factor, n_dims)
 
 
@@ -1109,6 +1119,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
     """
 
     def __init__(self, scale):
+        scale = np.asarray(scale)
         homogeneous_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(homogeneous_matrix, scale)
         homogeneous_matrix[-1, -1] = 1
@@ -1189,6 +1200,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         """
         np.fill_diagonal(self.homogeneous_matrix, vector)
         self.homogeneous_matrix[-1, -1] = 1
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
@@ -1273,6 +1285,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     def from_vector_inplace(self, p):
         np.fill_diagonal(self.homogeneous_matrix, p)
         self.homogeneous_matrix[-1, -1] = 1
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
@@ -1290,6 +1303,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
     """
 
     def __init__(self, translation):
+        translation = np.asarray(translation)
         homogeneous_matrix = np.eye(translation.shape[0] + 1)
         homogeneous_matrix[:-1, -1] = translation
         SimilarityTransform.__init__(self, homogeneous_matrix)
@@ -1351,6 +1365,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def from_vector_inplace(self, p):
         self.homogeneous_matrix[:-1, -1] = p
+        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):

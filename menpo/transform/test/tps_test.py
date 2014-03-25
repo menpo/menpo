@@ -80,18 +80,6 @@ def test_tps_jacobian_manual_sample_b():
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
 
 
-@raises(NotImplementedError)
-def test_tps_jacobian():
-    tps = TPS(src, tgt_perturbed)
-    result = tps.jacobian(tgt)
-
-
-@raises(NotImplementedError)
-def test_tps():
-    tps = TPS(src, tgt_perturbed)
-    assert (tps.n_parameters == 14)
-
-
 def test_tps_build_pseudoinverse():
     tps = TPS(src, tgt)
     tps_pinv = tps.pseudoinverse
