@@ -362,9 +362,11 @@ def es(image_data, verbose=False):
     return es_data
 
 
-def lbp(image_data, radius, samples, mapping_type='riu2', mode='image', verbose=False):
+def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
+        window_step_vertical=1, window_step_horizontal=1,
+        window_step_unit='pixels', padding=True, verbose=False):
     r"""
-    Computes a 2-dimensional HOG features image with k number of channels, of
+    Computes a 2-dimensional LBP features image with k number of channels, of
     size ``(M, N, C)`` and data type ``np.float``.
 
     Parameters
@@ -372,6 +374,29 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image', verbose=
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
+    window_step_vertical : float
+        Defines the vertical step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_horizontal : float
+        Defines the horizontal step by which the window in the
+        ImageWindowIterator is moved, thus it controls the features density.
+        The metric unit is defined by window_step_unit.
+
+        Default: 1
+    window_step_unit : 'pixels' or 'radius'
+        Defines the metric unit of the window_step_vertical and
+        window_step_horizontal parameters for the ImageWindowIterator object.
+
+        Default: 'pixels'
+    padding : bool
+        Enables/disables padding for the close-to-boundary windows in the
+        ImageWindowIterator object. When padding is enabled, the
+        out-of-boundary pixels are set to zero.
+
+        Default: True
     mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
         The mapping type. Select 'u2' for uniform-2 mapping, 'ri' for
         rotation-invariant mapping, 'riu2' for uniform-2 and
@@ -382,22 +407,89 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image', verbose=
         Flag to print LBP related information.
 
         Default: False
+
+    Raises
+    -------
+    ValueError
+        Radius and samples must both be either integers or lists
+    ValueError
+        Radius and samples must have the same length
+    ValueError
+        Radius must be greater than 0
+    ValueError
+        Radii must be greater than 0
+    ValueError
+        Samples must be greater than 0
+    ValueError
+        Mapping type must be u2, ri, riu2 or none
+    ValueError
+        Mode must be either image or hist
+    ValueError
+        Horizontal window step must be > 0
+    ValueError
+        Vertical window step must be > 0
+    ValueError
+        Window step unit must be either pixels or radius
     """
     # Parse options
+    if (isinstance(radius, int) and isinstance(radius, list)) or \
+            (isinstance(radius, list) and isinstance(radius, int)):
+        raise ValueError("Radius and samples must both be either integers or "
+                         "lists")
+    elif isinstance(radius, list) and isinstance(samples, list) and \
+            len(radius) != len(samples):
+        raise ValueError("Radius and samples must have the same length")
     if isinstance(radius, int) and radius < 1:
-        raise ValueError("LBP features radius must be greater than 0")
+        raise ValueError("Radius must be greater than 0")
     elif isinstance(radius, list) and sum(r < 1 for r in radius) > 0:
-        raise ValueError("LBP features list of radius must be greater than 0")
+        raise ValueError("Radii must be greater than 0")
     if isinstance(samples, int) and samples < 1:
-        raise ValueError("LBP features samples must be greater than 0")
+        raise ValueError("Samples must be greater than 0")
     elif isinstance(samples, list) and sum(s < 1 for s in samples) > 0:
-        raise ValueError("LBP features list of samples must be greater than 0")
+        raise ValueError("Samples must be greater than 0")
     if mapping_type not in ['u2', 'ri', 'riu2', 'none']:
-        raise ValueError("LBP features mapping type must be u2, ri, riu2 or "
+        raise ValueError("Mapping type must be u2, ri, riu2 or "
                          "none")
     if mode not in ['image', 'hist']:
-        raise ValueError("LBP features mode must be either image or hist")
-    #
+        raise ValueError("Mode must be either image or hist")
+    if window_step_horizontal <= 0:
+        raise ValueError("Horizontal window step must be > 0")
+    if window_step_vertical <= 0:
+        raise ValueError("Vertical window step must be > 0")
+    if window_step_unit not in ['pixels', 'radius']:
+        raise ValueError("Window step unit must be either pixels or radius")
+
+    # Correct input image_data
+    image_data = np.asfortranarray(image_data)
+
+    # Find window size
+    max_radius = radius
+    max_samples = samples
+    if isinstance(radius, list):
+        max_radius = max(radius)
+        max_samples = samples[radius.index(max_radius)]
+    angle_step = 2 * np.pi / max_samples
+    x = max_radius * np.cos([i * angle_step for i in range(max_samples)])
+    y = - max_radius * np.sin([i * angle_step for i in range(max_samples)])
+    print x, y, type(x), type(y)
+
+    # Create iterator object
+    #iterator = CppImageWindowIterator(image_data, window_height,
+    #                                  window_width, window_step_horizontal,
+    #                                  window_step_vertical, padding)
+    # Print iterator's info
+    #if verbose:
+    #    print iterator
+
+    # Compute LBP
+    #output_image, windows_centers = iterator.LBP(algorithm, num_bins,
+    #                                             cell_size, block_size,
+    #                                             signed_gradient, l2_norm_clip,
+    #                                             verbose)
+    # Destroy iterator and return
+    #del iterator
+    #return np.ascontiguousarray(output_image), np.ascontiguousarray(
+    #    windows_centers)
     return 0
 
 

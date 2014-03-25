@@ -284,6 +284,19 @@ class FeatureExtraction(object):
                                   self._image.pixels.shape[2]}
         return es_image
 
+    def lbp(self, radius, samples, mapping_type='riu2', mode='image',
+            window_step_vertical=1, window_step_horizontal=1,
+            window_step_unit='pixels', padding=True, verbose=False,
+            constrain_landmarks=True):
+        # compute es features
+        lbp = fc.lbp(self._image.pixels, radius=radius, samples=samples,
+                     mapping_type=mapping_type, mode=mode,
+                     window_step_vertical=window_step_vertical,
+                     window_step_horizontal=window_step_horizontal,
+                     window_step_unit=window_step_unit, padding=padding,
+                     verbose=verbose)
+        return 0
+
     def _init_feature_image(self, feature_pixels, window_centres=None,
                             constrain_landmarks=True):
         r"""
