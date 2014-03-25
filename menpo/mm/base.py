@@ -73,7 +73,7 @@ class MMBuilder(object):
         self.ra_models = [t.apply(m) for t, m in zip(gpa.transforms,
                                                      self.models)]
         self.ra_mean_lms = mean_pointcloud([self.lms_for(m).points
-                                             for m in self.ra_models])
+                                            for m in self.ra_models])
         self.unwrapper = cylindrical_unwrap_and_translation(self.ra_mean_lms)
 
     def unwrap_and_flatten(self):

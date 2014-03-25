@@ -72,6 +72,17 @@ class ExtractNDims(Transform):
 class AddNDims(Transform):
     r"""
     Adds n dims to a shape
+
+    Parameters
+    ----------
+
+    n : int
+        The number of dimensions to add
+
+    value: float, optional
+        The value that the extra dims should be given
+
+        Default: 0
     """
     def __init__(self, n, value=0):
         self.n = n
