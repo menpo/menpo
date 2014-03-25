@@ -5,6 +5,7 @@ from menpo.image import MaskedImage
 
 # noinspection PyProtectedMember
 from menpo.rasterize.base import TextureRasterInfo
+from menpo.rasterize.transform import LinearHTransform, ExtractNDims
 
 
 class GLRasterizer(object):
@@ -89,6 +90,11 @@ class GLRasterizer(object):
     def projection_matrix(self):
         return self._opengl.get_projection_matrix()
 
+    @property
+    def total_matrix(self):
+        return np.dot(self.projection_matrix,
+                      np.dot(self.view_matrix, self.model_matrix))
+
     def set_model_matrix(self, value):
         value = _verify_opengl_homogeneous_matrix(value)
         self._opengl.set_model_matrix(value)
@@ -100,6 +106,45 @@ class GLRasterizer(object):
     def set_projection_matrix(self, value):
         value = _verify_opengl_homogeneous_matrix(value)
         self._opengl.set_projection_matrix(value)
+
+    @property
+    def model_to_clip_space(self):
+        r"""
+        Transform that takes 3D points from model space to 3D clip space
+        """
+        return LinearHTransform(self.total_matrix)
+
+    @property
+    def clip_to_image_space(self):
+        r"""
+        Affine transform that converts 2D clip space coordinates into 2D image
+        space coordinates
+        """
+        from menpo.transform import Translation, Scale, AffineTransform
+        # 1. invert the y direction (up becomes down)
+        invert_y = Scale([1, -1])
+        # 2. [-1, 1] [-1, 1] -> [0, 2] [0, 2]
+        t = Translation([1, 1])
+        # 3. [0, 2] [0, 2] -> [0, 1] [0, 1]
+        unit_scale = Scale(0.5, n_dims=2)
+        # 4. [0, 1] [0, 1] -> [0, w] [0, h]
+        im_scale = Scale([self.width, self.height])
+        # 5. [0, w] [0, h] -> [0, h] [0, w]
+        xy_yx = AffineTransform(np.array([[0, 1, 0],
+                                          [1, 0, 0],
+                                          [0, 0, 1]], dtype=np.float))
+        # reduce the full transform chain to a single affine matrix
+        transforms = [invert_y, t, unit_scale, im_scale, xy_yx]
+        return reduce(lambda a, b: a.compose_before(b), transforms)
+
+    def model_to_image_space(self, pc):
+        r"""
+        Transform from 3D model space to 2D image space.
+        """
+        # TODO revisit this once we have general Transform chains
+        clip_space = self.model_to_clip_space.apply(pc)
+        clip_space_2d = ExtractNDims(2).apply(clip_space)
+        return self.clip_to_image_space.apply(clip_space_2d)
 
     def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
                                             per_vertex_f3v=None):
