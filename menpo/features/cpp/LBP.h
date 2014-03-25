@@ -7,6 +7,8 @@
 
 #define small_val 1e-6 //used to check if interpolation is needed
 
+const double PI = 3.141592653589793238463;
+
 using namespace std;
 
 class LBP: public WindowFeature {
