@@ -30,9 +30,8 @@ def clip_space_transform(points):
     Produces a transform which fits 2D points into the OpenGL
     clipping space ([-1, 1], [-1, 1])
     """
-    centering = Translation(-points.centre)
-    centred = centering.apply(points)
-    scale = Scale(centred.range() / 2)
+    centering = Translation(points.centre_of_bounds).pseudoinverse
+    scale = Scale(points.range() / 2)
     return centering.compose_before(scale.pseudoinverse)
 
 
