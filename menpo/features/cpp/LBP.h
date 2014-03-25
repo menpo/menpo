@@ -12,12 +12,14 @@ using namespace std;
 class LBP: public WindowFeature {
 public:
 	LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels,
-	        unsigned int radius, unsigned int samples);
+	        unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations);
 	virtual ~LBP();
 	void apply(double *windowImage, double *descriptorVector);
+	unsigned int numberOfRadiusSamplesCombinations;
 private:
-    unsigned int radius, samples, windowHeight, windowWidth, numberOfChannels;
+    unsigned int *radius, *samples;
+    unsigned int windowHeight, windowWidth, numberOfChannels;
 };
 
-void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix);
-double roundn(double x, int n);
+//void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix);
+//double roundn(double x, int n);

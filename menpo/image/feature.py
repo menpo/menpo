@@ -289,12 +289,15 @@ class FeatureExtraction(object):
             window_step_unit='pixels', padding=True, verbose=False,
             constrain_landmarks=True):
         # compute lbp features
-        lbp = fc.lbp(self._image.pixels, radius=radius, samples=samples,
-                     mapping_type=mapping_type, mode=mode,
-                     window_step_vertical=window_step_vertical,
-                     window_step_horizontal=window_step_horizontal,
-                     window_step_unit=window_step_unit, padding=padding,
-                     verbose=verbose)
+        lbp, window_centres = fc.lbp(self._image.pixels, radius=radius,
+                                     samples=samples,
+                                     mapping_type=mapping_type,
+                                     mode=mode,
+                                     window_step_vertical=window_step_vertical,
+                                     window_step_horizontal=
+                                     window_step_horizontal,
+                                     window_step_unit=window_step_unit,
+                                     padding=padding, verbose=verbose)
         return 0
 
     def _init_feature_image(self, feature_pixels, window_centres=None,

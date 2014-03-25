@@ -432,7 +432,7 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     ValueError
         Window step unit must be either pixels or window
     """
-    # Parse options
+    # Check options
     if (isinstance(radius, int) and isinstance(radius, list)) or \
             (isinstance(radius, list) and isinstance(radius, int)):
         raise ValueError("Radius and samples must both be either integers or "
@@ -460,24 +460,32 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     if window_step_unit not in ['pixels', 'window']:
         raise ValueError("Window step unit must be either pixels or window")
 
-    # Correct input image_data and inputs
+    # Correct input image_data
     image_data = np.asfortranarray(image_data)
-    if isinstance(radius, list):
-        radius = np.array(radius)
-    if isinstance(samples, list):
-        samples = np.array(samples)
 
-    # Find window parameters
-    if isinstance(radius, np.ndarray):
-        window_height = 2 * max(radius) + 1
-    else:
-        window_height = 2 * radius + 1
-    window_height = np.uint32(window_height)
+    # Parse options
+    if isinstance(radius, list):
+        radius = np.asfortranarray(radius)
+    if isinstance(samples, list):
+        samples = np.asfortranarray(samples)
+    window_height = np.uint32(2 * radius.max() + 1)
     window_width = window_height
     if window_step_unit == 'window':
         window_step_vertical = np.uint32(window_step_vertical * window_height)
         window_step_horizontal = np.uint32(window_step_horizontal *
                                            window_width)
+    if mapping_type == 'u2':
+        mapping_type = 1
+    elif mapping_type == 'ri':
+        mapping_type = 2
+    elif mapping_type == 'riu2':
+        mapping_type = 3
+    else:
+        mapping_type = 0
+    if mode == 'image':
+        mode = 1
+    else:
+        mode = 2
 
     # Create iterator object
     iterator = CppImageWindowIterator(image_data, window_height,
@@ -493,10 +501,8 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
                                                  mode, verbose)
     # Destroy iterator and return
     del iterator
-    #return np.ascontiguousarray(output_image), np.ascontiguousarray(
-    #    windows_centers)
-    return 0
-
+    return np.ascontiguousarray(output_image), np.ascontiguousarray(
+        windows_centers)
 
 def _lbp_mapping_table(n_samples, mapping_type='riu2'):
     r"""

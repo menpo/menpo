@@ -1,10 +1,10 @@
 #include "LBP.h"
 
-LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels, unsigned int radius[], unsigned int samples[]) {
-	unsigned int descriptorLengthPerWindow = 0;
-
+LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations) {
+	unsigned int descriptorLengthPerWindow = numberOfRadiusSamplesCombinations * numberOfChannels;
     this->radius = radius;
     this->samples = samples;
+    this->numberOfRadiusSamplesCombinations = numberOfRadiusSamplesCombinations;
     this->descriptorLengthPerWindow = descriptorLengthPerWindow;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
@@ -16,11 +16,11 @@ LBP::~LBP() {
 
 
 void LBP::apply(double *windowImage, double *descriptorVector) {
-    LBPdescriptor(windowImage, this->radius, this->samples, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
+    //LBPdescriptor(windowImage, this->radius, this->samples, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
-void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix) {
+/*void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix) {
     double samples_coords_x[samples] = {};
     double samples_coords_y[samples] = {};
     unsigned int i;
@@ -108,4 +108,4 @@ double roundn(double x, int n) {
     else
         x = round(x);
     return x;
-}
+}*/

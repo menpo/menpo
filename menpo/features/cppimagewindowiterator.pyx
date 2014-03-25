@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = menpo/features/cpp/ImageWindowIterator.cpp menpo/features/cpp/WindowFeature.cpp menpo/features/cpp/HOG.cpp
+# distutils: sources = menpo/features/cpp/ImageWindowIterator.cpp menpo/features/cpp/WindowFeature.cpp menpo/features/cpp/HOG.cpp menpo/features/cpp/LBP.cpp
 
 import numpy as np
 cimport numpy as np
@@ -51,9 +51,10 @@ cdef extern from "cpp/HOG.h":
 cdef extern from "cpp/LBP.h":
     cdef cppclass LBP(WindowFeature):
         LBP(unsigned int windowHeight, unsigned int windowWidth,
-            unsigned int numberOfChannels, unsigned int radius,
-            unsigned int samples)
+            unsigned int numberOfChannels, unsigned int *radius,
+            unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations)
         void apply(double *windowImage, double *descriptorVector)
+        unsigned int numberOfRadiusSamplesCombinations
 
 cdef class CppImageWindowIterator:
     cdef ImageWindowIterator* iterator
@@ -99,7 +100,6 @@ cdef class CppImageWindowIterator:
     def HOG(self, method, numberOfOrientationBins, cellHeightAndWidthInPixels,
             blockHeightAndWidthInCells, enableSignedGradients,
             l2normClipping, verbose):
-
         cdef HOG *hog = new HOG(self.iterator._windowHeight,
                                 self.iterator._windowWidth,
                                 self.iterator._numberOfChannels, method,
@@ -173,8 +173,66 @@ cdef class CppImageWindowIterator:
         return outputImage, windowsCenters
 
     def LBP(self, radius, samples, mapping_type, mode, verbose):
-        print 'MPHKA CYTHON'
+        cdef unsigned int[:] cradius = np.ascontiguousarray(radius,
+                                                            dtype=np.uint32)
+        cdef unsigned int[:] csamples = np.ascontiguousarray(samples,
+                                                             dtype=np.uint32)
+        cdef LBP *lbp = new LBP(self.iterator._windowHeight,
+                                self.iterator._windowWidth,
+                                self.iterator._numberOfChannels, &cradius[0],
+                                &csamples[0], radius.size)
+        cdef double[:, :, :] outputImage = np.zeros([self.iterator._numberOfWindowsVertically,
+                                                     self.iterator._numberOfWindowsHorizontally,
+                                                     lbp.descriptorLengthPerWindow], order='F')
+        cdef int[:, :, :] windowsCenters = np.zeros([self.iterator._numberOfWindowsVertically,
+                                                     self.iterator._numberOfWindowsHorizontally,
+                                                     2], order='F', dtype=np.int32)
+        #cdef np.ndarray[np.float64_t, ndim=3, mode='fortran'] outputImage = \
+        #    np.empty((self.iterator._numberOfWindowsVertically,
+        #             self.iterator._numberOfWindowsHorizontally,
+        #             lbp.descriptorLengthPerWindow), order='F')
+        #cdef np.ndarray[int, ndim=3, mode='fortran'] windowsCenters \
+        #    = \
+        #    np.empty((self.iterator._numberOfWindowsVertically,
+        #             self.iterator._numberOfWindowsHorizontally, 2),
+        #             order='F', dtype=np.int32)
         if verbose:
             info_str = "LBP features:\n"
+            info_str = "{0}  - {1} combinations of radius and samples.\n" \
+                .format(info_str, <int>radius.size)
+            info_str = "{0}  - Radius values: [" \
+                .format(info_str, <int>radius.size)
+            for k in range(radius.size - 1):
+                info_str = "{0}{1}, " \
+                    .format(info_str, <int>radius[k])
+            info_str = "{0}{1}].\n" \
+                .format(info_str, <int>radius[-1])
+            info_str = "{0}  - Samples values: [" \
+                .format(info_str, <int>samples.size)
+            for k in range(samples.size - 1):
+                info_str = "{0}{1}, " \
+                    .format(info_str, <int>samples[k])
+            info_str = "{0}{1}].\n" \
+                .format(info_str, <int>samples[-1])
+            if mapping_type == 1:
+                info_str = "{0}  - Uniform-2 codes mapping.\n" \
+                    .format(info_str)
+            elif mapping_type == 2:
+                info_str = "{0}  - Rotation-Invariant codes mapping.\n" \
+                    .format(info_str)
+            elif mapping_type == 3:
+                info_str = "{0}  - Uniform-2 and Rotation-Invariant codes mapping.\n" \
+                    .format(info_str)
+            elif mapping_type == 0:
+                info_str = "{0}  - No codes mapping used.\n" \
+                    .format(info_str)
+            info_str = "{0}  - Descriptor length per window = {1} x 1.\n" \
+                .format(info_str, <int>lbp.descriptorLengthPerWindow)
+            info_str = "{}Output image size {}W x {}H x {}."\
+                .format(info_str,
+                        <int>self.iterator._numberOfWindowsHorizontally,
+                        <int>self.iterator._numberOfWindowsVertically,
+                        <int>lbp.descriptorLengthPerWindow)
             print info_str
-        return 0, 0
+        del lbp
+        return outputImage, windowsCenters
