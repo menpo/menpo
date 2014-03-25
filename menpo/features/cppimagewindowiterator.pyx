@@ -54,7 +54,6 @@ cdef extern from "cpp/LBP.h":
             unsigned int numberOfChannels, unsigned int *radius,
             unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations)
         void apply(double *windowImage, double *descriptorVector)
-        unsigned int numberOfRadiusSamplesCombinations
 
 cdef class CppImageWindowIterator:
     cdef ImageWindowIterator* iterator
@@ -234,5 +233,6 @@ cdef class CppImageWindowIterator:
                         <int>self.iterator._numberOfWindowsVertically,
                         <int>lbp.descriptorLengthPerWindow)
             print info_str
+        self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], lbp)
         del lbp
         return outputImage, windowsCenters

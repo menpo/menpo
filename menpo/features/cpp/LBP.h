@@ -15,11 +15,10 @@ public:
 	        unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations);
 	virtual ~LBP();
 	void apply(double *windowImage, double *descriptorVector);
-	unsigned int numberOfRadiusSamplesCombinations;
 private:
     unsigned int *radius, *samples;
-    unsigned int windowHeight, windowWidth, numberOfChannels;
+    unsigned int numberOfRadiusSamplesCombinations, windowHeight, windowWidth, numberOfChannels;
 };
 
-//void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix);
+void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);
 //double roundn(double x, int n);

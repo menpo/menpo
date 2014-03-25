@@ -16,12 +16,12 @@ LBP::~LBP() {
 
 
 void LBP::apply(double *windowImage, double *descriptorVector) {
-    //LBPdescriptor(windowImage, this->radius, this->samples, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
+    LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
-/*void LBPdescriptor(double *inputImage, unsigned int radius, unsigned int samples, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorMatrix) {
-    double samples_coords_x[samples] = {};
+void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector) {
+    /*double samples_coords_x[samples] = {};
     double samples_coords_y[samples] = {};
     unsigned int i;
     bool flag;
@@ -90,8 +90,10 @@ void LBP::apply(double *windowImage, double *descriptorVector) {
         if (sample_val >= origin_val)
             lbp_code = lbp_code + 2^i;
 
-        descriptorVector[0] = lbp_code;
-    }
+        descriptorVector[0] = lbp_code;*/
+
+        descriptorVector[0] = inputImage[0];
+    //}
 }
 
 double roundn(double x, int n) {
@@ -108,4 +110,4 @@ double roundn(double x, int n) {
     else
         x = round(x);
     return x;
-}*/
+}

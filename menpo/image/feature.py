@@ -298,7 +298,28 @@ class FeatureExtraction(object):
                                      window_step_horizontal,
                                      window_step_unit=window_step_unit,
                                      padding=padding, verbose=verbose)
-        return 0
+        # create hog image object
+        lbp_image = self._init_feature_image(lbp,
+                                             window_centres=window_centres,
+                                             constrain_landmarks=
+                                             constrain_landmarks)
+        # store parameters
+        lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,
+                                    'mapping_type': mapping_type,
+                                    'mode': mode,
+                                    'window_step_vertical':
+                                    window_step_vertical,
+                                    'window_step_horizontal':
+                                    window_step_horizontal,
+                                    'window_step_unit': window_step_unit,
+                                    'padding': padding,
+                                    'original_image_height':
+                                    self._image.pixels.shape[0],
+                                    'original_image_width':
+                                    self._image.pixels.shape[1],
+                                    'original_image_channels':
+                                    self._image.pixels.shape[2]}
+        return lbp_image
 
     def _init_feature_image(self, feature_pixels, window_centres=None,
                             constrain_landmarks=True):
