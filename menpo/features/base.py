@@ -363,7 +363,7 @@ def es(image_data, verbose=False):
     return es_data
 
 
-def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
+def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
     r"""
@@ -437,9 +437,9 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
             (isinstance(radius, list) and isinstance(radius, int)):
         raise ValueError("Radius and samples must both be either integers or "
                          "lists")
-    elif isinstance(radius, list) and isinstance(samples, list) and \
-            len(radius) != len(samples):
-        raise ValueError("Radius and samples must have the same length")
+    elif isinstance(radius, list) and isinstance(samples, list):
+        if len(radius) != len(samples):
+            raise ValueError("Radius and samples must have the same length")
     if isinstance(radius, int) and radius < 1:
         raise ValueError("Radius must be greater than 0")
     elif isinstance(radius, list) and sum(r < 1 for r in radius) > 0:
@@ -489,12 +489,10 @@ def lbp(image_data, radius, samples, mapping_type='riu2', mode='image',
         print iterator
 
     # Compute LBP
-    #output_image, windows_centers = iterator.LBP(algorithm, num_bins,
-    #                                             cell_size, block_size,
-    #                                             signed_gradient, l2_norm_clip,
-    #                                             verbose)
+    output_image, windows_centers = iterator.LBP(radius, samples, mapping_type,
+                                                 mode, verbose)
     # Destroy iterator and return
-    #del iterator
+    del iterator
     #return np.ascontiguousarray(output_image), np.ascontiguousarray(
     #    windows_centers)
     return 0

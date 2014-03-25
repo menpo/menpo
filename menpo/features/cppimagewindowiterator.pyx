@@ -50,7 +50,7 @@ cdef extern from "cpp/HOG.h":
 
 cdef extern from "cpp/LBP.h":
     cdef cppclass LBP(WindowFeature):
-        HOG(unsigned int windowHeight, unsigned int windowWidth,
+        LBP(unsigned int windowHeight, unsigned int windowWidth,
             unsigned int numberOfChannels, unsigned int radius,
             unsigned int samples)
         void apply(double *windowImage, double *descriptorVector)
@@ -171,3 +171,10 @@ cdef class CppImageWindowIterator:
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
         return outputImage, windowsCenters
+
+    def LBP(self, radius, samples, mapping_type, mode, verbose):
+        print 'MPHKA CYTHON'
+        if verbose:
+            info_str = "LBP features:\n"
+            print info_str
+        return 0, 0
