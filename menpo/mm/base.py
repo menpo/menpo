@@ -1,67 +1,13 @@
 import numpy as np
 from menpo.groupalign import GeneralizedProcrustesAnalysis
 from menpo.shape import PointCloud
-from menpo.transform.base import Transform
 from menpo.transform.tps import TPS
 from menpo.transform import Translation, Scale
 from menpo.rasterize import GLRasterizer
+from menpo.rasterize.transform import (ExtractNDims, AddNDims,
+                                       CylindricalUnwrapTransform)
 
 
-class CylindricalUnwrapTransform(Transform):
-    r"""
-    Unwraps 3D points into cylindrical coordinates:
-    x -> radius * theta
-    y -> z
-    z -> depth
-
-    The cylinder is oriented st. it's axial vector is [0, 1, 0]
-    and it's centre is at the origin. discontinuity in theta values
-    occurs at y-z plane for NEGATIVE z values (i.e. the interesting
-    information you are wanting to unwrap better have positive z values).
-
-    radius - the distance of the unwrapping from the axis.
-    z -  the distance along the axis of the cylinder (maps onto the y
-         coordinate exactly)
-    theta - the angular distance around the cylinder, in radians. Note
-         that theta itself is not outputted but theta * radius, preserving
-         distances.
-
-    depth - is the displacement away from the radius along the radial vector.
-    """
-    def __init__(self, radius):
-        self.radius = radius
-
-    def _apply(self, x, **kwargs):
-        cy_coords = np.zeros_like(x)
-        depth = np.sqrt(x[:, 0]**2 + x[:, 2]**2) - self.radius
-        theta = np.arctan2(x[:, 0], x[:, 2])
-        z = x[:, 1]
-        cy_coords[:, 0] = theta * self.radius
-        cy_coords[:, 1] = z
-        cy_coords[:, 2] = depth
-        return cy_coords
-    
-    
-class Extract2D(Transform):
-    r"""
-    Extracts out the x-y dim
-    """
-    def __init__(self):
-        pass
-    
-    def _apply(self, x, **kwargs):
-        return x[:, :2].copy()
-    
-    
-class AddNillZ(Transform):
-    r"""
-    Adds a z axis of all zeros
-    """
-    
-    def _apply(self, x, **kwargs):
-        return np.hstack([x, np.zeros([x.shape[0], 1])]).copy()
-        
-    
 def cylindrical_unwrap_and_translation(points):
     from menpo.misctools.circlefit import circle_fit
     from menpo.transform import Translation
@@ -133,7 +79,7 @@ class MMBuilder(object):
     def unwrap_and_flatten(self):
         self.u_models = [self.unwrapper(m) for m in self.ra_models]
         self.u_mean_lms = self.unwrapper(self.ra_mean_lms)
-        extract_2d = Extract2D()
+        extract_2d = ExtractNDims(2)
         self.u_2d = [extract_2d.apply(u) for u in self.u_models]
         self.u_mean_lms_2d = extract_2d.apply(self.u_mean_lms)
 
@@ -141,13 +87,13 @@ class MMBuilder(object):
         tps_transforms = [TPS(self.lms_for(u), self.u_mean_lms_2d)
                           for u in self.u_2d]
         self.w_models_2d = [t.apply(u) for t, u in zip(tps_transforms,
-                                                        self.u_2d)]
+                                                       self.u_2d)]
 
     def rasterize(self):
         trans_to_clip_space = clip_space_transform(self.u_mean_lms_2d)
         cs_w_models_2d = [trans_to_clip_space.apply(m)
-                           for m in self.w_models_2d]
-        add_nill_z = AddNillZ()  # adds an all-zero z axis
+                          for m in self.w_models_2d]
+        add_nill_z = AddNDims(1)  # adds an all-zero z axis
         cs_w_models = [add_nill_z.apply(m) for m in cs_w_models_2d]
 
         self.shape_images = []
