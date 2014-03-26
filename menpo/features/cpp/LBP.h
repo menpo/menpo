@@ -23,4 +23,4 @@ private:
 };
 
 void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);
-//double roundn(double x, int n);
+double roundn(double x, int n);
