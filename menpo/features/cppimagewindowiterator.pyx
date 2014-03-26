@@ -52,7 +52,7 @@ cdef extern from "cpp/LBP.h":
     cdef cppclass LBP(WindowFeature):
         LBP(unsigned int windowHeight, unsigned int windowWidth,
             unsigned int numberOfChannels, unsigned int *radius,
-            unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations)
+            unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type)
         void apply(double *windowImage, double *descriptorVector)
 
 cdef class CppImageWindowIterator:
@@ -179,7 +179,7 @@ cdef class CppImageWindowIterator:
         cdef LBP *lbp = new LBP(self.iterator._windowHeight,
                                 self.iterator._windowWidth,
                                 self.iterator._numberOfChannels, &cradius[0],
-                                &csamples[0], radius.size)
+                                &csamples[0], radius.size, mapping_type)
         cdef double[:, :, :] outputImage = np.zeros([self.iterator._numberOfWindowsVertically,
                                                      self.iterator._numberOfWindowsHorizontally,
                                                      lbp.descriptorLengthPerWindow], order='F')
