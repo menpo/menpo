@@ -23,59 +23,44 @@ void LBP::apply(double *windowImage, double *descriptorVector) {
 void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector) {
     unsigned int i, s, ch;
     int centre_y, centre_x, rx, ry, fx, fy, cx, cy;
-    double angle_step, min_x, min_y, sample_x, sample_y, centre_val, sample_val;
-    double *samples_coords_x;
-    double *samples_coords_y;
+    double angle_step, centre_val, sample_val;
+    double *samples_x;
+    double *samples_y;
     double tx, ty, w1, w2, w3, w4;
     int lbp_code;
 
+    // find coordinates of the window centre in the window reference frame (axes origin in bottom left corner)
+    centre_y = (int)((imageHeight-1)/2);
+    centre_x = (int)((imageWidth-1)/2);
+
     for (i=0; i<numberOfRadiusSamplesCombinations; i++) {
-        // find coordinates of sampling points with the axes origin (0,0) on the window centre
-        samples_coords_x = new double[samples[i]];
-        samples_coords_y = new double[samples[i]];
+        // find coordinates of sampling point in the window reference frame (axes origin in bottom left corner)
+        samples_x = new double[samples[i]];
+        samples_y = new double[samples[i]];
         angle_step = 2*PI/samples[i];
         for (s=0; s<samples[i]; s++) {
-            samples_coords_x[s] = radius[i] * cos(s * angle_step);
-            samples_coords_y[s] = - (radius[i] * sin(s * angle_step));
+            samples_x[s] = centre_x + radius[i] * cos(s * angle_step);
+            samples_y[s] = centre_y - radius[i] * sin(s * angle_step);
         }
-
-        // find min coordinates of sampling points with the axes origin (0,0) on the window centre
-        min_x = samples_coords_x[0];
-        min_y = samples_coords_y[0];
-        for (s=1; s<samples[i]; s++) {
-            if (samples_coords_x[s] < min_x)
-                min_x = samples_coords_x[s];
-            if (samples_coords_y[s] < min_y)
-                min_y = samples_coords_y[s];
-        }
-
-        // find coordinates of the window centre in the window reference frame (axes origin in bottom left corner)
-        centre_y = (int)-floor(min(min_y,0.0));
-        centre_x = (int)-floor(min(min_x,0.0));
-
-        // value of centre
-        centre_val = inputImage[centre_y + centre_x*imageHeight + ch*imageHeight*imageWidth];
 
         // for each channel, compute the lbp code
         for (ch=0; ch<numberOfChannels; ch++) {
+            // value of centre
+            centre_val = inputImage[centre_y + centre_x*imageHeight + ch*imageHeight*imageWidth];
             lbp_code = 0;
             for (s=0; s<samples[i]; s++) {
-                // coordinates of sampling point in the window reference frame (axes origin in bottom left corner)
-                sample_x = centre_x + samples_coords_x[s];
-                sample_y = centre_y + samples_coords_y[s];
-
                 // check if interpolation is needed
-                rx = (int)round(sample_x);
-                ry = (int)round(sample_y);
-                if ( (fabs(sample_x - rx) < small_val) && (fabs(sample_y - ry) < small_val) )
+                rx = (int)round(samples_x[s]);
+                ry = (int)round(samples_y[s]);
+                if ( (fabs(samples_x[s] - rx) < small_val) && (fabs(samples_y[s] - ry) < small_val) )
                     sample_val = inputImage[ry + rx*imageHeight + ch*imageHeight*imageWidth];
                 else {
-                    fx = (int)floor(sample_x);
-                    fy = (int)floor(sample_y);
-                    cx = (int)ceil(sample_x);
-                    cy = (int)ceil(sample_y);
-                    tx = sample_x - fx;
-                    ty = sample_y - fy;
+                    fx = (int)floor(samples_x[s]);
+                    fy = (int)floor(samples_y[s]);
+                    cx = (int)ceil(samples_x[s]);
+                    cy = (int)ceil(samples_y[s]);
+                    tx = samples_x[s] - fx;
+                    ty = samples_y[s] - fy;
                     w1 = roundn((1 - tx) * (1 - ty), -6);
                     w2 = roundn(tx * (1 - ty), -6);
                     w3 = roundn((1 - tx) * ty, -6);
@@ -93,8 +78,8 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
         }
     }
     // Empty memory
-    delete [] samples_coords_x;
-    delete [] samples_coords_y;
+    delete [] samples_x;
+    delete [] samples_y;
 }
 
 double roundn(double x, int n) {
