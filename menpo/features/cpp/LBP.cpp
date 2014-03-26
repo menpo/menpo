@@ -176,7 +176,16 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
     }
     else if (mapping_type == 3) {
         // rotation invariant and uniform-2
-        index = 0;
+        newMax = n_samples + 2;
+        for (c=0; c<power2(n_samples); c++) {
+            // number of 1->0 and 0->1 transitions in a binary string x is equal
+            // to the number of 1-bits in XOR(x, rotate_left(x))
+            num_trans = count_bit_transitions(c, n_samples);
+            if (num_trans <= 2)
+                mapping_table[c] = count_bits(c);
+            else
+                mapping_table[c] = n_samples + 1;
+        }
     }
 }
 
