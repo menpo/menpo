@@ -52,7 +52,9 @@ cdef extern from "cpp/LBP.h":
     cdef cppclass LBP(WindowFeature):
         LBP(unsigned int windowHeight, unsigned int windowWidth,
             unsigned int numberOfChannels, unsigned int *radius,
-            unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type)
+            unsigned int *samples,
+            unsigned int numberOfRadiusSamplesCombinations,
+            unsigned int mapping_type)
         void apply(double *windowImage, double *descriptorVector)
 
 cdef class CppImageWindowIterator:
@@ -106,7 +108,8 @@ cdef class CppImageWindowIterator:
                                 cellHeightAndWidthInPixels,
                                 blockHeightAndWidthInCells,
                                 enableSignedGradients, l2normClipping)
-        if hog.numberOfBlocksPerWindowVertically == 0 or hog.numberOfBlocksPerWindowHorizontally == 0:
+        if hog.numberOfBlocksPerWindowVertically == 0 or \
+                hog.numberOfBlocksPerWindowHorizontally == 0:
             raise ValueError("The window-related options are wrong. The number of blocks per window is 0.")
         cdef double[:, :, :] outputImage = np.zeros([self.iterator._numberOfWindowsVertically,
                                                      self.iterator._numberOfWindowsHorizontally,
@@ -220,8 +223,8 @@ cdef class CppImageWindowIterator:
                 info_str = "{0}  - Rotation-Invariant codes mapping.\n" \
                     .format(info_str)
             elif mapping_type == 3:
-                info_str = "{0}  - Uniform-2 and Rotation-Invariant codes mapping.\n" \
-                    .format(info_str)
+                info_str = "{0}  - Uniform-2 and Rotation-Invariant codes " \
+                           "mapping.\n".format(info_str)
             elif mapping_type == 0:
                 info_str = "{0}  - No codes mapping used.\n" \
                     .format(info_str)

@@ -27,6 +27,7 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     double angle_step, centre_val, sample_val;
     double *samples_x;
     double *samples_y;
+    unsigned int *mapping_table;
     double tx, ty, w1, w2, w3, w4;
     int lbp_code;
 
@@ -38,6 +39,7 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     }
     samples_x = new double[max_samples];
     samples_y = new double[max_samples];
+    mapping_table = new unsigned int[power2(max_samples)];
 
     // find coordinates of the window centre in the window reference frame (axes origin in bottom left corner)
     centre_y = (int)((imageHeight-1)/2);
@@ -49,6 +51,14 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
         for (s=0; s<samples[i]; s++) {
             samples_x[s] = centre_x + radius[i] * cos(s * angle_step);
             samples_y[s] = centre_y - radius[i] * sin(s * angle_step);
+        }
+
+        if (i==0) {
+            generate_codes_mapping_table(mapping_table, mapping_type, samples[i]);
+            printf("\n%d:[",power2(samples[i]));
+            for (int kk=0; kk<power2(samples[i]); kk++)
+                printf("%d, ",mapping_table[kk]);
+            printf("]\n");
         }
 
         // for each channel, compute the lbp code
@@ -88,7 +98,7 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
 
                 // update the lbp code
                 if (sample_val >= centre_val)
-                    lbp_code = lbp_code + power2(s);
+                    lbp_code += power2(s);
             }
             descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = lbp_code;
         }
@@ -112,10 +122,6 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     return x;
 }*/
 
-void generate_codes_mapping_table(double *mapping_table, int *mapping_table_size, int mapping_type) {
-double a=1;
-}
-
 int power2(int index) {
     if (index == 0)
         return 1;
@@ -123,4 +129,62 @@ int power2(int index) {
     for (int i = 1; i < index; i++)
         number = number * 2;
     return number;
+}
+
+void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples) {
+    int index, c, num_trans;
+    unsigned int newMax = 0;
+    // new_max --> mapping_table_size
+    // n_samples --> n_samples
+    // table --> mapping_table
+
+    if (mapping_type == 1) {
+        // uniform-2
+        newMax = n_samples * (n_samples - 1) + 3;
+        index = 0;
+        for (c=0; c<power2(n_samples); c++) {
+            // number of 1->0 and 0->1 transitions in a binary string x is equal
+            // to the number of 1-bits in XOR(x, rotate_left(x))
+            num_trans = count_bit_transitions(c, n_samples);
+            if (num_trans <= 2) {
+                mapping_table[c] = index;
+                index += 1;
+            }
+            else
+                mapping_table[c] = newMax - 1;
+        }
+    }
+    else if (mapping_type == 2) {
+        // rotation invariant
+        index = 0;
+    }
+    else if (mapping_type == 3) {
+        // rotation invariant and uniform-2
+        index = 0;
+    }
+}
+
+/*int count_bit_transitions(int a)
+{
+    assert((-1 >> 1) < 0); // check for arithmetic shift
+    int count = 0;
+    for(a ^= (a >> 1); a; a &= a - 1)
+    	++count;
+    return count;
+}*/
+
+int count_bit_transitions(int a, unsigned int n_samples) {
+    int b = a >> 1; // sign-extending shift properly counts bits at the ends
+    int c = a ^ b;  // xor marks bits that are not the same as their neighbors on the left
+    if (a >= power2(n_samples-1))
+        return count_bits(c)-1; // count number of set bits in c
+    else
+        return count_bits(c); // count number of set bits in c
+}
+
+int count_bits(int n) {
+    unsigned int c; // c accumulates the total bits set in v
+    for (c = 0; n; c++)
+        n &= n - 1; // clear the least significant bit set
+    return c;
 }
