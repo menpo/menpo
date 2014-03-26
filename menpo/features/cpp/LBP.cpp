@@ -82,7 +82,6 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
                                  w2*inputImage[fy + cx*imageHeight + ch*imageHeight*imageWidth] +
                                  w3*inputImage[cy + fx*imageHeight + ch*imageHeight*imageWidth] +
                                  w4*inputImage[cy + cx*imageHeight + ch*imageHeight*imageWidth];
-                    //sample_val = roundn(sample_val, -4);
                 }
 
                 // update the lbp code
