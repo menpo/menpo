@@ -28,4 +28,5 @@ int power2(int index);
 void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples);
 int count_bit_transitions(int a, unsigned int n_samples);
 int count_bits(int n);
+int leftRotate(int num, unsigned int len_bits, unsigned int move_bits);
 

@@ -55,7 +55,7 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
 
         if (i==0) {
             generate_codes_mapping_table(mapping_table, mapping_type, samples[i]);
-            printf("\n%d:[",power2(samples[i]));
+            printf("\n%d, %d:[",mapping_type,power2(samples[i]));
             for (int kk=0; kk<power2(samples[i]); kk++)
                 printf("%d, ",mapping_table[kk]);
             printf("]\n");
@@ -132,12 +132,11 @@ int power2(int index) {
 }
 
 void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples) {
-    int index, c, num_trans;
+    int index, c, num_trans, rm, r, j;
     unsigned int newMax = 0;
     // new_max --> mapping_table_size
     // n_samples --> n_samples
     // table --> mapping_table
-
     if (mapping_type == 1) {
         // uniform-2
         newMax = n_samples * (n_samples - 1) + 3;
@@ -156,7 +155,24 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
     }
     else if (mapping_type == 2) {
         // rotation invariant
-        index = 0;
+        int *tmp_map = new int[power2(n_samples)];
+        for (c=0; c<power2(n_samples); c++)
+            tmp_map[c] = -1;
+        newMax = 0;
+        for (c=0; c<power2(n_samples); c++) {
+            rm = c;
+            r = c;
+            for (j=1; j<n_samples; j++) {
+                r = leftRotate(r, n_samples, 1);
+                if (r < rm)
+                    rm = r;
+            }
+            if (tmp_map[rm] < 0) {
+                tmp_map[rm] = newMax;
+                newMax += 1;
+            }
+            mapping_table[c] = tmp_map[rm];
+        }
     }
     else if (mapping_type == 3) {
         // rotation invariant and uniform-2
@@ -187,4 +203,10 @@ int count_bits(int n) {
     for (c = 0; n; c++)
         n &= n - 1; // clear the least significant bit set
     return c;
+}
+
+int leftRotate(int num, unsigned int len_bits, unsigned int move_bits) {
+   /* In num<<move_bits, last move_bits bits are 0. To put first 3 bits of num at
+     last, do bitwise or of num<<move_bits with num >>(len_bits - move_bits) */
+   return (num << move_bits % len_bits) & (power2(len_bits) - 1) | ((num & (power2(len_bits) - 1)) >> (len_bits - (move_bits % len_bits)));
 }
