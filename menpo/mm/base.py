@@ -41,7 +41,7 @@ def mean_pointcloud(pointclouds):
     return PointCloud(sum(pointclouds) / len(pointclouds))
 
 
-def build_trimesh_extractor(sample_image, sampling_rate=50):
+def build_trimesh_extractor(sample_image, sampling_rate=2):
     import numpy as np
     x, y = np.meshgrid(np.arange(0, sample_image.height, sampling_rate),
                        np.arange(0, sample_image.width, sampling_rate))
@@ -64,7 +64,7 @@ def build_trimesh_extractor(sample_image, sampling_rate=50):
 
 class MMBuilder(object):
 
-    def __init__(self, models, group=None, label='all'):
+    def __init__(self, models, group=None, label='all', sampling_rate=2):
         self.models = models
         self.group = group
         self.label = label
@@ -92,6 +92,7 @@ class MMBuilder(object):
 
         print 'Extracting TriMeshes...'
         self.dc_meshes = []
+        self.sampling_rate = sampling_rate
         self.extract()
 
         print 'Taking PCA...'
@@ -148,7 +149,8 @@ class MMBuilder(object):
             s.mask.pixels = si.mask.pixels.copy()
 
     def extract(self):
-        tm_extract = build_trimesh_extractor(self.shape_images[0])
+        tm_extract = build_trimesh_extractor(self.shape_images[0],
+                                             sampling_rate=self.sampling_rate)
         self.dc_meshes = [tm_extract(s) for s in self.shape_images]
 
     def pca(self):
