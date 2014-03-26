@@ -25,21 +25,19 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     unsigned int i, s, ch, max_samples;
     int centre_y, centre_x, rx, ry, fx, fy, cx, cy;
     double angle_step, centre_val, sample_val;
-    double *samples_x;
-    double *samples_y;
-    unsigned int *mapping_table;
     double tx, ty, w1, w2, w3, w4;
     int lbp_code;
 
-    // initialize samples coordinates arrays
+    // initialize samples coordinates arrays and mapping array
     max_samples = samples[0];
     for (i=1; i<numberOfRadiusSamplesCombinations; i++) {
         if (samples[i] > max_samples)
             max_samples = samples[i];
     }
-    samples_x = new double[max_samples];
-    samples_y = new double[max_samples];
-    mapping_table = new unsigned int[power2(max_samples)];
+    double *samples_x = new double[max_samples];
+    double *samples_y = new double[max_samples];
+    unsigned int *mapping_table = new unsigned int[power2(max_samples)];
+
 
     // find coordinates of the window centre in the window reference frame (axes origin in bottom left corner)
     centre_y = (int)((imageHeight-1)/2);
@@ -53,13 +51,9 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
             samples_y[s] = centre_y - radius[i] * sin(s * angle_step);
         }
 
-        if (i==0) {
+        // generate mapping table
+        if (mapping_type != 0)
             generate_codes_mapping_table(mapping_table, mapping_type, samples[i]);
-            printf("\n%d, %d:[",mapping_type,power2(samples[i]));
-            for (int kk=0; kk<power2(samples[i]); kk++)
-                printf("%d, ",mapping_table[kk]);
-            printf("]\n");
-        }
 
         // for each channel, compute the lbp code
         for (ch=0; ch<numberOfChannels; ch++) {
@@ -79,12 +73,7 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
                     cy = (int)ceil(samples_y[s]);
                     tx = samples_x[s] - fx;
                     ty = samples_y[s] - fy;
-                    // compute interpolation weights
-                    /*w1 = roundn((1 - tx) * (1 - ty), -6);
-                    w2 = roundn(tx * (1 - ty), -6);
-                    w3 = roundn((1 - tx) * ty, -6);
-                    // w4 = roundn(tx * ty, -6);
-                    w4 = roundn(1 - w1 - w2 - w3, -6);*/
+                    // compute interpolation weights and value
                     w1 = (1 - tx) * (1 - ty);
                     w2 =      tx  * (1 - ty);
                     w3 = (1 - tx) *      ty ;
@@ -106,21 +95,8 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     // Empty memory
     delete [] samples_x;
     delete [] samples_y;
+    delete [] mapping_table;
 }
-
-/*double roundn(double x, int n) {
-    if (n < 0) {
-        double p = pow(10, -n);
-        x = round(p * x) / p;
-    }
-    else if (n > 0) {
-        double p = pow(10, n);
-        x = p * round(x / p);
-    }
-    else
-        x = round(x);
-    return x;
-}*/
 
 int power2(int index) {
     if (index == 0)
@@ -132,15 +108,12 @@ int power2(int index) {
 }
 
 void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples) {
-    int index, c, num_trans, rm, r, j;
+    int c;
     unsigned int newMax = 0;
-    // new_max --> mapping_table_size
-    // n_samples --> n_samples
-    // table --> mapping_table
     if (mapping_type == 1) {
         // uniform-2
         newMax = n_samples * (n_samples - 1) + 3;
-        index = 0;
+        int index = 0, num_trans;
         for (c=0; c<power2(n_samples); c++) {
             // number of 1->0 and 0->1 transitions in a binary string x is equal
             // to the number of 1-bits in XOR(x, rotate_left(x))
@@ -155,6 +128,7 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
     }
     else if (mapping_type == 2) {
         // rotation invariant
+        int rm, r;
         int *tmp_map = new int[power2(n_samples)];
         for (c=0; c<power2(n_samples); c++)
             tmp_map[c] = -1;
@@ -162,7 +136,7 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
         for (c=0; c<power2(n_samples); c++) {
             rm = c;
             r = c;
-            for (j=1; j<n_samples; j++) {
+            for (int j=1; j<n_samples; j++) {
                 r = leftRotate(r, n_samples, 1);
                 if (r < rm)
                     rm = r;
@@ -176,6 +150,7 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
     }
     else if (mapping_type == 3) {
         // rotation invariant and uniform-2
+        int num_trans;
         newMax = n_samples + 2;
         for (c=0; c<power2(n_samples); c++) {
             // number of 1->0 and 0->1 transitions in a binary string x is equal
@@ -188,15 +163,6 @@ void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapp
         }
     }
 }
-
-/*int count_bit_transitions(int a)
-{
-    assert((-1 >> 1) < 0); // check for arithmetic shift
-    int count = 0;
-    for(a ^= (a >> 1); a; a &= a - 1)
-    	++count;
-    return count;
-}*/
 
 int count_bit_transitions(int a, unsigned int n_samples) {
     int b = a >> 1; // sign-extending shift properly counts bits at the ends
