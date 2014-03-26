@@ -40,6 +40,13 @@ def clip_space_transform(points, boundary_proportion=0.1):
 def mean_pointcloud(pointclouds):
     return PointCloud(sum(pointclouds) / len(pointclouds))
 
+def extract_z_for_rasterizing(model):
+    z_range = model.range()[-1]
+    z_centre = model.centre_of_bounds[-1]
+    z = model.points[:, 2]
+    z_c = z - z_centre
+    return z_c / z_range
+
 
 def build_trimesh_extractor(sample_image, sampling_rate=2):
     import numpy as np
@@ -130,6 +137,9 @@ class MMBuilder(object):
         cs_mean_lms_2d = trans_to_clip_space.apply(self.u_mean_lms_2d)
         add_nill_z = AddNDims(1)  # adds an all-zero z axis
         cs_models = [add_nill_z.apply(m) for m in cs_models_2d]
+	for orig, m in zip(self.u_models, cs_models):
+            z = extract_z_for_rasterizing(orig)
+            m.points[:, 2] = z
         mean_lm_img = self.r.model_to_image_space(
             add_nill_z.apply(cs_mean_lms_2d))
 
