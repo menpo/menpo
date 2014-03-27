@@ -281,13 +281,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Returns
         -------
-        hist : (shape given by keep_channels) list
-            A list of histogram array(s). If keep_channels=False, then
-            len(hist)=1. If keep_channels=True, then len(hist)=n_channels.
-        bin_edges : (shape given by keep_channels) list
-            A list of arrays corresponding to the above histograms that store
-            the bins' edges.
-            The result can be visualized as
+        hist : array or list with n_channels arrays
+            The histogram(s). If keep_channels=False, then hist is an array. If
+            keep_channels=True, then hist is a list with len(hist)=n_channels.
+        bin_edges : array or list with n_channels arrays
+            An array or a list of arrays corresponding to the above histograms
+            that store the bins' edges.
+            The result in the case of list of arrays can be visualized as:
                 for k in range(len(hist)):
                     plt.subplot(1,len(hist),k)
                     width = 0.7 * (bin_edges[k][1] - bin_edges[k][0])
@@ -304,19 +304,17 @@ class Image(Vectorizable, Landmarkable, Viewable):
             if bins == 'unique':
                 bins = 0
             else:
-                raise ValueError("Bins can be either 'unique', positive int or "
+                raise ValueError("Bins can be either 'unique', positive int or"
                                  "a sequence of scalars.")
         elif isinstance(bins, int) and bins < 1:
             raise ValueError("Bins can be either 'unique', positive int or a "
                              "sequence of scalars.")
         # compute histogram
         vec = self.as_vector(keep_channels=keep_channels)
-        if len(vec.shape) == 1:
+        if len(vec.shape) == 1 or vec.shape[1] == 1:
             if bins == 0:
                 bins = np.unique(vec)
-            h_tmp, c_tmp = np.histogram(vec, bins=bins)
-            hist = [h_tmp]
-            bin_edges = [c_tmp]
+            hist, bin_edges = np.histogram(vec, bins=bins)
         else:
             hist = []
             bin_edges = []
