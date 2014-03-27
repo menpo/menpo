@@ -363,8 +363,8 @@ def es(image_data, verbose=False):
     return es_data
 
 
-def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
-        window_step_vertical=1, window_step_horizontal=1,
+def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
+        mode='image', window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
     r"""
     Computes a 2-dimensional LBP features image with k number of channels, of
@@ -375,6 +375,34 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
+    radius : int or list of integers
+        It defines the radius of the circle (or circles) at which the sampling
+        points will be extracted. The radius (or radii) values must be greater
+        than zero. There must be a radius value for each samples value, thus
+        they both need to have the same length.
+
+        Default: [1, 2, 3, 4]
+    samples : int or list of integers
+        It defines the number of sampling points that will be extracted at each
+        circle. The samples value (or values) must be greater than zero. There
+        must be a samples value for each radius value, thus they both need to
+        have the same length.
+
+        Default: [8, 8, 8, 8]
+    mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
+        It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
+        mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
+        rotation-invariant mapping and 'none' to use no mapping nd only the
+        decimal values instead.
+
+        Default: 'riu2'
+    mode : 'image' or 'hist'
+        It defines whether the output will be a multichannel image or a
+        histogram of the LBP codes. In the case of 'image', the output
+        features image will have C * len(samples) channels. In the case of
+        'hist', the output will be len(samples) number of histogram vectors.
+
+        Default : 'image'
     window_step_vertical : float
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
@@ -398,12 +426,6 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
         out-of-boundary pixels are set to zero.
 
         Default: True
-    mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
-        The mapping type. Select 'u2' for uniform-2 mapping, 'ri' for
-        rotation-invariant mapping, 'riu2' for uniform-2 and
-        rotation-invariant mapping and 'none' to use no mapping.
-
-        Default: 'riu2'
     verbose : bool
         Flag to print LBP related information.
 
@@ -416,11 +438,11 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     ValueError
         Radius and samples must have the same length
     ValueError
-        Radius must be greater than 0
+        Radius must be > 0
     ValueError
-        Radii must be greater than 0
+        Radii must be > 0
     ValueError
-        Samples must be greater than 0
+        Samples must be > 0
     ValueError
         Mapping type must be u2, ri, riu2 or none
     ValueError
@@ -433,21 +455,21 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
         Window step unit must be either pixels or window
     """
     # Check options
-    if (isinstance(radius, int) and isinstance(radius, list)) or \
-            (isinstance(radius, list) and isinstance(radius, int)):
+    if (isinstance(radius, int) and isinstance(samples, list)) or \
+            (isinstance(radius, list) and isinstance(samples, int)):
         raise ValueError("Radius and samples must both be either integers or "
                          "lists")
     elif isinstance(radius, list) and isinstance(samples, list):
         if len(radius) != len(samples):
             raise ValueError("Radius and samples must have the same length")
     if isinstance(radius, int) and radius < 1:
-        raise ValueError("Radius must be greater than 0")
+        raise ValueError("Radius must be > 0")
     elif isinstance(radius, list) and sum(r < 1 for r in radius) > 0:
-        raise ValueError("Radii must be greater than 0")
+        raise ValueError("Radii must be > 0")
     if isinstance(samples, int) and samples < 1:
-        raise ValueError("Samples must be greater than 0")
+        raise ValueError("Samples must be > 0")
     elif isinstance(samples, list) and sum(s < 1 for s in samples) > 0:
-        raise ValueError("Samples must be greater than 0")
+        raise ValueError("Samples must be > 0")
     if mapping_type not in ['u2', 'ri', 'riu2', 'none']:
         raise ValueError("Mapping type must be u2, ri, riu2 or "
                          "none")
@@ -464,10 +486,8 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     image_data = np.asfortranarray(image_data)
 
     # Parse options
-    if isinstance(radius, list):
-        radius = np.asfortranarray(radius)
-    if isinstance(samples, list):
-        samples = np.asfortranarray(samples)
+    radius = np.asfortranarray(radius)
+    samples = np.asfortranarray(samples)
     window_height = np.uint32(2 * radius.max() + 1)
     window_width = window_height
     if window_step_unit == 'window':
@@ -504,98 +524,4 @@ def lbp(image_data, radius=1, samples=8, mapping_type='riu2', mode='image',
     return np.ascontiguousarray(output_image), np.ascontiguousarray(
         windows_centers)
 
-def _lbp_mapping_table(n_samples, mapping_type='riu2'):
-    r"""
-    Returns the mapping table for LBP codes in a neighbourhood of n_samples
-    number of sampling points.
-
-    Parameters
-    ----------
-    n_samples :  int
-        The number of sampling points.
-    mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
-        The mapping type. Select 'u2' for uniform-2 mapping, 'ri' for
-        rotation-invariant mapping, 'riu2' for uniform-2 and
-        rotation-invariant mapping and 'none' to use no mapping.
-
-        Default: 'riu2'
-
-    Raises
-    -------
-    ValueError
-        mapping_type can be 'u2' or 'ri' or 'riu2' or 'none'.
-    """
-    # initialize the output lbp codes mapping table
-    table = range(2**n_samples)
-    # uniform-2 mapping
-    if mapping_type == 'u2':
-        # initialize the number of patterns in the mapping table
-        new_max = n_samples * (n_samples - 1) + 3
-        index = 0
-        for c in range(2**n_samples):
-            # number of 1->0 and 0->1 transitions in a binary string x is equal
-            # to the number of 1-bits in XOR(x, rotate_left(x))
-            num_trans = bin(c ^ circural_rotation_left(c, 1, n_samples)).\
-                count('1')
-            if num_trans <= 2:
-                table[c] = index
-                index += 1
-            else:
-                table[c] = new_max - 1
-    # rotation-invariant mapping
-    elif mapping_type == 'ri':
-        new_max = 0
-        tmp_map = np.zeros((2**n_samples, 1), dtype=np.int) - 1
-        for c in range(2**n_samples):
-            rm = c
-            r = c
-            for j in range(1, n_samples):
-                r = circural_rotation_left(r, 1, n_samples)
-                rm = min(rm, r)
-            if tmp_map[rm, 0] < 0:
-                tmp_map[rm, 0] = new_max
-                new_max += 1
-            table[c] = tmp_map[rm, 0]
-    # uniform-2 and rotation-invariant mapping
-    elif mapping_type == 'riu2':
-        new_max = n_samples + 2
-        for c in range(2**n_samples):
-            # number of 1->0 and 0->1 transitions in a binary string x is equal
-            # to the number of 1-bits in XOR(x, rotate_left(x))
-            num_trans = bin(c ^ circural_rotation_left(c, 1, n_samples)).\
-                count('1')
-            if num_trans <= 2:
-                table[c] = bin(c).count('1')
-            else:
-                table[c] = n_samples + 1
-    elif mapping_type == 'none':
-        table = 0
-        new_max = 0
-    else:
-        raise ValueError('Wrong mapping type.')
-    return table, new_max
-
-
-def circural_rotation_left(val, rot_bits, max_bits):
-    r"""
-    Applies a circular left shift of 'rot_bits' bits on the given number 'num'
-    keeping 'max_bits' number of bits.
-
-    Parameters
-    ----------
-    val :  int
-        The input number to be shifted.
-    rot_bins : int
-        The number of bits of the left circular shift.
-    max_bits : int
-        The number of bits of the output number. All the bits in positions
-        larger than max_bits are dropped.
-    """
-    return (val << rot_bits % max_bits) & (2**max_bits - 1) | \
-           ((val & (2**max_bits - 1)) >> (max_bits - (rot_bits % max_bits)))
-
-
-def circural_rotation_right(val, rot_bits, max_bits):
-    return ((val & (2**max_bits - 1)) >> rot_bits % max_bits) | \
-           (val << (max_bits - (rot_bits % max_bits)) & (2**max_bits - 1))
 

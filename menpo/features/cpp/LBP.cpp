@@ -88,7 +88,11 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
                 if (sample_val >= centre_val)
                     lbp_code += power2(s);
             }
-            descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = lbp_code;
+            // store lbp code with mapping if requested
+            if (mapping_type != 0)
+                descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = mapping_table[lbp_code];
+            else
+                descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = lbp_code;
         }
     }
     // Empty memory

@@ -284,11 +284,102 @@ class FeatureExtraction(object):
                                   self._image.pixels.shape[2]}
         return es_image
 
-    def lbp(self, radius=1, samples=8, mapping_type='riu2', mode='image',
-            window_step_vertical=1, window_step_horizontal=1,
+    def lbp(self, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
+            mode='image', window_step_vertical=1, window_step_horizontal=1,
             window_step_unit='pixels', padding=True, verbose=False,
             constrain_landmarks=True):
-        # compute lbp features
+        r"""
+        Represents a 2-dimensional LBP features image with k number of
+        channels. The output object's class is either MaskedImage or Image
+        depending on the input image.
+
+        Parameters
+        ----------
+        radius : int or list of integers
+            It defines the radius of the circle (or circles) at which the sampling
+            points will be extracted. The radius (or radii) values must be greater
+            than zero. There must be a radius value for each samples value, thus
+            they both need to have the same length.
+
+            Default: [1, 2, 3, 4]
+        samples : int or list of integers
+            It defines the number of sampling points that will be extracted at each
+            circle. The samples value (or values) must be greater than zero. There
+            must be a samples value for each radius value, thus they both need to
+            have the same length.
+
+            Default: [8, 8, 8, 8]
+        mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
+            It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
+            mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
+            rotation-invariant mapping and 'none' to use no mapping nd only the
+            decimal values instead.
+
+            Default: 'riu2'
+        mode : 'image' or 'hist'
+            It defines whether the output will be a multichannel image or a
+            histogram of the LBP codes. In the case of 'image', the output
+            features image will have C * len(samples) channels. In the case of
+            'hist', the output will be len(samples) number of histogram vectors.
+
+            Default : 'image'
+        window_step_vertical : float
+            Defines the vertical step by which the window in the
+            ImageWindowIterator is moved, thus it controls the features density.
+            The metric unit is defined by window_step_unit.
+
+            Default: 1
+        window_step_horizontal : float
+            Defines the horizontal step by which the window in the
+            ImageWindowIterator is moved, thus it controls the features density.
+            The metric unit is defined by window_step_unit.
+
+            Default: 1
+        window_step_unit : 'pixels' or 'window'
+            Defines the metric unit of the window_step_vertical and
+            window_step_horizontal parameters for the ImageWindowIterator object.
+
+            Default: 'pixels'
+        padding : bool
+            Enables/disables padding for the close-to-boundary windows in the
+            ImageWindowIterator object. When padding is enabled, the
+            out-of-boundary pixels are set to zero.
+
+            Default: True
+        verbose : bool
+            Flag to print LBP related information.
+
+            Default: False
+        constrain_landmarks : bool
+            Flag that if enabled, it constrains landmarks that ended up outside
+            of the features image bounds.
+
+            Default: True
+
+        Raises
+        -------
+        ValueError
+            Radius and samples must both be either integers or lists
+        ValueError
+            Radius and samples must have the same length
+        ValueError
+            Radius must be > 0
+        ValueError
+            Radii must be > 0
+        ValueError
+            Samples must be > 0
+        ValueError
+            Mapping type must be u2, ri, riu2 or none
+        ValueError
+            Mode must be either image or hist
+        ValueError
+            Horizontal window step must be > 0
+        ValueError
+            Vertical window step must be > 0
+        ValueError
+            Window step unit must be either pixels or window
+        """
+        # compute lbp features and windows_centres
         lbp, window_centres = fc.lbp(self._image.pixels, radius=radius,
                                      samples=samples,
                                      mapping_type=mapping_type,
@@ -298,7 +389,7 @@ class FeatureExtraction(object):
                                      window_step_horizontal,
                                      window_step_unit=window_step_unit,
                                      padding=padding, verbose=verbose)
-        # create hog image object
+        # create lbp image object
         lbp_image = self._init_feature_image(lbp,
                                              window_centres=window_centres,
                                              constrain_landmarks=
