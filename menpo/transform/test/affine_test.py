@@ -39,8 +39,8 @@ def test_align_2d_translation():
     # estimate the transform from source and target
     estimate = Translation.align(source, target)
     # check the estimates is correct
-    assert_allclose(translation.homogeneous_matrix,
-                    estimate.homogeneous_matrix)
+    assert_allclose(translation.h_matrix,
+                    estimate.h_matrix)
 
 
 def test_basic_2d_rotation():
@@ -71,8 +71,8 @@ def test_align_2d_rotation():
     # estimate the transform from source and target
     estimate = Rotation2D.align(source, target)
     # check the estimates is correct
-    assert_allclose(rotation.homogeneous_matrix,
-                    estimate.homogeneous_matrix, atol=1e-14)
+    assert_allclose(rotation.h_matrix,
+                    estimate.h_matrix, atol=1e-14)
 
 
 
@@ -111,18 +111,18 @@ def test_3d_rotation_inverse_eye():
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     transformed = rotation.compose_before(rotation.inverse)
-    print transformed.homogeneous_matrix
-    assert_allclose(np.eye(4), transformed.homogeneous_matrix, atol=1e-15)
+    print transformed.h_matrix
+    assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 
 def test_basic_2d_affine():
     linear_component = np.array([[1, -6],
                                  [-3, 2]])
     translation_component = np.array([7, -8])
-    homogeneous_matrix = np.eye(3, 3)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(homogeneous_matrix)
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(h_matrix)
     x = np.array([[0, 1],
                   [1, 1],
                   [-1, -5],
@@ -146,10 +146,10 @@ def test_align_2d_affine():
     linear_component = np.array([[1, -6],
                                  [-3, 2]])
     translation_component = np.array([7, -8])
-    homogeneous_matrix = np.eye(3, 3)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(homogeneous_matrix)
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(h_matrix)
     source = PointCloud(np.array([[0, 1],
                                   [1, 1],
                                   [-1, -5],
@@ -158,7 +158,7 @@ def test_align_2d_affine():
     # estimate the transform from source and target
     estimate = AffineTransform.align(source, target)
     # check the estimates is correct
-    assert_allclose(affine.homogeneous_matrix, estimate.homogeneous_matrix)
+    assert_allclose(affine.h_matrix, estimate.h_matrix)
 
 
 def test_basic_3d_affine():
@@ -166,10 +166,10 @@ def test_basic_3d_affine():
                                  [-3, -2, 5],
                                  [5, -1, 3]])
     translation_component = np.array([7, -8, 9])
-    homogeneous_matrix = np.eye(4, 4)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(homogeneous_matrix)
+    h_matrix = np.eye(4, 4)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    affine = AffineTransform(h_matrix)
     x = np.array([[0, 1,  2],
                   [1, 1, 1],
                   [-1, 2, -5],
@@ -193,10 +193,10 @@ def test_basic_2d_similarity():
     linear_component = np.array([[2, -6],
                                  [6, 2]])
     translation_component = np.array([7, -8])
-    homogeneous_matrix = np.eye(3, 3)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    similarity = SimilarityTransform(homogeneous_matrix)
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    similarity = SimilarityTransform(h_matrix)
     x = np.array([[0, 1],
                   [1, 1],
                   [-1, -5],
@@ -220,10 +220,10 @@ def test_align_2d_similarity():
     linear_component = np.array([[2, -6],
                                  [6, 2]])
     translation_component = np.array([7, -8])
-    homogeneous_matrix = np.eye(3, 3)
-    homogeneous_matrix[:-1, :-1] = linear_component
-    homogeneous_matrix[:-1, -1] = translation_component
-    similarity = SimilarityTransform(homogeneous_matrix)
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    similarity = SimilarityTransform(h_matrix)
     source = PointCloud(np.array([[0, 1],
                                   [1, 1],
                                   [-1, -5],
@@ -232,8 +232,8 @@ def test_align_2d_similarity():
     # estimate the transform from source and target
     estimate = SimilarityTransform.align(source, target)
     # check the estimates is correct
-    assert_allclose(similarity.homogeneous_matrix,
-                    estimate.homogeneous_matrix)
+    assert_allclose(similarity.h_matrix,
+                    estimate.h_matrix)
 
 
 jac_solution2d = np.array(
@@ -515,7 +515,7 @@ def test_similarity_2d_from_vector():
 
     sim = SimilarityTransform.identity(2).from_vector(params)
 
-    assert_equal(sim.homogeneous_matrix, homo)
+    assert_equal(sim.h_matrix, homo)
 
 
 def test_similarity_2d_as_vector():
@@ -537,7 +537,7 @@ def test_translation_2d_from_vector():
 
     tr = Translation.identity(2).from_vector(params)
 
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_translation_2d_as_vector():
@@ -555,7 +555,7 @@ def test_translation_3d_from_vector():
 
     tr = Translation.identity(3).from_vector(params)
 
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_translation_3d_as_vector():
@@ -573,7 +573,7 @@ def test_uniformscale2d_update_from_vector():
                      [0, 0, 1]])
 
     uniform_scale.from_vector_inplace(new_scale)
-    assert_equal(uniform_scale.homogeneous_matrix, homo)
+    assert_equal(uniform_scale.h_matrix, homo)
 
 
 def test_uniformscale2d_as_vector():
@@ -590,7 +590,7 @@ def test_nonuniformscale2d_from_vector():
 
     tr = NonUniformScale.identity(2).from_vector(scale)
 
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_nonuniformscale2d_update_from_vector():
@@ -600,7 +600,7 @@ def test_nonuniformscale2d_update_from_vector():
                      [0, 0, 1]])
     tr = NonUniformScale(np.array([1, 2]))
     tr.from_vector_inplace(scale)
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_nonuniformscale2d_as_vector():
@@ -618,7 +618,7 @@ def test_uniformscale3d_from_vector():
 
     uniform_scale = UniformScale(1, 3)
     tr = uniform_scale.from_vector(scale)
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_uniformscale3d_as_vector():
@@ -634,7 +634,7 @@ def test_uniformscale_build_2d():
                      [0, 0, 1]])
 
     tr = UniformScale(scale, 2)
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 def test_uniformscale_build_3d():
@@ -647,7 +647,7 @@ def test_uniformscale_build_3d():
     tr = UniformScale(scale, 3)
 
     assert(isinstance(tr, UniformScale))
-    assert_equal(tr.homogeneous_matrix, homo)
+    assert_equal(tr.h_matrix, homo)
 
 
 @raises(DimensionalityError)
@@ -698,7 +698,7 @@ def test_rotation2d_from_vector():
 
     tr = Rotation2D.identity().from_vector(theta)
 
-    assert_allclose(tr.homogeneous_matrix, homo, atol=1**-15)
+    assert_allclose(tr.h_matrix, homo, atol=1**-15)
 
 
 def test_rotation2d_as_vector():
@@ -792,50 +792,50 @@ def test_rotation3d_n_parameters_raises_notimplementederror():
 
 
 def test_rotation2d_identity():
-    assert_allclose(Rotation2D.identity().homogeneous_matrix, np.eye(3))
+    assert_allclose(Rotation2D.identity().h_matrix, np.eye(3))
 
 
 def test_rotation3d_identity():
-    assert_allclose(Rotation3D.identity().homogeneous_matrix, np.eye(4))
+    assert_allclose(Rotation3D.identity().h_matrix, np.eye(4))
 
 
 def test_affine_identity_2d():
-    assert_allclose(AffineTransform.identity(2).homogeneous_matrix, np.eye(3))
+    assert_allclose(AffineTransform.identity(2).h_matrix, np.eye(3))
 
 
 def test_affine_identity_3d():
-    assert_allclose(AffineTransform.identity(3).homogeneous_matrix, np.eye(4))
+    assert_allclose(AffineTransform.identity(3).h_matrix, np.eye(4))
 
 
 def test_similarity_identity_2d():
-    assert_allclose(SimilarityTransform.identity(2).homogeneous_matrix,
+    assert_allclose(SimilarityTransform.identity(2).h_matrix,
                     np.eye(3))
 
 
 def test_similarity_identity_3d():
-    assert_allclose(SimilarityTransform.identity(3).homogeneous_matrix,
+    assert_allclose(SimilarityTransform.identity(3).h_matrix,
                     np.eye(4))
 
 
 def test_uniformscale_identity_2d():
-    assert_allclose(UniformScale.identity(2).homogeneous_matrix, np.eye(3))
+    assert_allclose(UniformScale.identity(2).h_matrix, np.eye(3))
 
 
 def test_uniformscale_identity_3d():
-    assert_allclose(UniformScale.identity(3).homogeneous_matrix, np.eye(4))
+    assert_allclose(UniformScale.identity(3).h_matrix, np.eye(4))
 
 
 def test_nonuniformscale_identity_2d():
-    assert_allclose(NonUniformScale.identity(2).homogeneous_matrix, np.eye(3))
+    assert_allclose(NonUniformScale.identity(2).h_matrix, np.eye(3))
 
 
 def test_nonuniformscale_identity_3d():
-    assert_allclose(NonUniformScale.identity(3).homogeneous_matrix, np.eye(4))
+    assert_allclose(NonUniformScale.identity(3).h_matrix, np.eye(4))
 
 
 def test_translation_identity_2d():
-    assert_allclose(Translation.identity(2).homogeneous_matrix, np.eye(3))
+    assert_allclose(Translation.identity(2).h_matrix, np.eye(3))
 
 
 def test_translation_identity_3d():
-    assert_allclose(Translation.identity(3).homogeneous_matrix, np.eye(4))
+    assert_allclose(Translation.identity(3).h_matrix, np.eye(4))

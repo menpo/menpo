@@ -10,7 +10,10 @@ class Transform(object):
     r"""
     An abstract representation of any N-dimensional transform.
     Provides a unified interface to apply the transform with
-    :meth:`apply_inplace` and :meth:`apply`.
+    :meth:`apply_inplace` and :meth:`apply`. All Transforms support basic
+    composition to form transform chains. For smart composition, see the
+    Composition and VComposition mix-ins.
+
     """
 
     __metaclass__ = abc.ABCMeta
@@ -112,6 +115,84 @@ class Transform(object):
             return x._transform(transform)
         except AttributeError:
             return self._apply(x, **kwargs)
+
+#     def compose_before(self, transform):
+#         r"""
+#         c = a.compose_before(b)
+#         c.apply(p) == b.apply(a.apply(p))
+#
+#         a and b are left unchanged.
+#
+#         Parameters
+#         ----------
+#         transform : :class:`Transform`
+#             Transform to be applied **after** self
+#
+#         Returns
+#         --------
+#         transform : :class:`TransformChain`
+#             The resulting transform chain.
+#         """
+#         return TransformChain([self, transform])
+#
+#     def compose_after(self, transform):
+#         r"""
+#         c = a.compose_after(b)
+#         c.apply(p) == a.apply(b.apply(p))
+#
+#         a and b are left unchanged.
+#
+#         This corresponds to the usual mathematical formalism for the compose
+#         operator, `o`.
+#
+#         Parameters
+#         ----------
+#         transform : :class:`Transform`
+#             Transform to be applied **before** self
+#
+#         Returns
+#         --------
+#         transform : :class:`TransformChain`
+#             The resulting transform chain.
+#         """
+#         return TransformChain([transform, self])
+#
+#
+# class TransformChain(Transform):
+#     r"""
+#     A chain of transforms that can be efficiently applied one after the other.
+#
+#     This class is the natural product of composition. Note that objects may
+#     know how to compose themselves more efficiently - such objects are
+#     implementing the Compose or VCompose interface.
+#
+#     Parameters
+#     ----------
+#     transforms : list of :class:`Transform`
+#         The list of transforms to be applied. Note that the first transform
+#         will be applied first - the result of which is fed into the second
+#         transform and so on until the chain is exhausted.
+#
+#     """
+#
+#     def __init__(self, transforms):
+#
+#         self.transforms = transforms
+#
+#     def _apply(self, x, **kwargs):
+#         r"""
+#         Applies each of the transforms to the array ``x``, in order.
+#
+#         Parameters
+#         ----------
+#         x : (N, D) ndarray
+#
+#         Returns
+#         -------
+#         transformed : (N, D) ndarray
+#             Transformed array having passed through the chain of transforms.
+#         """
+#         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
 
 
 class Invertible(object):
@@ -240,6 +321,14 @@ class Composable(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    # @abc.abstractproperty
+    # def composes_with(self):
+    #     r"""Iterable of classes that this transform composes against natively.
+    #     If native composition is not possible, falls back to producing a
+    #     :class:`TransformChain`
+    #     """
+    #     pass
+
     def compose_before(self, transform):
         r"""
         c = a.compose_before(b)
@@ -257,9 +346,36 @@ class Composable(object):
         transform : :class:`Composable`
             The resulting transform.
         """
-        # naive approach  - deepcopy followed by the inplace operation
+    #     if isinstance(transform, self.composes_with):
+    #         # naive native approach - deepcopy followed by the inplace
+    #         # operation
+    #         new_transform = deepcopy(self)
+    #         return new_transform.compose_before_inplace(transform)
+    #     else:
+    #         # best we do is a TransformChain
+    #         return Transform.compose_before(self, transform)
+    #
+    # def _compose_before(self, transform):
+    #     r"""
+    #     c = a.compose_before(b)
+    #     c.apply(p) == b.apply(a.apply(p))
+    #
+    #     a and b are left unchanged.
+    #
+    #     Parameters
+    #     ----------
+    #     transform : :class:`Composable`
+    #         Transform to be applied **after** self
+    #
+    #     Returns
+    #     --------
+    #     transform : :class:`Composable`
+    #         The resulting transform.
+    #     """
+    #     # naive approach - deepcopy followed by the inplace operation
         new_transform = deepcopy(self)
-        return new_transform.compose_before_inplace(transform)
+        new_transform.compose_before_inplace(transform)
+        return new_transform
 
     @abc.abstractmethod
     def compose_before_inplace(self, transform):
