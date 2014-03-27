@@ -285,7 +285,7 @@ class FeatureExtraction(object):
         return es_image
 
     def lbp(self, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
-            mode='image', window_step_vertical=1, window_step_horizontal=1,
+            window_step_vertical=1, window_step_horizontal=1,
             window_step_unit='pixels', padding=True, verbose=False,
             constrain_landmarks=True):
         r"""
@@ -316,13 +316,6 @@ class FeatureExtraction(object):
             decimal values instead.
 
             Default: 'riu2'
-        mode : 'image' or 'hist'
-            It defines whether the output will be a multichannel image or a
-            histogram of the LBP codes. In the case of 'image', the output
-            features image will have C * len(samples) channels. In the case of
-            'hist', the output will be len(samples) number of histogram vectors.
-
-            Default : 'image'
         window_step_vertical : float
             Defines the vertical step by which the window in the
             ImageWindowIterator is moved, thus it controls the features density.
@@ -371,8 +364,6 @@ class FeatureExtraction(object):
         ValueError
             Mapping type must be u2, ri, riu2 or none
         ValueError
-            Mode must be either image or hist
-        ValueError
             Horizontal window step must be > 0
         ValueError
             Vertical window step must be > 0
@@ -383,7 +374,6 @@ class FeatureExtraction(object):
         lbp, window_centres = fc.lbp(self._image.pixels, radius=radius,
                                      samples=samples,
                                      mapping_type=mapping_type,
-                                     mode=mode,
                                      window_step_vertical=window_step_vertical,
                                      window_step_horizontal=
                                      window_step_horizontal,
@@ -397,7 +387,6 @@ class FeatureExtraction(object):
         # store parameters
         lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,
                                     'mapping_type': mapping_type,
-                                    'mode': mode,
                                     'window_step_vertical':
                                     window_step_vertical,
                                     'window_step_horizontal':

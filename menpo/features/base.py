@@ -364,7 +364,7 @@ def es(image_data, verbose=False):
 
 
 def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
-        mode='image', window_step_vertical=1, window_step_horizontal=1,
+        window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
     r"""
     Computes a 2-dimensional LBP features image with k number of channels, of
@@ -396,13 +396,6 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
         decimal values instead.
 
         Default: 'riu2'
-    mode : 'image' or 'hist'
-        It defines whether the output will be a multichannel image or a
-        histogram of the LBP codes. In the case of 'image', the output
-        features image will have C * len(samples) channels. In the case of
-        'hist', the output will be len(samples) number of histogram vectors.
-
-        Default : 'image'
     window_step_vertical : float
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
@@ -446,8 +439,6 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
     ValueError
         Mapping type must be u2, ri, riu2 or none
     ValueError
-        Mode must be either image or hist
-    ValueError
         Horizontal window step must be > 0
     ValueError
         Vertical window step must be > 0
@@ -473,8 +464,6 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
     if mapping_type not in ['u2', 'ri', 'riu2', 'none']:
         raise ValueError("Mapping type must be u2, ri, riu2 or "
                          "none")
-    if mode not in ['image', 'hist']:
-        raise ValueError("Mode must be either image or hist")
     if window_step_horizontal <= 0:
         raise ValueError("Horizontal window step must be > 0")
     if window_step_vertical <= 0:
@@ -502,10 +491,6 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
         mapping_type = 3
     else:
         mapping_type = 0
-    if mode == 'image':
-        mode = 1
-    else:
-        mode = 2
 
     # Create iterator object
     iterator = CppImageWindowIterator(image_data, window_height,
@@ -518,7 +503,7 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
 
     # Compute LBP
     output_image, windows_centers = iterator.LBP(radius, samples, mapping_type,
-                                                 mode, verbose)
+                                                 verbose)
     # Destroy iterator and return
     del iterator
     return np.ascontiguousarray(output_image), np.ascontiguousarray(

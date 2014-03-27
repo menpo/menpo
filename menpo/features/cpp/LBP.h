@@ -23,7 +23,6 @@ private:
 };
 
 void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);
-//double roundn(double x, int n);
 int power2(int index);
 void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples);
 int count_bit_transitions(int a, unsigned int n_samples);

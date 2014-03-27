@@ -174,7 +174,7 @@ cdef class CppImageWindowIterator:
         del hog
         return outputImage, windowsCenters
 
-    def LBP(self, radius, samples, mapping_type, mode, verbose):
+    def LBP(self, radius, samples, mapping_type, verbose):
         cdef unsigned int[:] cradius = np.ascontiguousarray(radius,
                                                             dtype=np.uint32)
         cdef unsigned int[:] csamples = np.ascontiguousarray(samples,
