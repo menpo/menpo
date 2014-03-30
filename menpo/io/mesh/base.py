@@ -12,7 +12,7 @@ from vrml.vrml97.parser import buildParser as buildVRML97Parser
 import vrml.vrml97.basenodes as basenodes
 from vrml.node import NullNode
 import numpy as np
-from menpo.shape.mesh.textured import ColouredTriMesh
+from menpo.shape.mesh import ColouredTriMesh
 
 # TODO: Disconnect with AssimpImporter
 # This formalises the return type of a mesh importer (before building)
