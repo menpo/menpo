@@ -1,44 +1,12 @@
-import numpy as np
 from menpo.groupalign import GeneralizedProcrustesAnalysis
-from menpo.shape import PointCloud
+from menpo.shape.groupops import mean_pointcloud
 from menpo.transform.tps import TPS
-from menpo.transform import Translation, Scale
 from menpo.model import PCAModel
 from menpo.rasterize import GLRasterizer
-from menpo.rasterize.transform import (ExtractNDims, AddNDims,
-                                       CylindricalUnwrapTransform)
+from menpo.rasterize.transform import (ExtractNDims, AppendNDims,
+                                       optimal_cylindrical_unwrap,
+                                       clip_space_transform)
 
-
-def cylindrical_unwrap_and_translation(points):
-    from menpo.misctools.circlefit import circle_fit
-    from menpo.transform import Translation
-    # find the optimum centre to unwrap
-    xy = points.points[:, [0, 2]]  # just in the x-z plane
-    centre, radius = circle_fit(xy)
-    # convert the 2D circle data into the 3D space
-    translation = np.array([centre[0], 0, centre[1]])
-    centring_transform = Translation(-translation)
-    unwrap = CylindricalUnwrapTransform(radius)
-    
-    def translate_and_unwrap(pc):
-        return unwrap.apply(centring_transform.apply(pc))
-    
-    return translate_and_unwrap
-
-
-def clip_space_transform(points, boundary_proportion=0.1):
-    r"""
-    Produces a transform which fits 2D points into the OpenGL
-    clipping space ([-1, 1], [-1, 1])
-    """
-    centering = Translation(points.centre_of_bounds).pseudoinverse
-    scale = Scale(points.range() / 2)
-    b_scale = Scale(1 - boundary_proportion, n_dims=2)
-    return centering.compose_before(scale.pseudoinverse).compose_before(b_scale)
-
-
-def mean_pointcloud(pointclouds):
-    return PointCloud(sum(pointclouds) / len(pointclouds))
 
 def extract_z_for_rasterizing(model):
     z_range = model.range()[-1]
@@ -116,11 +84,11 @@ class MMBuilder(object):
                                                      self.models)]
         self.ra_mean_lms = mean_pointcloud([self.lms_for(m).points
                                             for m in self.ra_models])
-        self.unwrapper = cylindrical_unwrap_and_translation(self.ra_mean_lms)
+        self.unwrapper = optimal_cylindrical_unwrap(self.ra_mean_lms)
 
     def unwrap_and_flatten(self):
-        self.u_models = [self.unwrapper(m) for m in self.ra_models]
-        self.u_mean_lms = self.unwrapper(self.ra_mean_lms)
+        self.u_models = [self.unwrapper.apply(m) for m in self.ra_models]
+        self.u_mean_lms = self.unwrapper.apply(self.ra_mean_lms)
         extract_2d = ExtractNDims(2)
         self.u_2d = [extract_2d.apply(u) for u in self.u_models]
         self.u_mean_lms_2d = extract_2d.apply(self.u_mean_lms)
@@ -135,12 +103,12 @@ class MMBuilder(object):
         trans_to_clip_space = clip_space_transform(self.u_mean_lms_2d)
         cs_models_2d = [trans_to_clip_space.apply(m) for m in self.w_models_2d]
         cs_mean_lms_2d = trans_to_clip_space.apply(self.u_mean_lms_2d)
-        add_nill_z = AddNDims(1)  # adds an all-zero z axis
+        add_nill_z = AppendNDims(1)  # adds an all-zero z axis
         cs_models = [add_nill_z.apply(m) for m in cs_models_2d]
-	for orig, m in zip(self.u_models, cs_models):
+        for orig, m in zip(self.u_models, cs_models):
             z = extract_z_for_rasterizing(orig)
             m.points[:, 2] = z
-        mean_lm_img = self.r.model_to_image_space(
+        mean_lm_img = self.r.model_to_image_transform.apply(
             add_nill_z.apply(cs_mean_lms_2d))
 
         # build all the shape images
