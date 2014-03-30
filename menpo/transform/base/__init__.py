@@ -4,11 +4,14 @@ from copy import deepcopy
 
 class Transform(object):
     r"""
-    An abstract representation of any N-dimensional transform.
+    An abstract representation of any spatial transform.
     Provides a unified interface to apply the transform with
     :meth:`apply_inplace` and :meth:`apply`. All Transforms support basic
-    composition to form transform chains. For smart composition, see the
-    Composition and VComposition mix-ins.
+    composition to form TransformChains.
+
+    For native composition, see the Composition and VComposition mix-ins.
+    For inversion, see the Invertable and VInvertable mix-ins.
+    For alignment, see the Alignable and PureAlignment mix-ins.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -31,6 +34,7 @@ class Transform(object):
 
         :type: int or None
         """
+        # most Transforms don't change the dimensionality of their input.
         return self.n_dims
 
     @abc.abstractmethod
@@ -193,7 +197,7 @@ class Transformable(object):
 
     def _transform(self, transform):
         r"""
-        Apply the transform given in a non destructive manor - returning the
+        Apply the transform given in a non destructive manner - returning the
         transformed object and leaving this object as it was.
 
         Parameters
@@ -216,4 +220,3 @@ from .composable import (ComposableTransform, TransformChain,
                          VComposableTransform)
 from .invertable import Invertible, VInvertible
 from .alignable import Alignable, PureAlignment
-

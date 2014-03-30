@@ -2,8 +2,6 @@ import abc
 from copy import deepcopy
 from menpo.transform.base import Transform
 
-__author__ = 'jab08'
-
 
 class ComposableTransform(Transform):
     r"""
@@ -138,7 +136,8 @@ class ComposableTransform(Transform):
         else:
             raise ValueError(
                 "{} can only compose inplace with {} - not "
-                "{}".format(type(self), self.composes_inplace_with, type(transform)))
+                "{}".format(type(self), self.composes_inplace_with,
+                            type(transform)))
 
     def compose_after_inplace(self, transform):
         r"""
@@ -170,7 +169,8 @@ class ComposableTransform(Transform):
         else:
             raise ValueError(
                 "{} can only compose inplace with {} - not "
-                "{}".format(type(self), self.composes_inplace_with, type(transform)))
+                "{}".format(type(self), self.composes_inplace_with,
+                            type(transform)))
 
     def _compose_before(self, transform):
         # naive approach - deepcopy followed by the inplace operation

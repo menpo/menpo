@@ -1,7 +1,5 @@
 import abc
 
-__author__ = 'jab08'
-
 
 class Invertible(object):
     r"""

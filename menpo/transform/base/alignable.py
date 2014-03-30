@@ -1,15 +1,17 @@
 import abc
 from copy import deepcopy
 import numpy as np
+
 from menpo.visualize import AlignmentViewer2d
 from menpo.visualize.base import Viewable
 
 
 class Alignable(object):
     r"""
-    Mixin for all Transform's that can be constructed from an
+    Mixin for Transforms that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
-    Construction from the align class method enables certain features of hte
+
+    Construction from the align() class method enables certain features of the
     class, like the from_target() and update_from_target() method. If the
     instance is just constructed with it's regular constructor, it functions
     as a normal Transform - attempting to call alignment methods listed here
@@ -86,6 +88,9 @@ class Alignable(object):
 
     @property
     def is_alignment_transform(self):
+        r"""
+        True if this transform was constructed using a source and target.
+        """
         return self.source is not None and self.target is not None
 
     @property
@@ -201,7 +206,7 @@ class PureAlignment(Alignable, Viewable):
     to satisfy the AlignableTransform interface.
 
     Note that if you are inheriting this class and Transform it is suggested
-    that you inherit this class first, so as to get it's definitions of n_dims
+    that you inherit this class first, so as to get it's definitions of n_dims.
     """
 
     def __init__(self, source, target):
