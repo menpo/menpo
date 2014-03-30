@@ -1,13 +1,13 @@
 import numpy as np
 from numpy.testing import assert_allclose
+from nose.tools import raises
+
 from menpo.transform.tps import TPS
 from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
 from menpo.shape import PointCloud, TriMesh
 from menpo.transform.affine import Translation, Scale
 from menpo.transform.homogeneous import HomogeneousTransform
-
 from menpo.transform.base import TransformChain
-from nose.tools import raises
 
 
 def chain_tps_before_tps_test():

@@ -1,9 +1,10 @@
 import abc
 import copy
+import numpy as np
+
 from menpo.base import Vectorizable
 from menpo.transform.base import Alignable, VComposableTransform, VInvertible
 from menpo.exception import DimensionalityError
-import numpy as np
 
 
 class AffineTransform(Vectorizable, VComposableTransform, VInvertible,

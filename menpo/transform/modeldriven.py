@@ -2,8 +2,7 @@ from copy import deepcopy
 import numpy as np
 from menpo.base import Vectorizable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import (Alignable,
-                                  VComposableTransform, VInvertible)
+from menpo.transform.base import Alignable, VComposableTransform, VInvertible
 
 
 class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
