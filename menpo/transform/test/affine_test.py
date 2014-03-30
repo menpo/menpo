@@ -75,7 +75,6 @@ def test_align_2d_rotation():
                     estimate.h_matrix, atol=1e-14)
 
 
-
 def test_basic_3d_rotation():
     a = np.sqrt(3.0)/2.0
     b = 0.5

@@ -13,19 +13,29 @@ class Transform(object):
     :meth:`apply_inplace` and :meth:`apply`. All Transforms support basic
     composition to form transform chains. For smart composition, see the
     Composition and VComposition mix-ins.
-
     """
 
     __metaclass__ = abc.ABCMeta
 
+    @property
     def n_dims(self):
-        r"""`
-        The dimensionality of the transform. None if the transform is not
-        dimension specific.
+        r"""
+        The dimensionality of the data the transform operates on.
+        None if the transform is not dimension specific.
 
         :type: int or None
         """
         return None
+
+    @property
+    def n_dims_output(self):
+        r"""
+        The output of the data from the transform. None if the output
+        of the transform is not dimension specific.
+
+        :type: int or None
+        """
+        return self.n_dims
 
     @abc.abstractmethod
     def _apply(self, x, **kwargs):
@@ -116,164 +126,49 @@ class Transform(object):
         except AttributeError:
             return self._apply(x, **kwargs)
 
-#     def compose_before(self, transform):
-#         r"""
-#         c = a.compose_before(b)
-#         c.apply(p) == b.apply(a.apply(p))
-#
-#         a and b are left unchanged.
-#
-#         Parameters
-#         ----------
-#         transform : :class:`Transform`
-#             Transform to be applied **after** self
-#
-#         Returns
-#         --------
-#         transform : :class:`TransformChain`
-#             The resulting transform chain.
-#         """
-#         return TransformChain([self, transform])
-#
-#     def compose_after(self, transform):
-#         r"""
-#         c = a.compose_after(b)
-#         c.apply(p) == a.apply(b.apply(p))
-#
-#         a and b are left unchanged.
-#
-#         This corresponds to the usual mathematical formalism for the compose
-#         operator, `o`.
-#
-#         Parameters
-#         ----------
-#         transform : :class:`Transform`
-#             Transform to be applied **before** self
-#
-#         Returns
-#         --------
-#         transform : :class:`TransformChain`
-#             The resulting transform chain.
-#         """
-#         return TransformChain([transform, self])
-#
-#
-# class TransformChain(Transform):
-#     r"""
-#     A chain of transforms that can be efficiently applied one after the other.
-#
-#     This class is the natural product of composition. Note that objects may
-#     know how to compose themselves more efficiently - such objects are
-#     implementing the Compose or VCompose interface.
-#
-#     Parameters
-#     ----------
-#     transforms : list of :class:`Transform`
-#         The list of transforms to be applied. Note that the first transform
-#         will be applied first - the result of which is fed into the second
-#         transform and so on until the chain is exhausted.
-#
-#     """
-#
-#     def __init__(self, transforms):
-#
-#         self.transforms = transforms
-#
-#     def _apply(self, x, **kwargs):
-#         r"""
-#         Applies each of the transforms to the array ``x``, in order.
-#
-#         Parameters
-#         ----------
-#         x : (N, D) ndarray
-#
-#         Returns
-#         -------
-#         transformed : (N, D) ndarray
-#             Transformed array having passed through the chain of transforms.
-#         """
-#         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
-
-
-class Invertible(object):
-    r"""
-    Transform Mixin for invertible transforms. Provides an interface for
-    taking the psuedo or true inverse of a transform.
-    """
-
-    @abc.abstractmethod
-    def _build_pseudoinverse(self):
+    def compose_before(self, transform):
         r"""
-        Returns this transform's inverse if it has one. if not,
-        the pseduoinverse is given.
+        c = a.compose_before(b)
+        c.apply(p) == b.apply(a.apply(p))
 
-        This method is called by the pseudoinverse property and must be
-        overridden.
-
-
-        Returns
-        -------
-        pseudoinverse: type(self)
-        """
-        pass
-
-    @abc.abstractproperty
-    def has_true_inverse(self):
-        r"""
-        True if the pseudoinverse is an exact inverse.
-
-        :type: Boolean
-        """
-        pass
-
-    @property
-    def pseudoinverse(self):
-        r"""
-        The pseudoinverse of the transform - that is, the transform that
-        results from swapping source and target, or more formally, negating
-        the transforms parameters. If the transform has a true inverse this
-        is returned instead.
-
-        :type: :class:`Transform`
-        """
-        return self._build_pseudoinverse()
-
-
-class VInvertible(Invertible):
-    r"""
-    Transform Mixin for Vectorizable invertible transforms.
-
-    Prefer this Mixin over Invertible if the Transform in question is
-    Vectorizable as this adds from_vector variants to the Invertible
-    interface. These can be tuned for performance, and are for instance
-    needed by some of the machinery of AAMs.
-    """
-
-    def pseudoinverse_vector(self, vector):
-        r"""
-        The vectorized pseudoinverse of a provided vector instance.
-
-        Syntactic sugar for
-
-        self.from_vector(vector).pseudoinverse.as_vector()
-
-        Can be much faster than the explict call as object creation can be
-        entirely avoided in some cases.
+        a and b are left unchanged.
 
         Parameters
         ----------
-        vector :  (P,) ndarray
-            A vectorized version of self
+        transform : :class:`Transform`
+            Transform to be applied **after** self
 
         Returns
-        -------
-        pseudoinverse_vector : (N,) ndarray
-            The pseudoinverse of the vector provided
+        --------
+        transform : :class:`TransformChain`
+            The resulting transform chain.
         """
-        return self.from_vector(vector).pseudoinverse.as_vector()
+        return TransformChain([self, transform])
+
+    def compose_after(self, transform):
+        r"""
+        c = a.compose_after(b)
+        c.apply(p) == a.apply(b.apply(p))
+
+        a and b are left unchanged.
+
+        This corresponds to the usual mathematical formalism for the compose
+        operator, `o`.
+
+        Parameters
+        ----------
+        transform : :class:`Transform`
+            Transform to be applied **before** self
+
+        Returns
+        --------
+        transform : :class:`TransformChain`
+            The resulting transform chain.
+        """
+        return TransformChain([transform, self])
 
 
-class Composable(object):
+class ComposableTransform(Transform):
     r"""
     Mixin for Transform objects that can be composed together, such that
     behavior of multiple Transforms is compounded together in some way.
@@ -319,15 +214,14 @@ class Composable(object):
     See specific subclasses for more information about the performance of
     these methods.
     """
-    __metaclass__ = abc.ABCMeta
 
-    # @abc.abstractproperty
-    # def composes_with(self):
-    #     r"""Iterable of classes that this transform composes against natively.
-    #     If native composition is not possible, falls back to producing a
-    #     :class:`TransformChain`
-    #     """
-    #     pass
+    @abc.abstractproperty
+    def composes_inplace_with(self):
+        r"""Iterable of classes that this transform composes against natively.
+        If native composition is not possible, falls back to producing a
+        :class:`TransformChain`
+        """
+        pass
 
     def compose_before(self, transform):
         r"""
@@ -346,58 +240,11 @@ class Composable(object):
         transform : :class:`Composable`
             The resulting transform.
         """
-    #     if isinstance(transform, self.composes_with):
-    #         # naive native approach - deepcopy followed by the inplace
-    #         # operation
-    #         new_transform = deepcopy(self)
-    #         return new_transform.compose_before_inplace(transform)
-    #     else:
-    #         # best we do is a TransformChain
-    #         return Transform.compose_before(self, transform)
-    #
-    # def _compose_before(self, transform):
-    #     r"""
-    #     c = a.compose_before(b)
-    #     c.apply(p) == b.apply(a.apply(p))
-    #
-    #     a and b are left unchanged.
-    #
-    #     Parameters
-    #     ----------
-    #     transform : :class:`Composable`
-    #         Transform to be applied **after** self
-    #
-    #     Returns
-    #     --------
-    #     transform : :class:`Composable`
-    #         The resulting transform.
-    #     """
-    #     # naive approach - deepcopy followed by the inplace operation
-        new_transform = deepcopy(self)
-        new_transform.compose_before_inplace(transform)
-        return new_transform
-
-    @abc.abstractmethod
-    def compose_before_inplace(self, transform):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_before_inplace(b)
-        a.apply(p) == b.apply(a_orig.apply(p))
-
-        a is permanently altered to be the result of the composition. b is
-        left unchanged.
-
-        Parameters
-        ----------
-        transform : :class:`Composable`
-            Transform to be applied **after** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        pass
+        if isinstance(transform, self.composes_inplace_with):
+            return self._compose_before(transform)
+        else:
+            # best we can do is a TransformChain, let Transform handle that.
+            return Transform.compose_before(self, transform)
 
     def compose_after(self, transform):
         r"""
@@ -419,10 +266,43 @@ class Composable(object):
         transform : :class:`Composable`
             The resulting transform.
         """
-        # naive approach - just flip the object order and compose_before
-        return transform.compose_before(self)
+        if isinstance(transform, self.composes_inplace_with):
+            return self._compose_after(transform)
+        else:
+            # best we can do is a TransformChain, let Transform handle that.
+            return Transform.compose_after(self, transform)
 
-    @abc.abstractmethod
+    def compose_before_inplace(self, transform):
+        r"""
+        a_orig = deepcopy(a)
+        a.compose_before_inplace(b)
+        a.apply(p) == b.apply(a_orig.apply(p))
+
+        a is permanently altered to be the result of the composition. b is
+        left unchanged.
+
+        Parameters
+        ----------
+        transform : :class:`Composable`
+            Transform to be applied **after** self
+
+        Returns
+        --------
+        transform : self
+            self, updated to the result of the composition
+
+        Raises
+        ------
+        ValueError: If this transform cannot be composed inplace with the
+        provided transform
+        """
+        if isinstance(transform, self.composes_inplace_with):
+            self._compose_before_inplace(transform)
+        else:
+            raise ValueError(
+                "{} can only compose inplace with {} - not "
+                "{}".format(type(self), self.composes_inplace_with, type(transform)))
+
     def compose_after_inplace(self, transform):
         r"""
         a_orig = deepcopy(a)
@@ -432,20 +312,98 @@ class Composable(object):
         a is permanently altered to be the result of the composition. b is
         left unchanged.
 
+
         Parameters
         ----------
         transform : :class:`Composable`
             Transform to be applied **before** self
 
         Returns
-        --------
+        -------
         transform : self
             self, updated to the result of the composition
+
+        Raises
+        ------
+        ValueError: If this transform cannot be composed inplace with the
+        provided transform
         """
+        if isinstance(transform, self.composes_inplace_with):
+            self._compose_after_inplace(transform)
+        else:
+            raise ValueError(
+                "{} can only compose inplace with {} - not "
+                "{}".format(type(self), self.composes_inplace_with, type(transform)))
+
+    def _compose_before(self, transform):
+        # naive approach - deepcopy followed by the inplace operation
+        new_transform = deepcopy(self)
+        new_transform._compose_before_inplace(transform)
+        return new_transform
+
+    def _compose_after(self, transform):
+        # naive approach - deepcopy followed by the inplace operation
+        new_transform = deepcopy(self)
+        new_transform._compose_after_inplace(transform)
+        return new_transform
+
+    @abc.abstractmethod
+    def _compose_before_inplace(self, transform):
+        pass
+
+    @abc.abstractmethod
+    def _compose_after_inplace(self, transform):
         pass
 
 
-class VComposable(Composable):
+class TransformChain(ComposableTransform):
+    r"""
+    A chain of transforms that can be efficiently applied one after the other.
+
+    This class is the natural product of composition. Note that objects may
+    know how to compose themselves more efficiently - such objects are
+    implementing the Compose or VCompose interface.
+
+    Parameters
+    ----------
+    transforms : list of :class:`Transform`
+        The list of transforms to be applied. Note that the first transform
+        will be applied first - the result of which is fed into the second
+        transform and so on until the chain is exhausted.
+
+    """
+
+    def _compose_before_inplace(self, transform):
+        self.transforms.append(transform)
+
+    def _compose_after_inplace(self, transform):
+        self.transforms.insert(0, transform)
+
+    @property
+    def composes_inplace_with(self):
+        return Transform
+
+    def __init__(self, transforms):
+
+        self.transforms = transforms
+
+    def _apply(self, x, **kwargs):
+        r"""
+        Applies each of the transforms to the array ``x``, in order.
+
+        Parameters
+        ----------
+        x : (N, D) ndarray
+
+        Returns
+        -------
+        transformed : (N, D) ndarray
+            Transformed array having passed through the chain of transforms.
+        """
+        return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
+
+
+class VComposableTransform(ComposableTransform):
     r"""
     Transform Mixin for Vectorizable composable Transforms.
 
@@ -503,7 +461,7 @@ class VComposable(Composable):
         # then compose_after_inplace
         return self.compose_after_inplace(self.from_vector(vector))
 
-    def compose_after_inplace(self, transform):
+    def _compose_after_inplace(self, transform):
         r"""
         a_orig = deepcopy(a)
         a.compose_after_inplace(b)
@@ -529,7 +487,7 @@ class VComposable(Composable):
         return self.compose_before_from_vector_inplace(self_vector)
 
 
-class AlignableTransform(Transform):
+class Alignable(object):
     r"""
     Abstract interface for all Transform's that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
@@ -708,7 +666,7 @@ class AlignableTransform(Transform):
             return True
 
 
-class PureAlignmentTransform(AlignableTransform, Viewable):
+class PureAlignment(Alignable, Viewable):
     r"""
     :class:`AlignableTransform`s that are solely defined in terms of a source
     and target alignment.
@@ -726,7 +684,7 @@ class PureAlignmentTransform(AlignableTransform, Viewable):
     """
 
     def __init__(self, source, target):
-        AlignableTransform.__init__(self)
+        Alignable.__init__(self)
         if self._verify_source_and_target(source, target):
             self._source = source
             self._target = target
@@ -781,6 +739,84 @@ class PureAlignmentTransform(AlignableTransform, Viewable):
             A Transform object that is_alignment.
         """
         return cls(source, target, **kwargs)
+
+
+class Invertible(object):
+    r"""
+    Transform Mixin for invertible transforms. Provides an interface for
+    taking the psuedo or true inverse of a transform.
+    """
+
+    @abc.abstractmethod
+    def _build_pseudoinverse(self):
+        r"""
+        Returns this transform's inverse if it has one. if not,
+        the pseduoinverse is given.
+
+        This method is called by the pseudoinverse property and must be
+        overridden.
+
+
+        Returns
+        -------
+        pseudoinverse: type(self)
+        """
+        pass
+
+    @abc.abstractproperty
+    def has_true_inverse(self):
+        r"""
+        True if the pseudoinverse is an exact inverse.
+
+        :type: Boolean
+        """
+        pass
+
+    @property
+    def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping source and target, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: :class:`Transform`
+        """
+        return self._build_pseudoinverse()
+
+
+class VInvertible(Invertible):
+    r"""
+    Transform Mixin for Vectorizable invertible transforms.
+
+    Prefer this Mixin over Invertible if the Transform in question is
+    Vectorizable as this adds from_vector variants to the Invertible
+    interface. These can be tuned for performance, and are for instance
+    needed by some of the machinery of AAMs.
+    """
+
+    def pseudoinverse_vector(self, vector):
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
+
+        Syntactic sugar for
+
+        self.from_vector(vector).pseudoinverse.as_vector()
+
+        Can be much faster than the explict call as object creation can be
+        entirely avoided in some cases.
+
+        Parameters
+        ----------
+        vector :  (P,) ndarray
+            A vectorized version of self
+
+        Returns
+        -------
+        pseudoinverse_vector : (N,) ndarray
+            The pseudoinverse of the vector provided
+        """
+        return self.from_vector(vector).pseudoinverse.as_vector()
 
 
 class Transformable(object):

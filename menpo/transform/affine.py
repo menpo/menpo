@@ -1,13 +1,13 @@
 import abc
 import copy
 from menpo.base import Vectorizable
-from menpo.transform.base import AlignableTransform, VComposable, VInvertible
+from menpo.transform.base import Alignable, VComposableTransform, VInvertible
 from menpo.exception import DimensionalityError
 import numpy as np
 
 
-class AffineTransform(AlignableTransform, Vectorizable, VComposable,
-                      VInvertible):
+class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
+                      Alignable):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -19,6 +19,10 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
     h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
+
+    @property
+    def composes_inplace_with(self):
+        return AffineTransform
 
     def __init__(self, h_matrix):
         super(AffineTransform, self).__init__()
@@ -194,7 +198,10 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
-    def compose_before(self, transform):
+    def _compose_after(self, transform):
+        return transform._compose_before(self)
+
+    def _compose_before(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         same family, producing a new transform that is the composition of
@@ -222,22 +229,23 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         # transform upon composition
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
-            new_self.compose_before_inplace(transform)
+            new_self._compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
-            new_self = transform.compose_before(self)
+            new_self = transform._compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
               isinstance(transform, SimilarityTransform)):
             new_self = SimilarityTransform(self.h_matrix)
-            new_self.compose_before_inplace(transform)
+            new_self._compose_before_inplace(transform)
         elif isinstance(transform, AffineTransform):
             new_self = AffineTransform(self.h_matrix)
-            new_self.compose_before_inplace(transform)
+            new_self._compose_before_inplace(transform)
         else:
+            # TODO this shouldn't be possible with composes_with
             raise ValueError("Trying to compose_before a {} with "
                              " a {}".format(type(self), type(transform)))
         return new_self
 
-    def compose_before_inplace(self, transform):
+    def _compose_before_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         exact same type, updating the first to be the compose_before of the
@@ -250,13 +258,9 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        if isinstance(transform, type(self)):
-            self.h_matrix = np.dot(transform.h_matrix, self.h_matrix)
-        else:
-            raise ValueError("Trying to compose_before_inplace a {} with "
-                             " a {}".format(type(self), type(transform)))
+        self.h_matrix = np.dot(transform.h_matrix, self.h_matrix)
 
-    def compose_after_inplace(self, transform):
+    def _compose_after_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         exact same type, updating the first to be the compose_after of the
@@ -269,11 +273,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        if isinstance(transform, type(self)):
-            self.h_matrix = np.dot(self.h_matrix, transform.h_matrix)
-        else:
-            raise ValueError("Trying to compose_after_inplace a {} with "
-                             " a {}".format(type(self), type(transform)))
+        self.h_matrix = np.dot(self.h_matrix, transform.h_matrix)
 
     def jacobian(self, points):
         r"""

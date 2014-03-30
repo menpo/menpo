@@ -1,8 +1,8 @@
 import numpy as np
-from .base import Transform, Composable
+from menpo.transform.base import ComposableTransform
 
 
-class HomogeneousTransform(Transform, Composable):
+class HomogeneousTransform(ComposableTransform):
     r"""
     A simple n-dimensional homogeneous transformation.
 
@@ -19,12 +19,22 @@ class HomogeneousTransform(Transform, Composable):
         The homogeneous matrix to be applied.
     """
 
+    @property
+    def composes_inplace_with(self):
+        from menpo.transform.affine import AffineTransform
+        return (HomogeneousTransform, AffineTransform)
+
     def __init__(self, h_matrix):
         self.h_matrix = h_matrix
 
     @property
     def n_dims(self):
         return self.h_matrix.shape[0] - 1
+
+    @property
+    def n_dims_output(self):
+        # doesn't have to be a square homogeneous matrix...
+        return self.h_matrix.shape[1] - 1
 
     def _apply(self, x, **kwargs):
         # convert to homogeneous
@@ -34,8 +44,8 @@ class HomogeneousTransform(Transform, Composable):
         # normalize and return
         return (h_y / h_y[:, -1][:, None])[:, :-1]
 
-    def compose_before_inplace(self, transform):
+    def _compose_before_inplace(self, transform):
         self.h_matrix = np.dot(transform.h_matrix, self.h_matrix)
 
-    def compose_after_inplace(self, transform):
+    def _compose_after_inplace(self, transform):
         self.h_matrix = np.dot(self.h_matrix, transform.h_matrix)

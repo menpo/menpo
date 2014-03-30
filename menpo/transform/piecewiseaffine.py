@@ -2,7 +2,7 @@ import abc
 import numpy as np
 from menpo.transform import AffineTransform
 from menpo.transform.fastpwa import CLookupPWA
-from menpo.transform.base import PureAlignmentTransform, Invertible
+from menpo.transform.base import PureAlignment, Invertible, Transform
 # TODO View is broken for PWA (TriangleContainmentError)
 
 
@@ -20,7 +20,7 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class AbstractPWATransform(PureAlignmentTransform, Invertible):
+class AbstractPWATransform(PureAlignment, Transform, Invertible):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -55,7 +55,7 @@ class AbstractPWATransform(PureAlignmentTransform, Invertible):
     def __init__(self, source, target):
         if not isinstance(source, TriMesh):
             source = TriMesh(source.points)
-        PureAlignmentTransform.__init__(self, source, target)
+        PureAlignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError("source and target must be 2 "
                              "dimensional")

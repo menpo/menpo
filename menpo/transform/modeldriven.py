@@ -2,12 +2,12 @@ from copy import deepcopy
 import numpy as np
 from menpo.base import Vectorizable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import (AlignableTransform,
-                                  VComposable, VInvertible)
+from menpo.transform.base import (Alignable,
+                                  VComposableTransform, VInvertible)
 
 
-class ModelDrivenTransform(AlignableTransform, Vectorizable,
-                           VComposable, VInvertible):
+class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
+                           Alignable):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -226,7 +226,7 @@ class ModelDrivenTransform(AlignableTransform, Vectorizable,
         """
         return self.transform._apply(x, **kwargs)
 
-    def compose_before_inplace(self, transform):
+    def _compose_before_inplace(self, transform):
         r"""
         a_orig = deepcopy(a)
         a.compose_before_inplace(b)
@@ -251,31 +251,7 @@ class ModelDrivenTransform(AlignableTransform, Vectorizable,
         self.update_from_vector(transform.as_vector())
         return self.compose_after_from_vector_inplace(self_vector)
 
-    def compose_after(self, transform):
-        r"""
-        c = a.compose_after(b)
-        c.apply(p) == a.apply(b.apply(p))
-
-        a and b are left unchanged.
-
-        This corresponds to the usual mathematical formalism for the compose
-        operator, `o`.
-
-        Parameters
-        ----------
-        transform : :class:`ModelDrivenTransform`
-            Transform to be applied **before** self
-
-        Returns
-        --------
-        transform : :class:`ModelDrivenTransform`
-            The resulting ModelDrivenTransform.
-        """
-        self_copy = deepcopy(self)
-        self_copy.compose_after_inplace(transform)
-        return self_copy
-
-    def compose_after_inplace(self, md_transform):
+    def _compose_after_inplace(self, md_transform):
         r"""
         a_orig = deepcopy(a)
         a.compose_after_inplace(b)
