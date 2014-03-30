@@ -20,6 +20,7 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
+# Note we inherit from PureAlignment first to get it's n_dims behavior
 class AbstractPWATransform(PureAlignment, Transform, Invertible):
     r"""
     A piecewise affine transformation. This is composed of a number of
