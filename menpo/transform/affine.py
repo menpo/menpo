@@ -1,13 +1,14 @@
 import abc
 import copy
-from menpo.base import Vectorizable
-from menpo.transform.base import AlignableTransform, VComposable, VInvertible
-from menpo.exception import DimensionalityError
 import numpy as np
 
+from menpo.base import Vectorizable
+from menpo.transform.base import Alignable, VComposableTransform, VInvertible
+from menpo.exception import DimensionalityError
 
-class AffineTransform(AlignableTransform, Vectorizable, VComposable,
-                      VInvertible):
+
+class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
+                      Alignable):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -16,15 +17,19 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
 
     Parameters
     ----------
-    homogeneous_matrix : (n_dims + 1, n_dims + 1) ndarray
+    h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
 
-    def __init__(self, homogeneous_matrix):
+    @property
+    def composes_inplace_with(self):
+        return AffineTransform
+
+    def __init__(self, h_matrix):
         super(AffineTransform, self).__init__()
-        self._homogeneous_matrix = None
+        self._h_matrix = None
         # let the setter handle initialization
-        self.homogeneous_matrix = homogeneous_matrix
+        self.h_matrix = h_matrix
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -73,21 +78,19 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
            is non-singular, which generally means at least 2 corresponding
            points are required.
         """
-        optimal_h = AffineTransform._build_alignment_homogeneous_matrix(source,
-                                                                        target)
+        optimal_h = AffineTransform._build_alignment_h_matrix(source, target)
         affine_transform = AffineTransform(optimal_h)
         affine_transform._source = source
         affine_transform._target = target
         return affine_transform
 
     def _target_setter(self, new_target):
-        self.homogeneous_matrix = self._build_alignment_homogeneous_matrix(
-            self.source, new_target)
+        self.h_matrix = self._build_alignment_h_matrix(self.source, new_target)
         self._target = new_target
 
     @property
     def n_dims(self):
-        return self.homogeneous_matrix.shape[0] - 1
+        return self.h_matrix.shape[0] - 1
 
     @property
     def n_parameters(self):
@@ -113,15 +116,15 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         return self.n_dims * (self.n_dims + 1)
 
     @property
-    def homogeneous_matrix(self):
-        return self._homogeneous_matrix
+    def h_matrix(self):
+        return self._h_matrix
 
-    @homogeneous_matrix.setter
-    def homogeneous_matrix(self, value):
+    @h_matrix.setter
+    def h_matrix(self, value):
         shape = value.shape
         if len(shape) != 2 and shape[0] != shape[1]:
             raise ValueError("You need to provide a square homogeneous matrix")
-        if self.homogeneous_matrix is not None:
+        if self.h_matrix is not None:
             # already have a matrix set! The update better be the same size
             if self.n_dims != shape[0] - 1:
                 raise DimensionalityError("Trying to update the homogeneous "
@@ -129,7 +132,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         elif shape[0] - 1 not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
             # TODO add a check here that the matrix is actually valid
-        self._homogeneous_matrix = value.copy()
+        self._h_matrix = value.copy()
 
     @property
     def linear_component(self):
@@ -139,7 +142,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
 
         :type: (D, D) ndarray
         """
-        return self.homogeneous_matrix[:-1, :-1]
+        return self.h_matrix[:-1, :-1]
 
     @property
     def translation_component(self):
@@ -148,21 +151,21 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
 
         :type: (D,) ndarray
         """
-        return self.homogeneous_matrix[:-1, -1]
+        return self.h_matrix[:-1, -1]
 
     @property
     def has_true_inverse(self):
         return True
 
     def _build_pseudoinverse(self):
-        return AffineTransform(np.linalg.inv(self.homogeneous_matrix))
+        return AffineTransform(np.linalg.inv(self.h_matrix))
 
     def __eq__(self, other):
-        return np.allclose(self.homogeneous_matrix, other.homogeneous_matrix)
+        return np.allclose(self.h_matrix, other.h_matrix)
 
     def __str__(self):
         rep = repr(self) + '\n'
-        rep += str(self.homogeneous_matrix) + '\n'
+        rep += str(self.h_matrix) + '\n'
         rep += self._transform_str()
         return rep
 
@@ -196,7 +199,10 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         return np.dot(x, self.linear_component.T) + self.translation_component
 
-    def compose_before(self, transform):
+    def _compose_after(self, transform):
+        return transform._compose_before(self)
+
+    def _compose_before(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         same family, producing a new transform that is the composition of
@@ -224,22 +230,23 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         # transform upon composition
         if isinstance(transform, type(self)):
             new_self = copy.deepcopy(self)
-            new_self.compose_before_inplace(transform)
+            new_self._compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
-            new_self = transform.compose_before(self)
+            new_self = transform._compose_before(self)
         elif (isinstance(self, SimilarityTransform) and
               isinstance(transform, SimilarityTransform)):
-            new_self = SimilarityTransform(self.homogeneous_matrix)
-            new_self.compose_before_inplace(transform)
+            new_self = SimilarityTransform(self.h_matrix)
+            new_self._compose_before_inplace(transform)
         elif isinstance(transform, AffineTransform):
-            new_self = AffineTransform(self.homogeneous_matrix)
-            new_self.compose_before_inplace(transform)
+            new_self = AffineTransform(self.h_matrix)
+            new_self._compose_before_inplace(transform)
         else:
+            # TODO this shouldn't be possible with composes_with
             raise ValueError("Trying to compose_before a {} with "
                              " a {}".format(type(self), type(transform)))
         return new_self
 
-    def compose_before_inplace(self, transform):
+    def _compose_before_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         exact same type, updating the first to be the compose_before of the
@@ -252,14 +259,9 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        if isinstance(transform, type(self)):
-            self.homogeneous_matrix = np.dot(
-                transform.homogeneous_matrix, self.homogeneous_matrix)
-        else:
-            raise ValueError("Trying to compose_before_inplace a {} with "
-                             " a {}".format(type(self), type(transform)))
+        self.h_matrix = np.dot(transform.h_matrix, self.h_matrix)
 
-    def compose_after_inplace(self, transform):
+    def _compose_after_inplace(self, transform):
         r"""
         Chains an affine family transform with another transform of the
         exact same type, updating the first to be the compose_after of the
@@ -272,12 +274,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         """
         # note we dot this way as we have our data in the transposed
         # representation to normal
-        if isinstance(transform, type(self)):
-            self.homogeneous_matrix = np.dot(self.homogeneous_matrix,
-                                             transform.homogeneous_matrix)
-        else:
-            raise ValueError("Trying to compose_after_inplace a {} with "
-                             " a {}".format(type(self), type(transform)))
+        self.h_matrix = np.dot(self.h_matrix, transform.h_matrix)
 
     def jacobian(self, points):
         r"""
@@ -390,7 +387,7 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         params : (P,) ndarray
             The values that paramaterise the transform.
         """
-        params = self.homogeneous_matrix - np.eye(self.n_dims + 1)
+        params = self.h_matrix - np.eye(self.n_dims + 1)
         return params[:self.n_dims, :].flatten(order='F')
 
     def from_vector_inplace(self, p):
@@ -398,28 +395,28 @@ class AffineTransform(AlignableTransform, Vectorizable, VComposable,
         Updates this AffineTransform in-place from the new parameters. See
         from_vector for details of the parameter format
         """
-        self.homogeneous_matrix = self._homogeneous_matrix_from_parameters(p)
+        self.h_matrix = self._h_matrix_from_parameters(p)
         self._sync_target()  # update the target (if we are an alignment)
 
     @staticmethod
-    def _homogeneous_matrix_from_parameters(p):
+    def _h_matrix_from_parameters(p):
         r"""
         See from_vector for details of the parameter format expected.
         """
-        homogeneous_matrix = None
+        h_matrix = None
         if p.shape[0] is 6:  # 2D affine
-            homogeneous_matrix = np.eye(3)
-            homogeneous_matrix[:2, :] += p.reshape((2, 3), order='F')
+            h_matrix = np.eye(3)
+            h_matrix[:2, :] += p.reshape((2, 3), order='F')
         elif p.shape[0] is 12:  # 3D affine
-            homogeneous_matrix = np.eye(4)
-            homogeneous_matrix[:3, :] += p.reshape((3, 4), order='F')
+            h_matrix = np.eye(4)
+            h_matrix[:3, :] += p.reshape((3, 4), order='F')
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
-        return homogeneous_matrix
+        return h_matrix
 
     @staticmethod
-    def _build_alignment_homogeneous_matrix(source, target):
+    def _build_alignment_h_matrix(source, target):
         r"""
         See _align() for details. This is a separate method just so it can
         be shared by _target_setter().
@@ -463,13 +460,13 @@ class SimilarityTransform(AffineTransform):
 
     Parameters
     ----------
-    homogeneous_matrix : (D + 1, D + 1) ndarray
+    h_matrix : (D + 1, D + 1) ndarray
         The homogeneous matrix of the similarity transform.
     """
 
-    def __init__(self, homogeneous_matrix):
+    def __init__(self, h_matrix):
         #TODO check that I am a similarity transform
-        super(SimilarityTransform, self).__init__(homogeneous_matrix)
+        super(SimilarityTransform, self).__init__(h_matrix)
 
     @classmethod
     def _align(cls, source, target, rotation=True, **kwargs):
@@ -536,7 +533,7 @@ class SimilarityTransform(AffineTransform):
 
     def _target_setter(self, new_target):
         similarity = self._procrustes_alignment(self.source, new_target)
-        self.homogeneous_matrix = similarity.homogeneous_matrix
+        self.h_matrix = similarity.h_matrix
         self._target = new_target
 
     @property
@@ -665,7 +662,7 @@ class SimilarityTransform(AffineTransform):
         """
         n_dims = self.n_dims
         if n_dims == 2:
-            params = self.homogeneous_matrix - np.eye(n_dims + 1)
+            params = self.h_matrix - np.eye(n_dims + 1)
             # Pick off a, b, tx, ty
             params = params[:n_dims, :].flatten(order='F')
             # Pick out a, b, tx, ty
@@ -706,7 +703,7 @@ class SimilarityTransform(AffineTransform):
             homo[0, 1] = -p[1]
             homo[1, 0] = p[1]
             homo[:2, 2] = p[2:]
-            self.homogeneous_matrix = homo
+            self.h_matrix = homo
             self._sync_target()  # update the target (if we are an alignment)
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
@@ -716,7 +713,7 @@ class SimilarityTransform(AffineTransform):
                                       "are currently supported.")
 
     def _build_pseudoinverse(self):
-        return SimilarityTransform(np.linalg.inv(self.homogeneous_matrix))
+        return SimilarityTransform(np.linalg.inv(self.h_matrix))
 
     @classmethod
     def identity(cls, n_dims):
@@ -790,9 +787,9 @@ class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
 
     def __init__(self, rotation_matrix):
         #TODO check that I am a valid rotation
-        homogeneous_matrix = np.eye(rotation_matrix.shape[0] + 1)
-        homogeneous_matrix[:-1, :-1] = rotation_matrix
-        super(AbstractRotation, self).__init__(homogeneous_matrix)
+        h_matrix = np.eye(rotation_matrix.shape[0] + 1)
+        h_matrix[:-1, :-1] = rotation_matrix
+        super(AbstractRotation, self).__init__(h_matrix)
 
     @property
     def rotation_matrix(self):
@@ -929,7 +926,7 @@ class Rotation2D(AbstractRotation):
         transform : :class:`Rotation2D`
             The transform initialised to the given parameters.
         """
-        self.homogeneous_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
+        self.h_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
                                                     [np.sin(p), np.cos(p)]])
         self._sync_target()  # update the target (if we are an alignment)
 
@@ -1120,10 +1117,10 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
 
     def __init__(self, scale):
         scale = np.asarray(scale)
-        homogeneous_matrix = np.eye(scale.size + 1)
-        np.fill_diagonal(homogeneous_matrix, scale)
-        homogeneous_matrix[-1, -1] = 1
-        AffineTransform.__init__(self, homogeneous_matrix)
+        h_matrix = np.eye(scale.size + 1)
+        np.fill_diagonal(h_matrix, scale)
+        h_matrix[-1, -1] = 1
+        AffineTransform.__init__(self, h_matrix)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -1149,7 +1146,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
 
         :type: (D,) ndarray
         """
-        return self.homogeneous_matrix.diagonal()[:-1]
+        return self.h_matrix.diagonal()[:-1]
 
     def _build_pseudoinverse(self):
         """
@@ -1198,8 +1195,8 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
             The array of parameters.
 
         """
-        np.fill_diagonal(self.homogeneous_matrix, vector)
-        self.homogeneous_matrix[-1, -1] = 1
+        np.fill_diagonal(self.h_matrix, vector)
+        self.h_matrix[-1, -1] = 1
         self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
@@ -1215,10 +1212,10 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     """
 
     def __init__(self, scale, n_dims):
-        homogeneous_matrix = np.eye(n_dims + 1)
-        np.fill_diagonal(homogeneous_matrix, scale)
-        homogeneous_matrix[-1, -1] = 1
-        SimilarityTransform.__init__(self, homogeneous_matrix)
+        h_matrix = np.eye(n_dims + 1)
+        np.fill_diagonal(h_matrix, scale)
+        h_matrix[-1, -1] = 1
+        SimilarityTransform.__init__(self, h_matrix)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -1229,8 +1226,8 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
     def _target_setter(self, new_target):
         new_scale = new_target.norm() / self.source.norm()
-        np.fill_diagonal(self.homogeneous_matrix, new_scale)
-        self.homogeneous_matrix[-1, -1] = 1
+        np.fill_diagonal(self.h_matrix, new_scale)
+        self.h_matrix[-1, -1] = 1
         self._target = new_target
 
     @property
@@ -1249,7 +1246,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
 
         :type: double
         """
-        return self.homogeneous_matrix[0, 0]
+        return self.h_matrix[0, 0]
 
     def _build_pseudoinverse(self):
         r"""
@@ -1283,8 +1280,8 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         return self.scale
 
     def from_vector_inplace(self, p):
-        np.fill_diagonal(self.homogeneous_matrix, p)
-        self.homogeneous_matrix[-1, -1] = 1
+        np.fill_diagonal(self.h_matrix, p)
+        self.h_matrix[-1, -1] = 1
         self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
@@ -1304,9 +1301,9 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def __init__(self, translation):
         translation = np.asarray(translation)
-        homogeneous_matrix = np.eye(translation.shape[0] + 1)
-        homogeneous_matrix[:-1, -1] = translation
-        SimilarityTransform.__init__(self, homogeneous_matrix)
+        h_matrix = np.eye(translation.shape[0] + 1)
+        h_matrix[:-1, -1] = translation
+        SimilarityTransform.__init__(self, h_matrix)
 
     @classmethod
     def _align(cls, source, target, **kwargs):
@@ -1317,7 +1314,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def _target_setter(self, new_target):
         translation = new_target.centre - self.source.centre
-        self.homogeneous_matrix[:-1, -1] = translation
+        self.h_matrix[:-1, -1] = translation
         self._target = new_target
 
     @property
@@ -1361,10 +1358,10 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         ts : (D,) ndarray
             The translation in each axis.
         """
-        return self.homogeneous_matrix[:-1, -1]
+        return self.h_matrix[:-1, -1]
 
     def from_vector_inplace(self, p):
-        self.homogeneous_matrix[:-1, -1] = p
+        self.h_matrix[:-1, -1] = p
         self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod

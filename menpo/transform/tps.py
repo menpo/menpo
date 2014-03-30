@@ -1,11 +1,12 @@
 import numpy as np
 from scipy.spatial import distance
 from menpo.shape import PointCloud
-from menpo.transform.base import PureAlignmentTransform, Invertible
+from menpo.transform.base import Transform, PureAlignment, Invertible
 from menpo.basis.rbf import R2LogR2
 
 
-class TPS(PureAlignmentTransform, Invertible):
+# Note we inherit from PureAlignment first to get it's n_dims behavior
+class TPS(PureAlignment, Transform, Invertible):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -32,7 +33,7 @@ class TPS(PureAlignmentTransform, Invertible):
     """
 
     def __init__(self, source, target, kernel=None):
-        PureAlignmentTransform.__init__(self, source, target)
+        PureAlignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
