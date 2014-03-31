@@ -19,11 +19,11 @@ public:
 	virtual ~LBP();
 	void apply(double *windowImage, double *descriptorVector);
 private:
-    unsigned int *radius, *samples, *whichMapping;
+    unsigned int *radius, *samples, *whichMapping, **mappings;
     unsigned int numberOfRadiusSamplesCombinations, windowHeight, windowWidth, numberOfChannels, mapping_type;
 };
 
-void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type, unsigned int *whichMapping, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);
+void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type, unsigned int *whichMapping, unsigned int **mappings, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector);
 int power2(int index);
 void generate_codes_mapping_table(unsigned int *mapping_table, unsigned int mapping_type, unsigned int n_samples);
 int count_bit_transitions(int a, unsigned int n_samples);

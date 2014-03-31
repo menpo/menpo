@@ -14,11 +14,15 @@ LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numbe
     this->windowWidth = windowWidth;
     this->numberOfChannels = numberOfChannels;
 
-    // find mapping for each combination
-    printf("[");
-    for (int i=0; i<numberOfRadiusSamplesCombinations; i++)
-        printf("%d, ", this->whichMapping[i]);
-    printf("]\n");
+    // find mapping table for each separate samples value
+    unsigned int **mappings;
+    mappings = new unsigned int*[numberOfUniqueSamples];
+    for (int i=0; i<numberOfUniqueSamples; i++) {
+	    mappings[i] = new unsigned int[power2(samples[i])];
+	    generate_codes_mapping_table(mappings[i], mapping_type, samples[i]);
+	    printf("%d\n",power2(samples[i]));
+	}
+    this->mappings = mappings;
 }
 
 LBP::~LBP() {
@@ -27,14 +31,14 @@ LBP::~LBP() {
 
 void LBP::apply(double *windowImage, double *descriptorVector) {
     LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->mapping_type, this->whichMapping,
-                  this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
+                  this->mappings, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
 void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations,
-                   unsigned int mapping_type, unsigned int *whichMapping, unsigned int imageHeight, unsigned int imageWidth,
+                   unsigned int mapping_type, unsigned int *whichMapping, unsigned int **mappings, unsigned int imageHeight, unsigned int imageWidth,
                    unsigned int numberOfChannels, double *descriptorVector) {
-    unsigned int i, s, ch, max_samples;
+    unsigned int i, ii, jj, s, ch, max_samples;
     int centre_y, centre_x, rx, ry, fx, fy, cx, cy;
     double angle_step, centre_val, sample_val;
     double tx, ty, w1, w2, w3, w4;
@@ -100,6 +104,12 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
                 if (sample_val >= centre_val)
                     lbp_code += power2(s);
             }
+
+            printf("[");
+            for (jj=0; jj<power2(samples[i]); jj++)
+                printf("%d, ", mappings[i][jj]);
+            printf("]\n");
+
             // store lbp code with mapping if requested
             if (mapping_type != 0)
                 descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = mapping_table[lbp_code];
