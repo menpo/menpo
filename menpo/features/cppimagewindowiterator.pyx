@@ -55,7 +55,7 @@ cdef extern from "cpp/LBP.h":
             unsigned int *samples,
             unsigned int numberOfRadiusSamplesCombinations,
             unsigned int mapping_type, unsigned int *uniqueSamples,
-            unsigned int *whichMapping, unsigned int numberOfUniqueSamples)
+            unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples)
         void apply(double *windowImage, double *descriptorVector)
 
 cdef class CppImageWindowIterator:
@@ -177,7 +177,7 @@ cdef class CppImageWindowIterator:
 
     def LBP(self, radius, samples, mapping_type, verbose):
         # find unique samples (thus lbp codes mappings)
-        uniqueSamples, whichMapping = np.unique(samples, return_inverse=True)
+        uniqueSamples, whichMappingTable = np.unique(samples, return_inverse=True)
         numberOfUniqueSamples = uniqueSamples.size
         cdef unsigned int[:] cradius = np.ascontiguousarray(radius,
                                                             dtype=np.uint32)
@@ -185,13 +185,13 @@ cdef class CppImageWindowIterator:
                                                              dtype=np.uint32)
         cdef unsigned int[:] cuniqueSamples = np.ascontiguousarray(uniqueSamples,
                                                                    dtype=np.uint32)
-        cdef unsigned int[:] cwhichMapping = np.ascontiguousarray(whichMapping,
+        cdef unsigned int[:] cwhichMappingTable = np.ascontiguousarray(whichMappingTable,
                                                                   dtype=np.uint32)
         cdef LBP *lbp = new LBP(self.iterator._windowHeight,
                                 self.iterator._windowWidth,
                                 self.iterator._numberOfChannels, &cradius[0],
                                 &csamples[0], radius.size, mapping_type,
-                                &cuniqueSamples[0], &cwhichMapping[0], numberOfUniqueSamples)
+                                &cuniqueSamples[0], &cwhichMappingTable[0], numberOfUniqueSamples)
         cdef double[:, :, :] outputImage = np.zeros([self.iterator._numberOfWindowsVertically,
                                                      self.iterator._numberOfWindowsHorizontally,
                                                      lbp.descriptorLengthPerWindow], order='F')

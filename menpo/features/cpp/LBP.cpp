@@ -2,27 +2,30 @@
 
 LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels,
          unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations,
-         unsigned int mapping_type, unsigned int *uniqueSamples, unsigned int *whichMapping, unsigned int numberOfUniqueSamples) {
+         unsigned int mapping_type, unsigned int *uniqueSamples, unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples) {
 	unsigned int descriptorLengthPerWindow = numberOfRadiusSamplesCombinations * numberOfChannels;
     this->radius = radius;
     this->samples = samples;
-    this->whichMapping = whichMapping;
+    this->whichMappingTable = whichMappingTable;
     this->numberOfRadiusSamplesCombinations = numberOfRadiusSamplesCombinations;
-    this->mapping_type = mapping_type;
     this->descriptorLengthPerWindow = descriptorLengthPerWindow;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
     this->numberOfChannels = numberOfChannels;
 
-    // find mapping table for each separate samples value
-    unsigned int **mappings;
-    mappings = new unsigned int*[numberOfUniqueSamples];
-    for (int i=0; i<numberOfUniqueSamples; i++) {
-	    mappings[i] = new unsigned int[power2(samples[i])];
-	    generate_codes_mapping_table(mappings[i], mapping_type, samples[i]);
-	    printf("%d\n",power2(samples[i]));
+    // find mapping table for each unique samples value
+    unsigned int **mapping_tables, i;
+    mapping_tables = new unsigned int*[numberOfUniqueSamples];
+    for (i=0; i<numberOfUniqueSamples; i++) {
+	    mapping_tables[i] = new unsigned int[power2(uniqueSamples[i])];
+	    if (mapping_type != 0)
+    	    generate_codes_mapping_table(mapping_tables[i], mapping_type, uniqueSamples[i]);
+    	else {
+    	    for (int j=0; j<power2(uniqueSamples[i]); j++)
+        	    mapping_tables[i][j] = j;
+        }
 	}
-    this->mappings = mappings;
+    this->mapping_tables = mapping_tables;
 }
 
 LBP::~LBP() {
@@ -30,15 +33,15 @@ LBP::~LBP() {
 
 
 void LBP::apply(double *windowImage, double *descriptorVector) {
-    LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->mapping_type, this->whichMapping,
-                  this->mappings, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
+    LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->whichMappingTable,
+                  this->mapping_tables, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
 void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations,
-                   unsigned int mapping_type, unsigned int *whichMapping, unsigned int **mappings, unsigned int imageHeight, unsigned int imageWidth,
+                   unsigned int *whichMappingTable, unsigned int **mapping_tables, unsigned int imageHeight, unsigned int imageWidth,
                    unsigned int numberOfChannels, double *descriptorVector) {
-    unsigned int i, ii, jj, s, ch, max_samples;
+    unsigned int i, s, ch, max_samples;
     int centre_y, centre_x, rx, ry, fx, fy, cx, cy;
     double angle_step, centre_val, sample_val;
     double tx, ty, w1, w2, w3, w4;
@@ -52,8 +55,6 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
     }
     double *samples_x = new double[max_samples];
     double *samples_y = new double[max_samples];
-    unsigned int *mapping_table = new unsigned int[power2(max_samples)];
-
 
     // find coordinates of the window centre in the window reference frame (axes origin in bottom left corner)
     centre_y = (int)((imageHeight-1)/2);
@@ -66,10 +67,6 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
             samples_x[s] = centre_x + radius[i] * cos(s * angle_step);
             samples_y[s] = centre_y - radius[i] * sin(s * angle_step);
         }
-
-        // generate mapping table
-        if (mapping_type != 0)
-            generate_codes_mapping_table(mapping_table, mapping_type, samples[i]);
 
         // for each channel, compute the lbp code
         for (ch=0; ch<numberOfChannels; ch++) {
@@ -105,22 +102,13 @@ void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *sampl
                     lbp_code += power2(s);
             }
 
-            printf("[");
-            for (jj=0; jj<power2(samples[i]); jj++)
-                printf("%d, ", mappings[i][jj]);
-            printf("]\n");
-
-            // store lbp code with mapping if requested
-            if (mapping_type != 0)
-                descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = mapping_table[lbp_code];
-            else
-                descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = lbp_code;
+            // store lbp code with mapping
+            descriptorVector[i + ch*numberOfRadiusSamplesCombinations] = mapping_tables[whichMappingTable[i]][lbp_code];
         }
     }
     // Empty memory
     delete [] samples_x;
     delete [] samples_y;
-    delete [] mapping_table;
 }
 
 int power2(int index) {
