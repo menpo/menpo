@@ -29,6 +29,7 @@ LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numbe
 }
 
 LBP::~LBP() {
+    delete [] mapping_tables;
 }
 
 
