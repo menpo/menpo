@@ -1,5 +1,6 @@
 from cpptrimesh import CppTriMesh
 from menpo.shape.mesh.base import TriMesh
+from menpo.shape.mesh.coloured import ColouredTriMesh
 from menpo.shape.pointcloud import PointCloud
 
 
@@ -29,5 +30,6 @@ class PolyMesh(PointCloud):
     def n_polys(self):
         return len(self.polylist)
 
-from .base import TriMesh
 from .textured import TexturedTriMesh
+from .coloured import ColouredTriMesh
+
