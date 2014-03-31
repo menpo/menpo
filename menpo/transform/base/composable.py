@@ -52,7 +52,8 @@ class ComposableTransform(Transform):
 
     @abc.abstractproperty
     def composes_inplace_with(self):
-        r"""Iterable of classes that this transform composes against natively.
+        r"""Class or tuple of Classes that this transform composes against
+        natively.
         If native composition is not possible, falls back to producing a
         :class:`TransformChain`
         """
