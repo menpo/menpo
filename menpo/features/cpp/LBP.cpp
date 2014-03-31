@@ -1,15 +1,24 @@
 #include "LBP.h"
 
-LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type) {
+LBP::LBP(unsigned int windowHeight, unsigned int windowWidth, unsigned int numberOfChannels,
+         unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations,
+         unsigned int mapping_type, unsigned int *uniqueSamples, unsigned int *whichMapping, unsigned int numberOfUniqueSamples) {
 	unsigned int descriptorLengthPerWindow = numberOfRadiusSamplesCombinations * numberOfChannels;
     this->radius = radius;
     this->samples = samples;
+    this->whichMapping = whichMapping;
     this->numberOfRadiusSamplesCombinations = numberOfRadiusSamplesCombinations;
     this->mapping_type = mapping_type;
     this->descriptorLengthPerWindow = descriptorLengthPerWindow;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
     this->numberOfChannels = numberOfChannels;
+
+    // find mapping for each combination
+    printf("[");
+    for (int i=0; i<numberOfRadiusSamplesCombinations; i++)
+        printf("%d, ", this->whichMapping[i]);
+    printf("]\n");
 }
 
 LBP::~LBP() {
@@ -17,11 +26,14 @@ LBP::~LBP() {
 
 
 void LBP::apply(double *windowImage, double *descriptorVector) {
-    LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->mapping_type, this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
+    LBPdescriptor(windowImage, this->radius, this->samples, this->numberOfRadiusSamplesCombinations, this->mapping_type, this->whichMapping,
+                  this->windowHeight, this->windowWidth, this->numberOfChannels, descriptorVector);
 }
 
 
-void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations, unsigned int mapping_type, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels, double *descriptorVector) {
+void LBPdescriptor(double *inputImage, unsigned int *radius, unsigned int *samples, unsigned int numberOfRadiusSamplesCombinations,
+                   unsigned int mapping_type, unsigned int *whichMapping, unsigned int imageHeight, unsigned int imageWidth,
+                   unsigned int numberOfChannels, double *descriptorVector) {
     unsigned int i, s, ch, max_samples;
     int centre_y, centre_x, rx, ry, fx, fy, cx, cy;
     double angle_step, centre_val, sample_val;
