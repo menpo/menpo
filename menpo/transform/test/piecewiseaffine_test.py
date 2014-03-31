@@ -24,5 +24,5 @@ b_affine = np.array(
 def test_pwa_discrete_affine_transforms():
     pwa = DiscreteAffinePWATransform(src, tgt)
     assert(len(pwa.transforms) == 2)
-    assert_equal(pwa.transforms[0].homogeneous_matrix, a_affine)
-    assert_equal(pwa.transforms[1].homogeneous_matrix, b_affine)
+    assert_equal(pwa.transforms[0].h_matrix, a_affine)
+    assert_equal(pwa.transforms[1].h_matrix, b_affine)

@@ -36,6 +36,11 @@ def test_tps_maps_src_to_tgt():
     assert_allclose(tps.apply(square_src_landmarks), perturbed_tgt_landmarks)
 
 
+def test_tps_n_dims():
+    tps = TPS(src, tgt_perturbed)
+    assert(tps.n_dims == 2)
+
+
 def test_tps_jacobian_manual_corner_value_check():
     tps = TPS(src, tgt)
     dW_dxy = tps.jacobian_source(square_sample_points)
