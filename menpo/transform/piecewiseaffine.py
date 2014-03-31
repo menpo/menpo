@@ -2,7 +2,7 @@ import abc
 import numpy as np
 from menpo.transform import AffineTransform
 from menpo.transform.fastpwa import CLookupPWA
-from menpo.transform.base import PureAlignmentTransform
+from menpo.transform.base import PureAlignment, Invertible, Transform
 # TODO View is broken for PWA (TriangleContainmentError)
 
 
@@ -20,7 +20,8 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-class AbstractPWATransform(PureAlignmentTransform):
+# Note we inherit from PureAlignment first to get it's n_dims behavior
+class AbstractPWATransform(PureAlignment, Transform, Invertible):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -55,7 +56,7 @@ class AbstractPWATransform(PureAlignmentTransform):
     def __init__(self, source, target):
         if not isinstance(source, TriMesh):
             source = TriMesh(source.points)
-        super(AbstractPWATransform, self).__init__(source, target)
+        PureAlignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError("source and target must be 2 "
                              "dimensional")
@@ -97,16 +98,6 @@ class AbstractPWATransform(PureAlignmentTransform):
         pass
 
     @property
-    def n_parameters(self):
-        """
-
-        :type: int
-
-
-        """
-        raise NotImplementedError("n_parameters for PWA is not fixed yet.")
-
-    @property
     def n_tris(self):
         r"""
         The number of triangles in the triangle list.
@@ -133,9 +124,6 @@ class AbstractPWATransform(PureAlignmentTransform):
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
-
-    def jacobian(self, shape):
-        raise NotImplementedError("PWA jacobian is not implemented yet.")
 
     def jacobian_points(self, points):
         """
@@ -207,16 +195,6 @@ class AbstractPWATransform(PureAlignmentTransform):
         # in one line, we are done.
         jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
         return jac
-
-    def as_vector(self):
-        raise NotImplementedError("PWA as_vector() is not implemented yet.")
-
-    def from_vector(self, vector):
-        raise NotImplementedError("PWA from_vector() is not implemented yet.")
-
-    def from_vector_inplace(self, vector):
-        raise NotImplementedError("PWA from_vector_inplace() is not "
-                                  "implemented yet.")
 
 
 class DiscreteAffinePWATransform(AbstractPWATransform):

@@ -12,7 +12,7 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/shape/mesh/normals.pyx",
                   "menpo/interpolation/cinterp.pyx",
                   "menpo/transform/fastpwa.pyx",
-        		  "menpo/features/cppimagewindowiterator.pyx"]
+                  "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 
@@ -55,7 +55,7 @@ setup(name='menpo',
 
                         # 3D import
                         'menpo-pyvrml97==2.3.0a4',
-                        'cyassimp>=0.1',
+                        'cyassimp>=0.1.2',
 
                         # Visualization
                         'matplotlib>=1.2.1',
@@ -69,5 +69,3 @@ setup(name='menpo',
                         'nose>=1.3.0'],
       extras_require={'3d': 'mayavi>=4.3.0'}
       )
-
-

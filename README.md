@@ -237,12 +237,9 @@ For now, we have the assumption that `nosetests` is executed from
 the very top of the repo, so data can be reliably found at `./data/` in
 all tests.
 
-
 Finally, note that nose runs through all of the menpo package looking for
 tests, importing everything as it goes (much like how Sphinx works looking
-for docs). As a result, on systems which haven't installed the optional
-`mlabwrap`, you will see an error raised as nosetests attempts to import
-it from the menpo.matlab.wrapper` package - this can be safely ignored.
+for docs).
 
 Documentation
 =============

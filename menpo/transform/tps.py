@@ -1,11 +1,12 @@
 import numpy as np
 from scipy.spatial import distance
 from menpo.shape import PointCloud
-from menpo.transform.base import PureAlignmentTransform
+from menpo.transform.base import Transform, PureAlignment, Invertible
 from menpo.basis.rbf import R2LogR2
 
 
-class TPS(PureAlignmentTransform):
+# Note we inherit from PureAlignment first to get it's n_dims behavior
+class TPS(PureAlignment, Transform, Invertible):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -32,7 +33,7 @@ class TPS(PureAlignmentTransform):
     """
 
     def __init__(self, source, target, kernel=None):
-        super(TPS, self).__init__(source, target)
+        PureAlignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
@@ -108,26 +109,6 @@ class TPS(PureAlignmentTransform):
         # build the affine free warp component
         f_affine_free = kernel_dist.dot(c_affine_free)
         return f_affine + f_affine_free
-
-    def jacobian(self, points):
-        """
-        Calculates the Jacobian of the TPS warp wrt to the parameters.
-
-        This isn't implemented yet, and can't be implemented until
-        n_parameters is fixed and a suitable parametrisation chosen for TPS.
-
-        Parameters
-        ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the transform evaluated at the previous points.
-        """
-        raise NotImplementedError("n_parameters for TPS needs to be "
-                                  "implemented")
 
     def jacobian_points(self, points):
         """
@@ -285,12 +266,3 @@ class TPS(PureAlignmentTransform):
             dW_dx[:, i, 1] = k.dot(omega_y).dot(pseudo_target[1])
 
         return dW_dx
-
-    def as_vector(self):
-        raise NotImplementedError("TPS as_vector is not implemented yet.")
-
-    def from_vector(self, flattened):
-        raise NotImplementedError("TPS from_vector is not implemented yet.")
-
-    def from_vector_inplace(self, vector):
-        pass
