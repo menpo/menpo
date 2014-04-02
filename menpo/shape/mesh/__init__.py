@@ -30,6 +30,6 @@ class PolyMesh(PointCloud):
     def n_polys(self):
         return len(self.polylist)
 
+
 from .textured import TexturedTriMesh
 from .coloured import ColouredTriMesh
-
