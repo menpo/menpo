@@ -6,7 +6,69 @@ from menpo.visualize import AlignmentViewer2d
 from menpo.visualize.base import Viewable
 
 
-class Alignable(object):
+class Targetable(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @property
+    def n_dims(self):
+        return self.target.n_dims
+
+    @property
+    def n_points(self):
+        return self.target.n_points
+
+
+    @abc.abstractproperty
+    def target(self):
+        pass
+
+    @target.setter
+    def target(self, value):
+        r"""
+        Updates this alignment transform to point to a new target.
+        """
+        if value.n_dims != self.target.n_dims:
+            raise ValueError(
+                "The current target is {}D, the new target is {}D - new "
+                "target has to have the same dimensionality as the "
+                "old".format(self.target.n_dims, value.n_dims))
+        elif value.n_points != self.target.n_points:
+            raise ValueError(
+                "The current target has {} points, the new target has {} "
+                "- new target has to have the same number of points as the"
+                " old".format(self.target.n_points, value.n_points))
+        else:
+            self._target_setter(value)
+
+    @abc.abstractmethod
+    def _target_setter(self, new_target):
+        r"""
+        Updates this alignment transform based on the new target.
+
+        It is the responsibility of this method to leave the object in the
+        updated state, including setting new_target to self._target as
+        appropriate. Note that this method is called by the target setter,
+        so this behavior must be respected.
+        """
+        pass
+
+    @abc.abstractmethod
+    def _sync_target(self):
+        r"""
+        Synchronizes the target to be correct after changes to
+        AlignableTransforms.
+
+        Needs to be called after any operation that may change the state of
+        the transform (principally an issue on Vectorizable subclasses)
+
+        This is pretty nasty, and will be removed when from_vector is made an
+        underscore interface (in the same vein as _apply() or _view() ).
+        """
+        pass
+
+
+class Alignable(Targetable):
     r"""
     Mixin for Transforms that can be constructed from an
     optimisation aligning a source PointCloud to a target PointCloud.
@@ -17,8 +79,6 @@ class Alignable(object):
     as a normal Transform - attempting to call alignment methods listed here
     will simply yield an Exception.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self._target = None
@@ -47,18 +107,6 @@ class Alignable(object):
 
         alignment_transform: :class:`menpo.transform.AlignableTransform`
             A Transform object that is_alignment.
-        """
-        pass
-
-    @abc.abstractmethod
-    def _target_setter(self, new_target):
-        r"""
-        Updates this alignment transform based on the new target.
-
-        It is the responsibility of this method to leave the object in the
-        updated state, including setting new_target to self._target as
-        appropriate. Note that this method is called by the target setter,
-        so this behavior must be respected.
         """
         pass
 
@@ -110,18 +158,7 @@ class Alignable(object):
             raise NotImplementedError("Cannot update target for Transforms "
                                       "not built with the align constructor")
         else:
-            if value.n_dims != self.target.n_dims:
-                raise ValueError(
-                    "The current target is {}D, the new target is {}D - new "
-                    "target has to have the same dimensionality as the "
-                    "old".format(self.target.n_dims, value.n_dims))
-            elif value.n_points != self.target.n_points:
-                raise ValueError(
-                    "The current target has {} points, the new target has {} "
-                    "- new target has to have the same number of points as the"
-                    " old".format(self.target.n_points, value.n_points))
-            else:
-                self._target_setter(value)
+            super(Alignable, self).target = value
 
     @property
     def aligned_source(self):
@@ -139,43 +176,6 @@ class Alignable(object):
         :type: float
         """
         return np.linalg.norm(self.target.points - self.aligned_source.points)
-
-    def from_target(self, target):
-        r"""
-        Returns a new instance of this alignment transform with the source
-        unchanged but the target set to a newly provided target.
-
-        This default implementation simply deep copy's the current
-        transform, and then changes the target in place. If there is a more
-        efficient way for transforms to perform this operation, they can
-        just subclass this method.
-
-        Parameters
-        ----------
-
-        target: :class:`menpo.shape.PointCloud`
-            The new target that should be used in this align transform.
-        """
-        new_transform = deepcopy(self)
-        # If this method is overridden in a subclass verification of target
-        # will have to be called manually (right now it is called in the
-        # target setter here).
-        new_transform.target = target
-        return new_transform
-
-    def _sync_target(self):
-        r"""
-        Syncronizes the target to be correct after changes to
-        AlignableTransforms.
-
-        Needs to be called after any operation that may change the state of
-        the transform (principally an issue on Vectorizable subclasses)
-
-        This is pretty nasty, and will be removed when from_vector is made an
-        underscore interface (in the same vein as _apply() or _view() ).
-        """
-        if self.is_alignment_transform:
-            self.target = self.apply(self.source)
 
     @staticmethod
     def _verify_source_and_target(source, target):
@@ -214,14 +214,6 @@ class PureAlignment(Alignable, Viewable):
         if self._verify_source_and_target(source, target):
             self._source = source
             self._target = target
-
-    @property
-    def n_dims(self):
-        return self.source.n_dims
-
-    @property
-    def n_points(self):
-        return self.source.n_points
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
