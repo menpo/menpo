@@ -1,9 +1,6 @@
-import sys
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
-
-from buildhelpers.shaders import build_c_shaders
 
 
 # ---- C/C++ EXTENSIONS ---- #
@@ -15,7 +12,6 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
-
 
 setup(name='menpo',
       version='0.2',
