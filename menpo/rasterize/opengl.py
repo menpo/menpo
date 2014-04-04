@@ -1,13 +1,13 @@
 import numpy as np
-from cyrasterize import CyRasterizer
+from cyrasterize.base import CyRasterizerBase
 from menpo.image import MaskedImage
 
 
 # noinspection PyProtectedMember
 from menpo.rasterize.base import TextureRasterInfo
 
-
-class GLRasterizer(CyRasterizer):
+# Subclass the CyRasterizerBase class to add Menpo-specific features
+class GLRasterizer(CyRasterizerBase):
 
     def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
                                             per_vertex_f3v=None):
@@ -160,7 +160,8 @@ class GLRasterizer(CyRasterizer):
             determined on the creation of this class.
 
         """
-        rgb_pixels, mask, f3v_pixels = self.rasterize(
+        # make a call out to the CyRasterizer _rasterize method
+        rgb_pixels, f3v_pixels, mask = self._rasterize(
             r.points, r.trilist, r.texture, r.tcoords,
             per_vertex_f3v=per_vertex_f3v)
         return (MaskedImage(rgb_pixels, mask=mask),
