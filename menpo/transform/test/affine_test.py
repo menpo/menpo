@@ -1,21 +1,23 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.shape import PointCloud
-from menpo.transform import (Affine, Similarity, Rotation,  Rotation2D,
-                             Rotation3D, Scale, NonUniformScale, UniformScale,
+from menpo.transform import (Affine, AlignmentAffine,
+                             Similarity, AlignmentSimilarity,
+                             Rotation, Rotation2D, Rotation3D,
+                             AlignmentRotation2D,
+                             Scale, NonUniformScale, UniformScale,
                              Translation, AlignmentTranslation)
 from menpo.exception import DimensionalityError
 from nose.tools import raises
 
-
 @raises(DimensionalityError)
-def test_1d():
+def test_1d_translation():
     t_vec = np.array([1])
     Translation(t_vec)
 
 
 @raises(DimensionalityError)
-def test_5d():
+def test_5d_translation():
     t_vec = np.ones(5)
     Translation(t_vec)
 
@@ -69,7 +71,7 @@ def test_align_2d_rotation():
                                   [3, -5]]))
     target = rotation.apply(source)
     # estimate the transform from source and target
-    estimate = Rotation2D.align(source, target)
+    estimate = AlignmentRotation2D(source, target)
     # check the estimates is correct
     assert_allclose(rotation.h_matrix,
                     estimate.h_matrix, atol=1e-14)
@@ -109,7 +111,7 @@ def test_3d_rotation_inverse_eye():
                                 [0, a, b],
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
-    transformed = rotation.compose_before(rotation.inverse)
+    transformed = rotation.compose_before(rotation.pseudoinverse)
     print transformed.h_matrix
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
@@ -155,7 +157,7 @@ def test_align_2d_affine():
                                   [3, -5]]))
     target = affine.apply(source)
     # estimate the transform from source and target
-    estimate = Affine.align(source, target)
+    estimate = AlignmentAffine(source, target)
     # check the estimates is correct
     assert_allclose(affine.h_matrix, estimate.h_matrix)
 
@@ -229,7 +231,7 @@ def test_align_2d_similarity():
                                   [3, -5]]))
     target = similarity.apply(source)
     # estimate the transform from source and target
-    estimate = Similarity.align(source, target)
+    estimate = AlignmentSimilarity(source, target)
     # check the estimates is correct
     assert_allclose(similarity.h_matrix,
                     estimate.h_matrix)

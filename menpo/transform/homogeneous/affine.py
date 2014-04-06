@@ -20,14 +20,6 @@ class Affine(Homogeneous):
     h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
-    # noinspection PyMissingConstructor
-    def __init__(self, h_matrix):
-        # we don't call Homogeneous constructor - we use properties for h_matrix
-        # TODO maybe this should change
-        self._h_matrix = None
-        # let the setter handle initialization
-        self.h_matrix = h_matrix
-
     @property
     def n_parameters(self):
         r"""
@@ -55,13 +47,12 @@ class Affine(Homogeneous):
     def h_matrix(self):
         return self._h_matrix
 
-    @h_matrix.setter
-    def h_matrix(self, value):
-        self._h_matrix_setter(value)  # set the h_matrix
-
-    def _h_matrix_setter(self, value):
+    def set_h_matrix(self, value):
         r"""
         Updates the h_matrix, performing sanity checks.
+
+        The Affine h_matrix is limited in what values are allowed. Account
+        for them here.
         """
         shape = value.shape
         if len(shape) != 2 and shape[0] != shape[1]:
@@ -73,7 +64,9 @@ class Affine(Homogeneous):
                                           "matrix to a different dimension")
         elif shape[0] - 1 not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
-            # TODO add a check here that the matrix is actually valid
+        elif not (np.allclose(value[-1, :-1], 0) and
+                  np.allclose(value[-1, -1], 1)):
+            raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
         self._h_matrix = value.copy()
 
     @property
@@ -174,7 +167,7 @@ class Affine(Homogeneous):
                 "Trying to sample jacobian in incorrect dimensions "
                 "(transform is {0}D, sampling at {1}D)".format(
                     self.n_dims, points_n_dim))
-            # prealloc the jacobian
+        # prealloc the jacobian
         jac = np.zeros((n_points, self.n_parameters, self.n_dims))
         # a mask that we can apply at each iteration
         dim_mask = np.eye(self.n_dims, dtype=np.bool)
@@ -270,7 +263,7 @@ class Affine(Homogeneous):
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
-        self.h_matrix = h_matrix
+        self.set_h_matrix(h_matrix)
 
     def decompose(self):
         r"""
@@ -338,10 +331,11 @@ class AlignmentAffine(Affine, Alignment):
         optimal_h = self._build_alignment_h_matrix(source, target)
         Affine.__init__(self, optimal_h)
 
-    @Affine.h_matrix.setter
-    def h_matrix(self, value):
-        # TODO calling super setter correctly
-        Affine.h_matrix.fset(self, value)
+    def set_h_matrix(self, value):
+        r"""
+        Upon updating the h_matrix we must resync the target.
+        """
+        Affine.set_h_matrix(self, value)
         # now update the state
         self._sync_target_from_state()
 
@@ -365,7 +359,8 @@ class AlignmentAffine(Affine, Alignment):
 
     def _sync_state_from_target(self):
         optimal_h = self._build_alignment_h_matrix(self.source, self.target)
-        self._h_matrix_setter(optimal_h)
+        # Use the pure Affine setter (so we don't get syncing)
+        Affine.set_h_matrix(self, optimal_h)
 
 
 class DiscreteAffineTransform(object):

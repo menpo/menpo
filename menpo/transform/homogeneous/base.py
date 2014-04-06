@@ -23,7 +23,15 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         The homogeneous matrix to be applied.
     """
     def __init__(self, h_matrix):
-        self.h_matrix = h_matrix
+        self._h_matrix = h_matrix
+
+    @property
+    def h_matrix(self):
+        return self._h_matrix
+
+    def set_h_matrix(self, value):
+        # TODO add logic here
+        self._h_matrix = value
 
     @property
     def n_dims(self):
@@ -50,7 +58,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         return self.h_matrix.flatten()
 
     def from_vector_inplace(self, vector):
-        self.h_matrix = vector.reshape(self.h_matrix.shape)
+        self.set_h_matrix(vector.reshape(self.h_matrix.shape))
 
     @property
     def composes_inplace_with(self):
@@ -153,10 +161,18 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         return new_self
 
     def _compose_before_inplace(self, transform):
-        self.h_matrix = np.dot(transform.h_matrix, self.h_matrix)
+        # Force the Homogeneous variant. compose machinery will guarantee
+        # this is only invoked in the right circumstances (e.g. the types
+        # will match so we don't need to block the setting of the matrix)
+        Homogeneous.set_h_matrix(self, np.dot(transform.h_matrix,
+                                              self.h_matrix))
 
     def _compose_after_inplace(self, transform):
-        self.h_matrix = np.dot(self.h_matrix, transform.h_matrix)
+        # Force the Homogeneous variant. compose machinery will guarantee
+        # this is only invoked in the right circumstances (e.g. the types
+        # will match so we don't need to block the setting of the matrix)
+        Homogeneous.set_h_matrix(self, np.dot(self.h_matrix,
+                                              transform.h_matrix))
 
     def has_true_inverse(self):
         return True

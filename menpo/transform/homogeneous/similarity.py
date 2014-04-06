@@ -179,15 +179,14 @@ class Similarity(Affine):
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
         """
-        # See affine from_vector with regards to classmethod decorator
         if p.shape[0] == 4:
-            homo = np.eye(3)
-            homo[0, 0] += p[0]
-            homo[1, 1] += p[0]
-            homo[0, 1] = -p[1]
-            homo[1, 0] = p[1]
-            homo[:2, 2] = p[2:]
-            self.h_matrix = homo
+            homog = np.eye(3)
+            homog[0, 0] += p[0]
+            homog[1, 1] += p[0]
+            homog[0, 1] = -p[1]
+            homog[1, 0] = p[1]
+            homog[:2, 2] = p[2:]
+            Affine.set_h_matrix(self, homog)  # use the Affine setter cheekily
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -201,6 +200,9 @@ class Similarity(Affine):
     @classmethod
     def identity(cls, n_dims):
         return Similarity(np.eye(n_dims + 1))
+
+    def set_h_matrix(self, value):
+        raise ValueError("h_matrix cannot be set on a Similarity transform")
 
 
 class AlignmentSimilarity(Similarity, Alignment):
@@ -233,7 +235,7 @@ class AlignmentSimilarity(Similarity, Alignment):
         r"""
         Returns the similarity transform that aligns the source to the target.
         """
-        from .rotation import Rotation
+        from .rotation import Rotation, optimal_rotation_matrix
         from .translation import Translation
         from .scale import UniformScale
         target_translation = Translation(-target.centre)
@@ -247,13 +249,8 @@ class AlignmentSimilarity(Similarity, Alignment):
         # compute the target's inverse translation
         inv_target_translation = target_translation.pseudoinverse
         if rotation:
-            # calculate the correlation along each dimension + find the optimal
-            # rotation to maximise it
-            correlation = np.dot(centred_target.points.T,
-                                 scaled_aligned_source.points)
-            U, D, Vt = np.linalg.svd(correlation)
-
-            rotation = Rotation(np.dot(U, Vt))
+            rotation = Rotation(optimal_rotation_matrix(scaled_aligned_source,
+                                                        centred_target))
             return translation.compose_before(scale).compose_before(
                 rotation).compose_before(inv_target_translation)
         else:

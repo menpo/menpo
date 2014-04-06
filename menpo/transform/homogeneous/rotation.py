@@ -4,7 +4,33 @@ import numpy as np
 from menpo.exception import DimensionalityError
 
 from .affine import DiscreteAffineTransform
+from menpo.transform.base import Alignment
 from .similarity import Similarity
+
+
+def optimal_rotation_matrix(source, target):
+    r"""
+    Performs an SVD on the corrolation matrix to find an optimal rotation
+    between source and target
+
+    Parameters
+    ----------
+
+    source: :class:`menpo.shape.PointCloud`
+        The source points to be aligned
+
+    target: :class:`menpo.shape.PointCloud`
+        The target points to be aligned
+
+    Returns
+    -------
+
+    ndarray
+        The optimal square rotation matrix
+    """
+    correlation = np.dot(target.points.T, source.points)
+    U, D, Vt = np.linalg.svd(correlation)
+    return np.dot(U, Vt)
 
 
 def Rotation(rotation_matrix):
@@ -64,7 +90,7 @@ class AbstractRotation(DiscreteAffineTransform, Similarity):
         return self.linear_component
 
     @property
-    def inverse(self):
+    def pseudoinverse(self):
         r"""
         The inverse rotation matrix.
 
@@ -195,6 +221,10 @@ class Rotation2D(AbstractRotation):
     def identity(cls):
         return Rotation2D(np.eye(2))
 
+    @property
+    def composes_inplace_with(self):
+        return Rotation2D
+
 
 class Rotation3D(AbstractRotation):
     r"""
@@ -270,6 +300,10 @@ class Rotation3D(AbstractRotation):
         return axis, angle_of_rotation
 
     @property
+    def composes_inplace_with(self):
+        return Rotation3D
+
+    @property
     def n_parameters(self):
         r"""
         Not yet implemented.
@@ -313,3 +347,27 @@ class Rotation3D(AbstractRotation):
     @classmethod
     def identity(cls):
         return Rotation3D(np.eye(3))
+
+
+class AlignmentRotation2D(Alignment, Rotation2D):
+
+    def __init__(self, source, target):
+        Alignment.__init__(self, source, target)
+        Rotation2D.__init__(self, optimal_rotation_matrix(source, target))
+
+    def _sync_state_from_target(self):
+        h_matrix = np.eye(3)
+        h_matrix[:2, :2] = optimal_rotation_matrix(self.source, self.target)
+        self.h_matrix = h_matrix
+
+
+class AlignmentRotation3D(Alignment, Rotation3D):
+
+    def __init__(self, source, target):
+        Alignment.__init__(self, source, target)
+        Rotation3D.__init__(self, optimal_rotation_matrix(source, target))
+
+    def _sync_state_from_target(self):
+        h_matrix = np.eye(4)
+        h_matrix[:3, :3] = optimal_rotation_matrix(self.source, self.target)
+        self._h_matrix_setter(h_matrix)
