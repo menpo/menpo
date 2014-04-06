@@ -2,12 +2,11 @@ import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
 
+from menpo.shape import PointCloud, TriMesh
+
+from menpo.transform import TransformChain, Homogeneous, Translation, Scale
 from menpo.transform.tps import TPS
 from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
-from menpo.shape import PointCloud, TriMesh
-from menpo.transform.affine import Translation, Scale
-from menpo.transform.homogeneous import HomogeneousTransform
-from menpo.transform.base import TransformChain
 
 
 def chain_tps_before_tps_test():
@@ -173,24 +172,24 @@ def chain_compose_after_inplace_chain_test():
 
 
 def homog_compose_before_scale_test():
-    homog = HomogeneousTransform(np.array([[0, 1, 0],
-                                           [1, 0, 0],
-                                           [0, 0, 1]]))
+    homog = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]]))
     s = Scale([3, 4])
     res = homog.compose_before(s)
-    assert(isinstance(res, HomogeneousTransform))
+    assert(isinstance(res, Homogeneous))
     assert_allclose(res.h_matrix, np.array([[0, 3, 0],
                                             [4, 0, 0],
                                             [0, 0, 1]]))
 
 
 def homog_compose_after_scale_test():
-    homog = HomogeneousTransform(np.array([[0, 1, 0],
-                                           [1, 0, 0],
-                                           [0, 0, 1]]))
+    homog = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]]))
     s = Scale([3, 4])
     res = homog.compose_after(s)
-    assert(isinstance(res, HomogeneousTransform))
+    assert(isinstance(res, Homogeneous))
     assert_allclose(res.h_matrix, np.array([[0, 4, 0],
                                             [3, 0, 0],
                                             [0, 0, 1]]))
@@ -198,9 +197,9 @@ def homog_compose_after_scale_test():
 
 def scale_compose_after_homog_test():
     # can't do this inplace - so should just give transform chain
-    homog = HomogeneousTransform(np.array([[0, 1, 0],
-                                           [1, 0, 0],
-                                           [0, 0, 1]]))
+    homog = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]]))
     s = Scale([3, 4])
     res = s.compose_after(homog)
     assert(isinstance(res, TransformChain))
@@ -209,18 +208,18 @@ def scale_compose_after_homog_test():
 @raises(ValueError)
 def scale_compose_after_inplace_homog_test():
     # can't do this inplace - so should just give transform chain
-    homog = HomogeneousTransform(np.array([[0, 1, 0],
-                                           [1, 0, 0],
-                                           [0, 0, 1]]))
+    homog = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]]))
     s = Scale([3, 4])
     s.compose_after_inplace(homog)
 
 
 def homog_compose_after_inplace_scale_test():
     # this should be fine
-    homog = HomogeneousTransform(np.array([[0, 1, 0],
-                                           [1, 0, 0],
-                                           [0, 0, 1]]))
+    homog = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]]))
     s = Scale([3, 4])
     homog.compose_after_inplace(s)
     assert_allclose(homog.h_matrix, np.array([[0, 4, 0],

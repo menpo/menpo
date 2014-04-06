@@ -1,10 +1,10 @@
 from __future__ import division
 import numpy as np
 from copy import deepcopy
-from menpo.transform .affine import Scale
+from menpo.transform import Scale
 from menpo.aam.functions import compute_error
-from menpo.visualize.base import \
-    MultipleImageViewer, GraphPlotter, FittingViewer, Viewable
+from menpo.visualize.base import (MultipleImageViewer, GraphPlotter,
+                                  FittingViewer, Viewable)
 
 
 class FittingList(list, Viewable):

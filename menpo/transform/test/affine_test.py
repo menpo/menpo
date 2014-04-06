@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.shape import PointCloud
-from menpo.transform.affine import (Rotation, Translation, Affine, Similarity,
-                                    NonUniformScale, Rotation2D, Rotation3D,
-                                    UniformScale, Scale, AlignmentTranslation)
+from menpo.transform import (Affine, Similarity, Rotation,  Rotation2D,
+                             Rotation3D, Scale, NonUniformScale, UniformScale,
+                             Translation, AlignmentTranslation)
 from menpo.exception import DimensionalityError
 from nose.tools import raises
 

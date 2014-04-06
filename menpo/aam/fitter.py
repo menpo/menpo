@@ -3,8 +3,7 @@ import abc
 import numpy as np
 from copy import deepcopy
 from menpo.landmark import LandmarkGroup
-from menpo.transform .affine import \
-    Scale, Similarity, Affine
+from menpo.transform import Scale, Similarity, Affine
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from menpo.lucaskanade.residual import LSIntensity
 from menpo.lucaskanade.appearance import AlternatingInverseCompositional

@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import PointCloud, TriMesh
-from menpo.transform .affine import Translation, Similarity
+from menpo.transform import Translation, Similarity
 from menpo.image import MaskedImage
 
 

@@ -1,8 +1,7 @@
 import numpy as np
 from menpo.groupalign.base import MultipleAlignment
 from menpo.shape import PointCloud
-from menpo.transform.affine import (UniformScale,
-                                    Translation, AlignmentSimilarity)
+from menpo.transform import AlignmentSimilarity, UniformScale, Translation
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):

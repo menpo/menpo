@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import TriMesh
-from menpo.transform.affine import Scale, UniformScale, Translation
+from menpo.transform import Scale, UniformScale, Translation
 from menpo.groupalign import GeneralizedProcrustesAnalysis
 from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
 from menpo.transform.tps import TPS
