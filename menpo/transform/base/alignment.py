@@ -45,7 +45,7 @@ class Alignment(Targetable):
         self._target = new_target
 
     def _new_target_from_state(self):
-        self.apply(self.source)
+        return self.aligned_source
 
     @property
     def aligned_source(self):

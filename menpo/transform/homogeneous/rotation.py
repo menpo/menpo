@@ -33,37 +33,11 @@ def optimal_rotation_matrix(source, target):
     return np.dot(U, Vt)
 
 
-def Rotation(rotation_matrix):
-    r"""
-    Factory function for producing :class:`AbstractRotation` transforms.
+# TODO build rotations about axis, euler angles etc
+# see http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+# for details
 
-    Parameters
-    ----------
-    rotation_matrix : (D, D) ndarray
-        A square legal 2D or 3D rotation matrix
-
-    Returns
-    -------
-    rotation : :class:`Rotation2D` or :class:`Rotation3D`
-        A 2D or 3D rotation transform
-
-    Raises
-    ------
-    DimensionalityError
-        Only 2D and 3D transforms are supported.
-    """
-    if rotation_matrix.shape[0] == 2:
-        return Rotation2D(rotation_matrix)
-    elif rotation_matrix.shape[0] == 3:
-        return Rotation3D(rotation_matrix)
-    else:
-        raise DimensionalityError("Can only construct 2D or 3D Rotations")
-        # TODO build rotations about axis, euler angles etc
-        # see http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
-        # for details.
-
-
-class AbstractRotation(DiscreteAffineTransform, Similarity):
+class Rotation(DiscreteAffineTransform, Similarity):
     r"""
     Abstract ``n_dims`` rotation transform.
 
@@ -75,10 +49,9 @@ class AbstractRotation(DiscreteAffineTransform, Similarity):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, rotation_matrix):
-        #TODO check that I am a valid rotation
         h_matrix = np.eye(rotation_matrix.shape[0] + 1)
-        h_matrix[:-1, :-1] = rotation_matrix
         Similarity.__init__(self, h_matrix)
+        self.set_rotation_matrix(rotation_matrix)
 
     @property
     def rotation_matrix(self):
@@ -88,6 +61,18 @@ class AbstractRotation(DiscreteAffineTransform, Similarity):
         :type: (D, D) ndarray
         """
         return self.linear_component
+
+    def set_rotation_matrix(self, value):
+        shape = value.shape
+        if len(shape) != 2 and shape[0] != shape[1]:
+            raise ValueError("You need to provide a square rotation matrix")
+        # The update better be the same size
+        elif self.n_dims != shape[0]:
+            raise DimensionalityError("Trying to update the rotation "
+                                      "matrix to a different dimension")
+        # TODO actually check I am a valid rotation
+        # TODO slightly dodgey here accessing _h_matrix
+        self._h_matrix[:-1, :-1] = value
 
     @property
     def pseudoinverse(self):
@@ -106,7 +91,6 @@ class AbstractRotation(DiscreteAffineTransform, Similarity):
         message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
         return message
 
-    @abc.abstractmethod
     def axis_and_angle_of_rotation(self):
         r"""
         Abstract method for computing the axis and angle of rotation.
@@ -119,34 +103,14 @@ class AbstractRotation(DiscreteAffineTransform, Similarity):
             The angle in radians of the rotation about the axis. The angle is
             signed in a right handed sense.
         """
-        pass
+        if self.n_dims == 2:
+            return self._axis_and_angle_of_rotation_2d()
+        elif self.n_dims == 3:
+            return self._axis_and_angle_of_rotation_3d()
 
-
-class Rotation2D(AbstractRotation):
-    r"""
-    A 2-dimensional rotation. Parametrised by a single parameter, ``theta``,
-    which represents the right-handed rotation around ``[0, 0, 1]``.
-
-    Parameters
-    ----------
-    rotation_matrix : (2, 2) ndarray
-        The 2D rotation matrix.
-
-    Raises
-    ------
-    DimensionalityError
-        Only 2D rotation matrices are supported.
-    """
-
-    def __init__(self, rotation_matrix):
-        super(Rotation2D, self).__init__(rotation_matrix)
-        if self.n_dims != 2:
-            raise DimensionalityError("Rotation2D has to be built from a 2D"
-                                      " rotation matrix")
-
-    def axis_and_angle_of_rotation(self):
+    def _axis_and_angle_of_rotation_2d(self):
         r"""
-        Decomposes this 2D rotation's rotation matrix into a angular rotation
+        Decomposes this Rotation's rotation matrix into a angular rotation
         The rotation is considered in a right handed sense. The axis is, by
         definition, [0, 0, 1].
 
@@ -165,89 +129,7 @@ class Rotation2D(AbstractRotation):
         angle_of_rotation = np.arccos(np.dot(transformed_vector, test_vector))
         return axis, angle_of_rotation
 
-    @property
-    def n_parameters(self):
-        r"""
-        The number of parameters: 1
-
-        :type: int
-        """
-        return 1
-
-    def as_vector(self):
-        r"""
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. The parameters
-        are output in the order [theta].
-
-        +----------+--------------------------------------------+
-        |parameter | definition                                 |
-        +==========+============================================+
-        |theta     | The angle of rotation around ``[0, 0, 1]`` |
-        +----------+--------------------------------------------+
-
-        Returns
-        -------
-        theta : double
-            Angle of rotation around axis. Right-handed.
-        """
-        return self.axis_and_angle_of_rotation()[1]
-
-    def from_vector_inplace(self, p):
-        r"""
-        Returns an instance of the transform from the given parameters,
-        expected to be in Fortran ordering.
-
-        Supports rebuilding from 2D parameter sets.
-
-        2D Rotation: 1 parameter::
-
-            [theta]
-
-        Parameters
-        ----------
-        p : (1,) ndarray
-            The array of parameters.
-
-        Returns
-        -------
-        transform : :class:`Rotation2D`
-            The transform initialised to the given parameters.
-        """
-        self.h_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
-                                          [np.sin(p), np.cos(p)]])
-
-    @classmethod
-    def identity(cls):
-        return Rotation2D(np.eye(2))
-
-    @property
-    def composes_inplace_with(self):
-        return Rotation2D
-
-
-class Rotation3D(AbstractRotation):
-    r"""
-    A 3-dimensional rotation. **Currently no parametrisation is implemented**.
-
-    Parameters
-    ----------
-    rotation_matrix : (D, D) ndarray
-        The 3D rotation matrix.
-
-    Raises
-    ------
-    DimensionalityError
-        Only 3D rotation matrices are supported.
-    """
-
-    def __init__(self, rotation_matrix):
-        super(Rotation3D, self).__init__(rotation_matrix)
-        if self.n_dims != 3:
-            raise DimensionalityError("Rotation3D has to be built from a 3D"
-                                      " rotation matrix")
-
-    def axis_and_angle_of_rotation(self):
+    def _axis_and_angle_of_rotation_3d(self):
         r"""
         Decomposes this 3D rotation's rotation matrix into a angular rotation
         about an axis. The rotation is considered in a right handed sense.
@@ -300,74 +182,71 @@ class Rotation3D(AbstractRotation):
         return axis, angle_of_rotation
 
     @property
-    def composes_inplace_with(self):
-        return Rotation3D
-
-    @property
     def n_parameters(self):
-        r"""
-        Not yet implemented.
-
-        Raises
-        -------
-        NotImplementedError
-            Not yet implemented.
-        """
-        # TODO: Implement 3D rotation vectorisation
-        raise NotImplementedError('3D rotations do not support vectorisation '
-                                  'yet.')
+        return self.n_dims - 1
 
     def as_vector(self):
         r"""
-        Not yet implemented.
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. The parameters
+        are output in the order [theta].
 
-        Raises
+        +----------+--------------------------------------------+
+        |parameter | definition                                 |
+        +==========+============================================+
+        |theta     | The angle of rotation around ``[0, 0, 1]`` |
+        +----------+--------------------------------------------+
+
+        Returns
         -------
-        NotImplementedError
-            Not yet implemented.
+        theta : double
+            Angle of rotation around axis. Right-handed.
         """
-        # TODO: Implement 3D rotation vectorisation
-        raise NotImplementedError('3D rotations do not support vectorisation '
-                                  'yet.')
+        return self.axis_and_angle_of_rotation()[1]
 
     def from_vector_inplace(self, p):
         r"""
-        Not yet implemented.
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
 
-        Raises
+        Supports rebuilding from 2D parameter sets.
+
+        2D Rotation: 1 parameter::
+
+            [theta]
+
+        Parameters
+        ----------
+        p : (1,) ndarray
+            The array of parameters.
+
+        Returns
         -------
-        NotImplementedError
-            Not yet implemented.
+        transform : :class:`Rotation2D`
+            The transform initialised to the given parameters.
         """
-        # See affine from_vector with regards to classmethod decorator
-        # TODO: Implement 3D rotation vectorisation
-        raise NotImplementedError('3D rotations do not support vectorisation '
-                                  'yet.')
+        self.h_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
+                                          [np.sin(p), np.cos(p)]])
 
     @classmethod
-    def identity(cls):
-        return Rotation3D(np.eye(3))
+    def identity(cls, n_dims):
+        return Rotation(np.eye(n_dims))
+
+    @property
+    def composes_inplace_with(self):
+        return Rotation
 
 
-class AlignmentRotation2D(Alignment, Rotation2D):
-
-    def __init__(self, source, target):
-        Alignment.__init__(self, source, target)
-        Rotation2D.__init__(self, optimal_rotation_matrix(source, target))
-
-    def _sync_state_from_target(self):
-        h_matrix = np.eye(3)
-        h_matrix[:2, :2] = optimal_rotation_matrix(self.source, self.target)
-        self.h_matrix = h_matrix
-
-
-class AlignmentRotation3D(Alignment, Rotation3D):
+class AlignmentRotation(Alignment, Rotation):
 
     def __init__(self, source, target):
         Alignment.__init__(self, source, target)
-        Rotation3D.__init__(self, optimal_rotation_matrix(source, target))
+        Rotation.__init__(self, optimal_rotation_matrix(source, target))
 
     def _sync_state_from_target(self):
-        h_matrix = np.eye(4)
-        h_matrix[:3, :3] = optimal_rotation_matrix(self.source, self.target)
-        self._h_matrix_setter(h_matrix)
+        r = optimal_rotation_matrix(self.source, self.target)
+        Rotation.set_rotation_matrix(self, r)
+
+    def set_rotation_matrix(self, value):
+        Rotation.set_rotation_matrix(self, value)
+        self._sync_target_from_state()

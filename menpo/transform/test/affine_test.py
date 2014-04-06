@@ -3,8 +3,7 @@ from numpy.testing import assert_allclose, assert_equal
 from menpo.shape import PointCloud
 from menpo.transform import (Affine, AlignmentAffine,
                              Similarity, AlignmentSimilarity,
-                             Rotation, Rotation2D, Rotation3D,
-                             AlignmentRotation2D,
+                             Rotation, AlignmentRotation,
                              Scale, NonUniformScale, UniformScale,
                              Translation, AlignmentTranslation)
 from menpo.exception import DimensionalityError
@@ -71,7 +70,7 @@ def test_align_2d_rotation():
                                   [3, -5]]))
     target = rotation.apply(source)
     # estimate the transform from source and target
-    estimate = AlignmentRotation2D(source, target)
+    estimate = AlignmentRotation(source, target)
     # check the estimates is correct
     assert_allclose(rotation.h_matrix,
                     estimate.h_matrix, atol=1e-14)
@@ -697,7 +696,7 @@ def test_rotation2d_from_vector():
                      [1.0, 0.0, 0.0],
                      [0.0, 0.0, 1.0]], dtype=np.float64)
 
-    tr = Rotation2D.identity().from_vector(theta)
+    tr = Rotation.identity(2).from_vector(theta)
 
     assert_allclose(tr.h_matrix, homo, atol=1**-15)
 
@@ -707,20 +706,19 @@ def test_rotation2d_as_vector():
     rot_matrix = np.array([[0.0, -1.0],
                           [1.0, 0.0]])
 
-    vec = Rotation2D(rot_matrix).as_vector()
+    vec = Rotation(rot_matrix).as_vector()
 
     assert_allclose(vec, theta)
 
 
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
-    Rotation3D.identity().from_vector(0)
+    Rotation.identity(3).from_vector(0)
 
 
 @raises(NotImplementedError)
 def test_rotation3d_as_vector_raises_notimplementederror():
-    homo = np.eye(3)
-    Rotation3D(homo).as_vector()
+    Rotation.identity(3).as_vector()
 
 
 def test_affine_2d_n_parameters():
@@ -781,23 +779,23 @@ def test_translation_3d_n_parameters():
 
 def test_rotation2d_n_parameters():
     rot_matrix = np.eye(2)
-    t = Rotation2D(rot_matrix)
+    t = Rotation(rot_matrix)
     assert(t.n_parameters == 1)
 
 @raises(NotImplementedError)
 def test_rotation3d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(3)
-    t = Rotation3D(rot_matrix)
+    t = Rotation(rot_matrix)
     # Throws exception
     t.n_parameters
 
 
 def test_rotation2d_identity():
-    assert_allclose(Rotation2D.identity().h_matrix, np.eye(3))
+    assert_allclose(Rotation.identity(2).h_matrix, np.eye(3))
 
 
 def test_rotation3d_identity():
-    assert_allclose(Rotation3D.identity().h_matrix, np.eye(4))
+    assert_allclose(Rotation.identity(3).h_matrix, np.eye(4))
 
 
 def test_affine_identity_2d():
