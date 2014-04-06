@@ -1,12 +1,12 @@
 from copy import deepcopy
 import numpy as np
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, Targetable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import Alignable, VComposableTransform, VInvertible
+from menpo.transform.base import VComposableTransform, VInvertible
 
 
 class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
-                           Alignable):
+                           Targetable):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -206,6 +206,9 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
         self.transform.target = self._target_for_weights(self._weights)
         # 3. As always, update our self._target
         self._target = self.transform.target
+
+    def _sync_state_from_target(self):
+        pass
 
     def _apply(self, x, **kwargs):
         r"""

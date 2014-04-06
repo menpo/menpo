@@ -3,12 +3,11 @@ import copy
 import numpy as np
 
 from menpo.base import Vectorizable
-from menpo.transform.base import Alignable, VComposableTransform, VInvertible
+from menpo.transform.base import VComposableTransform, VInvertible, Alignment
 from menpo.exception import DimensionalityError
 
 
-class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
-                      Alignable):
+class Affine(Vectorizable, VComposableTransform, VInvertible):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -20,73 +19,14 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
     h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
-
-    @property
-    def composes_inplace_with(self):
-        return AffineTransform
-
     def __init__(self, h_matrix):
-        super(AffineTransform, self).__init__()
         self._h_matrix = None
         # let the setter handle initialization
         self.h_matrix = h_matrix
 
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        r"""
-        Alternative Transform constructor. Constructs an AffineTransform by
-        finding the optimal transform to align source to target.
-
-        Parameters
-        ----------
-
-        source: :class:`menpo.shape.PointCloud`
-            The source pointcloud instance used in the alignment
-
-        target: :class:`menpo.shape.PointCloud`
-            The target pointcloud instance used in the alignment
-
-        This is called automatically by align once verification of source and
-        target is performed.
-
-        Returns
-        -------
-
-        alignment_transform: :class:`menpo.transform.AffineTransform`
-            An AffineTransform object that is_alignment.
-
-
-        Notes
-        -----
-
-        We want to find the optimal transform M which satisfies
-
-            M a = b
-
-        where `a` and `b` are the source and target homogeneous vectors
-        respectively.
-
-           (M a)' = b'
-           a' M' = b'
-           a a' M' = a b'
-
-           `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
-           to solve for M.
-
-           This approach is the analytical linear least squares solution to
-           the problem at hand. It will have a solution as long as `(a a')`
-           is non-singular, which generally means at least 2 corresponding
-           points are required.
-        """
-        optimal_h = AffineTransform._build_alignment_h_matrix(source, target)
-        affine_transform = AffineTransform(optimal_h)
-        affine_transform._source = source
-        affine_transform._target = target
-        return affine_transform
-
-    def _target_setter(self, new_target):
-        self.h_matrix = self._build_alignment_h_matrix(self.source, new_target)
-        self._target = new_target
+    @property
+    def composes_inplace_with(self):
+        return Affine
 
     @property
     def n_dims(self):
@@ -121,6 +61,12 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
 
     @h_matrix.setter
     def h_matrix(self, value):
+        self._h_matrix_setter(value)  # set the h_matrix
+
+    def _h_matrix_setter(self, value):
+        r"""
+        Updates the h_matrix, performing sanity checks.
+        """
         shape = value.shape
         if len(shape) != 2 and shape[0] != shape[1]:
             raise ValueError("You need to provide a square homogeneous matrix")
@@ -158,7 +104,7 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
         return True
 
     def _build_pseudoinverse(self):
-        return AffineTransform(np.linalg.inv(self.h_matrix))
+        return Affine(np.linalg.inv(self.h_matrix))
 
     def __eq__(self, other):
         return np.allclose(self.h_matrix, other.h_matrix)
@@ -233,12 +179,12 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
             new_self._compose_before_inplace(transform)
         elif isinstance(self, type(transform)):
             new_self = transform._compose_before(self)
-        elif (isinstance(self, SimilarityTransform) and
-              isinstance(transform, SimilarityTransform)):
-            new_self = SimilarityTransform(self.h_matrix)
+        elif (isinstance(self, Similarity) and
+              isinstance(transform, Similarity)):
+            new_self = Similarity(self.h_matrix)
             new_self._compose_before_inplace(transform)
-        elif isinstance(transform, AffineTransform):
-            new_self = AffineTransform(self.h_matrix)
+        elif isinstance(transform, Affine):
+            new_self = Affine(self.h_matrix)
             new_self._compose_before_inplace(transform)
         else:
             # TODO this shouldn't be possible with composes_with
@@ -358,7 +304,7 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
 
     @classmethod
     def identity(cls, n_dims):
-        return AffineTransform(np.eye(n_dims + 1))
+        return Affine(np.eye(n_dims + 1))
 
     def as_vector(self):
         r"""
@@ -395,14 +341,6 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
         Updates this AffineTransform in-place from the new parameters. See
         from_vector for details of the parameter format
         """
-        self.h_matrix = self._h_matrix_from_parameters(p)
-        self._sync_target()  # update the target (if we are an alignment)
-
-    @staticmethod
-    def _h_matrix_from_parameters(p):
-        r"""
-        See from_vector for details of the parameter format expected.
-        """
         h_matrix = None
         if p.shape[0] is 6:  # 2D affine
             h_matrix = np.eye(3)
@@ -413,25 +351,7 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
-        return h_matrix
-
-    @staticmethod
-    def _build_alignment_h_matrix(source, target):
-        r"""
-        See _align() for details. This is a separate method just so it can
-        be shared by _target_setter().
-        """
-
-        def _homogeneous_points(pc):
-            r"""
-            Pulls out the points from a pointcloud as homogeneous points of
-            shape (n_dims + 1, n_points)
-            """
-            return np.concatenate((pc.points.T, np.ones(pc.n_points)[None, :]))
-
-        a = _homogeneous_points(source)
-        b = _homogeneous_points(target)
-        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
+        self.h_matrix = h_matrix
 
     def decompose(self):
         r"""
@@ -453,7 +373,84 @@ class AffineTransform(Vectorizable, VComposableTransform, VInvertible,
         return [rotation_1, scale, rotation_2, translation]
 
 
-class SimilarityTransform(AffineTransform):
+class AlignmentAffine(Affine, Alignment):
+    r"""
+    Constructs an Affine by finding the optimal affine transform to align
+    source to target.
+
+    Parameters
+    ----------
+
+    source: :class:`menpo.shape.PointCloud`
+        The source pointcloud instance used in the alignment
+
+    target: :class:`menpo.shape.PointCloud`
+        The target pointcloud instance used in the alignment
+
+    Notes
+    -----
+
+    We want to find the optimal transform M which satisfies
+
+        M a = b
+
+    where `a` and `b` are the source and target homogeneous vectors
+    respectively.
+
+       (M a)' = b'
+       a' M' = b'
+       a a' M' = a b'
+
+       `a a'` is of shape `(n_dim + 1, n_dim + 1)` and so can be inverted
+       to solve for M.
+
+       This approach is the analytical linear least squares solution to
+       the problem at hand. It will have a solution as long as `(a a')`
+       is non-singular, which generally means at least 2 corresponding
+       points are required.
+    """
+    def __init__(self, source, target):
+        # first, initialize the alignment
+        Alignment.__init__(self, source, target)
+        # now, the Affine
+        optimal_h = self._build_alignment_h_matrix(source, target)
+        Affine.__init__(self, optimal_h)
+
+    @Affine.h_matrix.setter
+    def h_matrix(self, value):
+        # TODO calling super setter correctly
+        Affine.h_matrix.fset(self, value)
+        # now update the state
+        self._sync_target_from_state()
+
+    @staticmethod
+    def _build_alignment_h_matrix(source, target):
+        r"""
+        Returns the optimal alignment of source to target.
+        """
+
+        a = source.h_points
+        b = target.h_points
+        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
+
+    def from_vector_inplace(self, p):
+        r"""
+        Updates this AffineTransform in-place from the new parameters. See
+        from_vector for details of the parameter format.
+        """
+        Affine.from_vector_inplace(self, p)
+        self._sync_target_from_state()
+
+    def _sync_state_from_target(self):
+        optimal_h = self._build_alignment_h_matrix(self.source, self.target)
+        self._h_matrix_setter(optimal_h)
+
+    def _build_pseudoinverse(self):
+        # TODO is this correct?
+        return AlignmentAffine(self.target, self.source)
+
+
+class Similarity(Affine):
     r"""
     Specialist version of an :class:`AffineTransform` that is guaranteed to be
     a Similarity transform.
@@ -466,75 +463,7 @@ class SimilarityTransform(AffineTransform):
 
     def __init__(self, h_matrix):
         #TODO check that I am a similarity transform
-        super(SimilarityTransform, self).__init__(h_matrix)
-
-    @classmethod
-    def _align(cls, source, target, rotation=True, **kwargs):
-        """
-        Infers the similarity transform relating two vectors with the same
-        dimensionality. This is simply the procrustes alignment of the
-        source to the target.
-
-
-        source: :class:`menpo.shape.PointCloud`
-            The source pointcloud instance used in the alignment
-
-        target: :class:`menpo.shape.PointCloud`
-            The target pointcloud instance used in the alignment
-
-        rotation: boolean, optional
-            If False, the rotation component of the similarity transform is not
-            inferred.
-
-            Default: True
-
-        This is called automatically by align once verification of source and
-        target is performed.
-
-        Returns
-        -------
-
-        alignment_transform: :class:`menpo.transform.SimilarityTransform`
-            A SimilarityTransform object that is_alignment.
-        """
-        similarity = cls._procrustes_alignment(source, target, rotation)
-        similarity._source = source
-        similarity._target = target
-        return similarity
-
-    @staticmethod
-    def _procrustes_alignment(source, target, rotation=True):
-        r"""
-        Returns the similarity transform that aligns the source to the target.
-        """
-        target_translation = Translation(-target.centre)
-        centred_target = target_translation.apply(target)
-        # now translate the source to the origin
-        translation = Translation(-source.centre)
-        # apply the translation to the source
-        aligned_source = translation.apply(source)
-        scale = UniformScale(target.norm() / source.norm(), source.n_dims)
-        scaled_aligned_source = scale.apply(aligned_source)
-        # compute the target's inverse translation
-        inv_target_translation = target_translation.pseudoinverse
-        if rotation:
-            # calculate the correlation along each dimension + find the optimal
-            # rotation to maximise it
-            correlation = np.dot(centred_target.points.T,
-                                 scaled_aligned_source.points)
-            U, D, Vt = np.linalg.svd(correlation)
-
-            rotation = Rotation(np.dot(U, Vt))
-            return translation.compose_before(scale).compose_before(
-                rotation).compose_before(inv_target_translation)
-        else:
-            return translation.compose_before(scale).compose_before(
-                inv_target_translation)
-
-    def _target_setter(self, new_target):
-        similarity = self._procrustes_alignment(self.source, new_target)
-        self.h_matrix = similarity.h_matrix
-        self._target = new_target
+        super(Similarity, self).__init__(h_matrix)
 
     @property
     def n_parameters(self):
@@ -704,7 +633,6 @@ class SimilarityTransform(AffineTransform):
             homo[1, 0] = p[1]
             homo[:2, 2] = p[2:]
             self.h_matrix = homo
-            self._sync_target()  # update the target (if we are an alignment)
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -713,11 +641,94 @@ class SimilarityTransform(AffineTransform):
                                       "are currently supported.")
 
     def _build_pseudoinverse(self):
-        return SimilarityTransform(np.linalg.inv(self.h_matrix))
+        return Similarity(np.linalg.inv(self.h_matrix))
 
     @classmethod
     def identity(cls, n_dims):
-        return SimilarityTransform(np.eye(n_dims + 1))
+        return Similarity(np.eye(n_dims + 1))
+
+
+class AlignmentSimilarity(Similarity, Alignment):
+    """
+    Infers the similarity transform relating two vectors with the same
+    dimensionality. This is simply the procrustes alignment of the
+    source to the target.
+
+
+    source: :class:`menpo.shape.PointCloud`
+        The source pointcloud instance used in the alignment
+
+    target: :class:`menpo.shape.PointCloud`
+        The target pointcloud instance used in the alignment
+
+    rotation: boolean, optional
+        If False, the rotation component of the similarity transform is not
+        inferred.
+
+        Default: True
+
+    """
+    def __init__(self, source, target, rotation=True):
+        Alignment.__init__(self, source, target)
+        x = self._procrustes_alignment(source, target, rotation=rotation)
+        Similarity.__init__(self, x.h_matrix)
+
+    @staticmethod
+    def _procrustes_alignment(source, target, rotation=True):
+        r"""
+        Returns the similarity transform that aligns the source to the target.
+        """
+        target_translation = Translation(-target.centre)
+        centred_target = target_translation.apply(target)
+        # now translate the source to the origin
+        translation = Translation(-source.centre)
+        # apply the translation to the source
+        aligned_source = translation.apply(source)
+        scale = UniformScale(target.norm() / source.norm(), source.n_dims)
+        scaled_aligned_source = scale.apply(aligned_source)
+        # compute the target's inverse translation
+        inv_target_translation = target_translation.pseudoinverse
+        if rotation:
+            # calculate the correlation along each dimension + find the optimal
+            # rotation to maximise it
+            correlation = np.dot(centred_target.points.T,
+                                 scaled_aligned_source.points)
+            U, D, Vt = np.linalg.svd(correlation)
+
+            rotation = Rotation(np.dot(U, Vt))
+            return translation.compose_before(scale).compose_before(
+                rotation).compose_before(inv_target_translation)
+        else:
+            return translation.compose_before(scale).compose_before(
+                inv_target_translation)
+
+    def _sync_state_from_target(self):
+        similarity = self._procrustes_alignment(self.source, self.target)
+        self.h_matrix = similarity.h_matrix
+
+    def from_vector_inplace(self, p):
+        r"""
+        Returns an instance of the transform from the given parameters,
+        expected to be in Fortran ordering.
+
+        Supports rebuilding from 2D parameter sets.
+
+        2D Similarity: 4 parameters::
+
+            [a, b, tx, ty]
+
+        Parameters
+        ----------
+        p : (P,) ndarray
+            The array of parameters.
+
+        Raises
+        ------
+        DimensionalityError, NotImplementedError
+            Only 2D transforms are supported.
+        """
+        Similarity.from_vector_inplace(self, p)
+        self._sync_target_from_state()  # update the target as we are an alignment
 
 
 class DiscreteAffineTransform(object):
@@ -773,7 +784,7 @@ def Rotation(rotation_matrix):
     # for details.
 
 
-class AbstractRotation(DiscreteAffineTransform, SimilarityTransform):
+class AbstractRotation(DiscreteAffineTransform, Similarity):
     r"""
     Abstract ``n_dims`` rotation transform.
 
@@ -873,8 +884,7 @@ class Rotation2D(AbstractRotation):
         test_vector = np.array([1, 0])
         transformed_vector = np.dot(self.rotation_matrix,
                                     test_vector)
-        angle_of_rotation = np.arccos(
-            np.dot(transformed_vector, test_vector))
+        angle_of_rotation = np.arccos(np.dot(transformed_vector, test_vector))
         return axis, angle_of_rotation
 
     @property
@@ -928,7 +938,6 @@ class Rotation2D(AbstractRotation):
         """
         self.h_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
                                                     [np.sin(p), np.cos(p)]])
-        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls):
@@ -1105,7 +1114,7 @@ def Scale(scale_factor, n_dims=None):
         return UniformScale(scale_factor, n_dims)
 
 
-class NonUniformScale(DiscreteAffineTransform, AffineTransform):
+class NonUniformScale(DiscreteAffineTransform, Affine):
     r"""
     An ``n_dims`` scale transform, with a scale component for each dimension.
 
@@ -1120,12 +1129,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        AffineTransform.__init__(self, h_matrix)
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        #TODO scale per dim should be used.
-        pass
+        Affine.__init__(self, h_matrix)
 
     @property
     def n_parameters(self):
@@ -1204,7 +1208,7 @@ class NonUniformScale(DiscreteAffineTransform, AffineTransform):
         return NonUniformScale(np.ones(n_dims))
 
 
-class UniformScale(DiscreteAffineTransform, SimilarityTransform):
+class UniformScale(DiscreteAffineTransform, Similarity):
     r"""
     An abstract similarity scale transform, with a single scale component
     applied to all dimensions. This is abstracted out to remove unnecessary
@@ -1215,20 +1219,7 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        SimilarityTransform.__init__(self, h_matrix)
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        uniform_scale = cls(target.norm() / source.norm(), source.n_dims)
-        uniform_scale._source = source
-        uniform_scale._target = target
-        return uniform_scale
-
-    def _target_setter(self, new_target):
-        new_scale = new_target.norm() / self.source.norm()
-        np.fill_diagonal(self.h_matrix, new_scale)
-        self.h_matrix[-1, -1] = 1
-        self._target = new_target
+        Similarity.__init__(self, h_matrix)
 
     @property
     def n_parameters(self):
@@ -1282,14 +1273,30 @@ class UniformScale(DiscreteAffineTransform, SimilarityTransform):
     def from_vector_inplace(self, p):
         np.fill_diagonal(self.h_matrix, p)
         self.h_matrix[-1, -1] = 1
-        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
         return UniformScale(1, n_dims)
 
 
-class Translation(DiscreteAffineTransform, SimilarityTransform):
+class AlignmentUniformScale(Alignment, UniformScale):
+
+    def __init__(self, source, target):
+        Alignment.__init__(self, source, target)
+        UniformScale.__init__(self, target.norm() / source.norm(),
+                              source.n_dims)
+
+    def from_vector_inplace(self, p):
+        UniformScale.from_vector_inplace(self, p)
+        self._sync_target_from_state()  # update the target as we are an alignment
+
+    def _sync_state_from_target(self):
+        new_scale = self.target.norm() / self.source.norm()
+        np.fill_diagonal(self.h_matrix, new_scale)
+        self.h_matrix[-1, -1] = 1
+
+
+class Translation(DiscreteAffineTransform, Similarity):
     r"""
     An N-dimensional translation transform.
 
@@ -1303,19 +1310,7 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
         translation = np.asarray(translation)
         h_matrix = np.eye(translation.shape[0] + 1)
         h_matrix[:-1, -1] = translation
-        SimilarityTransform.__init__(self, h_matrix)
-
-    @classmethod
-    def _align(cls, source, target, **kwargs):
-        translation = cls(target.centre - source.centre)
-        translation._source = source
-        translation._target = target
-        return translation
-
-    def _target_setter(self, new_target):
-        translation = new_target.centre - self.source.centre
-        self.h_matrix[:-1, -1] = translation
-        self._target = new_target
+        Similarity.__init__(self, h_matrix)
 
     @property
     def n_parameters(self):
@@ -1362,8 +1357,22 @@ class Translation(DiscreteAffineTransform, SimilarityTransform):
 
     def from_vector_inplace(self, p):
         self.h_matrix[:-1, -1] = p
-        self._sync_target()  # update the target (if we are an alignment)
 
     @classmethod
     def identity(cls, n_dims):
         return Translation(np.zeros(n_dims))
+
+
+class AlignmentTranslation(Alignment, Translation):
+
+    def __init__(self, source, target):
+        Alignment.__init__(self, source, target)
+        Translation.__init__(self, target.centre - source.centre)
+
+    def from_vector_inplace(self, p):
+        Translation.from_vector_inplace(self, p)
+        self._sync_target_from_state()
+
+    def _sync_state_from_target(self):
+        translation = self.target.centre - self.source.centre
+        self.h_matrix[:-1, -1] = translation

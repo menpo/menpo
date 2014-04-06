@@ -21,8 +21,8 @@ class HomogeneousTransform(ComposableTransform):
 
     @property
     def composes_inplace_with(self):
-        from menpo.transform.affine import AffineTransform
-        return (HomogeneousTransform, AffineTransform)
+        from menpo.transform.affine import Affine
+        return HomogeneousTransform, Affine
 
     def __init__(self, h_matrix):
         self.h_matrix = h_matrix

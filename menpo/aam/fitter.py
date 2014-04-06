@@ -4,7 +4,7 @@ import numpy as np
 from copy import deepcopy
 from menpo.landmark import LandmarkGroup
 from menpo.transform .affine import \
-    Scale, SimilarityTransform, AffineTransform
+    Scale, Similarity, Affine
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from menpo.lucaskanade.residual import LSIntensity
 from menpo.lucaskanade.appearance import AlternatingInverseCompositional
@@ -315,7 +315,7 @@ class Fitter(object):
         initial_shapes = [i.landmarks['initial_shape'].lms
                           for i in images]
 
-        affine_correction = AffineTransform.align(initial_shapes[-1],
+        affine_correction = Affine.align(initial_shapes[-1],
                                                   initial_shape)
 
         basic_fittings = self._fit(images, initial_shapes[0],
@@ -494,7 +494,7 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def __init__(self, aam, lk_algorithm=AlternatingInverseCompositional,
                  residual=LSIntensity, md_transform_cls=OrthoMDTransform,
-                 global_transform_cls=SimilarityTransform, n_shape=None,
+                 global_transform_cls=Similarity, n_shape=None,
                  n_appearance=None):
         super(LucasKanadeAAMFitter, self).__init__(aam)
         self.algorithm = lk_algorithm.type
@@ -507,7 +507,7 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def _set_up(self, lk_object_cls=AlternatingInverseCompositional,
                 residual_cls=LSIntensity, md_transform_cls=OrthoMDTransform,
-                global_transform_cls=SimilarityTransform, n_shape=None,
+                global_transform_cls=Similarity, n_shape=None,
                 n_appearance=None):
         r"""
         Re-initializes the Lucas-Kanade based fitting.

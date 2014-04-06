@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.shape import PointCloud
-from menpo.transform.affine import Rotation, Translation, \
-    AffineTransform, SimilarityTransform, NonUniformScale, \
-    Rotation2D, Rotation3D, UniformScale, Scale
+from menpo.transform.affine import (Rotation, Translation, Affine, Similarity,
+                                    NonUniformScale, Rotation2D, Rotation3D,
+                                    UniformScale, Scale, AlignmentTranslation)
 from menpo.exception import DimensionalityError
 from nose.tools import raises
 
@@ -37,7 +37,7 @@ def test_align_2d_translation():
                                   [3, -5]]))
     target = translation.apply(source)
     # estimate the transform from source and target
-    estimate = Translation.align(source, target)
+    estimate = AlignmentTranslation(source, target)
     # check the estimates is correct
     assert_allclose(translation.h_matrix,
                     estimate.h_matrix)
@@ -121,7 +121,7 @@ def test_basic_2d_affine():
     h_matrix = np.eye(3, 3)
     h_matrix[:-1, :-1] = linear_component
     h_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(h_matrix)
+    affine = Affine(h_matrix)
     x = np.array([[0, 1],
                   [1, 1],
                   [-1, -5],
@@ -148,14 +148,14 @@ def test_align_2d_affine():
     h_matrix = np.eye(3, 3)
     h_matrix[:-1, :-1] = linear_component
     h_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(h_matrix)
+    affine = Affine(h_matrix)
     source = PointCloud(np.array([[0, 1],
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
     target = affine.apply(source)
     # estimate the transform from source and target
-    estimate = AffineTransform.align(source, target)
+    estimate = Affine.align(source, target)
     # check the estimates is correct
     assert_allclose(affine.h_matrix, estimate.h_matrix)
 
@@ -168,7 +168,7 @@ def test_basic_3d_affine():
     h_matrix = np.eye(4, 4)
     h_matrix[:-1, :-1] = linear_component
     h_matrix[:-1, -1] = translation_component
-    affine = AffineTransform(h_matrix)
+    affine = Affine(h_matrix)
     x = np.array([[0, 1,  2],
                   [1, 1, 1],
                   [-1, 2, -5],
@@ -195,7 +195,7 @@ def test_basic_2d_similarity():
     h_matrix = np.eye(3, 3)
     h_matrix[:-1, :-1] = linear_component
     h_matrix[:-1, -1] = translation_component
-    similarity = SimilarityTransform(h_matrix)
+    similarity = Similarity(h_matrix)
     x = np.array([[0, 1],
                   [1, 1],
                   [-1, -5],
@@ -222,14 +222,14 @@ def test_align_2d_similarity():
     h_matrix = np.eye(3, 3)
     h_matrix[:-1, :-1] = linear_component
     h_matrix[:-1, -1] = translation_component
-    similarity = SimilarityTransform(h_matrix)
+    similarity = Similarity(h_matrix)
     source = PointCloud(np.array([[0, 1],
                                   [1, 1],
                                   [-1, -5],
                                   [3, -5]]))
     target = similarity.apply(source)
     # estimate the transform from source and target
-    estimate = SimilarityTransform.align(source, target)
+    estimate = Similarity.align(source, target)
     # check the estimates is correct
     assert_allclose(similarity.h_matrix,
                     estimate.h_matrix)
@@ -447,7 +447,7 @@ sim_jac_solution2d = np.array([[[0.,  0.],
 
 def test_affine_jacobian_2d_with_positions():
     params = np.array([0, 0.1, 0.2, 0, 30, 70])
-    t = AffineTransform.identity(2).from_vector(params)
+    t = Affine.identity(2).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0],
         [0, 1],
@@ -461,7 +461,7 @@ def test_affine_jacobian_2d_with_positions():
 
 def test_affine_jacobian_3d_with_positions():
     params = np.ones(12)
-    t = AffineTransform.identity(3).from_vector(params)
+    t = Affine.identity(3).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0, 0],
         [0, 0, 1],
@@ -481,7 +481,7 @@ def test_affine_jacobian_3d_with_positions():
 
 def test_similarity_jacobian_2d():
     params = np.ones(4)
-    t = SimilarityTransform.identity(2).from_vector(params)
+    t = Similarity.identity(2).from_vector(params)
     explicit_pixel_locations = np.array(
         [[0, 0],
         [0, 1],
@@ -495,14 +495,14 @@ def test_similarity_jacobian_2d():
 
 @raises(DimensionalityError)
 def test_similarity_jacobian_3d_raises_dimensionalityerror():
-    t = SimilarityTransform(np.eye(4))
+    t = Similarity(np.eye(4))
     t.jacobian(np.ones([2, 3]))
 
 
 @raises(DimensionalityError)
 def test_similarity_2d_points_raises_dimensionalityerror():
     params = np.ones(4)
-    t = SimilarityTransform.identity(2).from_vector(params)
+    t = Similarity.identity(2).from_vector(params)
     t.jacobian(np.ones([2, 3]))
 
 
@@ -512,7 +512,7 @@ def test_similarity_2d_from_vector():
                      [params[1], params[0] + 1, params[3]],
                      [0, 0, 1]])
 
-    sim = SimilarityTransform.identity(2).from_vector(params)
+    sim = Similarity.identity(2).from_vector(params)
 
     assert_equal(sim.h_matrix, homo)
 
@@ -523,7 +523,7 @@ def test_similarity_2d_as_vector():
                      [params[1], params[0] + 1.0, params[3]],
                      [0.0, 0.0, 1.0]])
 
-    vec = SimilarityTransform(homo).as_vector()
+    vec = Similarity(homo).as_vector()
 
     assert_allclose(vec, params)
 
@@ -723,26 +723,26 @@ def test_rotation3d_as_vector_raises_notimplementederror():
 
 def test_affine_2d_n_parameters():
     homo = np.eye(3)
-    t = AffineTransform(homo)
+    t = Affine(homo)
     assert(t.n_parameters == 6)
 
 
 def test_affine_3d_n_parameters():
     homo = np.eye(4)
-    t = AffineTransform(homo)
+    t = Affine(homo)
     assert(t.n_parameters == 12)
 
 
 def test_similarity_2d_n_parameters():
     homo = np.eye(3)
-    t = SimilarityTransform(homo)
+    t = Similarity(homo)
     assert(t.n_parameters == 4)
 
 
 @raises(NotImplementedError)
 def test_similarity_3d_n_parameters_raises_notimplementederror():
     homo = np.eye(4)
-    t = SimilarityTransform(homo)
+    t = Similarity(homo)
     # Raises exception
     t.n_parameters
 
@@ -799,20 +799,20 @@ def test_rotation3d_identity():
 
 
 def test_affine_identity_2d():
-    assert_allclose(AffineTransform.identity(2).h_matrix, np.eye(3))
+    assert_allclose(Affine.identity(2).h_matrix, np.eye(3))
 
 
 def test_affine_identity_3d():
-    assert_allclose(AffineTransform.identity(3).h_matrix, np.eye(4))
+    assert_allclose(Affine.identity(3).h_matrix, np.eye(4))
 
 
 def test_similarity_identity_2d():
-    assert_allclose(SimilarityTransform.identity(2).h_matrix,
+    assert_allclose(Similarity.identity(2).h_matrix,
                     np.eye(3))
 
 
 def test_similarity_identity_3d():
-    assert_allclose(SimilarityTransform.identity(3).h_matrix,
+    assert_allclose(Similarity.identity(3).h_matrix,
                     np.eye(4))
 
 

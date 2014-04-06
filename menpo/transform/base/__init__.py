@@ -219,4 +219,4 @@ class Transformable(object):
 from .composable import (ComposableTransform, TransformChain,
                          VComposableTransform)
 from .invertable import Invertible, VInvertible
-from .alignable import Alignable, PureAlignment
+from .alignment import Alignment
