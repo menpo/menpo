@@ -93,23 +93,23 @@ class LucasKanadeAAMFitter(AAMFitter):
     aam: :class:`pybug.aam.AAM`
         The Active Appearance Model to be use.
 
-    lk_object_cls: :class:`pybug.lucaskanade.appearance`, optional
+    algorithm: :class:`pybug.lucaskanade.appearance`, optional
             The Lucas-Kanade class to be used.
 
             Default: AlternatingInverseCompositional
 
-    residual_cls: :class:`pybug.lucaskanade.residual`, optional
+    residual: :class:`pybug.lucaskanade.residual`, optional
         The residual class to be used
 
         Default: 'LSIntensity'
 
-    md_transform_cls: :class:`pybug.transform.ModelDrivenTransform`,
+    md_transform: :class:`pybug.transform.ModelDrivenTransform`,
                       optional
         The model driven transform class to be used.
 
         Default: OrthoMDTransform
 
-    global_transform_cls: :class:`pybug.transform.affine`, optional
+    global_transform: :class:`pybug.transform.affine`, optional
         The global transform class to be used by the previous
         md_transform_cls. Currently, only
         :class:`pybug.transform.affine.Similarity` is supported.
@@ -129,12 +129,12 @@ class LucasKanadeAAMFitter(AAMFitter):
         Default: None
     """
 
-    def __init__(self, aam, lk_algorithm=AlternatingInverseCompositional,
+    def __init__(self, aam, algorithm=AlternatingInverseCompositional,
                  residual=LSIntensity, md_transform=OrthoMDTransform,
                  global_transform=SimilarityTransform, n_shape=None,
                  n_appearance=None):
         super(LucasKanadeAAMFitter, self).__init__(aam)
-        self._set_up(algorithm=lk_algorithm, residual=residual,
+        self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
                      global_transform=global_transform,
                      n_shape=n_shape, n_appearance=n_appearance)
@@ -148,7 +148,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 global_transform=SimilarityTransform, n_shape=None,
                 n_appearance=None):
         r"""
-        Re-initializes the Lucas-Kanade based fitting.
+        Sets up the lucas-kanade fitter object.
 
         Parameters
         -----------

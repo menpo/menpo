@@ -14,14 +14,51 @@ from menpo.fitmultilevel.featurefunctions import sparse_hog
 #TODO: Revise documentation
 class AAMBuilder(DeformableModelBuilder):
     r"""
-
+    Class that builds Multilevel Active Appearance Models.
 
     Parameters
     ----------
-    interpolator:'scipy', Optional
-        The interpolator that should be used to perform the warps.
+    feature_type: string or function/closure, Optional
+        If None, the appearance model will be build using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+        If string or closure, the appearance model will be built from a
+        feature representation of the original images:
+            If string, image features will be computed by executing:
 
-        Default: 'scipy'
+               feature_image = eval('img.feature_type.' + feature_type + '()')
+
+            For this to work properly `feature_type` needs to be one of
+            menpo's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using the default
+            options.
+
+            Non-default feature options and new experimental features can be
+            defined using functions/closures. In this case, the function must
+            receive an image as input and return a particular feature
+            representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `menpo.image.feature.py` for details more details on
+            menpo's standard image features and feature options.
+
+        Default: None
+
+    transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
+        The :class:`menpo.transform.PureAlignmentTransform` that will be
+        used to warp the images.
+
+        Default: :class:`menpo.transform.PiecewiseAffineTransform`
+
+    trilist: (t, 3) ndarray, Optional
+        Triangle list that will be used to build the reference frame. If None,
+        defaults to performing Delaunay triangulation on the points.
+
+        Default: None
 
     diagonal_range: int, Optional
         All images will be rescaled to ensure that the scale of their
@@ -39,97 +76,28 @@ class AAMBuilder(DeformableModelBuilder):
 
         Default: None
 
-    boundary: int, Optional
-        The number of pixels to be left as a safe margin on the boundaries
-        of the reference frame (has potential effects on the gradient
-        computation).
-
-        Default: 3
-
-    transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
-        The :class:`menpo.transform.PureAlignmentTransform` that will be
-        used to warp the images.
-
-        Default: :class:`menpo.transform.PiecewiseAffineTransform`
-
-    trilist: (t, 3) ndarray, Optional
-        Triangle list that will be used to build the reference frame. If None,
-        defaults to performing Delaunay triangulation on the points.
-
-        Default: None
-
-        .. note::
-
-            This kwarg will be completely ignored if the kwarg transform
-            is not set :class:`menpo.transform.PiecewiseAffineTransform` or
-            if the kwarg patch_shape is not set to None.
-
-    patch_shape: tuple of ints or None, Optional
-        If tuple, the appearance model of the AAM will be obtained by
-        sampling the appearance patches around the landmarks. If None, the
-        standard representation for the AAMs' appearance model will be used
-        instead.
-
-        Default: None
-
-        .. note::
-
-            If tuple, the kwarg transform will be automatically set to
-            :class:`menpo.transform.TPS`.
-
     n_levels: int, Optional
         The number of multi-resolution pyramidal levels to be used.
 
         Default: 3
 
     downscale: float > 1, Optional
-        The downscale factor that will be used to create the different AAM
+        The downscale factor that will be used to create the different
         pyramidal levels.
 
         Default: 2
 
-    scaled_reference_frames: boolean, Optional
-        If False, the resolution of all reference frames used to build the
+    scaled_levels: boolean, Optional
+        If True, the resolution of all reference frames used to build the
         appearance model will be fixed (the original images will be
         both smoothed and scaled using a Gaussian pyramid). Consequently, all
         appearance models will have the same dimensionality.
-        If True, the reference frames used to create the appearance model
-        will be themselves scaled (the original images will only be smoothed).
+        If False, the reference frames used to create the appearance model
+        will be scaled (the original images will only be smoothed).
         Consequently, the dimensionality of all appearance models will be
         different.
 
         Default: False
-
-    feature_type: string or closure, Optional
-        If None, the appearance model will be build using the original image
-        representation, i.e. no features will be extracted from the original
-        images.
-        If string or closure, the appearance model will be built from a
-        feature representation of the original images:
-            If string, the `ammbuilder` will try to compute image features by
-            executing:
-
-               feature_image = eval('img.feature_type.' + feature_type + '()')
-
-            For this to work properly the feature_type needs to be one of
-            Menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using the respective
-            default options.
-
-            Non-default feature options and new experimental features can be
-            used by defining a closure. In this case, the closure must define a
-            function that receives an image as input and returns a
-            particular feature representation of that image. For example:
-
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
-
-            See `menpo.image.MaskedNDImage` for details more details on Menpo's
-            standard image features and feature options.
-
-        Default: None
 
     max_shape_components: 0 < int < n_components, Optional
         If int, it specifies the specific number of components of the
@@ -142,6 +110,18 @@ class AAMBuilder(DeformableModelBuilder):
         original appearance model to be retained.
 
         Default: None
+
+    boundary: int, Optional
+        The number of pixels to be left as a safe margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
+
+        Default: 3
+
+    interpolator:'scipy', Optional
+        The interpolator that should be used to perform the warps.
+
+        Default: 'scipy'
 
     Returns
     -------
@@ -276,14 +256,52 @@ class AAMBuilder(DeformableModelBuilder):
 #TODO: Revise documentation
 class PatchBasedAAMBuilder(AAMBuilder):
     r"""
-    Builds an AAM object from a set of landmarked images.
+    Class that builds Patch-Based Multilevel Active Appearance Models.
 
     Parameters
     ----------
-    interpolator:'scipy', Optional
-        The interpolator that should be used to perform the warps.
+    feature_type: string or function/closure, Optional
+        If None, the appearance model will be build using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+        If string or closure, the appearance model will be built from a
+        feature representation of the original images:
+            If string, image features will be computed by executing:
 
-        Default: 'scipy'
+               feature_image = eval('img.feature_type.' + feature_type + '()')
+
+            For this to work properly `feature_type` needs to be one of
+            menpo's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using the default
+            options.
+
+            Non-default feature options and new experimental features can be
+            defined using functions/closures. In this case, the function must
+            receive an image as input and return a particular feature
+            representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `menpo.image.feature.py` for details more details on
+            menpo's standard image features and feature options.
+
+        Default: None
+
+    transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
+        The :class:`menpo.transform.PureAlignmentTransform` that will be
+        used to warp the images.
+
+        Default: :class:`menpo.transform.PiecewiseAffineTransform`
+
+    patch_shape: tuple of ints, Optional
+        The appearance model of the Patch-Based AAM will be obtained by
+        sampling appearance patches with the specified shape around each
+        landmark.
+
+        Default: (16, 16)
 
     diagonal_range: int, Optional
         All images will be rescaled to ensure that the scale of their
@@ -301,97 +319,28 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
         Default: None
 
-    boundary: int, Optional
-        The number of pixels to be left as a safe margin on the boundaries
-        of the reference frame (has potential effects on the gradient
-        computation).
-
-        Default: 3
-
-    transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
-        The :class:`menpo.transform.PureAlignmentTransform` that will be
-        used to warp the images.
-
-        Default: :class:`menpo.transform.PiecewiseAffineTransform`
-
-    trilist: (t, 3) ndarray, Optional
-        Triangle list that will be used to build the reference frame. If None,
-        defaults to performing Delaunay triangulation on the points.
-
-        Default: None
-
-        .. note::
-
-            This kwarg will be completely ignored if the kwarg transform
-            is not set :class:`menpo.transform.PiecewiseAffineTransform` or
-            if the kwarg patch_shape is not set to None.
-
-    patch_shape: tuple of ints or None, Optional
-        If tuple, the appearance model of the AAM will be obtained by
-        sampling the appearance patches around the landmarks. If None, the
-        standard representation for the AAMs' appearance model will be used
-        instead.
-
-        Default: None
-
-        .. note::
-
-            If tuple, the kwarg transform will be automatically set to
-            :class:`menpo.transform.TPS`.
-
     n_levels: int, Optional
         The number of multi-resolution pyramidal levels to be used.
 
         Default: 3
 
     downscale: float > 1, Optional
-        The downscale factor that will be used to create the different AAM
+        The downscale factor that will be used to create the different
         pyramidal levels.
 
         Default: 2
 
-    scaled_reference_frames: boolean, Optional
-        If False, the resolution of all reference frames used to build the
+    scaled_levels: boolean, Optional
+        If True, the resolution of all reference frames used to build the
         appearance model will be fixed (the original images will be
         both smoothed and scaled using a Gaussian pyramid). Consequently, all
         appearance models will have the same dimensionality.
-        If True, the reference frames used to create the appearance model
-        will be themselves scaled (the original images will only be smoothed).
+        If False, the reference frames used to create the appearance model
+        will be scaled (the original images will only be smoothed).
         Consequently, the dimensionality of all appearance models will be
         different.
 
         Default: False
-
-    feature_type: string or closure, Optional
-        If None, the appearance model will be build using the original image
-        representation, i.e. no features will be extracted from the original
-        images.
-        If string or closure, the appearance model will be built from a
-        feature representation of the original images:
-            If string, the `ammbuilder` will try to compute image features by
-            executing:
-
-               feature_image = eval('img.feature_type.' + feature_type + '()')
-
-            For this to work properly the feature_type needs to be one of
-            Menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using the respective
-            default options.
-
-            Non-default feature options and new experimental features can be
-            used by defining a closure. In this case, the closure must define a
-            function that receives an image as input and returns a
-            particular feature representation of that image. For example:
-
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
-
-            See `menpo.image.MaskedNDImage` for details more details on Menpo's
-            standard image features and feature options.
-
-        Default: None
 
     max_shape_components: 0 < int < n_components, Optional
         If int, it specifies the specific number of components of the
@@ -405,10 +354,22 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
         Default: None
 
+    boundary: int, Optional
+        The number of pixels to be left as a safe margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
+
+        Default: 3
+
+    interpolator:'scipy', Optional
+        The interpolator that should be used to perform the warps.
+
+        Default: 'scipy'
+
     Returns
     -------
-    aam : :class:`menpo.fitmultiple.aam.builder.AAMBuilder`
-        The AAM Builder object
+    aam : :class:`menpo.fitmultiple.aam.builder.PatchBasedAAMBuilder`
+        The Patch Based AAM Builder object
     """
     def __init__(self, feature_type='hog', transform=TPS,
                  patch_shape=(16, 16), diagonal_range=None, n_levels=3,
@@ -444,8 +405,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
 class AAM(object):
     r"""
-    Active Appearance Model (AAM) data structure. Can generate novel
-    instances of itself from its appearance and shape weights.
+    Active Appearance Model class.
 
     Parameters
     -----------
@@ -455,7 +415,7 @@ class AAM(object):
     appearance_models: :class:`menpo.model.PCA` list
         A list containing the appearance models of the AAM.
 
-    transform_cls: :class:`menpo.transform.PureAlignmentTransform`
+    transform: :class:`menpo.transform.PureAlignmentTransform`
         The transform used to warp the images from which the AAM was
         constructed.
 
@@ -480,6 +440,10 @@ class AAM(object):
         calculation ready for further fitting. See the examples for
         details.
 
+    reference_shape: PointCloud
+        The reference shape that was used to resize all training images to a
+        consistent object size.
+
     downscale: float
         The constant downscale factor used to create the different levels of
         the AAM. For example, a factor of 2 would imply that the second level
@@ -487,23 +451,13 @@ class AAM(object):
         The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
         the original.
 
-    patch_shape: integer tuple or None
-        Tuple specifying the size of the patches used to build the AAM. If
-        None, the AAM was not built using a patch-based representation.
+    scaled_levels: boolean
+        Boolean value specifying whether the AAM levels are scaled or not.
 
-    Examples
-    --------
+    interpolator: string
+        The interpolator that was used to build the AAM.
 
-    Let's say you built your AAM using double angle igos on normalized images.
-    An appropriate function_type argument would be:
-
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
-
-            See `menpo.image.MaskedNDImage` for details more details on Menpo's
-            standard image features and feature options.
+        Default: 'scipy'
     """
     def __init__(self, shape_models, appearance_models, transform,
                  feature_type, reference_shape, downscale, scaled_levels,
@@ -553,7 +507,7 @@ class AAM(object):
 
         Returns
         -------
-        image: :class:`menpo.image.masked.MaskedImage`
+        image: :class:`menpo.image.base.Image`
             The novel AAM instance.
         """
         sm = self.shape_models[level]
@@ -586,7 +540,7 @@ class AAM(object):
 
         Returns
         -------
-        image: :class:`menpo.image.masked.MaskedImage`
+        image: :class:`menpo.image.base.Image`
             The novel AAM instance.
         """
         sm = self.shape_models[level]
@@ -627,6 +581,62 @@ class AAM(object):
 #TODO: Document me
 class PatchBasedAAM(AAM):
     r"""
+    Active Appearance Model class.
+
+    Parameters
+    -----------
+    shape_models: :class:`menpo.model.PCA` list
+        A list containing the shape models of the AAM.
+
+    appearance_models: :class:`menpo.model.PCA` list
+        A list containing the appearance models of the AAM.
+
+    patch_shape: tuple of ints
+        The shape of the patches used to build the Patch Based AAM.
+
+    transform: :class:`menpo.transform.PureAlignmentTransform`
+        The transform used to warp the images from which the AAM was
+        constructed.
+
+    feature_type: str or function
+        The image feature that was be used to build the appearance_models. Will
+        subsequently be used by fitter objects using this class to fitter to
+        novel images.
+
+        If None, the appearance model was built immediately from the image
+        representation, i.e. intensity.
+
+        If string, the appearance model was built using one of Menpo's default
+        built-in feature representations - those
+        accessible at image.features.some_feature(). Note that this case can
+        only be used with default feature weights - for custom feature
+        weights, use the functional form of this argument instead.
+
+        If function, the user can directly provide the feature that was
+        calculated on the images. This class will simply invoke this
+        function, passing in as the sole argument the image to be fitted,
+        and expect as a return type an Image representing the feature
+        calculation ready for further fitting. See the examples for
+        details.
+
+    reference_shape: PointCloud
+        The reference shape that was used to resize all training images to a
+        consistent object size.
+
+    downscale: float
+        The constant downscale factor used to create the different levels of
+        the AAM. For example, a factor of 2 would imply that the second level
+        of the AAM pyramid is half the width and half the height of the first.
+        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
+        the original.
+
+    scaled_levels: boolean
+        Boolean value specifying whether the AAM levels are scaled or not.
+
+    interpolator: string
+        The interpolator that was used to build the AAM.
+
+        Default: 'scipy'
     """
     def __init__(self, shape_models, appearance_models, patch_shape,
                  transform, feature_type, reference_shape, downscale,
@@ -644,28 +654,36 @@ class PatchBasedAAM(AAM):
 def build_reference_frame(landmarks, boundary=3, group='source',
                           trilist=None):
     r"""
-    Build reference frame from landmarks.
+    Builds a reference frame from a particular set of landmarks.
 
     Parameters
     ----------
-    reference_landmarks:
-    scale: int, optional
+    landmarks: PointCloud
+        The landmarks that will be used to build the reference frame.
 
-        Default: 1
-    boundary: int, optional
+    boundary: int, Optional
+        The number of pixels to be left as a safe margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
 
         Default: 3
+
     group: str, optional
+        Group that will be assigned to the provided set of landmarks on the
+        reference frame.
 
         Default: 'source'
-    trilist: (Nt, 3) ndarray, optional
+
+    trilist: (t, 3) ndarray, Optional
+        Triangle list that will be used to build the reference frame. If None,
+        defaults to performing Delaunay triangulation on the points.
 
         Default: None
 
     Returns
     -------
-    rescaled_image : type(self)
-        A copy of this image, rescaled.
+    reference_frame : :class:`menpo.image.base.Image`
+        The reference frame.
     """
     reference_frame = _build_reference_frame(landmarks, boundary=boundary,
                                              group=group)
@@ -683,28 +701,35 @@ def build_reference_frame(landmarks, boundary=3, group='source',
 def build_patch_reference_frame(landmarks, boundary=3, group='source',
                                 patch_shape=(16, 16)):
     r"""
-    Build reference frame from landmarks.
+    Builds a reference frame from a particular set of landmarks.
 
     Parameters
     ----------
-    reference_landmarks:
-    scale: int, optional
+    landmarks: PointCloud
+        The landmarks that will be used to build the reference frame.
 
-        Default: 1
-    boundary: int, optional
+    boundary: int, Optional
+        The number of pixels to be left as a safe margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
 
         Default: 3
+
     group: str, optional
+        Group that will be assigned to the provided set of landmarks on the
+        reference frame.
 
         Default: 'source'
-    patch_shape: dictionary, optional
 
-        Default: None
+    patch_shape: tuple of ints, Optional
+        Tuple specifying the shape of the patches.
+
+        Default: (16, 16)
 
     Returns
     -------
-    rescaled_image : type(self)
-        A copy of this image, rescaled.
+    patch_based_reference_frame : :class:`menpo.image.base.Image`
+        The patch based reference frame.
     """
     boundary = np.max(patch_shape) + boundary
     reference_frame = _build_reference_frame(landmarks, boundary=boundary,
