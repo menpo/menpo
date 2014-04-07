@@ -52,12 +52,24 @@ class ComposableTransform(Transform):
 
     @abc.abstractproperty
     def composes_inplace_with(self):
+        r"""Class or tuple of Classes that this transform composes
+        inplace against natively.
+
+        An attempt to compose inplace against any type that is not an
+        instance of this property on this class will result in an Exception.
+        """
+        pass
+
+    @property
+    def composes_with(self):
         r"""Class or tuple of Classes that this transform composes against
         natively.
         If native composition is not possible, falls back to producing a
-        :class:`TransformChain`
+        :class:`TransformChain`.
+
+        By default, this is the same list as composes_inplace_with.
         """
-        pass
+        return self.composes_inplace_with
 
     def compose_before(self, transform):
         r"""
@@ -76,7 +88,7 @@ class ComposableTransform(Transform):
         transform : :class:`Composable`
             The resulting transform.
         """
-        if isinstance(transform, self.composes_inplace_with):
+        if isinstance(transform, self.composes_with):
             return self._compose_before(transform)
         else:
             # best we can do is a TransformChain, let Transform handle that.
@@ -102,7 +114,7 @@ class ComposableTransform(Transform):
         transform : :class:`Composable`
             The resulting transform.
         """
-        if isinstance(transform, self.composes_inplace_with):
+        if isinstance(transform, self.composes_with):
             return self._compose_after(transform)
         else:
             # best we can do is a TransformChain, let Transform handle that.
@@ -239,87 +251,3 @@ class TransformChain(ComposableTransform):
             Transformed array having passed through the chain of transforms.
         """
         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
-
-
-class VComposableTransform(ComposableTransform):
-    r"""
-    Transform Mixin for Vectorizable composable Transforms.
-
-    Prefer this Mixin over Composable if the Transform in question is
-    Vectorizable, as this adds from_vector variants to the Composable
-    interface. These can be tuned for performance, and are for instance
-    needed by some of the machinery of AAMs.
-    """
-
-    def compose_before_from_vector_inplace(self, vector):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_before_from_vector_inplace(b_vec)
-        b = self.from_vector(b_vec)
-        a.apply(p) == b.apply(a.apply(p))
-
-        a is permanently altered to be the result of the composition. b_vec
-        is left unchanged.
-
-        Parameters
-        ----------
-        vector : (N,) ndarray
-            Vectorized transform to be applied **after** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        # naive approach - use the vector to build an object,
-        # then compose_before_inplace
-        return self.compose_before_inplace(self.from_vector(vector))
-
-    def compose_after_from_vector_inplace(self, vector):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_after_from_vector_inplace(b_vec)
-        b = self.from_vector(b_vec)
-        a.apply(p) == a_orig.apply(b.apply(p))
-
-        a is permanently altered to be the result of the composition. b_vec
-        is left unchanged.
-
-        Parameters
-        ----------
-        vector : (N,) ndarray
-            Vectorized transform to be applied **before** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        # naive approach - use the vector to build an object,
-        # then compose_after_inplace
-        return self.compose_after_inplace(self.from_vector(vector))
-
-    def _compose_after_inplace(self, transform):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_after_inplace(b)
-        a.apply(p) == a_orig.apply(b.apply(p))
-
-        a is permanently altered to be the result of the composition. b is
-        left unchanged.
-
-        Parameters
-        ----------
-        transform : :class:`Composable`
-            Transform to be applied **before** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        # naive approach - update self to be equal to transform and
-        # compose_before_from_vector_inplace
-        self_vector = self.as_vector().copy()
-        self.update_from_vector(transform.as_vector())
-        return self.compose_before_from_vector_inplace(self_vector)

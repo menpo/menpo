@@ -6,6 +6,16 @@ from menpo.base import Vectorizable
 from menpo.transform.base import ComposableTransform, VInvertible, Alignment
 
 
+class HomogFamilyAlignment(Alignment):
+    r"""
+    Simple subclass of Alignment that adds the ability to create a copy of an
+    alignment class without the alignment behavior.
+    """
+    @abc.abstractmethod
+    def copy_without_alignment(self):
+        pass
+
+
 class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
     r"""
     A simple n-dimensional homogeneous transformation.
@@ -31,7 +41,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
 
     def set_h_matrix(self, value):
         # TODO add verification logic for homogeneous here
-        self._h_matrix = value
+        self._h_matrix = value.copy()
 
     @property
     def n_dims(self):
@@ -62,6 +72,17 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
 
     @property
     def composes_inplace_with(self):
+        r"""
+        Homogeneous can swallow composition with any other Homogeneous,
+        subclasses will have to override and be more specific.
+        """
+        return Homogeneous
+
+    @property
+    def composes_with(self):
+        r"""
+        Any Homogeneous can compose with any other Homogeneous.
+        """
         return Homogeneous
 
     # noinspection PyProtectedMember
@@ -75,6 +96,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
 
             The type of the returned transform is always the first common
             ancestor between self and transform.
+
+            Any Alignment will be lost.
 
         Parameters
         ----------
@@ -92,8 +115,14 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         from .affine import Affine
         from .similarity import Similarity
         if isinstance(t, type(self)):
-            # He is a subclass of me - I can swallow him
-            new_self = copy.deepcopy(self)
+            # He is a subclass of me - I can swallow him.
+            # What if I'm an Alignment though? Rules of composition state we
+            # have to produce a non-Alignment result. Nasty, but we check
+            # here to save a lot of repetition.
+            if isinstance(self, HomogFamilyAlignment):
+                new_self = self.copy_without_alignment()
+            else:
+                new_self = copy.deepcopy(self)
             new_self._compose_before_inplace(t)
         elif isinstance(self, type(t)):
             # I am a subclass of him - he can swallow me
@@ -124,6 +153,9 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
             The type of the returned transform is always the first common
             ancestor between self and transform.
 
+            Any Alignment will be lost.
+
+
         Parameters
         ----------
         transform : :class:`Homogeneous`
@@ -140,8 +172,14 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         from .affine import Affine
         from .similarity import Similarity
         if isinstance(t, type(self)):
-            # He is a subclass of me - I can swallow him
-            new_self = copy.deepcopy(self)
+            # He is a subclass of me - I can swallow him.
+            # What if I'm an Alignment though? Rules of composition state we
+            # have to produce a non-Alignment result. Nasty, but we check
+            # here to save a lot of repetition.
+            if isinstance(self, HomogFamilyAlignment):
+                new_self = self.copy_without_alignment()
+            else:
+                new_self = copy.deepcopy(self)
             new_self._compose_after_inplace(t)
         elif isinstance(self, type(t)):
             # I am a subclass of him - he can swallow me
@@ -179,13 +217,3 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
 
     def _build_pseudoinverse(self):
         return Homogeneous(np.linalg.inv(self.h_matrix))
-
-
-class HomogFamilyAlignment(Alignment):
-    r"""
-    Simple subclass of Alignment that adds the ability to create a copy of an
-    alignment class without the alignment behavior.
-    """
-    @abc.abstractmethod
-    def copy_without_alignment(self):
-        pass
