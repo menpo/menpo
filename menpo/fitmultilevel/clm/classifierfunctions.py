@@ -2,7 +2,6 @@ from sklearn import svm
 from sklearn import linear_model
 
 
-#TODO: Document me
 def classifier(X, t, classifier_type, **kwargs):
     r"""
     General binary classifier function. Provides a consistent signature for
@@ -12,6 +11,7 @@ def classifier(X, t, classifier_type, **kwargs):
     ----------
     X: (n_samples, n_features) ndarray
         Training vectors.
+
     t: (n_samples, 1) ndarray
         Binary class labels.
 
@@ -34,7 +34,6 @@ def classifier(X, t, classifier_type, **kwargs):
                          "(linear_svm_lr, ...).")
 
 
-#TODO: Document me
 def linear_svm_lr(X, t):
     r"""
     Binary classifier that combines Linear Support Vector Machines and

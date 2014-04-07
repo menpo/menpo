@@ -8,9 +8,107 @@ from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from menpo.fitmultilevel.clm.classifierfunctions import classifier, linear_svm
 
 
-# TODO: document me
 class CLMBuilder(DeformableModelBuilder):
     r"""
+    Class that builds Multilevel Constrained Local Models.
+
+    Parameters
+    ----------
+    classifier_type: classifier_closure
+        A closure implementing a binary classifier.
+
+        Examples of such closures can be found in
+        `menpo.fitmultilevel.clm.classifierfunctions`
+
+    patch_shape: tuple of ints
+        The shape of the patches used by the previous classifier closure.
+
+    feature_type: string or function/closure, Optional
+        If None, the appearance model will be build using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+        If string or closure, the appearance model will be built from a
+        feature representation of the original images:
+            If string, image features will be computed by executing:
+
+               feature_image = eval('img.feature_type.' + feature_type + '()')
+
+            For this to work properly `feature_type` needs to be one of
+            menpo's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using the default
+            options.
+
+            Non-default feature options and new experimental features can be
+            defined using functions/closures. In this case, the function must
+            receive an image as input and return a particular feature
+            representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `menpo.image.feature.py` for details more details on
+            menpo's standard image features and feature options.
+
+        Default: None
+
+    diagonal_range: int, Optional
+        All images will be rescaled to ensure that the scale of their
+        landmarks matches the scale of the mean shape.
+
+        If int, ensures that the mean shape is scaled so that
+        the diagonal of the bounding box containing it matches the
+        diagonal_range value.
+        If None, the mean landmarks are not rescaled.
+
+        Note that, because the reference frame is computed from the mean
+        landmarks, this kwarg also specifies the diagonal length of the
+        reference frame (provided that features computation does not change
+        the image size).
+
+        Default: None
+
+    n_levels: int, Optional
+        The number of multi-resolution pyramidal levels to be used.
+
+        Default: 3
+
+    downscale: float > 1, Optional
+        The downscale factor that will be used to create the different
+        pyramidal levels.
+
+        Default: 2
+
+    scaled_levels: boolean, Optional
+        If True, the original images will be both smoothed and scaled using
+        a Gaussian pyramid to create the different pyramidal levels.
+        If False, they will only be smoothed.
+
+        Default: True
+
+    max_shape_components: 0 < int < n_components, Optional
+        If int, it specifies the specific number of components of the
+        original shape model to be retained.
+
+        Default: None
+
+    boundary: int, Optional
+        The number of pixels to be left as a safe margin on the boundaries
+        of the reference frame (has potential effects on the gradient
+        computation).
+
+        Default: 3
+
+    interpolator:'scipy', Optional
+        The interpolator that should be used to perform the warps.
+
+        Default: 'scipy'
+
+    Returns
+    -------
+    clm : :class:`menpo.fitmultiple.clm.builder.CLMBuilder`
+        The CLM Builder object
     """
     def __init__(self, classifier_type=linear_svm, patch_shape=(5, 5),
                  feature_type=sparse_hog, diagonal_range=None, n_levels=3,
@@ -155,7 +253,6 @@ class CLMBuilder(DeformableModelBuilder):
                    self.scaled_levels, self.interpolator)
 
 
-#TODO: Document me
 class CLM(object):
     r"""
     Constrained Local Model class.

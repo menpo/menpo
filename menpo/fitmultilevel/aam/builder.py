@@ -11,7 +11,6 @@ from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fitmultilevel.featurefunctions import sparse_hog
 
 
-#TODO: Revise documentation
 class AAMBuilder(DeformableModelBuilder):
     r"""
     Class that builds Multilevel Active Appearance Models.
@@ -88,16 +87,11 @@ class AAMBuilder(DeformableModelBuilder):
         Default: 2
 
     scaled_levels: boolean, Optional
-        If True, the resolution of all reference frames used to build the
-        appearance model will be fixed (the original images will be
-        both smoothed and scaled using a Gaussian pyramid). Consequently, all
-        appearance models will have the same dimensionality.
-        If False, the reference frames used to create the appearance model
-        will be scaled (the original images will only be smoothed).
-        Consequently, the dimensionality of all appearance models will be
-        different.
+        If True, the original images will be both smoothed and scaled using
+        a Gaussian pyramid to create the different pyramidal levels.
+        If False, they will only be smoothed.
 
-        Default: False
+        Default: True
 
     max_shape_components: 0 < int < n_components, Optional
         If int, it specifies the specific number of components of the
@@ -128,7 +122,6 @@ class AAMBuilder(DeformableModelBuilder):
     aam : :class:`menpo.fitmultiple.aam.builder.AAMBuilder`
         The AAM Builder object
     """
-
     def __init__(self, feature_type=sparse_hog,
                  transform=PiecewiseAffineTransform, trilist=None,
                  diagonal_range=None, n_levels=3, downscale=1.1,
@@ -253,7 +246,7 @@ class AAMBuilder(DeformableModelBuilder):
                    self.scaled_levels, self.interpolator)
 
 
-#TODO: Revise documentation
+#TODO: Test me!!!
 class PatchBasedAAMBuilder(AAMBuilder):
     r"""
     Class that builds Patch-Based Multilevel Active Appearance Models.
@@ -331,16 +324,11 @@ class PatchBasedAAMBuilder(AAMBuilder):
         Default: 2
 
     scaled_levels: boolean, Optional
-        If True, the resolution of all reference frames used to build the
-        appearance model will be fixed (the original images will be
-        both smoothed and scaled using a Gaussian pyramid). Consequently, all
-        appearance models will have the same dimensionality.
-        If False, the reference frames used to create the appearance model
-        will be scaled (the original images will only be smoothed).
-        Consequently, the dimensionality of all appearance models will be
-        different.
+        If True, the original images will be both smoothed and scaled using
+        a Gaussian pyramid to create the different pyramidal levels.
+        If False, they will only be smoothed.
 
-        Default: False
+        Default: True
 
     max_shape_components: 0 < int < n_components, Optional
         If int, it specifies the specific number of components of the
@@ -578,10 +566,10 @@ class AAM(object):
             reference_shape, trilist=trilist)
 
 
-#TODO: Document me
+#TODO: Test me!!!
 class PatchBasedAAM(AAM):
     r"""
-    Active Appearance Model class.
+    Patch Based Active Appearance Model class.
 
     Parameters
     -----------

@@ -4,9 +4,9 @@ from menpo.fitmultilevel.aam.base import AAMFitter
 from menpo.fitmultilevel.clm.base import CLMFitter
 
 
-# TODO: document me
 class SupervisedDescentFitter(MultilevelFitter):
     r"""
+    Mixin for Supervised Descent Fitters.
     """
     def _set_up(self):
         pass
@@ -39,6 +39,37 @@ class SupervisedDescentFitter(MultilevelFitter):
 #TODO: Document me
 class SupervisedDescentMethodFitter(SupervisedDescentFitter):
     r"""
+    Supervised Descent Method.
+
+    References
+    ----------
+    Xuehan Xiong and Fernando De la Torre Fernando, "Supervised Descent Method
+    and its Applications to Face Alignment," IEEE International Conference on
+    Computer Vision and Pattern Recognition (CVPR), May, 2013.
+
+    Parameters
+    -----------
+    regressors:
+
+    feature_type: :class:`menpo.fit.gradientdescent.base`, optional
+        The Gradient Descent class to be used.
+
+    reference_shape: PointCloud
+        The reference shape that was used to resize all training images to a
+        consistent object size.
+
+    downscale: float
+        The constant downscale factor used to create the different levels of
+        training levels. For example, a factor of 2 would imply that the
+        second level of the SDM pyramid is half the width and half the
+        height of the first. The third would be 1/2 * 1/2 = 1/4 the width
+        and 1/4 the height of the original.
+
+    scaled_levels: boolean
+        Boolean value specifying whether the levels are scaled or not.
+
+    interpolator: string
+        The interpolator that was used during training.
     """
     def __init__(self, regressors, feature_type, reference_shape, downscale,
                  scaled_levels, interpolator):
@@ -112,6 +143,14 @@ class SupervisedDescentMethodFitter(SupervisedDescentFitter):
 #TODO: Document me
 class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
     r"""
+    Supervised Descent Fitter for AAMs
+
+    Parameters
+    -----------
+    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
+        The Active Appearance Model to be used.
+
+    regressors:
     """
     def __init__(self, aam, regressors):
         super(SupervisedDescentAAMFitter, self).__init__(aam)
@@ -125,6 +164,20 @@ class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
 #TODO: document me
 class SupervisedDescentCLMFitter(CLMFitter, SupervisedDescentFitter):
     r"""
+    Supervised Descent Fitter for CLMs
+
+    Parameters
+    -----------
+    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+        The Constrained Local Model to be used.
+
+    regressors:
+
+    References
+    ----------
+    A. Asthana, S. Zafeiriou, S. Cheng, M. Pantic. 2013 IEEE Conference on
+    Computer Vision and Pattern Recognition (CVPR 2013). Portland, Oregon,
+    USA, June 2013.
     """
     def __init__(self, clm, regressors):
         super(SupervisedDescentCLMFitter, self).__init__(clm)

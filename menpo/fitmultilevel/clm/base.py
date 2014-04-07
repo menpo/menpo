@@ -17,7 +17,6 @@ class CLMFitter(MultilevelFitter):
     clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
         The Constrained Local Model to be used.
     """
-
     def __init__(self, clm):
         self.clm = clm
 
@@ -84,7 +83,7 @@ class GradientDescentCLMFitter(CLMFitter):
     Parameters
     -----------
     clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
-        The Constrained Local Model to be use.
+        The Constrained Local Model to be used.
 
     algorithm: :class:`menpo.fit.gradientdescent.base`, optional
         The Gradient Descent class to be used.
