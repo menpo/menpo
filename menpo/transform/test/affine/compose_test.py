@@ -13,7 +13,7 @@ def homog_compose_before_scale_test():
                                   [0, 0, 1]]))
     s = Scale([3, 4])
     res = homog.compose_before(s)
-    assert(isinstance(res, Homogeneous))
+    assert(type(res) == Homogeneous)
     assert_allclose(res.h_matrix, np.array([[0, 3, 0],
                                             [4, 0, 0],
                                             [0, 0, 1]]))
@@ -25,7 +25,7 @@ def homog_compose_after_scale_test():
                                   [0, 0, 1]]))
     s = Scale([3, 4])
     res = homog.compose_after(s)
-    assert(isinstance(res, Homogeneous))
+    assert(type(res) == Homogeneous)
     assert_allclose(res.h_matrix, np.array([[0, 4, 0],
                                             [3, 0, 0],
                                             [0, 0, 1]]))
