@@ -150,7 +150,8 @@ class NonUniformScale(DiscreteAffineTransform, Affine):
         return NonUniformScale(np.ones(n_dims))
 
     def set_h_matrix(self, value):
-        raise ValueError("The h_matrix cannot be set on a NonUniformScale.")
+        raise NotImplementedError("The h_matrix cannot "
+                                  "be set on a NonUniformScale.")
 
     @property
     def composes_inplace_with(self):
@@ -226,9 +227,6 @@ class UniformScale(DiscreteAffineTransform, Similarity):
     @classmethod
     def identity(cls, n_dims):
         return UniformScale(1, n_dims)
-
-    def set_h_matrix(self, value):
-        raise ValueError("The h_matrix cannot be set on a UniformScale.")
 
     @property
     def composes_inplace_with(self):

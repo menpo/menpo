@@ -75,6 +75,16 @@ class Vectorizable(object):
         return self_copy
 
 
+class VectorizableUpdatable(Vectorizable):
+
+    @abc.abstractmethod
+    def update_from_vector_inplace(self, delta):
+        r"""
+        Additively update this object with a delta vector inplace.
+        """
+        pass
+
+
 class Targetable(object):
     r"""
     Interface for objects that can produce a 'target' PointCloud - which
@@ -107,18 +117,18 @@ class Targetable(object):
     def target(self):
         pass
 
-    @target.setter
-    def target(self, value):
+    def set_target(self, value):
         r"""
         Updates this alignment transform to point to a new target.
         """
-        self._update_target(value)  # trigger the actual update
+        self._target_setter_with_verification(value)  # trigger the update
         self._sync_state_from_target()  # and a sync
 
-    def _update_target(self, value):
+    def _target_setter_with_verification(self, value):
         r"""
-        Updates the target without triggering a sync. Should be called by
-        _sync_target_from_state with the new target value.
+        Updates the target, checking it is sensible, without triggering a sync.
+
+        Should be called by _sync_target_from_state with the new target value.
         """
         self._verify_target(value)
         self._target_setter(value)
@@ -138,13 +148,15 @@ class Targetable(object):
     @abc.abstractmethod
     def _target_setter(self, new_target):
         r"""
-        Sets the target to the new value. Does no synchronization.
+        Sets the target to the new value. Does no synchronization. Note that
+        it is advisable that _target_setter_with_verification is called from
+        subclasses instead of this.
         """
         pass
 
     def _sync_target_from_state(self):
         new_target = self._new_target_from_state()
-        self._update_target(new_target)
+        self._target_setter_with_verification(new_target)
 
     @abc.abstractmethod
     def _new_target_from_state(self):

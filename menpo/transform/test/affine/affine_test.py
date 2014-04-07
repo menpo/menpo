@@ -2,10 +2,10 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.shape import PointCloud
 from menpo.transform import (Affine, AlignmentAffine,
-                             Similarity, AlignmentSimilarity,
-                             Rotation, AlignmentRotation,
+                             Similarity,
+                             Rotation,
                              Scale, NonUniformScale, UniformScale,
-                             Translation, AlignmentTranslation)
+                             Translation)
 from menpo.exception import DimensionalityError
 from nose.tools import raises
 
@@ -29,21 +29,6 @@ def test_translation():
     assert_allclose(starting_vector + t_vec, transformed)
 
 
-def test_align_2d_translation():
-    t_vec = np.array([1, 2])
-    translation = Translation(t_vec)
-    source = PointCloud(np.array([[0, 1],
-                                  [1, 1],
-                                  [-1, -5],
-                                  [3, -5]]))
-    target = translation.apply(source)
-    # estimate the transform from source and target
-    estimate = AlignmentTranslation(source, target)
-    # check the estimates is correct
-    assert_allclose(translation.h_matrix,
-                    estimate.h_matrix)
-
-
 def test_basic_2d_rotation():
     rotation_matrix = np.array([[0, 1],
                                 [-1, 0]])
@@ -58,22 +43,6 @@ def test_basic_2d_rotation_axis_angle():
     axis, angle = rotation.axis_and_angle_of_rotation()
     assert_allclose(axis, np.array([0, 0, 1]))
     assert_allclose((90 * np.pi)/180, angle)
-
-
-def test_align_2d_rotation():
-    rotation_matrix = np.array([[0, 1],
-                                [-1, 0]])
-    rotation = Rotation(rotation_matrix)
-    source = PointCloud(np.array([[0, 1],
-                                  [1, 1],
-                                  [-1, -5],
-                                  [3, -5]]))
-    target = rotation.apply(source)
-    # estimate the transform from source and target
-    estimate = AlignmentRotation(source, target)
-    # check the estimates is correct
-    assert_allclose(rotation.h_matrix,
-                    estimate.h_matrix, atol=1e-14)
 
 
 def test_basic_3d_rotation():
@@ -141,26 +110,6 @@ def test_basic_2d_affine():
     for r in results:
         assert_allclose(solution, r)
 
-
-def test_align_2d_affine():
-    linear_component = np.array([[1, -6],
-                                 [-3, 2]])
-    translation_component = np.array([7, -8])
-    h_matrix = np.eye(3, 3)
-    h_matrix[:-1, :-1] = linear_component
-    h_matrix[:-1, -1] = translation_component
-    affine = Affine(h_matrix)
-    source = PointCloud(np.array([[0, 1],
-                                  [1, 1],
-                                  [-1, -5],
-                                  [3, -5]]))
-    target = affine.apply(source)
-    # estimate the transform from source and target
-    estimate = AlignmentAffine(source, target)
-    # check the estimates is correct
-    assert_allclose(affine.h_matrix, estimate.h_matrix)
-
-
 def test_basic_3d_affine():
     linear_component = np.array([[1, 6, -4],
                                  [-3, -2, 5],
@@ -214,26 +163,6 @@ def test_basic_2d_similarity():
     # check that all copies have been transformed correctly
     for r in results:
         assert_allclose(solution, r)
-
-
-def test_align_2d_similarity():
-    linear_component = np.array([[2, -6],
-                                 [6, 2]])
-    translation_component = np.array([7, -8])
-    h_matrix = np.eye(3, 3)
-    h_matrix[:-1, :-1] = linear_component
-    h_matrix[:-1, -1] = translation_component
-    similarity = Similarity(h_matrix)
-    source = PointCloud(np.array([[0, 1],
-                                  [1, 1],
-                                  [-1, -5],
-                                  [3, -5]]))
-    target = similarity.apply(source)
-    # estimate the transform from source and target
-    estimate = AlignmentSimilarity(source, target)
-    # check the estimates is correct
-    assert_allclose(similarity.h_matrix,
-                    estimate.h_matrix)
 
 
 jac_solution2d = np.array(
@@ -690,6 +619,8 @@ def test_scale_zero_scale_raise_valuerror():
     Scale(np.array([1, 0]))
 
 
+# Vectorizable interface tests
+
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
     Rotation.identity(3).from_vector(0)
@@ -770,51 +701,44 @@ def test_rotation3d_n_parameters_raises_notimplementederror():
     t.n_parameters
 
 
-def test_rotation2d_identity():
-    assert_allclose(Rotation.identity(2).h_matrix, np.eye(3))
+# Test list construction is equivalent to ndarray construction
+
+def test_translation_from_list():
+    t_a = Translation([3, 4])
+    t_b = Translation(np.array([3, 4]))
+    assert(np.all(t_a.h_matrix == t_b.h_matrix))
 
 
-def test_rotation3d_identity():
-    assert_allclose(Rotation.identity(3).h_matrix, np.eye(4))
+def test_nonuniformscale_from_list():
+    u_a = NonUniformScale([3, 2, 3])
+    u_b = NonUniformScale(np.array([3, 2, 3]))
+    assert(np.all(u_a.h_matrix == u_b.h_matrix))
 
 
-def test_affine_identity_2d():
-    assert_allclose(Affine.identity(2).h_matrix, np.eye(3))
+# Test set_h_matrix is not allowed on similarity subclasses + uniformscale
+
+@raises(NotImplementedError)
+def test_similarity_set_h_matrix_raises_notimplementederror():
+    s = Similarity(np.eye(3))
+    s.set_h_matrix(s.h_matrix)
+
+@raises(NotImplementedError)
+def test_translation_set_h_matrix_raises_notimplementederror():
+    t = Translation([3, 4])
+    t.set_h_matrix(t.h_matrix)
 
 
-def test_affine_identity_3d():
-    assert_allclose(Affine.identity(3).h_matrix, np.eye(4))
+@raises(NotImplementedError)
+def test_rotation_set_h_matrix_raises_notimplementederror():
+    r = Rotation(np.array([[1, 0], [0, 1]]))
+    r.set_h_matrix(r.h_matrix)
 
+@raises(NotImplementedError)
+def test_uniformscale_set_h_matrix_raises_notimplementederror():
+    s = UniformScale(2, 3)
+    s.set_h_matrix(s.h_matrix)
 
-def test_similarity_identity_2d():
-    assert_allclose(Similarity.identity(2).h_matrix,
-                    np.eye(3))
-
-
-def test_similarity_identity_3d():
-    assert_allclose(Similarity.identity(3).h_matrix,
-                    np.eye(4))
-
-
-def test_uniformscale_identity_2d():
-    assert_allclose(UniformScale.identity(2).h_matrix, np.eye(3))
-
-
-def test_uniformscale_identity_3d():
-    assert_allclose(UniformScale.identity(3).h_matrix, np.eye(4))
-
-
-def test_nonuniformscale_identity_2d():
-    assert_allclose(NonUniformScale.identity(2).h_matrix, np.eye(3))
-
-
-def test_nonuniformscale_identity_3d():
-    assert_allclose(NonUniformScale.identity(3).h_matrix, np.eye(4))
-
-
-def test_translation_identity_2d():
-    assert_allclose(Translation.identity(2).h_matrix, np.eye(3))
-
-
-def test_translation_identity_3d():
-    assert_allclose(Translation.identity(3).h_matrix, np.eye(4))
+@raises(NotImplementedError)
+def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
+    s = NonUniformScale([2, 3, 4])
+    s.set_h_matrix(s.h_matrix)

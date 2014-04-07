@@ -202,7 +202,8 @@ class Similarity(Affine):
         return Similarity(np.eye(n_dims + 1))
 
     def set_h_matrix(self, value):
-        raise ValueError("h_matrix cannot be set on a Similarity transform")
+        raise NotImplementedError("h_matrix cannot be set on a "
+                                  "Similarity transform")
 
 
 class AlignmentSimilarity(Similarity, Alignment):
@@ -259,7 +260,8 @@ class AlignmentSimilarity(Similarity, Alignment):
 
     def _sync_state_from_target(self):
         similarity = self._procrustes_alignment(self.source, self.target)
-        self.h_matrix = similarity.h_matrix
+        # use Affine's h_matrix setter.
+        Affine.set_h_matrix(self, similarity.h_matrix)
 
     def from_vector_inplace(self, p):
         r"""
