@@ -20,6 +20,12 @@ class Affine(Homogeneous):
     h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix of the affine transformation.
     """
+    def __init__(self, h_matrix):
+        Homogeneous.__init__(self, h_matrix)
+        # Affine is a little more constrained (only 2D or 3D supported)
+        # so run our verification
+        Affine.set_h_matrix(self, h_matrix)
+
     @property
     def n_parameters(self):
         r"""
@@ -62,10 +68,10 @@ class Affine(Homogeneous):
             if self.n_dims != shape[0] - 1:
                 raise DimensionalityError("Trying to update the homogeneous "
                                           "matrix to a different dimension")
-        elif shape[0] - 1 not in [2, 3]:
+        if shape[0] - 1 not in [2, 3]:
             raise DimensionalityError("Affine Transforms can only be 2D or 3D")
-        elif not (np.allclose(value[-1, :-1], 0) and
-                  np.allclose(value[-1, -1], 1)):
+        if not (np.allclose(value[-1, :-1], 0) and
+                np.allclose(value[-1, -1], 1)):
             raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
         self._h_matrix = value.copy()
 

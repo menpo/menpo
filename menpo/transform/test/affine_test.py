@@ -690,27 +690,6 @@ def test_scale_zero_scale_raise_valuerror():
     Scale(np.array([1, 0]))
 
 
-def test_rotation2d_from_vector():
-    theta = np.pi / 2
-    homo = np.array([[0.0, -1.0, 0.0],
-                     [1.0, 0.0, 0.0],
-                     [0.0, 0.0, 1.0]], dtype=np.float64)
-
-    tr = Rotation.identity(2).from_vector(theta)
-
-    assert_allclose(tr.h_matrix, homo, atol=1**-15)
-
-
-def test_rotation2d_as_vector():
-    theta = np.pi / 2
-    rot_matrix = np.array([[0.0, -1.0],
-                          [1.0, 0.0]])
-
-    vec = Rotation(rot_matrix).as_vector()
-
-    assert_allclose(vec, theta)
-
-
 @raises(NotImplementedError)
 def test_rotation3d_from_vector_raises_notimplementederror():
     Rotation.identity(3).from_vector(0)
@@ -777,10 +756,11 @@ def test_translation_3d_n_parameters():
     assert(t.n_parameters == 3)
 
 
-def test_rotation2d_n_parameters():
+@raises(NotImplementedError)
+def test_rotation2d_n_parameters_raises_notimplementederror():
     rot_matrix = np.eye(2)
     t = Rotation(rot_matrix)
-    assert(t.n_parameters == 1)
+    t.n_parameters
 
 @raises(NotImplementedError)
 def test_rotation3d_n_parameters_raises_notimplementederror():

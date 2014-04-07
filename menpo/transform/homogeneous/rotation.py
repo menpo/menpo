@@ -183,7 +183,7 @@ class Rotation(DiscreteAffineTransform, Similarity):
 
     @property
     def n_parameters(self):
-        return self.n_dims - 1
+        raise NotImplementedError("Rotations are not yet vectorizable")
 
     def as_vector(self):
         r"""
@@ -202,7 +202,7 @@ class Rotation(DiscreteAffineTransform, Similarity):
         theta : double
             Angle of rotation around axis. Right-handed.
         """
-        return self.axis_and_angle_of_rotation()[1]
+        raise NotImplementedError("Rotations are not yet vectorizable")
 
     def from_vector_inplace(self, p):
         r"""
@@ -225,8 +225,7 @@ class Rotation(DiscreteAffineTransform, Similarity):
         transform : :class:`Rotation2D`
             The transform initialised to the given parameters.
         """
-        self.h_matrix[:2, :2] = np.array([[np.cos(p), -np.sin(p)],
-                                          [np.sin(p), np.cos(p)]])
+        raise NotImplementedError("Rotations are not yet vectorizable")
 
     @classmethod
     def identity(cls, n_dims):

@@ -30,7 +30,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         return self._h_matrix
 
     def set_h_matrix(self, value):
-        # TODO add logic here
+        # TODO add verification logic for homogeneous here
         self._h_matrix = value
 
     @property

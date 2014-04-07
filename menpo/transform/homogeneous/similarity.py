@@ -17,8 +17,8 @@ class Similarity(Affine):
     """
 
     def __init__(self, h_matrix):
+        Affine.__init__(self, h_matrix)
         #TODO check that I am a similarity transform
-        super(Similarity, self).__init__(h_matrix)
 
     @property
     def n_parameters(self):
