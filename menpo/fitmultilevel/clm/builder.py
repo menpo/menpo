@@ -158,6 +158,63 @@ class CLMBuilder(DeformableModelBuilder):
 #TODO: Document me
 class CLM(object):
     r"""
+    Constrained Local Model class.
+
+    Parameters
+    -----------
+    shape_models: :class:`menpo.model.PCA` list
+        A list containing the shape models of the CLM.
+
+    classifiers: classifier_closure list of lists
+        A list containing the list of classifier_closures per each pyramidal
+        level of the CLM.
+
+    patch_shape: tuple of ints
+        The shape of the patches used to train the classifiers.
+
+    transform: :class:`menpo.transform.PureAlignmentTransform`
+        The transform used to warp the images from which the AAM was
+        constructed.
+
+    feature_type: str or function
+        The image feature that was be used to build the appearance_models. Will
+        subsequently be used by fitter objects using this class to fitter to
+        novel images.
+
+        If None, the appearance model was built immediately from the image
+        representation, i.e. intensity.
+
+        If string, the appearance model was built using one of Menpo's default
+        built-in feature representations - those
+        accessible at image.features.some_feature(). Note that this case can
+        only be used with default feature weights - for custom feature
+        weights, use the functional form of this argument instead.
+
+        If function, the user can directly provide the feature that was
+        calculated on the images. This class will simply invoke this
+        function, passing in as the sole argument the image to be fitted,
+        and expect as a return type an Image representing the feature
+        calculation ready for further fitting. See the examples for
+        details.
+
+    reference_shape: PointCloud
+        The reference shape that was used to resize all training images to a
+        consistent object size.
+
+    downscale: float
+        The constant downscale factor used to create the different levels of
+        the AAM. For example, a factor of 2 would imply that the second level
+        of the AAM pyramid is half the width and half the height of the first.
+        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
+        the original.
+
+    scaled_levels: boolean
+        Boolean value specifying whether the AAM levels are scaled or not.
+
+    interpolator: string
+        The interpolator that was used to build the AAM.
+
+        Default: 'scipy'
     """
     def __init__(self, shape_models, classifiers, patch_shape, feature_type,
                  reference_shape, downscale, scaled_levels, interpolator):
@@ -172,10 +229,20 @@ class CLM(object):
 
     @property
     def n_levels(self):
+        """
+        The number of multi-resolution pyramidal levels of the CLM.
+
+        :type: int
+        """
         return len(self.shape_models)
 
     @property
     def n_classifiers_per_level(self):
+        """
+        The number of classifiers per pyramidal level of the CLM.
+
+        :type: int
+        """
         return [len(clf) for clf in self.classifiers]
 
     def instance(self, shape_weights=None, level=-1):
@@ -234,11 +301,40 @@ class CLM(object):
         shape_instance = sm.instance(shape_weights)
         return shape_instance
 
-    def response_image(self, image, group=None, level=-1):
+    def response_image(self, image, group=None, label='all', level=-1):
         r"""
+        Generates a response image result of applying the classifiers of a
+        particular pyramidal level of the CLM to an image.
+
+        Parameters
+        -----------
+        image: :class:`menpo.image.base.Image`
+            The image.
+
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: 'all'
+
+        level: int, optional
+            The pyramidal level to be used.
+
+            Default: -1
+
+        Returns
+        -------
+        image: :class:`menpo.image.base.Image`
+            The response image.
         """
         image = image.rescale_to_reference_shape(self.reference_shape,
-                                                 group=group)
+                                                 group=group, label=label)
 
         pyramid = image.gaussian_pyramid(n_levels=self.n_levels,
                                          downscale=self.downscale)
@@ -258,9 +354,10 @@ class CLM(object):
         return Image(image_data=response_data)
 
 
-# TODO: document me
 def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):
     r"""
+    Divides a sampling grid in positive and negative pixel positions. By
+    default only the center of the grid is considered to be positive.
     """
     positive_grid_size = np.array(positive_grid_size)
     mask = np.zeros(sampling_grid.shape[:-1], dtype=np.bool)

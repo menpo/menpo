@@ -16,7 +16,7 @@ class AAMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    aam: :class:`pybug.aam.AAM`
+    aam: :class:`menpo.aam.AAM`
         The Active Appearance Model to be use.
     """
 
@@ -90,29 +90,29 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     Parameters
     -----------
-    aam: :class:`pybug.aam.AAM`
+    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
         The Active Appearance Model to be use.
 
-    algorithm: :class:`pybug.lucaskanade.appearance`, optional
-            The Lucas-Kanade class to be used.
+    algorithm: :class:`menpo.fit.lucaskanade.appearance`, optional
+        The Lucas-Kanade class to be used.
 
-            Default: AlternatingInverseCompositional
+        Default: AlternatingInverseCompositional
 
-    residual: :class:`pybug.lucaskanade.residual`, optional
+    residual: :class:`menpo.fit.lucaskanade.residual`, optional
         The residual class to be used
 
         Default: 'LSIntensity'
 
-    md_transform: :class:`pybug.transform.ModelDrivenTransform`,
+    md_transform: :class:`menpo.transform.ModelDrivenTransform`,
                       optional
         The model driven transform class to be used.
 
         Default: OrthoMDTransform
 
-    global_transform: :class:`pybug.transform.affine`, optional
+    global_transform: :class:`menpo.transform.affine`, optional
         The global transform class to be used by the previous
         md_transform_cls. Currently, only
-        :class:`pybug.transform.affine.Similarity` is supported.
+        :class:`menpo.transform.affine.Similarity` is supported.
 
         Default: SimilarityTransform
 
@@ -128,7 +128,6 @@ class LucasKanadeAAMFitter(AAMFitter):
 
         Default: None
     """
-
     def __init__(self, aam, algorithm=AlternatingInverseCompositional,
                  residual=LSIntensity, md_transform=OrthoMDTransform,
                  global_transform=SimilarityTransform, n_shape=None,
@@ -152,26 +151,26 @@ class LucasKanadeAAMFitter(AAMFitter):
 
         Parameters
         -----------
-        algorithm: :class:`pybug.lucaskanade.appearance`, optional
+        algorithm: :class:`menpo.lucaskanade.appearance`, optional
             The Lucas-Kanade class to be used.
 
             Default: AlternatingInverseCompositional
 
-        residual: :class:`pybug.lucaskanade.residual`, optional
+        residual: :class:`menpo.lucaskanade.residual`, optional
             The residual class to be used
 
             Default: 'LSIntensity'
 
-        md_transform: :class:`pybug.transform.ModelDrivenTransform`,
+        md_transform: :class:`menpo.transform.ModelDrivenTransform`,
                           optional
             The model driven transform class to be used.
 
             Default: OrthoMDTransform
 
-        global_trans: :class:`pybug.transform.affine`, optional
+        global_trans: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform. Currently, only
-            :class:`pybug.transform.affine.Similarity` is supported.
+            :class:`menpo.transform.affine.Similarity` is supported.
 
             Default: SimilarityTransform
 

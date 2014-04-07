@@ -14,7 +14,7 @@ class CLMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    clm: :class:`pybug.clm.CLM`
+    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
         The Constrained Local Model to be used.
     """
 
@@ -79,8 +79,47 @@ class CLMFitter(MultilevelFitter):
 # TODO: document me
 class GradientDescentCLMFitter(CLMFitter):
     r"""
-    """
+    Gradient Descent based Fitter for Constrained Local Models.
 
+    Parameters
+    -----------
+    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+        The Constrained Local Model to be use.
+
+    algorithm: :class:`menpo.fit.gradientdescent.base`, optional
+        The Gradient Descent class to be used.
+
+        Default: RegularizedLandmarkMeanShift
+
+    residual: :class:`menpo.fit.gradientdescent.residual`, optional
+        The residual class to be used
+
+        Default: 'SSD'
+
+    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+        The point distribution transform class to be used.
+
+        Default: OrthoPDMTransform
+
+    global_transform: :class:`menpo.transform.affine`, optional
+        The global transform class to be used by the previous
+        md_transform_cls. Currently, only
+        :class:`menpo.transform.affine.Similarity` is supported.
+
+        Default: SimilarityTransform
+
+    n_shape: list, optional
+        The number of shape components to be used per fitting level.
+        If None, for each shape model n_active_components will be used.
+
+        Default: None
+
+    n_appearance: list, optional
+        The number of appearance components to be used per fitting level.
+        If None, for each appearance model n_active_components will be used.
+
+        Default: None
+    """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
                  residual=SSD, pdm_transform=OrthoPDMTransform,
                  global_transform=SimilarityTransform, n_shape=None):
@@ -99,6 +138,46 @@ class GradientDescentCLMFitter(CLMFitter):
                 pdm_transform=OrthoPDMTransform,
                 global_transform=SimilarityTransform, n_shape=None):
         r"""
+        Sets up the gradient descent fitter object.
+
+        Parameters
+        -----------
+        clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+            The Constrained Local Model to be use.
+
+        algorithm: :class:`menpo.fit.gradientdescent.base`, optional
+            The Gradient Descent class to be used.
+
+            Default: RegularizedLandmarkMeanShift
+
+        residual: :class:`menpo.fit.gradientdescent.residual`, optional
+            The residual class to be used
+
+            Default: 'SSD'
+
+        pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+            The point distribution transform class to be used.
+
+            Default: OrthoPDMTransform
+
+        global_transform: :class:`menpo.transform.affine`, optional
+            The global transform class to be used by the previous
+            md_transform_cls. Currently, only
+            :class:`menpo.transform.affine.Similarity` is supported.
+
+            Default: SimilarityTransform
+
+        n_shape: list, optional
+            The number of shape components to be used per fitting level.
+            If None, for each shape model n_active_components will be used.
+
+            Default: None
+
+        n_appearance: list, optional
+            The number of appearance components to be used per fitting level.
+            If None, for each appearance model n_active_components will be used.
+
+            Default: None
         """
         if n_shape is None:
             n_shape = [sm.n_active_components

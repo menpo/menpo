@@ -5,27 +5,40 @@ from sklearn import linear_model
 #TODO: Document me
 def classifier(X, t, classifier_type, **kwargs):
     r"""
+    General binary classifier function. Provides a consistent signature for
+    specific implementation of binary classifier functions.
+
+    Parameters
+    ----------
+    X: (n_samples, n_features) ndarray
+        Training vectors.
+    t: (n_samples, 1) ndarray
+        Binary class labels.
+
+    classifier_type: closure
+        Closure implementing a particular type of binary classifier.
+
+    Returns
+    -------
+    classifier_closure: function
+        The classifier.
     """
     if hasattr(classifier_type, '__call__'):
         classifier_closure = classifier_type(X, t, **kwargs)
-
-        # note that, self is required as this closure is assigned to an object
-        def classifier_object_method(self, x):
-            return classifier_closure(x)
-
         return classifier_closure
     else:
-        raise ValueError("classifier_type can only be: a closure defining "
+        raise ValueError("classifier_type can only be a closure defining "
                          "a particular classifier technique. Several "
                          "examples of such closures can be found in "
                          "`menpo.fitmultilevel.clm.classifierfunctions` "
-                         "(linear_svm, ...).")
+                         "(linear_svm_lr, ...).")
 
 
 #TODO: Document me
-def linear_svm(X, t):
+def linear_svm_lr(X, t):
     r"""
-    Linear Support Vector Machine classifier
+    Binary classifier that combines Linear Support Vector Machines and
+    Logistic Regression.
     """
     clf1 = svm.LinearSVC(class_weight='auto')
     clf1.fit(X, t)
