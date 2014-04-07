@@ -613,7 +613,7 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        patch_size: tuple
+        patch_shape: tuple
             The size of the patch. Any floating point values are rounded up
             to the nearest integer.
         group : string, Optional
