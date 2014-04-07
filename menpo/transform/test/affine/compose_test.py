@@ -38,7 +38,7 @@ def nonuniformscale_compose_after_homog_test():
                                   [0, 0, 1]]))
     s = NonUniformScale([3, 4])
     res = s.compose_after(homog)
-    assert(isinstance(res, TransformChain))
+    assert(type(res) == Homogeneous)
 
 
 @raises(ValueError)
