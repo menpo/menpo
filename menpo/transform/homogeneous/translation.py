@@ -1,7 +1,6 @@
 import numpy as np
 
-from menpo.transform.base import Alignment
-
+from .base import HomogFamilyAlignment
 from .affine import DiscreteAffineTransform
 from .similarity import Similarity
 
@@ -73,10 +72,10 @@ class Translation(DiscreteAffineTransform, Similarity):
         return Translation(np.zeros(n_dims))
 
 
-class AlignmentTranslation(Alignment, Translation):
+class AlignmentTranslation(HomogFamilyAlignment, Translation):
 
     def __init__(self, source, target):
-        Alignment.__init__(self, source, target)
+        HomogFamilyAlignment.__init__(self, source, target)
         Translation.__init__(self, target.centre - source.centre)
 
     def from_vector_inplace(self, p):
@@ -86,3 +85,6 @@ class AlignmentTranslation(Alignment, Translation):
     def _sync_state_from_target(self):
         translation = self.target.centre - self.source.centre
         self.h_matrix[:-1, -1] = translation
+
+    def copy_without_alignment(self):
+        return Translation(self.translation_component)

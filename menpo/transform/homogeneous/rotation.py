@@ -3,8 +3,8 @@ import numpy as np
 
 from menpo.exception import DimensionalityError
 
+from .base import HomogFamilyAlignment
 from .affine import DiscreteAffineTransform
-from menpo.transform.base import Alignment
 from .similarity import Similarity
 
 
@@ -236,16 +236,19 @@ class Rotation(DiscreteAffineTransform, Similarity):
         return Rotation
 
 
-class AlignmentRotation(Alignment, Rotation):
+class AlignmentRotation(HomogFamilyAlignment, Rotation):
 
     def __init__(self, source, target):
-        Alignment.__init__(self, source, target)
+        HomogFamilyAlignment.__init__(self, source, target)
         Rotation.__init__(self, optimal_rotation_matrix(source, target))
+
+    def set_rotation_matrix(self, value):
+        Rotation.set_rotation_matrix(self, value)
+        self._sync_target_from_state()
 
     def _sync_state_from_target(self):
         r = optimal_rotation_matrix(self.source, self.target)
         Rotation.set_rotation_matrix(self, r)
 
-    def set_rotation_matrix(self, value):
-        Rotation.set_rotation_matrix(self, value)
-        self._sync_target_from_state()
+    def copy_without_alignment(self):
+        return Rotation(self.rotation_matrix)

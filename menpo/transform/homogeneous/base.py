@@ -1,11 +1,11 @@
+import abc
 import copy
 import numpy as np
 
 from menpo.base import Vectorizable
-from menpo.transform.base import ComposableTransform, VInvertible
+from menpo.transform.base import ComposableTransform, VInvertible, Alignment
 
 
-# Vectorizable, VComposableTransform, VInvertible
 class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
     r"""
     A simple n-dimensional homogeneous transformation.
@@ -23,7 +23,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         The homogeneous matrix to be applied.
     """
     def __init__(self, h_matrix):
-        self._h_matrix = h_matrix
+        self._h_matrix = h_matrix.copy()
 
     @property
     def h_matrix(self):
@@ -179,3 +179,13 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
 
     def _build_pseudoinverse(self):
         return Homogeneous(np.linalg.inv(self.h_matrix))
+
+
+class HomogFamilyAlignment(Alignment):
+    r"""
+    Simple subclass of Alignment that adds the ability to create a copy of an
+    alignment class without the alignment behavior.
+    """
+    @abc.abstractmethod
+    def copy_without_alignment(self):
+        pass

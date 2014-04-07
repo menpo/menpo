@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-from menpo.shape import PointCloud
-from menpo.transform import (Affine, AlignmentAffine,
+from menpo.transform import (Affine,
                              Similarity,
                              Rotation,
                              Scale, NonUniformScale, UniformScale,

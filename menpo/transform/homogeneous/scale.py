@@ -1,7 +1,6 @@
 import numpy as np
 
-from menpo.transform.base import Alignment
-
+from .base import HomogFamilyAlignment
 from .affine import DiscreteAffineTransform, Affine
 from .similarity import Similarity
 
@@ -233,10 +232,10 @@ class UniformScale(DiscreteAffineTransform, Similarity):
         return UniformScale
 
 
-class AlignmentUniformScale(Alignment, UniformScale):
+class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
 
     def __init__(self, source, target):
-        Alignment.__init__(self, source, target)
+        HomogFamilyAlignment.__init__(self, source, target)
         UniformScale.__init__(self, target.norm() / source.norm(),
                               source.n_dims)
 
@@ -248,3 +247,6 @@ class AlignmentUniformScale(Alignment, UniformScale):
         new_scale = self.target.norm() / self.source.norm()
         np.fill_diagonal(self.h_matrix, new_scale)
         self.h_matrix[-1, -1] = 1
+
+    def copy_without_alignment(self):
+        return UniformScale(self.scale, self.n_dims)

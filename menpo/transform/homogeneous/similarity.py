@@ -1,8 +1,9 @@
 import numpy as np
 
 from menpo.exception import DimensionalityError
-from menpo.transform.homogeneous import Affine
-from menpo.transform.base import Alignment
+
+from .base import HomogFamilyAlignment
+from .affine import Affine
 
 
 class Similarity(Affine):
@@ -206,7 +207,7 @@ class Similarity(Affine):
                                   "Similarity transform")
 
 
-class AlignmentSimilarity(Similarity, Alignment):
+class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     """
     Infers the similarity transform relating two vectors with the same
     dimensionality. This is simply the procrustes alignment of the
@@ -227,7 +228,7 @@ class AlignmentSimilarity(Similarity, Alignment):
 
     """
     def __init__(self, source, target, rotation=True):
-        Alignment.__init__(self, source, target)
+        HomogFamilyAlignment.__init__(self, source, target)
         x = self._procrustes_alignment(source, target, rotation=rotation)
         Similarity.__init__(self, x.h_matrix)
 
@@ -258,11 +259,6 @@ class AlignmentSimilarity(Similarity, Alignment):
             return translation.compose_before(scale).compose_before(
                 inv_target_translation)
 
-    def _sync_state_from_target(self):
-        similarity = self._procrustes_alignment(self.source, self.target)
-        # use Affine's h_matrix setter.
-        Affine.set_h_matrix(self, similarity.h_matrix)
-
     def from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
@@ -286,3 +282,11 @@ class AlignmentSimilarity(Similarity, Alignment):
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()
+
+    def _sync_state_from_target(self):
+        similarity = self._procrustes_alignment(self.source, self.target)
+        # use Affine's h_matrix setter.
+        Affine.set_h_matrix(self, similarity.h_matrix)
+
+    def copy_without_alignment(self):
+        return Similarity(self.h_matrix.copy())

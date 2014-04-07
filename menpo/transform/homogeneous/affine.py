@@ -3,9 +3,8 @@ import copy
 import numpy as np
 
 from menpo.exception import DimensionalityError
-from menpo.transform.base import Alignment
 
-from .base import Homogeneous
+from .base import Homogeneous, HomogFamilyAlignment
 
 
 class Affine(Homogeneous):
@@ -294,7 +293,7 @@ class Affine(Homogeneous):
         return [rotation_1, scale, rotation_2, translation]
 
 
-class AlignmentAffine(Affine, Alignment):
+class AlignmentAffine(Affine, HomogFamilyAlignment):
     r"""
     Constructs an Affine by finding the optimal affine transform to align
     source to target.
@@ -332,10 +331,19 @@ class AlignmentAffine(Affine, Alignment):
     """
     def __init__(self, source, target):
         # first, initialize the alignment
-        Alignment.__init__(self, source, target)
+        HomogFamilyAlignment.__init__(self, source, target)
         # now, the Affine
         optimal_h = self._build_alignment_h_matrix(source, target)
         Affine.__init__(self, optimal_h)
+
+    @staticmethod
+    def _build_alignment_h_matrix(source, target):
+        r"""
+        Returns the optimal alignment of source to target.
+        """
+        a = source.h_points
+        b = target.h_points
+        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
     def set_h_matrix(self, value):
         r"""
@@ -344,16 +352,6 @@ class AlignmentAffine(Affine, Alignment):
         Affine.set_h_matrix(self, value)
         # now update the state
         self._sync_target_from_state()
-
-    @staticmethod
-    def _build_alignment_h_matrix(source, target):
-        r"""
-        Returns the optimal alignment of source to target.
-        """
-
-        a = source.h_points
-        b = target.h_points
-        return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
     def from_vector_inplace(self, p):
         r"""
@@ -367,6 +365,9 @@ class AlignmentAffine(Affine, Alignment):
         optimal_h = self._build_alignment_h_matrix(self.source, self.target)
         # Use the pure Affine setter (so we don't get syncing)
         Affine.set_h_matrix(self, optimal_h)
+
+    def copy_without_alignment(self):
+        return Affine(self.h_matrix.copy())
 
 
 class DiscreteAffineTransform(object):
