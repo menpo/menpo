@@ -3,19 +3,16 @@ from collections import namedtuple
 import commands
 import os.path as path
 import tempfile
-from menpo.io.base import Importer, find_alternative_files, \
-    map_filepath_to_importer
-from menpo.io.mesh.assimp import AIImporter
-from menpo.io.exceptions import MeshImportError
-from menpo.shape import TexturedTriMesh, TriMesh
-from pyvrml import buildVRML97Parser
-import pyvrml.vrml97.basenodes as basenodes
-from pyvrml.node import NullNode
-from scipy.spatial import Delaunay
 import numpy as np
-from menpo.shape.mesh.textured import ColouredTriMesh
+from cyassimp import AIImporter
+from vrml.vrml97.parser import buildParser as buildVRML97Parser
+import vrml.vrml97.basenodes as basenodes
+from vrml.node import NullNode
+from menpo.io.base import (Importer, find_alternative_files,
+                           map_filepath_to_importer)
+from menpo.io.exceptions import MeshImportError
+from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
 
-# TODO: Disconnect with AssimpImporter
 # This formalises the return type of a mesh importer (before building)
 # However, at the moment there is a disconnect between this and the
 # Assimp type, and at some point they should become the same object
@@ -87,7 +84,8 @@ class MeshImporter(Importer):
     specified by filepath for landmarks and textures with the same basename as
     the mesh. If found, they are automatically attached. If a texture is found
     then a :class:`menpo.shape.mesh.textured.TexturedTriMesh` is built, else a
-    :class:`menpo.shape.mesh.base.Trimesh` is built.
+    :class:`menpo.shape.mesh.base.Trimesh` is built. Note that this behavior
+    can be overridden if desired.
 
     Parameters
     ----------
@@ -97,9 +95,10 @@ class MeshImporter(Importer):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, texture=True):
         super(MeshImporter, self).__init__(filepath)
         self.meshes = []
+        self.import_textures = texture
         self.attempted_texture_search = False
         self.relative_texture_path = None
         self.texture_importer = None
@@ -202,7 +201,8 @@ class MeshImporter(Importer):
         """
         #
         self._parse_format()
-        self._build_texture_importer()
+        if self.import_textures:
+            self._build_texture_importer()
 
         meshes = []
         for mesh in self.meshes:
@@ -224,7 +224,7 @@ class MeshImporter(Importer):
             return meshes
 
 
-class AssimpImporter(AIImporter, MeshImporter):
+class AssimpImporter(MeshImporter):
     """
     Uses assimp to import meshes. The assimp importing is wrapped via cython,
 
@@ -233,17 +233,17 @@ class AssimpImporter(AIImporter, MeshImporter):
     filepath : string
         Absolute filepath of the mesh.
     """
-    def __init__(self, filepath):
-        super(AssimpImporter, self).__init__(filepath)
+    def __init__(self, filepath, texture=True):
+        MeshImporter.__init__(self, filepath, texture=texture)
+        self.ai_importer = AIImporter(filepath)
 
     def _parse_format(self):
         r"""
-        Use assimp to build the mesh. Also, get the relative texture path.
+        Use assimp to build the mesh and get the relative texture path.
         """
-        self.build_scene()
-        # Properties should have different names because of multiple
-        # inheritance
-        self.relative_texture_path = self.assimp_texture_path
+        self.ai_importer.build_scene()
+        self.meshes = self.ai_importer.meshes
+        self.relative_texture_path = self.ai_importer.assimp_texture_path
 
 
 class WRLImporter(MeshImporter):

@@ -44,12 +44,25 @@ class PointCloud(Shape):
     @property
     def centre(self):
         r"""
-        The mean of all the points in this PointCloud.
+        The mean of all the points in this PointCloud (in the centre of mass
+        sense)
 
         :type: (D,) ndarray
-            The centre of this PointCloud.
+            The mean of this PointCloud's points.
         """
         return np.mean(self.points, axis=0)
+
+    @property
+    def centre_of_bounds(self):
+        r"""
+        The centre of the absolute bounds of this PointCloud. Contrast with
+        centre, which is the mean point position.
+
+        :type: (D,) ndarray
+            The centre of the bounds of this PointCloud.
+        """
+        min_b, max_b = self.bounds()
+        return (min_b + max_b) / 2
 
     def as_vector(self):
         r"""

@@ -36,6 +36,11 @@ def test_tps_maps_src_to_tgt():
     assert_allclose(tps.apply(square_src_landmarks), perturbed_tgt_landmarks)
 
 
+def test_tps_n_dims():
+    tps = TPS(src, tgt_perturbed)
+    assert(tps.n_dims == 2)
+
+
 def test_tps_jacobian_manual_corner_value_check():
     tps = TPS(src, tgt)
     dW_dxy = tps.jacobian_source(square_sample_points)
@@ -78,18 +83,6 @@ def test_tps_jacobian_manual_sample_b():
          [0.8296718, 0.95940495],
          [-0.03122042, 1.00073478]])
     assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
-
-
-@raises(NotImplementedError)
-def test_tps_jacobian():
-    tps = TPS(src, tgt_perturbed)
-    result = tps.jacobian(tgt)
-
-
-@raises(NotImplementedError)
-def test_tps():
-    tps = TPS(src, tgt_perturbed)
-    assert (tps.n_parameters == 14)
 
 
 def test_tps_build_pseudoinverse():

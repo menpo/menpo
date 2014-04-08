@@ -10,10 +10,9 @@ from buildhelpers.shaders import build_c_shaders
 cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/shape/mesh/cpptrimesh.pyx",
                   "menpo/shape/mesh/normals.pyx",
-                  "menpo/io/mesh/assimp.pyx",
                   "menpo/interpolation/cinterp.pyx",
                   "menpo/transform/fastpwa.pyx",
-		  "menpo/features/cppimagewindowiterator.pyx"]
+                  "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 
@@ -48,14 +47,15 @@ setup(name='menpo',
       install_requires=[# Core
                         'numpy>=1.8.0',
                         'scipy>=0.12.0',
-                        'Cython>=0.18',
+                        'Cython>=0.20.1',  # req on OS X Mavericks
 
                         # Image
                         'Pillow>=2.0.0',
                         'scikit-image>=0.8.2',
 
                         # 3D import
-                        'pyvrml>=2.4',
+                        'menpo-pyvrml97==2.3.0a4',
+                        'cyassimp>=0.1.2',
 
                         # Visualization
                         'matplotlib>=1.2.1',
@@ -67,10 +67,5 @@ setup(name='menpo',
                         'Sphinx>=1.2b1',
                         'numpydoc>=0.4',
                         'nose>=1.3.0'],
-      extras_require={'3d': 'mayavi>=4.3.0'},
-      dependency_links=[
-        'https://github.com/patricksnape/pyvrml/tarball/master#egg=pyvrml-2.4']
+      extras_require={'3d': 'mayavi>=4.3.0'}
       )
-
-# NOTE: Have to include the egg name in the dependency_links as well
-
