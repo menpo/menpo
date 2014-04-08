@@ -53,7 +53,7 @@ def residual_wrapper(residual, algorithm, interpolator, expected_error):
     align_algorithm = algorithm(
         template, residual, AffineTransform.identity(2).from_vector(
             initial_params))
-    fitting = align_algorithm.align(image, initial_params)
+    fitting = align_algorithm.fit(image, initial_params)
     transform = fitting.final_transform
     rms_error = compute_fixed_error(transform)
     assert_approx_equal(rms_error, expected_error)

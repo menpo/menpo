@@ -5,7 +5,7 @@ from menpo.image import Image
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
-from menpo.fitmultilevel.clm.classifierfunctions import classifier, linear_svm
+from menpo.fitmultilevel.clm.classifierfunctions import classifier, linear_svm_lr
 
 
 class CLMBuilder(DeformableModelBuilder):
@@ -110,7 +110,7 @@ class CLMBuilder(DeformableModelBuilder):
     clm : :class:`menpo.fitmultiple.clm.builder.CLMBuilder`
         The CLM Builder object
     """
-    def __init__(self, classifier_type=linear_svm, patch_shape=(5, 5),
+    def __init__(self, classifier_type=linear_svm_lr, patch_shape=(5, 5),
                  feature_type=sparse_hog, diagonal_range=None, n_levels=3,
                  downscale=1.1, scaled_levels=True, max_shape_components=None,
                  boundary=3, interpolator='scipy'):
