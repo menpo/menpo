@@ -8,7 +8,7 @@ from .affine import Affine
 
 class Similarity(Affine):
     r"""
-    Specialist version of an :class:`AffineTransform` that is guaranteed to be
+    Specialist version of an :class:`Affine` that is guaranteed to be
     a Similarity transform.
 
     Parameters

@@ -199,7 +199,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
-    Builds ``AffineTransform`` objects for each triangle. apply involves
+    Builds ``Affine`` objects for each triangle. apply involves
     finding the containing triangle for each input point, and then applying
     the appropriate Affine Transform.
 
@@ -519,5 +519,5 @@ class CachedPWATransform(AbstractPWATransform):
         self._rebuild_target_vectors()
 
 
-PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
+PiecewiseAffine = CachedPWATransform  # the default PWA is the C one.
 from menpo.shape import TriMesh  # to avoid circular import

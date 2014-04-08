@@ -1,7 +1,7 @@
 import numpy as np
 
 from .base import HomogFamilyAlignment
-from .affine import DiscreteAffineTransform, Affine
+from .affine import DiscreteAffine, Affine
 from .similarity import Similarity
 
 
@@ -56,7 +56,7 @@ def Scale(scale_factor, n_dims=None):
         return UniformScale(scale_factor, n_dims)
 
 
-class NonUniformScale(DiscreteAffineTransform, Affine):
+class NonUniformScale(DiscreteAffine, Affine):
     r"""
     An ``n_dims`` scale transform, with a scale component for each dimension.
 
@@ -157,7 +157,7 @@ class NonUniformScale(DiscreteAffineTransform, Affine):
         return (NonUniformScale, UniformScale)
 
 
-class UniformScale(DiscreteAffineTransform, Similarity):
+class UniformScale(DiscreteAffine, Similarity):
     r"""
     An abstract similarity scale transform, with a single scale component
     applied to all dimensions. This is abstracted out to remove unnecessary

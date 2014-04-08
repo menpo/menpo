@@ -1,11 +1,11 @@
 import numpy as np
 
 from .base import HomogFamilyAlignment
-from .affine import DiscreteAffineTransform
+from .affine import DiscreteAffine
 from .similarity import Similarity
 
 
-class Translation(DiscreteAffineTransform, Similarity):
+class Translation(DiscreteAffine, Similarity):
     r"""
     An N-dimensional translation transform.
 

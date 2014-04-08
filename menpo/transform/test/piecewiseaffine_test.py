@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-from menpo.transform.piecewiseaffine import PiecewiseAffineTransform, \
+from menpo.transform.piecewiseaffine import PiecewiseAffine, \
     DiscreteAffinePWATransform
 from menpo.shape import PointCloud, TriMesh
 

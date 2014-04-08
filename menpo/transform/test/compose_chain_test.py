@@ -6,7 +6,7 @@ from menpo.shape import PointCloud, TriMesh
 
 from menpo.transform import TransformChain, Homogeneous, Translation, Scale
 from menpo.transform.tps import TPS
-from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
+from menpo.transform.piecewiseaffine import PiecewiseAffine
 
 
 def chain_tps_before_tps_test():
@@ -38,7 +38,7 @@ def chain_tps_after_tps_test():
 def chain_pwa_before_tps_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    pwa = PiecewiseAffineTransform(a_tm, b)
+    pwa = PiecewiseAffine(a_tm, b)
     tps = TPS(b, a_tm)
     chain = pwa.compose_before(tps)
     assert(isinstance(chain, TransformChain))
@@ -47,7 +47,7 @@ def chain_pwa_before_tps_test():
 def chain_pwa_after_tps_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    pwa = PiecewiseAffineTransform(a_tm, b)
+    pwa = PiecewiseAffine(a_tm, b)
     tps = TPS(b, a_tm)
     chain = pwa.compose_after(tps)
     assert(isinstance(chain, TransformChain))
@@ -56,7 +56,7 @@ def chain_pwa_after_tps_test():
 def chain_tps_before_pwa_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    pwa = PiecewiseAffineTransform(a_tm, b)
+    pwa = PiecewiseAffine(a_tm, b)
     tps = TPS(b, a_tm)
     chain = tps.compose_before(pwa)
     assert(isinstance(chain, TransformChain))
@@ -65,7 +65,7 @@ def chain_tps_before_pwa_test():
 def chain_tps_after_pwa_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    pwa = PiecewiseAffineTransform(a_tm, b)
+    pwa = PiecewiseAffine(a_tm, b)
     tps = TPS(b, a_tm)
     chain = tps.compose_after(pwa)
     assert(isinstance(chain, TransformChain))
