@@ -302,19 +302,16 @@ def igo(image_data, double_angles=False, verbose=False):
         igo_data[..., 3::feat_channels] = np.sin(2 * grad_orient)
     # print information
     if verbose:
-        info_str = "IGO Features:\n" \
-                   "  - Input image is {}W x {}H with {} channels.\n"\
-            .format(image_data.shape[1], image_data.shape[0],
-                    image_data.shape[2])
+        info_str = "IGO Features:\n"
+        info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
+            info_str, image_data.shape[1], image_data.shape[0],
+            image_data.shape[2])
         if double_angles:
-            info_str = "{}  - Double angles are enabled.\n"\
-                .format(info_str)
+            info_str = "{}  - Double angles are enabled.\n".format(info_str)
         else:
-            info_str = "{}  - Double angles are disabled.\n"\
-                .format(info_str)
-        info_str = "{}Output image size {}W x {}H x {}."\
-            .format(info_str, igo_data.shape[0], igo_data.shape[1],
-                    igo_data.shape[2])
+            info_str = "{}  - Double angles are disabled.\n".format(info_str)
+        info_str = "{}Output image size {}W x {}H x {}.".format(
+            info_str, igo_data.shape[0], igo_data.shape[1], igo_data.shape[2])
         print info_str
     return igo_data
 
@@ -352,13 +349,12 @@ def es(image_data, verbose=False):
     es_data[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
     # print information
     if verbose:
-        info_str = "ES Features:\n" \
-                   "  - Input image is {}W x {}H with {} channels.\n"\
-            .format(image_data.shape[1], image_data.shape[0],
-                    image_data.shape[2])
-        info_str = "{}Output image size {}W x {}H x {}."\
-            .format(info_str, es_data.shape[0], es_data.shape[1],
-                    es_data.shape[2])
+        info_str = "ES Features:\n"
+        info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
+            info_str, image_data.shape[1], image_data.shape[0],
+            image_data.shape[2])
+        info_str = "{}Output image size {}W x {}H x {}.".format(
+            info_str, es_data.shape[0], es_data.shape[1], es_data.shape[2])
         print info_str
     return es_data
 
@@ -446,8 +442,8 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
         Window step unit must be either pixels or window
     """
     # Check options
-    if (isinstance(radius, int) and isinstance(samples, list)) or \
-            (isinstance(radius, list) and isinstance(samples, int)):
+    if ((isinstance(radius, int) and isinstance(samples, list)) or
+            (isinstance(radius, list) and isinstance(samples, int))):
         raise ValueError("Radius and samples must both be either integers or "
                          "lists")
     elif isinstance(radius, list) and isinstance(samples, list):
