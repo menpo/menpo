@@ -311,7 +311,7 @@ def igo(image_data, double_angles=False, verbose=False):
         else:
             info_str = "{}  - Double angles are disabled.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, igo_data.shape[0], igo_data.shape[1], igo_data.shape[2])
+            info_str, igo_data.shape[1], igo_data.shape[0], igo_data.shape[2])
         print info_str
     return igo_data
 
@@ -354,7 +354,7 @@ def es(image_data, verbose=False):
             info_str, image_data.shape[1], image_data.shape[0],
             image_data.shape[2])
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, es_data.shape[0], es_data.shape[1], es_data.shape[2])
+            info_str, es_data.shape[1], es_data.shape[0], es_data.shape[2])
         print info_str
     return es_data
 
