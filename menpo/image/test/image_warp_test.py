@@ -57,7 +57,7 @@ def test_cinterp2_warp_multi():
 
 ## TODO: Not 100% on the best way to test this?
 #def test_cinterp2_warp_gray_warp_mask():
-#    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+#    target_transform = Affine.identity(2).from_vector(initial_params)
 #    warped_im = cinterp2_warp(gray_image, gray_template, target_transform,
 #                              warp_mask=True)
 #
@@ -66,7 +66,7 @@ def test_cinterp2_warp_multi():
 
 ## TODO: Not 100% on the best way to test this?
 #def test_scipy_warp_gray_warp_mask():
-#    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+#    target_transform = Affine.identity(2).from_vector(initial_params)
 #    warped_im = gray_image.warp(template_mask, target_transform,
 #                                warp_mask=True)
 #

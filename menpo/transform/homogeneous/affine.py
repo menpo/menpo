@@ -255,7 +255,7 @@ class Affine(Homogeneous):
 
     def from_vector_inplace(self, p):
         r"""
-        Updates this AffineTransform in-place from the new parameters. See
+        Updates this Affine in-place from the new parameters. See
         from_vector for details of the parameter format
         """
         h_matrix = None
@@ -277,7 +277,7 @@ class Affine(Homogeneous):
 
         Returns
         -------
-        transforms: list of :class`DiscreteAffineTransform` that
+        transforms: list of :class`DiscreteAffine` that
             Equivalent to this affine transform, such that:
 
             ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
@@ -355,7 +355,7 @@ class AlignmentAffine(Affine, HomogFamilyAlignment):
 
     def from_vector_inplace(self, p):
         r"""
-        Updates this AffineTransform in-place from the new parameters. See
+        Updates this Affine in-place from the new parameters. See
         from_vector for details of the parameter format.
         """
         Affine.from_vector_inplace(self, p)
@@ -370,11 +370,11 @@ class AlignmentAffine(Affine, HomogFamilyAlignment):
         return Affine(self.h_matrix.copy())
 
 
-class DiscreteAffineTransform(object):
+class DiscreteAffine(object):
     r"""
     A discrete Affine transform operation (such as a :meth:`Scale`,
     :class:`Translation` or :meth:`Rotation`). Has to be able to invertable.
-    Make sure you inherit from :class:`DiscreteAffineTransform` first,
+    Make sure you inherit from :class:`DiscreteAffine` first,
     for optimal ``decompose()`` behavior.
     """
 
@@ -382,12 +382,12 @@ class DiscreteAffineTransform(object):
 
     def decompose(self):
         r"""
-        A :class:`DiscreteAffineTransform` is already maximally decomposed -
+        A :class:`DiscreteAffine` is already maximally decomposed -
         return a copy of self in a list.
 
         Returns
         -------
-        transform : :class:`DiscreteAffineTransform`
+        transform : :class:`DiscreteAffine`
             Deep copy of ``self``.
         """
         return [copy.deepcopy(self)]

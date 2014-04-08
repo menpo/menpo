@@ -4,7 +4,7 @@ import numpy as np
 from menpo.exception import DimensionalityError
 
 from .base import HomogFamilyAlignment
-from .affine import DiscreteAffineTransform
+from .affine import DiscreteAffine
 from .similarity import Similarity
 
 
@@ -37,7 +37,7 @@ def optimal_rotation_matrix(source, target):
 # see http://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 # for details
 
-class Rotation(DiscreteAffineTransform, Similarity):
+class Rotation(DiscreteAffine, Similarity):
     r"""
     Abstract ``n_dims`` rotation transform.
 
