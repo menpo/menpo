@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import PointCloud
-from menpo.transform.affine import SimilarityTransform
+from menpo.transform.affine import Similarity
 
 
 # TODO: document me
@@ -61,7 +61,7 @@ def mean_pointcloud(pointclouds):
     return PointCloud(np.mean([pc.points for pc in pointclouds], axis=0))
 
 
-# TODO: Should this be a method on SimilarityTransform? AlignableTransforms?
+# TODO: Should this be a method on Similarity? AlignableTransforms?
 def noisy_align(source, target, noise_std=0.04, rotation=False):
     r"""
     Constructs and perturbs the optimal similarity transform between source
@@ -80,23 +80,23 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
 
         Default: 0.04
     rotation: boolean
-        If False the second parameter of the SimilarityTransform,
+        If False the second parameter of the Similarity,
         which captures captures inplane rotations, is set to 0.
 
         Default:False
 
     Returns
     -------
-    noisy_transform : :class: `pybug.transform.SimilarityTransform`
+    noisy_transform : :class: `pybug.transform.Similarity`
         The noisy Similarity Transform
     """
-    transform = SimilarityTransform.align(source, target, rotation=rotation)
+    transform = Similarity.align(source, target, rotation=rotation)
     parameters = transform.as_vector()
     parameter_range = np.hstack((parameters[:2], target.range()))
     noise = (parameter_range * noise_std *
              np.random.randn(transform.n_parameters))
     parameters += noise
-    return SimilarityTransform.identity(source.n_dims).from_vector(parameters)
+    return Similarity.identity(source.n_dims).from_vector(parameters)
 
 
 #TODO: Document me

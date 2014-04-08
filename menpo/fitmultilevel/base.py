@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from copy import deepcopy
 from menpo.landmark import LandmarkGroup
-from menpo.transform .affine import AffineTransform, Scale
+from menpo.transform .affine import Affine, Scale
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import FittingResultList
 from menpo.fitmultilevel.fittingresult import MultilevelFittingResult
@@ -254,7 +254,7 @@ class MultilevelFitter(Fitter):
         initial_shapes = [i.landmarks['initial_shape'].lms
                           for i in images]
 
-        affine_correction = AffineTransform.align(initial_shapes[-1],
+        affine_correction = Affine.align(initial_shapes[-1],
                                                   initial_shape)
 
         fittings = self._fit(images, initial_shapes[0], max_iters=max_iters,

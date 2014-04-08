@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from menpo.transform.affine import SimilarityTransform
+from menpo.transform.affine import Similarity
 from menpo.transform.modeldriven import OrthoMDTransform, \
     ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity
@@ -113,7 +113,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         md_transform_cls. Currently, only
         :class:`menpo.transform.affine.Similarity` is supported.
 
-        Default: SimilarityTransform
+        Default: Similarity
 
     n_shape: list, optional
         The number of shape components to be used per fitting level.
@@ -129,7 +129,7 @@ class LucasKanadeAAMFitter(AAMFitter):
     """
     def __init__(self, aam, algorithm=AlternatingInverseCompositional,
                  residual=LSIntensity, md_transform=OrthoMDTransform,
-                 global_transform=SimilarityTransform, n_shape=None,
+                 global_transform=Similarity, n_shape=None,
                  n_appearance=None):
         super(LucasKanadeAAMFitter, self).__init__(aam)
         self._set_up(algorithm=algorithm, residual=residual,
@@ -143,7 +143,7 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def _set_up(self, algorithm=AlternatingInverseCompositional,
                 residual=LSIntensity, md_transform=OrthoMDTransform,
-                global_transform=SimilarityTransform, n_shape=None,
+                global_transform=Similarity, n_shape=None,
                 n_appearance=None):
         r"""
         Sets up the lucas-kanade fitter object.
@@ -171,7 +171,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             md_transform. Currently, only
             :class:`menpo.transform.affine.Similarity` is supported.
 
-            Default: SimilarityTransform
+            Default: Similarity
 
         n_shape: list, optional
             The number of shape components to be used per fitting level.

@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from menpo.transform .affine import SimilarityTransform
+from menpo.transform .affine import Similarity
 from menpo.transform.pdm import PDMTransform, OrthoPDMTransform
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
@@ -105,7 +105,7 @@ class GradientDescentCLMFitter(CLMFitter):
         md_transform_cls. Currently, only
         :class:`menpo.transform.affine.Similarity` is supported.
 
-        Default: SimilarityTransform
+        Default: Similarity
 
     n_shape: list, optional
         The number of shape components to be used per fitting level.
@@ -121,7 +121,7 @@ class GradientDescentCLMFitter(CLMFitter):
     """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
                  residual=SSD, pdm_transform=OrthoPDMTransform,
-                 global_transform=SimilarityTransform, n_shape=None):
+                 global_transform=Similarity, n_shape=None):
         super(GradientDescentCLMFitter, self).__init__(clm)
         self._set_up(algorithm=algorithm, residual=residual,
                      pdm_transform=pdm_transform,
@@ -135,7 +135,7 @@ class GradientDescentCLMFitter(CLMFitter):
     # TODO: document me
     def _set_up(self, algorithm=RegularizedLandmarkMeanShift, residual=SSD,
                 pdm_transform=OrthoPDMTransform,
-                global_transform=SimilarityTransform, n_shape=None):
+                global_transform=Similarity, n_shape=None):
         r"""
         Sets up the gradient descent fitter object.
 
@@ -164,7 +164,7 @@ class GradientDescentCLMFitter(CLMFitter):
             md_transform_cls. Currently, only
             :class:`menpo.transform.affine.Similarity` is supported.
 
-            Default: SimilarityTransform
+            Default: Similarity
 
         n_shape: list, optional
             The number of shape components to be used per fitting level.

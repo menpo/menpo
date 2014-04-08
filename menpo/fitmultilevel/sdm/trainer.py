@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import abc
 import numpy as np
-from menpo.transform.affine import Scale, SimilarityTransform
+from menpo.transform.affine import Scale, Similarity
 from menpo.transform.pdm import PDMTransform, OrthoPDMTransform
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 from menpo.fit.regression.trainer import NonParametricRegressorTrainer, \
@@ -203,7 +203,7 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
     def __init__(self, aam, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
                  update='compositional', md_transform=OrthoMDTransform,
-                 global_transform=SimilarityTransform, n_shape=None,
+                 global_transform=Similarity, n_shape=None,
                  n_appearance=None):
         super(SupervisedDescentAAMTrainer, self).__init__(
             regression_type=regression_type,
@@ -290,7 +290,7 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
     def __init__(self, clm, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
                  update='compositional', pdm_transform=OrthoPDMTransform,
-                 global_transform=SimilarityTransform, n_shape=None):
+                 global_transform=Similarity, n_shape=None):
         super(SupervisedDescentCLMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,

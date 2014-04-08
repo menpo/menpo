@@ -3,7 +3,7 @@ import numpy as np
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
 from menpo.transform.affine import Scale, Translation
-from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
+from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.tps import TPS
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
@@ -51,7 +51,7 @@ class AAMBuilder(DeformableModelBuilder):
         The :class:`menpo.transform.PureAlignmentTransform` that will be
         used to warp the images.
 
-        Default: :class:`menpo.transform.PiecewiseAffineTransform`
+        Default: :class:`menpo.transform.PiecewiseAffine`
 
     trilist: (t, 3) ndarray, Optional
         Triangle list that will be used to build the reference frame. If None,
@@ -123,7 +123,7 @@ class AAMBuilder(DeformableModelBuilder):
         The AAM Builder object
     """
     def __init__(self, feature_type=sparse_hog,
-                 transform=PiecewiseAffineTransform, trilist=None,
+                 transform=PiecewiseAffine, trilist=None,
                  diagonal_range=None, n_levels=3, downscale=1.1,
                  scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
@@ -287,7 +287,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
         The :class:`menpo.transform.PureAlignmentTransform` that will be
         used to warp the images.
 
-        Default: :class:`menpo.transform.PiecewiseAffineTransform`
+        Default: :class:`menpo.transform.PiecewiseAffine`
 
     patch_shape: tuple of ints, Optional
         The appearance model of the Patch-Based AAM will be obtained by
