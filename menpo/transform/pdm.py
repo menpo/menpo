@@ -123,7 +123,10 @@ class PDMTransform(ComposableTransform, Alignable):
         """
         return self.target
 
-    def compose_before_inplace(self, transform):
+    def composes_inplace_with(self):
+        return PDMTransform
+
+    def _compose_before_inplace(self, transform):
         r"""
         a_orig = deepcopy(a)
         a.compose_before_inplace(b)
@@ -170,11 +173,11 @@ class PDMTransform(ComposableTransform, Alignable):
             The resulting ModelDrivenTransform.
         """
         self_copy = deepcopy(self)
-        self_copy.compose_after_inplace(transform)
+        self_copy._compose_after_inplace(transform)
         return self_copy
 
     # TODO: document me
-    def compose_after_inplace(self, pdm_transform):
+    def _compose_after_inplace(self, pdm_transform):
         r"""
         """
         new_params = self.compose_after_from_vector_inplace(
