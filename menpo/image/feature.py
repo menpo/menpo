@@ -205,7 +205,7 @@ class FeatureExtraction(object):
 
         Parameters
         ----------
-        image :  class:`Abstract2DImage`
+        image :  class:`Image`
             An image object that contains pixels and mask fields.
         double_angles : bool
             Assume that phi represents the gradient orientations. If this flag
@@ -253,7 +253,7 @@ class FeatureExtraction(object):
 
         Parameters
         ----------
-        image :  class:`Abstract2DImage`
+        image :  class:`Image`
             An image object that contains pixels and mask fields.
         constrain_landmarks : bool
             Flag that if enabled, it constrains landmarks that ended up outside
@@ -296,41 +296,42 @@ class FeatureExtraction(object):
         Parameters
         ----------
         radius : int or list of integers
-            It defines the radius of the circle (or circles) at which the sampling
-            points will be extracted. The radius (or radii) values must be greater
-            than zero. There must be a radius value for each samples value, thus
-            they both need to have the same length.
+            It defines the radius of the circle (or circles) at which the
+            sampling points will be extracted. The radius (or radii) values
+            must be greater than zero. There must be a radius value for each
+            samples value, thus they both need to have the same length.
 
             Default: [1, 2, 3, 4]
         samples : int or list of integers
-            It defines the number of sampling points that will be extracted at each
-            circle. The samples value (or values) must be greater than zero. There
-            must be a samples value for each radius value, thus they both need to
-            have the same length.
+            It defines the number of sampling points that will be extracted at
+            each circle. The samples value (or values) must be greater than
+            zero. There must be a samples value for each radius value, thus
+            they both need to have the same length.
 
             Default: [8, 8, 8, 8]
         mapping_type : 'u2' or 'ri' or 'riu2' or 'none'
-            It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
-            mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
-            rotation-invariant mapping and 'none' to use no mapping nd only the
-            decimal values instead.
+            It defines the mapping type of the LBP codes. Select 'u2' for
+            uniform-2 mapping, 'ri' for rotation-invariant mapping, 'riu2' for
+            uniform-2 and rotation-invariant mapping and 'none' to use no
+            mapping and only the decimal values instead.
 
             Default: 'riu2'
         window_step_vertical : float
             Defines the vertical step by which the window in the
-            ImageWindowIterator is moved, thus it controls the features density.
-            The metric unit is defined by window_step_unit.
+            ImageWindowIterator is moved, thus it controls the features
+            density. The metric unit is defined by window_step_unit.
 
             Default: 1
         window_step_horizontal : float
             Defines the horizontal step by which the window in the
-            ImageWindowIterator is moved, thus it controls the features density.
-            The metric unit is defined by window_step_unit.
+            ImageWindowIterator is moved, thus it controls the features
+            density. The metric unit is defined by window_step_unit.
 
             Default: 1
         window_step_unit : 'pixels' or 'window'
             Defines the metric unit of the window_step_vertical and
-            window_step_horizontal parameters for the ImageWindowIterator object.
+            window_step_horizontal parameters for the ImageWindowIterator
+            object.
 
             Default: 'pixels'
         padding : bool
