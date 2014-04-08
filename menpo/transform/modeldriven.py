@@ -1,12 +1,12 @@
-from copy import deepcopy
 import numpy as np
-from menpo.transform.base import AlignableTransform, Composable
-from menpo.transform.pdm import PDMTransform, GlobalPDMTransform, \
-    OrthoPDMTransform
+from menpo.base import Vectorizable
+from menpo.transform.base import VComposableTransform, VInvertible, Alignable
+from menpo.transform.pdm import (PDMTransform, GlobalPDMTransform,
+                                 OrthoPDMTransform)
 
 
-class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
-                           Alignable):
+class ModelDrivenTransform(Vectorizable, VComposableTransform, Alignable,
+                           VInvertible):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -39,6 +39,10 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
 
         Default: 'both'
     """
+
+    def composes_inplace_with(self):
+        return ModelDrivenTransform
+
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform, source=None, weights=None,
                  composition='both'):
@@ -100,7 +104,7 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
         self.pdm_transform.weights = value
         self.transform.target = self.target
 
-    @AlignableTransform.target.getter
+    @Alignable.target.getter
     def target(self):
         return self.pdm_transform.target
 

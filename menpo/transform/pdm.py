@@ -1,19 +1,16 @@
 from copy import deepcopy
 import numpy as np
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import AlignableTransform, Composable
+from menpo.transform.base import Alignable, ComposableTransform
 
 
 # TODO: document me
-class PDMTransform(AlignableTransform, Composable):
+class PDMTransform(ComposableTransform, Alignable):
     r"""
     """
     #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, weights=None):
-        super(PDMTransform, self).__init__()
-
         self.model = model
-
         # TODO: this is just done here to be able to use the Alignable
         # interface, need to rethink this whole transform probably.
         self._source = model.mean
