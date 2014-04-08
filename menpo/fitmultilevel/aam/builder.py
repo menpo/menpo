@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
-from menpo.transform.affine import Scale, Translation
+from menpo.transform import Scale, Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.tps import TPS
 from menpo.model import PCAModel

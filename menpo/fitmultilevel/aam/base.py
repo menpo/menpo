@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from menpo.transform.affine import Similarity
+from menpo.transform import Similarity
 from menpo.transform.modeldriven import OrthoMDTransform, \
     ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity

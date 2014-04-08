@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from copy import deepcopy
 from menpo.landmark import LandmarkGroup
-from menpo.transform .affine import Affine, Scale
+from menpo.transform import Affine, Scale
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import FittingResultList
 from menpo.fitmultilevel.fittingresult import MultilevelFittingResult

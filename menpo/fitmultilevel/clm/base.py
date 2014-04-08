@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from menpo.transform .affine import Similarity
+from menpo.transform import Similarity
 from menpo.transform.pdm import PDMTransform, OrthoPDMTransform
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD

@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import PointCloud
-from menpo.transform.affine import Similarity
+from menpo.transform import Similarity
 
 
 # TODO: document me
