@@ -7,7 +7,7 @@ import numpy as np
 from menpo.io.base import Importer
 from menpo.landmark.base import LandmarkGroup
 from menpo.shape import PointCloud
-from menpo.transform.affine import Scale
+from menpo.transform import Scale
 
 
 class LandmarkImporter(Importer):

@@ -1,9 +1,9 @@
 from numpy.testing import assert_approx_equal
 from menpo.image import BooleanImage
 import menpo.io as pio
-from menpo.transform import AffineTransform
-from menpo.fit.lucaskanade.image import ImageInverseCompositional, \
-    ImageForwardAdditive
+from menpo.transform import Affine
+from menpo.fit.lucaskanade.image import (ImageInverseCompositional,
+                                         ImageForwardAdditive)
 from menpo.fit.lucaskanade.residual import *
 
 
@@ -26,14 +26,14 @@ def compute_rms_point_error(test_pts, template_affine, M):
 
 
 def setup_conditions(interpolator):
-    target_transform = AffineTransform.identity(2).from_vector(target_params)
+    target_transform = Affine.identity(2).from_vector(target_params)
     image_warped = image.warp_to(template_mask, target_transform,
                                  interpolator=interpolator)
     return image, image_warped, initial_params
 
 
 def setup_error():
-    target_transform = AffineTransform.identity(2).from_vector(target_params)
+    target_transform = Affine.identity(2).from_vector(target_params)
     original_box = np.array([[0,               0],
                              [target_shape[0], 0],
                              [target_shape[0], target_shape[1]],
@@ -51,7 +51,7 @@ def compute_fixed_error(transform):
 def residual_wrapper(residual, algorithm, interpolator, expected_error):
     image, template, initial_params = setup_conditions(interpolator)
     align_algorithm = algorithm(
-        template, residual, AffineTransform.identity(2).from_vector(
+        template, residual, Affine.identity(2).from_vector(
             initial_params))
     fitting = align_algorithm.fit(image, initial_params)
     transform = fitting.final_transform

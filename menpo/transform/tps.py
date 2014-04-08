@@ -1,12 +1,12 @@
 import numpy as np
 from scipy.spatial import distance
 from menpo.shape import PointCloud
-from menpo.transform.base import Transform, PureAlignment, Invertible
+from menpo.transform.base import Transform, Invertible, Alignment
 from menpo.basis.rbf import R2LogR2
 
 
-# Note we inherit from PureAlignment first to get it's n_dims behavior
-class TPS(PureAlignment, Transform, Invertible):
+# Note we inherit from Alignment first to get it's n_dims behavior
+class TPS(Alignment, Transform, Invertible):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -33,7 +33,7 @@ class TPS(PureAlignment, Transform, Invertible):
     """
 
     def __init__(self, source, target, kernel=None):
-        PureAlignment.__init__(self, source, target)
+        Alignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
@@ -55,28 +55,18 @@ class TPS(PureAlignment, Transform, Invertible):
         self.coefficients = np.linalg.solve(self.l, self.y.T)
 
     @property
-    def n_parameters(self):
-        """
-
-        :type: int
-        """
-        raise NotImplementedError("n_parameters for TPS needs to be "
-                                  "implemented")
-
-    @property
     def has_true_inverse(self):
         return False
 
     def _build_pseudoinverse(self):
         return TPS(self.target, self.source, kernel=self.kernel)
 
-    def _target_setter(self, new_target):
-        self._target = new_target
+    def _sync_state_from_target(self):
         # now the target is updated, we only have to rebuild the
         # coefficients.
         self._build_coefficients()
 
-    def _apply(self, points):
+    def _apply(self, points, **kwargs):
         """
         Performs a TPS transform on the given points.
 
