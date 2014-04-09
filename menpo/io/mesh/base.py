@@ -3,18 +3,16 @@ from collections import namedtuple
 import commands
 import os.path as path
 import tempfile
-from menpo.io.base import Importer, find_alternative_files, \
-    map_filepath_to_importer
-from menpo.io.mesh.assimp import AIImporter
-from menpo.io.exceptions import MeshImportError
-from menpo.shape import TexturedTriMesh, TriMesh
+import numpy as np
+from cyassimp import AIImporter
 from vrml.vrml97.parser import buildParser as buildVRML97Parser
 import vrml.vrml97.basenodes as basenodes
 from vrml.node import NullNode
-import numpy as np
-from menpo.shape.mesh import ColouredTriMesh
+from menpo.io.base import (Importer, find_alternative_files,
+                           map_filepath_to_importer)
+from menpo.io.exceptions import MeshImportError
+from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
 
-# TODO: Disconnect with AssimpImporter
 # This formalises the return type of a mesh importer (before building)
 # However, at the moment there is a disconnect between this and the
 # Assimp type, and at some point they should become the same object
