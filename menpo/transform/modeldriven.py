@@ -1,7 +1,8 @@
 import numpy as np
-from menpo.transform.pdm import PDM, GlobalPDM, OrthoPDM
 
 from menpo.base import Targetable, Vectorizable
+from menpo.model.pdm import PDM, GlobalPDM, OrthoPDM
+
 from .base import Transform, VInvertible, VComposable
 
 

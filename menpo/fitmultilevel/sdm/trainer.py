@@ -1,8 +1,10 @@
 from __future__ import division, print_function
 import abc
+
 import numpy as np
+
 from menpo.transform.affine import Scale, Similarity
-from menpo.transform.pdm import PDM, OrthoPDM
+from menpo.model.pdm import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 from menpo.fit.regression.trainer import NonParametricRegressorTrainer, \
     SemiParametricClassifierBasedRegressorTrainer, ParametricRegressorTrainer
@@ -12,6 +14,7 @@ from menpo.fitmultilevel.functions import mean_pointcloud
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from menpo.fitmultilevel.sdm.base import SupervisedDescentMethodFitter, \
     SupervisedDescentAAMFitter, SupervisedDescentCLMFitter
+
 
 
 # TODO: document me

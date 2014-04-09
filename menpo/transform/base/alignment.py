@@ -5,20 +5,26 @@ from menpo.base import Targetable
 
 class Alignment(Targetable):
     r"""
-    Mixin for Transforms that have been constructed from an
-    optimisation aligning a source PointCloud to a target PointCloud.
+    Mixin for :class:`Transforms` that have been constructed from an
+    optimisation aligning a source :class:`PointCloud` to a target
+    :class:`PointCloud`.
 
-    This is naturally an extension of the Targetable interface - we just
-    augment Targetable with the concept of a source, and related methods to
+    This is naturally an extension of the :class:`Targetable` interface - we
+    just augment Targetable with the concept of a source, and related methods to
     construct alignments between a source and a target.
 
-    Construction from the align() class method enables certain features of the
-    class, like the from_target() and update_from_target() method. If the
-    instance is just constructed with it's regular constructor, it functions
-    as a normal Transform - attempting to call alignment methods listed here
-    will simply yield an Exception.
-    """
+    Note: To inherit from Alignment, you have to be a Transform subclass first.
 
+    Parameters
+    ----------
+
+    source: :class:`PointCloud`
+        A PointCloud that the alignment will be based from
+
+    target: :class:`PointCloud`
+        A PointCloud that the alignment is targeted towards
+
+    """
     def __init__(self, source, target):
         self._verify_source_and_target(source, target)
         self._source = source
@@ -26,6 +32,11 @@ class Alignment(Targetable):
 
     @staticmethod
     def _verify_source_and_target(source, target):
+        r"""
+        Checks that the dimensions and number of points match up of the source
+        and the target.
+
+        """
         if source.n_dims != target.n_dims:
             raise ValueError("Source and target must have the same "
                              "dimensionality")
@@ -38,17 +49,8 @@ class Alignment(Targetable):
         return self._source
 
     @property
-    def target(self):
-        return self._target
-
-    def _target_setter(self, new_target):
-        self._target = new_target
-
-    def _new_target_from_state(self):
-        return self.aligned_source
-
-    @property
     def aligned_source(self):
+        # note here we require Alignment
         return self.apply(self.source)
 
     @property
@@ -60,3 +62,23 @@ class Alignment(Targetable):
         :type: float
         """
         return np.linalg.norm(self.target.points - self.aligned_source.points)
+
+    @property
+    def target(self):
+        return self._target
+
+    def _target_setter(self, new_target):
+        r"""
+        Fulfils the Transformable _target_setter interface for all
+        Alignments. This method should purely set the target - we know how to do
+         that for all Alignments.
+        """
+        self._target = new_target
+
+    def _new_target_from_state(self):
+        r"""
+        Fulfils the Transformable _new_target_from_state interface for all
+        Alignments. This method should purely return the new target to be set -
+        for all Alignments that is just the aligned source
+        """
+        return self.aligned_source

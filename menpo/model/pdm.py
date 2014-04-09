@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+
 from menpo.base import Targetable, Vectorizable
 from menpo.model import Similarity2dInstanceModel
 

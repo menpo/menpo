@@ -1,7 +1,6 @@
 from __future__ import division
-import numpy as np
 from menpo.transform import AlignmentSimilarity
-from menpo.transform.pdm import PDM, OrthoPDM
+from menpo.model.pdm import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
