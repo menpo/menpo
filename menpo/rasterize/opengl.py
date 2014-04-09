@@ -1,95 +1,20 @@
 import numpy as np
-from menpo.rasterize.copengl import COpenGLRasterizer
+from cyrasterize.base import CyRasterizerBase
+
 from menpo.image import MaskedImage
-
-
-# noinspection PyProtectedMember
-from menpo.rasterize.base import TextureRasterInfo
-from menpo.rasterize.transform import ExtractNDims
 from menpo.transform import HomogeneousTransform
 
-
-class GLRasterizer(object):
-
-    def __init__(self, width=1024, height=768, model_matrix=None,
-                 view_matrix=None, projection_matrix=None):
-        r"""Offscreen OpenGL rasterize of fixed width and height.
-
-        Parameters
-        ----------
-
-        width : int
-            The width of the rasterize target
-
-        height: int
-            The height of hte rasterize target
+from .base import TextureRasterInfo
+from .transform import ExtractNDims
 
 
-        Notes
-        -----
-
-        For a given vertex v = (x, y, z, 1), it's position in image space
-        v' = (s, t) is calculated from
-
-        v' = P * V * M * v
-
-        where:
-
-        M is the model matrix
-        V is the view matrix (view the world from the position of the camera)
-        P is the projection matrix (usually an orthographic or perspective
-        matrix)
-
-        All matrices are 4x4 floats, as in OpenGL all points are treated as
-        homogeneous.
-
-        Note that this is the raw code written in the shader. The usual
-        pipeline of OpenGL applies - perspective division is performed to
-        form a clip space, and z-buffering is used to mask pixels
-        appropriately.
-
-        Texture information in the form of a texture map and normalized
-        per-vertex texture coordinates) are used to source colour values.
-
-        An arbitrary float 3-vector (f3v) can also be set on each vertex.
-        This value is passed through the same pipeline and interpolated but
-        note that the MATRICES ABOVE ARE NOT APPLIED TO THIS DATA.
-
-        This can be useful for example for passing through the shape
-        information of
-        the object into the rendered image domain. Note that because of the
-        above statement, the shape information rendered would be in the
-        objects original space, not in camera space (i.e. the z value will
-        not correlate to a depth buffer).
-
-        """
-        self._opengl = COpenGLRasterizer(width, height)
-        if model_matrix is not None:
-            self.set_model_matrix(model_matrix)
-        if view_matrix is not None:
-            self.set_view_matrix(view_matrix)
-        if projection_matrix is not None:
-            self.set_projection_matrix(projection_matrix)
+# Subclass the CyRasterizerBase class to add Menpo-specific features
+class GLRasterizer(CyRasterizerBase):
 
     @property
-    def width(self):
-        return self._opengl.get_width()
-
-    @property
-    def height(self):
-        return self._opengl.get_height()
-
-    @property
-    def model_matrix(self):
-        return self._opengl.get_model_matrix()
-
-    @property
-    def view_matrix(self):
-        return self._opengl.get_view_matrix()
-
-    @property
-    def projection_matrix(self):
-        return self._opengl.get_projection_matrix()
+    def model_to_clip_matrix(self):
+        return np.dot(self.projection_matrix,
+                      np.dot(self.view_matrix, self.model_matrix))
 
     @property
     def model_transform(self):
@@ -104,28 +29,11 @@ class GLRasterizer(object):
         return HomogeneousTransform(self.projection_matrix)
 
     @property
-    def model_to_clip_matrix(self):
-        return np.dot(self.projection_matrix,
-                      np.dot(self.view_matrix, self.model_matrix))
-
-    @property
     def model_to_clip_transform(self):
         r"""
         Transform that takes 3D points from model space to 3D clip space
         """
         return HomogeneousTransform(self.model_to_clip_matrix)
-
-    def set_model_matrix(self, value):
-        value = _verify_opengl_homogeneous_matrix(value)
-        self._opengl.set_model_matrix(value)
-
-    def set_view_matrix(self, value):
-        value = _verify_opengl_homogeneous_matrix(value)
-        self._opengl.set_view_matrix(value)
-
-    def set_projection_matrix(self, value):
-        value = _verify_opengl_homogeneous_matrix(value)
-        self._opengl.set_projection_matrix(value)
 
     @property
     def clip_to_image_transform(self):
@@ -310,21 +218,9 @@ class GLRasterizer(object):
             determined on the creation of this class.
 
         """
-        points = np.require(r.points, dtype=np.float32, requirements='c')
-        trilist = np.require(r.trilist, dtype=np.uint32, requirements='c')
-        texture = np.require(r.texture, dtype=np.float32, requirements='c')
-        tcoords = np.require(r.tcoords, dtype=np.float32, requirements='c')
-        if per_vertex_f3v is None:
-            per_vertex_f3v = points
-        interp = np.require(per_vertex_f3v, dtype=np.float32, requirements='c')
-        rgb_fb, f3v_fb = self._opengl.render_offscreen_rgb(
-            points, interp, trilist, tcoords, texture)
-        mask_array = rgb_fb[..., 3].astype(np.bool)
-        return (MaskedImage(rgb_fb[..., :3].copy(), mask=mask_array),
-                MaskedImage(f3v_fb.copy(), mask=mask_array))
-
-
-def _verify_opengl_homogeneous_matrix(matrix):
-    if matrix.shape != (4, 4):
-        raise ValueError("OpenGL matrices must have shape (4,4)")
-    return np.require(matrix, dtype=np.float32, requirements='C')
+        # make a call out to the CyRasterizer _rasterize method
+        rgb_pixels, f3v_pixels, mask = self._rasterize(
+            r.points, r.trilist, r.texture, r.tcoords,
+            per_vertex_f3v=per_vertex_f3v)
+        return (MaskedImage(rgb_pixels, mask=mask),
+                MaskedImage(f3v_pixels, mask=mask))
