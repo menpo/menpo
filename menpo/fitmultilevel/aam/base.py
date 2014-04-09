@@ -1,6 +1,5 @@
 from __future__ import division
-import numpy as np
-from menpo.transform import Similarity
+from menpo.transform import AlignmentSimilarity
 from menpo.transform.modeldriven import OrthoMDTransform, \
     ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity
@@ -129,7 +128,7 @@ class LucasKanadeAAMFitter(AAMFitter):
     """
     def __init__(self, aam, algorithm=AlternatingInverseCompositional,
                  residual=LSIntensity, md_transform=OrthoMDTransform,
-                 global_transform=Similarity, n_shape=None,
+                 global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
         super(LucasKanadeAAMFitter, self).__init__(aam)
         self._set_up(algorithm=algorithm, residual=residual,
@@ -143,7 +142,7 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def _set_up(self, algorithm=AlternatingInverseCompositional,
                 residual=LSIntensity, md_transform=OrthoMDTransform,
-                global_transform=Similarity, n_shape=None,
+                global_transform=AlignmentSimilarity, n_shape=None,
                 n_appearance=None):
         r"""
         Sets up the lucas-kanade fitter object.
@@ -220,10 +219,8 @@ class LucasKanadeAAMFitter(AAMFitter):
                                          self.aam.shape_models)):
 
             if md_transform is not ModelDrivenTransform:
-                # ToDo: Do we need a blank (identity) method for Transforms?
-                global_trans = global_transform(np.eye(3, 3))
                 md_trans = md_transform(
-                    sm, self.aam.transform, global_trans,
+                    sm, self.aam.transform, global_transform,
                     source=am.mean.landmarks['source'].lms)
             else:
                 md_trans = md_transform(

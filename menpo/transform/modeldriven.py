@@ -231,7 +231,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         pseudoinverse_vector : (N,) ndarray
             The pseudoinverse of the vector provided
         """
-        return self.pdm.pseudoinverse_vector(vector)
+        return -vector
 
     def jacobian(self, points):
         """

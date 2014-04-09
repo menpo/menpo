@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import abc
 import numpy as np
-from menpo.transform.affine import Scale, Similarity
+from menpo.transform import Scale, AlignmentSimilarity
 from menpo.transform.pdm import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 from menpo.fit.regression.trainer import NonParametricRegressorTrainer, \
@@ -203,7 +203,7 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
     def __init__(self, aam, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
                  update='compositional', md_transform=OrthoMDTransform,
-                 global_transform=Similarity, n_shape=None,
+                 global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
         super(SupervisedDescentAAMTrainer, self).__init__(
             regression_type=regression_type,
@@ -261,10 +261,8 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
         sm = self.aam.shape_models[level]
 
         if self.md_transform is not ModelDrivenTransform:
-            # ToDo: Do we need a blank (identity) method for Transforms?
-            global_transform = self.global_transform(np.eye(3, 3))
             md_transform = self.md_transform(
-                sm, self.aam.transform, global_transform,
+                sm, self.aam.transform, self.global_transform,
                 source=am.mean.landmarks['source'].lms)
         else:
             md_transform = self.md_transform(
@@ -272,8 +270,9 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
                 source=am.mean.landmarks['source'].lms)
 
         return ParametricRegressorTrainer(
-            am, md_transform, regression_type=self.regression_type,
-            regression_features=self.regression_features, update=self.update,
+            am, md_transform, self.reference_shape,
+            regression_type=self.regression_type, regression_features=self
+            .regression_features, update=self.update,
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations,
             interpolator=self.interpolator)
@@ -289,8 +288,8 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
     """
     def __init__(self, clm, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
-                 update='compositional', pdm_transform=OrthoPDM,
-                 global_transform=Similarity, n_shape=None):
+                pdm_transform=OrthoPDM,
+                global_transform=AlignmentSimilarity, n_shape=None):
         super(SupervisedDescentCLMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
@@ -300,7 +299,6 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
             n_perturbations=n_perturbations, interpolator=clm.interpolator)
         self.clm = clm
         self.patch_shape = clm.patch_shape
-        self.update = update
         self.pdm_transform = pdm_transform
         self.global_transform = global_transform
 
@@ -328,15 +326,14 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
         sm = self.clm.shape_models[level]
 
         if self.pdm_transform is not PDM:
-            # ToDo: Do we need a blank (identity) method for Transforms?
-            global_transform = self.global_transform(np.eye(3, 3))
-            pdm_transform = self.pdm_transform(sm, global_transform)
+            pdm_transform = self.pdm_transform(sm, self.global_transform)
         else:
             pdm_transform = self.pdm_transform(sm)
 
         return SemiParametricClassifierBasedRegressorTrainer(
-            clfs, pdm_transform, regression_type=self.regression_type,
-            patch_shape=self.patch_shape, update=self.update,
+            clfs, pdm_transform, self.reference_shape,
+            regression_type=self.regression_type,
+            patch_shape=self.patch_shape,
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
 

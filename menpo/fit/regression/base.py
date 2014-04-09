@@ -70,7 +70,7 @@ class SemiParametricRegressor(Regressor):
         return "SemiParametric"
 
     def _create_fitting(self, image, shape, gt_shape=None):
-        self.transform.target = shape
+        self.transform.set_target(shape)
         return SemiParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)
@@ -111,7 +111,7 @@ class ParametricRegressor(SemiParametricRegressor):
         return "Parametric"
 
     def _create_fitting(self, image, shape, gt_shape=None):
-        self.transform.target = shape
+        self.transform.target.set_target(shape)
         return ParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)

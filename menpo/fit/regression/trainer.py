@@ -137,12 +137,12 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
     r"""
     """
-    def __init__(self, transform, regression_type=mlr,
+    def __init__(self, transform, reference_shape, regression_type=mlr,
                  regression_features=sparse_hog, patch_shape=(16, 16),
                  update='compositional', noise_std=0.04, rotation=False,
                  n_perturbations=10):
         super(SemiParametricRegressorTrainer, self).__init__(
-            transform.source, regression_type=regression_type,
+            reference_shape, regression_type=regression_type,
             regression_features=regression_features, patch_shape=patch_shape,
             noise_std=noise_std, rotation=rotation,
             n_perturbations=n_perturbations)
@@ -173,12 +173,12 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
 class ParametricRegressorTrainer(RegressorTrainer):
     r"""
     """
-    def __init__(self, appearance_model, transform, regression_type=mlr,
-                 regression_features=weights, update='compositional',
-                 noise_std=0.04, rotation=False, n_perturbations=10,
-                 interpolator='scipy'):
+    def __init__(self, appearance_model, transform, reference_shape,
+                 regression_type=mlr, regression_features=weights,
+                 update='compositional', noise_std=0.04, rotation=False,
+                 n_perturbations=10, interpolator='scipy'):
         super(ParametricRegressorTrainer, self).__init__(
-            transform.source, regression_type=regression_type,
+            reference_shape, regression_type=regression_type,
             regression_features=regression_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.appearance_model = appearance_model
@@ -193,7 +193,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
                                        gt_shape=gt_shape)
 
     def features(self, image, shape):
-        self.transform.target = shape
+        self.transform.set_target(shape)
         warped_image = image.warp_to(self.template.mask, self.transform,
                                      interpolator=self.interpolator)
         return np.hstack(
@@ -201,9 +201,9 @@ class ParametricRegressorTrainer(RegressorTrainer):
                                       warped_image), 1))
 
     def delta_ps(self, gt_shape, perturbed_shape):
-        self.transform.target = gt_shape
+        self.transform.set_target(gt_shape)
         gt_ps = self.transform.as_vector()
-        self.transform.target = perturbed_shape
+        self.transform.set_target(perturbed_shape)
         perturbed_ps = self.transform.as_vector()
         return gt_ps - perturbed_ps
 
@@ -218,16 +218,17 @@ class SemiParametricClassifierBasedRegressorTrainer(
         NonParametricRegressorTrainer):
     r"""
     """
-    def __init__(self, classifiers, transform, regression_type=mlr,
-                 patch_shape=(16, 16), update='compositional',
-                 noise_std=0.04, rotation=False, n_perturbations=10):
+    def __init__(self, classifiers, transform, reference_shape,
+                 regression_type=mlr, patch_shape=(16, 16),
+                 noise_std=0.04, rotation=False,
+                 n_perturbations=10):
         super(SemiParametricClassifierBasedRegressorTrainer, self).__init__(
-            transform.source, regression_type=regression_type,
+            reference_shape, regression_type=regression_type,
             patch_shape=patch_shape, noise_std=noise_std, rotation=rotation,
             n_perturbations=n_perturbations)
         self.classifiers = classifiers
         self.transform = transform
-        self.update = update
+        self.update = 'additive'
 
     def features(self, image, shape):
         patches = extract_local_patches(image, shape, self.sampling_grid)
@@ -240,9 +241,9 @@ class SemiParametricClassifierBasedRegressorTrainer(
                                            gt_shape=gt_shape)
 
     def delta_ps(self, gt_shape, perturbed_shape):
-        self.transform.target = gt_shape
+        self.transform.set_target(gt_shape)
         gt_ps = self.transform.as_vector()
-        self.transform.target = perturbed_shape
+        self.transform.set_target(perturbed_shape)
         perturbed_ps = self.transform.as_vector()
         return gt_ps - perturbed_ps
 
