@@ -2,25 +2,28 @@ from copy import deepcopy
 import numpy as np
 from menpo.base import Targetable, Vectorizable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import Alignable, ComposableTransform, VInvertible
+from .base import VInvertible
 
 # global tranform should be set in _new_target_for_state
 # properties should be changed for subclasses
 
 
 # TODO: document me
-class PDMTransform(Targetable, Vectorizable, VInvertible):
+class PDM(Targetable, Vectorizable, VInvertible):
     r"""
     """
-    #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, weights=None):
         self.model = model
-        self._target = None
-        self._weights = None
         if weights is None:
             # set all weights to 0 (yielding the mean)
             weights = np.zeros(self.model.n_active_components)
-        self.from_vector_inplace(weights)
+        self._weights = weights
+        # cannot really call set_target since the verification is triggered
+        # and no target has been assigned yet... One option here would be to
+        # assign self.target to model.mean and then call set_target (instead
+        #  of this two calls) here
+        self._target_setter(self._new_target_from_state())
+        self._sync_state_from_target()
 
     @property
     def target(self):
@@ -36,7 +39,7 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
 
     def _sync_state_from_target(self):
         # 1. Find the optimum parameters and set them
-        self._parameters = self._parameters_for_target(self.target)
+        self._weights = self._weights_for_target(self.target)
         # 2. Find the closest target the model can reproduce and trigger an
         # update of our transform
         self._target_setter(self._new_target_from_state())
@@ -52,9 +55,9 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
         new_target: :class:`menpo.shape.PointCloud`
             A new target for the weights provided
         """
-        return self.model.instance(self.parameters)
+        return self.model.instance(self.weights)
 
-    def _parameters_for_target(self, target):
+    def _weights_for_target(self, target):
         r"""
         Return the appropriate model weights for target provided.
         Subclasses can override this.
@@ -82,17 +85,6 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
         :type: int
         """
         return self.model.template_instance.n_dims
-
-    @property
-    def n_parameters(self):
-        r"""
-        The total number of parameters.
-
-        Simply ``n_weights``.
-
-        :type: int
-        """
-        return self.n_weights
 
     @property
     def n_weights(self):
@@ -140,7 +132,7 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
         In this simple PDM the weights is just the vector, but in subclasses
         this behavior will change.
         """
-        return self.as_vector()
+        return self._weights
 
     # def set_weights(self, value):
     #     r"""
@@ -158,18 +150,6 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
         """
         return self.model.jacobian
 
-    # TODO: document me
-    def jacobian_points(self, points):
-        r"""
-        TO BE DOCUMENTED
-
-        Returns
-        -------
-        dW_dx : (N, D, D) ndarray
-            The jacobian with respect to the points
-        """
-        pass
-
     def as_vector(self):
         r"""
         Return the current parameters of this transform - this is the
@@ -180,18 +160,17 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
         params : (``n_parameters``,) ndarray
             The vector of parameters
         """
-        return self.parameters
+        return self.weights
 
     def from_vector_inplace(self, vector):
         r"""
         Updates the ModelDrivenTransform's state from it's
         vectorized form.
         """
-        self.set_parameters(vector)
-        self._sync_target_from_state()
+        self.set_target(vector)
 
     def composes_inplace_with(self):
-        return PDMTransform
+        return PDM
 
     def _compose_before_inplace(self, transform):
         r"""
@@ -260,19 +239,26 @@ class PDMTransform(Targetable, Vectorizable, VInvertible):
 
 
 # TODO: document me
-class GlobalPDMTransform(PDMTransform):
+class GlobalPDM(PDM):
     r"""
     """
     def __init__(self, model, global_transform, weights=None):
-        # need to set the global transform right away - self
-        # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
-        super(GlobalPDMTransform, self).__init__(model, weights=weights)
-        # after construction, we want our global_transform() to be an align
-        # transform. This is a little hacky, but is ok as long as the
-        # superclasses __init__ doesn't use _weights_for_target.
-        self.global_transform = global_transform.align(self.model.mean,
-                                                       self.target)
+        super(GlobalPDM, self).__init__(model, weights=weights)
+
+    def _new_target_from_state(self):
+        r"""
+        Return the appropriate target for the model weights provided,
+        accounting for the effect of the global transform
+
+
+        Returns
+        -------
+
+        new_target: :class:`menpo.shape.PointCloud`
+            A new target for the weights provided
+        """
+        return self.global_transform.apply(self.model.instance(self.weights))
 
     @property
     def n_parameters(self):
@@ -303,10 +289,6 @@ class GlobalPDMTransform(PDMTransform):
         """
         return self.global_transform.as_vector()
 
-    @property
-    def parameters(self):
-        return np.hstack([self.global_parameters, self._parameters])
-
     def jacobian(self, points):
         r"""
         """
@@ -318,25 +300,24 @@ class GlobalPDMTransform(PDMTransform):
     def _global_transform_jacobian(self, points):
         return self.global_transform.jacobian(points)
 
+    def as_vector(self):
+        r"""
+        Return the current parameters of this transform - this is the
+        just the linear model's weights
+
+        Returns
+        -------
+        params : (``n_parameters``,) ndarray
+            The vector of parameters
+        """
+        return np.hstack([self.global_parameters, self.weights])
 
     def from_vector_inplace(self, vector):
-        # the only extra step we have to take in
-        global_params = vector[:self.n_global_parameters]
-        model_weights = vector[self.n_global_parameters:]
-        self._update_global_weights(global_params)
-        self.weights = model_weights
-
-    # TODO: document me
-    def compose_after_from_vector_inplace(self, vector):
-        r"""
-        """
-        global_params = (self.global_parameters +
-                         vector[:self.n_global_parameters])
-        model_weights = (self.weights +
-                         vector[self.n_global_parameters:])
-        self._update_global_weights(global_params)
-        self.weights = model_weights
-        return self
+        global_parameters = vector[:self.n_global_parameters]
+        weights = vector[self.n_global_parameters:]
+        self._update_global_weights(global_parameters)
+        self._weights = weights
+        self._sync_target_from_state()
 
     def _update_global_weights(self, global_weights):
         r"""
@@ -346,22 +327,18 @@ class GlobalPDMTransform(PDMTransform):
         """
         self.global_transform.from_vector_inplace(global_weights)
 
-    def _new_target_from_state(self):
+    # TODO: document me
+    def compose_after_from_vector_inplace(self, vector):
         r"""
-        Return the appropriate target for the model weights provided,
-        accounting for the effect of the global transform
-
-
-        Returns
-        -------
-
-        new_target: :class:`menpo.shape.PointCloud`
-            A new target for the weights provided
         """
-        # TODO update _global_transform first
-        return self.global_transform.apply(self.model.instance(self.weights))
+        global_parameters = (self.global_parameters +
+                             vector[:self.n_global_parameters])
+        weights = self.weights + vector[self.n_global_parameters:]
+        self._update_global_weights(global_parameters)
+        self._weights = weights
+        return self
 
-    def _parameters_for_target(self, target):
+    def _weights_for_target(self, target):
         r"""
         Return the appropriate model weights for target provided, accounting
         for the effect of the global transform. Note that this method
@@ -398,7 +375,7 @@ class GlobalPDMTransform(PDMTransform):
 
 
 # TODO: document me
-class OrthoPDMTransform(GlobalPDMTransform):
+class OrthoPDM(GlobalPDM):
     r"""
     """
     def __init__(self, model, global_transform, weights=None):
@@ -410,7 +387,7 @@ class OrthoPDMTransform(GlobalPDMTransform):
         self.similarity_weights = self.similarity_model.project(
             global_transform.apply(model.mean))
 
-        super(OrthoPDMTransform, self).__init__(
+        super(OrthoPDM, self).__init__(
             model, global_transform, weights=weights)
 
     def _update_global_transform(self, target):

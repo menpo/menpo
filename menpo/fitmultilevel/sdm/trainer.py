@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import abc
 import numpy as np
 from menpo.transform.affine import Scale, Similarity
-from menpo.transform.pdm import PDMTransform, OrthoPDMTransform
+from menpo.transform.pdm import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 from menpo.fit.regression.trainer import NonParametricRegressorTrainer, \
     SemiParametricClassifierBasedRegressorTrainer, ParametricRegressorTrainer
@@ -289,7 +289,7 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
     """
     def __init__(self, clm, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
-                 update='compositional', pdm_transform=OrthoPDMTransform,
+                 update='compositional', pdm_transform=OrthoPDM,
                  global_transform=Similarity, n_shape=None):
         super(SupervisedDescentCLMTrainer, self).__init__(
             regression_type=regression_type,
@@ -327,7 +327,7 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
         clfs = self.clm.classifiers[level]
         sm = self.clm.shape_models[level]
 
-        if self.pdm_transform is not PDMTransform:
+        if self.pdm_transform is not PDM:
             # ToDo: Do we need a blank (identity) method for Transforms?
             global_transform = self.global_transform(np.eye(3, 3))
             pdm_transform = self.pdm_transform(sm, global_transform)

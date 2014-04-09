@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.transform import Similarity
-from menpo.transform.pdm import PDMTransform, OrthoPDMTransform
+from menpo.transform.pdm import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
@@ -120,7 +120,7 @@ class GradientDescentCLMFitter(CLMFitter):
         Default: None
     """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
-                 residual=SSD, pdm_transform=OrthoPDMTransform,
+                 residual=SSD, pdm_transform=OrthoPDM,
                  global_transform=Similarity, n_shape=None):
         super(GradientDescentCLMFitter, self).__init__(clm)
         self._set_up(algorithm=algorithm, residual=residual,
@@ -134,7 +134,7 @@ class GradientDescentCLMFitter(CLMFitter):
 
     # TODO: document me
     def _set_up(self, algorithm=RegularizedLandmarkMeanShift, residual=SSD,
-                pdm_transform=OrthoPDMTransform,
+                pdm_transform=OrthoPDM,
                 global_transform=Similarity, n_shape=None):
         r"""
         Sets up the gradient descent fitter object.
@@ -196,7 +196,7 @@ class GradientDescentCLMFitter(CLMFitter):
             if n_shape is not None:
                 sm.n_active_components = n_shape[j]
 
-            if pdm_transform is not PDMTransform:
+            if pdm_transform is not PDM:
                 # ToDo: Do we need a blank (identity) method for Transforms?
                 global_trans = global_transform(np.eye(3, 3))
                 pdm_trans = pdm_transform(sm, global_trans)

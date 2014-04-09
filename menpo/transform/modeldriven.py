@@ -1,7 +1,7 @@
 import numpy as np
 from menpo.base import Vectorizable
-from menpo.transform.pdm import (PDMTransform, GlobalPDMTransform,
-                                 OrthoPDMTransform)
+from menpo.transform.pdm import (PDM, GlobalPDM,
+                                 OrthoPDM)
 
 from menpo.base import VectorizableUpdatable, Targetable
 from menpo.model import Similarity2dInstanceModel
@@ -49,7 +49,7 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
     def __init__(self, model, transform, source=None, weights=None,
                  composition='both'):
         super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = PDMTransform(model, weights=weights)
+        self.pdm_transform = PDM(model, weights=weights)
         if source is None:
             source = self.pdm_transform.source
         self._source = source
@@ -438,7 +438,7 @@ class GlobalMDTransform(ModelDrivenTransform):
     def __init__(self, model, transform, global_transform, source=None,
                  weights=None, composition='both'):
         super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = GlobalPDMTransform(model, global_transform,
+        self.pdm_transform = GlobalPDM(model, global_transform,
                                                 weights=weights)
         if source is None:
             source = self.pdm_transform.source
@@ -689,7 +689,7 @@ class OrthoMDTransform(GlobalMDTransform):
     def __init__(self, model, transform, global_transform, source=None,
                  weights=None, composition='both'):
         super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = OrthoPDMTransform(model, global_transform,
+        self.pdm_transform = OrthoPDM(model, global_transform,
                                                weights=weights)
         if source is None:
             source = self.pdm_transform.source
