@@ -28,7 +28,7 @@ class GradientDescent(Fitter):
             image, self, parameters=[parameters], gt_shape=gt_shape)
 
     def get_parameters(self, shape):
-        self.transform.target = shape
+        self.transform.set_target(shape)
         return self.transform.as_vector()
 
 

@@ -168,7 +168,7 @@ class GlobalPDM(PDM):
     r"""
     """
     def __init__(self, model, global_transform, weights=None):
-        self.global_transform = global_transform
+        self.global_transform = global_transform(model.mean, model.mean)
         super(GlobalPDM, self).__init__(model, weights=weights)
 
     @property
@@ -236,7 +236,7 @@ class GlobalPDM(PDM):
         return new_weights
 
     def _update_global_transform(self, target):
-        self.global_transform.target = target
+        self.global_transform.set_target(target)
 
     def as_vector(self):
         r"""
@@ -276,16 +276,13 @@ class GlobalPDM(PDM):
 class OrthoPDM(GlobalPDM):
     r"""
     """
-
     def __init__(self, model, global_transform, weights=None):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
         # 2. Orthonormalize model and similarity model
         model = deepcopy(model)
         model.orthonormalize_against_inplace(self.similarity_model)
-        self.similarity_weights = self.similarity_model.project(
-            global_transform.apply(model.mean))
-
+        self.similarity_weights = self.similarity_model.project(model.mean)
         super(OrthoPDM, self).__init__(
             model, global_transform, weights=weights)
 
@@ -305,7 +302,7 @@ class OrthoPDM(GlobalPDM):
     def _update_global_weights(self, global_weights):
         self.similarity_weights = global_weights
         new_target = self.similarity_model.instance(global_weights)
-        self.global_transform.target = new_target
+        self.global_transform.set_target(new_target)
 
     def jacobian(self, points):
         r"""

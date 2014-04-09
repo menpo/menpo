@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import PointCloud
-from menpo.transform import Similarity
+from menpo.transform import Similarity, AlignmentSimilarity
 
 
 # TODO: document me
@@ -90,7 +90,7 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
     noisy_transform : :class: `pybug.transform.Similarity`
         The noisy Similarity Transform
     """
-    transform = Similarity.align(source, target, rotation=rotation)
+    transform = AlignmentSimilarity(source, target, rotation=rotation)
     parameters = transform.as_vector()
     parameter_range = np.hstack((parameters[:2], target.range()))
     noise = (parameter_range * noise_std *

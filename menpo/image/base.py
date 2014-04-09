@@ -10,7 +10,8 @@ from scipy.misc import imrotate
 
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
-from menpo.transform import Translation, NonUniformScale, UniformScale
+from menpo.transform import Translation, NonUniformScale, UniformScale, \
+    AlignmentUniformScale
 from menpo.visualize.base import Viewable, ImageViewer
 from menpo.image.feature import FeatureExtraction
 
@@ -762,7 +763,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label].lms
-        scale = UniformScale.align(pc, reference_shape).as_vector()
+        scale = AlignmentUniformScale(pc, reference_shape).as_vector()
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
