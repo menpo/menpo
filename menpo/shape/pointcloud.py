@@ -24,6 +24,13 @@ class PointCloud(Shape):
         self.points = np.array(points, copy=True, order='C')
 
     @property
+    def h_points(self):
+        r"""
+        homogeneous points of shape (n_dims + 1, n_points)
+        """
+        return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
+
+    @property
     def n_points(self):
         r"""
         The number of points in the pointcloud.

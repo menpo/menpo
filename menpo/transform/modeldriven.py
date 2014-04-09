@@ -1,12 +1,14 @@
 from copy import deepcopy
 import numpy as np
-from menpo.base import Vectorizable
+
+from menpo.base import VectorizableUpdatable, Targetable
 from menpo.model import Similarity2dInstanceModel
-from menpo.transform.base import Alignable, VComposableTransform, VInvertible
+
+from .base import Transform, VInvertible
 
 
-class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
-                           Alignable):
+class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
+                           Targetable):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -39,8 +41,7 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
 
         Default: 'both'
     """
-    #TODO: Rethink this transform so it knows how to deal with complex shapes
-    def __init__(self, model, transform_cls, source=None, weights=None,
+    def __init__(self, model, alignment_tfom_cls, source=None, weights=None,
                  composition='both'):
         super(ModelDrivenTransform, self).__init__()
 
@@ -58,10 +59,8 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
         self._weights = weights
 
         self._target = self._target_for_weights(self._weights)
-        # by providing _source and _target we conform to the
-        # AlignmentTransform interface
-        # utilize the align constructor to build the transform
-        self.transform = transform_cls.align(self.source, self.target)
+        # utilize the Alignment Transform constructor to build the transform
+        self.transform = alignment_tfom_cls(self.source, self.target)
 
     @property
     def n_dims(self):
@@ -207,6 +206,14 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
         # 3. As always, update our self._target
         self._target = self.transform.target
 
+    def _sync_state_from_target(self):
+        pass
+
+    @property
+    def target(self):
+        pass
+
+
     def _apply(self, x, **kwargs):
         r"""
         Apply this transform to the given object. Uses the internal transform.
@@ -225,72 +232,8 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
         """
         return self.transform._apply(x, **kwargs)
 
-    def _compose_before_inplace(self, transform):
+    def update_from_vector_inplace(self, delta):
         r"""
-        a_orig = deepcopy(a)
-        a.compose_before_inplace(b)
-        a.apply(p) == b.apply(a_orig.apply(p))
-
-        a is permanently altered to be the result of the composition. b is
-        left unchanged.
-
-        Parameters
-        ----------
-        transform : :class:`ModelDrivenTransform`
-            Transform to be applied **after** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        # naive approach - update self to be equal to transform and
-        # compose_before_from_vector_inplace
-        self_vector = self.as_vector().copy()
-        self.update_from_vector(transform.as_vector())
-        return self.compose_after_from_vector_inplace(self_vector)
-
-    def _compose_after_inplace(self, md_transform):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_after_inplace(b)
-        a.apply(p) == a_orig.apply(b.apply(p))
-
-        a is permanently altered to be the result of the composition. b is
-        left unchanged.
-
-        Parameters
-        ----------
-        transform : :class:`ModelDrivenTransform`
-            Transform to be applied **before** self
-
-        Returns
-        --------
-        transform : self
-            self, updated to the result of the composition
-        """
-        if self.composition is 'model':
-            # TODO this seems to be the same, revisit
-            self.target = self._compose_after_model(md_transform.target)
-        elif self.composition is 'warp':
-            self.target = self._compose_after_warp(md_transform.target)
-        elif self.composition is 'both':
-            new_params = self._compose_after_both(md_transform.as_vector())
-            self.from_vector_inplace(new_params)
-        else:
-            raise ValueError('Unknown composition string selected. Valid'
-                             'options are: model, warp, both')
-        return self
-
-    def compose_after_from_vector_inplace(self, vector):
-        r"""
-        a_orig = deepcopy(a)
-        a.compose_after_from_vector_inplace(b_vec)
-        b = self.from_vector(b_vec)
-        a.apply(p) == a_orig.apply(b.apply(p))
-
-        a is permanently altered to be the result of the composition. b_vec
-        is left unchanged.
 
         compose_after this :class:`ModelDrivenTransform` with another inplace.
         Rather than requiring a new ModelDrivenTransform to compose_after
@@ -298,7 +241,7 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
 
         Parameters
         ----------
-        vector : (N,) ndarray
+        delta : (N,) ndarray
             Vectorized :class:`ModelDrivenTransform` to be applied **before**
             self
 
@@ -308,13 +251,13 @@ class ModelDrivenTransform(Vectorizable, VComposableTransform, VInvertible,
             self, updated to the result of the composition
         """
         if self.composition is 'model':
-            new_mdtransform = self.from_vector(vector)
+            new_mdtransform = self.from_vector(delta)
             self.target = self._compose_after_model(new_mdtransform.target)
         elif self.composition is 'warp':
-            new_mdtransform = self.from_vector(vector)
+            new_mdtransform = self.from_vector(delta)
             self.target = self._compose_after_warp(new_mdtransform.target)
         elif self.composition is 'both':
-            self.from_vector_inplace(self._compose_after_both(vector))
+            self.from_vector_inplace(self._compose_after_both(delta))
         else:
             raise ValueError('Unknown composition string selected. Valid'
                              'options are: model, warp, both')
@@ -537,13 +480,13 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         Default: `both`
     """
-    def __init__(self, model, transform_cls, global_transform, source=None,
+    def __init__(self, model, alignment_tfom_cls, global_transform, source=None,
                  weights=None, composition='both'):
         # need to set the global transform right away - self
         # ._target_for_weights() needs it in superclass __init__
         self.global_transform = global_transform
         super(GlobalMDTransform, self).__init__(
-            model, transform_cls, source=source, weights=weights,
+            model, alignment_tfom_cls, source=source, weights=weights,
             composition=composition)
         # after construction, we want our global_transform() to be an align
         # transform. This is a little hacky, but is ok as long as the
@@ -879,7 +822,7 @@ class OrthoMDTransform(GlobalMDTransform):
 
         Default: `both`
     """
-    def __init__(self, model, transform_cls, global_transform, source=None,
+    def __init__(self, model, alignment_tfom_cls, global_transform, source=None,
                  weights=None, composition='both'):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
@@ -890,7 +833,7 @@ class OrthoMDTransform(GlobalMDTransform):
             global_transform.apply(model.mean))
 
         super(OrthoMDTransform, self).__init__(
-            model, transform_cls, global_transform, source=source,
+            model, alignment_tfom_cls, global_transform, source=source,
             weights=weights, composition=composition)
 
     def _update_global_transform(self, target):

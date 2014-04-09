@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from menpo.shape import PointCloud, TriMesh
-from menpo.transform .affine import Translation, SimilarityTransform
+from menpo.transform import Translation, Similarity
 from menpo.image import MaskedImage
 
 
@@ -121,7 +121,7 @@ def noisy_align(source, target, noise_std=0.05, rotation=False):
     noisy_transform : :class: `menpo.transform.SimilarityTransform`
         The noisy Similarity Transform
     """
-    transform = SimilarityTransform.align(source, target)
+    transform = Similarity.align(source, target)
     parameters = transform.as_vector()
     if not rotation:
         parameters[1] = 0
@@ -129,7 +129,7 @@ def noisy_align(source, target, noise_std=0.05, rotation=False):
     noise = (parameter_range * noise_std *
              np.random.randn(transform.n_parameters))
     parameters += noise
-    return SimilarityTransform.identity(source.n_dims).from_vector_inplace(
+    return Similarity.identity(source.n_dims).from_vector_inplace(
         parameters)
 
 
