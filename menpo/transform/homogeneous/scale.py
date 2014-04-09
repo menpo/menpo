@@ -73,6 +73,27 @@ class NonUniformScale(DiscreteAffine, Affine):
         h_matrix[-1, -1] = 1
         Affine.__init__(self, h_matrix)
 
+    @classmethod
+    def identity(cls, n_dims):
+        return NonUniformScale(np.ones(n_dims))
+
+    def set_h_matrix(self, value):
+        raise NotImplementedError("The h_matrix cannot "
+                                  "be set on a NonUniformScale.")
+
+    @property
+    def scale(self):
+        r"""
+        The scale vector.
+
+        :type: (D,) ndarray
+        """
+        return self.h_matrix.diagonal()[:-1]
+
+    def _transform_str(self):
+        message = 'NonUniformScale by %s ' % self.scale
+        return message
+
     @property
     def n_parameters(self):
         """
@@ -84,27 +105,6 @@ class NonUniformScale(DiscreteAffine, Affine):
         representing the scale across each axis.
         """
         return self.scale.size
-
-    @property
-    def scale(self):
-        r"""
-        The scale vector.
-
-        :type: (D,) ndarray
-        """
-        return self.h_matrix.diagonal()[:-1]
-
-    def _build_pseudoinverse(self):
-        """
-        The inverse scale.
-
-        :type: :class:`NonUniformScale`
-        """
-        return NonUniformScale(1.0 / self.scale)
-
-    def _transform_str(self):
-        message = 'NonUniformScale by %s ' % self.scale
-        return message
 
     def as_vector(self):
         r"""
@@ -144,17 +144,17 @@ class NonUniformScale(DiscreteAffine, Affine):
         np.fill_diagonal(self.h_matrix, vector)
         self.h_matrix[-1, -1] = 1
 
-    @classmethod
-    def identity(cls, n_dims):
-        return NonUniformScale(np.ones(n_dims))
-
-    def set_h_matrix(self, value):
-        raise NotImplementedError("The h_matrix cannot "
-                                  "be set on a NonUniformScale.")
-
     @property
     def composes_inplace_with(self):
         return (NonUniformScale, UniformScale)
+
+    def _build_pseudoinverse(self):
+        """
+        The inverse scale.
+
+        :type: :class:`NonUniformScale`
+        """
+        return NonUniformScale(1.0 / self.scale)
 
 
 class UniformScale(DiscreteAffine, Similarity):
@@ -170,14 +170,9 @@ class UniformScale(DiscreteAffine, Similarity):
         h_matrix[-1, -1] = 1
         Similarity.__init__(self, h_matrix)
 
-    @property
-    def n_parameters(self):
-        r"""
-        The number of parameters: 1
-
-        :type: int
-        """
-        return 1
+    @classmethod
+    def identity(cls, n_dims):
+        return UniformScale(1, n_dims)
 
     @property
     def scale(self):
@@ -188,17 +183,18 @@ class UniformScale(DiscreteAffine, Similarity):
         """
         return self.h_matrix[0, 0]
 
-    def _build_pseudoinverse(self):
-        r"""
-        The inverse scale.
-
-        :type: type(self)
-        """
-        return type(self)(1.0 / self.scale, self.n_dims)
-
     def _transform_str(self):
         message = 'UniformScale by %f ' % self.scale
         return message
+
+    @property
+    def n_parameters(self):
+        r"""
+        The number of parameters: 1
+
+        :type: int
+        """
+        return 1
 
     def as_vector(self):
         r"""
@@ -223,13 +219,17 @@ class UniformScale(DiscreteAffine, Similarity):
         np.fill_diagonal(self.h_matrix, p)
         self.h_matrix[-1, -1] = 1
 
-    @classmethod
-    def identity(cls, n_dims):
-        return UniformScale(1, n_dims)
-
     @property
     def composes_inplace_with(self):
         return UniformScale
+
+    def _build_pseudoinverse(self):
+        r"""
+        The inverse scale.
+
+        :type: type(self)
+        """
+        return type(self)(1.0 / self.scale, self.n_dims)
 
 
 class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
