@@ -134,6 +134,10 @@ class Targetable(object):
         self._target_setter(value)
 
     def _verify_target(self, new_target):
+        # If the target is None (i.e. on construction) then dodge the
+        # verification
+        if self.target is None:
+            return
         if new_target.n_dims != self.target.n_dims:
             raise ValueError(
                 "The current target is {}D, the new target is {}D - new "

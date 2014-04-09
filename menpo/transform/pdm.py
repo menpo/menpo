@@ -9,18 +9,13 @@ from .base import VInvertible
 class PDM(Targetable, VectorizableUpdatable, VInvertible):
     r"""
     """
-    def __init__(self, model, weights=None):
+    def __init__(self, model):
         self.model = model
-        if weights is None:
-            # set all weights to 0 (yielding the mean)
-            weights = np.zeros(self.model.n_active_components)
-        self._weights = weights
-        # cannot really call set_target since the verification is triggered
-        # and no target has been assigned yet... One option here would be to
-        # assign self.target to model.mean and then call set_target (instead
-        #  of this two calls) here
-        self._target_setter(self._new_target_from_state())
-        self._sync_state_from_target()
+        self._target = None
+        # set all weights to 0 (yielding the mean, first call to
+        # from_vector_inplace() or set_target() will update this)
+        self._weights = np.zeros(self.model.n_active_components)
+        self._sync_target_from_state()
 
     @property
     def n_dims(self):
@@ -117,7 +112,8 @@ class PDM(Targetable, VectorizableUpdatable, VInvertible):
         Updates the ModelDrivenTransform's state from it's
         vectorized form.
         """
-        self.set_target(vector)
+        self._weights = vector
+        self._sync_target_from_state()
 
     def update_from_vector_inplace(self, delta):
         r"""
@@ -167,9 +163,11 @@ class PDM(Targetable, VectorizableUpdatable, VInvertible):
 class GlobalPDM(PDM):
     r"""
     """
-    def __init__(self, model, global_transform, weights=None):
-        self.global_transform = global_transform(model.mean, model.mean)
-        super(GlobalPDM, self).__init__(model, weights=weights)
+    def __init__(self, model, global_transform_cls):
+        # Start the global_transform as an identity (first call to
+        # from_vector_inplace() or set_target() will update this)
+        self.global_transform = global_transform_cls(model.mean, model.mean)
+        super(GlobalPDM, self).__init__(model)
 
     @property
     def n_global_parameters(self):
@@ -251,11 +249,12 @@ class GlobalPDM(PDM):
         return np.hstack([self.global_parameters, self.weights])
 
     def from_vector_inplace(self, vector):
+        # First, update the global transform
         global_parameters = vector[:self.n_global_parameters]
-        weights = vector[self.n_global_parameters:]
         self._update_global_weights(global_parameters)
-        self._weights = weights
-        self._sync_target_from_state()
+        # Now extract the weights, and let super handle the update
+        weights = vector[self.n_global_parameters:]
+        PDM.from_vector_inplace(self, weights)
 
     def _update_global_weights(self, global_weights):
         r"""
@@ -276,15 +275,14 @@ class GlobalPDM(PDM):
 class OrthoPDM(GlobalPDM):
     r"""
     """
-    def __init__(self, model, global_transform, weights=None):
+    def __init__(self, model, global_transform_cls):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
         # 2. Orthonormalize model and similarity model
         model = deepcopy(model)
         model.orthonormalize_against_inplace(self.similarity_model)
         self.similarity_weights = self.similarity_model.project(model.mean)
-        super(OrthoPDM, self).__init__(
-            model, global_transform, weights=weights)
+        super(OrthoPDM, self).__init__(model, global_transform_cls)
 
     @property
     def global_parameters(self):
