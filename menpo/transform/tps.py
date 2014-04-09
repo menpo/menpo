@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.spatial import distance
+
 from menpo.shape import PointCloud
-from menpo.transform.base import Transform, Invertible, Alignment
 from menpo.basis.rbf import R2LogR2
+
+from .base import Transform, Alignment, Invertible
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
@@ -54,13 +56,6 @@ class TPS(Alignment, Transform, Invertible):
         self.y = np.hstack([self.v, np.zeros([2, 3])])
         self.coefficients = np.linalg.solve(self.l, self.y.T)
 
-    @property
-    def has_true_inverse(self):
-        return False
-
-    def _build_pseudoinverse(self):
-        return TPS(self.target, self.source, kernel=self.kernel)
-
     def _sync_state_from_target(self):
         # now the target is updated, we only have to rebuild the
         # coefficients.
@@ -99,6 +94,13 @@ class TPS(Alignment, Transform, Invertible):
         # build the affine free warp component
         f_affine_free = kernel_dist.dot(c_affine_free)
         return f_affine + f_affine_free
+
+    @property
+    def has_true_inverse(self):
+        return False
+
+    def _build_pseudoinverse(self):
+        return TPS(self.target, self.source, kernel=self.kernel)
 
     def jacobian_points(self, points):
         """

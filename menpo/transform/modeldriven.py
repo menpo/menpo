@@ -3,7 +3,7 @@ import numpy as np
 from menpo.base import Targetable, Vectorizable
 from menpo.model.pdm import PDM, GlobalPDM, OrthoPDM
 
-from .base import Transform, VInvertible, VComposable
+from .base import Transform, VComposable, VInvertible
 
 
 class ModelDrivenTransform(Transform, Targetable, Vectorizable,
@@ -29,24 +29,16 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         provide weights - the source is either given or set to the
         model's mean.
     source : :class:`menpo.shape.base.PointCloud`
-        The source landmarks of the transform. If no ``source`` is provided the
-        mean of the model is used.
-    weights : (P,) ndarray
-        The reconstruction weights that will be fed to the model in order to
-        generate an instance of the target landmarks.
-    composition: 'both', 'warp' or 'model', optional
-        The composition approximation employed by this
-        ModelDrivenTransform.
+        The source landmarks of the transform. If None, the mean of the model
+         is used.
 
-        Default: 'both'
+        Default: None
+
     """
-
-    #TODO: Rethink this transform so it knows how to deal with complex shapes
     def __init__(self, model, transform_cls, source=None):
         self.pdm = PDM(model)
         self._cached_points = None
         self.transform = transform_cls(source, self.target)
-
 
     @property
     def n_dims(self):
@@ -79,15 +71,6 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
     def target(self):
         return self.pdm.target
 
-    def _new_target_from_state(self):
-        # We delegate to PDM to handle all our Targetable duties. As a
-        # result, *we* never need to call _sync_target_for_state, so we have
-        # no need for an implementation of this method. Of course the
-        # interface demands it, so the stub is here. Contrast with
-        # _target_setter, which is required, because we will have to handle
-        # external calls to set_target().
-        pass
-
     def _target_setter(self, new_target):
         r"""
         On a new target being set, we need to:
@@ -99,6 +82,15 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
             The new_target that we want to set.
         """
         self.pdm.set_target(new_target)
+
+    def _new_target_from_state(self):
+        # We delegate to PDM to handle all our Targetable duties. As a
+        # result, *we* never need to call _sync_target_for_state, so we have
+        # no need for an implementation of this method. Of course the
+        # interface demands it, so the stub is here. Contrast with
+        # _target_setter, which is required, because we will have to handle
+        # external calls to set_target().
+        pass
 
     def _sync_state_from_target(self):
         # Let the pdm update its state
@@ -141,7 +133,6 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
 
     def compose_after_from_vector_inplace(self, delta):
         r"""
-
         Composes two ModelDrivenTransforms together based on the
         first order approximation proposed by Papandreou and Maragos in [1].
 

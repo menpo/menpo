@@ -55,13 +55,6 @@ class PDM(Targetable, Vectorizable):
         """
         self._target = new_target
 
-    def _sync_state_from_target(self):
-        # 1. Find the optimum parameters and set them
-        self._weights = self._weights_for_target(self.target)
-        # 2. Find the closest target the model can reproduce and trigger an
-        # update of our transform
-        self._target_setter(self._new_target_from_state())
-
     def _new_target_from_state(self):
         r"""
         Return the appropriate target for the parameters provided.
@@ -74,6 +67,13 @@ class PDM(Targetable, Vectorizable):
             A new target for the weights provided
         """
         return self.model.instance(self.weights)
+
+    def _sync_state_from_target(self):
+        # 1. Find the optimum parameters and set them
+        self._weights = self._weights_for_target(self.target)
+        # 2. Find the closest target the model can reproduce and trigger an
+        # update of our transform
+        self._target_setter(self._new_target_from_state())
 
     def _weights_for_target(self, target):
         r"""

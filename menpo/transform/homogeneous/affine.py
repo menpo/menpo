@@ -25,28 +25,9 @@ class Affine(Homogeneous):
         # so run our verification
         Affine.set_h_matrix(self, h_matrix)
 
-    @property
-    def n_parameters(self):
-        r"""
-        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
-        the homogeneous part.
-
-        :type: int
-
-        Examples
-        --------
-        2D Affine: 6 parameters::
-
-            [p1, p3, p5]
-            [p2, p4, p6]
-
-        3D Affine: 12 parameters::
-
-            [p1, p4, p7, p10]
-            [p2, p5, p8, p11]
-            [p3, p6, p9, p12]
-        """
-        return self.n_dims * (self.n_dims + 1)
+    @classmethod
+    def identity(cls, n_dims):
+        return Affine(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
@@ -93,8 +74,27 @@ class Affine(Homogeneous):
         """
         return self.h_matrix[:-1, -1]
 
-    def _build_pseudoinverse(self):
-        return Affine(np.linalg.inv(self.h_matrix))
+    def decompose(self):
+        r"""
+        Uses an SVD to decompose this transform into discrete Affine
+        Transforms.
+
+        Returns
+        -------
+        transforms: list of :class`DiscreteAffine` that
+            Equivalent to this affine transform, such that:
+
+            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
+        """
+        from .rotation import Rotation
+        from .translation import Translation
+        from .scale import Scale
+        U, S, V = np.linalg.svd(self.linear_component)
+        rotation_2 = Rotation(U)
+        rotation_1 = Rotation(V)
+        scale = Scale(S)
+        translation = Translation(self.translation_component)
+        return [rotation_1, scale, rotation_2, translation]
 
     def __eq__(self, other):
         return np.allclose(self.h_matrix, other.h_matrix)
@@ -136,8 +136,81 @@ class Affine(Homogeneous):
         return np.dot(x, self.linear_component.T) + self.translation_component
 
     @property
+    def n_parameters(self):
+        r"""
+        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
+        the homogeneous part.
+
+        :type: int
+
+        Examples
+        --------
+        2D Affine: 6 parameters::
+
+            [p1, p3, p5]
+            [p2, p4, p6]
+
+        3D Affine: 12 parameters::
+
+            [p1, p4, p7, p10]
+            [p2, p5, p8, p11]
+            [p3, p6, p9, p12]
+        """
+        return self.n_dims * (self.n_dims + 1)
+
+    def as_vector(self):
+        r"""
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. This does not
+        include the homogeneous part of the warp. Note that it flattens using
+        Fortran ordering, to stay consistent with Matlab.
+
+        **2D**
+
+        ========= ===========================================
+        parameter definition
+        ========= ===========================================
+        p1        Affine parameter
+        p2        Affine parameter
+        p3        Affine parameter
+        p4        Affine parameter
+        p5        Translation in ``x``
+        p6        Translation in ``y``
+        ========= ===========================================
+
+        3D and higher transformations follow a similar format to the 2D case.
+
+        Returns
+        -------
+        params : (P,) ndarray
+            The values that paramaterise the transform.
+        """
+        params = self.h_matrix - np.eye(self.n_dims + 1)
+        return params[:self.n_dims, :].flatten(order='F')
+
+    def from_vector_inplace(self, p):
+        r"""
+        Updates this Affine in-place from the new parameters. See
+        from_vector for details of the parameter format
+        """
+        h_matrix = None
+        if p.shape[0] is 6:  # 2D affine
+            h_matrix = np.eye(3)
+            h_matrix[:2, :] += p.reshape((2, 3), order='F')
+        elif p.shape[0] is 12:  # 3D affine
+            h_matrix = np.eye(4)
+            h_matrix[:3, :] += p.reshape((3, 4), order='F')
+        else:
+            ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
+                       "homogeneous matrices are supported.")
+        self.set_h_matrix(h_matrix)
+
+    @property
     def composes_inplace_with(self):
         return Affine
+
+    def _build_pseudoinverse(self):
+        return Affine(np.linalg.inv(self.h_matrix))
 
     def jacobian(self, points):
         r"""
@@ -218,79 +291,6 @@ class Affine(Homogeneous):
             transform is applied to.
         """
         return self.linear_component[None, ...]
-
-    @classmethod
-    def identity(cls, n_dims):
-        return Affine(np.eye(n_dims + 1))
-
-    def as_vector(self):
-        r"""
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. This does not
-        include the homogeneous part of the warp. Note that it flattens using
-        Fortran ordering, to stay consistent with Matlab.
-
-        **2D**
-
-        ========= ===========================================
-        parameter definition
-        ========= ===========================================
-        p1        Affine parameter
-        p2        Affine parameter
-        p3        Affine parameter
-        p4        Affine parameter
-        p5        Translation in ``x``
-        p6        Translation in ``y``
-        ========= ===========================================
-
-        3D and higher transformations follow a similar format to the 2D case.
-
-        Returns
-        -------
-        params : (P,) ndarray
-            The values that paramaterise the transform.
-        """
-        params = self.h_matrix - np.eye(self.n_dims + 1)
-        return params[:self.n_dims, :].flatten(order='F')
-
-    def from_vector_inplace(self, p):
-        r"""
-        Updates this Affine in-place from the new parameters. See
-        from_vector for details of the parameter format
-        """
-        h_matrix = None
-        if p.shape[0] is 6:  # 2D affine
-            h_matrix = np.eye(3)
-            h_matrix[:2, :] += p.reshape((2, 3), order='F')
-        elif p.shape[0] is 12:  # 3D affine
-            h_matrix = np.eye(4)
-            h_matrix[:3, :] += p.reshape((3, 4), order='F')
-        else:
-            ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
-                       "homogeneous matrices are supported.")
-        self.set_h_matrix(h_matrix)
-
-    def decompose(self):
-        r"""
-        Uses an SVD to decompose this transform into discrete Affine
-        Transforms.
-
-        Returns
-        -------
-        transforms: list of :class`DiscreteAffine` that
-            Equivalent to this affine transform, such that:
-
-            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
-        """
-        from .rotation import Rotation
-        from .translation import Translation
-        from .scale import Scale
-        U, S, V = np.linalg.svd(self.linear_component)
-        rotation_2 = Rotation(U)
-        rotation_1 = Rotation(V)
-        scale = Scale(S)
-        translation = Translation(self.translation_component)
-        return [rotation_1, scale, rotation_2, translation]
 
 
 class AlignmentAffine(Affine, HomogFamilyAlignment):

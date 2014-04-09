@@ -21,6 +21,14 @@ class Similarity(Affine):
         Affine.__init__(self, h_matrix)
         #TODO check that I am a similarity transform
 
+    @classmethod
+    def identity(cls, n_dims):
+        return Similarity(np.eye(n_dims + 1))
+
+    def set_h_matrix(self, value):
+        raise NotImplementedError("h_matrix cannot be set on a "
+                                  "Similarity transform")
+
     @property
     def n_parameters(self):
         r"""
@@ -48,69 +56,6 @@ class Similarity(Affine):
         else:
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
-
-    def jacobian(self, points):
-        r"""
-        Computes the Jacobian of the transform w.r.t the parameters.
-
-        The Jacobian generated (for 2D) is of the form::
-
-            x -y 1 0
-            y  x 0 1
-
-        This maintains a parameter order of::
-
-          W(x;p) = [1 + a  -b   ] [x] + tx
-                   [b      1 + a] [y] + ty
-
-        Parameters
-        ----------
-        points : (N, D) ndarray
-            The points to calculate the jacobian over
-
-        Returns
-        -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
-
-        Raises
-        ------
-        DimensionalityError
-            ``points.n_dims != self.n_dims`` or transform is not 2D
-        """
-        n_points, points_n_dim = points.shape
-        if points_n_dim != self.n_dims:
-            raise DimensionalityError('Trying to sample jacobian in incorrect '
-                                      'dimensions (transform is {0}D, '
-                                      'sampling at {1}D)'.format(self.n_dims,
-                                                                 points_n_dim))
-        elif self.n_dims != 2:
-            # TODO: implement 3D Jacobian
-            raise DimensionalityError("Only the Jacobian of a 2D similarity "
-                                      "transform is currently supported.")
-
-        # prealloc the jacobian
-        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
-        ones = np.ones_like(points)
-
-        # Build a mask and apply it to the points to build the jacobian
-        # Do this for each parameter - [a, b, tx, ty] respectively
-        self._apply_jacobian_mask(jac, np.array([1, 1]), 0, points)
-        self._apply_jacobian_mask(jac, np.array([-1, 1]), 1, points[:, ::-1])
-        self._apply_jacobian_mask(jac, np.array([1, 0]), 2, ones)
-        self._apply_jacobian_mask(jac, np.array([0, 1]), 3, ones)
-
-        return jac
-
-    def _apply_jacobian_mask(self, jac, param_mask, row_index, points):
-        # make a mask for a single points jacobian
-        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=np.bool)
-        # fill the mask in for the ith axis
-        full_mask[row_index] = [True, True]
-        # assign the ith axis points to this mask, broadcasting over all
-        # points
-        jac[:, full_mask] = points * param_mask
 
     def as_vector(self):
         r"""
@@ -198,13 +143,68 @@ class Similarity(Affine):
     def _build_pseudoinverse(self):
         return Similarity(np.linalg.inv(self.h_matrix))
 
-    @classmethod
-    def identity(cls, n_dims):
-        return Similarity(np.eye(n_dims + 1))
+    def jacobian(self, points):
+        r"""
+        Computes the Jacobian of the transform w.r.t the parameters.
 
-    def set_h_matrix(self, value):
-        raise NotImplementedError("h_matrix cannot be set on a "
-                                  "Similarity transform")
+        The Jacobian generated (for 2D) is of the form::
+
+            x -y 1 0
+            y  x 0 1
+
+        This maintains a parameter order of::
+
+          W(x;p) = [1 + a  -b   ] [x] + tx
+                   [b      1 + a] [y] + ty
+
+        Parameters
+        ----------
+        points : (N, D) ndarray
+            The points to calculate the jacobian over
+
+        Returns
+        -------
+        dW_dp : (N, P, D) ndarray
+            A (``n_points``, ``n_params``, ``n_dims``) array representing
+            the Jacobian of the transform.
+
+        Raises
+        ------
+        DimensionalityError
+            ``points.n_dims != self.n_dims`` or transform is not 2D
+        """
+        n_points, points_n_dim = points.shape
+        if points_n_dim != self.n_dims:
+            raise DimensionalityError('Trying to sample jacobian in incorrect '
+                                      'dimensions (transform is {0}D, '
+                                      'sampling at {1}D)'.format(self.n_dims,
+                                                                 points_n_dim))
+        elif self.n_dims != 2:
+            # TODO: implement 3D Jacobian
+            raise DimensionalityError("Only the Jacobian of a 2D similarity "
+                                      "transform is currently supported.")
+
+        # prealloc the jacobian
+        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
+        ones = np.ones_like(points)
+
+        # Build a mask and apply it to the points to build the jacobian
+        # Do this for each parameter - [a, b, tx, ty] respectively
+        self._apply_jacobian_mask(jac, np.array([1, 1]), 0, points)
+        self._apply_jacobian_mask(jac, np.array([-1, 1]), 1, points[:, ::-1])
+        self._apply_jacobian_mask(jac, np.array([1, 0]), 2, ones)
+        self._apply_jacobian_mask(jac, np.array([0, 1]), 3, ones)
+
+        return jac
+
+    def _apply_jacobian_mask(self, jac, param_mask, row_index, points):
+        # make a mask for a single points jacobian
+        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=np.bool)
+        # fill the mask in for the ith axis
+        full_mask[row_index] = [True, True]
+        # assign the ith axis points to this mask, broadcasting over all
+        # points
+        jac[:, full_mask] = points * param_mask
 
 
 class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
@@ -213,6 +213,8 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     dimensionality. This is simply the procrustes alignment of the
     source to the target.
 
+    Parameters
+    ----------
 
     source: :class:`menpo.shape.PointCloud`
         The source pointcloud instance used in the alignment
@@ -259,6 +261,14 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
             return translation.compose_before(scale).compose_before(
                 inv_target_translation)
 
+    def _sync_state_from_target(self):
+        similarity = self._procrustes_alignment(self.source, self.target)
+        # use Affine's h_matrix setter.
+        Affine.set_h_matrix(self, similarity.h_matrix)
+
+    def copy_without_alignment(self):
+        return Similarity(self.h_matrix.copy())
+
     def from_vector_inplace(self, p):
         r"""
         Returns an instance of the transform from the given parameters,
@@ -282,11 +292,3 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()
-
-    def _sync_state_from_target(self):
-        similarity = self._procrustes_alignment(self.source, self.target)
-        # use Affine's h_matrix setter.
-        Affine.set_h_matrix(self, similarity.h_matrix)
-
-    def copy_without_alignment(self):
-        return Similarity(self.h_matrix.copy())
