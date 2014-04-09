@@ -42,7 +42,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         else:
             self.n_iterations += 1
             for t in self.transforms:
-                t.target = new_target
+                t.set_target(new_target)
             self.target = new_target
             return self._recursive_procrustes()
 
