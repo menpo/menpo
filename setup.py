@@ -1,9 +1,6 @@
-import sys
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
-
-from buildhelpers.shaders import build_c_shaders
 
 
 # ---- C/C++ EXTENSIONS ---- #
@@ -16,33 +13,13 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
 
-
-# ---- OPENGL C EXTENSIONS ---- #
-# first, convert the plain text shaders into C string literals
-build_c_shaders()
-
-opengl_c_cython_modules = ["menpo/rasterize/copengl.pyx"]
-opengl_c_exts = cythonize(opengl_c_cython_modules, nthreads=2, quiet=True)
-
-# unfortunately, OpenGL is just different on OS X/Linux
-if sys.platform.startswith('linux'):
-    for c_ext in opengl_c_exts:
-        c_ext.libraries += ['GL', 'GLU', 'glfw']
-elif sys.platform == 'darwin':
-    for c_ext in opengl_c_exts:
-        c_ext.libraries += ['glfw3']
-        # TODO why does it compile without these on OS X?!
-        #c_ext.extra_compile_args += ['-framework OpenGL',
-        #                             '-framework Cocoa', '-framework IOKit',
-        #                             '-framework CoreVideo']
-
 setup(name='menpo',
       version='0.2',
       description='iBUG Facial Modelling Toolkit',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=[np.get_include()],
-      ext_modules=cython_exts + opengl_c_exts,
+      ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=[# Core
                         'numpy>=1.8.0',
@@ -55,7 +32,10 @@ setup(name='menpo',
 
                         # 3D import
                         'menpo-pyvrml97==2.3.0a4',
-                        'cyassimp>=0.1.2',
+                        'cyassimp>=0.1.3',
+
+                        # Rasterization
+                        'cyrasterize>=0.1.4',
 
                         # Visualization
                         'matplotlib>=1.2.1',
