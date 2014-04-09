@@ -5,49 +5,10 @@ from menpo.transform.base import Transform
 
 class ComposableTransform(Transform):
     r"""
-    Mixin for Transform objects that can be composed together, such that
-    behavior of multiple Transforms is compounded together in some way.
+    Transform subclass that enables native composition, such that
+    behavior of multiple Transforms is compounded together in a natural
+    way.
 
-    There are two useful forms of composition. Firstly, the mathematical
-    composition symbol `o` has the definition
-
-        let a(x) and b(x) be two transforms on x.
-        (a o b)(x) == a(b(x))
-
-    This functionality is provided by the compose_after() family of methods.
-
-        (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
-
-    Equally useful is an inversion the order of composition - so that over
-    time a large chains of transforms can be built up that do a useful job,
-    and composing on this chain adds another transform to the end (after all
-    other preceding transforms have been performed).
-
-    For instance, let's say we want to rescale a
-    :class:`menpo.shape.PointCloud` p around it's mean, and then translate
-    it some place else. It would be nice to be able to do something like
-
-        t = Translation(-p.centre)  # translate to centre
-        s = Scale(2.0)  # rescale
-        move = Translate([10, 0 ,0]) # budge along the x axis
-
-        t.compose(s).compose(-t).compose(move)
-
-    in Menpo, this functionality is provided by the compose_before() family
-    of methods.
-
-        (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
-
-    within each family there are two methods, some of which may provide
-    performance benefits for certain situations. they are
-
-        compose_x(transform)
-        compose_x_inplace(transform)
-
-    where x = {after, before}
-
-    See specific subclasses for more information about the performance of
-    these methods.
     """
 
     @abc.abstractproperty
@@ -229,19 +190,8 @@ class TransformChain(ComposableTransform):
         transform and so on until the chain is exhausted.
 
     """
-
-    def _compose_before_inplace(self, transform):
-        self.transforms.append(transform)
-
-    def _compose_after_inplace(self, transform):
-        self.transforms.insert(0, transform)
-
-    @property
-    def composes_inplace_with(self):
-        return Transform
-
     def __init__(self, transforms):
-
+        # TODO for now we don't copy, important to come back and evaluate
         self.transforms = transforms
 
     def _apply(self, x, **kwargs):
@@ -258,3 +208,13 @@ class TransformChain(ComposableTransform):
             Transformed array having passed through the chain of transforms.
         """
         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
+
+    @property
+    def composes_inplace_with(self):
+        return Transform
+
+    def _compose_before_inplace(self, transform):
+        self.transforms.append(transform)
+
+    def _compose_after_inplace(self, transform):
+        self.transforms.insert(0, transform)

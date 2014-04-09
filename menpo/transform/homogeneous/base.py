@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 from menpo.base import Vectorizable
-from menpo.transform.base import (ComposableTransform, Alignment,
+from menpo.transform.base import (Alignment, ComposableTransform,
                                   VComposable, VInvertible)
 
 
@@ -32,9 +32,14 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     ----------
     h_matrix : (n_dims + 1, n_dims + 1) ndarray
         The homogeneous matrix to be applied.
+
     """
     def __init__(self, h_matrix):
         self._h_matrix = h_matrix.copy()
+
+    @classmethod
+    def identity(cls, n_dims):
+        return Homogeneous(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
@@ -60,10 +65,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         h_y = h_x.dot(self.h_matrix.T)
         # normalize and return
         return (h_y / h_y[:, -1][:, None])[:, :-1]
-
-    @classmethod
-    def identity(cls, n_dims):
-        return Homogeneous(np.eye(n_dims + 1))
 
     def as_vector(self):
         return self.h_matrix.flatten()

@@ -53,6 +53,10 @@ class Rotation(DiscreteAffine, Similarity):
         Similarity.__init__(self, h_matrix)
         self.set_rotation_matrix(rotation_matrix)
 
+    @classmethod
+    def identity(cls, n_dims):
+        return Rotation(np.eye(n_dims))
+
     @property
     def rotation_matrix(self):
         r"""
@@ -73,15 +77,6 @@ class Rotation(DiscreteAffine, Similarity):
         # TODO actually check I am a valid rotation
         # TODO slightly dodgey here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value
-
-    @property
-    def pseudoinverse(self):
-        r"""
-        The inverse rotation matrix.
-
-        :type: (D, D) ndarray
-        """
-        return Rotation(np.linalg.inv(self.rotation_matrix))
 
     def _transform_str(self):
         axis, rad_angle_of_rotation = self.axis_and_angle_of_rotation()
@@ -227,13 +222,18 @@ class Rotation(DiscreteAffine, Similarity):
         """
         raise NotImplementedError("Rotations are not yet vectorizable")
 
-    @classmethod
-    def identity(cls, n_dims):
-        return Rotation(np.eye(n_dims))
-
     @property
     def composes_inplace_with(self):
         return Rotation
+
+    @property
+    def pseudoinverse(self):
+        r"""
+        The inverse rotation matrix.
+
+        :type: (D, D) ndarray
+        """
+        return Rotation(np.linalg.inv(self.rotation_matrix))
 
 
 class AlignmentRotation(HomogFamilyAlignment, Rotation):

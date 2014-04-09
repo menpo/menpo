@@ -7,22 +7,6 @@ class Invertible(object):
     taking the psuedo or true inverse of a transform.
     """
 
-    @abc.abstractmethod
-    def _build_pseudoinverse(self):
-        r"""
-        Returns this transform's inverse if it has one. if not,
-        the pseduoinverse is given.
-
-        This method is called by the pseudoinverse property and must be
-        overridden.
-
-
-        Returns
-        -------
-        pseudoinverse: type(self)
-        """
-        pass
-
     @abc.abstractproperty
     def has_true_inverse(self):
         r"""
@@ -43,6 +27,22 @@ class Invertible(object):
         :type: :class:`Transform`
         """
         return self._build_pseudoinverse()
+
+    @abc.abstractmethod
+    def _build_pseudoinverse(self):
+        r"""
+        Returns this transform's inverse if it has one. if not,
+        the pseduoinverse is given.
+
+        This method is called by the pseudoinverse property and must be
+        overridden.
+
+
+        Returns
+        -------
+        pseudoinverse: type(self)
+        """
+        pass
 
 
 class VInvertible(Invertible):

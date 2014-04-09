@@ -21,6 +21,14 @@ class Translation(DiscreteAffine, Similarity):
         h_matrix[:-1, -1] = translation
         Similarity.__init__(self, h_matrix)
 
+    @classmethod
+    def identity(cls, n_dims):
+        return Translation(np.zeros(n_dims))
+
+    def _transform_str(self):
+        message = 'Translate by %s ' % self.translation_component
+        return message
+
     @property
     def n_parameters(self):
         r"""
@@ -29,18 +37,6 @@ class Translation(DiscreteAffine, Similarity):
         :type: int
         """
         return self.n_dims
-
-    def _build_pseudoinverse(self):
-        r"""
-        The inverse translation (negated).
-
-        :return: :class:`Translation`
-        """
-        return Translation(-self.translation_component)
-
-    def _transform_str(self):
-        message = 'Translate by %s ' % self.translation_component
-        return message
 
     def as_vector(self):
         r"""
@@ -67,9 +63,13 @@ class Translation(DiscreteAffine, Similarity):
     def from_vector_inplace(self, p):
         self.h_matrix[:-1, -1] = p
 
-    @classmethod
-    def identity(cls, n_dims):
-        return Translation(np.zeros(n_dims))
+    def _build_pseudoinverse(self):
+        r"""
+        The inverse translation (negated).
+
+        :return: :class:`Translation`
+        """
+        return Translation(-self.translation_component)
 
 
 class AlignmentTranslation(HomogFamilyAlignment, Translation):

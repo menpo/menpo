@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import abc
 import numpy as np
 from menpo.transform import Scale, AlignmentSimilarity
-from menpo.transform.pdm import PDM, OrthoPDM
+from menpo.model.pdm import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 from menpo.fit.regression.trainer import NonParametricRegressorTrainer, \
     SemiParametricClassifierBasedRegressorTrainer, ParametricRegressorTrainer
