@@ -75,6 +75,7 @@ class CLMFitter(MultilevelFitter):
 
 
 # TODO: document me
+# TODO: Residuals (SSD) is not used at the moment
 class GradientDescentCLMFitter(CLMFitter):
     r"""
     Gradient Descent based Fitter for Constrained Local Models.

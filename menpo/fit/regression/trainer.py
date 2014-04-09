@@ -250,24 +250,3 @@ class SemiParametricClassifierBasedRegressorTrainer(
     def _build_regressor(self, regressor, features, ):
         return SemiParametricRegressor(regressor, features, self.transform,
                                        self.update)
-
-
-#TODO: document me
-class NonParametricSOARegressorTrainer(NonParametricRegressorTrainer):
-    r"""
-    """
-    def __init__(self, reference_shape, regression_type=mlr,
-                 regression_features=sparse_hog, patch_shape=(16, 16),
-                 noise_std=0.04, rotation=False, n_perturbations=10):
-        super(NonParametricSOARegressorTrainer, self).__init__(
-            reference_shape, regression_type=regression_type,
-            regression_features=regression_features, patch_shape=patch_shape,
-            noise_std=noise_std, rotation=rotation,
-            n_perturbations=n_perturbations)
-
-    def features(self, image, shape):
-        patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [compute_features(p,
-                                     self.regression_features).pixels.ravel()
-                    for p in patches]
-        return np.hstack((np.asarray(features).ravel(), shape.as_vector(), 1))

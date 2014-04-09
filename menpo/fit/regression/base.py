@@ -59,7 +59,7 @@ class NonParametricRegressor(Regressor):
 #TODO: Document me
 class SemiParametricRegressor(Regressor):
 
-    def __init__(self, regressor, features, transform, update='additive'):
+    def __init__(self, regressor, features, transform, update='composition'):
         super(SemiParametricRegressor, self).__init__(
             regressor, features)
         self.transform = transform
@@ -100,7 +100,7 @@ class SemiParametricRegressor(Regressor):
 class ParametricRegressor(SemiParametricRegressor):
 
     def __init__(self, regressor, features, appearance_model, transform,
-                 update='additive'):
+                 update='composition'):
         super(ParametricRegressor, self).__init__(
             regressor, features, transform, update=update)
         self.appearance_model = appearance_model
