@@ -3,7 +3,8 @@ import copy
 import numpy as np
 
 from menpo.base import Vectorizable
-from menpo.transform.base import ComposableTransform, VInvertible, Alignment
+from menpo.transform.base import (ComposableTransform, Alignment,
+                                  VComposable, VInvertible)
 
 
 class HomogFamilyAlignment(Alignment):
@@ -16,7 +17,7 @@ class HomogFamilyAlignment(Alignment):
         pass
 
 
-class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
+class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     r"""
     A simple n-dimensional homogeneous transformation.
 
@@ -77,6 +78,9 @@ class Homogeneous(ComposableTransform, Vectorizable, VInvertible):
         subclasses will have to override and be more specific.
         """
         return Homogeneous
+
+    def compose_after_from_vector_inplace(self, vector):
+        self.compose_after_inplace(self.from_vector(vector))
 
     @property
     def composes_with(self):

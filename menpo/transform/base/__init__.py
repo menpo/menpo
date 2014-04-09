@@ -216,6 +216,6 @@ class Transformable(object):
         return copy_of_self
 
 
-from .composable import ComposableTransform, TransformChain
+from .composable import ComposableTransform, VComposable, TransformChain
 from .invertable import Invertible, VInvertible
 from .alignment import Alignment

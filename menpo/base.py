@@ -75,16 +75,6 @@ class Vectorizable(object):
         return self_copy
 
 
-class VectorizableUpdatable(Vectorizable):
-
-    @abc.abstractmethod
-    def update_from_vector_inplace(self, delta):
-        r"""
-        Additively update this object with a delta vector inplace.
-        """
-        pass
-
-
 class Targetable(object):
     r"""
     Interface for objects that can produce a 'target' PointCloud - which

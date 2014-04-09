@@ -95,7 +95,7 @@ class GradientDescentCLMFitter(CLMFitter):
 
         Default: 'SSD'
 
-    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+    pdm: :class:`menpo.transform.ModelDrivenTransform`, optional
         The point distribution transform class to be used.
 
         Default: OrthoPDMTransform
@@ -154,7 +154,7 @@ class GradientDescentCLMFitter(CLMFitter):
 
             Default: 'SSD'
 
-        pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+        pdm: :class:`menpo.transform.ModelDrivenTransform`, optional
             The point distribution transform class to be used.
 
             Default: OrthoPDMTransform

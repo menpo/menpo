@@ -1,12 +1,11 @@
 from copy import deepcopy
 import numpy as np
-from menpo.base import Targetable, VectorizableUpdatable
+from menpo.base import Targetable, Vectorizable
 from menpo.model import Similarity2dInstanceModel
-from .base import VInvertible
 
 
 # TODO: document me
-class PDM(Targetable, VectorizableUpdatable, VInvertible):
+class PDM(Targetable, Vectorizable):
     r"""
     """
     def __init__(self, model):
@@ -114,43 +113,6 @@ class PDM(Targetable, VectorizableUpdatable, VInvertible):
         """
         self._weights = vector
         self._sync_target_from_state()
-
-    def update_from_vector_inplace(self, delta):
-        r"""
-        Additively update this object with a delta vector inplace.
-        """
-        self.from_vector_inplace(self.as_vector() + delta)
-
-    @property
-    def has_true_inverse(self):
-        return True
-
-    def _build_pseudoinverse(self):
-        return self.from_vector(-self.as_vector())
-
-    def pseudoinverse_vector(self, vector):
-        r"""
-        The vectorized pseudoinverse of a provided vector instance.
-
-        Syntactic sugar for
-
-        self.from_vector(vector).pseudoinverse.as_vector()
-
-        On ModelDrivenTransform this is especially fast - we just negate the
-        vector provided.
-
-        Parameters
-        ----------
-        vector :  (P,) ndarray
-            A vectorized version of self
-
-        Returns
-        -------
-        pseudoinverse_vector : (N,) ndarray
-            The pseudoinverse of the vector provided
-        """
-        # just have to negate the parameters!
-        return -vector
 
     # TODO: document me
     def jacobian(self, points):

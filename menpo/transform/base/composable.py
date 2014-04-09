@@ -206,6 +206,13 @@ class ComposableTransform(Transform):
         pass
 
 
+class VComposable(object):
+
+    @abc.abstractmethod
+    def compose_after_from_vector_inplace(self, vector):
+        pass
+
+
 class TransformChain(ComposableTransform):
     r"""
     A chain of transforms that can be efficiently applied one after the other.

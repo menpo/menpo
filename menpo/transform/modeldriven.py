@@ -1,14 +1,12 @@
 import numpy as np
-from menpo.base import Vectorizable
-from menpo.transform.pdm import (PDM, GlobalPDM,
-                                 OrthoPDM)
+from menpo.transform.pdm import PDM, GlobalPDM, OrthoPDM
 
-from menpo.base import VectorizableUpdatable, Targetable
-from menpo.model import Similarity2dInstanceModel
-from .base import Transform, VInvertible
+from menpo.base import Targetable, Vectorizable
+from .base import Transform, VInvertible, VComposable
 
-class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
-                           Targetable):
+
+class ModelDrivenTransform(Transform, Targetable, Vectorizable,
+                           VComposable, VInvertible):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -42,20 +40,12 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
         Default: 'both'
     """
 
-    def composes_inplace_with(self):
-        return ModelDrivenTransform
-
     #TODO: Rethink this transform so it knows how to deal with complex shapes
-    def __init__(self, model, transform, source=None, weights=None,
-                 composition='both'):
-        super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = PDM(model, weights=weights)
-        if source is None:
-            source = self.pdm_transform.source
-        self._source = source
+    def __init__(self, model, transform_cls, source=None):
+        self.pdm = PDM(model)
         self._cached_points = None
-        self.composition = composition
-        self.transform = transform.align(self.source, self.target)
+        self.transform = transform_cls(source, self.target)
+
 
     @property
     def n_dims(self):
@@ -64,150 +54,7 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
 
         :type: int
         """
-        return self.pdm_transform.n_dims
-
-    @property
-    def n_parameters(self):
-        r"""
-        The total number of parameters.
-
-        Simply ``n_weights``.
-
-        :type: int
-        """
-        return self.pdm_transform.n_parameters
-
-    @property
-    def n_weights(self):
-        r"""
-        The number of parameters in the linear model.
-
-        :type: int
-        """
-        return self.pdm_transform.n_weights
-
-    @property
-    def has_true_inverse(self):
-        return False
-
-    def _build_pseudoinverse(self):
-        return self.from_vector(-self.as_vector())
-
-    @property
-    def weights(self):
-        return self.pdm_transform.weights
-
-    @weights.setter
-    def weights(self, value):
-        r"""
-        Setting the weights value automatically triggers a recalculation of
-        the target, and an update of the transform
-        """
-        self.pdm_transform.weights = value
-        self.transform.target = self.target
-
-    @Alignable.target.getter
-    def target(self):
-        return self.pdm_transform.target
-
-    def jacobian(self, points):
-        """
-        Calculates the Jacobian of the ModelDrivenTransform wrt to
-        its weights (the weights). This is done by chaining the relative
-        weight of each point wrt the source landmarks, i.e. the Jacobian of
-        the warp wrt the source landmarks when the target is assumed to be
-        equal to the source (dW/dx), together with the Jacobian of the
-        linear model  wrt its weights (dX/dp).
-
-        Parameters
-        -----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the ModelDrivenTransform evaluated at the
-            previous points.
-        """
-        # check if re-computation of dW/dx can be avoided
-        if not np.array_equal(self._cached_points, points):
-            # recompute dW/dx, i.e. the relative weight of each point wrt
-            # the source landmarks
-            self.dW_dX = self.transform.weight_points(points)
-            # cache points
-            self._cached_points = points
-
-        # dX/dp is simply the Jacobian of the model
-        dX_dp = self.pdm_transform.model.jacobian
-
-        # dW_dX:    n_points   x    n_points    x  n_dims
-        # dX_dp:  n_points  x     n_params      x  n_dims
-        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
-        # dW_dp:    n_points   x     n_params      x  n_dims
-
-        return dW_dp
-
-    # TODO: document me
-    def jacobian_points(self, points):
-        r"""
-        TO BE DOCUMENTED
-
-        Returns
-        -------
-        dW_dx : (N, D, D) ndarray
-            The jacobian with respect to the points
-        """
-        pass
-
-    def as_vector(self):
-        r"""
-        Return the current weights of this transform - this is the
-        just the linear model's weights
-
-        Returns
-        -------
-        params : (``n_parameters``,) ndarray
-            The vector of weights
-        """
-        return self.pdm_transform.as_vector()
-
-    def from_vector_inplace(self, vector):
-        r"""
-        Updates the ModelDrivenTransform's state from it's
-        vectorized form.
-        """
-        self.weights = vector
-
-    def _target_setter(self, new_target):
-        r"""
-        On a new target being set, we need to:
-
-        1. Find the optimum weights that align the model to this target,
-        and set them as self.weights.
-
-        2. Update the transform to point to the closest target that the
-        model can provide to the requested target
-
-        3. Set our target to the closest target that the model can provide
-        to the requested target.
-
-        Parameters
-        ----------
-
-        new_target: :class:`PointCloud`
-            The new_target that we want to set.
-        """
-        self.pdm_transform.target = new_target
-        self.transform.target = self.target
-
-    def _sync_state_from_target(self):
-        pass
-
-    @property
-    def target(self):
-        pass
-
+        return self.pdm.n_dims
 
     def _apply(self, x, **kwargs):
         r"""
@@ -227,12 +74,75 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
         """
         return self.transform._apply(x, **kwargs)
 
-    def update_from_vector_inplace(self, delta):
+    @property
+    def target(self):
+        return self.pdm.target
+
+    def _new_target_from_state(self):
+        # We delegate to PDM to handle all our Targetable duties. As a
+        # result, *we* never need to call _sync_target_for_state, so we have
+        # no need for an implementation of this method. Of course the
+        # interface demands it, so the stub is here. Contrast with
+        # _target_setter, which is required, because we will have to handle
+        # external calls to set_target().
+        pass
+
+    def _target_setter(self, new_target):
+        r"""
+        On a new target being set, we need to:
+
+        Parameters
+        ----------
+
+        new_target: :class:`PointCloud`
+            The new_target that we want to set.
+        """
+        self.pdm.set_target(new_target)
+
+    def _sync_state_from_target(self):
+        # Let the pdm update its state
+        self.pdm._sync_state_from_target()
+        # and update our transform to the new state
+        self.transform.set_target(self.target)
+
+    @property
+    def n_parameters(self):
+        r"""
+        The total number of parameters.
+
+        Simply ``n_weights``.
+
+        :type: int
+        """
+        return self.pdm.n_parameters
+
+    def as_vector(self):
+        r"""
+        Return the current weights of this transform - this is the
+        just the linear model's weights
+
+        Returns
+        -------
+        params : (``n_parameters``,) ndarray
+            The vector of weights
+        """
+        return self.pdm.as_vector()
+
+    def from_vector_inplace(self, vector):
+        r"""
+        Updates the ModelDrivenTransform's state from it's
+        vectorized form.
+        """
+        self.pdm.from_vector_inplace(vector)
+        # By here the pdm has updated our target state, we just need to
+        # update the transform
+        self.transform.set_target(self.target)
+
+    def compose_after_from_vector_inplace(self, delta):
         r"""
 
-        compose_after this :class:`ModelDrivenTransform` with another inplace.
-        Rather than requiring a new ModelDrivenTransform to compose_after
-        with, this method only requires the weights of the new transform.
+        Composes two ModelDrivenTransforms together based on the
+        first order approximation proposed by Papandreou and Maragos in [1].
 
         Parameters
         ----------
@@ -244,84 +154,7 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
         --------
         transform : self
             self, updated to the result of the composition
-        """
-        if self.composition is 'model':
-            new_mdtransform = self.from_vector(delta)
-            self.target = self._compose_after_model(new_mdtransform.target)
-        elif self.composition is 'warp':
-            new_mdtransform = self.from_vector(delta)
-            self.target = self._compose_after_warp(new_mdtransform.target)
-        elif self.composition is 'both':
-            self.from_vector_inplace(self._compose_after_both(delta))
-        else:
-            raise ValueError('Unknown composition string selected. Valid'
-                             'options are: model, warp, both')
 
-    def _compose_after_model(self, other_target):
-        r"""
-        Composes two statistically driven transforms together.
-
-        Parameters
-        ----------
-        other_target : :class:`PointCloud`
-            the target of the ModelDrivenTransform we are
-            composing with.
-
-        Returns
-        -------
-
-        target: :class:`PointCloud`
-            The new target of the composed result
-        """
-        model_variation = self.target.points - self.model.mean.points
-        composed_target = model_variation + other_target.points
-        from menpo.shape import PointCloud
-        return PointCloud(composed_target)
-
-    # TODO: The call to transform.apply_inplace will not work properly for PWA
-    #   - Define a new function in TPS & PWA called .apply_to_target
-    #   - For TPS this function should ne the same as the normal .apply_inplace()
-    #     method
-    #   - For PWA it should implement Bakers algorithmic approach to
-    #     composition
-    def _compose_after_warp(self, other_target):
-        r"""
-        Composes two statistically driven transforms together. This approach
-        composes the
-
-        Parameters
-        ----------
-        other_target : :class:`PointCloud`
-            the target of the ModelDrivenTransform we are
-            composing with.
-
-        Returns
-        -------
-
-        target: :class:`PointCloud`
-            The new target of the composed result
-        """
-        return self.transform.apply(other_target)
-
-    def _compose_after_both(self, mdt_vector):
-        r"""
-        Composes two statistically driven transforms together based on the
-        first order approximation proposed by Papandreou and Maragos in [1].
-
-        The resulting vector of weights is equivalent to
-
-            self.compose_after_from_vector(mdt_vector)
-
-        Parameters
-        ----------
-        mdt_vector : (P,) ndarray
-            the weights of the ModelDrivenTransform we are
-            composing with, as provided by .as_vector().
-
-        Returns
-        -------
-        vector: (P,) ndarray
-            The new weights of the composed result
 
         References
         ----------
@@ -330,9 +163,9 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        model_jacobian = self.pdm_transform.model.jacobian
-        points = self.pdm_transform.model.mean.points
-        n_points = self.pdm_transform.model.mean.n_points
+        model_jacobian = self.pdm.model.jacobian
+        points = self.pdm.model.mean.points
+        n_points = self.pdm.model.mean.n_points
 
         # compute:
         # -> dW/dp when p=0
@@ -367,7 +200,15 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, mdt_vector)
+        self.from_vector_inplace(self.as_vector() + np.dot(Jp, delta))
+        return self
+
+    @property
+    def has_true_inverse(self):
+        return False
+
+    def _build_pseudoinverse(self):
+        return self.from_vector(-self.as_vector())
 
     def pseudoinverse_vector(self, vector):
         r"""
@@ -390,9 +231,48 @@ class ModelDrivenTransform(Transform, VectorizableUpdatable, VInvertible,
         pseudoinverse_vector : (N,) ndarray
             The pseudoinverse of the vector provided
         """
-        return self.pdm_transform.pseudoinverse_vector(vector)
+        return self.pdm.pseudoinverse_vector(vector)
+
+    def jacobian(self, points):
+        """
+        Calculates the Jacobian of the ModelDrivenTransform wrt to
+        its weights (the weights). This is done by chaining the relative
+        weight of each point wrt the source landmarks, i.e. the Jacobian of
+        the warp wrt the source landmarks when the target is assumed to be
+        equal to the source (dW/dx), together with the Jacobian of the
+        linear model  wrt its weights (dX/dp).
+
+        Parameters
+        -----------
+        points: (N, D) ndarray
+            The points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the ModelDrivenTransform evaluated at the
+            previous points.
+        """
+        # check if re-computation of dW/dx can be avoided
+        if not np.array_equal(self._cached_points, points):
+            # recompute dW/dx, i.e. the relative weight of each point wrt
+            # the source landmarks
+            self.dW_dX = self.transform.weight_points(points)
+            # cache points
+            self._cached_points = points
+
+        # dX/dp is simply the Jacobian of the model
+        dX_dp = self.pdm.model.jacobian
+
+        # dW_dX:    n_points   x    n_points    x  n_dims
+        # dX_dp:  n_points  x     n_params      x  n_dims
+        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
+        # dW_dp:    n_points   x     n_params      x  n_dims
+
+        return dW_dp
 
 
+# noinspection PyMissingConstructor
 class GlobalMDTransform(ModelDrivenTransform):
     r"""
     A transform that couples an alignment transform to a
@@ -435,141 +315,28 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         Default: `both`
     """
-    def __init__(self, model, transform, global_transform, source=None,
-                 weights=None, composition='both'):
-        super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = GlobalPDM(model, global_transform,
-                                                weights=weights)
-        if source is None:
-            source = self.pdm_transform.source
-        self._source = source
+    def __init__(self, model, transform_cls, global_transform, source=None):
+        self.pdm = GlobalPDM(model, global_transform)
         self._cached_points = None
-        self.composition = composition
-        self.transform = transform.align(self.source, self.target)
+        self.transform = transform_cls(source, self.target)
 
-    @property
-    def n_global_parameters(self):
+    def compose_after_from_vector_inplace(self, delta):
         r"""
-        The number of weights in the ``global_transform``
 
-        :type: int
-        """
-        return self.pdm_transform.n_global_parameters
-
-    @property
-    def global_parameters(self):
-        r"""
-        The weights for the global transform.
-
-        :type: (``n_global_parameters``,) ndarray
-        """
-        return self.pdm_transform.global_parameters
-
-    def jacobian(self, points):
-        """
-        Calculates the Jacobian of the ModelDrivenTransform wrt to
-        its weights (the weights). This is done by chaining the relative
-        weight of each point wrt the source landmarks, i.e. the Jacobian of
-        the warp wrt the source landmarks when the target is assumed to be
-        equal to the source (dW/dx), together with the Jacobian of the
-        linear model (and of the global transform if present) wrt its
-        weights (dX/dp).
-
-        Parameters
-        -----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the ModelDrivenTransform evaluated at the
-            previous points.
-        """
-        # check if re-computation of dW/dx can be avoided
-        if not np.array_equal(self._cached_points, points):
-            # recompute dW/dx, i.e. the relative weight of each point wrt
-            # the source landmarks
-            self.dW_dX = self.transform.weight_points(points)
-            # cache points
-            self._cached_points = points
-
-        model_jacobian = self.pdm_transform.model.jacobian
-        points = self.pdm_transform.model.mean.points
-
-        # compute dX/dp
-
-        # dX/dq is the Jacobian of the global transform evaluated at the
-        # mean of the model.
-        dX_dq = self._global_transform_jacobian(points)
-        # dX_dq:  n_points  x  n_global_params  x  n_dims
-
-        # by application of the chain rule dX_db is the Jacobian of the
-        # model transformed by the linear component of the global transform
-        dS_db = model_jacobian
-        dX_dS = self.pdm_transform.global_transform.jacobian_points(points)
-        dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
-        # dS_db:  n_points  x     n_weights     x  n_dims
-        # dX_dS:  n_points  x     n_dims        x  n_dims
-        # dX_db:  n_points  x     n_weights     x  n_dims
-
-        # dX/dp is simply the concatenation of the previous two terms
-        dX_dp = np.hstack((dX_dq, dX_db))
-
-        # dW_dX:    n_points   x    n_points    x  n_dims
-        # dX_dp:  n_points  x     n_params      x  n_dims
-        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
-        # dW_dp:    n_points   x     n_params      x  n_dims
-
-        return dW_dp
-
-    def _global_transform_jacobian(self, points):
-        return self.pdm_transform.global_transform.jacobian(points)
-
-    def from_vector_inplace(self, vector):
-        self.pdm_transform.from_vector_inplace(vector)
-        self.transform.target = self.target
-
-    def _compose_after_model(self, other_target):
-        r"""
-        Composes two statistically driven transforms together.
+        Composes two ModelDrivenTransforms together based on the
+        first order approximation proposed by Papandreou and Maragos in [1].
 
         Parameters
         ----------
-        other_target : :class:`PointCloud`
-            the target of the ModelDrivenTransform we are
-            composing with.
+        delta : (N,) ndarray
+            Vectorized :class:`ModelDrivenTransform` to be applied **before**
+            self
 
         Returns
-        -------
+        --------
+        transform : self
+            self, updated to the result of the composition
 
-        target: :class:`PointCloud`
-            The new target of the composed result
-        """
-        model_variation = (
-            self.global_transform.pseudoinverse.apply(self.target.points) -
-            self.model.mean.points)
-        composed_target = self.global_transform.apply(
-            model_variation + other_target.points)
-        from menpo.shape import PointCloud
-        return PointCloud(composed_target)
-
-    def _compose_after_both(self, mdt_vector):
-        r"""
-        Composes two statistically driven transforms together based on the
-        first order approximation proposed by Papandreou and Maragos.
-
-        Parameters
-        ----------
-        new_sdt_parameters : (P,) ndarray
-            the weights of the ModelDrivenTransform we are
-            composing with, as provided by .as_vector().
-
-        Returns
-        -------
-
-        weights: (P,) ndarray
-            The new weights of the composed result
 
         References
         ----------
@@ -578,9 +345,9 @@ class GlobalMDTransform(ModelDrivenTransform):
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        model_jacobian = self.pdm_transform.model.jacobian
-        points = self.pdm_transform.model.mean.points
-        n_points = self.pdm_transform.model.mean.n_points
+        model_jacobian = self.pdm.model.jacobian
+        points = self.pdm.model.mean.points
+        n_points = self.pdm.model.mean.n_points
 
         # compute:
         # -> dW/dp when p=0
@@ -605,7 +372,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-        dW_dS = self.pdm_transform.global_transform.jacobian_points(points)
+        dW_dS = self.pdm.global_transform.jacobian_points(points)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
         # dW_dS:  n_points  x      n_dims       x  n_dims
         # dW_db:  n_points  x     n_weights     x  n_dims
@@ -636,9 +403,71 @@ class GlobalMDTransform(ModelDrivenTransform):
         Jp = np.linalg.solve(H, J)
         # Jp:  n_params  x  n_params
 
-        return self.as_vector() + np.dot(Jp, mdt_vector)
+        self.from_vector_inplace(self.as_vector() + np.dot(Jp, delta))
+
+    def _global_transform_jacobian(self, points):
+        return self.pdm.global_transform.jacobian(points)
+
+    def jacobian(self, points):
+        """
+        Calculates the Jacobian of the ModelDrivenTransform wrt to
+        its weights (the weights). This is done by chaining the relative
+        weight of each point wrt the source landmarks, i.e. the Jacobian of
+        the warp wrt the source landmarks when the target is assumed to be
+        equal to the source (dW/dx), together with the Jacobian of the
+        linear model (and of the global transform if present) wrt its
+        weights (dX/dp).
+
+        Parameters
+        -----------
+        points: (N, D) ndarray
+            The points at which the Jacobian will be evaluated.
+
+        Returns
+        -------
+        dW/dp : (N, P, D) ndarray
+            The Jacobian of the ModelDrivenTransform evaluated at the
+            previous points.
+        """
+        # check if re-computation of dW/dx can be avoided
+        if not np.array_equal(self._cached_points, points):
+            # recompute dW/dx, i.e. the relative weight of each point wrt
+            # the source landmarks
+            self.dW_dX = self.transform.weight_points(points)
+            # cache points
+            self._cached_points = points
+
+        model_jacobian = self.pdm.model.jacobian
+        points = self.pdm.model.mean.points
+
+        # compute dX/dp
+
+        # dX/dq is the Jacobian of the global transform evaluated at the
+        # mean of the model.
+        dX_dq = self._global_transform_jacobian(points)
+        # dX_dq:  n_points  x  n_global_params  x  n_dims
+
+        # by application of the chain rule dX_db is the Jacobian of the
+        # model transformed by the linear component of the global transform
+        dS_db = model_jacobian
+        dX_dS = self.pdm.global_transform.jacobian_points(points)
+        dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
+        # dS_db:  n_points  x     n_weights     x  n_dims
+        # dX_dS:  n_points  x     n_dims        x  n_dims
+        # dX_db:  n_points  x     n_weights     x  n_dims
+
+        # dX/dp is simply the concatenation of the previous two terms
+        dX_dp = np.hstack((dX_dq, dX_db))
+
+        # dW_dX:    n_points   x    n_points    x  n_dims
+        # dX_dp:  n_points  x     n_params      x  n_dims
+        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
+        # dW_dp:    n_points   x     n_params      x  n_dims
+
+        return dW_dp
 
 
+# noinspection PyMissingConstructor
 class OrthoMDTransform(GlobalMDTransform):
     r"""
     A transform that couples an alignment transform to a
@@ -677,26 +506,11 @@ class OrthoMDTransform(GlobalMDTransform):
     source : :class:`menpo.shape.base.PointCloud`, optional
         The source landmarks of the transform. If no ``source`` is provided the
         mean of the model is used.
-    weights : (P,) ndarray, optional
-        The reconstruction weights that will be fed to the model in order to
-        generate an instance of the target landmarks.
-    composition: 'both', 'warp' or 'model', optional
-        The composition approximation employed by this
-        ModelDrivenTransform.
-
-        Default: `both`
     """
-    def __init__(self, model, transform, global_transform, source=None,
-                 weights=None, composition='both'):
-        super(ModelDrivenTransform, self).__init__()
-        self.pdm_transform = OrthoPDM(model, global_transform,
-                                               weights=weights)
-        if source is None:
-            source = self.pdm_transform.source
-        self._source = source
+    def __init__(self, model, transform_cls, global_transform, source=None):
+        self.pdm = OrthoPDM(model, global_transform)
         self._cached_points = None
-        self.composition = composition
-        self.transform = transform.align(self.source, self.target)
+        self.transform = transform_cls(source, self.target)
 
     def _global_transform_jacobian(self, points):
-        return self.pdm_transform.similarity_model.jacobian
+            return self.pdm.similarity_model.jacobian
