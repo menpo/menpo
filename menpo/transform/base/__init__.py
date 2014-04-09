@@ -7,11 +7,12 @@ class Transform(object):
     An abstract representation of any spatial transform.
     Provides a unified interface to apply the transform with
     :meth:`apply_inplace` and :meth:`apply`. All Transforms support basic
-    composition to form TransformChains.
+    composition to form :class:`TransformChain`.
 
-    For native composition, see the Composition and VComposition mix-ins.
-    For inversion, see the Invertable and VInvertable mix-ins.
-    For alignment, see the Alignable and PureAlignment mix-ins.
+    For native composition, see the :class:`ComposableTransform` subclass and
+    the :class:`VComposition` mix-in.
+    For inversion, see the :class:`Invertable` and :class:`VInvertable` mix-ins.
+    For alignment, see the :class:`Alignment` mix in.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -61,9 +62,6 @@ class Transform(object):
         transformation will be non destructive, returning the transformed
         version. Any ``kwargs`` will be passed to the specific transform
         :meth:`_apply` methods.
-
-        If you wish to apply a Transform to a Transformable in a nondestructive
-        manor, use the nondestructive keyword
 
         Parameters
         ----------
@@ -216,6 +214,6 @@ class Transformable(object):
         return copy_of_self
 
 
-from .composable import ComposableTransform, VComposable, TransformChain
-from .invertable import Invertible, VInvertible
 from .alignment import Alignment
+from .composable import TransformChain, ComposableTransform, VComposable
+from .invertable import Invertible, VInvertible
