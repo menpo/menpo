@@ -2,7 +2,7 @@ import numpy as np
 from cyrasterize.base import CyRasterizerBase
 
 from menpo.image import MaskedImage
-from menpo.transform import HomogeneousTransform
+from menpo.transform import Homogeneous
 
 from .base import TextureRasterInfo
 from .transform import ExtractNDims
@@ -18,22 +18,22 @@ class GLRasterizer(CyRasterizerBase):
 
     @property
     def model_transform(self):
-        return HomogeneousTransform(self.model_matrix)
+        return Homogeneous(self.model_matrix)
 
     @property
     def view_transform(self):
-        return HomogeneousTransform(self.view_matrix)
+        return Homogeneous(self.view_matrix)
 
     @property
     def projection_transform(self):
-        return HomogeneousTransform(self.projection_matrix)
+        return Homogeneous(self.projection_matrix)
 
     @property
     def model_to_clip_transform(self):
         r"""
         Transform that takes 3D points from model space to 3D clip space
         """
-        return HomogeneousTransform(self.model_to_clip_matrix)
+        return Homogeneous(self.model_to_clip_matrix)
 
     @property
     def clip_to_image_transform(self):
@@ -41,7 +41,7 @@ class GLRasterizer(CyRasterizerBase):
         Affine transform that converts 2D clip space coordinates into 2D image
         space coordinates
         """
-        from menpo.transform import Translation, Scale, AffineTransform
+        from menpo.transform import Translation, Scale
         # 1. invert the y direction (up becomes down)
         invert_y = Scale([1, -1])
         # 2. [-1, 1] [-1, 1] -> [0, 2] [0, 2]
@@ -51,9 +51,9 @@ class GLRasterizer(CyRasterizerBase):
         # 4. [0, 1] [0, 1] -> [0, w] [0, h]
         im_scale = Scale([self.width, self.height])
         # 5. [0, w] [0, h] -> [0, h] [0, w]
-        xy_yx = AffineTransform(np.array([[0, 1, 0],
-                                          [1, 0, 0],
-                                          [0, 0, 1]], dtype=np.float))
+        xy_yx = Homogeneous(np.array([[0, 1, 0],
+                                      [1, 0, 0],
+                                      [0, 0, 1]], dtype=np.float))
         # reduce the full transform chain to a single affine matrix
         transforms = [invert_y, t, unit_scale, im_scale, xy_yx]
         return reduce(lambda a, b: a.compose_before(b), transforms)

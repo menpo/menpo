@@ -1,6 +1,6 @@
 from menpo.groupalign import GeneralizedProcrustesAnalysis
 from menpo.shape.groupops import mean_pointcloud
-from menpo.transform.tps import TPS
+from menpo.transform import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.rasterize import GLRasterizer
 from menpo.rasterize.transform import (ExtractNDims, AppendNDims,
@@ -94,7 +94,7 @@ class MMBuilder(object):
         self.u_mean_lms_2d = extract_2d.apply(self.u_mean_lms)
 
     def warp(self):
-        tps_transforms = [TPS(self.lms_for(u), self.u_mean_lms_2d)
+        tps_transforms = [ThinPlateSplines(self.lms_for(u), self.u_mean_lms_2d)
                           for u in self.u_2d]
         self.w_models_2d = [t.apply(u) for t, u in zip(tps_transforms,
                                                        self.u_2d)]
