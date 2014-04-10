@@ -1,15 +1,18 @@
 from __future__ import division, print_function
 import abc
 import numpy as np
-from menpo.fit.fittingresult import NonParametricFittingResult, \
-    SemiParametricFittingResult, ParametricFittingResult
-from menpo.fit.regression.base import NonParametricRegressor, \
-    SemiParametricRegressor, ParametricRegressor
-from menpo.fit.regression.parametricfeatures import weights
-from menpo.fit.regression.regressionfunctions import regression, mlr
-from menpo.fitmultilevel.functions import noisy_align, build_sampling_grid, \
-    extract_local_patches
+
+from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
+                                           extract_local_patches)
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
+from menpo.fit.fittingresult import (NonParametricFittingResult,
+                                     SemiParametricFittingResult,
+                                     ParametricFittingResult)
+
+from .base import (NonParametricRegressor, SemiParametricRegressor,
+                   ParametricRegressor)
+from .parametricfeatures import weights
+from .regressionfunctions import regression, mlr
 
 
 #TODO: document me

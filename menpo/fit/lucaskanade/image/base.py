@@ -1,5 +1,6 @@
 from scipy.linalg import norm
 import numpy as np
+
 from menpo.fit.lucaskanade.base import LucasKanade
 
 
@@ -10,7 +11,6 @@ class ImageLucasKanade(LucasKanade):
         super(ImageLucasKanade, self).__init__(
             residual, transform, interpolator=interpolator,
             optimisation=optimisation, eps=eps)
-
         # in image alignment, we align a template image to the target image
         self.template = template
         # pre-compute

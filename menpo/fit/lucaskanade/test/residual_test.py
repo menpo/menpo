@@ -1,7 +1,9 @@
 from numpy.testing import assert_approx_equal
+
 from menpo.image import BooleanImage
 import menpo.io as pio
 from menpo.transform import Affine
+
 from menpo.fit.lucaskanade.image import (ImageInverseCompositional,
                                          ImageForwardAdditive)
 from menpo.fit.lucaskanade.residual import *

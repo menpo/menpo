@@ -8,7 +8,7 @@ These similarity measures are designed to be dimension independent where
 possible. For this reason, some methods look more complicated than would be
 normally the case. For example, calculating the Hessian involves summing
 a multi-dimensional array, so we dynamically calculate the list of axes
-to summer over. However, the basics of the logic, other than dimension
+to sum over. However, the basics of the logic, other than dimension
 reduction, should be similar to the original algorithms.
 
 References
@@ -24,6 +24,7 @@ import copy
 import numpy as np
 from numpy.fft import fftshift, fftn
 import scipy.linalg
+
 from menpo.convolution import log_gabor
 from menpo.image import MaskedImage
 

@@ -1,6 +1,7 @@
 from scipy.linalg import norm
 import numpy as np
-from menpo.fit.lucaskanade.appearance.base import AppearanceLucasKanade
+
+from .base import AppearanceLucasKanade
 
 
 class AdaptiveForwardAdditive(AppearanceLucasKanade):

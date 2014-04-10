@@ -1,7 +1,9 @@
 import abc
+
 from menpo.fit.base import Fitter
-from menpo.fit.fittingresult import NonParametricFittingResult, \
-    SemiParametricFittingResult, ParametricFittingResult
+from menpo.fit.fittingresult import (NonParametricFittingResult,
+                                     SemiParametricFittingResult,
+                                     ParametricFittingResult)
 
 
 #TODO: document me
@@ -115,4 +117,3 @@ class ParametricRegressor(SemiParametricRegressor):
         return ParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)
-

@@ -1,2 +1,2 @@
-from menpo.fit.lucaskanade.residual import LSIntensity, ECC, GaborFourier, \
-    GradientImages, GradientCorrelation
+from .residual import (LSIntensity, ECC, GaborFourier, GradientImages,
+                       GradientCorrelation)

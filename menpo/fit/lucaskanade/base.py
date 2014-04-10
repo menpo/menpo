@@ -1,6 +1,7 @@
 from __future__ import division
 import abc
 import numpy as np
+
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import ParametricFittingResult
 
@@ -80,8 +81,6 @@ class LucasKanade(Fitter):
        "An iterative image registration technique with an application to
        stereo vision." IJCAI. Vol. 81. 1981.
     """
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, residual, transform,
                  interpolator='scipy', optimisation=('GN',), eps=10**-10):
         # set basic state for all Lucas Kanade algorithms
@@ -89,7 +88,6 @@ class LucasKanade(Fitter):
         self.residual = residual
         self.eps = eps
         self.interpolator = interpolator
-
         # select the optimisation approach and warp function
         self._calculate_delta_p = self._select_optimisation(optimisation)
 

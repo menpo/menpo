@@ -1,2 +1,2 @@
-from menpo.fit.lucaskanade.image.base import ImageForwardAdditive, \
-    ImageForwardCompositional, ImageInverseCompositional
+from .base import (ImageForwardAdditive, ImageForwardCompositional,
+                   ImageInverseCompositional)

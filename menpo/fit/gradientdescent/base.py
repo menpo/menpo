@@ -2,6 +2,7 @@ from __future__ import division
 import abc
 import numpy as np
 from scipy.stats import multivariate_normal
+
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import SemiParametricFittingResult
 from menpo.fitmultilevel.functions import build_sampling_grid
@@ -10,7 +11,7 @@ from menpo.fitmultilevel.functions import build_sampling_grid
 # TODO: document me
 # TODO: see if residuals can be incorporated here
 # TODO: deal with regularization/prior inside the transforms, this is also
-# rellevant for LucasKanade objects.
+# relevant for LucasKanade objects.
 class GradientDescent(Fitter):
     r"""
     """

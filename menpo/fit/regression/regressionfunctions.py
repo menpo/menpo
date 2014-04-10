@@ -1,7 +1,5 @@
 from __future__ import division
 import numpy as np
-from sklearn import svm
-from sklearn import ensemble
 
 
 #TODO: document me
