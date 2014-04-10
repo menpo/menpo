@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+
 from menpo.transform import Scale
 from menpo.visualize.base import GraphPlotter, MultipleImageViewer
 from menpo.fit.fittingresult import FittingResult

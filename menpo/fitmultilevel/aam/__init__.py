@@ -1,2 +1,2 @@
-from menpo.fitmultilevel.aam.builder import AAMBuilder, PatchBasedAAMBuilder
-from menpo.fitmultilevel.aam.base import LucasKanadeAAMFitter
+from .base import LucasKanadeAAMFitter
+from .builder import AAMBuilder, PatchBasedAAMBuilder

@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+
 from menpo.shape import PointCloud
 from menpo.transform import Similarity, AlignmentSimilarity
 

@@ -2,12 +2,14 @@ from __future__ import division
 import abc
 import numpy as np
 from copy import deepcopy
-from menpo.landmark import LandmarkGroup
-from menpo.transform import AlignmentAffine, Scale
+
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import FittingResultList
-from menpo.fitmultilevel.fittingresult import MultilevelFittingResult
-from menpo.fitmultilevel.functions import noisy_align
+from menpo.transform import AlignmentAffine, Scale
+from menpo.landmark import LandmarkGroup
+
+from .fittingresult import MultilevelFittingResult
+from .functions import noisy_align
 
 
 class MultilevelFitter(Fitter):

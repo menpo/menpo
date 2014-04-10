@@ -1,7 +1,7 @@
 from __future__ import division
+
 from menpo.transform import AlignmentSimilarity
-from menpo.transform.modeldriven import OrthoMDTransform, \
-    ModelDrivenTransform
+from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity
 from menpo.fit.lucaskanade.appearance import AlternatingInverseCompositional
 from menpo.fitmultilevel.base import MultilevelFitter

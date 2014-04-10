@@ -1,11 +1,12 @@
 from __future__ import division, print_function
 import numpy as np
-from menpo.transform import Scale
+
 from menpo.image import Image
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
-from menpo.fitmultilevel.clm.classifierfunctions import classifier, linear_svm_lr
+
+from .classifierfunctions import classifier, linear_svm_lr
 
 
 class CLMBuilder(DeformableModelBuilder):

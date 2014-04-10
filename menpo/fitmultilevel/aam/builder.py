@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
 from menpo.transform import Scale, Translation

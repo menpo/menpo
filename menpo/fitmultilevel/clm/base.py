@@ -1,4 +1,5 @@
 from __future__ import division
+
 from menpo.transform import AlignmentSimilarity
 from menpo.model.pdm import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
