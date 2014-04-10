@@ -1,14 +1,12 @@
 import numpy as np
 from scipy.spatial import distance
-
-from menpo.shape import PointCloud
 from menpo.basis.rbf import R2LogR2
 
 from .base import Transform, Alignment, Invertible
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
-class TPS(Alignment, Transform, Invertible):
+class ThinPlateSplines(Alignment, Transform, Invertible):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -100,7 +98,7 @@ class TPS(Alignment, Transform, Invertible):
         return False
 
     def _build_pseudoinverse(self):
-        return TPS(self.target, self.source, kernel=self.kernel)
+        return ThinPlateSplines(self.target, self.source, kernel=self.kernel)
 
     def jacobian_points(self, points):
         """
@@ -151,6 +149,7 @@ class TPS(Alignment, Transform, Invertible):
             The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points.
         """
+        from menpo.shape import PointCloud
         points_pc = PointCloud(points)
         n_lms = self.n_points
         n_pts = points_pc.n_points
@@ -215,6 +214,7 @@ class TPS(Alignment, Transform, Invertible):
             at the previous points and assuming that the target is equal to
             the source.
         """
+        from menpo.shape import PointCloud
         points_pc = PointCloud(points)
         n_lms = self.n_points
         n_pts = points_pc.n_points

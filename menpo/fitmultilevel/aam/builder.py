@@ -5,7 +5,7 @@ from menpo.shape import TriMesh
 from menpo.image import MaskedImage
 from menpo.transform import Scale, Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
-from menpo.transform.tps import TPS
+from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
@@ -360,7 +360,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
     aam : :class:`menpo.fitmultiple.aam.builder.PatchBasedAAMBuilder`
         The Patch Based AAM Builder object
     """
-    def __init__(self, feature_type='hog', transform=TPS,
+    def __init__(self, feature_type='hog', transform=ThinPlateSplines,
                  patch_shape=(16, 16), diagonal_range=None, n_levels=3,
                  downscale=2, scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,

@@ -334,7 +334,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             glyph_image = np.concatenate((pos, neg))
         glyph = Image(glyph_image)
         # correct landmarks
-        from menpo.transform.homogeneous import NonUniformScale
+        from menpo.transform import NonUniformScale
         image_shape = np.array(self.shape, dtype=np.double)
         glyph_shape = np.array(glyph.shape, dtype=np.double)
         nus = NonUniformScale(glyph_shape / image_shape)

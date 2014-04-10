@@ -8,7 +8,7 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/shape/mesh/cpptrimesh.pyx",
                   "menpo/shape/mesh/normals.pyx",
                   "menpo/interpolation/cinterp.pyx",
-                  "menpo/transform/fastpwa.pyx",
+                  "menpo/transform/piecewiseaffine/fastpwa.pyx",
                   "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)

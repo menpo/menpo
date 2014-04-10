@@ -1,7 +1,6 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
-from menpo.transform.piecewiseaffine import PiecewiseAffine, \
-    DiscreteAffinePWATransform
+from numpy.testing import assert_equal
+from menpo.transform.piecewiseaffine.base import DiscreteAffinePWA
 from menpo.shape import PointCloud, TriMesh
 
 src_points = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])
@@ -22,7 +21,7 @@ b_affine = np.array(
 
 
 def test_pwa_discrete_affine_transforms():
-    pwa = DiscreteAffinePWATransform(src, tgt)
+    pwa = DiscreteAffinePWA(src, tgt)
     assert(len(pwa.transforms) == 2)
     assert_equal(pwa.transforms[0].h_matrix, a_affine)
     assert_equal(pwa.transforms[1].h_matrix, b_affine)

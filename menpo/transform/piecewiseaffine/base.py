@@ -1,8 +1,8 @@
 import abc
 import numpy as np
 
-from .base import Alignment, Invertible, Transform
-from .homogeneous import Affine
+from menpo.transform import Affine
+from menpo.transform.base import Alignment, Invertible, Transform
 from .fastpwa import CLookupPWA
 # TODO View is broken for PWA (TriangleContainmentError)
 
@@ -22,7 +22,7 @@ class TriangleContainmentError(Exception):
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
-class AbstractPWATransform(Alignment, Transform, Invertible):
+class AbstractPWA(Alignment, Transform, Invertible):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -53,6 +53,7 @@ class AbstractPWATransform(Alignment, Transform, Invertible):
         ``error.points_outside_source_domain`` to handle this case.
     """
     def __init__(self, source, target):
+        from menpo.shape import TriMesh  # to avoid circular import
         if not isinstance(source, TriMesh):
             source = TriMesh(source.points)
         Alignment.__init__(self, source, target)
@@ -119,7 +120,7 @@ class AbstractPWATransform(Alignment, Transform, Invertible):
         return True
 
     def _build_pseudoinverse(self):
-        from menpo.shape import PointCloud
+        from menpo.shape import PointCloud, TriMesh  # to avoid circular import
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
@@ -196,7 +197,7 @@ class AbstractPWATransform(Alignment, Transform, Invertible):
         return jac
 
 
-class DiscreteAffinePWATransform(AbstractPWATransform):
+class DiscreteAffinePWA(AbstractPWA):
     r"""
     A piecewise affine transformation.
 
@@ -229,7 +230,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         ``error.points_outside_source_domain`` to handle this case.
     """
     def __init__(self, source, target):
-        AbstractPWATransform.__init__(self, source, target)
+        AbstractPWA.__init__(self, source, target)
         self._produce_affine_transforms_per_tri()
 
     def _produce_affine_transforms_per_tri(self):
@@ -431,7 +432,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         return x_transformed
 
 
-class CachedPWATransform(AbstractPWATransform):
+class CachedPWA(AbstractPWA):
     r"""
     A piecewise affine transformation.
 
@@ -460,7 +461,7 @@ class CachedPWATransform(AbstractPWATransform):
         ``error.points_outside_source_domain`` to handle this case.
     """
     def __init__(self, source, target):
-        super(CachedPWATransform, self).__init__(source, target)
+        super(CachedPWA, self).__init__(source, target)
         # make sure the source and target satisfy the c requirements
         source_c = np.require(self.source.points, dtype=np.float64,
                               requirements=['C'])
@@ -517,7 +518,3 @@ class CachedPWATransform(AbstractPWATransform):
         return (self.ti[tri_index] +
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
-
-
-PiecewiseAffine = CachedPWATransform  # the default PWA is the C one.
-from menpo.shape import TriMesh  # to avoid circular import
