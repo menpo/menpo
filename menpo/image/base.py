@@ -10,7 +10,8 @@ from scipy.misc import imrotate
 
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
-from menpo.transform.affine import Translation, NonUniformScale, UniformScale
+from menpo.transform import Translation, NonUniformScale, UniformScale, \
+    AlignmentUniformScale
 from menpo.visualize.base import Viewable, ImageViewer
 from menpo.image.feature import FeatureExtraction
 
@@ -333,7 +334,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             glyph_image = np.concatenate((pos, neg))
         glyph = Image(glyph_image)
         # correct landmarks
-        from menpo.transform.affine import NonUniformScale
+        from menpo.transform.homogeneous import NonUniformScale
         image_shape = np.array(self.shape, dtype=np.double)
         glyph_shape = np.array(glyph.shape, dtype=np.double)
         nus = NonUniformScale(glyph_shape / image_shape)
@@ -762,7 +763,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label].lms
-        scale = UniformScale.align(pc, reference_shape).as_vector()
+        scale = AlignmentUniformScale(pc, reference_shape).as_vector()
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 

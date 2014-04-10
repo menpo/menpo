@@ -1,8 +1,9 @@
 import abc
 import numpy as np
-from menpo.transform import AffineTransform
-from menpo.transform.fastpwa import CLookupPWA
-from menpo.transform.base import PureAlignment, Invertible, Transform
+
+from .base import Alignment, Invertible, Transform
+from .homogeneous import Affine
+from .fastpwa import CLookupPWA
 # TODO View is broken for PWA (TriangleContainmentError)
 
 
@@ -20,8 +21,8 @@ class TriangleContainmentError(Exception):
         self.points_outside_source_domain = points_outside_source_domain
 
 
-# Note we inherit from PureAlignment first to get it's n_dims behavior
-class AbstractPWATransform(PureAlignment, Transform, Invertible):
+# Note we inherit from Alignment first to get it's n_dims behavior
+class AbstractPWATransform(Alignment, Transform, Invertible):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -51,15 +52,31 @@ class AbstractPWATransform(PureAlignment, Transform, Invertible):
         All points to apply must be contained in a source triangle. Check
         ``error.points_outside_source_domain`` to handle this case.
     """
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, source, target):
         if not isinstance(source, TriMesh):
             source = TriMesh(source.points)
-        PureAlignment.__init__(self, source, target)
+        Alignment.__init__(self, source, target)
         if self.n_dims != 2:
             raise ValueError("source and target must be 2 "
                              "dimensional")
+
+    @property
+    def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
+        return self.source.n_tris
+
+    @property
+    def trilist(self):
+        r"""
+        The triangle list.
+
+        :type: (``n_tris``, 3) ndarray
+        """
+        return self.source.trilist
 
     @abc.abstractmethod
     def index_alpha_beta(self, points):
@@ -96,24 +113,6 @@ class AbstractPWATransform(PureAlignment, Transform, Invertible):
         ``error.points_outside_source_domain`` to handle this case.
         """
         pass
-
-    @property
-    def n_tris(self):
-        r"""
-        The number of triangles in the triangle list.
-
-        :type: int
-        """
-        return self.source.n_tris
-
-    @property
-    def trilist(self):
-        r"""
-        The triangle list.
-
-        :type: (``n_tris``, 3) ndarray
-        """
-        return self.source.trilist
 
     @property
     def has_true_inverse(self):
@@ -201,7 +200,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
     r"""
     A piecewise affine transformation.
 
-    Builds ``AffineTransform`` objects for each triangle. apply involves
+    Builds ``Affine`` objects for each triangle. apply involves
     finding the containing triangle for each input point, and then applying
     the appropriate Affine Transform.
 
@@ -230,8 +229,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         ``error.points_outside_source_domain`` to handle this case.
     """
     def __init__(self, source, target):
-        super(DiscreteAffinePWATransform, self).__init__(
-            source, target)
+        AbstractPWATransform.__init__(self, source, target)
         self._produce_affine_transforms_per_tri()
 
     def _produce_affine_transforms_per_tri(self):
@@ -273,7 +271,7 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         ht[:2, 2] = c_t
         transforms = []
         for i in range(self.n_tris):
-            transforms.append(AffineTransform(ht[..., i]))
+            transforms.append(Affine(ht[..., i]))
 
         # store our state out
         self.transforms = transforms
@@ -354,42 +352,6 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         beta = (dot_jj * dot_pk - dot_jk * dot_pj) * d
         return alpha, beta
 
-    def _target_setter(self, new_target):
-        r"""
-        DiscreteAffinePWATransform is particularly inefficient to update
-        from target - we just have to manually go through and rebuild all
-        the affine transforms.
-        """
-        self._target = new_target
-        self._produce_affine_transforms_per_tri()
-
-    def _apply(self, x, **kwargs):
-        """
-        Applies this transform to a new set of vectors.
-
-        Parameters
-        ----------
-        x : (K, 2) ndarray
-            Points to apply this transform to.
-
-        Returns
-        -------
-        transformed : (K, 2) ndarray
-            The transformed array.
-        """
-        tri_index, alpha, beta = self.index_alpha_beta(x)
-        # build a list of points in each triangle for each triangle
-        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
-        # zip the transforms and the list to apply to make the transformed x
-        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
-                                                     self.transforms)]
-        x_transformed = np.ones_like(x) * np.nan
-        # loop through each triangle, indexing into the x_transformed array
-        # for points in that triangle and replacing the value of x with x_t
-        for i, x_t in enumerate(x_per_tri_tran):
-            x_transformed[tri_index == i] = x_t
-        return x_transformed
-
     @staticmethod
     def _containment_from_alpha_beta(alpha, beta):
         r"""
@@ -432,6 +394,41 @@ class DiscreteAffinePWATransform(AbstractPWATransform):
         index = np.zeros(alpha.shape[0])
         index[point_index] = tri_index
         return index.astype(np.uint32)
+
+    def _sync_state_from_target(self):
+        r"""
+        DiscreteAffinePWATransform is particularly inefficient to sync
+        from target - we just have to manually go through and rebuild all
+        the affine transforms.
+        """
+        self._produce_affine_transforms_per_tri()
+
+    def _apply(self, x, **kwargs):
+        """
+        Applies this transform to a new set of vectors.
+
+        Parameters
+        ----------
+        x : (K, 2) ndarray
+            Points to apply this transform to.
+
+        Returns
+        -------
+        transformed : (K, 2) ndarray
+            The transformed array.
+        """
+        tri_index, alpha, beta = self.index_alpha_beta(x)
+        # build a list of points in each triangle for each triangle
+        x_per_tri = [x[tri_index == i] for i in xrange(self.n_tris)]
+        # zip the transforms and the list to apply to make the transformed x
+        x_per_tri_tran = [t.apply(p) for p, t in zip(x_per_tri,
+                                                     self.transforms)]
+        x_transformed = np.ones_like(x) * np.nan
+        # loop through each triangle, indexing into the x_transformed array
+        # for points in that triangle and replacing the value of x with x_t
+        for i, x_t in enumerate(x_per_tri_tran):
+            x_transformed[tri_index == i] = x_t
+        return x_transformed
 
 
 class CachedPWATransform(AbstractPWATransform):
@@ -493,6 +490,14 @@ class CachedPWATransform(AbstractPWATransform):
         else:
             return index, alpha, beta
 
+    def _sync_state_from_target(self):
+        r"""
+        CachedPWATransform is particularly efficient to sync
+        from target - we don't have to do much at all, just rebuild the target
+        vectors.
+        """
+        self._rebuild_target_vectors()
+
     def _apply(self, x, **kwargs):
         """
         Applies this transform to a new set of vectors.
@@ -513,15 +518,6 @@ class CachedPWATransform(AbstractPWATransform):
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
 
-    def _target_setter(self, new_target):
-        r"""
-        CachedPWATransform is particularly efficient to update
-        from target - we don't have to do much at all, just rebuild the target
-        vectors.
-        """
-        self._target = new_target
-        self._rebuild_target_vectors()
 
-
-PiecewiseAffineTransform = CachedPWATransform  # the default PWA is the C one.
+PiecewiseAffine = CachedPWATransform  # the default PWA is the C one.
 from menpo.shape import TriMesh  # to avoid circular import

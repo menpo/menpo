@@ -550,7 +550,7 @@ class MaskedImage(Image):
 
             Default: None
         """
-        from menpo.transform.piecewiseaffine import PiecewiseAffineTransform
+        from menpo.transform.piecewiseaffine import PiecewiseAffine
         from menpo.transform.piecewiseaffine import TriangleContainmentError
 
         if self.n_dims != 2:
@@ -562,7 +562,7 @@ class MaskedImage(Image):
 
             pc = TriMesh(pc.points, trilist)
 
-        pwa = PiecewiseAffineTransform(pc, pc)
+        pwa = PiecewiseAffine(pc, pc)
         try:
             pwa.apply_inplace(self.mask.all_indices)
         except TriangleContainmentError, e:
@@ -613,7 +613,7 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        patch_size: tuple
+        patch_shape: tuple
             The size of the patch. Any floating point values are rounded up
             to the nearest integer.
         group : string, Optional
