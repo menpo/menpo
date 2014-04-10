@@ -5,15 +5,15 @@ from nose.tools import raises
 from menpo.shape import PointCloud, TriMesh
 
 from menpo.transform import TransformChain, Homogeneous, Translation, Scale
-from menpo.transform.tps import TPS
+from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 
 
 def chain_tps_before_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps_one = TPS(a, b)
-    tps_two = TPS(b, a)
+    tps_one = ThinPlateSplines(a, b)
+    tps_two = ThinPlateSplines(b, a)
     chain = tps_one.compose_before(tps_two)
     assert(isinstance(chain, TransformChain))
     points = PointCloud(np.random.random([10, 2]))
@@ -25,8 +25,8 @@ def chain_tps_before_tps_test():
 def chain_tps_after_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps_one = TPS(a, b)
-    tps_two = TPS(b, a)
+    tps_one = ThinPlateSplines(a, b)
+    tps_two = ThinPlateSplines(b, a)
     chain = tps_one.compose_after(tps_two)
     assert(isinstance(chain, TransformChain))
     points = PointCloud(np.random.random([10, 2]))
@@ -39,7 +39,7 @@ def chain_pwa_before_tps_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
-    tps = TPS(b, a_tm)
+    tps = ThinPlateSplines(b, a_tm)
     chain = pwa.compose_before(tps)
     assert(isinstance(chain, TransformChain))
 
@@ -48,7 +48,7 @@ def chain_pwa_after_tps_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
-    tps = TPS(b, a_tm)
+    tps = ThinPlateSplines(b, a_tm)
     chain = pwa.compose_after(tps)
     assert(isinstance(chain, TransformChain))
 
@@ -57,7 +57,7 @@ def chain_tps_before_pwa_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
-    tps = TPS(b, a_tm)
+    tps = ThinPlateSplines(b, a_tm)
     chain = tps.compose_before(pwa)
     assert(isinstance(chain, TransformChain))
 
@@ -66,7 +66,7 @@ def chain_tps_after_pwa_test():
     a_tm = TriMesh(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     pwa = PiecewiseAffine(a_tm, b)
-    tps = TPS(b, a_tm)
+    tps = ThinPlateSplines(b, a_tm)
     chain = tps.compose_after(pwa)
     assert(isinstance(chain, TransformChain))
 
@@ -75,7 +75,7 @@ def compose_tps_after_translation_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
     t = Translation([3, 4])
-    tps = TPS(a, b)
+    tps = ThinPlateSplines(a, b)
     chain = tps.compose_after(t)
     assert(isinstance(chain, TransformChain))
 
@@ -91,7 +91,7 @@ def manual_no_op_chain_test():
 def chain_compose_before_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps = TPS(a, b)
+    tps = ThinPlateSplines(a, b)
 
     t = Translation([3, 4])
     s = Scale([4, 2])
@@ -108,7 +108,7 @@ def chain_compose_before_tps_test():
 def chain_compose_after_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps = TPS(a, b)
+    tps = ThinPlateSplines(a, b)
 
     t = Translation([3, 4])
     s = Scale([4, 2])
@@ -125,7 +125,7 @@ def chain_compose_after_tps_test():
 def chain_compose_before_inplace_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps = TPS(a, b)
+    tps = ThinPlateSplines(a, b)
 
     t = Translation([3, 4])
     s = Scale([4, 2])
@@ -142,7 +142,7 @@ def chain_compose_before_inplace_tps_test():
 def chain_compose_after_inplace_tps_test():
     a = PointCloud(np.random.random([10, 2]))
     b = PointCloud(np.random.random([10, 2]))
-    tps = TPS(a, b)
+    tps = ThinPlateSplines(a, b)
 
     t = Translation([3, 4])
     s = Scale([4, 2])
