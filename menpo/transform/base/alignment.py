@@ -1,9 +1,10 @@
 import numpy as np
 
 from menpo.base import Targetable
+from menpo.visualize.base import Viewable, AlignmentViewer2d
 
 
-class Alignment(Targetable):
+class Alignment(Targetable, Viewable):
     r"""
     Mixin for :class:`Transforms` that have been constructed from an
     optimisation aligning a source :class:`PointCloud` to a target
@@ -82,3 +83,21 @@ class Alignment(Targetable):
         for all Alignments that is just the aligned source
         """
         return self.aligned_source
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        r"""
+        View the PureAlignmentTransform. This plots the source points and
+        vectors that represent the shift from source to target.
+
+        Parameters
+        ----------
+        image : bool, optional
+            If ``True`` the vectors are plotted on top of an image
+
+            Default: ``False``
+        """
+        if self.n_dims == 2:
+            return AlignmentViewer2d(figure_id, new_figure, self).render(
+                **kwargs)
+        else:
+            raise ValueError("Only 2D alignments can be viewed currently.")
