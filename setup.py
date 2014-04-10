@@ -30,6 +30,9 @@ setup(name='menpo',
                         'Pillow>=2.0.0',
                         'scikit-image>=0.8.2',
 
+                        # ML
+                        'scikit-learn>=0.14.1',
+
                         # 3D import
                         'menpo-pyvrml97==2.3.0a4',
                         'cyassimp>=0.1.3',
