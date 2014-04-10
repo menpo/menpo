@@ -39,6 +39,7 @@ class MultilevelFittingResult(FittingResult):
 
     def __init__(self, image, multiple_fitter, fittings, affine_correction,
                  gt_shape=None, error_type='me_norm'):
+        self._error_stop = None  # Internal attribute of error_type setter
         self.fittings = fittings
         self._affine_correction = affine_correction
         super(MultilevelFittingResult, self).__init__(

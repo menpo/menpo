@@ -1,11 +1,12 @@
 from __future__ import division
 import abc
-import numpy as np
 from copy import deepcopy
+import numpy as np
+
 from menpo.shape.pointcloud import PointCloud
-from menpo.visualize.base import GraphPlotter, FittingViewer, Viewable, \
-    MultipleImageViewer
 from menpo.fitmultilevel.functions import compute_error
+from menpo.visualize.base import (Viewable, GraphPlotter, FittingViewer,
+                                  MultipleImageViewer)
 
 
 class FittingResult(Viewable):
@@ -29,6 +30,8 @@ class FittingResult(Viewable):
     """
 
     def __init__(self, image, fitter, gt_shape=None, error_type='me_norm'):
+        # Initialize the error internal properties
+        self._error_type, self._error_text = None, None
         self.image = deepcopy(image)
         self.fitter = fitter
         self.error_type = error_type
@@ -45,7 +48,7 @@ class FittingResult(Viewable):
     @property
     def fitted(self):
         r"""
-        True if the fitting procedure has been completed. False, if not.
+        True iff the fitting procedure has been completed.
         """
         return self._fitted
 
@@ -62,8 +65,8 @@ class FittingResult(Viewable):
         Sets the error type according to a set of predefined options.
         """
         if error_type is 'me_norm':
-            self._error_text = 'Point-to-point error normalized by object ' \
-                               'size'
+            self._error_text = ('Point-to-point error normalized by object '
+                                'size')
         elif error_type is 'me':
             NotImplementedError("me not implemented yet")
         elif error_type is 'rmse':
@@ -96,7 +99,7 @@ class FittingResult(Viewable):
 
         Returns
         -------
-        shapes: :class:`menpo.shape.PointCoulds or ndarray list
+        shapes: :class:`menpo.shape.PointCloud`s or ndarray list
             A list containing the shapes obtained at each fitting iteration.
         """
         pass
