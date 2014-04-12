@@ -1,1 +1,1 @@
-from menpo.features.base import gradient, hog, igo
+from menpo.features.base import gradient, hog, igo, es, lbp

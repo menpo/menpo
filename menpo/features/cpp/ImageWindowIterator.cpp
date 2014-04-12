@@ -3,9 +3,9 @@
 #include <cmath>
 #include <stdlib.h>
 
-ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth,
+ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels,
 		unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
-		unsigned int windowStepVertical, bool enablePadding, bool imageIsGrayscale) {
+		unsigned int windowStepVertical, bool enablePadding) {
 	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically;
 
     // Find number of windows
@@ -21,15 +21,12 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 	this->_image = image;
 	this->_imageHeight = imageHeight;
 	this->_imageWidth = imageWidth;
+	this->_numberOfChannels = numberOfChannels;
 	this->_windowHeight = windowHeight;
 	this->_windowWidth = windowWidth;
 	this->_windowStepHorizontal = windowStepHorizontal;
 	this->_windowStepVertical = windowStepVertical;
 	this->_enablePadding = enablePadding;
-	this->_imageIsGrayscale = imageIsGrayscale;
-	this->_numberOfChannels = 1;
-	if (!imageIsGrayscale)
-		this->_numberOfChannels = 3;
 	this->_numberOfWindowsHorizontally = numberOfWindowsHorizontally;
 	this->_numberOfWindowsVertically = numberOfWindowsVertically;
 }
@@ -83,7 +80,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
 			}
 
             // Compute descriptor of window
-            windowFeature->apply(windowImage, _imageIsGrayscale, descriptorVector);
+            windowFeature->apply(windowImage, descriptorVector);
 
             // Store results
             for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)
