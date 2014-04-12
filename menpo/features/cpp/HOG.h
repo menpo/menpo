@@ -21,16 +21,35 @@ static inline int max(int x, int y) { return (x <= y ? y : x); }
 
 class HOG: public WindowFeature {
 public:
-	HOG(unsigned int windowHeight, unsigned int windowWidth, unsigned int method, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels,
-			unsigned int blockHeightAndWidthInCells, bool enableSignedGradients, double l2normClipping);
+	HOG(unsigned int windowHeight, unsigned int windowWidth,
+	    unsigned int numberOfChannels, unsigned int method,
+	    unsigned int numberOfOrientationBins,
+	    unsigned int cellHeightAndWidthInPixels,
+	    unsigned int blockHeightAndWidthInCells, bool enableSignedGradients,
+	    double l2normClipping);
 	virtual ~HOG();
-	void apply(double *windowImage, bool imageIsGrayscale, double *descriptorVector);
-	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally, numberOfBlocksPerWindowVertically;
+	void apply(double *windowImage, double *descriptorVector);
+	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally,
+	             numberOfBlocksPerWindowVertically;
 private:
-    unsigned int method, numberOfOrientationBins, cellHeightAndWidthInPixels, blockHeightAndWidthInCells, windowHeight, windowWidth;
+    unsigned int method, numberOfOrientationBins, cellHeightAndWidthInPixels,
+                 blockHeightAndWidthInCells, windowHeight, windowWidth,
+                 numberOfChannels;
     bool enableSignedGradients;
     double l2normClipping;
 };
 
-void ZhuRamananHOGdescriptor(double *inputImage, int cellHeightAndWidthInPixels, unsigned int imageHeight, unsigned int imageWidth, double *descriptorMatrix);
-void DalalTriggsHOGdescriptor(double *inputImage, unsigned int numberOfOrientationBins, unsigned int cellHeightAndWidthInPixels, unsigned int blockHeightAndWidthInCells, bool signedOrUnsignedGradientsBool, double l2normClipping, unsigned int imageHeight, unsigned int imageWidth, double *descriptorVector, bool imageIsGrayscale);
+void ZhuRamananHOGdescriptor(double *inputImage,
+                             int cellHeightAndWidthInPixels,
+                             unsigned int imageHeight, unsigned int imageWidth,
+                             unsigned int numberOfChannels,
+                             double *descriptorMatrix);
+void DalalTriggsHOGdescriptor(double *inputImage,
+                              unsigned int numberOfOrientationBins,
+                              unsigned int cellHeightAndWidthInPixels,
+                              unsigned int blockHeightAndWidthInCells,
+                              bool signedOrUnsignedGradientsBool,
+                              double l2normClipping, unsigned int imageHeight,
+                              unsigned int imageWidth,
+                              unsigned int numberOfChannels,
+                              double *descriptorVector);
