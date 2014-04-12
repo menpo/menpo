@@ -6,6 +6,16 @@ required to build, fit, visualize, and test statistical models like Active
 Appearance Models and Morphable Models.
 
 
+Important notice
+----------------
+
+Menpo is currently under **agressive development** and is very much a
+**work in progress**. Documentation and examples are outdated, docstrings
+may be incorrect, tests are missing, and even core ideas are not yet fully
+formed. The project is at a pre-alpha stage, and this should be kept in mind
+at all times.
+
+
 DEPENDENCIES
 ============
 
