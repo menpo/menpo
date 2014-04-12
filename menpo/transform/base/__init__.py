@@ -6,12 +6,44 @@ class Transform(object):
     r"""
     An abstract representation of any spatial transform.
     Provides a unified interface to apply the transform with
-    :meth:`apply_inplace` and :meth:`apply`. All Transforms support basic
-    composition to form TransformChains.
+    :meth:`apply_inplace` and :meth:`apply`.
 
-    For native composition, see the Composition and VComposition mix-ins.
-    For inversion, see the Invertable and VInvertable mix-ins.
-    For alignment, see the Alignable and PureAlignment mix-ins.
+    All Transforms support basic composition to form a :class:`TransformChain`.
+
+    There are two useful forms of composition. Firstly, the mathematical
+    composition symbol `o` has the definition:
+
+        let a(x) and b(x) be two transforms on x.
+        (a o b)(x) == a(b(x))
+
+    This functionality is provided by the compose_after() family of methods.
+
+        (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
+
+    Equally useful is an inversion the order of composition - so that over
+    time a large chain of transforms can be built to do a useful job,
+    and composing on this chain adds another transform to the end (after all
+    other preceding transforms have been performed).
+
+    For instance, let's say we want to rescale a
+    :class:`menpo.shape.PointCloud` p around it's mean, and then translate
+    it some place else. It would be nice to be able to do something like
+
+        t = Translation(-p.centre)  # translate to centre
+        s = Scale(2.0)  # rescale
+        move = Translate([10, 0 ,0]) # budge along the x axis
+
+        t.compose(s).compose(-t).compose(move)
+
+    in Menpo, this functionality is provided by the compose_before() family
+    of methods.
+
+        (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
+
+    For native composition, see the :class:`ComposableTransform` subclass and
+    the :class:`VComposition` mix-in.
+    For inversion, see the :class:`Invertable` and :class:`VInvertable` mix-ins.
+    For alignment, see the :class:`Alignment` mix in.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -61,9 +93,6 @@ class Transform(object):
         transformation will be non destructive, returning the transformed
         version. Any ``kwargs`` will be passed to the specific transform
         :meth:`_apply` methods.
-
-        If you wish to apply a Transform to a Transformable in a nondestructive
-        manor, use the nondestructive keyword
 
         Parameters
         ----------
@@ -216,7 +245,6 @@ class Transformable(object):
         return copy_of_self
 
 
-from .composable import (ComposableTransform, TransformChain,
-                         VComposableTransform)
+from .alignment import Alignment
+from .composable import TransformChain, ComposableTransform, VComposable
 from .invertable import Invertible, VInvertible
-from .alignable import Alignable, PureAlignment

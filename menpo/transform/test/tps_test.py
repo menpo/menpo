@@ -1,8 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from nose.tools import raises
 
-from menpo.transform.tps import TPS
+from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.shape import PointCloud
 
 
@@ -32,17 +31,17 @@ tgt_perturbed = PointCloud(perturbed_tgt_landmarks)
 
 
 def test_tps_maps_src_to_tgt():
-    tps = TPS(src, tgt_perturbed)
+    tps = ThinPlateSplines(src, tgt_perturbed)
     assert_allclose(tps.apply(square_src_landmarks), perturbed_tgt_landmarks)
 
 
 def test_tps_n_dims():
-    tps = TPS(src, tgt_perturbed)
+    tps = ThinPlateSplines(src, tgt_perturbed)
     assert(tps.n_dims == 2)
 
 
 def test_tps_jacobian_manual_corner_value_check():
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     dW_dxy = tps.jacobian_source(square_sample_points)
     jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
     dwdx_corner = np.array(
@@ -56,7 +55,7 @@ def test_tps_jacobian_manual_corner_value_check():
 
 
 def test_tps_jacobian_unitary_x_y():
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     dW_dxy = tps.jacobian_source(square_sample_points)
     jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
     # both the x and y derivatives summed over all values should equal 1
@@ -64,7 +63,7 @@ def test_tps_jacobian_unitary_x_y():
 
 
 def test_tps_jacobian_manual_sample_a():
-    tps = TPS(src, tgt_perturbed)
+    tps = ThinPlateSplines(src, tgt_perturbed)
     dW_dxy = tps.jacobian_source(square_sample_points)
     onetwothreefour = np.array(
         [[0.78665966, 0.62374388],
@@ -75,7 +74,7 @@ def test_tps_jacobian_manual_sample_a():
 
 
 def test_tps_jacobian_manual_sample_b():
-    tps = TPS(src, tgt_perturbed)
+    tps = ThinPlateSplines(src, tgt_perturbed)
     dW_dxy = tps.jacobian_source(square_sample_points)
     threesixfouronethree = np.array(
         [[0.67244171, -0.0098011],
@@ -86,7 +85,7 @@ def test_tps_jacobian_manual_sample_b():
 
 
 def test_tps_build_pseudoinverse():
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     tps_pinv = tps.pseudoinverse
 
     assert (tps.source == tps_pinv.target)
@@ -98,7 +97,7 @@ def test_tps_apply():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
     pts = PointCloud(np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]]))
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     result = tps.apply(pts)
     expected = np.array([[-0.2, -2.], [-1., 2.], [4.2, -5.]])
     assert_allclose(result.points, expected)
@@ -107,7 +106,7 @@ def test_tps_apply():
 def test_tps_jacobian_points():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     result = tps.jacobian_points(src.points)
 
     assert_allclose(result, np.array([[[2, 0], [0., 2]],
@@ -120,7 +119,7 @@ def test_tps_jacobian_source():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
     pts = np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]])
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     result = tps.jacobian_source(pts)
     expected = np.array([[[1.10799034, 1.10799034], [-0.00799034, -0.00799034],
                           [0.89200966, 0.89200966], [0.00799034, 0.00799034]],
@@ -136,7 +135,7 @@ def test_tps_weight_points():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
     pts = np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]])
-    tps = TPS(src, tgt)
+    tps = ThinPlateSplines(src, tgt)
     result = tps.weight_points(pts)
     expected = np.array([[[0.55399517, 0.55399517], [-0.00399517, -0.00399517],
                           [0.44600483, 0.44600483], [0.00399517, 0.00399517]],

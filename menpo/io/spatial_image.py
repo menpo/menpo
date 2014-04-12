@@ -5,8 +5,6 @@ import numpy as np
 from menpo.image import ShapeImage
 from menpo.io.base import (Importer, find_alternative_files,
                            map_filepath_to_importer)
-from scipy.spatial import Delaunay
-from menpo.transform.affine import Scale
 import re
 
 

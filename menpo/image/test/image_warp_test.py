@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from menpo.transform import AffineTransform
+from menpo.transform import Affine
 import menpo.io as pio
 
 
@@ -23,7 +23,7 @@ multi_expected = rgb_image.cropped_copy([50, 50],
 
 
 def test_scipy_warp_gray():
-    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+    target_transform = Affine.identity(2).from_vector(initial_params)
     warped_im = gray_image.warp_to(template_mask, target_transform)
 
     assert(warped_im.shape == gray_template.shape)
@@ -31,7 +31,7 @@ def test_scipy_warp_gray():
 
 
 def test_scipy_warp_multi():
-    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+    target_transform = Affine.identity(2).from_vector(initial_params)
     warped_im = rgb_image.warp_to(template_mask, target_transform)
 
     assert(warped_im.shape == rgb_template.shape)
@@ -39,7 +39,7 @@ def test_scipy_warp_multi():
 
 
 def test_c_warp_gray():
-    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+    target_transform = Affine.identity(2).from_vector(initial_params)
     warped_im = gray_image.warp_to(template_mask, target_transform,
                                    interpolator='c')
 
@@ -48,7 +48,7 @@ def test_c_warp_gray():
 
 
 def test_cinterp2_warp_multi():
-    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+    target_transform = Affine.identity(2).from_vector(initial_params)
     warped_im = rgb_image.warp_to(template_mask, target_transform,
                                   interpolator='scipy')
     assert(warped_im.shape == rgb_template.shape)
@@ -57,7 +57,7 @@ def test_cinterp2_warp_multi():
 
 ## TODO: Not 100% on the best way to test this?
 #def test_cinterp2_warp_gray_warp_mask():
-#    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+#    target_transform = Affine.identity(2).from_vector(initial_params)
 #    warped_im = cinterp2_warp(gray_image, gray_template, target_transform,
 #                              warp_mask=True)
 #
@@ -66,7 +66,7 @@ def test_cinterp2_warp_multi():
 
 ## TODO: Not 100% on the best way to test this?
 #def test_scipy_warp_gray_warp_mask():
-#    target_transform = AffineTransform.identity(2).from_vector(initial_params)
+#    target_transform = Affine.identity(2).from_vector(initial_params)
 #    warped_im = gray_image.warp(template_mask, target_transform,
 #                                warp_mask=True)
 #

@@ -1,8 +1,7 @@
 import numpy as np
 from menpo.groupalign.base import MultipleAlignment
 from menpo.shape import PointCloud
-from menpo.transform.affine import (SimilarityTransform, UniformScale,
-                                    Translation)
+from menpo.transform import AlignmentSimilarity, UniformScale, Translation
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
@@ -11,7 +10,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     """
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
-        self.transforms = [SimilarityTransform.align(source, self.target)
+        self.transforms = [AlignmentSimilarity(source, self.target)
                            for source in self.sources]
         self.initial_target_scale = self.target.norm()
         self.n_iterations = 1
@@ -43,7 +42,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         else:
             self.n_iterations += 1
             for t in self.transforms:
-                t.target = new_target
+                t.set_target(new_target)
             self.target = new_target
             return self._recursive_procrustes()
 

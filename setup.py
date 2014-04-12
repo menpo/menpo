@@ -8,7 +8,7 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/shape/mesh/cpptrimesh.pyx",
                   "menpo/shape/mesh/normals.pyx",
                   "menpo/interpolation/cinterp.pyx",
-                  "menpo/transform/fastpwa.pyx",
+                  "menpo/transform/piecewiseaffine/fastpwa.pyx",
                   "menpo/features/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
@@ -29,6 +29,9 @@ setup(name='menpo',
                         # Image
                         'Pillow>=2.0.0',
                         'scikit-image>=0.8.2',
+
+                        # ML
+                        'scikit-learn>=0.14.1',
 
                         # 3D import
                         'menpo-pyvrml97==2.3.0a4',

@@ -4,7 +4,7 @@ import numpy as np
 from menpo.rasterize.base import TextureRasterInfo
 from menpo.shape import PointCloud
 from menpo.visualize import TexturedTriMeshViewer3d
-from menpo.transform.affine import Scale
+from menpo.transform import Scale
 from menpo.rasterize import Rasterizable
 from menpo.exception import DimensionalityError
 
