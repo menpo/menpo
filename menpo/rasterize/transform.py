@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.transform import Translation, Scale
+from menpo.transform import Translation, Scale, NonUniformScale
 from menpo.transform.base import Transform
 
 
@@ -135,11 +135,12 @@ class AppendNDims(Transform):
         return np.hstack([x, np.ones([x.shape[0], self.n]) * self.value]).copy()
 
 
-def clip_space_transform(points, boundary_proportion=0.1):
+def clip_space_transform(points, xy_scale=0.9, z_scale=0.1):
     r"""
-    Produces an SimilarityTransform which fits 3D points into the OpenGL
-    clipping space ([-1, 1], [-1, 1], [-1, 1]), or 2D points into the 2D
-    OpenGL clipping space ([-1, 1], [-1, 1]).
+    Produces an Affine Transform which centres and scales 3D points to fit
+    into the OpenGL clipping space ([-1, 1], [-1, 1], [-1, 1]). This can be
+    used to construct
+    an appropriate projection matrix for use in an orthographic Rasterizer.
 
     Parameters
     ----------
@@ -147,18 +148,30 @@ def clip_space_transform(points, boundary_proportion=0.1):
     points: :class:`PointCloud`
         The points that should be adjusted.
 
-    boundary_proprtion: float 0-1, optional
-        An amount by which the boundary is relaxed (so the points are not
-        right against the edge)
+    xy_scale: float 0-1, optional
+        Amount by which the boundary is relaxed so the points are not
+        right against the edge. A value of 1 means the extremities of the
+        point cloud will be mapped onto [-1, 1] [-1, 1] exactly (no boarder)
+        A value of 0.5 means the points will be mapped into the range
+        [-0.5, 0.5].
 
-        Default: 0.1 (10% reduction in tight crop size)
+        Default: 0.9 (map to [-0.9, 0.9])
+
+    z_scale: float 0-1, optional
+        Scale factor by which the z-dimension is squeezed. A value of 1
+        means the z-range of the points will be mapped to exactly fit in
+        [-1, 1]. A scale of 0.1 means the z-range is compressed to fit in the
+        range [-0.1, 0.1].
 
     Returns
     -------
-    :class:`SimilarityTransform
-        The similarity transform that creates this mapping
+    :class:`Affine`
+        The affine transform that creates this mapping
     """
+    # 1. Centre the points on the origin
     centering = Translation(points.centre_of_bounds).pseudoinverse
-    scale = Scale(points.range() / 2)
-    b_scale = Scale(1 - boundary_proportion, n_dims=points.n_dims)
+    # 2. Scale the points to exactly fit the boundaries
+    scale = Scale(points.range() / 2.0)
+    # 3. Apply the relaxations requested
+    b_scale = NonUniformScale([xy_scale, xy_scale, z_scale])
     return centering.compose_before(scale.pseudoinverse).compose_before(b_scale)
