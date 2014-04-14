@@ -14,7 +14,7 @@ class MMBuilder(object):
         self.target = gpa.mean_aligned_shape
         self.corresponder = TriMeshCorresponder(self.target,
                                                 sampling_rate=sampling_rate)
-        self.dc_models = [self.corresponder.in_correspondence(m,
+        self.dc_models = [self.corresponder.correspond(m,
                                                              group=group,
                                                              label=label)
                           for m in models]

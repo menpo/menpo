@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.transform import Translation, Scale, NonUniformScale
+from menpo.transform import Translation, Scale, NonUniformScale, Homogeneous
 from menpo.transform.base import Transform
 
 
@@ -135,12 +135,12 @@ class AppendNDims(Transform):
         return np.hstack([x, np.ones([x.shape[0], self.n]) * self.value]).copy()
 
 
-def clip_space_transform(points, xy_scale=0.9, z_scale=0.1):
+def model_to_clip_transform(points, xy_scale=0.9, z_scale=0.1):
     r"""
     Produces an Affine Transform which centres and scales 3D points to fit
     into the OpenGL clipping space ([-1, 1], [-1, 1], [-1, 1]). This can be
-    used to construct
-    an appropriate projection matrix for use in an orthographic Rasterizer.
+    used to construct an appropriate projection matrix for use in an
+    orthographic Rasterizer.
 
     Parameters
     ----------
@@ -175,3 +175,48 @@ def clip_space_transform(points, xy_scale=0.9, z_scale=0.1):
     # 3. Apply the relaxations requested
     b_scale = NonUniformScale([xy_scale, xy_scale, z_scale])
     return centering.compose_before(scale.pseudoinverse).compose_before(b_scale)
+
+
+
+def clip_to_image_transform(width, height):
+    r"""
+    Affine transform that converts 3D clip space coordinates into 2D image
+    space coordinates. Note that the z axis of the clip space coordinates is
+    ignored.
+
+    Parameters
+    ----------
+
+    width: int
+        The width of the image
+
+    height: int
+        The height of the image
+
+    Returns
+    -------
+
+    HomogeneousTransform
+        A homogeneous transform that moves clip space coordinates into image
+        space.
+    """
+    from menpo.transform import Homogeneous, Translation, Scale
+    # 1. Remove the z axis from the clip space
+    rem_z = Homogeneous(np.array([[1, 0, 0, 0],
+                                  [0, 1, 0, 0],
+                                  [0, 0, 0, 1]]))
+    # 2. invert the y direction (up becomes down)
+    invert_y = Scale([1, -1])
+    # 3. [-1, 1] [-1, 1] -> [0, 2] [0, 2]
+    t = Translation([1, 1])
+    # 4. [0, 2] [0, 2] -> [0, 1] [0, 1]
+    unit_scale = Scale(0.5, n_dims=2)
+    # 5. [0, 1] [0, 1] -> [0, w] [0, h]
+    im_scale = Scale([width, height])
+    # 6. [0, w] [0, h] -> [0, h] [0, w]
+    xy_yx = Homogeneous(np.array([[0, 1, 0],
+                                  [1, 0, 0],
+                                  [0, 0, 1]], dtype=np.float))
+    # reduce the full transform chain to a single affine matrix
+    transforms = [rem_z, invert_y, t, unit_scale, im_scale, xy_yx]
+    return reduce(lambda a, b: a.compose_before(b), transforms)

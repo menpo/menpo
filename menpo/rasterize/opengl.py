@@ -5,7 +5,7 @@ from menpo.image import MaskedImage
 from menpo.transform import Homogeneous
 
 from .base import TextureRasterInfo
-from .transform import ExtractNDims
+from .transform import ExtractNDims, clip_to_image_transform
 
 
 # Subclass the CyRasterizerBase class to add Menpo-specific features
@@ -38,34 +38,18 @@ class GLRasterizer(CyRasterizerBase):
     @property
     def clip_to_image_transform(self):
         r"""
-        Affine transform that converts 2D clip space coordinates into 2D image
+        Affine transform that converts 3D clip space coordinates into 2D image
         space coordinates
         """
-        from menpo.transform import Translation, Scale
-        # 1. invert the y direction (up becomes down)
-        invert_y = Scale([1, -1])
-        # 2. [-1, 1] [-1, 1] -> [0, 2] [0, 2]
-        t = Translation([1, 1])
-        # 3. [0, 2] [0, 2] -> [0, 1] [0, 1]
-        unit_scale = Scale(0.5, n_dims=2)
-        # 4. [0, 1] [0, 1] -> [0, w] [0, h]
-        im_scale = Scale([self.width, self.height])
-        # 5. [0, w] [0, h] -> [0, h] [0, w]
-        xy_yx = Homogeneous(np.array([[0, 1, 0],
-                                      [1, 0, 0],
-                                      [0, 0, 1]], dtype=np.float))
-        # reduce the full transform chain to a single affine matrix
-        transforms = [invert_y, t, unit_scale, im_scale, xy_yx]
-        return reduce(lambda a, b: a.compose_before(b), transforms)
+        return clip_to_image_transform(self.width, self.height)
 
     @property
     def model_to_image_transform(self):
         r"""
         TransformChain from 3D model space to 2D image space.
         """
-        chain = self.model_to_clip_transform.compose_before(ExtractNDims(2))
-        chain.compose_before_inplace(self.clip_to_image_transform)
-        return chain
+        return self.model_to_clip_transform.compose_before(
+            self.clip_to_image_transform)
 
     def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
                                             per_vertex_f3v=None):
@@ -98,10 +82,11 @@ class GLRasterizer(CyRasterizerBase):
             visible primitives.
 
         """
+        images = None
         if rasterizable._rasterize_type_texture:
             # request the textured info for rasterizing
             r = rasterizable._rasterize_generate_textured_mesh()
-            return self._rasterize_texture_with_interp(
+            images = self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
         elif rasterizable._rasterize_type_colour:
             #TODO: This should use a different shader!
@@ -122,7 +107,19 @@ class GLRasterizer(CyRasterizerBase):
             _, f3v_image = self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
 
-            return rgb_image, f3v_image
+            images = rgb_image, f3v_image
+        else:
+            raise ValueError("Cannot rasterize {}".format(rasterizable))
+
+        from menpo.landmark import Landmarkable
+        if isinstance(rasterizable, Landmarkable):
+            # Transform all landmarks and set them on the image
+            image_lms = self.model_to_image_transform.apply(
+                rasterizable.landmarks)
+            for image in images:
+                image.landmarks = image_lms
+        return images
+
 
     def rasterize_mesh_with_shape_image(self, rasterizable):
         r"""Rasterize the object to an image and generate an interpolated
