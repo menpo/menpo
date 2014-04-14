@@ -51,12 +51,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def n_dims(self):
-        return self.h_matrix.shape[0] - 1
+        return self.h_matrix.shape[1] - 1
 
     @property
     def n_dims_output(self):
         # doesn't have to be a square homogeneous matrix...
-        return self.h_matrix.shape[1] - 1
+        return self.h_matrix.shape[0] - 1
 
     def _apply(self, x, **kwargs):
         # convert to homogeneous
