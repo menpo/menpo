@@ -90,6 +90,7 @@ class GLRasterizer(CyRasterizerBase):
                 r, per_vertex_f3v=per_vertex_f3v)
         elif rasterizable._rasterize_type_colour:
             #TODO: This should use a different shader!
+            # TODO This should actually use the colour provided.
             # But I'm hacking it here to work quickly.
             colour_r = rasterizable._rasterize_generate_color_mesh()
 
