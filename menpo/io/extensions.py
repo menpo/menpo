@@ -91,6 +91,7 @@ all_mesh_and_image_types.update(mesh_types)
 image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter,
+                        '.ptsx': ImagePTSImporter,
                         '.json': JSONImporter}
 
 mesh_landmark_types = {'.pts3': MeshPTSImporter,
