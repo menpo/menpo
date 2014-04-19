@@ -1,6 +1,5 @@
 # distutils: language = c
 # distutils: sources = ./menpo/transform/piecewiseaffine/fastpwa/pwa.c
-# distutils: extra_compile_args = -std=c99
 
 import numpy as np
 cimport numpy as cnp
