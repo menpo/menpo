@@ -10,12 +10,12 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
 
     // Find number of windows
     if (!enablePadding) {
-        numberOfWindowsHorizontally = 1+floor((imageWidth-windowWidth)/windowStepHorizontal);
-        numberOfWindowsVertically = 1+floor((imageHeight-windowHeight)/windowStepVertical);
+        numberOfWindowsHorizontally = 1 + (imageWidth - windowWidth) / windowStepHorizontal;
+        numberOfWindowsVertically = 1 + (imageHeight - windowHeight) / windowStepVertical;
     }
     else {
-        numberOfWindowsHorizontally = ceil(imageWidth/windowStepHorizontal);
-        numberOfWindowsVertically = ceil(imageHeight/windowStepVertical);
+        numberOfWindowsHorizontally = (imageWidth / windowStepHorizontal) + 1;
+        numberOfWindowsVertically = (imageHeight / windowStepVertical) + 1;
     }
 
 	this->_image = image;
@@ -63,7 +63,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
                 rowFrom = rowCenter - (int)round((double)_windowHeight / 2.0) + 1;
                 rowTo = rowFrom + _windowHeight - 1;
                 columnCenter = windowIndexHorizontal*_windowStepHorizontal;
-                columnFrom = columnCenter - (int)ceil((double)_windowWidth/2) + 1;
+                columnFrom = columnCenter - (int)ceil((double)_windowWidth / 2.0) + 1;
                 columnTo = columnFrom + _windowWidth - 1;
             }
 

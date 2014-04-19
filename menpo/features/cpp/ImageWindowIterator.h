@@ -1,11 +1,6 @@
 #pragma once
 #include "WindowFeature.h"
 
-#if defined(_WIN32)
-    inline int round(float x) { return floor(x + 0.5); }
-    inline int round(double x) { return floor(x + 0.5); }
-#endif
-
 class ImageWindowIterator {
 public:
 	unsigned int _numberOfWindowsHorizontally, _numberOfWindowsVertically, _numberOfWindows;
