@@ -1,21 +1,21 @@
 #include "ImageWindowIterator.h"
 #include <iostream>
-#include <cmath>
+#include <math.h>
 #include <stdlib.h>
 
 ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels,
 		unsigned int windowHeight, unsigned int windowWidth, unsigned int windowStepHorizontal,
 		unsigned int windowStepVertical, bool enablePadding) {
-	unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically;
+    unsigned int numberOfWindowsHorizontally, numberOfWindowsVertically;
 
     // Find number of windows
     if (!enablePadding) {
-        numberOfWindowsHorizontally = 1+floor((imageWidth-windowWidth)/windowStepHorizontal);
-        numberOfWindowsVertically = 1+floor((imageHeight-windowHeight)/windowStepVertical);
+        numberOfWindowsHorizontally = 1 + (imageWidth - windowWidth) / windowStepHorizontal;
+        numberOfWindowsVertically = 1 + (imageHeight - windowHeight) / windowStepVertical;
     }
     else {
-        numberOfWindowsHorizontally = ceil(imageWidth/windowStepHorizontal);
-        numberOfWindowsVertically = ceil(imageHeight/windowStepVertical);
+        numberOfWindowsHorizontally = (imageWidth / windowStepHorizontal) + 1;
+        numberOfWindowsVertically = (imageHeight / windowStepVertical) + 1;
     }
 
 	this->_image = image;
@@ -53,17 +53,17 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
             if (!_enablePadding) {
                 rowFrom = windowIndexVertical*_windowStepVertical;
                 rowTo = rowFrom + _windowHeight - 1;
-                rowCenter = rowFrom + (int)round((double)_windowHeight/2) - 1;
+                rowCenter = rowFrom + (int)round((double)_windowHeight / 2.0) - 1;
                 columnFrom = windowIndexHorizontal*_windowStepHorizontal;
                 columnTo = columnFrom + _windowWidth - 1;
-                columnCenter = columnFrom + (int)round((double)_windowWidth/2) - 1;
+                columnCenter = columnFrom + (int)round((double)_windowWidth / 2.0) - 1;
             }
             else {
                 rowCenter = windowIndexVertical*_windowStepVertical;
-                rowFrom = rowCenter - (int)round((double)_windowHeight/2) + 1;
+                rowFrom = rowCenter - (int)round((double)_windowHeight / 2.0) + 1;
                 rowTo = rowFrom + _windowHeight - 1;
                 columnCenter = windowIndexHorizontal*_windowStepHorizontal;
-                columnFrom = columnCenter - (int)ceil((double)_windowWidth/2) + 1;
+                columnFrom = columnCenter - (int)ceil((double)_windowWidth / 2.0) + 1;
                 columnTo = columnFrom + _windowWidth - 1;
             }
 

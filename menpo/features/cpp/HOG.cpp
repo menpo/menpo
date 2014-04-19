@@ -293,8 +293,10 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     double binsSize = (1 + (signedOrUnsignedGradients == 1)) *
                       pi / numberOfOrientationBins;
 
-    float dx[numberOfChannels], dy[numberOfChannels], gradientOrientation,
-          gradientMagnitude, tempMagnitude, Xc, Yc, Oc, blockNorm;
+    float *dx = new float[numberOfChannels];
+	float *dy = new float[numberOfChannels];
+    float gradientOrientation, gradientMagnitude, tempMagnitude, 
+	      Xc, Yc, Oc, blockNorm;
     int x1, x2, y1, y2, bin1, descriptorIndex = 0;;
     unsigned int x, y, i, j, k, bin2;
 
@@ -462,4 +464,6 @@ void DalalTriggsHOGdescriptor(double *inputImage,
             }
         }
     }
+	delete[] dx;
+	delete[] dy;
 }
