@@ -1,6 +1,6 @@
 #include "ImageWindowIterator.h"
 #include <iostream>
-#include <cmath>
+#include <math.h>
 #include <stdlib.h>
 
 ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight, unsigned int imageWidth, unsigned int numberOfChannels,
