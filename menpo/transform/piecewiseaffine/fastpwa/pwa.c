@@ -79,10 +79,11 @@ void alphaBetaForTriangle(Triangle t, Point p, double *alpha, double *beta)
 TriangleCollection initTriangleCollection(double *vertices, unsigned int *trilist,
                                           unsigned int n_triangles)
 {
+  unsigned int i;
   TriangleCollection tris;
   tris.n_triangles = n_triangles;
   tris.triangles = (Triangle *)malloc(n_triangles * sizeof(Triangle));
-  for (unsigned int i = 0; i < n_triangles; i++) {
+  for (i = 0; i < n_triangles; i++) {
     tris.triangles[i] = initTriangle(&trilist[i * 3], vertices);
   }
   return tris;
@@ -96,8 +97,9 @@ void deleteTriangleCollection(TriangleCollection *tris)
 void containingTriangleAndAlphaBetaForPoint(TriangleCollection *tris, Point p,
                                             int *index, double *alpha, double *beta)
 {
+  unsigned int i;
   *index = -1; // no matching triangle
-  for (unsigned int i = 0; i < tris->n_triangles; i++) {
+  for (i = 0; i < tris->n_triangles; i++) {
     alphaBetaForTriangle(tris->triangles[i], p, alpha, beta);
     //printf("Triangle %u\n", i);
     //trianglePrint(tris.triangles[i]);
@@ -162,7 +164,8 @@ void cachedAlphaBetaIndexForPointInTriangleCollection(AlphaBetaIndex **hash, Tri
 void arrayCachedAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollection *tris, double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas)
 {
-  for (unsigned int i = 0; i < n_points; i++) {
+  unsigned int i;
+  for (i = 0; i < n_points; i++) {
     // build a point object
     Point queryPoint = initPoint(points + i * 2);
     cachedAlphaBetaIndexForPointInTriangleCollection(hash, tris, queryPoint,
@@ -173,7 +176,8 @@ void arrayCachedAlphaBetaIndexForPoints(AlphaBetaIndex **hash, TriangleCollectio
 void arrayAlphaBetaIndexForPoints(TriangleCollection *tris, double *points, unsigned int n_points,
                                   int *indexes, double *alphas, double *betas)
 {
-  for (unsigned int i = 0; i < n_points; i++) {
+  unsigned int i;
+  for (i = 0; i < n_points; i++) {
     // build a point object
     Point queryPoint = initPoint(points + i * 2);
     containingTriangleAndAlphaBetaForPoint(tris, queryPoint, indexes + i, alphas + i, betas + i);

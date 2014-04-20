@@ -47,7 +47,7 @@ setup(name='menpo',
                         'decorator>=3.4.0',
 
                         # Docs and testing
-                        'Sphinx>=1.2b1',
+                        'Sphinx>=1.2.2',
                         'numpydoc>=0.4',
                         'nose>=1.3.0'],
       extras_require={'3d': 'mayavi>=4.3.0'}
