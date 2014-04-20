@@ -6,9 +6,9 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int cellHeightAndWidthInPixels,
          unsigned int blockHeightAndWidthInCells, bool enableSignedGradients,
          double l2normClipping) {
-	unsigned int descriptorLengthPerBlock = 0, descriptorLengthPerWindow = 0,
-	             hist1, hist2, numberOfBlocksPerWindowVertically = 0,
-	             numberOfBlocksPerWindowHorizontally = 0;
+    unsigned int descriptorLengthPerBlock = 0, descriptorLengthPerWindow = 0,
+                 hist1 = 0, hist2 = 0, numberOfBlocksPerWindowVertically = 0,
+                 numberOfBlocksPerWindowHorizontally = 0;
 
     if (method == 1) {
         descriptorLengthPerBlock = blockHeightAndWidthInCells *
@@ -66,18 +66,19 @@ HOG::~HOG() {
 
 
 void HOG::apply(double *windowImage, double *descriptorVector) {
-	if (this->method == 1)
-		DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins,
-		                         this->cellHeightAndWidthInPixels,
-		                         this->blockHeightAndWidthInCells,
-		                         this->enableSignedGradients,
-		                         this->l2normClipping, this->windowHeight,
-		                         this->windowWidth, this->numberOfChannels,
-		                         descriptorVector);
-	else
-		ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels,
-		                        this->windowHeight, this->windowWidth,
-		                        this->numberOfChannels, descriptorVector);
+    if (this->method == 1) {
+        DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins,
+                                 this->cellHeightAndWidthInPixels,
+                                 this->blockHeightAndWidthInCells,
+                                 this->enableSignedGradients,
+                                 this->l2normClipping, this->windowHeight,
+                                 this->windowWidth, this->numberOfChannels,
+                                 descriptorVector);
+    } else {
+        ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels,
+                                this->windowHeight, this->windowWidth,
+                                this->numberOfChannels, descriptorVector);
+    }
 }
 
 
@@ -277,15 +278,18 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int imageWidth,
                               unsigned int numberOfChannels,
                               double *descriptorVector) {
-	numberOfOrientationBins = (int)numberOfOrientationBins;
-	cellHeightAndWidthInPixels = (double)cellHeightAndWidthInPixels;
-	blockHeightAndWidthInCells = (int)blockHeightAndWidthInCells;
+    
+    numberOfOrientationBins = (int)numberOfOrientationBins;
+    cellHeightAndWidthInPixels = (double)cellHeightAndWidthInPixels;
+    blockHeightAndWidthInCells = (int)blockHeightAndWidthInCells;
 
-	unsigned int signedOrUnsignedGradients;
-    if (signedOrUnsignedGradientsBool == true)
-    	signedOrUnsignedGradients = 1;
-    else
-    	signedOrUnsignedGradients = 0;
+    unsigned int signedOrUnsignedGradients;
+    
+    if (signedOrUnsignedGradientsBool) {
+        signedOrUnsignedGradients = 1;
+    } else {
+        signedOrUnsignedGradients = 0;
+    }
 
     int hist1= 2 + ceil(-0.5 + imageHeight / cellHeightAndWidthInPixels);
     int hist2= 2 + ceil(-0.5 + imageWidth / cellHeightAndWidthInPixels);
