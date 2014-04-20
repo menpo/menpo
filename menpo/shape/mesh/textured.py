@@ -66,6 +66,25 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         tcoords = tcoords[:, ::-1]
         return PointCloud(tcoords)
 
+    def tojson(self):
+        r"""
+        Convert this `TriMesh` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'points', 'trilist' and 'tcoords' keys. Both are lists
+        suitable for use in the by the `json` standard library package.
+
+        Note that textures are best transmitted in a native format like jpeg
+        rather that in a JSON format. For this reason the texture itself is
+        not encoded. Consumers of this method (e.g. a web server serving
+        Menpo TexturedTriMeshes) could use the ioinfo property to locate the
+        original texture on disk for clients and serve this directly.
+        """
+        json_dict = TriMesh.tojson(self)
+        json_dict['tcoords'] = self.tcoords.tojson()['points']
+        return json_dict
+
     def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
         r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently

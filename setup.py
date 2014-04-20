@@ -11,7 +11,7 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
                   "menpo/transform/piecewiseaffine/fastpwa.pyx",
                   "menpo/features/cppimagewindowiterator.pyx"]
 
-cython_exts = cythonize(cython_modules, nthreads=2, quiet=True)
+cython_exts = cythonize(cython_modules, quiet=True)
 
 setup(name='menpo',
       version='0.2',
