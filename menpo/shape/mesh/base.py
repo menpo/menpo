@@ -1,13 +1,15 @@
 import numpy as np
 from scipy.spatial import Delaunay
 
+from menpo.rasterize import Rasterizable
+from menpo.rasterize.base import ColourRasterInfo
 from menpo.shape import PointCloud
 from menpo.shape.mesh.normals import compute_normals
 from menpo.visualize import TriMeshViewer
 from menpo.exception import DimensionalityError
 
 
-class TriMesh(PointCloud):
+class TriMesh(PointCloud, Rasterizable):
     r"""
     A pointcloud with a connectivity defined by a triangle list. These are
     designed to be explicitly 2D or 3D.
@@ -134,3 +136,11 @@ class TriMesh(PointCloud):
         """
         return TriMeshViewer(figure_id, new_figure,
                              self.points, self.trilist).render(**kwargs)
+
+
+    @property
+    def _rasterize_type_texture(self):
+        return False
+
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.points)
