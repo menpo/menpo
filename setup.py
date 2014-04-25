@@ -38,7 +38,7 @@ setup(name='menpo',
                         'cyassimp>=0.1.3',
 
                         # Rasterization
-                        'cyrasterize>=0.1.4',
+                        'cyrasterize>=0.1.5',
 
                         # Visualization
                         'matplotlib>=1.2.1',
