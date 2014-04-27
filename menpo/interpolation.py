@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 
-def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
+def scipy_interpolation(pixels, points_to_sample, mode='nearest', order=1):
     r"""
     C-based interpolator that was designed to be identical when
     used in both Python and Matlab.
@@ -17,7 +17,7 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
         Points outside the boundaries of the input are filled according to the
         given mode.
 
-        Default: 'constant' (0)
+        Default: 'nearest' (1)
     order : int, optional
         The order of the spline interpolation. The order has to be in the
         range 0-5.

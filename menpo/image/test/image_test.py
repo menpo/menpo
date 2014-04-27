@@ -231,6 +231,13 @@ def test_rescale_negative_single_num():
     image.rescale(-0.5)
 
 
+def test_rescale_boundaries_interpolation():
+    image = MaskedImage(np.random.randn(60, 60, 3))
+    for i in [x * 0.1 for x in range(1, 31)]:
+        image_rescaled = image.rescale(i)
+        assert_allclose(image_rescaled.mask.proportion_true, 1.0)
+
+
 def test_resize():
     image = MaskedImage(np.random.randn(120, 120, 3))
     new_size = (250, 250)
