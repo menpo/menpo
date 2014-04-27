@@ -690,7 +690,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # we want to sample each channel in turn, returning a vector of sampled
         # pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
-                                             **kwargs)
+                                             mode='nearest', **kwargs)
         # set any nan values to 0
         sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image
