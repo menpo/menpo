@@ -171,4 +171,4 @@ class Targetable(object):
 
 
 def menpo_src_dir_path():
-    return os.path.split(os.path.abspath(__file__))[0][:-5]
+    return os.path.split(os.path.abspath(__file__))[0]
