@@ -1,31 +1,5 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
-from menpo.interpolation.cinterp import interp2
-
-
-def c_interpolation(ndimage, points_to_sample, mode='bilinear'):
-    r"""
-    C-based interpolator that was designed to be identical when
-    used in both Python and Matlab.
-
-    Parameters
-    ----------
-    ndimage : (M, N, ..., C) ndarray
-        The image that is to be sampled from. The final axis channels.
-    points_to_sample: (K, n_points) ndarray
-        The points which should be sampled from pixels
-    mode : {'bilinear', 'bicubic', 'nearest'}, optional
-        The type of interpolation to be carried out.
-
-        Default: bilinear
-
-    Returns
-    -------
-    sampled_image : ndarray
-        The pixel information sampled at each of the points.
-    """
-    return interp2(ndimage, points_to_sample[0, :], points_to_sample[1, :],
-                   mode=mode)
 
 
 def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
