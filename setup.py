@@ -43,12 +43,6 @@ setup(name='menpo',
                         # Visualization
                         'matplotlib>=1.2.1',
 
-                        # Need to decide if this is really needed
-                        'decorator>=3.4.0',
-
-                        # Docs and testing
-                        'Sphinx>=1.2.2',
-                        'numpydoc>=0.4',
                         'nose>=1.3.0'],
       extras_require={'3d': 'mayavi>=4.3.0'}
       )
