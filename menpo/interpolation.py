@@ -17,7 +17,7 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
         Points outside the boundaries of the input are filled according to the
         given mode.
 
-        Default: 'constant' (1)
+        Default: 'constant' (0)
     order : int, optional
         The order of the spline interpolation. The order has to be in the
         range 0-5.
