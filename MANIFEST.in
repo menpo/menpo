@@ -1,0 +1,5 @@
+recursive-include menpo *.pyx
+recursive-include menpo *.c
+recursive-include menpo *.h
+recursive-include menpo *.hpp
+recursive-include menpo *.cpp
