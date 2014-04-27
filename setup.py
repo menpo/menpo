@@ -41,8 +41,7 @@ setup(name='menpo',
                         'cyrasterize>=0.1.5',
 
                         # Visualization
-                        'matplotlib>=1.2.1',
-
-                        'nose>=1.3.0'],
+                        'matplotlib>=1.2.1'],
+      test_requires=['nose>=1.3.0'],
       extras_require={'3d': 'mayavi>=4.3.0'}
       )
