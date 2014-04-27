@@ -363,7 +363,7 @@ class MaskedImage(Image):
                 has False mask values, only the True region of the mask
                 will be updated, which is rarely the desired behavior,
                 but is possible for completion.
-        interpolator : 'scipy' or 'cinterp' or func, optional
+        interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
             Default: 'scipy'

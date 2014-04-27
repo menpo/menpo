@@ -658,7 +658,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             as self, but with each landmark updated to the warped position.
 
             Default: ``False``
-        interpolator : 'scipy' or 'c', optional
+        interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
             Default: 'scipy'
@@ -671,15 +671,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
         warped_image : type(self)
             A copy of this image, warped.
         """
-        from menpo.interpolation import c_interpolation, scipy_interpolation
+        from menpo.interpolation import scipy_interpolation
         # configure the interpolator we are going to use for the warp
+        # currently only scipy is supported but in the future we may have CUDA
         if interpolator == 'scipy':
             _interpolator = scipy_interpolation
-        elif interpolator == 'c':
-            _interpolator = c_interpolation
         else:
             raise ValueError("Don't understand interpolator '{}': needs to "
-                             "be either 'scipy' or 'c'".format(interpolator))
+                             "be 'scipy'".format(interpolator))
 
         if self.n_dims != transform.n_dims:
             raise ValueError(
@@ -727,7 +726,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             The scale factor. If a tuple, the scale to apply to each dimension.
             If a single float, the scale will be applied uniformly across
             each dimension.
-        interpolator : 'scipy' or 'c', optional
+        interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
             Default: 'scipy'
@@ -858,7 +857,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             'all' all landmarks in the group are used.
 
             Default: 'all'
-        interpolator : 'scipy' or 'c', optional
+        interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
         round: {'ceil', 'floor', 'round'}
