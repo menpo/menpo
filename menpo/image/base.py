@@ -785,6 +785,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         scale_factors = (scale * shape - 1) / (shape - 1)
         inverse_transform = NonUniformScale(scale_factors).pseudoinverse
         # for rescaling we enforce that mode is nearest to avoid num. errors
+        if 'mode' in kwargs:
+            raise ValueError("Cannot set 'mode' kwarg on rescale - set to "
+                             "'nearest' to avoid numerical errors")
         kwargs['mode'] = 'nearest'
         # Note here we pass warp_mask to warp_to. In the case of
         # Images that aren't MaskedImages this kwarg will
