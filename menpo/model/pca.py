@@ -119,8 +119,8 @@ class PCAModel(MeanInstanceLinearModel):
     @property
     def jacobian(self):
         """
-        Returns the Jacobian of the PCA model. In this case, simply the
-        components of the model reshaped to have the standard Jacobian shape:
+        Returns the Jacobian of the PCA model reshaped to have the standard
+        Jacobian shape:
 
             n_points    x  n_params      x  n_dims
             n_features  x  n_components  x  n_dims
@@ -130,9 +130,21 @@ class PCAModel(MeanInstanceLinearModel):
         jacobian : (n_features, n_components, n_dims) ndarray
             The Jacobian of the model in the standard Jacobian shape.
         """
-        jacobian = self.components.reshape(self.n_active_components, -1,
-                                           self.template_instance.n_dims)
+        jacobian = self._jacobian.reshape(self.n_active_components, -1,
+                                          self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
+
+    @property
+    def _jacobian(self):
+        """
+        Returns the Jacobian of the PCA model with respect to the weights.
+
+        Returns
+        -------
+        jacobian : (n_components, n_features) ndarray
+            The Jacobian with respect to the weights
+        """
+        return self.components
 
     def component_vector(self, index, with_mean=True, scale=1.0):
         r"""
