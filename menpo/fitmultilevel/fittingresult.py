@@ -298,7 +298,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
             interpolator = self.fittings[-1].fitter.interpolator
             warped_images = []
             for t in self.shapes():
-                transform.target = t
+                transform.set_target(t)
                 image = self.image.warp_to(mask, transform,
                                            interpolator=interpolator)
                 if as_pixels:
