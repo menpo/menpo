@@ -14,8 +14,8 @@ ImageWindowIterator::ImageWindowIterator(double *image, unsigned int imageHeight
         numberOfWindowsVertically = 1 + (imageHeight - windowHeight) / windowStepVertical;
     }
     else {
-        numberOfWindowsHorizontally = (imageWidth / windowStepHorizontal) + 1;
-        numberOfWindowsVertically = (imageHeight / windowStepVertical) + 1;
+        numberOfWindowsHorizontally = 1 + ((imageWidth - 1) / windowStepHorizontal);
+        numberOfWindowsVertically = 1 + ((imageHeight - 1) / windowStepVertical);
     }
 
 	this->_image = image;
