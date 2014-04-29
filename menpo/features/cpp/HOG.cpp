@@ -14,22 +14,12 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
         descriptorLengthPerBlock = blockHeightAndWidthInCells *
                                    blockHeightAndWidthInCells *
                                    numberOfOrientationBins;
-        hist1 = 2 + ceil(- 0.5 + windowHeight / cellHeightAndWidthInPixels);
-        hist2 = 2 + ceil(- 0.5 + windowWidth / cellHeightAndWidthInPixels);
-        descriptorLengthPerWindow = (hist1-2-(blockHeightAndWidthInCells-1)) *
-                                    (hist2-2-(blockHeightAndWidthInCells-1)) *
-                                    descriptorLengthPerBlock;
-        // both ways of calculating number of blocks are equal
-        //numberOfBlocksPerWindowVertically =
-        //  1 + floor((windowHeight-blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
-        //             / cellHeightAndWidthInPixels);
-        //numberOfBlocksPerWindowHorizontally =
-        //  1+floor((windowWidth-blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
-        //             / cellHeightAndWidthInPixels);
-        numberOfBlocksPerWindowVertically =
-            hist1 - 2 - (blockHeightAndWidthInCells - 1);
-        numberOfBlocksPerWindowHorizontally =
-            hist2 - 2 - (blockHeightAndWidthInCells - 1);
+        numberOfBlocksPerWindowVertically = 1 +
+        (windowHeight - blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
+        / cellHeightAndWidthInPixels;
+        numberOfBlocksPerWindowHorizontally = 1 +
+        (windowWidth - blockHeightAndWidthInCells * cellHeightAndWidthInPixels)
+        / cellHeightAndWidthInPixels;
     }
     else if (method==2) {
         hist1 = (unsigned int)round((double)windowHeight /
@@ -42,9 +32,6 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
         numberOfBlocksPerWindowVertically = max(hist1-2, 0);
         numberOfBlocksPerWindowHorizontally = max(hist2-2, 0);
         descriptorLengthPerBlock = 27 + 4;
-        descriptorLengthPerWindow = numberOfBlocksPerWindowHorizontally *
-                                    numberOfBlocksPerWindowVertically *
-                                    descriptorLengthPerBlock;
     }
     this->method = method;
     this->numberOfOrientationBins = numberOfOrientationBins;
@@ -52,10 +39,14 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
     this->blockHeightAndWidthInCells = blockHeightAndWidthInCells;
     this->enableSignedGradients = enableSignedGradients;
     this->l2normClipping = l2normClipping;
-    this->numberOfBlocksPerWindowHorizontally = numberOfBlocksPerWindowHorizontally;
-    this->numberOfBlocksPerWindowVertically = numberOfBlocksPerWindowVertically;
+    this->numberOfBlocksPerWindowHorizontally =
+                    numberOfBlocksPerWindowHorizontally;
+    this->numberOfBlocksPerWindowVertically =
+                    numberOfBlocksPerWindowVertically;
     this->descriptorLengthPerBlock = descriptorLengthPerBlock;
-    this->descriptorLengthPerWindow = descriptorLengthPerWindow;
+    this->descriptorLengthPerWindow = numberOfBlocksPerWindowHorizontally *
+                                      numberOfBlocksPerWindowVertically *
+                                      descriptorLengthPerBlock;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
     this->numberOfChannels = numberOfChannels;
