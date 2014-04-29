@@ -98,3 +98,33 @@ def test_imagewindowiterator_lbp_no_padding():
         n_windows_vertical = len(range(window_size - 1, image_height[i, 0],
                                        window_step_vertical[i, 0]))
         assert_allclose(lbp.shape, (n_windows_vertical, n_windows_horizontal))
+
+
+def test_hog_channels_dalaltriggs():
+    n_cases = 5
+    cell_size = np.random.randint(1, 16, [n_cases, 1])
+    block_size = np.random.randint(1, 3, [n_cases, 1])
+    num_bins = np.random.randint(7, 9, [n_cases, 1])
+    image = MaskedImage(np.random.randn(40, 40, 1))
+    for i in range(n_cases):
+        block_size_pixels = cell_size[i, 0] * block_size[i, 0]
+        window_width = np.random.randint(block_size_pixels, 40, 1)
+        window_height = np.random.randint(block_size_pixels, 40, 1)
+        hog = image.features.hog(mode='dense', algorithm='dalaltriggs',
+                                 cell_size=cell_size[i, 0],
+                                 block_size=block_size[i, 0],
+                                 num_bins=num_bins[i, 0],
+                                 window_height=window_height[0],
+                                 window_width=window_width[0],
+                                 window_unit='pixels',
+                                 window_step_vertical=3,
+                                 window_step_horizontal=3,
+                                 window_step_unit='pixels',
+                                 padding=True)
+        length_per_block = block_size[i, 0] * block_size[i, 0] * num_bins[i, 0]
+        n_blocks_horizontal = len(range(block_size_pixels - 1, window_width[0],
+                                        cell_size[i, 0]))
+        n_blocks_vertical = len(range(block_size_pixels - 1, window_height[0],
+                                      cell_size[i, 0]))
+        n_channels = n_blocks_horizontal * n_blocks_vertical * length_per_block
+        assert_allclose(hog.n_channels, n_channels)
