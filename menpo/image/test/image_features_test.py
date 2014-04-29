@@ -23,10 +23,10 @@ def test_imagewindowiterator_hog_padding():
             mode='dense', window_step_vertical=window_step_vertical[i, 0],
             window_step_horizontal=window_step_horizontal[i, 0],
             window_step_unit='pixels', padding=True)
-        n_windows_horizontal = np.ceil(float(image_width[i, 0]) /
-                                       float(window_step_horizontal[i, 0]))
-        n_windows_vertical = np.ceil(float(image_height[i, 0]) /
-                                     float(window_step_vertical[i, 0]))
+        n_windows_horizontal = len(range(0, image_width[i, 0],
+                                         window_step_horizontal[i, 0]))
+        n_windows_vertical = len(range(0, image_height[i, 0],
+                                       window_step_vertical[i, 0]))
         assert_allclose(hog.shape, (n_windows_vertical, n_windows_horizontal))
 
 
@@ -48,12 +48,12 @@ def test_imagewindowiterator_hog_no_padding():
             window_step_vertical=window_step_vertical[i, 0],
             window_step_horizontal=window_step_horizontal[i, 0],
             window_step_unit='pixels', padding=False)
-        n_windows_horizontal = 1 + np.floor(float(image_width[i, 0] -
-                                                  window_width[i, 0]) /
-                                            float(window_step_horizontal[i, 0]))
-        n_windows_vertical = 1 + np.floor(float(image_height[i, 0] -
-                                                window_height[i, 0]) /
-                                          float(window_step_vertical[i, 0]))
+        n_windows_horizontal = len(range(window_width[i, 0] - 1,
+                                         image_width[i, 0],
+                                         window_step_horizontal[i, 0]))
+        n_windows_vertical = len(range(window_height[i, 0] - 1,
+                                       image_height[i, 0],
+                                       window_step_vertical[i, 0]))
         assert_allclose(hog.shape, (n_windows_vertical, n_windows_horizontal))
 
 
@@ -70,10 +70,10 @@ def test_imagewindowiterator_lbp_padding():
             window_step_vertical=window_step_vertical[i, 0],
             window_step_horizontal=window_step_horizontal[i, 0],
             window_step_unit='pixels', padding=True)
-        n_windows_horizontal = np.ceil(float(image_width[i, 0]) /
-                                       float(window_step_horizontal[i, 0]))
-        n_windows_vertical = np.ceil(float(image_height[i, 0]) /
-                                     float(window_step_vertical[i, 0]))
+        n_windows_horizontal = len(range(0, image_width[i, 0],
+                                         window_step_horizontal[i, 0]))
+        n_windows_vertical = len(range(0, image_height[i, 0],
+                                       window_step_vertical[i, 0]))
         assert_allclose(lbp.shape, (n_windows_vertical, n_windows_horizontal))
 
 
@@ -93,10 +93,8 @@ def test_imagewindowiterator_lbp_no_padding():
             window_step_horizontal=window_step_horizontal[i, 0],
             window_step_unit='pixels', padding=False)
         window_size = 2 * radius[i, 0] + 1
-        n_windows_horizontal = 1 + np.floor(float(image_width[i, 0] -
-                                                  window_size) /
-                                            float(window_step_horizontal[i, 0]))
-        n_windows_vertical = 1 + np.floor(float(image_height[i, 0] -
-                                                window_size) /
-                                          float(window_step_vertical[i, 0]))
+        n_windows_horizontal = len(range(window_size - 1, image_width[i, 0],
+                                         window_step_horizontal[i, 0]))
+        n_windows_vertical = len(range(window_size - 1, image_height[i, 0],
+                                       window_step_vertical[i, 0]))
         assert_allclose(lbp.shape, (n_windows_vertical, n_windows_horizontal))
