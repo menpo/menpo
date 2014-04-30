@@ -509,17 +509,17 @@ def ibug_49_points(landmark_group):
     return new_landmark_group
 
 
-def labeller(landmarkables, group_label, label_func):
+def labeller(landmarkable, group_label, label_func):
     """
-    Takes a list of landmarkable objects and a group label indicating which
+    Takes a landmarkable object and a group label indicating which
     set of landmarks should have semantic meaning attached to them.
     The labelling function will add a new landmark group to each object that
     have been semantically annotated.
 
     Parameters
     ----------
-    landmarkables: list of :class:`menpo.landmark.base.Landmarkable`
-        List of landmarkable objects
+    landmarkable: :class:`menpo.landmark.base.Landmarkable`
+        Landmarkable object
     group_label: string
         The group label of the landmark group to apply semantic labels to.
     label_func: func
@@ -529,14 +529,10 @@ def labeller(landmarkables, group_label, label_func):
 
     Returns
     -------
-    landmarkables : list of :class:`menpo.landmark.base.Landmarkable`
-        The list of modified landmarkables (this is just for convenience,
-        the list will actually be modified in place)
+    landmarkable : :class:`menpo.landmark.base.Landmarkable`
+        landmarkable with label (this is just for convenience,
+        the object will actually be modified in place)
     """
-    landmark_groups = [label_func(landmarkable.landmarks[group_label])
-                       for landmarkable in landmarkables]
-
-    for (lanmarkable, group) in zip(landmarkables, landmark_groups):
-        lanmarkable.landmarks[group.group_label] = group
-
-    return landmarkables
+    group = label_func(landmarkable.landmarks[group_label])
+    landmarkable.landmarks[group.group_label] = group
+    return landmarkable
