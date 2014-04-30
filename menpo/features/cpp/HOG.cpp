@@ -26,9 +26,6 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
                                     (double)cellHeightAndWidthInPixels);
         hist2 = (unsigned int)round((double)windowWidth /
                                     (double)cellHeightAndWidthInPixels);
-        // You can change this to out[0] = max(hist1-1,0); and
-        // out[1] = max(hist2-1,0), in order to return the same output size as
-        // dalaltriggs. You can do the same in lines 1361, 1362.
         numberOfBlocksPerWindowVertically = max(hist1-2, 0);
         numberOfBlocksPerWindowHorizontally = max(hist2-2, 0);
         descriptorLengthPerBlock = 27 + 4;
@@ -98,9 +95,6 @@ void ZhuRamananHOGdescriptor(double *inputImage,
 
     // memory for HOG features
     int out[3];
-    // You can change this to out[0] = max(blocks[0]-1, 0); and
-    // out[1] = max(blocks[1]-1, 0), in order to return the same output size as
-    // dalaltriggs. I did the same change in lines 231, 232.
     out[0] = max(blocks[0]-2, 0);
     out[1] = max(blocks[1]-2, 0);
     out[2] = 27+4;
