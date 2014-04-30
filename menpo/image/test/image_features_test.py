@@ -1,15 +1,9 @@
 import numpy as np
 from numpy.testing import assert_allclose
-import menpo.io as pio
 import random
 import math
 
 from menpo.image import MaskedImage
-
-# Setup the static assets (the breaking_bad image)
-rgb_image = pio.import_builtin_asset('breakingbad.jpg')
-rgb_image.crop_to_landmarks(boundary=20)
-rgb_image.constrain_mask_to_landmarks()
 
 
 def test_imagewindowiterator_hog_padding():
@@ -219,3 +213,14 @@ def test_es_values():
     res = np.array([[[np.nan, np.nan], [np.nan, np.nan]],
                     [[np.nan, np.nan], [np.nan, np.nan]]])
     assert_allclose(es.pixels, res)
+
+
+def test_lbp_values():
+    image = MaskedImage([[0., 6., 0.], [5., 18., 13.], [0., 20., 0.]])
+    lbp = image.features.lbp(radius=1, samples=4, mapping_type='none',
+                             padding=False)
+    assert_allclose(lbp.pixels, 8.)
+    image = MaskedImage([[0., 6., 0.], [5., 25., 13.], [0., 20., 0.]])
+    lbp = image.features.lbp(radius=1, samples=4, mapping_type='none',
+                             padding=False)
+    assert_allclose(lbp.pixels, 0.)
