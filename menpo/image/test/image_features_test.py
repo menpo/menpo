@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import menpo.io as pio
+import random
 
 from menpo.image import MaskedImage
 
@@ -11,7 +12,7 @@ rgb_image.constrain_mask_to_landmarks()
 
 
 def test_imagewindowiterator_hog_padding():
-    n_cases = 10
+    n_cases = 5
     image_width = np.random.randint(50, 250, [n_cases, 1])
     image_height = np.random.randint(50, 250, [n_cases, 1])
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
@@ -31,7 +32,7 @@ def test_imagewindowiterator_hog_padding():
 
 
 def test_imagewindowiterator_hog_no_padding():
-    n_cases = 10
+    n_cases = 5
     image_width = np.random.randint(50, 250, [n_cases, 1])
     image_height = np.random.randint(50, 250, [n_cases, 1])
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
@@ -58,7 +59,7 @@ def test_imagewindowiterator_hog_no_padding():
 
 
 def test_imagewindowiterator_lbp_padding():
-    n_cases = 10
+    n_cases = 5
     image_width = np.random.randint(50, 250, [n_cases, 1])
     image_height = np.random.randint(50, 250, [n_cases, 1])
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
@@ -78,7 +79,7 @@ def test_imagewindowiterator_lbp_padding():
 
 
 def test_imagewindowiterator_lbp_no_padding():
-    n_cases = 10
+    n_cases = 5
     image_width = np.random.randint(50, 250, [n_cases, 1])
     image_height = np.random.randint(50, 250, [n_cases, 1])
     window_step_horizontal = np.random.randint(1, 10, [n_cases, 1])
@@ -101,12 +102,13 @@ def test_imagewindowiterator_lbp_no_padding():
 
 
 def test_hog_channels_dalaltriggs():
-    n_cases = 5
+    n_cases = 3
     cell_size = np.random.randint(1, 10, [n_cases, 1])
     block_size = np.random.randint(1, 3, [n_cases, 1])
     num_bins = np.random.randint(7, 9, [n_cases, 1])
-    image = MaskedImage(np.random.randn(40, 40, 1))
+    channels = np.random.randint(1, 4, [n_cases, 1])
     for i in range(n_cases):
+        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
         block_size_pixels = cell_size[i, 0] * block_size[i, 0]
         window_width = np.random.randint(block_size_pixels, 40, 1)
         window_height = np.random.randint(block_size_pixels, 40, 1)
@@ -129,10 +131,11 @@ def test_hog_channels_dalaltriggs():
 
 
 def test_hog_channels_zhuramanan():
-    n_cases = 5
-    cell_size = np.random.randint(1, 10, [n_cases, 1])
-    image = MaskedImage(np.random.randn(40, 40, 1))
+    n_cases = 3
+    cell_size = np.random.randint(2, 10, [n_cases, 1])
+    channels = np.random.randint(1, 4, [n_cases, 1])
     for i in range(n_cases):
+        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
         window_width = np.random.randint(3 * cell_size[i, 0], 40, 1)
         window_height = np.random.randint(3 * cell_size[i, 0], 40, 1)
         hog = image.features.hog(mode='dense', algorithm='zhuramanan',
@@ -149,3 +152,41 @@ def test_hog_channels_zhuramanan():
                                      / np.float(cell_size[i, 0])) - 2
         n_channels = n_blocks_horizontal * n_blocks_vertical * length_per_block
         assert_allclose(hog.n_channels, n_channels)
+
+
+def test_lbp_channels():
+    n_cases = 3
+    n_combs = np.random.randint(1, 6, [n_cases, 1])
+    channels = np.random.randint(1, 4, [n_cases, 1])
+    for i in range(n_cases):
+        radius = random.sample(xrange(1, 10), n_combs[i, 0])
+        samples = random.sample(xrange(4, 12), n_combs[i, 0])
+        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        lbp = image.features.lbp(radius=radius, samples=samples,
+                                 window_step_vertical=3,
+                                 window_step_horizontal=3,
+                                 window_step_unit='pixels', padding=True)
+        assert_allclose(lbp.n_channels, n_combs[i, 0] * channels[i, 0])
+
+
+def test_igo_channels():
+    n_cases = 3
+    channels = np.random.randint(1, 10, [n_cases, 1])
+    for i in range(n_cases):
+        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        igo = image.features.igo()
+        igo2 = image.features.igo(double_angles=True)
+        assert_allclose(igo.shape, image.shape)
+        assert_allclose(igo2.shape, image.shape)
+        assert_allclose(igo.n_channels, 2 * channels[i, 0])
+        assert_allclose(igo2.n_channels, 4 * channels[i, 0])
+
+
+def test_es_channels():
+    n_cases = 3
+    channels = np.random.randint(1, 10, [n_cases, 1])
+    for i in range(n_cases):
+        image = MaskedImage(np.random.randn(40, 40, channels[i, 0]))
+        es = image.features.es()
+        assert_allclose(es.shape, image.shape)
+        assert_allclose(es.n_channels, 2 * channels[i, 0])
