@@ -16,7 +16,6 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.n_iterations = 1
         self.max_iterations = 100
         self.converged = self._recursive_procrustes()
-        print self
 
     def _recursive_procrustes(self):
         """
