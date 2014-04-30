@@ -260,8 +260,9 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
 def igo(image_data, double_angles=False, verbose=False):
     r"""
-    Represents a 2-dimensional IGO features image with k=[2,4] number of
-    channels.
+    Represents a 2-dimensional IGO features image with N*C number of channels,
+    where N is the number of channels of the original image and C=[2,4]
+    depending on whether double angles are used.
 
     Parameters
     ----------
@@ -318,8 +319,9 @@ def igo(image_data, double_angles=False, verbose=False):
 
 def es(image_data, verbose=False):
     r"""
-    Represents a 2-dimensional Edge Structure (ES) features image
-    with k=2 number of channels.
+    Represents a 2-dimensional Edge Structure (ES) features image with N*C
+    number of channels, where N is the number of channels of the original image
+    and C=2.
 
     Parameters
     ----------
@@ -363,8 +365,9 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False):
     r"""
-    Computes a 2-dimensional LBP features image with k number of channels, of
-    size ``(M, N, C)`` and data type ``np.float``.
+    Computes a 2-dimensional LBP features image with N*C number of channels,
+    where N is the number of channels of the original image and C is the number
+    of radius/samples values combinations that are used in the LBP computation.
 
     Parameters
     ----------
