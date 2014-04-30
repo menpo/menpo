@@ -221,6 +221,14 @@ def test_lbp_values():
                              padding=False)
     assert_allclose(lbp.pixels, 8.)
     image = MaskedImage([[0., 6., 0.], [5., 25., 13.], [0., 20., 0.]])
-    lbp = image.features.lbp(radius=1, samples=4, mapping_type='none',
+    lbp = image.features.lbp(radius=1, samples=4, mapping_type='riu2',
                              padding=False)
     assert_allclose(lbp.pixels, 0.)
+    image = MaskedImage([[0., 6., 0.], [5., 13., 13.], [0., 20., 0.]])
+    lbp = image.features.lbp(radius=1, samples=4, mapping_type='u2',
+                             padding=False)
+    assert_allclose(lbp.pixels, 8.)
+    image = MaskedImage([[0., 6., 0.], [5., 6., 13.], [0., 20., 0.]])
+    lbp = image.features.lbp(radius=1, samples=4, mapping_type='ri',
+                             padding=False)
+    assert_allclose(lbp.pixels, 4.)
