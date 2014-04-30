@@ -699,7 +699,7 @@ class MaskedImage(Image):
             self, n_levels=n_levels, downscale=downscale, sigma=sigma,
             order=order, mode=mode, cval=cval)
         for j, image in enumerate(image_pyramid):
-            image.mask = self.mask.rescale(1/downscale**j)
+            image.mask = self.mask.resize(image.shape)
             yield image
 
     def smoothing_pyramid(self, n_levels=3, downscale=2, sigma=None,
