@@ -282,8 +282,8 @@ void DalalTriggsHOGdescriptor(double *inputImage,
         signedOrUnsignedGradients = 0;
     }
 
-    int hist1= 2 + ceil(-0.5 + imageHeight / cellHeightAndWidthInPixels);
-    int hist2= 2 + ceil(-0.5 + imageWidth / cellHeightAndWidthInPixels);
+    int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
+    int hist2 = 2 + (imageWidth / cellHeightAndWidthInPixels);
 
     double binsSize = (1 + (signedOrUnsignedGradients == 1)) *
                       pi / numberOfOrientationBins;
@@ -364,11 +364,11 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                        (signedOrUnsignedGradients == 1) * pi;
 
             // trilinear interpolation
-            bin1 = (int)floor(0.5 + gradientOrientation / binsSize) - 1;
+            bin1 = (gradientOrientation / binsSize) - 1;
             bin2 = bin1 + 1;
-            x1   = (int)floor(0.5 + x / cellHeightAndWidthInPixels);
+            x1   = x / cellHeightAndWidthInPixels;
             x2   = x1 + 1;
-            y1   = (int)floor(0.5 + y / cellHeightAndWidthInPixels);
+            y1   = y / cellHeightAndWidthInPixels;
             y2   = y1 + 1;
 
             Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
