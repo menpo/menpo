@@ -6,8 +6,8 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int cellHeightAndWidthInPixels,
          unsigned int blockHeightAndWidthInCells, bool enableSignedGradients,
          double l2normClipping) {
-    unsigned int descriptorLengthPerBlock = 0, descriptorLengthPerWindow = 0,
-                 hist1 = 0, hist2 = 0, numberOfBlocksPerWindowVertically = 0,
+    unsigned int descriptorLengthPerBlock = 0,
+                 numberOfBlocksPerWindowVertically = 0,
                  numberOfBlocksPerWindowHorizontally = 0;
 
     if (method == 1) {
@@ -22,13 +22,13 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
         / cellHeightAndWidthInPixels;
     }
     else if (method==2) {
-        hist1 = (unsigned int)round((double)windowHeight /
-                                    (double)cellHeightAndWidthInPixels);
-        hist2 = (unsigned int)round((double)windowWidth /
-                                    (double)cellHeightAndWidthInPixels);
-        numberOfBlocksPerWindowVertically = max(hist1-2, 0);
-        numberOfBlocksPerWindowHorizontally = max(hist2-2, 0);
         descriptorLengthPerBlock = 27 + 4;
+        numberOfBlocksPerWindowVertically =
+        (unsigned int)round((double)windowHeight /
+                            (double)cellHeightAndWidthInPixels) - 2;
+        numberOfBlocksPerWindowHorizontally =
+        (unsigned int)round((double)windowWidth /
+                            (double)cellHeightAndWidthInPixels) - 2;
     }
     this->method = method;
     this->numberOfOrientationBins = numberOfOrientationBins;
@@ -54,7 +54,7 @@ HOG::~HOG() {
 
 
 void HOG::apply(double *windowImage, double *descriptorVector) {
-    if (this->method == 1) {
+    if (this->method == 1)
         DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins,
                                  this->cellHeightAndWidthInPixels,
                                  this->blockHeightAndWidthInCells,
@@ -62,11 +62,10 @@ void HOG::apply(double *windowImage, double *descriptorVector) {
                                  this->l2normClipping, this->windowHeight,
                                  this->windowWidth, this->numberOfChannels,
                                  descriptorVector);
-    } else {
+    else
         ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels,
                                 this->windowHeight, this->windowWidth,
                                 this->numberOfChannels, descriptorVector);
-    }
 }
 
 
