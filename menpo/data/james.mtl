@@ -1,0 +1,15 @@
+# Produced by Dimensional Imaging OBJ exporter
+# http://www.di3d.com
+#
+#
+newmtl merged_material
+Ka  0.5 0.5 0.5
+Kd  0.5 0.5 0.5
+Ks  0.47 0.47 0.47
+d 1
+Ns 0
+illum 2
+map_Kd james.jpg
+#
+#
+# EOF
