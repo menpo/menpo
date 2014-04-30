@@ -157,7 +157,8 @@ class MeshImporter(Importer):
 
         try:
             return path.join(self.folder, self.relative_texture_path)
-        except AttributeError:
+        # AttributeError POSIX, TypeError Windows
+        except (AttributeError, TypeError):
             return None
 
     @abc.abstractmethod
