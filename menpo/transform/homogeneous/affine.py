@@ -194,10 +194,10 @@ class Affine(Homogeneous):
         from_vector for details of the parameter format
         """
         h_matrix = None
-        if p.shape[0] is 6:  # 2D affine
+        if p.shape[0] == 6:  # 2D affine
             h_matrix = np.eye(3)
             h_matrix[:2, :] += p.reshape((2, 3), order='F')
-        elif p.shape[0] is 12:  # 3D affine
+        elif p.shape[0] == 12:  # 3D affine
             h_matrix = np.eye(4)
             h_matrix[:3, :] += p.reshape((3, 4), order='F')
         else:
