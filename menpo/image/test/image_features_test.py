@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import menpo.io as pio
 import random
+import math
 
 from menpo.image import MaskedImage
 
@@ -190,3 +191,31 @@ def test_es_channels():
         es = image.features.es()
         assert_allclose(es.shape, image.shape)
         assert_allclose(es.n_channels, 2 * channels[i, 0])
+
+
+def test_igo_values():
+    image = MaskedImage([[1, 2], [2, 1]])
+    igo = image.features.igo()
+    res = np.array([
+        [[math.cos(math.radians(45)), math.sin(math.radians(45))],
+         [math.cos(math.radians(90+45)), math.sin(math.radians(90+45))]],
+        [[math.cos(math.radians(-45)), math.sin(math.radians(-45))],
+         [math.cos(math.radians(180+45)), math.sin(math.radians(180+45))]]])
+    assert_allclose(igo.pixels, res)
+    image = MaskedImage([[0, 0], [0, 0]])
+    igo = image.features.igo()
+    res = np.array([[[1., 0.], [1., 0.]], [[1., 0.], [1., 0.]]])
+    assert_allclose(igo.pixels, res)
+
+
+def test_es_values():
+    image = MaskedImage([[1, 2], [2, 1]])
+    es = image.features.es()
+    k = 1 / (2 * (2**0.5))
+    res = np.array([[[k, k], [-k, k]], [[k, -k], [-k, -k]]])
+    assert_allclose(es.pixels, res)
+    image = MaskedImage([[0, 0], [0, 0]])
+    es = image.features.es()
+    res = np.array([[[np.nan, np.nan], [np.nan, np.nan]],
+                    [[np.nan, np.nan], [np.nan, np.nan]]])
+    assert_allclose(es.pixels, res)
