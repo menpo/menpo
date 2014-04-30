@@ -4,6 +4,7 @@ import random
 import math
 
 from menpo.image import MaskedImage
+import menpo.io as pio
 
 
 def test_imagewindowiterator_hog_padding():
@@ -232,3 +233,18 @@ def test_lbp_values():
     lbp = image.features.lbp(radius=1, samples=4, mapping_type='ri',
                              padding=False)
     assert_allclose(lbp.pixels, 4.)
+
+
+def test_constrain_landmarks():
+    breaking_bad = pio.import_builtin_asset('breakingbad.jpg')
+    breaking_bad.crop_to_landmarks(boundary=20)
+    breaking_bad.constrain_mask_to_landmarks()
+    breaking_bad = breaking_bad.resize([50, 50])
+    hog = breaking_bad.features.hog(mode='sparse', constrain_landmarks=False)
+    x = np.where(hog.landmarks['PTS'].lms.points[:, 0] > hog.shape[1] - 1)
+    y = np.where(hog.landmarks['PTS'].lms.points[:, 0] > hog.shape[0] - 1)
+    assert_allclose(len(x[0]) + len(y[0]), 12)
+    hog = breaking_bad.features.hog(mode='sparse', constrain_landmarks=True)
+    x = np.where(hog.landmarks['PTS'].lms.points[:, 0] > hog.shape[1] - 1)
+    y = np.where(hog.landmarks['PTS'].lms.points[:, 0] > hog.shape[0] - 1)
+    assert_allclose(len(x[0]) + len(y[0]), 0)
