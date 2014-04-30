@@ -141,9 +141,9 @@ def test_hog_channels_zhuramanan():
                                  window_step_horizontal=3,
                                  window_step_unit='pixels', padding=True)
         length_per_block = 31
-        n_blocks_horizontal = np.round(np.float(window_width[0])
+        n_blocks_horizontal = round(np.float(window_width[0])
                                        / np.float(cell_size[i, 0])) - 2
-        n_blocks_vertical = np.round(np.float(window_height[0])
+        n_blocks_vertical = round(np.float(window_height[0])
                                      / np.float(cell_size[i, 0])) - 2
         n_channels = n_blocks_horizontal * n_blocks_vertical * length_per_block
         assert_allclose(hog.n_channels, n_channels)
