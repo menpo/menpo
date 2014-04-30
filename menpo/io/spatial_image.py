@@ -83,7 +83,7 @@ class SpatialImageImporter(Importer):
 
         try:
             return path.join(self.folder, self.relative_texture_path)
-        except AttributeError:
+        except (AttributeError, TypeError):
             return None
 
     @abc.abstractmethod
