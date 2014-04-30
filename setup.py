@@ -13,7 +13,7 @@ cython_modules = ["menpo/geodesics/kirsanov.pyx",
 cython_exts = cythonize(cython_modules, quiet=True)
 
 setup(name='menpo',
-      version='0.2.1',
+      version='0.2.2',
       description='iBUG Facial Modelling Toolkit',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
