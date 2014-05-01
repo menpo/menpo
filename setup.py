@@ -4,9 +4,7 @@ import numpy as np
 
 
 # ---- C/C++ EXTENSIONS ---- #
-cython_modules = ["menpo/geodesics/kirsanov.pyx",
-                  "menpo/shape/mesh/cpptrimesh.pyx",
-                  "menpo/shape/mesh/normals.pyx",
+cython_modules = ["menpo/shape/mesh/normals.pyx",
                   "menpo/transform/piecewiseaffine/fastpwa.pyx",
                   "menpo/features/cppimagewindowiterator.pyx"]
 
