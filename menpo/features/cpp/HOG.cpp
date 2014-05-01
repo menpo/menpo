@@ -6,45 +6,29 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int cellHeightAndWidthInPixels,
          unsigned int blockHeightAndWidthInCells, bool enableSignedGradients,
          double l2normClipping) {
-    unsigned int descriptorLengthPerBlock = 0, descriptorLengthPerWindow = 0,
-                 hist1 = 0, hist2 = 0, numberOfBlocksPerWindowVertically = 0,
+    unsigned int descriptorLengthPerBlock = 0,
+                 numberOfBlocksPerWindowVertically = 0,
                  numberOfBlocksPerWindowHorizontally = 0;
 
     if (method == 1) {
         descriptorLengthPerBlock = blockHeightAndWidthInCells *
                                    blockHeightAndWidthInCells *
                                    numberOfOrientationBins;
-        hist1 = 2 + ceil(- 0.5 + windowHeight / cellHeightAndWidthInPixels);
-        hist2 = 2 + ceil(- 0.5 + windowWidth / cellHeightAndWidthInPixels);
-        descriptorLengthPerWindow = (hist1-2-(blockHeightAndWidthInCells-1)) *
-                                    (hist2-2-(blockHeightAndWidthInCells-1)) *
-                                    descriptorLengthPerBlock;
-        // both ways of calculating number of blocks are equal
-        //numberOfBlocksPerWindowVertically =
-        //  1 + floor((windowHeight-blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
-        //             / cellHeightAndWidthInPixels);
-        //numberOfBlocksPerWindowHorizontally =
-        //  1+floor((windowWidth-blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
-        //             / cellHeightAndWidthInPixels);
-        numberOfBlocksPerWindowVertically =
-            hist1 - 2 - (blockHeightAndWidthInCells - 1);
-        numberOfBlocksPerWindowHorizontally =
-            hist2 - 2 - (blockHeightAndWidthInCells - 1);
+        numberOfBlocksPerWindowVertically = 1 +
+        (windowHeight - blockHeightAndWidthInCells*cellHeightAndWidthInPixels)
+        / cellHeightAndWidthInPixels;
+        numberOfBlocksPerWindowHorizontally = 1 +
+        (windowWidth - blockHeightAndWidthInCells * cellHeightAndWidthInPixels)
+        / cellHeightAndWidthInPixels;
     }
     else if (method==2) {
-        hist1 = (unsigned int)round((double)windowHeight /
-                                    (double)cellHeightAndWidthInPixels);
-        hist2 = (unsigned int)round((double)windowWidth /
-                                    (double)cellHeightAndWidthInPixels);
-        // You can change this to out[0] = max(hist1-1,0); and
-        // out[1] = max(hist2-1,0), in order to return the same output size as
-        // dalaltriggs. You can do the same in lines 1361, 1362.
-        numberOfBlocksPerWindowVertically = max(hist1-2, 0);
-        numberOfBlocksPerWindowHorizontally = max(hist2-2, 0);
         descriptorLengthPerBlock = 27 + 4;
-        descriptorLengthPerWindow = numberOfBlocksPerWindowHorizontally *
-                                    numberOfBlocksPerWindowVertically *
-                                    descriptorLengthPerBlock;
+        numberOfBlocksPerWindowVertically =
+        (unsigned int)round((double)windowHeight /
+                            (double)cellHeightAndWidthInPixels) - 2;
+        numberOfBlocksPerWindowHorizontally =
+        (unsigned int)round((double)windowWidth /
+                            (double)cellHeightAndWidthInPixels) - 2;
     }
     this->method = method;
     this->numberOfOrientationBins = numberOfOrientationBins;
@@ -52,10 +36,14 @@ HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
     this->blockHeightAndWidthInCells = blockHeightAndWidthInCells;
     this->enableSignedGradients = enableSignedGradients;
     this->l2normClipping = l2normClipping;
-    this->numberOfBlocksPerWindowHorizontally = numberOfBlocksPerWindowHorizontally;
-    this->numberOfBlocksPerWindowVertically = numberOfBlocksPerWindowVertically;
+    this->numberOfBlocksPerWindowHorizontally =
+                    numberOfBlocksPerWindowHorizontally;
+    this->numberOfBlocksPerWindowVertically =
+                    numberOfBlocksPerWindowVertically;
     this->descriptorLengthPerBlock = descriptorLengthPerBlock;
-    this->descriptorLengthPerWindow = descriptorLengthPerWindow;
+    this->descriptorLengthPerWindow = numberOfBlocksPerWindowHorizontally *
+                                      numberOfBlocksPerWindowVertically *
+                                      descriptorLengthPerBlock;
     this->windowHeight = windowHeight;
     this->windowWidth = windowWidth;
     this->numberOfChannels = numberOfChannels;
@@ -66,7 +54,7 @@ HOG::~HOG() {
 
 
 void HOG::apply(double *windowImage, double *descriptorVector) {
-    if (this->method == 1) {
+    if (this->method == 1)
         DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins,
                                  this->cellHeightAndWidthInPixels,
                                  this->blockHeightAndWidthInCells,
@@ -74,11 +62,10 @@ void HOG::apply(double *windowImage, double *descriptorVector) {
                                  this->l2normClipping, this->windowHeight,
                                  this->windowWidth, this->numberOfChannels,
                                  descriptorVector);
-    } else {
+    else
         ZhuRamananHOGdescriptor(windowImage, this->cellHeightAndWidthInPixels,
                                 this->windowHeight, this->windowWidth,
                                 this->numberOfChannels, descriptorVector);
-    }
 }
 
 
@@ -107,9 +94,6 @@ void ZhuRamananHOGdescriptor(double *inputImage,
 
     // memory for HOG features
     int out[3];
-    // You can change this to out[0] = max(blocks[0]-1, 0); and
-    // out[1] = max(blocks[1]-1, 0), in order to return the same output size as
-    // dalaltriggs. I did the same change in lines 231, 232.
     out[0] = max(blocks[0]-2, 0);
     out[1] = max(blocks[1]-2, 0);
     out[2] = 27+4;
@@ -291,8 +275,8 @@ void DalalTriggsHOGdescriptor(double *inputImage,
         signedOrUnsignedGradients = 0;
     }
 
-    int hist1= 2 + ceil(-0.5 + imageHeight / cellHeightAndWidthInPixels);
-    int hist2= 2 + ceil(-0.5 + imageWidth / cellHeightAndWidthInPixels);
+    int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
+    int hist2 = 2 + (imageWidth / cellHeightAndWidthInPixels);
 
     double binsSize = (1 + (signedOrUnsignedGradients == 1)) *
                       pi / numberOfOrientationBins;
@@ -373,11 +357,11 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                        (signedOrUnsignedGradients == 1) * pi;
 
             // trilinear interpolation
-            bin1 = (int)floor(0.5 + gradientOrientation / binsSize) - 1;
+            bin1 = (gradientOrientation / binsSize) - 1;
             bin2 = bin1 + 1;
-            x1   = (int)floor(0.5 + x / cellHeightAndWidthInPixels);
+            x1   = x / cellHeightAndWidthInPixels;
             x2   = x1 + 1;
-            y1   = (int)floor(0.5 + y / cellHeightAndWidthInPixels);
+            y1   = y / cellHeightAndWidthInPixels;
             y2   = y1 + 1;
 
             Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;

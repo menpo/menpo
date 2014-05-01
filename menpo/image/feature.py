@@ -26,7 +26,7 @@ class FeatureExtraction(object):
             window_step_unit='pixels', padding=True, verbose=False,
             constrain_landmarks=True):
         r"""
-        Represents a 2-dimensional HOG features image with k number of
+        Represents a 2-dimensional HOG features image with C number of
         channels. The output object's class is either MaskedImage or Image
         depending on the input image.
 
@@ -199,9 +199,11 @@ class FeatureExtraction(object):
     def igo(self, double_angles=False, constrain_landmarks=True,
             verbose=False):
         r"""
-        Represents a 2-dimensional IGO features image with k=[2,4] number of
-        channels. The output object's class is either MaskedImage or Image
-        depending on the input image.
+        Represents a 2-dimensional IGO features image with N*C number of
+        channels, where N is the number of channels of the original image and
+        C=[2,4] depending on whether double angles are used. The output
+        object's class is either MaskedImage or Image depending on the original
+        image.
 
         Parameters
         ----------
@@ -211,7 +213,8 @@ class FeatureExtraction(object):
             Assume that phi represents the gradient orientations. If this flag
             is disabled, the features image is the concatenation of cos(phi)
             and sin(phi), thus 2 channels. If it is enabled, the features image
-            is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi).
+            is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi),
+            thus 4 channels.
 
             Default: False
         constrain_landmarks : bool
@@ -247,9 +250,10 @@ class FeatureExtraction(object):
 
     def es(self, constrain_landmarks=True, verbose=False):
         r"""
-        Represents a 2-dimensional Edge Structure (ES) features image with k=2
-        number of channels. The output object's class is either MaskedImage or
-        Image depending on the input image.
+        Represents a 2-dimensional Edge Structure (ES) features image with N*C
+        number of channels, where N is the number of channels of the original
+        image and C=2. The output object's class is either MaskedImage or
+        Image depending on the original image.
 
         Parameters
         ----------
@@ -289,9 +293,11 @@ class FeatureExtraction(object):
             window_step_unit='pixels', padding=True, verbose=False,
             constrain_landmarks=True):
         r"""
-        Represents a 2-dimensional LBP features image with k number of
-        channels. The output object's class is either MaskedImage or Image
-        depending on the input image.
+        Represents a 2-dimensional LBP features image with N*C number of
+        channels, where N is the number of channels of the original image and
+        C is the number of radius/samples values combinations that are used in
+        the LBP computation. The output object's class is either MaskedImage or
+        Image depending on the input image.
 
         Parameters
         ----------
