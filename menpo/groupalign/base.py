@@ -1,20 +1,25 @@
 import abc
-import numpy as np
 from menpo.shape import PointCloud
 
 
 class MultipleAlignment(object):
     r"""
-    Abstract base class for aligning multiple sources to a target.
+    Abstract base class for aligning multiple source shapes to a target shape.
 
     Parameters
     ----------
-    sources : (N, D) list of ndarrays
-        List of points to be aligned
+    sources : list of (N, D) ndarrays
+        List of pointclouds to be aligned.
     target : (N, D) ndarray, optional
-        The target to align to.
+        The target pointcloud to align to. If None, then the mean of the
+        sources is used.
 
-        Default: The ``mean`` of sources
+        Default: None
+
+    Raises
+    -------
+    Exception
+        Need at least two sources to align
     """
 
     __metaclass__ = abc.ABCMeta
@@ -25,6 +30,7 @@ class MultipleAlignment(object):
         self.n_sources = len(sources)
         self.n_points, self.n_dims = sources[0].n_points, sources[0].n_dims
         self.sources = sources
+        print type(sources[0])
         if target is None:
             # set the target to the mean source position
             self.target = PointCloud(
@@ -32,3 +38,4 @@ class MultipleAlignment(object):
         else:
             assert self.n_dims, self.n_points == target.shape
             self.target = target
+        print type(self.target)
