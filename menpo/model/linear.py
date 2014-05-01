@@ -230,7 +230,7 @@ class LinearModel(object):
                         trans_a=True)
         return (vectors -
                 dgemm(alpha=1.0, a=weights.T, b=self.components.T,
-                      trans_a=True, trans_b=False))
+                      trans_a=True, trans_b=True))
 
     def orthonormalize_inplace(self):
         r"""
