@@ -686,7 +686,7 @@ def find_alternative_files(file_type, filepath, extensions_map):
     except Exception as e:
         raise ImportError("Failed to find a {0} for {1} from types {2}. "
                           "Reason: {3}".format(file_type, filepath,
-                                               extensions_map, e.message))
+                                               extensions_map, e))
 
 
 def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
