@@ -63,7 +63,7 @@ class BooleanImage(Image):
         if round not in ['ceil', 'round', 'floor']:
             raise ValueError('round must be either ceil, round or floor')
             # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(getattr(np, round)(shape))
+        shape = tuple(getattr(np, round)(shape).astype(np.int))
         if fill:
             mask = np.ones(shape, dtype=np.bool)
         else:
