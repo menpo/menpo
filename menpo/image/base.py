@@ -133,7 +133,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A new image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(np.ceil(shape))
+        shape = tuple(np.ceil(shape).astype(np.int))
         if fill == 0:
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
@@ -465,7 +465,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
-        slices = [slice(min_i, max_i)
+        slices = [slice(int(min_i), int(max_i))
                   for min_i, max_i in
                   zip(list(min_bounded), list(max_bounded))]
         self.pixels = self.pixels[slices].copy()
