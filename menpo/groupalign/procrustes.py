@@ -15,8 +15,9 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     kwargs : dict
         Optional target shape to pass to the MultipleAlignment.
     """
-    def __init__(self, sources, **kwargs):
-        super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
+    def __init__(self, sources, target=None):
+        super(GeneralizedProcrustesAnalysis, self).__init__(sources,
+                                                            target=target)
         initial_target = self.target
         self.transforms = [AlignmentSimilarity(source, self.target)
                            for source in self.sources]
@@ -24,7 +25,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.n_iterations = 1
         self.max_iterations = 100
         self.converged = self._recursive_procrustes()
-        if 'target' in kwargs and kwargs['target'] is not None:
+        if target is not None:
             self.target = initial_target
 
     def _recursive_procrustes(self):
