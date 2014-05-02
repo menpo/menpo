@@ -17,12 +17,15 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     """
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
+        initial_target = self.target
         self.transforms = [AlignmentSimilarity(source, self.target)
                            for source in self.sources]
         self.initial_target_scale = self.target.norm()
         self.n_iterations = 1
         self.max_iterations = 100
         self.converged = self._recursive_procrustes()
+        if 'target' in kwargs and kwargs['target'] is not None:
+            self.target = initial_target
 
     def _recursive_procrustes(self):
         r"""
