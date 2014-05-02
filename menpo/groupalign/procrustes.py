@@ -6,7 +6,14 @@ from menpo.transform import AlignmentSimilarity, UniformScale, Translation
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
-    TODO: Write documentation
+    Class for aligning multiple source shapes between them.
+
+    Parameters
+    ----------
+    sources : list of (N, D) ndarrays
+        List of pointclouds to be aligned.
+    kwargs : dict
+        Optional target shape to pass to the MultipleAlignment.
     """
     def __init__(self, sources, **kwargs):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources, **kwargs)
@@ -18,8 +25,8 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         self.converged = self._recursive_procrustes()
 
     def _recursive_procrustes(self):
-        """
-        Recursively calculates a Procrustes alignment
+        r"""
+        Recursively calculates a procrustes alignment.
         """
         if self.n_iterations > self.max_iterations:
             return False
@@ -47,11 +54,21 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
     @property
     def mean_aligned_shape(self):
+        r"""
+        Returns the mean of the aligned shapes.
+
+        :type: PointCloud
+        """
         return PointCloud(np.mean([t.target.points for t in self.transforms],
                                   axis=0))
 
     @property
     def av_alignment_error(self):
+        r"""
+        Returns the average error of the recursive procrustes alignment.
+
+        :type: float
+        """
         return sum([t.alignment_error for t in self.transforms])/self.n_sources
 
     def __str__(self):
