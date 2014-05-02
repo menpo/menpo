@@ -64,7 +64,7 @@ class PCAModel(MeanInstanceLinearModel):
 
     @n_active_components.setter
     def n_active_components(self, value):
-        value = round(value)
+        value = int(round(value))
         if 0 < value <= self.n_components:
             self._n_components = value
         else:
