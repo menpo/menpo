@@ -174,7 +174,7 @@ class MaskedImage(Image):
         if keep_channels:
             return self.masked_pixels.reshape([-1, self.n_channels])
         else:
-            return self.masked_pixels.flatten()
+            return self.masked_pixels.ravel()
 
     def from_vector(self, flattened, n_channels=None):
         r"""

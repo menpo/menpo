@@ -186,7 +186,7 @@ class Affine(Homogeneous):
             The values that paramaterise the transform.
         """
         params = self.h_matrix - np.eye(self.n_dims + 1)
-        return params[:self.n_dims, :].flatten(order='F')
+        return params[:self.n_dims, :].ravel(order='F')
 
     def from_vector_inplace(self, p):
         r"""

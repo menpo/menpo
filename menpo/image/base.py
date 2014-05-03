@@ -261,7 +261,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         if keep_channels:
             return self.pixels.reshape([-1, self.n_channels])
         else:
-            return self.pixels.flatten()
+            return self.pixels.ravel()
 
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""

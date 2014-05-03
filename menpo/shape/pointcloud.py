@@ -82,7 +82,7 @@ class PointCloud(Shape):
         flattened : (N,) ndarray
             The flattened points.
         """
-        return self.points.flatten()
+        return self.points.ravel()
 
     def tojson(self):
         r"""
