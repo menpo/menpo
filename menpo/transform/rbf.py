@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 
-class BasisFunction(object):
+class RadialBasisFunction(object):
     r"""
     An abstract base class for Basis functions. In the case, radial basis
     functions. They provide two methods, :meth:`apply`, which calculates the
@@ -71,7 +71,7 @@ class BasisFunction(object):
         pass
 
 
-class R2LogR2(BasisFunction):
+class R2LogR2RBF(RadialBasisFunction):
     r"""
     The :math:`r^2 \log{r^2}` basis function.
 
@@ -89,7 +89,7 @@ class R2LogR2(BasisFunction):
     """
 
     def __init__(self, c):
-        super(R2LogR2, self).__init__(c)
+        super(R2LogR2RBF, self).__init__(c)
 
     def apply(self, x):
         """
@@ -115,7 +115,7 @@ class R2LogR2(BasisFunction):
         with np.errstate(divide='ignore', invalid='ignore'):
             u = (euclidean_distance ** 2 *
                  (2 * np.log(euclidean_distance)))
-            # reset singularities to 0
+        # reset singularities to 0
         u[mask] = 0
         return u
 
@@ -156,7 +156,7 @@ class R2LogR2(BasisFunction):
         return dudx
 
 
-class R2LogR(BasisFunction):
+class R2LogRRBF(RadialBasisFunction):
     r"""
     Calculates the :math:`r^2 \log{r}` basis function.
 
@@ -174,7 +174,7 @@ class R2LogR(BasisFunction):
     """
 
     def __init__(self, c):
-        super(R2LogR, self).__init__(c)
+        super(R2LogRRBF, self).__init__(c)
 
     def apply(self, x):
         """

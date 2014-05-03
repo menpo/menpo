@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.spatial import distance
-from menpo.basis.rbf import R2LogR2
 
 from .base import Transform, Alignment, Invertible
+from .rbf import R2LogR2RBF
+
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
@@ -37,7 +38,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
         if self.n_dims != 2:
             raise ValueError('TPS can only be used on 2D data.')
         if kernel is None:
-            kernel = R2LogR2(source.points)
+            kernel = R2LogR2RBF(source.points)
         self.kernel = kernel
         self.k = self.kernel.apply(self.source.points)
         self.p = np.concatenate(
