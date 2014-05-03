@@ -1,7 +1,16 @@
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy as np
+import versioneer
 
+
+# Versioneer allows us to automatically generate versioning from
+# our git tagging system which makes releases simpler.  
+versioneer.VCS = 'git'
+versioneer.versionfile_source = 'menpo/_version.py'
+versioneer.versionfile_build = 'menpo/_version.py'
+versioneer.tag_prefix = 'v'             # tags are like v1.2.0
+versioneer.parentdir_prefix = 'menpo-'  # dirname like 'menpo-v1.2.0'
 
 # ---- C/C++ EXTENSIONS ---- #
 cython_modules = ["menpo/shape/mesh/normals.pyx",
@@ -11,7 +20,8 @@ cython_modules = ["menpo/shape/mesh/normals.pyx",
 cython_exts = cythonize(cython_modules, quiet=True)
 
 setup(name='menpo',
-      version='0.2.3',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description='iBUG Facial Modelling Toolkit',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
