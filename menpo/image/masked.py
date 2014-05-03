@@ -5,10 +5,10 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 
 from menpo.visualize.base import ImageViewer
-import menpo.features as fc
 
 from .base import Image
 from .boolean import BooleanImage
+from .feature import features
 
 
 class MaskedImage(Image):
@@ -509,7 +509,7 @@ class MaskedImage(Image):
             gradient of a 2D, single channel image, will have length ``2``.
             The length of a 2D, 3-channel image, will have length ``6``.
         """
-        grad_image_pixels = fc.gradient(self.pixels)
+        grad_image_pixels = features.gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
                                  mask=deepcopy(self.mask))
 

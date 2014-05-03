@@ -15,7 +15,7 @@ versioneer.parentdir_prefix = 'menpo-'  # dirname like 'menpo-v1.2.0'
 # ---- C/C++ EXTENSIONS ---- #
 cython_modules = ["menpo/shape/mesh/normals.pyx",
                   "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                  "menpo/features/cppimagewindowiterator.pyx"]
+                  "menpo/image/feature/cppimagewindowiterator.pyx"]
 
 cython_exts = cythonize(cython_modules, quiet=True)
 

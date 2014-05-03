@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = menpo/features/cpp/ImageWindowIterator.cpp menpo/features/cpp/WindowFeature.cpp menpo/features/cpp/HOG.cpp menpo/features/cpp/LBP.cpp
+# distutils: sources = menpo/image/feature/cpp/ImageWindowIterator.cpp menpo/image/feature/cpp/WindowFeature.cpp menpo/image/feature/cpp/HOG.cpp menpo/image/feature/cpp/LBP.cpp
 
 import numpy as np
 cimport numpy as np
