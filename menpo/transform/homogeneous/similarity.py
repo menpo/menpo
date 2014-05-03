@@ -1,7 +1,5 @@
 import numpy as np
 
-from menpo.exception import DimensionalityError
-
 from .base import HomogFamilyAlignment
 from .affine import Affine
 
@@ -101,8 +99,8 @@ class Similarity(Affine):
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
-            raise DimensionalityError("Only 2D and 3D Similarity transforms "
-                                      "are currently supported.")
+            raise ValueError("Only 2D and 3D Similarity transforms "
+                             "are currently supported.")
 
     def from_vector_inplace(self, p):
         r"""
@@ -137,8 +135,8 @@ class Similarity(Affine):
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
         else:
-            raise DimensionalityError("Only 2D and 3D Similarity transforms "
-                                      "are currently supported.")
+            raise ValueError("Only 2D and 3D Similarity transforms "
+                             "are currently supported.")
 
     def _build_pseudoinverse(self):
         return Similarity(np.linalg.inv(self.h_matrix))
@@ -175,14 +173,13 @@ class Similarity(Affine):
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
-            raise DimensionalityError('Trying to sample jacobian in incorrect '
-                                      'dimensions (transform is {0}D, '
-                                      'sampling at {1}D)'.format(self.n_dims,
-                                                                 points_n_dim))
+            raise ValueError('Trying to sample jacobian in incorrect '
+                             'dimensions (transform is {0}D, sampling '
+                             'at {1}D)'.format(self.n_dims, points_n_dim))
         elif self.n_dims != 2:
             # TODO: implement 3D Jacobian
-            raise DimensionalityError("Only the Jacobian of a 2D similarity "
-                                      "transform is currently supported.")
+            raise ValueError("Only the Jacobian of a 2D similarity "
+                             "transform is currently supported.")
 
         # prealloc the jacobian
         jac = np.zeros((n_points, self.n_parameters, self.n_dims))

@@ -171,3 +171,10 @@ class Targetable(object):
 
 def menpo_src_dir_path():
     return os.path.split(os.path.abspath(__file__))[0]
+
+
+class DimensionalityError(ValueError):
+    """
+    Raised when the number of dimensions do not match what was expected.
+    """
+    pass

@@ -90,8 +90,7 @@ class LandmarkManager(Transformable, Viewable):
         from menpo.shape import PointCloud
         # firstly, make sure the dim is correct
         if value.n_dims != self._target.n_dims:
-            from menpo.exception import DimensionalityError
-            raise DimensionalityError(
+            raise ValueError(
                 "Trying to set {}D landmarks on a "
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):

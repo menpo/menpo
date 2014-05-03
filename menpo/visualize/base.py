@@ -1,10 +1,6 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
 
-import numpy as np
-from scipy.misc import imrotate
-
-from menpo.exception import DimensionalityError
 from collections import Iterable
 
 
@@ -283,8 +279,8 @@ class LandmarkViewer(object):
                                     self.group_label, self.pointcloud,
                                     self.labels_to_masks).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D and 3D landmarks are "
-                                      "currently supported")
+            raise ValueError("Only 2D and 3D landmarks are "
+                             "currently supported")
 
 
 class PointCloudViewer(object):
@@ -334,8 +330,8 @@ class PointCloudViewer(object):
             return PointCloudViewer3d(self.figure_id, self.new_figure,
                                       self.points).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D and 3D pointclouds are "
-                                      "currently supported")
+            raise ValueError("Only 2D and 3D pointclouds are "
+                             "currently supported")
 
 
 class ImageViewer(object):
@@ -458,7 +454,7 @@ class ImageViewer(object):
                 return ImageViewer2d(self.figure_id, self.new_figure,
                                      self.pixels).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D images are currently supported")
+            raise ValueError("Only 2D images are currently supported")
 
 
 class TriMeshViewer(object):
@@ -512,8 +508,8 @@ class TriMeshViewer(object):
             return TriMeshViewer3d(self.figure_id, self.new_figure,
                                    self.points, self.trilist).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D and 3D TriMeshes are "
-                                      "currently supported")
+            raise ValueError("Only 2D and 3D TriMeshes "
+                             "are currently supported")
 
 
 class MultipleImageViewer(ImageViewer):
@@ -537,7 +533,7 @@ class MultipleImageViewer(ImageViewer):
                 return MultiImageViewer2d(self.figure_id, self.new_figure,
                                           self.pixels_list).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D images are currently supported")
+            raise ValueError("Only 2D images are currently supported")
 
 
 class FittingViewer(ImageViewer):
@@ -560,4 +556,4 @@ class FittingViewer(ImageViewer):
                     self.figure_id, self.new_figure, self.pixels,
                     self.target_list).render(**kwargs)
         else:
-            raise DimensionalityError("Only 2D images are currently supported")
+            raise ValueError("Only 2D images are currently supported")
