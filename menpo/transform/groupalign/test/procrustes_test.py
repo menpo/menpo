@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from menpo.shape import PointCloud
-from menpo.groupalign import GeneralizedProcrustesAnalysis
+from menpo.transform import GeneralizedProcrustesAnalysis
 
 
 def test_procrustes_no_target():

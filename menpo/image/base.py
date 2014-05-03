@@ -1,19 +1,22 @@
 from __future__ import division
 import abc
-import numpy as np
 from copy import deepcopy
-from skimage.transform import pyramid_gaussian
-from skimage.transform.pyramids import _smooth
+
+import numpy as np
+from scipy.misc import imrotate
 import scipy.linalg
 import PIL.Image as PILImage
-from scipy.misc import imrotate
+from skimage.transform import pyramid_gaussian
+from skimage.transform.pyramids import _smooth
 
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
-from menpo.transform import Translation, NonUniformScale, UniformScale, \
-    AlignmentUniformScale
+from menpo.transform import (Translation, NonUniformScale, UniformScale,
+                             AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
-from menpo.image.feature import FeatureExtraction
+
+from .feature import FeatureExtraction
+from .interpolation import scipy_interpolation
 
 
 class ImageBoundaryError(ValueError):
@@ -671,7 +674,6 @@ class Image(Vectorizable, Landmarkable, Viewable):
         warped_image : type(self)
             A copy of this image, warped.
         """
-        from menpo.interpolation import scipy_interpolation
         # configure the interpolator we are going to use for the warp
         # currently only scipy is supported but in the future we may have CUDA
         if interpolator == 'scipy':

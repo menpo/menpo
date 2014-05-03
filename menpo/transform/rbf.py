@@ -2,8 +2,10 @@ import abc
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from .base import Transform
 
-class BasisFunction(object):
+
+class RadialBasisFunction(Transform):
     r"""
     An abstract base class for Basis functions. In the case, radial basis
     functions. They provide two methods, :meth:`apply`, which calculates the
@@ -17,61 +19,11 @@ class BasisFunction(object):
         source landmarks.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, c):
         self.c = c
 
-    @abc.abstractmethod
-    def apply(self, x):
-        r"""
-        Calculate the basis function on the given residuals. The input is the
-        set of points the basis should be calculated for. The euclidean
-        distance between ``x`` and the centers, ``c``, will be used as the
-        residual.
 
-        .. note::
-
-            Divisions by zero are avoided and any zero residuals remain zero.
-
-        Parameters
-        ----------
-        x : (N, D) ndarray
-            Set of points to apply the basis to.
-
-        Returns
-        -------
-        u : (N, L) ndarray
-            The basis function applied to each distance,
-            :math:`\lVert x - c \rVert`.
-        """
-        pass
-
-    @abc.abstractmethod
-    def jacobian_points(self, x):
-        r"""
-        Calculate the derivative of the basis function wrt the
-        coordinate system.
-
-        .. note::
-
-            Divisions by zero are avoided and any zero residuals remain zero.
-
-        Parameters
-        ----------
-        x : (N, D) ndarray
-            Set of points to apply the basis to.
-
-        Returns
-        -------
-        dudx : (N, L, D) ndarray
-            Tensor representing the first order partial derivative
-            of each points with respect to the centers, over each dimension.
-        """
-        pass
-
-
-class R2LogR2(BasisFunction):
+class R2LogR2RBF(RadialBasisFunction):
     r"""
     The :math:`r^2 \log{r^2}` basis function.
 
@@ -89,9 +41,9 @@ class R2LogR2(BasisFunction):
     """
 
     def __init__(self, c):
-        super(R2LogR2, self).__init__(c)
+        super(R2LogR2RBF, self).__init__(c)
 
-    def apply(self, x):
+    def _apply(self, x):
         """
         Apply the basis function.
 
@@ -115,7 +67,7 @@ class R2LogR2(BasisFunction):
         with np.errstate(divide='ignore', invalid='ignore'):
             u = (euclidean_distance ** 2 *
                  (2 * np.log(euclidean_distance)))
-            # reset singularities to 0
+        # reset singularities to 0
         u[mask] = 0
         return u
 
@@ -156,7 +108,7 @@ class R2LogR2(BasisFunction):
         return dudx
 
 
-class R2LogR(BasisFunction):
+class R2LogRRBF(RadialBasisFunction):
     r"""
     Calculates the :math:`r^2 \log{r}` basis function.
 
@@ -174,9 +126,9 @@ class R2LogR(BasisFunction):
     """
 
     def __init__(self, c):
-        super(R2LogR, self).__init__(c)
+        super(R2LogRRBF, self).__init__(c)
 
-    def apply(self, x):
+    def _apply(self, x):
         """
         Apply the basis function :math:`r^2 \log{r}`.
 

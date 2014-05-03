@@ -1,13 +1,13 @@
 from numpy.testing import assert_allclose
 import numpy as np
-from menpo.basis import R2LogR2, R2LogR
+from menpo.transform import R2LogR2RBF, R2LogRRBF
 
 centers = np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]])
 points = np.array([[-0.4, -1.5], [-0.1, 1.1], [0.1, -2], [2.3, 0.3]])
 
 
 def test_rbf_r2logr2_apply():
-    result = R2LogR2(centers).apply(points)
+    result = R2LogR2RBF(centers).apply(points)
     expected = np.array([[-0.30152076, 12.48353795, 1.75251346, 17.2849475],
                          [8.62603644, -0.16272977, 9.70198395, 0.24259805],
                          [1.75251346, 23.72158352, 1.07392159, 22.4001763],
@@ -16,7 +16,7 @@ def test_rbf_r2logr2_apply():
 
 
 def test_rbf_r2logr2_jacobian():
-    result = R2LogR2(centers).jacobian_points(points)
+    result = R2LogR2RBF(centers).jacobian_points(points)
     expected = np.array([[[0.60684441, -0.50570368],
                           [3.46630038, -14.44291827],
                           [-5.02037904, -1.79299252],
@@ -37,7 +37,7 @@ def test_rbf_r2logr2_jacobian():
 
 
 def test_rbf_r2logr_apply():
-    result = R2LogR(centers).apply(points)
+    result = R2LogRRBF(centers).apply(points)
     expected = np.array([[-0.15076038, 6.24176898, 0.87625673, 8.64247375],
                          [4.31301822, -0.08136488, 4.85099198, 0.12129902],
                          [0.87625673, 11.86079176, 0.53696079, 11.20008815],
@@ -46,7 +46,7 @@ def test_rbf_r2logr_apply():
 
 
 def test_rbf_r2logr_jacobian():
-    result = R2LogR(centers).jacobian_points(points)
+    result = R2LogRRBF(centers).jacobian_points(points)
     expected = np.array([[[0.30342221, -0.25285184],
                           [1.73315019, -7.22145913],
                           [-2.51018952, -0.89649626],

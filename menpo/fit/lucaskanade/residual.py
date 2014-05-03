@@ -25,7 +25,7 @@ import numpy as np
 from numpy.fft import fftshift, fftn
 import scipy.linalg
 
-from menpo.convolution import log_gabor
+from menpo.math import log_gabor
 from menpo.image import MaskedImage
 
 

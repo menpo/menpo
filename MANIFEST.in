@@ -2,4 +2,5 @@ recursive-include menpo *.pyx
 recursive-include menpo *.c
 recursive-include menpo *.h
 recursive-include menpo *.hpp
-recursive-include menpo *.cpp
+recursive-include menpo *.cppinclude versioneer.py
+include menpo/_version.py

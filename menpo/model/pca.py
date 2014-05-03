@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg.blas import dgemm
-from menpo.decomposition import principal_component_decomposition
+from menpo.math import principal_component_decomposition
 from menpo.model.base import MeanInstanceLinearModel
 
 

@@ -1,11 +1,14 @@
 from __future__ import division
 from copy import deepcopy
+
 import numpy as np
 from scipy.ndimage import binary_erosion
-from menpo.image.base import Image
-from menpo.image.boolean import BooleanImage
+
 from menpo.visualize.base import ImageViewer
 import menpo.features as fc
+
+from .base import Image
+from .boolean import BooleanImage
 
 
 class MaskedImage(Image):

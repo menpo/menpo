@@ -1,4 +1,3 @@
-import numpy as np
 import menpo.features as fc
 
 

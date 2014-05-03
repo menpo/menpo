@@ -2,8 +2,7 @@ from __future__ import division
 import abc
 import numpy as np
 
-from menpo.transform import Scale, Translation
-from menpo.groupalign import GeneralizedProcrustesAnalysis
+from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 
 from .functions import mean_pointcloud

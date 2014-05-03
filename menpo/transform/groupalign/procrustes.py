@@ -1,7 +1,7 @@
 import numpy as np
-from menpo.groupalign.base import MultipleAlignment
-from menpo.shape import PointCloud
+
 from menpo.transform import AlignmentSimilarity, UniformScale, Translation
+from .base import MultipleAlignment
 
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
@@ -32,6 +32,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Recursively calculates a procrustes alignment.
         """
+        from menpo.shape import PointCloud
         if self.n_iterations > self.max_iterations:
             return False
         av_aligned_source = sum(
@@ -63,6 +64,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
         :type: PointCloud
         """
+        from menpo.shape import PointCloud
         return PointCloud(np.mean([t.target.points for t in self.transforms],
                                   axis=0))
 
