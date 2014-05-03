@@ -66,7 +66,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # normalize and return
         return (h_y / h_y[:, -1][:, None])[:, :-1]
 
-    def as_vector(self):
+    def _as_vector(self):
         return self.h_matrix.flatten()
 
     def from_vector_inplace(self, vector):

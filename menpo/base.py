@@ -22,8 +22,24 @@ class Vectorizable(object):
         """
         return (self.as_vector()).shape[0]
 
+    def as_vector(self, **kwargs):
+        """
+        Returns a flattened representation of the object as a single
+        vector.
+
+        Returns
+        -------
+        vector : (N,) ndarray
+            The core representation of the object, flattened into a
+            single vector. Note that this is always a view back on to the
+            original object, but is not writable.
+        """
+        v = self._as_vector(**kwargs)
+        v.flags.writeable = False
+        return v
+
     @abc.abstractmethod
-    def as_vector(self):
+    def _as_vector(self, **kwargs):
         """
         Returns a flattened representation of the object as a single
         vector.

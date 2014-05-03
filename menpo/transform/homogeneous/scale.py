@@ -106,7 +106,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         """
         return self.scale.size
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
@@ -196,7 +196,7 @@ class UniformScale(DiscreteAffine, Similarity):
         """
         return 1
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
@@ -213,7 +213,7 @@ class UniformScale(DiscreteAffine, Similarity):
         s : double
             The scale across each axis.
         """
-        return self.scale
+        return np.asarray(self.scale)
 
     def from_vector_inplace(self, p):
         np.fill_diagonal(self.h_matrix, p)

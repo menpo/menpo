@@ -57,7 +57,7 @@ class Similarity(Affine):
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters

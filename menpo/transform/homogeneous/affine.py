@@ -158,7 +158,7 @@ class Affine(Homogeneous):
         """
         return self.n_dims * (self.n_dims + 1)
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. This does not

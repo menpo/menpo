@@ -145,7 +145,7 @@ class MaskedImage(Image):
             self._str_shape, self.n_dims, self.n_channels,
             self.mask.proportion_true))
 
-    def as_vector(self, keep_channels=False):
+    def _as_vector(self, keep_channels=False):
         r"""
         Convert image to a vectorized form. Note that the only pixels
         returned here are from the masked region on the image.

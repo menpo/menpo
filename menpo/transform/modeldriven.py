@@ -109,7 +109,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         """
         return self.pdm.n_parameters
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the current weights of this transform - this is the
         just the linear model's weights

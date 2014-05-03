@@ -232,7 +232,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
-    def as_vector(self, keep_channels=False):
+    def _as_vector(self, keep_channels=False):
         r"""
         The vectorized form of this image.
 
@@ -836,7 +836,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label].lms
-        scale = AlignmentUniformScale(pc, reference_shape).as_vector()
+        scale = AlignmentUniformScale(pc, reference_shape).as_vector().copy()
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
