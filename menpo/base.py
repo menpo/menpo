@@ -102,7 +102,6 @@ class Targetable(object):
     def n_points(self):
         return self.target.n_points
 
-
     @abc.abstractproperty
     def target(self):
         pass
