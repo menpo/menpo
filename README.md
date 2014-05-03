@@ -1,5 +1,6 @@
 Menpo
 =====
+<a href='https://travis-ci.org/sebdah/git-pylint-commit-hook'><img src='https://secure.travis-ci.org/menpo/menpo.png?branch=master'></a>  
 
 Menpo is a statistical facial modelling toolkit, providing all the tools 
 required to build, fit, visualize, and test statistical models like Active
