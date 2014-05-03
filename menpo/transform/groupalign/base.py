@@ -1,5 +1,4 @@
 import abc
-from menpo.shape import PointCloud
 
 
 class MultipleAlignment(object):
@@ -25,6 +24,7 @@ class MultipleAlignment(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, sources, target=None):
+        from menpo.shape import PointCloud
         if len(sources) < 2 and target is None:
             raise Exception("Need at least two sources to align")
         self.n_sources = len(sources)
