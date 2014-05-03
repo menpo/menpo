@@ -2,8 +2,10 @@ import abc
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from .base import Transform
 
-class RadialBasisFunction(object):
+
+class RadialBasisFunction(Transform):
     r"""
     An abstract base class for Basis functions. In the case, radial basis
     functions. They provide two methods, :meth:`apply`, which calculates the
@@ -17,58 +19,8 @@ class RadialBasisFunction(object):
         source landmarks.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, c):
         self.c = c
-
-    @abc.abstractmethod
-    def apply(self, x):
-        r"""
-        Calculate the basis function on the given residuals. The input is the
-        set of points the basis should be calculated for. The euclidean
-        distance between ``x`` and the centers, ``c``, will be used as the
-        residual.
-
-        .. note::
-
-            Divisions by zero are avoided and any zero residuals remain zero.
-
-        Parameters
-        ----------
-        x : (N, D) ndarray
-            Set of points to apply the basis to.
-
-        Returns
-        -------
-        u : (N, L) ndarray
-            The basis function applied to each distance,
-            :math:`\lVert x - c \rVert`.
-        """
-        pass
-
-    @abc.abstractmethod
-    def jacobian_points(self, x):
-        r"""
-        Calculate the derivative of the basis function wrt the
-        coordinate system.
-
-        .. note::
-
-            Divisions by zero are avoided and any zero residuals remain zero.
-
-        Parameters
-        ----------
-        x : (N, D) ndarray
-            Set of points to apply the basis to.
-
-        Returns
-        -------
-        dudx : (N, L, D) ndarray
-            Tensor representing the first order partial derivative
-            of each points with respect to the centers, over each dimension.
-        """
-        pass
 
 
 class R2LogR2RBF(RadialBasisFunction):
@@ -91,7 +43,7 @@ class R2LogR2RBF(RadialBasisFunction):
     def __init__(self, c):
         super(R2LogR2RBF, self).__init__(c)
 
-    def apply(self, x):
+    def _apply(self, x):
         """
         Apply the basis function.
 
@@ -176,7 +128,7 @@ class R2LogRRBF(RadialBasisFunction):
     def __init__(self, c):
         super(R2LogRRBF, self).__init__(c)
 
-    def apply(self, x):
+    def _apply(self, x):
         """
         Apply the basis function :math:`r^2 \log{r}`.
 
