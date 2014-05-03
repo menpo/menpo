@@ -1,0 +1,28 @@
+language: python
+python:
+  - 2.7
+notifications:
+  email: false
+ 
+# Setup anaconda
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/anaconda/bin:$PATH
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+# Install packages
+install:
+  - conda install --yes python atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
+  - python setup.py install
+ 
+# Run test
+script:
+  - nosetests menpo
+ 
+# Calculate coverage
+#after_success:
+#  - coveralls --config_file .coveragerc
