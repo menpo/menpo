@@ -1,7 +1,7 @@
 from copy import deepcopy
 import numpy as np
-from menpo.image.base import Image
-from skimage.transform import pyramid_gaussian
+
+from .base import Image
 
 
 class BooleanImage(Image):

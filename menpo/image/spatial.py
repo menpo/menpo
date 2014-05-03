@@ -2,8 +2,9 @@ import abc
 from copy import deepcopy
 import numpy as np
 
-from menpo.image.masked import MaskedImage
 from menpo.visualize.base import ImageViewer, DepthImageHeightViewer
+
+from .masked import MaskedImage
 
 
 class AbstractSpatialImage(MaskedImage):
