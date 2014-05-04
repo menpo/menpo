@@ -4,7 +4,6 @@ Menpo
 [![Coverage Status](http://img.shields.io/coveralls/menpo/menpo.svg?style=flat)](https://coveralls.io/r/menpo/menpo)
 [![PyPI Release](http://img.shields.io/pypi/v/menpo.svg?style=flat)](https://pypi.python.org/pypi/menpo)
 
-
 Menpo is a statistical facial modelling toolkit, providing all the tools 
 required to build, fit, visualize, and test statistical models like Active
 Appearance Models and Morphable Models.
