@@ -18,13 +18,15 @@ before_install:
 install:
   - conda install --yes python numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
   - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
+  - pip install coveralls
   - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
   - python setup.py build_ext --inplace
  
 # Run test
 script:
-  - nosetests menpo
- 
-# Calculate coverage
-#after_success:
-#  - coveralls --config_file .coveragerc
+  - nosetests --with-coverage --cover-package=menpo menpo
+
+
+# should be after_success, maybe change 
+after_script:
+  - coveralls
