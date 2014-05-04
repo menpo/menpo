@@ -31,7 +31,7 @@ Menpo makes extensive use of IPython Notebooks to explain functionality of the p
 2. Run `ipython notebook`
 3. Play around with the notebooks.
 
-Want to get a feel for Menpo without installing anything? You can browse the notebooks straight from the [menpo website](http://www.menpo.io/notebooks).
+Want to get a feel for Menpo without installing anything? You can browse the notebooks straight from the [menpo website](http://www.menpo.io/notebooks.html).
 
 
 Documentation
