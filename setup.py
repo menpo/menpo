@@ -30,7 +30,9 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=[# Core
                         'numpy>=1.8.0',
-                        'scipy>=0.14.0',
+                        # we would like this to be 0.14.0, waiting for conda
+                        # support though (see menpo.math.multivariate)
+                        'scipy>=0.13.3',
                         'Cython>=0.20.1',
 
                         # Image

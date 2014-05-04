@@ -1,8 +1,11 @@
 from __future__ import division
 import abc
 import numpy as np
-from scipy.stats import multivariate_normal
-
+# note - this is just while we wait for scipy 0.14.0 to become stable,
+# import should be
+#   - from scipy.stats import multivariate_normal
+# but for now we use...
+from menpo.math import multivariate_normal
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import SemiParametricFittingResult
 from menpo.fitmultilevel.functions import build_sampling_grid
