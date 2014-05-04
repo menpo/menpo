@@ -16,7 +16,9 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda install --yes python numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
+  # get our 0.14 binstar until Anaconda updates
+  - conda install --yes -c menpo scipy
+  - conda install --yes python numpy matplotlib mayavi scikit-image scikit-learn imaging cython nose
   - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
   - pip install coveralls
   - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
