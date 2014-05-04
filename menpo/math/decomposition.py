@@ -27,7 +27,7 @@ def eigenvalue_decomposition(S, eps=10**-10):
     limit = np.max(np.abs(eigenvalues)) * eps
 
     # select positive eigenvalues
-    pos_index = eigenvalues > 0
+    pos_index = eigenvalues > 0.0
     pos_eigenvalues = eigenvalues[pos_index]
     pos_eigenvectors = eigenvectors[:, pos_index]
     # check they are within the expected tolerance
@@ -58,7 +58,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
     if bias:
         N = n_samples
     else:
-        N = n_samples - 1
+        N = n_samples - 1.0
 
     if center:
         # center data
@@ -75,7 +75,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
         # S should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex
         # eigenvectors from eigendecomposition
-        S = (S + S.T) / 2
+        S = (S + S.T) / 2.0
 
         # perform eigenvalue decomposition
         # eigenvectors:  n_features x  n_features
@@ -84,7 +84,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
 
         if whiten:
             # whiten eigenvectors
-            eigenvectors *= eigenvalues ** -0.5
+            eigenvectors *= np.sqrt(1.0 / eigenvalues)
 
     else:
         # n_features > n_samples
@@ -94,21 +94,19 @@ def principal_component_decomposition(X, whiten=False, center=True,
         # S should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex
         # eigenvectors from eigendecomposition
-        S = (S + S.T) / 2
+        S = (S + S.T) / 2.0
 
         # perform eigenvalue decomposition
         # eigenvectors:  n_samples  x  n_samples
         # eigenvalues:   n_samples
         eigenvectors, eigenvalues = eigenvalue_decomposition(S)
 
-        aux = 2
-        if whiten:
-            # will cause eigenvectors to be whiten
-            aux = 1
-
         # compute final eigenvectors
         # eigenvectors:  n_samples  x  n_features
-        w = (N * eigenvalues) ** (-1 / aux)
+        if whiten:
+            w = (N * eigenvalues) ** -1
+        else:
+            w = np.sqrt(1.0 / (N * eigenvalues))
         eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
                                  trans_b=True)
 
