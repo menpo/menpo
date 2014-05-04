@@ -1,7 +1,6 @@
 import itertools
-from menpo.features.cppimagewindowiterator import CppImageWindowIterator
 import numpy as np
-from math import ceil, floor
+from .cppimagewindowiterator import CppImageWindowIterator
 
 
 def gradient(image_data):

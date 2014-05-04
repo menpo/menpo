@@ -15,7 +15,7 @@ from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
 
-from .feature import FeatureExtraction
+from .feature import ImageFeatures
 from .interpolation import scipy_interpolation
 
 
@@ -80,7 +80,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                              "was provided".format(image_data.ndim))
         self.pixels = image_data
         # add FeatureExtraction functionality
-        self.features = FeatureExtraction(self)
+        self.features = ImageFeatures(self)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel, **kwargs):

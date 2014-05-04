@@ -4,7 +4,6 @@ from scipy.spatial import Delaunay
 from menpo.shape import PointCloud
 from menpo.shape.mesh.normals import compute_normals
 from menpo.visualize import TriMeshViewer
-from menpo.exception import DimensionalityError
 
 
 class TriMesh(PointCloud):
@@ -82,7 +81,7 @@ class TriMesh(PointCloud):
             If mesh is not 3D
         """
         if self.n_dims != 3:
-            raise DimensionalityError("Normals are only valid for 3D meshes")
+            raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[0]
 
     @property
@@ -101,7 +100,7 @@ class TriMesh(PointCloud):
             If mesh is not 3D
         """
         if self.n_dims != 3:
-            raise DimensionalityError("Normals are only valid for 3D meshes")
+            raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
     @property

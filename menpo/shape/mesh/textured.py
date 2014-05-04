@@ -6,7 +6,6 @@ from menpo.shape import PointCloud
 from menpo.visualize import TexturedTriMeshViewer3d
 from menpo.transform import Scale
 from menpo.rasterize import Rasterizable
-from menpo.exception import DimensionalityError
 
 from .base import TriMesh
 
@@ -114,8 +113,8 @@ class TexturedTriMesh(TriMesh, Rasterizable):
                     self.trilist, self.texture,
                     self.tcoords.points).render(**kwargs)
             else:
-                raise DimensionalityError("Only viewing of 3D textured meshes"
-                                          "is currently supported.")
+                raise ValueError("Only viewing of 3D textured meshes"
+                                 "is currently supported.")
         else:
             return super(TexturedTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,

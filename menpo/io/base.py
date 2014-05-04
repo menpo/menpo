@@ -3,7 +3,6 @@ from copy import deepcopy
 import os
 from glob import glob
 from menpo import menpo_src_dir_path
-from menpo.exception import DimensionalityError
 
 
 def data_dir_path():
@@ -452,7 +451,7 @@ def _import(filepath, extensions_map, keep_importer=False,
                 for x in built_objects:
                     try:
                         x.landmarks[lms.group_label] = deepcopy(lms)
-                    except DimensionalityError:
+                    except ValueError:
                         pass
         else:
             for x in built_objects:

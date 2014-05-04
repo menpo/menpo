@@ -1,8 +1,6 @@
 import abc
 import numpy as np
 
-from menpo.exception import DimensionalityError
-
 from .base import HomogFamilyAlignment
 from .affine import DiscreteAffine
 from .similarity import Similarity
@@ -72,8 +70,8 @@ class Rotation(DiscreteAffine, Similarity):
             raise ValueError("You need to provide a square rotation matrix")
         # The update better be the same size
         elif self.n_dims != shape[0]:
-            raise DimensionalityError("Trying to update the rotation "
-                                      "matrix to a different dimension")
+            raise ValueError("Trying to update the rotation "
+                             "matrix to a different dimension")
         # TODO actually check I am a valid rotation
         # TODO slightly dodgey here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value

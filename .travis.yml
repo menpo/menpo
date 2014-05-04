@@ -16,13 +16,16 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda install --yes python atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
-  - python setup.py install
+  - conda install --yes python pip atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
+  - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
+  - pip install coverage coveralls
+  - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
+  - python setup.py build_ext --inplace
  
 # Run test
 script:
-  - nosetests menpo
- 
-# Calculate coverage
-#after_success:
-#  - coveralls --config_file .coveragerc
+  - nosetests --with-coverage --cover-package=menpo menpo
+
+# Update coveralls
+after_success:
+  - coveralls
