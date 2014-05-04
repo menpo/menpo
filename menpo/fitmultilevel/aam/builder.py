@@ -141,7 +141,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.boundary = boundary
         self.interpolator = interpolator
 
-    def build(self, images, group=None, label='all'):
+    def build(self, images, group=None, label='all', verbose=False):
         r"""
         Builds a Multilevel Active Appearance Model from a list of
         landmarked images.
@@ -163,31 +163,41 @@ class AAMBuilder(DeformableModelBuilder):
 
             Default: 'all'
 
+        verbose: bool, Optional
+            Flag that controls information printing.
+
+            Default: False
+
         Returns
         -------
         aam : :class:`menpo.fitmultiple.aam.builder.AAM`
             The AAM object
         """
-        print '- Preprocessing'
+        if verbose:
+            print('- Preprocessing')
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.diagonal_range, self.interpolator,
             self.scaled_levels, self.n_levels, self.downscale)
 
-        print '- Building model pyramids'
+        if verbose:
+            print('- Building model pyramids')
         shape_models = []
         appearance_models = []
         # for each level
         for j in np.arange(self.n_levels):
-            print ' - Level {}'.format(j)
+            if verbose:
+                print('  - Level {}'.format(j))
 
-            print '  - Computing feature space'
+            if verbose:
+                print('    - Computing feature space')
             images = [compute_features(g.next(), self.feature_type)
                       for g in generator]
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label].lms for i in images]
 
             if j == 0 or self.scaled_levels:
-                print '  - Building shape model'
+                if verbose:
+                    print('    - Building shape model')
                 if j != 0:
                     shapes = [Scale(1/self.downscale,
                                     n_dims=shapes[0].n_dims).apply(s)
@@ -195,19 +205,22 @@ class AAMBuilder(DeformableModelBuilder):
                 shape_model = self._build_shape_model(
                     shapes, self.max_shape_components)
 
-                print '  - Building reference frame'
+                if verbose:
+                    print('    - Building reference frame')
                 reference_frame = self._build_reference_frame(
                     shape_model.mean)
 
             # add shape model to the list
             shape_models.append(shape_model)
 
-            print '  - Computing transforms'
+            if verbose:
+                print('    - Computing transforms')
             transforms = [self.transform(reference_frame.landmarks['source'].lms,
                                          i.landmarks[group][label].lms)
                           for i in images]
 
-            print '  - Warping images'
+            if verbose:
+                print('    - Warping images')
             images = [i.warp_to(reference_frame.mask, t,
                                 interpolator=self.interpolator)
                       for i, t in zip(images, transforms)]
@@ -216,7 +229,8 @@ class AAMBuilder(DeformableModelBuilder):
                 i.landmarks['source'] = reference_frame.landmarks['source']
                 self._mask_image(i)
 
-            print '  - Building appearance model'
+            if verbose:
+                print('    - Building appearance model')
             appearance_model = PCAModel(images)
             # trim appearance model if required
             if self.max_appearance_components is not None:
