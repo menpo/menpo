@@ -1,10 +1,9 @@
-import menpo.features as fc
+import features as fc
 
 
-class FeatureExtraction(object):
+class ImageFeatures(object):
     r"""
-    Class that given an image object, it adds the feature extraction
-    functionality to the object and computes the features image. The output
+    Utility class that exposes feature computation on an image. The output
     image's class is either MaskedImage or Image depending on the input image.
     The mask and landmarks are corrected based on the features calculation.
 
