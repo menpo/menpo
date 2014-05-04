@@ -1,6 +1,5 @@
 import numpy as np
 
-from menpo.exception import DimensionalityError
 from menpo.rasterize import Rasterizable
 from menpo.rasterize.base import ColourRasterInfo
 from menpo.visualize.base import ColouredTriMeshViewer3d
@@ -64,8 +63,8 @@ class ColouredTriMesh(TriMesh, Rasterizable):
                     figure_id, new_figure, self.points,
                     self.trilist, self.colours).render(**kwargs)
             else:
-                raise DimensionalityError("Only viewing of 3D coloured meshes"
-                                          "is currently supported.")
+                raise ValueError("Only viewing of 3D coloured meshes "
+                                 "is currently supported.")
         else:
             return super(ColouredTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,

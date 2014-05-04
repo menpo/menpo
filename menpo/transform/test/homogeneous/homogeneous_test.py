@@ -1,20 +1,16 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-from menpo.transform import (Affine,
-                             Similarity,
-                             Rotation,
-                             Scale, NonUniformScale, UniformScale,
-                             Translation)
-from menpo.exception import DimensionalityError
+from menpo.transform import (Affine, Similarity, Rotation, Scale,
+                             NonUniformScale, UniformScale, Translation)
 from nose.tools import raises
 
-@raises(DimensionalityError)
+@raises(ValueError)
 def test_1d_translation():
     t_vec = np.array([1])
     Translation(t_vec)
 
 
-@raises(DimensionalityError)
+@raises(ValueError)
 def test_5d_translation():
     t_vec = np.ones(5)
     Translation(t_vec)
@@ -422,13 +418,13 @@ def test_similarity_jacobian_2d():
     assert_equal(dW_dp, sim_jac_solution2d)
 
 
-@raises(DimensionalityError)
+@raises(ValueError)
 def test_similarity_jacobian_3d_raises_dimensionalityerror():
     t = Similarity(np.eye(4))
     t.jacobian(np.ones([2, 3]))
 
 
-@raises(DimensionalityError)
+@raises(ValueError)
 def test_similarity_2d_points_raises_dimensionalityerror():
     params = np.ones(4)
     t = Similarity.identity(2).from_vector(params)
@@ -578,7 +574,7 @@ def test_uniformscale_build_3d():
     assert_equal(tr.h_matrix, homo)
 
 
-@raises(DimensionalityError)
+@raises(ValueError)
 def test_uniformscale_build_4d_raise_dimensionalityerror():
     UniformScale(1, 4)
 

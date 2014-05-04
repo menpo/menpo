@@ -2,8 +2,6 @@ import abc
 import copy
 import numpy as np
 
-from menpo.exception import DimensionalityError
-
 from .base import Homogeneous, HomogFamilyAlignment
 
 
@@ -46,10 +44,10 @@ class Affine(Homogeneous):
         if self.h_matrix is not None:
             # already have a matrix set! The update better be the same size
             if self.n_dims != shape[0] - 1:
-                raise DimensionalityError("Trying to update the homogeneous "
-                                          "matrix to a different dimension")
+                raise ValueError("Trying to update the homogeneous "
+                                 "matrix to a different dimension")
         if shape[0] - 1 not in [2, 3]:
-            raise DimensionalityError("Affine Transforms can only be 2D or 3D")
+            raise ValueError("Affine Transforms can only be 2D or 3D")
         if not (np.allclose(value[-1, :-1], 0) and
                 np.allclose(value[-1, -1], 1)):
             raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
@@ -241,7 +239,7 @@ class Affine(Homogeneous):
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
-            raise DimensionalityError(
+            raise ValueError(
                 "Trying to sample jacobian in incorrect dimensions "
                 "(transform is {0}D, sampling at {1}D)".format(
                     self.n_dims, points_n_dim))
