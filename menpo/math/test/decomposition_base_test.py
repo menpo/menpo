@@ -272,24 +272,3 @@ def eigenvalue_decomposition_large_epsilon_test():
     sqrt_one_over_2 = np.sqrt(2.0) / 2.0
     assert_almost_equal(pos_eigenvectors,
                         [[sqrt_one_over_2], [sqrt_one_over_2]])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
