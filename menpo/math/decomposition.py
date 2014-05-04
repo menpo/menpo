@@ -66,7 +66,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
     else:
         mean_vector = np.zeros(n_features)
 
-    X -= mean_vector
+    X = X - mean_vector
 
     if n_features < n_samples:
         # compute covariance matrix
