@@ -26,7 +26,6 @@ install:
 script:
   - nosetests --with-coverage --cover-package=menpo menpo
 
-
-# should be after_success, maybe change 
-after_script:
+# Update coveralls
+after_success:
   - coveralls
