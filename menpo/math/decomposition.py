@@ -104,7 +104,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
         # compute final eigenvectors
         # eigenvectors:  n_samples  x  n_features
         if whiten:
-            w = (N * eigenvalues) ** -1
+            w = (N * eigenvalues) ** -1.0
         else:
             w = np.sqrt(1.0 / (N * eigenvalues))
         eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
