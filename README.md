@@ -1,7 +1,9 @@
 Menpo
 =====
 [![Build Status](https://travis-ci.org/menpo/menpo.svg?branch=master)](https://travis-ci.org/menpo/menpo)
-[![Coverage Status](https://coveralls.io/repos/menpo/menpo/badge)](https://coveralls.io/r/menpo/menpo)
+[![Coverage Status](http://img.shields.io/coveralls/menpo/menpo.svg)](https://coveralls.io/r/menpo/menpo)
+[![PyPI Release](http://img.shields.io/pypi/v/menpo.svg)](https://pypi.python.org/pypi/menpo)
+
 
 Menpo is a statistical facial modelling toolkit, providing all the tools 
 required to build, fit, visualize, and test statistical models like Active
