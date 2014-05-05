@@ -47,8 +47,8 @@ class PCAModel(MeanInstanceLinearModel):
             data[i] = sample.as_vector()
 
         eigenvectors, eigenvalues, mean_vector = \
-            principal_component_decomposition(data, whiten=False,
-                                              center=center, bias=bias)
+            principal_component_decomposition(
+                data, whiten=False, center=center, bias=bias, inplace=True)
         self._eigenvalues = eigenvalues
 
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
