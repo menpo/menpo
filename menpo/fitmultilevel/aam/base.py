@@ -75,10 +75,10 @@ class AAMFitter(MultilevelFitter):
 
         return images
 
-    def _create_fitting(self, image, fittings, affine_correction,
-                        gt_shape=None, error_type='me_norm'):
+    def _create_fitting_result(self, image, fitting_results, affine_correction,
+                               gt_shape=None, error_type='me_norm'):
         return AAMMultilevelFittingResult(
-            image, self, fittings, affine_correction, gt_shape=gt_shape,
+            image, self, fitting_results, affine_correction, gt_shape=gt_shape,
             error_type=error_type)
 
 

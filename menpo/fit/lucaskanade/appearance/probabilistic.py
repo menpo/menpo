@@ -10,10 +10,10 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
     def algorithm(self):
         return 'Probabilistic-FA'
 
-    def _fit(self, lk_fitting, max_iters=20, project=True):
+    def _fit(self, fitting_result, max_iters=20, project=True):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -48,14 +48,14 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
             # Update warp weights
             parameters = self.transform.as_vector() + delta_p
             self.transform.from_vector_inplace(parameters)
-            lk_fitting.parameters.append(parameters)
+            fitting_result.parameters.append(parameters)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class ProbabilisticForwardCompositional(AppearanceLucasKanade):
@@ -69,10 +69,10 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
-    def _fit(self, lk_fitting, max_iters=20, project=True):
+    def _fit(self, fitting_result, max_iters=20, project=True):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -100,14 +100,14 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class ProbabilisticInverseCompositional(AppearanceLucasKanade):
@@ -130,10 +130,10 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J, J2=J)
 
-    def _fit(self, lk_fitting, max_iters=20, project=True):
+    def _fit(self, fitting_result, max_iters=20, project=True):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm
@@ -154,11 +154,11 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(inv_delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result

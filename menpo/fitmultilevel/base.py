@@ -48,7 +48,7 @@ class MultilevelFitter(Fitter):
     @abc.abstractproperty
     def scaled_levels(self):
         r"""
-        Returns True if the shape results returned by the basic fittings
+        Returns True if the shape results returned by the basic fitting_results
         must be scaled.
         """
         pass
@@ -258,20 +258,20 @@ class MultilevelFitter(Fitter):
 
         affine_correction = AlignmentAffine(initial_shapes[-1], initial_shape)
 
-        fittings = self._fit(images, initial_shapes[0], max_iters=max_iters,
-                             gt_shapes=gt_shapes, **kwargs)
+        fitting_results = self._fit(images, initial_shapes[0],
+                                    max_iters=max_iters,
+                                    gt_shapes=gt_shapes, **kwargs)
 
-        multiple_fitting = self._create_fitting(image, fittings,
-                                                affine_correction,
-                                                gt_shape=gt_shape,
-                                                error_type=error_type)
+        multilevel_fitting_result = self._create_fitting_result(
+            image, fitting_results, affine_correction, gt_shape=gt_shape,
+            error_type=error_type)
 
         if verbose:
-            multiple_fitting.print_fitting_info()
+            multilevel_fitting_result.print_fitting_info()
         if view:
-            multiple_fitting.view_final_fitting(new_figure=True)
+            multilevel_fitting_result.view_final_fitting(new_figure=True)
 
-        return multiple_fitting
+        return multilevel_fitting_result
 
     def _detect_shape(self, noise_std=0.0, rotation=False):
         r"""
@@ -357,8 +357,8 @@ class MultilevelFitter(Fitter):
         """
         pass
 
-    def _create_fitting(self, image, fittings, affine_correction,
-                        gt_shape=None, error_type='me_norm'):
+    def _create_fitting_result(self, image, fitting_results, affine_correction,
+                               gt_shape=None, error_type='me_norm'):
         r"""
         Creates the :class: `pybug.aam.fitting.MultipleFitting` object
         associated with a particular Fitter objects.
@@ -368,7 +368,7 @@ class MultilevelFitter(Fitter):
         image: :class:`pybug.image.masked.MaskedImage`
             The original image to be fitted.
 
-        fittings: :class:`pybug.aam.fitting.BasicFitting` list
+        fitting_results: :class:`pybug.aam.fitting.BasicFitting` list
             A list of basic fitting objects containing the state of the
             different fitting levels.
 
@@ -392,7 +392,7 @@ class MultilevelFitter(Fitter):
         fitting: :class:`pybug.aam.Fitting`
             The fitting object that will hold the state of the fitter.
         """
-        return MultilevelFittingResult(image, self, fittings,
+        return MultilevelFittingResult(image, self, fitting_results,
                                        affine_correction, gt_shape=gt_shape,
                                        error_type=error_type)
 
@@ -425,7 +425,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        fittings: :class:`pybug.aam.fitting` list
+        fitting_results: :class:`pybug.aam.fitting` list
             The fitting object containing the state of the whole fitting
             procedure.
         """
@@ -444,19 +444,19 @@ class MultilevelFitter(Fitter):
                              'None'.format(self.n_levels))
 
         gt = None
-        fittings = []
+        fitting_results = []
         for j, (i, f, it) in enumerate(zip(images, self._fitters, max_iters)):
             if gt_shapes is not None:
                 gt = gt_shapes[j]
 
             parameters = f.get_parameters(shape)
-            fitting = f.fit(i, parameters, gt_shape=gt,
-                            max_iters=it, **kwargs)
-            fittings.append(fitting)
+            fitting_result = f.fit(i, parameters, gt_shape=gt, max_iters=it,
+                                   **kwargs)
+            fitting_results.append(fitting_result)
 
-            shape = fitting.final_shape
+            shape = fitting_result.final_shape
             if self.scaled_levels:
                 Scale(self.downscale,
                       n_dims=shape.n_dims).apply_inplace(shape)
 
-        return fittings
+        return fitting_results
