@@ -177,7 +177,7 @@ class AAMBuilder(DeformableModelBuilder):
             print('- Preprocessing')
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.diagonal_range, self.interpolator,
-            self.scaled_levels, self.n_levels, self.downscale)
+            self.scaled_levels, self.n_levels, self.downscale, verbose=verbose)
 
         if verbose:
             print('- Building model pyramids')
@@ -259,7 +259,6 @@ class AAMBuilder(DeformableModelBuilder):
         return AAM(shape_models, appearance_models, self.transform,
                    self.feature_type, self.reference_shape, self.downscale,
                    self.scaled_levels, self.interpolator)
-
 
 #TODO: Test me!!!
 class PatchBasedAAMBuilder(AAMBuilder):
@@ -579,6 +578,34 @@ class AAM(object):
             trilist = None
         return build_reference_frame(
             reference_shape, trilist=trilist)
+
+    def __str__(self):
+        out_str = "Active Appearance Model\n"
+        out_str = "{}  - Feature is {}.\n".format(out_str, self.feature_type)
+        out_str = "{}  - '{}' transform with '{}' interpolation.\n".format(
+            out_str, 'transform', self.interpolator)
+        if self.n_levels > 1:
+            out_str = "{}  - Pyramid with {} levels and downscale factor" \
+                      "of {}:\n".format(out_str, self.n_levels, self.downscale)
+            for i in range(self.n_levels):
+                out_str = "{}    - Level {}: \n" \
+                          "        - {} shape components\n" \
+                          "        - {} appearance components of length {}\n" \
+                          "        - {} reference frame\n".format(
+                    out_str, i+1, self.shape_models[i].n_components,
+                    self.appearance_models[i].n_components,
+                    self.appearance_models[i].n_features,
+                    self.appearance_models[i].template_instance._str_shape)
+        else:
+            out_str = "{}  - No pyramid used:\n" \
+                      "      - {} shape components\n" \
+                      "      - {} appearance components of length {}\n" \
+                      "      - {} reference frame\n".format(
+                out_str, self.shape_models[0].n_components,
+                self.appearance_models[0].n_components,
+                self.appearance_models[0].n_features,
+                self.appearance_models[0].template_instance._str_shape)
+        return out_str
 
 
 #TODO: Test me!!!
