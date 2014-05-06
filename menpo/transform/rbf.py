@@ -2,15 +2,16 @@ import abc
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from menpo.base import DX
+
 from .base import Transform
 
-
-class RadialBasisFunction(Transform):
+# TODO RBF is really implementing d_dl (with dim=1 for function)
+class RadialBasisFunction(Transform, DX):
     r"""
-    An abstract base class for Basis functions. In the case, radial basis
-    functions. They provide two methods, :meth:`apply`, which calculates the
-    basis itself, and :meth:`jacobian_points`, which calculates the derivative
-    of the basis wrt the coordinate system.
+    Radial Basis Functions are a class of transform that is used by
+    TPS. They have to be able to take their own spatial derivative for TPS to
+    be able to take it's own total derivative.
 
     Parameters
     ----------
@@ -71,7 +72,7 @@ class R2LogR2RBF(RadialBasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian_points(self, x):
+    def d_dx(self, x):
         """
         Apply the derivative of the basis function wrt the coordinate system.
         This is applied over each dimension of the input vector, `x`.
@@ -90,12 +91,12 @@ class R2LogR2RBF(RadialBasisFunction):
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : (n_points, n_dims) ndarray
             Set of points to apply the basis to.
 
         Returns
         -------
-        dudx : (N, L, D) ndarray
+        d_dx : (n_points, n_landmarks, n_dims) ndarray
             The jacobian tensor representing the first order partial derivative
             of each point wrt the coordinate system
         """
@@ -151,7 +152,7 @@ class R2LogRRBF(RadialBasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian_points(self, x):
+    def d_dx(self, x):
         """
         The derivative of the basis function wrt the coordinate system
         evaluated at `x`.

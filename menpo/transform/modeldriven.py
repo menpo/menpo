@@ -171,7 +171,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         # dW_dp_0:  n_points  x     n_params     x  n_dims
         # dW_dp:    n_points  x     n_params     x  n_dims
 
-        dW_dx = self.transform.jacobian_points(points)
+        dW_dx = self.transform.d_dx(points)
         # dW_dx:  n_points  x  n_dims  x  n_dims
 
         #TODO: Can we do this without splitting across the two dimensions?
@@ -364,7 +364,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
-        dW_dS = self.pdm.global_transform.jacobian_points(points)
+        dW_dS = self.pdm.global_transform.d_dx(points)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
         # dW_dS:  n_points  x      n_dims       x  n_dims
         # dW_db:  n_points  x     n_weights     x  n_dims
@@ -373,7 +373,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         dW_dp = np.hstack((dW_dq, dW_db))
         # dW_dp:    n_points  x     n_params     x  n_dims
 
-        dW_dx = self.transform.jacobian_points(points)
+        dW_dx = self.transform.d_dx(points)
         #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
         # dW_dx:  n_points  x  n_dims  x  n_dims
 
@@ -442,7 +442,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         # by application of the chain rule dX_db is the Jacobian of the
         # model transformed by the linear component of the global transform
         dS_db = model_jacobian
-        dX_dS = self.pdm.global_transform.jacobian_points(points)
+        dX_dS = self.pdm.global_transform.d_dx(points)
         dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
         # dS_db:  n_points  x     n_weights     x  n_dims
         # dX_dS:  n_points  x     n_dims        x  n_dims

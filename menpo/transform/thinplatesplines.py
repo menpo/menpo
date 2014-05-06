@@ -1,13 +1,14 @@
 import numpy as np
 from scipy.spatial import distance
 
+from menpo.base import DX
+
 from .base import Transform, Alignment, Invertible
 from .rbf import R2LogR2RBF
 
 
-
 # Note we inherit from Alignment first to get it's n_dims behavior
-class ThinPlateSplines(Alignment, Transform, Invertible):
+class ThinPlateSplines(Alignment, Transform, Invertible, DX):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -101,30 +102,30 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
     def _build_pseudoinverse(self):
         return ThinPlateSplines(self.target, self.source, kernel=self.kernel)
 
-    def jacobian_points(self, points):
-        """
-        Calculates the Jacobian of the TPS warp wrt to the coordinate system.
+    def d_dx(self, points):
+        r"""
+        The first order derivative of this TPS warp wrt spatial changes
+        evaluated at points.
 
         Parameters
         ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
 
         Returns
         -------
-        dW/dx : (N, D, D) ndarray
-            The Jacobian of the transform wrt the coordinate system in
-            which the transform is applied. Axis 0: points, Axis 1: direction
-            of derivative (x or y) Axis 2: Component in which we are
-            evaluating derivative (x or y)
+        d_dx: ndarray shape (n_points, n_dims, n_dims)
+            The jacobian wrt spatial changes.
 
-            e.g. [7, 0, 1] = derivative wrt x on the y coordinate of the
-            8th point.
+            d_dx[i, j, k] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the k'th dimension.
+
         """
         dk_dx = np.zeros((points.shape[0] + 3,   # i
                           self.source.n_points,  # k
                           self.source.n_dims))   # l
-        dk_dx[:-3, :] = self.kernel.jacobian_points(points)
+        dk_dx[:-3, :] = self.kernel.d_dx(points)
 
         affine_derivative = np.array([[0, 0],
                                       [1, 0],
@@ -161,7 +162,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
 
         dL_dx = np.zeros(self.l.shape + (n_lms,))
         dL_dy = np.zeros(self.l.shape + (n_lms,))
-        aux = self.kernel.jacobian_points(self.source.points)
+        aux = self.kernel.d_dx(self.source.points)
         dW_dx = np.zeros((n_pts, n_lms, 2))
 
         # Fix log(0)
@@ -184,7 +185,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
             aux3 = np.zeros((n_pts, self.y.shape[1], 2))
-            aux3[:, i, :] = self.kernel.jacobian_points(points)[:, i, :]
+            aux3[:, i, :] = self.kernel.d_dx(points)[:, i, :]
             omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
             dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
                               aux3[..., 0].dot(self.coefficients[:, 0]))

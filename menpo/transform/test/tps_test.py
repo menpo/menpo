@@ -103,11 +103,11 @@ def test_tps_apply():
     assert_allclose(result.points, expected)
 
 
-def test_tps_jacobian_points():
+def test_tps_d_dx():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
     tps = ThinPlateSplines(src, tgt)
-    result = tps.jacobian_points(src.points)
+    result = tps.d_dx(src.points)
 
     assert_allclose(result, np.array([[[2, 0], [0., 2]],
                                       [[2, 0], [0, 2]],

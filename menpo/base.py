@@ -169,6 +169,92 @@ class Targetable(object):
         pass
 
 
+class DP(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dp(self, points):
+        r"""
+        The derivative of this object wrt parametrization changes evaluated at
+        points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        ndarray shape (n_points, n_params, n_dims)
+            The jacobian wrt parameterization
+
+        """
+        pass
+
+
+
+class DX(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dx(self, points):
+        r"""
+        The first order derivative of this object wrt spatial changes
+        evaluated at points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        d_dx: ndarray shape (n_points, n_dims, n_dims)
+            The jacobian wrt spatial changes.
+
+            d_dx[i, j, k] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the k'th dimension.
+
+            It may be the case that the jacobian is constant across space -
+            in this case axis zero may have shape 1 to allow for broadcasting.
+
+        """
+        pass
+
+
+class DX0(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dx_at_0(self, points):
+        r"""
+        The derivative of this object wrt spatial changes evaluated at
+        points.
+        """
+        pass
+
+
+class DL(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dl(self, points):
+        r"""
+        The derivative of this object wrt spatial changes in anchor
+        landmark points evaluated at points.
+        """
+        pass
+
+
 def menpo_src_dir_path():
     return os.path.split(os.path.abspath(__file__))[0]
 
