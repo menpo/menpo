@@ -1,4 +1,4 @@
-.. _menpo-math-LinearModel:
+.. _menpo-model-LinearModel:
 
 .. currentmodule:: menpo.model.linear
 

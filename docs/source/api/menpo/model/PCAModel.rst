@@ -1,4 +1,4 @@
-.. _menpo-math-PCAModel:
+.. _menpo-model-PCAModel:
 
 .. currentmodule:: menpo.model.pca
 

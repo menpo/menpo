@@ -1,4 +1,4 @@
-.. _menpo-math-Similarity2dInstanceModel:
+.. _menpo-model-Similarity2dInstanceModel:
 
 .. currentmodule:: menpo.model.base
 

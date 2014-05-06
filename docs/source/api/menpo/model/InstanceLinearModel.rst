@@ -1,4 +1,4 @@
-.. _menpo-math-InstanceLinearModel:
+.. _menpo-model-InstanceLinearModel:
 
 .. currentmodule:: menpo.model.base
 
