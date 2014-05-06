@@ -1,5 +1,6 @@
 import sys
 
+
 def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     r"""
     Returns an str for the specified progress percentage. It can be combined
