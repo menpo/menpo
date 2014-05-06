@@ -1,6 +1,6 @@
 .. _menpo-image-Image:
 
-.. currentmodule:: menpo.image
+.. currentmodule:: menpo.image.base
 
 Image
 =====

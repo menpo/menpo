@@ -1,6 +1,6 @@
 .. _menpo-image-MaskedImage:
 
-.. currentmodule:: menpo.image
+.. currentmodule:: menpo.image.masked
 
 MaskedImage
 ===========

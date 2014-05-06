@@ -1,6 +1,6 @@
 .. _menpo-image-BooleanImage:
 
-.. currentmodule:: menpo.image
+.. currentmodule:: menpo.image.boolean
 
 BooleanImage
 ============

@@ -1,6 +1,6 @@
 .. _menpo-image-ImageBoundaryError:
 
-.. currentmodule:: menpo.image
+.. currentmodule:: menpo.image.base
 
 
 ImageBoundaryError

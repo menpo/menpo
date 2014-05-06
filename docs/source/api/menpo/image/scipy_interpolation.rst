@@ -1,6 +1,6 @@
 .. _menpo-image-scipy_interpolation:
 
-.. currentmodule:: menpo.image
+.. currentmodule:: menpo.image.interpolation
 
 scipy_interpolation
 ===================
