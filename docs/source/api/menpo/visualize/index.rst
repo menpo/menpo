@@ -1,7 +1,7 @@
 .. _api-visualize-index:
 
 :mod:`menpo.visualize`
-=================
+======================
 
 Classes
 -------

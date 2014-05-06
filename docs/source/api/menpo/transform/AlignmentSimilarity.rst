@@ -1,6 +1,6 @@
 .. _menpo-transform-AlignmentSimilarity:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.similarity
 
 AlignmentSimilarity
 ===================

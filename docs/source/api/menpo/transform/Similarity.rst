@@ -1,6 +1,6 @@
 .. _menpo-transform-Similarity:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.similarity
 
 Similarity
 ==========

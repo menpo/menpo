@@ -1,7 +1,7 @@
 .. _api-fit-index:
 
 :mod:`menpo.fit`
-=================
+================
 
 Classes
 -------

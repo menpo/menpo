@@ -1,7 +1,7 @@
 .. _api-rasterize-index:
 
 :mod:`menpo.rasterize`
-=================
+======================
 
 Classes
 -------

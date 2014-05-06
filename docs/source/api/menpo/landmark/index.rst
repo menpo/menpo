@@ -1,7 +1,7 @@
 .. _api-landmark-index:
 
 :mod:`menpo.landmark`
-=================
+=====================
 
 Classes
 -------

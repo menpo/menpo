@@ -1,6 +1,6 @@
 .. _menpo-transform-AlignmentAffine:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.affine
 
 AlignmentAffine
 ===============

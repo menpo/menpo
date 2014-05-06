@@ -1,6 +1,6 @@
 .. _menpo-transform-Scale:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.scale
 
 Scale
 =====

@@ -1,11 +1,11 @@
-.. _menpo-transform-Affine:
+.. _menpo-transform-DiscreteAffine:
 
 .. currentmodule:: menpo.transform.homogeneous.affine
 
-Affine
-======
+DiscreteAffine
+==============
 
-.. autoclass:: Affine
+.. autoclass:: DiscreteAffine
   :members:
   :inherited-members:
   :show-inheritance:

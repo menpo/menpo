@@ -1,7 +1,7 @@
 .. _api-fitmultilevel-index:
 
 :mod:`menpo.fitmultilevel`
-=================
+==========================
 
 Classes
 -------

@@ -1,6 +1,6 @@
 .. _menpo-transform-UniformScale:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.scale
 
 UniformScale
 ============

@@ -1,6 +1,6 @@
 .. _menpo-transform-Rotation:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.rotation
 
 Rotation
 ========

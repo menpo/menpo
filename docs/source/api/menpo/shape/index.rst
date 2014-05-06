@@ -1,7 +1,7 @@
 .. _api-shape-index:
 
 :mod:`menpo.shape`
-=================
+==================
 
 Classes
 -------

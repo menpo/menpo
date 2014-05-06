@@ -1,6 +1,6 @@
 .. _menpo-transform-Translation:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.translation
 
 Translation
 ===========

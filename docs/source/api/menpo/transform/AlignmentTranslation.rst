@@ -1,6 +1,6 @@
 .. _menpo-transform-AlignmentTranslation:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.translation
 
 AlignmentTranslation
 ====================

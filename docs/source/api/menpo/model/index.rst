@@ -1,7 +1,7 @@
 .. _api-model-index:
 
 :mod:`menpo.model`
-=================
+==================
 
 Classes
 -------

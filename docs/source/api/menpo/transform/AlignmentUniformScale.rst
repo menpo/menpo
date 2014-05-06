@@ -1,6 +1,6 @@
 .. _menpo-transform-AlignmentUniformScale:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.scale
 
 AlignmentUniformScale
 =====================

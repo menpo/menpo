@@ -1,6 +1,6 @@
 .. _menpo-transform-AlignmentRotation:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform.homogeneous.rotation
 
 AlignmentRotation
 =================
