@@ -13,9 +13,10 @@ Packages
    :maxdepth: 1
 
    menpo/index
-   menpo/image/index
+   menpo/fit/index
    menpo/fitmultilevel/index
    menpo/io/index
+   menpo/image/index
    menpo/landmark/index
    menpo/math/index
    menpo/model/index
