@@ -1,13 +1,13 @@
 import numpy as np
 
-from menpo.base import Targetable, Vectorizable
+from menpo.base import Targetable, Vectorizable, DP
 from menpo.model.pdm import PDM, GlobalPDM, OrthoPDM
 
 from .base import Transform, VComposable, VInvertible
 
 
 class ModelDrivenTransform(Transform, Targetable, Vectorizable,
-                           VComposable, VInvertible):
+                           VComposable, VInvertible, DP):
     r"""
     A transform that couples a traditional landmark-based transform to a
     statistical model such that source points of the alignment transform
@@ -225,25 +225,27 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         """
         return -vector
 
-    def jacobian(self, points):
-        """
-        Calculates the Jacobian of the ModelDrivenTransform wrt to
-        its weights (the weights). This is done by chaining the relative
-        weight of each point wrt the source landmarks, i.e. the Jacobian of
-        the warp wrt the source landmarks when the target is assumed to be
-        equal to the source (dW/dx), together with the Jacobian of the
-        linear model  wrt its weights (dX/dp).
+    def d_dp(self, points):
+        r"""
+        The derivative of this MDT wrt parametrization changes evaluated at
+        points.
+
+        This is done by chaining the derivative of points wrt the
+        source landmarks on the transform (dW/dL) together with the Jacobian
+        of the linear model wrt its weights (dX/dp).
 
         Parameters
-        -----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
 
         Returns
         -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the ModelDrivenTransform evaluated at the
-            previous points.
+
+        ndarray shape (n_points, n_params, n_dims)
+            The jacobian wrt parameterization
+
         """
         # check if re-computation of dW/dx can be avoided
         if not np.array_equal(self._cached_points, points):
@@ -254,7 +256,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
             self._cached_points = points
 
         # dX/dp is simply the Jacobian of the model
-        dX_dp = self.pdm.model.jacobian
+        dX_dp = self.pdm.model.d_dp
 
         # dW_dX:    n_points   x    n_points    x  n_dims
         # dX_dp:  n_points  x     n_params      x  n_dims
@@ -337,7 +339,7 @@ class GlobalMDTransform(ModelDrivenTransform):
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        model_jacobian = self.pdm.model.jacobian
+        model_d_dp = self.pdm.model.d_dp
         points = self.pdm.model.mean.points
         n_points = self.pdm.model.mean.n_points
 
@@ -349,11 +351,11 @@ class GlobalMDTransform(ModelDrivenTransform):
         # dW/dq when p=0 and when p!=0 are the same and given by the
         # Jacobian of the global transform evaluated at the mean of the
         # model
-        dW_dq = self._global_transform_jacobian(points)
+        dW_dq = self._global_transform_d_dp(points)
         # dW_dq:  n_points  x  n_global_params  x  n_dims
 
         # dW/db when p=0, is the Jacobian of the model
-        dW_db_0 = model_jacobian
+        dW_db_0 = model_d_dp
         # dW_db_0:  n_points  x     n_weights     x  n_dims
 
         # dW/dp when p=0, is simply the concatenation of the previous
@@ -397,10 +399,10 @@ class GlobalMDTransform(ModelDrivenTransform):
 
         self.from_vector_inplace(self.as_vector() + np.dot(Jp, delta))
 
-    def _global_transform_jacobian(self, points):
-        return self.pdm.global_transform.jacobian(points)
+    def _global_transform_d_dp(self, points):
+        return self.pdm.global_transform.d_dp(points)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         """
         Calculates the Jacobian of the ModelDrivenTransform wrt to
         its weights (the weights). This is done by chaining the relative
@@ -429,19 +431,19 @@ class GlobalMDTransform(ModelDrivenTransform):
             # cache points
             self._cached_points = points
 
-        model_jacobian = self.pdm.model.jacobian
+        model_d_dp = self.pdm.model.d_dp
         points = self.pdm.model.mean.points
 
         # compute dX/dp
 
         # dX/dq is the Jacobian of the global transform evaluated at the
         # mean of the model.
-        dX_dq = self._global_transform_jacobian(points)
+        dX_dq = self._global_transform_d_dp(points)
         # dX_dq:  n_points  x  n_global_params  x  n_dims
 
         # by application of the chain rule dX_db is the Jacobian of the
         # model transformed by the linear component of the global transform
-        dS_db = model_jacobian
+        dS_db = model_d_dp
         dX_dS = self.pdm.global_transform.d_dx(points)
         dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
         # dS_db:  n_points  x     n_weights     x  n_dims
@@ -504,5 +506,5 @@ class OrthoMDTransform(GlobalMDTransform):
         self._cached_points = None
         self.transform = transform_cls(source, self.target)
 
-    def _global_transform_jacobian(self, points):
-            return self.pdm.similarity_model.jacobian
+    def _global_transform_d_dp(self, points):
+            return self.pdm.similarity_model.d_dp
