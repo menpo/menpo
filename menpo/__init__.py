@@ -1,5 +1,5 @@
 from base import menpo_src_dir_path, Vectorizable, Targetable
-from base import DP, DX, DX0, DL
+from base import DP, DX, DL
 
 import fit
 import fitmultilevel
