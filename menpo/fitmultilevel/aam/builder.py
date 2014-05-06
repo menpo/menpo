@@ -10,6 +10,7 @@ from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -186,7 +187,7 @@ class AAMBuilder(DeformableModelBuilder):
         # for each level
         for j in np.arange(self.n_levels):
             if verbose:
-                print('  - Level {}'.format(j))
+                print('  - Level {}'.format(j + 1))
 
             if verbose:
                 print('    - Computing feature space')
@@ -219,19 +220,23 @@ class AAMBuilder(DeformableModelBuilder):
                                          i.landmarks[group][label].lms)
                           for i in images]
 
-            if verbose:
-                print('    - Warping images')
-            images = [i.warp_to(reference_frame.mask, t,
-                                interpolator=self.interpolator)
-                      for i, t in zip(images, transforms)]
+            warped_images = []
+            for c, (i, t) in enumerate(zip(images, transforms)):
+                if verbose:
+                    print_str = '    - Warping images: ' + progress_bar_str(
+                        float(c + 1) / len(images), show_bar=False)
+                    new_line = (c == len(images) - 1)
+                    print_dynamic(print_str, new_line=new_line)
+                warped_images.append(i.warp_to(reference_frame.mask, t,
+                                               interpolator=self.interpolator))
 
-            for i in images:
+            for i in warped_images:
                 i.landmarks['source'] = reference_frame.landmarks['source']
                 self._mask_image(i)
 
             if verbose:
                 print('    - Building appearance model')
-            appearance_model = PCAModel(images)
+            appearance_model = PCAModel(warped_images)
             # trim appearance model if required
             if self.max_appearance_components is not None:
                 appearance_model.trim_components(
