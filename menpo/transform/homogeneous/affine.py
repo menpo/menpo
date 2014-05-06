@@ -2,11 +2,11 @@ import abc
 import copy
 import numpy as np
 
-from menpo.base import DX
+from menpo.base import DX, DP
 from .base import Homogeneous, HomogFamilyAlignment
 
 
-class Affine(Homogeneous, DX):
+class Affine(Homogeneous, DP, DX):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -211,10 +211,10 @@ class Affine(Homogeneous, DX):
     def _build_pseudoinverse(self):
         return Affine(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
-        Computes the Jacobian of the transform w.r.t the parameters. This is
-        constant for affine transforms.
+        The first order derivative of this Affine transform wrt parameter
+        changes evaluated at points.
 
         The Jacobian generated (for 2D) is of the form::
 
@@ -229,13 +229,13 @@ class Affine(Homogeneous, DX):
 
         Parameters
         ----------
-        points : (N, D) ndarray
+        points : (n_points, n_dims) ndarray
             The set of points to calculate the jacobian for.
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
+        dW_dp : (n_points, n_params, n_dims) ndarray
+            A (``n_points`, `n_params`, `n_dims`) array representing
             the Jacobian of the transform.
         """
         n_points, points_n_dim = points.shape
