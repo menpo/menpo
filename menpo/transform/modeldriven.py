@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.base import Targetable, Vectorizable, DP
-from menpo.model.pdm import PDM, GlobalPDM, OrthoPDM
+from menpo.model.modelinstance import ModelInstance, GlobalPDM, OrthoPDM
 
 from .base import Transform, VComposable, VInvertible
 
@@ -36,7 +36,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
 
     """
     def __init__(self, model, transform_cls, source=None):
-        self.pdm = PDM(model)
+        self.pdm = ModelInstance(model)
         self._cached_points, self.dW_dl = None, None
         self.transform = transform_cls(source, self.target)
 

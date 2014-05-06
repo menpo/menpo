@@ -6,7 +6,7 @@ from menpo.model import Similarity2dInstanceModel
 
 
 # TODO: document me
-class PDM(Targetable, Vectorizable, DP):
+class ModelInstance(Targetable, Vectorizable, DP):
     r"""
     """
     def __init__(self, model):
@@ -123,7 +123,7 @@ class PDM(Targetable, Vectorizable, DP):
 
 
 # TODO: document me
-class GlobalPDM(PDM):
+class GlobalPDM(ModelInstance):
     r"""
     """
     def __init__(self, model, global_transform_cls):
@@ -217,7 +217,7 @@ class GlobalPDM(PDM):
         self._update_global_weights(global_parameters)
         # Now extract the weights, and let super handle the update
         weights = vector[self.n_global_parameters:]
-        PDM.from_vector_inplace(self, weights)
+        ModelInstance.from_vector_inplace(self, weights)
 
     def _update_global_weights(self, global_weights):
         r"""
