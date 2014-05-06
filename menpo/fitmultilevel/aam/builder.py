@@ -175,8 +175,6 @@ class AAMBuilder(DeformableModelBuilder):
             The AAM object
         """
         # generate reference shape and pyramid levels
-        if verbose:
-            print('- Preprocessing')
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.normalization_diagonal,
             self.interpolator, self.scaled_levels, self.n_levels,
@@ -184,22 +182,23 @@ class AAMBuilder(DeformableModelBuilder):
 
         # build the model at each level
         if verbose:
-            print('- Building model pyramids')
+            print_dynamic('- Building model for each {} pyramid level\n'.
+                          format(self.n_levels))
         shape_models = []
         appearance_models = []
         # for each level
         for j in np.arange(self.n_levels):
             if verbose:
-                print('  - Level {}'.format(j + 1))
+                level_str = '  - Level {}: '.format(j + 1)
 
             # extract features from each image
             feature_images = []
             for c, g in enumerate(generator):
                 if verbose:
-                    print_str = '    - Computing feature space: ' + \
-                                progress_bar_str(float(c + 1) / len(images),
-                                                 show_bar=True)
-                    print_dynamic(print_str, new_line=(c == len(images) - 1))
+                    print_dynamic('{}Computing feature space - {}'.format(
+                        level_str,
+                        progress_bar_str(float(c + 1) / len(images),
+                                         show_bar=False)))
                 feature_images.append(compute_features(g.next(),
                                                        self.feature_type))
 
@@ -208,7 +207,7 @@ class AAMBuilder(DeformableModelBuilder):
 
             if j == 0 or self.scaled_levels:
                 if verbose:
-                    print('    - Building shape model')
+                    print_dynamic('{}Building shape model'.format(level_str))
                 if j != 0:
                     shapes = [Scale(1/self.downscale,
                                     n_dims=shapes[0].n_dims).apply(s)
@@ -217,7 +216,8 @@ class AAMBuilder(DeformableModelBuilder):
                     shapes, self.max_shape_components)
 
                 if verbose:
-                    print('    - Building reference frame')
+                    print_dynamic('{}Building reference frame'.format(
+                        level_str))
                 reference_frame = self._build_reference_frame(
                     shape_model.mean)
 
@@ -226,7 +226,7 @@ class AAMBuilder(DeformableModelBuilder):
 
             # compute transforms
             if verbose:
-                print('    - Computing transforms')
+                print_dynamic('{}Computing transforms'.format(level_str))
             transforms = [self.transform(reference_frame.landmarks['source'].lms,
                                          i.landmarks[group][label].lms)
                           for i in feature_images]
@@ -235,19 +235,28 @@ class AAMBuilder(DeformableModelBuilder):
             warped_images = []
             for c, (i, t) in enumerate(zip(feature_images, transforms)):
                 if verbose:
-                    print_str = '    - Warping images: ' + progress_bar_str(
-                        float(c + 1) / len(feature_images), show_bar=False)
-                    print_dynamic(print_str, new_line=(c == len(images) - 1))
+                    print_dynamic('{}Warping images - {}'.format(
+                        level_str,
+                        progress_bar_str(float(c + 1) / len(feature_images),
+                                         show_bar=False)))
                 warped_images.append(i.warp_to(reference_frame.mask, t,
                                                interpolator=self.interpolator))
 
-            for i in warped_images:
+            # set source shape
+            for c, i in enumerate(warped_images):
+                if verbose:
+                    print_dynamic('{}Attaching mask to warped images - {}'.
+                                  format(level_str,
+                                         progress_bar_str(
+                                             float(c + 1) / len(warped_images),
+                                             show_bar=False)))
                 i.landmarks['source'] = reference_frame.landmarks['source']
-                self._mask_image(i)
+                i.mask = reference_frame.mask
+                #self._mask_image(i)
 
             # build appearance model
             if verbose:
-                print('    - Building appearance model')
+                print_dynamic('{}Building appearance model'.format(level_str))
             appearance_model = PCAModel(warped_images)
             # trim appearance model if required
             if self.max_appearance_components is not None:
@@ -256,6 +265,9 @@ class AAMBuilder(DeformableModelBuilder):
 
             # add appearance model to the list
             appearance_models.append(appearance_model)
+
+            if verbose:
+                print_dynamic('{}Done\n'.format(level_str))
 
         # reverse the list of shape and appearance models so that they are
         # ordered from lower to higher resolution
@@ -276,6 +288,7 @@ class AAMBuilder(DeformableModelBuilder):
         return AAM(shape_models, appearance_models, self.transform,
                    self.feature_type, self.reference_shape, self.downscale,
                    self.scaled_levels, self.interpolator)
+
 
 #TODO: Test me!!!
 class PatchBasedAAMBuilder(AAMBuilder):

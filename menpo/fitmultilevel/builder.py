@@ -27,9 +27,12 @@ class DeformableModelBuilder(object):
                        verbose=False):
         r"""
         """
+        if verbose:
+            intro_str = '- Preprocessing: '
+
         # the mean shape of the images' landmarks is the reference shape
         if verbose:
-            print('  - Computing reference shape')
+            print_dynamic('{}Computing reference shape'.format(intro_str))
         shapes = [i.landmarks[group][label].lms for i in images]
         reference_shape = mean_pointcloud(shapes)
 
@@ -42,16 +45,17 @@ class DeformableModelBuilder(object):
         normalized_images = []
         for c, i in enumerate(images):
             if verbose:
-                print_str = '  - Normalizing object size: ' + progress_bar_str(
-                    float(c + 1) / len(images), show_bar=False)
-                print_dynamic(print_str, new_line=(c == len(images) - 1))
+                print_dynamic('{}Normalizing object size - {}'.format(
+                    intro_str, progress_bar_str(float(c + 1) / len(images),
+                                                show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
                 reference_shape, group=group, label=label,
                 interpolator=interpolator))
 
         # generate pyramid
         if verbose:
-            print('  - Generating multilevel scale space')
+            print_dynamic('{}Generating multilevel scale space'.format(
+                intro_str))
         if scaled_levels:
             generator = [i.gaussian_pyramid(n_levels=n_levels,
                                             downscale=downscale)
@@ -60,6 +64,9 @@ class DeformableModelBuilder(object):
             generator = [i.smoothing_pyramid(n_levels=n_levels,
                                              downscale=downscale)
                          for i in normalized_images]
+
+        if verbose:
+            print_dynamic('{}Done\n'.format(intro_str))
 
         return reference_shape, generator
 

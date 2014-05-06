@@ -54,7 +54,7 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
         return "%d%%" % (percentage * 100)
 
 
-def print_dynamic(str_to_print='', new_line=False):
+def print_dynamic(str_to_print=''):
     r"""
     Dynamically prints the given string. This means that it prints the string
     and then flushes the buffer.
@@ -63,13 +63,6 @@ def print_dynamic(str_to_print='', new_line=False):
     ----------
     str_to_print : str
         The string to print.
-    new_line : bool, optional
-        If True, a new line character ('\n') will be printed after the string.
-
-        Default: False
     """
-    if new_line:
-        sys.stdout.write("\r%s\n" % str_to_print)
-    else:
-        sys.stdout.write("\r%s" % str_to_print)
+    sys.stdout.write("\r%s" % str_to_print)
     sys.stdout.flush()
