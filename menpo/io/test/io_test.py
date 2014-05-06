@@ -145,18 +145,13 @@ def test_import_auto_max_meshes():
     assert(sum([isinstance(x, TriMesh) for x in assets]) == 1)
 
 def test_ls_builtin_assets():
-    assert(mio.ls_builtin_assets() == ['breakingbad.jpg',
-                                       'breakingbad.pts',
-                                       'bunny.json',
-                                       'bunny.obj',
-                                       'bunny_no_nose.json',
-                                       'einstein.jpg',
-                                       'einstein.pts',
-                                       'james.jpg',
-                                       'james.mtl',
-                                       'james.obj',
-                                       'lenna.png',
-                                       'takeo.ppm'])
+    assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
+                                            'breakingbad.pts', 'bunny.json',
+                                            'bunny.obj', 'bunny_no_nose.json',
+                                            'einstein.jpg', 'einstein.pts',
+                                            'james.jpg', 'james.mtl',
+                                            'james.obj', 'lenna.png',
+                                            'takeo.ppm'})
 
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
