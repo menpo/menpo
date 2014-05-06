@@ -1,5 +1,3 @@
-__author__ = 'jab08'
-
 
 class InstanceBackedModel(object):
     r"""
@@ -121,7 +119,7 @@ class InstanceBackedModel(object):
         return instance.from_vector(vector_instance)
 
     @property
-    def jacobian(self):
+    def d_dp(self):
         """
         Returns the Jacobian of the linear model. In this case, simply the
         components of the model reshaped to have the standard Jacobian shape:
@@ -137,4 +135,3 @@ class InstanceBackedModel(object):
         jacobian = self.components.reshape(self.n_components, -1,
                                            self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
-

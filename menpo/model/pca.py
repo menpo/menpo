@@ -117,7 +117,7 @@ class PCAModel(MeanInstanceLinearModel):
             return 1.0 / noise_variance
 
     @property
-    def jacobian(self):
+    def d_dp(self):
         """
         Returns the Jacobian of the PCA model reshaped to have the standard
         Jacobian shape:
@@ -130,12 +130,12 @@ class PCAModel(MeanInstanceLinearModel):
         jacobian : (n_features, n_components, n_dims) ndarray
             The Jacobian of the model in the standard Jacobian shape.
         """
-        jacobian = self._jacobian.reshape(self.n_active_components, -1,
+        jacobian = self._d_dp.reshape(self.n_active_components, -1,
                                           self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
 
     @property
-    def _jacobian(self):
+    def _d_dp(self):
         """
         Returns the Jacobian of the PCA model with respect to the weights.
 

@@ -1,12 +1,12 @@
 from copy import deepcopy
 import numpy as np
 
-from menpo.base import Targetable, Vectorizable
+from menpo.base import Targetable, Vectorizable, DP
 from menpo.model import Similarity2dInstanceModel
 
 
 # TODO: document me
-class PDM(Targetable, Vectorizable):
+class PDM(Targetable, Vectorizable, DP):
     r"""
     """
     def __init__(self, model):
@@ -116,10 +116,10 @@ class PDM(Targetable, Vectorizable):
         self._sync_target_from_state()
 
     # TODO: document me
-    def jacobian(self, points):
+    def d_dp(self, points):
         """
         """
-        return self.model.jacobian
+        return self.model.d_dp
 
 
 # TODO: document me
@@ -227,10 +227,10 @@ class GlobalPDM(PDM):
         """
         self.global_transform.from_vector_inplace(global_weights)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
-        return np.hstack((self.global_transform.jacobian(points).T,
+        return np.hstack((self.global_transform.d_dp(points).T,
                           self.model.components.T))
 
 
@@ -265,7 +265,7 @@ class OrthoPDM(GlobalPDM):
         new_target = self.similarity_model.instance(global_weights)
         self.global_transform.set_target(new_target)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
         return np.hstack((self.similarity_model.components.T,
