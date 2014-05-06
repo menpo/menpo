@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 
-from menpo.base import DX
+from menpo.base import DX, DL
 from menpo.transform import Affine
 from menpo.transform.base import Alignment, Invertible, Transform
 from .fastpwa import CLookupPWA
@@ -23,7 +23,7 @@ class TriangleContainmentError(Exception):
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
-class AbstractPWA(Alignment, Transform, Invertible, DX):
+class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -153,21 +153,20 @@ class AbstractPWA(Alignment, Transform, Invertible, DX):
         # for the time being we assume the points are
         return np.tile(np.eye(2, 2)[:, 1, 1])
 
-     # TODO should be d_dl (n_points, n_dims, n_l, n_d)
-    def weight_points(self, points):
+    def d_dl(self, points):
         """
         Returns the jacobian of the warp at each point given in relation to the
         source points.
 
         Parameters
         ----------
-        points : (K, 2) ndarray
+        points : (n_points, 2) ndarray
             The points to calculate the Jacobian for.
 
         Returns
         -------
-        jacobian : (K, ``n_points``, 2) ndarray
-            The Jacobian for each of the ``K`` given points over each point in
+        jacobian : (n_points, n_landmarks, 2) ndarray
+            The Jacobian for each of the given points over each point in
             the source points.
         """
         tri_index, alpha_i, beta_i = self.index_alpha_beta(points)

@@ -131,12 +131,12 @@ def test_tps_jacobian_source():
     assert_allclose(result, expected, rtol=10 ** -6)
 
 
-def test_tps_weight_points():
+def test_tps_d_dl():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
     pts = np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]])
     tps = ThinPlateSplines(src, tgt)
-    result = tps.weight_points(pts)
+    result = tps.d_dl(pts)
     expected = np.array([[[0.55399517, 0.55399517], [-0.00399517, -0.00399517],
                           [0.44600483, 0.44600483], [0.00399517, 0.00399517]],
                          [[-0.01625165, -0.01625165], [0.76625165, 0.76625165],

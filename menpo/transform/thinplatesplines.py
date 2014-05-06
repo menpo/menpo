@@ -1,14 +1,14 @@
 import numpy as np
 from scipy.spatial import distance
 
-from menpo.base import DX
+from menpo.base import DX, DL
 
 from .base import Transform, Alignment, Invertible
 from .rbf import R2LogR2RBF
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
-class ThinPlateSplines(Alignment, Transform, Invertible, DX):
+class ThinPlateSplines(Alignment, Transform, Invertible, DX, DL):
     r"""
     The thin plate splines (TPS) alignment between 2D source and target
     landmarks.
@@ -196,7 +196,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX):
         return dW_dx
 
     # TODO: revise this function and try to speed it up!!!
-    def weight_points(self, points):
+    def d_dl(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the source landmarks
         assuming that he target is equal to the source. This is a special
@@ -206,12 +206,12 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX):
 
         Parameters
         ----------
-        points : (N, D)
+        points : (n_points, n_dims)
             Points at which the Jacobian will be evaluated.
 
         Returns
         -------
-        dW/dp : (N, P, D) ndarray
+        dW/dl : (n_points, n_params, n_dims) ndarray
             The Jacobian of the transform wrt to the source landmarks evaluated
             at the previous points and assuming that the target is equal to
             the source.

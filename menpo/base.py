@@ -236,7 +236,27 @@ class DL(object):
     def d_dl(self, points):
         r"""
         The derivative of this object wrt spatial changes in anchor
-        landmark points evaluated at points.
+        landmark points or centres, evaluated at points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        d_dl: ndarray shape (n_params, n_centres, n_dims)
+            The jacobian wrt landmark changes.
+
+            d_dl[i, j, k, m] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the m'th dimension of the k'th landmark point.
+
+            It may be the case that the jacobian is constant across space -
+            in this case axes my have shape 1 to allow for broadcasting.
+
         """
         pass
 

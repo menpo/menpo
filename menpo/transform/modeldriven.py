@@ -37,7 +37,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
     """
     def __init__(self, model, transform_cls, source=None):
         self.pdm = PDM(model)
-        self._cached_points = None
+        self._cached_points, self.dW_dl = None, None
         self.transform = transform_cls(source, self.target)
 
     @property
@@ -247,21 +247,22 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
             The jacobian wrt parameterization
 
         """
-        # check if re-computation of dW/dx can be avoided
+        # check if re-computation of dW/dl can be avoided
         if not np.array_equal(self._cached_points, points):
-            # recompute dW/dx, i.e. the relative weight of each point wrt
+            # recompute dW/dl, the derivative each point wrt
             # the source landmarks
-            self.dW_dX = self.transform.weight_points(points)
+            self.dW_dl = self.transform.d_dl(points)
             # cache points
             self._cached_points = points
 
-        # dX/dp is simply the Jacobian of the model
-        dX_dp = self.pdm.model.d_dp
+        # dX/dp is simply the Jacobian of the model instance
+        # TODO confirm with @ja310 this is correct
+        dX_dp = self.pdm.d_dp
 
-        # dW_dX:    n_points   x    n_points    x  n_dims
-        # dX_dp:  n_points  x     n_params      x  n_dims
-        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
-        # dW_dp:    n_points   x     n_params      x  n_dims
+        # dW_dl:  n_points x n_points x n_dims
+        # dX_dp:  n_points x n_params x n_dims
+        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dl, dX_dp)
+        # dW_dp:  n_points x n_params x n_dims
 
         return dW_dp
 
@@ -427,11 +428,12 @@ class GlobalMDTransform(ModelDrivenTransform):
         if not np.array_equal(self._cached_points, points):
             # recompute dW/dx, i.e. the relative weight of each point wrt
             # the source landmarks
-            self.dW_dX = self.transform.weight_points(points)
+            self.dW_dl = self.transform.d_dl(points)
             # cache points
             self._cached_points = points
 
-        model_d_dp = self.pdm.model.d_dp
+        # TODO check with @ja310 this is correct
+        model_d_dp = self.pdm.d_dp
         points = self.pdm.model.mean.points
 
         # compute dX/dp
@@ -439,24 +441,24 @@ class GlobalMDTransform(ModelDrivenTransform):
         # dX/dq is the Jacobian of the global transform evaluated at the
         # mean of the model.
         dX_dq = self._global_transform_d_dp(points)
-        # dX_dq:  n_points  x  n_global_params  x  n_dims
+        # dX_dq:  n_points x n_global_params x n_dims
 
         # by application of the chain rule dX_db is the Jacobian of the
         # model transformed by the linear component of the global transform
         dS_db = model_d_dp
         dX_dS = self.pdm.global_transform.d_dx(points)
         dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
-        # dS_db:  n_points  x     n_weights     x  n_dims
-        # dX_dS:  n_points  x     n_dims        x  n_dims
-        # dX_db:  n_points  x     n_weights     x  n_dims
+        # dS_db:  n_points x n_weights x n_dims
+        # dX_dS:  n_points x n_dims    x n_dims
+        # dX_db:  n_points x n_weights x n_dims
 
         # dX/dp is simply the concatenation of the previous two terms
         dX_dp = np.hstack((dX_dq, dX_db))
 
-        # dW_dX:    n_points   x    n_points    x  n_dims
-        # dX_dp:  n_points  x     n_params      x  n_dims
-        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dX, dX_dp)
-        # dW_dp:    n_points   x     n_params      x  n_dims
+        # dW_dl:  n_points x n_points x n_dims
+        # dX_dp:  n_points x n_params x n_dims
+        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dl, dX_dp)
+        # dW_dp:  n_points x n_params x n_dims
 
         return dW_dp
 
