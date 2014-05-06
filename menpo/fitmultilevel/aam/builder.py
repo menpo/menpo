@@ -182,14 +182,20 @@ class AAMBuilder(DeformableModelBuilder):
 
         # build the model at each level
         if verbose:
-            print_dynamic('- Building model for each {} pyramid level\n'.
-                          format(self.n_levels))
+            if self.n_levels > 1:
+                print_dynamic('- Building model for each of the {} pyramid '
+                              'levels\n'.format(self.n_levels))
+            else:
+                print_dynamic('- Building model\n')
         shape_models = []
         appearance_models = []
         # for each level
         for j in np.arange(self.n_levels):
             if verbose:
-                level_str = '  - Level {}: '.format(j + 1)
+                if self.n_levels > 1:
+                    level_str = '  - Level {}: '.format(j + 1)
+                else:
+                    level_str = '  - '
 
             # extract features from each image
             feature_images = []
@@ -245,14 +251,13 @@ class AAMBuilder(DeformableModelBuilder):
             # set source shape
             for c, i in enumerate(warped_images):
                 if verbose:
-                    print_dynamic('{}Attaching mask to warped images - {}'.
-                                  format(level_str,
-                                         progress_bar_str(
-                                             float(c + 1) / len(warped_images),
-                                             show_bar=False)))
+                    print_dynamic('{}Attaching reference shape to warped '
+                                  'images - {}'.format(
+                                  level_str,
+                                  progress_bar_str(
+                                      float(c + 1) / len(warped_images),
+                                      show_bar=False)))
                 i.landmarks['source'] = reference_frame.landmarks['source']
-                i.mask = reference_frame.mask
-                #self._mask_image(i)
 
             # build appearance model
             if verbose:
@@ -279,10 +284,6 @@ class AAMBuilder(DeformableModelBuilder):
     def _build_reference_frame(self, mean_shape):
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
-
-    def _mask_image(self, image):
-        image.constrain_mask_to_landmarks(group='source',
-                                          trilist=self.trilist)
 
     def _build_aam(self, shape_models, appearance_models):
         return AAM(shape_models, appearance_models, self.transform,
