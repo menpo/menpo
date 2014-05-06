@@ -310,7 +310,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
         Default: (16, 16)
 
-    diagonal_range: int, Optional
+    normalization_diagonal: int, Optional
         All images will be rescaled to ensure that the scale of their
         landmarks matches the scale of the mean shape.
 
@@ -374,14 +374,14 @@ class PatchBasedAAMBuilder(AAMBuilder):
         The Patch Based AAM Builder object
     """
     def __init__(self, feature_type='hog', transform=ThinPlateSplines,
-                 patch_shape=(16, 16), diagonal_range=None, n_levels=3,
+                 patch_shape=(16, 16), normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
         self.feature_type = feature_type
         self.transform = transform
         self.patch_shape = patch_shape
-        self.diagonal_range = diagonal_range
+        self.diagonal_range = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_levels = scaled_levels

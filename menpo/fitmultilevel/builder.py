@@ -21,21 +21,21 @@ class DeformableModelBuilder(object):
         pass
 
     @classmethod
-    def _preprocessing(cls, images, group, label, diagonal_range,
+    def _preprocessing(cls, images, group, label, normalization_diagonal,
                        interpolator, scaled_levels, n_levels, downscale,
                        verbose=False):
         r"""
         """
         if verbose:
-            print(' - Computing reference shape')
+            print('  - Computing reference shape')
         shapes = [i.landmarks[group][label].lms for i in images]
         reference_shape = mean_pointcloud(shapes)
 
         if verbose:
-            print(' - Normalizing object size')
-        if diagonal_range:
+            print('  - Normalizing object size')
+        if normalization_diagonal:
             x, y = reference_shape.range()
-            scale = diagonal_range / np.sqrt(x**2 + y**2)
+            scale = normalization_diagonal / np.sqrt(x**2 + y**2)
             Scale(scale, reference_shape.n_dims).apply_inplace(
                 reference_shape)
         images = [i.rescale_to_reference_shape(reference_shape,
@@ -45,7 +45,7 @@ class DeformableModelBuilder(object):
                   for i in images]
 
         if verbose:
-            print(' - Generating multilevel scale space')
+            print('  - Generating multilevel scale space')
         if scaled_levels:
             generator = [i.gaussian_pyramid(n_levels=n_levels,
                                             downscale=downscale)
