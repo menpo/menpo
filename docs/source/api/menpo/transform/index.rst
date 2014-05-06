@@ -21,7 +21,6 @@ Classes
    AlignmentRotation
    Translation
    AlignmentTranslation
-   Scale
    NonUniformScale
    UniformScale
    AlignmentUniformScale
@@ -33,3 +32,11 @@ Classes
    R2LogRRBF
 
    GeneralizedProcrustesAnalysis
+
+Functions
+---------
+
+.. toctree::
+  :maxdepth: 1
+
+  Scale
