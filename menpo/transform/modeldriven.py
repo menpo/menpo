@@ -155,7 +155,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        model_jacobian = self.pdm.model.jacobian
+        model_jacobian = self.pdm.model.d_dp
         points = self.pdm.model.mean.points
         n_points = self.pdm.model.mean.n_points
 
