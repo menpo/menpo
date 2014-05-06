@@ -228,19 +228,6 @@ class DX(object):
         pass
 
 
-class DX0(object):
-
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def d_dx_at_0(self, points):
-        r"""
-        The derivative of this object wrt spatial changes evaluated at
-        points.
-        """
-        pass
-
-
 class DL(object):
 
     __metaclass__ = abc.ABCMeta
