@@ -4,9 +4,9 @@
   The Menpo API
 ###################
 
-.. htmlonly::
+This is the api!
 
-   :Release: |version|
-   :Date: |today|
+.. toctree::
+   :maxdepth: 1
 
-.. include:: generated/gen.txt
+   menpo/image
