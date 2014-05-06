@@ -61,13 +61,13 @@ class AAMBuilder(DeformableModelBuilder):
 
         Default: None
 
-    diagonal_range: int, Optional
+    normalization_diagonal: int, Optional
         All images will be rescaled to ensure that the scale of their
         landmarks matches the scale of the mean shape.
 
         If int, ensures that the mean shape is scaled so that
         the diagonal of the bounding box containing it matches the
-        diagonal_range value.
+        normalization_diagonal value.
         If None, the mean landmarks are not rescaled.
 
         Note that, because the reference frame is computed from the mean
@@ -126,14 +126,14 @@ class AAMBuilder(DeformableModelBuilder):
     """
     def __init__(self, feature_type=sparse_hog,
                  transform=PiecewiseAffine, trilist=None,
-                 diagonal_range=None, n_levels=3, downscale=1.1,
+                 normalization_diagonal=None, n_levels=3, downscale=1.1,
                  scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
         self.feature_type = feature_type
         self.transform = transform
         self.trilist = trilist
-        self.diagonal_range = diagonal_range
+        self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_levels = scaled_levels
@@ -174,12 +174,15 @@ class AAMBuilder(DeformableModelBuilder):
         aam : :class:`menpo.fitmultiple.aam.builder.AAM`
             The AAM object
         """
+        # generate reference shape and pyramid levels
         if verbose:
             print('- Preprocessing')
         self.reference_shape, generator = self._preprocessing(
-            images, group, label, self.diagonal_range, self.interpolator,
-            self.scaled_levels, self.n_levels, self.downscale, verbose=verbose)
+            images, group, label, self.normalization_diagonal,
+            self.interpolator, self.scaled_levels, self.n_levels,
+            self.downscale, verbose=verbose)
 
+        # build the model at each level
         if verbose:
             print('- Building model pyramids')
         shape_models = []
@@ -189,12 +192,19 @@ class AAMBuilder(DeformableModelBuilder):
             if verbose:
                 print('  - Level {}'.format(j + 1))
 
-            if verbose:
-                print('    - Computing feature space')
-            images = [compute_features(g.next(), self.feature_type)
-                      for g in generator]
+            # extract features from each image
+            feature_images = []
+            for c, g in enumerate(generator):
+                if verbose:
+                    print_str = '    - Computing feature space: ' + \
+                                progress_bar_str(float(c + 1) / len(images),
+                                                 show_bar=True)
+                    print_dynamic(print_str, new_line=(c == len(images) - 1))
+                feature_images.append(compute_features(g.next(),
+                                                       self.feature_type))
+
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in images]
+            shapes = [i.landmarks[group][label].lms for i in feature_images]
 
             if j == 0 or self.scaled_levels:
                 if verbose:
@@ -214,19 +224,20 @@ class AAMBuilder(DeformableModelBuilder):
             # add shape model to the list
             shape_models.append(shape_model)
 
+            # compute transforms
             if verbose:
                 print('    - Computing transforms')
             transforms = [self.transform(reference_frame.landmarks['source'].lms,
                                          i.landmarks[group][label].lms)
-                          for i in images]
+                          for i in feature_images]
 
+            # warp images
             warped_images = []
-            for c, (i, t) in enumerate(zip(images, transforms)):
+            for c, (i, t) in enumerate(zip(feature_images, transforms)):
                 if verbose:
                     print_str = '    - Warping images: ' + progress_bar_str(
-                        float(c + 1) / len(images), show_bar=False)
-                    new_line = (c == len(images) - 1)
-                    print_dynamic(print_str, new_line=new_line)
+                        float(c + 1) / len(feature_images), show_bar=False)
+                    print_dynamic(print_str, new_line=(c == len(images) - 1))
                 warped_images.append(i.warp_to(reference_frame.mask, t,
                                                interpolator=self.interpolator))
 
@@ -234,6 +245,7 @@ class AAMBuilder(DeformableModelBuilder):
                 i.landmarks['source'] = reference_frame.landmarks['source']
                 self._mask_image(i)
 
+            # build appearance model
             if verbose:
                 print('    - Building appearance model')
             appearance_model = PCAModel(warped_images)
@@ -321,7 +333,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
         If int, ensures that the mean shape is scaled so that
         the diagonal of the bounding box containing it matches the
-        diagonal_range value.
+        normalization_diagonal value.
         If None, the mean landmarks are not rescaled.
 
         Note that, because the reference frame is computed from the mean
@@ -386,7 +398,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
         self.feature_type = feature_type
         self.transform = transform
         self.patch_shape = patch_shape
-        self.diagonal_range = normalization_diagonal
+        self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_levels = scaled_levels
