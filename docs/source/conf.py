@@ -22,7 +22,12 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.autosummary',
               'numpydoc',
-              'sphinxext.ref_prettify']
+              'sphinxext.ref_prettify',
+              'sphinxmapxrefrole']
+
+# Import the mapping dictionary and set it for sphinxmapxrefrole
+from xref_map import xref_map
+xref_mapping_dict = xref_map
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

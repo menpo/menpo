@@ -79,7 +79,7 @@ class Affine(Homogeneous):
 
         Returns
         -------
-        transforms: list of :class`DiscreteAffine` that
+        transforms : list of :map:`DiscreteAffine` that
             Equivalent to this affine transform, such that:
 
             ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
@@ -298,16 +298,14 @@ class AlignmentAffine(Affine, HomogFamilyAlignment):
 
     Parameters
     ----------
-
-    source: :class:`menpo.shape.PointCloud`
+    source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
 
-    target: :class:`menpo.shape.PointCloud`
+    target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
 
     Notes
     -----
-
     We want to find the optimal transform M which satisfies
 
         M a = b
