@@ -27,7 +27,7 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
 
     Returns
     -------
-    prorgess_str : str
+    progress_str : str
         The progress percentage string.
 
     Raises
@@ -39,7 +39,7 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     ValueError
         bar_marker must be a string of length 1
     """
-    if percentage >1 or percentage < 0:
+    if percentage > 1 or percentage < 0:
         raise ValueError("percentage is not in the range [0, 1]")
     if not isinstance(bar_length, int) or bar_length < 1:
         raise ValueError("bar_length must be an integer >= 1")
@@ -54,15 +54,22 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
         return "%d%%" % (percentage * 100)
 
 
-def print_dynamic(str_to_print=''):
+def print_dynamic(str_to_print='', new_line=False):
     r"""
     Dynamically prints the given string. This means that it prints the string
     and then flushes the buffer.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     str_to_print : str
         The string to print.
+    new_line : bool, optional
+        If True, a new line character ('\n') will be printed after the string.
+
+        Default: False
     """
-    sys.stdout.write("\r%s" % str_to_print)
+    if new_line:
+        sys.stdout.write("\r%s\n" % str_to_print)
+    else:
+        sys.stdout.write("\r%s" % str_to_print)
     sys.stdout.flush()
