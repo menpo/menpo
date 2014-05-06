@@ -125,7 +125,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX, DL):
         dk_dx = np.zeros((points.shape[0] + 3,   # i
                           self.source.n_points,  # k
                           self.source.n_dims))   # l
-        dk_dx[:-3, :] = self.kernel.d_dx(points)
+        dk_dx[:-3, :] = self.kernel.d_dl(points)
 
         affine_derivative = np.array([[0, 0],
                                       [1, 0],
@@ -162,7 +162,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX, DL):
 
         dL_dx = np.zeros(self.l.shape + (n_lms,))
         dL_dy = np.zeros(self.l.shape + (n_lms,))
-        aux = self.kernel.d_dx(self.source.points)
+        aux = self.kernel.d_dl(self.source.points)
         dW_dx = np.zeros((n_pts, n_lms, 2))
 
         # Fix log(0)
@@ -185,7 +185,7 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX, DL):
             dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
             # new bit
             aux3 = np.zeros((n_pts, self.y.shape[1], 2))
-            aux3[:, i, :] = self.kernel.d_dx(points)[:, i, :]
+            aux3[:, i, :] = self.kernel.d_dl(points)[:, i, :]
             omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
             dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
                               aux3[..., 0].dot(self.coefficients[:, 0]))
