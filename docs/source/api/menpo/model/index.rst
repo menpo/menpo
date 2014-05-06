@@ -14,5 +14,11 @@ Classes
    MeanLinearModel
    MeanInstanceLinearModel
    InstanceLinearModel
-   Similarity2dInstanceModel
 
+Functions
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+   Similarity2dInstanceModel
