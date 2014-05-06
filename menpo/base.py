@@ -195,7 +195,6 @@ class DP(object):
         pass
 
 
-
 class DX(object):
 
     __metaclass__ = abc.ABCMeta
@@ -257,10 +256,3 @@ class DL(object):
 
 def menpo_src_dir_path():
     return os.path.split(os.path.abspath(__file__))[0]
-
-
-class DimensionalityError(ValueError):
-    """
-    Raised when the number of dimensions do not match what was expected.
-    """
-    pass
