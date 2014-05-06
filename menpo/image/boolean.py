@@ -15,7 +15,7 @@ class BooleanImage(Image):
     -----------
     mask_data : (M, N, ..., L) ndarray
         The binary mask data. Note that there is no channel axis - a 2D Mask
-         Image is built from just a 2D numpy array of mask_data.
+        Image is built from just a 2D numpy array of mask_data.
         Automatically coerced in to boolean values.
     """
 

@@ -44,7 +44,7 @@ class R2LogR2RBF(RadialBasisFunction):
         super(R2LogR2RBF, self).__init__(c)
 
     def _apply(self, x):
-        """
+        r"""
         Apply the basis function.
 
         .. note::
@@ -72,7 +72,7 @@ class R2LogR2RBF(RadialBasisFunction):
         return u
 
     def jacobian_points(self, x):
-        """
+        r"""
         Apply the derivative of the basis function wrt the coordinate system.
         This is applied over each dimension of the input vector, `x`.
 
@@ -85,7 +85,7 @@ class R2LogR2RBF(RadialBasisFunction):
 
             where:
 
-            :math:`r_{x, l} = \lVert x - c \rVert``
+            :math:`r_{x, l} = \lVert x - c \rVert`
 
 
         Parameters
@@ -129,7 +129,7 @@ class R2LogRRBF(RadialBasisFunction):
         super(R2LogRRBF, self).__init__(c)
 
     def _apply(self, x):
-        """
+        r"""
         Apply the basis function :math:`r^2 \log{r}`.
 
         Parameters
@@ -152,7 +152,7 @@ class R2LogRRBF(RadialBasisFunction):
         return u
 
     def jacobian_points(self, x):
-        """
+        r"""
         The derivative of the basis function wrt the coordinate system
         evaluated at `x`.
 
