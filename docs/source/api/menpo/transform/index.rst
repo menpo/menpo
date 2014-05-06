@@ -1,7 +1,7 @@
 .. _api-transform-index:
 
 :mod:`menpo.transform`
-=================
+======================
 
 Classes
 -------
