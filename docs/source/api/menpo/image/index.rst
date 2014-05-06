@@ -1,7 +1,7 @@
 .. _api-image-index:
 
 :mod:`menpo.image`
-=================
+==================
 
 Classes
 -------

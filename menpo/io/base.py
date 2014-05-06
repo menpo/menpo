@@ -20,19 +20,21 @@ def data_dir_path():
 def data_path_to(asset_filename):
     r"""The path to a builtin asset in the ./data folder on this machine.
 
-    Parameters:
+    Parameters
+    ----------
     asset_filename : string
         The filename (with extension) of a file builtin to Menpo. The full
         set of allowed names is given by :func:`ls_builtin_assets()`
+
     Returns
     -------
-    string
+    data_path : string
         The path to a given asset in the ./data folder
 
     Raises
     ------
     ValueError
-        If the asset_filename doesn't exist in the ./data folder.
+        If the asset_filename doesn't exist in the ``data`` folder.
 
     """
     asset_path = os.path.join(data_dir_path(), asset_filename)
