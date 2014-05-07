@@ -121,17 +121,22 @@ class InstanceBackedModel(object):
     @property
     def d_dp(self):
         """
-        Returns the Jacobian of the linear model. In this case, simply the
-        components of the model reshaped to have the standard Jacobian shape:
+        Returns the first order differential of the linear model wrt delta
+        changes to component weightings.
 
-            n_points    x  n_params      x  n_dims
-            n_features  x  n_components  x  n_dims
+        As the model is linear, this is independent of any choice of weightings,
+        hence it being a property rather than a method.
+
+        Also note that this class does not formally implement the :map:`DP`
+        interface, which is reserved for objects which can be evaluated at
+        spatial points.
 
         Returns
         -------
-        jacobian : (n_features, n_components, n_dims) ndarray
+        jacobian : (n_features, n_components) ndarray
             The Jacobian of the model in the standard Jacobian shape.
         """
+        # TODO change the shape here
         jacobian = self.components.reshape(self.n_components, -1,
                                            self.template_instance.n_dims)
         return jacobian.swapaxes(0, 1)
