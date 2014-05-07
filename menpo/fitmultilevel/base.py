@@ -4,12 +4,10 @@ import numpy as np
 from copy import deepcopy
 
 from menpo.fit.base import Fitter
-from menpo.fit.fittingresult import FittingResultList
 from menpo.transform import AlignmentAffine, Scale
-from menpo.landmark import LandmarkGroup
 
 from .fittingresult import MultilevelFittingResult
-from .functions import noisy_align
+from .functions import noisy_align, align_shape_with_bb
 
 
 class MultilevelFitter(Fitter):
@@ -60,97 +58,8 @@ class MultilevelFitter(Fitter):
         """
         pass
 
-    def fit_images(self, images, group=None, label='all',
-                   initialization='from_gt_shape', noise_std=0.0,
-                   rotation=False, max_iters=50, verbose=True, view=False,
-                   error_type='me_norm', **kwargs):
-        r"""
-        Fits a list of images.
-
-        Parameters
-        -----------
-        images: list of :class:`pybug.image.masked.MaskedImage`
-            The list of images to be fitted.
-
-        group : string, Optional
-            The key of the landmark set that should be used. If None,
-            and if there is only one set of landmarks, this set will be used.
-
-            Default: None
-
-        label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
-
-            Default: 'all'
-
-        initialization: 'from_gt_shape' or 'detection', optional
-            The type of initialization to be used for fitting the image.
-
-            Default: 'from_gt_shape'
-
-        noise_std: float
-            The std of the gaussian noise used to produce the initial shape.
-
-            Default: 0.0
-
-        rotation: boolean
-            Specifies whether in-plane rotation is to be used to produce the
-            initial shape.
-
-            Default: False
-
-        max_iters: int or list, optional
-            The maximum number of iterations.
-            If int, then this will be the overall maximum number of iterations
-            for all the pyramidal levels.
-            If list, then a maximum number of iterations is specified for each
-            pyramidal level.
-
-            Default: 50
-
-        verbose: boolean
-            Whether or not to print information related to the fitting
-            results (such as: final error, convergence, ...).
-
-            Default: True
-
-        view: boolean
-            Whether or not the fitting results are to be displayed.
-
-            Default: False
-
-        error_type: 'me_norm', 'me' or 'rmse', optional.
-            Specifies the way in which the error between the fitted and
-            ground truth shapes is to be computed.
-
-            Default: 'me_norm'
-
-        Returns
-        -------
-        FittingList: :class:`pybug.aam.fitting.FittingList`
-            A fitting list object containing a fitting list object
-            associated to each image.
-        """
-        n_images = len(images)
-
-        fittings = []
-        for j, image in enumerate(images):
-            if verbose:
-                print '- fitting image {} of {}'.format(j, n_images)
-            fittings.append(
-                self.fit(image, group=group, label=label,
-                         initialization=initialization, noise_std=noise_std,
-                         rotation=rotation, max_iters=max_iters,
-                         verbose=verbose, view=view, error_type=error_type,
-                         **kwargs))
-
-        return FittingResultList(fittings)
-
-    def fit(self, image, group=None, label='all',
-            initialization='from_gt_shape', noise_std=0.0, rotation=False,
-            max_iters=50, verbose=True, view=False, error_type='me_norm',
-            **kwargs):
+    def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
+            error_type='me_norm', verbose=True, view=False, **kwargs):
         r"""
         Fits a single image.
 
@@ -159,33 +68,9 @@ class MultilevelFitter(Fitter):
         image: :class:`pybug.image.masked.MaskedImage`
             The image to be fitted.
 
-        group: string, Optional
-            The key of the landmark set that should be used. If None,
-            and if there is only one set of landmarks, this set will be used.
-
-            Default: None
-
-        label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
-
-            Default: 'all'
-
-        initialization: 'from_gt_shape' or 'detection', optional
-            The type of initialization to be used for fitting the image.
-
-            Default: 'from_gt_shape'
-
-        noise_std: float
-            The std of the gaussian noise used to produce the initial shape.
-
-            Default: 0.0
-
-        rotation: boolean
-            Specifies whether in-plane rotation is to be used to produce the
-            initial shape.
-
-            Default: False
+        initial_shape: :class:`pybug.shape.PointCloud`
+            The initial shape estimate from which the fitting procedure
+            will start.
 
         max_iters: int or list, optional
             The maximum number of iterations.
@@ -196,22 +81,24 @@ class MultilevelFitter(Fitter):
 
             Default: 50
 
-        verbose: boolean
-            Whether or not to print information related to the fitting
-            results (such as: final error, convergence, ...).
-
-            Default: True
-
-        view: boolean
-            Whether or not the fitting results are to be displayed.
-
-            Default: False
-
         error_type: 'me_norm', 'me' or 'rmse', optional.
             Specifies the way in which the error between the fitted and
             ground truth shapes is to be computed.
 
             Default: 'me_norm'
+
+        verbose: boolean, optional
+            Whether or not to print information related to the fitting
+            results (such as: final error, convergence, ...).
+
+            Default: True
+
+        view: boolean, optional
+            Whether or not the fitting results are to be displayed.
+
+            Default: False
+
+        **kwargs:
 
         Returns
         -------
@@ -220,33 +107,7 @@ class MultilevelFitter(Fitter):
             to each run.
         """
         image = deepcopy(image)
-
-        if isinstance(image.landmarks[group][label], LandmarkGroup):
-            gt_shape = image.landmarks[group][label].lms
-        else:
-            if group or label is not 'all':
-                raise ValueError('The specified group {} and/or '
-                                 'label {} do not exist'.format(group,
-                                                                label))
-            elif initialization is not 'detection':
-                raise ValueError('Initialization method {} cannot '
-                                 'be used because the image is not '
-                                 'landmarked'.format(initialization))
-            gt_shape = None
-
-        if initialization is 'from_gt_shape':
-            initial_shape = self._noisy_align_from_gt_shape(
-                gt_shape, noise_std=noise_std, rotation=rotation)
-        elif type is 'detection':
-            initial_shape = self._detect_shape(
-                noise_std=noise_std, rotation=rotation)
-        else:
-            raise ValueError('Unknown initialization string selected. '
-                             'Valid options are: "from_gt_shape", '
-                             '"detection"')
-
-        images = self._prepare_image(image, initial_shape,
-                                     gt_shape=gt_shape)
+        images = self._prepare_image(image, initial_shape, gt_shape=gt_shape)
 
         if gt_shape:
             gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
@@ -273,38 +134,11 @@ class MultilevelFitter(Fitter):
 
         return multilevel_fitting_result
 
-    def _detect_shape(self, noise_std=0.0, rotation=False):
-        r"""
-        Generates an initial shape by automatically detecting the object
-        being modelled (typically faces) in the image. This method should be
-        wired to future face and object detection algorithms.
-
-        Parameters
-        -----------
-        noise_std: float, optional
-            The std of the gaussian noise used to produce the initial shape.
-
-            Default: 0.0
-
-        rotation: boolean, optional
-            Specifies whether rotation is to be used to produce the initial
-            shape.
-
-            Default: False
-
-        Returns
-        -------
-        initial_shape: :class:`pybug.shape.PointCloud`
-            The initial shape.
-        """
-        raise ValueError('_detect_shape not implemented yet')
-
-    def _noisy_align_from_gt_shape(self, gt_shape, noise_std=0.0,
-                                   rotation=False):
+    def perturb_shape(self, gt_shape, noise_std=0.04, rotation=False):
         r"""
         Generates an initial shape by adding gaussian noise  to
         the perfect similarity alignment between the ground truth
-        and default shape.
+        and reference_shape.
 
         Parameters
         -----------
@@ -314,7 +148,7 @@ class MultilevelFitter(Fitter):
         noise_std: float, optional
             The std of the gaussian noise used to produce the initial shape.
 
-            Default: 0.0
+            Default: 0.04
 
         rotation: boolean, optional
             Specifies whether ground truth in-plane rotation is to be used
@@ -330,6 +164,24 @@ class MultilevelFitter(Fitter):
         reference_shape = self.reference_shape
         return noisy_align(reference_shape, gt_shape, noise_std=noise_std,
                            rotation=rotation).apply(reference_shape)
+
+    def obtain_shape_from_bb(self, bounding_box):
+        r"""
+        Generates an initial shape giving a bounding box detection.
+
+        Parameters
+        -----------
+        bounding_box: (4,) ndarray
+            The bounding box.
+
+        Returns
+        -------
+        initial_shape: :class:`pybug.shape.PointCloud`
+            The initial shape.
+        """
+        reference_shape = self.reference_shape
+        return align_shape_with_bb(reference_shape,
+                                   bounding_box).apply(reference_shape)
 
     @abc.abstractmethod
     def _prepare_image(self, image, initial_shape, gt_shape=None):
