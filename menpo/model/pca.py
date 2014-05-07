@@ -341,7 +341,7 @@ class PCAModel(MeanInstanceLinearModel):
             # by default trim using the current n_active_components
             n_components = self.n_active_components
         if isinstance(n_components, float):
-            if n_components > 0.0:
+            if 0.0 < n_components <= 1.0:
                 # n_components needed to capture desired variance
                 n_components = np.sum(
                     [r < n_components
