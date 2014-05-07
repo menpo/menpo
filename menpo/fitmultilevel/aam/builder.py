@@ -192,10 +192,9 @@ class AAMBuilder(DeformableModelBuilder):
         # for each level
         for j in np.arange(self.n_levels):
             if verbose:
+                level_str = '  - '
                 if self.n_levels > 1:
                     level_str = '  - Level {}: '.format(j + 1)
-                else:
-                    level_str = '  - '
 
             # extract features from each image
             feature_images = []
@@ -211,7 +210,7 @@ class AAMBuilder(DeformableModelBuilder):
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label].lms for i in feature_images]
 
-            if j == 0 or self.scaled_levels:
+            if j == 0 or not self.scaled_levels:
                 if verbose:
                     print_dynamic('{}Building shape model'.format(level_str))
                 if j != 0:
