@@ -13,14 +13,13 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) $(SRC_DIR)
 
-.PHONY: help clean html changes linkcheck api
+.PHONY: help clean html changes linkcheck
 
 default: html
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html        standalone HTML files"
-	@echo "  html_noapi  same as above, without the time consuming API docs"
 	@echo "  changes     an overview over all changed/added/deprecated items"
 	@echo "  linkcheck   check all external links for integrity (takes a long time)"
 	@echo
@@ -29,10 +28,7 @@ help:
 	@echo "all          html and pdf"
 	@echo "dist         all, and then puts the results in dist/"
 
-clean_api:
-	-rm -rf $(SRCDIR)/api/generated
-
-clean: clean_api
+clean:
 	-rm -rf $(BUILDDIR)/*
 
 pdf: latex
@@ -40,22 +36,13 @@ pdf: latex
 
 all: html pdf
 
-html: api
-html_noapi: clean_api
-
-html html_noapi:
+html:
 	mkdir -p $(BUILDDIR)/html $(BUILDDIR)/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-api: $(SRC_DIR)/api/generated/gen.txt
-
-$(SRC_DIR)/api/generated/gen.txt:
-	python autogen_api.py
-	@echo "Build API docs finished."
-
-latex: api
+latex:
 	mkdir -p $(BUILDDIR)/latex $(BUILDDIR)/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo

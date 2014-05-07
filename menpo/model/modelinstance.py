@@ -115,11 +115,23 @@ class ModelInstance(Targetable, Vectorizable, DP):
         self._weights = vector
         self._sync_target_from_state()
 
-    # TODO: document me
+
     def d_dp(self, points):
         """
+        Returns the Jacobian of the PCA model reshaped to have the standard
+        Jacobian shape:
+
+            n_points    x  n_params      x  n_dims
+            n_features  x  n_components  x  n_dims
+
+        Returns
+        -------
+        jacobian : (n_features, n_components, n_dims) ndarray
+            The Jacobian of the model in the standard Jacobian shape.
         """
-        return self.model.d_dp
+        jacobian = self._d_dp.reshape(self.n_active_components, -1,
+                                      self.template_instance.n_dims)
+        return jacobian.swapaxes(0, 1)
 
 
 # TODO: document me

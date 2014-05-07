@@ -105,7 +105,7 @@ class R2LogR2RBF(RadialBasisFunction):
 
             where:
 
-            :math:`r_{x, l} = \lVert x - c \rVert``
+            :math:`r_{x, l} = \lVert x - c \rVert`
 
 
         Parameters

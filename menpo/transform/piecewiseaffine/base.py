@@ -192,7 +192,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
                                beta_i[:, None]))
         # the jacobian wrt source is of shape
         # (n_sample_points, n_source_points, 2)
-        jac = np.zeros((points.shape[0], self.n_points, 2))
+        jac = np.zeros((points.shape[0], 2, self.n_points, 2))
         # per sample point, find the source points for the ijk vertices of
         # the containing triangle - only these points will get a non 0
         # jacobian value
@@ -203,7 +203,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         # term, ijk_per_point.
         linear_iterator = np.arange(points.shape[0]).reshape((-1, 1))
         # in one line, we are done.
-        jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
+        jac[linear_iterator, :, ijk_per_point] = np.eye(2) * gamma_ijk
         return jac
 
 

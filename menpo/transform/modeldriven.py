@@ -259,8 +259,12 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         # TODO confirm with @ja310 this is correct
         dX_dp = self.pdm.d_dp
 
-        # dW_dl:  n_points x n_points x n_dims
-        # dX_dp:  n_points x n_params x n_dims
+        # PREVIOUS
+        # dW_dX:  n_points x n_centres x n_dims
+        # dX_dp:  n_centres x n_params x n_dims
+
+        # dW_dl:  n_points x (n_dims) x n_centres x n_dims
+        # dX_dp:  (n_points x n_dims) x n_params
         dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dl, dX_dp)
         # dW_dp:  n_points x n_params x n_dims
 
