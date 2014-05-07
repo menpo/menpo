@@ -114,7 +114,7 @@ class AAMBuilder(DeformableModelBuilder):
 
         Default: 3
 
-    interpolator:'scipy', Optional
+    interpolator: 'scipy', Optional
         The interpolator that should be used to perform the warps.
 
         Default: 'scipy'
@@ -130,6 +130,27 @@ class AAMBuilder(DeformableModelBuilder):
                  scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
+        # check input
+        if n_levels < 1:
+            raise ValueError("n_levels must be > 0")
+        if downscale < 1:
+            raise ValueError("downscale must be >= 1")
+        if normalization_diagonal is not None and normalization_diagonal < 20:
+            raise ValueError("normalization_diagonal must be >= 20")
+        if boundary < 0:
+            raise ValueError("boundary must be >= 0")
+        if (isinstance(max_shape_components, list) and
+                len(max_shape_components) != n_levels):
+            raise ValueError("max_shape_components can be int or float or "
+                             "a list of length {}".format(n_levels))
+        elif not isinstance(max_shape_components, list):
+            max_shape_components = [max_shape_components] * n_levels
+        if (isinstance(max_appearance_components, list) and
+                len(max_appearance_components) != n_levels):
+            raise ValueError("max_appearance_components can be int or float "
+                             "or a list of length {}".format(n_levels))
+        elif not isinstance(max_appearance_components, list):
+            max_appearance_components = [max_appearance_components] * n_levels
         self.feature_type = feature_type
         self.transform = transform
         self.trilist = trilist
@@ -190,7 +211,7 @@ class AAMBuilder(DeformableModelBuilder):
         shape_models = []
         appearance_models = []
         # for each pyramid level
-        for j in np.arange(self.n_levels):
+        for j in range(self.n_levels):
             if verbose:
                 level_str = '  - '
                 if self.n_levels > 1:
@@ -221,7 +242,7 @@ class AAMBuilder(DeformableModelBuilder):
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
             shape_model = self._build_shape_model(shapes,
-                                                  self.max_shape_components)
+                                                  self.max_shape_components[j])
             reference_frame = self._build_reference_frame(shape_model.mean)
 
             # add shape model to the list
@@ -254,9 +275,9 @@ class AAMBuilder(DeformableModelBuilder):
                 print_dynamic('{}Building appearance model'.format(level_str))
             appearance_model = PCAModel(warped_images)
             # trim appearance model if required
-            if self.max_appearance_components is not None:
+            if self.max_appearance_components[j] is not None:
                 appearance_model.trim_components(
-                    self.max_appearance_components)
+                    self.max_appearance_components[j])
 
             # add appearance model to the list
             appearance_models.append(appearance_model)
