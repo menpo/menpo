@@ -20,19 +20,21 @@ def data_dir_path():
 def data_path_to(asset_filename):
     r"""The path to a builtin asset in the ./data folder on this machine.
 
-    Parameters:
+    Parameters
+    ----------
     asset_filename : string
         The filename (with extension) of a file builtin to Menpo. The full
         set of allowed names is given by :func:`ls_builtin_assets()`
+
     Returns
     -------
-    string
+    data_path : string
         The path to a given asset in the ./data folder
 
     Raises
     ------
     ValueError
-        If the asset_filename doesn't exist in the ./data folder.
+        If the asset_filename doesn't exist in the ``data`` folder.
 
     """
     asset_path = os.path.join(data_dir_path(), asset_filename)
@@ -101,10 +103,10 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
     # MESHES
     #  find all meshes that we can import
-    mesh_paths = _glob_matching_extension(pattern, mesh_types)
+    mesh_files = mesh_paths(pattern)
     if max_meshes:
-        mesh_paths = mesh_paths[:max_meshes]
-    for mesh, mesh_i in _multi_import_generator(mesh_paths, mesh_types,
+        mesh_files = mesh_files[:max_meshes]
+    for mesh, mesh_i in _multi_import_generator(mesh_files, mesh_types,
                                                 keep_importers=True):
         # need to keep track of texture images to not double import
         if mesh_i.texture_path is not None:
@@ -113,7 +115,7 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
     # IMAGES
     # find all images that we can import
-    image_files = _glob_matching_extension(pattern, all_image_types)
+    image_files = image_paths(pattern)
     image_files = _images_unrelated_to_meshes(image_files,
                                               texture_paths)
     if max_images:
@@ -362,6 +364,20 @@ def ls_builtin_assets():
 
     """
     return os.listdir(data_dir_path())
+
+
+def mesh_paths(pattern):
+    r"""
+    Return mesh filepaths that Menpo can import that match the glob pattern.
+    """
+    return _glob_matching_extension(pattern, mesh_types)
+
+
+def image_paths(pattern):
+    r"""
+    Return image filepaths that Menpo can import that match the glob pattern.
+    """
+    return _glob_matching_extension(pattern, all_image_types)
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
