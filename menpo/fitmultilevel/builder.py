@@ -23,7 +23,7 @@ class DeformableModelBuilder(object):
 
     @classmethod
     def _preprocessing(cls, images, group, label, normalization_diagonal,
-                       interpolator, scaled_levels, n_levels, downscale,
+                       interpolator, scaled_shape_models, n_levels, downscale,
                        verbose=False):
         r"""
         """
@@ -57,13 +57,13 @@ class DeformableModelBuilder(object):
         if verbose:
             print_dynamic('{}Generating multilevel scale space'.format(
                 intro_str))
-        if scaled_levels:
-            generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                            downscale=downscale)
-                         for i in normalized_images]
-        else:
+        if scaled_shape_models:
             generator = [i.smoothing_pyramid(n_levels=n_levels,
                                              downscale=downscale)
+                         for i in normalized_images]
+        else:
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
                          for i in normalized_images]
 
         if verbose:

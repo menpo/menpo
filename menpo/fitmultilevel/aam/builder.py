@@ -88,7 +88,7 @@ class AAMBuilder(DeformableModelBuilder):
 
         Default: 2
 
-    scaled_levels: boolean, Optional
+    scaled_shape_models: boolean, Optional
         If True, the original images will be both smoothed and scaled using
         a Gaussian pyramid to create the different pyramidal levels.
         If False, they will only be smoothed.
@@ -127,7 +127,7 @@ class AAMBuilder(DeformableModelBuilder):
     def __init__(self, feature_type=sparse_hog,
                  transform=PiecewiseAffine, trilist=None,
                  normalization_diagonal=None, n_levels=3, downscale=1.1,
-                 scaled_levels=True, max_shape_components=None,
+                 scaled_shape_models=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
         # check input
@@ -157,7 +157,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
-        self.scaled_levels = scaled_levels
+        self.scaled_shape_models = scaled_shape_models
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
@@ -198,7 +198,7 @@ class AAMBuilder(DeformableModelBuilder):
         # compute reference_shape, normalize images size and create pyramid
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.normalization_diagonal,
-            self.interpolator, self.scaled_levels, self.n_levels,
+            self.interpolator, self.scaled_shape_models, self.n_levels,
             self.downscale, verbose=verbose)
 
         # build the model at each pyramid level
@@ -233,7 +233,7 @@ class AAMBuilder(DeformableModelBuilder):
                 # extract potentially rescaled shapes
                 shapes = [i.landmarks[group][label].lms
                           for i in feature_images]
-            elif j != 0 and not self.scaled_levels:
+            elif j != 0 and self.scaled_shape_models:
                 # downscale shapes of previous level
                 shapes = [Scale(1/self.downscale,
                                 n_dims=shapes[0].n_dims).apply(s)
@@ -299,7 +299,7 @@ class AAMBuilder(DeformableModelBuilder):
     def _build_aam(self, shape_models, appearance_models):
         return AAM(shape_models, appearance_models, self.transform,
                    self.feature_type, self.reference_shape, self.downscale,
-                   self.scaled_levels, self.interpolator)
+                   self.scaled_shape_models, self.interpolator)
 
 
 #TODO: Test me!!!
