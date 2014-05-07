@@ -113,7 +113,7 @@ def align_shape_with_bb(shape, bounding_box):
     bounding_box: (2, 2) ndarray
         The bounding box specified as:
 
-            ((x_min, y_min), (x_max, y_max))
+            np.array([[x_min, y_min], [x_max, y_max]])
 
     Returns
     -------

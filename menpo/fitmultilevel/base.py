@@ -171,8 +171,10 @@ class MultilevelFitter(Fitter):
 
         Parameters
         -----------
-        bounding_box: (4,) ndarray
-            The bounding box.
+        bounding_box: (2, 2) ndarray
+            The bounding box specified as:
+
+                np.array([[x_min, y_min], [x_max, y_max]])
 
         Returns
         -------
