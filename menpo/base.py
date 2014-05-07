@@ -247,7 +247,7 @@ class DL(object):
         Returns
         -------
 
-        d_dl: ndarray shape (n_params, n_centres, n_dims)
+        d_dl: ndarray shape (n_points, n_dims_e, n_centres, n_dims)
             The jacobian wrt landmark changes.
 
             d_dl[i, j, k, m] is the scalar differential change that the
@@ -256,6 +256,10 @@ class DL(object):
 
             It may be the case that the jacobian is constant across space -
             in this case axes my have shape 1 to allow for broadcasting.
+
+            Also note that n_dims_e (the dimensionality of the function) may
+            differ from n_dims (the dimensionality of the centres and points).
+            For instance, in RBF, n_dims_e == 1, n_dims commonly is 2.
 
         """
         pass

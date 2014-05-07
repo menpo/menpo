@@ -145,3 +145,6 @@ def test_tps_d_dl():
                           [1.73368403, 1.73368403],
                           [-0.18368403, -0.18368403]]])
     assert_allclose(result, expected, rtol=10 ** -6)
+
+
+test_tps_d_dl()
