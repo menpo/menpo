@@ -176,8 +176,8 @@ class DP(object):
     @abc.abstractmethod
     def d_dp(self, points):
         r"""
-        The derivative of this object wrt parametrization changes evaluated at
-        points.
+        The derivative of this spatial object wrt parametrization changes
+        evaluated at points.
 
         Parameters
         ----------
@@ -202,7 +202,7 @@ class DX(object):
     @abc.abstractmethod
     def d_dx(self, points):
         r"""
-        The first order derivative of this object wrt spatial changes
+        The first order derivative of this spatial object wrt spatial changes
         evaluated at points.
 
         Parameters
@@ -235,7 +235,7 @@ class DL(object):
     @abc.abstractmethod
     def d_dl(self, points):
         r"""
-        The derivative of this object wrt spatial changes in anchor
+        The derivative of this spatial object wrt spatial changes in anchor
         landmark points or centres, evaluated at points.
 
         Parameters
