@@ -309,19 +309,25 @@ class PCAModel(MeanInstanceLinearModel):
         r"""
         Permanently trims the components down to a certain amount.
 
-        This will reduce `n_available_components` down to `n_components`
-        (either provided or as currently set), freeing up memory in the
-        process.
+        This will reduce `self.n_components` down to `n_components`
+        (if None `self.n_active_components` will be used), freeing
+        up memory in the process.
 
         Once the model is trimmed, the trimmed components cannot be recovered.
 
         Parameters
         ----------
 
-        n_components: int or 0.0 < float < 1.0, optional
+        n_components: int >= 1 or float > 0.0, optional
             The number of components that are kept or else the amount (ratio)
-            of variance that is kept.
-            If None, self.n_active_components is used.
+            of variance that is kept. If None, `self.n_active_components` is
+            used.
+
+        Notes
+        -----
+        In case `n_components` is greater than the total number of
+        components or greater than the total amount of variance
+        currently kept, this method does not perform any action.
         """
         err_str = ("n_components ({}) needs to be a float "
                    "0.0 < n_components < self.kept_variance_ratio "
@@ -330,23 +336,26 @@ class PCAModel(MeanInstanceLinearModel):
                    n_components, self.kept_variance_ratio,
                    self.n_components))
 
-        if n_components is None:
-            # by default trim using self.n_active_components
-            n_components = self.n_active_components
-
         # check input
-        if type(n_components) is float:
-            if 0.0 < n_components < self.kept_variance_ratio:
-                n_components = \
-                    np.sum([r < n_components
-                            for r in self.eigenvalues_cumulative_ratio])
+        if n_components is None:
+            # by default trim using the current n_active_components
+            n_components = self.n_active_components
+        if isinstance(n_components, float):
+            if n_components > 0.0:
+                # n_components needed to capture desired variance
+                n_components = np.sum(
+                    [r < n_components
+                     for r in self.eigenvalues_cumulative_ratio]) + 1
             else:
+                # variance must be bigger than 0.0
                 raise ValueError(err_str)
-        elif type(n_components) is int:
-            if n_components >= self.n_components:
+        if isinstance(n_components, int):
+            if n_components < 1:
+                # at least 1 component must be kept
                 raise ValueError(err_str)
-        else:
-            raise ValueError(err_str)
+            elif n_components >= self.n_components:
+                # if n_components bigger than self.n_components do nothing
+                return
 
         # trim components
         self._components = self._components[:n_components]
