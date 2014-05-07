@@ -379,7 +379,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
         Default: 2
 
-    scaled_levels: boolean, Optional
+    scaled_shape_models: boolean, Optional
         If True, the original images will be both smoothed and scaled using
         a Gaussian pyramid to create the different pyramidal levels.
         If False, they will only be smoothed.
@@ -495,7 +495,7 @@ class AAM(object):
         The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
         the original.
 
-    scaled_levels: boolean
+    scaled_shape_models: boolean
         Boolean value specifying whether the AAM levels are scaled or not.
 
     interpolator: string
@@ -504,7 +504,7 @@ class AAM(object):
         Default: 'scipy'
     """
     def __init__(self, shape_models, appearance_models, transform,
-                 feature_type, reference_shape, downscale, scaled_levels,
+                 feature_type, reference_shape, downscale, scaled_shape_models,
                  interpolator):
         self.shape_models = shape_models
         self.appearance_models = appearance_models
@@ -512,7 +512,7 @@ class AAM(object):
         self.feature_type = feature_type
         self.reference_shape = reference_shape
         self.downscale = downscale
-        self.scaled_levels = scaled_levels
+        self.scaled_shape_models = scaled_shape_models
         self.interpolator = interpolator
 
     @property
@@ -623,12 +623,20 @@ class AAM(object):
 
     def __str__(self):
         out_str = "Active Appearance Model\n"
-        out_str = "{}  - Feature is {}.\n".format(out_str, self.feature_type)
-        out_str = "{}  - '{}' transform with '{}' interpolation.\n".format(
+        out_str = "{} - Feature is {}.\n".format(out_str, self.feature_type)
+        out_str = "{} - '{}' transform with '{}' interpolation.\n".format(
             out_str, 'transform', self.interpolator)
         if self.n_levels > 1:
-            out_str = "{}  - Pyramid with {} levels and downscale factor " \
-                      "of {}:\n".format(out_str, self.n_levels, self.downscale)
+            if self.scaled_shape_models:
+                out_str = "{} - Smoothing pyramid with {} levels and " \
+                          "downscale factor of {}:\n".format(out_str,
+                                                             self.n_levels,
+                                                             self.downscale)
+            else:
+                out_str = "{} - Gaussian pyramid with {} levels and " \
+                          "downscale factor of {}:\n".format(out_str,
+                                                             self.n_levels,
+                                                             self.downscale)
             for i in range(self.n_levels):
                 out_str = "{}    - Level {}: \n" \
                           "        - {} shape components\n" \
@@ -702,7 +710,7 @@ class PatchBasedAAM(AAM):
         The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
         the original.
 
-    scaled_levels: boolean
+    scaled_shape_models: boolean
         Boolean value specifying whether the AAM levels are scaled or not.
 
     interpolator: string
@@ -712,10 +720,10 @@ class PatchBasedAAM(AAM):
     """
     def __init__(self, shape_models, appearance_models, patch_shape,
                  transform, feature_type, reference_shape, downscale,
-                 scaled_levels, interpolator):
+                 scaled_shape_models, interpolator):
         super(PatchBasedAAM, self).__init__(
             shape_models, appearance_models, transform, feature_type,
-            reference_shape, downscale, scaled_levels, interpolator)
+            reference_shape, downscale, scaled_shape_models, interpolator)
         self.patch_shape = patch_shape
 
     def _build_reference_frame(self, reference_shape, landmarks):
