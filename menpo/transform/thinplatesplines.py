@@ -137,68 +137,6 @@ class ThinPlateSplines(Alignment, Transform, Invertible, DX, DL):
 
         return np.einsum('ij, ikl -> klj', self.coefficients, dk_dx)
 
-    # TODO: revise me
-    def jacobian_source(self, points):
-        """
-        Calculates the Jacobian of the TPS warp wrt to the source landmark
-        position.
-
-        Parameters
-        ----------
-        points : (N, D)
-            Points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the transform wrt to the source landmarks evaluated
-            at the previous points.
-        """
-        from menpo.shape import PointCloud
-        points_pc = PointCloud(points)
-        n_lms = self.n_points
-        n_pts = points_pc.n_points
-
-        kernel_dist = self.kernel.apply(points)
-        k = np.concatenate([kernel_dist, np.ones([n_pts, 1]), points], axis=1)
-        inv_L = np.linalg.inv(self.l)
-
-        dL_dx = np.zeros(self.l.shape + (n_lms,))
-        dL_dy = np.zeros(self.l.shape + (n_lms,))
-        aux = self.kernel.d_dl(self.source.points)
-        dW_dx = np.zeros((n_pts, n_lms, 2))
-
-        # Fix log(0)
-        for i in np.arange(n_lms):
-            dK_dxyi = np.zeros((self.k.shape + (2,)))
-            dK_dxyi[i] = aux[i]
-            dK_dxyi[:, i] = -aux[:, i]
-
-            dP_dxi = np.zeros_like(self.p)
-            dP_dyi = np.zeros_like(self.p)
-            dP_dxi[i, 1] = -1
-            dP_dyi[i, 2] = -1
-
-            dL_dx[:n_lms, :n_lms, i] = dK_dxyi[..., 0]
-            dL_dx[:n_lms, n_lms:, i] = dP_dxi
-            dL_dx[n_lms:, :n_lms, i] = dP_dxi.T
-
-            dL_dy[:n_lms, :n_lms, i] = dK_dxyi[..., 1]
-            dL_dy[:n_lms, n_lms:, i] = dP_dyi
-            dL_dy[n_lms:, :n_lms, i] = dP_dyi.T
-            # new bit
-            aux3 = np.zeros((n_pts, self.y.shape[1], 2))
-            aux3[:, i, :] = self.kernel.d_dl(points)[:, i, :]
-            omega_x = -inv_L.dot(dL_dx[..., i].dot(inv_L))
-            dW_dx[:, i, 0] = (k.dot(omega_x).dot(self.y[0]) +
-                              aux3[..., 0].dot(self.coefficients[:, 0]))
-            omega_y = -inv_L.dot(dL_dy[..., i].dot(inv_L))
-            dW_dx[:, i, 1] = (k.dot(omega_y).dot(self.y[1]) +
-                              aux3[..., 1].dot(self.coefficients[:, 1]))
-
-        return dW_dx
-
-    # TODO: revise this function and try to speed it up!!!
     def d_dl(self, points):
         """
         Calculates the Jacobian of the TPS warp wrt to the source landmarks
