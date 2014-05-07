@@ -122,7 +122,7 @@ def align_shape_with_bb(shape, bounding_box):
     """
     shape_box = PointCloud(shape.bounds())
     bounding_box = PointCloud(bounding_box)
-    return AlignmentSimilarity(shape_box, bounding_box)
+    return AlignmentSimilarity(shape_box, bounding_box, rotation=False)
 
 
 #TODO: Document me
