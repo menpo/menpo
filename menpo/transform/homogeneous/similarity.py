@@ -19,6 +19,19 @@ class Similarity(Affine):
         Affine.__init__(self, h_matrix)
         #TODO check that I am a similarity transform
 
+    def _transform_str(self):
+        r"""
+        A string representation explaining what this similarity transform does.
+
+        Returns
+        -------
+        str : string
+            String representation of transform.
+        """
+        header = 'Similarity decomposing into:'
+        list_str = [t._transform_str() for t in self.decompose()]
+        return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
+
     @classmethod
     def identity(cls, n_dims):
         return Similarity(np.eye(n_dims + 1))

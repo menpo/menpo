@@ -98,12 +98,6 @@ class Affine(Homogeneous, DP, DX):
     def __eq__(self, other):
         return np.allclose(self.h_matrix, other.h_matrix)
 
-    def __str__(self):
-        rep = repr(self) + '\n'
-        rep += str(self.h_matrix) + '\n'
-        rep += self._transform_str()
-        return rep
-
     def _transform_str(self):
         r"""
         A string representation explaining what this affine transform does.
@@ -114,8 +108,9 @@ class Affine(Homogeneous, DP, DX):
         str : string
             String representation of transform.
         """
+        header = 'Affine decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
-        return reduce(lambda x, y: x + '\n' + y, list_str)
+        return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
 
     def _apply(self, x, **kwargs):
         r"""
