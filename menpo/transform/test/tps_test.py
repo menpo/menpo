@@ -40,50 +40,6 @@ def test_tps_n_dims():
     assert(tps.n_dims == 2)
 
 
-def test_tps_jacobian_manual_corner_value_check():
-    tps = ThinPlateSplines(src, tgt)
-    dW_dxy = tps.jacobian_source(square_sample_points)
-    jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
-    dwdx_corner = np.array(
-        [[1., 0.99619633, 0.99231034, 0.98835616, 0.98434133],
-         [0.99619633, 0.99240803, 0.98853625, 0.98459474, 0.98059178],
-         [0.99231034, 0.98853625, 0.98468246, 0.98075813, 0.9767711],
-         [0.98835616, 0.98459474, 0.98075813, 0.97685217, 0.97288316],
-         [0.98434133, 0.98059178, 0.9767711, 0.97288316, 0.96893276]])
-    assert_allclose(jacobian_image[:5, :5, 0, 0], dwdx_corner)
-    assert_allclose(jacobian_image[:5, :5, 0, 1], dwdx_corner)
-
-
-def test_tps_jacobian_unitary_x_y():
-    tps = ThinPlateSplines(src, tgt)
-    dW_dxy = tps.jacobian_source(square_sample_points)
-    jacobian_image = dW_dxy.reshape(xx.shape + (4, 2))
-    # both the x and y derivatives summed over all values should equal 1
-    assert_allclose(jacobian_image.sum(axis=2), 1)
-
-
-def test_tps_jacobian_manual_sample_a():
-    tps = ThinPlateSplines(src, tgt_perturbed)
-    dW_dxy = tps.jacobian_source(square_sample_points)
-    onetwothreefour = np.array(
-        [[0.78665966, 0.62374388],
-         [0.09473867, -0.68910365],
-         [0.68788235, 0.18713078],
-         [-0.80552584, 1.11078411]])
-    assert_allclose(dW_dxy[1234], onetwothreefour, rtol=10 ** -6)
-
-
-def test_tps_jacobian_manual_sample_b():
-    tps = ThinPlateSplines(src, tgt_perturbed)
-    dW_dxy = tps.jacobian_source(square_sample_points)
-    threesixfouronethree = np.array(
-        [[0.67244171, -0.0098011],
-         [-0.77028611, -1.19256858],
-         [0.8296718, 0.95940495],
-         [-0.03122042, 1.00073478]])
-    assert_allclose(dW_dxy[36413], threesixfouronethree, atol=1e-5)
-
-
 def test_tps_build_pseudoinverse():
     tps = ThinPlateSplines(src, tgt)
     tps_pinv = tps.pseudoinverse
@@ -115,22 +71,6 @@ def test_tps_d_dx():
                                       [[2, 0], [0, 2]]]), atol=10 ** -14)
 
 
-def test_tps_jacobian_source():
-    src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
-    tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
-    pts = np.array([[-0.1, -1.0], [-0.5, 1.0], [2.1, -2.5]])
-    tps = ThinPlateSplines(src, tgt)
-    result = tps.jacobian_source(pts)
-    expected = np.array([[[1.10799034, 1.10799034], [-0.00799034, -0.00799034],
-                          [0.89200966, 0.89200966], [0.00799034, 0.00799034]],
-                         [[-0.0325033, -0.0325033], [1.5325033, 1.5325033],
-                          [0.0325033, 0.0325033], [0.4674967, 0.4674967]],
-                         [[0.03263195, 0.03263195], [-1.13263195, -1.13263195],
-                          [3.46736805, 3.46736805],
-                          [-0.36736805, -0.36736805]]])
-    assert_allclose(result, expected, rtol=10 ** -6)
-
-
 def test_tps_d_dl():
     src = PointCloud(np.array([[-1.0, -1.0], [-1, 1], [1, -1], [1, 1]]))
     tgt = PointCloud(np.array([[-2.0, -2.0], [-2, 2], [2, -2], [2, 2]]))
@@ -145,6 +85,3 @@ def test_tps_d_dl():
                           [1.73368403, 1.73368403],
                           [-0.18368403, -0.18368403]]])
     assert_allclose(result, expected, rtol=10 ** -6)
-
-
-test_tps_d_dl()
