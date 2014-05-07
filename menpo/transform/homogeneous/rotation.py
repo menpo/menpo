@@ -81,7 +81,8 @@ class Rotation(DiscreteAffine, Similarity):
         if axis is None:
             return "NO OP"
         angle_of_rot = (rad_angle_of_rotation * 180.0) / np.pi
-        message = 'CCW Rotation of %d degrees about %s' % (angle_of_rot, axis)
+        message = ('CCW Rotation of {:.1f} degrees '
+                   'about {}'.format(angle_of_rot,axis))
         return message
 
     def axis_and_angle_of_rotation(self):

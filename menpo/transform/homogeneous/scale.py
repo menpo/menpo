@@ -91,7 +91,7 @@ class NonUniformScale(DiscreteAffine, Affine):
         return self.h_matrix.diagonal()[:-1]
 
     def _transform_str(self):
-        message = 'NonUniformScale by %s ' % self.scale
+        message = 'NonUniformScale by {}'.format(self.scale)
         return message
 
     @property
@@ -184,7 +184,7 @@ class UniformScale(DiscreteAffine, Similarity):
         return self.h_matrix[0, 0]
 
     def _transform_str(self):
-        message = 'UniformScale by %f ' % self.scale
+        message = 'UniformScale by {}'.format(self.scale)
         return message
 
     @property
