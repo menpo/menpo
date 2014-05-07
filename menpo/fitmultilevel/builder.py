@@ -30,18 +30,19 @@ class DeformableModelBuilder(object):
         if verbose:
             intro_str = '- Preprocessing: '
 
-        # the mean shape of the images' landmarks is the reference shape
+        # the mean shape of the images' landmarks is the reference_shape
         if verbose:
             print_dynamic('{}Computing reference shape'.format(intro_str))
         shapes = [i.landmarks[group][label].lms for i in images]
         reference_shape = mean_pointcloud(shapes)
 
-        # normalize the scaling of all shapes wrt the reference shape
+        # fix the reference_shape's diagonal length if asked
         if normalization_diagonal:
             x, y = reference_shape.range()
             scale = normalization_diagonal / np.sqrt(x**2 + y**2)
-            Scale(scale, reference_shape.n_dims).apply_inplace(
-                reference_shape)
+            Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
+
+        # normalize the scaling of all shapes wrt the reference_shape
         normalized_images = []
         for c, i in enumerate(images):
             if verbose:
