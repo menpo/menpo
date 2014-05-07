@@ -79,7 +79,7 @@ class Affine(Homogeneous):
 
         Returns
         -------
-        transforms: list of :class`DiscreteAffine` that
+        transforms : list of :map:`DiscreteAffine` that
             Equivalent to this affine transform, such that:
 
             ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
@@ -97,12 +97,6 @@ class Affine(Homogeneous):
     def __eq__(self, other):
         return np.allclose(self.h_matrix, other.h_matrix)
 
-    def __str__(self):
-        rep = repr(self) + '\n'
-        rep += str(self.h_matrix) + '\n'
-        rep += self._transform_str()
-        return rep
-
     def _transform_str(self):
         r"""
         A string representation explaining what this affine transform does.
@@ -113,8 +107,9 @@ class Affine(Homogeneous):
         str : string
             String representation of transform.
         """
+        header = 'Affine decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
-        return reduce(lambda x, y: x + '\n' + y, list_str)
+        return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
 
     def _apply(self, x, **kwargs):
         r"""
@@ -298,16 +293,14 @@ class AlignmentAffine(Affine, HomogFamilyAlignment):
 
     Parameters
     ----------
-
-    source: :class:`menpo.shape.PointCloud`
+    source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
 
-    target: :class:`menpo.shape.PointCloud`
+    target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
 
     Notes
     -----
-
     We want to find the optimal transform M which satisfies
 
         M a = b

@@ -292,6 +292,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             An array or a list of arrays corresponding to the above histograms
             that store the bins' edges.
             The result in the case of list of arrays can be visualized as:
+
                 for k in range(len(hist)):
                     plt.subplot(1,len(hist),k)
                     width = 0.7 * (bin_edges[k][1] - bin_edges[k][0])
@@ -688,7 +689,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 "(they must match)".format(self.n_dims, transform.n_dims))
 
         template_points = template_mask.true_indices
-        points_to_sample = transform.apply(template_points).T
+        points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of sampled
         # pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
@@ -1059,7 +1060,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         ----------
         mode : {'average', 'luminosity', 'channel'}
             'luminosity' - Calculates the luminance using the CCIR 601 formula
+
                 ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
+
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
 
