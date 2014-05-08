@@ -289,17 +289,19 @@ class AAMBuilder(DeformableModelBuilder):
         # ordered from lower to higher resolution
         shape_models.reverse()
         appearance_models.reverse()
+        n_training_images = len(images)
 
-        return self._build_aam(shape_models, appearance_models)
+        return self._build_aam(n_training_images, shape_models,
+                               appearance_models)
 
     def _build_reference_frame(self, mean_shape):
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
 
-    def _build_aam(self, shape_models, appearance_models):
-        return AAM(shape_models, appearance_models, self.transform,
-                   self.feature_type, self.reference_shape, self.downscale,
-                   self.scaled_shape_models, self.interpolator)
+    def _build_aam(self, n_training_images, shape_models, appearance_models):
+        return AAM(n_training_images, shape_models, appearance_models,
+                   self.transform, self.feature_type, self.reference_shape,
+                   self.downscale, self.scaled_shape_models, self.interpolator)
 
 
 #TODO: Test me!!!
@@ -503,9 +505,10 @@ class AAM(object):
 
         Default: 'scipy'
     """
-    def __init__(self, shape_models, appearance_models, transform,
-                 feature_type, reference_shape, downscale, scaled_shape_models,
-                 interpolator):
+    def __init__(self, n_training_images, shape_models, appearance_models,
+                 transform, feature_type, reference_shape, downscale,
+                 scaled_shape_models, interpolator):
+        self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
         self.transform = transform
@@ -622,7 +625,8 @@ class AAM(object):
             reference_shape, trilist=trilist)
 
     def __str__(self):
-        out = "Active Appearance Model\n"
+        out = "Active Appearance Model\n - {} training images.\n".format(
+            self.n_training_images)
         if isinstance(self.feature_type, str):
             out = "{} - Feature is {} with ".format(
                 out, self.feature_type)
