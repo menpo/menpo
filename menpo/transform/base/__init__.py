@@ -83,7 +83,6 @@ class Transform(object):
         transformed : (N, D) ndarray
             Transformed array.
         """
-        pass
 
     def apply_inplace(self, x, **kwargs):
         r"""

@@ -51,6 +51,5 @@ setup(name='menpo',
                         'matplotlib>=1.2.1',
                         'mayavi>=4.3.0'],
       package_data={'menpo': ['data/*']},
-      tests_require=['nose>=1.3.0'],
+      tests_require=['nose>=1.3.0, mock>=1.0.1']
       )
-
