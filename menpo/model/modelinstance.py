@@ -157,7 +157,7 @@ class PDM(ModelInstance, DP):
 
 
 # TODO: document me
-class GlobalPDM(ModelInstance):
+class GlobalPDM(PDM):
     r"""
     """
     def __init__(self, model, global_transform_cls):
@@ -251,7 +251,7 @@ class GlobalPDM(ModelInstance):
         self._update_global_weights(global_parameters)
         # Now extract the weights, and let super handle the update
         weights = vector[self.n_global_parameters:]
-        ModelInstance.from_vector_inplace(self, weights)
+        PDM.from_vector_inplace(self, weights)
 
     def _update_global_weights(self, global_weights):
         r"""
@@ -303,5 +303,6 @@ class OrthoPDM(GlobalPDM):
     def d_dp(self, points):
         r"""
         """
-        return np.hstack((self.similarity_model.d_dp
+        # TODO this seems suspiciously different in shape
+        return np.hstack((self.similarity_model.d_dp,
                           self.model.d_dp))
