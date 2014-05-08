@@ -36,9 +36,6 @@ class PCAModel(MeanInstanceLinearModel):
             \frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
     """
     def __init__(self, samples, center=True, bias=False):
-        self.samples = samples
-        self.center = center
-        self.bias = bias
         # build data matrix
         n_samples = len(samples)
         n_features = samples[0].n_parameters
@@ -46,14 +43,17 @@ class PCAModel(MeanInstanceLinearModel):
         for i, sample in enumerate(samples):
             data[i] = sample.as_vector()
 
+        # compute pca
         eigenvectors, eigenvalues, mean_vector = \
             principal_component_decomposition(data, whiten=False,
                                               center=center, bias=bias)
-        self._eigenvalues = eigenvalues
 
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        self.centered = center
+        self.biased = bias
+        self._eigenvalues = eigenvalues
         self._n_components = self.n_components
-        self._trimmed_variance = 0
+        self._trimmed_eigenvalues = None
 
     @property
     def n_active_components(self):
@@ -76,7 +76,7 @@ class PCAModel(MeanInstanceLinearModel):
     @MeanInstanceLinearModel.components.getter
     def components(self):
         r"""
-        The matrix containing the active components on this model.
+        Returns the active components of the model.
 
         type: (n_active_components, n_features) ndarray
         """
@@ -84,37 +84,132 @@ class PCAModel(MeanInstanceLinearModel):
 
     @property
     def whitened_components(self):
+        r"""
+        Returns the active components of the model whitened.
+
+        type: (n_active_components, n_features) ndarray
+        """
         return self.components / (
             np.sqrt(self.eigenvalues + self.noise_variance)[:, None])
 
     @property
-    def n_samples(self):
-        return len(self.samples)
+    def total_variance(self):
+        r"""
+        Returns the total amount of variance captured by the original model,
+        i.e. the amount of variance present on the original samples.
+
+        type: float
+        """
+        total_variance = self._eigenvalues.sum()
+        if self._trimmed_eigenvalues is not None:
+            total_variance += self._trimmed_eigenvalues.sum()
+        return total_variance
 
     @property
     def eigenvalues(self):
+        r"""
+        Returns the eigenvalues associated to the active components of the
+        model, i.e. the amount of variance captured by each active component.
+
+        type: (n_active_components,) ndarray
+        """
         return self._eigenvalues[:self.n_active_components]
 
     @property
     def eigenvalues_ratio(self):
-        return self.eigenvalues / self.eigenvalues.sum()
+        r"""
+        Returns the ratio between the variance captured by each active
+        component and the total amount of variance present on the original
+        samples.
+
+        type: (n_active_components,) ndarray
+        """
+        return self.eigenvalues / self.total_variance
+
+    @property
+    def eigenvalues_cumulative_ratio(self):
+        r"""
+        Returns the cumulative ratio between the variance captured by the
+        active components and the total amount of variance present on the
+        original samples.
+
+        type: (n_active_components,) ndarray
+        """
+        cumulative_ratio = []
+        previous_ratio = 0
+        for ratio in self.eigenvalues_ratio:
+            new_ratio = previous_ratio + ratio
+            cumulative_ratio.append(new_ratio)
+            previous_ratio = new_ratio
+        return cumulative_ratio
+
+    @property
+    def kept_variance(self):
+        r"""
+        Returns the total amount of variance retained by the active
+        components.
+
+        type: float
+        """
+        return self.eigenvalues.sum()
+
+    @property
+    def kept_variance_ratio(self):
+        r"""
+        Returns the ratio between the amount of variance retained by the
+        active components and the total amount of variance present on the
+        original samples.
+
+        type: float
+        """
+        return self.kept_variance / self.total_variance
 
     @property
     def noise_variance(self):
+        r"""
+        Returns the average variance captured by the inactive components,
+        i.e. the sample noise assumed in a PPCA formulation.
+
+        If all components are active, noise variance is equal to 0.0
+
+        type: float
+        """
         if self.n_active_components == self.n_components:
-            return self._trimmed_variance
+            noise_variance = 0.0
+            if self._trimmed_eigenvalues is not None:
+                noise_variance += self._trimmed_eigenvalues.mean()
         else:
-            return (self._eigenvalues[self.n_active_components:].mean() +
-                    self._trimmed_variance)
+            if self._trimmed_eigenvalues is not None:
+                noise_variance = \
+                    np.hstack((self._eigenvalues[self.n_active_components:],
+                               self._trimmed_eigenvalues)).mean()
+            else:
+                noise_variance = \
+                    self._eigenvalues[self.n_active_components:].mean()
+        return noise_variance
+
+    @property
+    def noise_variance_ratio(self):
+        r"""
+        Returns the ratio between the noise variance and the total amount of
+        variance present on the original samples.
+
+        type: float
+        """
+        return self.noise_variance / self.total_variance
 
     @property
     def inverse_noise_variance(self):
+        r"""
+        Returns the inverse of the noise variance.
+
+        type: float
+        """
         noise_variance = self.noise_variance
         if noise_variance == 0:
             raise ValueError("noise variance is nil - cannot take the "
                              "inverse")
-        else:
-            return 1.0 / noise_variance
+        return 1.0 / noise_variance
 
     @property
     def jacobian(self):
@@ -219,37 +314,62 @@ class PCAModel(MeanInstanceLinearModel):
         r"""
         Permanently trims the components down to a certain amount.
 
-        This will reduce `n_available_components` down to `n_components`
-        (either provided or as currently set), freeing up memory in the
-        process.
+        This will reduce `self.n_components` down to `n_components`
+        (if None `self.n_active_components` will be used), freeing
+        up memory in the process.
 
         Once the model is trimmed, the trimmed components cannot be recovered.
 
         Parameters
         ----------
 
-        n_components: int, optional
-            The number of components that are kept. If None,
-            self.n_components is used.
+        n_components: int >= 1 or float > 0.0, optional
+            The number of components that are kept or else the amount (ratio)
+            of variance that is kept. If None, `self.n_active_components` is
+            used.
+
+        Notes
+        -----
+        In case `n_components` is greater than the total number of
+        components or greater than the total amount of variance
+        currently kept, this method does not perform any action.
         """
+        err_str = ("n_components ({}) needs to be a float "
+                   "0.0 < n_components < self.kept_variance_ratio "
+                   "({}) or an integer 1 < n_components < "
+                   "self.n_components ({})".format(
+                   n_components, self.kept_variance_ratio,
+                   self.n_components))
+
+        # check input
         if n_components is None:
-            # by default trim using self.n_components
+            # by default trim using the current n_active_components
             n_components = self.n_active_components
+        if isinstance(n_components, float):
+            if 0.0 < n_components <= 1.0:
+                # n_components needed to capture desired variance
+                n_components = np.sum(
+                    [r < n_components
+                     for r in self.eigenvalues_cumulative_ratio]) + 1
+            else:
+                # variance must be bigger than 0.0
+                raise ValueError(err_str)
+        if isinstance(n_components, int):
+            if n_components < 1:
+                # at least 1 component must be kept
+                raise ValueError(err_str)
+            elif n_components >= self.n_components:
+                # if n_components bigger than self.n_components do nothing
+                return
 
         # trim components
-        if not n_components < self.n_components:
-            raise ValueError(
-                "n_components ({}) needs to be less than "
-                "n_available_components ({})".format(
-                n_components, self.n_components))
-        else:
-            self._components = self._components[:n_components]
+        self._components = self._components[:n_components]
         if self.n_active_components > self.n_components:
             # set n_components if necessary
             self.n_active_components = self.n_components
-        # store the amount of variance captured by the discarded components
-        self._trimmed_variance = \
-            self._eigenvalues[self.n_active_components:].mean()
+        # store the eigenvalues associated to the discarded components
+        self._trimmed_eigenvalues = \
+            self._eigenvalues[self.n_active_components:]
         # make sure that the eigenvalues are trimmed too
         self._eigenvalues = self._eigenvalues[:self.n_components]
 
@@ -368,3 +488,23 @@ class PCAModel(MeanInstanceLinearModel):
             self.trim_components(n_components=n_available_components)
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
+
+    def __str__(self):
+        str_out = 'PCA Model \n'
+        str_out = str_out + \
+            ' - centered:             {}\n' \
+            ' - biased:               {}\n' \
+            ' - # features:           {}\n' \
+            ' - # active components:  {}\n'.format(
+            self.centered, self.biased, self.n_features,
+            self.n_active_components)
+        str_out = str_out + \
+            ' - kept variance:        {:.2}  {:.1%}\n' \
+            ' - noise variance:       {:.2}  {:.1%}\n'.format(
+            self.kept_variance, self.kept_variance_ratio,
+            self.noise_variance, self.noise_variance_ratio)
+        str_out = str_out + \
+            ' - total # components:   {}\n' \
+            ' - components shape:     {}\n'.format(
+            self.n_components, self.components.shape)
+        return str_out

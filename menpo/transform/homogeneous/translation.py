@@ -26,7 +26,7 @@ class Translation(DiscreteAffine, Similarity):
         return Translation(np.zeros(n_dims))
 
     def _transform_str(self):
-        message = 'Translate by %s ' % self.translation_component
+        message = 'Translation by {}'.format(self.translation_component)
         return message
 
     @property

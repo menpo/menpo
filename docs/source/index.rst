@@ -2,14 +2,7 @@
 Menpo Documentation
 =====================
 
-.. htmlonly::
-
-   :Release: |release|
-   :Date: |today|
-
-.. only:: not rtd
-
-    Welcome to the official Menpo documentation.
+Welcome to the official Menpo documentation.
 
 Contents
 ========
@@ -19,9 +12,3 @@ Contents
 
    overview
    api/index
-   about/index
-
-.. htmlonly::
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`

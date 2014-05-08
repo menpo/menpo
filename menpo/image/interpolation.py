@@ -4,14 +4,14 @@ from scipy.ndimage import map_coordinates
 
 def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
     r"""
-    C-based interpolator that was designed to be identical when
-    used in both Python and Matlab.
+    Interpolation utilizing SciPy's map_coordinates function.
 
     Parameters
     ----------
-    ndimage : (M, N, ..., C) ndarray
-        The image that is to be sampled from. The final axis channels.
-    points_to_sample: (K, n_points) ndarray
+    pixels : (M, N, ..., n_channels) ndarray
+        The image to be sampled from, the final axis containing channel
+        information.
+    points_to_sample : (n_points, n_dims) ndarray
         The points which should be sampled from pixels
     mode : {'constant', 'nearest', 'reflect', 'wrap'}, optional
         Points outside the boundaries of the input are filled according to the
@@ -31,9 +31,12 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
     """
     sampled_pixel_values = []
     # Loop over every channel in image - we know last axis is always channels
+    # Note that map_coordinates uses the opposite (dims, points) convention
+    # to us so we transpose
+    points_to_sample_t = points_to_sample.T
     for i in xrange(pixels.shape[-1]):
         sampled_pixel_values.append(map_coordinates(pixels[..., i],
-                                                    points_to_sample,
+                                                    points_to_sample_t,
                                                     mode=mode,
                                                     order=order))
     sampled_pixel_values = [v.reshape([-1, 1]) for v in sampled_pixel_values]
