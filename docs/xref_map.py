@@ -4,6 +4,10 @@ xref_map = {
     'DL': ('class', 'menpo.base.DL'),
     'DP': ('class', 'menpo.base.DP'),
     'DX': ('class', 'menpo.base.DX'),
+    'MeanInstanceLinearModel': ('class', 'menpo.model.base.MeanInstanceLinearModel'),
+
     'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),
-    'TriMesh': ('class', 'menpo.shape.mesh.TriMesh')
+    'principal_component_decomposition': ('function', 'menpo.math.decomposition.principal_component_decomposition'),
+    'TriMesh': ('class', 'menpo.shape.mesh.TriMesh'),
+    'Vectorizable': ('class', 'menpo.base.Vectorizable')
 }

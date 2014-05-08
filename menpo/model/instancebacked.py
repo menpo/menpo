@@ -16,8 +16,8 @@ class InstanceBackedModel(object):
     reconstruct_vectors(vectors, n_components)
     project_out_vector(vector)
 
-    The constructor takes an instance of Vectorizable. This is used for all
-    conversions to and from numpy vectors and instances.
+    The constructor takes an instance of :map:`Vectorizable`. This is used for
+    all conversions to and from numpy vectors and instances.
     """
 
     def __init__(self, template_instance):
