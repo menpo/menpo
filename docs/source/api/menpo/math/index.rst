@@ -13,5 +13,3 @@ Functions
    log_gabor
    eigenvalue_decomposition
    principal_component_decomposition
-   multivariate_normal
-

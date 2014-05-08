@@ -180,12 +180,12 @@ class PCAModel(MeanInstanceLinearModel):
                 noise_variance += self._trimmed_eigenvalues.mean()
         else:
             if self._trimmed_eigenvalues is not None:
-                noise_variance = \
-                    np.hstack((self._eigenvalues[self.n_active_components:],
-                               self._trimmed_eigenvalues)).mean()
+                noise_variance = np.hstack(
+                    (self._eigenvalues[self.n_active_components:],
+                     self._trimmed_eigenvalues)).mean()
             else:
-                noise_variance = \
-                    self._eigenvalues[self.n_active_components:].mean()
+                noise_variance = (
+                    self._eigenvalues[self.n_active_components:].mean())
         return noise_variance
 
     @property
