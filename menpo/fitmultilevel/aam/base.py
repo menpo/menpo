@@ -67,11 +67,11 @@ class AAMFitter(MultilevelFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type)
-                      for i in pyramid]
+            images = [compute_features(i, self.feature_type[j])
+                      for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type)]
+            images = [compute_features(image, self.feature_type[0])]
 
         return images
 
