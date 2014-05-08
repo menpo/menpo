@@ -1,4 +1,5 @@
 from numpy.testing import assert_approx_equal
+from nose.plugins.attrib import attr
 
 from menpo.image import BooleanImage
 import menpo.io as pio
@@ -63,30 +64,35 @@ def residual_wrapper(residual, algorithm, interpolator, expected_error):
 ###############################################################################
 
 
+@attr('fuzzy')
 def test_2d_ls_ic_map_coords():
     residual_wrapper(LSIntensity(), ImageInverseCompositional,
                      'scipy',
                      1.551662325323618e-05)
 
 
+@attr('fuzzy')
 def test_2d_ls_fa_map_coords():
     residual_wrapper(LSIntensity(), ImageForwardAdditive,
                      'scipy',
                      1.4743724618438824e-05)
 
 
+@attr('fuzzy')
 def test_2d_ecc_ic_map_coords():
     residual_wrapper(ECC(), ImageInverseCompositional,
                      'scipy',
                      2.0802365833550096e-06)
 
 
+@attr('fuzzy')
 def test_2d_ecc_fa_map_coords():
     residual_wrapper(ECC(), ImageForwardAdditive,
                      'scipy',
                      1.9477094730117106)
 
 
+@attr('fuzzy')
 def test_2d_gabor_ic_map_coords():
     global target_shape
     residual_wrapper(GaborFourier(target_shape), ImageInverseCompositional,
@@ -94,6 +100,7 @@ def test_2d_gabor_ic_map_coords():
                      8.754889609451457)
 
 
+@attr('fuzzy')
 def test_2d_gabor_fa_map_coords():
     global target_shape
     residual_wrapper(GaborFourier(target_shape), ImageForwardAdditive,
@@ -101,24 +108,28 @@ def test_2d_gabor_fa_map_coords():
                      0.03729593561127312)
 
 
+@attr('fuzzy')
 def test_2d_gradientimages_ic_map_coords():
     residual_wrapper(GradientImages(), ImageInverseCompositional,
                      'scipy',
                      10.002935866056646)
 
 
+@attr('fuzzy')
 def test_2d_gradientimages_fa_map_coords():
     residual_wrapper(GradientImages(), ImageForwardAdditive,
                      'scipy',
                      9.952157644001336)
 
 
+@attr('fuzzy')
 def test_2d_gradientcorrelation_ic_map_coords():
     residual_wrapper(GradientCorrelation(), ImageInverseCompositional,
                      'scipy',
                      6.869975464538923)
 
 
+@attr('fuzzy')
 def test_2d_gradientcorrelation_fa_map_coords():
     residual_wrapper(GradientCorrelation(), ImageForwardAdditive,
                      'scipy',
