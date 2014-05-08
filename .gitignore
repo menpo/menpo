@@ -1,3 +1,5 @@
+.coverage
+cover/*
 *.pyd
 *.swp
 *.pyc
