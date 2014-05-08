@@ -92,6 +92,7 @@ class PCAModel(MeanInstanceLinearModel):
         return self.components / (
             np.sqrt(self.eigenvalues + self.noise_variance)[:, None])
 
+    @property
     def total_variance(self):
         r"""
         Returns the total amount of variance captured by the original model,
@@ -123,7 +124,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         type: (n_active_components,) ndarray
         """
-        return self.eigenvalues / self.total_variance()
+        return self.eigenvalues / self.total_variance
 
     @property
     def eigenvalues_cumulative_ratio(self):
@@ -161,7 +162,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         type: float
         """
-        return self.kept_variance / self.total_variance()
+        return self.kept_variance / self.total_variance
 
     @property
     def noise_variance(self):
@@ -178,9 +179,13 @@ class PCAModel(MeanInstanceLinearModel):
             if self._trimmed_eigenvalues is not None:
                 noise_variance += self._trimmed_eigenvalues.mean()
         else:
-            noise_variance = \
-                np.hstack((self._eigenvalues[self.n_active_components:],
-                           self._trimmed_eigenvalues)).mean()
+            if self._trimmed_eigenvalues is not None:
+                noise_variance = np.hstack(
+                    (self._eigenvalues[self.n_active_components:],
+                     self._trimmed_eigenvalues)).mean()
+            else:
+                noise_variance = (
+                    self._eigenvalues[self.n_active_components:].mean())
         return noise_variance
 
     @property
@@ -191,7 +196,7 @@ class PCAModel(MeanInstanceLinearModel):
 
         type: float
         """
-        return self.noise_variance / self.total_variance()
+        return self.noise_variance / self.total_variance
 
     @property
     def inverse_noise_variance(self):
