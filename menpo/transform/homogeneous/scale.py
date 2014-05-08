@@ -156,6 +156,10 @@ class NonUniformScale(DiscreteAffine, Affine):
         """
         return NonUniformScale(1.0 / self.scale)
 
+    def d_dp(self, points):
+        # TODO d_dp on NonUniformScale
+        return NotImplementedError("d_dp is not implemented on a NonUniformScale")
+
 
 class UniformScale(DiscreteAffine, Similarity):
     r"""
@@ -230,6 +234,10 @@ class UniformScale(DiscreteAffine, Similarity):
         :type: type(self)
         """
         return type(self)(1.0 / self.scale, self.n_dims)
+
+    def d_dp(self, points):
+        # TODO d_dp on UniformScale
+        raise NotImplementedError("d_dp is not implemented on UniformScale.")
 
 
 class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
