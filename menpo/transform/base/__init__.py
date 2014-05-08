@@ -221,7 +221,6 @@ class Transformable(object):
         transformed : :class:`Transformable`
             The transformed object. Transformed in place.
         """
-        pass
 
     def _transform(self, transform):
         r"""
