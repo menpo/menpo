@@ -4,40 +4,25 @@ from menpo.fitmultilevel.aam.base import AAMFitter
 from menpo.fitmultilevel.clm.base import CLMFitter
 
 
-class SupervisedDescentFitter(MultilevelFitter):
+class SDFitter(MultilevelFitter):
     r"""
     Mixin for Supervised Descent Fitters.
     """
     def _set_up(self):
         pass
 
-    def fit(self, image, group=None, label='all',
-            initialization='from_gt_shape', noise_std=0.0, rotation=False,
-            max_iters=None, verbose=True, view=False, error_type='me_norm',
-            **kwargs):
+    def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
+            error_type='me_norm', verbose=False, view=False, **kwargs):
         if max_iters is None:
             max_iters = self.n_levels
-        return super(SupervisedDescentFitter, self).fit(
-            image, group=group, label=label, initialization=initialization,
-            noise_std=noise_std, rotation=rotation, max_iters=max_iters,
-            verbose=verbose, view=view, error_type=error_type,
-            **kwargs)
-
-    def fit_images(self, images, group=None, label='all',
-                   initialization='from_gt_shape', noise_std=0.0,
-                   rotation=False, max_iters=None, verbose=True, view=False,
-                   error_type='me_norm', **kwargs):
-        if max_iters is None:
-            max_iters = self.n_levels
-        return super(SupervisedDescentFitter, self).fit_images(
-            images, group=group, label=label, initialization=initialization,
-            noise_std=noise_std, rotation=rotation, max_iters=max_iters,
-            verbose=verbose, view=view, error_type=error_type,
-            **kwargs)
+        return MultilevelFitter.fit(self, image, initial_shape,
+                                    max_iters=max_iters, gt_shape=gt_shape,
+                                    error_type=error_type, verbose=verbose,
+                                    view=view, **kwargs)
 
 
 #TODO: Document me
-class SupervisedDescentMethodFitter(SupervisedDescentFitter):
+class SDMFitter(SDFitter):
     r"""
     Supervised Descent Method.
 
@@ -131,17 +116,17 @@ class SupervisedDescentMethodFitter(SupervisedDescentFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type)
-                      for i in pyramid]
+            images = [compute_features(i, self.feature_type[j])
+                      for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type)]
+            images = [compute_features(image, self.feature_type[0])]
 
         return images
 
 
 #TODO: Document me
-class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
+class SDAAMFitter(AAMFitter, SDFitter):
     r"""
     Supervised Descent Fitter for AAMs
 
@@ -153,7 +138,7 @@ class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
     regressors:
     """
     def __init__(self, aam, regressors):
-        super(SupervisedDescentAAMFitter, self).__init__(aam)
+        super(SDAAMFitter, self).__init__(aam)
         self._fitters = regressors
 
     @property
@@ -162,7 +147,7 @@ class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
 
 
 #TODO: document me
-class SupervisedDescentCLMFitter(CLMFitter, SupervisedDescentFitter):
+class SDCLMFitter(CLMFitter, SDFitter):
     r"""
     Supervised Descent Fitter for CLMs
 
@@ -180,7 +165,7 @@ class SupervisedDescentCLMFitter(CLMFitter, SupervisedDescentFitter):
     USA, June 2013.
     """
     def __init__(self, clm, regressors):
-        super(SupervisedDescentCLMFitter, self).__init__(clm)
+        super(SDCLMFitter, self).__init__(clm)
         self._fitters = regressors
 
     @property

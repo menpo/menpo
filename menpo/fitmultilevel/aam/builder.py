@@ -19,33 +19,38 @@ class AAMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    feature_type: string or function/closure, Optional
+    feature_type: list of strings or list of functions/closures, Optional
         If None, the appearance model will be build using the original image
         representation, i.e. no features will be extracted from the original
         images.
-        If string or closure, the appearance model will be built from a
-        feature representation of the original images:
-            If string, image features will be computed by executing:
+        If list of strings or closures, the appearance model will be built
+        from a feature representation of the original images. The first
+        element of the list specifies the features to be extracted at the
+        lowest pyramidal level and so on.
 
-               feature_image = eval('img.feature_type.' + feature_type + '()')
+        If list of strings, image features will be computed by executing:
 
-            For this to work properly `feature_type` needs to be one of
-            menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using the default
-            options.
+           feature_image = eval('img.feature_type.' +
+                                feature_type[level] + '()')
 
-            Non-default feature options and new experimental features can be
-            defined using functions/closures. In this case, the function must
-            receive an image as input and return a particular feature
-            representation of that image. For example:
+        for each pyramidal level. For this to work properly each string
+        needs to be one of menpo's standard image feature methods
+        ('igo', 'hog', ...).
+        Note that, in this case, the feature computation will be
+        carried out using the default options.
 
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
+        Non-default feature options and new experimental features can be
+        defined using lists of functions/closures. In this case,
+        the functions must receive an image as input and return a
+        particular feature representation of that image. For example:
 
-            See `menpo.image.feature.py` for details more details on
-            menpo's standard image features and feature options.
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See `menpo.image.feature.py` for details more details on
+        menpo's standard image features and feature options.
 
         Default: None
 
@@ -151,6 +156,12 @@ class AAMBuilder(DeformableModelBuilder):
                              "or a list of length {}".format(n_levels))
         elif not isinstance(max_appearance_components, list):
             max_appearance_components = [max_appearance_components] * n_levels
+
+        # check feature type
+        feature_type = self.check_feature_type(feature_type, n_levels)
+        # levels are learned from high to low resolutions
+        feature_type.reverse()
+
         self.feature_type = feature_type
         self.transform = transform
         self.trilist = trilist
@@ -210,6 +221,7 @@ class AAMBuilder(DeformableModelBuilder):
                 print_dynamic('- Building model\n')
         shape_models = []
         appearance_models = []
+
         # for each pyramid level
         for j in range(self.n_levels):
             if verbose:
@@ -226,7 +238,7 @@ class AAMBuilder(DeformableModelBuilder):
                         progress_bar_str(float(c + 1) / len(generator),
                                          show_bar=False)))
                 feature_images.append(compute_features(g.next(),
-                                                       self.feature_type))
+                                                       self.feature_type[j]))
 
             # format shapes to build shape model
             if j == 0:
@@ -311,33 +323,38 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
     Parameters
     ----------
-    feature_type: string or function/closure, Optional
+    feature_type: list of strings or list of functions/closures, Optional
         If None, the appearance model will be build using the original image
         representation, i.e. no features will be extracted from the original
         images.
-        If string or closure, the appearance model will be built from a
-        feature representation of the original images:
-            If string, image features will be computed by executing:
+        If list of strings or closures, the appearance model will be built
+        from a feature representation of the original images. The first
+        element of the list specifies the features to be extracted at the
+        lowest pyramidal level and so on.
 
-               feature_image = eval('img.feature_type.' + feature_type + '()')
+        If list of strings, image features will be computed by executing:
 
-            For this to work properly `feature_type` needs to be one of
-            menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using the default
-            options.
+           feature_image = eval('img.feature_type.' +
+                                feature_type[level] + '()')
 
-            Non-default feature options and new experimental features can be
-            defined using functions/closures. In this case, the function must
-            receive an image as input and return a particular feature
-            representation of that image. For example:
+        for each pyramidal level. For this to work properly each string
+        needs to be one of menpo's standard image feature methods
+        ('igo', 'hog', ...).
+        Note that, in this case, the feature computation will be
+        carried out using the default options.
 
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
+        Non-default feature options and new experimental features can be
+        defined using lists of functions/closures. In this case,
+        the functions must receive an image as input and return a
+        particular feature representation of that image. For example:
 
-            See `menpo.image.feature.py` for details more details on
-            menpo's standard image features and feature options.
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See `menpo.image.feature.py` for details more details on
+        menpo's standard image features and feature options.
 
         Default: None
 
@@ -422,6 +439,12 @@ class PatchBasedAAMBuilder(AAMBuilder):
                  downscale=2, scaled_levels=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
+
+        # check feature type
+        feature_type = self.check_feature_type(feature_type, n_levels)
+        # levels are learned from high to low resolutions
+        feature_type.reverse()
+
         self.feature_type = feature_type
         self.transform = transform
         self.patch_shape = patch_shape

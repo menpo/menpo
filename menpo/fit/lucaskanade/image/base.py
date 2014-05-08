@@ -23,10 +23,10 @@ class ImageForwardAdditive(ImageLucasKanade):
     def algorithm(self):
         return 'Image-FA'
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -58,14 +58,14 @@ class ImageForwardAdditive(ImageLucasKanade):
             # Update warp weights
             parameters = self.transform.as_vector() + delta_p
             self.transform.from_vector_inplace(parameters)
-            lk_fitting.parameters.append(parameters)
+            fitting_result.parameters.append(parameters)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class ImageForwardCompositional(ImageLucasKanade):
@@ -83,10 +83,10 @@ class ImageForwardCompositional(ImageLucasKanade):
         self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Forward Compositional Algorithm
@@ -115,14 +115,14 @@ class ImageForwardCompositional(ImageLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class ImageInverseCompositional(ImageLucasKanade):
@@ -149,10 +149,10 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Compute Hessian and inverse
         self._H = self.residual.calculate_hessian(self._J)
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
+        image = fitting_result.image
         n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm
@@ -173,11 +173,11 @@ class ImageInverseCompositional(ImageLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(inv_delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result

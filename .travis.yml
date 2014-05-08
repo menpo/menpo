@@ -3,6 +3,7 @@ python:
   - 2.7
 notifications:
   email: false
+  flowdock: 769202b66114a5ce0e61df484dfeb177
   # notify gitter
   webhooks:
     urls:
@@ -26,7 +27,7 @@ before_install:
 install:
   - conda install --yes python pip atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
   - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
-  - pip install coverage coveralls
+  - pip install coverage coveralls mock
   - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
   - python setup.py build_ext --inplace
  

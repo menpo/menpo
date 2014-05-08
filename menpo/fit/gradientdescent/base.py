@@ -1,11 +1,8 @@
 from __future__ import division
 import abc
 import numpy as np
-# note - this is just while we wait for scipy 0.14.0 to become stable,
-# import should be
-#   - from scipy.stats import multivariate_normal
-# but for now we use...
-from menpo.math import multivariate_normal
+from scipy.stats import multivariate_normal
+
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import SemiParametricFittingResult
 from menpo.fitmultilevel.functions import build_sampling_grid
@@ -27,7 +24,7 @@ class GradientDescent(Fitter):
         # pre-computations
         self._set_up()
 
-    def _create_fitting(self, image, parameters, gt_shape=None):
+    def _create_fitting_result(self, image, parameters, gt_shape=None):
         return SemiParametricFittingResult(
             image, self, parameters=[parameters], gt_shape=gt_shape)
 
@@ -46,7 +43,7 @@ class ActiveShapeModel(GradientDescent):
     def _set_up(self):
         raise ValueError("Not implemented yet")
 
-    def _fit(self, fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         raise ValueError("Not implemented yet")
 
 
@@ -60,7 +57,7 @@ class ConvexQuadraticFitting(GradientDescent):
     def _set_up(self):
         raise ValueError("Not implemented yet")
 
-    def _fit(self, fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         raise ValueError("Not implemented yet")
 
 
@@ -93,10 +90,10 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         self._inv_H = np.linalg.inv(np.diag(self._J_regularizer) +
                                     np.dot(self._J.T, self._J))
 
-    def _fit(self, fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = fitting.image
+        image = fitting_result.image
         target = self.transform.target
         n_iters = 0
 
@@ -146,7 +143,7 @@ class RegularizedLandmarkMeanShift(GradientDescent):
 
             # Update transform weights
             parameters = self.transform.as_vector() + delta_p
-            fitting.parameters.append(parameters)
+            fitting_result.parameters.append(parameters)
             self.transform.from_vector_inplace(parameters)
             target = self.transform.target
 
@@ -154,5 +151,5 @@ class RegularizedLandmarkMeanShift(GradientDescent):
             error = np.abs(np.linalg.norm(delta_p))
             n_iters += 1
 
-        fitting.fitted = True
-        return fitting
+        fitting_result.fitted = True
+        return fitting_result

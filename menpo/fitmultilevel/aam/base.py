@@ -67,18 +67,18 @@ class AAMFitter(MultilevelFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type)
-                      for i in pyramid]
+            images = [compute_features(i, self.feature_type[j])
+                      for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type)]
+            images = [compute_features(image, self.feature_type[0])]
 
         return images
 
-    def _create_fitting(self, image, fittings, affine_correction,
-                        gt_shape=None, error_type='me_norm'):
+    def _create_fitting_result(self, image, fitting_results, affine_correction,
+                               gt_shape=None, error_type='me_norm'):
         return AAMMultilevelFittingResult(
-            image, self, fittings, affine_correction, gt_shape=gt_shape,
+            image, self, fitting_results, affine_correction, gt_shape=gt_shape,
             error_type=error_type)
 
 

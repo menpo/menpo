@@ -26,12 +26,12 @@ class Fitter(object):
         r"""
         Fits the fitter object to an image.
         """
-        fitting = self._create_fitting(image, initial_parameters,
-                                       gt_shape=gt_shape)
-        return self._fit(fitting, **kwargs)
+        fitting_result = self._create_fitting_result(
+            image, initial_parameters, gt_shape=gt_shape)
+        return self._fit(fitting_result, **kwargs)
 
     @abc.abstractmethod
-    def _create_fitting(self, **kwargs):
+    def _create_fitting_result(self, **kwargs):
         r"""
         Abstract method that defines the fitting result object associated to
         the fitter object.

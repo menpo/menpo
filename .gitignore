@@ -1,3 +1,5 @@
+.coverage
+cover/*
 *.pyd
 *.swp
 *.pyc
@@ -18,4 +20,5 @@ docs/_build/*
 dist/*
 # distutils makes the MANIFEST (note we make MANIFEST.in)
 MANIFEST
-
+# IntelliJ's module file
+*.iml

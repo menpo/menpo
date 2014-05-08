@@ -137,7 +137,7 @@ class LucasKanade(Fitter):
     def _set_up(self, **kwargs):
         pass
 
-    def _create_fitting(self, image, parameters, gt_shape=None):
+    def _create_fitting_result(self, image, parameters, gt_shape=None):
         return ParametricFittingResult(image, self, parameters=[parameters],
                                        gt_shape=gt_shape)
 
