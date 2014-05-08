@@ -10,11 +10,11 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
     def algorithm(self):
         return 'Alternating-FA'
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
-        lk_fitting.weights = [[0]]
+        image = fitting_result.image
+        fitting_result.weights = [[0]]
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -26,7 +26,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             # Compute appearance
             weights = self.appearance_model.project(IWxp)
             self.template = self.appearance_model.instance(weights)
-            lk_fitting.weights.append(weights)
+            fitting_result.weights.append(weights)
 
             # Compute warp Jacobian
             dW_dp = self.transform.jacobian(
@@ -50,14 +50,14 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             # Update warp weights
             parameters = self.transform.as_vector() + delta_p
             self.transform.from_vector_inplace(parameters)
-            lk_fitting.parameters.append(parameters)
+            fitting_result.parameters.append(parameters)
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class AlternatingForwardCompositional(AppearanceLucasKanade):
@@ -71,11 +71,11 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
-        lk_fitting.weights = [[0]]
+        image = fitting_result.image
+        fitting_result.weights = [[0]]
         n_iters = 0
 
         # Forward Additive Algorithm
@@ -87,7 +87,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
             # Compute template by projection
             weights = self.appearance_model.project(IWxp)
             self.template = self.appearance_model.instance(weights)
-            lk_fitting.weights.append(weights)
+            fitting_result.weights.append(weights)
 
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
@@ -104,14 +104,14 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result
 
 
 class AlternatingInverseCompositional(AppearanceLucasKanade):
@@ -125,11 +125,11 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         self._dW_dp = self.transform.jacobian(
             self.template.mask.true_indices)
 
-    def _fit(self, lk_fitting, max_iters=20):
+    def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
         error = self.eps + 1
-        image = lk_fitting.image
-        lk_fitting.weights = [[0]]
+        image = fitting_result.image
+        fitting_result.weights = [[0]]
         n_iters = 0
 
         # Baker-Matthews, Inverse Compositional Algorithm
@@ -141,7 +141,7 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
             # Compute appearance
             weights = self.appearance_model.project(IWxp)
             self.template = self.appearance_model.instance(weights)
-            lk_fitting.weights.append(weights)
+            fitting_result.weights.append(weights)
 
             # Compute steepest descent images, VT_dW_dp
             self._J = self.residual.steepest_descent_images(self.template,
@@ -162,11 +162,11 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
 
             # Update warp weights
             self.transform.compose_after_from_vector_inplace(inv_delta_p)
-            lk_fitting.parameters.append(self.transform.as_vector())
+            fitting_result.parameters.append(self.transform.as_vector())
 
             # Test convergence
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        lk_fitting.fitted = True
-        return lk_fitting
+        fitting_result.fitted = True
+        return fitting_result

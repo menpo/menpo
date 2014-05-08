@@ -560,7 +560,7 @@ class FittingResultList(list, Viewable):
 
     Parameters
     -----------
-    fittings: :class:`menpo.fitter.fitting.FittingResults`
+    fitting_results: :class:`menpo.fitter.fitting.FittingResults`
         A list of FittingResult objects.
 
     error_type: 'me_norm', 'me' or 'rmse', optional.
@@ -570,8 +570,8 @@ class FittingResultList(list, Viewable):
         Default: 'me_norm'
     """
 
-    def __init__(self, fittings, error_type='me_norm'):
-        super(FittingResultList, self).__init__(fittings)
+    def __init__(self, fitting_results, error_type='me_norm'):
+        super(FittingResultList, self).__init__(fitting_results)
         self.error_type = error_type
         self._final_error = None
         self._initial_error = None
