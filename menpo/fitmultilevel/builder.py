@@ -14,6 +14,27 @@ class DeformableModelBuilder(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    @classmethod
+    def check_feature_type(cls, feature_type, n_levels):
+        feature_type_str_error = ("feature_type must be a str or a "
+                                  "function/closure or a list of "
+                                  "those containing 1 or {} "
+                                  "elements").format(n_levels)
+        if not isinstance(feature_type, list):
+            feature_type_list = [feature_type for _ in range(n_levels)]
+        elif len(feature_type) is 1:
+            feature_type_list = [feature_type[0] for _ in range(n_levels)]
+        elif len(feature_type) is n_levels:
+            feature_type_list = feature_type
+        else:
+            raise ValueError(feature_type_str_error)
+        for ft in feature_type_list:
+            if (ft is not None or not isinstance(ft, str)
+               or not hasattr(ft, '__call__')):
+                ValueError(feature_type_str_error)
+
+        return feature_type_list
+
     @abc.abstractmethod
     def build(self, images, group=None, label='all'):
         r"""
@@ -53,6 +74,7 @@ class DeformableModelBuilder(object):
 
         return reference_shape, generator
 
+    #TODO: this seems useful on its own, maybe it shouldn't be underscored...
     @classmethod
     def _build_shape_model(cls, shapes, max_components):
         r"""

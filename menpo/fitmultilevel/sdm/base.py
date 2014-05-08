@@ -4,7 +4,7 @@ from menpo.fitmultilevel.aam.base import AAMFitter
 from menpo.fitmultilevel.clm.base import CLMFitter
 
 
-class SupervisedDescentFitter(MultilevelFitter):
+class SDFitter(MultilevelFitter):
     r"""
     Mixin for Supervised Descent Fitters.
     """
@@ -22,7 +22,7 @@ class SupervisedDescentFitter(MultilevelFitter):
 
 
 #TODO: Document me
-class SupervisedDescentMethodFitter(SupervisedDescentFitter):
+class SDMFitter(SDFitter):
     r"""
     Supervised Descent Method.
 
@@ -116,17 +116,17 @@ class SupervisedDescentMethodFitter(SupervisedDescentFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type)
-                      for i in pyramid]
+            images = [compute_features(i, self.feature_type[j])
+                      for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type)]
+            images = [compute_features(image, self.feature_type[0])]
 
         return images
 
 
 #TODO: Document me
-class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
+class SDAAMFitter(AAMFitter, SDFitter):
     r"""
     Supervised Descent Fitter for AAMs
 
@@ -138,7 +138,7 @@ class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
     regressors:
     """
     def __init__(self, aam, regressors):
-        super(SupervisedDescentAAMFitter, self).__init__(aam)
+        super(SDAAMFitter, self).__init__(aam)
         self._fitters = regressors
 
     @property
@@ -147,7 +147,7 @@ class SupervisedDescentAAMFitter(AAMFitter, SupervisedDescentFitter):
 
 
 #TODO: document me
-class SupervisedDescentCLMFitter(CLMFitter, SupervisedDescentFitter):
+class SDCLMFitter(CLMFitter, SDFitter):
     r"""
     Supervised Descent Fitter for CLMs
 
@@ -165,7 +165,7 @@ class SupervisedDescentCLMFitter(CLMFitter, SupervisedDescentFitter):
     USA, June 2013.
     """
     def __init__(self, clm, regressors):
-        super(SupervisedDescentCLMFitter, self).__init__(clm)
+        super(SDCLMFitter, self).__init__(clm)
         self._fitters = regressors
 
     @property
