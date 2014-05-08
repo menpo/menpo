@@ -59,7 +59,7 @@ class MultilevelFitter(Fitter):
         pass
 
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
-            error_type='me_norm', verbose=True, view=False, **kwargs):
+            error_type='me_norm', verbose=False, view=False, **kwargs):
         r"""
         Fits a single image.
 

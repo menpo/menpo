@@ -11,29 +11,13 @@ class SupervisedDescentFitter(MultilevelFitter):
     def _set_up(self):
         pass
 
-    def fit(self, image, group=None, label='all',
-            initialization='from_gt_shape', noise_std=0.0, rotation=False,
-            max_iters=None, verbose=True, view=False, error_type='me_norm',
-            **kwargs):
+    def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
+            error_type='me_norm', verbose=False, view=False, **kwargs):
         if max_iters is None:
             max_iters = self.n_levels
-        return super(SupervisedDescentFitter, self).fit(
-            image, group=group, label=label, initialization=initialization,
-            noise_std=noise_std, rotation=rotation, max_iters=max_iters,
-            verbose=verbose, view=view, error_type=error_type,
-            **kwargs)
-
-    def fit_images(self, images, group=None, label='all',
-                   initialization='from_gt_shape', noise_std=0.0,
-                   rotation=False, max_iters=None, verbose=True, view=False,
-                   error_type='me_norm', **kwargs):
-        if max_iters is None:
-            max_iters = self.n_levels
-        return super(SupervisedDescentFitter, self).fit_images(
-            images, group=group, label=label, initialization=initialization,
-            noise_std=noise_std, rotation=rotation, max_iters=max_iters,
-            verbose=verbose, view=view, error_type=error_type,
-            **kwargs)
+        return MultilevelFitter.fit(image, initial_shape, max_iters=max_iters,
+                                    gt_shape=gt_shape, error_type=error_type,
+                                    verbose=verbose, view=view, **kwargs)
 
 
 #TODO: Document me
