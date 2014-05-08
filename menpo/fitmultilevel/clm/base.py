@@ -1,7 +1,7 @@
 from __future__ import division
 
 from menpo.transform import AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import ModelInstance, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
@@ -197,7 +197,7 @@ class GradientDescentCLMFitter(CLMFitter):
             if n_shape is not None:
                 sm.n_active_components = n_shape[j]
 
-            if pdm_transform is not PDM:
+            if pdm_transform is not ModelInstance:
                 pdm_trans = pdm_transform(sm, global_transform)
             else:
                 pdm_trans = pdm_transform(sm)
