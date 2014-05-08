@@ -622,40 +622,70 @@ class AAM(object):
             reference_shape, trilist=trilist)
 
     def __str__(self):
-        out_str = "Active Appearance Model\n"
-        out_str = "{} - Feature is {}.\n".format(out_str, self.feature_type)
-        out_str = "{} - '{}' transform with '{}' interpolation.\n".format(
-            out_str, 'transform', self.interpolator)
+        out = "Active Appearance Model\n"
+        if isinstance(self.feature_type, str):
+            out = "{} - Feature is {} with ".format(
+                out, self.feature_type)
+        elif self.feature_type is None:
+            out = "{} - No features extracted. ".format(out)
+        else:
+            out = "{} - Feature is {} with ".format(
+                out, self.feature_type.func_name)
+        n_channels = self.appearance_models[0].template_instance.n_channels
+        ch_str = "channels"
+        if n_channels == 1:
+            ch_str = "channel"
+        out = "{}{} {} per image.\n".format(out, n_channels, ch_str)
+        out = "{} - {} transform with '{}' interpolation.\n".format(
+            out, self.transform.__name__, self.interpolator)
         if self.n_levels > 1:
             if self.scaled_shape_models:
-                out_str = "{} - Smoothing pyramid with {} levels and " \
-                          "downscale factor of {}:\n".format(out_str,
-                                                             self.n_levels,
-                                                             self.downscale)
+                out = "{} - Smoothing pyramid with {} levels and downscale " \
+                      "factor of {}.\n   Each level has a scaled shape " \
+                      "model.\n".format(out, self.n_levels, self.downscale)
+                for i in range(self.n_levels):
+                    out = "{0}   - Level {1}: \n     - {2} shape components " \
+                          "({3:.2f}% of variance)\n     - reference frame " \
+                          "of length {4} ({5} x {6}C)\n     - {7} " \
+                          "appearance components ({8:.2f}% of " \
+                          "variance)\n".format(
+                          out, i+1, self.shape_models[i].n_components,
+                          self.shape_models[i].kept_variance_ratio * 100,
+                          self.appearance_models[i].n_features,
+                          self.appearance_models[i].template_instance._str_shape,
+                          n_channels, self.appearance_models[i].n_components,
+                          self.appearance_models[i].kept_variance_ratio * 100)
             else:
-                out_str = "{} - Gaussian pyramid with {} levels and " \
-                          "downscale factor of {}:\n".format(out_str,
-                                                             self.n_levels,
-                                                             self.downscale)
-            for i in range(self.n_levels):
-                out_str = "{}    - Level {}: \n" \
-                          "        - {} shape components\n" \
-                          "        - {} appearance components of length {}\n" \
-                          "        - {} reference frame\n".format(
-                    out_str, i+1, self.shape_models[i].n_components,
-                    self.appearance_models[i].n_components,
-                    self.appearance_models[i].n_features,
-                    self.appearance_models[i].template_instance._str_shape)
+                out = "{} - Gaussian pyramid with {} levels and downscale " \
+                      "factor of {}:\n   Shape models are not " \
+                      "scaled.\n".format(out, self.n_levels, self.downscale)
+                out = "{0}   - Shape model: \n     - {1} shape components " \
+                      "({2:.2f}% of variance)\n     - reference frame of " \
+                      "length {3} ({4} x {5}C)\n   - Appearance " \
+                      "models:\n".format(
+                      out, self.shape_models[0].n_components,
+                      self.shape_models[0].kept_variance_ratio * 100,
+                      self.appearance_models[0].n_features,
+                      self.appearance_models[0].template_instance._str_shape,
+                      n_channels)
+                for i in range(self.n_levels):
+                    out = "{0}     - Level {1}: {2} appearance " \
+                          "components ({3:.2f}% of variance)\n".format(
+                          out, i+1, self.appearance_models[i].n_components,
+                          self.appearance_models[i].kept_variance_ratio * 100)
         else:
-            out_str = "{}  - No pyramid used:\n" \
-                      "      - {} shape components\n" \
-                      "      - {} appearance components of length {}\n" \
-                      "      - {} reference frame\n".format(
-                out_str, self.shape_models[0].n_components,
-                self.appearance_models[0].n_components,
-                self.appearance_models[0].n_features,
-                self.appearance_models[0].template_instance._str_shape)
-        return out_str
+            out = "{0} - No pyramid used:\n" \
+                  "   - {1} shape components ({2:.2f}% of variance)\n" \
+                  "   - {3} appearance components ({4:.2f}% of variance)\n" \
+                  "   - reference frame of length {5} ({6} x {7}C)\n".format(
+                  out, self.shape_models[0].n_components,
+                  self.shape_models[0].kept_variance_ratio * 100,
+                  self.appearance_models[0].n_components,
+                  self.appearance_models[0].kept_variance_ratio * 100,
+                  self.appearance_models[0].n_features,
+                  self.appearance_models[0].template_instance._str_shape,
+                  n_channels)
+        return out
 
 
 #TODO: Test me!!!
