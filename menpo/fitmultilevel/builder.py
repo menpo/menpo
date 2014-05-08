@@ -16,24 +16,64 @@ class DeformableModelBuilder(object):
     __metaclass__ = abc.ABCMeta
 
     @classmethod
+    def check_n_levels(cls, n_levels):
+        if n_levels < 1:
+            raise ValueError("n_levels must be > 0")
+
+    @classmethod
+    def check_downscale(cls, downscale):
+        if downscale < 1:
+            raise ValueError("downscale must be >= 1")
+
+    @classmethod
+    def check_normalization_diagonal(cls, normalization_diagonal):
+        if normalization_diagonal is not None and normalization_diagonal < 20:
+            raise ValueError("normalization_diagonal must be >= 20")
+
+    @classmethod
+    def check_boundary(cls, boundary):
+        if boundary < 0:
+            raise ValueError("boundary must be >= 0")
+
+    @classmethod
+    def check_max_components(cls, max_components, n_levels, var_name):
+        str_error = ("{} must be None or an int > 0 or a 0 <= float <= 1 or "
+                     "a list of those containing 1 or {} elements").format(
+                         var_name, n_levels)
+        if not isinstance(max_components, list):
+            max_components_list = [max_components] * n_levels
+        elif len(max_components) is 1:
+            max_components_list = [max_components[0]] * n_levels
+        elif len(max_components) is n_levels:
+            max_components_list = max_components
+        else:
+            raise ValueError(str_error)
+        for comp in max_components_list:
+            if comp is not None:
+                if not isinstance(comp, int):
+                    if not isinstance(comp, float):
+                        raise ValueError(str_error)
+        return max_components_list
+
+    @classmethod
     def check_feature_type(cls, feature_type, n_levels):
         feature_type_str_error = ("feature_type must be a str or a "
                                   "function/closure or a list of "
                                   "those containing 1 or {} "
                                   "elements").format(n_levels)
         if not isinstance(feature_type, list):
-            feature_type_list = [feature_type for _ in range(n_levels)]
+            feature_type_list = [feature_type] * n_levels
         elif len(feature_type) is 1:
-            feature_type_list = [feature_type[0] for _ in range(n_levels)]
+            feature_type_list = [feature_type[0]] * n_levels
         elif len(feature_type) is n_levels:
             feature_type_list = feature_type
         else:
             raise ValueError(feature_type_str_error)
         for ft in feature_type_list:
-            if (ft is not None or not isinstance(ft, str)
-               or not hasattr(ft, '__call__')):
-                ValueError(feature_type_str_error)
-
+            if ft is not None:
+                if not isinstance(ft, str):
+                    if not hasattr(ft, '__call__'):
+                        raise ValueError(feature_type_str_error)
         return feature_type_list
 
     @abc.abstractmethod

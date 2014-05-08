@@ -135,33 +135,21 @@ class AAMBuilder(DeformableModelBuilder):
                  scaled_shape_models=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
-        # check input
-        if n_levels < 1:
-            raise ValueError("n_levels must be > 0")
-        if downscale < 1:
-            raise ValueError("downscale must be >= 1")
-        if normalization_diagonal is not None and normalization_diagonal < 20:
-            raise ValueError("normalization_diagonal must be >= 20")
-        if boundary < 0:
-            raise ValueError("boundary must be >= 0")
-        if (isinstance(max_shape_components, list) and
-                len(max_shape_components) != n_levels):
-            raise ValueError("max_shape_components can be int or float or "
-                             "a list of length {}".format(n_levels))
-        elif not isinstance(max_shape_components, list):
-            max_shape_components = [max_shape_components] * n_levels
-        if (isinstance(max_appearance_components, list) and
-                len(max_appearance_components) != n_levels):
-            raise ValueError("max_appearance_components can be int or float "
-                             "or a list of length {}".format(n_levels))
-        elif not isinstance(max_appearance_components, list):
-            max_appearance_components = [max_appearance_components] * n_levels
-
-        # check feature type
+        # check parameters
+        self.check_n_levels(n_levels)
+        self.check_downscale(downscale)
+        self.check_normalization_diagonal(normalization_diagonal)
+        self.check_boundary(boundary)
+        max_shape_components = self.check_max_components(
+            max_shape_components, n_levels, 'max_shape_components')
+        max_appearance_components = self.check_max_components(
+            max_appearance_components, n_levels, 'max_appearance_components')
         feature_type = self.check_feature_type(feature_type, n_levels)
         # levels are learned from high to low resolutions
         feature_type.reverse()
-
+        max_shape_components.reverse()
+        max_appearance_components.reverse()
+        # store parameters
         self.feature_type = feature_type
         self.transform = transform
         self.trilist = trilist
@@ -301,6 +289,7 @@ class AAMBuilder(DeformableModelBuilder):
         # ordered from lower to higher resolution
         shape_models.reverse()
         appearance_models.reverse()
+        self.feature_type.reverse()
         n_training_images = len(images)
 
         return self._build_aam(n_training_images, shape_models,
@@ -650,19 +639,24 @@ class AAM(object):
     def __str__(self):
         out = "Active Appearance Model\n - {} training images.\n".format(
             self.n_training_images)
-        if isinstance(self.feature_type, str):
-            out = "{} - Feature is {} with ".format(
-                out, self.feature_type)
-        elif self.feature_type is None:
-            out = "{} - No features extracted. ".format(out)
-        else:
-            out = "{} - Feature is {} with ".format(
-                out, self.feature_type.func_name)
-        n_channels = self.appearance_models[0].template_instance.n_channels
-        ch_str = "channels"
-        if n_channels == 1:
-            ch_str = "channel"
-        out = "{}{} {} per image.\n".format(out, n_channels, ch_str)
+        n_channels = []
+        ch_str = []
+        feat_str = []
+        for j in range(self.n_levels):
+            n_channels.append(
+                self.appearance_models[j].template_instance.n_channels)
+            if n_channels[j] == 1:
+                ch_str.append("channel")
+            else:
+                ch_str.append("channels")
+            if isinstance(self.feature_type[j], str):
+                feat_str.append("- Feature is {} with ".format(
+                    self.feature_type[j]))
+            elif self.feature_type[j] is None:
+                feat_str.append("- No features extracted. ")
+            else:
+                feat_str.append("- Feature is {} with ".format(
+                    self.feature_type[j].func_name))
         out = "{} - {} transform with '{}' interpolation.\n".format(
             out, self.transform.__name__, self.interpolator)
         if self.n_levels > 1:
@@ -670,35 +664,29 @@ class AAM(object):
                 out = "{} - Smoothing pyramid with {} levels and downscale " \
                       "factor of {}.\n   Each level has a scaled shape " \
                       "model.\n".format(out, self.n_levels, self.downscale)
-                for i in range(self.n_levels):
-                    out = "{0}   - Level {1}: \n     - {2} shape components " \
-                          "({3:.2f}% of variance)\n     - Reference frame " \
-                          "of length {4} ({5} x {6}C)\n     - {7} " \
-                          "appearance components ({8:.2f}% of " \
-                          "variance)\n".format(
-                          out, i+1, self.shape_models[i].n_components,
-                          self.shape_models[i].kept_variance_ratio * 100,
-                          self.appearance_models[i].n_features,
-                          self.appearance_models[i].template_instance._str_shape,
-                          n_channels, self.appearance_models[i].n_components,
-                          self.appearance_models[i].kept_variance_ratio * 100)
+
             else:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}:\n   Shape models are not " \
                       "scaled.\n".format(out, self.n_levels, self.downscale)
-                out = "{0}   - Reference frame of length {1} " \
-                      "({2} x {3}C)\n".format(
-                      out, self.appearance_models[0].n_features,
-                      self.appearance_models[0].template_instance._str_shape,
-                      n_channels)
-                for i in range(self.n_levels):
-                    out = "{0}   - Level {1}: \n     - {2} shape components " \
-                          "({3:.2f}% of variance)\n     - {4} appearance " \
-                          "components ({5:.2f}% of variance)\n".format(
-                          out, i+1, self.shape_models[i].n_components,
-                          self.shape_models[i].kept_variance_ratio * 100,
-                          self.appearance_models[i].n_components,
-                          self.appearance_models[i].kept_variance_ratio * 100)
+
+            for i in range(self.n_levels):
+                out = "{0}   - Level {1}: \n" \
+                      "     {2}{3} {4} per image.\n" \
+                      "     - Reference frame of length {5} ({6} x {7}C, " \
+                      "{8} x {9}C)\n" \
+                      "     - {10} shape components ({11:.2f}% of variance)\n" \
+                      "     - {12} appearance components ({13:.2f}% of " \
+                      "variance)\n".format(
+                      out, i+1, feat_str[i], n_channels[i], ch_str[i],
+                      self.appearance_models[i].n_features,
+                      self.appearance_models[i].template_instance.n_true_pixels,
+                      n_channels[i],
+                      self.appearance_models[i].template_instance._str_shape,
+                      n_channels[i], self.shape_models[i].n_components,
+                      self.shape_models[i].kept_variance_ratio * 100,
+                      self.appearance_models[i].n_components,
+                      self.appearance_models[i].kept_variance_ratio * 100)
         else:
             out = "{0} - No pyramid used:\n" \
                   "   - {1} shape components ({2:.2f}% of variance)\n" \
@@ -710,7 +698,7 @@ class AAM(object):
                   self.appearance_models[0].kept_variance_ratio * 100,
                   self.appearance_models[0].n_features,
                   self.appearance_models[0].template_instance._str_shape,
-                  n_channels)
+                  n_channels[0])
         return out
 
 
