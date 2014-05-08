@@ -169,12 +169,101 @@ class Targetable(object):
         pass
 
 
+class DP(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dp(self, points):
+        r"""
+        The derivative of this spatial object wrt parametrization changes
+        evaluated at points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        ndarray shape (n_points, n_params, n_dims)
+            The jacobian wrt parameterization
+
+        """
+        pass
+
+
+class DX(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dx(self, points):
+        r"""
+        The first order derivative of this spatial object wrt spatial changes
+        evaluated at points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        d_dx: ndarray shape (n_points, n_dims, n_dims)
+            The jacobian wrt spatial changes.
+
+            d_dx[i, j, k] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the k'th dimension.
+
+            It may be the case that the jacobian is constant across space -
+            in this case axis zero may have shape 1 to allow for broadcasting.
+
+        """
+        pass
+
+
+class DL(object):
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def d_dl(self, points):
+        r"""
+        The derivative of this spatial object wrt spatial changes in anchor
+        landmark points or centres, evaluated at points.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
+
+        Returns
+        -------
+
+        d_dl: ndarray shape (n_points, n_dims_e, n_centres, n_dims)
+            The jacobian wrt landmark changes.
+
+            d_dl[i, j, k, m] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the m'th dimension of the k'th landmark point.
+
+            It may be the case that the jacobian is constant across space -
+            in this case axes my have shape 1 to allow for broadcasting.
+
+            Also note that n_dims_e (the dimensionality of the function) may
+            differ from n_dims (the dimensionality of the centres and points).
+            For instance, in RBF, n_dims_e == 1, n_dims commonly is 2.
+
+        """
+        pass
+
+
 def menpo_src_dir_path():
     return os.path.split(os.path.abspath(__file__))[0]
-
-
-class DimensionalityError(ValueError):
-    """
-    Raised when the number of dimensions do not match what was expected.
-    """
-    pass

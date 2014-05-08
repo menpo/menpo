@@ -1,12 +1,12 @@
 from copy import deepcopy
 import numpy as np
 
-from menpo.base import Targetable, Vectorizable
+from menpo.base import Targetable, Vectorizable, DP
 from menpo.model import Similarity2dInstanceModel
 
 
 # TODO: document me
-class PDM(Targetable, Vectorizable):
+class ModelInstance(Targetable, Vectorizable, DP):
     r"""
     """
     def __init__(self, model):
@@ -115,15 +115,27 @@ class PDM(Targetable, Vectorizable):
         self._weights = vector
         self._sync_target_from_state()
 
-    # TODO: document me
-    def jacobian(self, points):
+
+    def d_dp(self, points):
         """
+        Returns the Jacobian of the PCA model reshaped to have the standard
+        Jacobian shape:
+
+            n_points    x  n_params      x  n_dims
+            n_features  x  n_components  x  n_dims
+
+        Returns
+        -------
+        jacobian : (n_features, n_components, n_dims) ndarray
+            The Jacobian of the model in the standard Jacobian shape.
         """
-        return self.model.jacobian
+        jacobian = self._d_dp.reshape(self.n_active_components, -1,
+                                      self.template_instance.n_dims)
+        return jacobian.swapaxes(0, 1)
 
 
 # TODO: document me
-class GlobalPDM(PDM):
+class GlobalPDM(ModelInstance):
     r"""
     """
     def __init__(self, model, global_transform_cls):
@@ -217,7 +229,7 @@ class GlobalPDM(PDM):
         self._update_global_weights(global_parameters)
         # Now extract the weights, and let super handle the update
         weights = vector[self.n_global_parameters:]
-        PDM.from_vector_inplace(self, weights)
+        ModelInstance.from_vector_inplace(self, weights)
 
     def _update_global_weights(self, global_weights):
         r"""
@@ -227,10 +239,10 @@ class GlobalPDM(PDM):
         """
         self.global_transform.from_vector_inplace(global_weights)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
-        return np.hstack((self.global_transform.jacobian(points).T,
+        return np.hstack((self.global_transform.d_dp(points).T,
                           self.model.components.T))
 
 
@@ -265,7 +277,7 @@ class OrthoPDM(GlobalPDM):
         new_target = self.similarity_model.instance(global_weights)
         self.global_transform.set_target(new_target)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
         return np.hstack((self.similarity_model.components.T,

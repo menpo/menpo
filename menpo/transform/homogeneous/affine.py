@@ -2,10 +2,11 @@ import abc
 import copy
 import numpy as np
 
+from menpo.base import DX, DP
 from .base import Homogeneous, HomogFamilyAlignment
 
 
-class Affine(Homogeneous):
+class Affine(Homogeneous, DP, DX):
     r"""
     The base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
@@ -205,10 +206,10 @@ class Affine(Homogeneous):
     def _build_pseudoinverse(self):
         return Affine(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
-        Computes the Jacobian of the transform w.r.t the parameters. This is
-        constant for affine transforms.
+        The first order derivative of this Affine transform wrt parameter
+        changes evaluated at points.
 
         The Jacobian generated (for 2D) is of the form::
 
@@ -223,13 +224,13 @@ class Affine(Homogeneous):
 
         Parameters
         ----------
-        points : (N, D) ndarray
+        points : (n_points, n_dims) ndarray
             The set of points to calculate the jacobian for.
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
+        dW_dp : (n_points, n_params, n_dims) ndarray
+            A (``n_points`, `n_params`, `n_dims`) array representing
             the Jacobian of the transform.
         """
         n_points, points_n_dim = points.shape
@@ -260,10 +261,10 @@ class Affine(Homogeneous):
         jac[:, full_mask] = 1
         return jac
 
-    def jacobian_points(self, points):
+    def d_dx(self, points):
         r"""
-        Computes the Jacobian of the transform wrt the points to which
-        the transform is applied to. This is constant for affine transforms.
+        The first order derivative of this Affine transform wrt spatial changes
+        evaluated at points.
 
         The Jacobian for a given point (for 2D) is of the form::
 
@@ -276,12 +277,27 @@ class Affine(Homogeneous):
             W(x;p) = [1 + a   -b      tx] [x]
                      [b       1 + a   ty] [y]
                                           [1]
+        Hence it is simply the linear component of the transform.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
 
         Returns
         -------
-        dW/dx: dW/dx: (N, D, D) ndarray
-            The Jacobian of the transform wrt the points to which the
-            transform is applied to.
+
+        d_dx: ndarray shape (1, n_dims, n_dims)
+            The jacobian wrt spatial changes.
+
+            d_dx[0, j, k] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the k'th dimension.
+
+            Note that because the jacobian is constant across space the first
+            axis is length 1 to allow for broadcasting.
+
         """
         return self.linear_component[None, ...]
 

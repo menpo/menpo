@@ -154,7 +154,7 @@ class Similarity(Affine):
     def _build_pseudoinverse(self):
         return Similarity(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         Computes the Jacobian of the transform w.r.t the parameters.
 

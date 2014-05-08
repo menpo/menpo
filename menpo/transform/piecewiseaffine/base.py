@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 
+from menpo.base import DX, DL
 from menpo.transform import Affine
 from menpo.transform.base import Alignment, Invertible, Transform
 from .fastpwa import CLookupPWA
@@ -22,7 +23,7 @@ class TriangleContainmentError(Exception):
 
 
 # Note we inherit from Alignment first to get it's n_dims behavior
-class AbstractPWA(Alignment, Transform, Invertible):
+class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
     r"""
     A piecewise affine transformation. This is composed of a number of
     triangles defined be a set of source and target vertices. These vertices
@@ -125,38 +126,47 @@ class AbstractPWA(Alignment, Transform, Invertible):
         new_target = PointCloud(self.source.points)
         return type(self)(new_source, new_target)
 
-    def jacobian_points(self, points):
+    def d_dx(self, points):
         """
-        Calculates the Jacobian of the PWA warp with respect to the the points
-        to which the warp is applied to. Expected to return a
-        ``(n_points, n_dims, n_dims)`` shaped array, so the result is tiled
-        as necessary.
+        Calculates the first order spatial derivative of PWA at points.
 
-        The derivative of a piecewise affine warp with respect to the points
-        is simply the identity matrix for every point in the warp.
+        The nature of this derivative is complicated by the piecewise nature
+        of this transform. For points close to the source points of the
+        transform the derivative is ill-defined. In these cases, an identity
+        jacobian is returned.
+
+        In all other cases the jacobian is equal to the containing triangle's
+        d_dx.
 
         Returns
         -------
-        dW/dx: (N, D, D) ndarray
-            The Jacobian of the transform with respect to the points to which
-            the transform is applied to.
-        """
-        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
+        d_dx: (n_points, n_dims, n_dims) ndarray
+            The first order spatial derivative of this transform
 
-    def weight_points(self, points):
+        Raises
+        ------
+        TriangleContainmentError:
+            If any point is outside any triangle of this PWA.
+
+        """
+        # TODO check for position and return true d_dx (see docstring)
+        # for the time being we assume the points are
+        return np.tile(np.eye(2, 2)[:, 1, 1])
+
+    def d_dl(self, points):
         """
         Returns the jacobian of the warp at each point given in relation to the
         source points.
 
         Parameters
         ----------
-        points : (K, 2) ndarray
+        points : (n_points, 2) ndarray
             The points to calculate the Jacobian for.
 
         Returns
         -------
-        jacobian : (K, ``n_points``, 2) ndarray
-            The Jacobian for each of the ``K`` given points over each point in
+        jacobian : (n_points, n_landmarks, 2) ndarray
+            The Jacobian for each of the given points over each point in
             the source points.
         """
         tri_index, alpha_i, beta_i = self.index_alpha_beta(points)
@@ -182,7 +192,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
                                beta_i[:, None]))
         # the jacobian wrt source is of shape
         # (n_sample_points, n_source_points, 2)
-        jac = np.zeros((points.shape[0], self.n_points, 2))
+        jac = np.zeros((points.shape[0], 2, self.n_points, 2))
         # per sample point, find the source points for the ijk vertices of
         # the containing triangle - only these points will get a non 0
         # jacobian value
@@ -193,7 +203,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
         # term, ijk_per_point.
         linear_iterator = np.arange(points.shape[0]).reshape((-1, 1))
         # in one line, we are done.
-        jac[linear_iterator, ijk_per_point] = gamma_ijk[..., None]
+        jac[linear_iterator, :, ijk_per_point] = np.eye(2) * gamma_ijk
         return jac
 
 

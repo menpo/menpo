@@ -29,8 +29,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             lk_fitting.weights.append(weights)
 
             # Compute warp Jacobian
-            dW_dp = self.transform.jacobian(
-                self.template.mask.true_indices)
+            dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(
@@ -68,8 +67,7 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
 
     def _set_up(self):
         # Compute warp Jacobian
-        self._dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        self._dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
     def _fit(self, lk_fitting, max_iters=20):
         # Initial error > eps
@@ -122,8 +120,7 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
 
     def _set_up(self):
         # Compute warp Jacobian
-        self._dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        self._dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
     def _fit(self, lk_fitting, max_iters=20):
         # Initial error > eps

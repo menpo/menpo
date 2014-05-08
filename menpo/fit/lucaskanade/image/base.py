@@ -36,8 +36,7 @@ class ImageForwardAdditive(ImageLucasKanade):
                                  interpolator=self.interpolator)
 
             # Compute the Jacobian of the warp
-            dW_dp = self.transform.jacobian(
-                self.template.mask.true_indices)
+            dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
             # TODO: rename kwarg "forward" to "forward_additive"
             # Compute steepest descent images, VI_dW_dp
@@ -80,8 +79,7 @@ class ImageForwardCompositional(ImageLucasKanade):
         warp. This is set as an attribute on the class.
         """
         # Compute the Jacobian of the warp
-        self._dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        self._dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
     def _fit(self, lk_fitting, max_iters=20):
         # Initial error > eps
@@ -138,8 +136,7 @@ class ImageInverseCompositional(ImageLucasKanade):
         stored as attributes on the class.
         """
         # Compute the Jacobian of the warp
-        dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
         self._J = self.residual.steepest_descent_images(
