@@ -17,26 +17,45 @@ class DeformableModelBuilder(object):
 
     @classmethod
     def check_n_levels(cls, n_levels):
-        if n_levels < 1:
-            raise ValueError("n_levels must be > 0")
+        r"""
+        Checks the number of pyramid levels that must be int > 0.
+        """
+        if not isinstance(n_levels, int) or n_levels < 1:
+            raise ValueError("n_levels must be int > 0")
 
     @classmethod
     def check_downscale(cls, downscale):
+        r"""
+        Checks the downscale factor of the pyramid that must be >= 1.
+        """
         if downscale < 1:
             raise ValueError("downscale must be >= 1")
 
     @classmethod
     def check_normalization_diagonal(cls, normalization_diagonal):
+        r"""
+        Checks the diagonal length used to normalize the images' size that
+        must be >= 20.
+        """
         if normalization_diagonal is not None and normalization_diagonal < 20:
             raise ValueError("normalization_diagonal must be >= 20")
 
     @classmethod
     def check_boundary(cls, boundary):
-        if boundary < 0:
+        r"""
+        Checks the boundary added around the reference shape that must be
+        int >= 0.
+        """
+        if not isinstance(boundary, int) or boundary < 0:
             raise ValueError("boundary must be >= 0")
 
     @classmethod
     def check_max_components(cls, max_components, n_levels, var_name):
+        r"""
+        Checks the maximum number of components per level either of the shape
+        or the appearance model. It must be None or int or float or a list of
+        those containing 1 or {n_levels} elements.
+        """
         str_error = ("{} must be None or an int > 0 or a 0 <= float <= 1 or "
                      "a list of those containing 1 or {} elements").format(
                          var_name, n_levels)
@@ -57,6 +76,10 @@ class DeformableModelBuilder(object):
 
     @classmethod
     def check_feature_type(cls, feature_type, n_levels):
+        r"""
+        Checks the feature type per level. It must be a string or a
+        function/closure or a list of those containing 1 or {n_levels} elements.
+        """
         feature_type_str_error = ("feature_type must be a str or a "
                                   "function/closure or a list of "
                                   "those containing 1 or {} "
@@ -78,6 +101,9 @@ class DeformableModelBuilder(object):
 
     @abc.abstractmethod
     def build(self, images, group=None, label='all'):
+        r"""
+        Builds a Multilevel Deformable Model.
+        """
         pass
 
     @classmethod
@@ -195,6 +221,22 @@ class DeformableModelBuilder(object):
     @classmethod
     def _build_shape_model(cls, shapes, max_components):
         r"""
+        Builds a shape model given a set of shapes.
+
+        Parameters
+        ----------
+        shapes: list of :class:`Pointcloud`
+            The set of shapes from which to build the model.
+        max_components: None or int or float
+            Specifies the number of components of the trained shape model.
+            If int, it specifies the exact number of components to be retained.
+            If float, it specifies the percentage of variance to be retained.
+            If None, all the available components are kept (100% of variance).
+
+        Returns
+        -------
+        shape_model: :class:`menpo.model.pca`
+            The PCA shape model.
         """
         # centralize shapes
         centered_shapes = [Translation(-s.centre).apply(s) for s in shapes]

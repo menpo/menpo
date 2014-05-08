@@ -100,7 +100,8 @@ class AAMBuilder(DeformableModelBuilder):
         one of the highest pyramidal level).
 
         Default: True
-    max_shape_components: int > 0 or 0 <= float <= 1 or list of those, Optional
+    max_shape_components: None or int > 0 or 0 <= float <= 1
+                          or list of those, Optional
         If list of length n_levels, then a number of shape components is
         defined per level. The first element of the list specifies the number
         of components of the lowest pyramidal level and so on.
@@ -111,9 +112,11 @@ class AAMBuilder(DeformableModelBuilder):
         Per level:
         If int, it specifies the exact number of components to be retained.
         If float, it specifies the percentage of variance to be retained.
+        If None, all the available components are kept (100% of variance).
 
         Default: None
-    max_appearance_components: int > 0 or 0 <= float <= 1 or list of those, Opt
+    max_appearance_components: None or int > 0 or 0 <= float <= 1
+                               or list of those, Opt
         If list of length n_levels, then a number of appearance components is
         defined per level. The first element of the list specifies the number
         of components of the lowest pyramidal level and so on.
@@ -124,6 +127,7 @@ class AAMBuilder(DeformableModelBuilder):
         Per level:
         If int, it specifies the exact number of components to be retained.
         If float, it specifies the percentage of variance to be retained.
+        If None, all the available components are kept (100% of variance).
 
         Default: None
     boundary: int >= 0, Optional
@@ -145,7 +149,7 @@ class AAMBuilder(DeformableModelBuilder):
     Raises
     -------
     ValueError
-        n_levels must be > 0
+        n_levels must be int > 0
     ValueError
         downscale must be >= 1
     ValueError
@@ -325,10 +329,25 @@ class AAMBuilder(DeformableModelBuilder):
                                n_training_images)
 
     def _build_reference_frame(self, mean_shape):
+        r"""
+        Generates the reference frame given a mean shape.
+        """
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
 
     def _build_aam(self, shape_models, appearance_models, n_training_images):
+        r"""
+        Returns an AAM object.
+
+        Parameters
+        ----------
+        shape_models: :class:`menpo.model.pca`
+            The trained multilevel shape models.
+        appearance_models: :class:`menpo.model.pca`
+            The trained multilevel appearance models.
+        n_training_images: int
+            The number of training images.
+        """
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
                    self.downscale, self.scaled_shape_models, self.interpolator)
