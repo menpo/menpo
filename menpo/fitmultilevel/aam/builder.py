@@ -649,7 +649,7 @@ class AAM(object):
                       "model.\n".format(out, self.n_levels, self.downscale)
                 for i in range(self.n_levels):
                     out = "{0}   - Level {1}: \n     - {2} shape components " \
-                          "({3:.2f}% of variance)\n     - reference frame " \
+                          "({3:.2f}% of variance)\n     - Reference frame " \
                           "of length {4} ({5} x {6}C)\n     - {7} " \
                           "appearance components ({8:.2f}% of " \
                           "variance)\n".format(
@@ -663,25 +663,24 @@ class AAM(object):
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}:\n   Shape models are not " \
                       "scaled.\n".format(out, self.n_levels, self.downscale)
-                out = "{0}   - Shape model: \n     - {1} shape components " \
-                      "({2:.2f}% of variance)\n     - reference frame of " \
-                      "length {3} ({4} x {5}C)\n   - Appearance " \
-                      "models:\n".format(
-                      out, self.shape_models[0].n_components,
-                      self.shape_models[0].kept_variance_ratio * 100,
-                      self.appearance_models[0].n_features,
+                out = "{0}   - Reference frame of length {1} " \
+                      "({2} x {3}C)\n".format(
+                      out, self.appearance_models[0].n_features,
                       self.appearance_models[0].template_instance._str_shape,
                       n_channels)
                 for i in range(self.n_levels):
-                    out = "{0}     - Level {1}: {2} appearance " \
-                          "components ({3:.2f}% of variance)\n".format(
-                          out, i+1, self.appearance_models[i].n_components,
+                    out = "{0}   - Level {1}: \n     - {2} shape components " \
+                          "({3:.2f}% of variance)\n     - {4} appearance " \
+                          "components ({5:.2f}% of variance)\n".format(
+                          out, i+1, self.shape_models[i].n_components,
+                          self.shape_models[i].kept_variance_ratio * 100,
+                          self.appearance_models[i].n_components,
                           self.appearance_models[i].kept_variance_ratio * 100)
         else:
             out = "{0} - No pyramid used:\n" \
                   "   - {1} shape components ({2:.2f}% of variance)\n" \
                   "   - {3} appearance components ({4:.2f}% of variance)\n" \
-                  "   - reference frame of length {5} ({6} x {7}C)\n".format(
+                  "   - Reference frame of length {5} ({6} x {7}C)\n".format(
                   out, self.shape_models[0].n_components,
                   self.shape_models[0].kept_variance_ratio * 100,
                   self.appearance_models[0].n_components,
