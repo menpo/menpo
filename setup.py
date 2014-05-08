@@ -30,9 +30,7 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=[# Core
                         'numpy>=1.8.0',
-                        # we would like this to be 0.14.0, waiting for conda
-                        # support though (see menpo.math.multivariate)
-                        'scipy>=0.13.3',
+                        'scipy>=0.14.0',
                         'Cython>=0.20.1',
 
                         # Image
@@ -50,8 +48,9 @@ setup(name='menpo',
                         'cyrasterize>=0.1.5',
 
                         # Visualization
-                        'matplotlib>=1.2.1'],
+                        'matplotlib>=1.2.1',
+                        'mayavi>=4.3.0'],
       package_data={'menpo': ['data/*']},
       tests_require=['nose>=1.3.0'],
-      extras_require={'3d': 'mayavi>=4.3.0'}
       )
+
