@@ -154,7 +154,7 @@ class Similarity(Affine):
     def _build_pseudoinverse(self):
         return Similarity(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         Computes the Jacobian of the transform w.r.t the parameters.
 
@@ -170,19 +170,19 @@ class Similarity(Affine):
 
         Parameters
         ----------
-        points : (N, D) ndarray
-            The points to calculate the jacobian over
+        points : (n_points, n_dims) ndarray
+            The set of points to calculate the jacobian for.
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
+
+        (n_points, n_params, n_dims) ndarray
+            The jacobian wrt parametrization
 
         Raises
         ------
         DimensionalityError
-            ``points.n_dims != self.n_dims`` or transform is not 2D
+            `points.n_dims != self.n_dims` or transform is not 2D
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
