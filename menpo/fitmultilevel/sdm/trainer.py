@@ -3,7 +3,7 @@ import abc
 import numpy as np
 
 from menpo.transform import Scale, AlignmentSimilarity
-from menpo.model.modelinstance import ModelInstance, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 
 from menpo.fit.regression.trainer import (
@@ -329,7 +329,7 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
         clfs = self.clm.classifiers[level]
         sm = self.clm.shape_models[level]
 
-        if self.pdm_transform is not ModelInstance:
+        if self.pdm_transform is not PDM:
             pdm_transform = self.pdm_transform(sm, self.global_transform)
         else:
             pdm_transform = self.pdm_transform(sm)

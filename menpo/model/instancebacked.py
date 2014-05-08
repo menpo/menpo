@@ -117,23 +117,3 @@ class InstanceBackedModel(object):
         """
         vector_instance = self.project_out_vector(instance.as_vector())
         return instance.from_vector(vector_instance)
-
-    @property
-    def d_dp(self):
-        """
-        Returns the first order differential of the linear model wrt delta
-        changes to component weightings.
-
-        As the model is linear, this is independent of any choice of weightings,
-        hence it being a property rather than a method.
-
-        Also note that this class does not formally implement the :map:`DP`
-        interface, which is reserved for objects which can be evaluated at
-        spatial points.
-
-        Returns
-        -------
-        jacobian : (n_features, n_components) ndarray
-            The Jacobian of the model in the standard Jacobian shape.
-        """
-        return self.components

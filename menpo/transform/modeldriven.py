@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.base import Targetable, Vectorizable, DP
-from menpo.model.modelinstance import ModelInstance, GlobalPDM, OrthoPDM
+from menpo.model.modelinstance import PDM, GlobalPDM, OrthoPDM
 
 from .base import Transform, VComposable, VInvertible
 
@@ -36,7 +36,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
 
     """
     def __init__(self, model, transform_cls, source=None):
-        self.pdm = ModelInstance(model)
+        self.pdm = PDM(model)
         self._cached_points, self.dW_dl = None, None
         self.transform = transform_cls(source, self.target)
 
@@ -155,6 +155,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
+        # TODO @jalabort which is the correct d_dp to use here?
         model_jacobian = self.pdm.model.d_dp
         points = self.pdm.model.mean.points
         n_points = self.pdm.model.mean.n_points
@@ -255,9 +256,8 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
             # cache points
             self._cached_points = points
 
-        # dX/dp is simply the Jacobian of the model instance
-        # TODO confirm with @ja310 this is correct
-        dX_dp = self.pdm.d_dp
+        # dX/dp is simply the Jacobian of the PDM
+        dX_dp = self.pdm.d_dp(points)
 
         # PREVIOUS
         # dW_dX:  n_points x n_centres x n_dims
