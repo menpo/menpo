@@ -180,7 +180,7 @@ class AAMBuilder(DeformableModelBuilder):
         feature_type.reverse()
         max_shape_components.reverse()
         max_appearance_components.reverse()
-        
+
         # store parameters
         self.feature_type = feature_type
         self.transform = transform
