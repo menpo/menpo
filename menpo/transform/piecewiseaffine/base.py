@@ -155,7 +155,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         """
         # TODO check for position and return true d_dx (see docstring)
         # for the time being we assume the points are on the source landmarks
-        return np.tile(np.eye(2, 2), [self.n_points, 1, 1])
+        return np.eye(2, 2)[None, ...]
 
     def d_dl(self, points):
         """
