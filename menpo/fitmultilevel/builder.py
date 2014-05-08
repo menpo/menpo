@@ -9,9 +9,9 @@ from menpo.visualize import print_dynamic, progress_bar_str
 from .functions import mean_pointcloud
 
 
-#TODO: Document me
 class DeformableModelBuilder(object):
     r"""
+    Abstract class with a set of functions useful to build a Deformable Model.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -78,8 +78,6 @@ class DeformableModelBuilder(object):
 
     @abc.abstractmethod
     def build(self, images, group=None, label='all'):
-        r"""
-        """
         pass
 
     @classmethod
@@ -87,6 +85,67 @@ class DeformableModelBuilder(object):
                        interpolator, scaled_shape_models, n_levels, downscale,
                        verbose=False):
         r"""
+        Function that applies some preprocessing steps on a set of images.
+        These steps are essential before building a deformable model.
+
+        The preprocessing includes:
+        1) Computation of the reference shape as the mean shape of the images'
+           landmarks.
+        2) Scaling of the reference shape using the normalization_diagonal.
+        3) Rescaling of all the images so that their shape's scale is in
+           correspondence with the reference shape's scale.
+        4) Creation of the generator function for a smoothing or Gaussian
+           pyramid.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.Image`
+            The set of landmarked images from which to build the AAM.
+        group : string
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+        label: string
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+        normalization_diagonal: int
+            During building an AAM, all images are rescaled to ensure that the
+            scale of their landmarks matches the scale of the mean shape.
+
+            If int, it ensures that the mean shape is scaled so that the
+            diagonal of the bounding box containing it matches the
+            normalization_diagonal value.
+            If None, the mean shape is not rescaled.
+
+            Note that, because the reference frame is computed from the mean
+            landmarks, this kwarg also specifies the diagonal length of the
+            reference frame (provided that features computation does not change
+            the image size).
+        interpolator: string
+            The interpolator that should be used to perform the warps.
+        scaled_shape_models: boolean
+            If True, the original images will be smoothed with a smoothing
+            pyramid and the shape models (reference frames) will be scaled with
+            a Gaussian pyramid.
+            If False, the original images will be scaled with a Gaussian
+            pyramid and the shape models (reference frames) will have the same
+            scale (the one of the highest pyramidal level).
+        n_levels: int
+            The number of multi-resolution pyramidal levels to be used.
+        downscale: float
+            The downscale factor that will be used to create the different
+            pyramidal levels.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        reference_shape: Pointcloud
+            The reference shape that was used to resize all training images to a
+            consistent object size.
+        generator: function
+            The generator function of the smoothing or Gaussian pyramid.
         """
         if verbose:
             intro_str = '- Preprocessing: '

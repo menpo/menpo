@@ -19,16 +19,20 @@ class AAMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    feature_type: list of strings or list of functions/closures, Optional
-        If None, the appearance model will be build using the original image
+    feature_type: None or string or function/closure or list of those, Optional
+        If list of length n_levels, then a feature type is defined per level.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified feature type
+        will be used for all levels.
+
+        Per level:
+        If None, the appearance model will be built using the original image
         representation, i.e. no features will be extracted from the original
         images.
-        If list of strings or closures, the appearance model will be built
-        from a feature representation of the original images. The first
-        element of the list specifies the features to be extracted at the
-        lowest pyramidal level and so on.
 
-        If list of strings, image features will be computed by executing:
+        If string, image features will be computed by executing:
 
            feature_image = eval('img.feature_type.' +
                                 feature_type[level] + '()')
@@ -40,9 +44,9 @@ class AAMBuilder(DeformableModelBuilder):
         carried out using the default options.
 
         Non-default feature options and new experimental features can be
-        defined using lists of functions/closures. In this case,
-        the functions must receive an image as input and return a
-        particular feature representation of that image. For example:
+        defined using functions/closures. In this case, the functions must
+        receive an image as input and return a particular feature
+        representation of that image. For example:
 
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
@@ -53,27 +57,24 @@ class AAMBuilder(DeformableModelBuilder):
         menpo's standard image features and feature options.
 
         Default: None
-
     transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
         The :class:`menpo.transform.PureAlignmentTransform` that will be
         used to warp the images.
 
         Default: :class:`menpo.transform.PiecewiseAffine`
-
     trilist: (t, 3) ndarray, Optional
         Triangle list that will be used to build the reference frame. If None,
         defaults to performing Delaunay triangulation on the points.
 
         Default: None
+    normalization_diagonal: int >= 20, Optional
+        During building an AAM, all images are rescaled to ensure that the
+        scale of their landmarks matches the scale of the mean shape.
 
-    normalization_diagonal: int, Optional
-        All images will be rescaled to ensure that the scale of their
-        landmarks matches the scale of the mean shape.
-
-        If int, ensures that the mean shape is scaled so that
-        the diagonal of the bounding box containing it matches the
-        normalization_diagonal value.
-        If None, the mean landmarks are not rescaled.
+        If int, it ensures that the mean shape is scaled so that the diagonal
+        of the bounding box containing it matches the normalization_diagonal
+        value.
+        If None, the mean shape is not rescaled.
 
         Note that, because the reference frame is computed from the mean
         landmarks, this kwarg also specifies the diagonal length of the
@@ -81,45 +82,57 @@ class AAMBuilder(DeformableModelBuilder):
         the image size).
 
         Default: None
-
-    n_levels: int, Optional
+    n_levels: int > 0, Optional
         The number of multi-resolution pyramidal levels to be used.
 
         Default: 3
-
-    downscale: float > 1, Optional
+    downscale: float >= 1, Optional
         The downscale factor that will be used to create the different
         pyramidal levels.
 
         Default: 2
-
     scaled_shape_models: boolean, Optional
-        If True, the original images will be both smoothed and scaled using
-        a Gaussian pyramid to create the different pyramidal levels.
-        If False, they will only be smoothed.
+        If True, the original images will be smoothed with a smoothing pyramid
+        and the shape models (reference frames) will be scaled with a
+         Gaussian pyramid.
+        If False, the original images will be scaled with a Gaussian pyramid
+        and the shape models (reference frames) will have the same scale (the
+        one of the highest pyramidal level).
 
         Default: True
+    max_shape_components: int > 0 or 0 <= float <= 1 or list of those, Optional
+        If list of length n_levels, then a number of shape components is
+        defined per level. The first element of the list specifies the number
+        of components of the lowest pyramidal level and so on.
 
-    max_shape_components: 0 < int < n_components, Optional
-        If int, it specifies the specific number of components of the
-        original shape model to be retained.
+        If not a list or a list with length 1, then the specified number of
+        shape components will be used for all levels.
+
+        Per level:
+        If int, it specifies the exact number of components to be retained.
+        If float, it specifies the percentage of variance to be retained.
 
         Default: None
+    max_appearance_components: int > 0 or 0 <= float <= 1 or list of those, Opt
+        If list of length n_levels, then a number of appearance components is
+        defined per level. The first element of the list specifies the number
+        of components of the lowest pyramidal level and so on.
 
-    max_appearance_components: 0 < int < n_components, Optional
-        If int, it specifies the specific number of components of the
-        original appearance model to be retained.
+        If not a list or a list with length 1, then the specified number of
+        appearance components will be used for all levels.
+
+        Per level:
+        If int, it specifies the exact number of components to be retained.
+        If float, it specifies the percentage of variance to be retained.
 
         Default: None
-
-    boundary: int, Optional
+    boundary: int >= 0, Optional
         The number of pixels to be left as a safe margin on the boundaries
         of the reference frame (has potential effects on the gradient
         computation).
 
         Default: 3
-
-    interpolator: 'scipy', Optional
+    interpolator: string, Optional
         The interpolator that should be used to perform the warps.
 
         Default: 'scipy'
@@ -128,13 +141,30 @@ class AAMBuilder(DeformableModelBuilder):
     -------
     aam : :class:`menpo.fitmultiple.aam.builder.AAMBuilder`
         The AAM Builder object
+
+    Raises
+    -------
+    ValueError
+        n_levels must be > 0
+    ValueError
+        downscale must be >= 1
+    ValueError
+        normalization_diagonal must be >= 20
+    ValueError
+        max_shape_components must be None or an int > 0 or a 0 <= float <= 1
+        or a list of those containing 1 or {n_levels} elements
+    ValueError
+        max_appearance_components must be None or an int > 0 or a
+        0 <= float <= 1 or a list of those containing 1 or {n_levels} elements
+    ValueError
+        feature_type must be a str or a function/closure or a list of those
+        containing 1 or {n_levels} elements
     """
-    def __init__(self, feature_type=sparse_hog,
-                 transform=PiecewiseAffine, trilist=None,
-                 normalization_diagonal=None, n_levels=3, downscale=1.1,
-                 scaled_shape_models=True, max_shape_components=None,
-                 max_appearance_components=None, boundary=3,
-                 interpolator='scipy'):
+    def __init__(self, feature_type='igo', transform=PiecewiseAffine,
+                 trilist=None, normalization_diagonal=None, n_levels=3,
+                 downscale=2, scaled_shape_models=False,
+                 max_shape_components=None, max_appearance_components=None,
+                 boundary=3, interpolator='scipy'):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -145,10 +175,12 @@ class AAMBuilder(DeformableModelBuilder):
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
         feature_type = self.check_feature_type(feature_type, n_levels)
+
         # levels are learned from high to low resolutions
         feature_type.reverse()
         max_shape_components.reverse()
         max_appearance_components.reverse()
+        
         # store parameters
         self.feature_type = feature_type
         self.transform = transform
@@ -171,21 +203,18 @@ class AAMBuilder(DeformableModelBuilder):
         ----------
         images: list of :class:`menpo.image.Image`
             The set of landmarked images from which to build the AAM.
-
         group : string, Optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
-
         label: string, Optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: 'all'
-
         verbose: bool, Optional
-            Flag that controls information printing.
+            Flag that controls information and progress printing.
 
             Default: False
 
@@ -292,15 +321,15 @@ class AAMBuilder(DeformableModelBuilder):
         self.feature_type.reverse()
         n_training_images = len(images)
 
-        return self._build_aam(n_training_images, shape_models,
-                               appearance_models)
+        return self._build_aam(shape_models, appearance_models,
+                               n_training_images)
 
     def _build_reference_frame(self, mean_shape):
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
 
-    def _build_aam(self, n_training_images, shape_models, appearance_models):
-        return AAM(n_training_images, shape_models, appearance_models,
+    def _build_aam(self, shape_models, appearance_models, n_training_images):
+        return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
                    self.downscale, self.scaled_shape_models, self.interpolator)
 
@@ -473,22 +502,34 @@ class AAM(object):
     appearance_models: :class:`menpo.model.PCA` list
         A list containing the appearance models of the AAM.
 
+    n_training_images: int
+        The number of training images used to build the AAM.
+
     transform: :class:`menpo.transform.PureAlignmentTransform`
         The transform used to warp the images from which the AAM was
         constructed.
 
-    feature_type: str or function
+    feature_type: None or string or function/closure or list of those
         The image feature that was be used to build the appearance_models. Will
-        subsequently be used by fitter objects using this class to fitter to
+        subsequently be used by fitter objects using this class to fit to
         novel images.
 
-        If None, the appearance model was built immediately from the image
-        representation, i.e. intensity.
+        If list of length n_levels, then a feature type was defined per level.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified feature type
+        was used for all levels.
+
+        Per level:
+        If None, the appearance model was built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
 
         If string, the appearance model was built using one of Menpo's default
         built-in feature representations - those
         accessible at image.features.some_feature(). Note that this case can
-        only be used with default feature weights - for custom feature
+        only be used with default feature parameters - for custom feature
         weights, use the functional form of this argument instead.
 
         If function, the user can directly provide the feature that was
@@ -503,21 +544,22 @@ class AAM(object):
         consistent object size.
 
     downscale: float
-        The constant downscale factor used to create the different levels of
-        the AAM. For example, a factor of 2 would imply that the second level
-        of the AAM pyramid is half the width and half the height of the first.
-        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
-        the original.
+        The downscale factor that was used to create the different pyramidal
+        levels.
 
     scaled_shape_models: boolean
-        Boolean value specifying whether the AAM levels are scaled or not.
+        If True, the original images were smoothed with a smoothing pyramid
+        and the shape models (reference frames) are scaled with a Gaussian
+        pyramid.
+        If False, the original images were scaled with a Gaussian pyramid and
+        the shape models (reference frames) have the same scale (the one of
+        the highest pyramidal level).
 
     interpolator: string
         The interpolator that was used to build the AAM.
 
-        Default: 'scipy'
     """
-    def __init__(self, n_training_images, shape_models, appearance_models,
+    def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, feature_type, reference_shape, downscale,
                  scaled_shape_models, interpolator):
         self.n_training_images = n_training_images
