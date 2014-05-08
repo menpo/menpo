@@ -23,8 +23,7 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
                                  interpolator=self.interpolator)
 
             # Compute warp Jacobian
-            dW_dp = self.transform.jacobian(
-                self.template.mask.true_indices)
+            dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
@@ -66,8 +65,7 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
 
     def _set_up(self):
         # Compute warp Jacobian
-        self._dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        self._dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
     def _fit(self, lk_fitting, max_iters=20, project=True):
         # Initial error > eps
@@ -118,8 +116,7 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
 
     def _set_up(self):
         # Compute warp Jacobian
-        self._dW_dp = self.transform.jacobian(
-            self.template.mask.true_indices)
+        self._dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
         # Compute steepest descent images, VT_dW_dp
         J = self.residual.steepest_descent_images(self.template,

@@ -80,7 +80,7 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         self._kernel_grid = mvn.pdf(self._sampling_grid)
 
         # Transform Jacobian
-        self._J = self.transform.jacobian([])
+        self._J = self.transform.d_dp([])
 
         # Prior
         augmented_eigenvalues = np.hstack((np.ones(4),
