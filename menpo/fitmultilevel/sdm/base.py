@@ -15,9 +15,10 @@ class SupervisedDescentFitter(MultilevelFitter):
             error_type='me_norm', verbose=False, view=False, **kwargs):
         if max_iters is None:
             max_iters = self.n_levels
-        return MultilevelFitter.fit(image, initial_shape, max_iters=max_iters,
-                                    gt_shape=gt_shape, error_type=error_type,
-                                    verbose=verbose, view=view, **kwargs)
+        return MultilevelFitter.fit(self, image, initial_shape,
+                                    max_iters=max_iters, gt_shape=gt_shape,
+                                    error_type=error_type, verbose=verbose,
+                                    view=view, **kwargs)
 
 
 #TODO: Document me
