@@ -12,6 +12,9 @@ Classes
 
    Vectorizable
    Targetable
+   DP
+   DX
+   DL
 
 Functions
 ---------
@@ -20,4 +23,3 @@ Functions
    :maxdepth: 1
 
    menpo_src_dir_path
-
