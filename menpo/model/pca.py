@@ -179,7 +179,7 @@ class PCAModel(MeanInstanceLinearModel):
                 noise_variance += self._trimmed_eigenvalues.mean()
         else:
             noise_variance = \
-                np.vstack((self._eigenvalues[self.n_active_components:],
+                np.hstack((self._eigenvalues[self.n_active_components:],
                            self._trimmed_eigenvalues)).mean()
         return noise_variance
 
