@@ -15,7 +15,7 @@ class AAMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    aam: :class:`menpo.aam.AAM`
+    aam: :class:`menpo.aam.builder.AAM`
         The Active Appearance Model to be used.
     """
     def __init__(self, aam):
@@ -89,37 +89,31 @@ class LucasKanadeAAMFitter(AAMFitter):
     Parameters
     -----------
     aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
-        The Active Appearance Model to be use.
-
+        The Active Appearance Model to be used.
     algorithm: :class:`menpo.fit.lucaskanade.appearance`, optional
         The Lucas-Kanade class to be used.
 
         Default: AlternatingInverseCompositional
-
     residual: :class:`menpo.fit.lucaskanade.residual`, optional
         The residual class to be used
 
         Default: 'LSIntensity'
-
     md_transform: :class:`menpo.transform.ModelDrivenTransform`,
                       optional
         The model driven transform class to be used.
 
         Default: OrthoMDTransform
-
     global_transform: :class:`menpo.transform.affine`, optional
         The global transform class to be used by the previous
         md_transform_cls. Currently, only
         :class:`menpo.transform.affine.Similarity` is supported.
 
         Default: Similarity
-
     n_shape: list, optional
         The number of shape components to be used per fitting level.
         If None, for each shape model n_active_components will be used.
 
         Default: None
-
     n_appearance: list, optional
         The number of appearance components to be used per fitting level.
         If None, for each appearance model n_active_components will be used.
@@ -145,7 +139,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 global_transform=AlignmentSimilarity, n_shape=None,
                 n_appearance=None):
         r"""
-        Sets up the lucas-kanade fitter object.
+        Sets up the Lucas-Kanade fitter object.
 
         Parameters
         -----------
@@ -153,31 +147,26 @@ class LucasKanadeAAMFitter(AAMFitter):
             The Lucas-Kanade class to be used.
 
             Default: AlternatingInverseCompositional
-
         residual: :class:`menpo.lucaskanade.residual`, optional
             The residual class to be used
 
             Default: 'LSIntensity'
-
         md_transform: :class:`menpo.transform.ModelDrivenTransform`,
                           optional
             The model driven transform class to be used.
 
             Default: OrthoMDTransform
-
         global_trans: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform. Currently, only
             :class:`menpo.transform.affine.Similarity` is supported.
 
             Default: Similarity
-
         n_shape: list, optional
             The number of shape components to be used per fitting level.
             If None, for each shape model n_active_components will be used.
 
             Default: None
-
         n_appearance: list, optional
             The number of appearance components to be used per fitting level.
             If None, for each appearance model n_active_components will be used.
@@ -207,7 +196,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance[0]
             elif len(n_appearance) is self.aam.n_levels:
-                for am, n in zip(self.aam.appearance_models, n_shape):
+                for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
                 raise ValueError('n_appearance can be integer, integer list '
@@ -226,5 +215,20 @@ class LucasKanadeAAMFitter(AAMFitter):
                 md_trans = md_transform(
                     sm, self.aam.transform,
                     source=am.mean.landmarks['source'].lms)
-
             self._fitters.append(algorithm(am, residual(), md_trans))
+
+    def __str__(self):
+        out = "{0}Fitter\n" \
+              " - Lucas-Kanade {1}\n" \
+              " - Transforms: \n" \
+              " - Number of active components in use:\n".format(
+              self.aam.__str__(), self._fitters[0].algorithm)
+        for i in range(self.n_levels):
+            out = "{0}   - Level {1}:\n" \
+                  "     - {2} motion parameters\n" \
+                  "     - {3} appearance components ({4:.2f}% of original " \
+                  "variance)\n".format(
+                  out, i + 1, self._fitters[i].transform.n_parameters,
+                  self._fitters[i].appearance_model.n_active_components,
+                  self._fitters[i].appearance_model.kept_variance_ratio * 100)
+        return out
