@@ -12,6 +12,7 @@ from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.visualize.text_utils import print_bytes
+from ..functions import mean_pointcloud
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -228,15 +229,15 @@ class AAMBuilder(DeformableModelBuilder):
         aam : :class:`menpo.fitmultiple.aam.builder.AAM`
             The AAM object
         """
-        # estimate required ram memory
-        if verbose:
-            self._estimate_ram_requirements(images, group, label, n_images=3)
-
         # compute reference_shape, normalize images size and create pyramid
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.normalization_diagonal,
             self.interpolator, self.scaled_shape_models, self.n_levels,
             self.downscale, verbose=verbose)
+
+        # estimate required ram memory
+        if verbose:
+            self._estimate_ram_requirements(images, group, label, n_images=3)
 
         # build the model at each pyramid level
         if verbose:
@@ -382,6 +383,18 @@ class AAMBuilder(DeformableModelBuilder):
         n_training_images = len(images)
         which_images = sample(range(n_training_images), n_images)
         images_ram = [images[i] for i in which_images]
+        # normalize images with respect to reference shape
+        if self.normalization_diagonal is None:
+            shapes_ram = [i.landmarks[group][label].lms for i in images_ram]
+            reference_shape_ram = mean_pointcloud(shapes_ram)
+            x_ram, y_ram = reference_shape_ram.range()
+            x, y = self.reference_shape.range()
+            scale = np.sqrt(x**2 + y**2) / np.sqrt(x_ram**2 + y_ram**2)
+            Scale(scale, reference_shape_ram.n_dims).apply_inplace(
+                reference_shape_ram)
+            images_ram = [i.rescale_to_reference_shape(
+                reference_shape_ram, group=group, label=label,
+                interpolator=self.interpolator) for i in images_ram]
         # train aam
         aam_ram = self.build(images_ram, group=group, label=label,
                              verbose=False)
