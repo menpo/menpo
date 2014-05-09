@@ -16,12 +16,7 @@ at all times.
 
 Installation
 ------------
-
-The [Menpo Wiki](https://github.com/menpo/menpo/wiki) contains installation guides for each platform:
-
-- [OS X](https://github.com/menpo/menpo/wiki/%5BInstallation%5D-OS-X)
-- [Linux](https://github.com/menpo/menpo/wiki/%5BInstallation%5D-Ubuntu-14.04)
-- [Windows](https://github.com/menpo/menpo/wiki/%5BInstallation%5D-Windows)
+The [Menpo Wiki](https://github.com/menpo/menpo/wiki) contains installation guides for each platform.
 
 Usage
 -----
