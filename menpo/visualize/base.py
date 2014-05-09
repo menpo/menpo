@@ -203,7 +203,6 @@ LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
 VectorViewer3d = MayaviVectorViewer3d
-DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
