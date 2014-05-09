@@ -11,7 +11,7 @@ class SDFitter(MultilevelFitter):
     def _set_up(self):
         pass
 
-    def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
+    def fit(self, image, initial_shape, max_iters=None, gt_shape=None,
             error_type='me_norm', verbose=False, view=False, **kwargs):
         if max_iters is None:
             max_iters = self.n_levels
