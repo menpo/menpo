@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from random import sample
 
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
@@ -9,8 +10,8 @@ from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
-from menpo.fitmultilevel.featurefunctions import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.visualize.text_utils import print_bytes
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -166,7 +167,7 @@ class AAMBuilder(DeformableModelBuilder):
     """
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
-                 downscale=2, scaled_shape_models=False,
+                 downscale=2, scaled_shape_models=True,
                  max_shape_components=None, max_appearance_components=None,
                  boundary=3, interpolator='scipy'):
         # check parameters
@@ -227,6 +228,10 @@ class AAMBuilder(DeformableModelBuilder):
         aam : :class:`menpo.fitmultiple.aam.builder.AAM`
             The AAM object
         """
+        # estimate required ram memory
+        if verbose:
+            self._estimate_ram_requirements(images, group, label, n_images=3)
+
         # compute reference_shape, normalize images size and create pyramid
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.normalization_diagonal,
@@ -331,6 +336,11 @@ class AAMBuilder(DeformableModelBuilder):
     def _build_reference_frame(self, mean_shape):
         r"""
         Generates the reference frame given a mean shape.
+
+        Parameter
+        ---------
+        mean_shape: Pointcloud
+            The mean shape to use.
         """
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
@@ -351,6 +361,57 @@ class AAMBuilder(DeformableModelBuilder):
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
                    self.downscale, self.scaled_shape_models, self.interpolator)
+
+    def _estimate_ram_requirements(self, images, group, label, n_images=3):
+        r"""
+        Estimates the RAM memory requirements in order to save the AAM model
+        that is about to be trained. Note that this function is only called if
+        verbose parameter of the builder is enabled.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.Image`
+            The set of landmarked images which will be used to build the AAM.
+        group : string
+            The key of the landmark set that will be used.
+        label: string
+            The label of of the landmark manager that will be used.
+        """
+        print_dynamic('- Estimating RAM memory requirements')
+        # create images list
+        n_training_images = len(images)
+        which_images = sample(range(n_training_images), n_images)
+        images_ram = [images[i] for i in which_images]
+        # train aam
+        aam_ram = self.build(images_ram, group=group, label=label,
+                             verbose=False)
+        # find required appearance components per level
+        n_components = []
+        for i in range(self.n_levels):
+            if self.max_appearance_components[i] is None:
+                n_components.append(n_training_images - 1)
+            elif isinstance(self.max_appearance_components[i], int):
+                n_components.append(
+                    min([n_training_images - 1,
+                         self.max_appearance_components[i]]))
+            elif isinstance(self.max_appearance_components[i], float):
+                n_components.append(int((n_training_images - 1) *
+                                        self.max_appearance_components[i]))
+        n_components.reverse()
+        # find bytes per appearance model
+        bytes_ram = [n_components[i] *
+                     aam_ram.appearance_models[i].components[0, :].nbytes
+                     for i in range(self.n_levels)]
+        # convert and print bytes
+        print_bytes_ram = [print_bytes(i) for i in bytes_ram]
+        if len(print_bytes_ram) > 1:
+            print_dynamic("- Approximately {} {} of RAM required to store "
+                          "model.\n".format(print_bytes(sum(bytes_ram)),
+                                            print_bytes_ram))
+        else:
+            print_dynamic("- Approximately {} of RAM required to store "
+                          "model.\n".format(print_bytes(sum(bytes_ram))))
+        self.feature_type.reverse()
 
 
 #TODO: Test me!!!

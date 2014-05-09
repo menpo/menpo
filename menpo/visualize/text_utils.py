@@ -66,3 +66,23 @@ def print_dynamic(str_to_print=''):
     """
     sys.stdout.write("\r%s" % str_to_print)
     sys.stdout.flush()
+
+
+def print_bytes(num):
+    r"""
+    Returns a string of size provided in num with the appropriate format.
+    e.g. print_bytes(12345) returns '12.06 KB'
+         print_bytes(123456789) returns '117.74 MB'
+
+    Parameter
+    ---------
+    num : int > 0
+        The size in bytes.
+    """
+    if not isinstance(num, int) or num < 0:
+        raise ValueError("num must be int >= 0")
+    for x in ['bytes', 'KB', 'MB', 'GB']:
+        if num < 1024.0:
+            return "{0:3.2f} {1:s}".format(num, x)
+        num /= 1024.0
+    return "{0:3.2f} {1:s}".format(num, 'TB')
