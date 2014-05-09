@@ -218,13 +218,17 @@ class LucasKanadeAAMFitter(AAMFitter):
             self._fitters.append(algorithm(am, residual(), md_trans))
 
     def __str__(self):
-        out = "{0}Fitter\n" \
-              " - Lucas-Kanade {1}\n" \
+        out = "AAM Fitter\n" \
+              " - Lucas-Kanade {}\n" \
               " - Transforms: \n" \
-              " - Number of active components in use:\n".format(
+              " - Residual: \n" \
+              " - {} training images.\n" \
+              " - Pyramid info (builder)\n" \
+              "   Shape models (scaled or not, builder)\n".format(
               self.aam.__str__(), self._fitters[0].algorithm)
         for i in range(self.n_levels):
             out = "{0}   - Level {1}:\n" \
+                  "     Feature, Ref frame, "
                   "     - {2} motion parameters\n" \
                   "     - {3} appearance components ({4:.2f}% of original " \
                   "variance)\n".format(
