@@ -218,7 +218,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             self._fitters.append(algorithm(am, residual(), md_trans))
 
     def __str__(self):
-        out = "AAM Fitter\n" \
+        out = "Active Appearance Model Fitter\n" \
               " - Lucas-Kanade {0}\n" \
               " - Transforms: \n" \
               " - Residual: \n" \
