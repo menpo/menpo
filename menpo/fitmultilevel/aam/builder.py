@@ -804,15 +804,12 @@ class AAM(object):
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}:\n   Shape models are not " \
                       "scaled.\n".format(out, self.n_levels, self.downscale)
-
             for i in range(self.n_levels):
-                out = "{0}   - Level {1}: \n" \
-                      "     {2}{3} {4} per image.\n" \
+                out = "{0}   - Level {1}: \n     {2}{3} {4} per image.\n" \
                       "     - Reference frame of length {5} ({6} x {7}C, " \
-                      "{8} x {9}C)\n" \
-                      "     - {10} shape components ({11:.2f}% of variance)\n" \
-                      "     - {12} appearance components ({13:.2f}% of " \
-                      "variance)\n".format(
+                      "{8} x {9}C)\n     - {10} shape components ({11:.2f}% " \
+                      "of variance)\n     - {12} appearance components " \
+                      "({13:.2f}% of variance)\n".format(
                       out, i+1, feat_str[i], n_channels[i], ch_str[i],
                       self.appearance_models[i].n_features,
                       self.appearance_models[i].template_instance.n_true_pixels,
@@ -823,17 +820,20 @@ class AAM(object):
                       self.appearance_models[i].n_components,
                       self.appearance_models[i].kept_variance_ratio * 100)
         else:
-            out = "{0} - No pyramid used:\n" \
-                  "   - {1} shape components ({2:.2f}% of variance)\n" \
-                  "   - {3} appearance components ({4:.2f}% of variance)\n" \
-                  "   - Reference frame of length {5} ({6} x {7}C)\n".format(
-                  out, self.shape_models[0].n_components,
+            out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
+                  "   - Reference frame of length {4} ({5} x {6}C, " \
+                  "{7} x {8}C)\n   - {9} shape components ({10:.2f}% of " \
+                  "variance)\n   - {11} appearance components ({12:.2f}% of " \
+                  "variance)\n".format(
+                  out, feat_str[0], n_channels[0], ch_str[0],
+                  self.appearance_models[0].n_features,
+                  self.appearance_models[0].template_instance.n_true_pixels,
+                  n_channels[0],
+                  self.appearance_models[0].template_instance._str_shape,
+                  n_channels[0], self.shape_models[0].n_components,
                   self.shape_models[0].kept_variance_ratio * 100,
                   self.appearance_models[0].n_components,
-                  self.appearance_models[0].kept_variance_ratio * 100,
-                  self.appearance_models[0].n_features,
-                  self.appearance_models[0].template_instance._str_shape,
-                  n_channels[0])
+                  self.appearance_models[0].kept_variance_ratio * 100)
         return out
 
 

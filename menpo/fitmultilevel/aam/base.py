@@ -39,7 +39,7 @@ class AAMFitter(MultilevelFitter):
 
     @property
     def scaled_levels(self):
-        return self.aam.scaled_levels
+        return not self.aam.scaled_shape_models
 
     @property
     def interpolator(self):
@@ -219,20 +219,65 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     def __str__(self):
         out = "AAM Fitter\n" \
-              " - Lucas-Kanade {}\n" \
+              " - Lucas-Kanade {0}\n" \
               " - Transforms: \n" \
               " - Residual: \n" \
-              " - {} training images.\n" \
-              " - Pyramid info (builder)\n" \
-              "   Shape models (scaled or not, builder)\n".format(
-              self.aam.__str__(), self._fitters[0].algorithm)
-        for i in range(self.n_levels):
-            out = "{0}   - Level {1}:\n" \
-                  "     Feature, Ref frame, "
-                  "     - {2} motion parameters\n" \
-                  "     - {3} appearance components ({4:.2f}% of original " \
+              " - {1} training images.\n".format(
+              self._fitters[0].algorithm, self.aam.n_training_images)
+        n_channels = []
+        ch_str = []
+        feat_str = []
+        for j in range(self.n_levels):
+            n_channels.append(
+                self._fitters[j].appearance_model.template_instance.n_channels)
+            if n_channels[j] == 1:
+                ch_str.append("channel")
+            else:
+                ch_str.append("channels")
+            if isinstance(self.feature_type[j], str):
+                feat_str.append("- Feature is {} with ".format(
+                    self.feature_type[j]))
+            elif self.feature_type[j] is None:
+                feat_str.append("- No features extracted. ")
+            else:
+                feat_str.append("- Feature is {} with ".format(
+                    self.feature_type[j].func_name))
+        if self.n_levels > 1:
+            if self.aam.scaled_shape_models:  # not self.scaled_levels
+                out = "{} - Smoothing pyramid with {} levels and downscale " \
+                      "factor of {}.\n   Each level has a scaled shape " \
+                      "model.\n".format(out, self.n_levels, self.downscale)
+
+            else:
+                out = "{} - Gaussian pyramid with {} levels and downscale " \
+                      "factor of {}:\n   Shape models are not " \
+                      "scaled.\n".format(out, self.n_levels, self.downscale)
+            for i in range(self.n_levels):
+                out = "{0}   - Level {1}: \n     {2}{3} {4} per image.\n" \
+                      "     - Reference frame of length {5} ({6} x {7}C, " \
+                      "{8} x {9}C)\n     - {10} motion parameters\n" \
+                      "     - {11} active appearance components ({12:.2f}% " \
+                      "of original variance)\n".format(
+                      out, i+1, feat_str[i], n_channels[i], ch_str[i],
+                      self._fitters[i].appearance_model.n_features,
+                      self._fitters[i].template.n_true_pixels,
+                      n_channels[i],
+                      self._fitters[i].template._str_shape,
+                      n_channels[i], self._fitters[i].transform.n_parameters,
+                      self._fitters[i].appearance_model.n_active_components,
+                      self._fitters[i].appearance_model.kept_variance_ratio *
+                      100)
+        else:
+            out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
+                  "   - Reference frame of length {4} ({5} x {6}C, " \
+                  "{7} x {8}C)\n   - {9} motion parameters\n" \
+                  "   - {11} appearance components ({12:.2f}% of original " \
                   "variance)\n".format(
-                  out, i + 1, self._fitters[i].transform.n_parameters,
-                  self._fitters[i].appearance_model.n_active_components,
-                  self._fitters[i].appearance_model.kept_variance_ratio * 100)
+                  out, feat_str[0], n_channels[0], ch_str[0],
+                  self._fitters[0].appearance_model.n_features,
+                  self._fitters[0].template.n_true_pixels,
+                  n_channels[0], self._fitters[0].template._str_shape,
+                  n_channels[0], self._fitters[0].transform.n_parameters,
+                  self._fitters[0].appearance_model.n_active_components,
+                  self._fitters[0].appearance_model.kept_variance_ratio * 100)
         return out
