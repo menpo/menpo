@@ -67,11 +67,9 @@ class MultilevelFitter(Fitter):
         -----------
         image: :class:`pybug.image.masked.MaskedImage`
             The image to be fitted.
-
         initial_shape: :class:`pybug.shape.PointCloud`
             The initial shape estimate from which the fitting procedure
             will start.
-
         max_iters: int or list, optional
             The maximum number of iterations.
             If int, then this will be the overall maximum number of iterations
@@ -80,19 +78,16 @@ class MultilevelFitter(Fitter):
             pyramidal level.
 
             Default: 50
-
         error_type: 'me_norm', 'me' or 'rmse', optional.
             Specifies the way in which the error between the fitted and
             ground truth shapes is to be computed.
 
             Default: 'me_norm'
-
         verbose: boolean, optional
             Whether or not to print information related to the fitting
             results (such as: final error, convergence, ...).
 
             Default: True
-
         view: boolean, optional
             Whether or not the fitting results are to be displayed.
 
