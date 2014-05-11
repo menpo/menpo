@@ -51,15 +51,35 @@ class AAMFitter(MultilevelFitter):
         The image is first rescaled wrt the reference_landmarks, then
         smoothing or gaussian pyramid are computed and, finally, features
         are extracted from each pyramidal element.
+
+        Parameters
+        ----------
+        image: :class:`pybug.image.masked.MaskedImage`
+            The image to be fitted.
+        initial_shape: class:`pybug.shape.PointCloud`
+            The initial shape from which the fitting will start.
+        gt_shape: class:`pybug.shape.PointCloud`, optional
+            The original ground truth shape associated to the image.
+
+            Default: None
+
+        Returns
+        -------
+        images: list of :class:`pybug.image.masked.MaskedImage`
+            List of images, each being the result of applying the pyramid.
         """
+        # rescale image wrt the scale factor between reference_shape and
+        # initial_shape
         image.landmarks['initial_shape'] = initial_shape
         image = image.rescale_to_reference_shape(
             self.reference_shape, group='initial_shape',
             interpolator=self.interpolator)
 
+        # attach given ground truth shape
         if gt_shape:
-            image.landmarks['gt_shape'] = initial_shape
+            image.landmarks['gt_shape'] = gt_shape
 
+        # apply pyramid
         if self.n_levels > 1:
             if self.scaled_levels:
                 pyramid = image.gaussian_pyramid(
