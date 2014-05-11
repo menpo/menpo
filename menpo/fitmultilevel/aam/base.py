@@ -67,12 +67,12 @@ class AAMFitter(MultilevelFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type[j])
+            images = [compute_features(i,
+                                       self.feature_type[self.n_levels-j-1])
                       for j, i in enumerate(pyramid)]
             images.reverse()
         else:
             images = [compute_features(image, self.feature_type[0])]
-
         return images
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
@@ -227,6 +227,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         n_channels = []
         ch_str = []
         feat_str = []
+        down_str = []
         for j in range(self.n_levels):
             n_channels.append(
                 self._fitters[j].appearance_model.template_instance.n_channels)
@@ -242,6 +243,11 @@ class LucasKanadeAAMFitter(AAMFitter):
             else:
                 feat_str.append("- Feature is {} with ".format(
                     self.feature_type[j].func_name))
+            if j == self.n_levels - 1:
+                down_str.append('(no downscale)')
+            else:
+                down_str.append('(downscale by {})'.format(
+                    self.downscale**(self.n_levels - j - 1)))
         if self.n_levels > 1:
             if self.aam.scaled_shape_models:  # not self.scaled_levels
                 out = "{} - Smoothing pyramid with {} levels and downscale " \
@@ -252,13 +258,14 @@ class LucasKanadeAAMFitter(AAMFitter):
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}:\n   Shape models are not " \
                       "scaled.\n".format(out, self.n_levels, self.downscale)
-            for i in range(self.n_levels):
-                out = "{0}   - Level {1}: \n     {2}{3} {4} per image.\n" \
-                      "     - Reference frame of length {5} ({6} x {7}C, " \
-                      "{8} x {9}C)\n     - {10} motion parameters\n" \
-                      "     - {11} active appearance components ({12:.2f}% " \
+            for i in range(self.n_levels - 1, -1, -1):
+                out = "{0}   - Level {1} {2}: \n     {3}{4} {5} per image.\n" \
+                      "     - Reference frame of length {6} ({7} x {8}C, " \
+                      "{9} x {10}C)\n     - {11} motion parameters\n" \
+                      "     - {12} active appearance components ({13:.2f}% " \
                       "of original variance)\n".format(
-                      out, i+1, feat_str[i], n_channels[i], ch_str[i],
+                      out, self.n_levels - i, down_str[i], feat_str[i],
+                      n_channels[i], ch_str[i],
                       self._fitters[i].appearance_model.n_features,
                       self._fitters[i].template.n_true_pixels,
                       n_channels[i],
