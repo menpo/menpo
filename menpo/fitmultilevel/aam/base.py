@@ -23,26 +23,60 @@ class AAMFitter(MultilevelFitter):
 
     @property
     def reference_shape(self):
+        r"""
+        The reference shape of the trained AAM.
+
+        : `menpo.shape.Pointcloud`
+        """
         return self.aam.reference_shape
 
     @property
     def feature_type(self):
+        r"""
+        The feature type per pyramid level of the trained AAM. Note that they
+        are stored from lowest to highest level resolution.
+
+        : list
+        """
         return self.aam.feature_type
 
     @property
     def n_levels(self):
+        r"""
+        The number of pyramidal levels used during building the AAM.
+
+        : int
+        """
         return self.aam.n_levels
 
     @property
     def downscale(self):
+        r"""
+        The downscale per pyramidal level used during building the AAM.
+
+        : float
+        """
         return self.aam.downscale
 
     @property
     def scaled_levels(self):
+        r"""
+        Flag controls the pyramid of the testing image based on the pyramid
+        used during building the AAM.
+        If True, the test image will be scaled using a Gaussian pyramid.
+        If False, a smoothing pyramid will be applied to the testing image.
+
+        : boolean
+        """
         return not self.aam.scaled_shape_models
 
     @property
     def interpolator(self):
+        r"""
+        The interpolator used for warping.
+
+        : str
+        """
         return self.aam.interpolator
 
     # TODO: Can this be moved up?
@@ -75,7 +109,7 @@ class AAMFitter(MultilevelFitter):
             self.reference_shape, group='initial_shape',
             interpolator=self.interpolator)
 
-        # attach given ground truth shape
+        # attach given groundtruth shape
         if gt_shape:
             image.landmarks['gt_shape'] = gt_shape
 
@@ -152,6 +186,12 @@ class LucasKanadeAAMFitter(AAMFitter):
 
     @property
     def algorithm(self):
+        r"""
+        Returns a string containing the algorithm used from the Lucas-Kanade
+        family.
+
+        : str
+        """
         return 'LK-AAM-' + self._fitters[0].algorithm
 
     def _set_up(self, algorithm=AlternatingInverseCompositional,
