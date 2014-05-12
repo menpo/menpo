@@ -188,9 +188,9 @@ class MultilevelFittingResult(FittingResult):
                              'cannot be plotted')
 
     def __str__(self):
-        return 'MPHKA'
-        #print "Initial error: {}".format(self.initial_error)
-        #print "Final error: {}".format(self.final_error)
+        out = "Initial error: {0:.4f}\nFinal error: {1:.4f}".format(
+            self.initial_error, self.final_error)
+        return out
 
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):
