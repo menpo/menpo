@@ -802,9 +802,9 @@ class AAM(object):
                       n_channels[i],
                       self.appearance_models[i].template_instance._str_shape,
                       n_channels[i], self.shape_models[i].n_components,
-                      self.shape_models[i].kept_variance_ratio * 100,
+                      self.shape_models[i].variance_ratio * 100,
                       self.appearance_models[i].n_components,
-                      self.appearance_models[i].kept_variance_ratio * 100)
+                      self.appearance_models[i].variance_ratio * 100)
         else:
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
                   "   - Reference frame of length {4} ({5} x {6}C, " \
@@ -817,9 +817,9 @@ class AAM(object):
                   n_channels[0],
                   self.appearance_models[0].template_instance._str_shape,
                   n_channels[0], self.shape_models[0].n_components,
-                  self.shape_models[0].kept_variance_ratio * 100,
+                  self.shape_models[0].variance_ratio * 100,
                   self.appearance_models[0].n_components,
-                  self.appearance_models[0].kept_variance_ratio * 100)
+                  self.appearance_models[0].variance_ratio * 100)
         return out
 
 

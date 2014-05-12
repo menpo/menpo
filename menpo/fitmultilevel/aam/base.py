@@ -312,10 +312,11 @@ class LucasKanadeAAMFitter(AAMFitter):
     def __str__(self):
         out = "Active Appearance Model Fitter\n" \
               " - Lucas-Kanade {0}\n" \
-              " - Transform is ... and residual is {1}.\n" \
-              " - {2} training images.\n".format(
-              self._fitters[0].algorithm, self._fitters[0].residual.type,
-              self.aam.n_training_images)
+              " - Transform is {1} and residual is {2}.\n" \
+              " - {3} training images.\n".format(
+              self._fitters[0].algorithm,
+              self._fitters[0].transform.__class__.__name__,
+              self._fitters[0].residual.type, self.aam.n_training_images)
         n_channels = []
         ch_str = []
         feat_str = []
@@ -364,7 +365,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                       self._fitters[i].template._str_shape,
                       n_channels[i], self._fitters[i].transform.n_parameters,
                       self._fitters[i].appearance_model.n_active_components,
-                      self._fitters[i].appearance_model.kept_variance_ratio *
+                      self._fitters[i].appearance_model.variance_ratio *
                       100)
         else:
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
@@ -378,5 +379,5 @@ class LucasKanadeAAMFitter(AAMFitter):
                   n_channels[0], self._fitters[0].template._str_shape,
                   n_channels[0], self._fitters[0].transform.n_parameters,
                   self._fitters[0].appearance_model.n_active_components,
-                  self._fitters[0].appearance_model.kept_variance_ratio * 100)
+                  self._fitters[0].appearance_model.variance_ratio * 100)
         return out
