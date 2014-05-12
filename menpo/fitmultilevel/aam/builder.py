@@ -233,7 +233,8 @@ class AAMBuilder(DeformableModelBuilder):
 
         # estimate required ram memory
         if verbose:
-            self._estimate_ram_requirements(images, group, label, n_images=3)
+            self._estimate_ram_requirements(images, group, label,
+                                            n_images=min([3, len(images)]))
 
         # build the model at each pyramid level
         if verbose:
