@@ -101,29 +101,35 @@ class MultilevelFitter(Fitter):
             A fitting list object containing the fitting objects associated
             to each run.
         """
+        # copy image
         image = deepcopy(image)
+
+        # generate image pyramid
         images = self._prepare_image(image, initial_shape, gt_shape=gt_shape)
 
+        # get ground truth shape per level
         if gt_shape:
             gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
         else:
             gt_shapes = None
 
-        initial_shapes = [i.landmarks['initial_shape'].lms
-                          for i in images]
+        # get initial shape per level
+        initial_shapes = [i.landmarks['initial_shape'].lms for i in images]
 
         affine_correction = AlignmentAffine(initial_shapes[-1], initial_shape)
 
+        # execute multilevel fitting
         fitting_results = self._fit(images, initial_shapes[0],
                                     max_iters=max_iters,
                                     gt_shapes=gt_shapes, **kwargs)
 
+        # store result
         multilevel_fitting_result = self._create_fitting_result(
             image, fitting_results, affine_correction, gt_shape=gt_shape,
             error_type=error_type)
 
         if verbose:
-            multilevel_fitting_result.print_fitting_info()
+            print multilevel_fitting_result
         if view:
             multilevel_fitting_result.view_final_fitting(new_figure=True)
 
