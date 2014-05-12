@@ -131,6 +131,35 @@ class AAMFitter(MultilevelFitter):
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
+        r"""
+        Creates the :class: `pybug.aam.fitting.MultipleFitting` object
+        associated with a particular Fitter object.
+
+        Parameters
+        -----------
+        image: :class:`pybug.image.masked.MaskedImage`
+            The original image to be fitted.
+        fitting_results: :class:`pybug.aam.fitting.BasicFitting` list
+            A list of basic fitting objects containing the state of the
+            different fitting levels.
+        affine_correction: :class: `pybug.transforms.affine.Affine`
+            An affine transform that maps the result of the top resolution
+            fitting level to the space scale of the original image.
+        gt_shape: class:`pybug.shape.PointCloud`, optional
+            The ground truth shape associated to the image.
+
+            Default: None
+        error_type: 'me_norm', 'me' or 'rmse', optional
+            Specifies the way in which the error between the fitted and
+            ground truth shapes is to be computed.
+
+            Default: 'me_norm'
+
+        Returns
+        -------
+        fitting: :class:`pybug.aam.Fitting`
+            The fitting object that will hold the state of the fitter.
+        """
         return AAMMultilevelFittingResult(
             image, self, fitting_results, affine_correction, gt_shape=gt_shape,
             error_type=error_type)
@@ -220,8 +249,8 @@ class LucasKanadeAAMFitter(AAMFitter):
             :class:`menpo.transform.affine.Similarity` is supported.
 
             Default: Similarity
-        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of a
-                 combination of those, optional
+        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                 optional
             The number of shape components to be used per fitting level.
 
             If list of length n_levels, then a number of components is defined
@@ -239,8 +268,8 @@ class LucasKanadeAAMFitter(AAMFitter):
             captured by the components.
 
             Default: None
-        n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of a
-                      combination of those, optional
+        n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                      optional
             The number of appearance components to be used per fitting level.
 
             If list of length n_levels, then a number of components is defined
