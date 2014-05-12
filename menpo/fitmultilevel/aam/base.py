@@ -172,20 +172,24 @@ class LucasKanadeAAMFitter(AAMFitter):
 
             Default: Similarity
 
-        n_shape: list, optional
-            The number of shape components to be used per fitting level.
-            If None, for each shape model n_active_components will be used.
+        n_shape: list of int or float, optional
+            The number of shape components to be used per fitting level. It
+            can also be specified in terms of variance captured by the
+            components. If None, for each shape model n_active_components
+            will be used.
 
             Default: None
 
-        n_appearance: list, optional
+        n_appearance: list of int or float, optional
             The number of appearance components to be used per fitting level.
-            If None, for each appearance model n_active_components will be used.
+            It can also be specified in terms of variance captured by the
+            components. If None, for each appearance model
+            n_active_components will be used.
 
             Default: None
         """
         if n_shape is not None:
-            if type(n_shape) is int:
+            if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape
             elif len(n_shape) is 1 and self.aam.n_levels > 1:
@@ -195,23 +199,25 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_shape can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
         if n_appearance is not None:
-            if type(n_appearance) is int:
+            if type(n_appearance) is int or type(n_appearance) is float:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance
             elif len(n_appearance) is 1 and self.aam.n_levels > 1:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance[0]
             elif len(n_appearance) is self.aam.n_levels:
-                for am, n in zip(self.aam.appearance_models, n_shape):
+                for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
-                raise ValueError('n_appearance can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_appearance can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
         self._fitters = []
