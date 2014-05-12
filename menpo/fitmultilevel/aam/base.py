@@ -222,19 +222,48 @@ class LucasKanadeAAMFitter(AAMFitter):
             :class:`menpo.transform.affine.Similarity` is supported.
 
             Default: Similarity
-        n_shape: list, optional
+        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of a
+                 combination of those, optional
             The number of shape components to be used per fitting level.
-            If None, for each shape model n_active_components will be used.
+
+            If list of length n_levels, then a number of components is defined
+            per level. The first element of the list corresponds to the lowest
+            pyramidal level and so on.
+
+            If not a list or a list with length 1, then the specified number of
+            components will be used for all levels.
+
+            Per level:
+            If None, all the available shape components (n_active_componenets)
+            will be used.
+            If int > 1, a specific number of shape components is specified.
+            If 0. <= float <= 1., it specifies the variance percentage that is
+            captured by the components.
 
             Default: None
-        n_appearance: list, optional
+        n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of a
+                      combination of those, optional
             The number of appearance components to be used per fitting level.
-            If None, for each appearance model n_active_components will be used.
+
+            If list of length n_levels, then a number of components is defined
+            per level. The first element of the list corresponds to the lowest
+            pyramidal level and so on.
+
+            If not a list or a list with length 1, then the specified number of
+            components will be used for all levels.
+
+            Per level:
+            If None, all the available appearance components
+            (n_active_componenets) will be used.
+            If int > 1, a specific number of appearance components is specified
+            If 0. <= float <= 1., it specifies the variance percentage that is
+            captured by the components.
 
             Default: None
         """
+        # check n_shape parameter
         if n_shape is not None:
-            if type(n_shape) is int:
+            if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape
             elif len(n_shape) is 1 and self.aam.n_levels > 1:
@@ -244,12 +273,14 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_shape can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
+        # check n_appearance parameter
         if n_appearance is not None:
-            if type(n_appearance) is int:
+            if type(n_appearance) is int or type(n_appearance) is float:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance
             elif len(n_appearance) is 1 and self.aam.n_levels > 1:
@@ -259,8 +290,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
-                raise ValueError('n_appearance can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_appearance can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
         self._fitters = []
