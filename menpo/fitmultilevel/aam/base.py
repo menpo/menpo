@@ -172,15 +172,19 @@ class LucasKanadeAAMFitter(AAMFitter):
 
             Default: Similarity
 
-        n_shape: list, optional
-            The number of shape components to be used per fitting level.
-            If None, for each shape model n_active_components will be used.
+        n_shape: list of int or float, optional
+            The number of shape components to be used per fitting level. It
+            can also be specified in terms of variance captured by the
+            components. If None, for each shape model n_active_components
+            will be used.
 
             Default: None
 
-        n_appearance: list, optional
+        n_appearance: list of int or float, optional
             The number of appearance components to be used per fitting level.
-            If None, for each appearance model n_active_components will be used.
+            It can also be specified in terms of variance captured by the
+            components. If None, for each appearance model
+            n_active_components will be used.
 
             Default: None
         """
