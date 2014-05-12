@@ -148,10 +148,6 @@ class LucasKanadeAAMFitter(AAMFitter):
         The Lucas-Kanade class to be used.
 
         Default: AlternatingInverseCompositional
-    residual: :class:`menpo.fit.lucaskanade.residual`, optional
-        The residual class to be used
-
-        Default: 'LSIntensity'
     md_transform: :class:`menpo.transform.ModelDrivenTransform`,
                       optional
         The model driven transform class to be used.
@@ -175,10 +171,12 @@ class LucasKanadeAAMFitter(AAMFitter):
         Default: None
     """
     def __init__(self, aam, algorithm=AlternatingInverseCompositional,
-                 residual=LSIntensity, md_transform=OrthoMDTransform,
+                 md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
         super(LucasKanadeAAMFitter, self).__init__(aam)
+        # TODO: Add residual as parameter, when residuals are properly defined
+        residual = LSIntensity
         self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
                      global_transform=global_transform,
