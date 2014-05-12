@@ -280,10 +280,10 @@ class LucasKanadeAAMFitter(AAMFitter):
     def __str__(self):
         out = "Active Appearance Model Fitter\n" \
               " - Lucas-Kanade {0}\n" \
-              " - Transforms: \n" \
-              " - Residual: \n" \
-              " - {1} training images.\n".format(
-              self._fitters[0].algorithm, self.aam.n_training_images)
+              " - Transform is ... and residual is {1}.\n" \
+              " - {2} training images.\n".format(
+              self._fitters[0].algorithm, self._fitters[0].residual.type,
+              self.aam.n_training_images)
         n_channels = []
         ch_str = []
         feat_str = []
