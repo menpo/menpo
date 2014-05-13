@@ -38,8 +38,10 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
     if initialization_options is None:
         initialization_options = {}
 
-    # group option
+    # extract some options
     group = fitting_options.pop('gt_group', 'PTS')
+    max_iters = fitting_options.pop('max_iters', 50)
+    error_type = fitting_options.pop('error_type', 'me_norm')
 
     # create fitter
     fitter = LucasKanadeAAMFitter(aam, **fitting_options)
@@ -58,7 +60,8 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
         s = fitter.perturb_shape(gt_s, **initialization_options)
 
         # fit
-        fr = fitter.fit(i, s, gt_shape=gt_s, verbose=False)
+        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters,
+                        error_type=error_type, verbose=False)
         fitting_results.append(fr)
 
         # print
