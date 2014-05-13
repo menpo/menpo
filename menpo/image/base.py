@@ -800,8 +800,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
                             interpolator=interpolator, **kwargs)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
-                                       label='all', interpolator='scipy',
-                                       round='ceil', **kwargs):
+                                   label='all', interpolator='scipy',
+                                   round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
