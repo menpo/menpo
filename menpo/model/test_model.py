@@ -173,3 +173,16 @@ def test_pca_variance_after_trim():
     assert(model.noise_variance_ratio > 0.0)
     # inverse noise variance is computable
     assert(model.inverse_noise_variance == 1/model.noise_variance)
+
+
+def test_pca_orthogonalize_against():
+    pca_samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
+    pca_model = PCAModel(pca_samples)
+    lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
+    lm_model = LinearModel(np.asarray(lm_samples))
+    # set number of active components
+    pca_model.n_active_components = 5
+    # orthogonalize
+    pca_model.orthonormalize_against_inplace(lm_model)
+    # number of active components must remain the same
+    assert_equal(pca_model.n_active_components, 5)

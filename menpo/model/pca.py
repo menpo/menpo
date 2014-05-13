@@ -417,13 +417,15 @@ class PCAModel(MeanInstanceLinearModel):
             n_components = self.n_active_components
         # set self.n_active_components to n_components
         self.n_active_components = n_components
-        # set self.n_components to n_components
-        self._components = self._components[:n_components]
-        # store the eigenvalues associated to the discarded components
-        self._trimmed_eigenvalues = \
-            self._eigenvalues[self.n_active_components:]
-        # make sure that the eigenvalues are trimmed too
-        self._eigenvalues = self._eigenvalues[:self.n_components]
+
+        if self.n_active_components < self.n_components:
+            # set self.n_components to n_components
+            self._components = self._components[:self.n_active_components]
+            # store the eigenvalues associated to the discarded components
+            self._trimmed_eigenvalues = \
+                self._eigenvalues[self.n_active_components:]
+            # make sure that the eigenvalues are trimmed too
+            self._eigenvalues = self._eigenvalues[:self.n_active_components]
 
     def distance_to_subspace(self, instance):
         """
@@ -536,8 +538,15 @@ class PCAModel(MeanInstanceLinearModel):
         n_available_components = Q.shape[0] - linear_model.n_components
         if n_available_components < self.n_components:
             # oh dear, we've lost some components from the end of our model.
+            if self.n_active_components < n_available_components:
+                # save the current number of active componets
+                n_active_components = self.n_active_components
             # call trim_components to update our state.
             self.trim_components(n_components=n_available_components)
+            if n_active_components < n_available_components:
+                # reset the number of active componets
+                self.n_active_components = n_active_components
+
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 
