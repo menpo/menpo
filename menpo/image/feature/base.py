@@ -10,8 +10,7 @@ class ImageFeatures(object):
     Parameters
     ----------
     image :  Any image object
-        The object created by any image class (Image, MaskedImage,
-        SpatialImage, DepthImage).
+        The object created by any image class (Image, MaskedImage).
     """
 
     def __init__(self, image):
