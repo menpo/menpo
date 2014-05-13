@@ -1,6 +1,40 @@
 import sys
 import os
 
+
+# on_rtd is whether we are on readthedocs.org,
+# this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if on_rtd:
+    class Mock(object):
+
+        __all__ = []
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            return Mock()
+
+        @classmethod
+        def __getattr__(cls, name):
+            if name in ('__file__', '__path__'):
+                return '/dev/null'
+            elif name[0] == name[0].upper():
+                mockType = type(name, (), {})
+                mockType.__module__ = __name__
+                return mockType
+            else:
+                return Mock()
+
+    MOCK_MODULES = ['numpy', 'scipy', 'pil', 'sklearn', 'skimage', 'pyvrml97',
+                    'scipy.linalg', 'numpy.stats'
+                    'cyassimp', 'cyrasterize', 'matplotlib', 'matplotlib.pyplot',
+                    'mayavi']
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = Mock()
+
 # Add the folder above so we can grab the sphinx extensions
 sys.path.insert(0, os.path.abspath('..'))
 # Add the menpo root so we can grab the version
@@ -105,11 +139,6 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-
-# on_rtd is whether we are on readthedocs.org,
-# this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
 if not on_rtd:  # only import and set the theme if we're building docs locally
     import sphinx_rtd_theme
 
