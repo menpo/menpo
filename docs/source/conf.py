@@ -28,10 +28,19 @@ if on_rtd:
             else:
                 return Mock()
 
-    MOCK_MODULES = ['numpy', 'scipy', 'pil', 'sklearn', 'skimage', 'pyvrml97',
-                    'scipy.linalg', 'numpy.stats'
-                    'cyassimp', 'cyrasterize', 'matplotlib', 'matplotlib.pyplot',
-                    'mayavi']
+    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn', 'skimage',
+                    'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
+                    'cyassimp', 'cyrasterize', 'matplotlib', 'mayavi',
+                    'skimage.transform', 'matplotlib.pyplot', 'scipy.spatial',
+                    'skimage.transform.pyramids', 'scipy.spatial.distance',
+                    'numpy.dtype', 'scipy.ndimage',
+                    'cyrasterize.base', 'vrml', 'vrml.vrml97',
+                    'vrml.vrml97.parser', 'vrml.vrml97.basenodes', 'vrml.node',
+                    'scipy.linalg.blas']
+    # Masking our Cython modules
+    MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
+                     'menpo.image.feature.cppimagewindowiterator',
+                     'menpo.shape.mesh.normals']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
