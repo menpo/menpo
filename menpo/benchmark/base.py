@@ -220,7 +220,7 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
             if error_type is 'me_norm':
                 if fr.final_error <= 0.03:
                     perc1 += 1.
-                elif fr.final_error <= 0.04:
+                if fr.final_error <= 0.04:
                     perc2 += 1.
             print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
                           'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
@@ -228,7 +228,9 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
                 perc1 * 100. / n_images, perc2 * 100. / n_images, j + 1,
                 n_images, fr.initial_error, fr.final_error))
     if verbose:
-        print_dynamic('- Fitting completed\n')
+        print_dynamic('- Fitting completed: [<=0.03: {0:.1f}%, <=0.04: '
+                      '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
+                                           perc2 * 100. / n_images))
 
     # fit images
     fitting_results = FittingResultList(fitting_results)
