@@ -1,2 +1,1 @@
-from .base import (ActiveShapeModel, ConvexQuadraticFitting,
-                   RegularizedLandmarkMeanShift)
+from .base import RegularizedLandmarkMeanShift

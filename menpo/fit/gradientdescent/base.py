@@ -15,8 +15,7 @@ from menpo.fitmultilevel.functions import build_sampling_grid
 class GradientDescent(Fitter):
     r"""
     """
-    def __init__(self, classifiers, patch_shape, transform,
-                 eps=10**-10):
+    def __init__(self, classifiers, patch_shape, transform, eps=10**-10):
         self.classifiers = classifiers
         self.patch_shape = patch_shape
         self.transform = transform
@@ -31,34 +30,6 @@ class GradientDescent(Fitter):
     def get_parameters(self, shape):
         self.transform.set_target(shape)
         return self.transform.as_vector()
-
-
-# TODO: document me
-class ActiveShapeModel(GradientDescent):
-
-    @abc.abstractproperty
-    def algorithm(self):
-        return "ASM"
-
-    def _set_up(self):
-        raise ValueError("Not implemented yet")
-
-    def _fit(self, fitting_result, max_iters=20):
-        raise ValueError("Not implemented yet")
-
-
-# TODO: document me
-class ConvexQuadraticFitting(GradientDescent):
-
-    @abc.abstractproperty
-    def algorithm(self):
-        return "CQF"
-
-    def _set_up(self):
-        raise ValueError("Not implemented yet")
-
-    def _fit(self, fitting_result, max_iters=20):
-        raise ValueError("Not implemented yet")
 
 
 # TODO: document me
@@ -87,8 +58,8 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         self._J_regularizer[:4] = 0
 
         # Inverse Hessian
-        self._inv_H = np.linalg.inv(np.diag(self._J_regularizer) +
-                                    np.dot(self._J.T, self._J))
+        H = np.einsum('ijk, ilk -> jl', self._J, self._J)
+        self._inv_H = np.linalg.inv(np.diag(self._J_regularizer) + H)
 
     def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
@@ -136,10 +107,10 @@ class RegularizedLandmarkMeanShift(GradientDescent):
                     normalized_kernel_response * (x, y), axis=(1, 2))
 
             # Compute parameter updates
-            difference = np.dot(self._J.T,
-                                mean_shift_target.ravel() - target.as_vector())
-            regularizer = self._J_regularizer * self.transform.as_vector()
-            delta_p = -np.dot(self._inv_H, regularizer - difference)
+            difference = mean_shift_target - target.points
+            J_difference = np.einsum('ijk, ik -> j', self._J, difference)
+            J_regularizer = self._J_regularizer * self.transform.as_vector()
+            delta_p = -np.dot(self._inv_H, J_regularizer - J_difference)
 
             # Update transform weights
             parameters = self.transform.as_vector() + delta_p
