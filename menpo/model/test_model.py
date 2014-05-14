@@ -56,20 +56,20 @@ def test_pca_n_active_components():
     # integer
     model.n_active_components = 5
     assert_equal(model.n_active_components, 5)
-    # round down
-    model.n_active_components = 5.3
-    assert_equal(model.n_active_components, 5)
-    # round up
-    model.n_active_components = 4.9
-    assert_equal(model.n_active_components, 5)
 
 
-@raises(ValueError)
 def test_pca_n_active_components_too_many():
     samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
     model = PCAModel(samples)
-    # too many active components
+    # too many components
     model.n_active_components = 100
+    assert_equal(model.n_active_components, 9)
+    # reset too smaller number of components
+    model.n_active_components = 5
+    assert_equal(model.n_active_components, 5)
+    # reset to too many components
+    model.n_active_components = 100
+    assert_equal(model.n_active_components, 9)
 
 
 @raises(ValueError)
@@ -124,9 +124,9 @@ def test_pca_variance():
     samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
     model = PCAModel(samples)
     # kept variance must be equal to total variance
-    assert_equal(model.kept_variance, model.total_variance)
+    assert_equal(model.variance, model.original_variance)
     # kept variance ratio must be 1.0
-    assert_equal(model.kept_variance_ratio, 1.0)
+    assert_equal(model.variance_ratio, 1.0)
     # noise variance must be 0.0
     assert_equal(model.noise_variance, 0.0)
     # noise variance ratio must be also 0.0
@@ -147,9 +147,9 @@ def test_pca_variance_after_change_n_active_components():
     # set number of active components
     model.n_active_components = 5
     # kept variance must be smaller than total variance
-    assert(model.kept_variance < model.total_variance)
+    assert(model.variance < model.original_variance)
     # kept variance ratio must be smaller than 1.0
-    assert(model.kept_variance_ratio < 1.0)
+    assert(model.variance_ratio < 1.0)
     # noise variance must be bigger than 0.0
     assert(model.noise_variance > 0.0)
     # noise variance ratio must also be bigger than 0.0
@@ -164,12 +164,25 @@ def test_pca_variance_after_trim():
     # set number of active components
     model.trim_components(5)
     # kept variance must be smaller than total variance
-    assert(model.kept_variance < model.total_variance)
+    assert(model.variance < model.original_variance)
     # kept variance ratio must be smaller than 1.0
-    assert(model.kept_variance_ratio < 1.0)
+    assert(model.variance_ratio < 1.0)
     # noise variance must be bigger than 0.0
     assert(model.noise_variance > 0.0)
     # noise variance ratio must also be bigger than 0.0
     assert(model.noise_variance_ratio > 0.0)
     # inverse noise variance is computable
     assert(model.inverse_noise_variance == 1/model.noise_variance)
+
+
+def test_pca_orthogonalize_against():
+    pca_samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
+    pca_model = PCAModel(pca_samples)
+    lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
+    lm_model = LinearModel(np.asarray(lm_samples))
+    # set number of active components
+    pca_model.n_active_components = 5
+    # orthogonalize
+    pca_model.orthonormalize_against_inplace(lm_model)
+    # number of active components must remain the same
+    assert_equal(pca_model.n_active_components, 5)
