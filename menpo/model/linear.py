@@ -51,7 +51,14 @@ class LinearModel(object):
         else:
             np.copyto(self._components, value, casting='safe')
 
-    def component_vector(self, index):
+    @property
+    def d_dp(self):
+        r"""
+        """
+        return self.components.T
+
+
+        def component_vector(self, index):
         r"""
         A particular component of the model, in vectorized form.
 

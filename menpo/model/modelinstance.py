@@ -1,13 +1,27 @@
 from copy import deepcopy
 import numpy as np
 
-from menpo.base import Targetable, Vectorizable
+from menpo.base import Targetable, Vectorizable, DP
 from menpo.model import Similarity2dInstanceModel
 
 
-# TODO: document me
-class PDM(Targetable, Vectorizable):
-    r"""
+class ModelInstance(Targetable, Vectorizable, DP):
+    r"""A instance of a :map:`InstanceBackedModel`.
+
+    This class describes an instance produced from one of Menpo's
+    :map:`InstanceBackedModel`. The actual instance provided by the model can
+    be found at self.target. This class is targetable, and so
+    :meth:`set_target` can be used to update the target - this will produce the
+    closest possible instance the Model can produce to the target and set the
+    weights accordingly.
+
+    Parameters
+    ----------
+
+    model : :map:`InstanceBackedModel`
+        The generative model that instances will be taken from
+
+
     """
     def __init__(self, model):
         self.model = model
@@ -16,15 +30,6 @@ class PDM(Targetable, Vectorizable):
         # from_vector_inplace() or set_target() will update this)
         self._weights = np.zeros(self.model.n_active_components)
         self._sync_target_from_state()
-
-    @property
-    def n_dims(self):
-        r"""
-        The number of dimensions that the transform supports.
-
-        :type: int
-        """
-        return self.model.template_instance.n_dims
 
     @property
     def n_weights(self):
@@ -38,8 +43,8 @@ class PDM(Targetable, Vectorizable):
     @property
     def weights(self):
         r"""
-        In this simple PDM the weights is just the vector, but in subclasses
-        this behavior will change.
+        In this simple :map:`ModelInstance` the weights are just the weights
+        of the model.
         """
         return self._weights
 
@@ -63,8 +68,7 @@ class PDM(Targetable, Vectorizable):
         Returns
         -------
 
-        new_target: :class:`menpo.shape.PointCloud`
-            A new target for the weights provided
+        new_target: model instance
         """
         return self.model.instance(self.weights)
 
@@ -83,7 +87,7 @@ class PDM(Targetable, Vectorizable):
         Parameters
         ----------
 
-        target: :class:`menpo.shape.PointCloud`
+        target: model instance
             The target that the statistical model will try to reproduce
 
         Returns
@@ -91,7 +95,7 @@ class PDM(Targetable, Vectorizable):
 
         weights: (P,) ndarray
             Weights of the statistical model that generate the closest
-            PointCloud to the requested target
+            instance to the requested target
         """
         return self.model.project(target)
 
@@ -102,24 +106,54 @@ class PDM(Targetable, Vectorizable):
 
         Returns
         -------
-        params : (``n_parameters``,) ndarray
+        params : (`n_parameters`,) ndarray
             The vector of parameters
         """
         return self.weights
 
     def from_vector_inplace(self, vector):
         r"""
-        Updates the ModelDrivenTransform's state from it's
-        vectorized form.
+        Updates this :map:`ModelInstance` from it's
+        vectorized form (in this case, simply the weights on the linear model)
         """
         self._weights = vector
         self._sync_target_from_state()
 
-    # TODO: document me
-    def jacobian(self, points):
+
+class PDM(ModelInstance, DP):
+    r"""Specialization of :map:`ModelInstance` for use with spatial data.
+    """
+
+    @property
+    def n_dims(self):
+        r"""
+        The number of dimensions of the spatial instance of the model
+
+        :type: int
         """
+        return self.model.template_instance.n_dims
+
+    def d_dp(self, points):
         """
-        return self.model.jacobian
+        Returns the Jacobian of the PCA model reshaped to have the standard
+        Jacobian shape:
+
+            n_points    x  n_params      x  n_dims
+
+            which maps to
+
+            n_features  x  n_components  x  n_dims
+
+            on the linear model
+
+        Returns
+        -------
+        jacobian : (n_features, n_components, n_dims) ndarray
+            The Jacobian of the model in the standard Jacobian shape.
+        """
+        jacobian = self.model.d_dp.reshape(self.n_active_components, -1,
+                                           self.template_instance.n_dims)
+        return jacobian.swapaxes(0, 1)
 
 
 # TODO: document me
@@ -227,11 +261,12 @@ class GlobalPDM(PDM):
         """
         self.global_transform.from_vector_inplace(global_weights)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
-        return np.hstack((self.global_transform.jacobian(points).T,
-                          self.model.components.T))
+        # TODO this seems suspiciously different in shape
+        return np.hstack((self.global_transform.d_dp(points).T,
+                          self.model.d_dp))
 
 
 # TODO: document me
@@ -252,7 +287,7 @@ class OrthoPDM(GlobalPDM):
         r"""
         The parameters for the global transform.
 
-        :type: (``n_global_parameters``,) ndarray
+        :type: (`n_global_parameters`,) ndarray
         """
         return self.similarity_weights
 
@@ -265,9 +300,9 @@ class OrthoPDM(GlobalPDM):
         new_target = self.similarity_model.instance(global_weights)
         self.global_transform.set_target(new_target)
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         """
-        return np.hstack((self.similarity_model.components.T,
-                          self.model.components.T))
-
+        # TODO this seems suspiciously different in shape
+        return np.hstack((self.similarity_model.d_dp,
+                          self.model.d_dp))
