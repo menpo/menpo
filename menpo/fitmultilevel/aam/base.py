@@ -185,9 +185,9 @@ class LucasKanadeAAMFitter(AAMFitter):
     global_transform: :class:`menpo.transform.affine`, optional
         The global transform class to be used by the previous
         md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.Similarity` is supported.
+        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
-        Default: Similarity
+        Default: AlignmentSimilarity
     n_shape: list, optional
         The number of shape components to be used per fitting level.
         If None, for each shape model n_active_components will be used.
