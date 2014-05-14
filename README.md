@@ -3,7 +3,7 @@
 [![PyPI Release](http://img.shields.io/pypi/v/menpo.svg?style=flat)](https://pypi.python.org/pypi/menpo)
 
 Menpo is a statistical modelling toolkit, providing all the tools 
-required to build, fit, visualize, and test generative computer vision models like Active Appearance Models and Morphable Models.
+required to build, fit, visualize, and test generative deformable models like Active Appearance Models, Constrained Local Models, Supervised Descent Method and Morphable Models.
 
 IMPORTANT
 =========
@@ -16,7 +16,7 @@ at all times.
 
 Installation
 ------------
-The [Menpo Wiki](https://github.com/menpo/menpo/wiki) contains installation guides for each platform.
+Here in the Menpo team, we are firm believers in making installation as simple as possible. Unfortunately, we are a complex project that relies on satisfying a number of complex 3rd party library dependencies. The default Python packing environment does not make this an easy task. Therefore, we evangelise the use of the conda ecosystem, provided by Anaconda. In order to make things as simple as possible, we suggest that you use conda too! To try and persuade you, got to the [Menpo Wiki](https://github.com/menpo/menpo/wiki) to find installation instructions for all major platforms.
 
 Usage
 -----
@@ -31,8 +31,7 @@ Want to get a feel for Menpo without installing anything? You can browse the not
 
 Documentation
 -------------
-See the [menpo website](http://www.menpo.io/documentation).
-
+See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 
 Testing
 -------
