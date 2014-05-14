@@ -25,6 +25,19 @@ def test_mask_blank():
     assert (np.all(mask.pixels))
 
 
+def test_boolean_copy_false_boolean():
+    mask = np.zeros((10, 10), dtype=np.bool)
+    boolean_image = BooleanImage(mask, copy=False)
+    assert(boolean_image.pixels.base is mask)
+
+
+@raises(Warning)
+def test_boolean_copy_false_non_boolean():
+    mask = np.zeros((10, 10))
+    boolean_image = BooleanImage(mask, copy=False)
+    assert(boolean_image.pixels.base is mask)
+
+
 def test_mask_blank_rounding_floor():
     mask = BooleanImage.blank((56.1, 12.1), round='floor')
     assert_allclose(mask.shape, (56, 12))

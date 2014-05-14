@@ -17,11 +17,24 @@ class PointCloud(Shape):
     ----------
     points : (N, D) ndarray
         A (``n_points``, ``n_dims``) ndarray representing the points.
+
+    copy: bool, optional
+        If False, the points will not be copied on assignment. Note that
+        this will miss out on additional checks. Further note that we still
+        demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
+
+        Default False
     """
 
-    def __init__(self, points):
+    def __init__(self, points, copy=True):
+
         super(PointCloud, self).__init__()
-        self.points = np.array(points, copy=True, order='C')
+        if not copy:
+            self.points = np.require(points, requirements=['C'])
+        else:
+            self.points = np.array(points, copy=True, order='C')
 
     @property
     def h_points(self):
