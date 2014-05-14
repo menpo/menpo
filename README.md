@@ -18,7 +18,7 @@ What is Menpo?
 Menpo is a statistical modelling toolkit, providing all the tools 
 required to build, fit, visualize, and test generative deformable models like Active Appearance Models, Constrained Local Models, Supervised Descent Method and Morphable Models.
 
-> Menpo were facial armours which covered all or part of the face and provided a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) of the kabuto would be tied under the chin of the mempo. There were small hooks called ori-kugi or posts called odome located on various places to help secure the kabuto's chin cord. Mengu may be constructed from iron or leather, or a combination of both. They may have a lacquered or rusted type of finish and can include a variety of facial details, such as moustaches, fierce teeth and a detachable nose. Most mempo with the exception of the happuri had a small hole underneath the chin for sweat drainage.
+> Menpo were facial armours which covered all or part of the face and provided a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) of the kabuto would be tied under the chin of the menpo. There were small hooks called ori-kugi or posts called odome located on various places to help secure the kabuto's chin cord.
 >
 > --- Wikipedia, Menpo
 
