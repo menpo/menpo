@@ -57,8 +57,7 @@ class LinearModel(object):
         """
         return self.components.T
 
-
-        def component_vector(self, index):
+    def component_vector(self, index):
         r"""
         A particular component of the model, in vectorized form.
 

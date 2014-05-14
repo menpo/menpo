@@ -262,7 +262,7 @@ def test_affine_jacobian_2d_with_positions():
          [1, 0],
          [1, 1],
          [1, 2]])
-    dW_dp = t.jacobian(explicit_pixel_locations)
+    dW_dp = t.d_dp(explicit_pixel_locations)
     assert_equal(dW_dp, jac_solution2d)
 
 
@@ -282,7 +282,7 @@ def test_affine_jacobian_3d_with_positions():
          [1, 1, 1],
          [1, 2, 0],
          [1, 2, 1]])
-    dW_dp = t.jacobian(explicit_pixel_locations)
+    dW_dp = t.d_dp(explicit_pixel_locations)
     assert_equal(dW_dp, jac_solution3d)
 
 

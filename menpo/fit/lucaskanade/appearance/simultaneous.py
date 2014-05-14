@@ -35,7 +35,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         fitting_result.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = self.appearance_model._jacobian.T
+        appearance_jacobian = self.appearance_model.d_dp
 
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
@@ -117,7 +117,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         fitting_result.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = self.appearance_model._jacobian.T
+        appearance_jacobian = self.appearance_model.d_dp
 
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
@@ -194,7 +194,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         fitting_result.weights.append(weights)
 
         # Compute appearance model Jacobian wrt weights
-        appearance_jacobian = -self.appearance_model._jacobian.T
+        appearance_jacobian = -self.appearance_model.d_dp
 
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:

@@ -144,46 +144,45 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        # TODO @jalabort which is the correct d_dp to use here?
-        model_jacobian = self.pdm.model.d_dp
+        # the incremental warp is always evaluated at p=0, ie the mean shape
         points = self.pdm.model.mean.points
-        n_points = self.pdm.model.mean.n_points
 
         # compute:
-        # -> dW/dp when p=0
-        # -> dW/dp when p!=0
-        # -> dW/dx when p!=0 evaluated at the source landmarks
+        #   - dW/dp when p=0
+        #   - dW/dp when p!=0
+        #   - dW/dx when p!=0 evaluated at the source landmarks
 
         # dW/dp when p=0 and when p!=0 are the same and simply given by
         # the Jacobian of the model
-        dW_dp_0 = model_jacobian
+        # (n_points, n_params, n_dims)
+        dW_dp_0 = self.pdm.d_dp(points)
+        # (n_points, n_params, n_dims)
         dW_dp = dW_dp_0
-        # dW_dp_0:  n_points  x     n_params     x  n_dims
-        # dW_dp:    n_points  x     n_params     x  n_dims
 
+        # (n_points, n_dims, n_dims)
         dW_dx = self.transform.d_dx(points)
-        # dW_dx:  n_points  x  n_dims  x  n_dims
+
+        # (n_points, n_params, n_dims)
+        dW_dx_dW_dp_0 = np.einsum('ijk, ilk -> eilk', dW_dx, dW_dp_0)
 
         #TODO: Can we do this without splitting across the two dimensions?
-        dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
-        dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
-        dW_dp_0_mat = np.reshape(dW_dp_0, (n_points * self.n_dims,
-                                           self.n_parameters))
-        dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
-        dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0,
-                                   (n_points, self.n_parameters, self.n_dims))
-        # dW_dx:          n_points  x  n_dims    x  n_dims
-        # dW_dp_0:        n_points  x  n_params  x  n_dims
-        # dW_dx_dW_dp_0:  n_points  x  n_params  x  n_dims
+        # dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
+        # dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
+        # dW_dp_0_mat = np.reshape(dW_dp_0, (n_points * self.n_dims,
+        #                                    self.n_parameters))
+        # dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
+        # dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0,
+        #                            (n_points, self.n_parameters, self.n_dims))
 
+        # (n_params, n_params)
         J = np.einsum('ijk, ilk -> jl', dW_dp, dW_dx_dW_dp_0)
+        # (n_params, n_params)
         H = np.einsum('ijk, ilk -> jl', dW_dp, dW_dp)
-
+        # (n_params, n_params)
         Jp = np.linalg.solve(H, J)
-        # Jp:  n_params  x  n_params
+        lsadl;saj;ls
 
         self.from_vector_inplace(self.as_vector() + np.dot(Jp, delta))
-        return self
 
     @property
     def has_true_inverse(self):
@@ -310,7 +309,6 @@ class GlobalMDTransform(ModelDrivenTransform):
 
     def compose_after_from_vector_inplace(self, delta):
         r"""
-
         Composes two ModelDrivenTransforms together based on the
         first order approximation proposed by Papandreou and Maragos in [1].
 
@@ -333,127 +331,67 @@ class GlobalMDTransform(ModelDrivenTransform):
                Algorithms for Inverse Compositional Active Appearance Model
                Fitting", CVPR08
         """
-        model_d_dp = self.pdm.model.d_dp
+        # the incremental warp is always evaluated at p=0, ie the mean shape
         points = self.pdm.model.mean.points
-        n_points = self.pdm.model.mean.n_points
 
         # compute:
-        # -> dW/dp when p=0
-        # -> dW/dp when p!=0
-        # -> dW/dx when p!=0 evaluated at the source landmarks
+        #   - dW/dp when p=0
+        #   - dW/dp when p!=0
+        #   - dW/dx when p!=0 evaluated at the source landmarks
 
         # dW/dq when p=0 and when p!=0 are the same and given by the
         # Jacobian of the global transform evaluated at the mean of the
         # model
-        dW_dq = self._global_transform_d_dp(points)
-        # dW_dq:  n_points  x  n_global_params  x  n_dims
+        # (n_points, n_global_params, n_dims)
+        dW_dq = self.pdm._global_transform_d_dp(points)
 
         # dW/db when p=0, is the Jacobian of the model
-        dW_db_0 = model_d_dp
-        # dW_db_0:  n_points  x     n_weights     x  n_dims
+        # (n_points, n_weights, n_dims)
+        dW_db_0 = PDM.d_dp(self.pdm, points)
 
         # dW/dp when p=0, is simply the concatenation of the previous
         # two terms
+        # (n_points, n_params, n_dims)
         dW_dp_0 = np.hstack((dW_dq, dW_db_0))
-        # dW_dp_0:  n_points  x     n_params      x  n_dims
 
         # by application of the chain rule dW_db when p!=0,
         # is the Jacobian of the global transform wrt the points times
         # the Jacobian of the model: dX(S)/db = dX/dS *  dS/db
+        # (n_points, n_dims, n_dims)
         dW_dS = self.pdm.global_transform.d_dx(points)
+        # (n_points, n_weights, n_dims)
         dW_db = np.einsum('ilj, idj -> idj', dW_dS, dW_db_0)
-        # dW_dS:  n_points  x      n_dims       x  n_dims
-        # dW_db:  n_points  x     n_weights     x  n_dims
 
-        # dW/dp is simply the concatenation of dX_dq with dX_db
+        # dW/dp is simply the concatenation of dW_dq with dW_db
+        # (n_points, n_params, n_dims)
         dW_dp = np.hstack((dW_dq, dW_db))
-        # dW_dp:    n_points  x     n_params     x  n_dims
 
+        # dW/dx is the jacobian of the transform evaluated at the source
+        # landmarks
+        # (n_points, n_dims, n_dims)
         dW_dx = self.transform.d_dx(points)
-        #dW_dx = np.dot(dW_dx, self.global_transform.linear_component.T)
-        # dW_dx:  n_points  x  n_dims  x  n_dims
+
+        # (n_points, n_params, n_dims)
+        dW_dx_dW_dp_0 = np.einsum('ijk, ilk -> ilk', dW_dx, dW_dp_0)
 
         #TODO: Can we do this without splitting across the two dimensions?
-        dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
-        dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
-        dW_dp_0_mat = np.reshape(dW_dp_0, (n_points * self.n_dims,
-                                           self.n_parameters))
-        dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
-        dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0,
-                                   (n_points, self.n_parameters, self.n_dims))
-        # dW_dx:          n_points  x  n_dims    x  n_dims
-        # dW_dp_0:        n_points  x  n_params  x  n_dims
-        # dW_dx_dW_dp_0:  n_points  x  n_params  x  n_dims
+        # dW_dx_x = dW_dx[:, 0, :].flatten()[..., None]
+        # dW_dx_y = dW_dx[:, 1, :].flatten()[..., None]
+        # dW_dp_0_mat = np.reshape(dW_dp_0, (n_points * self.n_dims,
+        #                                    self.n_parameters))
+        # dW_dx_dW_dp_0 = dW_dp_0_mat * dW_dx_x + dW_dp_0_mat * dW_dx_y
+        # # (n_points, n_params, n_dims)
+        # dW_dx_dW_dp_0 = np.reshape(dW_dx_dW_dp_0,
+        #                            (n_points, self.n_parameters, self.n_dims))
 
+        # (n_params, n_params)
         J = np.einsum('ijk, ilk -> jl', dW_dp, dW_dx_dW_dp_0)
+        # (n_params, n_params)
         H = np.einsum('ijk, ilk -> jl', dW_dp, dW_dp)
-
+        # (n_params, n_params)
         Jp = np.linalg.solve(H, J)
-        # Jp:  n_params  x  n_params
 
         self.from_vector_inplace(self.as_vector() + np.dot(Jp, delta))
-
-    def _global_transform_d_dp(self, points):
-        return self.pdm.global_transform.d_dp(points)
-
-    def d_dp(self, points):
-        """
-        Calculates the Jacobian of the ModelDrivenTransform wrt to
-        its weights (the weights). This is done by chaining the relative
-        weight of each point wrt the source landmarks, i.e. the Jacobian of
-        the warp wrt the source landmarks when the target is assumed to be
-        equal to the source (dW/dx), together with the Jacobian of the
-        linear model (and of the global transform if present) wrt its
-        weights (dX/dp).
-
-        Parameters
-        -----------
-        points: (N, D) ndarray
-            The points at which the Jacobian will be evaluated.
-
-        Returns
-        -------
-        dW/dp : (N, P, D) ndarray
-            The Jacobian of the ModelDrivenTransform evaluated at the
-            previous points.
-        """
-        # check if re-computation of dW/dx can be avoided
-        if not np.array_equal(self._cached_points, points):
-            # recompute dW/dx, i.e. the relative weight of each point wrt
-            # the source landmarks
-            self.dW_dl = self.transform.d_dl(points)
-            # cache points
-            self._cached_points = points
-
-        # TODO check with @ja310 this is correct
-        model_d_dp = self.pdm.d_dp
-        points = self.pdm.model.mean.points
-
-        # compute dX/dp
-
-        # dX/dq is the Jacobian of the global transform evaluated at the
-        # mean of the model.
-        dX_dq = self._global_transform_d_dp(points)
-        # dX_dq:  n_points x n_global_params x n_dims
-
-        # by application of the chain rule dX_db is the Jacobian of the
-        # model transformed by the linear component of the global transform
-        dS_db = model_d_dp
-        dX_dS = self.pdm.global_transform.d_dx(points)
-        dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
-        # dS_db:  n_points x n_weights x n_dims
-        # dX_dS:  n_points x n_dims    x n_dims
-        # dX_db:  n_points x n_weights x n_dims
-
-        # dX/dp is simply the concatenation of the previous two terms
-        dX_dp = np.hstack((dX_dq, dX_db))
-
-        # dW_dl:  n_points x n_points x n_dims
-        # dX_dp:  n_points x n_params x n_dims
-        dW_dp = np.einsum('ild, lpd -> ipd', self.dW_dl, dX_dp)
-        # dW_dp:  n_points x n_params x n_dims
-
-        return dW_dp
 
 
 # noinspection PyMissingConstructor
@@ -485,7 +423,8 @@ class OrthoMDTransform(GlobalMDTransform):
         set to the points generated from the model using the
         provide weights - the source is either given or set to the
         model's mean.
-    global_transform : :class:`menpo.transform.AlignableTransform`
+    global_transform : :class:`menpo.transform.Aligna
+    bleTransform`
         A class of :class:`menpo.transform.base.AlignableTransform`
         The global transform that should be applied to the model output.
         Doesn't have to have been constructed from the .align() constructor.
@@ -501,5 +440,3 @@ class OrthoMDTransform(GlobalMDTransform):
         self._cached_points = None
         self.transform = transform_cls(source, self.target)
 
-    def _global_transform_d_dp(self, points):
-            return self.pdm.similarity_model.d_dp

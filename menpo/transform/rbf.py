@@ -5,6 +5,7 @@ from menpo.base import DL
 
 from .base import Transform
 
+
 class RadialBasisFunction(Transform, DL):
     r"""
     Radial Basis Functions are a class of transform that is used by

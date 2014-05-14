@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.spatial import distance
 
 from menpo.base import DX, DL
 

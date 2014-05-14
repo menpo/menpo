@@ -68,21 +68,21 @@ def test_similarity_jacobian_2d():
          [1, 0],
          [1, 1],
          [1, 2]])
-    dW_dp = t.jacobian(explicit_pixel_locations)
+    dW_dp = t.d_dp(explicit_pixel_locations)
     assert_almost_equal(dW_dp, sim_jac_solution2d)
 
 
 @raises(ValueError)
 def test_similarity_jacobian_3d_raises_dimensionalityerror():
     t = Similarity(np.eye(4))
-    t.jacobian(np.ones([2, 3]))
+    t.d_dp(np.ones([2, 3]))
 
 
 @raises(ValueError)
 def test_similarity_2d_points_raises_dimensionalityerror():
     params = np.ones(4)
     t = Similarity.identity(2).from_vector(params)
-    t.jacobian(np.ones([2, 3]))
+    t.d_dp(np.ones([2, 3]))
 
 
 def test_similarity_2d_from_vector():

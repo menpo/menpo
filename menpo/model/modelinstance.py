@@ -151,9 +151,9 @@ class PDM(ModelInstance, DP):
         jacobian : (n_features, n_components, n_dims) ndarray
             The Jacobian of the model in the standard Jacobian shape.
         """
-        jacobian = self.model.d_dp.reshape(self.n_active_components, -1,
-                                           self.template_instance.n_dims)
-        return jacobian.swapaxes(0, 1)
+        d_dp = self.model.d_dp.T.reshape(self.model.n_active_components,
+                                         -1, self.n_dims)
+        return d_dp.swapaxes(0, 1)
 
 
 # TODO: document me
@@ -262,11 +262,31 @@ class GlobalPDM(PDM):
         self.global_transform.from_vector_inplace(global_weights)
 
     def d_dp(self, points):
-        r"""
-        """
-        # TODO this seems suspiciously different in shape
-        return np.hstack((self.global_transform.d_dp(points).T,
-                          self.model.d_dp))
+        # d_dp is always evaluated for the current target
+        points = self.model.mean.points
+
+        # compute dX/dp
+
+        # dX/dq is the Jacobian of the global transform evaluated at the
+        # current target
+        # (n_points, n_global_params, n_dims)
+        dX_dq = self._global_transform_d_dp(points)
+
+        # by application of the chain rule dX/db is the Jacobian of the
+        # model transformed by the linear component of the global transform
+        # (n_points, n_weights, n_dims)
+        dS_db = PDM.d_dp(self, [])
+        # (n_points, n_dims, n_dims)
+        dX_dS = self.global_transform.d_dx(points)
+        # (n_points, n_weights, n_dims)
+        dX_db = np.einsum('ilj, idj -> idj', dX_dS, dS_db)
+
+        # dX/dp is simply the concatenation of the previous two terms
+        # (n_points, n_params, n_dims)
+        return np.hstack((dX_dq, dX_db))
+
+    def _global_transform_d_dp(self, points):
+        return self.global_transform.d_dp(points)
 
 
 # TODO: document me
@@ -284,11 +304,6 @@ class OrthoPDM(GlobalPDM):
 
     @property
     def global_parameters(self):
-        r"""
-        The parameters for the global transform.
-
-        :type: (`n_global_parameters`,) ndarray
-        """
         return self.similarity_weights
 
     def _update_global_transform(self, target):
@@ -300,9 +315,6 @@ class OrthoPDM(GlobalPDM):
         new_target = self.similarity_model.instance(global_weights)
         self.global_transform.set_target(new_target)
 
-    def d_dp(self, points):
-        r"""
-        """
-        # TODO this seems suspiciously different in shape
-        return np.hstack((self.similarity_model.d_dp,
-                          self.model.d_dp))
+    def _global_transform_d_dp(self, points):
+        return self.similarity_model.d_dp.T.reshape(
+            self.n_global_parameters, -1, self.n_dims).swapaxes(0, 1)
