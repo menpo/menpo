@@ -27,7 +27,7 @@ def aam_experiments_all(training_db_path, training_db_ext, fitting_db_path,
     training_options = {'group': 'PTS',
                         'feature_type': 'igo',
                         'transform': PiecewiseAffine,
-                        'trilist': ibug_68_trimesh,
+                        'trilist': None,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 2,
@@ -54,11 +54,15 @@ def aam_experiments_all(training_db_path, training_db_ext, fitting_db_path,
                               }
 
     # train the two aam models
+    if verbose:
+        print('\nTraining AAM with Smoothing pyramid:')
     training_options['scaled_shape_models'] = True
     aam_true = aam_build_benchmark(training_db_path, training_db_ext,
                                    db_loading_options=db_loading_options,
                                    training_options=training_options,
                                    verbose=verbose)
+    if verbose:
+        print('\nTraining AAM with Gaussian pyramid:')
     training_options['scaled_shape_models'] = False
     aam_false = aam_build_benchmark(training_db_path, training_db_ext,
                                     db_loading_options=db_loading_options,
@@ -75,7 +79,7 @@ def aam_experiments_all(training_db_path, training_db_ext, fitting_db_path,
                 for scaled_shape_models in scaled_shape_models_list:
                     exp_counter += 1
                     if verbose:
-                        print('\nEXPERIMENT {0}/{1}\n---------- -----\n'
+                        print('\nEXPERIMENT {0}/{1}\n----------------\n'
                               'Parameters:\n'
                               '- noise_std: {2:.2f}\n'
                               '- n_shape: {3}\n'
