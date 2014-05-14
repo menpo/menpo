@@ -44,6 +44,73 @@ def extract_local_patches(image, shape, sampling_grid):
     return patches
 
 
+def extract_local_patches_fast(image, centres, patch_shape, out=None):
+    r"""extract square patches from an image about centres.
+
+    Parameters
+    ----------
+
+    image: :map:`Image`
+        The image to extract patches from
+
+    centres: :map:`PointCloud`
+        The centres around which the patches should be extracted
+
+    patch_shape: tuple of ints
+        The size of the patch in each dimension
+
+    out: ndarray shape patch_shape + (n_channels, ) n_centres, optional
+        The output array to be assigned to. If None, a new numpy array will be
+        created.
+
+    Returns
+    -------
+    ndarray shape patch_shape + (n_channels, ) n_centres, optional
+        The patches as a single numpy array.
+
+    """
+    if out is not None:
+        patches = out
+    else:
+        patches = np.empty(patch_shape + (image.n_channels, centres.n_points,))
+    # 0 out the patches array
+    patches[...] = 0
+    image_size = np.array(image.shape, dtype=np.uint)
+    patch_shape = np.array(patch_shape, dtype=np.uint)
+    centres = np.require(centres.points, dtype=np.int)
+    # 1. compute the extents
+    c_min = centres - patch_shape / 2
+    c_max = centres + patch_shape / 2
+    out_min = c_min < 0
+    out_max = c_max > image_size
+
+    # 1. Build the extraction slices
+    ext_s_min = c_min.copy()
+    # Clamp the min to 0
+    ext_s_min[out_min] = 0
+
+    ext_s_max = c_max.copy()
+    # Clamp the max to image bounds across each dimension
+    for i in xrange(image.n_dims):
+        ext_s_max[out_max[:, i], i] = image_size[i] - 1
+
+    # 2. Build the insertion slices
+    ins_s_min = ext_s_min - c_min
+    ins_s_max = ext_s_max - c_max + patch_shape
+
+    for i, (e_a, e_b, i_a, i_b) in enumerate(zip(ext_s_min, ext_s_max,
+                                                 ins_s_min, ins_s_max)):
+        # build a list of insertion slices and extraction slices
+        i_slices = [slice(a, b) for a, b in zip(i_a, i_b)]
+        e_slices = [slice(a, b) for a, b in zip(e_a, e_b)]
+        # get a view onto the patch we are on
+        patch = patches[..., i]
+        # apply the slices to map
+        patch[i_slices] = image.pixels[e_slices]
+
+    return patches
+
+
 def mean_pointcloud(pointclouds):
     r"""
     Compute the mean of a list of point cloud objects
