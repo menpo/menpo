@@ -101,7 +101,7 @@ class AAMBuilder(DeformableModelBuilder):
         and the shape models (reference frames) will have the same scale (the
         one of the highest pyramidal level).
 
-        Default: True
+        Default: False
     max_shape_components: None or int > 0 or 0 <= float <= 1
                           or list of those, Optional
         If list of length n_levels, then a number of shape components is
@@ -168,7 +168,7 @@ class AAMBuilder(DeformableModelBuilder):
     """
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
-                 downscale=2, scaled_shape_models=True,
+                 downscale=2, scaled_shape_models=False,
                  max_shape_components=None, max_appearance_components=None,
                  boundary=3, interpolator='scipy'):
         # check parameters
