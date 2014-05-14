@@ -3,7 +3,7 @@ import abc
 import numpy as np
 
 from menpo.transform import Scale, AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 
 from menpo.fit.regression.trainer import (
