@@ -29,6 +29,8 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
                       initialization_options=None, verbose=False):
     if verbose:
         print('AAM Fitting:')
+        perc1 = 0.
+        perc2 = 0.
 
     # parse options
     if db_loading_options is None:
@@ -66,9 +68,16 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
 
         # print
         if verbose:
-            print_dynamic('- {0} - Image {1}/{2} ({3:.4f} --> {4:.4f})'.format(
+            if error_type is 'me_norm':
+                if fr.final_error <= 0.03:
+                    perc1 += 1.
+                elif fr.final_error <= 0.04:
+                    perc2 += 1.
+            print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
+                          'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
                 progress_bar_str(float(j + 1) / n_images, show_bar=False),
-                j + 1, n_images, fr.initial_error, fr.final_error))
+                perc1 * 100. / n_images, perc2 * 100. / n_images, j + 1,
+                n_images, fr.initial_error, fr.final_error))
     if verbose:
         print_dynamic('- Fitting completed\n')
 
