@@ -262,7 +262,7 @@ class GlobalPDM(PDM):
         self.global_transform.from_vector_inplace(global_weights)
 
     def d_dp(self, points):
-        # d_dp is always evaluated for the current target
+        # d_dp is always evaluated at the mean shape
         points = self.model.mean.points
 
         # compute dX/dp
