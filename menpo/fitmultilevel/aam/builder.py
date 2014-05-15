@@ -228,6 +228,11 @@ class AAMBuilder(DeformableModelBuilder):
             The AAM object. Shape and appearance models are stored from lowest
             to highest level
         """
+        # compute reference_shape and normalize images size
+        self.reference_shape = self._normalization_wrt_reference_shape(
+            images, group, label, self.normalization_diagonal,
+            self.interpolator, verbose=verbose)
+
         # compute reference_shape, normalize images size and create pyramid
         self.reference_shape, generator = self._preprocessing(
             images, group, label, self.normalization_diagonal,
