@@ -245,12 +245,6 @@ class AAMBuilder(DeformableModelBuilder):
                                          self.pyramid_on_features,
                                          self.feature_type, verbose=verbose)
 
-        ## compute reference_shape, normalize images size and create pyramid
-        #self.reference_shape, generator = self._preprocessing(
-        #    images, group, label, self.normalization_diagonal,
-        #    self.interpolator, self.scaled_shape_models, self.n_levels,
-        #    self.downscale, verbose=verbose)
-
         # build the model at each pyramid level
         if verbose:
             if self.n_levels > 1:
@@ -272,16 +266,28 @@ class AAMBuilder(DeformableModelBuilder):
                 if self.n_levels > 1:
                     level_str = '  - Level {}: '.format(j + 1)
 
-            # extract features from each image
-            feature_images = []
-            for c, g in enumerate(generator):
-                if verbose:
-                    print_dynamic('{}Computing feature space - {}'.format(
-                        level_str,
-                        progress_bar_str(float(c + 1) / len(generator),
-                                         show_bar=False)))
-                feature_images.append(compute_features(g.next(),
-                                                       self.feature_type[rj]))
+            # get images of current level
+            if self.pyramid_on_features:
+                # features are already computed, so just call generator
+                feature_images = []
+                for c, g in enumerate(generator):
+                    if verbose:
+                        print_dynamic('{}Rescaling feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generator),
+                                             show_bar=False)))
+                    feature_images.append(g.next())
+            else:
+                # extract features of images returned from generator
+                feature_images = []
+                for c, g in enumerate(generator):
+                    if verbose:
+                        print_dynamic('{}Computing feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generator),
+                                             show_bar=False)))
+                    feature_images.append(compute_features(
+                        g.next(), self.feature_type[rj]))
 
             # format shapes to build shape model
             if j == 0:
