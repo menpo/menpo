@@ -5,6 +5,7 @@ import numpy as np
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.fitmultilevel.featurefunctions import compute_features
 
 from .functions import mean_pointcloud
 
@@ -173,6 +174,8 @@ class DeformableModelBuilder(object):
         reference_shape: Pointcloud
             The reference shape that was used to resize all training images to
             a consistent object size.
+        normalized_images: list of MaskedImage objects
+            A list with the normalized images.
         """
         # the reference_shape is the mean shape of the images' landmarks
         if verbose:
@@ -190,7 +193,7 @@ class DeformableModelBuilder(object):
         normalized_images = []
         for c, i in enumerate(images):
             if verbose:
-                print_dynamic('- Normalizing images size - {}'.format(
+                print_dynamic('- Normalizing images size: {}'.format(
                     progress_bar_str((c + 1.) / len(images),
                                      show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
@@ -198,9 +201,66 @@ class DeformableModelBuilder(object):
                 interpolator=interpolator))
 
         if verbose:
-            print_dynamic('- Normalizing images size - Done\n')
+            print_dynamic('- Normalizing images size: Done\n')
+        return reference_shape, normalized_images
 
-        return reference_shape
+    @classmethod
+    def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
+                        feature_type, verbose=False):
+        r"""
+        Function that creates a generator function for Gaussian pyramid. The
+        pyramid can be created either on the feature space or the original
+        (intensities) space.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.Image`
+            The set of landmarked images from which to build the AAM.
+        n_levels: int
+            The number of multi-resolution pyramidal levels to be used.
+        downscale: float
+            The downscale factor that will be used to create the different
+            pyramidal levels.
+        pyramid_on_features: boolean
+            If True, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+            If False, the pyramid is created on the original (intensities)
+            space.
+        feature_type: list of size 1 with str or function/closure or None
+            The feature type to be used in case pyramid_on_features is enabled.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        generator: function
+            The generator function of the Gaussian pyramid.
+        """
+        if pyramid_on_features:
+            # compute features at highest level
+            feature_images = []
+            for c, i in enumerate(images):
+                if verbose:
+                    print_dynamic('- Computing feature space: {}'.format(
+                        progress_bar_str((c + 1.) / len(images),
+                                         show_bar=False)))
+                feature_images.append(compute_features(i, feature_type[0]))
+            if verbose:
+                print_dynamic('- Computing feature space: Done\n')
+
+            # create pyramid on feature_images
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
+                         for i in feature_images]
+        else:
+            # create pyramid on intensities images
+            # features will be computed per level
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
+                         for i in images]
+        return generator
 
     @classmethod
     def _preprocessing(cls, images, group, label, normalization_diagonal,

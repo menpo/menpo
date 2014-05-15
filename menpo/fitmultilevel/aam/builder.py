@@ -229,20 +229,27 @@ class AAMBuilder(DeformableModelBuilder):
             to highest level
         """
         # compute reference_shape and normalize images size
-        self.reference_shape = self._normalization_wrt_reference_shape(
-            images, group, label, self.normalization_diagonal,
-            self.interpolator, verbose=verbose)
-
-        # compute reference_shape, normalize images size and create pyramid
-        self.reference_shape, generator = self._preprocessing(
-            images, group, label, self.normalization_diagonal,
-            self.interpolator, self.scaled_shape_models, self.n_levels,
-            self.downscale, verbose=verbose)
+        self.reference_shape, normalized_images = \
+            self._normalization_wrt_reference_shape(
+                images, group, label, self.normalization_diagonal,
+                self.interpolator, verbose=verbose)
 
         # estimate required ram memory
-        if verbose:
-            self._estimate_ram_requirements(images, group, label,
-                                            n_images=min([3, len(images)]))
+        #if verbose:
+        #    self._estimate_ram_requirements(images, group, label,
+        #                                    n_images=min([3, len(images)]))
+
+        # create pyramid
+        generator = self._create_pyramid(normalized_images, self.n_levels,
+                                         self.downscale,
+                                         self.pyramid_on_features,
+                                         self.feature_type, verbose=verbose)
+
+        ## compute reference_shape, normalize images size and create pyramid
+        #self.reference_shape, generator = self._preprocessing(
+        #    images, group, label, self.normalization_diagonal,
+        #    self.interpolator, self.scaled_shape_models, self.n_levels,
+        #    self.downscale, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
