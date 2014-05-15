@@ -53,22 +53,25 @@ class AAMFitter(MultilevelFitter):
     def downscale(self):
         r"""
         The downscale per pyramidal level used during building the AAM.
+        The scale factor is: (downscale ** k) for k in range(n_levels)
 
         : float
         """
         return self.aam.downscale
 
     @property
-    def scaled_levels(self):
+    def pyramid_on_features(self):
         r"""
-        Flag controls the pyramid of the testing image based on the pyramid
-        used during building the AAM.
-        If True, the test image will be scaled using a Gaussian pyramid.
-        If False, a smoothing pyramid will be applied to the testing image.
+        Flag that controls the Gaussian pyramid of the testing image based on
+        the pyramid used during building the AAM.
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
 
         : boolean
         """
-        return not self.aam.scaled_shape_models
+        return self.aam.pyramid_on_features
 
     @property
     def interpolator(self):
@@ -82,9 +85,10 @@ class AAMFitter(MultilevelFitter):
     # TODO: Can this be moved up?
     def _prepare_image(self, image, initial_shape, gt_shape=None):
         r"""
-        The image is first rescaled wrt the reference_landmarks, then
-        smoothing or gaussian pyramid are computed and, finally, features
-        are extracted from each pyramidal element.
+        The image is first rescaled wrt the reference_landmarks and then the
+        gaussian pyramid is computed. Depending on the pyramid_on_features
+        flag, the pyramid is either applied on the feature image or
+        features are extracted at each pyramidal level.
 
         Parameters
         ----------
@@ -99,7 +103,7 @@ class AAMFitter(MultilevelFitter):
 
         Returns
         -------
-        images: list of :class:`pybug.image.masked.MaskedImage`
+        images: list of :class:`menpo.image.masked.MaskedImage`
             List of images, each being the result of applying the pyramid.
         """
         # rescale image wrt the scale factor between reference_shape and
@@ -109,21 +113,31 @@ class AAMFitter(MultilevelFitter):
             self.reference_shape, group='initial_shape',
             interpolator=self.interpolator)
 
-        # attach given groundtruth shape
+        # attach given ground truth shape
         if gt_shape:
             image.landmarks['gt_shape'] = gt_shape
 
         # apply pyramid
         if self.n_levels > 1:
-            if self.scaled_levels:
+            if self.pyramid_on_features:
+                # compute features at highest level
+                feature_image = compute_features(image, self.feature_type[0])
+
+                # apply pyramid on feature image
+                pyramid = feature_image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # get rescaled feature images
+                images = list(pyramid)
+            else:
+                # create pyramid on intensities image
                 pyramid = image.gaussian_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            else:
-                pyramid = image.smoothing_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i,
-                                       self.feature_type[self.n_levels-j-1])
-                      for j, i in enumerate(pyramid)]
+
+                # compute features at each level
+                images = [compute_features(
+                    i, self.feature_type[self.n_levels - j - 1])
+                    for j, i in enumerate(pyramid)]
             images.reverse()
         else:
             images = [compute_features(image, self.feature_type[0])]
@@ -132,7 +146,7 @@ class AAMFitter(MultilevelFitter):
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
         r"""
-        Creates the :class: `pybug.aam.fitting.MultipleFitting` object
+        Creates the :class: `menpo.aam.fitting.MultipleFitting` object
         associated with a particular Fitter object.
 
         Parameters
@@ -369,7 +383,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 down_str.append('(downscale by {})'.format(
                     self.downscale**(self.n_levels - j - 1)))
         if self.n_levels > 1:
-            if self.aam.scaled_shape_models:  # not self.scaled_levels
+            if self.aam.scaled_shape_models:
                 out = "{} - Smoothing pyramid with {} levels and downscale " \
                       "factor of {}.\n   Each level has a scaled shape " \
                       "model.\n".format(out, self.n_levels, self.downscale)

@@ -95,7 +95,8 @@ class AAMBuilder(DeformableModelBuilder):
         Default: 3
     downscale: float >= 1, Optional
         The downscale factor that will be used to create the different
-        pyramidal levels.
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
 
         Default: 2
     scaled_shape_models: boolean, Optional
@@ -258,10 +259,10 @@ class AAMBuilder(DeformableModelBuilder):
                                             n_images=min([3, len(images)]))
 
         # create pyramid
-        generator = self._create_pyramid(normalized_images, self.n_levels,
-                                         self.downscale,
-                                         self.pyramid_on_features,
-                                         self.feature_type, verbose=verbose)
+        generators = self._create_pyramid(normalized_images, self.n_levels,
+                                          self.downscale,
+                                          self.pyramid_on_features,
+                                          self.feature_type, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -288,21 +289,21 @@ class AAMBuilder(DeformableModelBuilder):
             if self.pyramid_on_features:
                 # features are already computed, so just call generator
                 feature_images = []
-                for c, g in enumerate(generator):
+                for c, g in enumerate(generators):
                     if verbose:
                         print_dynamic('{}Rescaling feature space - {}'.format(
                             level_str,
-                            progress_bar_str((c + 1.) / len(generator),
+                            progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
                     feature_images.append(g.next())
             else:
                 # extract features of images returned from generator
                 feature_images = []
-                for c, g in enumerate(generator):
+                for c, g in enumerate(generators):
                     if verbose:
                         print_dynamic('{}Computing feature space - {}'.format(
                             level_str,
-                            progress_bar_str((c + 1.) / len(generator),
+                            progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
                     feature_images.append(compute_features(
                         g.next(), self.feature_type[rj]))
