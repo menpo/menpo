@@ -1,1 +1,1 @@
-from .predefined_exps import aam_igo_smoothing_pyramid, aam_experiments_all
+from .predefined_exps import aam_fastest_alternating, aam_best_performance_alternating
