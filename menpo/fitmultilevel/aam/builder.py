@@ -22,12 +22,17 @@ class AAMBuilder(DeformableModelBuilder):
     Parameters
     ----------
     feature_type: None or string or function/closure or list of those, Optional
-        If list of length n_levels, then a feature type is defined per level.
-        The first element of the list specifies the features to be extracted at
-        the lowest pyramidal level and so on.
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
 
-        If not a list or a list with length 1, then the specified feature type
-        will be used for all levels.
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
 
         Per level:
         If None, the appearance model will be built using the original image
@@ -58,7 +63,7 @@ class AAMBuilder(DeformableModelBuilder):
         See `menpo.image.feature.py` for details more details on
         menpo's standard image features and feature options.
 
-        Default: None
+        Default: 'igo'
     transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
         The :class:`menpo.transform.PureAlignmentTransform` that will be
         used to warp the images.
@@ -94,14 +99,24 @@ class AAMBuilder(DeformableModelBuilder):
 
         Default: 2
     scaled_shape_models: boolean, Optional
-        If True, the original images will be smoothed with a smoothing pyramid
-        and the shape models (reference frames) will be scaled with a
-         Gaussian pyramid.
-        If False, the original images will be scaled with a Gaussian pyramid
-        and the shape models (reference frames) will have the same scale (the
-        one of the highest pyramidal level).
+        If True, the reference frames will be the mean shapes of each pyramid
+        level, so the shape models will be scaled.
+        If False, the reference frames of all levels will be the mean shape of
+        the highest level, so the shape models will not be scaled; they will
+        have the same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
 
         Default: False
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
+
+        Default: True
     max_shape_components: None or int > 0 or 0 <= float <= 1
                           or list of those, Optional
         If list of length n_levels, then a number of shape components is
@@ -165,6 +180,9 @@ class AAMBuilder(DeformableModelBuilder):
     ValueError
         feature_type must be a str or a function/closure or a list of those
         containing 1 or {n_levels} elements
+    ValueError
+        pyramid_on_features is enabled so feature_type must be a str or a
+        function/closure or a list containing 1 of those
     """
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
@@ -363,6 +381,11 @@ class AAMBuilder(DeformableModelBuilder):
         ---------
         mean_shape: Pointcloud
             The mean shape to use.
+
+        Returns
+        -------
+        reference_frame : :class:`menpo.image.base.Image`
+            The reference frame.
         """
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
@@ -379,6 +402,11 @@ class AAMBuilder(DeformableModelBuilder):
             The trained multilevel appearance models.
         n_training_images: int
             The number of training images.
+
+        Returns
+        -------
+        aam : :class:`menpo.fitmultilevel.aam.AAM`
+            The trained AAM object.
         """
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
@@ -399,8 +427,14 @@ class AAMBuilder(DeformableModelBuilder):
             The key of the landmark set that will be used.
         label: string
             The label of of the landmark manager that will be used.
+        n_images: int, Optional
+            The number of images to be used to train the temporary AAM and
+            estimate the RAM requirements. Note that the images are selected
+            randomly from the images list.
+
+            Default: 3
         """
-        print_dynamic('- Estimating RAM memory requirements')
+        print_dynamic('- Estimating RAM memory requirements...')
         # create images list
         n_training_images = len(images)
         which_images = sample(range(n_training_images), n_images)
@@ -613,12 +647,17 @@ class AAM(object):
         subsequently be used by fitter objects using this class to fit to
         novel images.
 
-        If list of length n_levels, then a feature type was defined per level.
-        The first element of the list specifies the features to be extracted at
-        the lowest pyramidal level and so on.
+        If list of length n_levels, then a feature was defined per level.
+        This means that the pyramid_on_features flag was disabled (False)
+        and the features were extracted at each level. The first element of
+        the list specifies the features of the lowest pyramidal level and so
+        on.
 
-        If not a list or a list with length 1, then the specified feature type
-        was used for all levels.
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature was applied
+            to the highest level.
+            If pyramid_on_features is False, the specified feature was applied
+            to all pyramid levels.
 
         Per level:
         If None, the appearance model was built using the original image
@@ -643,13 +682,21 @@ class AAM(object):
     downscale: float
         The downscale factor that was used to create the different pyramidal
         levels.
-    scaled_shape_models: boolean
-        If True, the original images were smoothed with a smoothing pyramid
-        and the shape models (reference frames) are scaled with a Gaussian
-        pyramid.
-        If False, the original images were scaled with a Gaussian pyramid and
-        the shape models (reference frames) have the same scale (the one of
-        the highest pyramidal level).
+    scaled_shape_models: boolean, Optional
+        If True, the reference frames are the mean shapes of each pyramid
+        level, so the shape models are scaled.
+        If False, the reference frames of all levels are the mean shape of
+        the highest level, so the shape models are not scaled; they have the
+        same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
+    pyramid_on_features: boolean, Optional
+        If True, the feature space was computed once at the highest scale and
+        the Gaussian pyramid was applied on the feature images.
+        If False, the Gaussian pyramid was applied on the original images
+        (intensities) and then features were extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
     interpolator: string
         The interpolator that was used to build the AAM.
 
