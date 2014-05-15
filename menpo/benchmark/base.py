@@ -1,112 +1,10 @@
 import os
 
-import menpo.io as pio
+import menpo.io as mio
 from menpo.visualize.text_utils import print_dynamic, progress_bar_str
 from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
 from menpo.fit.fittingresult import FittingResultList
 from menpo.landmark import labeller
-
-
-def aam_benchmark(training_db_path, training_db_ext, fitting_db_path,
-                  fitting_db_ext, db_loading_options=None,
-                  training_options=None, fitting_options=None,
-                  initialization_options=None, verbose=False):
-    r"""
-    Trains an AAM model and fits it to a database.
-
-    Parameters
-    ----------
-    training_db_path: str
-        The path of the training database images.
-    training_db_ext: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
-    fitting_db_path: str
-        The path of the fitting database images.
-    fitting_db_ext: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
-    db_loading_options: dictionary, optional
-        A dictionary with the parameters that will be passed in the
-        _load_database_images() method.
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            db_loading_options = {'crop_proportion': 0.1,
-                                  'convert_to_grey': True
-                                  }
-        For an explanation of the options, please refer to the
-        _load_database_images() documentation.
-
-        Default: None
-    training_options: dictionary, optional
-        A dictionary with the parameters that will be passed in the AAMBuilder
-        (:class:menpo.fitmultilevel.aam.AAMBuilder).
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            training_options = {'group': 'PTS',
-                                'feature_type': 'igo',
-                                'transform': PiecewiseAffine,
-                                'trilist': None,
-                                'normalization_diagonal': None,
-                                'n_levels': 3,
-                                'downscale': 2,
-                                'scaled_shape_models': True,
-                                'max_shape_components': None,
-                                'max_appearance_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
-                                }
-        For an explanation of the options, please refer to the AAMBuilder
-        documentation.
-
-        Default: None
-    fitting_options: dictionary, optional
-        A dictionary with the parameters that will be passed in the
-        LucasKanadeAAMFitter (:class:menpo.fitmultilevel.aam.base).
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            fitting_options = {'algorithm': AlternatingInverseCompositional,
-                               'md_transform': OrthoMDTransform,
-                               'global_transform': AlignmentSimilarity,
-                               'n_shape': None,
-                               'n_appearance': None,
-                               'max_iters': 50,
-                               'error_type': 'me_norm'
-                               }
-        For an explanation of the options, please refer to the
-        LucasKanadeAAMFitter documentation.
-
-        Default: None
-    initialization_options: dictionary, optional
-        A dictionary with parameters that define the initialization scheme to
-        be used during fitting. Currently the only supported initialization is
-        perturbation on the ground truth shape with noise of specified std.
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            initialization_options = {'noise_std': 0.04,
-                                      'rotation': False
-                                      }
-        For an explanation of the options, please refer to the perturb_shape()
-        method documentation of :class:menpo.fitmultilevel.MultilevelFitter.
-    verbose: boolean, optional
-        If True, it prints information regarding the AAM training and fitting.
-
-        Default: False
-
-    Returns
-    -------
-    fitting_results: :class:menpo.fit.fittingresult.FittingResultList object
-        A list with the FittingResult object per image.
-    """
-    # train aam
-    aam = aam_build_benchmark(training_db_path, training_db_ext,
-                              db_loading_options=db_loading_options,
-                              training_options=training_options,
-                              verbose=verbose)
-    # fit aam
-    fitting_results = aam_fit_benchmark(
-        fitting_db_path, fitting_db_ext, aam,
-        db_loading_options=db_loading_options, fitting_options=fitting_options,
-        initialization_options=initialization_options, verbose=verbose)
-    return fitting_results
 
 
 def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
@@ -238,9 +136,7 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
     return fitting_results
 
 
-def aam_build_benchmark(training_db_path, training_db_ext,
-                        db_loading_options=None, training_options=None,
-                        verbose=False):
+def aam_build_benchmark(training_images, training_options=None, verbose=False):
     r"""
     Builds an AAM model.
 
@@ -250,18 +146,6 @@ def aam_build_benchmark(training_db_path, training_db_ext,
         The path of the training database images.
     training_db_ext: str
         The extension (file format) of the image files. (e.g. '.png' or 'png')
-    db_loading_options: dictionary, optional
-        A dictionary with the parameters that will be passed in the
-        _load_database_images() method.
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            db_loading_options = {'crop_proportion': 0.1,
-                                  'convert_to_grey': True
-                                  }
-        For an explanation of the options, please refer to the
-        _load_database_images() documentation.
-
-        Default: None
     training_options: dictionary, optional
         A dictionary with the parameters that will be passed in the AAMBuilder
         (:class:menpo.fitmultilevel.aam.AAMBuilder).
@@ -325,8 +209,8 @@ def aam_build_benchmark(training_db_path, training_db_ext,
     return aam
 
 
-def _load_database_images(database_path, files_extension, crop_proportion=0.1,
-                          convert_to_grey=True, verbose=False):
+def load_database(database_path, files_extension, db_loading_options=None,
+                  verbose=False):
     r"""
     Loads the database images, crops them and converts them.
 
@@ -336,16 +220,22 @@ def _load_database_images(database_path, files_extension, crop_proportion=0.1,
         The path of the database images.
     files_extension: str
         The extension (file format) of the image files. (e.g. '.png' or 'png')
-    crop_proportion: float, optional
-        Additional padding to be added all around the landmarks bounds when the
-        images are cropped. It is defined as a proportion of the landmarks'
-        range.
+    db_loading_options: dictionary, optional
+        A dictionary with options related to image loading.
+        If None, the default options will be used.
+        This is an example of the dictionary with the default options:
+            training_options = {'crop_proportion': 0.1,
+                                'convert_to_grey': True,
+                                }
 
-        Default: 0.1
-    convert_to_grey: boolean, optional
-        If True, the RGB images will be converted to greyscale.
+        crop_proportion (float) defines the additional padding to be added all
+        around the landmarks bounds when the images are cropped. It is defined
+        as a proportion of the landmarks' range.
 
-        Default: True
+        convert_to_grey (boolean)defines whether the images will be converted
+        to greyscale.
+
+        Default: None
     verbose: boolean, optional
         If True, it prints a progress percentage bar.
 
@@ -353,7 +243,7 @@ def _load_database_images(database_path, files_extension, crop_proportion=0.1,
 
     Returns
     -------
-    training_images: list of :class:MaskedImage objects
+    images: list of :class:MaskedImage objects
         A list of the loaded images.
 
     Raises
@@ -363,6 +253,10 @@ def _load_database_images(database_path, files_extension, crop_proportion=0.1,
     ValueError
         No {files_extension} files in given path
     """
+    # check input options
+    if db_loading_options is None:
+        db_loading_options = {}
+
     # check given path
     database_path = os.path.abspath(os.path.expanduser(database_path))
     if os.path.isdir(database_path) is not True:
@@ -376,14 +270,18 @@ def _load_database_images(database_path, files_extension, crop_proportion=0.1,
     final_path = os.path.abspath(os.path.expanduser(os.path.join(
         database_path, '*{}'.format(files_extension))))
 
+    # get options
+    crop_proportion = db_loading_options.pop('crop_proportion', 0.1)
+    convert_to_grey = db_loading_options.pop('convert_to_grey', True)
+
     # find number of files
-    n_files = len(pio.image_paths(final_path))
+    n_files = len(mio.image_paths(final_path))
     if n_files < 1:
         raise ValueError('No {} files in given path'.format(files_extension))
 
     # load images
-    training_images = []
-    for c, i in enumerate(pio.import_images(final_path)):
+    images = []
+    for c, i in enumerate(mio.import_images(final_path)):
         # print progress bar
         if verbose:
             print_dynamic('- Loading database with {} images: {}'.format(
@@ -398,8 +296,8 @@ def _load_database_images(database_path, files_extension, crop_proportion=0.1,
             i = i.as_greyscale(mode='luminosity')
 
         # append it to the list
-        training_images.append(i)
+        images.append(i)
     if verbose:
         print_dynamic('- Loading database with {} images: Done\n'.format(
             n_files))
-    return training_images
+    return images

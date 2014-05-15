@@ -4,7 +4,7 @@ from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.transform.modeldriven import GlobalMDTransform, OrthoMDTransform
 from menpo.transform import AlignmentSimilarity
 
-from .base import aam_benchmark, aam_fit_benchmark, aam_build_benchmark
+from .base import load_database, aam_build_benchmark, aam_fit_benchmark
 
 
 def aam_experiments_all(training_db_path, training_db_ext, fitting_db_path,
