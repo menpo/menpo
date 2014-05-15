@@ -28,6 +28,7 @@ aam1 = AAMBuilder(feature_type=['igo', sparse_hog, None],
                   n_levels=3,
                   downscale=2,
                   scaled_shape_models=False,
+                  pyramid_on_features=False,
                   max_shape_components=[1, 2, 3],
                   max_appearance_components=[3, 3, 3],
                   boundary=3,
@@ -40,14 +41,35 @@ aam2 = AAMBuilder(feature_type=None,
                   n_levels=2,
                   downscale=1.2,
                   scaled_shape_models=True,
+                  pyramid_on_features=False,
                   max_shape_components=None,
                   max_appearance_components=10,
                   boundary=0,
                   interpolator='scipy').build(training_images, group='PTS')
 
+aam3 = AAMBuilder(feature_type='igo',
+                  transform=ThinPlateSplines,
+                  trilist=None,
+                  normalization_diagonal=None,
+                  n_levels=1,
+                  downscale=3,
+                  scaled_shape_models=True,
+                  pyramid_on_features=True,
+                  max_shape_components=[1],
+                  max_appearance_components=10,
+                  boundary=2,
+                  interpolator='scipy').build(training_images, group='PTS')
+
 
 @raises(ValueError)
 def test_feature_type_exception():
+    aam = AAMBuilder(feature_type=['igo', sparse_hog],
+                     pyramid_on_features=False).build(training_images,
+                                                      group='PTS')
+
+
+@raises(ValueError)
+def test_feature_type_with_pyramid_on_features_exception():
     aam = AAMBuilder(feature_type=['igo', sparse_hog]).build(training_images,
                                                              group='PTS')
 
@@ -101,6 +123,7 @@ def test_aam_1():
     assert (aam1.interpolator == 'scipy')
     assert_allclose(np.around(aam1.reference_shape.range()), (110., 102.))
     assert (not aam1.scaled_shape_models)
+    assert (not aam1.pyramid_on_features)
     assert (np.all([aam1.shape_models[j].n_components == 1
                     for j in range(aam1.n_levels)]))
     assert (np.all([aam1.appearance_models[j].n_components == 1
@@ -119,6 +142,7 @@ def test_aam_2():
     assert (aam2.interpolator == 'scipy')
     assert_allclose(np.around(aam2.reference_shape.range()), (224., 207.))
     assert aam2.scaled_shape_models
+    assert (not aam2.pyramid_on_features)
     assert (np.all([aam2.shape_models[j].n_components == 1
                     for j in range(aam2.n_levels)]))
     assert (np.all([aam2.appearance_models[j].n_components == 1
@@ -127,3 +151,22 @@ def test_aam_2():
                     for j in range(aam2.n_levels)]))
     assert_allclose([aam2.appearance_models[j].components.shape[1]
                      for j in range(aam2.n_levels)], (20447, 29443))
+
+
+def test_aam_3():
+    assert (aam3.n_training_images == 2)
+    assert (aam3.n_levels == 1)
+    assert (aam3.downscale == 3)
+    assert (aam3.feature_type[0] is 'igo' and len(aam3.feature_type) == 1)
+    assert (aam3.interpolator == 'scipy')
+    assert_allclose(np.around(aam3.reference_shape.range()), (224., 207.))
+    assert aam3.scaled_shape_models
+    assert aam3.pyramid_on_features
+    assert (np.all([aam3.shape_models[j].n_components == 1
+                    for j in range(aam3.n_levels)]))
+    assert (np.all([aam3.appearance_models[j].n_components == 1
+                    for j in range(aam3.n_levels)]))
+    assert (np.all([aam3.appearance_models[j].template_instance.n_channels == 2
+                    for j in range(aam3.n_levels)]))
+    assert_allclose([aam3.appearance_models[j].components.shape[1]
+                     for j in range(aam3.n_levels)], (58886))
