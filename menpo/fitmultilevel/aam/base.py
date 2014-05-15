@@ -358,57 +358,96 @@ class LucasKanadeAAMFitter(AAMFitter):
               self._fitters[0].algorithm,
               self._fitters[0].transform.__class__.__name__,
               self._fitters[0].residual.type, self.aam.n_training_images)
+        # small strings about number of channels, channels string and downscale
         n_channels = []
-        ch_str = []
-        feat_str = []
         down_str = []
         for j in range(self.n_levels):
             n_channels.append(
                 self._fitters[j].appearance_model.template_instance.n_channels)
-            if n_channels[j] == 1:
-                ch_str.append("channel")
-            else:
-                ch_str.append("channels")
-            if isinstance(self.feature_type[j], str):
-                feat_str.append("- Feature is {} with ".format(
-                    self.feature_type[j]))
-            elif self.feature_type[j] is None:
-                feat_str.append("- No features extracted. ")
-            else:
-                feat_str.append("- Feature is {} with ".format(
-                    self.feature_type[j].func_name))
             if j == self.n_levels - 1:
                 down_str.append('(no downscale)')
             else:
                 down_str.append('(downscale by {})'.format(
                     self.downscale**(self.n_levels - j - 1)))
+        # string about features and channels
+        if self.pyramid_on_features:
+            if isinstance(self.feature_type[0], str):
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0])
+            elif self.feature_type[0] is None:
+                feat_str = "- No features extracted. "
+            else:
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0].func_name)
+            if n_channels[0] == 1:
+                ch_str = "channel"
+            else:
+                ch_str = "channels"
+        else:
+            feat_str = []
+            ch_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.feature_type[j], str):
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j]))
+                elif self.feature_type[j] is None:
+                    feat_str.append("- No features extracted. ")
+                else:
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j].func_name))
+                if n_channels[j] == 1:
+                    ch_str.append("channel")
+                else:
+                    ch_str.append("channels")
         if self.n_levels > 1:
             if self.aam.scaled_shape_models:
-                out = "{} - Smoothing pyramid with {} levels and downscale " \
-                      "factor of {}.\n   Each level has a scaled shape " \
-                      "model.\n".format(out, self.n_levels, self.downscale)
+                out = "{} - Gaussian pyramid with {} levels and downscale " \
+                      "factor of {}.\n   - Each level has a scaled shape " \
+                      "model (reference frame).\n".format(out, self.n_levels,
+                                                          self.downscale)
 
             else:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
-                      "factor of {}:\n   Shape models are not " \
-                      "scaled.\n".format(out, self.n_levels, self.downscale)
+                      "factor of {}:\n   - Shape models (reference frames) " \
+                      "are not scaled.\n".format(out, self.n_levels,
+                                                 self.downscale)
+            if self.pyramid_on_features:
+                out = "{}   - Pyramid was applied on feature space.\n   " \
+                      "{}{} {} per image.\n".format(out, feat_str,
+                                                    n_channels[0], ch_str)
+                if self.aam.scaled_shape_models is False:
+                    out = "{}   - Reference frames of length {} " \
+                          "({} x {}C, {} x {}C)\n".format(
+                          out, self._fitters[0].appearance_model.n_features,
+                          self._fitters[0].template.n_true_pixels,
+                          n_channels[0], self._fitters[0].template._str_shape,
+                          n_channels[0])
+            else:
+                out = "{}   - Features were extracted at each pyramid " \
+                      "level.\n".format(out)
             for i in range(self.n_levels - 1, -1, -1):
-                out = "{0}   - Level {1} {2}: \n     {3}{4} {5} per image.\n" \
-                      "     - Reference frame of length {6} ({7} x {8}C, " \
-                      "{9} x {10}C)\n     - {11} motion parameters\n" \
-                      "     - {12} active appearance components ({13:.2f}% " \
-                      "of original variance)\n".format(
-                      out, self.n_levels - i, down_str[i], feat_str[i],
-                      n_channels[i], ch_str[i],
-                      self._fitters[i].appearance_model.n_features,
-                      self._fitters[i].template.n_true_pixels,
-                      n_channels[i],
-                      self._fitters[i].template._str_shape,
-                      n_channels[i], self._fitters[i].transform.n_parameters,
+                out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
+                                                      down_str[i])
+                if self.pyramid_on_features is False:
+                    out = "{}     {}{} {} per image.\n".format(
+                        out, feat_str[i], n_channels[i], ch_str[i])
+                if (self.aam.scaled_shape_models or
+                        self.pyramid_on_features is False):
+                    out = "{}     - Reference frame of length {} " \
+                          "({} x {}C, {} x {}C)\n".format(
+                          out, self._fitters[i].appearance_model.n_features,
+                          self._fitters[i].template.n_true_pixels,
+                          n_channels[i], self._fitters[i].template._str_shape,
+                          n_channels[i])
+                out = "{0}     - {1} motion components\n     - {2} active " \
+                      "appearance components ({3:.2f}% of original " \
+                      "variance)\n".format(
+                      out, self._fitters[i].transform.n_parameters,
                       self._fitters[i].appearance_model.n_active_components,
-                      self._fitters[i].appearance_model.variance_ratio *
-                      100)
+                      self._fitters[i].appearance_model.variance_ratio * 100)
         else:
+            if self.pyramid_on_features:
+                feat_str = [feat_str]
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
                   "   - Reference frame of length {4} ({5} x {6}C, " \
                   "{7} x {8}C)\n   - {9} motion parameters\n" \

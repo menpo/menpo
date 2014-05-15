@@ -44,10 +44,11 @@ class MultilevelFitter(Fitter):
         pass
 
     @abc.abstractproperty
-    def scaled_levels(self):
+    def pyramid_on_features(self):
         r"""
-        Returns True if the shape results returned by the basic fitting_results
-        must be scaled.
+        Returns True if the pyramid is computed on the feature image and False
+        if it is computed on the original (intensities) image and features are
+        extracted at each level.
         """
         pass
 
