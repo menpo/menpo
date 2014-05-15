@@ -1,7 +1,7 @@
 from __future__ import division
 
 from menpo.transform import AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
@@ -177,19 +177,19 @@ class GradientDescentCLMFitter(CLMFitter):
         """
         if n_shape is not None:
             if type(n_shape) is int or type(n_shape) is float:
-                for sm in self.aam.shape_models:
+                for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.aam.n_levels > 1:
-                for sm in self.aam.shape_models:
+            elif len(n_shape) is 1 and self.clm.n_levels > 1:
+                for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.aam.n_levels:
-                for sm, n in zip(self.aam.shape_models, n_shape):
+            elif len(n_shape) is self.clm.n_levels:
+                for sm, n in zip(self.clm.shape_models, n_shape):
                     sm.n_active_components = n
             else:
                 raise ValueError('n_shape can be an integer or a float, '
                                  'an integer or float list containing 1 '
                                  'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                                 'None'.format(self.clm.n_levels))
 
         self._fitters = []
         for j, (sm, clf) in enumerate(zip(self.clm.shape_models,
