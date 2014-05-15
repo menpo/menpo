@@ -108,7 +108,7 @@ class AAMBuilder(DeformableModelBuilder):
         Note that from our experience, if scaled_shape_models is False, AAMs
         tend to have slightly better performance.
 
-        Default: False
+        Default: True
     pyramid_on_features: boolean, Optional
         If True, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
@@ -187,7 +187,7 @@ class AAMBuilder(DeformableModelBuilder):
     """
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
-                 downscale=2, scaled_shape_models=False,
+                 downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3,
                  interpolator='scipy'):
