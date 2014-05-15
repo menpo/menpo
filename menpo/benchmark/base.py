@@ -7,33 +7,18 @@ from menpo.fit.fittingresult import FittingResultList
 from menpo.landmark import labeller
 
 
-def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
-                      db_loading_options=None, fitting_options=None,
+def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
                       initialization_options=None, verbose=False):
     r"""
     Fits a trained AAM model to a database.
 
     Parameters
     ----------
-    fitting_db_path: str
-        The path of the fitting database images.
-    fitting_db_ext: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
+    fitting_images: list of :class:MaskedImage objects
+        A list of the fitting images.
     aam: :class:menpo.fitmultilevel.aam.AAM object
         The trained AAM object. It can be generate from the
         aam_build_benchmark() method.
-    db_loading_options: dictionary, optional
-        A dictionary with the parameters that will be passed in the
-        _load_database_images() method.
-        If None, the default options will be used.
-        This is an example of the dictionary with the default options:
-            db_loading_options = {'crop_proportion': 0.1,
-                                  'convert_to_grey': True
-                                  }
-        For an explanation of the options, please refer to the
-        _load_database_images() documentation.
-
-        Default: None
     fitting_options: dictionary, optional
         A dictionary with the parameters that will be passed in the
         LucasKanadeAAMFitter (:class:menpo.fitmultilevel.aam.base).
@@ -80,8 +65,6 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
         perc2 = 0.
 
     # parse options
-    if db_loading_options is None:
-        db_loading_options = {}
     if fitting_options is None:
         fitting_options = {}
     if initialization_options is None:
@@ -95,13 +78,8 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
     # create fitter
     fitter = LucasKanadeAAMFitter(aam, **fitting_options)
 
-    # load fitting images
-    db_loading_options['verbose'] = verbose
-    fitting_images = _load_database_images(fitting_db_path, fitting_db_ext,
-                                           **db_loading_options)
-    n_images = len(fitting_images)
-
     # fit images
+    n_images = len(fitting_images)
     fitting_results = []
     for j, i in enumerate(fitting_images):
         # perturb shape
@@ -119,6 +97,11 @@ def aam_fit_benchmark(fitting_db_path, fitting_db_ext, aam,
                 if fr.final_error <= 0.03:
                     perc1 += 1.
                 if fr.final_error <= 0.04:
+                    perc2 += 1.
+            elif error_type is 'rmse':
+                if fr.final_error <= 0.05:
+                    perc1 += 1.
+                if fr.final_error <= 0.06:
                     perc2 += 1.
             print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
                           'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
@@ -142,10 +125,8 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
 
     Parameters
     ----------
-    training_db_path: str
-        The path of the training database images.
-    training_db_ext: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
+    training_images: list of :class:MaskedImage objects
+        A list of the training images.
     training_options: dictionary, optional
         A dictionary with the parameters that will be passed in the AAMBuilder
         (:class:menpo.fitmultilevel.aam.AAMBuilder).
@@ -182,15 +163,8 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
         print('AAM Training:')
 
     # parse options
-    if db_loading_options is None:
-        db_loading_options = {}
     if training_options is None:
         training_options = {}
-
-    # load training images
-    db_loading_options['verbose'] = verbose
-    training_images = _load_database_images(training_db_path, training_db_ext,
-                                            **db_loading_options)
 
     # group option
     group = training_options.pop('group', None)
