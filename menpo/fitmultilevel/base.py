@@ -302,8 +302,6 @@ class MultilevelFitter(Fitter):
             fitting_results.append(fitting_result)
 
             shape = fitting_result.final_shape
-            if self.scaled_levels:
-                Scale(self.downscale,
-                      n_dims=shape.n_dims).apply_inplace(shape)
+            Scale(self.downscale, n_dims=shape.n_dims).apply_inplace(shape)
 
         return fitting_results

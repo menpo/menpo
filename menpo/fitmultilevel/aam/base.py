@@ -92,11 +92,11 @@ class AAMFitter(MultilevelFitter):
 
         Parameters
         ----------
-        image: :class:`pybug.image.masked.MaskedImage`
+        image: :class:`menpo.image.MaskedImage`
             The image to be fitted.
-        initial_shape: class:`pybug.shape.PointCloud`
+        initial_shape: class:`menpo.shape.PointCloud`
             The initial shape from which the fitting will start.
-        gt_shape: class:`pybug.shape.PointCloud`, optional
+        gt_shape: class:`menpo.shape.PointCloud`, optional
             The original ground truth shape associated to the image.
 
             Default: None
@@ -151,15 +151,15 @@ class AAMFitter(MultilevelFitter):
 
         Parameters
         -----------
-        image: :class:`pybug.image.masked.MaskedImage`
+        image: :class:`menpo.image.masked.MaskedImage`
             The original image to be fitted.
-        fitting_results: :class:`pybug.aam.fitting.BasicFitting` list
+        fitting_results: :class:`menpo.fitmultilevel.FittingResult` list
             A list of basic fitting objects containing the state of the
             different fitting levels.
-        affine_correction: :class: `pybug.transforms.affine.Affine`
+        affine_correction: :class: `menpo.transforms.affine.Affine`
             An affine transform that maps the result of the top resolution
             fitting level to the space scale of the original image.
-        gt_shape: class:`pybug.shape.PointCloud`, optional
+        gt_shape: class:`menpo.shape.PointCloud`, optional
             The ground truth shape associated to the image.
 
             Default: None
@@ -171,7 +171,7 @@ class AAMFitter(MultilevelFitter):
 
         Returns
         -------
-        fitting: :class:`pybug.aam.Fitting`
+        fitting: :class:`menpo.aam.Fitting`
             The fitting object that will hold the state of the fitter.
         """
         return AAMMultilevelFittingResult(
@@ -451,7 +451,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
                   "   - Reference frame of length {4} ({5} x {6}C, " \
                   "{7} x {8}C)\n   - {9} motion parameters\n" \
-                  "   - {11} appearance components ({12:.2f}% of original " \
+                  "   - {10} appearance components ({11:.2f}% of original " \
                   "variance)\n".format(
                   out, feat_str[0], n_channels[0], ch_str[0],
                   self._fitters[0].appearance_model.n_features,
