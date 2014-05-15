@@ -169,8 +169,9 @@ class AAMBuilder(DeformableModelBuilder):
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=False,
-                 max_shape_components=None, max_appearance_components=None,
-                 boundary=3, interpolator='scipy'):
+                 pyramid_on_features=True, max_shape_components=None,
+                 max_appearance_components=None, boundary=3,
+                 interpolator='scipy'):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -180,7 +181,8 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels)
+        feature_type = self.check_feature_type(feature_type, n_levels,
+                                               pyramid_on_features)
 
         # store parameters
         self.feature_type = feature_type
@@ -190,6 +192,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
