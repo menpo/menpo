@@ -5,6 +5,24 @@ from nose.tools import raises
 from menpo.image import BooleanImage, MaskedImage
 
 
+def test_create_image_copy_false():
+    pixels = np.ones((100, 100))
+    image = MaskedImage(pixels, copy=False)
+    assert (image.pixels is pixels)
+
+
+def test_create_image_copy_true():
+    pixels = np.ones((100, 100))
+    image = MaskedImage(pixels)
+    assert (image.pixels is not pixels)
+
+
+@raises(Warning)
+def test_create_image_copy_false_not_c_contiguous():
+    pixels = np.ones((100, 100), order='F')
+    MaskedImage(pixels, copy=False)
+
+
 def mask_image_3d_test():
     mask_shape = (120, 121, 13)
     mask_region = np.ones(mask_shape)
@@ -28,14 +46,20 @@ def test_mask_blank():
 def test_boolean_copy_false_boolean():
     mask = np.zeros((10, 10), dtype=np.bool)
     boolean_image = BooleanImage(mask, copy=False)
-    assert(boolean_image.pixels.base is mask)
+    assert (boolean_image.pixels.base is mask)
+
+
+def test_boolean_copy_true():
+    mask = np.zeros((10, 10), dtype=np.bool)
+    boolean_image = BooleanImage(mask)
+    assert (boolean_image.pixels.base is not mask)
 
 
 @raises(Warning)
 def test_boolean_copy_false_non_boolean():
     mask = np.zeros((10, 10))
     boolean_image = BooleanImage(mask, copy=False)
-    assert(boolean_image.pixels.base is mask)
+    assert (boolean_image.pixels.base is mask)
 
 
 def test_mask_blank_rounding_floor():

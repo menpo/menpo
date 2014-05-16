@@ -78,7 +78,12 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Landmarkable.__init__(self)
         if not copy:
             # We assume you know what you are doing...
+            image_data_handle = image_data
             self.pixels = np.require(image_data, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
         else:
             image_data = np.array(image_data, copy=True, order='C')
             # This is the degenerate case whereby we can just put the extra axis
