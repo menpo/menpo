@@ -385,7 +385,7 @@ class AAMBuilder(DeformableModelBuilder):
 
         Returns
         -------
-        reference_frame : :class:`menpo.image.base.Image`
+        reference_frame : :class:`menpo.image.base.MaskedImage`
             The reference frame.
         """
         return build_reference_frame(mean_shape, boundary=self.boundary,
@@ -485,20 +485,29 @@ class AAMBuilder(DeformableModelBuilder):
 #TODO: Test me!!!
 class PatchBasedAAMBuilder(AAMBuilder):
     r"""
-    Class that builds Patch-Based Multilevel Active Appearance Models.
+    Class that builds Multilevel Patch-Based Active Appearance Models.
 
     Parameters
     ----------
-    feature_type: list of strings or list of functions/closures, Optional
-        If None, the appearance model will be build using the original image
+    feature_type: None or string or function/closure or list of those, Optional
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
+
+        Per level:
+        If None, the appearance model will be built using the original image
         representation, i.e. no features will be extracted from the original
         images.
-        If list of strings or closures, the appearance model will be built
-        from a feature representation of the original images. The first
-        element of the list specifies the features to be extracted at the
-        lowest pyramidal level and so on.
 
-        If list of strings, image features will be computed by executing:
+        If string, image features will be computed by executing:
 
            feature_image = eval('img.feature_type.' +
                                 feature_type[level] + '()')
@@ -510,9 +519,9 @@ class PatchBasedAAMBuilder(AAMBuilder):
         carried out using the default options.
 
         Non-default feature options and new experimental features can be
-        defined using lists of functions/closures. In this case,
-        the functions must receive an image as input and return a
-        particular feature representation of that image. For example:
+        defined using functions/closures. In this case, the functions must
+        receive an image as input and return a particular feature
+        representation of that image. For example:
 
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
@@ -522,26 +531,21 @@ class PatchBasedAAMBuilder(AAMBuilder):
         See `menpo.image.feature.py` for details more details on
         menpo's standard image features and feature options.
 
-        Default: None
-    transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
-        The :class:`menpo.transform.PureAlignmentTransform` that will be
-        used to warp the images.
-
-        Default: :class:`menpo.transform.PiecewiseAffine`
+        Default: 'hog'
     patch_shape: tuple of ints, Optional
         The appearance model of the Patch-Based AAM will be obtained by
         sampling appearance patches with the specified shape around each
         landmark.
 
         Default: (16, 16)
-    normalization_diagonal: int, Optional
-        All images will be rescaled to ensure that the scale of their
-        landmarks matches the scale of the mean shape.
+    normalization_diagonal: int >= 20, Optional
+        During building an AAM, all images are rescaled to ensure that the
+        scale of their landmarks matches the scale of the mean shape.
 
-        If int, ensures that the mean shape is scaled so that
-        the diagonal of the bounding box containing it matches the
-        normalization_diagonal value.
-        If None, the mean landmarks are not rescaled.
+        If int, it ensures that the mean shape is scaled so that the diagonal
+        of the bounding box containing it matches the normalization_diagonal
+        value.
+        If None, the mean shape is not rescaled.
 
         Note that, because the reference frame is computed from the mean
         landmarks, this kwarg also specifies the diagonal length of the
@@ -549,38 +553,72 @@ class PatchBasedAAMBuilder(AAMBuilder):
         the image size).
 
         Default: None
-    n_levels: int, Optional
+    n_levels: int > 0, Optional
         The number of multi-resolution pyramidal levels to be used.
 
         Default: 3
-    downscale: float > 1, Optional
+    downscale: float >= 1, Optional
         The downscale factor that will be used to create the different
-        pyramidal levels.
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
 
         Default: 2
     scaled_shape_models: boolean, Optional
-        If True, the original images will be both smoothed and scaled using
-        a Gaussian pyramid to create the different pyramidal levels.
-        If False, they will only be smoothed.
+        If True, the reference frames will be the mean shapes of each pyramid
+        level, so the shape models will be scaled.
+        If False, the reference frames of all levels will be the mean shape of
+        the highest level, so the shape models will not be scaled; they will
+        have the same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
 
         Default: True
-    max_shape_components: 0 < int < n_components, Optional
-        If int, it specifies the specific number of components of the
-        original shape model to be retained.
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
+
+        Default: True
+    max_shape_components: None or int > 0 or 0 <= float <= 1
+                          or list of those, Optional
+        If list of length n_levels, then a number of shape components is
+        defined per level. The first element of the list specifies the number
+        of components of the lowest pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        shape components will be used for all levels.
+
+        Per level:
+        If int, it specifies the exact number of components to be retained.
+        If float, it specifies the percentage of variance to be retained.
+        If None, all the available components are kept (100% of variance).
 
         Default: None
-    max_appearance_components: 0 < int < n_components, Optional
-        If int, it specifies the specific number of components of the
-        original appearance model to be retained.
+    max_appearance_components: None or int > 0 or 0 <= float <= 1
+                               or list of those, Opt
+        If list of length n_levels, then a number of appearance components is
+        defined per level. The first element of the list specifies the number
+        of components of the lowest pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        appearance components will be used for all levels.
+
+        Per level:
+        If int, it specifies the exact number of components to be retained.
+        If float, it specifies the percentage of variance to be retained.
+        If None, all the available components are kept (100% of variance).
 
         Default: None
-    boundary: int, Optional
+    boundary: int >= 0, Optional
         The number of pixels to be left as a safe margin on the boundaries
         of the reference frame (has potential effects on the gradient
         computation).
 
         Default: 3
-    interpolator:'scipy', Optional
+    interpolator: string, Optional
         The interpolator that should be used to perform the warps.
 
         Default: 'scipy'
@@ -588,44 +626,114 @@ class PatchBasedAAMBuilder(AAMBuilder):
     Returns
     -------
     aam : :class:`menpo.fitmultiple.aam.builder.PatchBasedAAMBuilder`
-        The Patch Based AAM Builder object
+        The Patch-Based AAM Builder object
+
+    Raises
+    -------
+    ValueError
+        n_levels must be int > 0
+    ValueError
+        downscale must be >= 1
+    ValueError
+        normalization_diagonal must be >= 20
+    ValueError
+        max_shape_components must be None or an int > 0 or a 0 <= float <= 1
+        or a list of those containing 1 or {n_levels} elements
+    ValueError
+        max_appearance_components must be None or an int > 0 or a
+        0 <= float <= 1 or a list of those containing 1 or {n_levels} elements
+    ValueError
+        feature_type must be a str or a function/closure or a list of those
+        containing 1 or {n_levels} elements
+    ValueError
+        pyramid_on_features is enabled so feature_type must be a str or a
+        function/closure or a list containing 1 of those
     """
-    def __init__(self, feature_type='hog', transform=ThinPlateSplines,
-                 patch_shape=(16, 16), normalization_diagonal=None, n_levels=3,
-                 downscale=2, scaled_levels=True, max_shape_components=None,
-                 max_appearance_components=None, boundary=3,
-                 interpolator='scipy'):
+    def __init__(self, feature_type='hog', patch_shape=(16, 16),
+                 normalization_diagonal=None, n_levels=3, downscale=2,
+                 scaled_shape_models=True, pyramid_on_features=True,
+                 max_shape_components=None, max_appearance_components=None,
+                 boundary=3, interpolator='scipy'):
+        # check parameters
+        self.check_n_levels(n_levels)
+        self.check_downscale(downscale)
+        self.check_normalization_diagonal(normalization_diagonal)
+        self.check_boundary(boundary)
+        max_shape_components = self.check_max_components(
+            max_shape_components, n_levels, 'max_shape_components')
+        max_appearance_components = self.check_max_components(
+            max_appearance_components, n_levels, 'max_appearance_components')
+        feature_type = self.check_feature_type(feature_type, n_levels,
+                                               pyramid_on_features)
 
-        # check feature type
-        feature_type = self.check_feature_type(feature_type, n_levels)
-        # levels are learned from high to low resolutions
-        feature_type.reverse()
-
+        # store parameters
         self.feature_type = feature_type
-        self.transform = transform
         self.patch_shape = patch_shape
         self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
-        self.scaled_levels = scaled_levels
+        self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
         self.interpolator = interpolator
 
+        # patch-based AAMs can only work with TPS transform
+        self.transform = ThinPlateSplines
+
     def _build_reference_frame(self, mean_shape):
+        r"""
+        Generates the reference frame given a mean shape.
+
+        Parameter
+        ---------
+        mean_shape: Pointcloud
+            The mean shape to use.
+
+        Returns
+        -------
+        reference_frame : :class:`menpo.image.base.MaskedImage`
+            The patch-based reference frame.
+        """
         return build_patch_reference_frame(mean_shape, boundary=self.boundary,
                                            patch_shape=self.patch_shape)
 
     def _mask_image(self, image):
+        r"""
+        Creates the patch-based mask of the given image.
+
+        Parameter
+        ---------
+        image: :class:`menpo.image.base.MaskedImage`
+            The image to be masked.
+        """
         image.build_mask_around_landmarks(self.patch_shape, group='source')
 
-    def _build_aam(self, shape_models, appearance_models):
+    def _build_aam(self, shape_models, appearance_models, n_training_images):
+        r"""
+        Returns a Patch-Based AAM object.
+
+        Parameters
+        ----------
+        shape_models: :class:`menpo.model.pca`
+            The trained multilevel shape models.
+        appearance_models: :class:`menpo.model.pca`
+            The trained multilevel appearance models.
+        n_training_images: int
+            The number of training images.
+
+        Returns
+        -------
+        aam : :class:`menpo.fitmultilevel.aam.PatchBasedAAM`
+            The trained Patched-Based AAM object.
+        """
         return PatchBasedAAM(shape_models, appearance_models,
-                             self.patch_shape, self.transform,
-                             self.feature_type, self.patch_shape,
+                             n_training_images, self.patch_shape,
+                             self.transform, self.feature_type,
                              self.reference_shape, self.downscale,
-                             self.interpolator)
+                             self.scaled_shape_models,
+                             self.pyramid_on_features, self.interpolator)
 
 
 class AAM(object):
@@ -700,7 +808,6 @@ class AAM(object):
         tend to have slightly better performance.
     interpolator: string
         The interpolator that was used to build the AAM.
-
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, feature_type, reference_shape, downscale,
@@ -948,23 +1055,39 @@ class PatchBasedAAM(AAM):
         A list containing the shape models of the AAM.
     appearance_models: :class:`menpo.model.PCA` list
         A list containing the appearance models of the AAM.
+    n_training_images: int
+        The number of training images used to build the AAM.
     patch_shape: tuple of ints
         The shape of the patches used to build the Patch Based AAM.
     transform: :class:`menpo.transform.PureAlignmentTransform`
         The transform used to warp the images from which the AAM was
         constructed.
-    feature_type: str or function
+    feature_type: None or string or function/closure or list of those
         The image feature that was be used to build the appearance_models. Will
-        subsequently be used by fitter objects using this class to fitter to
+        subsequently be used by fitter objects using this class to fit to
         novel images.
 
-        If None, the appearance model was built immediately from the image
-        representation, i.e. intensity.
+        If list of length n_levels, then a feature was defined per level.
+        This means that the pyramid_on_features flag was disabled (False)
+        and the features were extracted at each level. The first element of
+        the list specifies the features of the lowest pyramidal level and so
+        on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature was applied
+            to the highest level.
+            If pyramid_on_features is False, the specified feature was applied
+            to all pyramid levels.
+
+        Per level:
+        If None, the appearance model was built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
 
         If string, the appearance model was built using one of Menpo's default
         built-in feature representations - those
         accessible at image.features.some_feature(). Note that this case can
-        only be used with default feature weights - for custom feature
+        only be used with default feature parameters - for custom feature
         weights, use the functional form of this argument instead.
 
         If function, the user can directly provide the feature that was
@@ -977,29 +1100,47 @@ class PatchBasedAAM(AAM):
         The reference shape that was used to resize all training images to a
         consistent object size.
     downscale: float
-        The constant downscale factor used to create the different levels of
-        the AAM. For example, a factor of 2 would imply that the second level
-        of the AAM pyramid is half the width and half the height of the first.
-        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
-        the original.
-    scaled_shape_models: boolean
-        Boolean value specifying whether the AAM levels are scaled or not.
+        The downscale factor that was used to create the different pyramidal
+        levels.
+    scaled_shape_models: boolean, Optional
+        If True, the reference frames are the mean shapes of each pyramid
+        level, so the shape models are scaled.
+        If False, the reference frames of all levels are the mean shape of
+        the highest level, so the shape models are not scaled; they have the
+        same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
+    pyramid_on_features: boolean, Optional
+        If True, the feature space was computed once at the highest scale and
+        the Gaussian pyramid was applied on the feature images.
+        If False, the Gaussian pyramid was applied on the original images
+        (intensities) and then features were extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
     interpolator: string
         The interpolator that was used to build the AAM.
-
-        Default: 'scipy'
     """
-    def __init__(self, shape_models, appearance_models, patch_shape,
-                 transform, feature_type, reference_shape, downscale,
-                 scaled_shape_models, interpolator):
+    def __init__(self, shape_models, appearance_models, n_training_images,
+                 patch_shape, transform, feature_type, reference_shape,
+                 downscale, scaled_shape_models, pyramid_on_features,
+                 interpolator):
         super(PatchBasedAAM, self).__init__(
-            shape_models, appearance_models, transform, feature_type,
-            reference_shape, downscale, scaled_shape_models, interpolator)
+            shape_models, appearance_models, n_training_images, transform,
+            feature_type, reference_shape, downscale, scaled_shape_models,
+            pyramid_on_features, interpolator)
         self.patch_shape = patch_shape
 
     def _build_reference_frame(self, reference_shape, landmarks):
         return build_patch_reference_frame(
             reference_shape, patch_shape=self.patch_shape)
+
+    def __str__(self):
+        out = super(PatchBasedAAM, self).__str__()
+        out_splitted = out.splitlines()
+        out_splitted[0] = 'Patch-Based Active Appearance Model'
+        out_splitted.insert(5, "   - Patch size is {}W x {}H.".format(
+            self.patch_shape[1], self.patch_shape[0]))
+        return '\n'.join(out_splitted)
 
 
 def build_reference_frame(landmarks, boundary=3, group='source',
