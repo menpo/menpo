@@ -56,12 +56,12 @@ class Image(Vectorizable, Landmarkable, Viewable):
     the image have the  same number of channels, and all channels have the
     same data-type (float).
 
-
     Parameters
     -----------
     image_data: (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
-        channels.
+        channels
+
     """
 
     __metaclass__ = abc.ABCMeta

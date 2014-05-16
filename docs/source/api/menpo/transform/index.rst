@@ -12,20 +12,19 @@ Classes
    Transform
    Transformable
    TransformChain
+   ComposableTransform
+
 
    Homogeneous
-   Affine
-   AlignmentAffine
-   Similarity
-   AlignmentSimilarity
-   Rotation
-   AlignmentRotation
-   Translation
-   AlignmentTranslation
-   NonUniformScale
-   UniformScale
-   AlignmentUniformScale
 
+   Affine
+
+   Similarity
+   Rotation
+   Translation
+   UniformScale
+
+   NonUniformScale
    ThinPlateSplines
    PiecewiseAffine
 
@@ -41,3 +40,21 @@ Functions
   :maxdepth: 1
 
   Scale
+
+
+Alignment
+---------
+
+.. toctree::
+   :maxdepth: 1
+
+AlignmentAffine
+AlignmentSimilarity
+AlignmentRotation
+AlignmentTranslation
+AlignmentUniformScale
+
+   Transform
+   Transformable
+   TransformChain
+   ComposableTransform

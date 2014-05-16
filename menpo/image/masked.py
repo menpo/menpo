@@ -44,7 +44,7 @@ class MaskedImage(Image):
                 mask_image = BooleanImage(mask)
             else:
                 mask_image = mask
-                # have a BooleanImage object that we definitely own
+            # have a BooleanImage object that we definitely own
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
