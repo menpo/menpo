@@ -77,7 +77,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def __init__(self, image_data, copy=True):
         Landmarkable.__init__(self)
         if not copy:
-            # We assume you know what you are doing...
+            # Let's check we don't do a copy!
             image_data_handle = image_data
             self.pixels = np.require(image_data, requirements=['C'])
             if self.pixels is not image_data_handle:
