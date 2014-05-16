@@ -721,7 +721,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
-        All image information (landmarks) are rescaled appropriately.
+        Landmarks are rescaled appropriately.
 
         Parameters
         ----------
