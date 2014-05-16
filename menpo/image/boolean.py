@@ -99,6 +99,15 @@ class BooleanImage(Image):
         return self.n_pixels - self.n_true
 
     @property
+    def all_true(self):
+        r"""
+        True iff every element of the mask is True.
+
+        :type: bool
+        """
+        return np.all(self.pixels)
+
+    @property
     def proportion_true(self):
         r"""
         The proportion of the mask which is ``True``
@@ -123,7 +132,7 @@ class BooleanImage(Image):
 
         :type: (``n_dims``, ``n_true``) ndarray
         """
-        if np.all(self.pixels):
+        if self.all_true:
             return np.indices(self.shape).reshape([self.n_dims, -1]).T
         else:
             # Ignore the channel axis
