@@ -317,8 +317,8 @@ def convert_fitting_results_to_ced(fitting_results, max_error_bin=0.05,
 
 
 def plot_fitting_curves(x_axis, ceds, title, figure_id=None, new_figure=False,
-                        y_limit=1, x_limit=0.05, x_label='Error', legend=None,
-                        **kwargs):
+                        x_label='Point-to-Point Normalized RMS Error',
+                        y_limit=1, x_limit=0.05, legend=None, **kwargs):
     r"""
     Method that plots Cumulative Error Distributions in a single figure.
 
