@@ -431,12 +431,12 @@ class ImageFeatures(object):
         from menpo.image import MaskedImage, Image
         if isinstance(self._image, MaskedImage):
             # if we have a MaskedImage object
-            feature_image = MaskedImage(feature_pixels)
+            feature_image = MaskedImage(feature_pixels, copy=False)
             # fix mask
             self.transfer_mask(feature_image, window_centres=window_centres)
         else:
             # if we have an Image object
-            feature_image = Image(feature_pixels)
+            feature_image = Image(feature_pixels, copy=False)
         # fix landmarks
         self.transfer_landmarks(feature_image, window_centres=window_centres,
                                 constrain_landmarks=constrain_landmarks)
