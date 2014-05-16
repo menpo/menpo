@@ -133,7 +133,7 @@ class BooleanImage(Image):
         :type: (``n_dims``, ``n_true``) ndarray
         """
         if self.all_true:
-            return np.indices(self.shape).reshape([self.n_dims, -1]).T
+            return self.all_indices
         else:
             # Ignore the channel axis
             return np.vstack(np.nonzero(self.pixels[..., 0])).T
