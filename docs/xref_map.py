@@ -5,7 +5,9 @@ xref_map = {
     'DP': ('class', 'menpo.base.DP'),
     'DX': ('class', 'menpo.base.DX'),
     'Image': ('class', 'menpo.image.base.Image'),
-    'Landmarkable': ('class', 'menpo.base.Landmarkable'),
+    'Landmarkable': ('class', 'menpo.landmark.base.Landmarkable'),
+    'LandmarkGroup': ('class', 'menpo.landmark.base.LandmarkGroup'),
+    'LandmarkManager': ('class', 'menpo.landmark.base.LandmarkManager'),
     'MaskedImage': ('class', 'menpo.image.masked.MaskedImage'),
     'MeanInstanceLinearModel': ('class', 'menpo.model.base.MeanInstanceLinearModel'),
     'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),
@@ -13,6 +15,9 @@ xref_map = {
     'Shape': ('class', 'menpo.shape.base.Shape'),
     'Targetable': ('class', 'menpo.base.Targetable'),
     'Transform': ('class', 'menpo.transform.base.Transform'),
+    'Transformable': ('class', 'menpo.transform.base.Transformable'),
     'TriMesh': ('class', 'menpo.shape.mesh.TriMesh'),
-    'Vectorizable': ('class', 'menpo.base.Vectorizable')
+    'Vectorizable': ('class', 'menpo.base.Vectorizable'),
+    'view': ('meth', 'menpo.visualize.base.Viewable.view'),
+    'Viewable': ('class', 'menpo.visualize.base.Viewable')
 }

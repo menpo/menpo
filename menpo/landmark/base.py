@@ -12,11 +12,11 @@ class Landmarkable(object):
     r"""
     Abstract interface for object that can have landmarks attached to them.
     Landmarkable objects have a public dictionary of landmarks which are
-    managed by a :class:`menpo.landmark.base.LandmarkManager`. This means that
+    managed by a :map:`LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
     Landmarks can be N-dimensional and are expected to be some
-    subclass of :class:`menpo.shape.pointcloud.Pointcloud`. These landmarks
-    are wrapped inside a :class:`LandmarkGroup` object that performs
+    subclass of :map:`PointCloud`. These landmarks
+    are wrapped inside a :map:`LandmarkGroup` object that performs
     useful tasks like label filtering and viewing.
     """
 

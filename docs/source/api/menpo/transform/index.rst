@@ -10,6 +10,7 @@ Classes
    :maxdepth: 1
 
    Transform
+   Transformable
    TransformChain
 
    Homogeneous
