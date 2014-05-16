@@ -34,7 +34,7 @@ def data_path_to(asset_filename):
     Raises
     ------
     ValueError
-        If the asset_filename doesn't exist in the ``data`` folder.
+        If the asset_filename doesn't exist in the `data` folder.
 
     """
     asset_path = os.path.join(data_dir_path(), asset_filename)
@@ -63,15 +63,15 @@ def import_auto(pattern, max_meshes=None, max_images=None):
     pattern : String
         The glob path pattern to search for textures and meshes.
     max_meshes: positive integer, optional
-        If not ``None``, only import the first max_mesh meshes found. Else,
+        If not `None`, only import the first max_mesh meshes found. Else,
         import all.
 
-        Default: ``None``
+        Default: `None`
     max_images: positive integer, optional
-        If not ``None``, only import the first max_images found. Else,
+        If not `None`, only import the first max_images found. Else,
         import all.
 
-        Default: ``None``
+        Default: `None`
 
     Yields
     ------
@@ -80,19 +80,19 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
     Examples
     --------
-    Import all meshes that have file extension ``.obj``:
+    Import all meshes that have file extension `.obj`:
 
         >>> meshes = list(import_auto('*.obj'))
 
     (note the cast to a list as auto_import is a generator and we want to
     exhaust it's values)
 
-    Look for all files that begin with the string ``test``:
+    Look for all files that begin with the string `test`:
 
         >>> test_images = list(import_auto('test.*'))
 
-    Assuming that in the current directory that are two files, ``bunny.obj``
-    and ``bunny.pts``, which represent a mesh and it's landmarks, calling
+    Assuming that in the current directory that are two files, `bunny.obj`
+    and `bunny.pts`, which represent a mesh and it's landmarks, calling
 
         >>> bunny = list(import_auto('bunny.obj'))
 
@@ -225,10 +225,10 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
     pattern : String
         The glob path pattern to search for images.
     max_images: positive integer, optional
-        If not ``None``, only import the first max_images found. Else,
+        If not `None`, only import the first max_images found. Else,
         import all.
 
-        Default: ``None``
+        Default: `None`
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         image. The function should take one argument (an image itself) and
@@ -277,10 +277,10 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
     pattern : String
         The glob path pattern to search for textures and meshes.
     max_meshes: positive integer, optional
-        If not ``None``, only import the first max_mesh meshes found. Else,
+        If not `None`, only import the first max_mesh meshes found. Else,
         import all.
 
-        Default: ``None``
+        Default: `None`
     landmark_resolver: function, optional
         If not None, this function will be used to find landmarks for each
         mesh. The function should take one argument (a mesh itself) and
@@ -315,10 +315,10 @@ def import_landmark_files(pattern, max_landmarks=None):
     pattern : String
         The glob path pattern to search for images.
     max_landmark_files: positive integer, optional
-        If not ``None``, only import the first max_landmark_files found. Else,
+        If not `None`, only import the first max_landmark_files found. Else,
         import all.
 
-        Default: ``None``
+        Default: `None`
 
     Yields
     ------
@@ -401,7 +401,7 @@ def _import(filepath, extensions_map, keep_importer=False,
     it, returning a list of assets or a single asset, depending on the
     file type.
 
-    The type of assets returned are specified by the ``extensions_map``.
+    The type of assets returned are specified by the `extensions_map`.
 
     Parameters
     ----------
@@ -410,9 +410,9 @@ def _import(filepath, extensions_map, keep_importer=False,
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
     keep_importer : bool, optional
-        If ``True``, return the :class:`menpo.io.base.Importer` for each mesh
+        If `True`, return the :class:`menpo.io.base.Importer` for each mesh
         as well as the meshes.
     has_landmarks : bool, optional
         If `True`, an attempt will be made to find relevant landmarks.
@@ -506,9 +506,9 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
     keep_importers : bool, optional
-        If ``True``, return the :class:`menpo.io.base.Importer` for each mesh
+        If `True`, return the :class:`menpo.io.base.Importer` for each mesh
         as well as the meshes.
     has_landmarks : bool, optional
         If `True`, an attempt will be made to find relevant landmarks.
@@ -524,7 +524,7 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
     asset :
         An asset found at one of the filepaths.
     importer: :class:`menpo.io.base.Importer`
-        Only if ``keep_importers`` is ``True``. The importer used for the
+        Only if `keep_importers` is `True`. The importer used for the
         yielded asset.
     """
     importer = None
@@ -557,7 +557,7 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
 def _glob_matching_extension(pattern, extensions_map):
     r"""
     Filters the results from the glob pattern passed in to only those files
-    that have an importer given in ``extensions_map``.
+    that have an importer given in `extensions_map`.
 
     Parameters
     ----------
@@ -566,7 +566,7 @@ def _glob_matching_extension(pattern, extensions_map):
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
 
     Returns
     -------
@@ -593,14 +593,14 @@ def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         a subclass of :class:`Importer`. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
     importer_kwargs: dictionary, optional
         kwargs that will be supplied to the importer if not None.
 
     Returns
     --------
     importer: :class:`menpo.io.base.Importer` instance
-        Importer as found in the ``extensions_map`` instantiated for the
+        Importer as found in the `extensions_map` instantiated for the
         filepath provided.
 
     """
@@ -630,7 +630,7 @@ def find_extensions_from_basename(filepath):
     -------
     files : list of strings
         A list of absolute filepaths to files that share the same basename
-        as filepath. These files are found using ``glob``.
+        as filepath. These files are found using `glob`.
 
     """
     basename = os.path.splitext(os.path.basename(filepath))[0] + '*'
@@ -650,7 +650,7 @@ def filter_extensions(filepaths, extensions_map):
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
 
     Returns
     -------
@@ -677,12 +677,12 @@ def find_alternative_files(file_type, filepath, extensions_map):
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
         non-instantiated classes. The extensions are expected to
-        contain the leading period eg. ``.obj``.
+        contain the leading period eg. `.obj`.
 
     Returns
     -------
     base_name : string
-        The basename of the file that was found eg ``mesh.bmp``. Only **one**
+        The basename of the file that was found eg `mesh.bmp`. Only **one**
         file is ever returned. If more than one is found, the first is taken.
 
     Raises
@@ -734,7 +734,7 @@ class Importer(object):
     r"""
     Abstract representation of an Importer. Construction of an importer simply
     sets the filepaths etc up. To actually import the object and build a valid
-    representation, the ``build`` method must be called. This allows a set
+    representation, the `build` method must be called. This allows a set
     of importers to be instantiated but the heavy duty importing to happen
     separately.
 
@@ -762,7 +762,7 @@ class Importer(object):
         -------
         object : object or list
             An instantiated class of the expected type. For example, for an
-            ``.obj`` importer, this would be a
+            `.obj` importer, this would be a
             :class:`menpo.shape.mesh.base.Trimesh`. If multiple objects need
             to be returned from one importer, a list must be returned.
         """

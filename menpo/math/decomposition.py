@@ -42,7 +42,7 @@ def principal_component_decomposition(X, whiten=False, center=True,
                                       bias=False, inplace=False):
     r"""
     Apply PCA on the data matrix X. In the case where the data matrix is very
-    large, it is advisable to set ``inplace=True``. However, note this this
+    large, it is advisable to set `inplace=True`. However, note this this
     destructively edits the data matrix by subtracting the mean inplace.
 
     Parameters
@@ -52,21 +52,21 @@ def principal_component_decomposition(X, whiten=False, center=True,
     whiten : bool, optional
         Normalise the eigenvectors to have unit magnitude
 
-        Default: ``False``
+        Default: `False`
     center : bool, optional
-        Whether to center the data matrix. If ``False``, zero will be subtracted.
+        Whether to center the data matrix. If `False`, zero will be subtracted.
 
-        Default: ``True``
+        Default: `True`
     bias : bool, optional
-        Whether to use a biased estimate of the number of samples. If ``False``,
-        subtracts ``1`` from the number of samples.
+        Whether to use a biased estimate of the number of samples. If `False`,
+        subtracts `1` from the number of samples.
 
-        Default: ``False``
+        Default: `False`
     inplace : bool, optional
         Whether to do the mean subtracting inplace or not. This is crucial if
         the data matrix is greater than half the available memory size.
 
-        Default: ``False``
+        Default: `False`
 
     Returns
     -------

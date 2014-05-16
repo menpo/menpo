@@ -359,7 +359,7 @@ class PCAModel(MeanInstanceLinearModel):
             The weightings for the first n_weights components that
             should be used per instance that is to be produced
 
-            ``weights[i, j]`` is the linear contribution of the j'th
+            `weights[i, j]` is the linear contribution of the j'th
             principal component to the i'th instance vector produced. Note
             that if n_weights < n_components, only the first n_weight
             components are used in the reconstruction (i.e. unspecified
@@ -429,9 +429,9 @@ class PCAModel(MeanInstanceLinearModel):
 
     def distance_to_subspace(self, instance):
         """
-        Returns a version of ``instance`` where all the basis of the model
+        Returns a version of `instance` where all the basis of the model
         have been projected out and which has been scaled by the inverse of
-        the ``noise_variance``
+        the `noise_variance`
 
         Parameters
         ----------
@@ -440,18 +440,18 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        scaled_projected_out : ``self.instance_class``
-            A copy of ``instance``, with all basis of the model projected out
-            and scaled by the inverse of the ``noise_variance``.
+        scaled_projected_out : `self.instance_class`
+            A copy of `instance`, with all basis of the model projected out
+            and scaled by the inverse of the `noise_variance`.
         """
         vec_instance = self.distance_to_subspace_vector(instance.as_vector())
         return instance.from_vector(vec_instance)
 
     def distance_to_subspace_vector(self, vector_instance):
         """
-        Returns a version of ``instance`` where all the basis of the model
+        Returns a version of `instance` where all the basis of the model
         have been projected out and which has been scaled by the inverse of
-        the ``noise_variance``.
+        the `noise_variance`.
 
         Parameters
         ----------
@@ -461,15 +461,15 @@ class PCAModel(MeanInstanceLinearModel):
         Returns
         -------
         scaled_projected_out: (n_features,) ndarray
-            A copy of ``vector_instance`` with all basis of the model projected
-            out and scaled by the inverse of the ``noise_variance``.
+            A copy of `vector_instance` with all basis of the model projected
+            out and scaled by the inverse of the `noise_variance`.
         """
         return (self.inverse_noise_variance *
                 self.project_out_vectors(vector_instance))
 
     def project_whitened(self, instance):
         """
-        Returns a sheared (non-orthogonal) reconstruction of ``instance``.
+        Returns a sheared (non-orthogonal) reconstruction of `instance`.
 
         Parameters
         ----------
@@ -478,8 +478,8 @@ class PCAModel(MeanInstanceLinearModel):
 
         Returns
         -------
-        sheared_reconstruction : ``self.instance_class``
-            A sheared (non-orthogonal) reconstruction of ``instance``.
+        sheared_reconstruction : `self.instance_class`
+            A sheared (non-orthogonal) reconstruction of `instance`.
         """
         vector_instance = self.project_whitened_vector(instance.as_vector())
         return instance.from_vector(vector_instance)
@@ -487,7 +487,7 @@ class PCAModel(MeanInstanceLinearModel):
     def project_whitened_vector(self, vector_instance):
         """
         Returns a sheared (non-orthogonal) reconstruction of
-        ``vector_instance``.
+        `vector_instance`.
 
         Parameters
         ----------
@@ -497,7 +497,7 @@ class PCAModel(MeanInstanceLinearModel):
         Returns
         -------
         sheared_reconstruction : (n_features,) ndarray
-            A sheared (non-orthogonal) reconstruction of ``vector_instance``
+            A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components
         weights = dgemm(alpha=1.0, a=vector_instance.T,

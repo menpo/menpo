@@ -194,7 +194,7 @@ class LandmarkManager(Transformable, Viewable):
         Parameters
         ----------
         include_labels : bool, optional
-            If ``True``, also render the label names next to the landmarks.
+            If `True`, also render the label names next to the landmarks.
         kwargs : dict, optional
             Passed through to the viewer.
         """
@@ -438,7 +438,7 @@ class LandmarkGroup(Viewable):
         Parameters
         ----------
         include_labels : bool, optional
-            If ``True``, also render the label names next to the landmarks.
+            If `True`, also render the label names next to the landmarks.
         kwargs : dict, optional
             Passed through to the viewer.
         """
