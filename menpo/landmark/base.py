@@ -98,6 +98,7 @@ class LandmarkManager(Transformable, Viewable):
                 None, None, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
+            # TODO: Use the copy function
             lmark_group = LandmarkGroup(self._target, group_label,
                                         value._pointcloud,
                                         value._labels_to_masks)
