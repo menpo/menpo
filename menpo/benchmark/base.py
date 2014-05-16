@@ -1,10 +1,12 @@
 import os
+import numpy as np
 
 import menpo.io as mio
 from menpo.visualize.text_utils import print_dynamic, progress_bar_str
 from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
 from menpo.fit.fittingresult import FittingResultList
 from menpo.landmark import labeller
+from menpo.visualize.base import GraphPlotter
 
 
 def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
@@ -114,9 +116,9 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
                                            perc2 * 100. / n_images))
 
     # fit images
-    fitting_results = FittingResultList(fitting_results)
+    fitting_results_list = FittingResultList(fitting_results)
 
-    return fitting_results
+    return fitting_results_list
 
 
 def aam_build_benchmark(training_images, training_options=None, verbose=False):
@@ -275,3 +277,96 @@ def load_database(database_path, files_extension, db_loading_options=None,
         print_dynamic('- Loading database with {} images: Done\n'.format(
             n_files))
     return images
+
+
+def convert_fitting_results_to_ced(fitting_results, max_error_bin=0.05,
+                                   bins_error_step=0.005):
+    r"""
+    Method that given a fitting_result object, it converts it to the
+    cumulative error distribution values that can be used for plotting.
+
+    Parameters
+    ----------
+    fitting_results: :class:menpo.fit.fittingresult.FittingResultList object
+        A list with the FittingResult object per image.
+    max_error_bin: float, Optional
+        The maximum error of the distribution.
+
+        Default: 0.05
+    bins_error_step: float, Optional
+        The sampling step of the distribution values.
+
+        Default: 0.005
+
+    Returns
+    -------
+    final_error_dist: list
+        Cumulative distribution values of the final errors.
+    initial_error_dist: list
+        Cumulative distribution values of the initial errors.
+    """
+    error_bins = np.arange(0., max_error_bin + bins_error_step,
+                           bins_error_step)
+    final_error_dist = np.array(
+        [float(np.sum(fitting_results.final_error <= k)) /
+         len(fitting_results.final_error) for k in error_bins])
+    initial_error_dist = np.array(
+        [float(np.sum(fitting_results.initial_error <= k)) /
+         len(fitting_results.final_error) for k in error_bins])
+    return final_error_dist, initial_error_dist, error_bins
+
+
+def plot_fitting_curves(x_axis, ceds, title, figure_id=None, new_figure=False,
+                        y_limit=1, x_limit=0.05, x_label='Error', legend=None,
+                        **kwargs):
+    r"""
+    Method that plots Cumulative Error Distributions in a single figure.
+
+    Parameters
+    ----------
+    x_axis: ndarray
+        The horizontal axis values (errors).
+    ceds: list of ndarrays
+        The vertical axis values (percentages).
+    title: string
+        The plot title.
+    figure_id, Optional
+        A figure handle.
+
+        Default: None
+    new_figure: boolean, Optional
+        If True, a new figure window will be created.
+
+        Default: False
+    y_limit: float, Optional
+        The maximum value of the vertical axis.
+
+        Default: 1
+    x_limit: float, Optional
+        The maximum value of the vertical axis.
+
+        Default: 0.05
+    x_label: string
+        The label of the horizontal axis.
+
+        Default: 'Point-to-Point Normalized RMS Error'
+    legend: list of strings or None
+        The legend of the plot. If None, the legend will include an incremental
+        number per curve.
+
+        Default: None
+
+    Returns
+    -------
+    final_error_dist: list
+        Cumulative distribution values of the final errors.
+    initial_error_dist: list
+        Cumulative distribution values of the initial errors.
+    """
+    if legend is None:
+        legend = [str(i + 1) for i in range(len(ceds))]
+    y_label = 'Proportion of images'
+    axis_limits = [0, x_limit, 0, y_limit]
+    return GraphPlotter(figure_id, new_figure, x_axis, ceds, title=title,
+                        legend=legend, x_label=x_label, y_label=y_label,
+                        axis_limits=axis_limits).render(**kwargs)

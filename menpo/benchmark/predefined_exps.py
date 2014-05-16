@@ -4,12 +4,13 @@ from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.transform.modeldriven import GlobalMDTransform, OrthoMDTransform
 from menpo.transform import AlignmentSimilarity
 
-from .base import load_database, aam_build_benchmark, aam_fit_benchmark
+from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
+                   convert_fitting_results_to_ced, plot_fitting_curves)
 
 
-def aam_fastest_alternating(training_db_path, training_db_ext,
-                           fitting_db_path, fitting_db_ext, feature_type='igo',
-                           noise_std=0.04, verbose=False):
+def aam_fastest_alternating(training_db_path, training_db_ext, fitting_db_path,
+                            fitting_db_ext, feature_type='igo', noise_std=0.04,
+                            verbose=False, plot=False):
     # check feature
     if not isinstance(feature_type, str):
         if not hasattr(feature_type, '__call__'):
@@ -66,16 +67,30 @@ def aam_fastest_alternating(training_db_path, training_db_ext,
                                         fitting_options=fitting_options,
                                         verbose=verbose)
 
+    # convert results
+    max_error_bin = 0.05
+    bins_error_step = 0.005
+    final_error_curve, initial_error_curve, error_bins = \
+        convert_fitting_results_to_ced(fitting_results,
+                                       max_error_bin=max_error_bin,
+                                       bins_error_step=bins_error_step)
+
     # plot results
-    fitting_results.plot_cumulative_error_dist(color_list=['r', 'b'],
-                                               marker_list=['o', 'x'])
-    return fitting_results
+    if plot:
+        title = "AAMs using {} and Alternating IC".format(
+            training_options['feature_type'])
+        y_axis = [final_error_curve, initial_error_curve]
+        legend = ['Fitting', 'Initialization']
+        plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
+                            x_limit=max_error_bin, legend=legend,
+                            color_list=['r', 'b'], marker_list=['o', 'x'])
+    return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
 def aam_best_performance_alternating(training_db_path, training_db_ext,
                                      fitting_db_path, fitting_db_ext,
                                      feature_type='igo', noise_std=0.04,
-                                     verbose=False):
+                                     verbose=False, plot=False):
     # check feature
     if not isinstance(feature_type, str):
         if not hasattr(feature_type, '__call__'):
@@ -132,7 +147,21 @@ def aam_best_performance_alternating(training_db_path, training_db_ext,
                                         fitting_options=fitting_options,
                                         verbose=verbose)
 
+    # convert results
+    max_error_bin = 0.05
+    bins_error_step = 0.005
+    final_error_curve, initial_error_curve, error_bins = \
+        convert_fitting_results_to_ced(fitting_results,
+                                       max_error_bin=max_error_bin,
+                                       bins_error_step=bins_error_step)
+
     # plot results
-    fitting_results.plot_cumulative_error_dist(color_list=['r', 'b'],
-                                               marker_list=['o', 'x'])
-    return fitting_results
+    if plot:
+        title = "AAMs using {} and Alternating IC".format(
+            training_options['feature_type'])
+        y_axis = [final_error_curve, initial_error_curve]
+        legend = ['Fitting', 'Initialization']
+        plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
+                            x_limit=max_error_bin, legend=legend,
+                            color_list=['r', 'b'], marker_list=['o', 'x'])
+    return fitting_results, final_error_curve, initial_error_curve, error_bins
