@@ -31,20 +31,29 @@ class MaskedImage(Image):
 
         Default: :class:`BooleanImage` covering the whole image
 
+    copy: bool, optional
+        If False, the image_data will not be copied on assignment. If a mask is
+        provided, this also won't be copied.
+        In general this should only be used if you know what you are doing.
+
+        Default False
     Raises
     ------
     ValueError
         Mask is not the same shape as the image
     """
 
-    def __init__(self, image_data, mask=None):
-        super(MaskedImage, self).__init__(image_data)
+    def __init__(self, image_data, mask=None, copy=True):
+        super(MaskedImage, self).__init__(image_data, copy=copy)
         if mask is not None:
+            # Check if we need to create a BooleanImage or not
             if not isinstance(mask, BooleanImage):
-                mask_image = BooleanImage(mask)
-            else:
+                mask_image = BooleanImage(mask, copy=copy)
+            else:  # have a BooleanImage object that we definitely own
+                if copy:
+                    mask = deepcopy(mask)
                 mask_image = mask
-                # have a BooleanImage object that we definitely own
+
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
@@ -58,14 +67,14 @@ class MaskedImage(Image):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def _init_with_channel(cls, image_data_with_channel, mask):
+    def _init_with_channel(cls, image_data_with_channel, mask, **kwargs):
         r"""
         Constructor that always requires the image has a
         channel on the last axis. Only used by from_vector. By default,
         just calls the constructor. Subclasses with constructors that don't
         require channel axes need to overwrite this.
         """
-        return cls(image_data_with_channel, mask)
+        return cls(image_data_with_channel, mask, **kwargs)
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
