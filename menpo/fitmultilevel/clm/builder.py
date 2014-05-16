@@ -584,9 +584,11 @@ class CLM(object):
         # small strings about number of channels, channels string and downscale
         n_channels = []
         down_str = []
+        temp_img = Image(image_data=np.random.rand(50, 50))
         for j in range(self.n_levels):
-            n_channels.append(
-                self.appearance_models[j].template_instance.n_channels)
+            rj = self.n_levels - j - 1
+            temp = compute_features(temp_img, self.feature_type[rj])
+            n_channels.append(temp.n_channels)
             if j == self.n_levels - 1:
                 down_str.append('(no downscale)')
             else:
@@ -622,32 +624,24 @@ class CLM(object):
                     ch_str.append("channel")
                 else:
                     ch_str.append("channels")
-        out = "{} - Warp using {} transform with '{}' interpolation.\n".format(
-            out, self.transform.__name__, self.interpolator)
         if self.n_levels > 1:
             if self.scaled_shape_models:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}.\n   - Each level has a scaled shape " \
-                      "model (reference frame).\n".format(out, self.n_levels,
-                                                          self.downscale)
+                      "model (reference frame).\n   - Patch size is {}W x " \
+                      "{}H.\n".format(out, self.n_levels, self.downscale,
+                                      self.patch_shape[1], self.patch_shape[0])
 
             else:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
                       "factor of {}:\n   - Shape models (reference frames) " \
-                      "are not scaled.\n".format(out, self.n_levels,
-                                                 self.downscale)
+                      "are not scaled.\n   - Patch size is {}W x " \
+                      "{}H.\n".format(out, self.n_levels, self.downscale,
+                                      self.patch_shape[1], self.patch_shape[0])
             if self.pyramid_on_features:
                 out = "{}   - Pyramid was applied on feature space.\n   " \
                       "{}{} {} per image.\n".format(out, feat_str,
                                                     n_channels[0], ch_str)
-                if self.scaled_shape_models is False:
-                    out = "{}   - Reference frames of length {} " \
-                          "({} x {}C, {} x {}C)\n".format(
-                          out, self.appearance_models[0].n_features,
-                          self.appearance_models[0].template_instance.n_true_pixels,
-                          n_channels[0],
-                          self.appearance_models[0].template_instance._str_shape,
-                          n_channels[0])
             else:
                 out = "{}   - Features were extracted at each pyramid " \
                       "level.\n".format(out)
@@ -657,39 +651,22 @@ class CLM(object):
                 if self.pyramid_on_features is False:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
-                if (self.scaled_shape_models or
-                        self.pyramid_on_features is False):
-                    out = "{}     - Reference frame of length {} " \
-                          "({} x {}C, {} x {}C)\n".format(
-                          out, self.appearance_models[i].n_features,
-                          self.appearance_models[i].template_instance.n_true_pixels,
-                          n_channels[i],
-                          self.appearance_models[i].template_instance._str_shape,
-                          n_channels[i])
                 out = "{0}     - {1} shape components ({2:.2f}% of " \
-                      "variance)\n     - {3} appearance components " \
-                      "({4:.2f}% of variance)\n".format(
+                      "variance)\n     - {3} {4} classifiers.\n".format(
                       out, self.shape_models[i].n_components,
                       self.shape_models[i].variance_ratio * 100,
-                      self.appearance_models[i].n_components,
-                      self.appearance_models[i].variance_ratio * 100)
+                      len(self.classifiers[i]),
+                      self.classifiers[i][0].func_name)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
-                  "   - Reference frame of length {4} ({5} x {6}C, " \
-                  "{7} x {8}C)\n   - {9} shape components ({10:.2f}% of " \
-                  "variance)\n   - {11} appearance components ({12:.2f}% of " \
-                  "variance)\n".format(
+                  "   - {4} shape components ({5:.2f}% of " \
+                  "variance)\n   - {6} {7} classifiers.".format(
                   out, feat_str[0], n_channels[0], ch_str[0],
-                  self.appearance_models[0].n_features,
-                  self.appearance_models[0].template_instance.n_true_pixels,
-                  n_channels[0],
-                  self.appearance_models[0].template_instance._str_shape,
-                  n_channels[0], self.shape_models[0].n_components,
+                  self.shape_models[0].n_components,
                   self.shape_models[0].variance_ratio * 100,
-                  self.appearance_models[0].n_components,
-                  self.appearance_models[0].variance_ratio * 100)
+                  len(self.classifiers[0]), self.classifiers[0][0].func_name)
         return out
 
 
