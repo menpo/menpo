@@ -46,14 +46,15 @@ class MaskedImage(Image):
     def __init__(self, image_data, mask=None, copy=True):
         super(MaskedImage, self).__init__(image_data, copy=copy)
         if mask is not None:
+            # Check if we need to create a BooleanImage or not
             if not isinstance(mask, BooleanImage):
                 mask_image = BooleanImage(mask, copy=copy)
-            else:
+            else:  # have a BooleanImage object that we definitely own
+                if copy:
+                    mask = deepcopy(mask)
                 mask_image = mask
-                # have a BooleanImage object that we definitely own
+
             if mask_image.shape == self.shape:
-                if not copy:
-                    mask_image = deepcopy(mask_image)
                 self.mask = mask_image
             else:
                 raise ValueError("Trying to construct a Masked Image of "

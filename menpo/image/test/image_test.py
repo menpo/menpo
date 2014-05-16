@@ -1,26 +1,26 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from nose.tools import raises
-
-from menpo.image import BooleanImage, MaskedImage
+from menpo.testing import is_same_array
+from menpo.image import BooleanImage, MaskedImage, Image
 
 
 def test_create_image_copy_false():
-    pixels = np.ones((100, 100))
-    image = MaskedImage(pixels, copy=False)
-    assert (image.pixels is pixels)
+    pixels = np.ones((100, 100, 1))
+    image = Image(pixels, copy=False)
+    assert (is_same_array(image.pixels, pixels))
 
 
 def test_create_image_copy_true():
-    pixels = np.ones((100, 100))
-    image = MaskedImage(pixels)
-    assert (image.pixels is not pixels)
+    pixels = np.ones((100, 100, 1))
+    image = Image(pixels)
+    assert (not is_same_array(image.pixels, pixels))
 
 
 @raises(Warning)
 def test_create_image_copy_false_not_c_contiguous():
-    pixels = np.ones((100, 100), order='F')
-    MaskedImage(pixels, copy=False)
+    pixels = np.ones((100, 100, 1), order='F')
+    Image(pixels, copy=False)
 
 
 def mask_image_3d_test():
@@ -46,20 +46,19 @@ def test_mask_blank():
 def test_boolean_copy_false_boolean():
     mask = np.zeros((10, 10), dtype=np.bool)
     boolean_image = BooleanImage(mask, copy=False)
-    assert (boolean_image.pixels.base is mask)
+    assert (is_same_array(boolean_image.pixels, mask))
 
 
 def test_boolean_copy_true():
     mask = np.zeros((10, 10), dtype=np.bool)
     boolean_image = BooleanImage(mask)
-    assert (boolean_image.pixels.base is not mask)
+    assert (not is_same_array(boolean_image.pixels, mask))
 
 
 @raises(Warning)
 def test_boolean_copy_false_non_boolean():
     mask = np.zeros((10, 10))
     boolean_image = BooleanImage(mask, copy=False)
-    assert (boolean_image.pixels.base is mask)
 
 
 def test_mask_blank_rounding_floor():
@@ -129,6 +128,40 @@ def test_3channel_image_creation():
 def test_no_channels_image_creation():
     pixels = np.ones((120, 120))
     MaskedImage(pixels)
+
+
+def test_create_MaskedImage_copy_false_mask_array():
+    pixels = np.ones((100, 100, 1))
+    mask = np.ones((100, 100), dtype=np.bool)
+    image = MaskedImage(pixels, mask=mask, copy=False)
+    assert (is_same_array(image.pixels, pixels))
+    assert (is_same_array(image.mask.pixels, mask))
+
+
+def test_create_MaskedImage_copy_false_mask_BooleanImage():
+    pixels = np.ones((100, 100, 1))
+    mask = np.ones((100, 100), dtype=np.bool)
+    mask_image = BooleanImage(mask, copy=False)
+    image = MaskedImage(pixels, mask=mask_image, copy=False)
+    assert (is_same_array(image.pixels, pixels))
+    assert (is_same_array(image.mask.pixels, mask))
+
+
+def test_create_MaskedImage_copy_true_mask_array():
+    pixels = np.ones((100, 100))
+    mask = np.ones((100, 100), dtype=np.bool)
+    image = MaskedImage(pixels, mask=mask)
+    assert (not is_same_array(image.pixels, pixels))
+    assert (not is_same_array(image.mask.pixels, mask))
+
+
+def test_create_MaskedImage_copy_true_mask_BooleanImage():
+    pixels = np.ones((100, 100, 1))
+    mask = np.ones((100, 100), dtype=np.bool)
+    mask_image = BooleanImage(mask, copy=False)
+    image = MaskedImage(pixels, mask=mask_image, copy=True)
+    assert (not is_same_array(image.pixels, pixels))
+    assert (not is_same_array(image.mask.pixels, mask))
 
 
 def test_2d_crop_without_mask():
