@@ -10,8 +10,7 @@ from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
-from menpo.visualize import print_dynamic, progress_bar_str
-from menpo.visualize.text_utils import print_bytes
+from menpo.visualize import print_dynamic, progress_bar_str, print_bytes
 from ..functions import mean_pointcloud
 
 
