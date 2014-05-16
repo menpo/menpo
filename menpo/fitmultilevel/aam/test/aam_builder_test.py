@@ -5,7 +5,7 @@ from nose.tools import raises
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.transform import PiecewiseAffine, ThinPlateSplines
-from menpo.fitmultilevel.aam import AAMBuilder
+from menpo.fitmultilevel.aam import AAMBuilder, PatchBasedAAMBuilder
 from menpo.fitmultilevel.featurefunctions import sparse_hog
 
 # load images
@@ -59,6 +59,19 @@ aam3 = AAMBuilder(feature_type='igo',
                   max_appearance_components=10,
                   boundary=2,
                   interpolator='scipy').build(training_images, group='PTS')
+
+aam4 = PatchBasedAAMBuilder(feature_type='lbp',
+                            patch_shape=(10, 13),
+                            normalization_diagonal=200,
+                            n_levels=2,
+                            downscale=1.2,
+                            scaled_shape_models=True,
+                            pyramid_on_features=True,
+                            max_shape_components=1,
+                            max_appearance_components=None,
+                            boundary=2,
+                            interpolator='scipy').build(training_images,
+                                                        group='PTS')
 
 
 @raises(ValueError)
@@ -169,4 +182,23 @@ def test_aam_3():
     assert (np.all([aam3.appearance_models[j].template_instance.n_channels == 2
                     for j in range(aam3.n_levels)]))
     assert_allclose([aam3.appearance_models[j].components.shape[1]
-                     for j in range(aam3.n_levels)], (58886))
+                     for j in range(aam3.n_levels)], 58886)
+
+
+def test_aam_4():
+    assert (aam4.n_training_images == 2)
+    assert (aam4.n_levels == 2)
+    assert (aam4.downscale == 1.2)
+    assert (aam4.feature_type[0] is 'lbp')
+    assert (aam4.interpolator == 'scipy')
+    assert_allclose(np.around(aam4.reference_shape.range()), (147., 136.))
+    assert aam4.scaled_shape_models
+    assert aam4.pyramid_on_features
+    assert (np.all([aam4.shape_models[j].n_components == 1
+                    for j in range(aam4.n_levels)]))
+    assert (np.all([aam4.appearance_models[j].n_components == 1
+                    for j in range(aam4.n_levels)]))
+    assert (np.all([aam4.appearance_models[j].template_instance.n_channels == 4
+                    for j in range(aam4.n_levels)]))
+    assert_allclose([aam4.appearance_models[j].components.shape[1]
+                     for j in range(aam4.n_levels)], (22792, 25336))
