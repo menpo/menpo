@@ -1,1 +1,1 @@
-from .predefined_exps import aam_fastest_alternating, aam_best_performance_alternating
+from .predefined import aam_fastest_alternating, aam_best_performance_alternating
