@@ -6,8 +6,6 @@
 
 This is the api!
 
-Packages
-========
 
 .. toctree::
    :maxdepth: 1

@@ -2,7 +2,7 @@
 Menpo Documentation
 =====================
 
-Welcome to the official Menpo documentation.
+Welcome to the official Menpo documentsdsation.
 
 Contents
 ========
@@ -10,5 +10,5 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   overview
+   userguide/index
    api/index
