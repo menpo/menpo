@@ -351,11 +351,11 @@ class LucasKanadeAAMFitter(AAMFitter):
             self._fitters.append(algorithm(am, residual(), md_trans))
 
     def __str__(self):
-        out = "Active Appearance Model Fitter\n" \
-              " - Lucas-Kanade {0}\n" \
-              " - Transform is {1} and residual is {2}.\n" \
-              " - {3} training images.\n".format(
-              self._fitters[0].algorithm,
+        out = "{0} Fitter\n" \
+              " - Lucas-Kanade {1}\n" \
+              " - Transform is {2} and residual is {3}.\n" \
+              " - {4} training images.\n".format(
+              self.aam._str_title, self._fitters[0].algorithm,
               self._fitters[0].transform.__class__.__name__,
               self._fitters[0].residual.type, self.aam.n_training_images)
         # small strings about number of channels, channels string and downscale

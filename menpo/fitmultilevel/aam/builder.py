@@ -929,9 +929,18 @@ class AAM(object):
         return build_reference_frame(
             reference_shape, trilist=trilist)
 
+    @property
+    def _str_title(self):
+        r"""
+        Returns a string containing name of the model.
+
+        : str
+        """
+        return 'Active Appearance Model'
+
     def __str__(self):
-        out = "Active Appearance Model\n - {} training images.\n".format(
-            self.n_training_images)
+        out = "{}\n - {} training images.\n".format(self._str_title,
+                                                    self.n_training_images)
         # small strings about number of channels, channels string and downscale
         n_channels = []
         down_str = []
@@ -1134,10 +1143,19 @@ class PatchBasedAAM(AAM):
         return build_patch_reference_frame(
             reference_shape, patch_shape=self.patch_shape)
 
+    @property
+    def _str_title(self):
+        r"""
+        Returns a string containing name of the model.
+
+        : str
+        """
+        return 'Patch-Based Active Appearance Model'
+
     def __str__(self):
         out = super(PatchBasedAAM, self).__str__()
         out_splitted = out.splitlines()
-        out_splitted[0] = 'Patch-Based Active Appearance Model'
+        out_splitted[0] = self._str_title
         out_splitted.insert(5, "   - Patch size is {}W x {}H.".format(
             self.patch_shape[1], self.patch_shape[0]))
         return '\n'.join(out_splitted)
