@@ -1,13 +1,11 @@
 .. _user-guide:
 
-########################
-  The Menpo User Guide
-########################
-
-This is the user guide!
+###############
+  User Guide
+###############
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
     introduction
     vectorizing
