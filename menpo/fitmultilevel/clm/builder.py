@@ -345,15 +345,19 @@ class CLMBuilder(DeformableModelBuilder):
             # add level classifiers to the list
             classifiers.append(level_classifiers)
 
+            if verbose:
+                print_dynamic('{}Done\n'.format(level_str))
+
         # reverse the list of shape and appearance models so that they are
         # ordered from lower to higher resolution
         shape_models.reverse()
         classifiers.reverse()
         n_training_images = len(images)
 
-        return CLM(shape_models, classifiers, self.patch_shape,
-                   self.feature_type, self.reference_shape, self.downscale,
-                   self.scaled_levels, self.interpolator)
+        return CLM(shape_models, classifiers, n_training_images,
+                   self.patch_shape, self.feature_type, self.reference_shape,
+                   self.downscale, self.scaled_shape_models,
+                   self.pyramid_on_features, self.interpolator)
 
 
 class CLM(object):
@@ -364,30 +368,39 @@ class CLM(object):
     -----------
     shape_models: :class:`menpo.model.PCA` list
         A list containing the shape models of the CLM.
-
     classifiers: classifier_closure list of lists
         A list containing the list of classifier_closures per each pyramidal
         level of the CLM.
-
+    n_training_images: int
+        The number of training images used to build the AAM.
     patch_shape: tuple of ints
         The shape of the patches used to train the classifiers.
-
-    transform: :class:`menpo.transform.PureAlignmentTransform`
-        The transform used to warp the images from which the AAM was
-        constructed.
-
-    feature_type: str or function
+    feature_type: None or string or function/closure or list of those
         The image feature that was be used to build the appearance_models. Will
-        subsequently be used by fitter objects using this class to fitter to
+        subsequently be used by fitter objects using this class to fit to
         novel images.
 
-        If None, the appearance model was built immediately from the image
-        representation, i.e. intensity.
+        If list of length n_levels, then a feature was defined per level.
+        This means that the pyramid_on_features flag was disabled (False)
+        and the features were extracted at each level. The first element of
+        the list specifies the features of the lowest pyramidal level and so
+        on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature was applied
+            to the highest level.
+            If pyramid_on_features is False, the specified feature was applied
+            to all pyramid levels.
+
+        Per level:
+        If None, the appearance model was built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
 
         If string, the appearance model was built using one of Menpo's default
         built-in feature representations - those
         accessible at image.features.some_feature(). Note that this case can
-        only be used with default feature weights - for custom feature
+        only be used with default feature parameters - for custom feature
         weights, use the functional form of this argument instead.
 
         If function, the user can directly provide the feature that was
@@ -396,35 +409,38 @@ class CLM(object):
         and expect as a return type an Image representing the feature
         calculation ready for further fitting. See the examples for
         details.
-
     reference_shape: PointCloud
         The reference shape that was used to resize all training images to a
         consistent object size.
-
     downscale: float
-        The constant downscale factor used to create the different levels of
-        the AAM. For example, a factor of 2 would imply that the second level
-        of the AAM pyramid is half the width and half the height of the first.
-        The third would be 1/2 * 1/2 = 1/4 the width and 1/4 the height of
-        the original.
-
-    scaled_levels: boolean
-        Boolean value specifying whether the AAM levels are scaled or not.
-
+        The downscale factor that was used to create the different pyramidal
+        levels.
+    scaled_shape_models: boolean, Optional
+        If True, the reference frames are the mean shapes of each pyramid
+        level, so the shape models are scaled.
+        If False, the reference frames of all levels are the mean shape of
+        the highest level, so the shape models are not scaled; they have the
+        same size.
+    pyramid_on_features: boolean, Optional
+        If True, the feature space was computed once at the highest scale and
+        the Gaussian pyramid was applied on the feature images.
+        If False, the Gaussian pyramid was applied on the original images
+        (intensities) and then features were extracted at each level.
     interpolator: string
-        The interpolator that was used to build the AAM.
-
-        Default: 'scipy'
+        The interpolator that was used to build the CLM.
     """
-    def __init__(self, shape_models, classifiers, patch_shape, feature_type,
-                 reference_shape, downscale, scaled_levels, interpolator):
+    def __init__(self, shape_models, classifiers, n_training_images,
+                 patch_shape, feature_type, reference_shape, downscale,
+                 scaled_shape_models, pyramid_on_features, interpolator):
         self.shape_models = shape_models
         self.classifiers = classifiers
+        self.n_training_images = n_training_images
         self.patch_shape = patch_shape
         self.feature_type = feature_type
         self.reference_shape = reference_shape
         self.downscale = downscale
-        self.scaled_levels = scaled_levels
+        self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.interpolator = interpolator
 
     @property
@@ -466,7 +482,7 @@ class CLM(object):
 
         Returns
         -------
-        image: :class:`menpo.shape.PointCloud`
+        shape_instance: :class:`menpo.shape.PointCloud`
             The novel CLM instance.
         """
         sm = self.shape_models[level]
@@ -491,7 +507,7 @@ class CLM(object):
 
         Returns
         -------
-        image: :class:`menpo.shape.PointCloud`
+        shape_instance: :class:`menpo.shape.PointCloud`
             The novel CLM instance.
         """
         sm = self.shape_models[level]

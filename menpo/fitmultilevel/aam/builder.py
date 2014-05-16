@@ -481,7 +481,6 @@ class AAMBuilder(DeformableModelBuilder):
                           "model.\n".format(print_bytes(sum(bytes_ram))))
 
 
-#TODO: Test me!!!
 class PatchBasedAAMBuilder(AAMBuilder):
     r"""
     Class that builds Multilevel Patch-Based Active Appearance Models.
@@ -1052,7 +1051,6 @@ class AAM(object):
         return out
 
 
-#TODO: Test me!!!
 class PatchBasedAAM(AAM):
     r"""
     Patch Based Active Appearance Model class.
