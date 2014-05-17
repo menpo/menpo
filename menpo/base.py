@@ -53,10 +53,10 @@ class Vectorizable(object):
         Build a new instance of the object from it's vectorized state.
 
 
-        ``self`` is used to fill out the missing state required to
+        `self` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
         is the default implementation, which is which is a
-        ``deepcopy`` of the object followed by a call to
+        `deepcopy` of the object followed by a call to
         :meth:`from_vector_inplace()`. This method can be overridden for a
         performance benefit if desired.
 

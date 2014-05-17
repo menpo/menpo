@@ -58,7 +58,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         x : (N, D) ndarray or a transformable object
             The object to be transformed.
         kwargs : dict
-            Passed through to transforms ``apply_inplace`` method.
+            Passed through to transforms `apply_inplace` method.
 
         Returns
         --------
@@ -105,7 +105,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
 
         Returns
         -------
-        params : (``n_parameters``,) ndarray
+        params : (`n_parameters`,) ndarray
             The vector of weights
         """
         return self.pdm.as_vector()
@@ -291,7 +291,7 @@ class GlobalMDTransform(ModelDrivenTransform):
         exact object passed in here - so don't expect external changes to
         the global_transform to be reflected in the behavior of this object.
     source : :class:`menpo.shape.base.PointCloud`, optional
-        The source landmarks of the transform. If no ``source`` is provided the
+        The source landmarks of the transform. If no `source` is provided the
         mean of the model is used.
     weights : (P,) ndarray, optional
         The reconstruction weights that will be fed to the model in order to
@@ -432,7 +432,7 @@ class OrthoMDTransform(GlobalMDTransform):
         exact object passed in here - so don't expect external changes to
         the global_transform to be reflected in the behavior of this object.
     source : :class:`menpo.shape.base.PointCloud`, optional
-        The source landmarks of the transform. If no ``source`` is provided the
+        The source landmarks of the transform. If no `source` is provided the
         mean of the model is used.
     """
     def __init__(self, model, transform_cls, global_transform, source=None):

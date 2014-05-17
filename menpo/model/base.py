@@ -40,7 +40,7 @@ class MeanInstanceLinearModel(MeanLinearModel, InstanceBackedModel):
             valid in the case where with_mean is True. See
             :meth:`component_vector` for how this scale factor is interpreted.
 
-        :type: ``type(self.template_instance)``
+        :type: `type(self.template_instance)`
         """
         return self.template_instance.from_vector(self.component_vector(
             index, with_mean=with_mean, scale=scale))

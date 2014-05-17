@@ -69,7 +69,7 @@ class Residual(object):
         .. math::
              \nabla I \frac{\partial W}{\partial p}
 
-        The input image is vectorised (``N``-pixels) so that masked images can
+        The input image is vectorised (`N`-pixels) so that masked images can
         be handled.
 
         Parameters
@@ -144,18 +144,18 @@ class Residual(object):
         r"""
         Calculates the gradients of the given method.
 
-        If ``forward`` is provided, then the gradients are warped
+        If `forward` is provided, then the gradients are warped
         (as required in the forward additive algorithm)
 
         Parameters
         ----------
         image : :class:`menpo.image.base.Image`
             The image to calculate the gradients for
-        forward : (:class:`template <menpo.image.base.Image>`, :class:`template <menpo.transform.base.AlignableTransform>`, ``warp``), optional
+        forward : (:class:`template <menpo.image.base.Image>`, :class:`template <menpo.transform.base.AlignableTransform>`, `warp`), optional
             A tuple containing the extra weights required for the function
-            ``warp`` (which should be passed as a function handle).
+            `warp` (which should be passed as a function handle).
 
-            Default: ``None``
+            Default: `None`
         """
         if forward:
             # Calculate the gradient over the image
