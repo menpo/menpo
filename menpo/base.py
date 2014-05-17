@@ -77,9 +77,10 @@ class Vectorizable(object):
 
 class Targetable(object):
     r"""
-    Interface for objects that can produce a 'target' PointCloud - which
-    could for instance be the result of an alignment or a generation of a
-    PointCloud instance from a shape model.
+    Interface for objects that can produce a *target* :map:`PointCloud`.
+
+    This could for instance be the result of an alignment or a generation of a
+    :map:`PointCloud` instance from a shape model.
 
     Implementations must define sensible behavior for:
 
