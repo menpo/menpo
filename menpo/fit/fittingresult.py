@@ -64,13 +64,13 @@ class FittingResult(Viewable):
         r"""
         Sets the error type according to a set of predefined options.
         """
-        if error_type is 'me_norm':
+        if error_type == 'me_norm':
             self._error_text = ('Point-to-point error normalized by object '
                                 'size')
-        elif error_type is 'me':
-            NotImplementedError("me not implemented yet")
-        elif error_type is 'rmse':
-            NotImplementedError("rmse not implemented yet")
+        elif error_type == 'me':
+            raise NotImplementedError("me not implemented yet")
+        elif error_type == 'rmse':
+            raise NotImplementedError("rmse not implemented yet")
         else:
             raise ValueError('Unknown error_type string selected. Valid'
                              'options are: me_norm, me, rmse')
