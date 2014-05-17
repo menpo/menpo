@@ -1,11 +1,11 @@
-.. _menpo-transform-TransformChain:
+.. _menpo-transform-VComposable:
 
 .. currentmodule:: menpo.transform.base.composable
 
-TransformChain
-==============
+VComposable
+===========
 
-.. autoclass:: TransformChain
+.. autoclass:: VComposable
   :members:
   :inherited-members:
   :show-inheritance:
