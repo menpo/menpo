@@ -252,92 +252,6 @@ def clm_basic(training_db_path, training_db_ext, fitting_db_path,
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
-def clm_temp(training_db_path, training_db_ext, fitting_db_path,
-             fitting_db_ext, feature_type=sparse_hog, patch_shape=(5, 5),
-             classifier_type=linear_svm_lr, scaled_shape_models=True,
-             pyramid_on_features=True, n_shape=None,
-             noise_std=0.04, verbose=False,
-             plot=False):
-    # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
-                                 "function/closure or None")
-
-    # predefined options
-    db_loading_options = {'crop_proportion': 0.4,
-                          'convert_to_grey': True
-                          }
-    training_options = {'group': 'PTS',
-                        'classifier_type': linear_svm_lr,
-                        'patch_shape': (5, 5),
-                        'feature_type': sparse_hog,
-                        'normalization_diagonal': None,
-                        'n_levels': 3,
-                        'downscale': 1.1,
-                        'scaled_shape_models': False,
-                        'pyramid_on_features': False,
-                        'max_shape_components': None,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
-                        }
-    fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
-                       'pdm_transform': OrthoPDM,
-                       'global_transform': AlignmentSimilarity,
-                       'n_shape': [6, 6, 6],
-                       'max_iters': 50,
-                       'error_type': 'me_norm'
-                       }
-    initialization_options = {'noise_std': 0.01,
-                              'rotation': False}
-
-    # set passed parameters
-    training_options['feature_type'] = feature_type
-    training_options['patch_shape'] = patch_shape
-    training_options['scaled_shape_models'] = scaled_shape_models
-    training_options['pyramid_on_features'] = pyramid_on_features
-    fitting_options['n_shape'] = n_shape
-    training_options['classifier_type'] = classifier_type
-    initialization_options['noise_std'] = noise_std
-
-    # run experiment
-    training_images = load_database(training_db_path, training_db_ext,
-                                    db_loading_options=db_loading_options,
-                                    verbose=verbose)
-    clm = clm_build_benchmark(training_images,
-                              training_options=training_options,
-                              verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
-                                   db_loading_options=db_loading_options,
-                                   verbose=verbose)
-    fitting_results = clm_fit_benchmark(fitting_images, clm,
-                                        initialization_options=
-                                        initialization_options,
-                                        fitting_options=fitting_options,
-                                        verbose=verbose)
-
-    # convert results
-    max_error_bin = 0.05
-    bins_error_step = 0.005
-    final_error_curve, initial_error_curve, error_bins = \
-        convert_fitting_results_to_ced(fitting_results,
-                                       max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
-
-    # plot results
-    if plot:
-        title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['feature_type'],
-            training_options['classifier_type'])
-        y_axis = [final_error_curve, initial_error_curve]
-        legend = ['Fitting', 'Initialization']
-        plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
-                            x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
-    return fitting_results, final_error_curve, initial_error_curve, error_bins
-
-
 def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
                             fitting_db_ext, n_experiments=1, feature_type=None,
                             scaled_shape_models=None, pyramid_on_features=None,
@@ -459,6 +373,140 @@ def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using Alternating IC"
+        color_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
+        marker_list = ['o', 'x', 'v', 'd'] * n_experiments
+        plot_fitting_curves(error_bins, curves_to_plot, title, new_figure=True,
+                            x_limit=max_error_bin,  color_list=color_list,
+                            marker_list=marker_list)
+    return all_fitting_results
+
+
+def clm_params_combinations(training_db_path, training_db_ext, fitting_db_path,
+                            fitting_db_ext, n_experiments=1,
+                            classifier_type=None, patch_shape=None,
+                            feature_type=None, scaled_shape_models=None,
+                            pyramid_on_features=None, n_shape=None,
+                            noise_std=None, rotation=None, verbose=False,
+                            plot=False):
+
+    # parse input
+    if classifier_type is None:
+        classifier_type = [linear_svm_lr] * n_experiments
+    elif len(classifier_type) is not n_experiments:
+        raise ValueError("classifier_type has wrong length")
+    if patch_shape is None:
+        patch_shape = [(5, 5)] * n_experiments
+    elif len(patch_shape) is not n_experiments:
+        raise ValueError("patch_shape has wrong length")
+    if feature_type is None:
+        feature_type = ['igo'] * n_experiments
+    elif len(feature_type) is not n_experiments:
+        raise ValueError("feature_type has wrong length")
+    if scaled_shape_models is None:
+        scaled_shape_models = [True] * n_experiments
+    elif len(scaled_shape_models) is not n_experiments:
+        raise ValueError("scaled_shape_models has wrong length")
+    if pyramid_on_features is None:
+        pyramid_on_features = [True] * n_experiments
+    elif len(pyramid_on_features) is not n_experiments:
+        raise ValueError("pyramid_on_features has wrong length")
+    if n_shape is None:
+        n_shape = [[3, 6, 12]] * n_experiments
+    elif len(n_shape) is not n_experiments:
+        raise ValueError("n_shape has wrong length")
+    if noise_std is None:
+        noise_std = [0.04] * n_experiments
+    elif len(noise_std) is not n_experiments:
+        raise ValueError("noise_std has wrong length")
+    if rotation is None:
+        rotation = [False] * n_experiments
+    elif len(rotation) is not n_experiments:
+        raise ValueError("rotation has wrong length")
+
+    # load images
+    db_loading_options = {'crop_proportion': 0.4,
+                          'convert_to_grey': True
+                          }
+    training_images = load_database(training_db_path, training_db_ext,
+                                    db_loading_options=db_loading_options,
+                                    verbose=verbose)
+    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+                                   db_loading_options=db_loading_options,
+                                   verbose=verbose)
+
+    # run experiments
+    max_error_bin = 0.05
+    bins_error_step = 0.005
+    curves_to_plot = []
+    all_fitting_results = []
+    for i in range(n_experiments):
+        if verbose:
+            print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
+            print("- classifier_type: {}\npatch_shape: {}\n"
+                  "- feature_type: {}\n- scaled_shape_models: {}\n"
+                  "- pyramid_on_features: {}\n- n_shape: {}\n"
+                  "- noise_std: {}\n- rotation: {}".format(
+                  classifier_type[i], patch_shape[i], feature_type[i],
+                  scaled_shape_models[i], pyramid_on_features[i], n_shape[i],
+                  noise_std[i], rotation[i]))
+
+        # predefined option dictionaries
+        training_options = {'group': 'PTS',
+                            'classifier_type': linear_svm_lr,
+                            'patch_shape': (5, 5),
+                            'feature_type': sparse_hog,
+                            'normalization_diagonal': None,
+                            'n_levels': 3,
+                            'downscale': 1.1,
+                            'scaled_shape_models': False,
+                            'pyramid_on_features': True,
+                            'max_shape_components': None,
+                            'boundary': 3,
+                            'interpolator': 'scipy'
+                            }
+        fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
+                           'pdm_transform': OrthoPDM,
+                           'global_transform': AlignmentSimilarity,
+                           'n_shape': [3, 6, 12],
+                           'max_iters': 50,
+                           'error_type': 'me_norm'
+                           }
+        initialization_options = {'noise_std': 0.01,
+                                  'rotation': False}
+
+        # training
+        training_options['classifier_type'] = classifier_type[i]
+        training_options['patch_shape'] = patch_shape[i]
+        training_options['feature_type'] = feature_type[i]
+        training_options['scaled_shape_models'] = scaled_shape_models[i]
+        training_options['pyramid_on_features'] = pyramid_on_features[i]
+        clm = clm_build_benchmark(training_images,
+                                  training_options=training_options,
+                                  verbose=verbose)
+
+        # fitting
+        fitting_options['n_shape'] = n_shape[i]
+        initialization_options['noise_std'] = noise_std[i]
+        initialization_options['rotation'] = rotation[i]
+        fitting_results = clm_fit_benchmark(fitting_images, clm,
+                                            initialization_options=
+                                            initialization_options,
+                                            fitting_options=fitting_options,
+                                            verbose=verbose)
+        all_fitting_results.append(fitting_results)
+
+        # convert results
+        final_error_curve, initial_error_curve, error_bins = \
+            convert_fitting_results_to_ced(fitting_results,
+                                           max_error_bin=max_error_bin,
+                                           bins_error_step=bins_error_step)
+        curves_to_plot.append(final_error_curve)
+        if i == n_experiments - 1:
+            curves_to_plot.append(initial_error_curve)
+
+    # plot results
+    if plot:
+        title = "CLMs using RLMS"
         color_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
         marker_list = ['o', 'x', 'v', 'd'] * n_experiments
         plot_fitting_curves(error_bins, curves_to_plot, title, new_figure=True,
