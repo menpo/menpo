@@ -1,5 +1,4 @@
 # A list of extensions that different importers support.
-from menpo.io.spatial_image import BNTImporter, FIMImporter, ABSImporter
 from menpo.io.landmark import (LM3Importer, LANImporter, LM2Importer,
                                BNDImporter, JSONImporter)
 from menpo.io.landmark_mesh import MeshPTSImporter
@@ -53,10 +52,6 @@ mesh_types = {'.dae': AssimpImporter,
               # '.blend': AssimpImporter,
               '.wrl': WRLImporter}
 
-spatial_image_types = {'.bnt': BNTImporter,
-                       '.fim': FIMImporter,
-                       '.abs': ABSImporter}
-
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,
                '.dcx': PILImporter,
@@ -81,7 +76,6 @@ image_types = {'.bmp': PILImporter,
                '.xpm': PILImporter}
 
 all_image_types = {}
-all_image_types.update(spatial_image_types)
 all_image_types.update(image_types)
 
 all_mesh_and_image_types = {}

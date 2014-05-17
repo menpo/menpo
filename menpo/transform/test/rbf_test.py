@@ -15,8 +15,8 @@ def test_rbf_r2logr2_apply():
     assert_allclose(result, expected)
 
 
-def test_rbf_r2logr2_jacobian():
-    result = R2LogR2RBF(centers).jacobian_points(points)
+def test_rbf_r2logr2_d_dl():
+    result = R2LogR2RBF(centers).d_dl(points)
     expected = np.array([[[0.60684441, -0.50570368],
                           [3.46630038, -14.44291827],
                           [-5.02037904, -1.79299252],
@@ -45,8 +45,8 @@ def test_rbf_r2logr_apply():
     assert_allclose(result, expected)
 
 
-def test_rbf_r2logr_jacobian():
-    result = R2LogRRBF(centers).jacobian_points(points)
+def test_rbf_r2logr_d_dl():
+    result = R2LogRRBF(centers).d_dl(points)
     expected = np.array([[[0.30342221, -0.25285184],
                           [1.73315019, -7.22145913],
                           [-2.51018952, -0.89649626],

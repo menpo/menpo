@@ -2,9 +2,6 @@
 [![Coverage Status](http://img.shields.io/coveralls/menpo/menpo.svg?style=flat)](https://coveralls.io/r/menpo/menpo)
 [![PyPI Release](http://img.shields.io/pypi/v/menpo.svg?style=flat)](https://pypi.python.org/pypi/menpo)
 
-Menpo is a statistical modelling toolkit, providing all the tools 
-required to build, fit, visualize, and test generative computer vision models like Active Appearance Models and Morphable Models.
-
 IMPORTANT
 =========
 
@@ -14,9 +11,20 @@ may be incorrect, tests are missing, and even core ideas are not yet fully
 formed. The project is at a pre-alpha stage, and this should be kept in mind
 at all times.
 
+Menpo. A deformable modelling toolkit.
+======================================
+What is Menpo?
+--------------
+Menpo is a statistical modelling toolkit, providing all the tools 
+required to build, fit, visualize, and test deformable models like Active Appearance Models, Constrained Local Models, Supervised Descent Method and Morphable Models.
+
+> Menpo were facial armours which covered all or part of the face and provided a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) of the kabuto would be tied under the chin of the menpo. There were small hooks called ori-kugi or posts called odome located on various places to help secure the kabuto's chin cord.
+>
+> --- Wikipedia, Menpo
+
 Installation
 ------------
-The [Menpo Wiki](https://github.com/menpo/menpo/wiki) contains installation guides for each platform.
+Here in the Menpo team, we are firm believers in making installation as simple as possible. Unfortunately, we are a complex project that relies on satisfying a number of complex 3rd party library dependencies. The default Python packing environment does not make this an easy task. Therefore, we evangelise the use of the conda ecosystem, provided by [Anaconda](https://store.continuum.io/cshop/anaconda/). In order to make things as simple as possible, we suggest that you use conda too! To try and persuade you, go to the [Menpo website](http://www.menpo.io/installation/) to find installation instructions for all major platforms.
 
 Usage
 -----
@@ -31,8 +39,7 @@ Want to get a feel for Menpo without installing anything? You can browse the not
 
 Documentation
 -------------
-See the [menpo website](http://www.menpo.io/documentation).
-
+See our documentation on [ReadTheDocs](http://menpo.readthedocs.org)
 
 Testing
 -------

@@ -187,13 +187,10 @@ class MultilevelFittingResult(FittingResult):
             raise ValueError('Ground truth shape has not been set, error '
                              'cannot be plotted')
 
-    # TODO : this should overwrite __str__
-    def print_fitting_info(self):
-        r"""
-        Prints information related to the fitting.
-        """
-        print "Initial error: {}".format(self.initial_error)
-        print "Final error: {}".format(self.final_error)
+    def __str__(self):
+        out = "Initial error: {0:.4f}\nFinal error: {1:.4f}".format(
+            self.initial_error, self.final_error)
+        return out
 
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):

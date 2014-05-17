@@ -4,7 +4,7 @@ import random
 import math
 
 from menpo.image import MaskedImage
-import menpo.io as pio
+import menpo.io as mio
 
 
 def test_imagewindowiterator_hog_padding():
@@ -236,7 +236,7 @@ def test_lbp_values():
 
 
 def test_constrain_landmarks():
-    breaking_bad = pio.import_builtin_asset('breakingbad.jpg')
+    breaking_bad = mio.import_builtin_asset('breakingbad.jpg')
     breaking_bad.crop_to_landmarks(boundary=20)
     breaking_bad.constrain_mask_to_landmarks()
     breaking_bad = breaking_bad.resize([50, 50])

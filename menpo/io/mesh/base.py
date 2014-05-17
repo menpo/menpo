@@ -265,9 +265,9 @@ class WRLImporter(MeshImporter):
         Absolute filepath of the mesh.
     """
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, texture=True):
         # Setup class before super class call
-        super(WRLImporter, self).__init__(filepath)
+        super(WRLImporter, self).__init__(filepath, texture=texture)
 
     def _parse_format(self):
         r"""

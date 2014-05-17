@@ -5,35 +5,35 @@ from menpo.model.base import MeanInstanceLinearModel
 
 
 class PCAModel(MeanInstanceLinearModel):
-    """
-    A :class:`MeanLinearInstanceModel` where the components are Principal
-    Components.
+    """A :map:`MeanInstanceLinearModel` where components Principal Components.
 
-    Principal Component Analysis (PCA) by Eigenvalue Decomposition of the
-    data's scatter matrix.
 
-    For details of the implementation of PCA, see :func:`menpo.decomposition
-    .principal_component_decomposition`.
+    Principal Component Analysis (PCA) by eigenvalue decomposition of the
+    data's scatter matrix. For details of the implementation of PCA, see
+    :map:`principal_component_decomposition`.
 
     Parameters
     ----------
-    samples: list of :class:`menpo.base.Vectorizable`
+    samples : list of :map:`Vectorizable`
         List of samples to build the model from.
-
     center : bool, optional
         When True (True by default) PCA is performed after mean centering the
         data. If False the data is assumed to be centred, and the mean will
         be 0.
-
     bias: bool, optional
         When True (False by default) a biased estimator of the covariance
-        matrix is used, i.e.:
+        matrix is used. See notes.
 
-            \frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
+    ..notes:
 
-        instead of default:
+    True bias mean that we calculate the covariance as
 
-            \frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
+    :math:`\frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
+
+    instead of default
+
+    :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
+
     """
     def __init__(self, samples, center=True, bias=False):
         # build data matrix
@@ -287,36 +287,6 @@ class PCAModel(MeanInstanceLinearModel):
                              "inverse")
         return 1.0 / noise_variance
 
-    @property
-    def jacobian(self):
-        """
-        Returns the Jacobian of the PCA model reshaped to have the standard
-        Jacobian shape:
-
-            n_points    x  n_params      x  n_dims
-            n_features  x  n_components  x  n_dims
-
-        Returns
-        -------
-        jacobian : (n_features, n_components, n_dims) ndarray
-            The Jacobian of the model in the standard Jacobian shape.
-        """
-        jacobian = self._jacobian.reshape(self.n_active_components, -1,
-                                          self.template_instance.n_dims)
-        return jacobian.swapaxes(0, 1)
-
-    @property
-    def _jacobian(self):
-        """
-        Returns the Jacobian of the PCA model with respect to the weights.
-
-        Returns
-        -------
-        jacobian : (n_components, n_features) ndarray
-            The Jacobian with respect to the weights
-        """
-        return self.components
-
     def component_vector(self, index, with_mean=True, scale=1.0):
         r"""
         A particular component of the model, in vectorized form.
@@ -417,13 +387,15 @@ class PCAModel(MeanInstanceLinearModel):
             n_components = self.n_active_components
         # set self.n_active_components to n_components
         self.n_active_components = n_components
-        # set self.n_components to n_components
-        self._components = self._components[:n_components]
-        # store the eigenvalues associated to the discarded components
-        self._trimmed_eigenvalues = \
-            self._eigenvalues[self.n_active_components:]
-        # make sure that the eigenvalues are trimmed too
-        self._eigenvalues = self._eigenvalues[:self.n_components]
+
+        if self.n_active_components < self.n_components:
+            # set self.n_components to n_components
+            self._components = self._components[:self.n_active_components]
+            # store the eigenvalues associated to the discarded components
+            self._trimmed_eigenvalues = \
+                self._eigenvalues[self.n_active_components:]
+            # make sure that the eigenvalues are trimmed too
+            self._eigenvalues = self._eigenvalues[:self.n_active_components]
 
     def distance_to_subspace(self, instance):
         """
@@ -485,7 +457,7 @@ class PCAModel(MeanInstanceLinearModel):
     def project_whitened_vector(self, vector_instance):
         """
         Returns a sheared (non-orthogonal) reconstruction of
-        ``vector_instance``.
+        `vector_instance`.
 
         Parameters
         ----------
@@ -495,7 +467,7 @@ class PCAModel(MeanInstanceLinearModel):
         Returns
         -------
         sheared_reconstruction : (n_features,) ndarray
-            A sheared (non-orthogonal) reconstruction of ``vector_instance``
+            A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components
         weights = dgemm(alpha=1.0, a=vector_instance.T,
@@ -536,8 +508,15 @@ class PCAModel(MeanInstanceLinearModel):
         n_available_components = Q.shape[0] - linear_model.n_components
         if n_available_components < self.n_components:
             # oh dear, we've lost some components from the end of our model.
+            if self.n_active_components < n_available_components:
+                # save the current number of active componets
+                n_active_components = self.n_active_components
             # call trim_components to update our state.
             self.trim_components(n_components=n_available_components)
+            if n_active_components < n_available_components:
+                # reset the number of active componets
+                self.n_active_components = n_active_components
+
         # now we can set our own components with the updated orthogonal ones
         self.components = Q[linear_model.n_components:, :]
 

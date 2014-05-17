@@ -1,5 +1,7 @@
+from nose.tools import raises
 import numpy as np
 from menpo.shape import PointCloud
+from menpo.testing import is_same_array
 
 
 def test_pointcloud_creation():
@@ -8,18 +10,39 @@ def test_pointcloud_creation():
     PointCloud(points)
 
 
+def test_pointcloud_copy_false():
+    points = np.array([[1, 2, 3],
+                       [1, 1, 1]])
+    p = PointCloud(points, copy=False)
+    assert (is_same_array(p.points, points))
+
+
+def test_pointcloud_copy_true():
+    points = np.array([[1, 2, 3],
+                       [1, 1, 1]])
+    p = PointCloud(points)
+    assert (not is_same_array(p.points, points))
+
+
+@raises(Warning)
+def test_pointcloud_copy_warning():
+    points = np.array([[1, 2, 3],
+                       [1, 1, 1]], order='F')
+    PointCloud(points, copy=False)
+
+
 def test_pointcloud_n_dims():
     points = np.array([[1, 2, 3],
                        [1, 1, 1]])
     pc = PointCloud(points)
-    assert(pc.n_dims == 3)
+    assert (pc.n_dims == 3)
 
 
 def test_pointcloud_n_points():
     points = np.array([[1, 2, 3],
                        [1, 1, 1]])
     pc = PointCloud(points)
-    assert(pc.n_points == 2)
+    assert (pc.n_points == 2)
 
 
 def test_pointcloud_flatten_rebuild():
@@ -28,6 +51,6 @@ def test_pointcloud_flatten_rebuild():
     pc = PointCloud(points)
     flattened = pc.as_vector()
     new_pc = pc.from_vector(flattened)
-    assert(np.all(new_pc.n_dims == pc.n_dims))
-    assert(np.all(new_pc.n_points == pc.n_points))
-    assert(np.all(pc.points == new_pc.points))
+    assert (np.all(new_pc.n_dims == pc.n_dims))
+    assert (np.all(new_pc.n_points == pc.n_points))
+    assert (np.all(pc.points == new_pc.points))
