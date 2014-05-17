@@ -6,7 +6,7 @@ from menpo.transform import Scale
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
-from menpo.visualize import print_dynamic, progress_bar_str, print_bytes
+from menpo.visualize import print_dynamic, progress_bar_str
 
 from .classifierfunctions import classifier, linear_svm_lr
 
@@ -154,6 +154,7 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
+        classifier_type = check_classifier_type(classifier_type, n_levels)
 
         # store parameters
         self.classifier_type = classifier_type
@@ -202,11 +203,6 @@ class CLMBuilder(DeformableModelBuilder):
             self._normalization_wrt_reference_shape(
                 images, group, label, self.normalization_diagonal,
                 self.interpolator, verbose=verbose)
-
-        # estimate required ram memory
-        #if verbose:
-        #    self._estimate_ram_requirements(images, group, label,
-        #                                    n_images=min([3, len(images)]))
 
         # create pyramid
         generators = self._create_pyramid(normalized_images, self.n_levels,
@@ -339,7 +335,7 @@ class CLMBuilder(DeformableModelBuilder):
                 X = np.vstack((positive_samples, negative_samples))
                 t = np.hstack((positive_labels, negative_labels))
 
-                clf = classifier(X, t, self.classifier_type)
+                clf = classifier(X, t, self.classifier_type[rj])
                 level_classifiers.append(clf)
 
             # add level classifiers to the list
@@ -706,3 +702,24 @@ def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):
     positive = sampling_grid[mask]
     negative = sampling_grid[~mask]
     return positive, negative
+
+
+def check_classifier_type(classifier_type, n_levels):
+    r"""
+    Checks the classifier type per level. It must be a classifier
+    function closure or a list containing 1 or {n_levels} closures.
+    """
+    str_error = ("classifier_type must be a classifier function closure "
+                 "of a list containing 1 or {} closures").format(n_levels)
+    if not isinstance(classifier_type, list):
+        classifier_type_list = [classifier_type] * n_levels
+    elif len(classifier_type) is 1:
+        classifier_type_list = [classifier_type[0]] * n_levels
+    elif len(classifier_type) is n_levels:
+        classifier_type_list = classifier_type
+    else:
+        raise ValueError(str_error)
+    for clas in classifier_type_list:
+        if not hasattr(clas, '__call__'):
+            raise ValueError(str_error)
+    return classifier_type_list
