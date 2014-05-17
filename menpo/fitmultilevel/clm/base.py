@@ -162,10 +162,10 @@ class GradientDescentCLMFitter(CLMFitter):
             The residual class to be used
 
             Default: 'SSD'
-        pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+        pdm_transform: :class:`menpo.model.pdm`, optional
             The point distribution transform class to be used.
 
-            Default: OrthoPDMTransform
+            Default: OrthoPDM
         global_transform: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform_cls. Currently, only
