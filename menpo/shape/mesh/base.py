@@ -16,7 +16,7 @@ class TriMesh(PointCloud):
     points : (N, D) ndarray
         The set coordinates for the mesh.
     trilist : (M, 3) ndarray, optional
-        The triangle list. If None is provided, a Delaunay triangulation of
+        The triangle list. If `None`, a Delaunay triangulation of
         the points will be used instead.
 
         Default: None

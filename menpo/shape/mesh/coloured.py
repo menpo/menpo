@@ -15,10 +15,16 @@ class ColouredTriMesh(TriMesh, Rasterizable):
     ----------
     points : (N, D) ndarray
         The coordinates of the mesh.
-    trilist : (M, 3) ndarray
-        The triangle list for the mesh
-    colours : (N, 3) ndarray
-        The floating point RGB colour per vertex.
+    trilist : (M, 3) ndarray, optional
+        The triangle list for the mesh. If `None`, a Delaunay triangulation
+        will be performed.
+
+        Default: `None`
+    colours : (N, 3) ndarray, optional
+        The floating point RGB colour per vertex. If not given, grey will be
+        assigned to each vertex.
+
+        Default: `None`
     copy: bool, optional
         If `False`, the points, trilist and colours will not be copied on
         assignment.
@@ -47,6 +53,24 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         if points.shape[0] != colours.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
+
+    def copy(self):
+        r"""
+        An efficient copy of this ColouredTriMesh.
+
+        Only landmarks and points will be transferred. For a full copy consider
+        using `deepcopy()`.
+
+        Returns
+        -------
+        colouredtrimesh: :map:`ColouredTriMesh`
+            A ColouredTriMesh with the same points, trilist, colours and
+            landmarks as this one.
+        """
+        new_ctm = ColouredTriMesh(self.points, colours=self.colours,
+                                  trilist=self.trilist, copy=True)
+        new_ctm.landmarks = self.landmarks
+        return new_ctm
 
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
