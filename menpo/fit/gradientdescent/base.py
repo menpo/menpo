@@ -36,7 +36,7 @@ class GradientDescent(Fitter):
 # TODO: document me
 class ActiveShapeModel(GradientDescent):
 
-    @abc.abstractproperty
+    @property
     def algorithm(self):
         return "ASM"
 
@@ -50,7 +50,7 @@ class ActiveShapeModel(GradientDescent):
 # TODO: document me
 class ConvexQuadraticFitting(GradientDescent):
 
-    @abc.abstractproperty
+    @property
     def algorithm(self):
         return "CQF"
 
@@ -64,6 +64,7 @@ class ConvexQuadraticFitting(GradientDescent):
 # TODO: document me
 class RegularizedLandmarkMeanShift(GradientDescent):
 
+    @property
     def algorithm(self):
         return "RLMS"
 
