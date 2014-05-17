@@ -140,14 +140,42 @@ class LucasKanadeAAMFitter(AAMFitter):
         :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
         Default: AlignmentSimilarity
-    n_shape: list, optional
+    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                 optional
         The number of shape components to be used per fitting level.
-        If None, for each shape model n_active_components will be used.
+
+        If list of length n_levels, then a number of components is defined
+        per level. The first element of the list corresponds to the lowest
+        pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        components will be used for all levels.
+
+        Per level:
+        If None, all the available shape components (n_active_componenets)
+        will be used.
+        If int > 1, a specific number of shape components is specified.
+        If 0. <= float <= 1., it specifies the variance percentage that is
+        captured by the components.
 
         Default: None
-    n_appearance: list, optional
+    n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                      optional
         The number of appearance components to be used per fitting level.
-        If None, for each appearance model n_active_components will be used.
+
+        If list of length n_levels, then a number of components is defined
+        per level. The first element of the list corresponds to the lowest
+        pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        components will be used for all levels.
+
+        Per level:
+        If None, all the available appearance components
+        (n_active_componenets) will be used.
+        If int > 1, a specific number of appearance components is specified
+        If 0. <= float <= 1., it specifies the variance percentage that is
+        captured by the components.
 
         Default: None
     """
@@ -160,8 +188,8 @@ class LucasKanadeAAMFitter(AAMFitter):
         residual = LSIntensity
         self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
-                     global_transform=global_transform,
-                     n_shape=n_shape, n_appearance=n_appearance)
+                     global_transform=global_transform, n_shape=n_shape,
+                     n_appearance=n_appearance)
 
     @property
     def algorithm(self):
@@ -195,12 +223,12 @@ class LucasKanadeAAMFitter(AAMFitter):
             The model driven transform class to be used.
 
             Default: OrthoMDTransform
-        global_trans: :class:`menpo.transform.affine`, optional
+        global_transform: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform. Currently, only
-            :class:`menpo.transform.affine.Similarity` is supported.
+            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
-            Default: Similarity
+            Default: AlignmentSimilarity
         n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
                  optional
             The number of shape components to be used per fitting level.

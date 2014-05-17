@@ -81,8 +81,6 @@ class CLMFitter(MultilevelFitter):
         return self.clm.interpolator
 
 
-# TODO: document me
-# TODO: Residuals (SSD) is not used at the moment
 class GradientDescentCLMFitter(CLMFitter):
     r"""
     Gradient Descent based Fitter for Constrained Local Models.
@@ -95,117 +93,127 @@ class GradientDescentCLMFitter(CLMFitter):
         The Gradient Descent class to be used.
 
         Default: RegularizedLandmarkMeanShift
-    residual: :class:`menpo.fit.gradientdescent.residual`, optional
-        The residual class to be used
-
-        Default: 'SSD'
-
-    pdm: :class:`menpo.transform.ModelDrivenTransform`, optional
+    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
         The point distribution transform class to be used.
 
         Default: OrthoPDMTransform
-
     global_transform: :class:`menpo.transform.affine`, optional
         The global transform class to be used by the previous
         md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.Similarity` is supported.
+        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
-        Default: Similarity
-
-    n_shape: list, optional
+        Default: AlignmentSimilarity
+    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                 optional
         The number of shape components to be used per fitting level.
-        If None, for each shape model n_active_components will be used.
 
-        Default: None
+        If list of length n_levels, then a number of components is defined
+        per level. The first element of the list corresponds to the lowest
+        pyramidal level and so on.
 
-    n_appearance: list, optional
-        The number of appearance components to be used per fitting level.
-        If None, for each appearance model n_active_components will be used.
+        If not a list or a list with length 1, then the specified number of
+        components will be used for all levels.
+
+        Per level:
+        If None, all the available shape components (n_active_componenets)
+        will be used.
+        If int > 1, a specific number of shape components is specified.
+        If 0. <= float <= 1., it specifies the variance percentage that is
+        captured by the components.
 
         Default: None
     """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
-                 residual=SSD, pdm_transform=OrthoPDM,
-                 global_transform=AlignmentSimilarity, n_shape=None):
+                 pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
+                 n_shape=None):
         super(GradientDescentCLMFitter, self).__init__(clm)
+        # TODO: Add residual as parameter, when residuals are properly defined
+        residual = SSD
         self._set_up(algorithm=algorithm, residual=residual,
                      pdm_transform=pdm_transform,
-                     global_transform=global_transform,
-                     n_shape=n_shape)
+                     global_transform=global_transform, n_shape=n_shape)
 
     @property
     def algorithm(self):
+        r"""
+        Returns a string containing the algorithm used from the Gradient
+        Descent family.
+
+        : str
+        """
         return 'GD-CLM-' + self._fitters[0].algorithm
 
-    # TODO: document me
     def _set_up(self, algorithm=RegularizedLandmarkMeanShift, residual=SSD,
-                pdm_transform=OrthoPDM,
-                global_transform=AlignmentSimilarity, n_shape=None):
+                pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
+                n_shape=None):
         r"""
         Sets up the gradient descent fitter object.
 
         Parameters
         -----------
-        clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
-            The Constrained Local Model to be use.
-
         algorithm: :class:`menpo.fit.gradientdescent.base`, optional
             The Gradient Descent class to be used.
 
             Default: RegularizedLandmarkMeanShift
-
         residual: :class:`menpo.fit.gradientdescent.residual`, optional
             The residual class to be used
 
             Default: 'SSD'
-
-        pdm: :class:`menpo.transform.ModelDrivenTransform`, optional
+        pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
             The point distribution transform class to be used.
 
             Default: OrthoPDMTransform
-
         global_transform: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform_cls. Currently, only
-            :class:`menpo.transform.affine.Similarity` is supported.
+            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
-            Default: Similarity
+            Default: AlignmentSimilarity
+        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                     optional
+            The number of shape components to be used per fitting level.
 
-        n_shape: list of int or float, optional
-            The number of shape components to be used per fitting level. It
-            can also be specified in terms of variance captured by the
-            components. If None, for each shape model n_active_components
+            If list of length n_levels, then a number of components is defined
+            per level. The first element of the list corresponds to the lowest
+            pyramidal level and so on.
+
+            If not a list or a list with length 1, then the specified number of
+            components will be used for all levels.
+
+            Per level:
+            If None, all the available shape components (n_active_componenets)
             will be used.
+            If int > 1, a specific number of shape components is specified.
+            If 0. <= float <= 1., it specifies the variance percentage that is
+            captured by the components.
 
             Default: None
         """
+        # check n_shape parameter
         if n_shape is not None:
             if type(n_shape) is int or type(n_shape) is float:
-                for sm in self.aam.shape_models:
+                for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.aam.n_levels > 1:
-                for sm in self.aam.shape_models:
+            elif len(n_shape) is 1 and self.clm.n_levels > 1:
+                for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.aam.n_levels:
-                for sm, n in zip(self.aam.shape_models, n_shape):
+            elif len(n_shape) is self.clm.n_levels:
+                for sm, n in zip(self.clm.shape_models, n_shape):
                     sm.n_active_components = n
             else:
                 raise ValueError('n_shape can be an integer or a float, '
                                  'an integer or float list containing 1 '
                                  'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                                 'None'.format(self.clm.n_levels))
 
         self._fitters = []
         for j, (sm, clf) in enumerate(zip(self.clm.shape_models,
                                           self.clm.classifiers)):
             if n_shape is not None:
                 sm.n_active_components = n_shape[j]
-
             if pdm_transform is not PDM:
                 pdm_trans = pdm_transform(sm, global_transform)
             else:
                 pdm_trans = pdm_transform(sm)
-
-            self._fitters.append(algorithm(clf,
-                                           self.clm.patch_shape,
+            self._fitters.append(algorithm(clf, self.clm.patch_shape,
                                            pdm_trans))
