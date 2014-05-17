@@ -17,7 +17,15 @@ class CLMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    classifier_type: classifier_closure
+    classifier_type: classifier_closure of list of those
+        If list of length n_levels, then a classifier function is defined per
+        level. The first element of the list specifies the classifier to be
+        used at the lowest pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified classifier
+        function will be used for all levels.
+
+        Per level:
         A closure implementing a binary classifier.
 
         Examples of such closures can be found in
