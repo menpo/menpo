@@ -270,9 +270,9 @@ class AAMBuilder(DeformableModelBuilder):
                               'levels\n'.format(self.n_levels))
             else:
                 print_dynamic('- Building model\n')
+
         shape_models = []
         appearance_models = []
-
         # for each pyramid level (high --> low)
         for j in range(self.n_levels):
             # since models are built from highest to lowest level, the
@@ -285,9 +285,9 @@ class AAMBuilder(DeformableModelBuilder):
                     level_str = '  - Level {}: '.format(j + 1)
 
             # get images of current level
+            feature_images = []
             if self.pyramid_on_features:
                 # features are already computed, so just call generator
-                feature_images = []
                 for c, g in enumerate(generators):
                     if verbose:
                         print_dynamic('{}Rescaling feature space - {}'.format(
@@ -297,7 +297,6 @@ class AAMBuilder(DeformableModelBuilder):
                     feature_images.append(g.next())
             else:
                 # extract features of images returned from generator
-                feature_images = []
                 for c, g in enumerate(generators):
                     if verbose:
                         print_dynamic('{}Computing feature space - {}'.format(
@@ -307,21 +306,24 @@ class AAMBuilder(DeformableModelBuilder):
                     feature_images.append(compute_features(
                         g.next(), self.feature_type[rj]))
 
-            # format shapes to build shape model
+            # extract potentially rescaled shapes
+            shapes = [i.landmarks[group][label].lms for i in feature_images]
+
+            # define shapes that will be used for training
             if j == 0:
-                # extract potentially rescaled shapes
-                shapes = [i.landmarks[group][label].lms
-                          for i in feature_images]
-            elif j != 0 and self.scaled_shape_models:
-                # downscale shapes of previous level
-                shapes = [Scale(1/self.downscale,
-                                n_dims=shapes[0].n_dims).apply(s)
-                          for s in shapes]
-            # train shape model and build reference frame
+                original_shapes = shapes
+                train_shapes = shapes
+            else:
+                if self.scaled_shape_models:
+                    train_shapes = shapes
+                else:
+                    train_shapes = original_shapes
+
+            # train shape model and find reference frame
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
             shape_model = self._build_shape_model(
-                shapes, self.max_shape_components[rj])
+                train_shapes, self.max_shape_components[rj])
             reference_frame = self._build_reference_frame(shape_model.mean)
 
             # add shape model to the list
