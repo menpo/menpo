@@ -6,13 +6,14 @@ from .affine import Affine
 
 class Similarity(Affine):
     r"""
-    Specialist version of an :class:`Affine` that is guaranteed to be
+    Specialist version of an :map:`Affine` that is guaranteed to be
     a Similarity transform.
 
     Parameters
     ----------
     h_matrix : (D + 1, D + 1) ndarray
         The homogeneous matrix of the similarity transform.
+
     """
 
     def __init__(self, h_matrix):
@@ -27,6 +28,7 @@ class Similarity(Affine):
         -------
         str : string
             String representation of transform.
+
         """
         header = 'Similarity decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
@@ -52,12 +54,13 @@ class Similarity(Affine):
 
         Returns
         -------
-        4
+        int
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         if self.n_dims == 2:
             return 4
@@ -100,6 +103,7 @@ class Similarity(Affine):
         ------
         DimensionalityError, NotImplementedError
             If the transform is not 2D
+
         """
         n_dims = self.n_dims
         if n_dims == 2:
@@ -135,6 +139,7 @@ class Similarity(Affine):
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         if p.shape[0] == 4:
             homog = np.eye(3)
@@ -226,10 +231,10 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     Parameters
     ----------
 
-    source: :class:`menpo.shape.PointCloud`
+    source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
 
-    target: :class:`menpo.shape.PointCloud`
+    target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
 
     rotation: boolean, optional
@@ -248,6 +253,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     def _procrustes_alignment(source, target, rotation=True):
         r"""
         Returns the similarity transform that aligns the source to the target.
+
         """
         from .rotation import Rotation, optimal_rotation_matrix
         from .translation import Translation
@@ -299,6 +305,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()

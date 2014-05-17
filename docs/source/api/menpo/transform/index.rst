@@ -74,5 +74,6 @@ Abstaract Bases
    ComposableTransform
    Invertible
    Alignment
+   MultipleAlignment
    VComposable
    VInvertible

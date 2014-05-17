@@ -249,7 +249,7 @@ class TransformChain(ComposableTransform):
 
     This class is the natural product of composition. Note that objects may
     know how to compose themselves more efficiently - such objects
-    implement the :map:`ComposableTransform` or :map:`VCompose` interfaces.
+    implement the :map:`ComposableTransform` or :map:`VComposable` interfaces.
 
     Parameters
     ----------
