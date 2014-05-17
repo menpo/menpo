@@ -113,10 +113,12 @@ class LandmarkManager(Transformable, Viewable):
                 "Trying to set {}D landmarks on a "
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
+            # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
-                self._target, None, value,
+                self._target, None, value.copy(),
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
+            # Copy the landmark group so that we now own it
             lmark_group = value.copy()
             # check the target is set correctly
             lmark_group._target = self._target
@@ -198,7 +200,7 @@ class LandmarkManager(Transformable, Viewable):
             The landmark manager to copy from.
         """
         new_landmark_manager = landmark_manager.copy()
-        new_landmark_manager._target = self.__target
+        new_landmark_manager._target = self._target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
     def _transform_inplace(self, transform):
