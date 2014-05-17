@@ -66,9 +66,9 @@ class MultilevelFitter(Fitter):
 
         Parameters
         -----------
-        image: :class:`pybug.image.masked.MaskedImage`
+        image: :class:`menpo.image.masked.MaskedImage`
             The image to be fitted.
-        initial_shape: :class:`pybug.shape.PointCloud`
+        initial_shape: :class:`menpo.shape.PointCloud`
             The initial shape estimate from which the fitting procedure
             will start.
         max_iters: int or list, optional
@@ -98,7 +98,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        FittingList: :class:`pybug.aam.fitting.FittingList`
+        FittingList: :class:`menpo.aam.fitting.FittingList`
             A fitting list object containing the fitting objects associated
             to each run.
         """
@@ -143,7 +143,7 @@ class MultilevelFitter(Fitter):
 
         Parameters
         -----------
-        gt_shape: :class:`pybug.shape.PointCloud`
+        gt_shape: :class:`menpo.shape.PointCloud`
             The ground truth shape.
         noise_std: float, optional
             The standard deviation of the gaussian noise used to produce the
@@ -158,7 +158,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        initial_shape: :class:`pybug.shape.PointCloud`
+        initial_shape: :class:`menpo.shape.PointCloud`
             The initial shape.
         """
         reference_shape = self.reference_shape
@@ -178,7 +178,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        initial_shape: :class:`pybug.shape.PointCloud`
+        initial_shape: :class:`menpo.shape.PointCloud`
             The initial shape.
         """
         reference_shape = self.reference_shape
@@ -192,18 +192,18 @@ class MultilevelFitter(Fitter):
 
         Parameters
         -----------
-        image: :class:`pybug.image.masked.MaskedImage`
+        image: :class:`menpo.image.masked.MaskedImage`
             The original image to be fitted.
-        initial_shape: class:`pybug.shape.PointCloud`
+        initial_shape: class:`menpo.shape.PointCloud`
             The initial shape from which the fitting will start.
-        gt_shape: class:`pybug.shape.PointCloud`, optional
+        gt_shape: class:`menpo.shape.PointCloud`, optional
             The original ground truth shape associated to the image.
 
             Default: None
 
         Returns
         -------
-        images: :class:`pybug.image.masked.MaskedImage` list
+        images: :class:`menpo.image.masked.MaskedImage` list
             A list containing the images that will be used by the fitting
             algorithms.
         """
@@ -212,20 +212,20 @@ class MultilevelFitter(Fitter):
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
         r"""
-        Creates the :class: `pybug.aam.fitting.MultipleFitting` object
+        Creates the :class: `menpo.aam.fitting.MultipleFitting` object
         associated with a particular Fitter object.
 
         Parameters
         -----------
-        image: :class:`pybug.image.masked.MaskedImage`
+        image: :class:`menpo.image.masked.MaskedImage`
             The original image to be fitted.
-        fitting_results: :class:`pybug.aam.fitting.BasicFitting` list
+        fitting_results: :class:`menpo.aam.fitting.BasicFitting` list
             A list of basic fitting objects containing the state of the
             different fitting levels.
-        affine_correction: :class: `pybug.transforms.affine.Affine`
+        affine_correction: :class: `menpo.transforms.affine.Affine`
             An affine transform that maps the result of the top resolution
             fitting level to the space scale of the original image.
-        gt_shape: class:`pybug.shape.PointCloud`, optional
+        gt_shape: class:`menpo.shape.PointCloud`, optional
             The ground truth shape associated to the image.
 
             Default: None
@@ -237,7 +237,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        fitting: :class:`pybug.aam.Fitting`
+        fitting: :class:`menpo.aam.Fitting`
             The fitting object that will hold the state of the fitter.
         """
         return MultilevelFittingResult(image, self, fitting_results,
@@ -251,11 +251,11 @@ class MultilevelFitter(Fitter):
 
         Parameters
         -----------
-        images: :class:`pybug.image.masked.MaskedImage` list
+        images: :class:`menpo.image.masked.MaskedImage` list
             The images to be fitted.
-        initial_shape: :class:`pybug.shape.PointCloud`
+        initial_shape: :class:`menpo.shape.PointCloud`
             The initial shape from which the fitting will start.
-        gt_shapes: :class:`pybug.shape.PointCloud` list, optional
+        gt_shapes: :class:`menpo.shape.PointCloud` list, optional
             The original ground truth shapes associated to the images.
 
             Default: None
@@ -270,7 +270,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        fitting_results: :class:`pybug.aam.fitting` list
+        fitting_results: :class:`menpo.aam.fitting` list
             The fitting object containing the state of the whole fitting
             procedure.
         """

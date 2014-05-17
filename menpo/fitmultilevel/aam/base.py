@@ -15,7 +15,7 @@ class AAMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    aam: :class:`menpo.aam.builder.AAM`
+    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
         The Active Appearance Model to be used.
     """
     def __init__(self, aam):

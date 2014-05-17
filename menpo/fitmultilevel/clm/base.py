@@ -22,56 +22,124 @@ class CLMFitter(MultilevelFitter):
 
     @property
     def reference_shape(self):
+        r"""
+        The reference shape of the trained CLM.
+
+        : `menpo.shape.Pointcloud`
+        """
         return self.clm.reference_shape
 
     @property
     def feature_type(self):
+        r"""
+        The feature type per pyramid level of the trained CLM. Note that they
+        are stored from lowest to highest level resolution.
+
+        : list
+        """
         return self.clm.feature_type
 
     @property
     def n_levels(self):
+        r"""
+        The number of pyramidal levels used during building the CLM.
+
+        : int
+        """
         return self.clm.n_levels
 
     @property
     def downscale(self):
+        r"""
+        The downscale per pyramidal level used during building the CLM.
+        The scale factor is: (downscale ** k) for k in range(n_levels)
+
+        : float
+        """
         return self.clm.downscale
 
     @property
-    def scaled_levels(self):
-        return self.clm.scaled_levels
+    def pyramid_on_features(self):
+        r"""
+        Flag that controls the Gaussian pyramid of the testing image based on
+        the pyramid used during building the CLM.
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+
+        : boolean
+        """
+        return self.clm.pyramid_on_features
 
     @property
     def interpolator(self):
+        r"""
+        The interpolator used during training.
+
+        : str
+        """
         return self.clm.interpolator
 
     # TODO: Can this be moved up?
     def _prepare_image(self, image, initial_shape, gt_shape=None):
         r"""
-        The image is first rescaled wrt the reference_landmarks, then
-        smoothing or gaussian pyramid are computed and, finally, features
-        are extracted from each pyramidal element.
+        The image is first rescaled wrt the reference_landmarks and then the
+        gaussian pyramid is computed. Depending on the pyramid_on_features
+        flag, the pyramid is either applied on the feature image or
+        features are extracted at each pyramidal level.
+
+        Parameters
+        ----------
+        image: :class:`menpo.image.MaskedImage`
+            The image to be fitted.
+        initial_shape: class:`menpo.shape.PointCloud`
+            The initial shape from which the fitting will start.
+        gt_shape: class:`menpo.shape.PointCloud`, optional
+            The original ground truth shape associated to the image.
+
+            Default: None
+
+        Returns
+        -------
+        images: list of :class:`menpo.image.masked.MaskedImage`
+            List of images, each being the result of applying the pyramid.
         """
+        # rescale image wrt the scale factor between reference_shape and
+        # initial_shape
         image.landmarks['initial_shape'] = initial_shape
         image = image.rescale_to_reference_shape(
             self.reference_shape, group='initial_shape',
             interpolator=self.interpolator)
 
+        # attach given ground truth shape
         if gt_shape:
-            image.landmarks['gt_shape'] = initial_shape
+            image.landmarks['gt_shape'] = gt_shape
 
+        # apply pyramid
         if self.n_levels > 1:
-            if self.scaled_levels:
+            if self.pyramid_on_features:
+                # compute features at highest level
+                feature_image = compute_features(image, self.feature_type[0])
+
+                # apply pyramid on feature image
+                pyramid = feature_image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # get rescaled feature images
+                images = list(pyramid)
+            else:
+                # create pyramid on intensities image
                 pyramid = image.gaussian_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            else:
-                pyramid = image.smoothing_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type[j])
-                      for j, i in enumerate(pyramid)]
+
+                # compute features at each level
+                images = [compute_features(
+                    i, self.feature_type[self.n_levels - j - 1])
+                    for j, i in enumerate(pyramid)]
             images.reverse()
         else:
             images = [compute_features(image, self.feature_type[0])]
-
         return images
 
 
@@ -85,12 +153,10 @@ class GradientDescentCLMFitter(CLMFitter):
     -----------
     clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
         The Constrained Local Model to be used.
-
     algorithm: :class:`menpo.fit.gradientdescent.base`, optional
         The Gradient Descent class to be used.
 
         Default: RegularizedLandmarkMeanShift
-
     residual: :class:`menpo.fit.gradientdescent.residual`, optional
         The residual class to be used
 
