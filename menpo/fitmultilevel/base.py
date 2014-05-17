@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from menpo.fit.base import Fitter
 from menpo.transform import AlignmentAffine, Scale
+from menpo.fitmultilevel.featurefunctions import compute_features
 
 from .fittingresult import MultilevelFittingResult
 from .functions import noisy_align, align_shape_with_bb
@@ -185,15 +186,17 @@ class MultilevelFitter(Fitter):
         return align_shape_with_bb(reference_shape,
                                    bounding_box).apply(reference_shape)
 
-    @abc.abstractmethod
     def _prepare_image(self, image, initial_shape, gt_shape=None):
         r"""
-        Prepares an image to be fitted.
+        The image is first rescaled wrt the reference_landmarks and then the
+        gaussian pyramid is computed. Depending on the pyramid_on_features
+        flag, the pyramid is either applied on the feature image or
+        features are extracted at each pyramidal level.
 
         Parameters
-        -----------
-        image: :class:`menpo.image.masked.MaskedImage`
-            The original image to be fitted.
+        ----------
+        image: :class:`menpo.image.MaskedImage`
+            The image to be fitted.
         initial_shape: class:`menpo.shape.PointCloud`
             The initial shape from which the fitting will start.
         gt_shape: class:`menpo.shape.PointCloud`, optional
@@ -203,11 +206,45 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        images: :class:`menpo.image.masked.MaskedImage` list
-            A list containing the images that will be used by the fitting
-            algorithms.
+        images: list of :class:`menpo.image.masked.MaskedImage`
+            List of images, each being the result of applying the pyramid.
         """
-        pass
+        # rescale image wrt the scale factor between reference_shape and
+        # initial_shape
+        image.landmarks['initial_shape'] = initial_shape
+        image = image.rescale_to_reference_shape(
+            self.reference_shape, group='initial_shape',
+            interpolator=self.interpolator)
+
+        # attach given ground truth shape
+        if gt_shape:
+            image.landmarks['gt_shape'] = gt_shape
+
+        # apply pyramid
+        if self.n_levels > 1:
+            if self.pyramid_on_features:
+                # compute features at highest level
+                feature_image = compute_features(image, self.feature_type[0])
+
+                # apply pyramid on feature image
+                pyramid = feature_image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # get rescaled feature images
+                images = list(pyramid)
+            else:
+                # create pyramid on intensities image
+                pyramid = image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # compute features at each level
+                images = [compute_features(
+                    i, self.feature_type[self.n_levels - j - 1])
+                    for j, i in enumerate(pyramid)]
+            images.reverse()
+        else:
+            images = [compute_features(image, self.feature_type[0])]
+        return images
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
