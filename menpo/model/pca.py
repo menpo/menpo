@@ -5,35 +5,35 @@ from menpo.model.base import MeanInstanceLinearModel
 
 
 class PCAModel(MeanInstanceLinearModel):
-    """
-    A :class:`MeanLinearInstanceModel` where the components are Principal
-    Components.
+    """A :map:`MeanInstanceLinearModel` where components Principal Components.
 
-    Principal Component Analysis (PCA) by Eigenvalue Decomposition of the
-    data's scatter matrix.
 
-    For details of the implementation of PCA, see :func:`menpo.decomposition
-    .principal_component_decomposition`.
+    Principal Component Analysis (PCA) by eigenvalue decomposition of the
+    data's scatter matrix. For details of the implementation of PCA, see
+    :map:`principal_component_decomposition`.
 
     Parameters
     ----------
-    samples: list of :class:`menpo.base.Vectorizable`
+    samples : list of :map:`Vectorizable`
         List of samples to build the model from.
-
     center : bool, optional
         When True (True by default) PCA is performed after mean centering the
         data. If False the data is assumed to be centred, and the mean will
         be 0.
-
     bias: bool, optional
         When True (False by default) a biased estimator of the covariance
-        matrix is used, i.e.:
+        matrix is used. See notes.
 
-            \frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
+    ..notes:
 
-        instead of default:
+    True bias mean that we calculate the covariance as
 
-            \frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T
+    :math:`\frac{1}{N} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
+
+    instead of default
+
+    :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
+
     """
     def __init__(self, samples, center=True, bias=False):
         # build data matrix
@@ -286,36 +286,6 @@ class PCAModel(MeanInstanceLinearModel):
             raise ValueError("noise variance is nil - cannot take the "
                              "inverse")
         return 1.0 / noise_variance
-
-    @property
-    def jacobian(self):
-        """
-        Returns the Jacobian of the PCA model reshaped to have the standard
-        Jacobian shape:
-
-            n_points    x  n_params      x  n_dims
-            n_features  x  n_components  x  n_dims
-
-        Returns
-        -------
-        jacobian : (n_features, n_components, n_dims) ndarray
-            The Jacobian of the model in the standard Jacobian shape.
-        """
-        jacobian = self._jacobian.reshape(self.n_active_components, -1,
-                                          self.template_instance.n_dims)
-        return jacobian.swapaxes(0, 1)
-
-    @property
-    def _jacobian(self):
-        """
-        Returns the Jacobian of the PCA model with respect to the weights.
-
-        Returns
-        -------
-        jacobian : (n_components, n_features) ndarray
-            The Jacobian with respect to the weights
-        """
-        return self.components
 
     def component_vector(self, index, with_mean=True, scale=1.0):
         r"""

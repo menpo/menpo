@@ -1,6 +1,8 @@
 import numpy as np
+from nose.tools import raises
 from numpy.testing import assert_allclose
 from menpo.shape import TriMesh
+from menpo.testing import is_same_array
 
 
 def test_trimesh_creation():
@@ -11,6 +13,41 @@ def test_trimesh_creation():
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
     TriMesh(points, trilist)
+
+
+def test_trimesh_creation_copy_true():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    tm = TriMesh(points, trilist)
+    assert (not is_same_array(tm.points, points))
+    assert(not is_same_array(tm.trilist, trilist))
+
+
+def test_trimesh_creation_copy_false():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    tm = TriMesh(points, trilist, copy=False)
+    assert (is_same_array(tm.points, points))
+    assert(is_same_array(tm.trilist, trilist))
+
+
+@raises(Warning)
+def test_trimesh_creation_copy_warning():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]], order='F')
+    TriMesh(points, trilist, copy=False)
 
 
 def test_trimesh_n_dims():

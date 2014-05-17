@@ -20,14 +20,33 @@ class TriMesh(PointCloud):
         the points will be used instead.
 
         Default: None
+
+    copy: bool, optional
+        If False, the points will not be copied on assignment. Any trilist will
+        also not be copied.
+        Note that this will miss out on additional checks. Further note that we
+        still demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
+
+        Default False
     """
 
-    def __init__(self, points, trilist=None):
+    def __init__(self, points, trilist=None, copy=True):
         #TODO add inheritance from Graph once implemented
-        super(TriMesh, self).__init__(points)
+        super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             trilist = Delaunay(points).simplices
-        self.trilist = np.array(trilist, copy=True, order='C')
+        if not copy:
+            # Let's check we don't do a copy!
+            trilist_handle = trilist
+            self.trilist = np.require(trilist, requirements=['C'])
+            if self.trilist is not trilist_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
+        else:
+            self.trilist = np.array(trilist, copy=True, order='C')
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),

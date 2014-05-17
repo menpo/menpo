@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import numpy as np
 
 from .base import Image
@@ -17,12 +18,30 @@ class BooleanImage(Image):
         The binary mask data. Note that there is no channel axis - a 2D Mask
         Image is built from just a 2D numpy array of mask_data.
         Automatically coerced in to boolean values.
+
+    copy: bool, optional
+        If False, the image_data will not be copied on assignment. Note that
+        if the array you provide is not boolean, there **will still be copy**.
+        In general this should only be used if you know what you are doing.
+
+        Default: `False`
     """
 
-    def __init__(self, mask_data):
-        # Enforce boolean pixels, and add a channel dim
-        mask_data = np.asarray(mask_data[..., None], dtype=np.bool)
-        super(BooleanImage, self).__init__(mask_data)
+    def __init__(self, mask_data, copy=True):
+        # Add a channel dimension. We do this little reshape trick to add
+        # the axis because this maintains C-contiguous'ness
+        mask_data = mask_data.reshape(mask_data.shape + (1,))
+        # If we are trying not to copy, but the data we have isn't boolean,
+        # then unfortunately, we forced to copy anyway!
+        if mask_data.dtype != np.bool:
+            # Unfortunately, even if you were trying not to copy, if you don't
+            # have boolean data we have to copy!
+            if not copy:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please use np.bool data'
+                              'to avoid this.')
+            mask_data = np.require(mask_data, dtype=np.bool, requirements=['C'])
+        super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
     def _init_with_channel(cls, image_data_with_channel):
@@ -68,7 +87,7 @@ class BooleanImage(Image):
             mask = np.ones(shape, dtype=np.bool)
         else:
             mask = np.zeros(shape, dtype=np.bool)
-        return cls(mask)
+        return cls(mask, copy=False)
 
     @property
     def mask(self):
@@ -99,6 +118,15 @@ class BooleanImage(Image):
         return self.n_pixels - self.n_true
 
     @property
+    def all_true(self):
+        r"""
+        True iff every element of the mask is True.
+
+        :type: bool
+        """
+        return np.all(self.pixels)
+
+    @property
     def proportion_true(self):
         r"""
         The proportion of the mask which is `True`
@@ -123,8 +151,11 @@ class BooleanImage(Image):
 
         :type: (`n_dims`, `n_true`) ndarray
         """
-        # Ignore the channel axis
-        return np.vstack(np.nonzero(self.pixels[..., 0])).T
+        if self.all_true:
+            return self.all_indices
+        else:
+            # Ignore the channel axis
+            return np.vstack(np.nonzero(self.pixels[..., 0])).T
 
     @property
     def false_indices(self):

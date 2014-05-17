@@ -196,6 +196,7 @@ class Rotation(DiscreteAffine, Similarity):
         theta : double
             Angle of rotation around axis. Right-handed.
         """
+        # TODO vectorizable rotations
         raise NotImplementedError("Rotations are not yet vectorizable")
 
     def from_vector_inplace(self, p):
@@ -233,6 +234,10 @@ class Rotation(DiscreteAffine, Similarity):
         :type: (D, D) ndarray
         """
         return Rotation(np.linalg.inv(self.rotation_matrix))
+
+    def d_dp(self, points):
+        raise NotImplementedError("vectorizable (and hence d_dp) is not "
+                                  "implemented for Rotation")
 
 
 class AlignmentRotation(HomogFamilyAlignment, Rotation):

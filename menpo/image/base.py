@@ -60,25 +60,41 @@ class Image(Vectorizable, Landmarkable, Viewable):
     -----------
     image_data: (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
-        channels
+        channels.
+    copy: bool, optional
+        If False, the image_data will not be copied on assignment. Note that
+        this will miss out on additional checks. Further note that we still
+        demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
 
+        Default False
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image_data):
+    def __init__(self, image_data, copy=True):
         Landmarkable.__init__(self)
-        image_data = np.array(image_data, copy=True, order='C')
-        # This is the degenerate case whereby we can just put the extra axis
-        # on ourselves
-        if image_data.ndim == 2:
-            image_data = image_data[..., None]
-        if image_data.ndim < 2:
-            raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
-                             "1 channel) or 3D+ (2D+ shape, n_channels) "
-                             " - a {}D array "
-                             "was provided".format(image_data.ndim))
-        self.pixels = image_data
+        if not copy:
+            # Let's check we don't do a copy!
+            image_data_handle = image_data
+            self.pixels = np.require(image_data, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
+        else:
+            image_data = np.array(image_data, copy=True, order='C')
+            # This is the degenerate case whereby we can just put the extra axis
+            # on ourselves
+            if image_data.ndim == 2:
+                image_data = image_data[..., None]
+            if image_data.ndim < 2:
+                raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
+                                 "1 channel) or 3D+ (2D+ shape, n_channels) "
+                                 " - a {}D array "
+                                 "was provided".format(image_data.ndim))
+            self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
 
@@ -141,7 +157,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, **kwargs)
+        return cls._init_with_channel(pixels, copy=False, **kwargs)
 
     @property
     def n_dims(self):
@@ -1195,3 +1211,4 @@ def _create_feature_glyph(features, vbs):
                       features[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
+
