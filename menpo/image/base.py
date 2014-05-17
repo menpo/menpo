@@ -1001,7 +1001,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                    order=order, mode=mode, cval=cval)
 
         for j, image_data in enumerate(pyramid):
-            image = self._init_with_channel(image_data, copy=False)
+            image = self.__class__(image_data, copy=False)
 
             # rescale and reassign existent landmark
             image.landmarks = self.landmarks
@@ -1062,7 +1062,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
                 image_data = _smooth(self.pixels, sigma=sigma_aux,
                                      mode=mode, cval=cval)
-                image = self.__class__(image_data)
+                image = self.__class__(image_data, copy=False)
 
                 # rescale and reassign existent landmark
                 image.landmarks = self.landmarks
