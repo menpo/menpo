@@ -252,6 +252,21 @@ class Image(Vectorizable, Landmarkable, Viewable):
             return '{}W x {}H'.format(self.width, self.height)
 
     def copy(self):
+        r"""
+        Return a new image with copies of the pixels and landmarks of this
+        image.
+
+        This is an efficient copy method. If you need to copy all the state on
+        the object, consider deepcopy instead.
+
+        Returns
+        -------
+
+        image: :map:`Image`
+            A new image with the same pixels and landmarks as this one, just
+            copied.
+
+        """
         new_image = Image(self.pixels)
         new_image.landmarks = self.landmarks
         return new_image

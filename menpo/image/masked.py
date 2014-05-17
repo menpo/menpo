@@ -157,6 +157,21 @@ class MaskedImage(Image):
             self.mask.proportion_true))
 
     def copy(self):
+        r"""
+        Return a new image with copies of the pixels, landmarks, and masks of
+        this image.
+
+        This is an efficient copy method. If you need to copy all the state on
+        the object, consider deepcopy instead.
+
+        Returns
+        -------
+
+        image: :map:`MaskedImage`
+            A new image with the same pixels, mask and landmarks as this one,
+            just copied.
+
+        """
         new_image = MaskedImage(self.pixels, mask=self.mask)
         new_image.landmarks = self.landmarks
         return new_image
