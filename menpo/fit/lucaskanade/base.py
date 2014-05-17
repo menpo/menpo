@@ -17,28 +17,28 @@ class LucasKanade(Fitter):
 
     Parameters
     ----------
-    image : :class:`pybug.image.base.Image`
+    image : :class:`menpo.image.base.Image`
         The image to perform the alignment upon.
 
         .. note:: Only the image is expected within the base class because
             different algorithms expect different kinds of template
             (image/model)
-    residual : :class:`pybug.lucaskanade.residual.Residual`
+    residual : :class:`menpo.lucaskanade.residual.Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
-    transform : :class:`pybug.transform.base.AlignableTransform`
+    transform : :class:`menpo.transform.base.AlignableTransform`
         The transformation type used to warp the image in to the appropriate
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
     warp : function
         A function that takes 3 arguments,
-        ``warp(`` :class:`image <pybug.image.base.Image>`,
-        :class:`template <pybug.image.base.Image>`,
-        :class:`transform <pybug.transform.base.AlignableTransform>` ``)``
+        ``warp(`` :class:`image <menpo.image.base.Image>`,
+        :class:`template <menpo.image.base.Image>`,
+        :class:`transform <menpo.transform.base.AlignableTransform>` ``)``
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
-        :doc:`pybug.interpolation`.
+        :doc:`menpo.interpolation`.
     optimisation : ('GN',) | ('LM', float), optional
         The optimisation technique used to calculate the Hessian approximation.
         Note that for 'LM' the float is used to set the update step.
