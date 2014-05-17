@@ -44,14 +44,14 @@ class BooleanImage(Image):
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
-    def _init_with_channel(cls, image_data_with_channel):
+    def _init_with_channel(cls, image_data_with_channel, **kwargs):
         r"""
         Constructor that always requires the image has a
         channel on the last axis. Only used by from_vector. By default,
         just calls the constructor. Subclasses with constructors that don't
         require channel axes need to overwrite this.
         """
-        return cls(image_data_with_channel[..., 0])
+        return cls(image_data_with_channel[..., 0], **kwargs)
 
     @classmethod
     def blank(cls, shape, fill=True, round='ceil', **kwargs):
@@ -181,6 +181,11 @@ class BooleanImage(Image):
         return ('{} {}D mask, {:.1%} '
                 'of which is True '.format(self._str_shape, self.n_dims,
                                            self.proportion_true))
+
+    def copy(self):
+        new_image = BooleanImage(self.pixels[..., 0])
+        new_image.landmarks = self.landmarks
+        return new_image
 
     def from_vector(self, flattened):
         r"""

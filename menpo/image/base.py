@@ -251,6 +251,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
+    def copy(self):
+        new_image = Image(self.pixels)
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def as_vector(self, keep_channels=False):
         r"""
         The vectorized form of this image.
@@ -1000,7 +1005,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                    order=order, mode=mode, cval=cval)
 
         for j, image_data in enumerate(pyramid):
-            image = self._init_with_channel(image_data, copy=False)
+            image = self.__class__(image_data, copy=False)
 
             # rescale and reassign existent landmark
             image.landmarks = self.landmarks
@@ -1061,7 +1066,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
                 image_data = _smooth(self.pixels, sigma=sigma_aux,
                                      mode=mode, cval=cval)
-                image = self.__class__(image_data)
+                image = self.__class__(image_data, copy=False)
 
                 # rescale and reassign existent landmark
                 image.landmarks = self.landmarks

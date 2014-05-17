@@ -16,20 +16,16 @@ class TriMesh(PointCloud):
     points : (N, D) ndarray
         The set coordinates for the mesh.
     trilist : (M, 3) ndarray, optional
-        The triangle list. If None is provided, a Delaunay triangulation of
+        The triangle list. If `None`, a Delaunay triangulation of
         the points will be used instead.
 
         Default: None
-
     copy: bool, optional
-        If False, the points will not be copied on assignment. Any trilist will
-        also not be copied.
-        Note that this will miss out on additional checks. Further note that we
-        still demand that the array is C-contiguous - if it isn't, a copy will be
-        generated anyway.
+        If `False`, the points will not be copied on assignment.
+        Any trilist will also not be copied.
         In general this should only be used if you know what you are doing.
 
-        Default False
+        Default: `False`
     """
 
     def __init__(self, points, trilist=None, copy=True):

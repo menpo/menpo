@@ -156,6 +156,11 @@ class MaskedImage(Image):
             self._str_shape, self.n_dims, self.n_channels,
             self.mask.proportion_true))
 
+    def copy(self):
+        new_image = MaskedImage(self.pixels, mask=self.mask)
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def as_vector(self, keep_channels=False):
         r"""
         Convert image to a vectorized form. Note that the only pixels
@@ -709,7 +714,7 @@ class MaskedImage(Image):
         image_pyramid = Image.gaussian_pyramid(
             self, n_levels=n_levels, downscale=downscale, sigma=sigma,
             order=order, mode=mode, cval=cval)
-        for j, image in enumerate(image_pyramid):
+        for image in image_pyramid:
             image.mask = self.mask.resize(image.shape)
             yield image
 
