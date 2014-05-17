@@ -26,12 +26,22 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         The texture coordinates for the mesh.
     texture : :class:`menpo.image.base.Image`
         The texture for the mesh.
+    copy: bool, optional
+        If `False`, the points, trilist and texture will not be copied on
+        assignment.
+        In general this should only be used if you know what you are doing.
+
+        Default: `False`
     """
 
-    def __init__(self, points, trilist, tcoords, texture):
-        super(TexturedTriMesh, self).__init__(points, trilist)
-        self.tcoords = PointCloud(tcoords)
-        self.texture = copy.deepcopy(texture)
+    def __init__(self, points, trilist, tcoords, texture, copy=True):
+        super(TexturedTriMesh, self).__init__(points, trilist, copy=copy)
+        self.tcoords = PointCloud(tcoords, copy=copy)
+
+        if not copy:
+            self.texture = texture
+        else:
+            self.texture = texture.copy()
 
     def tcoords_pixel_scaled(self):
         r"""

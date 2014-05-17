@@ -19,6 +19,12 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         The triangle list for the mesh
     colours : (N, 3) ndarray
         The floating point RGB colour per vertex.
+    copy: bool, optional
+        If `False`, the points, trilist and colours will not be copied on
+        assignment.
+        In general this should only be used if you know what you are doing.
+
+        Default: `False`
 
     Raises
     ------
@@ -26,14 +32,21 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         If the number of colour values does not match the number of vertices.
     """
 
-    def __init__(self, points, trilist=None, colours=None):
-        TriMesh.__init__(self, points, trilist=trilist)
+    def __init__(self, points, trilist=None, colours=None, copy=True):
+        TriMesh.__init__(self, points, trilist=trilist, copy=copy)
+        # Handle the settings of colours, either be provided a default grey
+        # set of colours, or copy the given array if necessary
         if colours is None:
             # default to grey
-            colours = np.ones_like(points, dtype=np.float) * 0.5
+            colours_handle = np.ones_like(points, dtype=np.float) * 0.5
+        elif not copy:
+            colours_handle = colours
+        else:
+            colours_handle = colours.copy()
+
         if points.shape[0] != colours.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
-        self.colours = colours
+        self.colours = colours_handle
 
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
