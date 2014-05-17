@@ -72,19 +72,19 @@ class Similarity(Affine):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order ``[a, b, tx, ty]``, given that
-        ``a = k cos(theta) - 1`` and ``b = k sin(theta)`` where ``k`` is a
-        uniform scale and ``theta`` is a clockwise rotation in radians.
+        are output in the order `[a, b, tx, ty]`, given that
+        `a = k cos(theta) - 1` and `b = k sin(theta)` where `k` is a
+        uniform scale and `theta` is a clockwise rotation in radians.
 
         **2D**
 
         ========= ===========================================
         parameter definition
         ========= ===========================================
-        a         ``a = k cos(theta) - 1``
-        b         ``b = k sin(theta)``
-        tx        Translation in ``x``
-        ty        Translation in ``y``
+        a         `a = k cos(theta) - 1`
+        b         `b = k sin(theta)`
+        tx        Translation in `x`
+        ty        Translation in `y`
         ========= ===========================================
 
         .. note::
@@ -175,7 +175,6 @@ class Similarity(Affine):
 
         Returns
         -------
-
         (n_points, n_params, n_dims) ndarray
             The jacobian wrt parametrization
 
@@ -183,6 +182,7 @@ class Similarity(Affine):
         ------
         DimensionalityError
             `points.n_dims != self.n_dims` or transform is not 2D
+
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:

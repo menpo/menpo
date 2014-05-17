@@ -4,12 +4,12 @@ from scipy import optimize
 
 def circle_fit(coords):
     """
-    Find the least squares circle fitting a set of 2D points ``(x,y)``.
+    Find the least squares circle fitting a set of 2D points `(x,y)`.
 
     Parameters
     ----------
     coords : (N, 2) ndarray
-        Set of ``x`` and ``y`` coordinates.
+        Set of `x` and `y` coordinates.
 
     Returns
     -------
