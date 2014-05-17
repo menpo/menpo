@@ -15,7 +15,7 @@ from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
 
-from .feature import ImageFeatures
+from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
 
@@ -58,10 +58,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     Parameters
     -----------
-    image_data: (M, N ..., Q, C) ndarray
+    image_data : (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
         channels.
-    copy: bool, optional
+    copy : bool, optional
         If False, the image_data will not be copied on assignment. Note that
         this will miss out on additional checks. Further note that we still
         demand that the array is C-contiguous - if it isn't, a copy will be
@@ -69,6 +69,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
         In general this should only be used if you know what you are doing.
 
         Default False
+
+    Raises
+    ------
+
+    Warning : If copy=False cannot be honored
+    ValueError : If the pixel array is malformed
+
     """
 
     __metaclass__ = abc.ABCMeta
@@ -85,33 +92,23 @@ class Image(Vectorizable, Landmarkable, Viewable):
                               'you pass is C-contiguous.')
         else:
             image_data = np.array(image_data, copy=True, order='C')
-            # This is the degenerate case whereby we can just put the extra axis
+            # Degenerate case whereby we can just put the extra axis
             # on ourselves
             if image_data.ndim == 2:
                 image_data = image_data[..., None]
             if image_data.ndim < 2:
-                raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
-                                 "1 channel) or 3D+ (2D+ shape, n_channels) "
-                                 " - a {}D array "
+                raise ValueError("Pixel array has to be 2D (2D shape,"
+                                 " implicitly 1 channel) or 3D+ (2D+ shape, "
+                                 "n_channels)  - a {}D array "
                                  "was provided".format(image_data.ndim))
             self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
 
     @classmethod
-    def _init_with_channel(cls, image_data_with_channel, **kwargs):
+    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
         r"""
-        Constructor that always requires the image has a
-        channel on the last axis. Only used by from_vector. By default,
-        just calls the constructor. Subclasses with constructors that don't
-        require channel axes need to overwrite this.
-        """
-        return cls(image_data_with_channel, **kwargs)
-
-    @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, **kwargs):
-        r"""
-        Returns a blank image
+        Returns a blank image.
 
         Parameters
         ----------
@@ -127,28 +124,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
             The value to fill all pixels with
 
             Default: 0
-        dtype: numpy datatype, optional
-            The datatype of the image.
+        dtype: numpy data type, optional
+            The data type of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanImage`
-            An optional mask that can be applied to the image. Has to have a
-             shape equal to that of the image.
-
-             Default: all True :class:`BooleanImage`
-
-        Notes
-        -----
-        Subclasses of `Image` need to overwrite this method and
-        explicitly call this superclass method:
-
-            super(SubClass, cls).blank(shape,**kwargs)
-
-        in order to appropriately propagate the SubClass type to cls.
 
         Returns
         -------
-        blank_image : :class:`Image`
+        blank_image : :map:`Image`
             A new image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
@@ -157,7 +140,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, copy=False, **kwargs)
+        # We know there is no need to copy...
+        return cls(pixels, copy=False)
 
     @property
     def n_dims(self):
@@ -251,6 +235,16 @@ class Image(Vectorizable, Landmarkable, Viewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
+    @property
+    def indices(self):
+        r"""
+        Return the indices of all pixels in this image.
+
+        :type: (`n_dims`, `n_pixels`) ndarray
+
+        """
+        return np.indices(self.shape).reshape([self.n_dims, -1]).T
+
     def copy(self):
         r"""
         Return a new image with copies of the pixels and landmarks of this
@@ -298,6 +292,92 @@ class Image(Vectorizable, Landmarkable, Viewable):
             return self.pixels.reshape([-1, self.n_channels])
         else:
             return self.pixels.flatten()
+
+    def from_vector(self, vector, n_channels=None, copy=True):
+        r"""
+        Takes a flattened vector and returns a new image formed by reshaping
+        the vector to the correct pixels and channels.
+
+        The `n_channels` argument is useful for when we want to add an extra
+        channel to an image but maintain the shape. For example, when
+        calculating the gradient.
+
+        Note that landmarks are transferred in the process.
+
+        Parameters
+        ----------
+        vector : (`n_parameters`,)
+            A flattened vector of all pixels and channels of an image.
+
+        n_channels : int, optional
+            If given, will assume that vector is the same shape as this image,
+            but with a possibly different number of channels
+
+            Default: Use the existing image channels
+
+        copy : bool, optional
+            If False the vector will not be copied in creating the new image.
+
+            Default: True
+
+        Returns
+        -------
+        image : :map:`Image`
+            New image of same shape as this image and the number of
+            specified channels.
+
+        Raises
+        ------
+
+        Warning : If the copy=False flag cannot be honored
+
+        """
+        # This is useful for when we want to add an extra channel to an image
+        # but maintain the shape. For example, when calculating the gradient
+        n_channels = self.n_channels if n_channels is None else n_channels
+        image_data = vector.reshape(self.shape + (n_channels,))
+        new_image = Image(image_data, copy=copy)
+        new_image.landmarks = self.landmarks
+        return new_image
+
+    def from_vector_inplace(self, vector, copy=True):
+        r"""
+        Takes a flattened vector and update this image by
+        reshaping the vector to the correct dimensions.
+
+        Parameters
+        ----------
+        vector : (`n_pixels`,) np.bool ndarray
+            A vector vector of all the pixels of a BooleanImage.
+
+        copy: bool, optional
+            If False, the vector will be set as the pixels. If True a copy of
+            the vector is taken.
+
+            Default: True
+
+        Raises
+        ------
+        Warning : If copy=False flag cannot be honored
+
+        Notes
+        -----
+        For BooleanImage's this is rebuilding a boolean image **itself**
+        from boolean values. The mask is in no way interpreted in performing
+        the operation, in contrast to MaskedImage, where only the masked
+        region is used in from_vector{_inplace}() and as_vector().
+        """
+        if copy:
+            vector = vector.copy()
+            self.pixels = np.require(vector.reshape(self.pixels.shape),
+                                     requirements=['C'])
+        else:
+            image_data_handle = vector.reshape(self.pixels.shape)
+            self.pixels = np.require(image_data_handle, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the vector '
+                              'you pass is C-contiguous.')
 
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""
@@ -368,26 +448,6 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def from_vector_inplace(self, vector):
-        r"""
-        Takes a flattened vector and update this image by
-        reshaping the vector to the correct dimensions.
-
-        Parameters
-        ----------
-        vector : (`n_pixels`,) np.bool ndarray
-            A vector vector of all the pixels of a BooleanImage.
-
-
-        Notes
-        -----
-        For BooleanImage's this is rebuilding a boolean image **itself**
-        from boolean values. The mask is in no way interpreted in performing
-        the operation, in contrast to MaskedImage, where only the masked
-        region is used in from_vector{_inplace}() and as_vector().
-        """
-        self.pixels = vector.reshape(self.pixels.shape)
-
     def _view(self, figure_id=None, new_figure=False, channels=None,
               **kwargs):
         r"""
@@ -449,6 +509,24 @@ class Image(Vectorizable, Landmarkable, Viewable):
         glyph.landmarks = self.landmarks
         nus.apply_inplace(glyph.landmarks)
         return glyph
+
+    def gradient(self, **kwargs):
+        r"""
+        Returns an :map:`Image` which is the gradient of this one. In the case
+        of multiple channels, it returns the gradient over each axis over
+        each channel as a flat list.
+
+        Returns
+        -------
+        gradient : :map:`Image`
+            The gradient over each axis over each channel. Therefore, the
+            gradient of a 2D, single channel image, will have length `2`.
+            The length of a 2D, 3-channel image, will have length `6`.
+        """
+        grad_image_pixels = features.gradient(self.pixels)
+        grad_image = Image(grad_image_pixels, copy=False)
+        grad_image.landmarks = self.landmarks
+        return grad_image
 
     def crop(self, min_indices, max_indices,
              constrain_to_boundary=True):
