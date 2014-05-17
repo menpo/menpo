@@ -293,7 +293,7 @@ class CLMBuilder(DeformableModelBuilder):
                 positive_samples = []
                 negative_samples = []
 
-                for i, s in zip(images, shapes):
+                for i, s in zip(feature_images, shapes):
 
                     max_x = i.shape[0] - 1
                     max_y = i.shape[1] - 1
@@ -549,15 +549,36 @@ class CLM(object):
         image: :class:`menpo.image.base.Image`
             The response image.
         """
+        # rescale image
         image = image.rescale_to_reference_shape(self.reference_shape,
                                                  group=group, label=label)
 
-        pyramid = image.gaussian_pyramid(n_levels=self.n_levels,
-                                         downscale=self.downscale)
-        images = [compute_features(i, self.feature_type[j])
-                  for j, i in enumerate(pyramid)]
-        images.reverse()
+        # apply pyramid
+        if self.n_levels > 1:
+            if self.pyramid_on_features:
+                # compute features at highest level
+                feature_image = compute_features(image, self.feature_type[0])
 
+                # apply pyramid on feature image
+                pyramid = feature_image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # get rescaled feature images
+                images = list(pyramid)
+            else:
+                # create pyramid on intensities image
+                pyramid = image.gaussian_pyramid(
+                    n_levels=self.n_levels, downscale=self.downscale)
+
+                # compute features at each level
+                images = [compute_features(
+                    i, self.feature_type[self.n_levels - j - 1])
+                    for j, i in enumerate(pyramid)]
+            images.reverse()
+        else:
+            images = [compute_features(image, self.feature_type[0])]
+
+        # initialize responses
         image = images[level]
         image_pixels = np.reshape(image.pixels, (-1, image.n_channels))
         response_data = np.zeros((image.shape[0], image.shape[1],
@@ -566,7 +587,6 @@ class CLM(object):
         for j, clf in enumerate(self.classifiers[level]):
             response_data[:, :, j] = np.reshape(clf(image_pixels),
                                                 image.shape)
-
         return Image(image_data=response_data)
 
     @property
@@ -655,7 +675,7 @@ class CLM(object):
                       "variance)\n     - {3} {4} classifiers.\n".format(
                       out, self.shape_models[i].n_components,
                       self.shape_models[i].variance_ratio * 100,
-                      len(self.classifiers[i]),
+                      self.n_classifiers_per_level[i],
                       self.classifiers[i][0].func_name)
         else:
             if self.pyramid_on_features:
@@ -666,7 +686,8 @@ class CLM(object):
                   out, feat_str[0], n_channels[0], ch_str[0],
                   self.shape_models[0].n_components,
                   self.shape_models[0].variance_ratio * 100,
-                  len(self.classifiers[0]), self.classifiers[0][0].func_name)
+                  self.n_classifiers_per_level[0],
+                  self.classifiers[0][0].func_name)
         return out
 
 
