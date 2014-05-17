@@ -228,13 +228,13 @@ class CLMBuilder(DeformableModelBuilder):
                               'levels\n'.format(self.n_levels))
             else:
                 print_dynamic('- Building model\n')
+
         shape_models = []
         classifiers = []
-
         # for each pyramid level (high --> low)
         for j in range(self.n_levels):
             # since models are built from highest to lowest level, the
-            # parameters in form of list need to use a reversed index
+            # parameters of type list need to use a reversed index
             rj = self.n_levels - j - 1
 
             if verbose:

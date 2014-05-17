@@ -38,7 +38,7 @@ class ActiveShapeModel(GradientDescent):
 
     @property
     def algorithm(self):
-        return "ASM"
+        return 'ASM'
 
     def _set_up(self):
         raise ValueError("Not implemented yet")
@@ -52,7 +52,7 @@ class ConvexQuadraticFitting(GradientDescent):
 
     @property
     def algorithm(self):
-        return "CQF"
+        return 'CQF'
 
     def _set_up(self):
         raise ValueError("Not implemented yet")
@@ -66,7 +66,7 @@ class RegularizedLandmarkMeanShift(GradientDescent):
 
     @property
     def algorithm(self):
-        return "RLMS"
+        return 'RLMS'
 
     def _set_up(self):
         self._sampling_grid = build_sampling_grid(self.patch_shape)

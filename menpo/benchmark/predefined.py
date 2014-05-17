@@ -253,7 +253,7 @@ def clm_basic(training_db_path, training_db_ext, fitting_db_path,
 
 
 def clm_temp(training_db_path, training_db_ext, fitting_db_path,
-             fitting_db_ext, feature_type=sparse_hog, patch_size=(5, 5),
+             fitting_db_ext, feature_type=sparse_hog, patch_shape=(5, 5),
              classifier_type=linear_svm_lr, scaled_shape_models=True,
              pyramid_on_features=True, n_shape=None,
              noise_std=0.04, verbose=False,
@@ -294,7 +294,7 @@ def clm_temp(training_db_path, training_db_ext, fitting_db_path,
 
     # set passed parameters
     training_options['feature_type'] = feature_type
-    training_options['patch_size'] = patch_size
+    training_options['patch_shape'] = patch_shape
     training_options['scaled_shape_models'] = scaled_shape_models
     training_options['pyramid_on_features'] = pyramid_on_features
     fitting_options['n_shape'] = n_shape
