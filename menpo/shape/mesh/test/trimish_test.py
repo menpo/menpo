@@ -50,7 +50,8 @@ def test_texturedtrimesh_creation_copy_false():
     pixels = np.ones([10, 10])
     tcoords = np.ones([4, 2])
     texture = Image(pixels, copy=False)
-    ttm = TexturedTriMesh(points, trilist, tcoords, texture, copy=False)
+    ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                          copy=False)
     assert (is_same_array(ttm.points, points))
     assert (is_same_array(ttm.trilist, trilist))
     assert (is_same_array(ttm.tcoords.points, tcoords))
@@ -67,7 +68,8 @@ def test_texturedtrimesh_creation_copy_true():
     pixels = np.ones([10, 10])
     tcoords = np.ones([4, 2])
     texture = Image(pixels, copy=False)
-    ttm = TexturedTriMesh(points, trilist, tcoords, texture, copy=True)
+    ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                          copy=True)
     assert (not is_same_array(ttm.points, points))
     assert (not is_same_array(ttm.trilist, trilist))
     assert (not is_same_array(ttm.tcoords.points, tcoords))
