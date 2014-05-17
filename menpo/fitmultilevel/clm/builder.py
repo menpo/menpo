@@ -609,17 +609,22 @@ class CLM(object):
         out = "{}\n - {} training images.\n".format(self._str_title,
                                                     self.n_training_images)
         # small strings about number of channels, channels string and downscale
-        n_channels = []
         down_str = []
-        temp_img = Image(image_data=np.random.rand(50, 50))
         for j in range(self.n_levels):
-            temp = compute_features(temp_img, self.feature_type[j])
-            n_channels.append(temp.n_channels)
             if j == self.n_levels - 1:
                 down_str.append('(no downscale)')
             else:
                 down_str.append('(downscale by {})'.format(
                     self.downscale**(self.n_levels - j - 1)))
+        temp_img = Image(image_data=np.random.rand(50, 50))
+        if self.pyramid_on_features:
+            temp = compute_features(temp_img, self.feature_type[0])
+            n_channels = [temp.n_channels] * self.n_levels
+        else:
+            n_channels = []
+            for j in range(self.n_levels):
+                temp = compute_features(temp_img, self.feature_type[j])
+                n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
             if isinstance(self.feature_type[0], str):
