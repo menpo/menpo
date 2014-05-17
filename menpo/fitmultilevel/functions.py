@@ -72,15 +72,17 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
     if out is not None:
         patches = out
     else:
-        patches = np.empty(patch_shape + (image.n_channels, centres.n_points,))
+        patches = np.empty(
+            (centres.n_points,) + patch_shape + (image.n_channels,))
     # 0 out the patches array
     patches[...] = 0
-    image_size = np.array(image.shape, dtype=np.uint)
-    patch_shape = np.array(patch_shape, dtype=np.uint)
+    image_size = np.array(image.shape, dtype=np.int)
+    patch_shape = np.array(patch_shape, dtype=np.int)
     centres = np.require(centres.points, dtype=np.int)
+    half_patch_shape = np.require(patch_shape / 2, dtype=np.int)
     # 1. compute the extents
-    c_min = centres - patch_shape / 2
-    c_max = centres + patch_shape / 2
+    c_min = centres - half_patch_shape
+    c_max = centres + half_patch_shape
     out_min = c_min < 0
     out_max = c_max > image_size
 
@@ -104,7 +106,7 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
         i_slices = [slice(a, b) for a, b in zip(i_a, i_b)]
         e_slices = [slice(a, b) for a, b in zip(e_a, e_b)]
         # get a view onto the patch we are on
-        patch = patches[..., i]
+        patch = patches[i, ...]
         # apply the slices to map
         patch[i_slices] = image.pixels[e_slices]
 
