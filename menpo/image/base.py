@@ -252,6 +252,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
+    def copy(self):
+        new_image = Image(self.pixels)
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def as_vector(self, keep_channels=False):
         r"""
         The vectorized form of this image.

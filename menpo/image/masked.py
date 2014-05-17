@@ -157,6 +157,11 @@ class MaskedImage(Image):
             self._str_shape, self.n_dims, self.n_channels,
             self.mask.proportion_true))
 
+    def copy(self):
+        new_image = MaskedImage(self.pixels, mask=self.mask)
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def as_vector(self, keep_channels=False):
         r"""
         Convert image to a vectorized form. Note that the only pixels

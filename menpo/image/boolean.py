@@ -170,6 +170,11 @@ class BooleanImage(Image):
                 'of which is True '.format(self._str_shape, self.n_dims,
                                            self.proportion_true))
 
+    def copy(self):
+        new_image = BooleanImage(self.pixels[..., 0])
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def from_vector(self, flattened):
         r"""
         Takes a flattened vector and returns a new
