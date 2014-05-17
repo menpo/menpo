@@ -57,7 +57,7 @@ class LandmarkImporter(Importer):
         Read the landmarks file from disk, parse it in to semantic labels and
         :class:`menpo.shape.base.PointCloud`.
 
-        Set the ``self.label`` and ``self.pointcloud`` attributes.
+        Set the `self.label` and `self.pointcloud` attributes.
         """
         pass
 
@@ -71,13 +71,13 @@ def _indices_to_mask(n_points, indices):
     n_points : int
         The total number of points for the mask
     indices : ndarray of ints
-        An array of integers representing the ``True`` indices.
+        An array of integers representing the `True` indices.
 
     Returns
     -------
     boolean_mask : ndarray of bools
         The mask for the set of landmarks where each index from indices is set
-        to ``True`` and the rest are ``False``
+        to `True` and the rest are `False`
     """
     mask = np.zeros(n_points, dtype=np.bool)
     mask[indices] = True
@@ -91,7 +91,7 @@ class ASFImporter(LandmarkImporter):
 
     Implementations of this class should override the :meth:`_build_points`
     which determines the ordering of axes. For example, for images, the
-    ``x`` and ``y`` axes are flipped such that the first axis is ``y`` (height
+    `x` and `y` axes are flipped such that the first axis is `y` (height
     in the image domain).
 
     Landmark set label: ASF
@@ -123,7 +123,7 @@ class ASFImporter(LandmarkImporter):
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
-        ``x`` is the first axis, where as for images ``y`` is the first axis.
+        `x` is the first axis, where as for images `y` is the first axis.
         """
         pass
 
@@ -172,7 +172,7 @@ class PTSImporter(LandmarkImporter):
 
     Implementations of this class should override the :meth:`_build_points`
     which determines the ordering of axes. For example, for images, the
-    ``x`` and ``y`` axes are flipped such that the first axis is ``y`` (height
+    `x` and `y` axes are flipped such that the first axis is `y` (height
     in the image domain).
 
     Note that PTS has a very loose format definition. Here we make the
@@ -204,7 +204,7 @@ class PTSImporter(LandmarkImporter):
     def _build_points(self, xs, ys):
         r"""
         Determines the ordering of points within the landmarks. For meshes
-        ``x`` is the first axis, where as for images ``y`` is the first axis.
+        `x` is the first axis, where as for images `y` is the first axis.
         """
         pass
 

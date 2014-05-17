@@ -124,9 +124,9 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         Parameters
         ----------
         textured : bool, optional
-            If ``True``, render the texture.
+            If `True`, render the texture.
 
-            Default: ``True``
+            Default: `True`
 
         Returns
         -------
@@ -136,7 +136,7 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         Raises
         ------
         DimensionalityError
-            If ``self.n_dims != 3``.
+            If `self.n_dims != 3`.
         """
         if textured:
             if self.n_dims == 3:

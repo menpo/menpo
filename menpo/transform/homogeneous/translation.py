@@ -32,7 +32,7 @@ class Translation(DiscreteAffine, Similarity):
     @property
     def n_parameters(self):
         r"""
-        The number of parameters: ``n_dims``
+        The number of parameters: `n_dims`
 
         :type: int
         """

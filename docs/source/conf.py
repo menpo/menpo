@@ -93,8 +93,8 @@ autodoc_member_order = 'groupwise'
 
 # General information about the project.
 project = u'Menpo'
-authors = u'Patrick Snape, James Booth, ' \
-          u'Joan Alabort-i-Medina and Nontas Antonakos'
+authors = (u'Joan Alabort-i-Medina, Epameinondas Antonakos, James Booth,'
+            ' Patrick Snape, and Stefanos Zafeiriou')
 copyright = u'2014, ' + authors
 
 # The version info for the project you're documenting, acts as replacement for
@@ -305,4 +305,3 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
-

@@ -51,7 +51,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
 
     TriangleContainmentError
         All points to apply must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        `error.points_outside_source_domain` to handle this case.
     """
     def __init__(self, source, target):
         from menpo.shape import TriMesh  # to avoid circular import
@@ -76,7 +76,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         r"""
         The triangle list.
 
-        :type: (``n_tris``, 3) ndarray
+        :type: (`n_tris`, 3) ndarray
         """
         return self.source.trilist
 
@@ -101,7 +101,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         Returns
         -------
         tri_index : (L,) ndarray
-            triangle index for each of the ``points``, assigning each
+            triangle index for each of the `points`, assigning each
             point to it's containing triangle.
         alpha : (L,) ndarray
             Alpha for containing triangle of each point.
@@ -111,8 +111,8 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         Raises
         ------
         TriangleContainmentError
-        All ``points`` must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        All `points` must be contained in a source triangle. Check
+        `error.points_outside_source_domain` to handle this case.
         """
         pass
 
@@ -172,6 +172,7 @@ class AbstractPWA(Alignment, Transform, Invertible, DX, DL):
         d_dl : (n_points, n_centres, 2) ndarray
             The Jacobian for each of the given points over each point in
             the source points.
+
         """
         tri_index, alpha_i, beta_i = self.index_alpha_beta(points)
         # for the jacobian we only need
@@ -215,7 +216,7 @@ class DiscreteAffinePWA(AbstractPWA):
     r"""
     A piecewise affine transformation.
 
-    Builds ``Affine`` objects for each triangle. apply involves
+    Builds `Affine` objects for each triangle. apply involves
     finding the containing triangle for each input point, and then applying
     the appropriate Affine Transform.
 
@@ -241,7 +242,7 @@ class DiscreteAffinePWA(AbstractPWA):
 
     TriangleContainmentError
         All points to apply_inplace must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        `error.points_outside_source_domain` to handle this case.
     """
     def __init__(self, source, target):
         AbstractPWA.__init__(self, source, target)
@@ -314,7 +315,7 @@ class DiscreteAffinePWA(AbstractPWA):
         Returns
         -------
         tri_index : (L,) ndarray
-            triangle index for each of the ``points``, assigning each
+            triangle index for each of the `points`, assigning each
             point to it's containing triangle.
         alpha : (L,) ndarray
             Alpha for containing triangle of each point.
@@ -325,8 +326,8 @@ class DiscreteAffinePWA(AbstractPWA):
         Raises
         ------
         TriangleContainmentError
-        All ``points`` must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        All `points` must be contained in a source triangle. Check
+        `error.points_outside_source_domain` to handle this case.
         """
         alpha, beta = self.alpha_beta(points)
         each_point = np.arange(points.shape[0])
@@ -346,11 +347,11 @@ class DiscreteAffinePWA(AbstractPWA):
 
         Returns
         --------
-        alpha : (K, ``n_tris``)
+        alpha : (K, `n_tris`)
             The alpha for each point and triangle. Alpha can be interpreted
             as the contribution of the ij vector to the position of the
             point in question.
-        beta : (K, ``n_tris``)
+        beta : (K, `n_tris`)
             The beta for each point and triangle. Beta can be interpreted as
              the contribution of the ik vector to the position of the point
              in question.
@@ -370,30 +371,30 @@ class DiscreteAffinePWA(AbstractPWA):
     @staticmethod
     def _containment_from_alpha_beta(alpha, beta):
         r"""
-        Check ``alpha`` and ``beta`` are within a triangle (``alpha >= 0``,
-        ``beta >= 0``, ``alpha + beta <= 1``). Returns the indices of the
-        triangles that are ``alpha`` and ``beta`` are in. If any of the
+        Check `alpha` and `beta` are within a triangle (`alpha >= 0`,
+        `beta >= 0`, `alpha + beta <= 1`). Returns the indices of the
+        triangles that are `alpha` and `beta` are in. If any of the
         points are not contained in a triangle,
         raises a TriangleContainmentError.
 
         Parameters
         ----------
-        alpha: (K, ``n_tris``) ndarray
+        alpha: (K, `n_tris`) ndarray
             Alpha for each point and triangle being tested.
-        beta: (K, ``n_tris``) ndarray
+        beta: (K, `n_tris`) ndarray
             Beta for each point and triangle being tested.
 
         Returns
         -------
         tri_index : (L,) ndarray
-            triangle index for each ``points``, assigning each
+            triangle index for each `points`, assigning each
             point in a triangle to the triangle index.
 
         Raises
         ------
         TriangleContainmentError
-        All ``points`` must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        All `points` must be contained in a source triangle. Check
+        `error.points_outside_source_domain` to handle this case.
         """
         # (K, n_tris), boolean for whether a given triangle contains a given
         #  point
@@ -472,7 +473,7 @@ class CachedPWA(AbstractPWA):
 
     TriangleContainmentError
         All points to apply must be contained in a source triangle. Check
-        ``error.points_outside_source_domain`` to handle this case.
+        `error.points_outside_source_domain` to handle this case.
     """
     def __init__(self, source, target):
         super(CachedPWA, self).__init__(source, target)
@@ -532,3 +533,4 @@ class CachedPWA(AbstractPWA):
         return (self.ti[tri_index] +
                 alpha[:, None] * self.tij[tri_index] +
                 beta[:, None] * self.tik[tri_index])
+

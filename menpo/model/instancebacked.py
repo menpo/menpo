@@ -32,19 +32,19 @@ class InstanceBackedModel(object):
         index : int
             The component that is to be returned
 
-        :type: ``type(self.template_instance)``
+        :type: `type(self.template_instance)`
         """
         return self.template_instance.from_vector(self.component_vector(index))
 
     def instance(self, weights):
         """
-        Creates a new instance of the model using the first ``len(weights)``
+        Creates a new instance of the model using the first `len(weights)`
         components.
 
         Parameters
         ----------
         weights : (n_weights,) ndarray or list
-            ``weights[i]`` is the linear contribution of the i'th component
+            `weights[i]` is the linear contribution of the i'th component
             to the instance vector.
 
         Raises
@@ -53,7 +53,7 @@ class InstanceBackedModel(object):
 
         Returns
         -------
-        instance : ``type(self.template_instance)``
+        instance : `type(self.template_instance)`
             An instance of the model.
         """
         return self.template_instance.from_vector(
@@ -61,7 +61,7 @@ class InstanceBackedModel(object):
 
     def project(self, instance):
         """
-        Projects the ``instance`` onto the model, retrieving the optimal
+        Projects the `instance` onto the model, retrieving the optimal
         linear weightings.
 
         Parameters
@@ -78,7 +78,7 @@ class InstanceBackedModel(object):
 
     def reconstruct(self, instance):
         """
-        Projects a ``instance`` onto the linear space and rebuilds from the
+        Projects a `instance` onto the linear space and rebuilds from the
         weights found.
 
         Syntactic sugar for:
@@ -94,7 +94,7 @@ class InstanceBackedModel(object):
 
         Returns
         -------
-        reconstructed : ``self.instance_class``
+        reconstructed : `self.instance_class`
             The reconstructed object.
         """
         reconstruction_vector = self.reconstruct_vector(instance.as_vector())
@@ -102,7 +102,7 @@ class InstanceBackedModel(object):
 
     def project_out(self, instance):
         """
-        Returns a version of ``instance`` where all the basis of the model
+        Returns a version of `instance` where all the basis of the model
         have been projected out.
 
         Parameters
@@ -112,8 +112,8 @@ class InstanceBackedModel(object):
 
         Returns
         -------
-        projected_out : ``self.instance_class``
-            A copy of ``instance``, with all basis of the model projected out.
+        projected_out : `self.instance_class`
+            A copy of `instance`, with all basis of the model projected out.
         """
         vector_instance = self.project_out_vector(instance.as_vector())
         return instance.from_vector(vector_instance)

@@ -83,7 +83,7 @@ class Affine(Homogeneous, DP, DX):
         transforms : list of :map:`DiscreteAffine` that
             Equivalent to this affine transform, such that:
 
-            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
+            `reduce(lambda x,y: x.chain(y), self.decompose()) == self`
         """
         from .rotation import Rotation
         from .translation import Translation
@@ -132,7 +132,7 @@ class Affine(Homogeneous, DP, DX):
     @property
     def n_parameters(self):
         r"""
-        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
+        `n_dims * (n_dims + 1)` parameters - every element of the matrix bar
         the homogeneous part.
 
         :type: int
@@ -168,8 +168,8 @@ class Affine(Homogeneous, DP, DX):
         p2        Affine parameter
         p3        Affine parameter
         p4        Affine parameter
-        p5        Translation in ``x``
-        p6        Translation in ``y``
+        p5        Translation in `x`
+        p6        Translation in `y`
         ========= ===========================================
 
         3D and higher transformations follow a similar format to the 2D case.
@@ -229,7 +229,6 @@ class Affine(Homogeneous, DP, DX):
 
         Returns
         -------
-
         (n_points, n_params, n_dims) ndarray
             The jacobian wrt parametrization
 
@@ -383,7 +382,7 @@ class DiscreteAffine(object):
     A discrete Affine transform operation (such as a :meth:`Scale`,
     :class:`Translation` or :meth:`Rotation`). Has to be able to invertable.
     Make sure you inherit from :class:`DiscreteAffine` first,
-    for optimal ``decompose()`` behavior.
+    for optimal `decompose()` behavior.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -396,6 +395,6 @@ class DiscreteAffine(object):
         Returns
         -------
         transform : :class:`DiscreteAffine`
-            Deep copy of ``self``.
+            Deep copy of `self`.
         """
         return [copy.deepcopy(self)]

@@ -79,7 +79,7 @@ class TriMesh(PointCloud):
 
     def from_vector(self, flattened):
         r"""
-        Builds a new :class:`TriMesh` given then ``flattened`` vector.
+        Builds a new :class:`TriMesh` given then `flattened` vector.
         This allows rebuilding pointclouds with the correct number of
         dimensions from a vector. Note that the trilist will be drawn from
         self.
@@ -101,7 +101,7 @@ class TriMesh(PointCloud):
         r"""
         Normal at each point.
 
-        :type: (``n_points``, 3) ndarray
+        :type: (`n_points`, 3) ndarray
 
         Compute the per-vertex normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
@@ -120,7 +120,7 @@ class TriMesh(PointCloud):
         r"""
         Normal at each face.
 
-        :type: (``n_tris``, 3) ndarray
+        :type: (`n_tris`, 3) ndarray
 
         Compute the face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
@@ -160,7 +160,7 @@ class TriMesh(PointCloud):
         Raises
         ------
         DimensionalityError
-            If ``not self.n_dims in [2, 3]``.
+            If `not self.n_dims in [2, 3]`.
         """
         return TriMeshViewer(figure_id, new_figure,
                              self.points, self.trilist).render(**kwargs)

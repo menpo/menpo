@@ -53,12 +53,12 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **after** self
 
         Returns
         --------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             The resulting transform.
         """
         if isinstance(transform, self.composes_with):
@@ -85,12 +85,12 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **before** self
 
         Returns
         --------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             The resulting transform.
         """
         if isinstance(transform, self.composes_with):
@@ -113,7 +113,7 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **after** self
 
         Raises
@@ -144,7 +144,7 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **before** self
 
         Raises
@@ -168,12 +168,12 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **after** self
 
         Returns
         --------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             The resulting transform.
         """
         # naive approach - deepcopy followed by the inplace operation
@@ -188,12 +188,12 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **before** self
 
         Returns
         --------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             The resulting transform.
         """
         # naive approach - deepcopy followed by the inplace operation
@@ -210,7 +210,7 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **after** self
         """
 
@@ -223,7 +223,7 @@ class ComposableTransform(Transform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **before** self
         """
 
@@ -249,7 +249,7 @@ class TransformChain(ComposableTransform):
 
     This class is the natural product of composition. Note that objects may
     know how to compose themselves more efficiently - such objects
-    implement the :map:`Compose` or :map:`VCompose` interfaces.
+    implement the :map:`ComposableTransform` or :map:`VCompose` interfaces.
 
     Parameters
     ----------
@@ -299,7 +299,7 @@ class TransformChain(ComposableTransform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **after** self
         """
         self.transforms.append(transform)
@@ -311,7 +311,7 @@ class TransformChain(ComposableTransform):
 
         Parameters
         ----------
-        transform : :map:`Composable`
+        transform : :map:`ComposableTransform`
             Transform to be applied **before** self
         """
         self.transforms.insert(0, transform)
