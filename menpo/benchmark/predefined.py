@@ -336,3 +336,132 @@ def clm_temp(training_db_path, training_db_ext, fitting_db_path,
                             x_limit=max_error_bin, legend=legend,
                             color_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
+
+
+def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
+                            fitting_db_ext, n_experiments=1, feature_type=None,
+                            scaled_shape_models=None, pyramid_on_features=None,
+                            n_shape=None, n_appearance=None, noise_std=None,
+                            rotation=None, verbose=False, plot=False):
+
+    # parse input
+    if feature_type is None:
+        feature_type = ['igo'] * n_experiments
+    elif len(feature_type) is not n_experiments:
+        raise ValueError("feature_type has wrong length")
+    if scaled_shape_models is None:
+        scaled_shape_models = [True] * n_experiments
+    elif len(scaled_shape_models) is not n_experiments:
+        raise ValueError("scaled_shape_models has wrong length")
+    if pyramid_on_features is None:
+        pyramid_on_features = [True] * n_experiments
+    elif len(pyramid_on_features) is not n_experiments:
+        raise ValueError("pyramid_on_features has wrong length")
+    if n_shape is None:
+        n_shape = [[3, 6, 12]] * n_experiments
+    elif len(n_shape) is not n_experiments:
+        raise ValueError("n_shape has wrong length")
+    if n_appearance is None:
+        n_appearance = [50] * n_experiments
+    elif len(n_appearance) is not n_experiments:
+        raise ValueError("n_appearance has wrong length")
+    if noise_std is None:
+        noise_std = [0.04] * n_experiments
+    elif len(noise_std) is not n_experiments:
+        raise ValueError("noise_std has wrong length")
+    if rotation is None:
+        rotation = [False] * n_experiments
+    elif len(rotation) is not n_experiments:
+        raise ValueError("rotation has wrong length")
+
+    # load images
+    db_loading_options = {'crop_proportion': 0.1,
+                          'convert_to_grey': True
+                          }
+    training_images = load_database(training_db_path, training_db_ext,
+                                    db_loading_options=db_loading_options,
+                                    verbose=verbose)
+    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+                                   db_loading_options=db_loading_options,
+                                   verbose=verbose)
+
+    # run experiments
+    max_error_bin = 0.05
+    bins_error_step = 0.005
+    curves_to_plot = []
+    all_fitting_results = []
+    for i in range(n_experiments):
+        if verbose:
+            print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
+            print("- feature_type: {}\n- scaled_shape_models: {}\n"
+                  "- pyramid_on_features: {}\n- n_shape: {}\n"
+                  "- n_appearance: {}\n- noise_std: {}\n"
+                  "- rotation: {}".format(
+                  feature_type[i], scaled_shape_models[i],
+                  pyramid_on_features[i], n_shape[i], n_appearance[i],
+                  noise_std[i], rotation[i]))
+
+        # predefined option dictionaries
+        training_options = {'group': 'PTS',
+                            'feature_type': 'igo',
+                            'transform': PiecewiseAffine,
+                            'trilist': ibug_68_trimesh,
+                            'normalization_diagonal': None,
+                            'n_levels': 3,
+                            'downscale': 2,
+                            'scaled_shape_models': True,
+                            'pyramid_on_features': True,
+                            'max_shape_components': 25,
+                            'max_appearance_components': 250,
+                            'boundary': 3,
+                            'interpolator': 'scipy'
+                            }
+        fitting_options = {'algorithm': AlternatingInverseCompositional,
+                           'md_transform': OrthoMDTransform,
+                           'global_transform': AlignmentSimilarity,
+                           'n_shape': [3, 6, 12],
+                           'n_appearance': 50,
+                           'max_iters': 50,
+                           'error_type': 'me_norm'
+                           }
+        initialization_options = {'noise_std': 0.04,
+                                  'rotation': False}
+
+        # training
+        training_options['feature_type'] = feature_type[i]
+        training_options['scaled_shape_models'] = scaled_shape_models[i]
+        training_options['pyramid_on_features'] = pyramid_on_features[i]
+        aam = aam_build_benchmark(training_images,
+                                  training_options=training_options,
+                                  verbose=verbose)
+
+        # fitting
+        fitting_options['n_shape'] = n_shape[i]
+        fitting_options['n_appearance'] = n_appearance[i]
+        initialization_options['noise_std'] = noise_std[i]
+        initialization_options['rotation'] = rotation[i]
+        fitting_results = aam_fit_benchmark(fitting_images, aam,
+                                            initialization_options=
+                                            initialization_options,
+                                            fitting_options=fitting_options,
+                                            verbose=verbose)
+        all_fitting_results.append(fitting_results)
+
+        # convert results
+        final_error_curve, initial_error_curve, error_bins = \
+            convert_fitting_results_to_ced(fitting_results,
+                                           max_error_bin=max_error_bin,
+                                           bins_error_step=bins_error_step)
+        curves_to_plot.append(final_error_curve)
+        if i == n_experiments - 1:
+            curves_to_plot.append(initial_error_curve)
+
+    # plot results
+    if plot:
+        title = "AAMs using Alternating IC"
+        color_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
+        marker_list = ['o', 'x', 'v', 'd'] * n_experiments
+        plot_fitting_curves(error_bins, curves_to_plot, title, new_figure=True,
+                            x_limit=max_error_bin,  color_list=color_list,
+                            marker_list=marker_list)
+    return all_fitting_results
