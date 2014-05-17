@@ -43,14 +43,14 @@ class PointCloud(Shape):
             self.points = np.array(points, copy=True, order='C')
 
     def copy(self):
-        r"""An efficient copy of this PointCloud.
+        r"""
+        An efficient copy of this PointCloud.
 
         Only landmarks and points will be transferred. For a full copy consider
-        using deepcopy().
+        using `deepcopy()`.
 
         Returns
         -------
-
         pointcloud: :map:`PointCloud`
             A PointCloud with the same points and landmarks as this one.
 
