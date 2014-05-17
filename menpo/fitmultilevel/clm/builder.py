@@ -162,7 +162,10 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
+        feature_type = self.check_feature_type(feature_type, n_levels,
+                                               pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
+        patch_shape = check_patch_shape(patch_shape)
 
         # store parameters
         self.classifier_type = classifier_type
@@ -610,8 +613,7 @@ class CLM(object):
         down_str = []
         temp_img = Image(image_data=np.random.rand(50, 50))
         for j in range(self.n_levels):
-            rj = self.n_levels - j - 1
-            temp = compute_features(temp_img, self.feature_type[rj])
+            temp = compute_features(temp_img, self.feature_type[j])
             n_channels.append(temp.n_channels)
             if j == self.n_levels - 1:
                 down_str.append('(no downscale)')
@@ -731,3 +733,16 @@ def check_classifier_type(classifier_type, n_levels):
         if not hasattr(clas, '__call__'):
             raise ValueError(str_error)
     return classifier_type_list
+
+
+def check_patch_shape(patch_shape):
+    r"""
+    Checks the patch shape. It must be a tuple with ints > 1.
+    """
+    str_error = "patch_size mast be a tuple with two integers"
+    if not isinstance(patch_shape, tuple) or len(patch_shape) != 2:
+        raise ValueError(str_error)
+    for sh in patch_shape:
+        if not isinstance(sh, int) or sh < 2:
+            raise ValueError(str_error)
+    return patch_shape
