@@ -98,7 +98,7 @@ class LandmarkManager(Transformable, Viewable):
                 None, None, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
-            # TODO: Use the copy function
+            # TODO replace with copy function
             lmark_group = LandmarkGroup(self._target, group_label,
                                         value._pointcloud,
                                         value._labels_to_masks)
@@ -232,6 +232,11 @@ class LandmarkGroup(Viewable):
     labels_to_masks : dict of string to boolean ndarrays
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
+    copy : boolean, optional
+        If true, a copy of the pointcloud is stored on the group.
+
+        Default True
+
     """
 
     def __init__(self, target, group_label, pointcloud, labels_to_masks,
@@ -258,7 +263,8 @@ class LandmarkGroup(Viewable):
         if copy:
             # TODO: Replace with copy function
             self._pointcloud = deepcopy(pointcloud)
-            self._labels_to_masks = deepcopy(labels_to_masks)
+            self._labels_to_masks = {l: m.copy() for l, m in
+                                     labels_to_masks.iteritems()}
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
