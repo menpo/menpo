@@ -32,7 +32,7 @@ class Landmarkable(object):
 
     @landmarks.setter
     def landmarks(self, value):
-        self._landmarks = deepcopy(value)
+        self._landmarks = value.copy()
         self._landmarks._target = self
 
     @property
@@ -61,6 +61,25 @@ class LandmarkManager(Transformable, Viewable):
         super(LandmarkManager, self).__init__()
         self.__target = target
         self._landmark_groups = {}
+
+    def copy(self):
+        r"""
+        An efficient copy of this landmark manager.
+
+        Note that the returned landmark manager will share the same target as
+        self - the target will not be copied.
+
+        Returns
+        -------
+
+        manager: :map:`LandmarkManager`
+            A manager with an identical set of annotations to this one.
+
+        """
+        new_manager = LandmarkManager(self._target)
+        new_manager._landmark_groups = {l: g.copy() for l, g in
+                                        self._landmark_groups.iteritems()}
+        return new_manager
 
     def __iter__(self):
         """
@@ -95,13 +114,12 @@ class LandmarkManager(Transformable, Viewable):
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
-                None, None, value,
+                self._target, None, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
-            # TODO replace with copy function
-            lmark_group = LandmarkGroup(self._target, group_label,
-                                        value._pointcloud,
-                                        value._labels_to_masks)
+            lmark_group = value.copy()
+            # check the target is set correctly
+            lmark_group._target = self._target
         else:
             raise ValueError('Valid types are PointCloud or LandmarkGroup')
 
@@ -172,15 +190,14 @@ class LandmarkManager(Transformable, Viewable):
     def update(self, landmark_manager):
         """
         Update the manager with the groups from another manager. This performs
-        a deep copy on the other landmark manager and resets it's target.
+        a copy on the other landmark manager and resets it's target.
 
         Parameters
         ----------
         landmark_manager : :class:`LandmarkManager`
             The landmark manager to copy from.
         """
-        # TODO: replace with copy function
-        new_landmark_manager = deepcopy(landmark_manager)
+        new_landmark_manager = landmark_manager.copy()
         new_landmark_manager._target = self.__target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
@@ -261,13 +278,30 @@ class LandmarkGroup(Viewable):
         self._group_label = group_label
         self._target = target
         if copy:
-            # TODO: Replace with copy function
-            self._pointcloud = deepcopy(pointcloud)
+            self._pointcloud = pointcloud.copy()
             self._labels_to_masks = {l: m.copy() for l, m in
                                      labels_to_masks.iteritems()}
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
+
+    def copy(self):
+        r"""
+        An efficient copy of this landmark group.
+
+        Note that the returned landmark group will share the same target as
+        self - the target will not be copied.
+
+        Returns
+        -------
+
+        group: :map:`LandmarkGroup`
+            A group with an identical set of points, labels, and masks
+            as this one.
+
+        """
+        return LandmarkGroup(self._target, self.group_label, self.lms,
+                             self._labels_to_masks, copy=True)
 
     def __iter__(self):
         """

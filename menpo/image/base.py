@@ -1001,7 +1001,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                    order=order, mode=mode, cval=cval)
 
         for j, image_data in enumerate(pyramid):
-            image = self.__class__(image_data)
+            image = self._init_with_channel(image_data, copy=False)
 
             # rescale and reassign existent landmark
             image.landmarks = self.landmarks
