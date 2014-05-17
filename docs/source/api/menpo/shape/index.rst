@@ -9,8 +9,8 @@ Classes
 .. toctree::
    :maxdepth: 1
 
+   Shape
    PointCloud
    TriMesh
    ColouredTriMesh
    TexturedTriMesh
-

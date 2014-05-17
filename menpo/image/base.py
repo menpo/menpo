@@ -51,11 +51,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     Images are n-dimensional homogeneous regular arrays of data. Each
     spatially distinct location in the array is referred to as a `pixel`.
-    At a pixel, ``k`` distinct pieces of information can be stored. Each
+    At a pixel, `k` distinct pieces of information can be stored. Each
     datum at a pixel is refereed to as being in a `channel`. All pixels in
     the image have the  same number of channels, and all channels have the
     same data-type (float).
-
 
     Parameters
     -----------
@@ -173,7 +172,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_pixels(self):
         r"""
-        Total number of pixels in the image (``prod(shape)``)
+        Total number of pixels in the image (`prod(shape)`)
 
         :type: int
         """
@@ -182,8 +181,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_elements(self):
         r"""
-        Total number of data points in the image (``prod(shape) x
-        n_channels``)
+        Total number of data points in the image (`prod(shape) x
+        n_channels`)
 
         :type: int
         """
@@ -226,7 +225,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def shape(self):
         r"""
         The shape of the image
-        (with ``n_channel`` values at each point).
+        (with `n_channel` values at each point).
 
         :type: tuple
         """
@@ -263,11 +262,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             ========== =================================
             Value      Return shape
             ========== =================================
-            ``False``  (``n_pixels``  x ``n_channels``,)
-            ``True``   (``n_pixels``, ``n_channels``)
+            `False`  (`n_pixels`  x `n_channels`,)
+            `True`   (`n_pixels`, `n_channels`)
             ========== =================================
 
-            Default: ``False``
+            Default: `False`
 
         Returns
         -------
@@ -287,11 +286,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Parameters
         ----------
         keep_channels : bool, optional
-            If set to ``False``, it returns a single histogram for all the
-            channels of the image. If set to ``True``, it returns a list of
+            If set to `False`, it returns a single histogram for all the
+            channels of the image. If set to `True`, it returns a list of
             histograms, one for each channel.
 
-            Default: ``True``
+            Default: `True`
         bins : 'unique', positive int or sequence of scalars, optional
             If set equal to 'unique', the bins of the histograms are centered
             on the unique values of each channel. If set equal to a positive
@@ -356,7 +355,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        vector : (``n_pixels``,) np.bool ndarray
+        vector : (`n_pixels`,) np.bool ndarray
             A vector vector of all the pixels of a BooleanImage.
 
 
@@ -675,10 +674,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
@@ -738,7 +737,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
-        All image information (landmarks) are rescaled appropriately.
+        Landmarks are rescaled appropriately.
 
         Parameters
         ----------
@@ -1078,7 +1077,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         mode : {'average', 'luminosity', 'channel'}
             'luminosity' - Calculates the luminance using the CCIR 601 formula
 
-                ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
+                `Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'`
 
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
@@ -1128,14 +1127,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     def as_PILImage(self):
         r"""
-        Return a PIL copy of the image. Scales the image by ``255`` and
-        converts to ``np.uint8``. Image must only have 1 or 3 channels and
+        Return a PIL copy of the image. Scales the image by `255` and
+        converts to `np.uint8`. Image must only have 1 or 3 channels and
         be two dimensional.
 
         Returns
         -------
-        pil_image : ``PILImage``
-            PIL copy of image as ``np.uint8``
+        pil_image : `PILImage`
+            PIL copy of image as `np.uint8`
 
         Raises
         ------
@@ -1212,3 +1211,4 @@ def _create_feature_glyph(features, vbs):
                       features[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
+

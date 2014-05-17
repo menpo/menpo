@@ -11,11 +11,11 @@ class MatplotlibRenderer(Renderer):
 
     Parameters
     ----------
-    figure_id : int or ``None``
-        A figure id or ``None``. ``None`` assumes we maintain the Matplotlib
-        state machine and use ``plt.gcf()``.
+    figure_id : int or `None`
+        A figure id or `None`. `None` assumes we maintain the Matplotlib
+        state machine and use `plt.gcf()`.
     new_figure : bool
-        If ``True``, creates a new figure to render on.
+        If `True`, creates a new figure to render on.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -25,9 +25,9 @@ class MatplotlibRenderer(Renderer):
 
     def get_figure(self):
         r"""
-        Gets the figure specified by the combination of ``self.figure_id`` and
-        ``self.new_figure``. If ``self.figure_id == None`` then ``plt.gcf()``
-        is used. ``self.figure_id`` is also set to the correct id of the figure
+        Gets the figure specified by the combination of `self.figure_id` and
+        `self.new_figure`. If `self.figure_id == None` then `plt.gcf()`
+        is used. `self.figure_id` is also set to the correct id of the figure
         if a new figure is created.
 
         Returns

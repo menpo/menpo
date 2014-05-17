@@ -9,6 +9,7 @@ Classes
 .. toctree::
    :maxdepth: 1
 
+   Viewable
    PointCloudViewer2d
    PointCloudViewer3d
    TriMeshViewer3d

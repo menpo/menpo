@@ -43,9 +43,9 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         Parameters
         ----------
         coloured : bool, optional
-            If ``True``, render the colours.
+            If `True`, render the colours.
 
-            Default: ``True``
+            Default: `True`
 
         Returns
         -------
@@ -55,7 +55,7 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         Raises
         ------
         DimensionalityError
-            If ``self.n_dims != 3``.
+            If `self.n_dims != 3`.
         """
         if coloured:
             if self.n_dims == 3:

@@ -29,7 +29,7 @@ def __adjusted_meshgrid(shape):
     shape: tuple
         Size of meshgrid, (M, N, ...). The dimensionality should not be
         swapped due to using images. Therefore, for a 2D image, the expected
-        tuple is ``(HEIGHT, WIDTH)``.
+        tuple is `(HEIGHT, WIDTH)`.
 
     Returns
     -------
@@ -59,7 +59,7 @@ def __frequency_butterworth_filter(shape, cutoff, order):
     shape : tuple
         The size of the filter (M, N, ...)
     cutoff : double
-        Cutoff frequency of the filter in the range ``[0, 0.5]``
+        Cutoff frequency of the filter in the range `[0, 0.5]`
     order : positive int
         Order of the filter. The higher it is the sharper the transition
 
@@ -163,14 +163,14 @@ def log_gabor(image, **kwargs):
         imaginary part is the result from convolution with the
         odd symmetric filter.
     bandpass : (num_scales x image.shape) ndarray
-        Bandpass images corresponding to each scale ``s``
+        Bandpass images corresponding to each scale `s`
     S: (image.shape) ndarray
         Convolved image
 
     Examples
     --------
     Return the magnitude of the convolution over the image at
-    scale ``s`` and orientation ``o``::
+    scale `s` and orientation `o`::
 
         >>> np.abs(complex_conv[s, o, :, :])
 

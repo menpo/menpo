@@ -7,7 +7,7 @@ from menpo.shape.base import Shape
 class PointCloud(Shape):
     r"""
     An N-dimensional point cloud. This is internally represented as an ndarray
-    of shape (``n_points``, ``n_dims``). This class is important for dealing
+    of shape (`n_points`, `n_dims`). This class is important for dealing
     with complex functionality such as viewing and representing metadata such
     as landmarks.
 
@@ -16,7 +16,7 @@ class PointCloud(Shape):
     Parameters
     ----------
     points : (N, D) ndarray
-        A (``n_points``, ``n_dims``) ndarray representing the points.
+        A (`n_points`, `n_dims`) ndarray representing the points.
 
     copy: bool, optional
         If False, the points will not be copied on assignment. Note that
@@ -26,6 +26,7 @@ class PointCloud(Shape):
         In general this should only be used if you know what you are doing.
 
         Default False
+
     """
 
     def __init__(self, points, copy=True):
@@ -111,7 +112,7 @@ class PointCloud(Shape):
         r"""
         Returns a flattened representation of the pointcloud.
         Note that the flattened representation is of the form
-        ``[x0, y0, x1, y1, ....., xn, yn]`` for 2D.
+        `[x0, y0, x1, y1, ....., xn, yn]` for 2D.
 
         Returns
         -------
@@ -200,7 +201,7 @@ class PointCloud(Shape):
         r"""
         Returns a distance matrix between this point cloud and another.
         By default the Euclidian distance is calculated - see
-        ``scipy.spatial.distance.cdist`` for valid kwargs to change the metric
+        `scipy.spatial.distance.cdist` for valid kwargs to change the metric
         and other properties.
 
         Parameters

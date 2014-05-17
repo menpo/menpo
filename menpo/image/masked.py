@@ -24,7 +24,7 @@ class MaskedImage(Image):
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    mask : (M, N) ``np.bool`` ndarray or :class:`BooleanImage`, optional
+    mask : (M, N) `np.bool` ndarray or :class:`BooleanImage`, optional
         A binary array representing the mask. Must be the same
         shape as the image. Only one mask is supported for an image (so the
         mask is applied to every channel equally).
@@ -53,7 +53,6 @@ class MaskedImage(Image):
                 if copy:
                     mask = deepcopy(mask)
                 mask_image = mask
-
             if mask_image.shape == self.shape:
                 self.mask = mask_image
             else:
@@ -141,9 +140,9 @@ class MaskedImage(Image):
     @property
     def masked_pixels(self):
         r"""
-        Get the pixels covered by the ``True`` values in the mask.
+        Get the pixels covered by the `True` values in the mask.
 
-        :type: (``mask.n_true``, ``n_channels``) ndarray
+        :type: (`mask.n_true`, `n_channels`) ndarray
         """
         return self.pixels[self.mask.mask]
 
@@ -169,15 +168,15 @@ class MaskedImage(Image):
             ========== ====================================
             Value      Return shape
             ========== ====================================
-            ``True``   (``mask.n_true``,``n_channels``)
-            ``False``  (``mask.n_true`` x ``n_channels``,)
+            `True`   (`mask.n_true`,`n_channels`)
+            `False`  (`mask.n_true` x `n_channels`,)
             ========== ====================================
 
-            Default: ``False``
+            Default: `False`
 
         Returns
         -------
-        vectorized_image : (shape given by ``keep_channels``) ndarray
+        vectorized_image : (shape given by `keep_channels`) ndarray
             Vectorized image
         """
         if keep_channels:
@@ -191,7 +190,7 @@ class MaskedImage(Image):
         the vector to the correct pixels and channels. Note that the only
         region of the image that will be filled is the masked region.
 
-        The ``n_channels`` argument is useful for when we want to add an extra
+        The `n_channels` argument is useful for when we want to add an extra
         channel to an image but maintain the shape. For example, when
         calculating the gradient.
 
@@ -199,7 +198,7 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        flattened : (``n_pixels``,)
+        flattened : (`n_pixels`,)
             A flattened vector of all pixels and channels of an image.
         n_channels : int, optional
             If given, will assume that flattened is the same
@@ -235,7 +234,7 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        vector : (``n_pixels``,)
+        vector : (`n_pixels`,)
             A flattened vector of all pixels and channels of an image.
         """
         self.masked_pixels = vector.reshape((-1, self.n_channels))
@@ -311,7 +310,7 @@ class MaskedImage(Image):
 
     def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
         r"""
-        Crop this image to be bounded just the ``True`` values of it's mask.
+        Crop this image to be bounded just the `True` values of it's mask.
 
         Parameters
         ----------
@@ -322,17 +321,17 @@ class MaskedImage(Image):
             Default: 0
 
         constrain_to_boundary: boolean, optional
-            If ``True`` the crop will be snapped to not go beyond this images
-            boundary. If ``False``, a ImageBoundaryError will be raised if an
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, a ImageBoundaryError will be raised if an
             attempt is made to go beyond the edge of the image. Note that is
             only possible if boundary != 0.
 
-            Default: ``True``
+            Default: `True`
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is ``False``, and an attempt is
+            Raised if constrain_to_boundary is `False`, and an attempt is
             made to crop the image in a way that violates the image bounds.
         """
         min_indices, max_indices = self.mask.bounds_true(
@@ -356,22 +355,22 @@ class MaskedImage(Image):
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         warp_mask : bool, optional
-            If ``True``, sample the ``image.mask`` at all ``template_image``
+            If `True`, sample the `image.mask` at all `template_image`
             points, setting the returned image mask to the sampled value
-            **within the masked region of ``template_image``**.
+            **within the masked region of `template_image`**.
 
-            Default: ``False``
+            Default: `False`
 
             .. note::
 
-                This is most commonly set ``True`` in combination with an all
-                True ``template_mask``, as this is then a warp of the image
-                and it's full mask. If ``template_mask``
+                This is most commonly set `True` in combination with an all
+                True `template_mask`, as this is then a warp of the image
+                and it's full mask. If `template_mask`
                 has False mask values, only the True region of the mask
                 will be updated, which is rarely the desired behavior,
                 but is possible for completion.
@@ -504,8 +503,8 @@ class MaskedImage(Image):
         Parameters
         ----------
         nullify_values_at_mask_boundaries : bool, optional
-            If ``True`` a one pixel boundary is set to 0 around the edge of
-            the ``True`` mask region. This is useful in situations where
+            If `True` a one pixel boundary is set to 0 around the edge of
+            the `True` mask region. This is useful in situations where
             there is absent data in the image which will cause erroneous
             gradient settings.
 
@@ -513,10 +512,10 @@ class MaskedImage(Image):
 
         Returns
         -------
-        gradient : :class:``MaskedImage``
+        gradient : :class:`MaskedImage`
             The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length ``2``.
-            The length of a 2D, 3-channel image, will have length ``6``.
+            gradient of a 2D, single channel image, will have length `2`.
+            The length of a 2D, 3-channel image, will have length `6`.
         """
         grad_image_pixels = features.gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,

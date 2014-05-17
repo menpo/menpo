@@ -169,7 +169,7 @@ class GlobalPDM(PDM):
     @property
     def n_global_parameters(self):
         r"""
-        The number of parameters in the ``global_transform``
+        The number of parameters in the `global_transform`
 
         :type: int
         """
@@ -180,7 +180,7 @@ class GlobalPDM(PDM):
         r"""
         The parameters for the global transform.
 
-        :type: (``n_global_parameters``,) ndarray
+        :type: (`n_global_parameters`,) ndarray
         """
         return self.global_transform.as_vector()
 
@@ -240,7 +240,7 @@ class GlobalPDM(PDM):
 
         Returns
         -------
-        params : (``n_parameters``,) ndarray
+        params : (`n_parameters`,) ndarray
             The vector of parameters
         """
         return np.hstack([self.global_parameters, self.weights])
@@ -304,6 +304,11 @@ class OrthoPDM(GlobalPDM):
 
     @property
     def global_parameters(self):
+        r"""
+        The parameters for the global transform.
+
+        :type: (`n_global_parameters`,) ndarray
+        """
         return self.similarity_weights
 
     def _update_global_transform(self, target):
