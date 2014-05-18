@@ -1042,7 +1042,6 @@ class SDAAMTrainer(SDTrainer):
         return SDAAMFitter(self.aam, regressors)
 
 
-#TODO: Finish me
 class SDCLMTrainer(SDTrainer):
     r"""
     (self, clm, regression_type=mlr, regression_features=weights,
@@ -1170,7 +1169,6 @@ class SDCLMTrainer(SDTrainer):
         """
         return self.clm.reference_shape
 
-    #TODO: Finish me
     def _set_regressor_trainer(self, level):
         r"""
         Function that sets the regression class to be the
