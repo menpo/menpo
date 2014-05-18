@@ -152,7 +152,7 @@ class CLMBuilder(DeformableModelBuilder):
     def __init__(self, classifier_type=linear_svm_lr, patch_shape=(5, 5),
                  feature_type=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
-                 pyramid_on_features=True, max_shape_components=None,
+                 pyramid_on_features=False, max_shape_components=None,
                  boundary=3, interpolator='scipy'):
         # check parameters
         self.check_n_levels(n_levels)

@@ -70,12 +70,10 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
 
     Parameters
     ----------
-    source: :class:`pybug.shape.PointCloud`
+    source: :class:`menpo.shape.PointCloud`
         The source pointcloud instance used in the alignment
-
-    target: :class:`pybug.shape.PointCloud`
+    target: :class:`menpo.shape.PointCloud`
         The target pointcloud instance used in the alignment
-
     noise_std: float
         The standard deviation of the white noise
 
@@ -88,7 +86,7 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
 
     Returns
     -------
-    noisy_transform : :class: `pybug.transform.Similarity`
+    noisy_transform : :class: `menpo.transform.Similarity`
         The noisy Similarity Transform
     """
     transform = AlignmentSimilarity(source, target, rotation=rotation)
@@ -107,9 +105,8 @@ def align_shape_with_bb(shape, bounding_box):
 
     Parameters
     ----------
-    shape: :class:`pybug.shape.PointCloud`
+    shape: :class:`menpo.shape.PointCloud`
         The shape to be aligned.
-
     bounding_box: (2, 2) ndarray
         The bounding box specified as:
 
@@ -117,7 +114,7 @@ def align_shape_with_bb(shape, bounding_box):
 
     Returns
     -------
-    transform : :class: `pybug.transform.Similarity`
+    transform : :class: `menpo.transform.Similarity`
         The align transform
     """
     shape_box = PointCloud(shape.bounds())

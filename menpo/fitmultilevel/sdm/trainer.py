@@ -14,8 +14,7 @@ from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 
-from .base import (SDMFitter, SDAAMFitter,
-                   SDCLMFitter)
+from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
 
 
 # TODO: document me
@@ -26,21 +25,27 @@ class SDTrainer(object):
 
     def __init__(self, regression_type=mlr, regression_features=None,
                  feature_type=None, n_levels=3, downscale=2,
-                 scaled_levels=True, noise_std=0.04, rotation=False,
+                 scaled_shape_models=True, pyramid_on_features=True,
+                 noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy', **kwargs):
 
-        # check regression feature
+        # check parameters
+        self.check_n_levels(n_levels)
+        self.check_downscale(downscale)
+        feature_type = self.check_feature_type(feature_type, n_levels,
+                                               pyramid_on_features)
         regression_features = self.check_feature_type(regression_features,
-                                                      n_levels)
-        # check feature type
-        feature_type = self.check_feature_type(feature_type, n_levels)
+                                                      n_levels,
+                                                      pyramid_on_features)
 
+        # store parameters
         self.regression_type = regression_type
         self.regression_features = regression_features
         self.feature_type = feature_type
         self.n_levels = n_levels
         self.downscale = downscale
-        self.scaled_levels = scaled_levels
+        self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.noise_std = noise_std
         self.rotation = rotation
         self.n_perturbations = n_perturbations
@@ -145,25 +150,61 @@ class SDTrainer(object):
     #TODO: repeated code from Builder. Should builder and Trainer have a
     # common ancestor???
     @classmethod
-    def check_feature_type(cls, feature_type, n_levels):
-        feature_type_str_error = ("feature_type must be a str or a "
-                                  "function/closure or a list of "
-                                  "those containing 1 or {} "
-                                  "elements").format(n_levels)
-        if not isinstance(feature_type, list):
-            feature_type_list = [feature_type for _ in range(n_levels)]
-        elif len(feature_type) is 1:
-            feature_type_list = [feature_type[0] for _ in range(n_levels)]
-        elif len(feature_type) is n_levels:
-            feature_type_list = feature_type
+    def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
+        r"""
+        Checks the feature type per level.
+        If pyramid_on_features is False, it must be a string or a
+        function/closure or a list of those containing 1 or {n_levels}
+        elements.
+        If pyramid_on_features is True, it must be a string or a
+        function/closure or a list of 1 of those.
+        """
+        if pyramid_on_features is False:
+            feature_type_str_error = ("feature_type must be a str or a "
+                                      "function/closure or a list of "
+                                      "those containing 1 or {} "
+                                      "elements").format(n_levels)
+            if not isinstance(feature_type, list):
+                feature_type_list = [feature_type] * n_levels
+            elif len(feature_type) is 1:
+                feature_type_list = [feature_type[0]] * n_levels
+            elif len(feature_type) is n_levels:
+                feature_type_list = feature_type
+            else:
+                raise ValueError(feature_type_str_error)
         else:
-            raise ValueError(feature_type_str_error)
+            feature_type_str_error = ("pyramid_on_features is enabled so "
+                                      "feature_type must be a str or a "
+                                      "function/closure or a list "
+                                      "containing 1 of those")
+            if not isinstance(feature_type, list):
+                feature_type_list = [feature_type]
+            elif len(feature_type) is 1:
+                feature_type_list = feature_type
+            else:
+                raise ValueError(feature_type_str_error)
         for ft in feature_type_list:
-            if (ft is not None or not isinstance(ft, str)
-               or not hasattr(ft, '__call__')):
-                ValueError(feature_type_str_error)
-
+            if ft is not None:
+                if not isinstance(ft, str):
+                    if not hasattr(ft, '__call__'):
+                        raise ValueError(feature_type_str_error)
         return feature_type_list
+
+    @classmethod
+    def check_n_levels(cls, n_levels):
+        r"""
+        Checks the number of pyramid levels that must be int > 0.
+        """
+        if not isinstance(n_levels, int) or n_levels < 1:
+            raise ValueError("n_levels must be int > 0")
+
+    @classmethod
+    def check_downscale(cls, downscale):
+        r"""
+        Checks the downscale factor of the pyramid that must be >= 1.
+        """
+        if downscale < 1:
+            raise ValueError("downscale must be >= 1")
 
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
