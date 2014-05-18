@@ -70,8 +70,9 @@ def import_bounding_boxes(boxes_path):
     bboxes = {}
     for bb in bboxes_mat['bounding_boxes'][0, :]:
         fname, detector_bb, gt_bb = bb[0, 0]
-        bboxes[str(fname[0])] = BoundingBox(detector_bb.reshape([2, 2]),
-                                            gt_bb.reshape([2, 2]))
+        bboxes[str(fname[0])] = BoundingBox(
+            detector_bb.reshape([2, 2])[:, ::-1],
+            gt_bb.reshape([2, 2])[:, ::-1])
     return bboxes
 
 
