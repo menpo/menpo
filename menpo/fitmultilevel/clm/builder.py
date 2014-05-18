@@ -2,7 +2,6 @@ from __future__ import division, print_function
 import numpy as np
 
 from menpo.image import Image
-from menpo.transform import Scale
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
