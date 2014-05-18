@@ -204,10 +204,9 @@ class GradientDescentCLMFitter(CLMFitter):
                 for sm, n in zip(self.clm.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be an integer or a float, '
-                                 'an integer or float list containing 1 '
-                                 'or {} elements or else '
-                                 'None'.format(self.clm.n_levels))
+                raise ValueError('n_shape can be an integer or a float or None'
+                                 'or a list containing 1 or {} of '
+                                 'those'.format(self.clm.n_levels))
 
         self._fitters = []
         for j, (sm, clf) in enumerate(zip(self.clm.shape_models,

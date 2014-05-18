@@ -267,6 +267,15 @@ class LucasKanadeAAMFitter(AAMFitter):
             captured by the components.
 
             Default: None
+
+        Raises
+        -------
+        ValueError
+            n_shape can be an integer or a float or None or a list containing 1
+            or {n_levels} of those
+        ValueError
+            n_appearance can be an integer or a float or None or a list
+            containing 1 or {n_levels} of those
         """
         # check n_shape parameter
         if n_shape is not None:
@@ -280,10 +289,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be an integer or a float, '
-                                 'an integer or float list containing 1 '
-                                 'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                raise ValueError('n_shape can be an integer or a float or None'
+                                 'or a list containing 1 or {} of '
+                                 'those'.format(self.aam.n_levels))
 
         # check n_appearance parameter
         if n_appearance is not None:
@@ -297,10 +305,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
-                raise ValueError('n_appearance can be an integer or a float, '
-                                 'an integer or float list containing 1 '
-                                 'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                raise ValueError('n_appearance can be an integer or a float '
+                                 'or None or a list containing 1 or {} of '
+                                 'those'.format(self.aam.n_levels))
 
         self._fitters = []
         for j, (am, sm) in enumerate(zip(self.aam.appearance_models,
