@@ -5,6 +5,7 @@ import numpy as np
 from menpo.transform import Scale, AlignmentSimilarity
 from menpo.model.pdm import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
+from menpo.visualize import print_dynamic, progress_bar_str
 
 from menpo.fit.regression.trainer import (
     NonParametricRegressorTrainer, ParametricRegressorTrainer,
@@ -51,40 +52,33 @@ class SDTrainer(object):
         self.n_perturbations = n_perturbations
         self.interpolator = interpolator
 
-    def train(self, images, group=None, label='all', **kwargs):
+    def train(self, images, group=None, label='all', verbose=False, **kwargs):
         r"""
         """
-        print('- Computing reference shape')
+        if verbose:
+            print_dynamic('- Computing reference shape')
         self.reference_shape = self._compute_reference_shape(images, group,
                                                              label)
 
-        print('- Normalizing object size')
+        # normalize the scaling of all images wrt the reference_shape size
         self._rescale_reference_shape()
-        images = [i.rescale_to_reference_shape(self.reference_shape,
-                                               group=group, label=label,
-                                               interpolator=self.interpolator)
-                  for i in images]
+        normalized_images = self._normalization_wrt_reference_shape(
+            images, group, label, self.reference_shape, self.interpolator,
+            verbose=verbose)
 
-        print('- Generating multilevel scale space')
-        if self.scaled_levels:
-            # Gaussian pyramid
-            generator = [i.gaussian_pyramid(n_levels=self.n_levels,
-                                            downscale=self.downscale)
-                         for i in images]
-        else:
-            # Smoothing pyramid
-            generator = [i.smoothing_pyramid(n_levels=self.n_levels,
-                                             downscale=self.downscale)
-                         for i in images]
+        # create pyramid
+        generators = self._create_pyramid(normalized_images, self.n_levels,
+                                          self.downscale,
+                                          self.pyramid_on_features,
+                                          self.feature_type, verbose=verbose)
 
-        print('- Generating multilevel feature space')
-        images = []
-        for j in np.arange(self.n_levels):
-            images.append([compute_features(g.next(), self.feature_type[j])
-                           for g in generator])
+        # get feature images of all levels
+        images = self._apply_pyramid_on_images(
+            generators, self.n_levels, self.pyramid_on_features,
+            self.feature_type, verbose=verbose)
         images.reverse()
 
-        print('- Extracting ground truth shapes')
+        # extract groundtruth shapes
         gt_shapes = [[i.landmarks[group][label].lms for i in img]
                      for img in images]
 
@@ -146,6 +140,183 @@ class SDTrainer(object):
             print(' - Mean error = {}'.format(mean_error))
 
         return self._build_supervised_descent_fitter(regressors)
+
+    @classmethod
+    def _normalization_wrt_reference_shape(cls, images, group, label,
+                                           reference_shape, interpolator,
+                                           verbose=False):
+        r"""
+        Function that normalizes the images sizes with respect to the reference
+        shape (mean shape) scaling. This step is essential before building a
+        deformable model.
+
+        The normalization includes:
+        1) Computation of the reference shape as the mean shape of the images'
+           landmarks.
+        2) Scaling of the reference shape using the normalization_diagonal.
+        3) Rescaling of all the images so that their shape's scale is in
+           correspondence with the reference shape's scale.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images from which to build the model.
+        group : string
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+        label: string
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+        reference_shape: Pointcloud
+            The reference shape that is used to resize all training images to
+            a consistent object size.
+        interpolator: string
+            The interpolator that should be used to perform the warps.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        normalized_images: list of MaskedImage objects
+            A list with the normalized images.
+        """
+        normalized_images = []
+        for c, i in enumerate(images):
+            if verbose:
+                print_dynamic('- Normalizing images size: {}'.format(
+                    progress_bar_str((c + 1.) / len(images),
+                                     show_bar=False)))
+            normalized_images.append(i.rescale_to_reference_shape(
+                reference_shape, group=group, label=label,
+                interpolator=interpolator))
+
+        if verbose:
+            print_dynamic('- Normalizing images size: Done\n')
+        return normalized_images
+
+    @classmethod
+    def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
+                        feature_type, verbose=False):
+        r"""
+        Function that creates a generator function for Gaussian pyramid. The
+        pyramid can be created either on the feature space or the original
+        (intensities) space.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.Image`
+            The set of landmarked images.
+        n_levels: int
+            The number of multi-resolution pyramidal levels to be used.
+        downscale: float
+            The downscale factor that will be used to create the different
+            pyramidal levels.
+        pyramid_on_features: boolean
+            If True, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+            If False, the pyramid is created on the original (intensities)
+            space.
+        feature_type: list of size 1 with str or function/closure or None
+            The feature type to be used in case pyramid_on_features is enabled.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        generator: function
+            The generator function of the Gaussian pyramid.
+        """
+        if pyramid_on_features:
+            # compute features at highest level
+            feature_images = []
+            for c, i in enumerate(images):
+                if verbose:
+                    print_dynamic('- Computing feature space: {}'.format(
+                        progress_bar_str((c + 1.) / len(images),
+                                         show_bar=False)))
+                feature_images.append(compute_features(i, feature_type[0]))
+            if verbose:
+                print_dynamic('- Computing feature space: Done\n')
+
+            # create pyramid on feature_images
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
+                         for i in feature_images]
+        else:
+            # create pyramid on intensities images
+            # features will be computed per level
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
+                         for i in images]
+        return generator
+
+    @classmethod
+    def _apply_pyramid_on_images(cls, generators, n_levels,
+                                 pyramid_on_features, feature_type,
+                                 verbose=False):
+        r"""
+        Function that applies a pyramid genertors on images.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images.
+        generators: list of generator functions
+            The generator function of the Gaussian pyramid for all images.
+        n_levels: int
+            The number of multi-resolution pyramidal levels to be used.
+        pyramid_on_features: boolean
+            If True, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+            If False, the pyramid is created on the original (intensities)
+            space.
+        feature_type: list of size 1 with str or function/closure or None
+            The feature type to be used in case pyramid_on_features is enabled.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        feature_images: list of lists of :class:`menpo.image.MaskedImage`
+            The set of pyramidal images.
+        """
+        feature_images = []
+        for j in range(n_levels):
+            # since generators are built from highest to lowest level, the
+            # parameters in form of list need to use a reversed index
+            rj = n_levels - j - 1
+
+            if verbose:
+                level_str = '- Pyramid: '
+                if n_levels > 1:
+                    level_str = '- Pyramid: [Level {}] - '.format(j + 1)
+
+            if pyramid_on_features:
+                # features are already computed, so just call generator
+                for c, g in enumerate(generators):
+                    if verbose:
+                        print_dynamic('{}Rescaling feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generators),
+                                             show_bar=False)))
+                    feature_images.append([g.next()])
+            else:
+                # extract features of images returned from generator
+                for c, g in enumerate(generators):
+                    if verbose:
+                        print_dynamic('{}Computing feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generators),
+                                             show_bar=False)))
+                    feature_images.append([compute_features(
+                        g.next(), feature_type[rj])])
+        return feature_images
 
     #TODO: repeated code from Builder. Should builder and Trainer have a
     # common ancestor???
@@ -209,6 +380,23 @@ class SDTrainer(object):
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
         r"""
+        Function that computes the reference shape, given a set of images.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images.
+        group : string
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+        label: string
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+        Returns
+        -------
+        reference_shape: Pointcloud
+            The reference shape computed based on .
         """
         pass
 

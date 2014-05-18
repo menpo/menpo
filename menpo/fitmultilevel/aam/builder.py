@@ -223,7 +223,7 @@ class AAMBuilder(DeformableModelBuilder):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.Image`
+        images: list of :class:`menpo.image.MaskedImage`
             The set of landmarked images from which to build the AAM.
         group : string, Optional
             The key of the landmark set that should be used. If None,
