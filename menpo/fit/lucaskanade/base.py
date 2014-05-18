@@ -32,9 +32,9 @@ class LucasKanade(Fitter):
         sub-pixel coordinates of the input image in the reference frame.
     warp : function
         A function that takes 3 arguments,
-        ``warp(`` :class:`image <pybug.image.base.Image>`,
+        `warp(` :class:`image <pybug.image.base.Image>`,
         :class:`template <pybug.image.base.Image>`,
-        :class:`transform <pybug.transform.base.AlignableTransform>` ``)``
+        :class:`transform <pybug.transform.base.AlignableTransform>` `)`
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
@@ -51,7 +51,7 @@ class LucasKanade(Fitter):
         Default: 0.001
     eps : float, optional
         The convergence value. When calculating the level of convergence, if
-        the norm of the delta parameter updates is less than ``eps``, the
+        the norm of the delta parameter updates is less than `eps`, the
         algorithm is considered to have converged.
 
         Default: 1**-10

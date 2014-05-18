@@ -62,7 +62,7 @@ class BooleanImage(Image):
         ----------
         shape : tuple or list
             The shape of the image. Any floating point values are rounded
-            according to the ``round`` kwarg.
+            according to the `round` kwarg.
 
         fill : True or False, optional
             The mask value to be set everywhere
@@ -102,7 +102,7 @@ class BooleanImage(Image):
     @property
     def n_true(self):
         r"""
-        The number of ``True`` values in the mask
+        The number of `True` values in the mask
 
         :type: int
         """
@@ -111,16 +111,25 @@ class BooleanImage(Image):
     @property
     def n_false(self):
         r"""
-        The number of ``False`` values in the mask
+        The number of `False` values in the mask
 
         :type: int
         """
         return self.n_pixels - self.n_true
 
     @property
+    def all_true(self):
+        r"""
+        True iff every element of the mask is True.
+
+        :type: bool
+        """
+        return np.all(self.pixels)
+
+    @property
     def proportion_true(self):
         r"""
-        The proportion of the mask which is ``True``
+        The proportion of the mask which is `True`
 
         :type: double
         """
@@ -129,7 +138,7 @@ class BooleanImage(Image):
     @property
     def proportion_false(self):
         r"""
-        The proportion of the mask which is ``False``
+        The proportion of the mask which is `False`
 
         :type: double
         """
@@ -140,17 +149,20 @@ class BooleanImage(Image):
         r"""
         The indices of pixels that are true.
 
-        :type: (``n_dims``, ``n_true``) ndarray
+        :type: (`n_dims`, `n_true`) ndarray
         """
-        # Ignore the channel axis
-        return np.vstack(np.nonzero(self.pixels[..., 0])).T
+        if self.all_true:
+            return self.all_indices
+        else:
+            # Ignore the channel axis
+            return np.vstack(np.nonzero(self.pixels[..., 0])).T
 
     @property
     def false_indices(self):
         r"""
         The indices of pixels that are false.
 
-        :type: (``n_dims``, ``n_false``) ndarray
+        :type: (`n_dims`, `n_false`) ndarray
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(~self.pixels[..., 0])).T
@@ -161,7 +173,7 @@ class BooleanImage(Image):
         Indices into all pixels of the mask, as consistent with
         true_indices and false_indices
 
-        :type: (``n_dims``, ``n_pixels``) ndarray
+        :type: (`n_dims`, `n_pixels`) ndarray
         """
         return np.indices(self.shape).reshape([self.n_dims, -1]).T
 
@@ -182,7 +194,7 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        flattened : (``n_pixels``,) np.bool ndarray
+        flattened : (`n_pixels`,) np.bool ndarray
             A flattened vector of all the pixels of a BooleanImage.
 
         Returns
@@ -306,10 +318,10 @@ class BooleanImage(Image):
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 

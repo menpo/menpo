@@ -53,10 +53,10 @@ class Vectorizable(object):
         Build a new instance of the object from it's vectorized state.
 
 
-        ``self`` is used to fill out the missing state required to
+        `self` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
         is the default implementation, which is which is a
-        ``deepcopy`` of the object followed by a call to
+        `deepcopy` of the object followed by a call to
         :meth:`from_vector_inplace()`. This method can be overridden for a
         performance benefit if desired.
 
@@ -77,9 +77,10 @@ class Vectorizable(object):
 
 class Targetable(object):
     r"""
-    Interface for objects that can produce a 'target' PointCloud - which
-    could for instance be the result of an alignment or a generation of a
-    PointCloud instance from a shape model.
+    Interface for objects that can produce a *target* :map:`PointCloud`.
+
+    This could for instance be the result of an alignment or a generation of a
+    :map:`PointCloud` instance from a shape model.
 
     Implementations must define sensible behavior for:
 
