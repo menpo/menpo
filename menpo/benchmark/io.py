@@ -111,6 +111,6 @@ def bounding_boxes_for_images(bbox_path, images):
     bboxes_dict = import_bounding_boxes(bbox_path)
     bboxes_list = []
     for im in images:
-        fname = im.ioinfo.filename + im.info.extension
-        bboxes_list.append(bboxes_dict[fname].detected)
+        fname = im.ioinfo.filename + im.ioinfo.extension
+        bboxes_list.append(bboxes_dict[fname].detector)
     return bboxes_list

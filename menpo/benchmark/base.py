@@ -10,9 +10,6 @@ from menpo.landmark import labeller
 from menpo.visualize.base import GraphPlotter
 
 
-
-
-
 def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
                       bounding_boxes=None, perturb_options=None, verbose=False):
     r"""
