@@ -141,6 +141,11 @@ class LucasKanade(Fitter):
         return ParametricFittingResult(image, self, parameters=[parameters],
                                        gt_shape=gt_shape)
 
+    def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
+        self.transform.from_vector_inplace(initial_parameters)
+        return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
+                          **kwargs)
+
     def get_parameters(self, shape):
         self.transform.set_target(shape)
         return self.transform.as_vector()
