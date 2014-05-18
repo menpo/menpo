@@ -20,7 +20,7 @@ from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
 
 class SDTrainer(object):
     r"""
-    Class that trains a Supervised Descent Regressor.
+    Mixin for Supervised Descent Trainers.
 
     Parameters
     ----------
@@ -87,14 +87,6 @@ class SDTrainer(object):
             (downscale ** k) for k in range(n_levels)
 
         Default: 2
-    scaled_shape_models: boolean, Optional
-        If True, the reference frames will be the mean shapes of each pyramid
-        level, so the shape models will be scaled.
-        If False, the reference frames of all levels will be the mean shape of
-        the highest level, so the shape models will not be scaled; they will
-        have the same size.
-
-        Default: True
     pyramid_on_features: boolean, Optional
         If True, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
@@ -137,19 +129,18 @@ class SDTrainer(object):
 
     def __init__(self, regression_type=mlr, regression_features=None,
                  feature_type=None, n_levels=3, downscale=1.2,
-                 scaled_shape_models=True, pyramid_on_features=True,
-                 noise_std=0.04, rotation=False,
+                 pyramid_on_features=True, noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy', **kwargs):
 
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
+        self.check_n_permutations(n_perturbations)
         feature_type = self.check_feature_type(feature_type, n_levels,
                                                pyramid_on_features)
-        #regression_features = self.check_feature_type(regression_features,
-        #                                              n_levels,
-        #                                              pyramid_on_features)
-        self.check_n_permutations(n_perturbations)
+        # TODO: this should use check_feature_type
+        regression_features = self.check_regression_features(
+            regression_features, n_levels)
 
         # store parameters
         self.regression_type = regression_type
@@ -157,7 +148,6 @@ class SDTrainer(object):
         self.feature_type = feature_type
         self.n_levels = n_levels
         self.downscale = downscale
-        self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
         self.noise_std = noise_std
         self.rotation = rotation
@@ -282,8 +272,8 @@ class SDTrainer(object):
                                            for fitting_sublist in fittings
                                            for f in fitting_sublist]))
             if verbose:
-                print('- Fitting shapes: Done\n'
-                      '  - Mean error is {0:.6f}.'.format(mean_error))
+                print_dynamic('- Fitting shapes: Done\n'
+                              '  - Mean error is {0:.6f}.'.format(mean_error))
 
         return self._build_supervised_descent_fitter(regressors)
 
@@ -512,6 +502,26 @@ class SDTrainer(object):
         return feature_type_list
 
     @classmethod
+    def check_regression_features(cls, feature_type, n_levels):
+        feature_type_str_error = ("regression_features must be a str or a "
+                                  "function/closure or a list of "
+                                  "those containing 1 or {} "
+                                  "elements").format(n_levels)
+        if not isinstance(feature_type, list):
+            feature_type_list = [feature_type for _ in range(n_levels)]
+        elif len(feature_type) is 1:
+            feature_type_list = [feature_type[0] for _ in range(n_levels)]
+        elif len(feature_type) is n_levels:
+            feature_type_list = feature_type
+        else:
+            raise ValueError(feature_type_str_error)
+        for ft in feature_type_list:
+            if (ft is not None or not isinstance(ft, str)
+               or not hasattr(ft, '__call__')):
+                ValueError(feature_type_str_error)
+        return feature_type_list
+
+    @classmethod
     def check_n_levels(cls, n_levels):
         r"""
         Checks the number of pyramid levels that must be int > 0.
@@ -575,6 +585,18 @@ class SDTrainer(object):
 
     @abc.abstractmethod
     def _build_supervised_descent_fitter(self, regressors):
+        r"""
+        Builds an SDM fitter object.
+
+        Parameters
+        ----------
+        regressors: :class: menpo.fit.regression.RegressorTrainer
+
+        Returns
+        -------
+        fitter: :class: menpo.fitmultilevel.sdm.base
+            The SDM fitter object.
+        """
         pass
 
 
@@ -651,14 +673,6 @@ class SDMTrainer(SDTrainer):
             (downscale ** k) for k in range(n_levels)
 
         Default: 2
-    scaled_shape_models: boolean, Optional
-        If True, the reference frames will be the mean shapes of each pyramid
-        level, so the shape models will be scaled.
-        If False, the reference frames of all levels will be the mean shape of
-        the highest level, so the shape models will not be scaled; they will
-        have the same size.
-
-        Default: True
     pyramid_on_features: boolean, Optional
         If True, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
@@ -702,20 +716,19 @@ class SDMTrainer(SDTrainer):
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
                  patch_shape=(16, 16), feature_type=None, n_levels=3,
-                 downscale=1.5, scaled_shape_models=True,
-                 pyramid_on_features=False, noise_std=0.04, rotation=False,
-                 n_perturbations=10, normalization_diagonal=None,
-                 interpolator='scipy'):
+                 downscale=1.5, pyramid_on_features=False, noise_std=0.04,
+                 rotation=False, n_perturbations=10,
+                 normalization_diagonal=None, interpolator='scipy'):
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=feature_type, n_levels=n_levels,
-            downscale=downscale, scaled_shape_models=scaled_shape_models,
-            pyramid_on_features=pyramid_on_features,
+            downscale=downscale, pyramid_on_features=pyramid_on_features,
             noise_std=noise_std, rotation=rotation,
             n_perturbations=n_perturbations, interpolator=interpolator)
         self.patch_shape = patch_shape
         self.normalization_diagonal = normalization_diagonal
+        self.pyramid_on_features = pyramid_on_features
 
     def _compute_reference_shape(self, images, group, label):
         r"""
@@ -779,10 +792,15 @@ class SDMTrainer(SDTrainer):
         Parameters
         ----------
         regressors: :class: menpo.fit.regression.RegressorTrainer
+
+        Returns
+        -------
+        fitter: :class: menpo.fitmultilevel.sdm.base.SDMFitter
+            The SDM fitter object.
         """
-        return SDMFitter(
-            regressors, self.feature_type, self.reference_shape,
-            self.downscale, self.scaled_levels, self.interpolator)
+        return SDMFitter(regressors, self.feature_type, self.reference_shape,
+                         self.downscale, self.pyramid_on_features,
+                         self.interpolator)
 
 
 #TODO: Document me

@@ -57,13 +57,14 @@ class SDMFitter(SDFitter):
         The interpolator that was used during training.
     """
     def __init__(self, regressors, feature_type, reference_shape, downscale,
-                 scaled_levels, interpolator):
+                 pyramid_on_features, interpolator):
         self._fitters = regressors
         self._feature_type = feature_type
         self._reference_shape = reference_shape
         self._downscale = downscale
-        self._scaled_levels = scaled_levels
+        self._scaled_levels = True
         self._interpolator = interpolator
+        self._pyramid_on_features = pyramid_on_features
 
 
     @property
@@ -87,8 +88,8 @@ class SDMFitter(SDFitter):
         return self._downscale
 
     @property
-    def scaled_levels(self):
-        return self._scaled_levels
+    def pyramid_on_features(self):
+        return self._pyramid_on_features
 
     @property
     def interpolator(self):
