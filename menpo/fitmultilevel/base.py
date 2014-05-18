@@ -80,6 +80,10 @@ class MultilevelFitter(Fitter):
             pyramidal level.
 
             Default: 50
+        gt_shape: PointCloud
+            The groundtruth shape of the image.
+
+            Default: None
         error_type: 'me_norm', 'me' or 'rmse', optional.
             Specifies the way in which the error between the fitted and
             ground truth shapes is to be computed.
@@ -99,9 +103,8 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        FittingList: :class:`menpo.aam.fitting.FittingList`
-            A fitting list object containing the fitting objects associated
-            to each run.
+        FittingList: :class:`menpo.fitmultilevel.fittingresult`
+            A fitting result object.
         """
         # copy image
         image = deepcopy(image)
