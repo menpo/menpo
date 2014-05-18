@@ -95,7 +95,7 @@ class LandmarkManager(Transformable, Viewable):
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
-                None, None, value,
+                self._target, group_label, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
             # TODO replace with copy function
