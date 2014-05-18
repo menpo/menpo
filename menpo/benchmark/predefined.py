@@ -322,7 +322,7 @@ def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
                             'trilist': ibug_68_trimesh,
                             'normalization_diagonal': None,
                             'n_levels': 3,
-                            'downscale': 2,
+                            'downscale': 1.1,
                             'scaled_shape_models': True,
                             'pyramid_on_features': True,
                             'max_shape_components': 25,
@@ -442,7 +442,7 @@ def clm_params_combinations(training_db_path, training_db_ext, fitting_db_path,
     for i in range(n_experiments):
         if verbose:
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
-            print("- classifier_type: {}\npatch_shape: {}\n"
+            print("- classifier_type: {}\n- patch_shape: {}\n"
                   "- feature_type: {}\n- scaled_shape_models: {}\n"
                   "- pyramid_on_features: {}\n- n_shape: {}\n"
                   "- noise_std: {}\n- rotation: {}".format(
