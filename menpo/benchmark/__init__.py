@@ -1,4 +1,4 @@
-from .predefined import (aam_fastest_alternating,
-                         aam_best_performance_alternating,
-                         aam_params_combinations, clm_params_combinations,
-                         clm_basic)
+from .predefined import (aam_fastest_alternating_noise,
+                         aam_best_performance_alternating_noise,
+                         aam_params_combinations_noise,
+                         clm_params_combinations_noise, clm_basic_noise)

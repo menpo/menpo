@@ -13,9 +13,9 @@ from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
                    convert_fitting_results_to_ced, plot_fitting_curves)
 
 
-def aam_fastest_alternating(training_db_path, training_db_ext, fitting_db_path,
-                            fitting_db_ext, feature_type='igo', noise_std=0.04,
-                            verbose=False, plot=False):
+def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
+                                  feature_type='igo', noise_std=0.04,
+                                  verbose=False, plot=False):
     # check feature
     if not isinstance(feature_type, str):
         if not hasattr(feature_type, '__call__'):
@@ -57,13 +57,13 @@ def aam_fastest_alternating(training_db_path, training_db_ext, fitting_db_path,
     initialization_options['noise_std'] = noise_std
 
     # run experiment
-    training_images = load_database(training_db_path, training_db_ext,
+    training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
     aam = aam_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+    fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    verbose=verbose)
     fitting_results = aam_fit_benchmark(fitting_images, aam,
@@ -92,10 +92,9 @@ def aam_fastest_alternating(training_db_path, training_db_ext, fitting_db_path,
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
-def aam_best_performance_alternating(training_db_path, training_db_ext,
-                                     fitting_db_path, fitting_db_ext,
-                                     feature_type='igo', noise_std=0.04,
-                                     verbose=False, plot=False):
+def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
+                                           feature_type='igo', noise_std=0.04,
+                                           verbose=False, plot=False):
     # check feature
     if not isinstance(feature_type, str):
         if not hasattr(feature_type, '__call__'):
@@ -137,13 +136,13 @@ def aam_best_performance_alternating(training_db_path, training_db_ext,
     initialization_options['noise_std'] = noise_std
 
     # run experiment
-    training_images = load_database(training_db_path, training_db_ext,
+    training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
     aam = aam_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+    fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    verbose=verbose)
     fitting_results = aam_fit_benchmark(fitting_images, aam,
@@ -172,10 +171,9 @@ def aam_best_performance_alternating(training_db_path, training_db_ext,
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
-def clm_basic(training_db_path, training_db_ext, fitting_db_path,
-              fitting_db_ext, feature_type=sparse_hog,
-              classifier_type=linear_svm_lr, noise_std=0.04, verbose=False,
-              plot=False):
+def clm_basic_noise(training_db_path,  fitting_db_path,
+                    feature_type=sparse_hog, classifier_type=linear_svm_lr,
+                    noise_std=0.04, verbose=False, plot=False):
     # check feature
     if not isinstance(feature_type, str):
         if not hasattr(feature_type, '__call__'):
@@ -194,8 +192,8 @@ def clm_basic(training_db_path, training_db_ext, fitting_db_path,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 1.1,
-                        'scaled_shape_models': False,
-                        'pyramid_on_features': True,
+                        'scaled_shape_models': True,
+                        'pyramid_on_features': False,
                         'max_shape_components': None,
                         'boundary': 3,
                         'interpolator': 'scipy'
@@ -216,13 +214,13 @@ def clm_basic(training_db_path, training_db_ext, fitting_db_path,
     initialization_options['noise_std'] = noise_std
 
     # run experiment
-    training_images = load_database(training_db_path, training_db_ext,
+    training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
     clm = clm_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+    fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    verbose=verbose)
     fitting_results = clm_fit_benchmark(fitting_images, clm,
@@ -252,11 +250,12 @@ def clm_basic(training_db_path, training_db_ext, fitting_db_path,
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
-def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
-                            fitting_db_ext, n_experiments=1, feature_type=None,
-                            scaled_shape_models=None, pyramid_on_features=None,
-                            n_shape=None, n_appearance=None, noise_std=None,
-                            rotation=None, verbose=False, plot=False):
+def aam_params_combinations_noise(training_db_path, fitting_db_path,
+                                  n_experiments=1, feature_type=None,
+                                  scaled_shape_models=None,
+                                  pyramid_on_features=None, n_shape=None,
+                                  n_appearance=None, noise_std=None,
+                                  rotation=None, verbose=False, plot=False):
 
     # parse input
     if feature_type is None:
@@ -292,10 +291,10 @@ def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
     db_loading_options = {'crop_proportion': 0.1,
                           'convert_to_grey': True
                           }
-    training_images = load_database(training_db_path, training_db_ext,
+    training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+    fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    verbose=verbose)
 
@@ -381,13 +380,13 @@ def aam_params_combinations(training_db_path, training_db_ext, fitting_db_path,
     return all_fitting_results
 
 
-def clm_params_combinations(training_db_path, training_db_ext, fitting_db_path,
-                            fitting_db_ext, n_experiments=1,
-                            classifier_type=None, patch_shape=None,
-                            feature_type=None, scaled_shape_models=None,
-                            pyramid_on_features=None, n_shape=None,
-                            noise_std=None, rotation=None, verbose=False,
-                            plot=False):
+def clm_params_combinations_noise(training_db_path, fitting_db_path,
+                                  n_experiments=1, classifier_type=None,
+                                  patch_shape=None, feature_type=None,
+                                  scaled_shape_models=None,
+                                  pyramid_on_features=None, n_shape=None,
+                                  noise_std=None, rotation=None, verbose=False,
+                                  plot=False):
 
     # parse input
     if classifier_type is None:
@@ -427,10 +426,10 @@ def clm_params_combinations(training_db_path, training_db_ext, fitting_db_path,
     db_loading_options = {'crop_proportion': 0.4,
                           'convert_to_grey': True
                           }
-    training_images = load_database(training_db_path, training_db_ext,
+    training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
-    fitting_images = load_database(fitting_db_path, fitting_db_ext,
+    fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    verbose=verbose)
 

@@ -356,8 +356,7 @@ def clm_build_benchmark(training_images, training_options=None, verbose=False):
     return aam
 
 
-def load_database(database_path, files_extension, db_loading_options=None,
-                  verbose=False):
+def load_database(database_path, db_loading_options=None, verbose=False):
     r"""
     Loads the database images, crops them and converts them.
 
@@ -365,8 +364,6 @@ def load_database(database_path, files_extension, db_loading_options=None,
     ----------
     database_path: str
         The path of the database images.
-    files_extension: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
     db_loading_options: dictionary, optional
         A dictionary with options related to image loading.
         If None, the default options will be used.
@@ -409,13 +406,8 @@ def load_database(database_path, files_extension, db_loading_options=None,
     if os.path.isdir(database_path) is not True:
         raise ValueError('Invalid path given')
 
-    # check given extension
-    if files_extension[0] is not '.' and len(files_extension) == 3:
-        files_extension = '.{}'.format(files_extension)
-
     # create final path
-    final_path = os.path.abspath(os.path.expanduser(os.path.join(
-        database_path, '*{}'.format(files_extension))))
+    final_path = os.path.join(database_path, '*')
 
     # get options
     crop_proportion = db_loading_options.pop('crop_proportion', 0.1)
@@ -424,7 +416,7 @@ def load_database(database_path, files_extension, db_loading_options=None,
     # find number of files
     n_files = len(mio.image_paths(final_path))
     if n_files < 1:
-        raise ValueError('No {} files in given path'.format(files_extension))
+        raise ValueError('No image files in given path')
 
     # load images
     images = []
