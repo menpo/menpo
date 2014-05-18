@@ -105,10 +105,11 @@ class SDTrainer(object):
             trainer = self._set_regressor_trainer(j)
             if j == 0:
                 regressor = trainer.train(level_images, level_gt_shapes,
-                                          **kwargs)
+                                          verbose=verbose, **kwargs)
             else:
                 regressor = trainer.train(level_images, level_gt_shapes,
-                                          level_shapes, **kwargs)
+                                          level_shapes, verbose=verbose,
+                                          **kwargs)
 
             if verbose:
                 print_dynamic('{}Generating next level data'.format(level_str))
