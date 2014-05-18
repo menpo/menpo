@@ -18,26 +18,129 @@ from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
 
 
-# TODO: document me
 class SDTrainer(object):
     r"""
+    Mixin for Supervised Descent Trainers.
+
+    Parameters
+    ----------
+    regression_type: function/closure, Optional
+        A function/closure that defines the type of regression.
+        Examples of such closures can be found in
+        `menpo.fit.regression.trainer`
+
+        Default: mlr
+    regression_features: None or string or function/closure, Optional
+        The features that are extracted from the regressor.
+
+        Default: None
+    feature_type: None or string or function/closure or list of those, Optional
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
+
+        Per level:
+        If None, the appearance model will be built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+
+        If string, image features will be computed by executing:
+
+           feature_image = eval('img.feature_type.' +
+                                feature_type[level] + '()')
+
+        for each pyramidal level. For this to work properly each string
+        needs to be one of menpo's standard image feature methods
+        ('igo', 'hog', ...).
+        Note that, in this case, the feature computation will be
+        carried out using the default options.
+
+        Non-default feature options and new experimental features can be
+        defined using functions/closures. In this case, the functions must
+        receive an image as input and return a particular feature
+        representation of that image. For example:
+
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See `menpo.image.feature.py` for details more details on
+        menpo's standard image features and feature options.
+
+        Default: None
+    n_levels: int > 0, Optional
+        The number of multi-resolution pyramidal levels to be used.
+
+        Default: 3
+    downscale: float >= 1, Optional
+        The downscale factor that will be used to create the different
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
+
+        Default: 2
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+
+        Default: True
+    noise_std: float, optional
+        The standard deviation of the gaussian noise used to produce the
+        initial shape.
+
+        Default: 0.04
+    rotation: boolean, optional
+        Specifies whether ground truth in-plane rotation is to be used
+        to produce the initial shape.
+
+        Default: False
+    n_perturbations: int > 0, Optional
+        Defines the number of perturbations that will be applied to the shapes.
+
+        Default: 10
+    interpolator: string, Optional
+        The interpolator in use.
+
+        Default: 'scipy'
+
+    Raises
+    ------
+    ValueError
+        n_levels must be int > 0
+    ValueError
+        downscale must be >= 1
+    ValueError
+        feature_type must be a str or a function/closure or a list of those
+        containing 1 or {n_levels} elements
+    ValueError
+        n_perturbations must be > 0
     """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, regression_type=mlr, regression_features=None,
-                 feature_type=None, n_levels=3, downscale=2,
-                 scaled_shape_models=True, pyramid_on_features=True,
-                 noise_std=0.04, rotation=False,
+                 feature_type=None, n_levels=3, downscale=1.2,
+                 pyramid_on_features=True, noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy', **kwargs):
 
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
+        self.check_n_permutations(n_perturbations)
         feature_type = self.check_feature_type(feature_type, n_levels,
                                                pyramid_on_features)
-        regression_features = self.check_feature_type(regression_features,
-                                                      n_levels,
-                                                      pyramid_on_features)
+        # TODO: this should use check_feature_type
+        regression_features = self.check_regression_features(
+            regression_features, n_levels)
 
         # store parameters
         self.regression_type = regression_type
@@ -45,7 +148,6 @@ class SDTrainer(object):
         self.feature_type = feature_type
         self.n_levels = n_levels
         self.downscale = downscale
-        self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
         self.noise_std = noise_std
         self.rotation = rotation
@@ -54,6 +156,26 @@ class SDTrainer(object):
 
     def train(self, images, group=None, label='all', verbose=False, **kwargs):
         r"""
+        Trains a Supervised Descent Regressor from a list of landmarked images.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images from which to build the SD.
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: 'all'
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
         """
         if verbose:
             print_dynamic('- Computing reference shape')
@@ -97,21 +219,23 @@ class SDTrainer(object):
         for j, (level_images, level_gt_shapes) in enumerate(zip(images,
                                                                 gt_shapes)):
             if verbose:
-                level_str = '  - '
-                if self.n_levels > 1:
-                    level_str = '  - Level {}: '.format(j + 1)
+                if self.n_levels == 1:
+                    print_dynamic('\n')
+                elif self.n_levels > 1:
+                    print_dynamic('\nLevel {}:\n'.format(j + 1))
 
             # build regressor
             trainer = self._set_regressor_trainer(j)
             if j == 0:
                 regressor = trainer.train(level_images, level_gt_shapes,
-                                          **kwargs)
+                                          verbose=verbose, **kwargs)
             else:
                 regressor = trainer.train(level_images, level_gt_shapes,
-                                          level_shapes, **kwargs)
+                                          level_shapes, verbose=verbose,
+                                          **kwargs)
 
             if verbose:
-                print_dynamic('{}Generating next level data'.format(level_str))
+                print_dynamic('- Generating next level data')
             level_shapes = trainer.perturb_shapes(gt_shapes[0])
 
             regressors.append(regressor)
@@ -134,8 +258,7 @@ class SDTrainer(object):
 
                     fittings.append(fitting_sublist)
                     if verbose:
-                        print_dynamic('{}Fitting shapes - {}'.format(
-                            level_str,
+                        print_dynamic('- Fitting shapes: {}'.format(
                             progress_bar_str((count + 1.) / total,
                                              show_bar=False)))
 
@@ -149,8 +272,8 @@ class SDTrainer(object):
                                            for fitting_sublist in fittings
                                            for f in fitting_sublist]))
             if verbose:
-                print_dynamic('{0}Mean error is {1:.6f}'.format(level_str,
-                                                                mean_error))
+                print_dynamic('- Fitting shapes: Done\n'
+                              '  - Mean error is {0:.6f}.'.format(mean_error))
 
         return self._build_supervised_descent_fitter(regressors)
 
@@ -379,6 +502,26 @@ class SDTrainer(object):
         return feature_type_list
 
     @classmethod
+    def check_regression_features(cls, feature_type, n_levels):
+        feature_type_str_error = ("regression_features must be a str or a "
+                                  "function/closure or a list of "
+                                  "those containing 1 or {} "
+                                  "elements").format(n_levels)
+        if not isinstance(feature_type, list):
+            feature_type_list = [feature_type for _ in range(n_levels)]
+        elif len(feature_type) is 1:
+            feature_type_list = [feature_type[0] for _ in range(n_levels)]
+        elif len(feature_type) is n_levels:
+            feature_type_list = feature_type
+        else:
+            raise ValueError(feature_type_str_error)
+        for ft in feature_type_list:
+            if (ft is not None or not isinstance(ft, str)
+               or not hasattr(ft, '__call__')):
+                ValueError(feature_type_str_error)
+        return feature_type_list
+
+    @classmethod
     def check_n_levels(cls, n_levels):
         r"""
         Checks the number of pyramid levels that must be int > 0.
@@ -393,6 +536,14 @@ class SDTrainer(object):
         """
         if downscale < 1:
             raise ValueError("downscale must be >= 1")
+
+    @classmethod
+    def check_n_permutations(cls, n_permutations):
+        r"""
+        Checks the n_permutations that must be > 0.
+        """
+        if n_permutations < 1:
+            raise ValueError("n_permutations must be > 0")
 
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
@@ -419,51 +570,215 @@ class SDTrainer(object):
 
     def _rescale_reference_shape(self):
         r"""
+        Function rescales the reference shape wrt to normalization_diagonal
+        parameter.
         """
         pass
 
     @abc.abstractmethod
     def _set_regressor_trainer(self, **kwargs):
         r"""
+        Function that sets the regression object to be one from
+        :class: menpo.fit.regression.RegressorTrainer,
         """
         pass
 
     @abc.abstractmethod
     def _build_supervised_descent_fitter(self, regressors):
+        r"""
+        Builds an SDM fitter object.
+
+        Parameters
+        ----------
+        regressors: :class: menpo.fit.regression.RegressorTrainer
+
+        Returns
+        -------
+        fitter: :class: menpo.fitmultilevel.sdm.base
+            The SDM fitter object.
+        """
         pass
 
 
-#TODO: Document me
 class SDMTrainer(SDTrainer):
     r"""
+    Class that trains Supervised Descent Method using Non-Parametric Regression.
+
+    Parameters
+    ----------
+    regression_type: function/closure, Optional
+        A function/closure that defines the type of regression.
+        Examples of such closures can be found in
+        `menpo.fit.regression.trainer`
+
+        Default: mlr
+    regression_features: None or string or function/closure, Optional
+        The features that are extracted from the regressor.
+
+        Default: None
+    patch_shape: tuple of ints
+        The shape of the patches used by the SDM.
+
+        Default: (16, 16)
+    feature_type: None or string or function/closure or list of those, Optional
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
+
+        Per level:
+        If None, the appearance model will be built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+
+        If string, image features will be computed by executing:
+
+           feature_image = eval('img.feature_type.' +
+                                feature_type[level] + '()')
+
+        for each pyramidal level. For this to work properly each string
+        needs to be one of menpo's standard image feature methods
+        ('igo', 'hog', ...).
+        Note that, in this case, the feature computation will be
+        carried out using the default options.
+
+        Non-default feature options and new experimental features can be
+        defined using functions/closures. In this case, the functions must
+        receive an image as input and return a particular feature
+        representation of that image. For example:
+
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See `menpo.image.feature.py` for details more details on
+        menpo's standard image features and feature options.
+
+        Default: None
+    n_levels: int > 0, Optional
+        The number of multi-resolution pyramidal levels to be used.
+
+        Default: 3
+    downscale: float >= 1, Optional
+        The downscale factor that will be used to create the different
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
+
+        Default: 2
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+
+        Default: True
+    noise_std: float, optional
+        The standard deviation of the gaussian noise used to produce the
+        initial shape.
+
+        Default: 0.04
+    rotation: boolean, optional
+        Specifies whether ground truth in-plane rotation is to be used
+        to produce the initial shape.
+
+        Default: False
+    n_perturbations: int > 0, Optional
+        Defines the number of perturbations that will be applied to the shapes.
+
+        Default: 10
+    normalization_diagonal: int >= 20, Optional
+        During training, all images are rescaled to ensure that the scale of
+        their landmarks matches the scale of the mean shape.
+
+        If int, it ensures that the mean shape is scaled so that the diagonal
+        of the bounding box containing it matches the normalization_diagonal
+        value.
+        If None, the mean shape is not rescaled.
+
+        Note that, because the reference frame is computed from the mean
+        landmarks, this kwarg also specifies the diagonal length of the
+        reference frame (provided that features computation does not change
+        the image size).
+
+        Default: None
+    interpolator: string, Optional
+        The interpolator in use.
+
+        Default: 'scipy'
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
                  patch_shape=(16, 16), feature_type=None, n_levels=3,
-                 downscale=1.5, scaled_levels=True, noise_std=0.04,
-                 rotation=False, n_perturbations=10, diagonal_range=None,
-                 interpolator='scipy'):
+                 downscale=1.5, pyramid_on_features=False, noise_std=0.04,
+                 rotation=False, n_perturbations=10,
+                 normalization_diagonal=None, interpolator='scipy'):
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=feature_type, n_levels=n_levels,
-            downscale=downscale, scaled_levels=scaled_levels,
+            downscale=downscale, pyramid_on_features=pyramid_on_features,
             noise_std=noise_std, rotation=rotation,
             n_perturbations=n_perturbations, interpolator=interpolator)
         self.patch_shape = patch_shape
-        self.diagonal_range = diagonal_range
+        self.normalization_diagonal = normalization_diagonal
+        self.pyramid_on_features = pyramid_on_features
 
     def _compute_reference_shape(self, images, group, label):
+        r"""
+        Function that computes the reference shape, given a set of images.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images.
+        group : string
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+        label: string
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+        Returns
+        -------
+        reference_shape: Pointcloud
+            The reference shape computed based on.
+        """
         shapes = [i.landmarks[group][label].lms for i in images]
         return mean_pointcloud(shapes)
 
     def _rescale_reference_shape(self):
-        if self.diagonal_range:
+        r"""
+        Function rescales the reference shape wrt to normalization_diagonal
+        parameter.
+        """
+        if self.normalization_diagonal:
             x, y = self.reference_shape.range()
-            scale = self.diagonal_range / np.sqrt(x**2 + y**2)
-            Scale(scale, self.reference_shape.n_dims
-                  ).apply_inplace(self.reference_shape)
+            scale = self.normalization_diagonal / np.sqrt(x**2 + y**2)
+            Scale(scale, self.reference_shape.n_dims).apply_inplace(
+                self.reference_shape)
 
     def _set_regressor_trainer(self, level):
+        r"""
+        Function that sets the regression class to be the
+        NonParametricRegressorTrainer.
+
+        Parameter
+        ---------
+        level: int
+            The scale level.
+
+        Returns
+        -------
+        trainer: :class: menpo.fit.regression.NonParametricRegressorTrainer
+            The regressor object.
+        """
         return NonParametricRegressorTrainer(
             self.reference_shape, regression_type=self.regression_type,
             regression_features=self.regression_features[level],
@@ -471,9 +786,21 @@ class SDMTrainer(SDTrainer):
             rotation=self.rotation, n_perturbations=self.n_perturbations)
 
     def _build_supervised_descent_fitter(self, regressors):
-        return SDMFitter(
-            regressors, self.feature_type, self.reference_shape,
-            self.downscale, self.scaled_levels, self.interpolator)
+        r"""
+        Builds an SDM fitter object.
+
+        Parameters
+        ----------
+        regressors: :class: menpo.fit.regression.RegressorTrainer
+
+        Returns
+        -------
+        fitter: :class: menpo.fitmultilevel.sdm.base.SDMFitter
+            The SDM fitter object.
+        """
+        return SDMFitter(regressors, self.feature_type, self.reference_shape,
+                         self.downscale, self.pyramid_on_features,
+                         self.interpolator)
 
 
 #TODO: Document me

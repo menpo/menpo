@@ -8,6 +8,7 @@ from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
                                      ParametricFittingResult)
+from menpo.visualize import print_dynamic, progress_bar_str
 
 from .base import (NonParametricRegressor, SemiParametricRegressor,
                    ParametricRegressor)
@@ -31,10 +32,13 @@ class RegressorTrainer(object):
         self.noise_std = noise_std
         self.n_perturbations = n_perturbations
 
-    def _regression_data(self, images, gt_shapes, perturbed_shapes):
+    def _regression_data(self, images, gt_shapes, perturbed_shapes,
+                         verbose=False):
+
+        if verbose:
+            print_dynamic('- Generating regression data')
 
         n_images = len(images)
-
         features = []
         delta_ps = []
         for j, (i, s, p_shape) in enumerate(zip(images, gt_shapes,
@@ -42,8 +46,9 @@ class RegressorTrainer(object):
             for ps in p_shape:
                 features.append(self.features(i, ps))
                 delta_ps.append(self.delta_ps(s, ps))
-            print(' - {} % '.format(round(100*(j+1)/n_images)), end='\r')
-
+            if verbose:
+                print_dynamic('- Generating regression data - {}'.format(
+                    progress_bar_str((j + 1.) / n_images, show_bar=False)))
         return np.asarray(features), np.asarray(delta_ps)
 
     @abc.abstractmethod
@@ -54,40 +59,40 @@ class RegressorTrainer(object):
     def delta_ps(self, gt_shape, perturbed_shape):
         pass
 
-    def train(self, images, shapes, perturbed_shapes=None, **kwargs):
+    def train(self, images, shapes, perturbed_shapes=None, verbose=False,
+              **kwargs):
         r"""
         """
         n_images = len(images)
         n_shapes = len(shapes)
 
-        print('- generating regression data')
+        # generate regression data
         if n_images != n_shapes:
             raise ValueError("The number of shapes must be equal to "
                              "the number of images.")
-
         elif not perturbed_shapes:
             perturbed_shapes = self.perturb_shapes(shapes)
             features, delta_ps = self._regression_data(
-                images, shapes, perturbed_shapes)
-
+                images, shapes, perturbed_shapes, verbose=verbose)
         elif n_images == len(perturbed_shapes):
             features, delta_ps = self._regression_data(
-                images, shapes, perturbed_shapes)
-
+                images, shapes, perturbed_shapes, verbose=verbose)
         else:
             raise ValueError("The number of perturbed shapes must be "
                              "equal or multiple to the number of images.")
 
-        print('- performing regression')
+         # perform regression
+        if verbose:
+            print_dynamic('- Performing regression')
         regressor = regression(features, delta_ps, self.regression_type,
                                **kwargs)
 
-        print('- computing regression rmse')
+        # compute regressor RMSE
         estimated_delta_ps = regressor(features)
         error = np.sqrt(np.mean(np.sum((delta_ps - estimated_delta_ps) ** 2,
                                        axis=1)))
-        print(' - error = {}'.format(error))
-
+        if verbose:
+            print_dynamic('- Regression RMSE is {0:.5f}.\n'.format(error))
         return self._build_regressor(regressor, self.features)
 
     def perturb_shapes(self, gt_shape):
