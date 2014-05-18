@@ -77,6 +77,11 @@ class SemiParametricRegressor(Regressor):
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)
 
+    def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
+        self.transform.from_vector_inplace(initial_parameters)
+        return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
+                          **kwargs)
+
     def _select_update(self, update):
         if update is 'additive':
             return self._additive

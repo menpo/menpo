@@ -142,9 +142,6 @@ class LucasKanade(Fitter):
                                        gt_shape=gt_shape)
 
     def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
-        r"""
-        Fits the fitter object to an image.
-        """
         self.transform.from_vector_inplace(initial_parameters)
         return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
                           **kwargs)
