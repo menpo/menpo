@@ -76,21 +76,33 @@ class SDTrainer(object):
         images = self._apply_pyramid_on_images(
             generators, self.n_levels, self.pyramid_on_features,
             self.feature_type, verbose=verbose)
+
+        # this reverse sets the lowest resolution as the first level
         images.reverse()
 
         # extract groundtruth shapes
         gt_shapes = [[i.landmarks[group][label].lms for i in img]
                      for img in images]
 
-        print('- Building regressors')
+        # build the regressors
+        if verbose:
+            if self.n_levels > 1:
+                print_dynamic('- Building regressors for each of the {} '
+                              'pyramid levels\n'.format(self.n_levels))
+            else:
+                print_dynamic('- Building regressors\n')
+
         regressors = []
-        # for each level
+        # for each pyramid level (low --> high)
         for j, (level_images, level_gt_shapes) in enumerate(zip(images,
                                                                 gt_shapes)):
-            print(' - Level {}'.format(j))
+            if verbose:
+                level_str = '  - '
+                if self.n_levels > 1:
+                    level_str = '  - Level {}: '.format(j + 1)
 
+            # build regressor
             trainer = self._set_regressor_trainer(j)
-
             if j == 0:
                 regressor = trainer.train(level_images, level_gt_shapes,
                                           **kwargs)
@@ -98,8 +110,8 @@ class SDTrainer(object):
                 regressor = trainer.train(level_images, level_gt_shapes,
                                           level_shapes, **kwargs)
 
-            print(' - Generating next level data')
-
+            if verbose:
+                print_dynamic('{}Generating next level data'.format(level_str))
             level_shapes = trainer.perturb_shapes(gt_shapes[0])
 
             regressors.append(regressor)
@@ -121,23 +133,24 @@ class SDTrainer(object):
                         count += 1
 
                     fittings.append(fitting_sublist)
-                    print(' - {} % '.format(round(100*(count+1)/total)),
-                          end='\r')
+                    if verbose:
+                        print_dynamic('{}Fitting shapes - {}'.format(
+                            level_str,
+                            progress_bar_str((count + 1.) / total,
+                                             show_bar=False)))
 
-                if self.scaled_levels:
-                    level_shapes = [[Scale(self.downscale,
-                                           n_dims=self.reference_shape.n_dims
-                                           ).apply(f.final_shape)
-                                     for f in fitting_sublist]
-                                    for fitting_sublist in fittings]
-                else:
-                    level_shapes = [[f.final_shape for f in fitting_sublist]
-                                    for fitting_sublist in fittings]
+                level_shapes = [[Scale(self.downscale,
+                                       n_dims=self.reference_shape.n_dims
+                                       ).apply(f.final_shape)
+                                 for f in fitting_sublist]
+                                for fitting_sublist in fittings]
 
             mean_error = np.mean(np.array([f.final_error
                                            for fitting_sublist in fittings
                                            for f in fitting_sublist]))
-            print(' - Mean error = {}'.format(mean_error))
+            if verbose:
+                print_dynamic('{0}Mean error is {1:.6f}'.format(level_str,
+                                                                mean_error))
 
         return self._build_supervised_descent_fitter(regressors)
 
@@ -293,29 +306,33 @@ class SDTrainer(object):
             rj = n_levels - j - 1
 
             if verbose:
-                level_str = '- Pyramid: '
+                level_str = '- Apply pyramid: '
                 if n_levels > 1:
-                    level_str = '- Pyramid: [Level {}] - '.format(j + 1)
+                    level_str = '- Apply pyramid: [Level {} - '.format(j + 1)
 
+            current_images = []
             if pyramid_on_features:
                 # features are already computed, so just call generator
                 for c, g in enumerate(generators):
                     if verbose:
-                        print_dynamic('{}Rescaling feature space - {}'.format(
+                        print_dynamic('{}Rescaling feature space - {}]'.format(
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append([g.next()])
+                    current_images.append(g.next())
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):
                     if verbose:
-                        print_dynamic('{}Computing feature space - {}'.format(
+                        print_dynamic('{}Computing feature space - {}]'.format(
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append([compute_features(
-                        g.next(), feature_type[rj])])
+                    current_images.append(compute_features(g.next(),
+                                                           feature_type[rj]))
+            feature_images.append(current_images)
+        if verbose:
+            print_dynamic('- Apply pyramid: Done\n')
         return feature_images
 
     #TODO: repeated code from Builder. Should builder and Trainer have a
