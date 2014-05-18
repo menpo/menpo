@@ -803,9 +803,118 @@ class SDMTrainer(SDTrainer):
                          self.interpolator)
 
 
-#TODO: Document me
 class SDAAMTrainer(SDTrainer):
     r"""
+    Class that trains Supervised Descent Regressor for a given Active
+    Appearance Model, thus a Parametric Regression.
+
+    Parameters
+    ----------
+    regression_type: function/closure, Optional
+        A function/closure that defines the type of regression.
+        Examples of such closures can be found in
+        `menpo.fit.regression.trainer`
+
+        Default: mlr
+    regression_features: None or string or function/closure, Optional
+        The features that are extracted from the regressor.
+
+        Default: None
+    noise_std: float, optional
+        The standard deviation of the gaussian noise used to produce the
+        initial shape.
+
+        Default: 0.04
+    rotation: boolean, optional
+        Specifies whether ground truth in-plane rotation is to be used
+        to produce the initial shape.
+
+        Default: False
+    n_perturbations: int > 0, Optional
+        Defines the number of perturbations that will be applied to the shapes.
+
+        Default: 10
+
+
+    feature_type: None or string or function/closure or list of those, Optional
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
+
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
+
+        Per level:
+        If None, the appearance model will be built using the original image
+        representation, i.e. no features will be extracted from the original
+        images.
+
+        If string, image features will be computed by executing:
+
+           feature_image = eval('img.feature_type.' +
+                                feature_type[level] + '()')
+
+        for each pyramidal level. For this to work properly each string
+        needs to be one of menpo's standard image feature methods
+        ('igo', 'hog', ...).
+        Note that, in this case, the feature computation will be
+        carried out using the default options.
+
+        Non-default feature options and new experimental features can be
+        defined using functions/closures. In this case, the functions must
+        receive an image as input and return a particular feature
+        representation of that image. For example:
+
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See `menpo.image.feature.py` for details more details on
+        menpo's standard image features and feature options.
+
+        Default: None
+    n_levels: int > 0, Optional
+        The number of multi-resolution pyramidal levels to be used.
+
+        Default: 3
+    downscale: float >= 1, Optional
+        The downscale factor that will be used to create the different
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
+
+        Default: 2
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+
+        Default: True
+    normalization_diagonal: int >= 20, Optional
+        During training, all images are rescaled to ensure that the scale of
+        their landmarks matches the scale of the mean shape.
+
+        If int, it ensures that the mean shape is scaled so that the diagonal
+        of the bounding box containing it matches the normalization_diagonal
+        value.
+        If None, the mean shape is not rescaled.
+
+        Note that, because the reference frame is computed from the mean
+        landmarks, this kwarg also specifies the diagonal length of the
+        reference frame (provided that features computation does not change
+        the image size).
+
+        Default: None
+    interpolator: string, Optional
+        The interpolator in use.
+
+        Default: 'scipy'
     """
     def __init__(self, aam, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
@@ -824,8 +933,9 @@ class SDAAMTrainer(SDTrainer):
         self.md_transform = md_transform
         self.global_transform = global_transform
 
+        # check n_shape parameter
         if n_shape is not None:
-            if type(n_shape) is int:
+            if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape
             elif len(n_shape) is 1 and self.aam.n_levels > 1:
@@ -835,23 +945,26 @@ class SDAAMTrainer(SDTrainer):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_shape can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
+        # check n_appearance parameter
         if n_appearance is not None:
-            if type(n_appearance) is int:
+            if type(n_appearance) is int or type(n_appearance) is float:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance
             elif len(n_appearance) is 1 and self.aam.n_levels > 1:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance[0]
             elif len(n_appearance) is self.aam.n_levels:
-                for am, n in zip(self.aam.appearance_models, n_shape):
+                for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
-                raise ValueError('n_appearance can be integer, integer list '
-                                 'containing 1 or {} elements or '
+                raise ValueError('n_appearance can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
 
     def _compute_reference_shape(self, images, group, label):
