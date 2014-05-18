@@ -153,14 +153,38 @@ class MaskedImage(Image):
             return self.pixels
         return self.pixels[self.mask.mask]
 
-    @masked_pixels.setter
-    def masked_pixels(self, value):
+    def set_masked_pixels(self, pixels, copy=True):
+        r"""Update the masked pixels only to new values.
+
+        Parameters
+        ----------
+        pixels: ndarray
+            The new pixels to set.
+
+        copy: `bool`, optional
+            If False a copy will be avoided in assignment. This can only happen
+            if the mask is all True - in all other cases it will raise a
+            warning.
+
+        Raises
+        ------
+
+        Warning : If the copy=False flag cannot be honored.
+
+        """
         if self.mask.all_true:
-            # great! Can simply assign.
-            self.pixels = value
+            if copy:
+                pixels = pixels.copy()
+            # Our mask is all True, so if they don't want a copy
+            # we can respect their wishes
+            self.pixels = pixels.reshape(self.shape + (self.n_channels,))
         else:
-            # Use the mask to index.
-            self.pixels[self.mask.mask] = value
+            self.pixels[self.mask.mask] = pixels
+            # oh dear, couldn't avoid a copy. Did the user try to?
+            if not copy:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. copy can only be avoided'
+                              ' if MaskedImage has an all_true mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
@@ -274,26 +298,20 @@ class MaskedImage(Image):
         vector : (`n_parameters`,)
             A flattened vector of all pixels and channels of an image.
 
-        copy: bool, optional
+        copy: `bool`, optional
             If False, the vector will be set as the pixels with no copy made.
             If True a copy of the vector is taken.
 
             Default: True
 
+        Raises
+        ------
+
+        Warning : If copy=False cannot be honored.
+
         """
-        if self.mask.all_true:
-            if copy:
-                vector = vector.copy()
-            # Our mask is all True, so if they don't want a copy
-            # we can respect their wishes
-            self.pixels = vector.reshape(self.pixels.shape)
-        else:
-            self.masked_pixels = vector.reshape((-1, self.n_channels)).copy()
-            # oh dear, can't avoid a copy. Did they try to?
-            if not copy:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. copy can only be avoided'
-                              ' if MaskedImage has an all_true mask.')
+        self.set_masked_pixels(vector.reshape((-1, self.n_channels)),
+                               copy=copy)
 
     def _view(self, figure_id=None, new_figure=False, channels=None,
               masked=True, **kwargs):
