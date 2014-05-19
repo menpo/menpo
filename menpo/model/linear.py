@@ -51,6 +51,12 @@ class LinearModel(object):
         else:
             np.copyto(self._components, value, casting='safe')
 
+    @property
+    def d_dp(self):
+        r"""
+        """
+        return self.components.T
+
     def component_vector(self, index):
         r"""
         A particular component of the model, in vectorized form.
@@ -75,7 +81,7 @@ class LinearModel(object):
             The weightings for the first n_weights components that
             should be used.
 
-            ``weights[j]`` is the linear contribution of the j'th principal
+            `weights[j]` is the linear contribution of the j'th principal
             component to the instance vector.
 
         Returns
@@ -98,7 +104,7 @@ class LinearModel(object):
             The weightings for all components of the linear model. All
             components will be used to produce the instance.
 
-            ``weights[i, j]`` is the linear contribution of the j'th
+            `weights[i, j]` is the linear contribution of the j'th
             principal component to the i'th instance vector produced.
 
         Raises
@@ -125,7 +131,7 @@ class LinearModel(object):
 
     def project_vector(self, vector):
         """
-        Projects the ``vector`` onto the model, retrieving the optimal
+        Projects the `vector` onto the model, retrieving the optimal
         linear reconstruction weights
 
         Parameters
@@ -142,7 +148,7 @@ class LinearModel(object):
 
     def project_vectors(self, vectors):
         """
-        Projects each of the ``vectors`` onto the model, retrieving
+        Projects each of the `vectors` onto the model, retrieving
         the optimal linear reconstruction weights for each instance.
 
         Parameters
@@ -160,7 +166,7 @@ class LinearModel(object):
 
     def reconstruct_vector(self, vector):
         """
-        Project a ``vector`` onto the linear space and
+        Project a `vector` onto the linear space and
         rebuild from the weights found.
 
         Parameters
@@ -177,7 +183,7 @@ class LinearModel(object):
 
     def reconstruct_vectors(self, vectors):
         """
-        Projects the ``vectors`` onto the linear space and
+        Projects the `vectors` onto the linear space and
         rebuilds vectors from the weights found.
 
         Parameters
@@ -194,7 +200,7 @@ class LinearModel(object):
 
     def project_out_vector(self, vector):
         """
-        Returns a version of ``vector`` where all the basis of the
+        Returns a version of `vector` where all the basis of the
         model have been projected out.
 
         Parameters
@@ -205,14 +211,14 @@ class LinearModel(object):
         Returns
         -------
         projected_out : (n_features,) ndarray
-            A copy of ``vector`` with all basis of the model
+            A copy of `vector` with all basis of the model
             projected out.
         """
         return self.project_out_vectors(vector[None, :])
 
     def project_out_vectors(self, vectors):
         """
-        Returns a version of ``vectors`` where all the basis of the
+        Returns a version of `vectors` where all the basis of the
         model have been projected out.
 
         Parameters
@@ -223,7 +229,7 @@ class LinearModel(object):
         Returns
         -------
         projected_out : (n_vectors, n_features) ndarray
-            A copy of ``vectors`` with all basis of the model
+            A copy of `vectors` with all basis of the model
             projected out.
         """
         weights = dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
@@ -313,7 +319,7 @@ class MeanLinearModel(LinearModel):
 
     def project_vectors(self, vectors):
         """
-        Projects each of the ``vectors`` onto the model, retrieving
+        Projects each of the `vectors` onto the model, retrieving
         the optimal linear reconstruction weights for each instance.
 
         Parameters

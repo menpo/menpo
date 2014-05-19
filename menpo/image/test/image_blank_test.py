@@ -3,7 +3,7 @@ from menpo.image import *
 
 
 def test_blank_1_channel_image():
-    mask = np.zeros((10, 10))
+    mask = np.zeros((10, 10), dtype=np.bool)
     im = MaskedImage.blank((10, 10), mask=mask)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 1
@@ -14,7 +14,7 @@ def test_blank_1_channel_image():
 
 
 def test_blank_3_channel_image():
-    mask = np.zeros((10, 10))
+    mask = np.zeros((10, 10), dtype=np.bool)
     im = MaskedImage.blank((10, 10), mask=mask, n_channels=3)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 3
@@ -25,7 +25,7 @@ def test_blank_3_channel_image():
 
 
 def test_blank_maskedndimage():
-    mask = np.zeros((10, 10))
+    mask = np.zeros((10, 10), dtype=np.bool)
     im = MaskedImage.blank((10, 10), mask=mask, n_channels=10)
     assert np.all(im.pixels == 0.0)
     assert im.n_channels == 10

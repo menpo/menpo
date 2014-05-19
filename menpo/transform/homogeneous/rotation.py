@@ -37,7 +37,7 @@ def optimal_rotation_matrix(source, target):
 
 class Rotation(DiscreteAffine, Similarity):
     r"""
-    Abstract ``n_dims`` rotation transform.
+    Abstract `n_dims` rotation transform.
 
     Parameters
     ----------
@@ -133,7 +133,7 @@ class Rotation(DiscreteAffine, Similarity):
         axis : (3,) ndarray
             A unit vector, the axis about which the rotation takes place
         angle_of_rotation : double
-            The angle in radians of the rotation about the ``axis``.
+            The angle in radians of the rotation about the `axis`.
             The angle is signed in a right handed sense.
 
         References
@@ -188,7 +188,7 @@ class Rotation(DiscreteAffine, Similarity):
         +----------+--------------------------------------------+
         |parameter | definition                                 |
         +==========+============================================+
-        |theta     | The angle of rotation around ``[0, 0, 1]`` |
+        |theta     | The angle of rotation around `[0, 0, 1]` |
         +----------+--------------------------------------------+
 
         Returns
@@ -196,6 +196,7 @@ class Rotation(DiscreteAffine, Similarity):
         theta : double
             Angle of rotation around axis. Right-handed.
         """
+        # TODO vectorizable rotations
         raise NotImplementedError("Rotations are not yet vectorizable")
 
     def from_vector_inplace(self, p):
@@ -233,6 +234,10 @@ class Rotation(DiscreteAffine, Similarity):
         :type: (D, D) ndarray
         """
         return Rotation(np.linalg.inv(self.rotation_matrix))
+
+    def d_dp(self, points):
+        raise NotImplementedError("vectorizable (and hence d_dp) is not "
+                                  "implemented for Rotation")
 
 
 class AlignmentRotation(HomogFamilyAlignment, Rotation):

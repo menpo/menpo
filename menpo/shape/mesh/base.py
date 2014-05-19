@@ -20,14 +20,33 @@ class TriMesh(PointCloud):
         the points will be used instead.
 
         Default: None
+
+    copy: bool, optional
+        If False, the points will not be copied on assignment. Any trilist will
+        also not be copied.
+        Note that this will miss out on additional checks. Further note that we
+        still demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
+
+        Default False
     """
 
-    def __init__(self, points, trilist=None):
+    def __init__(self, points, trilist=None, copy=True):
         #TODO add inheritance from Graph once implemented
-        super(TriMesh, self).__init__(points)
+        super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
             trilist = Delaunay(points).simplices
-        self.trilist = np.array(trilist, copy=True, order='C')
+        if not copy:
+            # Let's check we don't do a copy!
+            trilist_handle = trilist
+            self.trilist = np.require(trilist, requirements=['C'])
+            if self.trilist is not trilist_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
+        else:
+            self.trilist = np.array(trilist, copy=True, order='C')
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
@@ -48,7 +67,7 @@ class TriMesh(PointCloud):
 
     def from_vector(self, flattened):
         r"""
-        Builds a new :class:`TriMesh` given then ``flattened`` vector.
+        Builds a new :class:`TriMesh` given then `flattened` vector.
         This allows rebuilding pointclouds with the correct number of
         dimensions from a vector. Note that the trilist will be drawn from
         self.
@@ -70,7 +89,7 @@ class TriMesh(PointCloud):
         r"""
         Normal at each point.
 
-        :type: (``n_points``, 3) ndarray
+        :type: (`n_points`, 3) ndarray
 
         Compute the per-vertex normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
@@ -89,7 +108,7 @@ class TriMesh(PointCloud):
         r"""
         Normal at each face.
 
-        :type: (``n_tris``, 3) ndarray
+        :type: (`n_tris`, 3) ndarray
 
         Compute the face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
@@ -129,7 +148,7 @@ class TriMesh(PointCloud):
         Raises
         ------
         DimensionalityError
-            If ``not self.n_dims in [2, 3]``.
+            If `not self.n_dims in [2, 3]`.
         """
         return TriMeshViewer(figure_id, new_figure,
                              self.points, self.trilist).render(**kwargs)

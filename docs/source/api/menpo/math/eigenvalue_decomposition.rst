@@ -5,4 +5,7 @@
 eigenvalue_decomposition
 ========================
 
+.. toctree::
+    :hidden:
+
 .. autofunction:: eigenvalue_decomposition

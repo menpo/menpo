@@ -3,40 +3,77 @@
 :mod:`menpo.transform`
 ======================
 
-Classes
--------
+
+Homogeneous Family
+------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   Homogeneous
+   Affine
+   Similarity
+   Rotation
+   Translation
+   Scale
+   UniformScale
+   NonUniformScale
+
+
+Alignments
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   ThinPlateSplines
+   PiecewiseAffine
+   AlignmentAffine
+   AlignmentSimilarity
+   AlignmentRotation
+   AlignmentTranslation
+   AlignmentUniformScale
+
+
+Group Alignments
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   GeneralizedProcrustesAnalysis
+
+
+Composite Transforms
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   TransformChain
+
+
+Radial Basis Functions
+----------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   R2LogR2RBF
+   R2LogRRBF
+
+
+Abstaract Bases
+---------------
 
 .. toctree::
    :maxdepth: 1
 
    Transform
-   TransformChain
-
-   Homogeneous
-   Affine
-   AlignmentAffine
-   Similarity
-   AlignmentSimilarity
-   Rotation
-   AlignmentRotation
-   Translation
-   AlignmentTranslation
-   NonUniformScale
-   UniformScale
-   AlignmentUniformScale
-
-   ThinPlateSplines
-   PiecewiseAffine
-
-   R2LogR2RBF
-   R2LogRRBF
-
-   GeneralizedProcrustesAnalysis
-
-Functions
----------
-
-.. toctree::
-  :maxdepth: 1
-
-  Scale
+   Transformable
+   ComposableTransform
+   Invertible
+   Alignment
+   MultipleAlignment
+   VComposable
+   VInvertible

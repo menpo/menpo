@@ -4,7 +4,7 @@ import numpy as np
 
 class ImageASFImporter(ASFImporter):
     r"""
-    Implements the :meth:`_build_points` method for images. Here, ``y`` is the
+    Implements the :meth:`_build_points` method for images. Here, `y` is the
     first axis.
 
     Parameters
@@ -18,27 +18,27 @@ class ImageASFImporter(ASFImporter):
 
     def _build_points(self, xs, ys):
         """
-        For images, ``axis 0 = ys`` and ``axis 1 = xs``. Therefore, return the
+        For images, `axis 0 = ys` and `axis 1 = xs`. Therefore, return the
         appropriate points array ordering.
 
         Parameters
         ----------
         xs : (N,) ndarray
-            Row vector of ``x`` coordinates
+            Row vector of `x` coordinates
         ys : (N,) ndarray
-            Row vector of ``y`` coordinates
+            Row vector of `y` coordinates
 
         Returns
         -------
         points : (N, 2) ndarray
-            Array with ``ys`` as the first axis: ``[ys; xs]``
+            Array with `ys` as the first axis: `[ys; xs]`
         """
         return np.hstack([ys, xs])
 
 
 class ImagePTSImporter(PTSImporter):
     r"""
-    Implements the :meth:`_build_points` method for images. Here, ``y`` is the
+    Implements the :meth:`_build_points` method for images. Here, `y` is the
     first axis.
 
     Parameters
@@ -52,19 +52,19 @@ class ImagePTSImporter(PTSImporter):
 
     def _build_points(self, xs, ys):
         """
-        For images, ``axis 0 = ys`` and ``axis 1 = xs``. Therefore, return the
+        For images, `axis 0 = ys` and `axis 1 = xs`. Therefore, return the
         appropriate points array ordering.
 
         Parameters
         ----------
         xs : (N,) ndarray
-            Row vector of ``x`` coordinates
+            Row vector of `x` coordinates
         ys : (N,) ndarray
-            Row vector of ``y`` coordinates
+            Row vector of `y` coordinates
 
         Returns
         -------
         points : (N, 2) ndarray
-            Array with ``ys`` as the first axis: ``[ys; xs]``
+            Array with `ys` as the first axis: `[ys; xs]`
         """
         return np.hstack([ys, xs])

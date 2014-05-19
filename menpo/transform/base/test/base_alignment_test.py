@@ -6,13 +6,6 @@ from numpy.testing import assert_equal
 from menpo.transform.base import Alignment
 
 
-
-
-
-
-
-
-
 # Mock a pointcloud
 source_array = np.random.random([5, 2])
 target_array = np.random.random([5, 2])

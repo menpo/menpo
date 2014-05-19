@@ -3,7 +3,7 @@ import numpy as np
 
 from menpo.image import Image
 from menpo.transform import AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter

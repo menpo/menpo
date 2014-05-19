@@ -9,8 +9,9 @@ Classes
 .. toctree::
    :maxdepth: 1
 
-   LandmarkManager
    Landmarkable
+   LandmarkManager
+   LandmarkGroup
 
 Functions
 ---------
@@ -27,4 +28,3 @@ Functions
    ibug_51_points
    ibug_49_points
    labeller
-

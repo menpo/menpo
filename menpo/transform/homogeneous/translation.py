@@ -32,7 +32,7 @@ class Translation(DiscreteAffine, Similarity):
     @property
     def n_parameters(self):
         r"""
-        The number of parameters: ``n_dims``
+        The number of parameters: `n_dims`
 
         :type: int
         """
@@ -70,6 +70,10 @@ class Translation(DiscreteAffine, Similarity):
         :return: :class:`Translation`
         """
         return Translation(-self.translation_component)
+
+    def d_dp(self, points):
+        # TODO implement d_dp for Translation
+        return NotImplementedError("d_dp is not implemented for Translation")
 
 
 class AlignmentTranslation(HomogFamilyAlignment, Translation):

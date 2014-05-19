@@ -523,7 +523,7 @@ def labeller(landmarkable, group_label, label_func):
     group_label: string
         The group label of the landmark group to apply semantic labels to.
     label_func: func
-        A labelling function taken from this module. ``func`` should take a
+        A labelling function taken from this module. `func` should take a
         :class:`menpo.landmark.base.LandmarkGroup` and
         return a new LandmarkGroup with semantic labels applied.
 

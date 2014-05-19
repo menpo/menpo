@@ -1,5 +1,5 @@
 import abc
-import copy
+from copy import deepcopy
 
 import numpy as np
 
@@ -12,11 +12,11 @@ class Landmarkable(object):
     r"""
     Abstract interface for object that can have landmarks attached to them.
     Landmarkable objects have a public dictionary of landmarks which are
-    managed by a :class:`menpo.landmark.base.LandmarkManager`. This means that
+    managed by a :map:`LandmarkManager`. This means that
     different sets of landmarks can be attached to the same object.
     Landmarks can be N-dimensional and are expected to be some
-    subclass of :class:`menpo.shape.pointcloud.Pointcloud`. These landmarks
-    are wrapped inside a :class:`LandmarkGroup` object that performs
+    subclass of :map:`PointCloud`. These landmarks
+    are wrapped inside a :map:`LandmarkGroup` object that performs
     useful tasks like label filtering and viewing.
     """
 
@@ -32,7 +32,7 @@ class Landmarkable(object):
 
     @landmarks.setter
     def landmarks(self, value):
-        self._landmarks = copy.deepcopy(value)
+        self._landmarks = deepcopy(value)
         self._landmarks._target = self
 
     @property
@@ -95,16 +95,17 @@ class LandmarkManager(Transformable, Viewable):
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
             lmark_group = LandmarkGroup(
-                None, None, value,
+                self._target, group_label, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
-            lmark_group = copy.deepcopy(value)
+            # TODO replace with copy function
+            lmark_group = LandmarkGroup(self._target, group_label,
+                                        value._pointcloud,
+                                        value._labels_to_masks)
         else:
             raise ValueError('Valid types are PointCloud or LandmarkGroup')
 
         self._landmark_groups[group_label] = lmark_group
-        self._landmark_groups[group_label]._group_label = group_label
-        self._landmark_groups[group_label]._target = self._target
 
     def __getitem__(self, group_label=None):
         """
@@ -178,7 +179,8 @@ class LandmarkManager(Transformable, Viewable):
         landmark_manager : :class:`LandmarkManager`
             The landmark manager to copy from.
         """
-        new_landmark_manager = copy.deepcopy(landmark_manager)
+        # TODO: replace with copy function
+        new_landmark_manager = deepcopy(landmark_manager)
         new_landmark_manager._target = self.__target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
@@ -194,7 +196,7 @@ class LandmarkManager(Transformable, Viewable):
         Parameters
         ----------
         include_labels : bool, optional
-            If ``True``, also render the label names next to the landmarks.
+            If `True`, also render the label names next to the landmarks.
         kwargs : dict, optional
             Passed through to the viewer.
         """
@@ -214,9 +216,10 @@ class LandmarkManager(Transformable, Viewable):
 
 class LandmarkGroup(Viewable):
     """
-    An immutable object that holds a PointCloud (or a subclass) and stores
-    labels for each point. These labels are defined via masks on the
-    pointcloud. For this reason, the pointcloud is considered to be immutable.
+    An immutable object that holds a :map:`PointCloud` (or a subclass) and
+    stores labels for each point. These labels are defined via masks on the
+    :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
+    be immutable.
 
     Parameters
     ----------
@@ -224,14 +227,20 @@ class LandmarkGroup(Viewable):
         The parent object of this landmark group.
     group_label : String
         The label of the group.
-    pointcloud : :class:`menpo.shape.pointcloud.PointCloud`
+    pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
     labels_to_masks : dict of string to boolean ndarrays
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
+    copy : boolean, optional
+        If true, a copy of the pointcloud is stored on the group.
+
+        Default True
+
     """
 
-    def __init__(self, target, group_label, pointcloud, labels_to_masks):
+    def __init__(self, target, group_label, pointcloud, labels_to_masks,
+                 copy=True):
         super(LandmarkGroup, self).__init__()
 
         if not labels_to_masks:
@@ -251,8 +260,14 @@ class LandmarkGroup(Viewable):
 
         self._group_label = group_label
         self._target = target
-        self._pointcloud = pointcloud
-        self._labels_to_masks = labels_to_masks
+        if copy:
+            # TODO: Replace with copy function
+            self._pointcloud = deepcopy(pointcloud)
+            self._labels_to_masks = {l: m.copy() for l, m in
+                                     labels_to_masks.iteritems()}
+        else:
+            self._pointcloud = pointcloud
+            self._labels_to_masks = labels_to_masks
 
     def __iter__(self):
         """
@@ -371,7 +386,7 @@ class LandmarkGroup(Viewable):
             else:
                 raise ValueError("Cannot use None as there are "
                                  "{} labels".format(self.n_labels))
-            # Make it easier to use by accepting a single string as well as a list
+        # Make it easier to use by accepting a single string as well as a list
         if isinstance(labels, str):
             labels = [labels]
         return self._new_group_with_only_labels(labels)
@@ -438,7 +453,7 @@ class LandmarkGroup(Viewable):
         Parameters
         ----------
         include_labels : bool, optional
-            If ``True``, also render the label names next to the landmarks.
+            If `True`, also render the label names next to the landmarks.
         kwargs : dict, optional
             Passed through to the viewer.
         """

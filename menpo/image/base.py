@@ -51,34 +51,50 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     Images are n-dimensional homogeneous regular arrays of data. Each
     spatially distinct location in the array is referred to as a `pixel`.
-    At a pixel, ``k`` distinct pieces of information can be stored. Each
+    At a pixel, `k` distinct pieces of information can be stored. Each
     datum at a pixel is refereed to as being in a `channel`. All pixels in
     the image have the  same number of channels, and all channels have the
     same data-type (float).
-
 
     Parameters
     -----------
     image_data: (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
         channels.
+    copy: bool, optional
+        If False, the image_data will not be copied on assignment. Note that
+        this will miss out on additional checks. Further note that we still
+        demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
+
+        Default False
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image_data):
+    def __init__(self, image_data, copy=True):
         Landmarkable.__init__(self)
-        image_data = np.array(image_data, copy=True, order='C')
-        # This is the degenerate case whereby we can just put the extra axis
-        # on ourselves
-        if image_data.ndim == 2:
-            image_data = image_data[..., None]
-        if image_data.ndim < 2:
-            raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
-                             "1 channel) or 3D+ (2D+ shape, n_channels) "
-                             " - a {}D array "
-                             "was provided".format(image_data.ndim))
-        self.pixels = image_data
+        if not copy:
+            # Let's check we don't do a copy!
+            image_data_handle = image_data
+            self.pixels = np.require(image_data, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
+        else:
+            image_data = np.array(image_data, copy=True, order='C')
+            # This is the degenerate case whereby we can just put the extra axis
+            # on ourselves
+            if image_data.ndim == 2:
+                image_data = image_data[..., None]
+            if image_data.ndim < 2:
+                raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
+                                 "1 channel) or 3D+ (2D+ shape, n_channels) "
+                                 " - a {}D array "
+                                 "was provided".format(image_data.ndim))
+            self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
 
@@ -141,7 +157,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, **kwargs)
+        return cls._init_with_channel(pixels, copy=False, **kwargs)
 
     @property
     def n_dims(self):
@@ -156,7 +172,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_pixels(self):
         r"""
-        Total number of pixels in the image (``prod(shape)``)
+        Total number of pixels in the image (`prod(shape)`)
 
         :type: int
         """
@@ -165,8 +181,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_elements(self):
         r"""
-        Total number of data points in the image (``prod(shape) x
-        n_channels``)
+        Total number of data points in the image (`prod(shape) x
+        n_channels`)
 
         :type: int
         """
@@ -209,7 +225,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def shape(self):
         r"""
         The shape of the image
-        (with ``n_channel`` values at each point).
+        (with `n_channel` values at each point).
 
         :type: tuple
         """
@@ -246,11 +262,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             ========== =================================
             Value      Return shape
             ========== =================================
-            ``False``  (``n_pixels``  x ``n_channels``,)
-            ``True``   (``n_pixels``, ``n_channels``)
+            `False`  (`n_pixels`  x `n_channels`,)
+            `True`   (`n_pixels`, `n_channels`)
             ========== =================================
 
-            Default: ``False``
+            Default: `False`
 
         Returns
         -------
@@ -270,11 +286,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Parameters
         ----------
         keep_channels : bool, optional
-            If set to ``False``, it returns a single histogram for all the
-            channels of the image. If set to ``True``, it returns a list of
+            If set to `False`, it returns a single histogram for all the
+            channels of the image. If set to `True`, it returns a list of
             histograms, one for each channel.
 
-            Default: ``True``
+            Default: `True`
         bins : 'unique', positive int or sequence of scalars, optional
             If set equal to 'unique', the bins of the histograms are centered
             on the unique values of each channel. If set equal to a positive
@@ -339,7 +355,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        vector : (``n_pixels``,) np.bool ndarray
+        vector : (`n_pixels`,) np.bool ndarray
             A vector vector of all the pixels of a BooleanImage.
 
 
@@ -658,10 +674,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
@@ -721,7 +737,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
-        All image information (landmarks) are rescaled appropriately.
+        Landmarks are rescaled appropriately.
 
         Parameters
         ----------
@@ -1061,7 +1077,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         mode : {'average', 'luminosity', 'channel'}
             'luminosity' - Calculates the luminance using the CCIR 601 formula
 
-                ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
+                `Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'`
 
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
@@ -1111,14 +1127,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     def as_PILImage(self):
         r"""
-        Return a PIL copy of the image. Scales the image by ``255`` and
-        converts to ``np.uint8``. Image must only have 1 or 3 channels and
+        Return a PIL copy of the image. Scales the image by `255` and
+        converts to `np.uint8`. Image must only have 1 or 3 channels and
         be two dimensional.
 
         Returns
         -------
-        pil_image : ``PILImage``
-            PIL copy of image as ``np.uint8``
+        pil_image : `PILImage`
+            PIL copy of image as `np.uint8`
 
         Raises
         ------
@@ -1195,3 +1211,4 @@ def _create_feature_glyph(features, vbs):
                       features[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
+
