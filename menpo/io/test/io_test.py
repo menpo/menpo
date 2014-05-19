@@ -100,13 +100,20 @@ def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
     assert(img.shape == (225, 150))
     assert(img.n_channels == 3)
-    assert(img.landmarks.n_groups == 0)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
 def test_einstein_import():
     img = mio.import_builtin_asset('einstein.jpg')
     assert(img.shape == (1024, 817))
     assert(img.n_channels == 1)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
+
+
+def test_lenna_import():
+    img = mio.import_builtin_asset('lenna.png')
+    assert(img.shape == (512, 512))
+    assert(img.n_channels == 3)
     assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
@@ -119,13 +126,16 @@ def test_ioinfo():
     assert(img.ioinfo.extension == '.jpg')
     assert(img.ioinfo.dir == mio.data_dir_path())
 
+
 def test_import_image():
     img_path = os.path.join(mio.data_dir_path(), 'einstein.jpg')
     mio.import_images(img_path)
 
+
 def test_import_mesh():
     obj_path = os.path.join(mio.data_dir_path(), 'bunny.obj')
     mio.import_images(obj_path)
+
 
 def test_import_images():
     imgs_glob = os.path.join(mio.data_dir_path(), '*')
@@ -147,10 +157,12 @@ def test_import_auto_max_images():
     assert(sum([isinstance(x, TriMesh) for x in assets]) == 2)
     assert(sum([isinstance(x, Image) for x in assets]) == 2)
 
+
 def test_import_auto_max_meshes():
     assets_glob = os.path.join(mio.data_dir_path(), '*')
     assets = list(mio.import_auto(assets_glob, max_meshes=1))
     assert(sum([isinstance(x, TriMesh) for x in assets]) == 1)
+
 
 def test_ls_builtin_assets():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
@@ -159,13 +171,15 @@ def test_ls_builtin_assets():
                                             'einstein.jpg', 'einstein.pts',
                                             'james.jpg', 'james.mtl',
                                             'james.obj', 'lenna.png',
-                                            'takeo.ppm'})
+                                            'lenna.pts', 'takeo.ppm',
+                                            'takeo.pts'})
+
 
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
     assert(len(ls) == 2)
 
+
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
     assert(len(ls) == 5)
-

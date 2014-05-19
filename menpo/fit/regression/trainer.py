@@ -459,10 +459,21 @@ class ParametricRegressorTrainer(RegressorTrainer):
         `menpo.fit.regression.regressionfunctions.py`
 
         Default: mlr
-    regression_features: None or string or function/closure, Optional
-        The features that are used during the regression.
+    regression_features: None or function/closure or list of those, Optional
+        The features that are used in the regressor.
+        If list of length {aam.n_levels}, it specifies the feature to be used
+        per level.
+        If list of length 1, the specified feature will be used for all levels.
 
-        Default: sparse_hog
+        Per level:
+        Since the regressor in use is a Parametric one, these features
+        can only come from:
+        `menpo.fit.regression.parametricfeatures`
+
+        If function/closure, the specified funtion will be used.
+        If None, 'weights' will be used.
+
+        Default: weights
     patch_shape: tuple, Optional
         The shape of the patches that will be extracted.
 
@@ -495,6 +506,8 @@ class ParametricRegressorTrainer(RegressorTrainer):
                  regression_type=mlr, regression_features=weights,
                  update='compositional', noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy'):
+        if regression_features is None:
+            regression_features = weights
         super(ParametricRegressorTrainer, self).__init__(
             reference_shape, regression_type=regression_type,
             regression_features=regression_features, noise_std=noise_std,

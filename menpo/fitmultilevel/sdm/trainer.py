@@ -148,7 +148,6 @@ class SDTrainer(object):
         self.check_n_permutations(n_perturbations)
         feature_type = self.check_feature_type(feature_type, n_levels,
                                                pyramid_on_features)
-        # TODO: this should use check_feature_type
         regression_features = self.check_regression_features(
             regression_features, n_levels)
 
@@ -511,29 +510,29 @@ class SDTrainer(object):
         return feature_type_list
 
     @classmethod
-    def check_regression_features(cls, feature_type, n_levels):
+    def check_regression_features(self, regression_features, n_levels):
         r"""
-        Checks the regression features type per level. It must be a string or
-        a function/closure of a list of those containing 1 or {n_levels}
-        elements.
+        Checks the regression features type per level. It must be a
+        function/closure from `menpo.fit.regression.parametricfeatures` or
+        a list of those containing 1 or {n_levels} elements.
         """
-        feature_type_str_error = ("regression_features must be a str or a "
-                                  "function/closure or a list of "
-                                  "those containing 1 or {} "
-                                  "elements").format(n_levels)
-        if not isinstance(feature_type, list):
-            feature_type_list = [feature_type for _ in range(n_levels)]
-        elif len(feature_type) is 1:
-            feature_type_list = [feature_type[0] for _ in range(n_levels)]
-        elif len(feature_type) is n_levels:
-            feature_type_list = feature_type
+        regression_features_str_error = ("regression_features must be "
+                                         "function/closure or str or a list of "
+                                         "those containing 1 or {} "
+                                         "elements").format(n_levels)
+        if not isinstance(regression_features, list):
+            regression_features_list = [regression_features] * n_levels
+        elif len(regression_features) is 1:
+            regression_features_list = [regression_features[0]] * n_levels
+        elif len(regression_features) is n_levels:
+            regression_features_list = regression_features
         else:
-            raise ValueError(feature_type_str_error)
-        for ft in feature_type_list:
-            if (ft is not None or not isinstance(ft, str)
-               or not hasattr(ft, '__call__')):
-                ValueError(feature_type_str_error)
-        return feature_type_list
+            raise ValueError(regression_features_str_error)
+        for ft in regression_features_list:
+            if (ft is not None or not hasattr(ft, '__call__') or
+                    not isinstance(ft, str)):
+                ValueError(regression_features_str_error)
+        return regression_features_list
 
     @classmethod
     def check_n_levels(cls, n_levels):
@@ -834,10 +833,19 @@ class SDAAMTrainer(SDTrainer):
         `menpo.fit.regression.trainer`
 
         Default: mlr
-    regression_features: None or string or function/closure, Optional
-        The features that are extracted from the regressor.
-        They come from:
+    regression_features: None or function/closure or list of those, Optional
+        The features that are used in the regressor.
+        If list of length {aam.n_levels}, it specifies the feature to be used
+        per level.
+        If list of length 1, the specified feature will be used for all levels.
+
+        Per level:
+        Since the regressor in use is a Parametric one, these features
+        can only come from:
         `menpo.fit.regression.parametricfeatures`
+
+        If function/closure, the specified funtion will be used.
+        If None, 'weights' will be used.
 
         Default: weights
     noise_std: float, optional
@@ -1221,7 +1229,7 @@ class SDCLMTrainer(SDTrainer):
 
         return SemiParametricClassifierBasedRegressorTrainer(
             clfs, pdm_transform, self.reference_shape,
-            regression_type=self.regression_type,
+            regression_type=self.regression_type[level],
             patch_shape=self.patch_shape,
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
