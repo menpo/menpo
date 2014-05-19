@@ -887,7 +887,7 @@ class SDMTrainer(SDTrainer):
             The regressor object.
         """
         return NonParametricRegressorTrainer(
-            self.reference_shape, regression_type=self.regression_type,
+            self.reference_shape, regression_type=self.regression_type[level],
             regression_features=self.regression_features[level],
             patch_shape=self.patch_shape, noise_std=self.noise_std,
             rotation=self.rotation, n_perturbations=self.n_perturbations)
@@ -1186,7 +1186,7 @@ class SDAAMTrainer(SDTrainer):
 
         return ParametricRegressorTrainer(
             am, md_transform, self.reference_shape,
-            regression_type=self.regression_type,
+            regression_type=self.regression_type[level],
             regression_features=self.regression_features[level],
             update=self.update, noise_std=self.noise_std,
             rotation=self.rotation, n_perturbations=self.n_perturbations,
