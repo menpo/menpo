@@ -44,8 +44,7 @@ class Vectorizable(object):
         """
 
     def from_vector(self, vector):
-        """
-        Build a new instance of the object from it's vectorized state.
+        """Build a new instance of the object from it's vectorized state.
 
 
         ``self`` is used to fill out the missing state required to
@@ -125,16 +124,38 @@ class Targetable(object):
         self._target_setter_with_verification(new_target)  # trigger the update
         self._sync_state_from_target()  # and a sync
 
-    def _target_setter_with_verification(self, value):
-        r"""
-        Updates the target, checking it is sensible, without triggering a sync.
+    def _target_setter_with_verification(self, new_target):
+        r"""Updates the target, checking it is sensible, without triggering a
+        sync.
 
-        Should be called by _sync_target_from_state with the new target value.
+        Should be called by :meth:`_sync_target_from_state` once it has
+        generated a suitable target representation.
+
+        Parameters
+        ----------
+        new_target : :map:`PointCloud`
+            The new target that should be set.
         """
-        self._verify_target(value)
-        self._target_setter(value)
+        self._verify_target(new_target)
+        self._target_setter(new_target)
 
     def _verify_target(self, new_target):
+        r"""Performs sanity checks to ensure that the new target is valid.
+
+        This includes checking the dimensionality matches and the number of
+        points matches the current target's values.
+
+        Parameters
+        ----------
+        new_target : :map:`PointCloud`
+            The target that needs to be verified.
+
+        Raises
+        ------
+        ValueError
+            If the ``new_target`` has differing ``n_points`` or ``n_dims`` to
+            ``self``.
+        """
         # If the target is None (i.e. on construction) then dodge the
         # verification
         if self.target is None:
@@ -152,12 +173,17 @@ class Targetable(object):
 
     @abc.abstractmethod
     def _target_setter(self, new_target):
-        r"""
-        Sets the target to the new value. Does no synchronization. Note that
-        it is advisable that _target_setter_with_verification is called from
+        r"""Sets the target to the new value.
+
+        Does no synchronization. Note that it is advisable that
+        :meth:`_target_setter_with_verification` is called from
         subclasses instead of this.
+
+        Parameters
+        ----------
+        new_target : :map:`PointCloud`
+            The new target that will be set.
         """
-        pass
 
     def _sync_target_from_state(self):
         new_target = self._new_target_from_state()
@@ -165,15 +191,18 @@ class Targetable(object):
 
     @abc.abstractmethod
     def _new_target_from_state(self):
-        r"""
-        Returns a new target that is correct after changes to the object.
+        r"""Generate a new target that is correct after changes to the object.
+
+        Returns
+        -------
+        object : ``type(self)``
         """
         pass
 
     @abc.abstractmethod
     def _sync_state_from_target(self):
-        r"""
-        Synchronizes the object state to be correct after changes to the target.
+        r"""Synchronizes the object state to be correct after changes to the
+        target.
 
         Called automatically from the target setter. This is called after the
         target is updated - only handle synchronization here.

@@ -6,6 +6,6 @@ Vectorizable
 ============
 
 .. autoclass:: Vectorizable
-  :members:
-  :inherited-members:
-  :show-inheritance:
+    :members:
+    :inherited-members:
+    :show-inheritance:
