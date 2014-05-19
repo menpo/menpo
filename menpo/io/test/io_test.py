@@ -14,7 +14,7 @@ bunny_nose = np.array([[-0.07949748,  0.12401747,  0.05170817]])
 bunny_mouth = np.array([[-0.08876467,  0.11684129,  0.04538456],
                         [-0.08044379,  0.11318078,  0.04642309],
                         [-0.07329408,  0.11268603,  0.04844998],
-                        [-0.0670796 ,  0.11644761,  0.0498054 ]])
+                        [-0.0670796,  0.11644761,  0.0498054]])
 
 
 def test_import_asset_bunny():
@@ -118,13 +118,16 @@ def test_ioinfo():
     assert(img.ioinfo.extension == '.jpg')
     assert(img.ioinfo.dir == mio.data_dir_path())
 
+
 def test_import_image():
     img_path = os.path.join(mio.data_dir_path(), 'einstein.jpg')
     mio.import_images(img_path)
 
+
 def test_import_mesh():
     obj_path = os.path.join(mio.data_dir_path(), 'bunny.obj')
     mio.import_images(obj_path)
+
 
 def test_import_images():
     imgs_glob = os.path.join(mio.data_dir_path(), '*')
@@ -146,10 +149,12 @@ def test_import_auto_max_images():
     assert(sum([isinstance(x, TriMesh) for x in assets]) == 2)
     assert(sum([isinstance(x, Image) for x in assets]) == 2)
 
+
 def test_import_auto_max_meshes():
     assets_glob = os.path.join(mio.data_dir_path(), '*')
     assets = list(mio.import_auto(assets_glob, max_meshes=1))
     assert(sum([isinstance(x, TriMesh) for x in assets]) == 1)
+
 
 def test_ls_builtin_assets():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
@@ -161,11 +166,12 @@ def test_ls_builtin_assets():
                                             'lenna.pts', 'takeo.ppm',
                                             'takeo.pts'})
 
+
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
     assert(len(ls) == 2)
 
+
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
     assert(len(ls) == 5)
-
