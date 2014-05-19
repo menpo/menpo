@@ -51,7 +51,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :map:`Transform`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
 
         Returns
         --------
@@ -84,7 +84,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :map:`Transform`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
 
         Returns
         --------
@@ -112,7 +112,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :attr:`composes_inplace_with`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
 
         Returns
         --------
@@ -146,7 +146,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :attr:`composes_inplace_with`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
 
         Returns
         --------
@@ -173,7 +173,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
 
         Returns
         --------
@@ -192,7 +192,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
 
         Returns
         --------
@@ -213,7 +213,7 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :attr:`composes_inplace_with`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
         """
 
     @abc.abstractmethod
@@ -225,28 +225,32 @@ class ComposableTransform(Transform):
         Parameters
         ----------
         transform : :attr:`composes_inplace_with`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
         """
 
 
 class VComposable(object):
+    r"""Mix-in for efficient composition with :map:`Vectorizable` objects.
+
+    Has to be implimented in conjunction with :map:`Vectorizable`.
+    """
+
     @abc.abstractmethod
     def compose_after_from_vector_inplace(self, vector):
-        r"""
-        Specialised inplace composition with a vector. This should be
+        r"""Specialised inplace composition with a vector. This should be
         overridden to provide specific cases of composition whereby the current
         state of the transform can be derived purely from the provided vector.
 
         Parameters
         ----------
-        vector : (N, 1) ndarray
+        vector : ``(n_parameters,)`` ndarray
             Vector to update the transform state with.
         """
 
 
 class TransformChain(ComposableTransform):
-    r"""
-    A chain of transforms that can be efficiently applied one after the other.
+    r"""A chain of transforms that can be efficiently applied one after the
+    other.
 
     This class is the natural product of composition. Note that objects may
     know how to compose themselves more efficiently - such objects
@@ -254,65 +258,61 @@ class TransformChain(ComposableTransform):
 
     Parameters
     ----------
-    transforms : list of :map:`Transform`
+    transforms : `list` of :map:`Transform`
         The list of transforms to be applied. Note that the first transform
         will be applied first - the result of which is fed into the second
         transform and so on until the chain is exhausted.
     """
 
     def __init__(self, transforms):
-        # TODO for now we don't copy, important to come back and evaluate
+        # TODO Should TransformChain copy on input?
         self.transforms = transforms
 
     def _apply(self, x, **kwargs):
-        r"""
-        Applies each of the transforms to the array `x`, in order.
+        r"""Applies each of the transforms to the array ``x``, in order.
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : ``(n_points, n_dims)`` `ndarray`
             The array to transform.
 
         Returns
         -------
-        transformed : (N, D) ndarray
+        transformed : ``(n_points, n_dims_output)`` `ndarray`
             Transformed array having passed through the chain of transforms.
         """
         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
 
     @property
     def composes_inplace_with(self):
-        r"""
-        Class or tuple of classes that this transform composes
-        inplace against natively.
+        r"""The :map:`Transform` s that this transform composes inplace
+        with **natively** (i.e. no :map:`TransformChain` will be produced).
 
         An attempt to compose inplace against any type that is not an
         instance of this property on this class will result in an `Exception`.
 
-        Returns: :map:`Transform`
+        :type: :map:`Transform` or tuple of :map:`Transform` s
         """
         return Transform
 
     def _compose_before_inplace(self, transform):
-        r"""
-        Specialised inplace composition. In this case we merely keep a list
-        of :map:`Transform`s to apply in order.
+        r"""Specialised inplace composition. In this case we merely keep a list
+        of :map:`Transform` s to apply in order.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
         """
         self.transforms.append(transform)
 
     def _compose_after_inplace(self, transform):
-        r"""
-        Specialised inplace composition. In this case we merely keep a list
+        r"""Specialised inplace composition. In this case we merely keep a list
         of :map:`Transform`s to apply in order.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
         """
         self.transforms.insert(0, transform)
