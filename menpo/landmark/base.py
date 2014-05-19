@@ -120,6 +120,7 @@ class LandmarkManager(Transformable, Viewable):
             # Copy the landmark group so that we now own it
             lmark_group = value.copy()
             # check the target is set correctly
+            lmark_group._group_label = group_label
             lmark_group._target = self._target
         else:
             raise ValueError('Valid types are PointCloud or LandmarkGroup')
