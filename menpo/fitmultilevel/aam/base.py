@@ -6,7 +6,6 @@ from menpo.fit.lucaskanade.residual import LSIntensity
 from menpo.fit.lucaskanade.appearance import AlternatingInverseCompositional
 from menpo.fitmultilevel.base import MultilevelFitter
 from menpo.fitmultilevel.fittingresult import AAMMultilevelFittingResult
-from menpo.fitmultilevel.featurefunctions import compute_features
 
 
 class AAMFitter(MultilevelFitter):
@@ -15,7 +14,7 @@ class AAMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    aam: :class:`menpo.aam.builder.AAM`
+    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
         The Active Appearance Model to be used.
     """
     def __init__(self, aam):
@@ -82,67 +81,6 @@ class AAMFitter(MultilevelFitter):
         """
         return self.aam.interpolator
 
-    # TODO: Can this be moved up?
-    def _prepare_image(self, image, initial_shape, gt_shape=None):
-        r"""
-        The image is first rescaled wrt the reference_landmarks and then the
-        gaussian pyramid is computed. Depending on the pyramid_on_features
-        flag, the pyramid is either applied on the feature image or
-        features are extracted at each pyramidal level.
-
-        Parameters
-        ----------
-        image: :class:`menpo.image.MaskedImage`
-            The image to be fitted.
-        initial_shape: class:`menpo.shape.PointCloud`
-            The initial shape from which the fitting will start.
-        gt_shape: class:`menpo.shape.PointCloud`, optional
-            The original ground truth shape associated to the image.
-
-            Default: None
-
-        Returns
-        -------
-        images: list of :class:`menpo.image.masked.MaskedImage`
-            List of images, each being the result of applying the pyramid.
-        """
-        # rescale image wrt the scale factor between reference_shape and
-        # initial_shape
-        image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_to_reference_shape(
-            self.reference_shape, group='initial_shape',
-            interpolator=self.interpolator)
-
-        # attach given ground truth shape
-        if gt_shape:
-            image.landmarks['gt_shape'] = gt_shape
-
-        # apply pyramid
-        if self.n_levels > 1:
-            if self.pyramid_on_features:
-                # compute features at highest level
-                feature_image = compute_features(image, self.feature_type[0])
-
-                # apply pyramid on feature image
-                pyramid = feature_image.gaussian_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-
-                # get rescaled feature images
-                images = list(pyramid)
-            else:
-                # create pyramid on intensities image
-                pyramid = image.gaussian_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-
-                # compute features at each level
-                images = [compute_features(
-                    i, self.feature_type[self.n_levels - j - 1])
-                    for j, i in enumerate(pyramid)]
-            images.reverse()
-        else:
-            images = [compute_features(image, self.feature_type[0])]
-        return images
-
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
         r"""
@@ -202,14 +140,42 @@ class LucasKanadeAAMFitter(AAMFitter):
         :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
         Default: AlignmentSimilarity
-    n_shape: list, optional
+    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                 optional
         The number of shape components to be used per fitting level.
-        If None, for each shape model n_active_components will be used.
+
+        If list of length n_levels, then a number of components is defined
+        per level. The first element of the list corresponds to the lowest
+        pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        components will be used for all levels.
+
+        Per level:
+        If None, all the available shape components (n_active_componenets)
+        will be used.
+        If int > 1, a specific number of shape components is specified.
+        If 0. <= float <= 1., it specifies the variance percentage that is
+        captured by the components.
 
         Default: None
-    n_appearance: list, optional
+    n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
+                      optional
         The number of appearance components to be used per fitting level.
-        If None, for each appearance model n_active_components will be used.
+
+        If list of length n_levels, then a number of components is defined
+        per level. The first element of the list corresponds to the lowest
+        pyramidal level and so on.
+
+        If not a list or a list with length 1, then the specified number of
+        components will be used for all levels.
+
+        Per level:
+        If None, all the available appearance components
+        (n_active_componenets) will be used.
+        If int > 1, a specific number of appearance components is specified
+        If 0. <= float <= 1., it specifies the variance percentage that is
+        captured by the components.
 
         Default: None
     """
@@ -222,8 +188,8 @@ class LucasKanadeAAMFitter(AAMFitter):
         residual = LSIntensity
         self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
-                     global_transform=global_transform,
-                     n_shape=n_shape, n_appearance=n_appearance)
+                     global_transform=global_transform, n_shape=n_shape,
+                     n_appearance=n_appearance)
 
     @property
     def algorithm(self):
@@ -257,12 +223,12 @@ class LucasKanadeAAMFitter(AAMFitter):
             The model driven transform class to be used.
 
             Default: OrthoMDTransform
-        global_trans: :class:`menpo.transform.affine`, optional
+        global_transform: :class:`menpo.transform.affine`, optional
             The global transform class to be used by the previous
             md_transform. Currently, only
-            :class:`menpo.transform.affine.Similarity` is supported.
+            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
 
-            Default: Similarity
+            Default: AlignmentSimilarity
         n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
                  optional
             The number of shape components to be used per fitting level.
@@ -301,6 +267,15 @@ class LucasKanadeAAMFitter(AAMFitter):
             captured by the components.
 
             Default: None
+
+        Raises
+        -------
+        ValueError
+            n_shape can be an integer or a float or None or a list containing 1
+            or {n_levels} of those
+        ValueError
+            n_appearance can be an integer or a float or None or a list
+            containing 1 or {n_levels} of those
         """
         # check n_shape parameter
         if n_shape is not None:
@@ -314,10 +289,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be an integer or a float, '
-                                 'an integer or float list containing 1 '
-                                 'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                raise ValueError('n_shape can be an integer or a float or None'
+                                 'or a list containing 1 or {} of '
+                                 'those'.format(self.aam.n_levels))
 
         # check n_appearance parameter
         if n_appearance is not None:
@@ -331,10 +305,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
-                raise ValueError('n_appearance can be an integer or a float, '
-                                 'an integer or float list containing 1 '
-                                 'or {} elements or else '
-                                 'None'.format(self.aam.n_levels))
+                raise ValueError('n_appearance can be an integer or a float '
+                                 'or None or a list containing 1 or {} of '
+                                 'those'.format(self.aam.n_levels))
 
         self._fitters = []
         for j, (am, sm) in enumerate(zip(self.aam.appearance_models,
@@ -351,11 +324,11 @@ class LucasKanadeAAMFitter(AAMFitter):
             self._fitters.append(algorithm(am, residual(), md_trans))
 
     def __str__(self):
-        out = "Active Appearance Model Fitter\n" \
-              " - Lucas-Kanade {0}\n" \
-              " - Transform is {1} and residual is {2}.\n" \
-              " - {3} training images.\n".format(
-              self._fitters[0].algorithm,
+        out = "{0} Fitter\n" \
+              " - Lucas-Kanade {1}\n" \
+              " - Transform is {2} and residual is {3}.\n" \
+              " - {4} training images.\n".format(
+              self.aam._str_title, self._fitters[0].algorithm,
               self._fitters[0].transform.__class__.__name__,
               self._fitters[0].residual.type, self.aam.n_training_images)
         # small strings about number of channels, channels string and downscale

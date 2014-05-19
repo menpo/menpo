@@ -54,4 +54,4 @@ def compute_features(image, feature_type):
 
 
 def sparse_hog(image):
-    return image.features.hog(mode='sparse')
+    return image.features.hog(mode='sparse', constrain_landmarks=True)

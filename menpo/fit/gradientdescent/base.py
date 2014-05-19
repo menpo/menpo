@@ -40,8 +40,9 @@ class GradientDescent(Fitter):
 # TODO: document me
 class RegularizedLandmarkMeanShift(GradientDescent):
 
+    @property
     def algorithm(self):
-        return "RLMS"
+        return 'RLMS'
 
     def _set_up(self):
         self._sampling_grid = build_sampling_grid(self.patch_shape)
