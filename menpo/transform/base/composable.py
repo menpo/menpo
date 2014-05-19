@@ -114,10 +114,6 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **after** ``self``
 
-        Returns
-        --------
-        self : ``type(self)``
-
         Raises
         ------
         ValueError
@@ -125,7 +121,6 @@ class ComposableTransform(Transform):
         """
         if isinstance(transform, self.composes_inplace_with):
             self._compose_before_inplace(transform)
-            return self
         else:
             raise ValueError(
                 "{} can only compose inplace with {} - not "
@@ -148,10 +143,6 @@ class ComposableTransform(Transform):
         transform : :attr:`composes_inplace_with`
             Transform to be applied **before** ``self``
 
-        Returns
-        --------
-        self : ``type(self)``
-
         Raises
         ------
         ValueError
@@ -159,7 +150,6 @@ class ComposableTransform(Transform):
         """
         if isinstance(transform, self.composes_inplace_with):
             self._compose_after_inplace(transform)
-            return self
         else:
             raise ValueError(
                 "{} can only compose inplace with {} - not "

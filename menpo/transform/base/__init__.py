@@ -120,7 +120,7 @@ class Transform(object):
             x._transform_inplace(transform)
         except AttributeError:
             raise ValueError('apply_inplace can only be used on Transformable'
-                             'objects.')
+                             ' objects.')
 
     def apply(self, x, **kwargs):
         r"""Applies this transform to ``x``.

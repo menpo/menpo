@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
+from nose.tools import raises
 from mock import Mock
 
 from menpo.transform import Transform
@@ -52,14 +53,10 @@ def transform_apply_inplace_x_transformable_test():
     assert (no_return is None)
     assert mocked._transform_inplace.called
 
-
+@raises(ValueError)
 def transform_apply_inplace_x_not_transformable_test():
     tr = MockTransform()
-    x_ref = x
-    no_return = tr.apply_inplace(x)
-
-    assert (no_return is None)
-    assert (x_ref is x)
+    tr.apply_inplace(x)
 
 
 def transform_compose_before_test():
