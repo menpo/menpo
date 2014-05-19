@@ -53,6 +53,7 @@ def transform_apply_inplace_x_transformable_test():
     assert (no_return is None)
     assert mocked._transform_inplace.called
 
+
 @raises(ValueError)
 def transform_apply_inplace_x_not_transformable_test():
     tr = MockTransform()
@@ -79,4 +80,3 @@ def transform_compose_after_test():
     assert (len(chain.transforms) == 2)
     assert (chain.transforms[0] is mocked)
     assert (chain.transforms[1] is tr)
-
