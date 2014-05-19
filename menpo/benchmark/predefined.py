@@ -4,7 +4,7 @@ from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.transform.modeldriven import GlobalMDTransform, OrthoMDTransform
 from menpo.transform import AlignmentSimilarity
 from menpo.fitmultilevel.featurefunctions import sparse_hog
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 from .io import bounding_boxes_for_images
