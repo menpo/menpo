@@ -152,6 +152,17 @@ class LandmarkManager(Transformable, Viewable):
                                  "landmark groups".format(self.n_groups))
         return self._landmark_groups[group_label]
 
+    def __delitem__(self, group_label):
+        """
+        Delete the group for the provided label.
+
+        Parameters
+        ---------
+        group_label : String
+            The label of the group.
+        """
+        del self._landmark_groups[group_label]
+
     @property
     def _target(self):
         return self.__target
