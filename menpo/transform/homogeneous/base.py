@@ -37,24 +37,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def __init__(self, h_matrix):
         self._h_matrix = h_matrix.copy()
 
-    def copy(self):
-        r"""
-        Returns an efficient copy of this Homogeneous family transform (i.e.
-        one with the same homogeneous matrix). If you need all state to be
-        perfectly replicated, consider deepcopy() instead.
-
-        Returns
-        -------
-
-        h_transform: :map:`Homogeneous` or :map:`Homogeneous` subclass
-            A copy fo the transform with the same h_matrix.
-
-        """
-        new = self.__class__.__new__(self.__class__)
-        # Just update the h_matrix and we are done
-        new._h_matrix = self._h_matrix.copy()
-        return new
-
     def __str__(self):
         rep = self._transform_str() + '\n'
         rep += str(self.h_matrix)
