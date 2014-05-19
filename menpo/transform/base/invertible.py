@@ -68,4 +68,8 @@ class VInvertible(Invertible):
         pseudoinverse_vector : ``(n_parameters,)`` `ndarray`
             The pseudoinverse of the vector provided
         """
-        return self.from_vector(vector).pseudoinverse.as_vector()
+        new_t = self.from_vector(vector)
+        i = new_t.pseudoinverse
+        v = i.as_vector()
+        return v
+        # return self.from_vector(vector).pseudoinverse.as_vector()
