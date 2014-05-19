@@ -19,7 +19,7 @@ class MultilevelFitter(Fitter):
     @abc.abstractproperty
     def reference_shape(self):
         r"""
-        Returns the reference shape. Typically, the mean of shape model.
+        Returns the reference shape. Typically, the mean of the shape model.
         """
         pass
 
@@ -33,7 +33,7 @@ class MultilevelFitter(Fitter):
     @abc.abstractproperty
     def n_levels(self):
         r"""
-        Returns the number of levels used by fitter.
+        Returns the number of levels used by the fitter.
         """
         pass
 
@@ -90,12 +90,12 @@ class MultilevelFitter(Fitter):
 
             Default: 'me_norm'
         verbose: boolean, optional
-            Whether or not to print information related to the fitting
-            results (such as: final error, convergence, ...).
+            If True, it prints information related to the fitting results (such
+            as: final error, convergence, ...).
 
-            Default: True
+            Default: False
         view: boolean, optional
-            Whether or not the fitting results are to be displayed.
+            If True, the final fitting result will be visualized.
 
             Default: False
 
@@ -259,7 +259,7 @@ class MultilevelFitter(Fitter):
         -----------
         image: :class:`menpo.image.masked.MaskedImage`
             The original image to be fitted.
-        fitting_results: :class:`menpo.aam.fitting.BasicFitting` list
+        fitting_results: :class:`menpo.fit.fittingresult.FittingResultList`
             A list of basic fitting objects containing the state of the
             different fitting levels.
         affine_correction: :class: `menpo.transforms.affine.Affine`
@@ -277,7 +277,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        fitting: :class:`menpo.aam.Fitting`
+        fitting: :class:`menpo.fitmultilevel.fittingresult.MultilevelFittingResult`
             The fitting object that will hold the state of the fitter.
         """
         return MultilevelFittingResult(image, self, fitting_results,
@@ -287,7 +287,7 @@ class MultilevelFitter(Fitter):
     def _fit(self, images, initial_shape, gt_shapes=None, max_iters=50,
              **kwargs):
         r"""
-        Fits the AAM to an image using Lucas-Kanade.
+        Fits the fitter to the multilevel pyramidal images.
 
         Parameters
         -----------
@@ -296,7 +296,8 @@ class MultilevelFitter(Fitter):
         initial_shape: :class:`menpo.shape.PointCloud`
             The initial shape from which the fitting will start.
         gt_shapes: :class:`menpo.shape.PointCloud` list, optional
-            The original ground truth shapes associated to the images.
+            The original ground truth shapes associated to the multilevel
+            images.
 
             Default: None
         max_iters: int or list, optional
@@ -310,7 +311,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        fitting_results: :class:`menpo.aam.fitting` list
+        fitting_results: :class:`menpo.fit.fittingresult.FittingResult` list
             The fitting object containing the state of the whole fitting
             procedure.
         """

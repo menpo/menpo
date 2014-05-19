@@ -115,6 +115,11 @@ class SDTrainer(object):
 
         Default: 'scipy'
 
+    Returns
+    -------
+    fitter: :class:`menpo.fitmultilevel.sdm.base`
+        The fitter object.
+
     Raises
     ------
     ValueError
@@ -187,6 +192,8 @@ class SDTrainer(object):
             print_dynamic('- Computing reference shape')
         self.reference_shape = self._compute_reference_shape(images, group,
                                                              label)
+        # store number of training images
+        self.n_training_images = len(images)
 
         # normalize the scaling of all images wrt the reference_shape size
         self._rescale_reference_shape()
@@ -278,8 +285,8 @@ class SDTrainer(object):
                                            for fitting_sublist in fittings
                                            for f in fitting_sublist]))
             if verbose:
-                print_dynamic('- Fitting shapes: Done\n'
-                              '  - Mean error is {0:.6f}.'.format(mean_error))
+                print_dynamic("- Fitting shapes: mean error "
+                              "is {0:.6f}.\n".format(mean_error))
 
         return self._build_supervised_descent_fitter(regressors)
 
@@ -807,9 +814,9 @@ class SDMTrainer(SDTrainer):
         fitter: :class: menpo.fitmultilevel.sdm.base.SDMFitter
             The SDM fitter object.
         """
-        return SDMFitter(regressors, self.feature_type, self.reference_shape,
-                         self.downscale, self.pyramid_on_features,
-                         self.interpolator)
+        return SDMFitter(regressors, self.n_training_images, self.feature_type,
+                         self.reference_shape, self.downscale,
+                         self.pyramid_on_features, self.interpolator)
 
 
 class SDAAMTrainer(SDTrainer):
@@ -1059,7 +1066,7 @@ class SDAAMTrainer(SDTrainer):
         fitter: :class: menpo.fitmultilevel.sdm.base.SDAAMFitter
             The SDM fitter object.
         """
-        return SDAAMFitter(self.aam, regressors)
+        return SDAAMFitter(self.aam, regressors, self.n_training_images)
 
 
 class SDCLMTrainer(SDTrainer):
@@ -1142,9 +1149,10 @@ class SDCLMTrainer(SDTrainer):
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=clm.feature_type, n_levels=clm.n_levels,
-            downscale=clm.downscale, scaled_levels=clm.scaled_levels,
-            noise_std=noise_std, rotation=rotation,
-            n_perturbations=n_perturbations, interpolator=clm.interpolator)
+            downscale=clm.downscale,
+            pyramid_on_features=clm.pyramid_on_features, noise_std=noise_std,
+            rotation=rotation, n_perturbations=n_perturbations,
+            interpolator=clm.interpolator)
         self.clm = clm
         self.patch_shape = clm.patch_shape
         self.pdm_transform = pdm_transform
@@ -1213,7 +1221,7 @@ class SDCLMTrainer(SDTrainer):
 
         return SemiParametricClassifierBasedRegressorTrainer(
             clfs, pdm_transform, self.reference_shape,
-            regression_type=self.regression_type[level],
+            regression_type=self.regression_type,
             patch_shape=self.patch_shape,
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
@@ -1231,4 +1239,4 @@ class SDCLMTrainer(SDTrainer):
         fitter: :class: menpo.fitmultilevel.sdm.base.SDCLMFitter
             The SDM fitter object.
         """
-        return SDCLMFitter(self.clm, regressors)
+        return SDCLMFitter(self.clm, regressors, self.n_training_images)

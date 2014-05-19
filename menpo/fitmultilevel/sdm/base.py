@@ -1,3 +1,6 @@
+import numpy as np
+
+from menpo.image import Image
 from menpo.fitmultilevel.base import MultilevelFitter
 from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fitmultilevel.aam.base import AAMFitter
@@ -82,6 +85,9 @@ class SDMFitter(SDFitter):
     -----------
     regressors: :class: menpo.fit.regression.RegressorTrainer
         The trained regressors.
+    n_training_images: int
+        The number of images that were used to train the SDM fitter. It is
+        only used for informational reasons.
     feature_type: None or string or function/closure or list of those, Optional
         If list of length n_levels, then a feature is defined per level.
         However, this requires that the pyramid_on_features flag is disabled,
@@ -123,8 +129,6 @@ class SDMFitter(SDFitter):
 
         See `menpo.image.feature.py` for details more details on
         menpo's standard image features and feature options.
-
-        Default: None
     reference_shape: PointCloud
         The reference shape that was used to resize all training images to a
         consistent object size.
@@ -140,16 +144,16 @@ class SDMFitter(SDFitter):
     interpolator: string
         The interpolator that was used during training.
     """
-    def __init__(self, regressors, feature_type, reference_shape, downscale,
-                 pyramid_on_features, interpolator):
+    def __init__(self, regressors, n_training_images, feature_type,
+                 reference_shape, downscale, pyramid_on_features,
+                 interpolator):
         self._fitters = regressors
         self._feature_type = feature_type
         self._reference_shape = reference_shape
         self._downscale = downscale
-        self._scaled_levels = True
         self._interpolator = interpolator
         self._pyramid_on_features = pyramid_on_features
-
+        self._n_training_images = n_training_images
 
     @property
     def algorithm(self):
@@ -221,6 +225,81 @@ class SDMFitter(SDFitter):
         """
         return self._interpolator
 
+    def __str__(self):
+        out = "Supervised Descent Method\n" \
+              " - Non-Parametric '{}' Regressor\n" \
+              " - {} training images.\n".format(
+              self._fitters[0].regressor.__name__, self._n_training_images)
+        # small strings about number of channels, channels string and downscale
+        down_str = []
+        for j in range(self.n_levels):
+            if j == self.n_levels - 1:
+                down_str.append('(no downscale)')
+            else:
+                down_str.append('(downscale by {})'.format(
+                    self.downscale**(self.n_levels - j - 1)))
+        temp_img = Image(image_data=np.random.rand(40, 40))
+        if self.pyramid_on_features:
+            temp = compute_features(temp_img, self.feature_type[0])
+            n_channels = [temp.n_channels] * self.n_levels
+        else:
+            n_channels = []
+            for j in range(self.n_levels):
+                temp = compute_features(temp_img, self.feature_type[j])
+                n_channels.append(temp.n_channels)
+        # string about features and channels
+        if self.pyramid_on_features:
+            if isinstance(self.feature_type[0], str):
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0])
+            elif self.feature_type[0] is None:
+                feat_str = "- No features extracted. "
+            else:
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0].func_name)
+            if n_channels[0] == 1:
+                ch_str = "channel"
+            else:
+                ch_str = "channels"
+        else:
+            feat_str = []
+            ch_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.feature_type[j], str):
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j]))
+                elif self.feature_type[j] is None:
+                    feat_str.append("- No features extracted. ")
+                else:
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j].func_name))
+                if n_channels[j] == 1:
+                    ch_str.append("channel")
+                else:
+                    ch_str.append("channels")
+        if self.n_levels > 1:
+            out = "{} - Gaussian pyramid with {} levels and downscale " \
+                  "factor of {}.\n".format(out, self.n_levels,
+                                           self.downscale)
+            if self.pyramid_on_features:
+                out = "{}   - Pyramid was applied on feature space.\n   " \
+                      "{}{} {} per image.\n".format(out, feat_str,
+                                                    n_channels[0], ch_str)
+            else:
+                out = "{}   - Features were extracted at each pyramid " \
+                      "level.\n".format(out)
+                for i in range(self.n_levels - 1, -1, -1):
+                    out = "{}   - Level {} {}: \n     {}{} {} per " \
+                          "image.\n".format(
+                          out, self.n_levels - i, down_str[i], feat_str[i],
+                          n_channels[i], ch_str[i])
+        else:
+            if self.pyramid_on_features:
+                feat_str = [feat_str]
+            out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n".format(
+                  out, feat_str[0], n_channels[0], ch_str[0])
+        return out
+
 
 class SDAAMFitter(AAMFitter, SDFitter):
     r"""
@@ -232,10 +311,13 @@ class SDAAMFitter(AAMFitter, SDFitter):
         The Active Appearance Model to be used.
     regressors: :class: menpo.fit.regression.RegressorTrainer
         The trained regressors.
+    n_training_images: int
+        The number of training images used to train the SDM fitter.
     """
-    def __init__(self, aam, regressors):
+    def __init__(self, aam, regressors, n_training_images):
         super(SDAAMFitter, self).__init__(aam)
         self._fitters = regressors
+        self._n_training_images = n_training_images
 
     @property
     def algorithm(self):
@@ -245,6 +327,13 @@ class SDAAMFitter(AAMFitter, SDFitter):
         : str
         """
         return 'SD-AAM' + self._fitters[0].algorithm
+
+    def __str__(self):
+        return "{}Supervised Descent Method for AAMs:\n" \
+               " - Parametric '{}' Regressor\n" \
+               " - {} training images.\n".format(
+               self.aam.__str__(), self._fitters[0].regressor.__name__,
+               self._n_training_images)
 
 
 class SDCLMFitter(CLMFitter, SDFitter):
@@ -257,6 +346,8 @@ class SDCLMFitter(CLMFitter, SDFitter):
         The Constrained Local Model to be used.
     regressors: :class: menpo.fit.regression.RegressorTrainer
         The trained regressors.
+    n_training_images: int
+        The number of training images used to train the SDM fitter.
 
     References
     ----------
@@ -264,9 +355,10 @@ class SDCLMFitter(CLMFitter, SDFitter):
     Computer Vision and Pattern Recognition (CVPR 2013). Portland, Oregon,
     USA, June 2013.
     """
-    def __init__(self, clm, regressors):
+    def __init__(self, clm, regressors, n_training_images):
         super(SDCLMFitter, self).__init__(clm)
         self._fitters = regressors
+        self._n_training_images = n_training_images
 
     @property
     def algorithm(self):
@@ -276,3 +368,10 @@ class SDCLMFitter(CLMFitter, SDFitter):
         : str
         """
         return 'SD-CLM' + self._fitters[0].algorithm
+
+    def __str__(self):
+        return "{}Supervised Descent Method for CLMs:\n" \
+               " - Parametric '{}' Regressor\n" \
+               " - {} training images.\n".format(
+               self.clm.__str__(), self._fitters[0].regressor.__name__,
+               self._n_training_images)
