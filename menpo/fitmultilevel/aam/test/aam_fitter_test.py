@@ -1,3 +1,5 @@
+from StringIO import StringIO
+from mock import patch
 from nose.plugins.attrib import attr
 import numpy as np
 from numpy.testing import assert_allclose
@@ -392,6 +394,18 @@ def test_max_iters_exception():
                                   algorithm=AlternatingInverseCompositional)
     fitter.fit(training_images[0], initial_shape[0],
                max_iters=[10, 20, 30, 40])
+
+
+@patch('sys.stdout', new_callable=StringIO)
+def test_str_mock(mock_stdout):
+    print aam
+    fitter = LucasKanadeAAMFitter(aam,
+                                  algorithm=AlternatingInverseCompositional)
+    print fitter
+    print aam2
+    fitter = LucasKanadeAAMFitter(aam2,
+                                  algorithm=ProbabilisticForwardAdditive)
+    print fitter
 
 
 def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,

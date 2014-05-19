@@ -1,6 +1,8 @@
+from mock import patch
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
+from StringIO import StringIO
 
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
@@ -126,6 +128,19 @@ def test_max_appearance_components_exception():
 @raises(ValueError)
 def test_boundary_exception():
     aam = AAMBuilder(boundary=-1).build(training_images, group='PTS')
+
+
+@patch('sys.stdout', new_callable=StringIO)
+def test_verbose_mock(mock_stdout):
+    aam = AAMBuilder().build(training_images, group='PTS', verbose=True)
+
+
+@patch('sys.stdout', new_callable=StringIO)
+def test_str_mock(mock_stdout):
+    print aam1
+    print aam2
+    print aam3
+    print aam4
 
 
 def test_aam_1():
