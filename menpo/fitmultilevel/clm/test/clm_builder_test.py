@@ -1,3 +1,5 @@
+from StringIO import StringIO
+from mock import patch
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
@@ -138,6 +140,18 @@ def test_boundary_exception():
     clm = CLMBuilder(boundary=-1).build(training_images, group='PTS')
 
 
+@patch('sys.stdout', new_callable=StringIO)
+def test_verbose_mock(mock_stdout):
+    clm = CLMBuilder().build(training_images, group='PTS', verbose=True)
+
+
+@patch('sys.stdout', new_callable=StringIO)
+def test_str_mock(mock_stdout):
+    print clm1
+    print clm2
+    print clm3
+
+
 def test_clm_1():
     assert (clm1.n_training_images == 4)
     assert (clm1.n_levels == 3)
@@ -148,8 +162,8 @@ def test_clm_1():
     assert (not clm1.scaled_shape_models)
     assert (not clm1.pyramid_on_features)
     assert_allclose(clm1.patch_shape, (5, 5))
-    assert (np.all([clm1.shape_models[j].n_components == 1
-                    for j in range(clm1.n_levels)]))
+    assert_allclose([clm1.shape_models[j].n_components
+                     for j in range(clm1.n_levels)], (1, 2, 3))
     assert_allclose(clm1.n_classifiers_per_level, [68, 68, 68])
     assert (clm1.
             classifiers[0][np.random.
@@ -175,7 +189,7 @@ def test_clm_2():
     assert clm2.scaled_shape_models
     assert (not clm2.pyramid_on_features)
     assert_allclose(clm2.patch_shape, (3, 10))
-    assert (np.all([clm2.shape_models[j].n_components == 1
+    assert (np.all([clm2.shape_models[j].n_components == 3
                     for j in range(clm2.n_levels)]))
     assert_allclose(clm2.n_classifiers_per_level, [68, 68])
     assert (clm2.
