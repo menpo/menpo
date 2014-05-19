@@ -253,7 +253,7 @@ class LandmarkGroup(Viewable):
 
     Parameters
     ----------
-    target : :class:`menpo.landmarks.base.Landmarkable`
+    target : :map:`Landmarkable`
         The parent object of this landmark group.
     group_label : String
         The label of the group.
@@ -263,10 +263,19 @@ class LandmarkGroup(Viewable):
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
     copy : boolean, optional
-        If true, a copy of the pointcloud is stored on the group.
+        If `True`, a copy of the :map:`PointCloud` is stored on the group.
 
-        Default True
+        Default: `True`
 
+    Raises
+    ------
+    ValueError
+        If no set of label masks is passed.
+    ValueError
+        If any of the label masks differs in size to the pointcloud.
+    ValueError
+        If there exists any point in the pointcloud that is not covered
+        by a label.
     """
 
     def __init__(self, target, group_label, pointcloud, labels_to_masks,
@@ -281,12 +290,9 @@ class LandmarkGroup(Viewable):
         if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
             raise ValueError('Each mask must have the same number of points '
                              'as the landmark pointcloud.')
-
-        unlabelled_points = np.sum(labels_to_masks.values(), axis=0) == 0
-        if np.any(unlabelled_points):
-            raise ValueError('Every point in the landmark pointcloud must be '
-                             'labelled. Points {0} were unlabelled.'.format(
-                np.nonzero(unlabelled_points)))
+        # Another sanity check
+        self._labels_to_masks = labels_to_masks
+        self._verify_all_labels_masked()
 
         self._group_label = group_label
         self._target = target
@@ -307,8 +313,7 @@ class LandmarkGroup(Viewable):
 
         Returns
         -------
-
-        group: :map:`LandmarkGroup`
+        group : :map:`LandmarkGroup`
             A group with an identical set of points, labels, and masks
             as this one.
 
@@ -349,7 +354,7 @@ class LandmarkGroup(Viewable):
 
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with a single label.
         """
         return self.with_labels(label)
@@ -370,7 +375,7 @@ class LandmarkGroup(Viewable):
 
         Raises
         ------
-        ValueError:
+        ValueError
             If deleting the label would leave some points unlabelled
         """
         # Pop the value off, which is akin to deleting it (removes it from the
@@ -378,13 +383,12 @@ class LandmarkGroup(Viewable):
         # removing it causes an unlabelled point
         value_to_delete = self._labels_to_masks.pop(label)
 
-        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
-        if np.any(unlabelled_points):
-            # Restore the value
+        try:
+            self._verify_all_labels_masked()
+        except ValueError as e:
+            # Catch the error, restore the value and re-raise the exception!
             self._labels_to_masks[label] = value_to_delete
-            raise ValueError('Every point in the landmark pointcloud must be '
-                             'labelled. Points {0} were unlabelled.'.format(
-                np.nonzero(unlabelled_points)))
+            raise e
 
     @property
     def group_label(self):
@@ -418,7 +422,7 @@ class LandmarkGroup(Viewable):
         """
         The pointcloud representing all the landmarks in the group.
 
-        :type: :class:`menpo.shape.pointcloud.Pointcloud`
+        :type: :map:`Pointcloud`
         """
         return self._pointcloud
 
@@ -451,10 +455,10 @@ class LandmarkGroup(Viewable):
             None is passed, and if there is only one label on this group,
             the label will be substituted automatically.
 
-            Default: None
+            Default: `None`
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with the same group label but containing only
             the given label.
         """
@@ -482,7 +486,7 @@ class LandmarkGroup(Viewable):
 
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with the same group label but containing all
             labels except the given label.
         """
@@ -491,6 +495,18 @@ class LandmarkGroup(Viewable):
             labels = [labels]
         labels_to_keep = list(set(self.labels).difference(labels))
         return self._new_group_with_only_labels(labels_to_keep)
+
+    def _verify_all_labels_masked(self):
+        """
+        Verify that every point in the pointcloud is associated with a label.
+        If any one point is not covered by a label, then raise a
+        ``ValueError``.
+        """
+        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        if np.any(unlabelled_points):
+            raise ValueError('Every point in the landmark pointcloud must be '
+                             'labelled. Points {0} were unlabelled.'.format(
+                np.nonzero(unlabelled_points)))
 
     def _new_group_with_only_labels(self, labels):
         """
@@ -504,7 +520,7 @@ class LandmarkGroup(Viewable):
 
         Returns
         -------
-        lmark_group : :class:`LandmarkGroup`
+        lmark_group : :map:`LandmarkGroup`
             The new landmark group with only the requested labels.
         """
         set_difference = set(labels).difference(self.labels)
