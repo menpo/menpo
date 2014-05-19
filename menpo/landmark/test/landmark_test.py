@@ -107,3 +107,84 @@ def test_LandmarkManager_set_PointCloud_not_copy_target():
     assert_allclose(man['test_set']['all'].lms.points, np.ones([10, 3]))
     assert_equal(man['test_set'].group_label, 'test_set')
     assert (man['test_set']._target is target)
+
+
+def test_LandmarkManager_iterate():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    man = LandmarkManager(target)
+    man['test_set'] = pcloud
+
+    for l in man:
+        assert_equal(l, 'test_set')
+
+
+def test_LandmarkGroup_iterate():
+    points = np.ones((10, 3))
+    mask_dict = {'all': np.ones(10, dtype=np.bool)}
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    lgroup = LandmarkGroup(target, 'label', pcloud, mask_dict, copy=False)
+
+    for l in lgroup:
+        assert_equal(l, 'all')
+
+
+def test_LandmarkManager_get():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+    mask_dict = {'all': np.ones(10, dtype=np.bool)}
+
+    lgroup = LandmarkGroup(target, 'label', pcloud, mask_dict, copy=False)
+
+    man = LandmarkManager(target)
+    man._landmark_groups['test_set'] = lgroup
+
+    assert_equal(man['test_set'], lgroup)
+
+
+def test_LandmarkManager_set():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+    mask_dict = {'all': np.ones(10, dtype=np.bool)}
+
+    lgroup = LandmarkGroup(target, 'label', pcloud, mask_dict, copy=False)
+
+    man = LandmarkManager(target)
+    man['test_set'] = lgroup
+
+    assert_equal(man._landmark_groups['test_set'].group_label,
+                 'test_set')
+    assert (man._landmark_groups['test_set']._target is target)
+    assert_allclose(man._landmark_groups['test_set'].lms.points,
+                    lgroup.lms.points)
+    assert_equal(man._landmark_groups['test_set'].n_labels, 1)
+
+
+def test_LandmarkManager_del():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    man = LandmarkManager(target)
+    man['test_set'] = pcloud
+
+    del man['test_set']
+
+    assert_equal(man.n_groups, 0)
+
+
+def test_LandmarkManager_in():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    man = LandmarkManager(target)
+    man['test_set'] = pcloud
+
+    assert ('test_set' in man)
