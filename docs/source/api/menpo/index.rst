@@ -6,6 +6,7 @@
 
 Core
 ----
+Core interfaces of Menpo.
 
 .. toctree::
    :maxdepth: 1
@@ -15,6 +16,7 @@ Core
 
 Differentiation
 ---------------
+Abstract interfaces that govern the taking of derivatives in Menpo.
 
 .. toctree::
    :maxdepth: 1
