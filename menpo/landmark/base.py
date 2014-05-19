@@ -114,7 +114,7 @@ class LandmarkManager(Transformable, Viewable):
         if isinstance(value, PointCloud):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
-                self._target, None, value.copy(),
+                self._target, group_label, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
