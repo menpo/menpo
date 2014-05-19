@@ -354,6 +354,38 @@ class LandmarkGroup(Viewable):
         """
         return self.with_labels(label)
 
+    def __delitem__(self, label):
+        """
+        Delete the semantic labelling for the provided label.
+
+         .. note::
+             You cannot delete a semantic label and leave the landmark group
+             partially unlabelled. Landmark groups must contain labels for
+             every point.
+
+        Parameters
+        ---------
+        label : String
+            The label to remove.
+
+        Raises
+        ------
+        ValueError:
+            If deleting the label would leave some points unlabelled
+        """
+        # Pop the value off, which is akin to deleting it (removes it from the
+        # underlying dict). However, we keep it around so we can check if
+        # removing it causes an unlabelled point
+        value_to_delete = self._labels_to_masks.pop(label)
+
+        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        if np.any(unlabelled_points):
+            # Restore the value
+            self._labels_to_masks[label] = value_to_delete
+            raise ValueError('Every point in the landmark pointcloud must be '
+                             'labelled. Points {0} were unlabelled.'.format(
+                np.nonzero(unlabelled_points)))
+
     @property
     def group_label(self):
         """
