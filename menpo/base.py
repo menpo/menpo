@@ -4,7 +4,8 @@ import os.path
 
 
 class Vectorizable(object):
-    """
+    """Flattening of rich objects to vectors and rebuilding them back.
+
     Interface that provides methods for 'flattening' an object into a
     vector, and restoring from the same vectorized form. Useful for
     statistical analysis of objects, which commonly requires the data
@@ -15,60 +16,53 @@ class Vectorizable(object):
 
     @property
     def n_parameters(self):
-        r"""
-        The length of the vector that this Vectorizable object produces.
+        r"""The length of the vector that this object produces.
 
-        type: int
+        :type: `int`
         """
         return (self.as_vector()).shape[0]
 
     @abc.abstractmethod
     def as_vector(self):
-        """
-        Returns a flattened representation of the object as a single
-        vector.
+        """A flattened representation of the object as a vector.
 
         Returns
         -------
-        vector : (N,) ndarray
+        vector : ``(n_parameters,)`` `ndarray`
             The core representation of the object, flattened into a
             single vector.
         """
-        pass
 
     @abc.abstractmethod
     def from_vector_inplace(self, vector):
-        """
-        Update the state of this object from it's vectorized state
+        """Update the state of this object from a vector form.
 
         Parameters
         ----------
-        vector : (N,) ndarray
-            Flattened representation of this object.
+        vector : ``(n_parameters,)`` `ndarray`
+            Flattened representation of this object
         """
-        pass
 
     def from_vector(self, vector):
         """
         Build a new instance of the object from it's vectorized state.
 
 
-        `self` is used to fill out the missing state required to
+        ``self`` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
-        is the default implementation, which is which is a
-        `deepcopy` of the object followed by a call to
-        :meth:`from_vector_inplace()`. This method can be overridden for a
-        performance benefit if desired.
+        is the default implementation, which is which is a ``deepcopy`` of the
+        object followed by a call to :meth:`from_vector_inplace()`. This method
+        can be overridden for a performance benefit if desired.
 
         Parameters
         ----------
-        vector : (N,) ndarray
+        vector : ``(n_parameters,)`` `ndarray`
             Flattened representation of the object.
 
         Returns
         -------
-        object : :class:`Vectorizable`
-            An instance of the class.
+        object : ``type(self)``
+            An new instance of this class.
         """
         self_copy = deepcopy(self)
         self_copy.from_vector_inplace(vector)
@@ -76,42 +70,59 @@ class Vectorizable(object):
 
 
 class Targetable(object):
-    r"""
-    Interface for objects that can produce a *target* :map:`PointCloud`.
+    """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
+
 
     This could for instance be the result of an alignment or a generation of a
     :map:`PointCloud` instance from a shape model.
 
     Implementations must define sensible behavior for:
 
-     - what a target is: target property
-     - how to set a target: _target_setter
-     - how to update the object after a target is set: _sync_state_from_target
-     - how to produce a new target after the changes: _new_target_from_state
+     - what a target is: see :attr:`target`
+     - how to set a target: see :meth:`set_target`
+     - how to update the object after a target is set: see :meth:`_sync_state_from_target`
+     - how to produce a new target after the changes: see :meth:`_new_target_from_state`
 
-    Note that _sync_target_from_state() needs to be triggered as appropriate by
-    subclasses e.g. when from_vector_inplace is called. This will in turn
-    trigger _new_target_from_state(), which each subclass must implement.
+    Note that :meth:`_sync_target_from_state` needs to be triggered as
+    appropriate by subclasses e.g. when :map:`from_vector_inplace` is
+    called. This will in turn trigger :meth:`_new_target_from_state`, which each
+    subclass must implement.
     """
     __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
+        r"""The number of dimensions of the :attr:`target`.
+
+        :type: `int`
+        """
         return self.target.n_dims
 
     @property
     def n_points(self):
+        r"""The number of points on the :attr:`target`.
+
+        :type: `int`
+        """
         return self.target.n_points
 
     @abc.abstractproperty
     def target(self):
-        pass
+        r"""The current :map:`PointCloud` that this object produces.
 
-    def set_target(self, value):
-        r"""
-        Updates this alignment transform to point to a new target.
+        :type: :map:`PointCloud`
         """
-        self._target_setter_with_verification(value)  # trigger the update
+
+    def set_target(self, new_target):
+        r"""Update this object so that it attempts to recreate the
+        ``new_target``.
+
+        Parameters
+        ----------
+        new_target : :map:`PointCloud`
+            The new target that this object should try and regenerate.
+        """
+        self._target_setter_with_verification(new_target)  # trigger the update
         self._sync_state_from_target()  # and a sync
 
     def _target_setter_with_verification(self, value):
@@ -171,7 +182,6 @@ class Targetable(object):
 
 
 class DP(object):
-
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -196,7 +206,6 @@ class DP(object):
 
 
 class DX(object):
-
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -228,7 +237,6 @@ class DX(object):
 
 
 class DL(object):
-
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -259,4 +267,14 @@ class DL(object):
 
 
 def menpo_src_dir_path():
+    r"""The path to the top of the menpo Python package.
+
+    Useful for locating where the data folder is stored.
+
+    Returns
+    -------
+
+    path : str
+        The full path to the top of the Menpo package
+    """
     return os.path.split(os.path.abspath(__file__))[0]

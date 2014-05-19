@@ -4,20 +4,27 @@
 =================
 
 
-Classes
--------
+Core
+----
 
 .. toctree::
    :maxdepth: 1
 
    Vectorizable
    Targetable
+
+Differentiation
+---------------
+
+.. toctree::
+   :maxdepth: 1
+
    DP
    DX
    DL
 
-Functions
----------
+Convienience
+------------
 
 .. toctree::
    :maxdepth: 1
