@@ -12,8 +12,6 @@ from sklearn import qda
 
 
 def random_forest(X, t):
-    r"""
-    """
     clf = qda.QDA()
     clf.fit(X, t)
 
@@ -23,9 +21,9 @@ def random_forest(X, t):
     return random_forest_predict
 
 # load images
-filenames = ['breakingbad.jpg', 'einstein.jpg']
+filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']
 training_images = []
-for i in range(2):
+for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion(0.1)
     labeller(im, 'PTS', ibug_68_trimesh)
@@ -141,12 +139,12 @@ def test_boundary_exception():
 
 
 def test_clm_1():
-    assert (clm1.n_training_images == 2)
+    assert (clm1.n_training_images == 4)
     assert (clm1.n_levels == 3)
     assert (clm1.downscale == 2)
     assert (clm1.feature_type[0] == 'igo' and clm1.feature_type[2] is None)
     assert (clm1.interpolator == 'scipy')
-    assert_allclose(np.around(clm1.reference_shape.range()), (110., 102.))
+    assert_allclose(np.around(clm1.reference_shape.range()), (109., 103.))
     assert (not clm1.scaled_shape_models)
     assert (not clm1.pyramid_on_features)
     assert_allclose(clm1.patch_shape, (5, 5))
@@ -168,12 +166,12 @@ def test_clm_1():
 
 
 def test_clm_2():
-    assert (clm2.n_training_images == 2)
+    assert (clm2.n_training_images == 4)
     assert (clm2.n_levels == 2)
     assert (clm2.downscale == 1.2)
     assert (clm2.feature_type[0] is None and clm2.feature_type[1] is None)
     assert (clm2.interpolator == 'scipy')
-    assert_allclose(np.around(clm2.reference_shape.range()), (224., 207.))
+    assert_allclose(np.around(clm2.reference_shape.range()), (169., 161.))
     assert clm2.scaled_shape_models
     assert (not clm2.pyramid_on_features)
     assert_allclose(clm2.patch_shape, (3, 10))
@@ -191,12 +189,12 @@ def test_clm_2():
 
 
 def test_clm_3():
-    assert (clm3.n_training_images == 2)
+    assert (clm3.n_training_images == 4)
     assert (clm3.n_levels == 1)
     assert (clm3.downscale == 3)
-    assert (clm3.feature_type[0] is 'igo' and len(clm3.feature_type) == 1)
+    assert (clm3.feature_type[0] == 'igo' and len(clm3.feature_type) == 1)
     assert (clm3.interpolator == 'scipy')
-    assert_allclose(np.around(clm3.reference_shape.range()), (224., 207.))
+    assert_allclose(np.around(clm3.reference_shape.range()), (169., 161.))
     assert clm3.scaled_shape_models
     assert clm3.pyramid_on_features
     assert_allclose(clm3.patch_shape, (2, 3))

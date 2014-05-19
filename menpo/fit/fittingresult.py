@@ -223,11 +223,11 @@ class NonParametricFittingResult(FittingResult):
     r"""
     """
 
-    def __init__(self, image, fitter, shape=None, costs=None,
+    def __init__(self, image, fitter, shapes=None, costs=None,
                  gt_shape=None, error_type='me_norm'):
         super(NonParametricFittingResult, self).__init__(
             image, fitter, gt_shape=gt_shape, error_type=error_type)
-        self.parameters = shape
+        self.parameters = shapes
         self.costs = costs
 
     @FittingResult.fitted.setter
