@@ -189,7 +189,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         This is the width according to image semantics, and is thus the size
         of the **second** dimension.
 
-        :type: int
+        :type: `int`
         """
         return self.pixels.shape[1]
 
