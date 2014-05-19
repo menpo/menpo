@@ -66,20 +66,20 @@ class NonUniformScale(DiscreteAffine, Affine):
         A scale for each axis.
     """
 
-    def __init__(self, scale):
+    def __init__(self, scale, skip_checks=False):
         scale = np.asarray(scale)
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Affine.__init__(self, h_matrix)
+        Affine.__init__(self, h_matrix, copy=False, skip_checks=skip_checks)
 
     @classmethod
     def identity(cls, n_dims):
         return NonUniformScale(np.ones(n_dims))
 
-    def set_h_matrix(self, value):
-        raise NotImplementedError("The h_matrix cannot "
-                                  "be set on a NonUniformScale.")
+    @property
+    def h_matrix_is_mutable(self):
+        return False
 
     @property
     def scale(self):
@@ -154,7 +154,7 @@ class NonUniformScale(DiscreteAffine, Affine):
 
         :type: :class:`NonUniformScale`
         """
-        return NonUniformScale(1.0 / self.scale)
+        return NonUniformScale(1.0 / self.scale, skip_checks=True)
 
     def d_dp(self, points):
         # TODO d_dp on NonUniformScale
@@ -168,11 +168,12 @@ class UniformScale(DiscreteAffine, Similarity):
     code duplication.
     """
 
-    def __init__(self, scale, n_dims):
+    def __init__(self, scale, n_dims, skip_checks=False):
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Similarity.__init__(self, h_matrix)
+        Similarity.__init__(self, h_matrix, copy=False,
+                            skip_checks=skip_checks)
 
     @classmethod
     def identity(cls, n_dims):
@@ -233,7 +234,7 @@ class UniformScale(DiscreteAffine, Similarity):
 
         :type: type(self)
         """
-        return type(self)(1.0 / self.scale, self.n_dims)
+        return UniformScale(1.0 / self.scale, self.n_dims, skip_checks=True)
 
     def d_dp(self, points):
         # TODO d_dp on UniformScale

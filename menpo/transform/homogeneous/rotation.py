@@ -46,10 +46,10 @@ class Rotation(DiscreteAffine, Similarity):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, rotation_matrix):
+    def __init__(self, rotation_matrix, skip_checks=False):
         h_matrix = np.eye(rotation_matrix.shape[0] + 1)
-        Similarity.__init__(self, h_matrix)
-        self.set_rotation_matrix(rotation_matrix)
+        Similarity.__init__(self, h_matrix, copy=False, skip_checks=True)
+        self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
     def identity(cls, n_dims):
@@ -64,16 +64,17 @@ class Rotation(DiscreteAffine, Similarity):
         """
         return self.linear_component
 
-    def set_rotation_matrix(self, value):
-        shape = value.shape
-        if len(shape) != 2 and shape[0] != shape[1]:
-            raise ValueError("You need to provide a square rotation matrix")
-        # The update better be the same size
-        elif self.n_dims != shape[0]:
-            raise ValueError("Trying to update the rotation "
-                             "matrix to a different dimension")
-        # TODO actually check I am a valid rotation
-        # TODO slightly dodgey here accessing _h_matrix
+    def set_rotation_matrix(self, value, skip_checks=False):
+        if not skip_checks:
+            shape = value.shape
+            if len(shape) != 2 and shape[0] != shape[1]:
+                raise ValueError("You need to provide a square rotation matrix")
+            # The update better be the same size
+            elif self.n_dims != shape[0]:
+                raise ValueError("Trying to update the rotation "
+                                 "matrix to a different dimension")
+            # TODO actually check I am a valid rotation
+            # TODO slightly dodgey here accessing _h_matrix
         self._h_matrix[:-1, :-1] = value
 
     def _transform_str(self):
@@ -233,7 +234,7 @@ class Rotation(DiscreteAffine, Similarity):
 
         :type: (D, D) ndarray
         """
-        return Rotation(np.linalg.inv(self.rotation_matrix))
+        return Rotation(np.linalg.inv(self.rotation_matrix), skip_checks=True)
 
     def d_dp(self, points):
         raise NotImplementedError("vectorizable (and hence d_dp) is not "
@@ -246,13 +247,13 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         HomogFamilyAlignment.__init__(self, source, target)
         Rotation.__init__(self, optimal_rotation_matrix(source, target))
 
-    def set_rotation_matrix(self, value):
-        Rotation.set_rotation_matrix(self, value)
+    def set_rotation_matrix(self, value, skip_checks=False):
+        Rotation.set_rotation_matrix(self, value, skip_checks=skip_checks)
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
         r = optimal_rotation_matrix(self.source, self.target)
-        Rotation.set_rotation_matrix(self, r)
+        Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
     def copy_without_alignment(self):
-        return Rotation(self.rotation_matrix)
+        return Rotation(self.rotation_matrix, skip_checks=True)
