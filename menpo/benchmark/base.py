@@ -437,7 +437,7 @@ def load_database(database_path, db_loading_options=None, verbose=False):
                                           show_bar=True)))
 
         # crop image
-        i.crop_to_landmarks_proportion(crop_proportion)
+        i.crop_to_landmarks_proportion_inplace(crop_proportion)
 
         # convert it to greyscale if needed
         if convert_to_grey is True and i.n_channels == 3:
