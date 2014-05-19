@@ -11,10 +11,9 @@ def extract_parametric_features(appearance_model, warped_image,
         computed.
     warped_image: :class:`menpo.image.masked`
         The warped image.
-    rergession_features: None or function/closure
-        If None, the PCA apperance model weights will be returned as features.
-        If function/closure, the parametric features will be extracted using
-        one of the functions the are defined in here.
+    rergession_features: function/closure
+        Defines the function from which the parametric features will be
+        extracted.
 
         Non-default regression feature options and new experimental features
         can be used by defining a closure. In this case, the closure must

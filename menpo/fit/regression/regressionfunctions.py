@@ -20,6 +20,14 @@ def regression(X, T, regression_type, **kwargs):
     -------
     regression_closure: function/closure
         The closure of the regression method.
+
+    Raises
+    ------
+    ValueError
+        regression_type can only be: a closure defining a particular regression
+        technique. Several examples of such closures can be found in
+        `menpo.fit.regression.regressionfunctions.py` (mlr, mlr_svd, mlr_pca,
+        pcr, pls, ccr, ...).
     """
     if hasattr(regression_type, '__call__'):
         regression_closure = regression_type(X, T, **kwargs)
