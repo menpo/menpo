@@ -157,7 +157,7 @@ filenames = ['breakingbad.jpg', 'einstein.jpg']
 training_images = []
 for i in range(2):
     im = mio.import_builtin_asset(filenames[i])
-    im.crop_to_landmarks_proportion(0.1)
+    im.crop_to_landmarks_proportion_inplace(0.1)
     labeller(im, 'PTS', ibug_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')

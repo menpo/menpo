@@ -89,10 +89,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             if image_data.ndim == 2:
                 image_data = image_data[..., None]
             if image_data.ndim < 2:
-                raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
-                                 "1 channel) or 3D+ (2D+ shape, n_channels) "
-                                 " - a {}D array "
-                                 "was provided".format(image_data.ndim))
+                raise ValueError(
+                    "Pixel array has to be 2D (2D shape, implicitly "
+                    "1 channel) or 3D+ (2D+ shape, n_channels) "
+                    " - a {}D array "
+                    "was provided".format(image_data.ndim))
             self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
@@ -585,49 +586,54 @@ class Image(Vectorizable, Landmarkable, Viewable):
         return self.crop_inplace(min_indices, max_indices,
                                  constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
-                                     label='all', minimum=True,
-                                     constrain_to_boundary=True):
+    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
+                                             group=None, label='all',
+                                             minimum=True,
+                                             constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
 
         Parameters
         ----------
-        boundary_proportion: float
+        boundary_proportion : float
             Additional padding to be added all around the landmarks
             bounds defined as a proportion of the landmarks' range. See
-            minimum for a definition of how the range is calculated.
+            the minimum parameter for a definition of how the range is
+            calculated.
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-
-        label: string, Optional
+            Default: `None`
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
-
-        minimum: bool, Optional
-            If True the specified proportion is relative to the minimum
-            value of the landmarks' per-dimension range; if False wrt the
+        minimum : bool, Optional
+            If `True` the specified proportion is relative to the minimum
+            value of the landmarks' per-dimension range; if `False` w.r.t. the
             maximum value of the landmarks' per-dimension range.
 
-            Default: True
+            Default: `True`
+        constrain_to_boundary : boolean, optional
+            If `True`, the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+            Default: `True`
 
-            Default: True
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks with a border proportional to
+            the landmark spread or range.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
@@ -635,9 +641,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        self.crop_to_landmarks_inplace(group=group, label=label,
-                                       boundary=boundary,
-                                       constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_landmarks_inplace(
+            group=group, label=label, boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
