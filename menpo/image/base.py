@@ -14,7 +14,6 @@ from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
-
 from .feature import ImageFeatures
 from .interpolation import scipy_interpolation
 
@@ -423,6 +422,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         glyph = Image(glyph_image)
         # correct landmarks
         from menpo.transform import NonUniformScale
+
         image_shape = np.array(self.shape, dtype=np.double)
         glyph_shape = np.array(glyph.shape, dtype=np.double)
         nus = NonUniformScale(glyph_shape / image_shape)
@@ -430,8 +430,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         nus.apply_inplace(glyph.landmarks)
         return glyph
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=True):
+    def crop_inplace(self, min_indices, max_indices,
+                     constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -439,32 +439,32 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
-        cropped_image : :class:`type(self)`
-            This image, but cropped.
+        cropped_image : `type(self)`
+            This image, cropped.
 
         Raises
         ------
-        ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+        `ValueError`
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
-        ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+        `ImageBoundaryError`
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
 
         """
@@ -480,8 +480,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
         if not constrain_to_boundary and not (
-                np.all(min_bounded == min_indices) or
-                np.all(max_bounded == max_indices)):
+                    np.all(min_bounded == min_indices) or
+                    np.all(max_bounded == max_indices)):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
@@ -494,8 +494,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         lm_translation.apply_inplace(self.landmarks)
         return self
 
-    def cropped_copy(self, min_indices, max_indices,
-                     constrain_to_boundary=False):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=False):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -503,18 +503,18 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
@@ -525,16 +525,17 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Raises
         ------
         ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         cropped_image = deepcopy(self)
-        return cropped_image.crop(min_indices, max_indices,
-                                  constrain_to_boundary=constrain_to_boundary)
+        return cropped_image.crop_inplace(
+            min_indices, max_indices,
+            constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks(self, group=None, label='all', boundary=0,
                           constrain_to_boundary=True):
@@ -576,8 +577,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         pc = self.landmarks[group][label].lms
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        self.crop(min_indices, max_indices,
-                  constrain_to_boundary=constrain_to_boundary)
+        self.crop_inplace(min_indices, max_indices,
+                          constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
                                      label='all', minimum=True,
@@ -899,7 +900,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         x, y = self.landmarks[group][label].lms.range()
-        scale = diagonal_range / np.sqrt(x**2 + y**2)
+        scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
@@ -1055,7 +1056,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 yield self
             else:
                 if sigma is None:
-                    sigma_aux = 2 * downscale**j / 6.0
+                    sigma_aux = 2 * downscale ** j / 6.0
                 else:
                     sigma_aux = sigma
 

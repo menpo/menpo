@@ -261,7 +261,7 @@ class MaskedImage(Image):
                            pixels_to_view, channels=channels,
                            mask=mask).render(**kwargs)
 
-    def crop(self, min_indices, max_indices,
+    def crop_inplace(self, min_indices, max_indices,
              constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
@@ -300,11 +300,11 @@ class MaskedImage(Image):
 
         """
         # crop our image
-        super(MaskedImage, self).crop(
+        super(MaskedImage, self).crop_inplace(
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
-        self.mask.crop(min_indices, max_indices,
+        self.mask.crop_inplace(min_indices, max_indices,
                        constrain_to_boundary=constrain_to_boundary)
         return self
 
@@ -337,7 +337,7 @@ class MaskedImage(Image):
         min_indices, max_indices = self.mask.bounds_true(
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
-        self.crop(min_indices, max_indices,
+        self.crop_inplace(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
     def warp_to(self, template_mask, transform, warp_landmarks=False,
