@@ -36,11 +36,11 @@ def compute_features(image, feature_type):
 
     Returns
     -------
-    feature_image: :class:`menpo.image.MaskedNDImage`
+    feature_image: :class:`menpo.image.MaskedImage`
         The resulting feature image.
     """
     if feature_type is not None:
-        if type(feature_type) is str:
+        if isinstance(feature_type, str):
             image = eval('image.features.' + feature_type + '()')
         elif hasattr(feature_type, '__call__'):
             image = feature_type(image)
@@ -54,4 +54,14 @@ def compute_features(image, feature_type):
 
 
 def sparse_hog(image):
+    r"""
+    Non-standard feature function that computes sparse HOGs.
+    """
     return image.features.hog(mode='sparse', constrain_landmarks=True)
+
+
+def double_igo(image):
+    r"""
+    Non-standard feature function that computes IGOs with double angles.
+    """
+    return image.features.igo(double_angles=True)
