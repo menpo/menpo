@@ -37,6 +37,23 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def __init__(self, h_matrix):
         self._h_matrix = h_matrix.copy()
 
+    def __str__(self):
+        rep = self._transform_str() + '\n'
+        rep += str(self.h_matrix)
+        return rep
+
+    def _transform_str(self):
+        r"""
+        A string representation explaining what this homogeneous transform does.
+        Has to be implemented by base classes.
+
+        Returns
+        -------
+        str : string
+            String representation of transform.
+        """
+        return 'Homogeneous'
+
     @classmethod
     def identity(cls, n_dims):
         return Homogeneous(np.eye(n_dims + 1))

@@ -13,45 +13,42 @@ class LucasKanade(Fitter):
 
     This is to abstract away optimisation specific functionality such as the
     calculation of the Hessian (which could be derived using a number of
-    techniques, including Gauss-Newton and Levenberg-Marquardt).
+    techniques, currently only Gauss-Newton).
 
     Parameters
     ----------
-    image : :class:`pybug.image.base.Image`
+    image : :map:`Image`
         The image to perform the alignment upon.
 
         .. note:: Only the image is expected within the base class because
             different algorithms expect different kinds of template
             (image/model)
-    residual : :class:`pybug.lucaskanade.residual.Residual`
+    residual : :map:`Residual`
+    residual : :map:`Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
-    transform : :class:`pybug.transform.base.AlignableTransform`
+    transform : :map:`Alignment`
         The transformation type used to warp the image in to the appropriate
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
     warp : function
         A function that takes 3 arguments,
-        ``warp(`` :class:`image <pybug.image.base.Image>`,
-        :class:`template <pybug.image.base.Image>`,
-        :class:`transform <pybug.transform.base.AlignableTransform>` ``)``
+
+            warp(:map:`Image`, :map:`Image`, :map:`Alignment`)
+
         This function is intended to perform sub-pixel interpolation of the
         pixel locations calculated by transforming the given image into the
         reference frame of the template. Appropriate functions are given in
-        :doc:`pybug.interpolation`.
-    optimisation : ('GN',) | ('LM', float), optional
-        The optimisation technique used to calculate the Hessian approximation.
-        Note that for 'LM' the float is used to set the update step.
+        :module:`menpo.image.interpolation`.
+    optimisation : ('GN',), optional
+        A tuple containing the optimisation technique used to calculate the
+        Hessian approximation. The first element is the string identifier and
+        the remaining elements are any parameters for the technique.
 
-        Default: 'GN'
-    update_step : float, optional
-        The update step used when performing a Levenberg-Marquardt
-        optimisation.
-
-        Default: 0.001
+        Default: ('GN',)
     eps : float, optional
         The convergence value. When calculating the level of convergence, if
-        the norm of the delta parameter updates is less than ``eps``, the
+        the norm of the delta parameter updates is less than `eps`, the
         algorithm is considered to have converged.
 
         Default: 1**-10
@@ -66,7 +63,6 @@ class LucasKanade(Fitter):
     type  full name            hessian approximation
     ===== ==================== ===============================================
     'GN'  Gauss-Newton         :math:`\mathbf{J^T J}`
-    'LM'  Levenberg-Marquardt  :math:`\mathbf{J^T J + \lambda\, diag(J^T J)}`
     ===== ==================== ===============================================
 
     Attributes
@@ -121,25 +117,20 @@ class LucasKanade(Fitter):
                                   "implemented yet")
 
     def _levenberg_marquardt_update(self, sd_delta_p):
-        LM = np.diagflat(np.diagonal(self._H))
-        H_lm = self._H + (self.update_step * LM)
-
-        if self.residual.error < self.__e_lm:
-            # Bad step, increase step
-            self.update_step *= 10
-        else:
-            # Good step, decrease step
-            self.update_step /= 10
-            self.__e_lm = self.residual.error
-
-        return np.linalg.solve(H_lm, sd_delta_p)
+        raise NotImplementedError("Levenberg Marquardt optimization not "
+                                  "implemented yet")
 
     def _set_up(self, **kwargs):
         pass
 
-    def _create_fitting(self, image, parameters, gt_shape=None):
+    def _create_fitting_result(self, image, parameters, gt_shape=None):
         return ParametricFittingResult(image, self, parameters=[parameters],
                                        gt_shape=gt_shape)
+
+    def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
+        self.transform.from_vector_inplace(initial_parameters)
+        return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
+                          **kwargs)
 
     def get_parameters(self, shape):
         self.transform.set_target(shape)

@@ -4,9 +4,18 @@
   The Menpo API
 ###################
 
-.. htmlonly::
+.. toctree::
+   :maxdepth: 1
 
-   :Release: |version|
-   :Date: |today|
-
-.. include:: generated/gen.txt
+   menpo/index
+   menpo/fit/index
+   menpo/fitmultilevel/index
+   menpo/io/index
+   menpo/image/index
+   menpo/landmark/index
+   menpo/math/index
+   menpo/model/index
+   menpo/rasterize/index
+   menpo/shape/index
+   menpo/transform/index
+   menpo/visualize/index

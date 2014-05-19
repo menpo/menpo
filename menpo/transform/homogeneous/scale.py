@@ -12,13 +12,13 @@ def Scale(scale_factor, n_dims=None):
 
     A :class:`UniformScale` will be produced if:
 
-        - A float ``scale_factor`` and a ``n_dims`` kwarg are provided
-        - A ndarray scale_factor with shape (``n_dims``, ) is provided with all
+        - A float `scale_factor` and a `n_dims` kwarg are provided
+        - A ndarray scale_factor with shape (`n_dims`, ) is provided with all
           elements being the same
 
     A :class:`NonUniformScale` will be provided if:
 
-        - A ndarray ``scale_factor`` with shape (``n_dims``, ) is provided with
+        - A ndarray `scale_factor` with shape (`n_dims`, ) is provided with
           at least two differing scale factors.
 
     Parameters
@@ -58,7 +58,7 @@ def Scale(scale_factor, n_dims=None):
 
 class NonUniformScale(DiscreteAffine, Affine):
     r"""
-    An ``n_dims`` scale transform, with a scale component for each dimension.
+    An `n_dims` scale transform, with a scale component for each dimension.
 
     Parameters
     ----------
@@ -91,17 +91,17 @@ class NonUniformScale(DiscreteAffine, Affine):
         return self.h_matrix.diagonal()[:-1]
 
     def _transform_str(self):
-        message = 'NonUniformScale by %s ' % self.scale
+        message = 'NonUniformScale by {}'.format(self.scale)
         return message
 
     @property
     def n_parameters(self):
         """
-        The number of parameters: ``n_dims``.
+        The number of parameters: `n_dims`.
 
         :type: int
 
-        ``n_dims`` parameters - ``[scale_x, scale_y, ....]`` - The scalar values
+        `n_dims` parameters - `[scale_x, scale_y, ....]` - The scalar values
         representing the scale across each axis.
         """
         return self.scale.size
@@ -156,6 +156,10 @@ class NonUniformScale(DiscreteAffine, Affine):
         """
         return NonUniformScale(1.0 / self.scale)
 
+    def d_dp(self, points):
+        # TODO d_dp on NonUniformScale
+        return NotImplementedError("d_dp is not implemented on a NonUniformScale")
+
 
 class UniformScale(DiscreteAffine, Similarity):
     r"""
@@ -184,7 +188,7 @@ class UniformScale(DiscreteAffine, Similarity):
         return self.h_matrix[0, 0]
 
     def _transform_str(self):
-        message = 'UniformScale by %f ' % self.scale
+        message = 'UniformScale by {}'.format(self.scale)
         return message
 
     @property
@@ -230,6 +234,10 @@ class UniformScale(DiscreteAffine, Similarity):
         :type: type(self)
         """
         return type(self)(1.0 / self.scale, self.n_dims)
+
+    def d_dp(self, points):
+        # TODO d_dp on UniformScale
+        raise NotImplementedError("d_dp is not implemented on UniformScale.")
 
 
 class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):

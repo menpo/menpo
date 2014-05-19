@@ -1,7 +1,7 @@
 from __future__ import division
 
 from menpo.transform import AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
@@ -66,11 +66,11 @@ class CLMFitter(MultilevelFitter):
             else:
                 pyramid = image.smoothing_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
-            images = [compute_features(i, self.feature_type)
-                      for i in pyramid]
+            images = [compute_features(i, self.feature_type[j])
+                      for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type)]
+            images = [compute_features(image, self.feature_type[0])]
 
         return images
 
@@ -167,29 +167,29 @@ class GradientDescentCLMFitter(CLMFitter):
 
             Default: Similarity
 
-        n_shape: list, optional
-            The number of shape components to be used per fitting level.
-            If None, for each shape model n_active_components will be used.
-
-            Default: None
-
-        n_appearance: list, optional
-            The number of appearance components to be used per fitting level.
-            If None, for each appearance model n_active_components will be used.
+        n_shape: list of int or float, optional
+            The number of shape components to be used per fitting level. It
+            can also be specified in terms of variance captured by the
+            components. If None, for each shape model n_active_components
+            will be used.
 
             Default: None
         """
-        if n_shape is None:
-            n_shape = [sm.n_active_components
-                       for sm in self.clm.shape_models]
-        if type(n_shape) is int:
-            n_shape = [n_shape for _ in range(self.clm.n_levels)]
-        elif len(n_shape) is 1 and self.clm.n_levels > 1:
-            n_shape = [n_shape[0] for _ in range(self.clm.n_levels)]
-        elif len(n_shape) is not self.clm.n_levels:
-            raise ValueError('n_shape can be integer, integer list '
-                             'containing 1 or {} elements or '
-                             'None'.format(self.clm.n_levels))
+        if n_shape is not None:
+            if type(n_shape) is int or type(n_shape) is float:
+                for sm in self.clm.shape_models:
+                    sm.n_active_components = n_shape
+            elif len(n_shape) is 1 and self.clm.n_levels > 1:
+                for sm in self.clm.shape_models:
+                    sm.n_active_components = n_shape[0]
+            elif len(n_shape) is self.clm.n_levels:
+                for sm, n in zip(self.clm.shape_models, n_shape):
+                    sm.n_active_components = n
+            else:
+                raise ValueError('n_shape can be an integer or a float, '
+                                 'an integer or float list containing 1 '
+                                 'or {} elements or else '
+                                 'None'.format(self.clm.n_levels))
 
         self._fitters = []
         for j, (sm, clf) in enumerate(zip(self.clm.shape_models,

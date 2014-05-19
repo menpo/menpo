@@ -3,7 +3,7 @@ import abc
 import numpy as np
 
 from menpo.transform import Scale, AlignmentSimilarity
-from menpo.model.pdm import PDM, OrthoPDM
+from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.transform.modeldriven import ModelDrivenTransform, OrthoMDTransform
 
 from menpo.fit.regression.trainer import (
@@ -14,12 +14,12 @@ from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 
-from .base import (SupervisedDescentMethodFitter, SupervisedDescentAAMFitter,
-                   SupervisedDescentCLMFitter)
+from .base import (SDMFitter, SDAAMFitter,
+                   SDCLMFitter)
 
 
 # TODO: document me
-class SupervisedDescentTrainer(object):
+class SDTrainer(object):
     r"""
     """
     __metaclass__ = abc.ABCMeta
@@ -28,6 +28,13 @@ class SupervisedDescentTrainer(object):
                  feature_type=None, n_levels=3, downscale=2,
                  scaled_levels=True, noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy', **kwargs):
+
+        # check regression feature
+        regression_features = self.check_feature_type(regression_features,
+                                                      n_levels)
+        # check feature type
+        feature_type = self.check_feature_type(feature_type, n_levels)
+
         self.regression_type = regression_type
         self.regression_features = regression_features
         self.feature_type = feature_type
@@ -67,8 +74,8 @@ class SupervisedDescentTrainer(object):
 
         print('- Generating multilevel feature space')
         images = []
-        for _ in np.arange(self.n_levels):
-            images.append([compute_features(g.next(), self.feature_type)
+        for j in np.arange(self.n_levels):
+            images.append([compute_features(g.next(), self.feature_type[j])
                            for g in generator])
         images.reverse()
 
@@ -135,6 +142,29 @@ class SupervisedDescentTrainer(object):
 
         return self._build_supervised_descent_fitter(regressors)
 
+    #TODO: repeated code from Builder. Should builder and Trainer have a
+    # common ancestor???
+    @classmethod
+    def check_feature_type(cls, feature_type, n_levels):
+        feature_type_str_error = ("feature_type must be a str or a "
+                                  "function/closure or a list of "
+                                  "those containing 1 or {} "
+                                  "elements").format(n_levels)
+        if not isinstance(feature_type, list):
+            feature_type_list = [feature_type for _ in range(n_levels)]
+        elif len(feature_type) is 1:
+            feature_type_list = [feature_type[0] for _ in range(n_levels)]
+        elif len(feature_type) is n_levels:
+            feature_type_list = feature_type
+        else:
+            raise ValueError(feature_type_str_error)
+        for ft in feature_type_list:
+            if (ft is not None or not isinstance(ft, str)
+               or not hasattr(ft, '__call__')):
+                ValueError(feature_type_str_error)
+
+        return feature_type_list
+
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
         r"""
@@ -158,7 +188,7 @@ class SupervisedDescentTrainer(object):
 
 
 #TODO: Document me
-class SupervisedDescentMethodTrainer(SupervisedDescentTrainer):
+class SDMTrainer(SDTrainer):
     r"""
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
@@ -166,7 +196,7 @@ class SupervisedDescentMethodTrainer(SupervisedDescentTrainer):
                  downscale=1.5, scaled_levels=True, noise_std=0.04,
                  rotation=False, n_perturbations=10, diagonal_range=None,
                  interpolator='scipy'):
-        super(SupervisedDescentMethodTrainer, self).__init__(
+        super(SDMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=feature_type, n_levels=n_levels,
@@ -190,18 +220,18 @@ class SupervisedDescentMethodTrainer(SupervisedDescentTrainer):
     def _set_regressor_trainer(self, level):
         return NonParametricRegressorTrainer(
             self.reference_shape, regression_type=self.regression_type,
-            regression_features=self.regression_features,
+            regression_features=self.regression_features[level],
             patch_shape=self.patch_shape, noise_std=self.noise_std,
             rotation=self.rotation, n_perturbations=self.n_perturbations)
 
     def _build_supervised_descent_fitter(self, regressors):
-        return SupervisedDescentMethodFitter(
+        return SDMFitter(
             regressors, self.feature_type, self.reference_shape,
             self.downscale, self.scaled_levels, self.interpolator)
 
 
 #TODO: Document me
-class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
+class SDAAMTrainer(SDTrainer):
     r"""
     """
     def __init__(self, aam, regression_type=mlr, regression_features=weights,
@@ -209,7 +239,7 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
                  update='compositional', md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
-        super(SupervisedDescentAAMTrainer, self).__init__(
+        super(SDAAMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=aam.feature_type, n_levels=aam.n_levels,
@@ -275,26 +305,26 @@ class SupervisedDescentAAMTrainer(SupervisedDescentTrainer):
 
         return ParametricRegressorTrainer(
             am, md_transform, self.reference_shape,
-            regression_type=self.regression_type, regression_features=self
-            .regression_features, update=self.update,
-            noise_std=self.noise_std, rotation=self.rotation,
-            n_perturbations=self.n_perturbations,
+            regression_type=self.regression_type,
+            regression_features=self.regression_features[level],
+            update=self.update, noise_std=self.noise_std,
+            rotation=self.rotation, n_perturbations=self.n_perturbations,
             interpolator=self.interpolator)
 
     def _build_supervised_descent_fitter(self, regressors):
-        return SupervisedDescentAAMFitter(self.aam, regressors)
+        return SDAAMFitter(self.aam, regressors)
 
 
 #TODO: Document me
 #TODO: Finish me
-class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
+class SDCLMTrainer(SDTrainer):
     r"""
     """
     def __init__(self, clm, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
                 pdm_transform=OrthoPDM,
                 global_transform=AlignmentSimilarity, n_shape=None):
-        super(SupervisedDescentCLMTrainer, self).__init__(
+        super(SDCLMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=clm.feature_type, n_levels=clm.n_levels,
@@ -336,10 +366,10 @@ class SupervisedDescentCLMTrainer(SupervisedDescentTrainer):
 
         return SemiParametricClassifierBasedRegressorTrainer(
             clfs, pdm_transform, self.reference_shape,
-            regression_type=self.regression_type,
+            regression_type=self.regression_type[level],
             patch_shape=self.patch_shape,
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
 
     def _build_supervised_descent_fitter(self, regressors):
-        return SupervisedDescentCLMFitter(self.clm, regressors)
+        return SDCLMFitter(self.clm, regressors)

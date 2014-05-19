@@ -12,11 +12,11 @@ class Renderer(object):
 
     It is assumed that the renderers follow some form of stateful pattern for
     rendering to Figures. Therefore, the major interface for rendering involves
-    providing a ``figure_id`` or a boolean about whether a new figure should
+    providing a `figure_id` or a boolean about whether a new figure should
     be used. If neither are provided then the default state of the rendering
     engine is assumed to maintained.
 
-    Providing a ``figure_id`` and ``new_figure == True`` is not a valid state.
+    Providing a `figure_id` and `new_figure == True` is not a valid state.
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ class Renderer(object):
         Returns
         -------
         viewer : :class:`Renderer`
-            Pointer to ``self``.
+            Pointer to `self`.
         """
         return self._render(**kwargs)
 
@@ -74,7 +74,7 @@ class Renderer(object):
         Returns
         -------
         viewer : :class:`Renderer`
-            Pointer to ``self``.
+            Pointer to `self`.
         """
         pass
 
@@ -82,7 +82,7 @@ class Renderer(object):
     def get_figure(self):
         r"""
         Abstract method for getting the correct figure to render on. Should
-        also set the correct ``figure_id`` for the figure.
+        also set the correct `figure_id` for the figure.
 
         Returns
         -------
@@ -137,7 +137,7 @@ class Viewable(object):
         r"""
         View the object using the default rendering engine figure handling.
         For example, the default behaviour for Matplotlib is that all draw
-        commands are applied to the same ``figure`` object.
+        commands are applied to the same `figure` object.
 
         Parameters
         ----------
@@ -162,11 +162,11 @@ class Viewable(object):
         figure_id : object, optional
             A unique identifier for a figure.
 
-            Default: ``None``
+            Default: `None`
         new_figure : bool, optional
             Whether the rendering engine should create a new figure.
 
-            Default: ``False``
+            Default: `False`
         kwargs : dict
             Passed through to specific rendering engine.
 
@@ -203,7 +203,6 @@ LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
 VectorViewer3d = MayaviVectorViewer3d
-DepthImageHeightViewer = MayaviSurfaceViewer3d
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d

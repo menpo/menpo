@@ -1,6 +1,6 @@
-from .base import (SupervisedDescentMethodFitter,
-                   SupervisedDescentAAMFitter,
-                   SupervisedDescentCLMFitter)
-from .trainer import (SupervisedDescentMethodTrainer,
-                      SupervisedDescentAAMTrainer,
-                      SupervisedDescentCLMTrainer)
+from .base import (SDMFitter,
+                   SDAAMFitter,
+                   SDCLMFitter)
+from .trainer import (SDMTrainer,
+                      SDAAMTrainer,
+                      SDCLMTrainer)

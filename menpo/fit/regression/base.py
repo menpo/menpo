@@ -16,9 +16,9 @@ class Regressor(Fitter):
     def _set_up(self):
         pass
 
-    def _fit(self, fitting, max_iters=1):
-        image = fitting.image
-        initial_shape = fitting.initial_shape
+    def _fit(self, fitting_result, max_iters=1):
+        image = fitting_result.image
+        initial_shape = fitting_result.initial_shape
         n_iters = 0
 
         while n_iters < max_iters:
@@ -26,11 +26,11 @@ class Regressor(Fitter):
             delta_p = self.regressor(features)
 
             fitted_shape, parameters = self.update(delta_p, initial_shape)
-            fitting.parameters.append(parameters)
+            fitting_result.parameters.append(parameters)
             n_iters += 1
 
-        fitting.fitted = True
-        return fitting
+        fitting_result.fitted = True
+        return fitting_result
 
     @abc.abstractmethod
     def update(self, delta_p, initial_shape):
@@ -48,7 +48,7 @@ class NonParametricRegressor(Regressor):
     def algorithm(self):
         return "Non-Parametric"
 
-    def _create_fitting(self, image, shape, gt_shape=None):
+    def _create_fitting_result(self, image, shape, gt_shape=None):
         return NonParametricFittingResult(image, self, shape=[shape],
                                           gt_shape=gt_shape)
 
@@ -71,11 +71,16 @@ class SemiParametricRegressor(Regressor):
     def algorithm(self):
         return "SemiParametric"
 
-    def _create_fitting(self, image, shape, gt_shape=None):
+    def _create_fitting_result(self, image, shape, gt_shape=None):
         self.transform.set_target(shape)
         return SemiParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)
+
+    def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
+        self.transform.from_vector_inplace(initial_parameters)
+        return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
+                          **kwargs)
 
     def _select_update(self, update):
         if update is 'additive':
@@ -112,7 +117,7 @@ class ParametricRegressor(SemiParametricRegressor):
     def algorithm(self):
         return "Parametric"
 
-    def _create_fitting(self, image, shape, gt_shape=None):
+    def _create_fitting_result(self, image, shape, gt_shape=None):
         self.transform.set_target(shape)
         return ParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],

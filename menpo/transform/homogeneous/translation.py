@@ -26,13 +26,13 @@ class Translation(DiscreteAffine, Similarity):
         return Translation(np.zeros(n_dims))
 
     def _transform_str(self):
-        message = 'Translate by %s ' % self.translation_component
+        message = 'Translation by {}'.format(self.translation_component)
         return message
 
     @property
     def n_parameters(self):
         r"""
-        The number of parameters: ``n_dims``
+        The number of parameters: `n_dims`
 
         :type: int
         """
@@ -70,6 +70,10 @@ class Translation(DiscreteAffine, Similarity):
         :return: :class:`Translation`
         """
         return Translation(-self.translation_component)
+
+    def d_dp(self, points):
+        # TODO implement d_dp for Translation
+        return NotImplementedError("d_dp is not implemented for Translation")
 
 
 class AlignmentTranslation(HomogFamilyAlignment, Translation):

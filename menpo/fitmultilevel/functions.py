@@ -99,6 +99,31 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
     return Similarity.identity(source.n_dims).from_vector(parameters + noise)
 
 
+def align_shape_with_bb(shape, bounding_box):
+    r"""
+    Returns the Similarity transform that aligns the provided shape with the
+    provided bounding box.
+
+    Parameters
+    ----------
+    shape: :class:`pybug.shape.PointCloud`
+        The shape to be aligned.
+
+    bounding_box: (2, 2) ndarray
+        The bounding box specified as:
+
+            np.array([[x_min, y_min], [x_max, y_max]])
+
+    Returns
+    -------
+    transform : :class: `pybug.transform.Similarity`
+        The align transform
+    """
+    shape_box = PointCloud(shape.bounds())
+    bounding_box = PointCloud(bounding_box)
+    return AlignmentSimilarity(shape_box, bounding_box, rotation=False)
+
+
 #TODO: Document me
 def compute_error(target, ground_truth, error_type='me_norm'):
     r"""

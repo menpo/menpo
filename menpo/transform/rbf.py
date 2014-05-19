@@ -1,26 +1,45 @@
-import abc
 import numpy as np
 from scipy.spatial.distance import cdist
+
+from menpo.base import DL
 
 from .base import Transform
 
 
-class RadialBasisFunction(Transform):
+class RadialBasisFunction(Transform, DL):
     r"""
-    An abstract base class for Basis functions. In the case, radial basis
-    functions. They provide two methods, :meth:`apply`, which calculates the
-    basis itself, and :meth:`jacobian_points`, which calculates the derivative
-    of the basis wrt the coordinate system.
+    Radial Basis Functions are a class of transform that is used by
+    TPS. They have to be able to take their own radial derivative for TPS to
+    be able to take it's own total derivative.
 
     Parameters
     ----------
-    c : (L, D) ndarray
+    c : (n_centres, n_dims) ndarray
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
 
     def __init__(self, c):
         self.c = c
+
+    @property
+    def n_centres(self):
+        return self.c.shape[0]
+
+    @property
+    def n_dims(self):
+        r"""
+        The RBF can only be applied on points with the same dimensionality as
+        the centres.
+        """
+        return self.c.shape[1]
+
+    @property
+    def n_dims_output(self):
+        r"""
+        The result of the transform has a dimension (weight) for every centre
+        """
+        return self.n_centres
 
 
 class R2LogR2RBF(RadialBasisFunction):
@@ -35,7 +54,7 @@ class R2LogR2RBF(RadialBasisFunction):
 
     Parameters
     ----------
-    c : (L, D) ndarray
+    c : (n_centres, n_dims) ndarray
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
@@ -43,7 +62,7 @@ class R2LogR2RBF(RadialBasisFunction):
     def __init__(self, c):
         super(R2LogR2RBF, self).__init__(c)
 
-    def _apply(self, x):
+    def _apply(self, x, **kwargs):
         """
         Apply the basis function.
 
@@ -53,12 +72,12 @@ class R2LogR2RBF(RadialBasisFunction):
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : (n_points, n_dims) ndarray
             Set of points to apply the basis to.
 
         Returns
         -------
-        u : (N, L) ndarray
+        u : (n_points, n_centres) ndarray
             The basis function applied to each distance,
             :math:`\lVert x - c \rVert`.
         """
@@ -71,12 +90,14 @@ class R2LogR2RBF(RadialBasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian_points(self, x):
+    def d_dl(self, points):
         """
-        Apply the derivative of the basis function wrt the coordinate system.
-        This is applied over each dimension of the input vector, `x`.
+        Apply the derivative of the basis function wrt the centres and the
+        points given by `points`.
 
         .. note::
+
+            Let `points` be `x`, then
 
             ..math::
 
@@ -85,27 +106,28 @@ class R2LogR2RBF(RadialBasisFunction):
 
             where:
 
-            :math:`r_{x, l} = \lVert x - c \rVert``
+            :math:`r_{x, l} = \lVert x - c \rVert`
 
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : (n_points, n_dims) ndarray
             Set of points to apply the basis to.
 
         Returns
         -------
-        dudx : (N, L, D) ndarray
-            The jacobian tensor representing the first order partial derivative
-            of each point wrt the coordinate system
+        d_dl : (n_points, n_centres, n_dims) ndarray
+            The jacobian tensor representing the first order derivative
+            of the radius from each centre wrt the centre's position, evaluated
+            at each point.
         """
-        euclidean_distance = cdist(x, self.c)
-        component_distances = x[..., None, ...] - self.c
+        euclidean_distance = cdist(points, self.c)
+        component_distances = points[..., None, ...] - self.c
         # Avoid log(0) and set to 1 so that log(1) = 0
         euclidean_distance[euclidean_distance == 0] = 1
-        dudx = (2 * component_distances *
+        d_dl = (2 * component_distances *
                 (2 * np.log(euclidean_distance[..., None]) + 1))
-        return dudx
+        return d_dl
 
 
 class R2LogRRBF(RadialBasisFunction):
@@ -120,7 +142,7 @@ class R2LogRRBF(RadialBasisFunction):
 
     Parameters
     ----------
-    c : (L, D) ndarray
+    c : (n_centres, n_dims) ndarray
         The set of centers that make the basis. Usually represents a set of
         source landmarks.
     """
@@ -128,22 +150,22 @@ class R2LogRRBF(RadialBasisFunction):
     def __init__(self, c):
         super(R2LogRRBF, self).__init__(c)
 
-    def _apply(self, x):
+    def _apply(self, points, **kwargs):
         """
         Apply the basis function :math:`r^2 \log{r}`.
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        points : (n_points, n_dims) ndarray
             Set of points to apply the basis to.
 
         Returns
         -------
-        u : (N, L) ndarray
+        u : (n_points, n_centres) ndarray
             The basis function applied to each distance,
-            :math:`\lVert x - c \rVert`.
+            :math:`\lVert points - c \rVert`.
         """
-        euclidean_distance = cdist(x, self.c)
+        euclidean_distance = cdist(points, self.c)
         mask = euclidean_distance == 0
         with np.errstate(divide='ignore', invalid='ignore'):
             u = euclidean_distance ** 2 * np.log(euclidean_distance)
@@ -151,32 +173,32 @@ class R2LogRRBF(RadialBasisFunction):
         u[mask] = 0
         return u
 
-    def jacobian_points(self, x):
+    def d_dl(self, points):
         """
         The derivative of the basis function wrt the coordinate system
-        evaluated at `x`.
+        evaluated at `points`.
 
         :math:`(x - c)^T (1 + 2 \log{r_{x, l}})`.
 
         .. note::
 
-            :math:`r_{x, l} = \lVert x - c \rVert``
+            :math:`r_{x, l} = \lVert x - c \rVert`
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        points : (n_points, n_dims) ndarray
             Set of points to apply the basis to.
 
         Returns
         -------
-        dudx : (N, L, D) ndarray
+        d_dl : (n_points, n_centres, n_dims) ndarray
             The jacobian tensor representing the first order partial derivative
-            of each points wrt the coordinate system
+            of each points wrt the centres
         """
-        euclidean_distance = cdist(x, self.c)
-        component_distances = x[..., None, ...] - self.c
+        euclidean_distance = cdist(points, self.c)
+        component_distances = points[..., None, ...] - self.c
         # Avoid log(0) and set to 1 so that log(1) = 0
         euclidean_distance[euclidean_distance == 0] = 1
-        dudx = (component_distances *
+        d_dl = (component_distances *
                 (1 + 2 * np.log(euclidean_distance[..., None])))
-        return dudx
+        return d_dl
