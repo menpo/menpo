@@ -230,9 +230,11 @@ class ComposableTransform(Transform):
 
 
 class VComposable(object):
-    r"""Mix-in for efficient composition with :map:`Vectorizable` objects.
+    r"""Mix-in for :map:`Vectorizable` :map:`Composable` :map:`Transform` s.
 
-    Has to be implimented in conjunction with :map:`Vectorizable`.
+    Prefer this mix-in over :map:`Composable` if the :map:`Transform` in
+    question is :map:`Vectorizable` as this adds :meth:`from_vector` variants
+    to the :map:`Composable` interface. These can be tuned for performance.
     """
 
     @abc.abstractmethod
