@@ -569,7 +569,7 @@ class SDTrainer(object):
         else:
             raise ValueError(regression_type_str_error)
         for rt in regression_type_list:
-            if rt is not hasattr(rt, '__call__'):
+            if not hasattr(rt, '__call__'):
                 raise ValueError(regression_type_str_error)
         return regression_type_list
 
@@ -1238,7 +1238,7 @@ class SDAAMTrainer(SDTrainer):
         else:
             raise ValueError(regression_features_str_error)
         for rf in regression_features_list:
-            if rf is not hasattr(rf, '__call__'):
+            if not hasattr(rf, '__call__'):
                 raise ValueError(regression_features_str_error)
         return regression_features_list
 
