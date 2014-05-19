@@ -5,6 +5,7 @@ import numpy as np
 #TODO: document me
 def regression(X, T, regression_type, **kwargs):
     r"""
+    Applies regression.
     """
     if hasattr(regression_type, '__call__'):
         regression_closure = regression_type(X, T, **kwargs)
@@ -21,7 +22,6 @@ def regression(X, T, regression_type, **kwargs):
                          "`menpo.sdm.functions` (mlr, pcr, pls, ccr, ...).")
 
 
-#TODO: document me
 def mlr(X, T):
     r"""
     Multivariate Linear Regression
@@ -37,7 +37,6 @@ def mlr(X, T):
     return mlr_fitting
 
 
-#TODO: document me
 def mlr_svd(X, T, variance=None):
     r"""
     Multivariate Linear Regression using SVD decomposition
@@ -50,7 +49,6 @@ def mlr_svd(X, T, variance=None):
     return mlr_svd_fitting
 
 
-#TODO: document me
 def mlr_pca(X, T, variance=None):
     r"""
     Multivariate Linear Regression using PCA reconstructions
@@ -64,7 +62,6 @@ def mlr_pca(X, T, variance=None):
     return mlr_svd_fitting
 
 
-#TODO: document me
 def mlr_pca_weights(X, T, variance=None):
     r"""
     Multivariate Linear Regression using PCA weights

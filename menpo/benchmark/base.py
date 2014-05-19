@@ -4,13 +4,14 @@ import numpy as np
 import menpo.io as mio
 from menpo.visualize.text_utils import print_dynamic, progress_bar_str
 from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
+from menpo.fitmultilevel.clm import CLMBuilder, GradientDescentCLMFitter
 from menpo.fit.fittingresult import FittingResultList
 from menpo.landmark import labeller
 from menpo.visualize.base import GraphPlotter
 
 
 def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
-                      initialization_options=None, verbose=False):
+                      bounding_boxes=None, perturb_options=None, verbose=False):
     r"""
     Fits a trained AAM model to a database.
 
@@ -19,7 +20,7 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
     fitting_images: list of :class:MaskedImage objects
         A list of the fitting images.
     aam: :class:menpo.fitmultilevel.aam.AAM object
-        The trained AAM object. It can be generate from the
+        The trained AAM object. It can be generated from the
         aam_build_benchmark() method.
     fitting_options: dictionary, optional
         A dictionary with the parameters that will be passed in the
@@ -38,18 +39,22 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
         LucasKanadeAAMFitter documentation.
 
         Default: None
-    initialization_options: dictionary, optional
-        A dictionary with parameters that define the initialization scheme to
-        be used during fitting. Currently the only supported initialization is
-        perturbation on the ground truth shape with noise of specified std.
+    bounding_boxes: list of (2, 2) ndarray, optional
+        If provided, fits will be initialized from a bounding box. If
+        None, perturbation of ground truth will be used instead.
+        can be provided). Interpreted as [[min_x, min_y], [max_x, max_y]].
+    perturb_options: dictionary, optional
+        A dictionary with parameters that control the perturbation on the
+        ground truth shape with noise of specified std. Note that if
+        bounding_box is provided perturb_options is ignored and not used.
         If None, the default options will be used.
         This is an example of the dictionary with the default options:
             initialization_options = {'noise_std': 0.04,
                                       'rotation': False
                                       }
         For an explanation of the options, please refer to the perturb_shape()
-        method documentation of :class:menpo.fitmultilevel.MultilevelFitter.
-    verbose: boolean, optional
+        method documentation of :map:`MultilevelFitter`.
+    verbose: bool, optional
         If True, it prints information regarding the AAM fitting including
         progress bar, current image error and percentage of images with errors
         less or equal than a value.
@@ -58,8 +63,8 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
 
     Returns
     -------
-    fitting_results: :class:menpo.fit.fittingresult.FittingResultList object
-        A list with the FittingResult object per image.
+    fitting_results: :map:`FittingResultList`
+        A list with the :map:`FittingResult` object per image.
     """
     if verbose:
         print('AAM Fitting:')
@@ -69,8 +74,8 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
     # parse options
     if fitting_options is None:
         fitting_options = {}
-    if initialization_options is None:
-        initialization_options = {}
+    if perturb_options is None:
+        perturb_options = {}
 
     # extract some options
     group = fitting_options.pop('gt_group', 'PTS')
@@ -86,8 +91,12 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
     for j, i in enumerate(fitting_images):
         # perturb shape
         gt_s = i.landmarks[group].lms
-        s = fitter.perturb_shape(gt_s, **initialization_options)
-
+        if bounding_boxes:
+            # shape from bounding box
+            s = fitter.obtain_shape_from_bb(bounding_boxes[j])
+        else:
+            # shape from perturbation
+            s = fitter.perturb_shape(gt_s, **perturb_options)
         # fit
         fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters,
                         error_type=error_type, verbose=False)
@@ -142,6 +151,7 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
                                 'n_levels': 3,
                                 'downscale': 2,
                                 'scaled_shape_models': True,
+                                'pyramid_on_features': True,
                                 'max_shape_components': None,
                                 'max_appearance_components': None,
                                 'boundary': 3,
@@ -185,8 +195,177 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
     return aam
 
 
-def load_database(database_path, files_extension, db_loading_options=None,
-                  verbose=False):
+def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
+                      bounding_boxes=None, perturb_options=None, verbose=False):
+    r"""
+    Fits a trained CLM model to a database.
+
+    Parameters
+    ----------
+    fitting_images: list of :class:MaskedImage objects
+        A list of the fitting images.
+    clm: :class:menpo.fitmultilevel.clm.CLM object
+        The trained CLM object. It can be generated from the
+        clm_build_benchmark() method.
+    fitting_options: dictionary, optional
+        A dictionary with the parameters that will be passed in the
+        GradientDescentCLMFitter (:class:menpo.fitmultilevel.clm.base).
+        If None, the default options will be used.
+        This is an example of the dictionary with the default options:
+            fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
+                               'pdm_transform': OrthoPDM,
+                               'global_transform': AlignmentSimilarity,
+                               'n_shape': None,
+                               'max_iters': 50,
+                               'error_type': 'me_norm'
+                               }
+        For an explanation of the options, please refer to the
+        GradientDescentCLMFitter documentation.
+
+        Default: None
+    bounding_boxes: list of (2, 2) ndarray, optional
+        If provided, fits will be initialized from a bounding box. If
+        None, perturbation of ground truth will be used instead.
+        can be provided). Interpreted as [[min_x, min_y], [max_x, max_y]].
+    perturb_options: dictionary, optional
+        A dictionary with parameters that control the perturbation on the
+        ground truth shape with noise of specified std. Note that if
+        bounding_box is provided perturb_options is ignored and not used.
+    verbose: boolean, optional
+        If True, it prints information regarding the AAM fitting including
+        progress bar, current image error and percentage of images with errors
+        less or equal than a value.
+
+        Default: False
+
+    Returns
+    -------
+    fitting_results: :class:menpo.fit.fittingresult.FittingResultList object
+        A list with the FittingResult object per image.
+    """
+    if verbose:
+        print('CLM Fitting:')
+        perc1 = 0.
+        perc2 = 0.
+
+    # parse options
+    if fitting_options is None:
+        fitting_options = {}
+    if initialization_options is None:
+        initialization_options = {}
+
+    # extract some options
+    group = fitting_options.pop('gt_group', 'PTS')
+    max_iters = fitting_options.pop('max_iters', 50)
+    error_type = fitting_options.pop('error_type', 'me_norm')
+
+    # create fitter
+    fitter = GradientDescentCLMFitter(clm, **fitting_options)
+
+    # fit images
+    n_images = len(fitting_images)
+    fitting_results = []
+    for j, i in enumerate(fitting_images):
+        # perturb shape
+        gt_s = i.landmarks[group].lms
+        if bounding_boxes:
+            # shape from bounding box
+            s = fitter.obtain_shape_from_bb(bounding_boxes[j])
+        else:
+            # shape from perturbation
+            s = fitter.perturb_shape(gt_s, **perturb_options)
+        # fit
+        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters,
+                        error_type=error_type, verbose=False)
+        fitting_results.append(fr)
+
+        # print
+        if verbose:
+            if error_type is 'me_norm':
+                if fr.final_error <= 0.03:
+                    perc1 += 1.
+                if fr.final_error <= 0.04:
+                    perc2 += 1.
+            elif error_type is 'rmse':
+                if fr.final_error <= 0.05:
+                    perc1 += 1.
+                if fr.final_error <= 0.06:
+                    perc2 += 1.
+            print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
+                          'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
+                          progress_bar_str(float(j + 1) / n_images,
+                                           show_bar=False),
+                          perc1 * 100. / n_images, perc2 * 100. / n_images,
+                          j + 1, n_images, fr.initial_error, fr.final_error))
+    if verbose:
+        print_dynamic('- Fitting completed: [<=0.03: {0:.1f}%, <=0.04: '
+                      '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
+                                           perc2 * 100. / n_images))
+
+    # fit images
+    fitting_results_list = FittingResultList(fitting_results)
+
+    return fitting_results_list
+
+
+def clm_build_benchmark(training_images, training_options=None, verbose=False):
+    r"""
+    Builds an CLM model.
+
+    Parameters
+    ----------
+    training_images: list of :class:MaskedImage objects
+        A list of the training images.
+    training_options: dictionary, optional
+        A dictionary with the parameters that will be passed in the CLMBuilder
+        (:class:menpo.fitmultilevel.clm.CLMBuilder).
+        If None, the default options will be used.
+        This is an example of the dictionary with the default options:
+            training_options = {'group': 'PTS',
+                                'classifier_type': linear_svm_lr,
+                                'patch_shape': (5, 5),
+                                'feature_type': sparse_hog,
+                                'normalization_diagonal': None,
+                                'n_levels': 3,
+                                'downscale': 1.1,
+                                'scaled_shape_models': True,
+                                'pyramid_on_features': True,
+                                'max_shape_components': None,
+                                'boundary': 3,
+                                'interpolator': 'scipy'
+                                }
+        For an explanation of the options, please refer to the CLMBuilder
+        documentation.
+
+        Default: None
+    verbose: boolean, optional
+        If True, it prints information regarding the CLM training.
+
+        Default: False
+
+    Returns
+    -------
+    clm: :class:menpo.fitmultilevel.clm.CLM object
+        The trained CLM model.
+    """
+    if verbose:
+        print('CLM Training:')
+
+    # parse options
+    if training_options is None:
+        training_options = {}
+
+    # group option
+    group = training_options.pop('group', None)
+
+    # build aam
+    aam = CLMBuilder(**training_options).build(training_images, group=group,
+                                               verbose=verbose)
+
+    return aam
+
+
+def load_database(database_path, db_loading_options=None, verbose=False):
     r"""
     Loads the database images, crops them and converts them.
 
@@ -194,8 +373,6 @@ def load_database(database_path, files_extension, db_loading_options=None,
     ----------
     database_path: str
         The path of the database images.
-    files_extension: str
-        The extension (file format) of the image files. (e.g. '.png' or 'png')
     db_loading_options: dictionary, optional
         A dictionary with options related to image loading.
         If None, the default options will be used.
@@ -238,13 +415,8 @@ def load_database(database_path, files_extension, db_loading_options=None,
     if os.path.isdir(database_path) is not True:
         raise ValueError('Invalid path given')
 
-    # check given extension
-    if files_extension[0] is not '.' and len(files_extension) == 3:
-        files_extension = '.{}'.format(files_extension)
-
     # create final path
-    final_path = os.path.abspath(os.path.expanduser(os.path.join(
-        database_path, '*{}'.format(files_extension))))
+    final_path = os.path.join(database_path, '*')
 
     # get options
     crop_proportion = db_loading_options.pop('crop_proportion', 0.1)
@@ -253,7 +425,7 @@ def load_database(database_path, files_extension, db_loading_options=None,
     # find number of files
     n_files = len(mio.image_paths(final_path))
     if n_files < 1:
-        raise ValueError('No {} files in given path'.format(files_extension))
+        raise ValueError('No image files in given path')
 
     # load images
     images = []
@@ -265,7 +437,7 @@ def load_database(database_path, files_extension, db_loading_options=None,
                                           show_bar=True)))
 
         # crop image
-        i.crop_to_landmarks_proportion(crop_proportion)
+        i.crop_to_landmarks_proportion_inplace(crop_proportion)
 
         # convert it to greyscale if needed
         if convert_to_grey is True and i.n_channels == 3:

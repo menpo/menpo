@@ -6,18 +6,11 @@ from nose.tools import raises
 import menpo.io as mio
 from menpo.shape.pointcloud import PointCloud
 from menpo.landmark import labeller, ibug_68_trimesh
-from menpo.transform import PiecewiseAffine
-from menpo.fitmultilevel.aam import AAMBuilder
-from menpo.fitmultilevel.aam import LucasKanadeAAMFitter
-from menpo.fit.lucaskanade.appearance import \
-    (AlternatingForwardAdditive, AlternatingForwardCompositional,
-     AlternatingInverseCompositional, AdaptiveForwardAdditive,
-     AdaptiveForwardCompositional, AdaptiveInverseCompositional,
-     SimultaneousForwardAdditive, SimultaneousForwardCompositional,
-     SimultaneousInverseCompositional, ProjectOutForwardAdditive,
-     ProjectOutForwardCompositional, ProjectOutInverseCompositional,
-     ProbabilisticForwardAdditive, ProbabilisticForwardCompositional,
-     ProbabilisticInverseCompositional)
+from menpo.fitmultilevel.clm import CLMBuilder
+from menpo.fitmultilevel.clm import GradientDescentCLMFitter
+from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
+from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.featurefunctions import sparse_hog
 
 
 initial_shape = []
@@ -171,52 +164,58 @@ for i in range(2):
     training_images.append(im)
 
 # build aam
-aam = AAMBuilder(feature_type=['igo'],
-                 transform=PiecewiseAffine,
-                 trilist=training_images[0].landmarks['ibug_68_trimesh'].
-                 lms.trilist,
+clm = CLMBuilder(classifier_type=linear_svm_lr,
+                 patch_shape=(8, 8),
+                 feature_type=[sparse_hog],
                  normalization_diagonal=150,
                  n_levels=3,
-                 downscale=2,
+                 downscale=1.1,
                  scaled_shape_models=True,
                  pyramid_on_features=True,
                  max_shape_components=[1, 2, 3],
-                 max_appearance_components=[3, 3, 3],
                  boundary=3,
                  interpolator='scipy').build(training_images, group='PTS')
 
 
-def test_aam():
-    assert (aam.n_training_images == 2)
-    assert (aam.n_levels == 3)
-    assert (aam.downscale == 2)
-    assert (aam.feature_type[0] == 'igo' and len(aam.feature_type) == 1)
-    assert (aam.interpolator == 'scipy')
-    assert_allclose(np.around(aam.reference_shape.range()), (110., 102.))
-    assert aam.scaled_shape_models
-    assert aam.pyramid_on_features
-    assert (np.all([aam.shape_models[j].n_components == 1
-                    for j in range(aam.n_levels)]))
-    assert (np.all([aam.appearance_models[j].n_components == 1
-                    for j in range(aam.n_levels)]))
-    assert_allclose([aam.appearance_models[j].template_instance.n_channels
-                     for j in range(aam.n_levels)], (2, 2, 2))
-    assert_allclose([aam.appearance_models[j].components.shape[1]
-                     for j in range(aam.n_levels)], (866, 3466, 13892))
+def test_clm():
+    assert (clm.n_training_images == 2)
+    assert (clm.n_levels == 3)
+    assert (clm.downscale == 1.1)
+    assert (clm.feature_type[0] == sparse_hog and len(clm.feature_type) == 1)
+    assert (clm.interpolator == 'scipy')
+    assert_allclose(np.around(clm.reference_shape.range()), (110., 102.))
+    assert clm.scaled_shape_models
+    assert clm.pyramid_on_features
+    assert_allclose(clm.patch_shape, (8, 8))
+    assert (np.all([clm.shape_models[j].n_components == 1
+                    for j in range(clm.n_levels)]))
+    assert_allclose(clm.n_classifiers_per_level, [68, 68, 68])
+    assert (clm.
+            classifiers[0][np.random.
+            randint(0, clm.n_classifiers_per_level[0])].__name__
+            is 'linear_svm_predict')
+    assert (clm.
+            classifiers[1][np.random.
+            randint(0, clm.n_classifiers_per_level[1])].__name__
+            is 'linear_svm_predict')
+    assert (clm.
+            classifiers[2][np.random.
+            randint(0, clm.n_classifiers_per_level[2])].__name__
+            is 'linear_svm_predict')
 
 
 @raises(ValueError)
-def test_n_shape_exception():
-    fitter = LucasKanadeAAMFitter(aam, n_shape=[3, 6, 'a'])
+def test_n_shape_1_exception():
+    fitter = GradientDescentCLMFitter(clm, n_shape=[3, 6, 'a'])
 
 
 @raises(ValueError)
-def test_n_appearance_exception():
-    fitter = LucasKanadeAAMFitter(aam, n_appearance=[10, 20])
+def test_n_shape_2_exception():
+    fitter = GradientDescentCLMFitter(clm, n_shape=[10, 20])
 
 
 def test_pertrube_shape():
-    fitter = LucasKanadeAAMFitter(aam)
+    fitter = GradientDescentCLMFitter(clm)
     s = fitter.perturb_shape(training_images[0].landmarks['PTS'].lms,
                              noise_std=0.08, rotation=False)
     assert (s.n_dims == 2)
@@ -225,7 +224,7 @@ def test_pertrube_shape():
 
 
 def test_obtain_shape_from_bb():
-    fitter = LucasKanadeAAMFitter(aam)
+    fitter = GradientDescentCLMFitter(clm)
     s = fitter.obtain_shape_from_bb(np.array([[26, 49], [350, 400]]))
     assert ((np.around(s.points) == np.around(initial_shape[1].points)).
             all())
@@ -236,89 +235,17 @@ def test_obtain_shape_from_bb():
 
 @raises(ValueError)
 def test_max_iters_exception():
-    fitter = LucasKanadeAAMFitter(aam,
-                                  algorithm=AlternatingInverseCompositional)
+    fitter = GradientDescentCLMFitter(clm)
     fitter.fit(training_images[0], initial_shape[0],
                max_iters=[10, 20, 30, 40])
 
 
-def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,
-               max_iters=2, initial_error=0.04287, final_error=0.00461,
-               error_type='me_norm'):
-    fitter = LucasKanadeAAMFitter(aam, algorithm=algorithm)
-    fitting_result = fitter.fit(
-        training_images[im_number], initial_shape[im_number],
-        gt_shape=training_images[im_number].landmarks['PTS'].lms,
-        max_iters=max_iters, error_type=error_type)
-    assert (np.around(fitting_result.initial_error, 5) == initial_error)
-    assert (np.around(fitting_result.final_error, 5) == final_error)
-
-
-@attr('fuzzy')
-def test_alternating_ic():
-    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.04287, 0.00045,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_adaptive_ic():
-    aam_helper(aam, AdaptiveInverseCompositional, 1, 6, 166.22834, 137.89303,
-               'me')
-
-
-@attr('fuzzy')
-def test_simultaneous_ic():
-    aam_helper(aam, SimultaneousInverseCompositional, 0, 6, 12.66692, 0.1419,
-               'rmse')
-
-
-@attr('fuzzy')
-def test_projectout_ic():
-    aam_helper(aam, ProjectOutInverseCompositional, 1, 6, 1.81256, 1.51091,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_alternating_fa():
-    aam_helper(aam, AlternatingForwardAdditive, 1, 6, 1.81256, 2.31823,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_adaptive_fa():
-    aam_helper(aam, AdaptiveForwardAdditive, 0, 6, 0.04287, 0.00023, 'me_norm')
-
-
-@attr('fuzzy')
-def test_simultaneous_fa():
-    aam_helper(aam, SimultaneousForwardAdditive, 1, 6, 166.22834, 211.99908,
-               'me')
-
-
-@attr('fuzzy')
-def test_projectout_fa():
-    aam_helper(aam, ProjectOutForwardAdditive, 0, 6, 12.66692, 0.06682, 'rmse')
-
-
-@attr('fuzzy')
-def test_alternating_fc():
-    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 12.66692, 0.10504,
-               'rmse')
-
-
-@attr('fuzzy')
-def test_adaptive_fc():
-    aam_helper(aam, AdaptiveForwardCompositional, 1, 6, 1.81256, 1.44126,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_simultaneous_fc():
-    aam_helper(aam, SimultaneousForwardCompositional, 0, 6, 0.04287, 0.00038,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_projectout_fc():
-    aam_helper(aam, ProjectOutForwardCompositional, 1, 6, 166.22834, 132.17712,
-               'me')
+#@attr('fuzzy')
+#def test_rlms_0():
+#    fitter = GradientDescentCLMFitter(clm, algorithm=RegularizedLandmarkMeanShift)
+#    fitting_result = fitter.fit(
+#        training_images[0], initial_shape[0],
+#        gt_shape=training_images[0].landmarks['PTS'].lms,
+#        max_iters=6, error_type='me_norm')
+#    assert (np.around(fitting_result.initial_error, 5) == initial_error)
+#    assert (np.around(fitting_result.final_error, 5) == final_error)
