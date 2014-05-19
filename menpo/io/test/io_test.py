@@ -92,13 +92,20 @@ def test_takeo_import():
     img = mio.import_builtin_asset('takeo.ppm')
     assert(img.shape == (225, 150))
     assert(img.n_channels == 3)
-    assert(img.landmarks.n_groups == 0)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
 def test_einstein_import():
     img = mio.import_builtin_asset('einstein.jpg')
     assert(img.shape == (1024, 817))
     assert(img.n_channels == 1)
+    assert(img.landmarks['PTS'].n_landmarks == 68)
+
+
+def test_lenna_import():
+    img = mio.import_builtin_asset('lenna.png')
+    assert(img.shape == (512, 512))
+    assert(img.n_channels == 3)
     assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
@@ -151,7 +158,8 @@ def test_ls_builtin_assets():
                                             'einstein.jpg', 'einstein.pts',
                                             'james.jpg', 'james.mtl',
                                             'james.obj', 'lenna.png',
-                                            'takeo.ppm'})
+                                            'lenna.pts', 'takeo.ppm',
+                                            'takeo.pts'})
 
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
