@@ -537,48 +537,53 @@ class Image(Vectorizable, Landmarkable, Viewable):
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label='all', boundary=0,
-                          constrain_to_boundary=True):
+    def crop_to_landmarks_inplace(self, group=None, label='all', boundary=0,
+                                  constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
-        optional n_pixel boundary
+        optional `n_pixel` boundary
 
         Parameters
         ----------
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
+            Default: `None`
 
-        label: string, Optional
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
 
-        boundary: int, Optional
+        boundary : int, Optional
             An extra padding to be added all around the landmarks bounds.
 
-            Default: 0
+            Default: `0`
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
+
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        self.crop_inplace(min_indices, max_indices,
-                          constrain_to_boundary=constrain_to_boundary)
+        return self.crop_inplace(min_indices, max_indices,
+                                 constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
                                      label='all', minimum=True,
@@ -630,8 +635,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        self.crop_to_landmarks(group=group, label=label, boundary=boundary,
-                               constrain_to_boundary=constrain_to_boundary)
+        self.crop_to_landmarks_inplace(group=group, label=label,
+                                       boundary=boundary,
+                                       constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
