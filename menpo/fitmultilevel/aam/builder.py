@@ -22,12 +22,17 @@ class AAMBuilder(DeformableModelBuilder):
     Parameters
     ----------
     feature_type: None or string or function/closure or list of those, Optional
-        If list of length n_levels, then a feature type is defined per level.
-        The first element of the list specifies the features to be extracted at
-        the lowest pyramidal level and so on.
+        If list of length n_levels, then a feature is defined per level.
+        However, this requires that the pyramid_on_features flag is disabled,
+        so that the features are extracted at each level. The first element of
+        the list specifies the features to be extracted at the lowest pyramidal
+        level and so on.
 
-        If not a list or a list with length 1, then the specified feature type
-        will be used for all levels.
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature will be
+            applied to the highest level.
+            If pyramid_on_features is False, the specified feature will be
+            applied to all pyramid levels.
 
         Per level:
         If None, the appearance model will be built using the original image
@@ -58,7 +63,7 @@ class AAMBuilder(DeformableModelBuilder):
         See `menpo.image.feature.py` for details more details on
         menpo's standard image features and feature options.
 
-        Default: None
+        Default: 'igo'
     transform: :class:`menpo.transform.PureAlignmentTransform`, Optional
         The :class:`menpo.transform.PureAlignmentTransform` that will be
         used to warp the images.
@@ -90,16 +95,27 @@ class AAMBuilder(DeformableModelBuilder):
         Default: 3
     downscale: float >= 1, Optional
         The downscale factor that will be used to create the different
-        pyramidal levels.
+        pyramidal levels. The scale factor will be:
+            (downscale ** k) for k in range(n_levels)
 
         Default: 2
     scaled_shape_models: boolean, Optional
-        If True, the original images will be smoothed with a smoothing pyramid
-        and the shape models (reference frames) will be scaled with a
-         Gaussian pyramid.
-        If False, the original images will be scaled with a Gaussian pyramid
-        and the shape models (reference frames) will have the same scale (the
-        one of the highest pyramidal level).
+        If True, the reference frames will be the mean shapes of each pyramid
+        level, so the shape models will be scaled.
+        If False, the reference frames of all levels will be the mean shape of
+        the highest level, so the shape models will not be scaled; they will
+        have the same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
+
+        Default: True
+    pyramid_on_features: boolean, Optional
+        If True, the feature space is computed once at the highest scale and
+        the Gaussian pyramid is applied on the feature images.
+        If False, the Gaussian pyramid is applied on the original images
+        (intensities) and then features will be extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
 
         Default: True
     max_shape_components: None or int > 0 or 0 <= float <= 1
@@ -165,12 +181,16 @@ class AAMBuilder(DeformableModelBuilder):
     ValueError
         feature_type must be a str or a function/closure or a list of those
         containing 1 or {n_levels} elements
+    ValueError
+        pyramid_on_features is enabled so feature_type must be a str or a
+        function/closure or a list containing 1 of those
     """
     def __init__(self, feature_type='igo', transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
-                 max_shape_components=None, max_appearance_components=None,
-                 boundary=3, interpolator='scipy'):
+                 pyramid_on_features=True, max_shape_components=None,
+                 max_appearance_components=None, boundary=3,
+                 interpolator='scipy'):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -180,7 +200,8 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels)
+        feature_type = self.check_feature_type(feature_type, n_levels,
+                                               pyramid_on_features)
 
         # store parameters
         self.feature_type = feature_type
@@ -190,6 +211,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
@@ -225,16 +247,22 @@ class AAMBuilder(DeformableModelBuilder):
             The AAM object. Shape and appearance models are stored from lowest
             to highest level
         """
-        # compute reference_shape, normalize images size and create pyramid
-        self.reference_shape, generator = self._preprocessing(
-            images, group, label, self.normalization_diagonal,
-            self.interpolator, self.scaled_shape_models, self.n_levels,
-            self.downscale, verbose=verbose)
+        # compute reference_shape and normalize images size
+        self.reference_shape, normalized_images = \
+            self._normalization_wrt_reference_shape(
+                images, group, label, self.normalization_diagonal,
+                self.interpolator, verbose=verbose)
 
         # estimate required ram memory
         if verbose:
             self._estimate_ram_requirements(images, group, label,
                                             n_images=min([3, len(images)]))
+
+        # create pyramid
+        generators = self._create_pyramid(normalized_images, self.n_levels,
+                                          self.downscale,
+                                          self.pyramid_on_features,
+                                          self.feature_type, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -257,16 +285,28 @@ class AAMBuilder(DeformableModelBuilder):
                 if self.n_levels > 1:
                     level_str = '  - Level {}: '.format(j + 1)
 
-            # extract features from each image
-            feature_images = []
-            for c, g in enumerate(generator):
-                if verbose:
-                    print_dynamic('{}Computing feature space - {}'.format(
-                        level_str,
-                        progress_bar_str(float(c + 1) / len(generator),
-                                         show_bar=False)))
-                feature_images.append(compute_features(g.next(),
-                                                       self.feature_type[rj]))
+            # get images of current level
+            if self.pyramid_on_features:
+                # features are already computed, so just call generator
+                feature_images = []
+                for c, g in enumerate(generators):
+                    if verbose:
+                        print_dynamic('{}Rescaling feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generators),
+                                             show_bar=False)))
+                    feature_images.append(g.next())
+            else:
+                # extract features of images returned from generator
+                feature_images = []
+                for c, g in enumerate(generators):
+                    if verbose:
+                        print_dynamic('{}Computing feature space - {}'.format(
+                            level_str,
+                            progress_bar_str((c + 1.) / len(generators),
+                                             show_bar=False)))
+                    feature_images.append(compute_features(
+                        g.next(), self.feature_type[rj]))
 
             # format shapes to build shape model
             if j == 0:
@@ -342,6 +382,11 @@ class AAMBuilder(DeformableModelBuilder):
         ---------
         mean_shape: Pointcloud
             The mean shape to use.
+
+        Returns
+        -------
+        reference_frame : :class:`menpo.image.base.Image`
+            The reference frame.
         """
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
@@ -358,10 +403,16 @@ class AAMBuilder(DeformableModelBuilder):
             The trained multilevel appearance models.
         n_training_images: int
             The number of training images.
+
+        Returns
+        -------
+        aam : :class:`menpo.fitmultilevel.aam.AAM`
+            The trained AAM object.
         """
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
-                   self.downscale, self.scaled_shape_models, self.interpolator)
+                   self.downscale, self.scaled_shape_models,
+                   self.pyramid_on_features, self.interpolator)
 
     def _estimate_ram_requirements(self, images, group, label, n_images=3):
         r"""
@@ -377,8 +428,14 @@ class AAMBuilder(DeformableModelBuilder):
             The key of the landmark set that will be used.
         label: string
             The label of of the landmark manager that will be used.
+        n_images: int, Optional
+            The number of images to be used to train the temporary AAM and
+            estimate the RAM requirements. Note that the images are selected
+            randomly from the images list.
+
+            Default: 3
         """
-        print_dynamic('- Estimating RAM memory requirements')
+        print_dynamic('- Estimating RAM memory requirements...')
         # create images list
         n_training_images = len(images)
         which_images = sample(range(n_training_images), n_images)
@@ -591,12 +648,17 @@ class AAM(object):
         subsequently be used by fitter objects using this class to fit to
         novel images.
 
-        If list of length n_levels, then a feature type was defined per level.
-        The first element of the list specifies the features to be extracted at
-        the lowest pyramidal level and so on.
+        If list of length n_levels, then a feature was defined per level.
+        This means that the pyramid_on_features flag was disabled (False)
+        and the features were extracted at each level. The first element of
+        the list specifies the features of the lowest pyramidal level and so
+        on.
 
-        If not a list or a list with length 1, then the specified feature type
-        was used for all levels.
+        If not a list or a list with length 1, then:
+            If pyramid_on_features is True, the specified feature was applied
+            to the highest level.
+            If pyramid_on_features is False, the specified feature was applied
+            to all pyramid levels.
 
         Per level:
         If None, the appearance model was built using the original image
@@ -621,20 +683,28 @@ class AAM(object):
     downscale: float
         The downscale factor that was used to create the different pyramidal
         levels.
-    scaled_shape_models: boolean
-        If True, the original images were smoothed with a smoothing pyramid
-        and the shape models (reference frames) are scaled with a Gaussian
-        pyramid.
-        If False, the original images were scaled with a Gaussian pyramid and
-        the shape models (reference frames) have the same scale (the one of
-        the highest pyramidal level).
+    scaled_shape_models: boolean, Optional
+        If True, the reference frames are the mean shapes of each pyramid
+        level, so the shape models are scaled.
+        If False, the reference frames of all levels are the mean shape of
+        the highest level, so the shape models are not scaled; they have the
+        same size.
+        Note that from our experience, if scaled_shape_models is False, AAMs
+        tend to have slightly better performance.
+    pyramid_on_features: boolean, Optional
+        If True, the feature space was computed once at the highest scale and
+        the Gaussian pyramid was applied on the feature images.
+        If False, the Gaussian pyramid was applied on the original images
+        (intensities) and then features were extracted at each level.
+        Note that from our experience, if pyramid_on_features is True, AAMs
+        tend to have slightly better performance.
     interpolator: string
         The interpolator that was used to build the AAM.
 
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, feature_type, reference_shape, downscale,
-                 scaled_shape_models, interpolator):
+                 scaled_shape_models, pyramid_on_features, interpolator):
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
@@ -643,6 +713,7 @@ class AAM(object):
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
+        self.pyramid_on_features = pyramid_on_features
         self.interpolator = interpolator
 
     @property
@@ -754,59 +825,101 @@ class AAM(object):
     def __str__(self):
         out = "Active Appearance Model\n - {} training images.\n".format(
             self.n_training_images)
+        # small strings about number of channels, channels string and downscale
         n_channels = []
-        ch_str = []
-        feat_str = []
         down_str = []
         for j in range(self.n_levels):
             n_channels.append(
                 self.appearance_models[j].template_instance.n_channels)
-            if n_channels[j] == 1:
-                ch_str.append("channel")
-            else:
-                ch_str.append("channels")
-            if isinstance(self.feature_type[j], str):
-                feat_str.append("- Feature is {} with ".format(
-                    self.feature_type[j]))
-            elif self.feature_type[j] is None:
-                feat_str.append("- No features extracted. ")
-            else:
-                feat_str.append("- Feature is {} with ".format(
-                    self.feature_type[j].func_name))
             if j == self.n_levels - 1:
                 down_str.append('(no downscale)')
             else:
                 down_str.append('(downscale by {})'.format(
                     self.downscale**(self.n_levels - j - 1)))
+        # string about features and channels
+        if self.pyramid_on_features:
+            if isinstance(self.feature_type[0], str):
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0])
+            elif self.feature_type[0] is None:
+                feat_str = "- No features extracted. "
+            else:
+                feat_str = "- Feature is {} with ".format(
+                    self.feature_type[0].func_name)
+            if n_channels[0] == 1:
+                ch_str = "channel"
+            else:
+                ch_str = "channels"
+        else:
+            feat_str = []
+            ch_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.feature_type[j], str):
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j]))
+                elif self.feature_type[j] is None:
+                    feat_str.append("- No features extracted. ")
+                else:
+                    feat_str.append("- Feature is {} with ".format(
+                        self.feature_type[j].func_name))
+                if n_channels[j] == 1:
+                    ch_str.append("channel")
+                else:
+                    ch_str.append("channels")
         out = "{} - Warp using {} transform with '{}' interpolation.\n".format(
             out, self.transform.__name__, self.interpolator)
         if self.n_levels > 1:
             if self.scaled_shape_models:
-                out = "{} - Smoothing pyramid with {} levels and downscale " \
-                      "factor of {}.\n   Each level has a scaled shape " \
-                      "model.\n".format(out, self.n_levels, self.downscale)
+                out = "{} - Gaussian pyramid with {} levels and downscale " \
+                      "factor of {}.\n   - Each level has a scaled shape " \
+                      "model (reference frame).\n".format(out, self.n_levels,
+                                                          self.downscale)
 
             else:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
-                      "factor of {}:\n   Shape models are not " \
-                      "scaled.\n".format(out, self.n_levels, self.downscale)
+                      "factor of {}:\n   - Shape models (reference frames) " \
+                      "are not scaled.\n".format(out, self.n_levels,
+                                                 self.downscale)
+            if self.pyramid_on_features:
+                out = "{}   - Pyramid was applied on feature space.\n   " \
+                      "{}{} {} per image.\n".format(out, feat_str,
+                                                    n_channels[0], ch_str)
+                if self.scaled_shape_models is False:
+                    out = "{}   - Reference frames of length {} " \
+                          "({} x {}C, {} x {}C)\n".format(
+                          out, self.appearance_models[0].n_features,
+                          self.appearance_models[0].template_instance.n_true_pixels,
+                          n_channels[0],
+                          self.appearance_models[0].template_instance._str_shape,
+                          n_channels[0])
+            else:
+                out = "{}   - Features were extracted at each pyramid " \
+                      "level.\n".format(out)
             for i in range(self.n_levels - 1, -1, -1):
-                out = "{0}   - Level {1} {2}: \n     {3}{4} " \
-                      "{5} per image.\n     - Reference frame of length {6} " \
-                      "({7} x {8}C, {9} x {10}C)\n     - {11} shape " \
-                      "components ({12:.2f}% of variance)\n     - {13} " \
-                      "appearance components ({14:.2f}% of variance)\n".format(
-                      out, self.n_levels - i, down_str[i], feat_str[i],
-                      n_channels[i], ch_str[i],
-                      self.appearance_models[i].n_features,
-                      self.appearance_models[i].template_instance.n_true_pixels,
-                      n_channels[i],
-                      self.appearance_models[i].template_instance._str_shape,
-                      n_channels[i], self.shape_models[i].n_components,
+                out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
+                                                      down_str[i])
+                if self.pyramid_on_features is False:
+                    out = "{}     {}{} {} per image.\n".format(
+                        out, feat_str[i], n_channels[i], ch_str[i])
+                if (self.scaled_shape_models or
+                        self.pyramid_on_features is False):
+                    out = "{}     - Reference frame of length {} " \
+                          "({} x {}C, {} x {}C)\n".format(
+                          out, self.appearance_models[i].n_features,
+                          self.appearance_models[i].template_instance.n_true_pixels,
+                          n_channels[i],
+                          self.appearance_models[i].template_instance._str_shape,
+                          n_channels[i])
+                out = "{0}     - {1} shape components ({2:.2f}% of " \
+                      "variance)\n     - {3} appearance components " \
+                      "({4:.2f}% of variance)\n".format(
+                      out, self.shape_models[i].n_components,
                       self.shape_models[i].variance_ratio * 100,
                       self.appearance_models[i].n_components,
                       self.appearance_models[i].variance_ratio * 100)
         else:
+            if self.pyramid_on_features:
+                feat_str = [feat_str]
             out = "{0} - No pyramid used:\n   {1}{2} {3} per image.\n" \
                   "   - Reference frame of length {4} ({5} x {6}C, " \
                   "{7} x {8}C)\n   - {9} shape components ({10:.2f}% of " \

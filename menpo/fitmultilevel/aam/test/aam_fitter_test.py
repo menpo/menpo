@@ -170,14 +170,15 @@ for i in range(2):
     training_images.append(im)
 
 # build aam
-aam = AAMBuilder(feature_type=['igo', 'igo', None],
+aam = AAMBuilder(feature_type=['igo'],
                  transform=PiecewiseAffine,
                  trilist=training_images[0].landmarks['ibug_68_trimesh'].
                  lms.trilist,
                  normalization_diagonal=150,
                  n_levels=3,
                  downscale=2,
-                 scaled_shape_models=False,
+                 scaled_shape_models=True,
+                 pyramid_on_features=True,
                  max_shape_components=[1, 2, 3],
                  max_appearance_components=[3, 3, 3],
                  boundary=3,
@@ -188,18 +189,19 @@ def test_aam_1():
     assert (aam.n_training_images == 2)
     assert (aam.n_levels == 3)
     assert (aam.downscale == 2)
-    assert (aam.feature_type[0] == 'igo' and aam.feature_type[2] is None)
+    assert (aam.feature_type[0] == 'igo' and len(aam.feature_type) == 1)
     assert (aam.interpolator == 'scipy')
     assert_allclose(np.around(aam.reference_shape.range()), (110., 102.))
-    assert (not aam.scaled_shape_models)
+    assert aam.scaled_shape_models
+    assert aam.pyramid_on_features
     assert (np.all([aam.shape_models[j].n_components == 1
                     for j in range(aam.n_levels)]))
     assert (np.all([aam.appearance_models[j].n_components == 1
                     for j in range(aam.n_levels)]))
     assert_allclose([aam.appearance_models[j].template_instance.n_channels
-                     for j in range(aam.n_levels)], (2, 2, 1))
+                     for j in range(aam.n_levels)], (2, 2, 2))
     assert_allclose([aam.appearance_models[j].components.shape[1]
-                     for j in range(aam.n_levels)], (13892, 13892, 6946))
+                     for j in range(aam.n_levels)], (866, 3466, 13892))
 
 
 @raises(ValueError)
@@ -240,7 +242,7 @@ def test_n_appearance_exception():
 
 
 def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,
-               max_iters=2, initial_error=0.04287, final_error=0.0103,
+               max_iters=2, initial_error=0.04287, final_error=0.00461,
                error_type='me_norm'):
     fitter = LucasKanadeAAMFitter(aam, algorithm=algorithm)
     fitting_result = fitter.fit(
@@ -253,68 +255,69 @@ def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,
 
 @attr('fuzzy')
 def test_alternating_ic():
-    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.04287, 0.00041,
+    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.04287, 0.00045,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_adaptive_ic():
-    aam_helper(aam, AdaptiveInverseCompositional, 1, 6, 58.78675, 57.12899,
+    aam_helper(aam, AdaptiveInverseCompositional, 1, 6, 166.22834, 137.89303,
                'me')
 
 
 @attr('fuzzy')
 def test_simultaneous_ic():
-    aam_helper(aam, SimultaneousInverseCompositional, 0, 6, 12.66692, 0.14499,
+    aam_helper(aam, SimultaneousInverseCompositional, 0, 6, 12.66692, 0.1419,
                'rmse')
 
 
 @attr('fuzzy')
 def test_projectout_ic():
-    aam_helper(aam, ProjectOutInverseCompositional, 1, 6, 0.64101, 0.61362,
+    aam_helper(aam, ProjectOutInverseCompositional, 1, 6, 1.81256, 1.51091,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_alternating_fa():
-    aam_helper(aam, AlternatingForwardAdditive, 1, 6, 0.64101, 0.4495,
+    aam_helper(aam, AlternatingForwardAdditive, 1, 6, 1.81256, 2.31823,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_adaptive_fa():
-    aam_helper(aam, AdaptiveForwardAdditive, 0, 6, 0.04287, 0.0003, 'me_norm')
+    aam_helper(aam, AdaptiveForwardAdditive, 0, 6, 0.04287, 0.00023, 'me_norm')
 
 
 @attr('fuzzy')
 def test_simultaneous_fa():
-    aam_helper(aam, SimultaneousForwardAdditive, 1, 6, 58.78675, 41.42773, 'me')
+    aam_helper(aam, SimultaneousForwardAdditive, 1, 6, 166.22834, 211.99908,
+               'me')
 
 
 @attr('fuzzy')
 def test_projectout_fa():
-    aam_helper(aam, ProjectOutForwardAdditive, 0, 6, 12.66692, 0.08345, 'rmse')
+    aam_helper(aam, ProjectOutForwardAdditive, 0, 6, 12.66692, 0.06682, 'rmse')
 
 
 @attr('fuzzy')
 def test_alternating_fc():
-    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 12.66692, 0.22511,
+    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 12.66692, 0.10504,
                'rmse')
 
 
 @attr('fuzzy')
 def test_adaptive_fc():
-    aam_helper(aam, AdaptiveForwardCompositional, 1, 6, 0.64101, 0.50041,
+    aam_helper(aam, AdaptiveForwardCompositional, 1, 6, 1.81256, 1.44126,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_simultaneous_fc():
-    aam_helper(aam, SimultaneousForwardCompositional, 0, 6, 0.04287, 0.00068,
+    aam_helper(aam, SimultaneousForwardCompositional, 0, 6, 0.04287, 0.00038,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_projectout_fc():
-    aam_helper(aam, ProjectOutForwardCompositional, 1, 6, 58.78675, 45.89221,
+    aam_helper(aam, ProjectOutForwardCompositional, 1, 6, 166.22834, 132.17712,
                'me')
