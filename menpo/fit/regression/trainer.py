@@ -612,6 +612,8 @@ class ParametricRegressorTrainer(RegressorTrainer):
                                      interpolator=self.interpolator)
         features = extract_parametric_features(
             self.appearance_model, warped_image, self.regression_features)
+        # TODO: Is this correct or should I return np.hstack((features, 1)) as
+        # before?
         return np.hstack((np.asarray(features).ravel(), 1))
 
     def delta_ps(self, gt_shape, perturbed_shape):
