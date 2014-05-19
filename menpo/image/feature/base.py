@@ -469,7 +469,7 @@ class ImageFeatures(object):
         if window_centres is not None:
             if target_image.landmarks.has_landmarks:
                 for l_group in target_image.landmarks:
-                    l = target_image.landmarks[l_group[0]]
+                    l = target_image.landmarks[l_group]
                     # find the vertical and horizontal sampling steps
                     step_vertical = window_centres[0, 0, 0]
                     if window_centres.shape[0] > 1:
