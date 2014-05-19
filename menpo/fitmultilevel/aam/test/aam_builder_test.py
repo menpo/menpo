@@ -10,7 +10,7 @@ from menpo.fitmultilevel.aam import AAMBuilder, PatchBasedAAMBuilder
 from menpo.fitmultilevel.featurefunctions import sparse_hog
 
 # load images
-filenames = ['breakingbad.jpg', 'einstein.jpg']
+filenames = ['breakingbad.jpg', 'lenna.png']
 training_images = []
 for i in range(2):
     im = mio.import_builtin_asset(filenames[i])
@@ -186,15 +186,13 @@ def test_aam_3():
                      for j in range(aam3.n_levels)], 58886)
 
 
-# TODO: Why is this broken?
-@skip
 def test_aam_4():
     assert (aam4.n_training_images == 2)
     assert (aam4.n_levels == 2)
     assert (aam4.downscale == 1.2)
     assert (aam4.feature_type[0] is 'lbp')
     assert (aam4.interpolator == 'scipy')
-    assert_allclose(np.around(aam4.reference_shape.range()), (147., 136.))
+    assert_allclose(np.around(aam4.reference_shape.range()), (147., 135.))
     assert aam4.scaled_shape_models
     assert aam4.pyramid_on_features
     assert (np.all([aam4.shape_models[j].n_components == 1
@@ -204,4 +202,4 @@ def test_aam_4():
     assert (np.all([aam4.appearance_models[j].template_instance.n_channels == 4
                     for j in range(aam4.n_levels)]))
     assert_allclose([aam4.appearance_models[j].components.shape[1]
-                     for j in range(aam4.n_levels)], (22792, 25336))
+                     for j in range(aam4.n_levels)], (22572, 25168))
