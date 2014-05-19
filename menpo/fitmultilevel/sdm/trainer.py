@@ -25,16 +25,17 @@ class SDTrainer(object):
     Parameters
     ----------
     regression_type: function/closure, Optional
-        A function/closure that defines the type of regression.
+        A function/closure that defines the regression technique to be used.
         Examples of such closures can be found in
-        `menpo.fit.regression.trainer`
+        `menpo.fit.regression.regressionfunctions.py`
 
         Default: mlr
     regression_features: None or string or function/closure, Optional
-        The features that are extracted from the regressor.
+        The features that are used during the regression.
 
         Default: None
     feature_type: None or string or function/closure or list of those, Optional
+        Defines the features that will be extracted from the image.
         If list of length n_levels, then a feature is defined per level.
         However, this requires that the pyramid_on_features flag is disabled,
         so that the features are extracted at each level. The first element of
@@ -86,7 +87,7 @@ class SDTrainer(object):
         pyramidal levels. The scale factor will be:
             (downscale ** k) for k in range(n_levels)
 
-        Default: 2
+        Default: 1.2
     pyramid_on_features: boolean, Optional
         If True, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
@@ -96,16 +97,17 @@ class SDTrainer(object):
         Default: True
     noise_std: float, optional
         The standard deviation of the gaussian noise used to produce the
-        initial shape.
+        training shapes.
 
         Default: 0.04
     rotation: boolean, optional
         Specifies whether ground truth in-plane rotation is to be used
-        to produce the initial shape.
+        to produce the training shapes.
 
         Default: False
     n_perturbations: int > 0, Optional
-        Defines the number of perturbations that will be applied to the shapes.
+        Defines the number of perturbations that will be applied to the
+        training shapes.
 
         Default: 10
     interpolator: string, Optional
@@ -120,10 +122,13 @@ class SDTrainer(object):
     ValueError
         downscale must be >= 1
     ValueError
+        n_perturbations must be > 0
+    ValueError
         feature_type must be a str or a function/closure or a list of those
         containing 1 or {n_levels} elements
     ValueError
-        n_perturbations must be > 0
+        regression_features must be a str or a function/closure or a list of
+        those containing 1 or {n_levels} elements
     """
     __metaclass__ = abc.ABCMeta
 
@@ -156,7 +161,8 @@ class SDTrainer(object):
 
     def train(self, images, group=None, label='all', verbose=False, **kwargs):
         r"""
-        Trains a Supervised Descent Regressor from a list of landmarked images.
+        Trains a Supervised Descent Regressor given a list of landmarked
+        images.
 
         Parameters
         ----------
@@ -168,7 +174,7 @@ class SDTrainer(object):
 
             Default: None
         label: string, Optional
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: 'all'
@@ -199,10 +205,10 @@ class SDTrainer(object):
             generators, self.n_levels, self.pyramid_on_features,
             self.feature_type, verbose=verbose)
 
-        # this reverse sets the lowest resolution as the first level
+        # this .reverse sets the lowest resolution as the first level
         images.reverse()
 
-        # extract groundtruth shapes
+        # extract the ground truth shapes
         gt_shapes = [[i.landmarks[group][label].lms for i in img]
                      for img in images]
 
@@ -294,7 +300,7 @@ class SDTrainer(object):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
         reference_shape: Pointcloud
             The reference shape that is used to resize all training images to
@@ -335,7 +341,7 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.Image`
+        images: list of :class:`menpo.image.MaskedImage`
             The set of landmarked images.
         n_levels: int
             The number of multi-resolution pyramidal levels to be used.
@@ -347,8 +353,9 @@ class SDTrainer(object):
             pyramid is created on the feature images.
             If False, the pyramid is created on the original (intensities)
             space.
-        feature_type: list of size 1 with str or function/closure or None
-            The feature type to be used in case pyramid_on_features is enabled.
+        feature_type: list with str or function/closure or None
+            In case pyramid_on_features is enabled, feature_type[0] will be
+            used as features type.
         verbose: bool, Optional
             Flag that controls information and progress printing.
 
@@ -388,14 +395,14 @@ class SDTrainer(object):
                                  pyramid_on_features, feature_type,
                                  verbose=False):
         r"""
-        Function that applies a pyramid genertors on images.
+        Function that applies the generators of a pyramid on images.
 
         Parameters
         ----------
         images: list of :class:`menpo.image.MaskedImage`
             The set of landmarked images.
         generators: list of generator functions
-            The generator function of the Gaussian pyramid for all images.
+            The generator functions of the Gaussian pyramid for all images.
         n_levels: int
             The number of multi-resolution pyramidal levels to be used.
         pyramid_on_features: boolean
@@ -403,8 +410,10 @@ class SDTrainer(object):
             pyramid is created on the feature images.
             If False, the pyramid is created on the original (intensities)
             space.
-        feature_type: list of size 1 with str or function/closure or None
-            The feature type to be used in case pyramid_on_features is enabled.
+        feature_type: list of length n_levels with str or function/closure or
+                      None
+            The feature type per level to be used in case pyramid_on_features
+            is enabled.
         verbose: bool, Optional
             Flag that controls information and progress printing.
 
@@ -496,6 +505,11 @@ class SDTrainer(object):
 
     @classmethod
     def check_regression_features(cls, feature_type, n_levels):
+        r"""
+        Checks the regression features type per level. It must be a string or
+        a function/closure of a list of those containing 1 or {n_levels}
+        elements.
+        """
         feature_type_str_error = ("regression_features must be a str or a "
                                   "function/closure or a list of "
                                   "those containing 1 or {} "
@@ -551,20 +565,20 @@ class SDTrainer(object):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
         reference_shape: Pointcloud
-            The reference shape computed based on .
+            The reference shape computed based on the given images' shapes.
         """
         pass
 
     def _rescale_reference_shape(self):
         r"""
-        Function rescales the reference shape wrt to normalization_diagonal
-        parameter.
+        Function that rescales the reference shape wrt to
+        normalization_diagonal parameter.
         """
         pass
 
@@ -583,7 +597,8 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        regressors: :class: menpo.fit.regression.RegressorTrainer
+        regressors: list of :class: menpo.fit.regression.RegressorTrainer
+            The list of regressors.
 
         Returns
         -------
@@ -600,13 +615,13 @@ class SDMTrainer(SDTrainer):
     Parameters
     ----------
     regression_type: function/closure, Optional
-        A function/closure that defines the type of regression.
+        A function/closure that defines the regression technique to be used.
         Examples of such closures can be found in
-        `menpo.fit.regression.trainer`
+        `menpo.fit.regression.regressionfunctions.py`
 
         Default: mlr
     regression_features: None or string or function/closure, Optional
-        The features that are extracted from the regressor.
+        The features that are used during the regression.
 
         Default: None
     patch_shape: tuple of ints
@@ -735,21 +750,21 @@ class SDMTrainer(SDTrainer):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
         reference_shape: Pointcloud
-            The reference shape computed based on.
+            The reference shape computed based on the given images.
         """
         shapes = [i.landmarks[group][label].lms for i in images]
         return mean_pointcloud(shapes)
 
     def _rescale_reference_shape(self):
         r"""
-        Function rescales the reference shape wrt to normalization_diagonal
-        parameter.
+        Function that rescales the reference shape wrt to
+        normalization_diagonal parameter.
         """
         if self.normalization_diagonal:
             x, y = self.reference_shape.range()
@@ -784,7 +799,8 @@ class SDMTrainer(SDTrainer):
 
         Parameters
         ----------
-        regressors: :class: menpo.fit.regression.RegressorTrainer
+        regressors: list of :class: menpo.fit.regression.RegressorTrainer
+            The list of regressors.
 
         Returns
         -------
@@ -799,7 +815,7 @@ class SDMTrainer(SDTrainer):
 class SDAAMTrainer(SDTrainer):
     r"""
     Class that trains Supervised Descent Regressor for a given Active
-    Appearance Model, thus a Parametric Regression.
+    Appearance Model, thus uses Parametric Regression.
 
     Parameters
     ----------
@@ -813,20 +829,23 @@ class SDAAMTrainer(SDTrainer):
         Default: mlr
     regression_features: None or string or function/closure, Optional
         The features that are extracted from the regressor.
+        They come from:
+        `menpo.fit.regression.parametricfeatures`
 
-        Default: None
+        Default: weights
     noise_std: float, optional
         The standard deviation of the gaussian noise used to produce the
-        initial shape.
+        training shapes.
 
         Default: 0.04
     rotation: boolean, optional
         Specifies whether ground truth in-plane rotation is to be used
-        to produce the initial shape.
+        to produce the training shapes.
 
         Default: False
     n_perturbations: int > 0, Optional
-        Defines the number of perturbations that will be applied to the shapes.
+        Defines the number of perturbations that will be applied to the
+        training shapes.
 
         Default: 10
     update: 'additive' or 'compositional'
@@ -901,9 +920,10 @@ class SDAAMTrainer(SDTrainer):
             regression_type=regression_type,
             regression_features=regression_features,
             feature_type=aam.feature_type, n_levels=aam.n_levels,
-            downscale=aam.downscale, scaled_levels=aam.scaled_levels,
-            noise_std=noise_std, rotation=rotation,
-            n_perturbations=n_perturbations, interpolator=aam.interpolator)
+            downscale=aam.downscale,
+            pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
+            rotation=rotation, n_perturbations=n_perturbations,
+            interpolator=aam.interpolator)
         self.aam = aam
         self.update = update
         self.md_transform = md_transform
@@ -955,7 +975,7 @@ class SDAAMTrainer(SDTrainer):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
@@ -978,7 +998,7 @@ class SDAAMTrainer(SDTrainer):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
@@ -1044,12 +1064,8 @@ class SDAAMTrainer(SDTrainer):
 
 class SDCLMTrainer(SDTrainer):
     r"""
-    (self, clm, regression_type=mlr, regression_features=weights,
-                 noise_std=0.04, rotation=False, n_perturbations=10,
-                pdm_transform=OrthoPDM,
-                global_transform=AlignmentSimilarity, n_shape=None)
-    Class that trains Supervised Descent Regressor for a given Active
-    Appearance Model, thus a Parametric Regression.
+    Class that trains Supervised Descent Regressor for a given Constrained
+    Local Model, thus uses Semi Parametric Classifier-Based Regression.
 
     Parameters
     ----------
@@ -1063,20 +1079,23 @@ class SDCLMTrainer(SDTrainer):
         Default: mlr
     regression_features: None or string or function/closure, Optional
         The features that are extracted from the regressor.
+        They come from:
+        `menpo.fit.regression.parametricfeatures`
 
         Default: weights
     noise_std: float, optional
         The standard deviation of the gaussian noise used to produce the
-        initial shape.
+        training shapes.
 
         Default: 0.04
     rotation: boolean, optional
         Specifies whether ground truth in-plane rotation is to be used
-        to produce the initial shape.
+        to produce the training shapes.
 
         Default: False
     n_perturbations: int > 0, Optional
-        Defines the number of perturbations that will be applied to the shapes.
+        Defines the number of perturbations that will be applied to the
+        training shapes.
 
         Default: 10
     pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
@@ -1159,13 +1178,13 @@ class SDCLMTrainer(SDTrainer):
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
         label: string
-            The label of of the landmark manager that you wish to use. If no
+            The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
         reference_shape: Pointcloud
-            The reference shape computed based on.
+            The reference shape.
         """
         return self.clm.reference_shape
 
