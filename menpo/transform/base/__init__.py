@@ -3,20 +3,21 @@ from copy import deepcopy
 
 
 class Transform(object):
-    r"""
-    An abstract representation of any spatial transform.
+    r"""Abstract representation of any spatial transform.
+
     Provides a unified interface to apply the transform with
     :meth:`apply_inplace` and :meth:`apply`.
 
     All Transforms support basic composition to form a :map:`TransformChain`.
 
     There are two useful forms of composition. Firstly, the mathematical
-    composition symbol `o` has the definition:
+    composition symbol `o` has the following definition::
 
         let a(x) and b(x) be two transforms on x.
         (a o b)(x) == a(b(x))
 
-    This functionality is provided by the compose_after() family of methods.
+    This functionality is provided by the :meth:`compose_after` family of
+    methods::
 
         (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
 
@@ -25,33 +26,32 @@ class Transform(object):
     and composing on this chain adds another transform to the end (after all
     other preceding transforms have been performed).
 
-    For instance, let's say we want to rescale a
-    :map:`PointCloud`, `p`, around it's mean, and then translate
-    it some place else. It would be nice to be able to do something like
+    For instance, let's say we want to rescale a :map:`PointCloud` ``p``
+    around it's mean, and then translate it some place else. It would be nice
+    to be able to do something like::
 
         t = Translation(-p.centre)  # translate to centre
         s = Scale(2.0)  # rescale
-        move = Translate([10, 0 ,0]) # budge along the x axis
-
+        move = Translate([10, 0 ,0])  # budge along the x axis
         t.compose(s).compose(-t).compose(move)
 
-    in Menpo, this functionality is provided by the :meth:`compose_before()`
-    family of methods.
+    In Menpo, this functionality is provided by the :meth:`compose_before()`
+    family of methods::
 
         (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
 
     For native composition, see the :map:`ComposableTransform` subclass and
-    the :map:`VComposition` mix-in.
-    For inversion, see the :map:`Invertable` and :map:`VInvertable` mix-ins.
+    the :map:`VComposable` mix-in.
+    For inversion, see the :map:`Invertible` and :map:`VInvertible` mix-ins.
     For alignment, see the :map:`Alignment` mix in.
     """
-
     __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
         r"""
         The dimensionality of the data the transform operates on.
+
         None if the transform is not dimension specific.
 
         :type: int or None
