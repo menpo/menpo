@@ -16,20 +16,19 @@ class MaskedImage(Image):
     Represents an n-dimensional k-channel image, which has a mask.
     Images can be masked in order to identify a region of interest. All
     images implicitly have a mask that is defined as the the entire image.
-    The mask is an instance of
-    :class:`BooleanImage`.
+    The mask is an instance of :map:`BooleanImage`.
 
     Parameters
     ----------
     image_data :  ndarray
         The pixel data for the image, where the last axis represents the
         number of channels.
-    mask : (M, N) `np.bool` ndarray or :class:`BooleanImage`, optional
+    mask : (M, N) `np.bool` ndarray or :map:`BooleanImage`, optional
         A binary array representing the mask. Must be the same
         shape as the image. Only one mask is supported for an image (so the
         mask is applied to every channel equally).
 
-        Default: :class:`BooleanImage` covering the whole image
+        Default: :map:`BooleanImage` covering the whole image
 
     copy: bool, optional
         If False, the image_data will not be copied on assignment. If a mask is
@@ -41,17 +40,19 @@ class MaskedImage(Image):
     ------
     ValueError
         Mask is not the same shape as the image
-    """
 
+    """
     def __init__(self, image_data, mask=None, copy=True):
         super(MaskedImage, self).__init__(image_data, copy=copy)
         if mask is not None:
             # Check if we need to create a BooleanImage or not
             if not isinstance(mask, BooleanImage):
+                # So it's a numpy array.
                 mask_image = BooleanImage(mask, copy=copy)
-            else:  # have a BooleanImage object that we definitely own
+            else:
+                # It's a BooleanImage object.
                 if copy:
-                    mask = deepcopy(mask)
+                    mask = mask.copy()
                 mask_image = mask
             if mask_image.shape == self.shape:
                 self.mask = mask_image
@@ -63,17 +64,6 @@ class MaskedImage(Image):
         else:
             # no mask provided - make the default.
             self.mask = BooleanImage.blank(self.shape, fill=True)
-
-    # noinspection PyMethodOverriding
-    @classmethod
-    def _init_with_channel(cls, image_data_with_channel, mask, **kwargs):
-        r"""
-        Constructor that always requires the image has a
-        channel on the last axis. Only used by from_vector. By default,
-        just calls the constructor. Subclasses with constructors that don't
-        require channel axes need to overwrite this.
-        """
-        return cls(image_data_with_channel, mask, **kwargs)
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
@@ -118,8 +108,13 @@ class MaskedImage(Image):
         blank_image : :class:`MaskedImage`
             A new masked image of the requested size.
         """
-        return super(MaskedImage, cls).blank(shape, n_channels=n_channels,
-                                             fill=fill, dtype=dtype, mask=mask)
+        # Ensure that the '+' operator means concatenate tuples
+        shape = tuple(np.ceil(shape).astype(np.int))
+        if fill == 0:
+            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
+        else:
+            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
+        return cls(pixels, copy=False, mask=mask)
 
     @property
     def n_true_pixels(self):
@@ -138,23 +133,84 @@ class MaskedImage(Image):
         return self.n_false_pixels * self.n_channels
 
     @property
+    def indices(self):
+        r"""
+        Return the indices of all true pixels in this image.
+
+        :type: (`n_dims`, `n_true_pixels`) ndarray
+
+        """
+        return self.mask.true_indices
+
+    @property
     def masked_pixels(self):
         r"""
         Get the pixels covered by the `True` values in the mask.
 
         :type: (`mask.n_true`, `n_channels`) ndarray
         """
+        if self.mask.all_true:
+            return self.pixels
         return self.pixels[self.mask.mask]
 
-    @masked_pixels.setter
-    def masked_pixels(self, value):
-        self.pixels[self.mask.mask] = value
+    def set_masked_pixels(self, pixels, copy=True):
+        r"""Update the masked pixels only to new values.
+
+        Parameters
+        ----------
+        pixels: ndarray
+            The new pixels to set.
+
+        copy: `bool`, optional
+            If False a copy will be avoided in assignment. This can only happen
+            if the mask is all True - in all other cases it will raise a
+            warning.
+
+        Raises
+        ------
+
+        Warning : If the copy=False flag cannot be honored.
+
+        """
+        if self.mask.all_true:
+            if copy:
+                pixels = pixels.copy()
+            # Our mask is all True, so if they don't want a copy
+            # we can respect their wishes
+            self.pixels = pixels.reshape(self.shape + (self.n_channels,))
+        else:
+            self.pixels[self.mask.mask] = pixels
+            # oh dear, couldn't avoid a copy. Did the user try to?
+            if not copy:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. copy can only be avoided'
+                              ' if MaskedImage has an all_true mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
             self._str_shape, self.n_dims, self.n_channels,
             self.mask.proportion_true))
+
+    def copy(self):
+        r"""
+        Return a new image with copies of the pixels, landmarks, and masks of
+        this image.
+
+        This is an efficient copy method. If you need to copy all the state on
+        the object, consider deepcopy instead.
+
+        Returns
+        -------
+
+        image: :map:`MaskedImage`
+            A new image with the same pixels, mask and landmarks as this one,
+            just copied.
+
+        """
+        new_image = MaskedImage(self.pixels, mask=self.mask)
+        new_image.landmarks = self.landmarks
+        return new_image
 
     def as_vector(self, keep_channels=False):
         r"""
@@ -184,11 +240,13 @@ class MaskedImage(Image):
         else:
             return self.masked_pixels.flatten()
 
-    def from_vector(self, flattened, n_channels=None):
+    def from_vector(self, vector, n_channels=None):
         r"""
         Takes a flattened vector and returns a new image formed by reshaping
         the vector to the correct pixels and channels. Note that the only
         region of the image that will be filled is the masked region.
+
+        On masked images, the vector is always copied.
 
         The `n_channels` argument is useful for when we want to add an extra
         channel to an image but maintain the shape. For example, when
@@ -198,10 +256,10 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        flattened : (`n_pixels`,)
+        vector : (`n_pixels`,)
             A flattened vector of all pixels and channels of an image.
         n_channels : int, optional
-            If given, will assume that flattened is the same
+            If given, will assume that vector is the same
             shape as this image, but with a possibly different number of
             channels
 
@@ -212,21 +270,24 @@ class MaskedImage(Image):
         image : :class:`MaskedImage`
             New image of same shape as this image and the number of
             specified channels.
+
         """
         # This is useful for when we want to add an extra channel to an image
         # but maintain the shape. For example, when calculating the gradient
         n_channels = self.n_channels if n_channels is None else n_channels
         # Creates zeros of size (M x N x ... x n_channels)
-        image_data = np.zeros(self.shape + (n_channels,))
-        pixels_per_channel = flattened.reshape((-1, n_channels))
-        image_data[self.mask.mask] = pixels_per_channel
-        # call the constructor accounting for the fact that some image
-        # classes expect a channel axis and some don't.
-        new_image = type(self)._init_with_channel(image_data, mask=self.mask)
+        if self.mask.all_true:
+            # we can just reshape the array!
+            image_data = vector.reshape((self.shape + (n_channels,)))
+        else:
+            image_data = np.zeros(self.shape + (n_channels,))
+            pixels_per_channel = vector.reshape((-1, n_channels))
+            image_data[self.mask.mask] = pixels_per_channel
+        new_image = MaskedImage(image_data, mask=self.mask)
         new_image.landmarks = self.landmarks
         return new_image
 
-    def from_vector_inplace(self, vector):
+    def from_vector_inplace(self, vector, copy=True):
         r"""
         Takes a flattened vector and updates this image by reshaping
         the vector to the correct pixels and channels. Note that the only
@@ -234,10 +295,23 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        vector : (`n_pixels`,)
+        vector : (`n_parameters`,)
             A flattened vector of all pixels and channels of an image.
+
+        copy: `bool`, optional
+            If False, the vector will be set as the pixels with no copy made.
+            If True a copy of the vector is taken.
+
+            Default: True
+
+        Raises
+        ------
+
+        Warning : If copy=False cannot be honored.
+
         """
-        self.masked_pixels = vector.reshape((-1, self.n_channels))
+        self.set_masked_pixels(vector.reshape((-1, self.n_channels)),
+                               copy=copy)
 
     def _view(self, figure_id=None, new_figure=False, channels=None,
               masked=True, **kwargs):
@@ -261,7 +335,7 @@ class MaskedImage(Image):
                            pixels_to_view, channels=channels,
                            mask=mask).render(**kwargs)
 
-    def crop(self, min_indices, max_indices,
+    def crop_inplace(self, min_indices, max_indices,
              constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
@@ -300,11 +374,11 @@ class MaskedImage(Image):
 
         """
         # crop our image
-        super(MaskedImage, self).crop(
+        super(MaskedImage, self).crop_inplace(
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
-        self.mask.crop(min_indices, max_indices,
+        self.mask.crop_inplace(min_indices, max_indices,
                        constrain_to_boundary=constrain_to_boundary)
         return self
 
@@ -337,7 +411,7 @@ class MaskedImage(Image):
         min_indices, max_indices = self.mask.bounds_true(
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
-        self.crop(min_indices, max_indices,
+        self.crop_inplace(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
     def warp_to(self, template_mask, transform, warp_landmarks=False,
@@ -575,7 +649,7 @@ class MaskedImage(Image):
 
         pwa = PiecewiseAffine(pc, pc)
         try:
-            pwa.apply_inplace(self.mask.all_indices)
+            pwa.apply_inplace(self.indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 
@@ -709,7 +783,7 @@ class MaskedImage(Image):
         image_pyramid = Image.gaussian_pyramid(
             self, n_levels=n_levels, downscale=downscale, sigma=sigma,
             order=order, mode=mode, cval=cval)
-        for j, image in enumerate(image_pyramid):
+        for image in image_pyramid:
             image.mask = self.mask.resize(image.shape)
             yield image
 

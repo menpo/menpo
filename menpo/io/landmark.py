@@ -504,12 +504,6 @@ class JSONImporter(LandmarkImporter):
     Landmark labels: decided by file
 
     """
-
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, filepath):
-        super(LandmarkImporter, self).__init__(filepath)
-
     def _parse_format(self, asset=None):
         with open(self.filepath, 'rb') as f:
             lms_dict = json.load(f)  # lms_dict is now a dict rep the JSON
@@ -517,13 +511,10 @@ class JSONImporter(LandmarkImporter):
         all_points = []
         labels = []  # label per group
         labels_slices = []  # slices into the full pointcloud per label
-        # ensure that we always respect the sorting of keys
-        ordered_groups = OrderedDict(sorted(lms_dict['groups'].items(),
-                                            key=lambda t: t[0]))
         start = 0
-        for label, group in ordered_groups.iteritems():
+        for group in lms_dict['groups']:
             lms = group['landmarks']
-            labels.append(label)
+            labels.append(group['label'])
             labels_slices.append(slice(start, len(lms) + start))
             start = len(lms) + start
             for p in lms:

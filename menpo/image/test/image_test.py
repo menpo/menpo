@@ -5,6 +5,233 @@ from menpo.testing import is_same_array
 from menpo.image import BooleanImage, MaskedImage, Image
 
 
+@raises(ValueError)
+def test_create_1d_error():
+    Image(np.ones(1))
+
+
+def test_image_n_elements():
+    image = Image(np.ones((10, 10, 3)))
+    assert(image.n_elements == 10 * 10 * 3)
+
+
+def test_image_width():
+    image = Image(np.ones((6, 4, 3)))
+    assert(image.width == 4)
+
+
+def test_image_height():
+    image = Image(np.ones((6, 4, 3)))
+    assert(image.height == 6)
+
+
+def test_image_blank():
+    image = Image(np.zeros((6, 4, 1)))
+    image_blank = Image.blank((6, 4))
+    assert(np.all(image_blank.pixels == image.pixels))
+
+
+def test_image_blank_fill():
+    image = Image(np.ones((6, 4, 1)) * 7)
+    image_blank = Image.blank((6, 4), fill=7)
+    assert(np.all(image_blank.pixels == image.pixels))
+
+
+def test_image_blank_n_channels():
+    image = Image(np.zeros((6, 4, 7)))
+    image_blank = Image.blank((6, 4), n_channels=7)
+    assert(np.all(image_blank.pixels == image.pixels))
+
+
+def test_image_centre():
+    pixels = np.ones((10, 20, 1))
+    image = Image(pixels)
+    assert(np.all(image.centre == np.array([5, 10])))
+
+
+def test_image_str_shape_4d():
+    pixels = np.ones((10, 20, 11, 12, 1))
+    image = Image(pixels)
+    assert(image._str_shape == '10 x 20 x 11 x 12')
+
+
+def test_image_str_shape_2d():
+    pixels = np.ones((10, 20, 1))
+    image = Image(pixels)
+    assert(image._str_shape == '20W x 10H')
+
+
+def test_image_as_vector():
+    pixels = np.random.rand(10, 20, 1)
+    image = Image(pixels)
+    assert(np.all(image.as_vector() == pixels.ravel()))
+
+
+def test_image_as_vector_keep_channels():
+    pixels = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    assert(np.all(image.as_vector(keep_channels=True) ==
+                  pixels.reshape([-1, 2])))
+
+
+def test_image_from_vector():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image2 = image.from_vector(pixels2.ravel())
+    assert(np.all(image2.pixels == pixels2))
+
+
+def test_image_from_vector_custom_channels():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 3)
+    image = Image(pixels)
+    image2 = image.from_vector(pixels2.ravel(), n_channels=3)
+    assert(np.all(image2.pixels == pixels2))
+
+
+def test_image_from_vector_no_copy():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image2 = image.from_vector(pixels2.ravel(), copy=False)
+    assert(is_same_array(image2.pixels, pixels2))
+
+
+def test_image_from_vector_inplace_no_copy():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image.from_vector_inplace(pixels2.ravel(), copy=False)
+    assert(is_same_array(image.pixels, pixels2))
+
+
+@raises(Warning)
+def test_image_from_vector_inplace_no_copy_warning():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image.from_vector_inplace(pixels2.ravel()[::-1], copy=False)
+    assert(is_same_array(image.pixels, pixels2))
+
+
+def test_image_from_vector_inplace_copy_default():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image.from_vector_inplace(pixels2.ravel())
+    assert(not is_same_array(image.pixels, pixels2))
+
+
+def test_image_from_vector_inplace_copy_explicit():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 2)
+    image = Image(pixels)
+    image.from_vector_inplace(pixels2.ravel(), copy=True)
+    assert(not is_same_array(image.pixels, pixels2))
+
+
+def test_image_from_vector_custom_channels_no_copy():
+    pixels = np.random.rand(10, 20, 2)
+    pixels2 = np.random.rand(10, 20, 3)
+    image = Image(pixels)
+    image2 = image.from_vector(pixels2.ravel(), n_channels=3, copy=False)
+    assert(is_same_array(image2.pixels, pixels2))
+
+
+@raises(ValueError)
+def test_boolean_image_wrong_round():
+    BooleanImage.blank((12, 12), round='ads')
+
+
+def test_boolean_image_proportion_true():
+    image = BooleanImage.blank((10, 10))
+    image.pixels[:7] = False
+    assert(image.proportion_true == 0.3)
+
+
+def test_boolean_image_proportion_false():
+    image = BooleanImage.blank((10, 10))
+    image.pixels[:7] = False
+    assert(image.proportion_false == 0.7)
+
+
+def test_boolean_image_proportion_sums():
+    image = BooleanImage.blank((10, 10))
+    image.pixels[:7] = False
+    assert(image.proportion_true + image.proportion_false == 1)
+
+
+def test_boolean_image_false_indices():
+    image = BooleanImage.blank((2, 3))
+    image.pixels[0, 1] = False
+    image.pixels[1, 2] = False
+    assert(np.all(image.false_indices == np.array([[0, 1],
+                                                   [1, 2]])))
+
+
+def test_boolean_image_false_indices():
+    image = BooleanImage.blank((2, 3))
+    assert(image.__str__() == '3W x 2H 2D mask, 100.0% of which is True')
+
+
+def test_boolean_image_from_vector():
+    vector = np.zeros(16, dtype=np.bool)
+    image = BooleanImage.blank((4, 4))
+    image2 = image.from_vector(vector)
+    assert(np.all(image2.as_vector() == vector))
+
+
+def test_boolean_image_from_vector_no_copy():
+    vector = np.zeros(16, dtype=np.bool)
+    image = BooleanImage.blank((4, 4))
+    image2 = image.from_vector(vector, copy=False)
+    assert(is_same_array(image2.pixels.ravel(), vector))
+
+
+@raises(Warning)
+def test_boolean_image_from_vector_no_copy_raises():
+    vector = np.zeros(16, dtype=np.bool)
+    image = BooleanImage.blank((4, 4))
+    image.from_vector(vector[::-1], copy=False)
+
+
+def test_boolean_image_invert_inplace():
+    image = BooleanImage.blank((4, 4))
+    image.invert_inplace()
+    assert(np.all(image.pixels == False))
+
+
+def test_boolean_image_invert_inplace_double_noop():
+    image = BooleanImage.blank((4, 4))
+    image.invert_inplace()
+    image.invert_inplace()
+    assert(np.all(image.pixels == True))
+
+
+def test_boolean_image_invert():
+    image = BooleanImage.blank((4, 4))
+    image2 = image.invert()
+    assert(np.all(image.pixels == True))
+    assert(np.all(image2.pixels == False))
+
+
+def test_boolean_bounds_false():
+    mask = BooleanImage.blank((8, 8), fill=True)
+    mask.pixels[1, 2] = False
+    mask.pixels[5, 4] = False
+    mask.pixels[3:2, 3] = False
+    min_b, max_b = mask.bounds_false()
+    assert(np.all(min_b == np.array([1, 2])))
+    assert(np.all(max_b == np.array([5, 4])))
+
+
+@raises(ValueError)
+def test_boolean_prevent_order_kwarg():
+    mask = BooleanImage.blank((8, 8), fill=True)
+    mask.warp_to(mask, None, order=4)
+
+
 def test_create_image_copy_false():
     pixels = np.ones((100, 100, 1))
     image = Image(pixels, copy=False)
@@ -168,7 +395,7 @@ def test_2d_crop_without_mask():
     pixels = np.ones((120, 120, 3))
     im = MaskedImage(pixels)
 
-    cropped_im = im.cropped_copy([10, 50], [20, 60])
+    cropped_im = im.crop([10, 50], [20, 60])
 
     assert (cropped_im.shape == (10, 10))
     assert (cropped_im.n_channels == 3)
@@ -180,7 +407,7 @@ def test_2d_crop_with_mask():
     mask = np.zeros_like(pixels[..., 0])
     mask[10:100, 20:30] = 1
     im = MaskedImage(pixels, mask=mask)
-    cropped_im = im.cropped_copy([0, 0], [20, 60])
+    cropped_im = im.crop([0, 0], [20, 60])
     assert (cropped_im.shape == (20, 60))
     assert (np.alltrue(cropped_im.shape))
 
@@ -350,3 +577,12 @@ def test_as_pil_image_3channels():
     new_im = im.as_PILImage()
     assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
                     (im.pixels * 255).astype(np.uint8))
+
+
+def test_image_gradient_sanity():
+    # Only a sanity check - does it run and generate sensible output?
+    image = Image(np.zeros([120, 120, 3]))
+    new_image = image.gradient()
+    assert(type(new_image) == Image)
+    assert(new_image.shape == image.shape)
+    assert(new_image.n_channels == image.n_channels * 2)
