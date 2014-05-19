@@ -1,5 +1,6 @@
 from nose.tools import raises
 import numpy as np
+
 from menpo.shape import PointCloud
 from menpo.testing import is_same_array
 
@@ -8,6 +9,21 @@ def test_pointcloud_creation():
     points = np.array([[1, 2, 3],
                        [1, 1, 1]])
     PointCloud(points)
+
+
+def test_pointcloud_copy_method():
+    points = np.array([[1, 2, 3],
+                       [1, 1, 1]])
+    landmarks = PointCloud(np.ones([3, 3]), copy=False)
+
+    p = PointCloud(points, copy=False)
+    p.landmarks['test'] = landmarks
+    p_copy = p.copy()
+
+    assert (not is_same_array(p_copy.points, p.points))
+    assert (p_copy.landmarks['test']._target is p_copy)
+    assert (not is_same_array(p_copy.landmarks['test'].lms.points,
+                              p.landmarks['test'].lms.points))
 
 
 def test_pointcloud_copy_false():
