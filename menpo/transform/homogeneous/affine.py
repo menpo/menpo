@@ -7,15 +7,14 @@ from .base import Homogeneous, HomogFamilyAlignment
 
 
 class Affine(Homogeneous, DP, DX):
-    r"""
-    The base class for all n-dimensional affine transformations. Provides
+    r"""Base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
     and to chain this transform with other affine transformations.
 
     Parameters
     ----------
-    h_matrix : (n_dims + 1, n_dims + 1) ndarray
+    h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
         The homogeneous matrix of the affine transformation.
     """
     def __init__(self, h_matrix):
@@ -56,34 +55,31 @@ class Affine(Homogeneous, DP, DX):
 
     @property
     def linear_component(self):
-        r"""
-        Returns just the linear transform component of this affine
-        transform.
+        r"""The linear component of this affine transform.
 
-        :type: (D, D) ndarray
+        :type: ``(n_dims, n_dims)`` `ndarray`
         """
         return self.h_matrix[:-1, :-1]
 
     @property
     def translation_component(self):
-        r"""
-        Returns just the translation component.
+        r"""The translation component of this affine transform.
 
-        :type: (D,) ndarray
+        :type: ``(n_dims,)`` `ndarray`
         """
         return self.h_matrix[:-1, -1]
 
     def decompose(self):
-        r"""
-        Uses an SVD to decompose this transform into discrete Affine
-        Transforms.
+        r"""Decompose this transform into discrete Affine Transforms.
+
+        Useful for understanding the effect of a complex composite transform.
 
         Returns
         -------
-        transforms : list of :map:`DiscreteAffine` that
-            Equivalent to this affine transform, such that:
+        transforms : list of :map:`DiscreteAffine`
+            Equivalent to this affine transform, such that::
 
-            `reduce(lambda x,y: x.chain(y), self.decompose()) == self`
+                reduce(lambda x,y: x.chain(y), self.decompose()) == self
         """
         from .rotation import Rotation
         from .translation import Translation
@@ -153,11 +149,11 @@ class Affine(Homogeneous, DP, DX):
         return self.n_dims * (self.n_dims + 1)
 
     def as_vector(self):
-        r"""
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. This does not
-        include the homogeneous part of the warp. Note that it flattens using
-        Fortran ordering, to stay consistent with Matlab.
+        r"""Return the parameters of the transform as a 1D array.
+
+        These parameters are parametrised as deltas from the identity warp.
+        This does not include the homogeneous part of the warp. Note that it
+        flattens using Fortran ordering, to stay consistent with Matlab.
 
         **2D**
 
@@ -176,8 +172,8 @@ class Affine(Homogeneous, DP, DX):
 
         Returns
         -------
-        params : (P,) ndarray
-            The values that paramaterise the transform.
+        params : ``(n_parameters,)`` `ndarray`
+            The values that parametrise the transform.
         """
         params = self.h_matrix - np.eye(self.n_dims + 1)
         return params[:self.n_dims, :].flatten(order='F')
@@ -302,7 +298,7 @@ class Affine(Homogeneous, DP, DX):
         return self.linear_component[None, ...]
 
 
-class AlignmentAffine(Affine, HomogFamilyAlignment):
+class AlignmentAffine(HomogFamilyAlignment, Affine):
     r"""
     Constructs an Affine by finding the optimal affine transform to align
     source to target.

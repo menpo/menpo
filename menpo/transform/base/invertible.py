@@ -69,3 +69,4 @@ class VInvertible(Invertible):
             The pseudoinverse of the vector provided
         """
         return self.from_vector(vector).pseudoinverse.as_vector()
+

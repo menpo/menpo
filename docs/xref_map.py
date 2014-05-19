@@ -10,6 +10,7 @@ xref_map = {
 'DP': ('class', 'menpo.base.DP'),
 'DX': ('class', 'menpo.base.DX'),
 'from_vector_inplace': ('meth', 'menpo.base.Vectorizable.from_vector_inplace'),
+'Homogeneous': ('class', 'menpo.transform.homogeneous.Homogeneous'),
 'Image': ('class', 'menpo.image.base.Image'),
 'Invertible': ('class', 'menpo.transform.base.invertible.Invertible'),
 'Landmarkable': ('class', 'menpo.landmark.base.Landmarkable'),

@@ -46,7 +46,6 @@ class Vectorizable(object):
     def from_vector(self, vector):
         """Build a new instance of the object from it's vectorized state.
 
-
         ``self`` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
         is the default implementation, which is which is a ``deepcopy`` of the
@@ -306,7 +305,6 @@ def menpo_src_dir_path():
 
     Returns
     -------
-
     path : str
         The full path to the top of the Menpo package
     """
