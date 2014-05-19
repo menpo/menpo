@@ -1270,7 +1270,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         if self.landmarks.has_landmarks:
             for l_group in self.landmarks:
-                pc = l_group[1].lms.points
+                pc = self.landmarks[l_group].lms.points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
                     return True
         return False
@@ -1281,13 +1281,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         if self.has_landmarks_outside_bounds:
             for l_group in self.landmarks:
-                l = self.landmarks[l_group[0]]
+                l = self.landmarks[l_group]
                 for k in range(l.lms.points.shape[1]):
                     tmp = l.lms.points[:, k]
                     tmp[tmp < 0] = 0
                     tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
                     l.lms.points[:, k] = tmp
-                self.landmarks[l_group[0]] = l
+                self.landmarks[l_group] = l
 
 
 def _create_feature_glyph(features, vbs):

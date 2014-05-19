@@ -84,7 +84,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         Iterate over the internal landmark group dictionary
         """
-        return iter(self._landmark_groups.iteritems())
+        return iter(self._landmark_groups)
 
     def __setitem__(self, group_label, value):
         """
