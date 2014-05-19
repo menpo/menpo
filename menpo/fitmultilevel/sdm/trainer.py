@@ -148,9 +148,6 @@ class SDTrainer(object):
         self.check_n_permutations(n_perturbations)
         feature_type = self.check_feature_type(feature_type, n_levels,
                                                pyramid_on_features)
-        # TODO: this should use check_feature_type
-        regression_features = self.check_regression_features(
-            regression_features, n_levels)
 
         # store parameters
         self.regression_type = regression_type
@@ -511,7 +508,7 @@ class SDTrainer(object):
         return feature_type_list
 
     @classmethod
-    def check_regression_features(cls, feature_type, n_levels):
+    def check_regression_features(cls, regression_features, n_levels):
         r"""
         Checks the regression features type per level. It must be a string or
         a function/closure of a list of those containing 1 or {n_levels}
@@ -745,6 +742,30 @@ class SDMTrainer(SDTrainer):
         self.normalization_diagonal = normalization_diagonal
         self.pyramid_on_features = pyramid_on_features
 
+    def check_regression_features(self, regression_features, n_levels):
+        r"""
+        Checks the regression features type per level. It must be a string or
+        a function/closure or None or a list of those containing 1 or
+        {n_levels} elements.
+        """
+        regression_features_str_error = ("regression_features must be a str "
+                                         "or a function/closure or a list of "
+                                         "those containing 1 or {} "
+                                         "elements").format(n_levels)
+        if not isinstance(regression_features, list):
+            regression_features_list = [regression_features] * n_levels
+        elif len(regression_features) is 1:
+            regression_features_list = [regression_features[0]] * n_levels
+        elif len(regression_features) is n_levels:
+            regression_features_list = regression_features
+        else:
+            raise ValueError(regression_features_str_error)
+        for ft in regression_features_list:
+            if (ft is not None or not isinstance(ft, str)
+               or not hasattr(ft, '__call__')):
+                ValueError(regression_features_str_error)
+        return regression_features_list
+
     def _compute_reference_shape(self, images, group, label):
         r"""
         Function that computes the reference shape, given a set of images.
@@ -834,10 +855,19 @@ class SDAAMTrainer(SDTrainer):
         `menpo.fit.regression.trainer`
 
         Default: mlr
-    regression_features: None or string or function/closure, Optional
-        The features that are extracted from the regressor.
-        They come from:
+    regression_features: None or function/closure or list of those, Optional
+        The features that are used in the regressor.
+        If list of length {aam.n_levels}, it specifies the feature to be used
+        per level.
+        If list of length 1, the specified feature will be used for all levels.
+
+        Per level:
+        Since the regressor in use is a Parametric one, these features
+        can only come from:
         `menpo.fit.regression.parametricfeatures`
+
+        If function/closure, the specified funtion will be used.
+        If None, 'weights' will be used.
 
         Default: weights
     noise_std: float, optional
@@ -923,9 +953,11 @@ class SDAAMTrainer(SDTrainer):
                  update='compositional', md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
+        regression_features_list = self.check_regression_features(
+            regression_features, aam.n_levels)
         super(SDAAMTrainer, self).__init__(
             regression_type=regression_type,
-            regression_features=regression_features,
+            regression_features=regression_features_list,
             feature_type=aam.feature_type, n_levels=aam.n_levels,
             downscale=aam.downscale,
             pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
@@ -969,6 +1001,29 @@ class SDAAMTrainer(SDTrainer):
                                  'an integer or float list containing 1 '
                                  'or {} elements or else '
                                  'None'.format(self.aam.n_levels))
+
+    def check_regression_features(self, regression_features, n_levels):
+        r"""
+        Checks the regression features type per level. It must be a
+        function/closure from `menpo.fit.regression.parametricfeatures` or
+        a list of those containing 1 or {n_levels} elements.
+        """
+        regression_features_str_error = ("regression_features must be "
+                                         "function/closure or a list of "
+                                         "those containing 1 or {} "
+                                         "elements").format(n_levels)
+        if not isinstance(regression_features, list):
+            regression_features_list = [regression_features] * n_levels
+        elif len(regression_features) is 1:
+            regression_features_list = [regression_features[0]] * n_levels
+        elif len(regression_features) is n_levels:
+            regression_features_list = regression_features
+        else:
+            raise ValueError(regression_features_str_error)
+        for ft in regression_features_list:
+            if ft is not None or not hasattr(ft, '__call__'):
+                ValueError(regression_features_str_error)
+        return regression_features_list
 
     def _compute_reference_shape(self, images, group, label):
         r"""
