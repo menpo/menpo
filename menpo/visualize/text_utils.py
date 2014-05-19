@@ -39,8 +39,10 @@ def progress_bar_str(percentage, bar_length=20, bar_marker='=', show_bar=True):
     ValueError
         bar_marker must be a string of length 1
     """
-    if percentage > 1 or percentage < 0:
+    if percentage < 0:
         raise ValueError("percentage is not in the range [0, 1]")
+    elif percentage > 1:
+        percentage = 1
     if not isinstance(bar_length, int) or bar_length < 1:
         raise ValueError("bar_length must be an integer >= 1")
     if not isinstance(bar_marker, str) or len(bar_marker) != 1:

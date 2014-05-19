@@ -18,10 +18,8 @@ class FittingResult(Viewable):
     -----------
     image: :map:`MaskedImage`
         The fitted image.
-
     fitter: :map:`Fitter`
         The Fitter object used to fitter the image.
-
     error_type: 'me_norm', 'me' or 'rmse', optional.
         Specifies the way in which the error between the fitted and
         ground truth shapes is to be computed.
@@ -31,8 +29,8 @@ class FittingResult(Viewable):
 
     def __init__(self, image, fitter, gt_shape=None, error_type='me_norm'):
         # Initialize the error internal properties
-        self._error_type, self._error_text = None, None
         self.image = deepcopy(image)
+        self._error_type, self._error_text = None, None
         self.fitter = fitter
         self.error_type = error_type
         self._gt_shape = gt_shape

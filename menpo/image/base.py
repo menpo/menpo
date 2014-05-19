@@ -14,7 +14,6 @@ from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
-
 from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
@@ -97,10 +96,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             if image_data.ndim == 2:
                 image_data = image_data[..., None]
             if image_data.ndim < 2:
-                raise ValueError("Pixel array has to be 2D (2D shape,"
-                                 " implicitly 1 channel) or 3D+ (2D+ shape, "
-                                 "n_channels)  - a {}D array "
-                                 "was provided".format(image_data.ndim))
+                raise ValueError(
+                    "Pixel array has to be 2D (2D shape, implicitly "
+                    "1 channel) or 3D+ (2D+ shape, n_channels) "
+                    " - a {}D array "
+                    "was provided".format(image_data.ndim))
             self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
@@ -503,6 +503,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         glyph = Image(glyph_image)
         # correct landmarks
         from menpo.transform import NonUniformScale
+
         image_shape = np.array(self.shape, dtype=np.double)
         glyph_shape = np.array(glyph.shape, dtype=np.double)
         nus = NonUniformScale(glyph_shape / image_shape)
@@ -528,8 +529,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         grad_image.landmarks = self.landmarks
         return grad_image
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=True):
+    def crop_inplace(self, min_indices, max_indices,
+                     constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -537,32 +538,32 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
-        cropped_image : :class:`type(self)`
-            This image, but cropped.
+        cropped_image : `type(self)`
+            This image, cropped.
 
         Raises
         ------
-        ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+        `ValueError`
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
-        ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+        `ImageBoundaryError`
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
 
         """
@@ -578,8 +579,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
         if not constrain_to_boundary and not (
-                np.all(min_bounded == min_indices) or
-                np.all(max_bounded == max_indices)):
+                    np.all(min_bounded == min_indices) or
+                    np.all(max_bounded == max_indices)):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
@@ -592,8 +593,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         lm_translation.apply_inplace(self.landmarks)
         return self
 
-    def cropped_copy(self, min_indices, max_indices,
-                     constrain_to_boundary=False):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=False):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -601,18 +602,18 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
@@ -623,103 +624,114 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Raises
         ------
         ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         cropped_image = deepcopy(self)
-        return cropped_image.crop(min_indices, max_indices,
-                                  constrain_to_boundary=constrain_to_boundary)
+        return cropped_image.crop_inplace(
+            min_indices, max_indices,
+            constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label='all', boundary=0,
-                          constrain_to_boundary=True):
+    def crop_to_landmarks_inplace(self, group=None, label='all', boundary=0,
+                                  constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
-        optional n_pixel boundary
+        optional `n_pixel` boundary
 
         Parameters
         ----------
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
+            Default: `None`
 
-        label: string, Optional
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
 
-        boundary: int, Optional
+        boundary : int, Optional
             An extra padding to be added all around the landmarks bounds.
 
-            Default: 0
+            Default: `0`
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
+
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        self.crop(min_indices, max_indices,
-                  constrain_to_boundary=constrain_to_boundary)
+        return self.crop_inplace(min_indices, max_indices,
+                                 constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
-                                     label='all', minimum=True,
-                                     constrain_to_boundary=True):
+    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
+                                             group=None, label='all',
+                                             minimum=True,
+                                             constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
 
         Parameters
         ----------
-        boundary_proportion: float
+        boundary_proportion : float
             Additional padding to be added all around the landmarks
             bounds defined as a proportion of the landmarks' range. See
-            minimum for a definition of how the range is calculated.
+            the minimum parameter for a definition of how the range is
+            calculated.
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-
-        label: string, Optional
+            Default: `None`
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
-
-        minimum: bool, Optional
-            If True the specified proportion is relative to the minimum
-            value of the landmarks' per-dimension range; if False wrt the
+        minimum : bool, Optional
+            If `True` the specified proportion is relative to the minimum
+            value of the landmarks' per-dimension range; if `False` w.r.t. the
             maximum value of the landmarks' per-dimension range.
 
-            Default: True
+            Default: `True`
+        constrain_to_boundary : boolean, optional
+            If `True`, the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+            Default: `True`
 
-            Default: True
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks with a border proportional to
+            the landmark spread or range.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
@@ -727,8 +739,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        self.crop_to_landmarks(group=group, label=label, boundary=boundary,
-                               constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_landmarks_inplace(
+            group=group, label=label, boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -997,7 +1010,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         x, y = self.landmarks[group][label].lms.range()
-        scale = diagonal_range / np.sqrt(x**2 + y**2)
+        scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
@@ -1153,7 +1166,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 yield self
             else:
                 if sigma is None:
-                    sigma_aux = 2 * downscale**j / 6.0
+                    sigma_aux = 2 * downscale ** j / 6.0
                 else:
                     sigma_aux = sigma
 

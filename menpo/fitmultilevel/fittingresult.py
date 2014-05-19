@@ -66,7 +66,7 @@ class MultilevelFittingResult(FittingResult):
         Returns True if the shape results returned by the basic fitting_results
         must be scaled.
         """
-        return self.fitter.scaled_levels
+        return True  # self.fitter.scaled_levels
 
     @property
     def fitted(self):

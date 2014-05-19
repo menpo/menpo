@@ -395,7 +395,7 @@ def test_2d_crop_without_mask():
     pixels = np.ones((120, 120, 3))
     im = MaskedImage(pixels)
 
-    cropped_im = im.cropped_copy([10, 50], [20, 60])
+    cropped_im = im.crop([10, 50], [20, 60])
 
     assert (cropped_im.shape == (10, 10))
     assert (cropped_im.n_channels == 3)
@@ -407,7 +407,7 @@ def test_2d_crop_with_mask():
     mask = np.zeros_like(pixels[..., 0])
     mask[10:100, 20:30] = 1
     im = MaskedImage(pixels, mask=mask)
-    cropped_im = im.cropped_copy([0, 0], [20, 60])
+    cropped_im = im.crop([0, 0], [20, 60])
     assert (cropped_im.shape == (20, 60))
     assert (np.alltrue(cropped_im.shape))
 
