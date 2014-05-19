@@ -649,7 +649,7 @@ class MaskedImage(Image):
 
         pwa = PiecewiseAffine(pc, pc)
         try:
-            pwa.apply_inplace(self.indices)
+            pwa.apply(self.indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 

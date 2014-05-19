@@ -25,8 +25,8 @@ Abstract interfaces that govern the taking of derivatives in Menpo.
    DX
    DL
 
-Convienience
-------------
+Convenience
+-----------
 
 .. toctree::
    :maxdepth: 1

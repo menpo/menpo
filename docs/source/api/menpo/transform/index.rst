@@ -63,8 +63,8 @@ Radial Basis Functions
    R2LogRRBF
 
 
-Abstaract Bases
----------------
+Abstract Bases
+--------------
 
 .. toctree::
    :maxdepth: 1
@@ -75,5 +75,14 @@ Abstaract Bases
    Invertible
    Alignment
    MultipleAlignment
+
+Performance Specializations
+---------------------------
+
+Mix-ins that provide fast vectorized varients of methods.
+
+.. toctree::
+   :maxdepth: 1
+
    VComposable
    VInvertible

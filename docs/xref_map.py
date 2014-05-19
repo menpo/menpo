@@ -1,4 +1,6 @@
 xref_map = {
+'_apply': ('meth', 'menpo.transform.base.Transform._apply'),
+'apply_inplace': ('meth', 'menpo.transform.base.Transform.apply_inplace'),
 'Affine': ('class', 'menpo.transform.homogeneous.affine.Affine'),
 'Alignment': ('class', 'menpo.transform.base.alignment.Alignment'),
 'AlignmentSimilarity': ('class', 'menpo.transform.homogeneous.similarity.AlignmentSimilarity'),
