@@ -215,9 +215,8 @@ class MultilevelFitter(Fitter):
         # rescale image wrt the scale factor between reference_shape and
         # initial_shape
         image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_to_reference_shape(
-            self.reference_shape, group='initial_shape',
-            interpolator=self.interpolator)
+        image = image.rescale_to_reference_shape(self.reference_shape,
+                                                 group='initial_shape')
 
         # attach given ground truth shape
         if gt_shape:

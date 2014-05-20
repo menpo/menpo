@@ -6,13 +6,14 @@ import numpy as np
 from scipy.misc import imrotate
 import scipy.linalg
 import PIL.Image as PILImage
+import skimage
 from skimage.transform import pyramid_gaussian
 from skimage.transform.pyramids import _smooth
 
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
-                             AlignmentUniformScale)
+                             AlignmentUniformScale, Affine)
 from menpo.visualize.base import Viewable, ImageViewer
 from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
@@ -802,6 +803,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         r"""
         Return a copy of this image warped into a different reference space.
 
+        Note that warping into a mask is slower than warping into a full image.
+        If you don't need a non-linear mask, consider warp_to_shape instead.
+
         Parameters
         ----------
         template_mask : :map:`BooleanImage`
@@ -872,33 +876,106 @@ class Image(Vectorizable, Landmarkable, Viewable):
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
-    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
+                      order=1, mode='constant', cval=0.):
+        """
+        Return a copy of this image warped into a different reference space.
+
+        Parameters
+        ----------
+        template_shape : (n_dims, ) tuple or ndarray
+            Defines the shape of the result, and what pixel indices should be
+            sampled (all of them).
+
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+
+        warp_landmarks : `bool`, optional
+            If `True`, ``warped_image`` will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
+
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        warped_image : ``type(self)``
+            A copy of this image, warped.
+        """
+        # skimage has an optimised Cython interpolation, if the transform
+        # we are using is an Affine we get faster interpolation..
+        if isinstance(transform, Affine):
+            h  = transform.h_matrix
+            # TODO do this elegantly
+            m = np.eye(3)
+            m[0, 0] = h[1, 1]
+            m[1, 1] = h[0, 0]
+            m[0, 1] = h[1, 0]
+            m[1, 0] = h[0, 1]
+            m[0, 2] = h[1, 2]
+            m[1, 2] = h[0, 2]
+            print m
+            print h
+            mapping = m
+        else:
+            # just give skimage a closure that applies our transform.
+            # TODO flip the transform order here
+            mapping = lambda x: transform.apply(x)
+        warped_pixels = skimage.transform.warp(self.pixels,
+                                               inverse_map=mapping,
+                                               output_shape=template_shape,
+                                               order=order, mode=mode,
+                                               cval=cval)
+        warped_image = Image(warped_pixels, copy=False)
+
+        # warp landmarks if requested.
+        if warp_landmarks:
+            warped_image.landmarks = self.landmarks
+            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+        return warped_image
+
+    def rescale(self, scale, round='ceil', order=1):
         r"""
         Return a copy of this image, rescaled by a given factor.
         Landmarks are rescaled appropriately.
 
         Parameters
         ----------
-        scale : float or tuple
+        scale : `float` or `tuple` of `floats`
             The scale factor. If a tuple, the scale to apply to each dimension.
             If a single float, the scale will be applied uniformly across
             each dimension.
-        interpolator : 'scipy', optional
-            The interpolator that should be used to perform the warp.
-
-            Default: 'scipy'
         round: {'ceil', 'floor', 'round'}
             Rounding function to be applied to floating point shapes.
 
-            Default: 'ceil'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details. Note that mode is set to nearest to avoid numerical
-            issues, and cannot be changed here by the user.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
         Returns
         -------
-        rescaled_image : type(self)
+        rescaled_image : ``type(self)``
             A copy of this image, rescaled.
 
         Raises
@@ -926,10 +1003,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 raise ValueError('Scales must be positive floats.')
 
         transform = NonUniformScale(scale)
-        from menpo.image.boolean import BooleanImage
         # use the scale factor to make the template mask bigger
-        template_mask = BooleanImage.blank(transform.apply(self.shape),
-                                           round=round)
+        # while respecting the users rounding preference.
+        template_shape = round_image_shape(transform.apply(self.shape),
+                                           round)
         # due to image indexing, we can't just apply the pseduoinverse
         # transform to achieve the scaling we want though!
         # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
@@ -942,16 +1019,12 @@ class Image(Vectorizable, Landmarkable, Viewable):
         scale_factors = (scale * shape - 1) / (shape - 1)
         inverse_transform = NonUniformScale(scale_factors).pseudoinverse
         # for rescaling we enforce that mode is nearest to avoid num. errors
-        if 'mode' in kwargs:
-            raise ValueError("Cannot set 'mode' kwarg on rescale - set to "
-                             "'nearest' to avoid numerical errors")
-        kwargs['mode'] = 'nearest'
-        return self.warp_to_mask(template_mask, inverse_transform,
-                                 interpolator=interpolator, **kwargs)
+        return self.warp_to_shape(template_shape, inverse_transform,
+                                  warp_landmarks=True, order=order,
+                                  mode='nearest')
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
-                                   label='all', interpolator='scipy',
-                                   round='ceil', **kwargs):
+                                   label='all', round='ceil', order=1):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
@@ -962,40 +1035,39 @@ class Image(Vectorizable, Landmarkable, Viewable):
         reference_shape: :class:`menpo.shape.pointcloud`
             The reference shape to which the landmarks scale will be matched
             against.
-        group : string, Optional
+
+        group : `str`, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-        label: string, Optional
+        label: `str`, optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
-            Default: 'all'
-        interpolator : 'scipy' or 'c', optional
-            The interpolator that should be used to perform the warp.
-
-        round: {'ceil', 'floor', 'round'}
+        round: {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
 
-            Default: 'ceil'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
         Returns
         -------
-        rescaled_image : type(self)
+        rescaled_image : ``type(self)``
             A copy of this image, rescaled.
         """
         pc = self.landmarks[group][label].lms
         scale = AlignmentUniformScale(pc, reference_shape).as_vector()
-        return self.rescale(scale, interpolator=interpolator,
-                            round=round, **kwargs)
+        return self.rescale(scale, round=round, order=order)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label='all', interpolator='scipy',
-                                            round='ceil', **kwargs):
+                                            label='all', round='ceil',
+                                            order=1):
         r"""
         Return a copy of this image, rescaled so that the diagonal_range of the
         bounding box containing its landmarks matches the specified diagonal_range
@@ -1003,61 +1075,62 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         ----------
-        diagonal_range: :class:`menpo.shape.pointcloud`
+        diagonal_range: ``(n_dims,)`` `ndarray`
             The diagonal_range range that we want the landmarks of the returned
             image to have.
-        group : string, Optional
+
+        group : `str`, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-        label: string, Optional
+        label: `str`, optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
-            Default: 'all'
-        interpolator : 'scipy', optional
-            The interpolator that should be used to perform the warp.
-
-        round: {'ceil', 'floor', 'round'}
+        round: {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
 
-            Default: 'ceil'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
         Returns
         -------
-        rescaled_image : type(self)
+        rescaled_image : ``type(self)``
             A copy of this image, rescaled.
         """
         x, y = self.landmarks[group][label].lms.range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
-        return self.rescale(scale, interpolator=interpolator,
-                            round=round, **kwargs)
+        return self.rescale(scale, round=round, order=order)
 
-    def resize(self, shape, interpolator='scipy', **kwargs):
+    def resize(self, shape, order=1):
         r"""
         Return a copy of this image, resized to a particular shape.
-        All image information (landmarks, the mask in the case of
-        :class:`MaskedImage`) is resized appropriately.
+        All image information (landmarks, and mask in the case of
+        :map:`MaskedImage`) is resized appropriately.
 
         Parameters
         ----------
         shape : tuple
             The new shape to resize to.
-        interpolator : 'scipy' or 'c', optional
-            The interpolator that should be used to perform the warp.
 
-            Default: 'scipy'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
         Returns
         -------
-        resized_image : type(self)
+        resized_image : ``type(self)``
             A copy of this image, resized.
 
         Raises
@@ -1066,19 +1139,18 @@ class Image(Vectorizable, Landmarkable, Viewable):
             If the number of dimensions of the new shape does not match
             the number of dimensions of the image.
         """
-        shape = np.asarray(shape)
+        shape = np.asarray(shape, dtype=np.float)
         if len(shape) != self.n_dims:
             raise ValueError(
                 'Dimensions must match.'
                 '{} dimensions provided, {} were expected.'.format(
                     shape.shape, self.n_dims))
-        scales = shape.astype(np.float) / self.shape
+        scales = shape / self.shape
         # Have to round the shape when scaling to deal with floating point
         # errors. For example, if we want (250, 250), we need to ensure that
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
-        return self.rescale(scales, interpolator=interpolator,
-                            round='round', **kwargs)
+        return self.rescale(scales, round='round', order=order)
 
     def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None,
                          order=1, mode='reflect', cval=0):
@@ -1346,3 +1418,9 @@ def _create_feature_glyph(features, vbs):
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
 
+
+def round_image_shape(shape, round):
+    if round not in ['ceil', 'round', 'floor']:
+        raise ValueError('round must be either ceil, round or floor')
+    # Ensure that the '+' operator means concatenate tuples
+    return tuple(getattr(np, round)(shape).astype(np.int))

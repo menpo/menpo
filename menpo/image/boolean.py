@@ -78,10 +78,8 @@ class BooleanImage(Image):
             A blank mask of the requested size
 
         """
-        if round not in ['ceil', 'round', 'floor']:
-            raise ValueError('round must be either ceil, round or floor')
-            # Ensure that the '+' operator means concatenate tuples
-        shape = tuple(getattr(np, round)(shape).astype(np.int))
+        from .base import round_image_shape
+        shape = round_image_shape(shape, round)
         if fill:
             mask = np.ones(shape, dtype=np.bool)
         else:
@@ -368,6 +366,58 @@ class BooleanImage(Image):
                                   warp_landmarks=warp_landmarks,
                                   interpolator=interpolator, **kwargs)
 
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
+                      order=1, mode='constant', cval=0.):
+        """
+        Return a copy of this :map:`BooleanImage` warped into a different
+        reference space.
+
+        Parameters
+        ----------
+        template_shape : (n_dims, ) tuple or ndarray
+            Defines the shape of the result, and what pixel indices should be
+            sampled (all of them).
+
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+
+        warp_landmarks : `bool`, optional
+            If `True`, ``warped_image`` will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
+
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        warped_image : :map:`BooleanImage`
+            A copy of this image, warped.
+        """
+        # call the super variant and get ourselves an Image back
+        warped_image = Image.warp_to_shape(self, template_shape, transform,
+                                           warp_landmarks=warp_landmarks,
+                                           order=order, mode=mode, cval=cval)
+        # convert to a boolean mask and return
+        b = BooleanImage(warped_image.pixels)
+        b.landmarks = warped_image
+        return b
+
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
                               **kwargs):
         r"""Builds the warped image from the template mask and
@@ -383,3 +433,42 @@ class BooleanImage(Image):
             # we have to fill out mask with the sampled mask..
             warped_img.pixels[warped_img.mask] = sampled_pixel_values
         return warped_img
+
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
+                      **kwargs):
+        r"""
+        Return a copy of this :map:`BooleanImage` warped into a different
+        reference space.
+
+        Parameters
+        ----------
+        template_shape : (n_dims, ) tuple or ndarray
+            Defines the shape of the result, and what pixel indices should be
+            sampled (all of them).
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+        warp_landmarks : bool, optional
+            If `True`, warped_image will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+            Default: `False`
+
+        Returns
+        -------
+        warped_image : :map:`BooleanImage`
+            A copy of this image, warped.
+
+        """
+        # call the super variant and get ourselves an Image back
+        warped_image = Image.warp_to_shape(self, template_shape, transform,
+                                           warp_landmarks=warp_landmarks,
+                                           **kwargs)
+        # unfortunately we can't escape copying here, let BooleanImage
+        # convert us to np.bool
+        warped_boolean_image = BooleanImage(
+            warped_image.pixels.reshape(template_shape))
+        warped_boolean_image.landmarks = warped_image.landmarks
+
+        return warped_boolean_image

@@ -330,8 +330,7 @@ class SDTrainer(object):
                     progress_bar_str((c + 1.) / len(images),
                                      show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
-                reference_shape, group=group, label=label,
-                interpolator=interpolator))
+                reference_shape, group=group, label=label))
 
         if verbose:
             print_dynamic('- Normalizing images size: Done\n')

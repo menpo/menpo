@@ -359,7 +359,7 @@ class MaskedImage(Image):
                            mask=mask).render(**kwargs)
 
     def crop_inplace(self, min_indices, max_indices,
-             constrain_to_boundary=True):
+                     constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -402,7 +402,7 @@ class MaskedImage(Image):
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
         self.mask.crop_inplace(min_indices, max_indices,
-                       constrain_to_boundary=constrain_to_boundary)
+                               constrain_to_boundary=constrain_to_boundary)
         return self
 
     def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
@@ -435,7 +435,7 @@ class MaskedImage(Image):
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         self.crop_inplace(min_indices, max_indices,
-                  constrain_to_boundary=constrain_to_boundary)
+                          constrain_to_boundary=constrain_to_boundary)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      interpolator='scipy', **kwargs):
@@ -481,6 +481,65 @@ class MaskedImage(Image):
                                              **kwargs)
         warped_image.mask = warped_mask
         return warped_image
+
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
+                      order=1, mode='constant', cval=0.):
+        """
+        Return a copy of this :map:`MaskedImage` warped into a different
+        reference space.
+
+        Parameters
+        ----------
+        template_shape : (n_dims, ) tuple or ndarray
+            Defines the shape of the result, and what pixel indices should be
+            sampled (all of them).
+
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+
+        warp_landmarks : `bool`, optional
+            If `True`, ``warped_image`` will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
+
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        warped_image : :map:`MaskedImage`
+            A copy of this image, warped.
+        """
+        # call the super variant and get ourselves an Image back
+        warped_image = Image.warp_to_shape(self, template_shape, transform,
+                                           warp_landmarks=warp_landmarks,
+                                           order=order, mode=mode, cval=cval)
+        # warp the
+        # mask separately and reattach.
+        mask = self.mask.warp_to_shape(template_shape, transform,
+                                       warp_landmarks=warp_landmarks,
+                                       order=order, mode=mode, cval=cval)
+        # efficiently turn the Image into a MaskedImage, attaching the
+        # landmarks
+        masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
+                                          copy=False)
+        masked_warped_image.landmarks = warped_image.landmarks
+        return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
 
@@ -645,42 +704,6 @@ class MaskedImage(Image):
             pwa.apply(self.indices)
         except TriangleContainmentError, e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
-
-    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
-        r"""A copy of this MaskedImage, rescaled by a given factor.
-
-        All image information (landmarks and mask) are rescaled appropriately.
-
-        Parameters
-        ----------
-        scale : float or tuple
-            The scale factor. If a tuple, the scale to apply to each dimension.
-            If a single float, the scale will be applied uniformly across
-            each dimension.
-        round: {'ceil', 'floor', 'round'}
-            Rounding function to be applied to floating point shapes.
-
-            Default: 'ceil'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
-
-        Returns
-        -------
-        rescaled_image : type(self)
-            A copy of this image, rescaled.
-
-        Raises
-        ------
-        ValueError:
-            If less scales than dimensions are provided.
-            If any scale is less than or equal to 0.
-        """
-        # just call normal Image version, passing the warp_mask=True flag
-        return super(MaskedImage, self).rescale(scale,
-                                                interpolator=interpolator,
-                                                round=round,
-                                                **kwargs)
 
     def build_mask_around_landmarks(self, patch_size, group=None,
                                     label='all'):
