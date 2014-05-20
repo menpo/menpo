@@ -281,8 +281,16 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         similarity = self._procrustes_alignment(self.source, self.target)
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
-    def copy_without_alignment(self):
-        return Similarity(self.h_matrix, copy=False, skip_checks=True)
+    def as_non_alignment(self):
+        r"""Returns a copy of this similarity without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Similarity`
+            A version of this similarity with the same transform behavior but
+            without the alignment logic.
+        """
+        return Similarity(self.h_matrix, skip_checks=True)
 
     def from_vector_inplace(self, p):
         r"""

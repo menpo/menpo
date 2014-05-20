@@ -91,5 +91,13 @@ class AlignmentTranslation(HomogFamilyAlignment, Translation):
         translation = self.target.centre - self.source.centre
         self.h_matrix[:-1, -1] = translation
 
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this translation without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Translation`
+            A version of this transform with the same transform behavior but
+            without the alignment logic.
+        """
         return Translation(self.translation_component)

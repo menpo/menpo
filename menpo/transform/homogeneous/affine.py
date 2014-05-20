@@ -390,7 +390,15 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         # We know the resulting affine is correct so skip the checks
         Affine.set_h_matrix(self, optimal_h, copy=False, skip_checks=True)
 
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this affine without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Affine`
+            A version of this affine with the same transform behavior but
+            without the alignment logic.
+        """
         return Affine(self.h_matrix, skip_checks=True)
 
 

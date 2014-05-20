@@ -255,5 +255,13 @@ class AlignmentRotation(HomogFamilyAlignment, Rotation):
         r = optimal_rotation_matrix(self.source, self.target)
         Rotation.set_rotation_matrix(self, r, skip_checks=True)
 
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this rotation without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Rotation`
+            A version of this rotation with the same transform behavior but
+            without the alignment logic.
+        """
         return Rotation(self.rotation_matrix, skip_checks=True)

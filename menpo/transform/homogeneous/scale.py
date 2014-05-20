@@ -257,5 +257,13 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
         np.fill_diagonal(self.h_matrix, new_scale)
         self.h_matrix[-1, -1] = 1
 
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this uniform scale without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`UniformScale`
+            A version of this scale with the same transform behavior but
+            without the alignment logic.
+        """
         return UniformScale(self.scale, self.n_dims)

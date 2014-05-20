@@ -17,7 +17,15 @@ class HomogFamilyAlignment(Alignment):
     to have the correct copy behavior.
     """
     @abc.abstractmethod
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this transform without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Homogeneous` but not :map:`Alignment` subclass
+            A version of this transform with the same transform behavior but
+            without the alignment logic.
+        """
         pass
 
     def copy(self):
@@ -251,7 +259,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
             # have to produce a non-Alignment result. Nasty, but we check
             # here to save a lot of repetition.
             if isinstance(self, HomogFamilyAlignment):
-                new_self = self.copy_without_alignment()
+                new_self = self.as_non_alignment()
             else:
                 new_self = self.copy()
             new_self._compose_before_inplace(t)
@@ -308,7 +316,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
             # have to produce a non-Alignment result. Nasty, but we check
             # here to save a lot of repetition.
             if isinstance(self, HomogFamilyAlignment):
-                new_self = self.copy_without_alignment()
+                new_self = self.as_non_alignment()
             else:
                 new_self = self.copy()
             new_self._compose_after_inplace(t)
