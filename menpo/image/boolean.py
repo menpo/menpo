@@ -320,39 +320,38 @@ class BooleanImage(Image):
         return self.invert().bounds_true(
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
                      interpolator='scipy', **kwargs):
-        r"""
-        Warps this BooleanImage into a different reference space.
+        r"""Return a copy of this :map:`BooleanImage` warped into a different
+        reference space.
 
         Parameters
         ----------
         template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
+
         transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
-        warp_landmarks : bool, optional
+
+        warp_landmarks : `bool`, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: `False`
         interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp. This
             is a stub for future interpolation options.
 
-            Default: 'scipy'
         kwargs : dict
             Passed through to the interpolator. See :map:`interpolation`
             for details.
 
         Returns
         -------
-        warped_image : type(self)
+        warped_image : :map:`BooleanImage`
             A copy of this image, warped.
-
         """
         # enforce the order as 0, for this boolean data, then call super
         manually_set_order = kwargs.get('order', 0)
@@ -365,15 +364,18 @@ class BooleanImage(Image):
                                   warp_landmarks=warp_landmarks,
                                   interpolator=interpolator, **kwargs)
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values,
-                            **kwargs):
-        r"""
-        Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanImage as we can't use
-        the usual from_vector_inplace method.
+    def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
+                              **kwargs):
+        r"""Builds the warped image from the template mask and
+        sampled pixel values.
         """
-        warped_image = BooleanImage.blank(template_mask.shape)
-        # As we are a mask image, we have to implement the update a little
-        # more manually than other image classes.
-        warped_image.pixels[warped_image.mask] = sampled_pixel_values
-        return warped_image
+        # start from a copy of the template_mask
+        warped_img = template_mask.copy()
+        if warped_img.all_true:
+            # great, just reshape the sampled_pixel_values
+            warped_img.pixels = sampled_pixel_values.reshape(
+                warped_img.shape + (1,))
+        else:
+            # we have to fill out mask with the sampled mask..
+            warped_img.pixels[warped_img.true_indices] = sampled_pixel_values
+        return warped_img

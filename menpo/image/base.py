@@ -822,24 +822,26 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # set any nan values to 0
         sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image
-        warped_image = self._build_warped_image(template_mask,
-                                                sampled_pixel_values)
+        warped_image = self._build_warped_to_mask(template_mask,
+                                                  sampled_pixel_values)
 
         if warp_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values,
-                            **kwargs):
+    def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
+                              **kwargs):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method. All other Image classes share
         the Image implementation.
         """
-        warped_image = self.blank(template_mask.shape,
-                                  n_channels=self.n_channels, **kwargs)
+        from .masked import MaskedImage
+        warped_image = MaskedImage.blank(template_mask.shape,
+                                         n_channels=self.n_channels,
+                                         mask=template_mask)
         warped_image.from_vector_inplace(sampled_pixel_values.ravel())
         return warped_image
 
@@ -920,9 +922,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # Note here we pass warp_mask to warp_to. In the case of
         # Images that aren't MaskedImages this kwarg will
         # harmlessly fall through so we are fine.
-        return self.warp_to(template_mask, inverse_transform,
-                            warp_landmarks=True,
-                            interpolator=interpolator, **kwargs)
+        return self.warp_to_mask(template_mask, inverse_transform,
+                                 warp_landmarks=True,
+                                 interpolator=interpolator, **kwargs)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label='all', interpolator='scipy',

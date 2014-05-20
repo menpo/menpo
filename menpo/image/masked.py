@@ -560,16 +560,6 @@ class MaskedImage(Image):
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values,
-                            **kwargs):
-        r"""
-        Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanImage as we can't use
-        the usual from_vector_inplace method.
-        """
-        return super(MaskedImage, self)._build_warped_image(
-            template_mask, sampled_pixel_values, mask=template_mask)
-
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
         Returns a MaskedImage which is the gradient of this one. In the case
