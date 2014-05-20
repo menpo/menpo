@@ -104,6 +104,23 @@ def difference(appearance_model, warped_image):
             appearance(appearance_model, warped_image))
 
 
+def warped_image(appearance_model, warped_image):
+    r"""
+    Returns the difference between the warped image and the image constructed
+    by projecting the warped image onto the appearance model and rebuilding it
+    from the weights found.
+
+    Parameters
+    ----------
+    appearance_model: :class:`menpo.model.pca`
+        The appearance model based on which the parametric features will be
+        computed.
+    warped_image: :class:`menpo.image.masked`
+        The warped image.
+    """
+    return warped_image.as_vector()
+
+
 def project_out(appearance_model, warped_image):
     r"""
     Returns a version of the whitened warped image where all the basis of the

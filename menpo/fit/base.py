@@ -60,7 +60,6 @@ class Fitter(object):
         """
         pass
 
-    @abc.abstractmethod
     def get_parameters(self, shape):
         r"""
         Abstract method that gets the parameters.

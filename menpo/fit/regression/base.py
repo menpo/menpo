@@ -118,7 +118,13 @@ class NonParametricRegressor(Regressor):
 
     def get_parameters(self, shape):
         r"""
-        Abstract method that gets the parameters.
+        Method that makes sure that the parameter passed to the fit method is
+        the shape.
+
+        Parameter
+        ---------
+        shape: PointCloud
+            The current shape.
         """
         return shape
 
@@ -231,6 +237,15 @@ class SemiParametricRegressor(Regressor):
         return self.transform.target, self.transform.as_vector()
 
     def get_parameters(self, shape):
+        r"""
+        Method that makes sure that the parameter passed to the fit method is
+        the model parameters.
+
+        Parameter
+        ---------
+        shape: PointCloud
+            The current shape.
+        """
         self.transform.set_target(shape)
         return self.transform.as_vector()
 
