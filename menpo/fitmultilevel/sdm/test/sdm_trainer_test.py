@@ -1,19 +1,20 @@
 from mock import patch
-import numpy as np
-from numpy.testing import assert_allclose
 from nose.tools import raises
 from StringIO import StringIO
-
+import numpy as np
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
 from menpo.transform.modeldriven import OrthoMDTransform
 from menpo.transform.homogeneous import AlignmentSimilarity
 from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 from menpo.fit.regression.regressionfunctions import mlr, mlr_svd
-from menpo.fit.regression.parametricfeatures import weights, warped_image
+from menpo.fit.regression.parametricfeatures import weights
 from menpo.transform import PiecewiseAffine
 from menpo.fitmultilevel.aam import AAMBuilder
+from menpo.fitmultilevel.clm import CLMBuilder
+from menpo.model.modelinstance import OrthoPDM
 
 # load images
 filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']
@@ -25,7 +26,9 @@ for i in range(4):
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
     training_images.append(im)
-    training_images.append(im)
+
+# Seed the random number generator
+np.random.seed(seed=1000)
 
 # build sdms
 sdm1 = SDMTrainer(regression_type=mlr_svd,
@@ -66,6 +69,27 @@ sdm2 = SDAAMTrainer(aam,
                     global_transform=AlignmentSimilarity,
                     n_shape=25,
                     n_appearance=None).train(training_images, group='PTS')
+
+clm = CLMBuilder(classifier_type=linear_svm_lr,
+                 feature_type=[sparse_hog],
+                 normalization_diagonal=100,
+                 patch_shape=(5, 5),
+                 n_levels=1,
+                 downscale=1.1,
+                 scaled_shape_models=True,
+                 pyramid_on_features=True,
+                 max_shape_components=25,
+                 boundary=3,
+                 interpolator='scipy').build(training_images, group='PTS')
+
+sdm3 = SDCLMTrainer(clm,
+                    regression_type=mlr,
+                    noise_std=0.04,
+                    rotation=False,
+                    n_perturbations=1,
+                    pdm_transform=OrthoPDM,
+                    global_transform=AlignmentSimilarity,
+                    n_shape=None).train(training_images, group='PTS')
 
 
 @raises(ValueError)
@@ -147,10 +171,11 @@ def test_verbose_mock(mock_stdout):
 def test_str_mock(mock_stdout):
     print sdm1
     print sdm2
+    print sdm3
     
     
 def test_sdm_1():
-    assert (sdm1._n_training_images == 8)
+    assert (sdm1._n_training_images == 4)
     assert (sdm1.n_levels == 2)
     assert (sdm1.downscale == 1.3)
     assert (sdm1.feature_type[0] is None)
@@ -164,7 +189,7 @@ def test_sdm_1():
 
 
 def test_sdm_2():
-    assert (sdm2._n_training_images == 8)
+    assert (sdm2._n_training_images == 4)
     assert (sdm2.n_levels == 3)
     assert (sdm2.downscale == 1.2)
     assert (sdm2.interpolator == 'scipy')
@@ -175,3 +200,14 @@ def test_sdm_2():
     assert (sdm2._fitters[0].regressor.__name__ ==
             sdm2._fitters[1].regressor.__name__ ==
             sdm2._fitters[2].regressor.__name__ == 'mlr_fitting')
+
+
+def test_sdm_3():
+    assert (sdm3._n_training_images == 4)
+    assert (sdm3.n_levels == 1)
+    assert (sdm3.downscale == 1.1)
+    assert (sdm3.interpolator == 'scipy')
+    assert (sdm3.algorithm == 'SD-CLM-Semi-Parametric')
+    assert sdm3.pyramid_on_features
+    assert (sdm3._fitters[0].algorithm == 'Semi-Parametric')
+    assert (sdm3._fitters[0].regressor.__name__ == 'mlr_fitting')
