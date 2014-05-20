@@ -38,7 +38,7 @@ class SDFitter(MultilevelFitter):
 
             Default: 50
         gt_shape: PointCloud
-            The groundtruth shape of the image.
+            The ground truth shape of the image.
 
             Default: None
         error_type: 'me_norm', 'me' or 'rmse', optional.

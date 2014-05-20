@@ -88,12 +88,12 @@ class RegressorTrainer(object):
         delta_ps = []
         for j, (i, s, p_shape) in enumerate(zip(images, gt_shapes,
                                                 perturbed_shapes)):
-            for ps in p_shape:
-                features.append(self.features(i, ps))
-                delta_ps.append(self.delta_ps(s, ps))
             if verbose:
                 print_dynamic('- Generating regression data - {}'.format(
                     progress_bar_str((j + 1.) / n_images, show_bar=False)))
+            for ps in p_shape:
+                features.append(self.features(i, ps))
+                delta_ps.append(self.delta_ps(s, ps))
         return np.asarray(features), np.asarray(delta_ps)
 
     @abc.abstractmethod
@@ -177,7 +177,7 @@ class RegressorTrainer(object):
 
          # perform regression
         if verbose:
-            print_dynamic('- Performing regression')
+            print_dynamic('- Performing regression...')
         regressor = regression(features, delta_ps, self.regression_type,
                                **kwargs)
 
