@@ -30,8 +30,8 @@ def compute_rms_point_error(test_pts, template_affine, M):
 
 def setup_conditions(interpolator):
     target_transform = Affine.identity(2).from_vector(target_params)
-    image_warped = image.warp_to(template_mask, target_transform,
-                                 interpolator=interpolator)
+    image_warped = image.warp_to_mask(template_mask, target_transform,
+                                      interpolator=interpolator)
     return image, image_warped, initial_params
 
 

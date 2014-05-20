@@ -163,8 +163,8 @@ class Residual(object):
             # Warp gradient for forward additive, if we've been given a
             # transform
             template, transform, interpolator = forward
-            gradient = gradient.warp_to(template.mask, transform,
-                                        interpolator=interpolator)
+            gradient = gradient.warp_to_mask(template.mask, transform,
+                                             interpolator=interpolator)
         else:
             # Calculate the gradient over the image and remove one pixels at
             # the borders of the image mask

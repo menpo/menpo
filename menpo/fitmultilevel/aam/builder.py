@@ -344,8 +344,8 @@ class AAMBuilder(DeformableModelBuilder):
                         level_str,
                         progress_bar_str(float(c + 1) / len(feature_images),
                                          show_bar=False)))
-                warped_images.append(i.warp_to(reference_frame.mask, t,
-                                               interpolator=self.interpolator))
+                warped_images.append(i.warp_to_mask(
+                    reference_frame.mask, t, interpolator=self.interpolator))
 
             # attach reference_frame to images' source shape
             for i in warped_images:
@@ -918,7 +918,7 @@ class AAM(object):
         transform = self.transform(
             reference_frame.landmarks['source'].lms, landmarks)
 
-        return appearance_instance.warp_to(
+        return appearance_instance.warp_to_mask(
             reference_frame.mask, transform, self.interpolator)
 
     def _build_reference_frame(self, reference_shape, landmarks):

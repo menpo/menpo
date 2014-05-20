@@ -476,12 +476,12 @@ class ParametricFittingResult(SemiParametricFittingResult):
         transform = self.fitter.transform
         interpolator = self.fitter.interpolator
         if as_pixels:
-            return [self.image.warp_to(mask, transform.from_vector(p),
-                                       interpolator=interpolator).pixels
+            return [self.image.warp_to_mask(mask, transform.from_vector(p),
+                                            interpolator=interpolator).pixels
                     for p in self.parameters]
         else:
-            return [self.image.warp_to(mask, transform.from_vector(p),
-                                       interpolator=interpolator)
+            return [self.image.warp_to_mask(mask, transform.from_vector(p),
+                                            interpolator=interpolator)
                     for p in self.parameters]
 
     def appearance_reconstructions(self, as_pixels=False):

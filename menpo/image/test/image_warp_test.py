@@ -24,7 +24,7 @@ multi_expected = rgb_image.crop([50, 50],
 
 def test_scipy_warp_gray():
     target_transform = Affine.identity(2).from_vector(initial_params)
-    warped_im = gray_image.warp_to(template_mask, target_transform)
+    warped_im = gray_image.warp_to_mask(template_mask, target_transform)
 
     assert(warped_im.shape == gray_template.shape)
     assert_allclose(warped_im.pixels, gray_template.pixels)
@@ -32,7 +32,7 @@ def test_scipy_warp_gray():
 
 def test_scipy_warp_multi():
     target_transform = Affine.identity(2).from_vector(initial_params)
-    warped_im = rgb_image.warp_to(template_mask, target_transform)
+    warped_im = rgb_image.warp_to_mask(template_mask, target_transform)
 
     assert(warped_im.shape == rgb_template.shape)
     assert_allclose(warped_im.pixels, rgb_template.pixels)

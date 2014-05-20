@@ -20,8 +20,8 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      interpolator=self.interpolator)
 
             # Compute appearance
             weights = self.appearance_model.project(IWxp)
@@ -79,8 +79,8 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      interpolator=self.interpolator)
 
             # Compute template by projection
             weights = self.appearance_model.project(IWxp)
@@ -132,8 +132,8 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      interpolator=self.interpolator)
 
             # Compute appearance
             weights = self.appearance_model.project(IWxp)

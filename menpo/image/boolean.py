@@ -40,8 +40,11 @@ class BooleanImage(Image):
                 raise Warning('The copy flag was NOT honoured. '
                               'A copy HAS been made. Please use np.bool data'
                               'to avoid this.')
+            # no need to copy in super now at least...
+            copy = False
             mask_data = np.require(mask_data, dtype=np.bool,
                                    requirements=['C'])
+
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
@@ -317,17 +320,17 @@ class BooleanImage(Image):
         return self.invert().bounds_true(
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
-    def warp_to(self, template_mask, transform, warp_landmarks=False,
-                interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+                     interpolator='scipy', **kwargs):
         r"""
         Warps this BooleanImage into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`menpo.image.boolean.BooleanImage`
+        template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
-        transform : :class:`menpo.transform.base.Transform`
+        transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
@@ -336,18 +339,20 @@ class BooleanImage(Image):
             as self, but with each landmark updated to the warped position.
 
             Default: `False`
-        interpolator : 'scipy' or 'c', optional
-            The interpolator that should be used to perform the warp.
+        interpolator : 'scipy', optional
+            The interpolator that should be used to perform the warp. This
+            is a stub for future interpolation options.
 
             Default: 'scipy'
         kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
+            Passed through to the interpolator. See :map:`interpolation`
             for details.
 
         Returns
         -------
         warped_image : type(self)
             A copy of this image, warped.
+
         """
         # enforce the order as 0, for this boolean data, then call super
         manually_set_order = kwargs.get('order', 0)
@@ -356,9 +361,9 @@ class BooleanImage(Image):
                 "The order of the interpolation on a boolean image has to be "
                 "0 (attempted to set {})".format(manually_set_order))
         kwargs['order'] = 0
-        return Image.warp_to(self, template_mask, transform,
-                             warp_landmarks=warp_landmarks,
-                             interpolator=interpolator, **kwargs)
+        return Image.warp_to_mask(self, template_mask, transform,
+                                  warp_landmarks=warp_landmarks,
+                                  interpolator=interpolator, **kwargs)
 
     def _build_warped_image(self, template_mask, sampled_pixel_values,
                             **kwargs):

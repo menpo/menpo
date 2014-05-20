@@ -555,8 +555,8 @@ class ParametricRegressorTrainer(RegressorTrainer):
             The current shape.
         """
         self.transform.set_target(shape)
-        warped_image = image.warp_to(self.template.mask, self.transform,
-                                     interpolator=self.interpolator)
+        warped_image = image.warp_to_mask(self.template.mask, self.transform,
+                                          interpolator=self.interpolator)
         return np.hstack(
             (self.regression_features(self.appearance_model,
                                       warped_image), 1))

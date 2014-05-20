@@ -770,20 +770,19 @@ class Image(Vectorizable, Landmarkable, Viewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def warp_to(self, template_mask, transform, warp_landmarks=False,
-                interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+                     interpolator='scipy', **kwargs):
         r"""
         Return a copy of this image warped into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`menpo.image.boolean.BooleanImage`
-            Defines the shape of the result, and what pixels should be
-            sampled.
-        transform : :class:`menpo.transform.base.Transform`
-            Transform **from the template space back to this image**.
-            Defines, for each True pixel location on the template, which pixel
-            location should be sampled from on this image.
+        template_mask : :map:`BooleanImage`
+            True pixels will be sampled at their indicies in the template_mask.
+        transform : :map:`Transform`
+            Transform **from the template_mask space back to this image**.
+            Defines, for each True pixel location on the template_mask, which
+            pixel location should be sampled from on this image.
         warp_landmarks : bool, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
@@ -809,7 +808,6 @@ class Image(Vectorizable, Landmarkable, Viewable):
         else:
             raise ValueError("Don't understand interpolator '{}': needs to "
                              "be 'scipy'".format(interpolator))
-
         if self.n_dims != transform.n_dims:
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
@@ -817,8 +815,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         template_points = template_mask.true_indices
         points_to_sample = transform.apply(template_points)
-        # we want to sample each channel in turn, returning a vector of sampled
-        # pixels. Store those in a (n_pixels, n_channels) array.
+        # we want to sample each channel in turn, returning a vector of
+        # sampled pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
                                              **kwargs)
         # set any nan values to 0

@@ -414,17 +414,17 @@ class MaskedImage(Image):
         self.crop_inplace(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
-    def warp_to(self, template_mask, transform, warp_landmarks=False,
-                warp_mask=False, interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+                     warp_mask=False, interpolator='scipy', **kwargs):
         r"""
         Warps this image into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`menpo.image.boolean.BooleanImage`
+        template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
-        transform : :class:`menpo.transform.base.Transform`
+        transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
@@ -461,10 +461,12 @@ class MaskedImage(Image):
         warped_image : type(self)
             A copy of this image, warped.
         """
-        warped_image = Image.warp_to(self, template_mask, transform,
-                                     warp_landmarks=warp_landmarks,
-                                     interpolator=interpolator,
-                                     **kwargs)
+        # call the super variant and get ourselves a MaskedImage back
+        # with a blank mask
+        warped_image = Image.warp_to_mask(self, template_mask, transform,
+                                          warp_landmarks=warp_landmarks,
+                                          interpolator=interpolator,
+                                          **kwargs)
         # note that _build_warped_image for MaskedImage classes attaches
         # the template mask by default. If the user doesn't want to warp the
         # mask, we are done. If they do want to warp the mask, we warp the
@@ -472,10 +474,10 @@ class MaskedImage(Image):
         # TODO an optimisation could be added here for the case where mask
         # is all true/all false.
         if warp_mask:
-            warped_mask = self.mask.warp_to(template_mask, transform,
-                                            warp_landmarks=warp_landmarks,
-                                            interpolator=interpolator,
-                                            **kwargs)
+            warped_mask = self.mask.warp_to_mask(template_mask, transform,
+                                                 warp_landmarks=warp_landmarks,
+                                                 interpolator=interpolator,
+                                                 **kwargs)
             warped_image.mask = warped_mask
         return warped_image
 
