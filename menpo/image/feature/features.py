@@ -20,8 +20,8 @@ def gradient(image_data):
     gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
         The gradient over each axis over each channel. Therefore, the
         last axis of the gradient of a 2D, single channel image, will have
-        length ``2``. The last axis of the gradient of a 2D, 3-channel image,
-        will have length ``6``, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
+        length `2`. The last axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
         Bd_x, Bd_y].
     """
     grad_per_dim_per_channel = [np.gradient(g) for g in
@@ -42,7 +42,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
         window_step_unit='pixels', padding=True, verbose=False):
     r"""
     Computes a 2-dimensional HOG features image with k number of channels, of
-    size ``(M, N, C)`` and data type ``np.float``.
+    size `(M, N, C)` and data type `np.float`.
 
     Parameters
     ----------

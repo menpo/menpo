@@ -1,6 +1,9 @@
 import numpy as np
+from nose.tools import raises
 from numpy.testing import assert_allclose
-from menpo.shape import TriMesh
+from menpo.image import Image
+from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh
+from menpo.testing import is_same_array
 
 
 def test_trimesh_creation():
@@ -11,6 +14,105 @@ def test_trimesh_creation():
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
     TriMesh(points, trilist)
+
+
+def test_trimesh_creation_copy_true():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    tm = TriMesh(points, trilist)
+    assert (not is_same_array(tm.points, points))
+    assert (not is_same_array(tm.trilist, trilist))
+
+
+def test_trimesh_creation_copy_false():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    tm = TriMesh(points, trilist, copy=False)
+    assert (is_same_array(tm.points, points))
+    assert (is_same_array(tm.trilist, trilist))
+
+
+def test_texturedtrimesh_creation_copy_false():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    pixels = np.ones([10, 10])
+    tcoords = np.ones([4, 2])
+    texture = Image(pixels, copy=False)
+    ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                          copy=False)
+    assert (is_same_array(ttm.points, points))
+    assert (is_same_array(ttm.trilist, trilist))
+    assert (is_same_array(ttm.tcoords.points, tcoords))
+    assert (is_same_array(ttm.texture.pixels, pixels))
+
+
+def test_texturedtrimesh_creation_copy_true():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    pixels = np.ones([10, 10])
+    tcoords = np.ones([4, 2])
+    texture = Image(pixels, copy=False)
+    ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,
+                          copy=True)
+    assert (not is_same_array(ttm.points, points))
+    assert (not is_same_array(ttm.trilist, trilist))
+    assert (not is_same_array(ttm.tcoords.points, tcoords))
+    assert (not is_same_array(ttm.texture.pixels, pixels))
+
+
+def test_colouredtrimesh_creation_copy_false():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    colours = np.ones([4, 13])
+    ttm = ColouredTriMesh(points, trilist, colours=colours, copy=False)
+    assert (is_same_array(ttm.points, points))
+    assert (is_same_array(ttm.trilist, trilist))
+    assert (is_same_array(ttm.colours, colours))
+
+
+def test_colouredtrimesh_creation_copy_true():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]])
+    colours = np.ones([4, 13])
+    ttm = ColouredTriMesh(points, trilist, colours=colours, copy=True)
+    assert (not is_same_array(ttm.points, points))
+    assert (not is_same_array(ttm.trilist, trilist))
+    assert (not is_same_array(ttm.colours, colours))
+
+
+@raises(Warning)
+def test_trimesh_creation_copy_warning():
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0]])
+    trilist = np.array([[0, 1, 3],
+                        [1, 2, 3]], order='F')
+    TriMesh(points, trilist, copy=False)
 
 
 def test_trimesh_n_dims():

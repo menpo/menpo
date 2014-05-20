@@ -2,19 +2,19 @@ import abc
 import copy
 import numpy as np
 
+from menpo.base import DX, DP
 from .base import Homogeneous, HomogFamilyAlignment
 
 
-class Affine(Homogeneous):
-    r"""
-    The base class for all n-dimensional affine transformations. Provides
+class Affine(Homogeneous, DP, DX):
+    r"""Base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
     and to chain this transform with other affine transformations.
 
     Parameters
     ----------
-    h_matrix : (n_dims + 1, n_dims + 1) ndarray
+    h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
         The homogeneous matrix of the affine transformation.
     """
     def __init__(self, h_matrix):
@@ -55,34 +55,31 @@ class Affine(Homogeneous):
 
     @property
     def linear_component(self):
-        r"""
-        Returns just the linear transform component of this affine
-        transform.
+        r"""The linear component of this affine transform.
 
-        :type: (D, D) ndarray
+        :type: ``(n_dims, n_dims)`` `ndarray`
         """
         return self.h_matrix[:-1, :-1]
 
     @property
     def translation_component(self):
-        r"""
-        Returns just the translation component.
+        r"""The translation component of this affine transform.
 
-        :type: (D,) ndarray
+        :type: ``(n_dims,)`` `ndarray`
         """
         return self.h_matrix[:-1, -1]
 
     def decompose(self):
-        r"""
-        Uses an SVD to decompose this transform into discrete Affine
-        Transforms.
+        r"""Decompose this transform into discrete Affine Transforms.
+
+        Useful for understanding the effect of a complex composite transform.
 
         Returns
         -------
-        transforms : list of :map:`DiscreteAffine` that
-            Equivalent to this affine transform, such that:
+        transforms : list of :map:`DiscreteAffine`
+            Equivalent to this affine transform, such that::
 
-            ``reduce(lambda x,y: x.chain(y), self.decompose()) == self``
+                reduce(lambda x,y: x.chain(y), self.decompose()) == self
         """
         from .rotation import Rotation
         from .translation import Translation
@@ -131,7 +128,7 @@ class Affine(Homogeneous):
     @property
     def n_parameters(self):
         r"""
-        ``n_dims * (n_dims + 1)`` parameters - every element of the matrix bar
+        `n_dims * (n_dims + 1)` parameters - every element of the matrix bar
         the homogeneous part.
 
         :type: int
@@ -152,11 +149,11 @@ class Affine(Homogeneous):
         return self.n_dims * (self.n_dims + 1)
 
     def as_vector(self):
-        r"""
-        Return the parameters of the transform as a 1D array. These parameters
-        are parametrised as deltas from the identity warp. This does not
-        include the homogeneous part of the warp. Note that it flattens using
-        Fortran ordering, to stay consistent with Matlab.
+        r"""Return the parameters of the transform as a 1D array.
+
+        These parameters are parametrised as deltas from the identity warp.
+        This does not include the homogeneous part of the warp. Note that it
+        flattens using Fortran ordering, to stay consistent with Matlab.
 
         **2D**
 
@@ -167,16 +164,16 @@ class Affine(Homogeneous):
         p2        Affine parameter
         p3        Affine parameter
         p4        Affine parameter
-        p5        Translation in ``x``
-        p6        Translation in ``y``
+        p5        Translation in `x`
+        p6        Translation in `y`
         ========= ===========================================
 
         3D and higher transformations follow a similar format to the 2D case.
 
         Returns
         -------
-        params : (P,) ndarray
-            The values that paramaterise the transform.
+        params : ``(n_parameters,)`` `ndarray`
+            The values that parametrise the transform.
         """
         params = self.h_matrix - np.eye(self.n_dims + 1)
         return params[:self.n_dims, :].flatten(order='F')
@@ -205,10 +202,9 @@ class Affine(Homogeneous):
     def _build_pseudoinverse(self):
         return Affine(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
-        r"""
-        Computes the Jacobian of the transform w.r.t the parameters. This is
-        constant for affine transforms.
+    def d_dp(self, points):
+        r"""The first order derivative of this Affine transform wrt parameter
+        changes evaluated at points.
 
         The Jacobian generated (for 2D) is of the form::
 
@@ -223,14 +219,15 @@ class Affine(Homogeneous):
 
         Parameters
         ----------
-        points : (N, D) ndarray
+        points : (n_points, n_dims) ndarray
             The set of points to calculate the jacobian for.
+
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
+        (n_points, n_params, n_dims) ndarray
+            The jacobian wrt parametrization
+
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
@@ -260,10 +257,10 @@ class Affine(Homogeneous):
         jac[:, full_mask] = 1
         return jac
 
-    def jacobian_points(self, points):
+    def d_dx(self, points):
         r"""
-        Computes the Jacobian of the transform wrt the points to which
-        the transform is applied to. This is constant for affine transforms.
+        The first order derivative of this Affine transform wrt spatial changes
+        evaluated at points.
 
         The Jacobian for a given point (for 2D) is of the form::
 
@@ -276,17 +273,32 @@ class Affine(Homogeneous):
             W(x;p) = [1 + a   -b      tx] [x]
                      [b       1 + a   ty] [y]
                                           [1]
+        Hence it is simply the linear component of the transform.
+
+        Parameters
+        ----------
+
+        points: ndarray shape (n_points, n_dims)
+            The spatial points at which the derivative should be evaluated.
 
         Returns
         -------
-        dW/dx: dW/dx: (N, D, D) ndarray
-            The Jacobian of the transform wrt the points to which the
-            transform is applied to.
+
+        d_dx: (1, n_dims, n_dims) ndarray
+            The jacobian wrt spatial changes.
+
+            d_dx[0, j, k] is the scalar differential change that the
+            j'th dimension of the i'th point experiences due to a first order
+            change in the k'th dimension.
+
+            Note that because the jacobian is constant across space the first
+            axis is length 1 to allow for broadcasting.
+
         """
         return self.linear_component[None, ...]
 
 
-class AlignmentAffine(Affine, HomogFamilyAlignment):
+class AlignmentAffine(HomogFamilyAlignment, Affine):
     r"""
     Constructs an Affine by finding the optimal affine transform to align
     source to target.
@@ -366,7 +378,7 @@ class DiscreteAffine(object):
     A discrete Affine transform operation (such as a :meth:`Scale`,
     :class:`Translation` or :meth:`Rotation`). Has to be able to invertable.
     Make sure you inherit from :class:`DiscreteAffine` first,
-    for optimal ``decompose()`` behavior.
+    for optimal `decompose()` behavior.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -379,6 +391,6 @@ class DiscreteAffine(object):
         Returns
         -------
         transform : :class:`DiscreteAffine`
-            Deep copy of ``self``.
+            Deep copy of `self`.
         """
         return [copy.deepcopy(self)]

@@ -14,8 +14,7 @@ from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import Viewable, ImageViewer
-
-from .feature import ImageFeatures
+from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
 
@@ -51,51 +50,65 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     Images are n-dimensional homogeneous regular arrays of data. Each
     spatially distinct location in the array is referred to as a `pixel`.
-    At a pixel, ``k`` distinct pieces of information can be stored. Each
+    At a pixel, `k` distinct pieces of information can be stored. Each
     datum at a pixel is refereed to as being in a `channel`. All pixels in
     the image have the  same number of channels, and all channels have the
     same data-type (float).
 
-
     Parameters
     -----------
-    image_data: (M, N ..., Q, C) ndarray
+    image_data : (M, N ..., Q, C) ndarray
         Array representing the image pixels, with the last axis being
         channels.
+    copy : bool, optional
+        If False, the image_data will not be copied on assignment. Note that
+        this will miss out on additional checks. Further note that we still
+        demand that the array is C-contiguous - if it isn't, a copy will be
+        generated anyway.
+        In general this should only be used if you know what you are doing.
+
+        Default False
+
+    Raises
+    ------
+
+    Warning : If copy=False cannot be honored
+    ValueError : If the pixel array is malformed
+
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image_data):
+    def __init__(self, image_data, copy=True):
         Landmarkable.__init__(self)
-        image_data = np.array(image_data, copy=True, order='C')
-        # This is the degenerate case whereby we can just put the extra axis
-        # on ourselves
-        if image_data.ndim == 2:
-            image_data = image_data[..., None]
-        if image_data.ndim < 2:
-            raise ValueError("Pixel array has to be 2D (2D shape, implicitly "
-                             "1 channel) or 3D+ (2D+ shape, n_channels) "
-                             " - a {}D array "
-                             "was provided".format(image_data.ndim))
-        self.pixels = image_data
+        if not copy:
+            # Let's check we don't do a copy!
+            image_data_handle = image_data
+            self.pixels = np.require(image_data, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the data '
+                              'you pass is C-contiguous.')
+        else:
+            image_data = np.array(image_data, copy=True, order='C')
+            # Degenerate case whereby we can just put the extra axis
+            # on ourselves
+            if image_data.ndim == 2:
+                image_data = image_data[..., None]
+            if image_data.ndim < 2:
+                raise ValueError(
+                    "Pixel array has to be 2D (2D shape, implicitly "
+                    "1 channel) or 3D+ (2D+ shape, n_channels) "
+                    " - a {}D array "
+                    "was provided".format(image_data.ndim))
+            self.pixels = np.require(image_data, requirements=['C'])
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
 
     @classmethod
-    def _init_with_channel(cls, image_data_with_channel, **kwargs):
+    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
         r"""
-        Constructor that always requires the image has a
-        channel on the last axis. Only used by from_vector. By default,
-        just calls the constructor. Subclasses with constructors that don't
-        require channel axes need to overwrite this.
-        """
-        return cls(image_data_with_channel, **kwargs)
-
-    @classmethod
-    def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, **kwargs):
-        r"""
-        Returns a blank image
+        Returns a blank image.
 
         Parameters
         ----------
@@ -111,28 +124,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
             The value to fill all pixels with
 
             Default: 0
-        dtype: numpy datatype, optional
-            The datatype of the image.
+        dtype: numpy data type, optional
+            The data type of the image.
 
             Default: np.float
-        mask: (M, N) boolean ndarray or :class:`BooleanImage`
-            An optional mask that can be applied to the image. Has to have a
-             shape equal to that of the image.
-
-             Default: all True :class:`BooleanImage`
-
-        Notes
-        -----
-        Subclasses of `Image` need to overwrite this method and
-        explicitly call this superclass method:
-
-            super(SubClass, cls).blank(shape,**kwargs)
-
-        in order to appropriately propagate the SubClass type to cls.
 
         Returns
         -------
-        blank_image : :class:`Image`
+        blank_image : :map:`Image`
             A new image of the requested size.
         """
         # Ensure that the '+' operator means concatenate tuples
@@ -141,7 +140,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
             pixels = np.zeros(shape + (n_channels,), dtype=dtype)
         else:
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
-        return cls._init_with_channel(pixels, **kwargs)
+        # We know there is no need to copy...
+        return cls(pixels, copy=False)
 
     @property
     def n_dims(self):
@@ -156,7 +156,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_pixels(self):
         r"""
-        Total number of pixels in the image (``prod(shape)``)
+        Total number of pixels in the image (`prod(shape)`)
 
         :type: int
         """
@@ -165,8 +165,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
     @property
     def n_elements(self):
         r"""
-        Total number of data points in the image (``prod(shape) x
-        n_channels``)
+        Total number of data points in the image (`prod(shape) x
+        n_channels`)
 
         :type: int
         """
@@ -189,7 +189,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         This is the width according to image semantics, and is thus the size
         of the **second** dimension.
 
-        :type: int
+        :type: `int`
         """
         return self.pixels.shape[1]
 
@@ -209,7 +209,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def shape(self):
         r"""
         The shape of the image
-        (with ``n_channel`` values at each point).
+        (with `n_channel` values at each point).
 
         :type: tuple
         """
@@ -235,6 +235,36 @@ class Image(Vectorizable, Landmarkable, Viewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
+    @property
+    def indices(self):
+        r"""
+        Return the indices of all pixels in this image.
+
+        :type: (`n_dims`, `n_pixels`) ndarray
+
+        """
+        return np.indices(self.shape).reshape([self.n_dims, -1]).T
+
+    def copy(self):
+        r"""
+        Return a new image with copies of the pixels and landmarks of this
+        image.
+
+        This is an efficient copy method. If you need to copy all the state on
+        the object, consider deepcopy instead.
+
+        Returns
+        -------
+
+        image: :map:`Image`
+            A new image with the same pixels and landmarks as this one, just
+            copied.
+
+        """
+        new_image = Image(self.pixels)
+        new_image.landmarks = self.landmarks
+        return new_image
+
     def as_vector(self, keep_channels=False):
         r"""
         The vectorized form of this image.
@@ -246,11 +276,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
             ========== =================================
             Value      Return shape
             ========== =================================
-            ``False``  (``n_pixels``  x ``n_channels``,)
-            ``True``   (``n_pixels``, ``n_channels``)
+            `False`  (`n_pixels`  x `n_channels`,)
+            `True`   (`n_pixels`, `n_channels`)
             ========== =================================
 
-            Default: ``False``
+            Default: `False`
 
         Returns
         -------
@@ -263,6 +293,92 @@ class Image(Vectorizable, Landmarkable, Viewable):
         else:
             return self.pixels.flatten()
 
+    def from_vector(self, vector, n_channels=None, copy=True):
+        r"""
+        Takes a flattened vector and returns a new image formed by reshaping
+        the vector to the correct pixels and channels.
+
+        The `n_channels` argument is useful for when we want to add an extra
+        channel to an image but maintain the shape. For example, when
+        calculating the gradient.
+
+        Note that landmarks are transferred in the process.
+
+        Parameters
+        ----------
+        vector : (`n_parameters`,)
+            A flattened vector of all pixels and channels of an image.
+
+        n_channels : int, optional
+            If given, will assume that vector is the same shape as this image,
+            but with a possibly different number of channels
+
+            Default: Use the existing image channels
+
+        copy : bool, optional
+            If False the vector will not be copied in creating the new image.
+
+            Default: True
+
+        Returns
+        -------
+        image : :map:`Image`
+            New image of same shape as this image and the number of
+            specified channels.
+
+        Raises
+        ------
+
+        Warning : If the copy=False flag cannot be honored
+
+        """
+        # This is useful for when we want to add an extra channel to an image
+        # but maintain the shape. For example, when calculating the gradient
+        n_channels = self.n_channels if n_channels is None else n_channels
+        image_data = vector.reshape(self.shape + (n_channels,))
+        new_image = Image(image_data, copy=copy)
+        new_image.landmarks = self.landmarks
+        return new_image
+
+    def from_vector_inplace(self, vector, copy=True):
+        r"""
+        Takes a flattened vector and update this image by
+        reshaping the vector to the correct dimensions.
+
+        Parameters
+        ----------
+        vector : (`n_pixels`,) np.bool ndarray
+            A vector vector of all the pixels of a BooleanImage.
+
+        copy: bool, optional
+            If False, the vector will be set as the pixels. If True a copy of
+            the vector is taken.
+
+            Default: True
+
+        Raises
+        ------
+        Warning : If copy=False flag cannot be honored
+
+        Notes
+        -----
+        For BooleanImage's this is rebuilding a boolean image **itself**
+        from boolean values. The mask is in no way interpreted in performing
+        the operation, in contrast to MaskedImage, where only the masked
+        region is used in from_vector{_inplace}() and as_vector().
+        """
+        if copy:
+            vector = vector.copy()
+            self.pixels = np.require(vector.reshape(self.pixels.shape),
+                                     requirements=['C'])
+        else:
+            image_data_handle = vector.reshape(self.pixels.shape)
+            self.pixels = np.require(image_data_handle, requirements=['C'])
+            if self.pixels is not image_data_handle:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please ensure the vector '
+                              'you pass is C-contiguous.')
+
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""
         Histogram binning of the values of this image.
@@ -270,11 +386,11 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Parameters
         ----------
         keep_channels : bool, optional
-            If set to ``False``, it returns a single histogram for all the
-            channels of the image. If set to ``True``, it returns a list of
+            If set to `False`, it returns a single histogram for all the
+            channels of the image. If set to `True`, it returns a list of
             histograms, one for each channel.
 
-            Default: ``True``
+            Default: `True`
         bins : 'unique', positive int or sequence of scalars, optional
             If set equal to 'unique', the bins of the histograms are centered
             on the unique values of each channel. If set equal to a positive
@@ -332,26 +448,6 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def from_vector_inplace(self, vector):
-        r"""
-        Takes a flattened vector and update this image by
-        reshaping the vector to the correct dimensions.
-
-        Parameters
-        ----------
-        vector : (``n_pixels``,) np.bool ndarray
-            A vector vector of all the pixels of a BooleanImage.
-
-
-        Notes
-        -----
-        For BooleanImage's this is rebuilding a boolean image **itself**
-        from boolean values. The mask is in no way interpreted in performing
-        the operation, in contrast to MaskedImage, where only the masked
-        region is used in from_vector{_inplace}() and as_vector().
-        """
-        self.pixels = vector.reshape(self.pixels.shape)
-
     def _view(self, figure_id=None, new_figure=False, channels=None,
               **kwargs):
         r"""
@@ -407,6 +503,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         glyph = Image(glyph_image)
         # correct landmarks
         from menpo.transform import NonUniformScale
+
         image_shape = np.array(self.shape, dtype=np.double)
         glyph_shape = np.array(glyph.shape, dtype=np.double)
         nus = NonUniformScale(glyph_shape / image_shape)
@@ -414,8 +511,26 @@ class Image(Vectorizable, Landmarkable, Viewable):
         nus.apply_inplace(glyph.landmarks)
         return glyph
 
-    def crop(self, min_indices, max_indices,
-             constrain_to_boundary=True):
+    def gradient(self, **kwargs):
+        r"""
+        Returns an :map:`Image` which is the gradient of this one. In the case
+        of multiple channels, it returns the gradient over each axis over
+        each channel as a flat list.
+
+        Returns
+        -------
+        gradient : :map:`Image`
+            The gradient over each axis over each channel. Therefore, the
+            gradient of a 2D, single channel image, will have length `2`.
+            The length of a 2D, 3-channel image, will have length `6`.
+        """
+        grad_image_pixels = features.gradient(self.pixels)
+        grad_image = Image(grad_image_pixels, copy=False)
+        grad_image.landmarks = self.landmarks
+        return grad_image
+
+    def crop_inplace(self, min_indices, max_indices,
+                     constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -423,32 +538,32 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
-        cropped_image : :class:`type(self)`
-            This image, but cropped.
+        cropped_image : `type(self)`
+            This image, cropped.
 
         Raises
         ------
-        ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+        `ValueError`
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
-        ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+        `ImageBoundaryError`
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
 
         """
@@ -464,8 +579,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         min_bounded = self.constrain_points_to_bounds(min_indices)
         max_bounded = self.constrain_points_to_bounds(max_indices)
         if not constrain_to_boundary and not (
-                np.all(min_bounded == min_indices) or
-                np.all(max_bounded == max_indices)):
+                    np.all(min_bounded == min_indices) or
+                    np.all(max_bounded == max_indices)):
             # points have been constrained and the user didn't want this -
             raise ImageBoundaryError(min_indices, max_indices,
                                      min_bounded, max_bounded)
@@ -478,8 +593,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         lm_translation.apply_inplace(self.landmarks)
         return self
 
-    def cropped_copy(self, min_indices, max_indices,
-                     constrain_to_boundary=False):
+    def crop(self, min_indices, max_indices,
+             constrain_to_boundary=False):
         r"""
         Return a cropped copy of this image using the given minimum and
         maximum indices. Landmarks are correctly adjusted so they maintain
@@ -487,18 +602,18 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
         Parameters
         -----------
-        min_indices: (n_dims, ) ndarray
+        min_indices : (n_dims, ) ndarray
             The minimum index over each dimension
 
-        max_indices: (n_dims, ) ndarray
+        max_indices : (n_dims, ) ndarray
             The maximum index over each dimension
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
 
         Returns
         -------
@@ -509,103 +624,114 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Raises
         ------
         ValueError
-            min_indices and max_indices both have to be of length n_dims.
-            All max_indices must be greater than min_indices.
+            `min_indices` and `max_indices` both have to be of length `n_dims`.
+            All `max_indices` must be greater than `min_indices`.
 
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         cropped_image = deepcopy(self)
-        return cropped_image.crop(min_indices, max_indices,
-                                  constrain_to_boundary=constrain_to_boundary)
+        return cropped_image.crop_inplace(
+            min_indices, max_indices,
+            constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks(self, group=None, label='all', boundary=0,
-                          constrain_to_boundary=True):
+    def crop_to_landmarks_inplace(self, group=None, label='all', boundary=0,
+                                  constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
-        optional n_pixel boundary
+        optional `n_pixel` boundary
 
         Parameters
         ----------
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
+            Default: `None`
 
-        label: string, Optional
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
 
-        boundary: int, Optional
+        boundary : int, Optional
             An extra padding to be added all around the landmarks bounds.
 
-            Default: 0
+            Default: `0`
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+        constrain_to_boundary : boolean, optional
+            If `True` the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-            Default: True
+            Default: `True`
+
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
         min_indices, max_indices = pc.bounds(boundary=boundary)
-        self.crop(min_indices, max_indices,
-                  constrain_to_boundary=constrain_to_boundary)
+        return self.crop_inplace(min_indices, max_indices,
+                                 constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_proportion(self, boundary_proportion, group=None,
-                                     label='all', minimum=True,
-                                     constrain_to_boundary=True):
+    def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
+                                             group=None, label='all',
+                                             minimum=True,
+                                             constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with a
         border proportional to the landmark spread or range.
 
         Parameters
         ----------
-        boundary_proportion: float
+        boundary_proportion : float
             Additional padding to be added all around the landmarks
             bounds defined as a proportion of the landmarks' range. See
-            minimum for a definition of how the range is calculated.
+            the minimum parameter for a definition of how the range is
+            calculated.
         group : string, Optional
-            The key of the landmark set that should be used. If None,
+            The key of the landmark set that should be used. If `None`,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-
-        label: string, Optional
+            Default: `None`
+        label : string, Optional
             The label of of the landmark manager that you wish to use. If
             'all' all landmarks in the group are used.
 
             Default: 'all'
-
-        minimum: bool, Optional
-            If True the specified proportion is relative to the minimum
-            value of the landmarks' per-dimension range; if False wrt the
+        minimum : bool, Optional
+            If `True` the specified proportion is relative to the minimum
+            value of the landmarks' per-dimension range; if `False` w.r.t. the
             maximum value of the landmarks' per-dimension range.
 
-            Default: True
+            Default: `True`
+        constrain_to_boundary : boolean, optional
+            If `True`, the crop will be snapped to not go beyond this images
+            boundary. If `False`, an :map:`ImageBoundaryError` will be raised if
+            an attempt is made to go beyond the edge of the image.
 
-        constrain_to_boundary: boolean, optional
-            If True the crop will be snapped to not go beyond this images
-            boundary. If False, an ImageBoundaryError will be raised if an
-            attempt is made to go beyond the edge of the image.
+            Default: `True`
 
-            Default: True
+        Returns
+        -------
+        image : :map:`Image`
+            This image, cropped to it's landmarks with a border proportional to
+            the landmark spread or range.
 
         Raises
         ------
         ImageBoundaryError
-            Raised if constrain_to_boundary is False, and an attempt is made
+            Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label].lms
@@ -613,8 +739,9 @@ class Image(Vectorizable, Landmarkable, Viewable):
             boundary = boundary_proportion * np.min(pc.range())
         else:
             boundary = boundary_proportion * np.max(pc.range())
-        self.crop_to_landmarks(group=group, label=label, boundary=boundary,
-                               constrain_to_boundary=constrain_to_boundary)
+        return self.crop_to_landmarks_inplace(
+            group=group, label=label, boundary=boundary,
+            constrain_to_boundary=constrain_to_boundary)
 
     def constrain_points_to_bounds(self, points):
         r"""
@@ -658,10 +785,10 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         interpolator : 'scipy', optional
             The interpolator that should be used to perform the warp.
 
@@ -721,7 +848,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""
         Return a copy of this image, rescaled by a given factor.
-        All image information (landmarks) are rescaled appropriately.
+        Landmarks are rescaled appropriately.
 
         Parameters
         ----------
@@ -883,7 +1010,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, rescaled.
         """
         x, y = self.landmarks[group][label].lms.range()
-        scale = diagonal_range / np.sqrt(x**2 + y**2)
+        scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
 
@@ -984,7 +1111,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                                    order=order, mode=mode, cval=cval)
 
         for j, image_data in enumerate(pyramid):
-            image = self.__class__(image_data)
+            image = self.__class__(image_data, copy=False)
 
             # rescale and reassign existent landmark
             image.landmarks = self.landmarks
@@ -1039,13 +1166,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
                 yield self
             else:
                 if sigma is None:
-                    sigma_aux = 2 * downscale**j / 6.0
+                    sigma_aux = 2 * downscale ** j / 6.0
                 else:
                     sigma_aux = sigma
 
                 image_data = _smooth(self.pixels, sigma=sigma_aux,
                                      mode=mode, cval=cval)
-                image = self.__class__(image_data)
+                image = self.__class__(image_data, copy=False)
 
                 # rescale and reassign existent landmark
                 image.landmarks = self.landmarks
@@ -1061,7 +1188,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         mode : {'average', 'luminosity', 'channel'}
             'luminosity' - Calculates the luminance using the CCIR 601 formula
 
-                ``Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'``
+                `Y' = 0.2989 R' + 0.5870 G' + 0.1140 B'`
 
             'average' - intensity is an equal average of all three channels
             'channel' - a specific channel is used
@@ -1111,14 +1238,14 @@ class Image(Vectorizable, Landmarkable, Viewable):
 
     def as_PILImage(self):
         r"""
-        Return a PIL copy of the image. Scales the image by ``255`` and
-        converts to ``np.uint8``. Image must only have 1 or 3 channels and
+        Return a PIL copy of the image. Scales the image by `255` and
+        converts to `np.uint8`. Image must only have 1 or 3 channels and
         be two dimensional.
 
         Returns
         -------
-        pil_image : ``PILImage``
-            PIL copy of image as ``np.uint8``
+        pil_image : `PILImage`
+            PIL copy of image as `np.uint8`
 
         Raises
         ------
@@ -1143,7 +1270,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         if self.landmarks.has_landmarks:
             for l_group in self.landmarks:
-                pc = l_group[1].lms.points
+                pc = self.landmarks[l_group].lms.points
                 if np.any(np.logical_or(self.shape - pc < 1, pc < 0)):
                     return True
         return False
@@ -1154,13 +1281,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
         """
         if self.has_landmarks_outside_bounds:
             for l_group in self.landmarks:
-                l = self.landmarks[l_group[0]]
+                l = self.landmarks[l_group]
                 for k in range(l.lms.points.shape[1]):
                     tmp = l.lms.points[:, k]
                     tmp[tmp < 0] = 0
                     tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
                     l.lms.points[:, k] = tmp
-                self.landmarks[l_group[0]] = l
+                self.landmarks[l_group] = l
 
 
 def _create_feature_glyph(features, vbs):
@@ -1195,3 +1322,4 @@ def _create_feature_glyph(features, vbs):
                       features[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
+

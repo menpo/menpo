@@ -6,13 +6,14 @@ from .affine import Affine
 
 class Similarity(Affine):
     r"""
-    Specialist version of an :class:`Affine` that is guaranteed to be
+    Specialist version of an :map:`Affine` that is guaranteed to be
     a Similarity transform.
 
     Parameters
     ----------
     h_matrix : (D + 1, D + 1) ndarray
         The homogeneous matrix of the similarity transform.
+
     """
 
     def __init__(self, h_matrix):
@@ -27,6 +28,7 @@ class Similarity(Affine):
         -------
         str : string
             String representation of transform.
+
         """
         header = 'Similarity decomposing into:'
         list_str = [t._transform_str() for t in self.decompose()]
@@ -52,12 +54,13 @@ class Similarity(Affine):
 
         Returns
         -------
-        4
+        int
 
         Raises
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         if self.n_dims == 2:
             return 4
@@ -72,19 +75,19 @@ class Similarity(Affine):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
-        are output in the order ``[a, b, tx, ty]``, given that
-        ``a = k cos(theta) - 1`` and ``b = k sin(theta)`` where ``k`` is a
-        uniform scale and ``theta`` is a clockwise rotation in radians.
+        are output in the order `[a, b, tx, ty]`, given that
+        `a = k cos(theta) - 1` and `b = k sin(theta)` where `k` is a
+        uniform scale and `theta` is a clockwise rotation in radians.
 
         **2D**
 
         ========= ===========================================
         parameter definition
         ========= ===========================================
-        a         ``a = k cos(theta) - 1``
-        b         ``b = k sin(theta)``
-        tx        Translation in ``x``
-        ty        Translation in ``y``
+        a         `a = k cos(theta) - 1`
+        b         `b = k sin(theta)`
+        tx        Translation in `x`
+        ty        Translation in `y`
         ========= ===========================================
 
         .. note::
@@ -100,6 +103,7 @@ class Similarity(Affine):
         ------
         DimensionalityError, NotImplementedError
             If the transform is not 2D
+
         """
         n_dims = self.n_dims
         if n_dims == 2:
@@ -135,6 +139,7 @@ class Similarity(Affine):
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         if p.shape[0] == 4:
             homog = np.eye(3)
@@ -154,7 +159,7 @@ class Similarity(Affine):
     def _build_pseudoinverse(self):
         return Similarity(np.linalg.inv(self.h_matrix))
 
-    def jacobian(self, points):
+    def d_dp(self, points):
         r"""
         Computes the Jacobian of the transform w.r.t the parameters.
 
@@ -170,19 +175,19 @@ class Similarity(Affine):
 
         Parameters
         ----------
-        points : (N, D) ndarray
-            The points to calculate the jacobian over
+        points : (n_points, n_dims) ndarray
+            The set of points to calculate the jacobian for.
 
         Returns
         -------
-        dW_dp : (N, P, D) ndarray
-            A (``n_points``, ``n_params``, ``n_dims``) array representing
-            the Jacobian of the transform.
+        (n_points, n_params, n_dims) ndarray
+            The jacobian wrt parametrization
 
         Raises
         ------
         DimensionalityError
-            ``points.n_dims != self.n_dims`` or transform is not 2D
+            `points.n_dims != self.n_dims` or transform is not 2D
+
         """
         n_points, points_n_dim = points.shape
         if points_n_dim != self.n_dims:
@@ -226,10 +231,10 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     Parameters
     ----------
 
-    source: :class:`menpo.shape.PointCloud`
+    source : :map:`PointCloud`
         The source pointcloud instance used in the alignment
 
-    target: :class:`menpo.shape.PointCloud`
+    target : :map:`PointCloud`
         The target pointcloud instance used in the alignment
 
     rotation: boolean, optional
@@ -248,6 +253,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     def _procrustes_alignment(source, target, rotation=True):
         r"""
         Returns the similarity transform that aligns the source to the target.
+
         """
         from .rotation import Rotation, optimal_rotation_matrix
         from .translation import Translation
@@ -299,6 +305,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         ------
         DimensionalityError, NotImplementedError
             Only 2D transforms are supported.
+
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()

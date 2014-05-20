@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
@@ -50,7 +49,7 @@ def imm_58_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        copy.deepcopy(landmark_group.lms),
+        landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(13)
@@ -113,7 +112,7 @@ def ibug_68_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        copy.deepcopy(landmark_group.lms),
+        landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(17)
@@ -168,7 +167,7 @@ def ibug_68_contour(landmark_group):
                              "points. However, the given landmark group only "
                              "has {1} points".format(group_label, n_points))
 
-    new_landmarks = copy.deepcopy(landmark_group.lms)
+    new_landmarks = landmark_group.lms.copy()
     ind = np.hstack((np.arange(17), np.arange(16, 21),
                      np.arange(21, 26), np.arange(1)))
     new_landmarks.points = new_landmarks.points[ind]
@@ -249,7 +248,7 @@ def ibug_68_trimesh(landmark_group):
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label,
-        TriMesh(copy.deepcopy(landmark_group.lms.points), tri_list),
+        TriMesh(landmark_group.lms.points, tri_list),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
@@ -298,7 +297,7 @@ def ibug_68_closed_mouth(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     # Ignore the 3 coincident points (the last 3 points)
-    new_landmarks = copy.deepcopy(landmark_group.lms)
+    new_landmarks = landmark_group.lms.copy()
     new_landmarks.points = new_landmarks.points[:-3]
     new_landmark_group = LandmarkGroup(
         landmark_group._target, group_label, new_landmarks,
@@ -362,7 +361,7 @@ def ibug_66_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     # Ignore the 2 inner mouth corners
-    new_landmarks = copy.deepcopy(landmark_group.lms)
+    new_landmarks = landmark_group.lms.copy()
     ind = np.hstack((np.arange(0, 60), np.arange(61, 64),
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
@@ -427,7 +426,7 @@ def ibug_51_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     # Ignore the chin region
-    new_landmarks = copy.deepcopy(landmark_group.lms)
+    new_landmarks = landmark_group.lms.copy()
     ind = np.arange(17, 68)
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
@@ -491,7 +490,7 @@ def ibug_49_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     # Ignore the chin region and the 2 inner mouth corners
-    new_landmarks = copy.deepcopy(landmark_group.lms)
+    new_landmarks = landmark_group.lms.copy()
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64),
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
@@ -523,7 +522,7 @@ def labeller(landmarkable, group_label, label_func):
     group_label: string
         The group label of the landmark group to apply semantic labels to.
     label_func: func
-        A labelling function taken from this module. ``func`` should take a
+        A labelling function taken from this module. `func` should take a
         :class:`menpo.landmark.base.LandmarkGroup` and
         return a new LandmarkGroup with semantic labels applied.
 

@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import numpy as np
 
 from .base import Image
@@ -17,33 +18,42 @@ class BooleanImage(Image):
         The binary mask data. Note that there is no channel axis - a 2D Mask
         Image is built from just a 2D numpy array of mask_data.
         Automatically coerced in to boolean values.
+
+    copy: bool, optional
+        If False, the image_data will not be copied on assignment. Note that
+        if the array you provide is not boolean, there **will still be copy**.
+        In general this should only be used if you know what you are doing.
+
+        Default: `False`
     """
 
-    def __init__(self, mask_data):
-        # Enforce boolean pixels, and add a channel dim
-        mask_data = np.asarray(mask_data[..., None], dtype=np.bool)
-        super(BooleanImage, self).__init__(mask_data)
-
-    @classmethod
-    def _init_with_channel(cls, image_data_with_channel):
-        r"""
-        Constructor that always requires the image has a
-        channel on the last axis. Only used by from_vector. By default,
-        just calls the constructor. Subclasses with constructors that don't
-        require channel axes need to overwrite this.
-        """
-        return cls(image_data_with_channel[..., 0])
+    def __init__(self, mask_data, copy=True):
+        # Add a channel dimension. We do this little reshape trick to add
+        # the axis because this maintains C-contiguous'ness
+        mask_data = mask_data.reshape(mask_data.shape + (1,))
+        # If we are trying not to copy, but the data we have isn't boolean,
+        # then unfortunately, we forced to copy anyway!
+        if mask_data.dtype != np.bool:
+            # Unfortunately, even if you were trying not to copy, if you don't
+            # have boolean data we have to copy!
+            if not copy:
+                raise Warning('The copy flag was NOT honoured. '
+                              'A copy HAS been made. Please use np.bool data'
+                              'to avoid this.')
+            mask_data = np.require(mask_data, dtype=np.bool,
+                                   requirements=['C'])
+        super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
     def blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
-        Returns a blank :class:`BooleanImage` of the requested shape
+        Returns a blank :map:`BooleanImage` of the requested shape
 
         Parameters
         ----------
         shape : tuple or list
             The shape of the image. Any floating point values are rounded
-            according to the ``round`` kwarg.
+            according to the `round` kwarg.
 
         fill : True or False, optional
             The mask value to be set everywhere
@@ -57,8 +67,9 @@ class BooleanImage(Image):
 
         Returns
         -------
-        blank_image : :class:`BooleanImage`
+        blank_image : :map:`BooleanImage`
             A blank mask of the requested size
+
         """
         if round not in ['ceil', 'round', 'floor']:
             raise ValueError('round must be either ceil, round or floor')
@@ -68,7 +79,7 @@ class BooleanImage(Image):
             mask = np.ones(shape, dtype=np.bool)
         else:
             mask = np.zeros(shape, dtype=np.bool)
-        return cls(mask)
+        return cls(mask, copy=False)
 
     @property
     def mask(self):
@@ -83,7 +94,7 @@ class BooleanImage(Image):
     @property
     def n_true(self):
         r"""
-        The number of ``True`` values in the mask
+        The number of `True` values in the mask
 
         :type: int
         """
@@ -92,16 +103,25 @@ class BooleanImage(Image):
     @property
     def n_false(self):
         r"""
-        The number of ``False`` values in the mask
+        The number of `False` values in the mask
 
         :type: int
         """
         return self.n_pixels - self.n_true
 
     @property
+    def all_true(self):
+        r"""
+        True iff every element of the mask is True.
+
+        :type: bool
+        """
+        return np.all(self.pixels)
+
+    @property
     def proportion_true(self):
         r"""
-        The proportion of the mask which is ``True``
+        The proportion of the mask which is `True`
 
         :type: double
         """
@@ -110,7 +130,7 @@ class BooleanImage(Image):
     @property
     def proportion_false(self):
         r"""
-        The proportion of the mask which is ``False``
+        The proportion of the mask which is `False`
 
         :type: double
         """
@@ -121,41 +141,53 @@ class BooleanImage(Image):
         r"""
         The indices of pixels that are true.
 
-        :type: (``n_dims``, ``n_true``) ndarray
+        :type: (`n_dims`, `n_true`) ndarray
         """
-        # Ignore the channel axis
-        return np.vstack(np.nonzero(self.pixels[..., 0])).T
+        if self.all_true:
+            return self.indices
+        else:
+            # Ignore the channel axis
+            return np.vstack(np.nonzero(self.pixels[..., 0])).T
 
     @property
     def false_indices(self):
         r"""
         The indices of pixels that are false.
 
-        :type: (``n_dims``, ``n_false``) ndarray
+        :type: (`n_dims`, `n_false`) ndarray
         """
         # Ignore the channel axis
         return np.vstack(np.nonzero(~self.pixels[..., 0])).T
 
-    @property
-    def all_indices(self):
-        r"""
-        Indices into all pixels of the mask, as consistent with
-        true_indices and false_indices
-
-        :type: (``n_dims``, ``n_pixels``) ndarray
-        """
-        return np.indices(self.shape).reshape([self.n_dims, -1]).T
-
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
-                'of which is True '.format(self._str_shape, self.n_dims,
-                                           self.proportion_true))
+                'of which is True'.format(self._str_shape, self.n_dims,
+                                          self.proportion_true))
 
-    def from_vector(self, flattened):
+    def copy(self):
         r"""
-        Takes a flattened vector and returns a new
-        :class:`BooleanImage` formed by
-        reshaping the vector to the correct dimensions. Note that this is
+        Return a new image with copies of the pixels and landmarks of this
+        image.
+
+        This is an efficient copy method. If you need to copy all the state on
+        the object, consider deepcopy instead.
+
+        Returns
+        -------
+
+        image: :map:`BooleanImage`
+            A new image with the same pixels and landmarks as this one,
+            just copied.
+
+        """
+        new_image = BooleanImage(self.pixels[..., 0])
+        new_image.landmarks = self.landmarks
+        return new_image
+
+    def from_vector(self, vector, copy=True):
+        r"""
+        Takes a flattened vector and returns a new :map:`BooleanImage` formed
+        by reshaping the vector to the correct dimensions. Note that this is
         rebuilding a boolean image **itself** from boolean values. The mask
         is in no way interpreted in performing the operation, in contrast to
         MaskedImage, where only the masked region is used in from_vector()
@@ -163,36 +195,49 @@ class BooleanImage(Image):
 
         Parameters
         ----------
-        flattened : (``n_pixels``,) np.bool ndarray
+        vector : (`n_pixels`,) np.bool ndarray
             A flattened vector of all the pixels of a BooleanImage.
+
+        copy : bool, optional
+            If false, no copy of the vector will be taken.
+
+            Default: True
 
         Returns
         -------
-        image : :class:`BooleanImage`
+        image : :map:`BooleanImage`
             New BooleanImage of same shape as this image
+
+        Raises
+        ------
+        Warning : If copy=False cannot be honored.
+
         """
-        mask = BooleanImage(flattened.reshape(self.shape))
+        mask = BooleanImage(vector.reshape(self.shape), copy=copy)
         mask.landmarks = self.landmarks
         return mask
 
-    def invert(self):
+    def invert_inplace(self):
         r"""
-        Inverts the current mask in place, setting all True values to False,
-        and all False values to True.
+        Inverts this Boolean Image inplace.
+
         """
         self.pixels = ~self.pixels
 
-    def inverted_copy(self):
+    def invert(self):
         r"""
         Returns a copy of this Boolean image, which is inverted.
 
         Returns
         -------
-        inverted_image: :class:`BooleanNSImage`
-            An inverted copy of this boolean image.
+
+        inverted : :map:`BooleanImage`
+            A copy of this boolean mask, where all True values are False and
+            all False values are True.
+
         """
-        inverse = deepcopy(self)
-        inverse.invert()
+        inverse = self.copy()
+        inverse.invert_inplace()
         return inverse
 
     def bounds_true(self, boundary=0, constrain_to_bounds=True):
@@ -269,7 +314,7 @@ class BooleanImage(Image):
             along each dimension. If constrain_to_bounds was True,
             is clipped to legal image bounds.
         """
-        return self.inverted_copy().bounds_true(
+        return self.invert().bounds_true(
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
     def warp_to(self, template_mask, transform, warp_landmarks=False,
@@ -287,10 +332,10 @@ class BooleanImage(Image):
             Defines, for each True pixel location on the template, which pixel
             location should be sampled from on this image.
         warp_landmarks : bool, optional
-            If ``True``, warped_image will have the same landmark dictionary
+            If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: ``False``
+            Default: `False`
         interpolator : 'scipy' or 'c', optional
             The interpolator that should be used to perform the warp.
 

@@ -20,18 +20,50 @@ class TexturedTriMesh(TriMesh, Rasterizable):
     ----------
     points : (N, D) ndarray
         The coordinates of the mesh.
-    trilist : (M, 3) ndarray
-        The triangle list for the mesh
     tcoords : (N, 2) ndarray
         The texture coordinates for the mesh.
     texture : :class:`menpo.image.base.Image`
         The texture for the mesh.
+    trilist : (M, 3) ndarray, optional
+        The triangle list for the mesh. If `None`, a Delaunay triangulation
+        will be performed.
+
+        Default: `None`
+    copy: bool, optional
+        If `False`, the points, trilist and texture will not be copied on
+        assignment.
+        In general this should only be used if you know what you are doing.
+
+        Default: `False`
     """
 
-    def __init__(self, points, trilist, tcoords, texture):
-        super(TexturedTriMesh, self).__init__(points, trilist)
-        self.tcoords = PointCloud(tcoords)
-        self.texture = copy.deepcopy(texture)
+    def __init__(self, points, tcoords, texture, trilist=None, copy=True):
+        super(TexturedTriMesh, self).__init__(points, trilist=trilist,
+                                              copy=copy)
+        self.tcoords = PointCloud(tcoords, copy=copy)
+
+        if not copy:
+            self.texture = texture
+        else:
+            self.texture = texture.copy()
+
+    def copy(self):
+        r"""
+        An efficient copy of this TexturedTriMesh.
+
+        Only landmarks and points will be transferred. For a full copy consider
+        using `deepcopy()`.
+
+        Returns
+        -------
+        texturedtrimesh: :map:`TexturedTriMesh`
+            A TexturedTriMesh with the same points, trilist, tcoords, texture
+            and landmarks as this one.
+        """
+        new_ttm = TexturedTriMesh(self.points, self.tcoords, self.texture,
+                                  trilist=self.trilist, copy=True)
+        new_ttm.landmarks = self.landmarks
+        return new_ttm
 
     def tcoords_pixel_scaled(self):
         r"""
@@ -92,9 +124,9 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         Parameters
         ----------
         textured : bool, optional
-            If ``True``, render the texture.
+            If `True`, render the texture.
 
-            Default: ``True``
+            Default: `True`
 
         Returns
         -------
@@ -104,7 +136,7 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         Raises
         ------
         DimensionalityError
-            If ``self.n_dims != 3``.
+            If `self.n_dims != 3`.
         """
         if textured:
             if self.n_dims == 3:

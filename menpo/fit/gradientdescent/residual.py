@@ -15,7 +15,7 @@ class Residual(object):
         pass
 
     @abc.abstractproperty
-    def jacobian(self):
+    def d_dp(self):
         pass
 
     @abc.abstractproperty
@@ -33,7 +33,7 @@ class SSD(Residual):
     def error_derivative(self):
         raise ValueError("Not implemented")
 
-    def jacobian(self):
+    def d_dp(self):
         raise ValueError("Not implemented")
 
     def hessian(self):
@@ -51,7 +51,7 @@ class Robust(Residual):
     def error_derivative(self):
         raise ValueError("Not implemented")
 
-    def jacobian(self):
+    def d_dp(self):
         raise ValueError("Not implemented")
 
     def hessian(self):

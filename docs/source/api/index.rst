@@ -4,11 +4,6 @@
   The Menpo API
 ###################
 
-This is the api!
-
-Packages
-========
-
 .. toctree::
    :maxdepth: 1
 
