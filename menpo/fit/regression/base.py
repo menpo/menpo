@@ -116,6 +116,12 @@ class NonParametricRegressor(Regressor):
             initial_shape.as_vector() + delta_shape)
         return fitted_shape, fitted_shape
 
+    def get_parameters(self, shape):
+        r"""
+        Abstract method that gets the parameters.
+        """
+        return shape
+
 
 class SemiParametricRegressor(Regressor):
     r"""
@@ -142,7 +148,7 @@ class SemiParametricRegressor(Regressor):
         """
         return "Semi-Parametric"
 
-    def _create_fitting_result(self, image, shape, gt_shape=None):
+    def _create_fitting_result(self, image, parameters, gt_shape=None):
         r"""
         Creates the fitting result object.
 
@@ -150,14 +156,14 @@ class SemiParametricRegressor(Regressor):
         ----------
         image: :class:`menpo.image.MaskedImage`
             The current image..
-        shape: :class:`menpo.shape.PointCloud`
-            The current shape.
+        parameters: numpy.ndarray
+            The current parameters vector.
         gt_shape: :class:`menpo.shape.PointCloud`, Optional
             The ground truth shape.
 
             Default: None
         """
-        self.transform.set_target(shape)
+        self.transform.from_vector_inplace(parameters)
         return SemiParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)
@@ -224,6 +230,10 @@ class SemiParametricRegressor(Regressor):
         self._update(delta_p)
         return self.transform.target, self.transform.as_vector()
 
+    def get_parameters(self, shape):
+        self.transform.set_target(shape)
+        return self.transform.as_vector()
+
 
 class ParametricRegressor(SemiParametricRegressor):
     r"""
@@ -251,7 +261,7 @@ class ParametricRegressor(SemiParametricRegressor):
         """
         return "Parametric"
 
-    def _create_fitting_result(self, image, shape, gt_shape=None):
+    def _create_fitting_result(self, image, parameters, gt_shape=None):
         r"""
         Creates the fitting result object.
 
@@ -259,14 +269,14 @@ class ParametricRegressor(SemiParametricRegressor):
         ----------
         image: :class:`menpo.image.MaskedImage`
             The current image..
-        shape: :class:`menpo.shape.PointCloud`
-            The current shape.
+        parameters: numpy.ndarray
+            The current parameters vector.
         gt_shape: :class:`menpo.shape.PointCloud`, Optional
             The ground truth shape.
 
             Default: None
         """
-        self.transform.set_target(shape)
+        self.transform.from_vector_inplace(parameters)
         return ParametricFittingResult(
             image, self, parameters=[self.transform.as_vector()],
             gt_shape=gt_shape)

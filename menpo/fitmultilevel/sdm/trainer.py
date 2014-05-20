@@ -267,17 +267,18 @@ class SDTrainer(object):
                 test_images = images[k]
                 test_gt_shapes = gt_shapes[k]
 
-                fittings = []
+                fitting_results = []
                 for (i, gt_s, level_s) in zip(test_images, test_gt_shapes,
                                               level_shapes):
-                    fitting_sublist = []
+                    fr_list = []
                     for ls in level_s:
-                        fitting = r.fit(i, ls)
-                        fitting.gt_shape = gt_s
-                        fitting_sublist.append(fitting)
+                        parameters = r.get_parameters(ls)
+                        fr = r.fit(i, parameters)
+                        fr.gt_shape = gt_s
+                        fr_list.append(fr)
                         count += 1
 
-                    fittings.append(fitting_sublist)
+                    fitting_results.append(fr_list)
                     if verbose:
                         print_dynamic('- Fitting shapes: {}'.format(
                             progress_bar_str((count + 1.) / total,
@@ -285,13 +286,13 @@ class SDTrainer(object):
 
                 level_shapes = [[Scale(self.downscale,
                                        n_dims=self.reference_shape.n_dims
-                                       ).apply(f.final_shape)
-                                 for f in fitting_sublist]
-                                for fitting_sublist in fittings]
+                                       ).apply(fr.final_shape)
+                                 for fr in fr_list]
+                                for fr_list in fitting_results]
 
-            mean_error = np.mean(np.array([f.final_error
-                                           for fitting_sublist in fittings
-                                           for f in fitting_sublist]))
+            mean_error = np.mean(np.array([fr.final_error
+                                           for fr_list in fitting_results
+                                           for fr in fr_list]))
             if verbose:
                 print_dynamic("- Fitting shapes: mean error "
                               "is {0:.6f}.\n".format(mean_error))
