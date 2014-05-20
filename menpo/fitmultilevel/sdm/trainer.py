@@ -256,7 +256,7 @@ class SDTrainer(object):
                                           **kwargs)
 
             if verbose:
-                print_dynamic('- Generating next level data')
+                print_dynamic('- Perturbing shapes...')
             level_shapes = trainer.perturb_shapes(gt_shapes[0])
 
             regressors.append(regressor)
@@ -290,6 +290,8 @@ class SDTrainer(object):
                                  for fr in fr_list]
                                 for fr_list in fitting_results]
 
+            if verbose:
+                print_dynamic('- Fitting shapes: computing mean error...')
             mean_error = np.mean(np.array([fr.final_error
                                            for fr_list in fitting_results
                                            for fr in fr_list]))
