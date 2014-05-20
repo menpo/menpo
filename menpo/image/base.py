@@ -105,6 +105,33 @@ class Image(Vectorizable, Landmarkable, Viewable):
         # add FeatureExtraction functionality
         self.features = ImageFeatures(self)
 
+    def as_masked(self, mask=None, copy=True):
+        r"""
+        Return a copy of this image with an attached mask behavior.
+
+        A custom mask may be provided, or None. See the :map:`MaskedImage`
+        constructor for details of how the kwargs will be handled.
+
+        Parameters
+        ----------
+        mask : `ndarray` with shape of ``self.shape`` or :map:`BooleanImage`
+            A mask to attach to the newly generated masked image.
+
+        copy : `bool`, optional
+            If False, the produced :map:`MaskedImage` will share pixels with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        masked_image : :map:`MaskedImage`
+            An image with the same pixels and landmarks as this one, but with
+            a mask.
+        """
+        from .masked import MaskedImage
+        img = MaskedImage(self.pixels, copy=copy, mask=mask)
+        img.landmarks = self.landmarks
+        return img
+
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
         r"""
@@ -919,11 +946,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             raise ValueError("Cannot set 'mode' kwarg on rescale - set to "
                              "'nearest' to avoid numerical errors")
         kwargs['mode'] = 'nearest'
-        # Note here we pass warp_mask to warp_to. In the case of
-        # Images that aren't MaskedImages this kwarg will
-        # harmlessly fall through so we are fine.
         return self.warp_to_mask(template_mask, inverse_transform,
-                                 warp_landmarks=True,
                                  interpolator=interpolator, **kwargs)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
@@ -1205,7 +1228,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         greyscale_image: :class:`MaskedImage`
             A copy of this image in greyscale.
         """
-        greyscale = deepcopy(self)
+        greyscale = self.copy()
         if mode == 'luminosity':
             if self.n_dims != 2:
                 raise ValueError("The 'luminosity' mode only works on 2D RGB"

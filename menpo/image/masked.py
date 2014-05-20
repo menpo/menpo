@@ -65,6 +65,29 @@ class MaskedImage(Image):
             # no mask provided - make the default.
             self.mask = BooleanImage.blank(self.shape, fill=True)
 
+    def as_unmasked(self, copy=True):
+        r"""
+        Return a copy of this image without the masking behavior.
+
+        By default the mask is simply discarded. In the future more options
+        may be possible.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If False, the produced :map:`Image` will share pixels with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        image : :map:`Image`
+            An image with the same pixels and landmarks as this one, but with
+            no mask.
+        """
+        img = Image(self.pixels, copy=copy)
+        img.landmarks = self.landmarks
+        return img
+
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
         r"""
@@ -414,8 +437,8 @@ class MaskedImage(Image):
         self.crop_inplace(min_indices, max_indices,
                   constrain_to_boundary=constrain_to_boundary)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     warp_mask=False, interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
+                     interpolator='scipy', **kwargs):
         r"""
         Warps this image into a different reference space.
 
@@ -424,41 +447,26 @@ class MaskedImage(Image):
         template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
+
         transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
-        warp_landmarks : bool, optional
+
+        warp_landmarks : `bool`, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: `False`
-        warp_mask : bool, optional
-            If `True`, sample the `image.mask` at all `template_image`
-            points, setting the returned image mask to the sampled value
-            **within the masked region of `template_image`**.
-
-            Default: `False`
-
-            .. note::
-
-                This is most commonly set `True` in combination with an all
-                True `template_mask`, as this is then a warp of the image
-                and it's full mask. If `template_mask`
-                has False mask values, only the True region of the mask
-                will be updated, which is rarely the desired behavior,
-                but is possible for completion.
-        interpolator : 'scipy', optional
+        interpolator : ``'scipy'``, optional
             The interpolator that should be used to perform the warp.
 
-            Default: 'scipy'
-        kwargs : dict
+        kwargs : `dict`
             Passed through to the interpolator. See `menpo.interpolation`
             for details.
 
         Returns
         -------
-        warped_image : type(self)
+        warped_image : ``type(self)``
             A copy of this image, warped.
         """
         # call the super variant and get ourselves a MaskedImage back
@@ -467,18 +475,11 @@ class MaskedImage(Image):
                                           warp_landmarks=warp_landmarks,
                                           interpolator=interpolator,
                                           **kwargs)
-        # note that _build_warped_image for MaskedImage classes attaches
-        # the template mask by default. If the user doesn't want to warp the
-        # mask, we are done. If they do want to warp the mask, we warp the
-        # mask separately and reattach.
-        # TODO an optimisation could be added here for the case where mask
-        # is all true/all false.
-        if warp_mask:
-            warped_mask = self.mask.warp_to_mask(template_mask, transform,
-                                                 warp_landmarks=warp_landmarks,
-                                                 interpolator=interpolator,
-                                                 **kwargs)
-            warped_image.mask = warped_mask
+        warped_mask = self.mask.warp_to_mask(template_mask, transform,
+                                             warp_landmarks=warp_landmarks,
+                                             interpolator=interpolator,
+                                             **kwargs)
+        warped_image.mask = warped_mask
         return warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
@@ -679,7 +680,6 @@ class MaskedImage(Image):
         return super(MaskedImage, self).rescale(scale,
                                                 interpolator=interpolator,
                                                 round=round,
-                                                warp_mask=True,
                                                 **kwargs)
 
     def build_mask_around_landmarks(self, patch_size, group=None,
@@ -787,16 +787,12 @@ class MaskedImage(Image):
 
         Parameters
         ----------
-        n_levels : int
+        n_levels : `int`
             Number of levels in the pyramid. When set to -1 the maximum
             number of levels will be build.
 
-            Default: 3
-
-        downscale : float, optional
+        downscale : `float`, optional
             Downscale factor.
-
-            Default: 2
 
         sigma : float, optional
             Sigma for gaussian filter. Default is `2 * downscale / 6.0` which

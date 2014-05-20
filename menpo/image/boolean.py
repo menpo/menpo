@@ -47,6 +47,10 @@ class BooleanImage(Image):
 
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
+    def as_masked(self, mask=None, copy=True):
+        raise NotImplementedError("as_masked cannot be invoked on a "
+                                  "BooleanImage.")
+
     @classmethod
     def blank(cls, shape, fill=True, round='ceil', **kwargs):
         r"""
@@ -377,5 +381,5 @@ class BooleanImage(Image):
                 warped_img.shape + (1,))
         else:
             # we have to fill out mask with the sampled mask..
-            warped_img.pixels[warped_img.true_indices] = sampled_pixel_values
+            warped_img.pixels[warped_img.mask] = sampled_pixel_values
         return warped_img
