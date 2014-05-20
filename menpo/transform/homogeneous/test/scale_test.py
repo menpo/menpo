@@ -86,6 +86,17 @@ def test_nonuniformscale2d_as_vector():
     assert_allclose(vec, scale)
 
 
+def test_scale_2d_pseudoinverse():
+    scale1 = 0.5
+    scale2 = 4.0
+    homo = np.array([[scale1,      0, 0],
+                     [     0, scale2, 0],
+                     [     0,      0, 1]])
+
+    tr = NonUniformScale([1/scale1, 1/scale2])
+    assert_almost_equal(tr.pseudoinverse.h_matrix, homo)
+
+
 def test_uniformscale3d_from_vector():
     scale = 2
     homo = np.array([[scale, 0, 0, 0],
@@ -130,6 +141,16 @@ def test_uniformscale_build_3d():
 @raises(ValueError)
 def test_uniformscale_build_4d_raise_dimensionalityerror():
     UniformScale(1, 4)
+
+
+def test_uniformscale_2d_pseudoinverse():
+    scale = 0.5
+    homo = np.array([[scale, 0, 0],
+                     [0, scale, 0],
+                     [0, 0, 1]])
+
+    tr = UniformScale(2, 2)
+    assert_almost_equal(tr.pseudoinverse.h_matrix, homo)
 
 
 def test_scale_build_2d_uniform_pass_dim():

@@ -26,7 +26,6 @@ class HomogFamilyAlignment(Alignment):
             A version of this transform with the same transform behavior but
             without the alignment logic.
         """
-        pass
 
     def copy(self):
         r"""
@@ -142,7 +141,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self._h_matrix
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""Updates the h_matrix, optionally performing sanity checks.
+        r"""Updates ``h_matrix``, optionally performing sanity checks.
 
         Parameters
         ----------
@@ -351,6 +350,7 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         self._set_h_matrix(np.dot(self.h_matrix, transform.h_matrix),
                            copy=False, skip_checks=True)
 
+    @property
     def has_true_inverse(self):
         return True
 

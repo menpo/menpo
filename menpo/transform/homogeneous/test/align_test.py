@@ -73,6 +73,28 @@ def test_align_2d_affine_set_h_matrix():
     assert_allclose(target.points, estimate.target.points)
 
 
+def test_align_2d_affine_as_non_alignment():
+    linear_component = np.array([[1, -6],
+                                 [-3, 2]])
+    translation_component = np.array([7, -8])
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    affine = Affine(h_matrix)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = affine.apply(source)
+    # estimate the transform from source and source
+    estimate = AlignmentAffine(source, source)
+    # and set the h_matrix
+    non_align = estimate.as_non_alignment()
+    # check the estimates is correct
+    assert_allclose(non_align.h_matrix, estimate.h_matrix)
+    assert(type(non_align) == Affine)
+
+
 # TODO check from_vector, from_vector_inplace works correctly
 
 

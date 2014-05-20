@@ -1,4 +1,5 @@
 import numpy as np
+from nose.tools import raises
 from numpy.testing import assert_allclose, assert_equal
 
 from menpo.transform import Affine
@@ -296,3 +297,21 @@ def test_affine_3d_n_parameters():
     homo = np.eye(4)
     t = Affine(homo)
     assert (t.n_parameters == 12)
+
+
+@raises(ValueError)
+def test_affine_non_square_h_matrix():
+    homo = np.random.rand(4, 6)
+    Affine(homo)
+
+
+@raises(ValueError)
+def test_affine_incorrect_bottom_row():
+    homo = np.random.rand(4, 4)
+    Affine(homo)
+
+
+@raises(ValueError)
+def test_affine_non_square_h_matrix():
+    homo = np.random.rand(4, 6)
+    Affine(homo)

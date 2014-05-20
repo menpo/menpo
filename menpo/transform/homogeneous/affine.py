@@ -51,7 +51,7 @@ class Affine(Homogeneous, DP, DX):
         """
         if not skip_checks:
             shape = value.shape
-            if len(shape) != 2 and shape[0] != shape[1]:
+            if len(shape) != 2 or shape[0] != shape[1]:
                 raise ValueError("You need to provide a square homogeneous "
                                  "matrix")
             if self.h_matrix is not None:
@@ -422,4 +422,4 @@ class DiscreteAffine(object):
         transform : :class:`DiscreteAffine`
             Deep copy of `self`.
         """
-        return [copy.deepcopy(self)]
+        return [self.copy()]
