@@ -250,8 +250,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # note that this overload of the basic _compose_before is just to
         # deal with the complexities of maintaining the correct class of
         # transform upon composition
-        from .affine import Affine
-        from .similarity import Similarity
         if isinstance(t, type(self)):
             # He is a subclass of me - I can swallow him.
             # What if I'm an Alignment though? Rules of composition state we
@@ -307,8 +305,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # note that this overload of the basic _compose_after is just to
         # deal with the complexities of maintaining the correct class of
         # transform upon composition
-        from .affine import Affine
-        from .similarity import Similarity
         if isinstance(t, type(self)):
             # He is a subclass of me - I can swallow him.
             # What if I'm an Alignment though? Rules of composition state we
@@ -357,3 +353,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def _build_pseudoinverse(self):
         return Homogeneous(np.linalg.inv(self.h_matrix), copy=False,
                            skip_checks=True)
+
+from .affine import Affine
+from .similarity import Similarity
