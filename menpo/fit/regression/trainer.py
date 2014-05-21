@@ -706,6 +706,8 @@ class SemiParametricClassifierBasedRegressorTrainer(
         self.classifiers = classifiers
         self.transform = transform
         self.update = 'additive'
+        # work out feature length per patch
+        self._feature_patch_length = patch_shape[0] * patch_shape[1]
 
     def features(self, image, shape):
         r"""
@@ -726,7 +728,7 @@ class SemiParametricClassifierBasedRegressorTrainer(
         features = np.zeros((shape.n_points, self._feature_patch_length))
         for j, (clf, patch) in enumerate(zip(self.classifiers, patches)):
             # compute response maps
-            features[j, ...] = clf(patch, copy=False).ravel
+            features[j, ...] = clf(patch.ravel())
 
         return np.hstack((features.ravel(), 1))
 
