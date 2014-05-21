@@ -62,16 +62,20 @@ class NonUniformScale(DiscreteAffine, Affine):
 
     Parameters
     ----------
-    scale : (D,) ndarray
+    scale : ``(n_dims,)`` `ndarray`
         A scale for each axis.
     """
 
     def __init__(self, scale, skip_checks=False):
         scale = np.asarray(scale)
+        if not skip_checks:
+            if scale.size > 3 or scale.size < 2:
+                raise ValueError("NonUniformScale can only be 2D or 3D"
+                                 ", not {}".format(scale.size))
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Affine.__init__(self, h_matrix, copy=False, skip_checks=skip_checks)
+        Affine.__init__(self, h_matrix, skip_checks=True, copy=False)
 
     @classmethod
     def identity(cls, n_dims):
@@ -169,11 +173,15 @@ class UniformScale(DiscreteAffine, Similarity):
     """
 
     def __init__(self, scale, n_dims, skip_checks=False):
+        if not skip_checks:
+            if n_dims > 3 or n_dims < 2:
+                raise ValueError("UniformScale can only be 2D or 3D"
+                                 ", not {}".format(n_dims))
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
         Similarity.__init__(self, h_matrix, copy=False,
-                            skip_checks=skip_checks)
+                            skip_checks=False)
 
     @classmethod
     def identity(cls, n_dims):
