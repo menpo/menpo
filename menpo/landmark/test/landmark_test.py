@@ -324,3 +324,27 @@ def test_LandmarkGroup_without_labels():
     assert_equal(new_lgroup.n_labels, 1)
     assert_equal(new_lgroup.n_landmarks, 2)
     assert ('lower' in new_lgroup)
+
+
+def test_LandmarkManager_str():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+
+    man = LandmarkManager(target)
+    man['test_set'] = pcloud
+
+    out_str = man.__str__()
+    assert (len(out_str) > 0)
+
+
+def test_LandmarkGroup_str():
+    points = np.array([[0, 1], [2, 3], [4, 5]])
+    pcloud = PointCloud(points, copy=False)
+    target = PointCloud(points)
+    mask_dict = {'all': np.ones(3, dtype=np.bool)}
+
+    lgroup = LandmarkGroup(target, 'label', pcloud, mask_dict, copy=False)
+
+    out_str = lgroup.__str__()
+    assert (len(out_str) > 0)

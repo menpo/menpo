@@ -57,6 +57,8 @@ def test_texturedtrimesh_copy():
 
     assert (not is_same_array(ttmesh_copy.points, ttmesh.points))
     assert (not is_same_array(ttmesh_copy.trilist, ttmesh.trilist))
+    assert (not is_same_array(ttmesh_copy.tcoords.points,
+                              ttmesh.tcoords.points))
     assert (not is_same_array(ttmesh_copy.texture.pixels,
                               ttmesh.texture.pixels))
     assert (ttmesh_copy.texture.landmarks['test_im']._target is

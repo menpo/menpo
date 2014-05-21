@@ -237,9 +237,9 @@ class LandmarkManager(Transformable, Viewable):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
                                                self.n_groups)
         if self.has_landmarks:
-            for label, group in self:
+            for label in self:
                 out_string += '\n'
-                out_string += '({}): {}'.format(label, group.__str__())
+                out_string += '({}): {}'.format(label, self[label].__str__())
 
         return out_string
 
