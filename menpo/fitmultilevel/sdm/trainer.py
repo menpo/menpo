@@ -299,7 +299,7 @@ class SDTrainer(object):
         label: string
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-        reference_shape: Pointcloud
+        reference_shape: :map:`PointCloud`
             The reference shape that is used to resize all training images to
             a consistent object size.
         interpolator: string
@@ -567,7 +567,7 @@ class SDTrainer(object):
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape: :map:`PointCloud`
             The reference shape computed based on the given images' shapes.
         """
         pass
@@ -745,7 +745,7 @@ class SDMTrainer(SDTrainer):
 
         Returns
         -------
-        reference_shape : :map:`Pointcloud`
+        reference_shape : :map:`PointCloud`
             The reference shape computed based on the given images.
         """
         shapes = [i.landmarks[group][label].lms for i in images]
@@ -975,7 +975,7 @@ class SDAAMTrainer(SDTrainer):
 
         Returns
         -------
-        reference_shape : :map:`Pointcloud`
+        reference_shape : :map:`PointCloud`
             The reference shape computed based on.
         """
         return self.aam.reference_shape
@@ -1174,7 +1174,7 @@ class SDCLMTrainer(SDTrainer):
 
         Returns
         -------
-        reference_shape : :map:`Pointcloud`
+        reference_shape : :map:`PointCloud`
             The reference shape.
         """
         return self.clm.reference_shape

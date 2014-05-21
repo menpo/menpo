@@ -16,7 +16,7 @@ class CLMFitter(MultilevelFitter):
 
     Parameters
     -----------
-    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+    clm : :map:`CLM`
         The Constrained Local Model to be used.
     """
     def __init__(self, clm):
@@ -27,7 +27,7 @@ class CLMFitter(MultilevelFitter):
         r"""
         The reference shape of the trained CLM.
 
-        : `menpo.shape.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self.clm.reference_shape
 
@@ -37,7 +37,7 @@ class CLMFitter(MultilevelFitter):
         The feature type per pyramid level of the trained CLM. Note that they
         are stored from lowest to highest level resolution.
 
-        : list
+        :type: `list`
         """
         return self.clm.feature_type
 
@@ -46,7 +46,7 @@ class CLMFitter(MultilevelFitter):
         r"""
         The number of pyramidal levels used during building the CLM.
 
-        : int
+        :type: `int`
         """
         return self.clm.n_levels
 
@@ -54,9 +54,11 @@ class CLMFitter(MultilevelFitter):
     def downscale(self):
         r"""
         The downscale per pyramidal level used during building the CLM.
-        The scale factor is: (downscale ** k) for k in range(n_levels)
+        The scale factor is::
 
-        : float
+            (downscale ** k) for k in range(n_levels)
+
+        :type: `float`
         """
         return self.clm.downscale
 
@@ -65,12 +67,14 @@ class CLMFitter(MultilevelFitter):
         r"""
         Flag that controls the Gaussian pyramid of the testing image based on
         the pyramid used during building the CLM.
-        If True, the feature space is computed once at the highest scale and
+
+        If ``True``, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
+
+        If ``False``, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
 
-        : boolean
+        :type: `boolean`
         """
         return self.clm.pyramid_on_features
 
@@ -79,7 +83,7 @@ class CLMFitter(MultilevelFitter):
         r"""
         The interpolator used during training.
 
-        : str
+        :type: `string`
         """
         return self.clm.interpolator
 
@@ -90,27 +94,24 @@ class GradientDescentCLMFitter(CLMFitter):
 
     Parameters
     -----------
-    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+    clm : :map:`CLM`
         The Constrained Local Model to be used.
-    algorithm: :class:`menpo.fit.gradientdescent.base`, optional
+
+    algorithm : :map:`GradientDescent`, optional
         The Gradient Descent class to be used.
 
-        Default: RegularizedLandmarkMeanShift
-    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+    pdm_transform : :map:`ModelDrivenTransform`, optional
         The point distribution transform class to be used.
 
-        Default: OrthoPDMTransform
-    global_transform: :class:`menpo.transform.affine`, optional
+    global_transform : :map:`Affine`, optional
         The global transform class to be used by the previous
-        md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+        ``md_transform_cls``. Currently, only
+        :map:`AlignmentSimilarity` is supported.
 
-        Default: AlignmentSimilarity
-    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
+    n_shape :type: `int` > ``1`` or ``0`` <= `float` <= ``1`` or ``None``, or a list of those, optional
         The number of shape components to be used per fitting level.
 
-        If list of length n_levels, then a number of components is defined
+        If list of length ``n_levels``, then a number of components is defined
         per level. The first element of the list corresponds to the lowest
         pyramidal level and so on.
 
@@ -118,13 +119,14 @@ class GradientDescentCLMFitter(CLMFitter):
         components will be used for all levels.
 
         Per level:
-        If None, all the available shape components (n_active_componenets)
-        will be used.
-        If int > 1, a specific number of shape components is specified.
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
-
-        Default: None
+            If ``None``, all the available shape components 
+            (``n_active_componenets``) will be used.
+            
+            If `int` > ``1``, a specific number of shape components is 
+            specified.
+            
+            If ``0`` <= `float` <= ``1``, it specifies the variance percentage 
+            that is captured by the components.
     """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
                  pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
@@ -142,7 +144,7 @@ class GradientDescentCLMFitter(CLMFitter):
         Returns a string containing the algorithm used from the Gradient
         Descent family.
 
-        : str
+        :type: `string`
         """
         return 'GD-CLM-' + self._fitters[0].algorithm
 
@@ -154,43 +156,36 @@ class GradientDescentCLMFitter(CLMFitter):
 
         Parameters
         -----------
-        algorithm: :class:`menpo.fit.gradientdescent.base`, optional
+        algorithm : :map:`GradientDescent`, optional
             The Gradient Descent class to be used.
-
-            Default: RegularizedLandmarkMeanShift
-        residual: :class:`menpo.fit.gradientdescent.residual`, optional
+        residual : :map:`Residual`, optional
             The residual class to be used
-
-            Default: 'SSD'
-        pdm_transform: :class:`menpo.model.pdm`, optional
+        pdm_transform : :map:`PDM`, optional
             The point distribution transform class to be used.
-
-            Default: OrthoPDM
-        global_transform: :class:`menpo.transform.affine`, optional
+        global_transform : :map:`Affine`, optional
             The global transform class to be used by the previous
-            md_transform_cls. Currently, only
-            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+            ``md_transform_cls``. Currently, only
+            :map:`AlignmentSimilarity` is supported.
 
-            Default: AlignmentSimilarity
-        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                     optional
+        n_shape :type: `int` > ``1`` or ``0`` <= `float` <= ``1`` or ``None``, or a list of those, optional
             The number of shape components to be used per fitting level.
 
-            If list of length n_levels, then a number of components is defined
-            per level. The first element of the list corresponds to the lowest
-            pyramidal level and so on.
+            If list of length ``n_levels``, then a number of components is
+            defined per level. The first element of the list corresponds to the
+            lowest pyramidal level and so on.
 
-            If not a list or a list with length 1, then the specified number of
-            components will be used for all levels.
+            If not a list or a list with length ``1``, then the specified
+            number of components will be used for all levels.
 
             Per level:
-            If None, all the available shape components (n_active_componenets)
-            will be used.
-            If int > 1, a specific number of shape components is specified.
-            If 0. <= float <= 1., it specifies the variance percentage that is
-            captured by the components.
+                If ``None``, all the available shape components
+                (``n_active_componenets``) will be used.
 
-            Default: None
+                If `int` > ``1``, a specific number of shape components is
+                specified.
+
+                If ``0`` <= `float` <= ``1``, it specifies the variance
+                percentage that is captured by the components.
         """
         # check n_shape parameter
         if n_shape is not None:

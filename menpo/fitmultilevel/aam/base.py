@@ -25,7 +25,7 @@ class AAMFitter(MultilevelFitter):
         r"""
         The reference shape of the trained AAM.
 
-        : `menpo.shape.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self.aam.reference_shape
 
