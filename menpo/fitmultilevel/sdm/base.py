@@ -38,7 +38,7 @@ class SDFitter(MultilevelFitter):
 
             Default: 50
         gt_shape: PointCloud
-            The groundtruth shape of the image.
+            The ground truth shape of the image.
 
             Default: None
         error_type: 'me_norm', 'me' or 'rmse', optional.
@@ -326,7 +326,7 @@ class SDAAMFitter(AAMFitter, SDFitter):
 
         : str
         """
-        return 'SD-AAM' + self._fitters[0].algorithm
+        return 'SD-AAM-' + self._fitters[0].algorithm
 
     def __str__(self):
         return "{}Supervised Descent Method for AAMs:\n" \
@@ -367,7 +367,7 @@ class SDCLMFitter(CLMFitter, SDFitter):
 
         : str
         """
-        return 'SD-CLM' + self._fitters[0].algorithm
+        return 'SD-CLM-' + self._fitters[0].algorithm
 
     def __str__(self):
         return "{}Supervised Descent Method for CLMs:\n" \

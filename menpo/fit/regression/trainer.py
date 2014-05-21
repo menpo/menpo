@@ -12,7 +12,7 @@ from menpo.visualize import print_dynamic, progress_bar_str
 
 from .base import (NonParametricRegressor, SemiParametricRegressor,
                    ParametricRegressor)
-from .parametricfeatures import weights
+from .parametricfeatures import extract_parametric_features, weights
 from .regressionfunctions import regression, mlr
 
 
@@ -88,12 +88,12 @@ class RegressorTrainer(object):
         delta_ps = []
         for j, (i, s, p_shape) in enumerate(zip(images, gt_shapes,
                                                 perturbed_shapes)):
-            for ps in p_shape:
-                features.append(self.features(i, ps))
-                delta_ps.append(self.delta_ps(s, ps))
             if verbose:
                 print_dynamic('- Generating regression data - {}'.format(
                     progress_bar_str((j + 1.) / n_images, show_bar=False)))
+            for ps in p_shape:
+                features.append(self.features(i, ps))
+                delta_ps.append(self.delta_ps(s, ps))
         return np.asarray(features), np.asarray(delta_ps)
 
     @abc.abstractmethod
@@ -177,7 +177,7 @@ class RegressorTrainer(object):
 
          # perform regression
         if verbose:
-            print_dynamic('- Performing regression')
+            print_dynamic('- Performing regression...')
         regressor = regression(features, delta_ps, self.regression_type,
                                **kwargs)
 
@@ -245,6 +245,34 @@ class NonParametricRegressorTrainer(RegressorTrainer):
         Default: mlr
     regression_features: None or string or function/closure, Optional
         The features that are used during the regression.
+        If None, no feature representation will be computed from the
+        original image.
+        If string or closure, the feature representation will be computed
+        in the following way:
+            If string, the feature representation will be extracted by
+            executing:
+
+                feature_image = eval('img.features.' + feature_type + '()')
+
+            For this to work properly feature_type needs to be one of
+            Menpo's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using its default
+            options.
+
+            Non-default feature options and new experimental feature can be
+            used by defining a closure. In this case, the closure must define a
+            function that receives as an input an image and returns a
+            particular feature representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `menpo.image.feature.py` for details more details on
+            Menpo's standard image features and feature options.
+            See `menpo.fitmultilevel.featurefunctions.py` for non standard
+            features definitions.
 
         Default: sparse_hog
     patch_shape: tuple, Optional
@@ -369,7 +397,9 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
 class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
     r"""
-    Class for training a Semi-Parametric Regressor.
+    Class for training a Semi-Parametric Regressor. (This means that a
+    parametric shape model and a non-parametric appearance representation are
+    employed.)
 
     Parameters
     ----------
@@ -383,6 +413,34 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
         Default: mlr
     regression_features: None or string or function/closure, Optional
         The features that are used during the regression.
+        If None, no feature representation will be computed from the
+        original image.
+        If string or closure, the feature representation will be computed
+        in the following way:
+            If string, the feature representation will be extracted by
+            executing:
+
+                feature_image = eval('img.features.' + feature_type + '()')
+
+            For this to work properly feature_type needs to be one of
+            Menpo's standard image feature methods. Note that, in this case,
+            the feature computation will be carried out using its default
+            options.
+
+            Non-default feature options and new experimental feature can be
+            used by defining a closure. In this case, the closure must define a
+            function that receives as an input an image and returns a
+            particular feature representation of that image. For example:
+
+                def igo_double_from_std_normalized_intensities(image)
+                    image = deepcopy(image)
+                    image.normalize_std_inplace()
+                    return image.feature_type.igo(double_angles=True)
+
+            See `menpo.image.feature.py` for details more details on
+            Menpo's standard image features and feature options.
+            See `menpo.fitmultilevel.featurefunctions.py` for non standard
+            features definitions.
 
         Default: sparse_hog
     patch_shape: tuple, Optional
@@ -487,19 +545,16 @@ class ParametricRegressorTrainer(RegressorTrainer):
         `menpo.fit.regression.regressionfunctions.py`
 
         Default: mlr
-    regression_features: None or function/closure or list of those, Optional
-        The features that are used in the regressor.
-        If list of length {aam.n_levels}, it specifies the feature to be used
-        per level.
-        If list of length 1, the specified feature will be used for all levels.
-
-        Per level:
-        Since the regressor in use is a Parametric one, these features
-        can only come from:
-        `menpo.fit.regression.parametricfeatures`
-
-        If function/closure, the specified funtion will be used.
-        If None, 'weights' will be used.
+    regression_features: None or function/closure, Optional
+        The parametric features that are used during the regression.
+        If None, the reconstruction appearance weights will be used as feature.
+        If string or function/closure, the feature representation will be
+        computed using one of the function in:
+            If string, the feature representation will be extracted by
+            executing:
+                `menpo.fit.regression.parametricfeatures`
+            Note that this feature type can only be one of the parametric
+            feature functions defined there.
 
         Default: weights
     patch_shape: tuple, Optional
@@ -534,8 +589,6 @@ class ParametricRegressorTrainer(RegressorTrainer):
                  regression_type=mlr, regression_features=weights,
                  update='compositional', noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy'):
-        if regression_features is None:
-            regression_features = weights
         super(ParametricRegressorTrainer, self).__init__(
             reference_shape, regression_type=regression_type,
             regression_features=regression_features, noise_std=noise_std,
@@ -585,9 +638,9 @@ class ParametricRegressorTrainer(RegressorTrainer):
         self.transform.set_target(shape)
         warped_image = image.warp_to(self.template.mask, self.transform,
                                      interpolator=self.interpolator)
-        return np.hstack(
-            (self.regression_features(self.appearance_model,
-                                      warped_image), 1))
+        features = extract_parametric_features(
+            self.appearance_model, warped_image, self.regression_features)
+        return np.hstack((features, 1))
 
     def delta_ps(self, gt_shape, perturbed_shape):
         r"""
@@ -618,7 +671,8 @@ class ParametricRegressorTrainer(RegressorTrainer):
 class SemiParametricClassifierBasedRegressorTrainer(
         NonParametricRegressorTrainer):
     r"""
-    Class for training a Non-Parametric Classifier-Based Regressor.
+    Class for training a Semi-Parametric Classifier-Based Regressor. This means
+    that the classifiers are used instead of features.
 
     Parameters
     ----------
