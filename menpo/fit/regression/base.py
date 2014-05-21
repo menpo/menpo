@@ -121,8 +121,8 @@ class NonParametricRegressor(Regressor):
         Method that makes sure that the parameter passed to the fit method is
         the shape.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         shape: PointCloud
             The current shape.
         """
@@ -183,13 +183,15 @@ class SemiParametricRegressor(Regressor):
         r"""
         Select the way to update the parameters.
 
-        Parameter
-        ---------
-        update: 'compositional' or 'additive'
+        Parameters
+        ----------
+        update : {'compositional', 'additive'}
+            The update method.
 
         Returns
         -------
-        : function/closure
+        update : `function`
+            The correct function to apply the update chosen.
         """
         if update is 'additive':
             return self._additive
@@ -203,9 +205,9 @@ class SemiParametricRegressor(Regressor):
         r"""
         Updates the parameters in the additive way.
 
-        Parameter
-        ---------
-        delta_p:
+        Parameters
+        ----------
+        delta_p : `ndarray`
             The parameters increment
         """
         parameters = self.transform.as_vector() + delta_p
@@ -215,9 +217,9 @@ class SemiParametricRegressor(Regressor):
         r"""
         Updates the parameters in the compositional way.
 
-        Parameter
-        ---------
-        delta_p:
+        Parameters
+        ----------
+        delta_p : `ndarray`
             The parameters increment
         """
         self.transform.compose_after_from_vector_inplace(delta_p)
@@ -228,9 +230,10 @@ class SemiParametricRegressor(Regressor):
 
         Parameters
         ----------
-        delta_p: numpy.array
+        delta_p : `ndarray`
             The parameters increment.
-        initial_shape: PointCloud
+
+        initial_shape : :map:`PointCloud`
             The current shape.
         """
         self._update(delta_p)
@@ -241,9 +244,9 @@ class SemiParametricRegressor(Regressor):
         Method that makes sure that the parameter passed to the fit method is
         the model parameters.
 
-        Parameter
-        ---------
-        shape: PointCloud
+        Parameters
+        ----------
+        shape : :map:`PointCloud`
             The current shape.
         """
         self.transform.set_target(shape)

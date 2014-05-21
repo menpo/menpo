@@ -884,8 +884,8 @@ class SDMTrainer(SDTrainer):
         Function that sets the regression class to be the
         :map:`NonParametricRegressorTrainer`.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         level : `int`
             The scale level.
 
@@ -1173,8 +1173,8 @@ class SDAAMTrainer(SDTrainer):
         Function that sets the regression class to be the
         :map:`ParametricRegressorTrainer`.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         level : `int`
             The scale level.
 
@@ -1384,8 +1384,8 @@ class SDCLMTrainer(SDTrainer):
         Function that sets the regression class to be the
         :map:`SemiParametricClassifierBasedRegressorTrainer`
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         level : `int`
             The scale level.
 

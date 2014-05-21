@@ -57,7 +57,7 @@ class SDFitter(MultilevelFitter):
 
         Returns
         -------
-        fitting_list : :map:`FittingList`
+        fitting_list : :map:`FittingResultList`
             A fitting result object.
         """
         if max_iters is None:

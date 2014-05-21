@@ -377,8 +377,8 @@ class AAMBuilder(DeformableModelBuilder):
         r"""
         Generates the reference frame given a mean shape.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         mean_shape : :map:`PointCloud`
             The mean shape to use.
 
@@ -687,8 +687,8 @@ class PatchBasedAAMBuilder(AAMBuilder):
         r"""
         Generates the reference frame given a mean shape.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         mean_shape : :map:`PointCloud`
             The mean shape to use.
 
@@ -704,8 +704,8 @@ class PatchBasedAAMBuilder(AAMBuilder):
         r"""
         Creates the patch-based mask of the given image.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         image : :map:`MaskedImage`
             The image to be masked.
         """

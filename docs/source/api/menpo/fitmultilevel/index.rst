@@ -51,10 +51,19 @@ Builders
    clm/CLM
    clm/CLMBuilder
    clm/check_classifier_type
-   clm/classifier
-   clm/linear_svm_lr
    clm/check_patch_shape
    clm/get_pos_neg_grid_positions
+
+.. _classifier_functions:
+
+Classifier Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 1
+
+   clm/classifier
+   clm/linear_svm_lr
 
 Fitters
 ^^^^^^^
