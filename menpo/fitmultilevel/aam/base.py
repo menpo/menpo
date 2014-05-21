@@ -351,9 +351,9 @@ class LucasKanadeAAMFitter(AAMFitter):
                 feat_str = "- Feature is {} with ".format(
                     self.feature_type[0].func_name)
             if n_channels[0] == 1:
-                ch_str = "channel"
+                ch_str = ["channel"]
             else:
-                ch_str = "channels"
+                ch_str = ["channels"]
         else:
             feat_str = []
             ch_str = []
@@ -385,7 +385,7 @@ class LucasKanadeAAMFitter(AAMFitter):
             if self.pyramid_on_features:
                 out = "{}   - Pyramid was applied on feature space.\n   " \
                       "{}{} {} per image.\n".format(out, feat_str,
-                                                    n_channels[0], ch_str)
+                                                    n_channels[0], ch_str[0])
                 if self.aam.scaled_shape_models is False:
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(

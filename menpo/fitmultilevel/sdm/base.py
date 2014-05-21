@@ -265,9 +265,9 @@ class SDMFitter(SDFitter):
                 feat_str = "- Feature is {} with ".format(
                     self.feature_type[0].func_name)
             if n_channels[0] == 1:
-                ch_str = "channel"
+                ch_str = ["channel"]
             else:
-                ch_str = "channels"
+                ch_str = ["channels"]
         else:
             feat_str = []
             ch_str = []
@@ -291,7 +291,7 @@ class SDMFitter(SDFitter):
             if self.pyramid_on_features:
                 out = "{}   - Pyramid was applied on feature space.\n   " \
                       "{}{} {} per image.\n".format(out, feat_str,
-                                                    n_channels[0], ch_str)
+                                                    n_channels[0], ch_str[0])
             else:
                 out = "{}   - Features were extracted at each pyramid " \
                       "level.\n".format(out)
