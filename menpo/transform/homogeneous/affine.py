@@ -16,12 +16,16 @@ class Affine(Homogeneous, DP, DX):
     ----------
     h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
         The homogeneous matrix of the affine transformation.
+
+    copy : `bool`, optional
+        If ``False`` avoid copying ``h_matrix`` for performance.
+
+    skip_checks : `bool`, optional
+        If ``True`` avoid sanity checks on ``h_matrix`` for performance.
     """
-    def __init__(self, h_matrix):
-        Homogeneous.__init__(self, h_matrix)
-        # Affine is a little more constrained (only 2D or 3D supported)
-        # so run our verification
-        Affine.set_h_matrix(self, h_matrix)
+    def __init__(self, h_matrix, copy=True, skip_checks=False):
+        Homogeneous.__init__(self, h_matrix, copy=copy,
+                             skip_checks=skip_checks)
 
     @classmethod
     def identity(cls, n_dims):
@@ -31,27 +35,38 @@ class Affine(Homogeneous, DP, DX):
     def h_matrix(self):
         return self._h_matrix
 
-    def set_h_matrix(self, value):
-        r"""
-        Updates the h_matrix, performing sanity checks.
+    def _set_h_matrix(self, value, copy=True, skip_checks=False):
+        r"""Updates the h_matrix, performing sanity checks.
 
-        The Affine h_matrix is limited in what values are allowed. Account
-        for them here.
+        Parameters
+        ----------
+        value : ndarray
+            The new homogeneous matrix to set
+
+        copy : `bool`, optional
+            If False do not copy the h_matrix. Useful for performance.
+
+        skip_checks : `bool`, optional
+            If True skip sanity checks on the matrix. Useful for performance.
         """
-        shape = value.shape
-        if len(shape) != 2 and shape[0] != shape[1]:
-            raise ValueError("You need to provide a square homogeneous matrix")
-        if self.h_matrix is not None:
-            # already have a matrix set! The update better be the same size
-            if self.n_dims != shape[0] - 1:
-                raise ValueError("Trying to update the homogeneous "
-                                 "matrix to a different dimension")
-        if shape[0] - 1 not in [2, 3]:
-            raise ValueError("Affine Transforms can only be 2D or 3D")
-        if not (np.allclose(value[-1, :-1], 0) and
-                np.allclose(value[-1, -1], 1)):
-            raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
-        self._h_matrix = value.copy()
+        if not skip_checks:
+            shape = value.shape
+            if len(shape) != 2 or shape[0] != shape[1]:
+                raise ValueError("You need to provide a square homogeneous "
+                                 "matrix")
+            if self.h_matrix is not None:
+                # already have a matrix set! The update better be the same size
+                if self.n_dims != shape[0] - 1:
+                    raise ValueError("Trying to update the homogeneous "
+                                     "matrix to a different dimension")
+            if shape[0] - 1 not in [2, 3]:
+                raise ValueError("Affine Transforms can only be 2D or 3D")
+            if not (np.allclose(value[-1, :-1], 0) and
+                    np.allclose(value[-1, -1], 1)):
+                raise ValueError("Bottom row must be [0 0 0 1] or [0, 0, 1]")
+        if copy:
+            value = value.copy()
+        self._h_matrix = value
 
     @property
     def linear_component(self):
@@ -90,9 +105,6 @@ class Affine(Homogeneous, DP, DX):
         scale = Scale(S)
         translation = Translation(self.translation_component)
         return [rotation_1, scale, rotation_2, translation]
-
-    def __eq__(self, other):
-        return np.allclose(self.h_matrix, other.h_matrix)
 
     def _transform_str(self):
         r"""
@@ -193,14 +205,16 @@ class Affine(Homogeneous, DP, DX):
         else:
             ValueError("Only 2D (6 parameters) or 3D (12 parameters) "
                        "homogeneous matrices are supported.")
-        self.set_h_matrix(h_matrix)
+        self.set_h_matrix(h_matrix, copy=False, skip_checks=True)
 
     @property
     def composes_inplace_with(self):
         return Affine
 
     def _build_pseudoinverse(self):
-        return Affine(np.linalg.inv(self.h_matrix))
+        # Skip the checks as we know inverse of a homogeneous is a homogeneous
+        return Affine(np.linalg.inv(self.h_matrix), copy=False,
+                      skip_checks=True)
 
     def d_dp(self, points):
         r"""The first order derivative of this Affine transform wrt parameter
@@ -337,7 +351,7 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         HomogFamilyAlignment.__init__(self, source, target)
         # now, the Affine
         optimal_h = self._build_alignment_h_matrix(source, target)
-        Affine.__init__(self, optimal_h)
+        Affine.__init__(self, optimal_h, copy=False, skip_checks=True)
 
     @staticmethod
     def _build_alignment_h_matrix(source, target):
@@ -348,29 +362,68 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         b = target.h_points
         return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
-    def set_h_matrix(self, value):
+    def set_h_matrix(self, value, copy=True, skip_checks=False):
         r"""
-        Upon updating the h_matrix we must resync the target.
-        """
-        Affine.set_h_matrix(self, value)
-        # now update the state
-        self._sync_target_from_state()
+        Updates ``h_matrix``, optionally performing sanity checks.
 
-    def from_vector_inplace(self, p):
-        r"""
-        Updates this Affine in-place from the new parameters. See
-        from_vector for details of the parameter format.
+        .. note::
+
+            Updating the ``h_matrix`` on an :map:`AlignmentAffine`
+            triggers a sync of the target.
+
+        Note that it won't always be possible to manually specify the
+        ``h_matrix`` through this method, specifically if changing the
+        ``h_matrix`` could change the nature of the transform. See
+        :attr:`h_matrix_is_mutable` for how you can discover if the
+        ``h_matrix`` is allowed to be set for a given class.
+
+        Parameters
+        ----------
+        value : ndarray
+            The new homogeneous matrix to set
+        copy : `bool`, optional
+            If False do not copy the h_matrix. Useful for performance.
+        skip_checks : `bool`, optional
+            If True skip checking. Useful for performance.
+
+        Raises
+        ------
+        NotImplementedError
+            If :attr:`h_matrix_is_mutable` returns ``False``.
+
+
+        Parameters
+        ----------
+
+        value : ndarray
+            The new homogeneous matrix to set
+
+        copy : bool, optional
+            If False do not copy the h_matrix. Useful for performance.
+
+        skip_checks : bool, optional
+            If True skip verification for performance.
         """
-        Affine.from_vector_inplace(self, p)
+        Affine.set_h_matrix(self, value, copy=copy, skip_checks=skip_checks)
+        # now update the state
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
         optimal_h = self._build_alignment_h_matrix(self.source, self.target)
         # Use the pure Affine setter (so we don't get syncing)
-        Affine.set_h_matrix(self, optimal_h)
+        # We know the resulting affine is correct so skip the checks
+        Affine.set_h_matrix(self, optimal_h, copy=False, skip_checks=True)
 
-    def copy_without_alignment(self):
-        return Affine(self.h_matrix.copy())
+    def as_non_alignment(self):
+        r"""Returns a copy of this affine without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Affine`
+            A version of this affine with the same transform behavior but
+            without the alignment logic.
+        """
+        return Affine(self.h_matrix, skip_checks=True)
 
 
 class DiscreteAffine(object):
@@ -393,4 +446,4 @@ class DiscreteAffine(object):
         transform : :class:`DiscreteAffine`
             Deep copy of `self`.
         """
-        return [copy.deepcopy(self)]
+        return [self.copy()]
