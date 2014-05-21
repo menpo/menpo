@@ -305,18 +305,12 @@ class NonParametricRegressorTrainer(RegressorTrainer):
         self.patch_shape = patch_shape
         self.sampling_grid = build_sampling_grid(patch_shape)
 
-<<<<<<< HEAD
-        # work out feature length
-        patch = np.random.randn(patch_shape[0], patch_shape[1], 1)
-        self.feature_length = regression_features(patch).ravel().shape[0]
-=======
     @property
     def algorithm(self):
         r"""
         Returns the algorithm name.
         """
         return "Non-Parametric"
->>>>>>> master
 
     def _create_fitting(self, image, shapes, gt_shape=None):
         r"""
@@ -335,27 +329,6 @@ class NonParametricRegressorTrainer(RegressorTrainer):
                                           gt_shape=gt_shape)
 
     def features(self, image, shape):
-<<<<<<< HEAD
-        max_x = image.shape[0] - 1
-        max_y = image.shape[1] - 1
-        # compute sampling points
-        grids = (self.sampling_grid[None, ...] +
-                 np.round(shape.points).astype(int)[:, None, None, ...])
-        xs = grids[:, :, :, 0]
-        ys = grids[:, :, :, 1]
-        # deal with boundaries
-        xs[xs > max_x] = max_x
-        ys[ys > max_y] = max_y
-        xs[xs < 0] = 0
-        ys[ys < 0] = 0
-        # compute features
-        features = np.zeros((shape.n_points, self.feature_length))
-        for j, (x, y) in enumerate(zip(xs, ys)):
-            features[j, :] = self.regression_features(
-                image.pixels[x, y, :]).ravel()
-        # attach bias term
-        return np.hstack((features.ravel(), 1))
-=======
         r"""
         Method that extracts the features for the regression, which in this
         case are patch based.
@@ -372,7 +345,6 @@ class NonParametricRegressorTrainer(RegressorTrainer):
                                      self.regression_features).pixels.ravel()
                     for p in patches]
         return np.hstack((np.asarray(features).ravel(), 1))
->>>>>>> master
 
     def delta_ps(self, gt_shape, perturbed_shape):
         r"""
