@@ -2,10 +2,11 @@ import abc
 
 
 class Invertible(object):
-    r"""Mix-in for invertible transforms. Provides an interface for
+    r"""
+    Mix-in for invertible transforms. Provides an interface for
     taking the `psuedo` or true inverse of a transform.
 
-    Has to be implimented in conjunction with :map:`Transform`.
+    Has to be implemented in conjunction with :map:`Transform`.
     """
 
     @abc.abstractproperty
@@ -17,7 +18,8 @@ class Invertible(object):
 
     @property
     def pseudoinverse(self):
-        r"""The pseudoinverse of the transform - that is, the transform that
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
         results from swapping source and target, or more formally, negating
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
@@ -28,7 +30,8 @@ class Invertible(object):
 
     @abc.abstractmethod
     def _build_pseudoinverse(self):
-        r"""Returns this transform's inverse if it has one. If not,
+        r"""
+        Returns this transform's inverse if it has one. If not,
         the pseduoinverse is given.
 
         This method is called by the pseudoinverse property and **must** be
@@ -42,7 +45,8 @@ class Invertible(object):
 
 
 class VInvertible(Invertible):
-    r"""Mix-in for :map:`Vectorizable` :map:`Invertible` :map:`Transform` s.
+    r"""
+    Mix-in for :map:`Vectorizable` :map:`Invertible` :map:`Transform` s.
 
     Prefer this mix-in over :map:`Invertible` if the :map:`Transform` in
     question is :map:`Vectorizable` as this adds :meth:`from_vector` variants
@@ -50,7 +54,8 @@ class VInvertible(Invertible):
     and are, for instance, needed by some of the machinery of fit.
     """
     def pseudoinverse_vector(self, vector):
-        r"""The vectorized pseudoinverse of a provided vector instance.
+        r"""
+        The vectorized pseudoinverse of a provided vector instance.
         Syntactic sugar for::
 
             self.from_vector(vector).pseudoinverse.as_vector()
@@ -69,4 +74,3 @@ class VInvertible(Invertible):
             The pseudoinverse of the vector provided
         """
         return self.from_vector(vector).pseudoinverse.as_vector()
-

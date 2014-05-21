@@ -363,7 +363,34 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""Upon updating the h_matrix we must resync the target.
+        r"""
+        Updates ``h_matrix``, optionally performing sanity checks.
+
+        .. note::
+
+            Updating the ``h_matrix`` on an :map:`AlignmentAffine`
+            triggers a sync of the target.
+
+        Note that it won't always be possible to manually specify the
+        ``h_matrix`` through this method, specifically if changing the
+        ``h_matrix`` could change the nature of the transform. See
+        :attr:`h_matrix_is_mutable` for how you can discover if the
+        ``h_matrix`` is allowed to be set for a given class.
+
+        Parameters
+        ----------
+        value : ndarray
+            The new homogeneous matrix to set
+        copy : `bool`, optional
+            If False do not copy the h_matrix. Useful for performance.
+        skip_checks : `bool`, optional
+            If True skip checking. Useful for performance.
+
+        Raises
+        ------
+        NotImplementedError
+            If :attr:`h_matrix_is_mutable` returns ``False``.
+
 
         Parameters
         ----------

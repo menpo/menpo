@@ -7,7 +7,6 @@ from menpo.transform.base import (Alignment, ComposableTransform,
                                   VComposable, VInvertible)
 
 
-# TODO check the copy method is picked up by the subclasses.
 class HomogFamilyAlignment(Alignment):
     r"""
     Simple subclass of Alignment that adds the ability to create a copy of an
@@ -18,7 +17,8 @@ class HomogFamilyAlignment(Alignment):
     """
     @abc.abstractmethod
     def as_non_alignment(self):
-        r"""Returns a copy of this transform without it's alignment nature.
+        r"""
+        Returns a copy of this transform without it's alignment nature.
 
         Returns
         -------
@@ -48,7 +48,8 @@ class HomogFamilyAlignment(Alignment):
 
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
-    r"""A simple n-dimensional homogeneous transformation.
+    r"""
+    A simple n-dimensional homogeneous transformation.
 
     Adds a unit homogeneous coordinate to points, performs the dot
     product, re-normalizes by division by the homogeneous coordinate,
@@ -74,12 +75,22 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def h_matrix_is_mutable(self):
+        r"""
+        True iff :meth:`set_h_matrix` is permitted on this type of transform.
+        If this returns ``False`` calls to :meth:``set_h_matrix` will raise
+        a NonImplimentedError.
+
+        :type: `bool`
+        """
         return True
 
     def copy(self):
-        r"""An efficient copy of this Homogeneous family transform (i.e.
-        one with the same homogeneous matrix). If you need all state to be
-        perfectly replicated, consider using :meth:`deepcopy` instead.
+        r"""
+        An efficient copy of this Homogeneous family transform (i.e.
+        one with the same homogeneous matrix).
+
+        If you need all state to be perfectly replicated, consider using
+        :meth:`deepcopy` instead.
 
         Returns
         -------
@@ -93,7 +104,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return new
 
     def from_vector(self, vector):
-        """Build a new instance of the object from it's vectorized state.
+        """
+        Build a new instance of the object from it's vectorized state.
 
         ``self`` is used to fill out the missing state required to
         rebuild a full object from it's standardized flattened state. This
@@ -122,7 +134,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return rep
 
     def _transform_str(self):
-        r"""A string representation explaining what this homogeneous transform
+        r"""
+        A string representation explaining what this homogeneous transform
         does. Has to be implemented by base classes.
 
         Returns
@@ -141,7 +154,14 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self._h_matrix
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""Updates ``h_matrix``, optionally performing sanity checks.
+        r"""
+        Updates ``h_matrix``, optionally performing sanity checks.
+
+        Note that it won't always be possible to manually specify the
+        ``h_matrix`` through this method, specifically if changing the
+        ``h_matrix`` could change the nature of the transform. See
+        :attr:`h_matrix_is_mutable` for how you can discover if the
+        ``h_matrix`` is allowed to be set for a given class.
 
         Parameters
         ----------
@@ -151,6 +171,11 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
             If False do not copy the h_matrix. Useful for performance.
         skip_checks : `bool`, optional
             If True skip checking. Useful for performance.
+
+        Raises
+        ------
+        NotImplementedError
+            If :attr:`h_matrix_is_mutable` returns ``False``.
         """
         if self.h_matrix_is_mutable:
             self._set_h_matrix(value, copy=copy, skip_checks=skip_checks)
@@ -159,7 +184,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
                 "h_matrix cannot be set on {}".format(self._transform_str()))
 
     def _set_h_matrix(self, value, copy=True, skip_checks=False):
-        r"""Actually updates the h_matrix, optionally performing sanity checks.
+        r"""
+        Actually updates the h_matrix, optionally performing sanity checks.
 
         Called by :meth:`set_h_matrix` on classes that have
         :attr:`h_matrix_is_mutable` as ``True``.
