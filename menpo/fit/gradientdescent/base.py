@@ -1,5 +1,4 @@
 from __future__ import division
-import abc
 import numpy as np
 from scipy.stats import multivariate_normal
 
@@ -8,17 +7,45 @@ from menpo.fit.fittingresult import SemiParametricFittingResult
 from menpo.fitmultilevel.functions import build_sampling_grid
 
 
-# TODO: document me
-# TODO: see if residuals can be incorporated here
-# TODO: deal with regularization/prior inside the transforms, this is also
-# relevant for LucasKanade objects.
+# TODO: incorporate different residuals
+# TODO: generalize transform prior, and map the changes to LK methods
 class GradientDescent(Fitter):
     r"""
+    Abstract Interface for defining Gradient Descent based fitting algorithms
+    for Constrained Local Models [1]_.
+
+    Parameters
+    ----------
+    classifiers : `list` of ``classifier_closure``
+        The list containing the classifier that will produce the response
+        maps for each landmark point.
+
+    patch_shape : `tuple` of `int`
+        The shape of the patches used to train the classifiers.
+
+    transform : :map:`GlobalPDM` or subclass
+        The global point distribution model to be used.
+
+        .. note::
+
+            Only :map:`GlobalPDM` and its subclasses are supported.
+            :map:`PDM` is not supported at the moment.
+
+    eps : `float`, optional
+        The convergence value. When calculating the level of convergence, if
+        the norm of the delta parameter updates is less than ``eps``, the
+        algorithm is considered to have converged.
+
+    References
+    ----------
+    .. [1] J. Saragih, S. Lucey and J. Cohn, ''Deformable Model Fitting by
+    Regularized Landmark Mean-Shifts", International Journal of Computer
+    Vision (IJCV), 2010.
     """
-    def __init__(self, classifiers, patch_shape, transform, eps=10**-10):
+    def __init__(self, classifiers, patch_shape, pdm, eps=10**-10):
         self.classifiers = classifiers
         self.patch_shape = patch_shape
-        self.transform = transform
+        self.transform = pdm
         self.eps = eps
         # pre-computations
         self._set_up()
@@ -37,35 +64,74 @@ class GradientDescent(Fitter):
         return self.transform.as_vector()
 
 
-# TODO: document me
 class RegularizedLandmarkMeanShift(GradientDescent):
+    r"""
+    Implementation of the Regularized Landmark Mean-Shifts algorithm for
+    fitting Constrained Local Models described in [1]_.
+
+    Parameters
+    ----------
+    classifiers : `list` of ``classifier_closure``
+        The list containing the classifier that will produce the response
+        maps for each landmark point.
+
+    patch_shape : `tuple` of `int`
+        The shape of the patches used to train the classifiers.
+
+    transform : :map:`GlobalPDM` or subclass
+        The global point distribution model to be used.
+
+        .. note::
+
+            Only :map:`GlobalPDM` and its subclasses are supported.
+            :map:`PDM` is not supported at the moment.
+
+    eps : `float`, optional
+        The convergence value. When calculating the level of convergence, if
+        the norm of the delta parameter updates is less than ``eps``, the
+        algorithm is considered to have converged.
+
+    scale: `float`, optional
+        Constant value that will be multiplied to the `noise_variance` of
+        the pdm in order to compute the covariance of the KDE
+        approximation.
+
+     References
+    ----------
+    .. [1] J. Saragih, S. Lucey and J. Cohn, ''Deformable Model Fitting by
+    Regularized Landmark Mean-Shifts", International Journal of Computer
+    Vision (IJCV), 2010.
+    """
+    def __init__(self, classifiers, patch_shape, pdm, eps=10**-10, scale=10):
+        self.scale = scale
+        super(RegularizedLandmarkMeanShift, self).__init__(
+            classifiers, patch_shape, pdm, eps=eps)
 
     @property
     def algorithm(self):
         return 'RLMS'
 
     def _set_up(self):
+        # Build the sampling grid associated to the patch shape
         self._sampling_grid = build_sampling_grid(self.patch_shape)
-
-        # Gaussian-KDE
+        # Define the 2-dimensional gaussian distribution
         mean = np.zeros(self.transform.n_dims)
-        self._rho = 10 * self.transform.model.noise_variance
-        mvn = multivariate_normal(mean=mean, cov=self._rho)
+        covariance = self.scale * self.transform.model.noise_variance
+        mvn = multivariate_normal(mean=mean, cov=covariance)
+        # Compute Gaussian-KDE grid
         self._kernel_grid = mvn.pdf(self._sampling_grid)
 
-        # Transform Jacobian
+        # Jacobian
         self._J = self.transform.d_dp([])
 
         # Prior
-        augmented_eigenvalues = np.hstack((np.ones(4),
-                                           self.transform.model.eigenvalues))
-        self._J_regularizer = self._rho / augmented_eigenvalues
-        # set uninformative prior for similarity weights
-        self._J_regularizer[:4] = 0
+        sim_prior = np.zeros((4,))
+        pdm_prior = 1 / self.transform.model.eigenvalues
+        self._J_prior = np.hstack((sim_prior, pdm_prior))
 
         # Inverse Hessian
         H = np.einsum('ijk, ilk -> jl', self._J, self._J)
-        self._inv_H = np.linalg.inv(np.diag(self._J_regularizer) + H)
+        self._inv_H = np.linalg.inv(np.diag(self._J_prior) + H)
 
     def _fit(self, fitting_result, max_iters=20):
         # Initial error > eps
@@ -81,14 +147,14 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         response_image = np.zeros((image.shape[0], image.shape[1],
                                    target.n_points))
 
-        # Compute responses
+        # Compute response maps
         for j, clf in enumerate(self.classifiers):
             response_image[:, :, j] = np.reshape(clf(image_pixels),
                                                  image.shape)
 
         while n_iters < max_iters and error > self.eps:
 
-            mean_shift_target = np.zeros((target.n_points, target.n_dims))
+            mean_shift_target = np.zeros_like(target.points)
 
             # Compute mean-shift vectors
             for j, point in enumerate(target.points):
@@ -112,11 +178,18 @@ class RegularizedLandmarkMeanShift(GradientDescent):
                 mean_shift_target[j, :] = np.sum(
                     normalized_kernel_response * (x, y), axis=(1, 2))
 
+            # Compute (shape) error term
+            error = mean_shift_target - target.points
+
+            # Compute steepest descent parameter updates
+            sd_delta_p = np.einsum('ijk, ik -> j', self._J, error)
+
+            # TODO: a similar approach could be implemented in LK
+            # Deal with prior
+            prior = self._J_prior * self.transform.as_vector()
+
             # Compute parameter updates
-            difference = mean_shift_target - target.points
-            J_difference = np.einsum('ijk, ik -> j', self._J, difference)
-            J_regularizer = self._J_regularizer * self.transform.as_vector()
-            delta_p = -np.dot(self._inv_H, J_regularizer - J_difference)
+            delta_p = -np.dot(self._inv_H, prior - sd_delta_p)
 
             # Update transform weights
             parameters = self.transform.as_vector() + delta_p
