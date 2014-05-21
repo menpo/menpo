@@ -24,116 +24,107 @@ class SDTrainer(object):
 
     Parameters
     ----------
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
-        Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
+    regression_type : function/closure, optional
+        A `function` that defines the regression technique to be used.
+        Examples of such closures can be found in :ref:`regression_functions`.
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_features :`` None`` or `string` or `function`, optional
         The features that are used during the regression.
 
-        Default: None
-    feature_type: None or string or function/closure or list of those, Optional
+    feature_type : None or string or function/closure or list of those, optional
         Defines the features that will be extracted from the image.
-        If list of length n_levels, then a feature is defined per level.
-        However, this requires that the pyramid_on_features flag is disabled,
-        so that the features are extracted at each level. The first element of
-        the list specifies the features to be extracted at the lowest pyramidal
-        level and so on.
+        If list of length ``n_levels``, then a feature is defined per level.
+        However, this requires that the ``pyramid_on_features`` flag is
+        ``False``, so that the features are extracted at each level.
+        The first element of the list specifies the features to be extracted
+        at the lowest pyramidal level and so on.
 
-        If not a list or a list with length 1, then:
-            If pyramid_on_features is True, the specified feature will be
-            applied to the highest level.
-            If pyramid_on_features is False, the specified feature will be
-            applied to all pyramid levels.
+        If not a list or a list with length ``1``:
+            If ``pyramid_on_features`` is ``True``, the specified feature will
+            be applied to the highest level.
+
+            If ``pyramid_on_features`` is ``False``, the specified feature will
+            be applied to all pyramid levels.
 
         Per level:
-        If None, the appearance model will be built using the original image
-        representation, i.e. no features will be extracted from the original
-        images.
+            If ``None``, the appearance model will be built using the original
+            image representation, i.e. no features will be extracted from the
+            original images.
 
-        If string, image features will be computed by executing:
+            If `string`, image features will be computed by executing::
 
-           feature_image = eval('img.feature_type.' +
-                                feature_type[level] + '()')
+               feature_image = eval('img.feature_type.' +
+                                    feature_type[level] + '()')
 
-        for each pyramidal level. For this to work properly each string
-        needs to be one of menpo's standard image feature methods
-        ('igo', 'hog', ...).
-        Note that, in this case, the feature computation will be
-        carried out using the default options.
+            for each pyramidal level. For this to work properly each string
+            needs to be one of menpo's standard image feature methods
+            ('igo', 'hog', ...).
+            Note that, in this case, the feature computation will be
+            carried out using the default options.
 
         Non-default feature options and new experimental features can be
         defined using functions/closures. In this case, the functions must
         receive an image as input and return a particular feature
-        representation of that image. For example:
+        representation of that image. For example::
 
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
                 return image.feature_type.igo(double_angles=True)
 
-        See `menpo.image.feature.py` for details more details on
-        menpo's standard image features and feature options.
+        See :map:`ImageFeatures` for details more details on
+        Menpo's standard image features and feature options.
 
-        Default: None
-    n_levels: int > 0, Optional
+    n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
 
-        Default: 3
-    downscale: float >= 1, Optional
+    downscale : `float` >= ``1``, optional
         The downscale factor that will be used to create the different
-        pyramidal levels. The scale factor will be:
+        pyramidal levels. The scale factor will be::
+
             (downscale ** k) for k in range(n_levels)
 
-        Default: 1.2
-    pyramid_on_features: boolean, Optional
-        If True, the feature space is computed once at the highest scale and
+    pyramid_on_features : `boolean`, optional
+        If ``True``, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
+
+        If ``False``, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
 
-        Default: True
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
-
-        Default: 0.04
-    rotation: boolean, optional
+`
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int > 0, Optional
+    n_perturbations : `int` > ``0``, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
-    interpolator: string, Optional
+    interpolator : `string`, optional
         The interpolator in use.
-
-        Default: 'scipy'
 
     Returns
     -------
-    fitter: :class:`menpo.fitmultilevel.sdm.base`
+    fitter : :map:`MultilevelFitter`
         The fitter object.
 
     Raises
     ------
     ValueError
-        n_levels must be int > 0
+        n_levels must be `int` > ``0``
     ValueError
-        downscale must be >= 1
+        ``downscale`` must be >= ``1``
     ValueError
-        n_perturbations must be > 0
+        ``n_perturbations`` must be > 0
     ValueError
-        feature_type must be a str or a function/closure or a list of those
-        containing 1 or {n_levels} elements
+        ``feature_type`` must be a `string` or a `function` or a list of those
+        containing ``1`` or ``n_levels`` elements
     ValueError
-        regression_features must be a str or a function/closure or a list of
-        those containing 1 or {n_levels} elements
+        ``regression_features`` must be a `string` or a `function` or a list of
+        those containing ``1`` or ``n_levels`` elements
     """
     __metaclass__ = abc.ABCMeta
 
@@ -170,19 +161,19 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the SD.
-        group : string, Optional
+        group : string, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
             Default: None
-        label: string, Optional
+        label: string, optional
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
             Default: 'all'
-        verbose: bool, Optional
+        verbose: bool, optional
             Flag that controls information and progress printing.
 
             Default: False
@@ -300,7 +291,7 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the model.
         group : string
             The key of the landmark set that should be used. If None,
@@ -313,7 +304,7 @@ class SDTrainer(object):
             a consistent object size.
         interpolator: string
             The interpolator that should be used to perform the warps.
-        verbose: bool, Optional
+        verbose: bool, optional
             Flag that controls information and progress printing.
 
             Default: False
@@ -347,7 +338,7 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images.
         n_levels: int
             The number of multi-resolution pyramidal levels to be used.
@@ -362,7 +353,7 @@ class SDTrainer(object):
         feature_type: list with str or function/closure or None
             In case pyramid_on_features is enabled, feature_type[0] will be
             used as features type.
-        verbose: bool, Optional
+        verbose: bool, optional
             Flag that controls information and progress printing.
 
             Default: False
@@ -405,7 +396,7 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images.
         generators: list of generator functions
             The generator functions of the Gaussian pyramid for all images.
@@ -420,14 +411,14 @@ class SDTrainer(object):
                       None
             The feature type per level to be used in case pyramid_on_features
             is enabled.
-        verbose: bool, Optional
+        verbose: bool, optional
             Flag that controls information and progress printing.
 
             Default: False
 
         Returns
         -------
-        feature_images: list of lists of :class:`menpo.image.MaskedImage`
+        feature_images: list of lists of :map:`MaskedImage`
             The set of pyramidal images.
         """
         feature_images = []
@@ -565,7 +556,7 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images.
         group : string
             The key of the landmark set that should be used. If None,
@@ -620,42 +611,40 @@ class SDMTrainer(SDTrainer):
 
     Parameters
     ----------
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
         Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
+        :ref:`regression_functions`
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_features : ``None`` or `string` or `function`, optional
         The features that are used during the regression.
 
-        Default: None
-    patch_shape: tuple of ints
+    patch_shape : tuple of `int`
         The shape of the patches used by the SDM.
 
-        Default: (16, 16)
-    feature_type: None or string or function/closure or list of those, Optional
-        If list of length n_levels, then a feature is defined per level.
-        However, this requires that the pyramid_on_features flag is disabled,
-        so that the features are extracted at each level. The first element of
-        the list specifies the features to be extracted at the lowest pyramidal
-        level and so on.
+    feature_type : `None` or `string` or `function` or list of those, optional
+        If list of length ``n_levels``, then a feature is defined per level.
+        However, this requires that the ``pyramid_on_features`` flag is
+        ``False``, so that the features are extracted at each level.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If not a list or a list with length 1, then:
-            If pyramid_on_features is True, the specified feature will be
-            applied to the highest level.
-            If pyramid_on_features is False, the specified feature will be
-            applied to all pyramid levels.
+        If not a list or a list with length ``1``, then:
+            If ``pyramid_on_features`` is ``True``, the specified feature will
+            be applied to the highest level.
+
+            If ``pyramid_on_features`` is ``False``, the specified feature will
+            be applied to all pyramid levels.
 
         Per level:
-        If None, the appearance model will be built using the original image
-        representation, i.e. no features will be extracted from the original
-        images.
+            If ``None``, the appearance model will be built using the original
+            image representation, i.e. no features will be extracted from the
+            original images.
 
-        If string, image features will be computed by executing:
+            If `string`, image features will be computed by executing::
 
-           feature_image = eval('img.feature_type.' +
-                                feature_type[level] + '()')
+               feature_image = eval('img.feature_type.' +
+                                    feature_type[level] + '()')
 
         for each pyramidal level. For this to work properly each string
         needs to be one of menpo's standard image feature methods
@@ -666,67 +655,60 @@ class SDMTrainer(SDTrainer):
         Non-default feature options and new experimental features can be
         defined using functions/closures. In this case, the functions must
         receive an image as input and return a particular feature
-        representation of that image. For example:
+        representation of that image. For example::
 
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
                 return image.feature_type.igo(double_angles=True)
 
-        See `menpo.image.feature.py` for details more details on
-        menpo's standard image features and feature options.
+        See :map:`ImageFeatures` for details more details on
+        Menpo's standard image features and feature options.
 
-        Default: None
-    n_levels: int > 0, Optional
+    n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
 
-        Default: 3
-    downscale: float >= 1, Optional
+    downscale : `float` >= ``1``, optional
         The downscale factor that will be used to create the different
-        pyramidal levels. The scale factor will be:
+        pyramidal levels. The scale factor will be::
+
             (downscale ** k) for k in range(n_levels)
 
-        Default: 2
-    pyramid_on_features: boolean, Optional
-        If True, the feature space is computed once at the highest scale and
+    pyramid_on_features : `boolean`, optional
+        If ``True``, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
+
+        If ``False``, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
 
-        Default: True
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         initial shape.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the initial shape.
 
-        Default: False
-    n_perturbations: int > 0, Optional
+    n_perturbations : `int` > ``0``, optional
         Defines the number of perturbations that will be applied to the shapes.
 
-        Default: 10
-    normalization_diagonal: int >= 20, Optional
+    normalization_diagonal : `int` >= ``20``, optional
         During training, all images are rescaled to ensure that the scale of
         their landmarks matches the scale of the mean shape.
 
-        If int, it ensures that the mean shape is scaled so that the diagonal
+        If `int`, it ensures that the mean shape is scaled so that the diagonal
         of the bounding box containing it matches the normalization_diagonal
         value.
-        If None, the mean shape is not rescaled.
+
+        If ``None``, the mean shape is not rescaled.
 
         Note that, because the reference frame is computed from the mean
         landmarks, this kwarg also specifies the diagonal length of the
         reference frame (provided that features computation does not change
         the image size).
 
-        Default: None
-    interpolator: string, Optional
+    interpolator : `string`, optional
         The interpolator in use.
-
-        Default: 'scipy'
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
                  patch_shape=(16, 16), feature_type=None, n_levels=3,
@@ -750,18 +732,20 @@ class SDMTrainer(SDTrainer):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        group : string
-            The key of the landmark set that should be used. If None,
+
+        group : `string`
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape : :map:`Pointcloud`
             The reference shape computed based on the given images.
         """
         shapes = [i.landmarks[group][label].lms for i in images]
@@ -769,7 +753,7 @@ class SDMTrainer(SDTrainer):
 
     def _rescale_reference_shape(self):
         r"""
-        Function that rescales the reference shape wrt to
+        Function that rescales the reference shape w.r.t. to
         normalization_diagonal parameter.
         """
         if self.normalization_diagonal:
@@ -785,12 +769,12 @@ class SDMTrainer(SDTrainer):
 
         Parameter
         ---------
-        level: int
+        level : `int`
             The scale level.
 
         Returns
         -------
-        trainer: :class: menpo.fit.regression.NonParametricRegressorTrainer
+        trainer : :map:`NonParametricRegressorTrainer`
             The regressor object.
         """
         return NonParametricRegressorTrainer(
@@ -805,12 +789,12 @@ class SDMTrainer(SDTrainer):
 
         Parameters
         ----------
-        regressors: list of :class: menpo.fit.regression.RegressorTrainer
+        regressors : list of :map:`RegressorTrainer`
             The list of regressors.
 
         Returns
         -------
-        fitter: :class: menpo.fitmultilevel.sdm.base.SDMFitter
+        fitter : :map:`SDMFitter`
             The SDM fitter object.
         """
         return SDMFitter(regressors, self.n_training_images, self.feature_type,
@@ -825,83 +809,76 @@ class SDAAMTrainer(SDTrainer):
 
     Parameters
     ----------
-    aam: :class: menpo.fitmultilevel.aam.builder.AAM
+    aam : :map:`AAM`
         The trained AAM object.
-    regression_type: function/closure, Optional
+
+    regression_type : `function`, optional
         A function/closure that defines the type of regression.
         Examples of such closures can be found in
         `menpo.fit.regression.trainer`
 
-        Default: mlr
-    regression_features: None or function/closure or list of those, Optional
+    regression_features : ``None`` or `function` or list of those, optional
         The features that are used in the regressor.
-        If list of length {aam.n_levels}, it specifies the feature to be used
+        If list of length ``aam.n_levels``, it specifies the feature to be used
         per level.
-        If list of length 1, the specified feature will be used for all levels.
+
+        If list of length ``1``, the specified feature will be used for all
+        levels.
 
         Per level:
-        Since the regressor in use is a Parametric one, these features
-        can only come from:
-        `menpo.fit.regression.parametricfeatures`
+            Since the regressor in use is a parametric one, these features
+            can only come from :ref:`parametric_features`.
 
-        If function/closure, the specified funtion will be used.
-        If None, 'weights' will be used.
+            If `function`, the specified function will be used.
+            If ``None``, ``weights`` will be used.
 
-        Default: weights
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int > 0, Optional
+    n_perturbations : `int` > ``0``, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
-    update: 'additive' or 'compositional'
+    update : {'additive', 'compositional'}
         Defines the way that the warp will be updated.
 
-        Default: 'compositional'
-    md_transform: :class:`menpo.transform.ModelDrivenTransform`,
-                      optional
+    md_transform: :map:`ModelDrivenTransform`, optional
         The model driven transform class to be used.
 
-        Default: OrthoMDTransform
-    global_transform: :class:`menpo.transform.affine`, optional
+    global_transform : :map:`Affine`, optional
         The global transform class to be used by the previous
-        md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+        ``md_transform_cls``. Currently, only
+        :map:`AlignmentSimilarity` is supported.
 
-        Default: AlignmentSimilarity
-    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
+    n_shape : `int` > ``1`` or ``0`` <= `float` <= ``1`` or ``None``, or a list of those, optional
         The number of shape components to be used per fitting level.
 
-        If list of length n_levels, then a number of components is defined
+        If list of length ``n_levels``, then a number of components is defined
         per level. The first element of the list corresponds to the lowest
         pyramidal level and so on.
 
-        If not a list or a list with length 1, then the specified number of
+        If not a list or a list with length ``1``, then the specified number of
         components will be used for all levels.
 
         Per level:
-        If None, all the available shape components (n_active_componenets)
-        will be used.
-        If int > 1, a specific number of shape components is specified.
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
+            If ``None``, all the available shape components
+            (``n_active_components``)will be used.
 
-        Default: None
-    n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                      optional
+            If `int` > ``1``, a specific number of shape components is
+            specified.
+
+            If ``0`` <= `float` <= ``1``, it specifies the variance percentage
+            that is captured by the components.
+
+    n_appearance : `int` > ``1`` or ``0`` <= `float` <= ``1`` or ``None``, or a list of those, optional
         The number of appearance components to be used per fitting level.
 
-        If list of length n_levels, then a number of components is defined
+        If list of length ``n_levels``, then a number of components is defined
         per level. The first element of the list corresponds to the lowest
         pyramidal level and so on.
 
@@ -909,13 +886,14 @@ class SDAAMTrainer(SDTrainer):
         components will be used for all levels.
 
         Per level:
-        If None, all the available appearance components
-        (n_active_componenets) will be used.
-        If int > 1, a specific number of appearance components is specified
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
-
-        Default: None
+            If ``None``, all the available appearance components
+            (``n_active_components``) will be used.
+            
+            If `int > ``1``, a specific number of appearance components is
+            specified.
+            
+            If ``0`` <= `float` <= ``1``, it specifies the variance percentage
+            that is captured by the components.
 
     Raises
     -------
@@ -984,18 +962,20 @@ class SDAAMTrainer(SDTrainer):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        group : string
-            The key of the landmark set that should be used. If None,
+
+        group : `string`
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape : :map:`Pointcloud`
             The reference shape computed based on.
         """
         return self.aam.reference_shape
@@ -1007,18 +987,20 @@ class SDAAMTrainer(SDTrainer):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images from which to build the model.
-        group : string
-            The key of the landmark set that should be used. If None,
+
+        group : `string`
+            The key of the landmark set that should be used. If ```None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
-        normalized_images: list of MaskedImage objects
+        normalized_images : :map:`MaskedImage` list
             A list with the normalized images.
         """
         return [i.rescale_to_reference_shape(self.reference_shape,
@@ -1029,16 +1011,16 @@ class SDAAMTrainer(SDTrainer):
     def _set_regressor_trainer(self, level):
         r"""
         Function that sets the regression class to be the
-        ParametricRegressorTrainer.
+        :map:`ParametricRegressorTrainer`.
 
         Parameter
         ---------
-        level: int
+        level : `int`
             The scale level.
 
         Returns
         -------
-        trainer: :class: menpo.fit.regression.ParametricRegressorTrainer
+        trainer: :map:`ParametricRegressorTrainer`
             The regressor object.
         """
         am = self.aam.appearance_models[level]
@@ -1067,11 +1049,12 @@ class SDAAMTrainer(SDTrainer):
 
         Parameters
         ----------
-        regressors: :class: menpo.fit.regression.RegressorTrainer
+        regressors : :map:`RegressorTrainer`
+            The regressor to build with.
 
         Returns
         -------
-        fitter: :class: menpo.fitmultilevel.sdm.base.SDAAMFitter
+        fitter : :map:`SDAAMFitter`
             The SDM fitter object.
         """
         return SDAAMFitter(self.aam, regressors, self.n_training_images)
@@ -1084,70 +1067,62 @@ class SDCLMTrainer(SDTrainer):
 
     Parameters
     ----------
-    clm: :class: menpo.fitmultilevel.aam.builder.CLM
+    clm : :map:`CLM`
         The trained CLM object.
-    regression_type: function/closure, Optional
+    regression_type : `function`, optional
         A function/closure that defines the type of regression.
         Examples of such closures can be found in
         `menpo.fit.regression.trainer`
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_features : ``None`` or `string` or `function`, optional
         The features that are extracted from the regressor.
-        They come from:
-        `menpo.fit.regression.parametricfeatures`
+        They come from :ref:`parametric_features`
 
-        Default: weights
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int > 0, Optional
+    n_perturbations : `int` > ``0``, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
-    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
+    pdm_transform : :map:`ModelDrivenTransform`, optional
         The point distribution transform class to be used.
 
-        Default: OrthoPDM
-    global_transform: :class:`menpo.transform.affine`, optional
+    global_transform : :map:`Affine`, optional
         The global transform class to be used by the previous
-        md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+        ``md_transform_cls``. Currently, only
+        :map:`AlignmentSimilarity` is supported.
 
-        Default: AlignmentSimilarity
-    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
+    n_shape : `int` > ``1`` or ``0`` <= `float` <= ``1`` or ``None``, or a list of those, optional
         The number of shape components to be used per fitting level.
 
-        If list of length n_levels, then a number of components is defined
+        If list of length ``n_levels``, then a number of components is defined
         per level. The first element of the list corresponds to the lowest
         pyramidal level and so on.
 
-        If not a list or a list with length 1, then the specified number of
+        If not a list or a list with length ``1``, then the specified number of
         components will be used for all levels.
 
         Per level:
-        If None, all the available shape components (n_active_componenets)
-        will be used.
-        If int > 1, a specific number of shape components is specified.
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
+            If ``None``, all the available shape components
+            (``n_active_components``) will be used.
 
-        Default: None
+            If `int` > ``1``, a specific number of shape components is
+            specified.
+            
+            If ``0`` <= `float` <= ``1``, it specifies the variance percentage
+            that is captured by the components.
 
     Raises
     -------
     ValueError
-        n_shape can be an integer or a float or None or a list containing 1
-        or {n_levels} of those
+        ``n_shape`` can be an integer or a `float` or ``None`` or a list
+        containing ``1`` or ``n_levels`` of those.
     """
     def __init__(self, clm, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
@@ -1188,18 +1163,18 @@ class SDCLMTrainer(SDTrainer):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images.
-        group : string
-            The key of the landmark set that should be used. If None,
+        group : `string`
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape : :map:`Pointcloud`
             The reference shape.
         """
         return self.clm.reference_shape
@@ -1207,16 +1182,16 @@ class SDCLMTrainer(SDTrainer):
     def _set_regressor_trainer(self, level):
         r"""
         Function that sets the regression class to be the
-        SemiParametricClassifierBasedRegressorTrainer.
+        :map:`SemiParametricClassifierBasedRegressorTrainer`
 
         Parameter
         ---------
-        level: int
+        level : `int`
             The scale level.
 
         Returns
         -------
-        trainer: :class: menpo.fit.regression.SemiParametricClassifierBasedRegressorTrainer
+        trainer: :map:`SemiParametricClassifierBasedRegressorTrainer`
             The regressor object.
         """
         clfs = self.clm.classifiers[level]
@@ -1240,11 +1215,12 @@ class SDCLMTrainer(SDTrainer):
 
         Parameters
         ----------
-        regressors: :class: menpo.fit.regression.RegressorTrainer
+        regressors : :map:`RegressorTrainer`
+            Regressor to train with.
 
         Returns
         -------
-        fitter: :class: menpo.fitmultilevel.sdm.base.SDCLMFitter
+        fitter : :map:`SDCLMFitter`
             The SDM fitter object.
         """
         return SDCLMFitter(self.clm, regressors, self.n_training_images)

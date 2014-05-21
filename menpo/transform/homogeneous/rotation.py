@@ -188,7 +188,7 @@ class Rotation(DiscreteAffine, Similarity):
         +----------+--------------------------------------------+
         |parameter | definition                                 |
         +==========+============================================+
-        |theta     | The angle of rotation around `[0, 0, 1]` |
+        |theta     | The angle of rotation around `[0, 0, 1]`   |
         +----------+--------------------------------------------+
 
         Returns

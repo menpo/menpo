@@ -18,7 +18,6 @@ class Alignment(Targetable, Viewable):
 
     Parameters
     ----------
-
     source : :map:`PointCloud`
         A PointCloud that the alignment will be based from
 

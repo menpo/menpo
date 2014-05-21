@@ -40,6 +40,8 @@ Fitters
 Constrained Local Models
 ------------------------
 
+.. _clm_builders:
+
 Builders
 ^^^^^^^^
 

@@ -109,6 +109,8 @@ Classes
    regression/SemiParametricRegressor
    regression/ParametricRegressor
 
+.. _regression_functions:
+
 Functions
 ^^^^^^^^^
 
@@ -133,6 +135,8 @@ Trainers
    regression/ParametricRegressorTrainer
    regression/SemiParametricRegressorTrainer
    regression/SemiParametricClassifierBasedRegressorTrainer
+
+.. _parametric_features:
 
 Parametric Features
 ~~~~~~~~~~~~~~~~~~~
