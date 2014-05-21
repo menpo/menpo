@@ -3,8 +3,8 @@ from nose.tools import raises
 import numpy as np
 
 import menpo.io as mio
-from menpo.shape import TriMesh
-from menpo.image import Image
+from menpo.shape import TriMesh, TexturedTriMesh, PointCloud
+from menpo.image import Image, MaskedImage
 from numpy.testing import assert_allclose
 
 # ground truth bunny landmarks
@@ -28,6 +28,23 @@ bunny_mouth = np.array([[-0.08719271323528464,
 def test_import_asset_bunny():
     mesh = mio.import_builtin_asset('bunny.obj')
     assert(isinstance(mesh, TriMesh))
+    assert(isinstance(mesh.points, np.ndarray))
+    assert(mesh.points.shape[1] == 3)
+    assert(isinstance(mesh.trilist, np.ndarray))
+    assert(mesh.trilist.shape[1] == 3)
+
+
+def test_import_asset_james():
+    mesh = mio.import_builtin_asset('james.obj')
+    assert(isinstance(mesh, TexturedTriMesh))
+    assert(isinstance(mesh.points, np.ndarray))
+    assert(mesh.points.shape[1] == 3)
+    assert(isinstance(mesh.trilist, np.ndarray))
+    assert(mesh.trilist.shape[1] == 3)
+    assert(isinstance(mesh.texture, MaskedImage))
+    print mesh.tcoords
+    assert(isinstance(mesh.tcoords, PointCloud))
+    assert(mesh.tcoords.points.shape[1] == 2)
 
 @raises(ValueError)
 def test_import_incorrect_built_in():

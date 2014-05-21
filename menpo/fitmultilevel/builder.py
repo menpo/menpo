@@ -84,6 +84,25 @@ class DeformableModelBuilder(object):
         elements.
         If pyramid_on_features is True, it must be a string or a
         function/closure or a list of 1 of those.
+
+        Parameters
+        ----------
+        n_levels: int
+            The number of pyramid levels.
+        pyramid_on_features: boolean
+            If True, the pyramid will be applied to the feature image, so
+            the user needs to define a single feature_type.
+            If False, the pyramid will be applied to the intensities image and
+            features will be extracted at each level, so the user can define
+            a feature_type per level.
+
+        Returns
+        -------
+        feature_type_list: list
+            A list of feature types.
+            If pyramid_on_features is True, the list will have length 1.
+            If pyramid_on_features is False, the list will have length
+            {n_levels}.
         """
         if pyramid_on_features is False:
             feature_type_str_error = ("feature_type must be a str or a "
@@ -110,9 +129,8 @@ class DeformableModelBuilder(object):
             else:
                 raise ValueError(feature_type_str_error)
         for ft in feature_type_list:
-            if ft is not None:
-                if not isinstance(ft, str):
-                    if not hasattr(ft, '__call__'):
+            if (ft is not None and not isinstance(ft, str)
+                    and not hasattr(ft, '__call__')):
                         raise ValueError(feature_type_str_error)
         return feature_type_list
 
@@ -171,10 +189,10 @@ class DeformableModelBuilder(object):
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape : :map:`PointCloud`
             The reference shape that was used to resize all training images to
             a consistent object size.
-        normalized_images: list of MaskedImage objects
+        normalized_images : :map:`MaskedImage` list
             A list with the normalized images.
         """
         # the reference_shape is the mean shape of the images' landmarks
@@ -269,7 +287,7 @@ class DeformableModelBuilder(object):
 
         Parameters
         ----------
-        shapes: list of :class:`Pointcloud`
+        shapes: list of :map:`PointCloud`
             The set of shapes from which to build the model.
         max_components: None or int or float
             Specifies the number of components of the trained shape model.

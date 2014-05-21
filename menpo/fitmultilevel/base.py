@@ -103,7 +103,7 @@ class MultilevelFitter(Fitter):
 
         Returns
         -------
-        FittingList: :class:`menpo.fitmultilevel.fittingresult`
+        fitting_list: :map:`FittingResultList`
             A fitting result object.
         """
         # copy image

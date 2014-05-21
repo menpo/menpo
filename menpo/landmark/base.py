@@ -39,7 +39,7 @@ class Landmarkable(object):
         r"""
         The number of landmark groups on this object.
 
-        :type: int
+        :type: `int`
         """
         return self.landmarks.n_groups
 
@@ -52,7 +52,7 @@ class LandmarkManager(Transformable, Viewable):
 
     Parameters
     ----------
-    target : :class:`menpo.landmarks.base.Landmarkable`
+    target : :map:`Landmarkable`
         The parent object that owns these landmarks
     """
 
@@ -71,7 +71,7 @@ class LandmarkManager(Transformable, Viewable):
         Returns
         -------
 
-        manager: :map:`LandmarkManager`
+        manager : :map:`LandmarkManager`
             A manager with an identical set of annotations to this one.
 
         """
@@ -95,9 +95,10 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ----------
-        group_label : String
+        group_label : `string`
             Label of new group.
-        value : LandmarkGroup or PointCloud
+
+        value : :map:`LandmarkGroup` or :map:`PointCloud`
             The new landmark group to set.
 
         Raises
@@ -133,15 +134,12 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ---------
-        group_label : String, optional
+        group_label : `string`, optional
             The label of the group. If None is provided, and if there is only
             one group, the unambiguous group will be returned.
-
-            Default: None
-
         Returns
         -------
-        lmark_group : :class:`LandmarkGroup`
+        lmark_group : :map:`LandmarkGroup`
             The matching landmark group.
         """
         if group_label is None:
@@ -158,7 +156,7 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ---------
-        group_label : String
+        group_label : `string`
             The label of the group.
         """
         del self._landmark_groups[group_label]
@@ -178,7 +176,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         Total number of labels.
 
-        :type: int
+        :type: `int`
         """
         return len(self._landmark_groups)
 
@@ -187,7 +185,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         Whether the object has landmarks or not
 
-        :type: int
+        :type: `int`
         """
         return self.n_groups != 0
 
@@ -196,7 +194,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         All the labels for the landmark set.
 
-        :type: List of strings
+        :type: list of `string`
         """
         return self._landmark_groups.keys()
 
@@ -207,7 +205,7 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ----------
-        landmark_manager : :class:`LandmarkManager`
+        landmark_manager : :map:`LandmarkManager`
             The landmark manager to copy from.
         """
         new_landmark_manager = landmark_manager.copy()
@@ -225,9 +223,10 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ----------
-        include_labels : bool, optional
-            If `True`, also render the label names next to the landmarks.
-        kwargs : dict, optional
+        include_labels : `bool`, optional
+            If ``True``, also render the label names next to the landmarks.
+
+        kwargs : `dict`, optional
             Passed through to the viewer.
         """
         for group in self._landmark_groups.itervalues():
@@ -255,17 +254,19 @@ class LandmarkGroup(Viewable):
     ----------
     target : :map:`Landmarkable`
         The parent object of this landmark group.
-    group_label : String
+
+    group_label : `string`
         The label of the group.
+
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : dict of string to boolean ndarrays
+
+    labels_to_masks : `dict` of `string` to `boolean` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
-    copy : boolean, optional
-        If `True`, a copy of the :map:`PointCloud` is stored on the group.
 
-        Default: `True`
+    copy : `boolean`, optional
+        If ``True``, a copy of the :map:`PointCloud` is stored on the group.
 
     Raises
     ------
@@ -316,7 +317,6 @@ class LandmarkGroup(Viewable):
         group : :map:`LandmarkGroup`
             A group with an identical set of points, labels, and masks
             as this one.
-
         """
         return LandmarkGroup(self._target, self.group_label, self.lms,
                              self._labels_to_masks, copy=True)
@@ -333,9 +333,10 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label of landmark.
-        indices : (K,) ndarray
+
+        indices : ``(K,)`` `ndarray`
             Array of indices in to the pointcloud. Each index implies
             membership to the label.
         """
@@ -349,7 +350,7 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label to filter on.
 
         Returns
@@ -364,13 +365,14 @@ class LandmarkGroup(Viewable):
         Delete the semantic labelling for the provided label.
 
          .. note::
+
              You cannot delete a semantic label and leave the landmark group
              partially unlabelled. Landmark groups must contain labels for
              every point.
 
         Parameters
         ---------
-        label : String
+        label : `string`
             The label to remove.
 
         Raises
@@ -395,7 +397,7 @@ class LandmarkGroup(Viewable):
         """
         The label of this landmark group.
 
-        :type: String
+        :type: `string`
         """
         return self._group_label
 
@@ -404,7 +406,7 @@ class LandmarkGroup(Viewable):
         """
         The list of labels that belong to this group.
 
-        :type: [strings]
+        :type: list of `string`
         """
         return self._labels_to_masks.keys()
 
@@ -413,7 +415,7 @@ class LandmarkGroup(Viewable):
         """
         Number of labels in the group.
 
-        :type: int
+        :type: `int`
         """
         return len(self.labels)
 
@@ -422,7 +424,7 @@ class LandmarkGroup(Viewable):
         """
         The pointcloud representing all the landmarks in the group.
 
-        :type: :map:`Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self._pointcloud
 
@@ -431,7 +433,7 @@ class LandmarkGroup(Viewable):
         """
         The total number of landmarks in the group.
 
-        :type: int
+        :type: `int`
         """
         return self._pointcloud.n_points
 
@@ -440,7 +442,7 @@ class LandmarkGroup(Viewable):
         """
         The dimensionality of these landmarks.
 
-        :type: int
+        :type: `int`
         """
         return self._pointcloud.n_dims
 
@@ -450,12 +452,11 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        labels : String or List of strings, optional
+        labels : `string` or list of `string`, optional
             Labels that should be kept in the returned landmark group. If
             None is passed, and if there is only one label on this group,
             the label will be substituted automatically.
 
-            Default: `None`
         Returns
         -------
         landmark_group : :map:`LandmarkGroup`
@@ -481,7 +482,7 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label to exclude.
 
         Returns
@@ -515,7 +516,7 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        labels : [String]
+        labels : list of `string`
             List of strings of the labels to keep
 
         Returns
@@ -547,9 +548,9 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        include_labels : bool, optional
+        include_labels : `boolean`, optional
             If `True`, also render the label names next to the landmarks.
-        kwargs : dict, optional
+        kwargs : `dict`, optional
             Passed through to the viewer.
         """
         target_viewer = self._target.view(figure_id=figure_id,

@@ -247,8 +247,8 @@ class MaskedImage(Image):
             ========== ====================================
             Value      Return shape
             ========== ====================================
-            `True`   (`mask.n_true`,`n_channels`)
-            `False`  (`mask.n_true` x `n_channels`,)
+            `True`     (`mask.n_true`,`n_channels`)
+            `False`    (`mask.n_true` x `n_channels`,)
             ========== ====================================
 
             Default: `False`

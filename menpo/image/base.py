@@ -58,29 +58,32 @@ class Image(Vectorizable, Landmarkable, Viewable):
     spatially distinct location in the array is referred to as a `pixel`.
     At a pixel, `k` distinct pieces of information can be stored. Each
     datum at a pixel is refereed to as being in a `channel`. All pixels in
-    the image have the  same number of channels, and all channels have the
-    same data-type (float).
+    the image have the same number of channels, and all channels have the
+    same data-type (`float`).
 
     Parameters
     -----------
-    image_data : (M, N ..., Q, C) ndarray
+    image_data : ``(M, N ..., Q, C)`` `ndarray`
         Array representing the image pixels, with the last axis being
         channels.
-    copy : bool, optional
-        If False, the image_data will not be copied on assignment. Note that
-        this will miss out on additional checks. Further note that we still
-        demand that the array is C-contiguous - if it isn't, a copy will be
-        generated anyway.
-        In general this should only be used if you know what you are doing.
+    copy : `bool`, optional
+        If ``False``, the ``image_data`` will not be copied on assignment.
+        Note that this will miss out on additional checks. Further note that we
+        still demand that the array is C-contiguous - if it isn't, a copy will
+        be generated anyway.
+        In general, this should only be used if you know what you are doing.
 
-        Default False
+    Attributes
+    ----------
+    features : :map:`ImageFeatures`
+        Gives access to all the feature types that we support.
 
     Raises
     ------
-
-    Warning : If copy=False cannot be honored
-    ValueError : If the pixel array is malformed
-
+    Warning
+        If ``copy=False`` cannot be honoured
+    ValueError
+        If the pixel array is malformed
     """
 
     __metaclass__ = abc.ABCMeta
@@ -309,8 +312,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
             ========== =================================
             Value      Return shape
             ========== =================================
-            `False`  (`n_pixels`  x `n_channels`,)
-            `True`   (`n_pixels`, `n_channels`)
+            `False`    (`n_pixels` * `n_channels`,)
+            `True`     (`n_pixels`, `n_channels`)
             ========== =================================
 
             Default: `False`

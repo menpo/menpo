@@ -267,22 +267,18 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         Parameters
         -----------
-        from_basic_fittings: boolean, optional
-            If True, the returned transform per iteration is used to warp
+        from_basic_fittings : `boolean`, optional
+            If ``True``, the returned transform per iteration is used to warp
             the internal image representation used by each basic fitter.
-            If False, the transforms are used to warp original image.
+            If ``False``, the transforms are used to warp original image.
 
-            Default: False
-
-        as_pixels: boolean, optional
-            Whether the result is returned as a list of Images or
-            ndarrays.
-
-            Default: False
+        as_pixels : `boolean`, optional
+            Whether the result is returned as a list of :map:`Image` or
+            `ndarray`.
 
         Returns
         -------
-        warped_images: :class:`pybug.image.masked.MaskedImage` or ndarray list
+        warped_images : :map:`MaskedImage` or `ndarray` list
             A list containing the warped images obtained at each fitting
             iteration.
         """
@@ -311,17 +307,14 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         each fitting iteration.
 
         Parameters
-        -----------
-        as_pixels: boolean, optional
-            Whether the result is returned as a list of Images or
-            ndarrays.
-
-            Default: False
+        ----------
+        as_pixels : `boolean`, optional
+            Whether the result is returned as a list of :map:`Image` or
+            `ndarray`.
 
         Returns
         -------
-        appearance_reconstructions: :class:`pybug.image.masked.MaskedImage`
-                                    or ndarray list
+        appearance_reconstructions : :map:`MaskedImage` or `ndarray` list
             A list containing the appearance reconstructions obtained at each
             fitting iteration.
         """

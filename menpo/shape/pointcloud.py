@@ -7,7 +7,7 @@ from menpo.shape.base import Shape
 class PointCloud(Shape):
     r"""
     An N-dimensional point cloud. This is internally represented as an ndarray
-    of shape (`n_points`, `n_dims`). This class is important for dealing
+    of shape (``n_points``, ``n_dims``). This class is important for dealing
     with complex functionality such as viewing and representing metadata such
     as landmarks.
 
@@ -15,18 +15,15 @@ class PointCloud(Shape):
 
     Parameters
     ----------
-    points : (N, D) ndarray
-        A (`n_points`, `n_dims`) ndarray representing the points.
+    points : ``(n_points, n_dims)`` `ndarray`
+        The array representing the points.
 
-    copy: bool, optional
-        If False, the points will not be copied on assignment. Note that
+    copy : `boolean`, optional
+        If ``False``, the points will not be copied on assignment. Note that
         this will miss out on additional checks. Further note that we still
         demand that the array is C-contiguous - if it isn't, a copy will be
         generated anyway.
         In general this should only be used if you know what you are doing.
-
-        Default False
-
     """
 
     def __init__(self, points, copy=True):
@@ -48,11 +45,11 @@ class PointCloud(Shape):
         An efficient copy of this PointCloud.
 
         Only landmarks and points will be transferred. For a full copy consider
-        using `deepcopy()`.
+        using ``deepcopy()``.
 
         Returns
         -------
-        pointcloud: :map:`PointCloud`
+        pointcloud : :map:`PointCloud`
             A PointCloud with the same points and landmarks as this one.
 
         """
@@ -63,7 +60,7 @@ class PointCloud(Shape):
     @property
     def h_points(self):
         r"""
-        homogeneous points of shape (n_dims + 1, n_points)
+        homogeneous points of shape (``n_dims + 1``, ``n_points``)
         """
         return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
 
@@ -72,7 +69,7 @@ class PointCloud(Shape):
         r"""
         The number of points in the pointcloud.
 
-        :type: int
+        :type: `int`
         """
         return self.points.shape[0]
 
@@ -81,7 +78,7 @@ class PointCloud(Shape):
         r"""
         The number of dimensions in the pointcloud.
 
-        :type: int
+        :type: `int`
         """
         return self.points.shape[1]
 
@@ -91,7 +88,7 @@ class PointCloud(Shape):
         The mean of all the points in this PointCloud (in the centre of mass
         sense)
 
-        :type: (D,) ndarray
+        :type: ``(n_dims)`` `ndarray`
             The mean of this PointCloud's points.
         """
         return np.mean(self.points, axis=0)
@@ -102,7 +99,7 @@ class PointCloud(Shape):
         The centre of the absolute bounds of this PointCloud. Contrast with
         centre, which is the mean point position.
 
-        :type: (D,) ndarray
+        :type: ``n_dims`` `ndarray`
             The centre of the bounds of this PointCloud.
         """
         min_b, max_b = self.bounds()
@@ -112,22 +109,23 @@ class PointCloud(Shape):
         r"""
         Returns a flattened representation of the pointcloud.
         Note that the flattened representation is of the form
-        `[x0, y0, x1, y1, ....., xn, yn]` for 2D.
+        ``[x0, y0, x1, y1, ....., xn, yn]`` for 2D.
 
         Returns
         -------
-        flattened : (N,) ndarray
+        flattened : ``(n_points,)`` `ndarray`
             The flattened points.
         """
         return self.points.flatten()
 
     def tojson(self):
         r"""
-        Convert this `PointCloud` to a dictionary JSON representation.
+        Convert this PointCloud to a dictionary JSON representation.
 
         Returns
         -------
-        dict with a 'points' key, the value of which is a list suitable
+        json_dict : `dict`
+        Dictionary with a 'points' key, the value of which is a list suitable
         for use in the by the `json` standard library package.
         """
         return {'points': self.points.tolist()}
@@ -145,25 +143,25 @@ class PointCloud(Shape):
 
     def bounds(self, boundary=0):
         r"""
-        The minimum to maximum extent of the :class:`PointCloud`.
+        The minimum to maximum extent of the :map:`PointCloud`.
         An optional boundary argument can be provided to expand the bounds
         by a constant margin.
 
         Parameters
         ----------
-        boundary: b float
+        boundary : `float`
             A optional padding distance that is added to the bounds. Default
-            is zero, meaning the max/min of tightest possible containing
+            is ``0``, meaning the max/min of tightest possible containing
             square/cube/hypercube is returned.
 
         Returns
         --------
-        min_b : (D,) ndarray
-            The minimum extent of the :class:`PointCloud` and boundary along
+        min_b : ``(n_dims,)`` `ndarray`
+            The minimum extent of the :map:`PointCloud` and boundary along
             each dimension
 
-        max_b : (D,) ndarray
-            The maximum extent of the :class:`PointCloud` and boundary along
+        max_b : ``(n_dims,)`` `ndarray`
+            The maximum extent of the :map:`PointCloud` and boundary along
             each dimension
         """
         min_b = np.min(self.points, axis=0) - boundary
@@ -172,19 +170,19 @@ class PointCloud(Shape):
 
     def range(self, boundary=0):
         r"""
-        The range of the extent of the :class:`PointCloud`.
+        The range of the extent of the :map:`PointCloud`.
 
         Parameters
         ----------
-        boundary: b float
+        boundary : `float`
             A optional padding distance that is used to extend the bounds
-            from which the range is computed. Default is zero, no extension
+            from which the range is computed. Default is ``0``, no extension
             is performed.
 
         Returns
-        --------
-        range : (D,) ndarray
-            The range of the :class:`PointCloud`s extent in each dimension.
+        -------
+        range : ``(n_dims,)`` `ndarray`
+            The range of the :map:`PointCloud` extent in each dimension.
         """
         min_b, max_b = self.bounds(boundary)
         return max_b - min_b
@@ -206,13 +204,13 @@ class PointCloud(Shape):
 
         Parameters
         ----------
-        pointcloud : :class:`PointCloud`
+        pointcloud : :map:`PointCloud`
             The second pointcloud to compute distances between. This must be
             of the same dimension as this PointCloud.
 
         Returns
         -------
-        distance_matrix: (N, M) ndarray
+        distance_matrix: ``(n_points, n_points)`` `ndarray`
             The symmetric pairwise distance matrix between the two PointClouds
             s.t. distance_matrix[i, j] is the distance between the i'th
             point of this PointCloud and the j'th point of the input
@@ -234,8 +232,8 @@ class PointCloud(Shape):
 
         Returns
         -------
-        norm: float
-            The norm of this :class:`PointCloud`
+        norm : `float`
+            The norm of this :map:`PointCloud`
         """
         return np.linalg.norm(self.points - self.centre, **kwargs)
 
@@ -244,16 +242,16 @@ class PointCloud(Shape):
         A 1D boolean array with the same number of elements as the number of
         points in the pointcloud. This is then broadcast across the dimensions
         of the pointcloud and returns a new pointcloud containing only those
-        points that were `True` in the mask.
+        points that were ``True`` in the mask.
 
         Parameters
         ----------
-        mask : (N,) ndarray
+        mask : ``(n_points,)`` `ndarray`
             1D array of booleans
 
         Returns
         -------
-        pointcloud : :class:`PointCloud`
+        pointcloud : :map:`PointCloud`
             A new pointcloud that has been masked.
         """
         return PointCloud(self.points[mask, :])
@@ -266,12 +264,12 @@ class PointCloud(Shape):
 
         Parameters
         ----------
-        mask : (N,) ndarray
+        mask : ``(n_points,)`` `ndarray`
             1D array of booleans
 
         Returns
         -------
-        pointcloud : :class:`PointCloud`
+        pointcloud : :map:`PointCloud`
             A pointer to self.
         """
         self.points = self.points[mask, :]

@@ -64,4 +64,4 @@ class Fitter(object):
         r"""
         Abstract method that gets the parameters.
         """
-        return shape
+        pass
