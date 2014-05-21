@@ -99,6 +99,17 @@ Fitting Results
    fittingresult/MultilevelFittingResult
    fittingresult/AAMMultilevelFittingResult
 
+.. _feature_functions:
+
+Features Functions
+------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   functions/compute_features
+   functions/sparse_hog
+
 Utility Functions
 -----------------
 
@@ -111,5 +122,3 @@ Utility Functions
    functions/extract_local_patches
    functions/mean_pointcloud
    functions/noisy_align
-   functions/compute_features
-   functions/sparse_hog

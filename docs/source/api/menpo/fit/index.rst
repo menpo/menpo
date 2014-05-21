@@ -150,7 +150,7 @@ Parametric Features
    regression/parametricfeatures/project_out
    regression/parametricfeatures/quadratic_weights
    regression/parametricfeatures/weights
-   regression/parametricfeatures/whiten_weights
+   regression/parametricfeatures/whitened_weights
 
 
 Fitting Result
