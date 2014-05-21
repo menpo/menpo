@@ -24,14 +24,14 @@ class SDTrainer(object):
 
     Parameters
     ----------
-    regression_type : function/closure, optional
+    regression_type : `function`, optional
         A `function` that defines the regression technique to be used.
         Examples of such closures can be found in :ref:`regression_functions`.
 
     regression_features :`` None`` or `string` or `function`, optional
         The features that are used during the regression.
 
-    feature_type : None or string or function/closure or list of those, optional
+    feature_type : ``None`` or `string` or `function` or list of those, optional
         Defines the features that will be extracted from the image.
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
@@ -163,20 +163,17 @@ class SDTrainer(object):
         ----------
         images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the SD.
-        group : string, optional
-            The key of the landmark set that should be used. If None,
+
+        group : `string`, optional
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-        label: string, optional
+        label: `string`, optional
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
-            Default: 'all'
-        verbose: bool, optional
+        verbose: `boolean`, optional
             Flag that controls information and progress printing.
-
-            Default: False
         """
         if verbose:
             print_dynamic('- Computing reference shape')
@@ -291,27 +288,30 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :map:`MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images from which to build the model.
-        group : string
-            The key of the landmark set that should be used. If None,
+
+        group : `string`
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-        reference_shape: :map:`PointCloud`
+
+        reference_shape : :map:`PointCloud`
             The reference shape that is used to resize all training images to
             a consistent object size.
-        interpolator: string
+
+        interpolator : `string`
             The interpolator that should be used to perform the warps.
+
         verbose: bool, optional
             Flag that controls information and progress printing.
 
-            Default: False
-
         Returns
         -------
-        normalized_images: list of MaskedImage objects
+        normalized_images : :map:`MaskedImage` list
             A list with the normalized images.
         """
         normalized_images = []
@@ -338,29 +338,32 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :map:`MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        n_levels: int
+
+        n_levels : `int`
             The number of multi-resolution pyramidal levels to be used.
-        downscale: float
+
+        downscale : `float`
             The downscale factor that will be used to create the different
             pyramidal levels.
-        pyramid_on_features: boolean
-            If True, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-            If False, the pyramid is created on the original (intensities)
-            space.
-        feature_type: list with str or function/closure or None
-            In case pyramid_on_features is enabled, feature_type[0] will be
-            used as features type.
-        verbose: bool, optional
-            Flag that controls information and progress printing.
 
-            Default: False
+        pyramid_on_features : `boolean`
+            If ``True``, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+
+            If ``False``, the pyramid is created on the original (intensities)
+            space.
+        feature_type : list with str or `function` or None
+            In case``pyramid_on_features`` is ``True``, ``feature_type[0]``
+            will be used as features type.
+
+        verbose : `boolean`, optional
+            Flag that controls information and progress printing.
 
         Returns
         -------
-        generator: function
+        generator : `function`
             The generator function of the Gaussian pyramid.
         """
         if pyramid_on_features:
@@ -396,25 +399,27 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :map:`MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        generators: list of generator functions
-            The generator functions of the Gaussian pyramid for all images.
-        n_levels: int
-            The number of multi-resolution pyramidal levels to be used.
-        pyramid_on_features: boolean
-            If True, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-            If False, the pyramid is created on the original (intensities)
-            space.
-        feature_type: list of length n_levels with str or function/closure or
-                      None
-            The feature type per level to be used in case pyramid_on_features
-            is enabled.
-        verbose: bool, optional
-            Flag that controls information and progress printing.
 
-            Default: False
+        generators : list of generator `function`
+            The generator functions of the Gaussian pyramid for all images.
+
+        n_levels: `int`
+            The number of multi-resolution pyramidal levels to be used.
+
+        pyramid_on_features: boolean
+            If ``True``, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+            If ``False``, the pyramid is created on the original (intensities)
+            space.
+
+        feature_type: list of length ``n_levels`` with `string` or `function` or ``None``
+            The feature type per level to be used in case ``pyramid_on_features``
+            is enabled.
+
+        verbose: `boolean`, optional
+            Flag that controls information and progress printing.
 
         Returns
         -------
@@ -463,15 +468,17 @@ class SDTrainer(object):
     def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
         r"""
         Checks the feature type per level.
-        If pyramid_on_features is False, it must be a string or a
-        function/closure or a list of those containing 1 or {n_levels}
+        
+        If ``pyramid_on_features`` is ``False``, it must be a string or a
+        `function` or a list of those containing 1 or ``n_levels``
         elements.
-        If pyramid_on_features is True, it must be a string or a
-        function/closure or a list of 1 of those.
+        
+        If ``pyramid_on_features`` is ``True``, it must be a `string` or a
+        `function` or a list of one of those.
         """
         if pyramid_on_features is False:
             feature_type_str_error = ("feature_type must be a str or a "
-                                      "function/closure or a list of "
+                                      "`function` or a list of "
                                       "those containing 1 or {} "
                                       "elements").format(n_levels)
             if not isinstance(feature_type, list):
@@ -485,7 +492,7 @@ class SDTrainer(object):
         else:
             feature_type_str_error = ("pyramid_on_features is enabled so "
                                       "feature_type must be a str or a "
-                                      "function/closure or a list "
+                                      "`function` or a list "
                                       "containing 1 of those")
             if not isinstance(feature_type, list):
                 feature_type_list = [feature_type]
@@ -504,11 +511,11 @@ class SDTrainer(object):
     def check_regression_features(self, regression_features, n_levels):
         r"""
         Checks the regression features type per level. It must be a
-        function/closure from `menpo.fit.regression.parametricfeatures` or
-        a list of those containing 1 or {n_levels} elements.
+        `function` from :ref:`parametric_features` or
+        a list of those containing ``1`` or ``n_levels`` elements.
         """
         regression_features_str_error = ("regression_features must be "
-                                         "function/closure or str or a list of "
+                                         "`function` or str or a list of "
                                          "those containing 1 or {} "
                                          "elements").format(n_levels)
         if not isinstance(regression_features, list):
@@ -528,7 +535,7 @@ class SDTrainer(object):
     @classmethod
     def check_n_levels(cls, n_levels):
         r"""
-        Checks the number of pyramid levels that must be int > 0.
+        Checks the number of pyramid levels that must be `int` > ``0``.
         """
         if not isinstance(n_levels, int) or n_levels < 1:
             raise ValueError("n_levels must be int > 0")
@@ -536,7 +543,7 @@ class SDTrainer(object):
     @classmethod
     def check_downscale(cls, downscale):
         r"""
-        Checks the downscale factor of the pyramid that must be >= 1.
+        Checks the downscale factor of the pyramid that must be >= ``1``.
         """
         if downscale < 1:
             raise ValueError("downscale must be >= 1")
@@ -544,7 +551,7 @@ class SDTrainer(object):
     @classmethod
     def check_n_permutations(cls, n_permutations):
         r"""
-        Checks the n_permutations that must be > 0.
+        Checks the n_permutations that must be > ``0``.
         """
         if n_permutations < 1:
             raise ValueError("n_permutations must be > 0")
@@ -556,26 +563,28 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        images: list of :map:`MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        group : string
-            The key of the landmark set that should be used. If None,
+
+        group : `string`
+            The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-        label: string
+
+        label : `string`
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
 
         Returns
         -------
-        reference_shape: :map:`PointCloud`
-            The reference shape computed based on the given images' shapes.
+        reference_shape : :map:`PointCloud`
+            The reference shape computed based on the given images shapes.
         """
         pass
 
     def _rescale_reference_shape(self):
         r"""
-        Function that rescales the reference shape wrt to
-        normalization_diagonal parameter.
+        Function that rescales the reference shape w.r.t. to
+        ``normalization_diagonal`` parameter.
         """
         pass
 
@@ -583,7 +592,7 @@ class SDTrainer(object):
     def _set_regressor_trainer(self, **kwargs):
         r"""
         Function that sets the regression object to be one from
-        :class: menpo.fit.regression.RegressorTrainer,
+        :map:`RegressorTrainer`,
         """
         pass
 
@@ -594,12 +603,12 @@ class SDTrainer(object):
 
         Parameters
         ----------
-        regressors: list of :class: menpo.fit.regression.RegressorTrainer
+        regressors : list of :map:`RegressorTrainer`
             The list of regressors.
 
         Returns
         -------
-        fitter: :class: menpo.fitmultilevel.sdm.base
+        fitter : :map:`SDMFitter`
             The SDM fitter object.
         """
         pass
@@ -754,7 +763,7 @@ class SDMTrainer(SDTrainer):
     def _rescale_reference_shape(self):
         r"""
         Function that rescales the reference shape w.r.t. to
-        normalization_diagonal parameter.
+        ``normalization_diagonal`` parameter.
         """
         if self.normalization_diagonal:
             x, y = self.reference_shape.range()
@@ -765,7 +774,7 @@ class SDMTrainer(SDTrainer):
     def _set_regressor_trainer(self, level):
         r"""
         Function that sets the regression class to be the
-        NonParametricRegressorTrainer.
+        :map:`NonParametricRegressorTrainer`.
 
         Parameter
         ---------
@@ -813,7 +822,7 @@ class SDAAMTrainer(SDTrainer):
         The trained AAM object.
 
     regression_type : `function`, optional
-        A function/closure that defines the type of regression.
+        A `function` that defines the type of regression.
         Examples of such closures can be found in
         `menpo.fit.regression.trainer`
 
@@ -899,10 +908,10 @@ class SDAAMTrainer(SDTrainer):
     -------
     ValueError
         n_shape can be an integer or a float or None or a list containing 1
-        or {n_levels} of those
+        or ``n_levels`` of those
     ValueError
         n_appearance can be an integer or a float or None or a list containing
-        1 or {n_levels} of those
+        1 or ``n_levels`` of those
     """
     def __init__(self, aam, regression_type=mlr, regression_features=weights,
                  noise_std=0.04, rotation=False, n_perturbations=10,
@@ -1070,7 +1079,7 @@ class SDCLMTrainer(SDTrainer):
     clm : :map:`CLM`
         The trained CLM object.
     regression_type : `function`, optional
-        A function/closure that defines the type of regression.
+        A `function` that defines the type of regression.
         Examples of such closures can be found in
         `menpo.fit.regression.trainer`
 
