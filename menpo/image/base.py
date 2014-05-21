@@ -13,7 +13,7 @@ from skimage.transform.pyramids import _smooth
 from menpo.base import Vectorizable
 from menpo.landmark import Landmarkable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
-                             AlignmentUniformScale, Affine)
+                             AlignmentUniformScale, Affine, Homogeneous)
 from menpo.visualize.base import Viewable, ImageViewer
 from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
@@ -43,6 +43,11 @@ class ImageBoundaryError(ValueError):
         self.requested_max = requested_max
         self.snapped_min = snapped_min
         self.snapped_max = snapped_max
+
+# Store out a transform that simply switches the x and y axis
+xy_yx = Homogeneous(np.array([[0., 1., 0.],
+                              [1., 0., 0.],
+                              [0., 0., 1.]]))
 
 
 class Image(Vectorizable, Landmarkable, Viewable):
@@ -919,24 +924,15 @@ class Image(Vectorizable, Landmarkable, Viewable):
             A copy of this image, warped.
         """
         # skimage has an optimised Cython interpolation, if the transform
-        # we are using is an Affine we get faster interpolation..
+        # we are using is an Affine we get faster interpolation, so we'll be
+        # go through them
+        # unfortunately they consider xy -> yx
+        t = xy_yx.compose_before(transform).compose_before(xy_yx)
         if isinstance(transform, Affine):
-            h  = transform.h_matrix
-            # TODO do this elegantly
-            m = np.eye(3)
-            m[0, 0] = h[1, 1]
-            m[1, 1] = h[0, 0]
-            m[0, 1] = h[1, 0]
-            m[1, 0] = h[0, 1]
-            m[0, 2] = h[1, 2]
-            m[1, 2] = h[0, 2]
-            print m
-            print h
-            mapping = m
+            mapping = t.h_matrix
         else:
-            # just give skimage a closure that applies our transform.
-            # TODO flip the transform order here
-            mapping = lambda x: transform.apply(x)
+            # just give skimage a closure that applies our transform chain.
+            mapping = lambda x: t.apply(x)
         warped_pixels = skimage.transform.warp(self.pixels,
                                                inverse_map=mapping,
                                                output_shape=template_shape,
