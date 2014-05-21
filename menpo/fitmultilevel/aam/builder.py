@@ -444,15 +444,15 @@ class AAMBuilder(DeformableModelBuilder):
         # normalize images with respect to reference shape
         if self.normalization_diagonal is None:
             shapes_ram = [i.landmarks[group][label].lms for i in images_ram]
-            reference_shape_ram = mean_pointcloud(shapes_ram)
-            x_ram, y_ram = reference_shape_ram.range()
+            r_shape_ram = mean_pointcloud(shapes_ram)
+            x_ram, y_ram = r_shape_ram.range()
             x, y = self.reference_shape.range()
             scale = np.sqrt(x**2 + y**2) / np.sqrt(x_ram**2 + y_ram**2)
-            Scale(scale, reference_shape_ram.n_dims).apply_inplace(
-                reference_shape_ram)
-            images_ram = [i.rescale_to_reference_shape(
-                reference_shape_ram, group=group, label=label,
-                interpolator=self.interpolator) for i in images_ram]
+            Scale(scale, r_shape_ram.n_dims).apply_inplace(r_shape_ram)
+            images_ram = [i.rescale_to_reference_shape(r_shape_ram,
+                                                       group=group,
+                                                       label=label)
+                          for i in images_ram]
         # train aam
         aam_ram = self.build(images_ram, group=group, label=label,
                              verbose=False)
