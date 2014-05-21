@@ -32,6 +32,9 @@ Regression
 Regressors
 ~~~~~~~~~~
 
+Classes
+^^^^^^^
+
 .. toctree::
    :maxdepth: 1
 
@@ -39,6 +42,18 @@ Regressors
    regression/NonParametricRegressor
    regression/SemiParametricRegressor
    regression/ParametricRegressor
+
+Functions
+^^^^^^^^^
+
+.. toctree::
+   :maxdepth: 1
+
+   regression/regressionfunctions/regression
+   regression/regressionfunctions/mlr
+   regression/regressionfunctions/mlr_pca
+   regression/regressionfunctions/mlr_pca_weights
+   regression/regressionfunctions/mlr_svd
 
 
 Trainers
@@ -58,6 +73,14 @@ Parametric Features
 
 .. toctree::
    :maxdepth: 1
+
+   regression/parametricfeatures/appearance
+   regression/parametricfeatures/difference
+   regression/parametricfeatures/probabilistic
+   regression/parametricfeatures/project_out
+   regression/parametricfeatures/quadratic_weights
+   regression/parametricfeatures/weights
+   regression/parametricfeatures/whiten_weights
 
 
 Fitting Result
