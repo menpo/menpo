@@ -1,20 +1,28 @@
 xref_map = {
+'_apply': ('meth', 'menpo.transform.base.Transform._apply'),
+'apply_inplace': ('meth', 'menpo.transform.base.Transform.apply_inplace'),
 'Affine': ('class', 'menpo.transform.homogeneous.affine.Affine'),
+'Alignment': ('class', 'menpo.transform.base.alignment.Alignment'),
+'AlignmentSimilarity': ('class', 'menpo.transform.homogeneous.similarity.AlignmentSimilarity'),
 'ComposableTransform': ('class', 'menpo.transform.base.composable.ComposableTransform'),
-
 'DiscreteAffine': ('class', 'menpo.transform.homogeneous.affine.DiscreteAffine'),
 'DL': ('class', 'menpo.base.DL'),
 'DP': ('class', 'menpo.base.DP'),
 'DX': ('class', 'menpo.base.DX'),
+'from_vector_inplace': ('meth', 'menpo.base.Vectorizable.from_vector_inplace'),
+'Homogeneous': ('class', 'menpo.transform.homogeneous.Homogeneous'),
 'Image': ('class', 'menpo.image.base.Image'),
+'Invertible': ('class', 'menpo.transform.base.invertible.Invertible'),
 'Landmarkable': ('class', 'menpo.landmark.base.Landmarkable'),
 'LandmarkGroup': ('class', 'menpo.landmark.base.LandmarkGroup'),
 'LandmarkManager': ('class', 'menpo.landmark.base.LandmarkManager'),
 'MaskedImage': ('class', 'menpo.image.masked.MaskedImage'),
 'MeanInstanceLinearModel': ('class', 'menpo.model.base.MeanInstanceLinearModel'),
+'MultipleAlignment': ('class', 'menpo.transform.groupalign.base.MultipleAlignment'),
 'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),
 'principal_component_decomposition': ('function', 'menpo.math.decomposition.principal_component_decomposition'),
 'Shape': ('class', 'menpo.shape.base.Shape'),
+'Similarity': ('class', 'menpo.transform.homogeneous.similarity.Similarity'),
 'Targetable': ('class', 'menpo.base.Targetable'),
 'Transform': ('class', 'menpo.transform.base.Transform'),
 'TransformChain': ('class', 'menpo.transform.base.composable.TransformChain'),
@@ -22,5 +30,7 @@ xref_map = {
 'TriMesh': ('class', 'menpo.shape.mesh.TriMesh'),
 'Vectorizable': ('class', 'menpo.base.Vectorizable'),
 'view': ('meth', 'menpo.visualize.base.Viewable.view'),
-'Viewable': ('class', 'menpo.visualize.base.Viewable')
+'Viewable': ('class', 'menpo.visualize.base.Viewable'),
+'VComposable': ('class', 'menpo.transform.base.composable.VComposable'),
+'VInvertible': ('class', 'menpo.transform.base.invertible.VInvertible')
 }

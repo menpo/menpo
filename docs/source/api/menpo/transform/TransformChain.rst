@@ -1,6 +1,6 @@
 .. _menpo-transform-TransformChain:
 
-.. currentmodule:: menpo.transform.base
+.. currentmodule:: menpo.transform.base.composable
 
 TransformChain
 ==============

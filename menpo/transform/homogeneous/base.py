@@ -43,13 +43,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return rep
 
     def _transform_str(self):
-        r"""
-        A string representation explaining what this homogeneous transform does.
-        Has to be implemented by base classes.
+        r"""A string representation explaining what this homogeneous transform
+        does. Has to be implemented by base classes.
 
         Returns
         -------
-        str : string
+        string : ``str``
             String representation of transform.
         """
         return 'Homogeneous'

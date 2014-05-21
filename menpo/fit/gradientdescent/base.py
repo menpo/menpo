@@ -27,6 +27,11 @@ class GradientDescent(Fitter):
         return SemiParametricFittingResult(
             image, self, parameters=[parameters], gt_shape=gt_shape)
 
+    def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
+        self.transform.from_vector_inplace(initial_parameters)
+        return Fitter.fit(self, image, initial_parameters, gt_shape=gt_shape,
+                          **kwargs)
+
     def get_parameters(self, shape):
         self.transform.set_target(shape)
         return self.transform.as_vector()
@@ -35,8 +40,9 @@ class GradientDescent(Fitter):
 # TODO: document me
 class RegularizedLandmarkMeanShift(GradientDescent):
 
+    @property
     def algorithm(self):
-        return "RLMS"
+        return 'RLMS'
 
     def _set_up(self):
         self._sampling_grid = build_sampling_grid(self.patch_shape)

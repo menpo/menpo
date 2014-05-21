@@ -245,7 +245,7 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
 
         >>> images = []
         >>> for im in import_images('./massive_image_db/*'):
-        >>>    im.crop((0, 0), (100, 100))  # crop to a sensible size as we go
+        >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
         >>>    images.append(im)
         >>>
 

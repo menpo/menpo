@@ -6,6 +6,6 @@ Targetable
 ==========
 
 .. autoclass:: Targetable
-  :members:
-  :inherited-members:
-  :show-inheritance:
+    :members:
+    :inherited-members:
+    :show-inheritance:

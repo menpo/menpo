@@ -5,61 +5,59 @@ from menpo.transform.base import Transform
 
 
 class ComposableTransform(Transform):
-    r"""
-    :map:`Transform` subclass that enables native composition, such that the
-    behavior of multiple :map:`Transform`s is composed together in a natural
-    way.
+    r""":map:`Transform` subclass that enables native composition, such that
+    the behavior of multiple :map:`Transform` s is composed together in a
+    natural way.
     """
 
     @abc.abstractproperty
     def composes_inplace_with(self):
-        r"""
-        Class or tuple of classes that this transform composes
-        inplace against natively.
+        r"""The :map:`Transform` s that this transform composes inplace
+        with **natively** (i.e. no :map:`TransformChain` will be produced).
 
         An attempt to compose inplace against any type that is not an
         instance of this property on this class will result in an `Exception`.
 
-        :type: list of :map:`Transform`
+        :type: :map:`Transform` or tuple of :map:`Transform` s
         """
 
     @property
     def composes_with(self):
-        r"""
-        Class or tuple of classes that this transform composes against
-        natively.
+        r"""The :map:`Transform` s that this transform composes
+        with **natively** (i.e. no :map:`TransformChain` will be produced).
 
         If native composition is not possible, falls back to producing a
         :map:`TransformChain`.
 
-        By default, this is the same list as :meth:`composes_inplace_with`.
+        By default, this is the same list as :attr:`composes_inplace_with`.
 
-        :type: list of :map:`Transform`
+        :type: :map:`Transform` or tuple of :map:`Transform` s
         """
         return self.composes_inplace_with
 
     def compose_before(self, transform):
-        r"""
-        Attempts to compose this transform with another. This transform
-        will be applied in the following order:
+        r"""A :map:`Transform` that represents **this** transform
+        composed **before** the given transform::
 
             c = a.compose_before(b)
             c.apply(p) == b.apply(a.apply(p))
 
-        `a` and `b` are left unchanged.
+        ``a`` and ``b`` are left unchanged.
 
         An attempt is made to perform native composition, but will fall back
-        to a :map:`TransformChain` as a last resort.
+        to a :map:`TransformChain` as a last resort. See :attr:`composes_with`
+        for a description of how the mode of composition is decided.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+        transform : :map:`Transform`
+            Transform to be applied **after** ``self``
 
         Returns
         --------
-        transform : :map:`ComposableTransform`
-            The resulting transform.
+        transform : :map:`Transform` or :map:`TransformChain`
+            If the composition was native, a single new :map:`Transform` will
+            be returned. If not, a :map:`TransformChain` is returned instead.
         """
         if isinstance(transform, self.composes_with):
             return self._compose_before(transform)
@@ -68,30 +66,31 @@ class ComposableTransform(Transform):
             return Transform.compose_before(self, transform)
 
     def compose_after(self, transform):
-        r"""
-        Attempts to compose this transform with another. This transform
-        will be applied in the following order:
+        r"""A :map:`Transform` that represents **this** transform
+        composed **after** the given transform::
 
             c = a.compose_after(b)
             c.apply(p) == a.apply(b.apply(p))
 
-        `a` and `b` are left unchanged.
+        ``a`` and ``b`` are left unchanged.
 
         This corresponds to the usual mathematical formalism for the compose
         operator, `o`.
 
         An attempt is made to perform native composition, but will fall back
-        to a :map:`TransformChain` as a last resort.
+        to a :map:`TransformChain` as a last resort. See :attr:`composes_with`
+        for a description of how the mode of composition is decided.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+        transform : :map:`Transform`
+            Transform to be applied **before** ``self``
 
         Returns
         --------
-        transform : :map:`ComposableTransform`
-            The resulting transform.
+        transform : :map:`Transform` or :map:`TransformChain`
+            If the composition was native, a single new :map:`Transform` will
+            be returned. If not, a :map:`TransformChain` is returned instead.
         """
         if isinstance(transform, self.composes_with):
             return self._compose_after(transform)
@@ -100,27 +99,25 @@ class ComposableTransform(Transform):
             return Transform.compose_after(self, transform)
 
     def compose_before_inplace(self, transform):
-        r"""
-        Attempts to compose this transform inplace with another. This transform
-        will be applied in the following order:
+        r"""Update ``self`` so that it represents **this** transform composed
+        **before** the given transform::
 
             a_orig = deepcopy(a)
             a.compose_before_inplace(b)
             a.apply(p) == b.apply(a_orig.apply(p))
 
-        `a` is permanently altered to be the result of the composition. `b` is
-        left unchanged.
+        ``a`` is permanently altered to be the result of the composition. ``b``
+        is left unchanged.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+        transform : :attr:`composes_inplace_with`
+            Transform to be applied **after** ``self``
 
         Raises
         ------
-        ValueError:
-            If this transform cannot be composed inplace with the
-            provided transform
+        ValueError
+            If ``transform`` isn't an instance of :attr:`composes_inplace_with`
         """
         if isinstance(transform, self.composes_inplace_with):
             self._compose_before_inplace(transform)
@@ -131,27 +128,25 @@ class ComposableTransform(Transform):
                             type(transform)))
 
     def compose_after_inplace(self, transform):
-        r"""
-        Attempts to compose this transform inplace with another. This transform
-        will be applied in the following order:
+        r"""Update ``self`` so that it represents **this** transform composed
+        **after** the given transform::
 
             a_orig = deepcopy(a)
             a.compose_after_inplace(b)
             a.apply(p) == a_orig.apply(b.apply(p))
 
-        `a` is permanently altered to be the result of the composition. `b` is
-        left unchanged.
+        ``a`` is permanently altered to be the result of the composition. ``b``
+        is left unchanged.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+        transform : :attr:`composes_inplace_with`
+            Transform to be applied **before** ``self``
 
         Raises
         ------
-        ValueError:
-            If this transform cannot be composed inplace with the
-            provided transform
+        ValueError
+            If ``transform`` isn't an instance of :attr:`composes_inplace_with`
         """
         if isinstance(transform, self.composes_inplace_with):
             self._compose_after_inplace(transform)
@@ -162,14 +157,13 @@ class ComposableTransform(Transform):
                             type(transform)))
 
     def _compose_before(self, transform):
-        r"""
-        Naive implementation of composition, `deepcopy` `self` and then
-        :meth:`compose_before_inplace`. Apply this transform *first*.
+        r"""Naive implementation of composition, ``deepcopy(self)`` and then
+        :meth:``compose_before_inplace``. Apply this transform **first**.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
 
         Returns
         --------
@@ -182,14 +176,13 @@ class ComposableTransform(Transform):
         return new_transform
 
     def _compose_after(self, transform):
-        r"""
-        Naive implementation of composition, `deepcopy` `self` and then
-        :meth:`compose_after_inplace`. Apply this transform *second*.
+        r"""Naive implementation of composition, ``deepcopy(self)`` and then
+        :meth:``compose_after_inplace``. Apply this transform **second**.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
 
         Returns
         --------
@@ -203,115 +196,116 @@ class ComposableTransform(Transform):
 
     @abc.abstractmethod
     def _compose_before_inplace(self, transform):
-        r"""
-        Specialised inplace composition. This should be overridden to provide
-        specific cases of composition as defined in
-        :meth:`composes_inplace_with`.
+        r"""Specialised inplace composition. This should be overridden to
+        provide specific cases of composition as defined in
+        :attr:`composes_inplace_with`.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+        transform : :attr:`composes_inplace_with`
+            Transform to be applied **after** ``self``
         """
 
     @abc.abstractmethod
     def _compose_after_inplace(self, transform):
-        r"""
-        Specialised inplace composition. This should be overridden to provide
-        specific cases of composition as defined in
-        :meth:`composes_inplace_with`.
+        r"""Specialised inplace composition. This should be overridden to
+        provide specific cases of composition as defined in
+        :attr:`composes_inplace_with`.
 
         Parameters
         ----------
-        transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+        transform : :attr:`composes_inplace_with`
+            Transform to be applied **before** ``self``
         """
 
 
 class VComposable(object):
+    r"""Mix-in for :map:`Vectorizable` :map:`ComposableTransform` s.
+
+    Use this mix-in with :map:`ComposableTransform` if the
+    :map:`ComposableTransform` in question is :map:`Vectorizable` as this adds
+    :meth:`from_vector` variants to the :map:`ComposableTransform` interface.
+    These can be tuned for performance.
+    """
+
     @abc.abstractmethod
     def compose_after_from_vector_inplace(self, vector):
-        r"""
-        Specialised inplace composition with a vector. This should be
+        r"""Specialised inplace composition with a vector. This should be
         overridden to provide specific cases of composition whereby the current
         state of the transform can be derived purely from the provided vector.
 
         Parameters
         ----------
-        vector : (N, 1) ndarray
+        vector : ``(n_parameters,)`` ndarray
             Vector to update the transform state with.
         """
 
 
 class TransformChain(ComposableTransform):
-    r"""
-    A chain of transforms that can be efficiently applied one after the other.
+    r"""A chain of transforms that can be efficiently applied one after the
+    other.
 
     This class is the natural product of composition. Note that objects may
     know how to compose themselves more efficiently - such objects
-    implement the :map:`ComposableTransform` or :map:`VCompose` interfaces.
+    implement the :map:`ComposableTransform` or :map:`VComposable` interfaces.
 
     Parameters
     ----------
-    transforms : list of :map:`Transform`
+    transforms : `list` of :map:`Transform`
         The list of transforms to be applied. Note that the first transform
         will be applied first - the result of which is fed into the second
         transform and so on until the chain is exhausted.
     """
 
     def __init__(self, transforms):
-        # TODO for now we don't copy, important to come back and evaluate
+        # TODO Should TransformChain copy on input?
         self.transforms = transforms
 
     def _apply(self, x, **kwargs):
-        r"""
-        Applies each of the transforms to the array `x`, in order.
+        r"""Applies each of the transforms to the array ``x``, in order.
 
         Parameters
         ----------
-        x : (N, D) ndarray
+        x : ``(n_points, n_dims)`` `ndarray`
             The array to transform.
 
         Returns
         -------
-        transformed : (N, D) ndarray
+        transformed : ``(n_points, n_dims_output)`` `ndarray`
             Transformed array having passed through the chain of transforms.
         """
         return reduce(lambda x_i, tr: tr._apply(x_i), self.transforms, x)
 
     @property
     def composes_inplace_with(self):
-        r"""
-        Class or tuple of classes that this transform composes
-        inplace against natively.
+        r"""The :map:`Transform` s that this transform composes inplace
+        with **natively** (i.e. no :map:`TransformChain` will be produced).
 
         An attempt to compose inplace against any type that is not an
         instance of this property on this class will result in an `Exception`.
 
-        Returns: :map:`Transform`
+        :type: :map:`Transform` or tuple of :map:`Transform` s
         """
         return Transform
 
     def _compose_before_inplace(self, transform):
-        r"""
-        Specialised inplace composition. In this case we merely keep a list
-        of :map:`Transform`s to apply in order.
+        r"""Specialised inplace composition. In this case we merely keep a list
+        of :map:`Transform` s to apply in order.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **after** self
+            Transform to be applied **after** ``self``
         """
         self.transforms.append(transform)
 
     def _compose_after_inplace(self, transform):
-        r"""
-        Specialised inplace composition. In this case we merely keep a list
+        r"""Specialised inplace composition. In this case we merely keep a list
         of :map:`Transform`s to apply in order.
 
         Parameters
         ----------
         transform : :map:`ComposableTransform`
-            Transform to be applied **before** self
+            Transform to be applied **before** ``self``
         """
         self.transforms.insert(0, transform)

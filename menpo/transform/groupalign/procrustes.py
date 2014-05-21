@@ -8,12 +8,25 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
     Class for aligning multiple source shapes between them.
 
+    After construction, the :map:`AlignmentSimilarity` transforms used to map each
+    source optimally to the target can be found at `transforms`.
+
     Parameters
     ----------
-    sources : list of (N, D) ndarrays
+    sources : list of :map:`PointCloud`
         List of pointclouds to be aligned.
-    kwargs : dict
-        Optional target shape to pass to the MultipleAlignment.
+
+    target : :map:`PointCloud`
+        The target :map:`PointCloud` to align each source to.
+        If None, then the mean of the sources is used.
+
+        Default: None
+
+    Raises
+    -------
+    ValueError
+        Need at least two sources to align
+
     """
     def __init__(self, sources, target=None):
         super(GeneralizedProcrustesAnalysis, self).__init__(sources,

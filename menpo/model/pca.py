@@ -509,12 +509,15 @@ class PCAModel(MeanInstanceLinearModel):
         if n_available_components < self.n_components:
             # oh dear, we've lost some components from the end of our model.
             if self.n_active_components < n_available_components:
-                # save the current number of active componets
+                # save the current number of active components
                 n_active_components = self.n_active_components
+            else:
+                # save the current number of available components
+                n_active_components = n_available_components
             # call trim_components to update our state.
             self.trim_components(n_components=n_available_components)
             if n_active_components < n_available_components:
-                # reset the number of active componets
+                # reset the number of active components
                 self.n_active_components = n_active_components
 
         # now we can set our own components with the updated orthogonal ones
