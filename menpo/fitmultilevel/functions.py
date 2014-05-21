@@ -83,22 +83,25 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
     # 1. compute the extents
     c_min = centres - half_patch_shape
     c_max = centres + half_patch_shape
-    out_min = c_min < 0
-    out_max = c_max > image_size
+    out_min_min = c_min < 0
+    out_min_max = c_min > image_size
+    out_max_min = c_max < 0
+    out_max_max = c_max > image_size
 
     # 1. Build the extraction slices
     ext_s_min = c_min.copy()
-    # Clamp the min to 0
-    ext_s_min[out_min] = 0
-
     ext_s_max = c_max.copy()
+    # Clamp the min to 0
+    ext_s_min[out_min_min] = 0
+    ext_s_max[out_max_min] = 0
     # Clamp the max to image bounds across each dimension
     for i in xrange(image.n_dims):
-        ext_s_max[out_max[:, i], i] = image_size[i] - 1
+        ext_s_max[out_max_max[:, i], i] = image_size[i] - 1
+        ext_s_min[out_min_max[:, i], i] = image_size[i] - 1
 
     # 2. Build the insertion slices
     ins_s_min = ext_s_min - c_min
-    ins_s_max = ext_s_max - c_max + patch_shape
+    ins_s_max = np.maximum(ext_s_max - c_max + patch_shape, (0, 0))
 
     for i, (e_a, e_b, i_a, i_b) in enumerate(zip(ext_s_min, ext_s_max,
                                                  ins_s_min, ins_s_max)):

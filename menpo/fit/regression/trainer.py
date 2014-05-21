@@ -2,8 +2,9 @@ from __future__ import division, print_function
 import abc
 import numpy as np
 
+from menpo.image import Image
 from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
-                                           extract_local_patches)
+                                           extract_local_patches_fast)
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
@@ -303,7 +304,10 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             regression_features=regression_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
-        self.sampling_grid = build_sampling_grid(patch_shape)
+        # work out feature length per patch
+        patch_img = Image.blank(patch_shape, fill=0)
+        self._feature_patch_length = compute_features(
+            patch_img, self.regression_features).n_parameters
 
     @property
     def algorithm(self):
@@ -340,11 +344,18 @@ class NonParametricRegressorTrainer(RegressorTrainer):
         shape: :class:`menpo.shape.PointCloud`
             The current shape.
         """
-        patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [compute_features(p,
-                                     self.regression_features).pixels.ravel()
-                    for p in patches]
-        return np.hstack((np.asarray(features).ravel(), 1))
+        # extract patches
+        patches = extract_local_patches_fast(image, shape, self.patch_shape)
+
+        features = np.zeros((shape.n_points, self._feature_patch_length))
+        for j, patch in enumerate(patches):
+            # build patch image
+            patch_img = Image(patch, copy=False)
+            # compute features
+            features[j, ...] = compute_features(
+                patch_img, self.regression_features).as_vector()
+
+        return np.hstack((features.ravel(), 1))
 
     def delta_ps(self, gt_shape, perturbed_shape):
         r"""
@@ -571,7 +582,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
         self.transform = transform
         self.update = update
         self.interpolator = interpolator
-
+    
     @property
     def algorithm(self):
         r"""
@@ -708,10 +719,15 @@ class SemiParametricClassifierBasedRegressorTrainer(
         shape: :class:`menpo.shape.PointCloud`
             The current shape.
         """
-        patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [clf(np.reshape(p.pixels, (-1, p.n_channels)))
-                    for (clf, p) in zip(self.classifiers, patches)]
-        return np.hstack((np.asarray(features).ravel(), 1))
+        # extract patches
+        patches = extract_local_patches_fast(image, shape, self.patch_shape)
+
+        features = np.zeros((shape.n_points, self._feature_patch_length))
+        for j, (clf, patch) in enumerate(zip(self.classifiers, patches)):
+            # compute response maps
+            features[j, ...] = clf(patch, copy=False).ravel
+
+        return np.hstack((features.ravel(), 1))
 
     def _create_fitting(self, image, shapes, gt_shape=None):
         r"""
