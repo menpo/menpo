@@ -81,7 +81,7 @@ class CLMFitter(MultilevelFitter):
         r"""
         The interpolator used during CLM building.
 
-        :type: `str`
+        :type: `string`
         """
         return self.clm.interpolator
 
@@ -146,7 +146,7 @@ class GradientDescentCLMFitter(CLMFitter):
         r"""
         Returns a string containing the name of fitting algorithm.
 
-        :type: `str`
+        :type: `string`
         """
         return 'GD-CLM-' + self._fitters[0].algorithm
 

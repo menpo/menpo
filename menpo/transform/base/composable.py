@@ -99,15 +99,16 @@ class ComposableTransform(Transform):
             return Transform.compose_after(self, transform)
 
     def compose_before_inplace(self, transform):
-        r"""Update ``self`` so that it represents **this** transform composed
+        r"""
+        Update ``self`` so that it represents **this** transform composed
         **before** the given transform::
 
             a_orig = deepcopy(a)
             a.compose_before_inplace(b)
             a.apply(p) == b.apply(a_orig.apply(p))
 
-        ``a`` is permanently altered to be the result of the composition. ``b``
-        is left unchanged.
+        ``a`` is permanently altered to be the result of the composition.
+        ``b`` is left unchanged.
 
         Parameters
         ----------

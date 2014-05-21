@@ -3,8 +3,8 @@
 :mod:`menpo.image`
 ==================
 
-Classes
--------
+Image Types
+-----------
 
 .. toctree::
    :maxdepth: 1
@@ -13,8 +13,18 @@ Classes
    BooleanImage
    MaskedImage
 
-Functions
----------
+Features
+--------
+These methods and classes are not directly exposed. If you wish to access
+features on images, you should use ``image.features.FEATURE_NAME``.
+
+.. toctree::
+   :maxdepth: 1
+
+   ImageFeatures
+
+Interpolation
+-------------
 
 .. toctree::
    :maxdepth: 1

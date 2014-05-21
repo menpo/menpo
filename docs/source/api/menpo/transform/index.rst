@@ -3,7 +3,6 @@
 :mod:`menpo.transform`
 ======================
 
-
 Homogeneous Family
 ------------------
 
@@ -75,6 +74,7 @@ Abstract Bases
    Invertible
    Alignment
    MultipleAlignment
+   DiscreteAffine
 
 Performance Specializations
 ---------------------------

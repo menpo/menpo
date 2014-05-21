@@ -24,7 +24,7 @@ def test_blank_3_channel_image():
     assert np.all(im.pixels == 0.5)
 
 
-def test_blank_maskedndimage():
+def test_blank_maskedimage():
     mask = np.zeros((10, 10), dtype=np.bool)
     im = MaskedImage.blank((10, 10), mask=mask, n_channels=10)
     assert np.all(im.pixels == 0.0)
