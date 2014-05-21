@@ -2,7 +2,8 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 
-def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
+def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
+                        cval=0.):
     r"""
     Interpolation utilizing SciPy's map_coordinates function.
 
@@ -38,6 +39,7 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
         sampled_pixel_values.append(map_coordinates(pixels[..., i],
                                                     points_to_sample_t,
                                                     mode=mode,
-                                                    order=order))
+                                                    order=order,
+                                                    cval=cval))
     sampled_pixel_values = [v.reshape([-1, 1]) for v in sampled_pixel_values]
     return np.concatenate(sampled_pixel_values, axis=1)

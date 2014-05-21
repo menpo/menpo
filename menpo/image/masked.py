@@ -438,7 +438,7 @@ class MaskedImage(Image):
                           constrain_to_boundary=constrain_to_boundary)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     interpolator='scipy', **kwargs):
+                     order=1, mode='constant', cval=0., interpolator='scipy'):
         r"""
         Warps this image into a different reference space.
 
@@ -457,12 +457,25 @@ class MaskedImage(Image):
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
+
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
         interpolator : ``'scipy'``, optional
             The interpolator that should be used to perform the warp.
-
-        kwargs : `dict`
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
 
         Returns
         -------
@@ -473,12 +486,12 @@ class MaskedImage(Image):
         # with a blank mask
         warped_image = Image.warp_to_mask(self, template_mask, transform,
                                           warp_landmarks=warp_landmarks,
-                                          interpolator=interpolator,
-                                          **kwargs)
+                                          order=order, mode=mode, cval=cval,
+                                          interpolator=interpolator)
         warped_mask = self.mask.warp_to_mask(template_mask, transform,
                                              warp_landmarks=warp_landmarks,
-                                             interpolator=interpolator,
-                                             **kwargs)
+                                             mode=mode, cval=cval,
+                                             interpolator=interpolator)
         warped_image.mask = warped_mask
         return warped_image
 
@@ -529,11 +542,10 @@ class MaskedImage(Image):
         warped_image = Image.warp_to_shape(self, template_shape, transform,
                                            warp_landmarks=warp_landmarks,
                                            order=order, mode=mode, cval=cval)
-        # warp the
-        # mask separately and reattach.
+        # warp the mask separately and reattach.
         mask = self.mask.warp_to_shape(template_shape, transform,
                                        warp_landmarks=warp_landmarks,
-                                       order=order, mode=mode, cval=cval)
+                                       mode=mode, cval=cval)
         # efficiently turn the Image into a MaskedImage, attaching the
         # landmarks
         masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,

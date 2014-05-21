@@ -1,7 +1,8 @@
 import numpy as np
+import menpo
 from numpy.testing import assert_allclose
 from menpo.image import BooleanImage, Image, MaskedImage
-from menpo.transform import Affine, Translation
+from menpo.transform import Affine
 import menpo.io as mio
 
 # do the import to generate the expected outputs
@@ -98,3 +99,11 @@ def test_warp_to_mask_masked_image():
     assert(warped_img.n_true_pixels == 10)
     assert(np.all(result == warped_img.pixels))
     assert(np.all(result_mask == warped_img.mask.pixels))
+
+
+def test_warp_to_shape_equal_warp_to_mask():
+    r = menpo.transform.UniformScale(2.0, n_dims=2)
+    b = mio.import_builtin_asset('breakingbad.jpg').as_unmasked()
+    m_shape = b.warp_to_shape([540, 960], r)
+    m_mask = b.warp_to_mask(menpo.image.BooleanImage.blank([540, 960]), r)
+    assert_allclose(m_shape.pixels, m_mask.pixels)

@@ -322,10 +322,15 @@ class BooleanImage(Image):
         return self.invert().bounds_true(
             boundary=boundary, constrain_to_bounds=constrain_to_bounds)
 
+    # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     interpolator='scipy', **kwargs):
-        r"""Return a copy of this :map:`BooleanImage` warped into a different
+                     mode='constant', cval=0., interpolator='scipy'):
+        r"""
+        Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
+
+        Note that warping into a mask is slower than warping into a full image.
+        If you don't need a non-linear mask, consider warp_to_shape instead.
 
         Parameters
         ----------
@@ -335,20 +340,23 @@ class BooleanImage(Image):
 
         transform : :map:`Transform`
             Transform **from the template space back to this image**.
-            Defines, for each True pixel location on the template, which pixel
+            Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
 
         warp_landmarks : `bool`, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-        interpolator : 'scipy', optional
-            The interpolator that should be used to perform the warp. This
-            is a stub for future interpolation options.
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
 
-        kwargs : dict
-            Passed through to the interpolator. See :map:`interpolation`
-            for details.
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        interpolator : ``'scipy'``, optional
+            The interpolator that should be used to perform the warp.
 
         Returns
         -------
@@ -356,18 +364,14 @@ class BooleanImage(Image):
             A copy of this image, warped.
         """
         # enforce the order as 0, for this boolean data, then call super
-        manually_set_order = kwargs.get('order', 0)
-        if manually_set_order != 0:
-            raise ValueError(
-                "The order of the interpolation on a boolean image has to be "
-                "0 (attempted to set {})".format(manually_set_order))
-        kwargs['order'] = 0
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
-                                  interpolator=interpolator, **kwargs)
+                                  order=0, mode=mode, cval=cval,
+                                  interpolator=interpolator)
 
+    # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      order=1, mode='constant', cval=0.):
+                      mode='constant', cval=0.):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -387,15 +391,6 @@ class BooleanImage(Image):
             If `True`, ``warped_image`` will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-        order : `int`, optional
-            The order of interpolation. The order has to be in the range 0-5:
-            * 0: Nearest-neighbor
-            * 1: Bi-linear (default)
-            * 2: Bi-quadratic
-            * 3: Bi-cubic
-            * 4: Bi-quartic
-            * 5: Bi-quintic
-
         mode : `str`, optional
             Points outside the boundaries of the input are filled according
             to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
@@ -412,7 +407,7 @@ class BooleanImage(Image):
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
                                            warp_landmarks=warp_landmarks,
-                                           order=order, mode=mode, cval=cval)
+                                           order=1, mode=mode, cval=cval)
         # convert to a boolean mask and return
         b = BooleanImage(warped_image.pixels)
         b.landmarks = warped_image

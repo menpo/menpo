@@ -803,8 +803,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
+                     order=1, mode='constant', cval=0., interpolator='scipy'):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -814,27 +814,41 @@ class Image(Vectorizable, Landmarkable, Viewable):
         Parameters
         ----------
         template_mask : :map:`BooleanImage`
-            True pixels will be sampled at their indicies in the template_mask.
+            Defines the shape of the result, and what pixels should be
+            sampled.
+
         transform : :map:`Transform`
-            Transform **from the template_mask space back to this image**.
-            Defines, for each True pixel location on the template_mask, which
-            pixel location should be sampled from on this image.
-        warp_landmarks : bool, optional
+            Transform **from the template space back to this image**.
+            Defines, for each pixel location on the template, which pixel
+            location should be sampled from on this image.
+
+        warp_landmarks : `bool`, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: `False`
-        interpolator : 'scipy', optional
-            The interpolator that should be used to perform the warp.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
-            Default: 'scipy'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        interpolator : ``'scipy'``, optional
+            The interpolator that should be used to perform the warp.
 
         Returns
         -------
-        warped_image : type(self)
+        warped_image : :map:`MaskedImage`
             A copy of this image, warped.
         """
         # configure the interpolator we are going to use for the warp
@@ -848,13 +862,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
-
         template_points = template_mask.true_indices
         points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of
         # sampled pixels. Store those in a (n_pixels, n_channels) array.
         sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
-                                             **kwargs)
+                                             order=order, mode=mode,
+                                             cval=cval)
         # set any nan values to 0
         sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image
@@ -866,15 +880,13 @@ class Image(Vectorizable, Landmarkable, Viewable):
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
 
-    def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
-                              **kwargs):
+    def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
         r"""
         Builds the warped image from the template mask and
         sampled pixel values. Overridden for BooleanImage as we can't use
         the usual from_vector_inplace method. All other Image classes share
         the Image implementation.
         """
-        from .masked import MaskedImage
         warped_image = MaskedImage.blank(template_mask.shape,
                                          n_channels=self.n_channels,
                                          mask=template_mask)
@@ -1420,3 +1432,6 @@ def round_image_shape(shape, round):
         raise ValueError('round must be either ceil, round or floor')
     # Ensure that the '+' operator means concatenate tuples
     return tuple(getattr(np, round)(shape).astype(np.int))
+
+
+from .masked import MaskedImage
