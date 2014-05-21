@@ -5,18 +5,17 @@ from menpo.image import Image
 from menpo.transform import AlignmentSimilarity
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fit.gradientdescent.residual import SSD
 from menpo.fitmultilevel.base import MultilevelFitter
 from menpo.fitmultilevel.featurefunctions import compute_features
 
 
 class CLMFitter(MultilevelFitter):
     r"""
-    Mixin for Constrained Local Models Fitters.
+    Abstract Interface for defining Constrained Local Models Fitters.
 
     Parameters
     -----------
-    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+    clm : :map:`CLM`
         The Constrained Local Model to be used.
     """
     def __init__(self, clm):
@@ -25,172 +24,171 @@ class CLMFitter(MultilevelFitter):
     @property
     def reference_shape(self):
         r"""
-        The reference shape of the trained CLM.
+        The reference shape of the CLM.
 
-        : `menpo.shape.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self.clm.reference_shape
 
     @property
     def feature_type(self):
         r"""
-        The feature type per pyramid level of the trained CLM. Note that they
-        are stored from lowest to highest level resolution.
+        The feature extracted at each pyramidal level during CLM building.
+        Stored in ascending pyramidal order.
 
-        : list
+        :type: `list`
         """
         return self.clm.feature_type
 
     @property
     def n_levels(self):
         r"""
-        The number of pyramidal levels used during building the CLM.
+        The number of pyramidal levels used during CLM building.
 
-        : int
+        :type: `int`
         """
         return self.clm.n_levels
 
     @property
     def downscale(self):
         r"""
-        The downscale per pyramidal level used during building the CLM.
-        The scale factor is: (downscale ** k) for k in range(n_levels)
+        The downscale used to generate the final scale factor applied at
+        each pyramidal level during CLM building.
+        The scale factor is computed as:
 
-        : float
+            ``(downscale ** k) for k in range(n_levels)``
+
+        :type: `float`
         """
         return self.clm.downscale
 
     @property
     def pyramid_on_features(self):
         r"""
-        Flag that controls the Gaussian pyramid of the testing image based on
-        the pyramid used during building the CLM.
-        If True, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
+        Flag that defined the nature of Gaussian pyramid used to build the
+        CLM.
+        If ``True``, the feature space is computed once at the highest scale
+        and the Gaussian pyramid is applied to the feature images.
+        If ``False``, the Gaussian pyramid is applied to the original images
+        and features are extracted at each level.
 
-        : boolean
+        :type: `boolean`
         """
         return self.clm.pyramid_on_features
 
     @property
     def interpolator(self):
         r"""
-        The interpolator used during training.
+        The interpolator used during CLM building.
 
-        : str
+        :type: `str`
         """
         return self.clm.interpolator
 
 
 class GradientDescentCLMFitter(CLMFitter):
     r"""
-    Gradient Descent based Fitter for Constrained Local Models.
+    Gradient Descent based :map:`Fitter` for Constrained Local Models.
 
     Parameters
     -----------
-    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+    clm : :map:`CLM`
         The Constrained Local Model to be used.
-    algorithm: :class:`menpo.fit.gradientdescent.base`, optional
-        The Gradient Descent class to be used.
 
-        Default: RegularizedLandmarkMeanShift
-    pdm_transform: :class:`menpo.transform.ModelDrivenTransform`, optional
-        The point distribution transform class to be used.
+    algorithm : subclass :map:`GradientDescent`, optional
+        The :map:`GradientDescent` class to be used.
 
-        Default: OrthoPDMTransform
-    global_transform: :class:`menpo.transform.affine`, optional
-        The global transform class to be used by the previous
-        md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+    pdm_transform : :map:`GlobalPDM` or subclass, optional
+        The point distribution class to be used.
 
-        Default: AlignmentSimilarity
-    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
-        The number of shape components to be used per fitting level.
+        .. note::
 
-        If list of length n_levels, then a number of components is defined
-        per level. The first element of the list corresponds to the lowest
-        pyramidal level and so on.
+            Only :map:`GlobalPDM` and its subclasses are supported.
+            :map:`PDM` is not supported at the moment.
 
-        If not a list or a list with length 1, then the specified number of
-        components will be used for all levels.
+    global_transform : subclass of :map:`HomogFamilyAlignment`, optional
+        The global transform class to be used by the previous pdm.
 
-        Per level:
-        If None, all the available shape components (n_active_componenets)
+        .. note::
+
+            Only :map:`AlignmentSimilarity` is supported when
+            ``pdm_transform`` is set to :map:`AlignmentSimilarity`.
+
+    n_shape : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+        previous or ``None``, optional
+        The number of shape components or amount of shape variance to be
+        used per pyramidal level.
+
+        If `None`, all available shape components ``(n_active_components)``
         will be used.
-        If int > 1, a specific number of shape components is specified.
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
+        If `int` ``> 1``, the specified number of shape components will be
+        used.
+        If ``0. <=`` `float` ``<= 1.``, the number of shape components
+        capturing the specified variance ratio will be computed and used.
 
-        Default: None
+        If `list` of length ``n_levels``, then the number of components is
+        defined per level. The first element of the list corresponds to the
+        lowest pyramidal level and so on.
+        If not a `list` or a `list` of length 1, then the specified number of
+        components will be used for all levels.
     """
     def __init__(self, clm, algorithm=RegularizedLandmarkMeanShift,
                  pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
-                 n_shape=None):
+                 n_shape=None, **kwargs):
         super(GradientDescentCLMFitter, self).__init__(clm)
         # TODO: Add residual as parameter, when residuals are properly defined
-        residual = SSD
-        self._set_up(algorithm=algorithm, residual=residual,
-                     pdm_transform=pdm_transform,
-                     global_transform=global_transform, n_shape=n_shape)
+        self._set_up(algorithm=algorithm, pdm_transform=pdm_transform,
+                     global_transform=global_transform, n_shape=n_shape,
+                     **kwargs)
 
     @property
     def algorithm(self):
         r"""
-        Returns a string containing the algorithm used from the Gradient
-        Descent family.
+        Returns a string containing the name of fitting algorithm.
 
-        : str
+        :type: `str`
         """
         return 'GD-CLM-' + self._fitters[0].algorithm
 
-    def _set_up(self, algorithm=RegularizedLandmarkMeanShift, residual=SSD,
+    def _set_up(self, algorithm=RegularizedLandmarkMeanShift,
                 pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
-                n_shape=None):
+                n_shape=None, **kwargs):
         r"""
-        Sets up the gradient descent fitter object.
+        Sets up the Gradient Descent Fitter object.
 
         Parameters
         -----------
-        algorithm: :class:`menpo.fit.gradientdescent.base`, optional
+        algorithm : :map:`GradientDescent`, optional
             The Gradient Descent class to be used.
 
-            Default: RegularizedLandmarkMeanShift
-        residual: :class:`menpo.fit.gradientdescent.residual`, optional
-            The residual class to be used
+        pdm_transform : :map:`GlobalPDM` or subclass, optional
+            The point distribution class to be used.
 
-            Default: 'SSD'
-        pdm_transform: :class:`menpo.model.pdm`, optional
-            The point distribution transform class to be used.
+        global_transform : subclass of :map:`HomogFamilyAlignment`, optional
+            The global transform class to be used by the previous pdm.
 
-            Default: OrthoPDM
-        global_transform: :class:`menpo.transform.affine`, optional
-            The global transform class to be used by the previous
-            md_transform_cls. Currently, only
-            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+            .. note::
 
-            Default: AlignmentSimilarity
-        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                     optional
-            The number of shape components to be used per fitting level.
+                Only :map:`AlignmentSimilarity` is supported when
+                ``pdm_transform`` is set to :map:`AlignmentSimilarity`.
 
-            If list of length n_levels, then a number of components is defined
-            per level. The first element of the list corresponds to the lowest
-            pyramidal level and so on.
+        n_shape : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+            previous or ``None``, optional
+            The number of shape components or amount of shape variance to be
+            used per fitting level.
 
-            If not a list or a list with length 1, then the specified number of
-            components will be used for all levels.
-
-            Per level:
-            If None, all the available shape components (n_active_componenets)
+            If `None`, all available shape components ``(n_active_components)``
             will be used.
-            If int > 1, a specific number of shape components is specified.
-            If 0. <= float <= 1., it specifies the variance percentage that is
-            captured by the components.
+            If `int` ``> 1``, the specified number of shape components will be
+            used.
+            If ``0. <=`` `float` ``<= 1.``, the number of components capturing the
+            specified variance ratio will be computed and used.
 
-            Default: None
+            If `list` of length ``n_levels``, then the number of components is
+            defined per level. The first element of the list corresponds to the
+            lowest pyramidal level and so on.
+            If not a `list` or a `list` of length 1, then the specified number of
+            components will be used for all levels.
         """
         # check n_shape parameter
         if n_shape is not None:
@@ -211,14 +209,13 @@ class GradientDescentCLMFitter(CLMFitter):
         self._fitters = []
         for j, (sm, clf) in enumerate(zip(self.clm.shape_models,
                                           self.clm.classifiers)):
-            if n_shape is not None:
-                sm.n_active_components = n_shape[j]
+
             if pdm_transform is not PDM:
                 pdm_trans = pdm_transform(sm, global_transform)
             else:
                 pdm_trans = pdm_transform(sm)
             self._fitters.append(algorithm(clf, self.clm.patch_shape,
-                                           pdm_trans))
+                                           pdm_trans, **kwargs))
 
     def __str__(self):
         out = "{0} Fitter\n" \

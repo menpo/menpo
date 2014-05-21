@@ -10,11 +10,11 @@ from menpo.fitmultilevel.fittingresult import AAMMultilevelFittingResult
 
 class AAMFitter(MultilevelFitter):
     r"""
-    Mixin for Active Appearance Models Fitters.
+    Abstract Interface for defining Active Appearance Models Fitters.
 
     Parameters
     -----------
-    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
+    aam : :map:`AAM`
         The Active Appearance Model to be used.
     """
     def __init__(self, aam):
@@ -23,94 +23,98 @@ class AAMFitter(MultilevelFitter):
     @property
     def reference_shape(self):
         r"""
-        The reference shape of the trained AAM.
+        The reference shape of the AAM.
 
-        : `menpo.shape.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self.aam.reference_shape
 
     @property
     def feature_type(self):
         r"""
-        The feature type per pyramid level of the trained AAM. Note that they
-        are stored from lowest to highest level resolution.
+        The feature extracted at each pyramidal level during AAM building.
+        Stored in ascending pyramidal order.
 
-        : list
+        :type: `list`
         """
         return self.aam.feature_type
 
     @property
     def n_levels(self):
         r"""
-        The number of pyramidal levels used during building the AAM.
+        The number of pyramidal levels used during AAM building.
 
-        : int
+        :type: `int`
         """
         return self.aam.n_levels
 
     @property
     def downscale(self):
         r"""
-        The downscale per pyramidal level used during building the AAM.
-        The scale factor is: (downscale ** k) for k in range(n_levels)
+        The downscale used to generate the final scale factor applied at
+        each pyramidal level during AAM building.
+        The scale factor is computed as:
 
-        : float
+            ``(downscale ** k) for k in range(n_levels)``
+
+        :type: `float`
         """
         return self.aam.downscale
 
     @property
     def pyramid_on_features(self):
         r"""
-        Flag that controls the Gaussian pyramid of the testing image based on
-        the pyramid used during building the AAM.
-        If True, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
+        Flag that defined the nature of Gaussian pyramid used to build the
+        AAM.
+        If ``True``, the feature space is computed once at the highest scale
+        and the Gaussian pyramid is applied to the feature images.
+        If ``False``, the Gaussian pyramid is applied to the original images
+        and features are extracted at each level.
 
-        : boolean
+        :type: `boolean`
         """
         return self.aam.pyramid_on_features
 
     @property
     def interpolator(self):
         r"""
-        The interpolator used for warping.
+        The interpolator used during AAM building.
 
-        : str
+        :type: `str`
         """
         return self.aam.interpolator
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None, error_type='me_norm'):
         r"""
-        Creates the :class: `menpo.aam.fitting.MultipleFitting` object
-        associated with a particular Fitter object.
+        Creates a :map:`AAMMultilevelFittingResult` associated to a
+        particular fitting of the AAM fitter.
 
         Parameters
         -----------
-        image: :class:`menpo.image.masked.MaskedImage`
-            The original image to be fitted.
-        fitting_results: :class:`menpo.fitmultilevel.FittingResult` list
-            A list of basic fitting objects containing the state of the
-            different fitting levels.
-        affine_correction: :class: `menpo.transforms.affine.Affine`
+        image : :map:`Image` or subclass
+            The image to be fitted.
+
+        fitting_results : `list` of :map:`FittingResult`
+            A list of fitting result objects containing the state of the
+            the fitting for each pyramidal level.
+
+        affine_correction : :map:`Affine`
             An affine transform that maps the result of the top resolution
-            fitting level to the space scale of the original image.
-        gt_shape: class:`menpo.shape.PointCloud`, optional
+            level to the scale space of the original image.
+
+        gt_shape : :map:`PointCloud`, optional
             The ground truth shape associated to the image.
 
-            Default: None
-        error_type: 'me_norm', 'me' or 'rmse', optional
-            Specifies the way in which the error between the fitted and
-            ground truth shapes is to be computed.
-
-            Default: 'me_norm'
+        error_type : 'me_norm', 'me' or 'rmse', optional
+            Specifies how the error between the fitted and ground truth
+            shapes must be computed.
 
         Returns
         -------
-        fitting: :class:`menpo.aam.Fitting`
-            The fitting object that will hold the state of the fitter.
+        fitting : :map:`AAMMultilevelFittingResult`
+            A fitting result object that will hold the state of the AAM
+            fitter for a particular fitting.
         """
         return AAMMultilevelFittingResult(
             image, self, fitting_results, affine_correction, gt_shape=gt_shape,
@@ -119,163 +123,156 @@ class AAMFitter(MultilevelFitter):
 
 class LucasKanadeAAMFitter(AAMFitter):
     r"""
-    Lucas-Kanade based Fitter for Active Appearance Models.
+    Lucas-Kanade based :map:`Fitter` for Active Appearance Models.
 
     Parameters
     -----------
-    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
+    aam : :map:`AAM`
         The Active Appearance Model to be used.
-    algorithm: :class:`menpo.fit.lucaskanade.appearance`, optional
-        The Lucas-Kanade class to be used.
+    algorithm : subclass of :map:`AppearanceLucasKanade`, optional
+        The Appearance Lucas-Kanade class to be used.
 
-        Default: AlternatingInverseCompositional
-    md_transform: :class:`menpo.transform.ModelDrivenTransform`,
-                      optional
+    md_transform : :map:`ModelDrivenTransform` or subclass, optional
         The model driven transform class to be used.
 
-        Default: OrthoMDTransform
-    global_transform: :class:`menpo.transform.affine`, optional
-        The global transform class to be used by the previous
-        md_transform_cls. Currently, only
-        :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+    global_transform : subclass of :map:`HomogFamilyAlignment`, optional
+        The global transform class to be used by the previous pdm.
 
-        Default: AlignmentSimilarity
-    n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
-        The number of shape components to be used per fitting level.
+        .. note::
 
-        If list of length n_levels, then a number of components is defined
-        per level. The first element of the list corresponds to the lowest
-        pyramidal level and so on.
+            Only :map:`AlignmentSimilarity` is supported when
+            ``pdm_transform`` is set to :map:`AlignmentSimilarity`.
 
-        If not a list or a list with length 1, then the specified number of
-        components will be used for all levels.
+            ``global_transform`` has no effect when ``md_transform`` is
+            specifically set to map:`MDTransform`
 
-        Per level:
-        If None, all the available shape components (n_active_componenets)
+    n_shape : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+        previous or ``None``, optional
+        The number of shape components or amount of shape variance to be
+        used per pyramidal level.
+
+        If `None`, all available shape components ``(n_active_components)``
         will be used.
-        If int > 1, a specific number of shape components is specified.
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
+        If `int` ``> 1``, the specified number of shape components will be
+        used.
+        If ``0. <=`` `float` ``<= 1.``, the number of components capturing the
+        specified variance ratio will be computed and used.
 
-        Default: None
-    n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                      optional
-        The number of appearance components to be used per fitting level.
-
-        If list of length n_levels, then a number of components is defined
-        per level. The first element of the list corresponds to the lowest
-        pyramidal level and so on.
-
-        If not a list or a list with length 1, then the specified number of
+        If `list` of length ``n_levels``, then the number of components is
+        defined per level. The first element of the list corresponds to the
+        lowest pyramidal level and so on.
+        If not a `list` or a `list` of length 1, then the specified number of
         components will be used for all levels.
 
-        Per level:
-        If None, all the available appearance components
-        (n_active_componenets) will be used.
-        If int > 1, a specific number of appearance components is specified
-        If 0. <= float <= 1., it specifies the variance percentage that is
-        captured by the components.
+    n_appearance : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+        previous or ``None``, optional
+        The number of appearance components or amount of appearance variance
+        to be used per pyramidal level.
 
-        Default: None
+        If `None`, all available appearance components
+        ``(n_active_components)`` will be used.
+        If `int` ``> 1``, the specified number of appearance components will
+        be used.
+        If ``0. <=`` `float` ``<= 1.``, the number of appearance components
+        capturing the specified variance ratio will be computed and used.
+
+        If `list` of length ``n_levels``, then the number of components is
+        defined per level. The first element of the list corresponds to the
+        lowest pyramidal level and so on.
+        If not a `list` or a `list` of length 1, then the specified number of
+        components will be used for all levels.
     """
     def __init__(self, aam, algorithm=AlternatingInverseCompositional,
                  md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
-                 n_appearance=None):
+                 n_appearance=None, **kwargs):
         super(LucasKanadeAAMFitter, self).__init__(aam)
         # TODO: Add residual as parameter, when residuals are properly defined
         residual = LSIntensity
         self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
                      global_transform=global_transform, n_shape=n_shape,
-                     n_appearance=n_appearance)
+                     n_appearance=n_appearance, **kwargs)
 
     @property
     def algorithm(self):
         r"""
-        Returns a string containing the algorithm used from the Lucas-Kanade
-        family.
+        Returns a string containing the name of fitting algorithm.
 
-        : str
+        :type: `str`
         """
         return 'LK-AAM-' + self._fitters[0].algorithm
 
     def _set_up(self, algorithm=AlternatingInverseCompositional,
                 residual=LSIntensity, md_transform=OrthoMDTransform,
                 global_transform=AlignmentSimilarity, n_shape=None,
-                n_appearance=None):
+                n_appearance=None, **kwargs):
         r"""
         Sets up the Lucas-Kanade fitter object.
 
         Parameters
         -----------
-        algorithm: :class:`menpo.lucaskanade.appearance`, optional
-            The Lucas-Kanade class to be used.
+        algorithm : subclass of :map:`AppearanceLucasKanade`, optional
+            The Appearance Lucas-Kanade class to be used.
 
-            Default: AlternatingInverseCompositional
-        residual: :class:`menpo.lucaskanade.residual`, optional
-            The residual class to be used
-
-            Default: 'LSIntensity'
-        md_transform: :class:`menpo.transform.ModelDrivenTransform`,
-                          optional
+        md_transform : :map:`ModelDrivenTransform` or subclass, optional
             The model driven transform class to be used.
 
-            Default: OrthoMDTransform
-        global_transform: :class:`menpo.transform.affine`, optional
-            The global transform class to be used by the previous
-            md_transform. Currently, only
-            :class:`menpo.transform.affine.AlignmentSimilarity` is supported.
+        global_transform : subclass of :map:`HomogFamilyAlignment`, optional
+            The global transform class to be used by the previous pdm.
 
-            Default: AlignmentSimilarity
-        n_shape: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                 optional
-            The number of shape components to be used per fitting level.
+            .. note::
 
-            If list of length n_levels, then a number of components is defined
-            per level. The first element of the list corresponds to the lowest
-            pyramidal level and so on.
+                Only :map:`AlignmentSimilarity` is supported when
+                ``pdm_transform`` is set to :map:`AlignmentSimilarity`.
 
-            If not a list or a list with length 1, then the specified number of
-            components will be used for all levels.
+                ``global_transform`` has no effect when ``md_transform`` is
+                specifically set to map:`MDTransform`
 
-            Per level:
-            If None, all the available shape components (n_active_componenets)
+        n_shape : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+            previous or ``None``, optional
+            The number of shape components or amount of shape variance to be
+            used per pyramidal level.
+
+            If `None`, all available shape components ``(n_active_components)``
             will be used.
-            If int > 1, a specific number of shape components is specified.
-            If 0. <= float <= 1., it specifies the variance percentage that is
-            captured by the components.
+            If `int` ``> 1``, the specified number of shape components will be
+            used.
+            If ``0. <=`` `float` ``<= 1.``, the number of components capturing the
+            specified variance ratio will be computed and used.
 
-            Default: None
-        n_appearance: int > 1 or 0. <= float <= 1. or None, or a list of those,
-                      optional
-            The number of appearance components to be used per fitting level.
-
-            If list of length n_levels, then a number of components is defined
-            per level. The first element of the list corresponds to the lowest
-            pyramidal level and so on.
-
-            If not a list or a list with length 1, then the specified number of
+            If `list` of length ``n_levels``, then the number of components is
+            defined per level. The first element of the list corresponds to the
+            lowest pyramidal level and so on.
+            If not a `list` or a `list` of length 1, then the specified number of
             components will be used for all levels.
 
-            Per level:
-            If None, all the available appearance components
-            (n_active_componenets) will be used.
-            If int > 1, a specific number of appearance components is specified
-            If 0. <= float <= 1., it specifies the variance percentage that is
-            captured by the components.
+        n_appearance : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
+            previous or ``None``, optional
+            The number of appearance components or amount of appearance variance
+            to be used per pyramidal level.
 
-            Default: None
+            If `None`, all available appearance components
+            ``(n_active_components)`` will be used.
+            If `int` ``> 1``, the specified number of appearance components will
+            be used.
+            If ``0. <=`` `float` ``<= 1.``, the number of appearance components
+            capturing the specified variance ratio will be computed and used.
+
+            If `list` of length ``n_levels``, then the number of components is
+            defined per level. The first element of the list corresponds to the
+            lowest pyramidal level and so on.
+            If not a `list` or a `list` of length 1, then the specified number of
+            components will be used for all levels.
 
         Raises
         -------
         ValueError
-            n_shape can be an integer or a float or None or a list containing 1
-            or {n_levels} of those
+            ``n_shape`` can be an `int`, `float`, ``None`` or a `list`
+            containing ``1`` or ``n_levels`` of those.
         ValueError
-            n_appearance can be an integer or a float or None or a list
-            containing 1 or {n_levels} of those
+            ``n_appearance`` can be an `int`, `float`, `None` or a `list`
+            containing ``1`` or ``n_levels`` of those.
         """
         # check n_shape parameter
         if n_shape is not None:
@@ -321,7 +318,8 @@ class LucasKanadeAAMFitter(AAMFitter):
                 md_trans = md_transform(
                     sm, self.aam.transform,
                     source=am.mean.landmarks['source'].lms)
-            self._fitters.append(algorithm(am, residual(), md_trans))
+            self._fitters.append(algorithm(am, residual(), md_trans,
+                                           **kwargs))
 
     def __str__(self):
         out = "{0} Fitter\n" \
