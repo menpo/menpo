@@ -3,11 +3,39 @@
 :mod:`menpo.fit`
 ================
 
+Abstract Classes
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   Fitter
+
 Gradient Descent
 ----------------
 
 .. toctree::
    :maxdepth: 1
+
+   gradientdescent/GradientDescent
+   gradientdescent/RegularizedLandmarkMeanShift
+
+Residuals
+~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   gradientdescent/residual/Residual
+   gradientdescent/residual/Robust
+   gradientdescent/residual/Cauchy
+   gradientdescent/residual/Fair
+   gradientdescent/residual/GemanMcClure
+   gradientdescent/residual/Huber
+   gradientdescent/residual/L1L2
+   gradientdescent/residual/SSD
+   gradientdescent/residual/Turkey
+   gradientdescent/residual/Welsch
 
 Lucas Kanade
 ------------
@@ -15,16 +43,54 @@ Lucas Kanade
 .. toctree::
    :maxdepth: 1
 
+   lucaskanade/LucasKanade
+
 Appearance-Based Fitters
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   lucaskanade/appearance/AppearanceLucasKanade
+   lucaskanade/appearance/AdaptiveForwardAdditive
+   lucaskanade/appearance/AdaptiveForwardCompositional
+   lucaskanade/appearance/AdaptiveInverseCompositional
+   lucaskanade/appearance/AlternatingForwardAdditive
+   lucaskanade/appearance/AlternatingForwardCompositional
+   lucaskanade/appearance/AlternatingInverseCompositional
+   lucaskanade/appearance/ProbabilisticForwardAdditive
+   lucaskanade/appearance/ProbabilisticForwardCompositional
+   lucaskanade/appearance/ProbabilisticInverseCompositional
+   lucaskanade/appearance/ProjectOutForwardAdditive
+   lucaskanade/appearance/ProjectOutForwardCompositional
+   lucaskanade/appearance/ProjectOutInverseCompositional
+   lucaskanade/appearance/SimultaneousForwardAdditive
+   lucaskanade/appearance/SimultaneousForwardCompositional
+   lucaskanade/appearance/SimultaneousInverseCompositional
 
 Image-Based Fitters
 ~~~~~~~~~~~~~~~~~~~
 
-Residuals
-~~~~~~~~~
 .. toctree::
    :maxdepth: 1
+
+   lucaskanade/image/ImageLucasKanade
+   lucaskanade/image/ImageForwardAdditive
+   lucaskanade/image/ImageForwardCompositional
+   lucaskanade/image/ImageInverseCompositional
+
+Residuals
+~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   lucaskanade/residual/Residual
+   lucaskanade/residual/ECC
+   lucaskanade/residual/GaborFourier
+   lucaskanade/residual/GradientCorrelation
+   lucaskanade/residual/GradientImages
+   lucaskanade/residual/LSIntensity
 
 Regression
 ----------
@@ -95,11 +161,3 @@ Fitting Result
    SemiParametricFittingResult
    NonParametricFittingResult
    TrackingResultList
-
-Abstract Classes
-----------------
-
-.. toctree::
-   :maxdepth: 1
-
-   Fitter
