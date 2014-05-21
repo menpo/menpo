@@ -11,9 +11,6 @@ def compute_features(image, feature_type):
         If ``None``, no feature representation will be computed from the
         original image.
 
-        If `string` or `function`, the feature representation will be computed
-        in the following way:
-
         If `string`, the feature representation will be extracted by
         executing::
 
@@ -43,7 +40,7 @@ def compute_features(image, feature_type):
         The resulting feature image.
     """
     if feature_type is not None:
-        if type(feature_type) is str:
+        if isinstance(feature_type, str):
             image = eval('image.features.' + feature_type + '()')
         elif hasattr(feature_type, '__call__'):
             image = feature_type(image)
@@ -57,4 +54,14 @@ def compute_features(image, feature_type):
 
 
 def sparse_hog(image):
+    r"""
+    Non-standard feature function that computes sparse HOGs.
+    """
     return image.features.hog(mode='sparse', constrain_landmarks=True)
+
+
+def double_igo(image):
+    r"""
+    Non-standard feature function that computes IGOs with double angles.
+    """
+    return image.features.igo(double_angles=True)

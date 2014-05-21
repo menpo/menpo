@@ -335,7 +335,7 @@ class SDAAMFitter(AAMFitter, SDFitter):
 
         :type: `string`
         """
-        return 'SD-AAM' + self._fitters[0].algorithm
+        return 'SD-AAM-' + self._fitters[0].algorithm
 
     def __str__(self):
         return "{}Supervised Descent Method for AAMs:\n" \
@@ -380,7 +380,7 @@ class SDCLMFitter(CLMFitter, SDFitter):
 
         :type: `string`
         """
-        return 'SD-CLM' + self._fitters[0].algorithm
+        return 'SD-CLM-' + self._fitters[0].algorithm
 
     def __str__(self):
         return "{}Supervised Descent Method for CLMs:\n" \
