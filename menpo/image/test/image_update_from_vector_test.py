@@ -19,6 +19,6 @@ def test_3channel_update_from_vector():
     update_im_from_vector(im)
 
 
-def test_maskedndimage_update_from_vector():
+def test_maskedimage_update_from_vector():
     im = MaskedImage.blank((10, 10), n_channels=10)
     update_im_from_vector(im)

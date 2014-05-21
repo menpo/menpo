@@ -23,33 +23,28 @@ class RegressorTrainer(object):
 
     Parameters
     ----------
-    reference_shape: PointCloud
+    reference_shape : :map:`PointCloud`
         The reference shape that will be used.
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
-        Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
+        Examples of such closures can be found in
+        :ref:`regression_functions`
+
+    regression_features : ``None`` or `string` or `function`, optional
         The features that are used during the regression.
 
-        Default: None
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : boolean, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int, Optional
+    n_perturbations : `int`, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
-
-        Default: 10
     """
     __metaclass__ = abc.ABCMeta
 
@@ -66,20 +61,21 @@ class RegressorTrainer(object):
     def _regression_data(self, images, gt_shapes, perturbed_shapes,
                          verbose=False):
         r"""
-        Method that generates the regression data: features and delta_ps.
+        Method that generates the regression data : features and delta_ps.
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images.
-        gt_shapes: :class:`menpo.shape.PointCloud` list
-            List of the ground truth shapes that correspond to the images.
-        perturbed_shapes: :class:`menpo.shape.PointCloud` list
-            List of the perturbed shapes in order to regress.
-        verbose: boolean, optional
-            If True, the progress is printed.
 
-            Default: False
+        gt_shapes : :map:`PointCloud` list
+            List of the ground truth shapes that correspond to the images.
+
+        perturbed_shapes : :map:`PointCloud` list
+            List of the perturbed shapes in order to regress.
+
+        verbose : `boolean`, optional
+            If ``True``, the progress is printed.
         """
         if verbose:
             print_dynamic('- Generating regression data')
@@ -104,9 +100,10 @@ class RegressorTrainer(object):
 
         Parameters
         ----------
-        image: :class:`menpo.image.MaskedImage`
-            The current image..
-        shape: :class:`menpo.shape.PointCloud`
+        image : :map:`MaskedImage`
+            The current image.
+
+        shape : :map:`PointCloud`
             The current shape.
         """
         pass
@@ -118,9 +115,10 @@ class RegressorTrainer(object):
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
-        perturbed_shape: :class:`menpo.shape.PointCloud`
+
+        perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
         pass
@@ -132,22 +130,21 @@ class RegressorTrainer(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images : list of :map:`MaskedImage`
             The set of landmarked images from which to train the regressor.
-        shapes: :class:`menpo.shape.PointCloud` list
+
+        shapes : :map:`PointCloud` list
             List of the shapes that correspond to the images.
-        perturbed_shapes: :class:`menpo.shape.PointCloud` list, optional
+
+        perturbed_shapes : :map:`PointCloud` list, optional
             List of the perturbed shapes used for the regressor training.
 
-            Default: None
-        verbose: bool, Optional
+        verbose : `boolean`, optional
             Flag that controls information and progress printing.
-
-            Default: False
 
         Returns
         -------
-        regressor: `menpo.fit.regression.base`
+        regressor : :map:`Regressor`
             A regressor object.
 
         Raises
@@ -193,16 +190,17 @@ class RegressorTrainer(object):
     def perturb_shapes(self, gt_shape):
         r"""
         Perturbs the given shapes. The number of perturbations is defined by
-        self.n_perturbations.
+        ``n_perturbations``.
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud` list
-            List of the shapes that correspond to the images.will be perturbed.
+        gt_shape : :map:`PointCloud` list
+            List of the shapes that correspond to the images.
+            will be perturbed.
 
         Returns
         -------
-        perturbed_shapes: :class:`menpo.shape.PointCloud` list
+        perturbed_shapes : :map:`PointCloud` list
             List of the perturbed shapes.
         """
         return [[self._perturb_shape(s) for _ in range(self.n_perturbations)]
@@ -215,7 +213,7 @@ class RegressorTrainer(object):
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
         return noisy_align(self.reference_shape, gt_shape,
@@ -236,22 +234,25 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
     Parameters
     ----------
-    reference_shape: PointCloud
+    reference_shape : :map:`PointCloud`
         The reference shape that will be used.
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
-        Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
+        Examples of such closures can be found in
+        :ref:`regression_functions`
+
+    regression_features : ``None`` or `string` or `function`, optional
         The features that are used during the regression.
-        If None, no feature representation will be computed from the
+
+        If ``None``, no feature representation will be computed from the
         original image.
-        If string or closure, the feature representation will be computed
+
+        If `string` or `function`, the feature representation will be computed
         in the following way:
-            If string, the feature representation will be extracted by
-            executing:
+        
+            If `string`, the feature representation will be extracted by
+            executing::
 
                 feature_image = eval('img.features.' + feature_type + '()')
 
@@ -263,38 +264,33 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             Non-default feature options and new experimental feature can be
             used by defining a closure. In this case, the closure must define a
             function that receives as an input an image and returns a
-            particular feature representation of that image. For example:
+            particular feature representation of that image. For example::
 
                 def igo_double_from_std_normalized_intensities(image)
                     image = deepcopy(image)
                     image.normalize_std_inplace()
                     return image.feature_type.igo(double_angles=True)
 
-            See `menpo.image.feature.py` for details more details on
+            See :map:`ImageFeatures` for details more details on
             Menpo's standard image features and feature options.
-            See `menpo.fitmultilevel.featurefunctions.py` for non standard
+            See :ref:`feature_functions` for non standard
             features definitions.
 
-        Default: sparse_hog
-    patch_shape: tuple, Optional
+    patch_shape : tuple, optional
         The shape of the patches that will be extracted.
 
-        Default: (16, 16)
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int, Optional
+    n_perturbations : `int`, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
     """
     def __init__(self, reference_shape, regression_type=mlr,
                  regression_features=sparse_hog, patch_shape=(16, 16),
@@ -322,11 +318,13 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        image: `menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The image object.
-        shapes: `menpo.shape.PointCloud` list
+
+        shapes : :map:`PointCloud` list
             The shapes.
-        gt_shape: `menpo.shape.PointCloud`
+
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
         return NonParametricFittingResult(image, self, shapes=[shapes],
@@ -339,9 +337,10 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        image: :class:`menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The current image.
-        shape: :class:`menpo.shape.PointCloud`
+
+        shape : :map:`PointCloud`
             The current shape.
         """
         # extract patches
@@ -363,9 +362,10 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
-        perturbed_shape: :class:`menpo.shape.PointCloud`
+
+        perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
         return (gt_shape.as_vector() -
@@ -380,28 +380,32 @@ class NonParametricRegressorTrainer(RegressorTrainer):
 
 class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
     r"""
-    Class for training a Semi-Parametric Regressor. (This means that a
-    parametric shape model and a non-parametric appearance representation are
-    employed.)
+    Class for training a Semi-Parametric Regressor.
+
+    This means that a parametric shape model and a non-parametric appearance
+    representation are employed.
 
     Parameters
     ----------
-    reference_shape: PointCloud
+    reference_shape : PointCloud
         The reference shape that will be used.
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
-        Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
 
-        Default: mlr
-    regression_features: None or string or function/closure, Optional
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
+        Examples of such closures can be found in
+        :ref:`regression_functions`
+
+    regression_features : ``None`` or `string` or `function`, optional
         The features that are used during the regression.
-        If None, no feature representation will be computed from the
+
+        If ``None``, no feature representation will be computed from the
         original image.
-        If string or closure, the feature representation will be computed
+
+        If `string` or `function`, the feature representation will be computed
         in the following way:
-            If string, the feature representation will be extracted by
-            executing:
+
+            If `string`, the feature representation will be extracted by
+            executing::
 
                 feature_image = eval('img.features.' + feature_type + '()')
 
@@ -413,42 +417,36 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
             Non-default feature options and new experimental feature can be
             used by defining a closure. In this case, the closure must define a
             function that receives as an input an image and returns a
-            particular feature representation of that image. For example:
+            particular feature representation of that image. For example::
 
                 def igo_double_from_std_normalized_intensities(image)
                     image = deepcopy(image)
                     image.normalize_std_inplace()
                     return image.feature_type.igo(double_angles=True)
 
-            See `menpo.image.feature.py` for details more details on
+            See :map:`ImageFeatures` for details more details on
             Menpo's standard image features and feature options.
-            See `menpo.fitmultilevel.featurefunctions.py` for non standard
+            See :ref:`feature_functions` for non standard
             features definitions.
 
-        Default: sparse_hog
-    patch_shape: tuple, Optional
+    patch_shape : tuple, optional
         The shape of the patches that will be extracted.
 
-        Default: (16, 16)
-    update: 'compositional' or 'additive'
+    update : 'compositional' or 'additive'
         Defines the way to update the warp.
 
-        Default: 'compositional'
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int, Optional
+    n_perturbations : `int`, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
     """
     def __init__(self, transform, reference_shape, regression_type=mlr,
                  regression_features=sparse_hog, patch_shape=(16, 16),
@@ -475,11 +473,13 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
 
         Parameters
         ----------
-        image: `menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The image object.
-        shapes: `menpo.shape.PointCloud` list
+
+        shapes : :map:`PointCloud` list
             The shapes.
-        gt_shape: `menpo.shape.PointCloud`
+
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
         return SemiParametricFittingResult(image, self, parameters=[shapes],
@@ -491,9 +491,10 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
-        perturbed_shape: :class:`menpo.shape.PointCloud`
+
+        perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
         self.transform.target = gt_shape
@@ -516,57 +517,56 @@ class ParametricRegressorTrainer(RegressorTrainer):
 
     Parameters
     ----------
-    appearance_model: `menpo.model.pca`
+    appearance_model : :map:`PCAModel`
         The appearance model to be used.
-    transform: `model.transform.affine`
+
+    transform : :map:`Affine`
         The transform used for warping.
-    reference_shape: PointCloud
+
+    reference_shape : :map:`PointCloud`
         The reference shape that will be used.
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
+
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
         Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
+        :ref:`regression_functions`
 
-        Default: mlr
-    regression_features: None or function/closure, Optional
+    regression_features : ``None`` or `function`, optional
         The parametric features that are used during the regression.
-        If None, the reconstruction appearance weights will be used as feature.
-        If string or function/closure, the feature representation will be
-        computed using one of the function in:
-            If string, the feature representation will be extracted by
-            executing:
-                `menpo.fit.regression.parametricfeatures`
-            Note that this feature type can only be one of the parametric
-            feature functions defined there.
 
-        Default: weights
-    patch_shape: tuple, Optional
+        If ``None``, the reconstruction appearance weights will be used as
+        feature.
+
+        If `string` or `function`, the feature representation will be
+        computed using one of the function in:
+
+            If `string`, the feature representation will be extracted by
+            executing a parametric feature function.
+
+            Note that this feature type can only be one of the parametric
+            feature functions defined :ref:`parametric_features`.
+
+    patch_shape : tuple, optional
         The shape of the patches that will be extracted.
 
-        Default: (16, 16)
-    update: 'compositional' or 'additive'
+    update : 'compositional' or 'additive'
         Defines the way to update the warp.
 
-        Default: 'compositional'
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int, Optional
+    n_perturbations : `int`, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
-    interpolator: string
+    interpolator : `string`
         Specifies the interpolator used in warping.
 
-        Default: 'scipy'
     """
     def __init__(self, appearance_model, transform, reference_shape,
                  regression_type=mlr, regression_features=weights,
@@ -596,11 +596,13 @@ class ParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        image: `menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The image object.
-        shapes: `menpo.shape.PointCloud` list
+
+        shapes : :map:`PointCloud` list
             The shapes.
-        gt_shape: `menpo.shape.PointCloud`
+
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
         return ParametricFittingResult(image, self, parameters=[shapes],
@@ -613,9 +615,10 @@ class ParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        image: :class:`menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The current image.
-        shape: :class:`menpo.shape.PointCloud`
+
+        shape : :map:`PointCloud`
             The current shape.
         """
         self.transform.set_target(shape)
@@ -631,9 +634,10 @@ class ParametricRegressorTrainer(RegressorTrainer):
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
-        perturbed_shape: :class:`menpo.shape.PointCloud`
+
+        perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
         self.transform.set_target(gt_shape)
@@ -659,41 +663,37 @@ class SemiParametricClassifierBasedRegressorTrainer(
 
     Parameters
     ----------
-    classifiers: list of `menpo.fitmultilevel.clm.classifierfunctions`
+    classifiers : list of :ref:`classifier_functions`
         List of classifiers.
-    transform: `model.transform.affine`
-        The transform used for warping.
-    reference_shape: PointCloud
-        The reference shape that will be used.
-    regression_type: function/closure, Optional
-        A function/closure that defines the regression technique to be used.
-        Examples of such closures can be found in
-        `menpo.fit.regression.regressionfunctions.py`
 
-        Default: mlr
-    patch_shape: tuple, Optional
+    transform : :map:`Affine`
+        The transform used for warping.
+
+    reference_shape : :map:`PointCloud`
+        The reference shape that will be used.
+
+    regression_type : `function`, optional
+        A `function` that defines the regression technique to be used.
+        Examples of such closures can be found in
+        :ref:`regression_functions`
+
+    patch_shape : tuple, optional
         The shape of the patches that will be extracted.
 
-        Default: (16, 16)
-    noise_std: float, optional
+    noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
         training shapes.
 
-        Default: 0.04
-    rotation: boolean, optional
+    rotation : `boolean`, optional
         Specifies whether ground truth in-plane rotation is to be used
         to produce the training shapes.
 
-        Default: False
-    n_perturbations: int, Optional
+    n_perturbations : `int`, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-        Default: 10
-    interpolator: string
+    interpolator : `string`
         Specifies the interpolator used in warping.
-
-        Default: 'scipy'
     """
     def __init__(self, classifiers, transform, reference_shape,
                  regression_type=mlr, patch_shape=(16, 16),
@@ -714,9 +714,10 @@ class SemiParametricClassifierBasedRegressorTrainer(
 
         Parameters
         ----------
-        image: :class:`menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The current image.
-        shape: :class:`menpo.shape.PointCloud`
+
+        shape : :map:`PointCloud`
             The current shape.
         """
         # extract patches
@@ -735,11 +736,13 @@ class SemiParametricClassifierBasedRegressorTrainer(
 
         Parameters
         ----------
-        image: `menpo.image.MaskedImage`
+        image : :map:`MaskedImage`
             The image object.
-        shapes: `menpo.shape.PointCloud` list
+
+        shapes : :map:`PointCloud` list
             The shapes.
-        gt_shape: `menpo.shape.PointCloud`
+
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
         return SemiParametricFittingResult(image, self, parameters=[shapes],
@@ -751,9 +754,10 @@ class SemiParametricClassifierBasedRegressorTrainer(
 
         Parameters
         ----------
-        gt_shape: :class:`menpo.shape.PointCloud`
+        gt_shape : :map:`PointCloud`
             The ground truth shape.
-        perturbed_shape: :class:`menpo.shape.PointCloud`
+
+        perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
         self.transform.set_target(gt_shape)

@@ -1,0 +1,11 @@
+.. _menpo-fit-gradientdescent-residual-L1L2:
+
+.. currentmodule:: menpo.fit.gradientdescent.residual
+
+L1L2
+====
+
+.. autoclass:: L1L2
+  :members:
+  :inherited-members:
+  :show-inheritance:

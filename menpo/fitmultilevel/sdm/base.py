@@ -24,43 +24,40 @@ class SDFitter(MultilevelFitter):
 
         Parameters
         -----------
-        image: :class:`menpo.image.masked.MaskedImage`
+        image : :map:`MaskedImage`
             The image to be fitted.
-        initial_shape: :class:`menpo.shape.PointCloud`
+        initial_shape : :map:`PointCloud`
             The initial shape estimate from which the fitting procedure
             will start.
-        max_iters: int or list, optional
+        max_iters :  int  or `list`, optional
             The maximum number of iterations.
-            If int, then this will be the overall maximum number of iterations
+
+            If `int`, then this will be the overall maximum number of iterations
             for all the pyramidal levels.
-            If list, then a maximum number of iterations is specified for each
+
+            If `list`, then a maximum number of iterations is specified for each
             pyramidal level.
 
-            Default: 50
-        gt_shape: PointCloud
-            The ground truth shape of the image.
+        gt_shape : :map:`PointCloud`
+            The groundtruth shape of the image.
 
-            Default: None
-        error_type: 'me_norm', 'me' or 'rmse', optional.
+        error_type : {'me_norm', 'me', 'rmse'}, optional.
             Specifies the way in which the error between the fitted and
             ground truth shapes is to be computed.
 
-            Default: 'me_norm'
-        verbose: boolean, optional
+        verbose: `boolean`, optional
             Whether or not to print information related to the fitting
-            results (such as: final error, convergence, ...).
+            results (such as: ``final error``, ``convergence``, ...).
 
-            Default: True
-        view: boolean, optional
+        view : `boolean`, optional
             Whether or not the fitting results are to be displayed.
 
-            Default: False
-
-        **kwargs:
+        **kwargs : `dict`
+            optional arguments to be passed through.
 
         Returns
         -------
-        FittingList: :class:`menpo.fitmultilevel.fittingresult`
+        fitting_list : :map:`FittingResultList`
             A fitting result object.
         """
         if max_iters is None:
@@ -75,74 +72,84 @@ class SDMFitter(SDFitter):
     r"""
     Supervised Descent Method.
 
-    References
-    ----------
-    Xuehan Xiong and Fernando De la Torre Fernando, "Supervised Descent Method
-    and its Applications to Face Alignment," IEEE International Conference on
-    Computer Vision and Pattern Recognition (CVPR), May, 2013.
-
     Parameters
     -----------
-    regressors: :class: menpo.fit.regression.RegressorTrainer
+    regressors : :map:`RegressorTrainer`
         The trained regressors.
-    n_training_images: int
+        
+    n_training_images : `int`
         The number of images that were used to train the SDM fitter. It is
         only used for informational reasons.
-    feature_type: None or string or function/closure or list of those, Optional
-        If list of length n_levels, then a feature is defined per level.
-        However, this requires that the pyramid_on_features flag is disabled,
-        so that the features are extracted at each level. The first element of
-        the list specifies the features to be extracted at the lowest pyramidal
-        level and so on.
+        
+    feature_type : ``None`` or `string` or `function` or list of those, optional
+        If list of length ``n_levels``, then a feature is defined per level.
+        However, this requires that the ``pyramid_on_features`` flag is
+        ``False``, so that the features are extracted at each level.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If not a list or a list with length 1, then:
-            If pyramid_on_features is True, the specified feature will be
-            applied to the highest level.
-            If pyramid_on_features is False, the specified feature will be
-            applied to all pyramid levels.
+        If not a list or a list with length ``1``, then:
+            If ``pyramid_on_features`` is ``True``, the specified feature will
+            be applied to the highest level.
+            If ``pyramid_on_features`` is ``False``, the specified feature will
+            be applied to all pyramid levels.
 
         Per level:
-        If None, the appearance model will be built using the original image
-        representation, i.e. no features will be extracted from the original
-        images.
+            If ``None``, the appearance model will be built using the original image
+            representation, i.e. no features will be extracted from the original
+            images.
 
-        If string, image features will be computed by executing:
+            If `string`, image features will be computed by executing::
 
-           feature_image = eval('img.feature_type.' +
-                                feature_type[level] + '()')
+               feature_image = eval('img.feature_type.' +
+                                    feature_type[level] + '()')
 
-        for each pyramidal level. For this to work properly each string
-        needs to be one of menpo's standard image feature methods
-        ('igo', 'hog', ...).
-        Note that, in this case, the feature computation will be
-        carried out using the default options.
+            for each pyramidal level. For this to work properly each string
+            needs to be one of menpo's standard image feature methods
+            ('igo', 'hog', ...).
+            Note that, in this case, the feature computation will be
+            carried out using the default options.
 
         Non-default feature options and new experimental features can be
-        defined using functions/closures. In this case, the functions must
+        defined using `function`. In this case, the `function` must
         receive an image as input and return a particular feature
-        representation of that image. For example:
+        representation of that image. For example::
 
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
                 return image.feature_type.igo(double_angles=True)
 
-        See `menpo.image.feature.py` for details more details on
-        menpo's standard image features and feature options.
-    reference_shape: PointCloud
+        See :map:`ImageFeatures` for details more details on
+        Menpo's standard image features and feature options.
+
+    reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
         consistent object size.
-    downscale: float
+        
+    downscale : `float`
         The downscale factor that will be used to create the different
-        pyramidal levels. The scale factor will be:
+        pyramidal levels. The scale factor will be::
+
             (downscale ** k) for k in range(n_levels)
-    pyramid_on_features: boolean, Optional
-        If True, the feature space is computed once at the highest scale and
+            
+    pyramid_on_features : `boolean`, optional
+        If ``True``, the feature space is computed once at the highest scale and
         the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
+
+        If ``False``, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
-    interpolator: string
+        
+    interpolator : `string`
         The interpolator that was used during training.
+
+    References
+    ----------
+    .. [XiongD13] Supervised Descent Method and its Applications to
+       Face Alignment
+       Xuehan Xiong and Fernando De la Torre Fernando
+       IEEE International Conference on Computer Vision and Pattern Recognition
+       May, 2013
     """
     def __init__(self, regressors, n_training_images, feature_type,
                  reference_shape, downscale, pyramid_on_features,
@@ -169,7 +176,7 @@ class SDMFitter(SDFitter):
         r"""
         The reference shape used during training.
 
-        : `menpo.shape.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self._reference_shape
 
@@ -179,7 +186,7 @@ class SDMFitter(SDFitter):
         The feature type per pyramid level. Note that they are stored from
         lowest to highest level resolution.
 
-        : list
+        :type: `list`
         """
         return self._feature_type
 
@@ -198,7 +205,7 @@ class SDMFitter(SDFitter):
         The downscale per pyramidal level used during building the AAM.
         The scale factor is: (downscale ** k) for k in range(n_levels)
 
-        : float
+        :type: `float`
         """
         return self._downscale
 
@@ -212,7 +219,7 @@ class SDMFitter(SDFitter):
         If False, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
 
-        : boolean
+        :type: `boolean`
         """
         return self._pyramid_on_features
 
@@ -221,7 +228,7 @@ class SDMFitter(SDFitter):
         r"""
         The employed interpolator.
 
-        : str
+        :type: `string`
         """
         return self._interpolator
 
@@ -307,11 +314,13 @@ class SDAAMFitter(AAMFitter, SDFitter):
 
     Parameters
     -----------
-    aam: :class:`menpo.fitmultilevel.aam.builder.AAM`
+    aam : :map:`AAM`
         The Active Appearance Model to be used.
-    regressors: :class: menpo.fit.regression.RegressorTrainer
+
+    regressors : :map:``RegressorTrainer`
         The trained regressors.
-    n_training_images: int
+
+    n_training_images : `int`
         The number of training images used to train the SDM fitter.
     """
     def __init__(self, aam, regressors, n_training_images):
@@ -324,7 +333,7 @@ class SDAAMFitter(AAMFitter, SDFitter):
         r"""
         Returns a string containing the algorithm used from the SDM family.
 
-        : str
+        :type: `string`
         """
         return 'SD-AAM-' + self._fitters[0].algorithm
 
@@ -342,18 +351,22 @@ class SDCLMFitter(CLMFitter, SDFitter):
 
     Parameters
     -----------
-    clm: :class:`menpo.fitmultilevel.clm.builder.CLM`
+    clm : :map:`CLM`
         The Constrained Local Model to be used.
-    regressors: :class: menpo.fit.regression.RegressorTrainer
+
+    regressors : :map:`RegressorTrainer`
         The trained regressors.
-    n_training_images: int
+
+    n_training_images : `int`
         The number of training images used to train the SDM fitter.
 
     References
     ----------
-    A. Asthana, S. Zafeiriou, S. Cheng, M. Pantic. 2013 IEEE Conference on
-    Computer Vision and Pattern Recognition (CVPR 2013). Portland, Oregon,
-    USA, June 2013.
+    .. [Asthana13] Robust Discriminative Response Map Fitting with Constrained
+       Local Models
+       A. Asthana, S. Zafeiriou, S. Cheng, M. Pantic.
+       IEEE Conference onComputer Vision and Pattern Recognition.
+       Portland, Oregon, USA, June 2013.
     """
     def __init__(self, clm, regressors, n_training_images):
         super(SDCLMFitter, self).__init__(clm)
@@ -365,7 +378,7 @@ class SDCLMFitter(CLMFitter, SDFitter):
         r"""
         Returns a string containing the algorithm used from the SDM family.
 
-        : str
+        :type: `string`
         """
         return 'SD-CLM-' + self._fitters[0].algorithm
 

@@ -189,10 +189,10 @@ class DeformableModelBuilder(object):
 
         Returns
         -------
-        reference_shape: Pointcloud
+        reference_shape : :map:`PointCloud`
             The reference shape that was used to resize all training images to
             a consistent object size.
-        normalized_images: list of MaskedImage objects
+        normalized_images : :map:`MaskedImage` list
             A list with the normalized images.
         """
         # the reference_shape is the mean shape of the images' landmarks
@@ -288,7 +288,7 @@ class DeformableModelBuilder(object):
 
         Parameters
         ----------
-        shapes: list of :class:`Pointcloud`
+        shapes: list of :map:`PointCloud`
             The set of shapes from which to build the model.
         max_components: None or int or float
             Specifies the number of components of the trained shape model.
