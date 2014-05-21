@@ -106,9 +106,6 @@ class Affine(Homogeneous, DP, DX):
         translation = Translation(self.translation_component)
         return [rotation_1, scale, rotation_2, translation]
 
-    def __eq__(self, other):
-        return np.allclose(self.h_matrix, other.h_matrix)
-
     def _transform_str(self):
         r"""
         A string representation explaining what this affine transform does.

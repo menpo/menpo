@@ -2,7 +2,7 @@ import numpy as np
 from nose.tools import raises
 from numpy.testing import assert_allclose, assert_equal
 
-from menpo.transform import Affine
+from menpo.transform import Affine, NonUniformScale
 
 
 jac_solution2d = np.array(
@@ -315,3 +315,18 @@ def test_affine_incorrect_bottom_row():
 def test_affine_non_square_h_matrix():
     homo = np.random.rand(4, 6)
     Affine(homo)
+
+
+def test_affine_compose_inplace_affine():
+    a = Affine.identity(2)
+    b = Affine.identity(2)
+    a.compose_before_inplace(b)
+    assert(np.all(a.h_matrix == b.h_matrix))
+
+
+def test_affine_pseudoinverse():
+    s = NonUniformScale([4, 3])
+    inv_man = NonUniformScale([1./4, 1./3])
+    b = Affine(s.h_matrix)
+    i = b.pseudoinverse
+    assert_allclose(i.h_matrix, inv_man.h_matrix)
