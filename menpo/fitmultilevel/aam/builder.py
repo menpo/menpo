@@ -441,7 +441,7 @@ class AAMBuilder(DeformableModelBuilder):
         # create images list
         n_training_images = len(images)
         which_images = sample(range(n_training_images), n_images)
-        images_ram = [images[i] for i in which_images]
+        images_ram = [images[i].copy() for i in which_images]
         # normalize images with respect to reference shape
         if self.normalization_diagonal is None:
             shapes_ram = [i.landmarks[group][label].lms for i in images_ram]
@@ -457,22 +457,39 @@ class AAMBuilder(DeformableModelBuilder):
         # train aam
         aam_ram = self.build(images_ram, group=group, label=label,
                              verbose=False)
+        # Make a temporary AAM Builder so that we can compute the estimate
+        # of the ram given the images we just chose.
+        temp_builder = AAMBuilder(
+            feature_type=self.feature_type, transform=self.transform,
+            trilist=self.trilist,
+            normalization_diagonal=self.normalization_diagonal,
+            n_levels=self.n_levels, downscale=self.downscale,
+            scaled_shape_models=self.scaled_shape_models,
+            pyramid_on_features=self.pyramid_on_features,
+            max_shape_components=self.max_shape_components,
+            max_appearance_components=self.max_appearance_components,
+            boundary=self.boundary,
+            interpolator=self.interpolator)
+        # Train the temporary AAM
+        aam_ram = temp_builder.build(images_ram, group=group, label=label,
+                                     verbose=False)
         # find required appearance components per level
         n_components = []
-        for i in range(self.n_levels):
-            if self.max_appearance_components[i] is None:
+        for i in range(temp_builder.n_levels):
+            if temp_builder.max_appearance_components[i] is None:
                 n_components.append(n_training_images - 1)
-            elif isinstance(self.max_appearance_components[i], int):
+            elif isinstance(temp_builder.max_appearance_components[i], int):
                 n_components.append(
                     min([n_training_images - 1,
-                         self.max_appearance_components[i]]))
-            elif isinstance(self.max_appearance_components[i], float):
-                n_components.append(int((n_training_images - 1) *
-                                        self.max_appearance_components[i]))
+                         temp_builder.max_appearance_components[i]]))
+            elif isinstance(temp_builder.max_appearance_components[i], float):
+                n_comp = (int((n_training_images - 1) *
+                          temp_builder.max_appearance_components[i]))
+                n_components.append(n_comp)
         # find bytes per appearance model
         bytes_ram = [n_components[i] *
                      aam_ram.appearance_models[i].components[0, :].nbytes
-                     for i in range(self.n_levels - 1, -1, -1)]
+                     for i in range(temp_builder.n_levels - 1, -1, -1)]
         # convert and print bytes
         print_bytes_ram = [print_bytes(i) for i in bytes_ram]
         if len(print_bytes_ram) > 1:

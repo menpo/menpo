@@ -144,7 +144,7 @@ class SDTrainer(object):
     def __init__(self, regression_type=mlr, regression_features=None,
                  feature_type=None, n_levels=3, downscale=1.2,
                  pyramid_on_features=True, noise_std=0.04, rotation=False,
-                 n_perturbations=10, interpolator='scipy', **kwargs):
+                 n_perturbations=10, interpolator='scipy'):
 
         # check parameters
         regression_type_list = self.check_regression_type(regression_type,
@@ -1404,7 +1404,7 @@ class SDCLMTrainer(SDTrainer):
         return SemiParametricClassifierBasedRegressorTrainer(
             clfs, pdm_transform, self.reference_shape,
             regression_type=self.regression_type[level],
-            patch_shape=self.patch_shape,
+            patch_shape=self.patch_shape, update='additive',
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
 
