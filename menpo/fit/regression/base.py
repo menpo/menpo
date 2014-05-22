@@ -193,9 +193,9 @@ class SemiParametricRegressor(Regressor):
         update : `function`
             The correct function to apply the update chosen.
         """
-        if update is 'additive':
+        if update == 'additive':
             return self._additive
-        elif update is 'compositional':
+        elif update == 'compositional':
             return self._compositional
         else:
             raise ValueError('Unknown update string selected. Valid'

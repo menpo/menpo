@@ -517,16 +517,16 @@ class SDTrainer(object):
             If pyramid_on_features is ``False``, the list will have length
             ``n_levels``.
         """
-        if pyramid_on_features is False:
+        if not pyramid_on_features:
             feature_type_str_error = ("feature_type must be a str or a "
                                       "function/closure or a list of "
                                       "those containing 1 or {} "
                                       "elements").format(n_levels)
             if not isinstance(feature_type, list):
                 feature_type_list = [feature_type] * n_levels
-            elif len(feature_type) is 1:
+            elif len(feature_type) == 1:
                 feature_type_list = [feature_type[0]] * n_levels
-            elif len(feature_type) is n_levels:
+            elif len(feature_type) == n_levels:
                 feature_type_list = feature_type
             else:
                 raise ValueError(feature_type_str_error)
@@ -537,7 +537,7 @@ class SDTrainer(object):
                                       "containing 1 of those")
             if not isinstance(feature_type, list):
                 feature_type_list = [feature_type]
-            elif len(feature_type) is 1:
+            elif len(feature_type) == 1:
                 feature_type_list = feature_type
             else:
                 raise ValueError(feature_type_str_error)
@@ -574,9 +574,9 @@ class SDTrainer(object):
                                      "elements").format(n_levels)
         if not isinstance(regression_type, list):
             regression_type_list = [regression_type] * n_levels
-        elif len(regression_type) is 1:
+        elif len(regression_type) == 1:
             regression_type_list = [regression_type[0]] * n_levels
-        elif len(regression_type) is n_levels:
+        elif len(regression_type) == n_levels:
             regression_type_list = regression_type
         else:
             raise ValueError(regression_type_str_error)
@@ -944,9 +944,9 @@ class SDMTrainer(SDTrainer):
                                          "elements").format(n_levels)
         if not isinstance(regression_features, list):
             regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) is 1:
+        elif len(regression_features) == 1:
             regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) is n_levels:
+        elif len(regression_features) == n_levels:
             regression_features_list = regression_features
         else:
             raise ValueError(regression_features_str_error)
@@ -1087,10 +1087,10 @@ class SDAAMTrainer(SDTrainer):
             if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.aam.n_levels > 1:
+            elif len(n_shape) == 1 and self.aam.n_levels > 1:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.aam.n_levels:
+            elif len(n_shape) == self.aam.n_levels:
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
@@ -1104,10 +1104,10 @@ class SDAAMTrainer(SDTrainer):
             if type(n_appearance) is int or type(n_appearance) is float:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance
-            elif len(n_appearance) is 1 and self.aam.n_levels > 1:
+            elif len(n_appearance) == 1 and self.aam.n_levels > 1:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance[0]
-            elif len(n_appearance) is self.aam.n_levels:
+            elif len(n_appearance) == self.aam.n_levels:
                 for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
@@ -1245,9 +1245,9 @@ class SDAAMTrainer(SDTrainer):
                                          "elements").format(n_levels)
         if not isinstance(regression_features, list):
             regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) is 1:
+        elif len(regression_features) == 1:
             regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) is n_levels:
+        elif len(regression_features) == n_levels:
             regression_features_list = regression_features
         else:
             raise ValueError(regression_features_str_error)
@@ -1344,10 +1344,10 @@ class SDCLMTrainer(SDTrainer):
             if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.clm.n_levels > 1:
+            elif len(n_shape) == 1 and self.clm.n_levels > 1:
                 for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.clm.n_levels:
+            elif len(n_shape) == self.clm.n_levels:
                 for sm, n in zip(self.clm.shape_models, n_shape):
                     sm.n_active_components = n
             else:

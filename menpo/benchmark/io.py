@@ -9,6 +9,8 @@ import zipfile
 from collections import namedtuple
 
 # Container for bounding box
+from menpo.shape import PointCloud
+
 BoundingBox = namedtuple('BoundingBox', ['detector', 'groundtruth'])
 # Where the bounding boxes should be fetched from
 bboxes_url = 'http://ibug.doc.ic.ac.uk/media/uploads/competitions/bounding_boxes.zip'
@@ -25,7 +27,7 @@ def download_ibug_bounding_boxes(path=None, verbose=False):
         If None, the current directory will be used.
     """
     if path is None:
-        path  = os.getcwd()
+        path = os.getcwd()
     else:
         path = os.path.abspath(os.path.expanduser(path))
     if verbose:
@@ -71,8 +73,8 @@ def import_bounding_boxes(boxes_path):
     for bb in bboxes_mat['bounding_boxes'][0, :]:
         fname, detector_bb, gt_bb = bb[0, 0]
         bboxes[str(fname[0])] = BoundingBox(
-            detector_bb.reshape([2, 2])[:, ::-1],
-            gt_bb.reshape([2, 2])[:, ::-1])
+            PointCloud(detector_bb.reshape([2, 2])[:, ::-1]),
+            PointCloud(gt_bb.reshape([2, 2])[:, ::-1]))
     return bboxes
 
 
@@ -107,11 +109,3 @@ def import_all_bounding_boxes(boxes_dir_path=None, verbose=True):
         print('Done.')
     return bboxes
 
-
-def bounding_boxes_for_images(bbox_path, images):
-    bboxes_dict = import_bounding_boxes(bbox_path)
-    bboxes_list = []
-    for im in images:
-        fname = im.ioinfo.filename + im.ioinfo.extension
-        bboxes_list.append(bboxes_dict[fname].detector)
-    return bboxes_list

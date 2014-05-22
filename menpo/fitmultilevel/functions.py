@@ -218,11 +218,11 @@ def align_shape_with_bb(shape, bounding_box):
 def compute_error(target, ground_truth, error_type='me_norm'):
     r"""
     """
-    if error_type is 'me_norm':
+    if error_type == 'me_norm':
         return _compute_me_norm(target, ground_truth)
-    elif error_type is 'me':
+    elif error_type == 'me':
         return _compute_me(target, ground_truth)
-    elif error_type is 'rmse':
+    elif error_type == 'rmse':
         return _compute_rmse(target, ground_truth)
     else:
         raise ValueError("Unknown error_type string selected. Valid options "

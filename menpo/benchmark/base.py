@@ -11,7 +11,7 @@ from menpo.visualize.base import GraphPlotter
 
 
 def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
-                      bounding_boxes=None, perturb_options=None, verbose=False):
+                      perturb_options=None, verbose=False):
     r"""
     Fits a trained AAM model to a database.
 
@@ -91,9 +91,9 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
     for j, i in enumerate(fitting_images):
         # perturb shape
         gt_s = i.landmarks[group].lms
-        if bounding_boxes:
+        if 'bbox' in i.landmarks:
             # shape from bounding box
-            s = fitter.obtain_shape_from_bb(bounding_boxes[j])
+            s = fitter.obtain_shape_from_bb(i.landmarks['bbox'].lms.points)
         else:
             # shape from perturbation
             s = fitter.perturb_shape(gt_s, **perturb_options)
@@ -104,12 +104,12 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
 
         # print
         if verbose:
-            if error_type is 'me_norm':
+            if error_type == 'me_norm':
                 if fr.final_error <= 0.03:
                     perc1 += 1.
                 if fr.final_error <= 0.04:
                     perc2 += 1.
-            elif error_type is 'rmse':
+            elif error_type == 'rmse':
                 if fr.final_error <= 0.05:
                     perc1 += 1.
                 if fr.final_error <= 0.06:
@@ -196,7 +196,7 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
 
 
 def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
-                      bounding_boxes=None, perturb_options=None, verbose=False):
+                      perturb_options=None, verbose=False):
     r"""
     Fits a trained CLM model to a database.
 
@@ -251,8 +251,6 @@ def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
     # parse options
     if fitting_options is None:
         fitting_options = {}
-    if initialization_options is None:
-        initialization_options = {}
 
     # extract some options
     group = fitting_options.pop('gt_group', 'PTS')
@@ -268,9 +266,9 @@ def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
     for j, i in enumerate(fitting_images):
         # perturb shape
         gt_s = i.landmarks[group].lms
-        if bounding_boxes:
+        if 'bbox' in i.landmarks:
             # shape from bounding box
-            s = fitter.obtain_shape_from_bb(bounding_boxes[j])
+            s = fitter.obtain_shape_from_bb(i.landmarks['bbox'].lms.points)
         else:
             # shape from perturbation
             s = fitter.perturb_shape(gt_s, **perturb_options)
@@ -281,12 +279,12 @@ def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
 
         # print
         if verbose:
-            if error_type is 'me_norm':
+            if error_type == 'me_norm':
                 if fr.final_error <= 0.03:
                     perc1 += 1.
                 if fr.final_error <= 0.04:
                     perc2 += 1.
-            elif error_type is 'rmse':
+            elif error_type == 'rmse':
                 if fr.final_error <= 0.05:
                     perc1 += 1.
                 if fr.final_error <= 0.06:
@@ -365,7 +363,8 @@ def clm_build_benchmark(training_images, training_options=None, verbose=False):
     return aam
 
 
-def load_database(database_path, db_loading_options=None, verbose=False):
+def load_database(database_path, bounding_boxes=None,
+                  db_loading_options=None, verbose=False):
     r"""
     Loads the database images, crops them and converts them.
 
@@ -436,11 +435,21 @@ def load_database(database_path, db_loading_options=None, verbose=False):
                 n_files, progress_bar_str(float(c + 1) / n_files,
                                           show_bar=True)))
 
+        # If we have bounding boxes then we need to make sure we crop to them!
+        # If we don't crop to the bounding box then we might crop out part of
+        # the image the bounding box belongs to.
+        landmark_group_label = None
+        if bounding_boxes is not None:
+            fname = i.ioinfo.filename + i.ioinfo.extension
+            landmark_group_label = 'bbox'
+            i.landmarks[landmark_group_label] = bounding_boxes[fname].detector
+
         # crop image
-        i.crop_to_landmarks_proportion_inplace(crop_proportion)
+        i.crop_to_landmarks_proportion_inplace(crop_proportion,
+                                               group=landmark_group_label)
 
         # convert it to greyscale if needed
-        if convert_to_grey is True and i.n_channels == 3:
+        if convert_to_grey and i.n_channels == 3:
             i = i.as_greyscale(mode='luminosity')
 
         # append it to the list

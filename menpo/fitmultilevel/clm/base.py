@@ -195,10 +195,10 @@ class GradientDescentCLMFitter(CLMFitter):
             if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.clm.n_levels > 1:
+            elif len(n_shape) == 1 and self.clm.n_levels > 1:
                 for sm in self.clm.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.clm.n_levels:
+            elif len(n_shape) == self.clm.n_levels:
                 for sm, n in zip(self.clm.shape_models, n_shape):
                     sm.n_active_components = n
             else:
@@ -298,7 +298,7 @@ class GradientDescentCLMFitter(CLMFitter):
             for i in range(self.n_levels - 1, -1, -1):
                 out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
                                                       down_str[i])
-                if self.pyramid_on_features is False:
+                if not self.pyramid_on_features:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
                 out = "{0}     - {1} motion components\n     - {2} {3} " \

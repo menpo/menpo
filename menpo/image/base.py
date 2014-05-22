@@ -1165,7 +1165,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Generator yielding pyramid layers as menpo image objects.
         """
         for j in range(n_levels):
-            if j is 0:
+            if j == 0:
                 yield self
             else:
                 if sigma is None:

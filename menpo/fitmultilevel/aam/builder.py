@@ -1026,7 +1026,7 @@ class AAM(object):
                 out = "{}   - Pyramid was applied on feature space.\n   " \
                       "{}{} {} per image.\n".format(out, feat_str,
                                                     n_channels[0], ch_str[0])
-                if self.scaled_shape_models is False:
+                if not self.scaled_shape_models:
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out, self.appearance_models[0].n_features,
@@ -1040,11 +1040,11 @@ class AAM(object):
             for i in range(self.n_levels - 1, -1, -1):
                 out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
                                                       down_str[i])
-                if self.pyramid_on_features is False:
+                if not self.pyramid_on_features:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
                 if (self.scaled_shape_models or
-                        self.pyramid_on_features is False):
+                        (not self.pyramid_on_features)):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out, self.appearance_models[i].n_features,

@@ -62,9 +62,9 @@ class DeformableModelBuilder(object):
                          var_name, n_levels)
         if not isinstance(max_components, list):
             max_components_list = [max_components] * n_levels
-        elif len(max_components) is 1:
+        elif len(max_components) == 1:
             max_components_list = [max_components[0]] * n_levels
-        elif len(max_components) is n_levels:
+        elif len(max_components) == n_levels:
             max_components_list = max_components
         else:
             raise ValueError(str_error)
@@ -104,16 +104,16 @@ class DeformableModelBuilder(object):
             If pyramid_on_features is False, the list will have length
             {n_levels}.
         """
-        if pyramid_on_features is False:
+        if not pyramid_on_features:
             feature_type_str_error = ("feature_type must be a str or a "
                                       "function/closure or a list of "
                                       "those containing 1 or {} "
                                       "elements").format(n_levels)
             if not isinstance(feature_type, list):
                 feature_type_list = [feature_type] * n_levels
-            elif len(feature_type) is 1:
+            elif len(feature_type) == 1:
                 feature_type_list = [feature_type[0]] * n_levels
-            elif len(feature_type) is n_levels:
+            elif len(feature_type) == n_levels:
                 feature_type_list = feature_type
             else:
                 raise ValueError(feature_type_str_error)
@@ -124,7 +124,7 @@ class DeformableModelBuilder(object):
                                       "containing 1 of those")
             if not isinstance(feature_type, list):
                 feature_type_list = [feature_type]
-            elif len(feature_type) is 1:
+            elif len(feature_type) == 1:
                 feature_type_list = feature_type
             else:
                 raise ValueError(feature_type_str_error)

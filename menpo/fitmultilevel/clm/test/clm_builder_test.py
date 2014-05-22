@@ -168,15 +168,15 @@ def test_clm_1():
     assert (clm1.
             classifiers[0][np.random.
             randint(0, clm1.n_classifiers_per_level[0])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
     assert (clm1.
             classifiers[1][np.random.
             randint(0, clm1.n_classifiers_per_level[1])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
     assert (clm1.
             classifiers[2][np.random.
             randint(0, clm1.n_classifiers_per_level[2])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
 
 
 def test_clm_2():
@@ -195,11 +195,11 @@ def test_clm_2():
     assert (clm2.
             classifiers[0][np.random.
             randint(0, clm2.n_classifiers_per_level[0])].__name__
-            is 'random_forest_predict')
+            == 'random_forest_predict')
     assert (clm2.
             classifiers[1][np.random.
             randint(0, clm2.n_classifiers_per_level[1])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
 
 
 def test_clm_3():
@@ -218,4 +218,4 @@ def test_clm_3():
     assert (clm3.
             classifiers[0][np.random.
             randint(0, clm3.n_classifiers_per_level[0])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
