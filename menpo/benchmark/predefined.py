@@ -7,7 +7,7 @@ from menpo.fitmultilevel.featurefunctions import sparse_hog
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
-from .io import bounding_boxes_for_images
+from .io import import_bounding_boxes
 
 from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
                    clm_build_benchmark, clm_fit_benchmark,
@@ -25,7 +25,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.1,
+    db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
@@ -103,7 +103,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.1,
+    db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
@@ -133,21 +133,22 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     training_options['feature_type'] = feature_type
 
     # run experiment
-
     training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
     aam = aam_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
+
+    # import bounding boxes
+    bboxes_list = import_bounding_boxes(fitting_bboxes_path)
+
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
+                                   bounding_boxes=bboxes_list,
                                    verbose=verbose)
-    # import bounding boxes
-    bboxes_list = bounding_boxes_for_images(fitting_bboxes_path,
-                                            fitting_images)
+
     fitting_results = aam_fit_benchmark(fitting_images, aam,
-                                        bounding_boxes=bboxes_list,
                                         fitting_options=fitting_options,
                                         verbose=verbose)
 
@@ -182,7 +183,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.1,
+    db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
@@ -261,7 +262,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.1,
+    db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
@@ -297,14 +298,16 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     aam = aam_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
+
+    # import bounding boxes
+    bboxes_list = import_bounding_boxes(fitting_bboxes_path)
+
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
+                                   bounding_boxes=bboxes_list,
                                    verbose=verbose)
-    # import bounding boxes
-    bboxes_list = bounding_boxes_for_images(fitting_bboxes_path,
-                                            fitting_images)
+
     fitting_results = aam_fit_benchmark(fitting_images, aam,
-                                        bounding_boxes=bboxes_list,
                                         fitting_options=fitting_options,
                                         verbose=verbose)
 
@@ -449,17 +452,20 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     training_images = load_database(training_db_path,
                                     db_loading_options=db_loading_options,
                                     verbose=verbose)
+
     clm = clm_build_benchmark(training_images,
                               training_options=training_options,
                               verbose=verbose)
+
+    # import bounding boxes
+    bboxes_list = import_bounding_boxes(fitting_bboxes_path)
+
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
+                                   bounding_boxes=bboxes_list,
                                    verbose=verbose)
-    # import bounding boxes
-    bboxes_list = bounding_boxes_for_images(fitting_bboxes_path,
-                                            fitting_images)
+
     fitting_results = clm_fit_benchmark(fitting_images, clm,
-                                        bounding_boxes=bboxes_list,
                                         fitting_options=fitting_options,
                                         verbose=verbose)
 
