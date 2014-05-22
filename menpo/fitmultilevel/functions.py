@@ -10,9 +10,9 @@ def build_sampling_grid(patch_shape):
     r"""
     """
     patch_shape= np.array(patch_shape)
-    patch_half_size = np.require(np.round(patch_shape / 2), dtype=int)
-    start = -patch_half_size
-    end = patch_half_size + 1
+    patch_half_shape = np.require(np.round(patch_shape / 2), dtype=int)
+    start = -patch_half_shape
+    end = patch_half_shape + 1
     sampling_grid = np.mgrid[start[0]:end[0], start[1]:end[1]]
     return sampling_grid.swapaxes(0, 2).swapaxes(0, 1)
 

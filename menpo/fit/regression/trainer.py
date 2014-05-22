@@ -301,8 +301,11 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             regression_features=regression_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
+        self._func()
+
+    def _func(self):
         # work out feature length per patch
-        patch_img = Image.blank(patch_shape, fill=0)
+        patch_img = Image.blank(self.patch_shape, fill=0)
         self._feature_patch_length = compute_features(
             patch_img, self.regression_features).n_parameters
 
@@ -700,21 +703,18 @@ class SemiParametricClassifierBasedRegressorTrainer(
                  regression_type=mlr, patch_shape=(16, 16),
                  noise_std=0.04, rotation=False,
                  n_perturbations=10):
+        super(SemiParametricClassifierBasedRegressorTrainer, self).__init__(
+            reference_shape, regression_type=regression_type,
+            patch_shape=patch_shape, noise_std=noise_std, rotation=rotation,
+            n_perturbations=n_perturbations)
         self.classifiers = classifiers
         self.transform = transform
-        self.reference_shape = reference_shape
-        self.regression_type = regression_type
-        self.patch_shape = patch_shape
-        self.noise_std = noise_std
-        self.rotation = rotation
-        self.n_perturbations = n_perturbations
-
-        # set update
         self.update = 'additive'
 
+    def _func(self):
         # TODO: CLMs should use slices instead of sampling grid
         # set up sampling grid
-        self.sampling_grid = build_sampling_grid(patch_shape)
+        self.sampling_grid = build_sampling_grid(self.patch_shape)
 
     def features(self, image, shape):
         r"""
