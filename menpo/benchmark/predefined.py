@@ -11,6 +11,7 @@ from .io import import_bounding_boxes
 
 from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
                    clm_build_benchmark, clm_fit_benchmark,
+                   sdm_build_benchmark, sdm_fit_benchmark,
                    convert_fitting_results_to_ced, plot_fitting_curves)
 
 
@@ -269,13 +270,13 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                         'feature_type': 'igo',
                         'transform': PiecewiseAffine,
                         'trilist': ibug_68_trimesh,
-                        'normalization_diagonal': None,
+                        'normalization_diagonal': 200,
                         'n_levels': 3,
-                        'downscale': 1.2,
+                        'downscale': 2,
                         'scaled_shape_models': False,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
-                        'max_appearance_components': 250,
+                        'max_appearance_components': 100,
                         'boundary': 3,
                         'interpolator': 'scipy'
     }
@@ -482,6 +483,71 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
         title = "CLMs with {} and {} classifier using RLMS".format(
             training_options['feature_type'],
             training_options['classifier_type'])
+        y_axis = [final_error_curve, initial_error_curve]
+        legend = ['Fitting', 'Initialization']
+        plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
+                            x_limit=max_error_bin, legend=legend,
+                            color_list=['r', 'b'], marker_list=['o', 'x'])
+    return fitting_results, final_error_curve, initial_error_curve, error_bins
+
+
+def sdm_fastest_bbox(training_db_path, fitting_db_path,
+                                 fitting_bboxes_path, feature_type=None,
+                                 verbose=False, plot=False):
+    # check feature
+    if not isinstance(feature_type, str):
+        if not hasattr(feature_type, '__call__'):
+            if feature_type is not None:
+                raise ValueError("feature_type must be a string or "
+                                 "function/closure or None")
+
+    # predefined options
+    db_loading_options = {'crop_proportion': 0.2,
+                          'convert_to_grey': True
+    }
+    training_options = {'group': 'PTS',
+                        'normalization_diagonal': 200,
+                        'n_levels': 3,
+                        'downscale': 2,
+                        'pyramid_on_features': True,
+                        'interpolator': 'scipy'
+    }
+    fitting_options = {
+                       'error_type': 'me_norm'
+    }
+
+    # run experiment
+    training_images = load_database(training_db_path,
+                                    db_loading_options=db_loading_options,
+                                    verbose=verbose)
+    sdm = sdm_build_benchmark(training_images,
+                              training_options=training_options,
+                              verbose=verbose)
+
+    # import bounding boxes
+    bboxes_list = import_bounding_boxes(fitting_bboxes_path)
+
+    fitting_images = load_database(fitting_db_path,
+                                   db_loading_options=db_loading_options,
+                                   bounding_boxes=bboxes_list,
+                                   verbose=verbose)
+
+    fitting_results = sdm_fit_benchmark(fitting_images, sdm,
+                                        fitting_options=fitting_options,
+                                        verbose=verbose)
+
+    # convert results
+    max_error_bin = 0.05
+    bins_error_step = 0.005
+    final_error_curve, initial_error_curve, error_bins = \
+        convert_fitting_results_to_ced(fitting_results,
+                                       max_error_bin=max_error_bin,
+                                       bins_error_step=bins_error_step)
+
+    # plot results
+    if plot:
+        title = "SDMs using default (sparse hogs)".format(
+            training_options['feature_type'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
