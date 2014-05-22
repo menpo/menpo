@@ -62,24 +62,28 @@ class NonUniformScale(DiscreteAffine, Affine):
 
     Parameters
     ----------
-    scale : (D,) ndarray
+    scale : ``(n_dims,)`` `ndarray`
         A scale for each axis.
     """
 
-    def __init__(self, scale):
+    def __init__(self, scale, skip_checks=False):
         scale = np.asarray(scale)
+        if not skip_checks:
+            if scale.size > 3 or scale.size < 2:
+                raise ValueError("NonUniformScale can only be 2D or 3D"
+                                 ", not {}".format(scale.size))
         h_matrix = np.eye(scale.size + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Affine.__init__(self, h_matrix)
+        Affine.__init__(self, h_matrix, skip_checks=True, copy=False)
 
     @classmethod
     def identity(cls, n_dims):
         return NonUniformScale(np.ones(n_dims))
 
-    def set_h_matrix(self, value):
-        raise NotImplementedError("The h_matrix cannot "
-                                  "be set on a NonUniformScale.")
+    @property
+    def h_matrix_is_mutable(self):
+        return False
 
     @property
     def scale(self):
@@ -154,7 +158,7 @@ class NonUniformScale(DiscreteAffine, Affine):
 
         :type: :class:`NonUniformScale`
         """
-        return NonUniformScale(1.0 / self.scale)
+        return NonUniformScale(1.0 / self.scale, skip_checks=True)
 
     def d_dp(self, points):
         # TODO d_dp on NonUniformScale
@@ -168,11 +172,16 @@ class UniformScale(DiscreteAffine, Similarity):
     code duplication.
     """
 
-    def __init__(self, scale, n_dims):
+    def __init__(self, scale, n_dims, skip_checks=False):
+        if not skip_checks:
+            if n_dims > 3 or n_dims < 2:
+                raise ValueError("UniformScale can only be 2D or 3D"
+                                 ", not {}".format(n_dims))
         h_matrix = np.eye(n_dims + 1)
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
-        Similarity.__init__(self, h_matrix)
+        Similarity.__init__(self, h_matrix, copy=False,
+                            skip_checks=False)
 
     @classmethod
     def identity(cls, n_dims):
@@ -233,7 +242,7 @@ class UniformScale(DiscreteAffine, Similarity):
 
         :type: type(self)
         """
-        return type(self)(1.0 / self.scale, self.n_dims)
+        return UniformScale(1.0 / self.scale, self.n_dims, skip_checks=True)
 
     def d_dp(self, points):
         # TODO d_dp on UniformScale
@@ -256,5 +265,13 @@ class AlignmentUniformScale(HomogFamilyAlignment, UniformScale):
         np.fill_diagonal(self.h_matrix, new_scale)
         self.h_matrix[-1, -1] = 1
 
-    def copy_without_alignment(self):
+    def as_non_alignment(self):
+        r"""Returns a copy of this uniform scale without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`UniformScale`
+            A version of this scale with the same transform behavior but
+            without the alignment logic.
+        """
         return UniformScale(self.scale, self.n_dims)

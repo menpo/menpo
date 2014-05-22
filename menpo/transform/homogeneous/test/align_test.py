@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, raises
 from menpo.shape import PointCloud
 from menpo.transform import (Affine, AlignmentAffine,
                              Similarity, AlignmentSimilarity,
@@ -73,6 +73,28 @@ def test_align_2d_affine_set_h_matrix():
     assert_allclose(target.points, estimate.target.points)
 
 
+def test_align_2d_affine_as_non_alignment():
+    linear_component = np.array([[1, -6],
+                                 [-3, 2]])
+    translation_component = np.array([7, -8])
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    affine = Affine(h_matrix)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = affine.apply(source)
+    # estimate the transform from source and source
+    estimate = AlignmentAffine(source, source)
+    # and set the h_matrix
+    non_align = estimate.as_non_alignment()
+    # check the estimates is correct
+    assert_allclose(non_align.h_matrix, estimate.h_matrix)
+    assert(type(non_align) == Affine)
+
+
 # TODO check from_vector, from_vector_inplace works correctly
 
 
@@ -119,7 +141,25 @@ def test_align_2d_similarity_set_target():
     assert_allclose(similarity.h_matrix,
                     estimate.h_matrix)
 
-# n.b. there is currently no way to update the Similarity state so we are done.
+
+@raises(NotImplementedError)
+def test_align_2d_similarity_set_h_matrix_raises_notimplemented_error():
+    linear_component = np.array([[2, -6],
+                                 [6, 2]])
+    translation_component = np.array([7, -8])
+    h_matrix = np.eye(3, 3)
+    h_matrix[:-1, :-1] = linear_component
+    h_matrix[:-1, -1] = translation_component
+    similarity = Similarity(h_matrix)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = similarity.apply(source)
+    # estimate the transform from source to source
+    estimate = AlignmentSimilarity(source, source)
+    # and set the target
+    estimate.set_h_matrix(h_matrix)
 
 
 # ROTATION
@@ -176,6 +216,22 @@ def test_align_2d_rotation_set_rotation_matrix():
                     estimate.target.points, atol=1e-14)
 
 
+@raises(NotImplementedError)
+def test_align_2d_rotation_set_h_matrix_raises_notimplemented_error():
+    rotation_matrix = np.array([[0, 1],
+                                [-1, 0]])
+    rotation = Rotation(rotation_matrix)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = rotation.apply(source)
+    # estimate the transform from source and source
+    estimate = AlignmentRotation(source, source)
+    # and set the target
+    estimate.set_h_matrix(rotation.h_matrix)
+
+
 # UNIFORM SCALE
 
 def test_align_2d_uniform_scale():
@@ -204,6 +260,20 @@ def test_align_2d_uniform_scale_set_target():
     estimate.set_target(target)
     # check the estimates is correct
     assert_allclose(scale.h_matrix, estimate.h_matrix)
+
+
+@raises(NotImplementedError)
+def test_align_2d_uniform_scale_set_h_matrix_raises_notimplemented_error():
+    scale = UniformScale(2.5, 2)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = scale.apply(source)
+    # estimate the transform from source and source
+    estimate = AlignmentUniformScale(source, source)
+    # and set the target
+    estimate.set_h_matrix(scale.h_matrix)
 
 
 # TRANSLATION
@@ -238,6 +308,21 @@ def test_align_2d_translation_set_target():
     # check the estimates is correct
     assert_allclose(translation.h_matrix,
                     estimate.h_matrix)
+
+
+@raises(NotImplementedError)
+def test_align_2d_translation_set_h_matrix_raises_notimplemented_error():
+    t_vec = np.array([1, 2])
+    translation = Translation(t_vec)
+    source = PointCloud(np.array([[0, 1],
+                                  [1, 1],
+                                  [-1, -5],
+                                  [3, -5]]))
+    target = translation.apply(source)
+    # estimate the transform from source to source..
+    estimate = AlignmentTranslation(source, source)
+    # and change the target.
+    estimate.set_h_matrix(translation.h_matrix)
 
 
 def test_align_2d_translation_from_vector_inplace():

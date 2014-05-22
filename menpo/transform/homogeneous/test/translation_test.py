@@ -90,3 +90,9 @@ def test_translation_identity_2d():
 
 def test_translation_identity_3d():
     assert_allclose(Translation.identity(3).h_matrix, np.eye(4))
+
+
+def test_translation_decompose_optional():
+    t = Translation.identity(2)
+    d = t.decompose()
+    assert np.all(d[0].h_matrix == t.h_matrix)

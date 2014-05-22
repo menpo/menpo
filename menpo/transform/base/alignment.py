@@ -5,7 +5,8 @@ from menpo.visualize.base import Viewable, AlignmentViewer2d
 
 
 class Alignment(Targetable, Viewable):
-    r"""Mix-in for :map:`Transform` that have been constructed from an
+    r"""
+    Mix-in for :map:`Transform` that have been constructed from an
     optimisation aligning a source :map:`PointCloud` to a target
     :map:`PointCloud`.
 
@@ -46,7 +47,8 @@ class Alignment(Targetable, Viewable):
 
     @property
     def source(self):
-        r"""The source :map:`PointCloud` that is used in the alignment.
+        r"""
+        The source :map:`PointCloud` that is used in the alignment.
 
         The source is not mutable.
 
@@ -56,7 +58,8 @@ class Alignment(Targetable, Viewable):
 
     @property
     def aligned_source(self):
-        r"""The result of applying ``self`` to :attr:`source`
+        r"""
+        The result of applying ``self`` to :attr:`source`
 
         :type: :map:`PointCloud`
         """
@@ -65,7 +68,8 @@ class Alignment(Targetable, Viewable):
 
     @property
     def alignment_error(self):
-        r"""The Frobenius Norm of the difference between the target and
+        r"""
+        The Frobenius Norm of the difference between the target and
         the aligned source.
 
         :type: float
@@ -74,9 +78,10 @@ class Alignment(Targetable, Viewable):
 
     @property
     def target(self):
-        r"""The current :map:`PointCloud` that this object produces.
+        r"""
+        The current :map:`PointCloud` that this object produces.
 
-        To change the taget, use :meth:`set_target`.
+        To change the target, use :meth:`set_target`.
 
         :type: :map:`PointCloud`
         """
@@ -92,7 +97,8 @@ class Alignment(Targetable, Viewable):
         self._target = new_target
 
     def _new_target_from_state(self):
-        r"""Fulfils the :map:`Targetable` :meth:`_new_target_from_state`
+        r"""
+        Fulfils the :map:`Targetable` :meth:`_new_target_from_state`
         interface for all Alignments.
 
         This method should purely return the new target to be set - for all
@@ -101,7 +107,8 @@ class Alignment(Targetable, Viewable):
         return self.aligned_source
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
-        r"""Plots the source points and vectors that represent the shift from
+        r"""
+        Plots the source points and vectors that represent the shift from
         source to target.
 
         Parameters

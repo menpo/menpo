@@ -6,6 +6,7 @@ xref_map = {
 'apply_inplace': ('function', 'menpo.transform.base.Transform.apply_inplace'),
 'Affine': ('class', 'menpo.transform.homogeneous.affine.Affine'),
 'Alignment': ('class', 'menpo.transform.base.alignment.Alignment'),
+'AlignmentAffine': ('class', 'menpo.transform.homogeneous.affine.AlignmentAffine'),
 'AlignmentSimilarity': ('class', 'menpo.transform.homogeneous.similarity.AlignmentSimilarity'),
 'BooleanImage': ('class', 'menpo.image.boolean.BooleanImage'),
 'CLM': ('class', 'menpo.fitmultilevel.clm.builder.CLM'),
