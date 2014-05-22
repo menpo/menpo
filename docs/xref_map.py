@@ -1,4 +1,5 @@
 xref_map = {
+'as_vector': ('function', 'menpo.base.Vectorizable.as_vector'),
 'AAM': ('class', 'menpo.fitmultilevel.aam.builder.AAM'),
 'AAMMultilevelFittingResult': ('class', 'menpo.fitmultilevel.fittingresult.AAMMultilevelFittingResult'),
 'AppearanceLucasKanade': ('class', 'menpo.fit.lucaskanade.appearance.base.AppearanceLucasKanade'),
@@ -16,6 +17,7 @@ xref_map = {
 'DP': ('class', 'menpo.base.DP'),
 'DX': ('class', 'menpo.base.DX'),
 'from_vector_inplace': ('function', 'menpo.base.Vectorizable.from_vector_inplace'),
+'from_vector': ('function', 'menpo.base.Vectorizable.from_vector'),
 'Fitter': ('class', 'menpo.fit.Fitter'),
 'FittingResult': ('class', 'menpo.fit.fittingresult.FittingResult'),
 'FittingResultList': ('class', 'menpo.fit.fittingresult.FittingResultList'),

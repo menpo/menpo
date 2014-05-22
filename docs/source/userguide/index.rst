@@ -8,4 +8,5 @@
     :maxdepth: 1
 
     introduction
+    datatypes
     vectorizing

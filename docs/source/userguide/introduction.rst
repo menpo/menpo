@@ -1,7 +1,7 @@
 .. _ug-introduction:
 
 Introduction
-------------
+============
 
 Menpo is an object oriented framework built around a set of core abstract
 interfaces, each one governing a single facet of Menpo's design. Menpo's key
@@ -22,6 +22,7 @@ Most numerical data in Menpo is passed around in one of our core data containers
 - :map:`PointCloud` - n-dimensional ordered point collection
 - :map:`TriMesh` - As :map:`PointCloud`, but with a triangulation
 
-And
-
-This user guide walks through each of the ac
+This user guide is a general introduction to Menpo, aiming to provide a
+bird's eye of Menpo's design. After reading this guide you should be able to
+go explore Menpo's extensive Notebooks and not be too suprised by what you see.
+We'll start by covering Menpo's apprach to handling data.
