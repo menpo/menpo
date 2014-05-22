@@ -12,7 +12,7 @@ def build_sampling_grid(grid_size):
     patch_size = np.array(grid_size)
     patch_half_size = (np.round(patch_size / 2)).astype(int)
     start = -patch_half_size
-    end = patch_half_size
+    end = patch_half_size + 1
     sampling_grid = np.mgrid[start[0]:end[0], start[1]:end[1]]
     return sampling_grid.swapaxes(0, 2).swapaxes(0, 1)
 
