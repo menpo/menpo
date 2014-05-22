@@ -301,9 +301,9 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             regression_features=regression_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
-        self._func()
+        self._set_up()
 
-    def _func(self):
+    def _set_up(self):
         # work out feature length per patch
         patch_img = Image.blank(self.patch_shape, fill=0)
         self._feature_patch_length = compute_features(
@@ -501,9 +501,9 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
         perturbed_shape : :map:`PointCloud`
             The perturbed shape.
         """
-        self.transform.target = gt_shape
+        self.transform.set_target(gt_shape)
         gt_ps = self.transform.as_vector()
-        self.transform.target = perturbed_shape
+        self.transform.set_target(perturbed_shape)
         perturbed_ps = self.transform.as_vector()
         return gt_ps - perturbed_ps
 
@@ -660,7 +660,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
 
 
 class SemiParametricClassifierBasedRegressorTrainer(
-        NonParametricRegressorTrainer):
+        SemiParametricRegressorTrainer):
     r"""
     Class for training a Semi-Parametric Classifier-Based Regressor. This means
     that the classifiers are used instead of features.
@@ -701,18 +701,18 @@ class SemiParametricClassifierBasedRegressorTrainer(
     """
     def __init__(self, classifiers, transform, reference_shape,
                  regression_type=mlr, patch_shape=(16, 16),
-                 noise_std=0.04, rotation=False,
+                 update='compositional', noise_std=0.04, rotation=False,
                  n_perturbations=10):
         super(SemiParametricClassifierBasedRegressorTrainer, self).__init__(
-            reference_shape, regression_type=regression_type,
-            patch_shape=patch_shape, noise_std=noise_std, rotation=rotation,
+            transform, reference_shape, regression_type=regression_type,
+            patch_shape=patch_shape, update=update,
+            noise_std=noise_std,  rotation=rotation,
             n_perturbations=n_perturbations)
         self.classifiers = classifiers
-        self.transform = transform
-        self.update = 'additive'
 
-    def _func(self):
-        # TODO: CLMs should use slices instead of sampling grid
+    def _set_up(self):
+        # TODO: CLMs should use slices instead of sampling grid, and the
+        # need of the _set_up method will probably disappear
         # set up sampling grid
         self.sampling_grid = build_sampling_grid(self.patch_shape)
 
@@ -731,49 +731,6 @@ class SemiParametricClassifierBasedRegressorTrainer(
         """
         # TODO: in the future this should be extract_local_patches_fast
         patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [clf(np.reshape(p, (-1, p.shape[-1])))
-                    for (clf, p) in zip(self.classifiers, patches)]
+        features = [clf(np.reshape(patch, (-1, patch.shape[-1])))
+                    for (clf, patch) in zip(self.classifiers, patches)]
         return np.hstack((np.asarray(features).ravel(), 1))
-
-    def _create_fitting(self, image, shapes, gt_shape=None):
-        r"""
-        Method that creates the fitting result object.
-
-        Parameters
-        ----------
-        image : :map:`MaskedImage`
-            The image object.
-
-        shapes : :map:`PointCloud` list
-            The shapes.
-
-        gt_shape : :map:`PointCloud`
-            The ground truth shape.
-        """
-        return SemiParametricFittingResult(image, self, parameters=[shapes],
-                                           gt_shape=gt_shape)
-
-    def delta_ps(self, gt_shape, perturbed_shape):
-        r"""
-        Method to generate the delta_ps for the regression.
-
-        Parameters
-        ----------
-        gt_shape : :map:`PointCloud`
-            The ground truth shape.
-
-        perturbed_shape : :map:`PointCloud`
-            The perturbed shape.
-        """
-        self.transform.set_target(gt_shape)
-        gt_ps = self.transform.as_vector()
-        self.transform.set_target(perturbed_shape)
-        perturbed_ps = self.transform.as_vector()
-        return gt_ps - perturbed_ps
-
-    def _build_regressor(self, regressor, features, ):
-        r"""
-        Method to build the SemiParametricRegressor regressor object.
-        """
-        return SemiParametricRegressor(regressor, features, self.transform,
-                                       self.update)

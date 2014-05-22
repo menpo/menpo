@@ -1405,7 +1405,7 @@ class SDCLMTrainer(SDTrainer):
         return SemiParametricClassifierBasedRegressorTrainer(
             clfs, pdm_transform, self.reference_shape,
             regression_type=self.regression_type[level],
-            patch_shape=self.patch_shape,
+            patch_shape=self.patch_shape, update='additive',
             noise_std=self.noise_std, rotation=self.rotation,
             n_perturbations=self.n_perturbations)
 
