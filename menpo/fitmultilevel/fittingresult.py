@@ -80,15 +80,15 @@ class MultilevelFittingResult(FittingResult):
         r"""
         Sets the error type according to a set of predefined options.
         """
-        if error_type is 'me_norm':
+        if error_type == 'me_norm':
             for f in self.fitting_results:
                 f.error_type = error_type
             self._error_stop = 0.1
             self._error_text = 'Point-to-point error normalized by object ' \
                                'size'
-        elif error_type is 'me':
+        elif error_type == 'me':
             NotImplementedError("erro_type 'me' not implemented yet")
-        elif error_type is 'rmse':
+        elif error_type == 'rmse':
             NotImplementedError("error_type 'rmse' not implemented yet")
         else:
             raise ValueError("Unknown error_type string selected. Valid"

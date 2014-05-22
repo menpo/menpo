@@ -521,7 +521,7 @@ def sdm_helper(sdm, im_number, max_iters, initial_error, final_error,
         training_images[im_number], initial_shape[im_number],
         gt_shape=training_images[im_number].landmarks['PTS'].lms,
         max_iters=max_iters, error_type=error_type)
-    if str_flag is True:
+    if str_flag:
         ie = str(fitting_result.initial_error)
         fe = str(fitting_result.final_error)
         assert (ie[0:5] == initial_error)

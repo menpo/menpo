@@ -333,15 +333,15 @@ def test_clm():
     assert (clm.
             classifiers[0][np.random.
             randint(0, clm.n_classifiers_per_level[0])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
     assert (clm.
             classifiers[1][np.random.
             randint(0, clm.n_classifiers_per_level[1])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
     assert (clm.
             classifiers[2][np.random.
             randint(0, clm.n_classifiers_per_level[2])].__name__
-            is 'linear_svm_predict')
+            == 'linear_svm_predict')
 
 
 @raises(ValueError)
