@@ -6,11 +6,11 @@ from menpo.transform import Similarity, AlignmentSimilarity
 
 
 # TODO: document me
-def build_sampling_grid(grid_size):
+def build_sampling_grid(patch_shape):
     r"""
     """
-    patch_size = np.array(grid_size)
-    patch_half_size = (np.round(patch_size / 2)).astype(int)
+    patch_shape= np.array(patch_shape)
+    patch_half_size = np.require(np.round(patch_shape / 2), dtype=int)
     start = -patch_half_size
     end = patch_half_size + 1
     sampling_grid = np.mgrid[start[0]:end[0], start[1]:end[1]]
@@ -18,56 +18,76 @@ def build_sampling_grid(grid_size):
 
 
 # TODO: document me
-def extract_local_patches(image, shape, sampling_grid):
+def extract_local_patches(image, centres, sampling_grid):
     r"""
+    Extract square patches from an image about centres.
+
+    Parameters
+    ----------
+    image : :map:`Image`
+        The image to extract patches from
+
+    centres : :map:`PointCloud`
+        The centres around which the patches should be extracted
+
+    sampling_grid : `ndarray` of shape: ``(patch_shape[0]+1, patch_shape[1]+1,
+    n_dims)``
+        The size of the patch in each dimension
+
+    Returns
+    -------
+    patches : ndarray` of shape: ``n_centres, + patch_shape + n_channels,``
+        The patches as a single numpy array.
     """
     max_x = image.shape[0] - 1
     max_y = image.shape[1] - 1
 
-    patches = []
-    for point in shape.points:
-        patch_grid = (sampling_grid +
-                      np.round(point[None, None, ...]).astype(int))
-        x = patch_grid[:, :, 0]
-        y = patch_grid[:, :, 1]
+    pixels = image.pixels
 
-        # deal with boundaries
-        x[x > max_x] = max_x
-        y[y > max_y] = max_y
-        x[x < 0] = 0
-        y[y < 0] = 0
+    patch_grid = (sampling_grid[None, ...] +
+                  np.round(centres.points[:, None, None, ...]).astype(int))
 
-        patch_data = image.pixels[x, y, :]
-        patch_img = image.__class__(patch_data)
-        patches.append(patch_img)
+    X = patch_grid[:, :, :, 0]
+    Y = patch_grid[:, :, :, 1]
+
+    # deal with boundaries
+    X[X > max_x] = max_x
+    Y[Y > max_y] = max_y
+    X[X < 0] = 0
+    Y[Y < 0] = 0
+
+    patches = np.empty(
+        (centres.n_points,) + sampling_grid.shape[:-1] + (image.n_channels,))
+    for j, (x, y) in enumerate(zip(X, Y)):
+        patches[j, ...] = pixels[x, y, :]
 
     return patches
 
 
 def extract_local_patches_fast(image, centres, patch_shape, out=None):
-    r"""extract square patches from an image about centres.
+    r"""
+    Extract square patches from an image about centres.
 
     Parameters
     ----------
-
-    image: :map:`Image`
+    image : :map:`Image`
         The image to extract patches from
 
-    centres: :map:`PointCloud`
+    centres : :map:`PointCloud`
         The centres around which the patches should be extracted
 
-    patch_shape: tuple of ints
+    patch_shape : `tuple` of `ints`
         The size of the patch in each dimension
 
-    out: ndarray shape patch_shape + (n_channels, ) n_centres, optional
-        The output array to be assigned to. If None, a new numpy array will be
-        created.
+    out : `ndarray` of shape: ``n_centres, + patch_shape + n_channels,``,
+    optional
+        The output array to be assigned to. If `None`, a new numpy array
+        will be created.
 
     Returns
     -------
-    ndarray shape patch_shape + (n_channels, ) n_centres, optional
+    patches : `ndarray` of shape: ``n_centres, + patch_shape + n_channels,``
         The patches as a single numpy array.
-
     """
     if out is not None:
         patches = out

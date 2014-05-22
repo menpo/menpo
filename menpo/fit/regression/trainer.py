@@ -709,7 +709,7 @@ class SemiParametricClassifierBasedRegressorTrainer(
         self.rotation = rotation
         self.n_perturbations = n_perturbations
 
-        # set up
+        # set update
         self.update = 'additive'
 
         # TODO: CLMs should use slices instead of sampling grid
@@ -731,7 +731,7 @@ class SemiParametricClassifierBasedRegressorTrainer(
         """
         # TODO: in the future this should be extract_local_patches_fast
         patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [clf(np.reshape(p.pixels, (-1, p.n_channels)))
+        features = [clf(np.reshape(p, (-1, p.shape[-1])))
                     for (clf, p) in zip(self.classifiers, patches)]
         return np.hstack((np.asarray(features).ravel(), 1))
 
