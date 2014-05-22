@@ -4,7 +4,8 @@ import numpy as np
 
 from menpo.image import Image
 from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
-                                           extract_local_patches_fast)
+                                           extract_local_patches_fast,
+                                           extract_local_patches)
 from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
@@ -699,15 +700,21 @@ class SemiParametricClassifierBasedRegressorTrainer(
                  regression_type=mlr, patch_shape=(16, 16),
                  noise_std=0.04, rotation=False,
                  n_perturbations=10):
-        super(SemiParametricClassifierBasedRegressorTrainer, self).__init__(
-            reference_shape, regression_type=regression_type,
-            patch_shape=patch_shape, noise_std=noise_std, rotation=rotation,
-            n_perturbations=n_perturbations)
         self.classifiers = classifiers
         self.transform = transform
+        self.reference_shape = reference_shape
+        self.regression_type = regression_type
+        self.patch_shape = patch_shape
+        self.noise_std = noise_std
+        self.rotation = rotation
+        self.n_perturbations = n_perturbations
+
+        # set up
         self.update = 'additive'
-        # work out feature length per patch
-        self._feature_patch_length = patch_shape[0] * patch_shape[1]
+
+        # TODO: CLMs should use slices instead of sampling grid
+        # set up sampling grid
+        self.sampling_grid = build_sampling_grid(patch_shape)
 
     def features(self, image, shape):
         r"""
@@ -722,15 +729,11 @@ class SemiParametricClassifierBasedRegressorTrainer(
         shape : :map:`PointCloud`
             The current shape.
         """
-        # extract patches
-        patches = extract_local_patches_fast(image, shape, self.patch_shape)
-
-        features = np.zeros((shape.n_points, self._feature_patch_length))
-        for j, (clf, patch) in enumerate(zip(self.classifiers, patches)):
-            # compute response maps
-            features[j, ...] = clf(patch.ravel())
-
-        return np.hstack((features.ravel(), 1))
+        # TODO: in the future this should be extract_local_patches_fast
+        patches = extract_local_patches(image, shape, self.sampling_grid)
+        features = [clf(np.reshape(p.pixels, (-1, p.n_channels)))
+                    for (clf, p) in zip(self.classifiers, patches)]
+        return np.hstack((np.asarray(features).ravel(), 1))
 
     def _create_fitting(self, image, shapes, gt_shape=None):
         r"""

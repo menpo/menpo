@@ -79,7 +79,7 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
     image_size = np.array(image.shape, dtype=np.int)
     patch_shape = np.array(patch_shape, dtype=np.int)
     centres = np.require(centres.points, dtype=np.int)
-    half_patch_shape = np.require(patch_shape / 2, dtype=np.int)
+    half_patch_shape = np.require(np.ceil(patch_shape / 2), dtype=np.int)
     # 1. compute the extents
     c_min = centres - half_patch_shape
     c_max = centres + half_patch_shape
