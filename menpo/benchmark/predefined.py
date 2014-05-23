@@ -508,13 +508,14 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.5,
+    db_loading_options = {'crop_proportion': 0.8,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
                         'normalization_diagonal': 200,
                         'n_levels': 3,
-                        'downscale': 2,
+                        'downscale': 1.5,
+                        'noise_std': 0.08,
                         'pyramid_on_features': True,
                         'interpolator': 'scipy'
     }

@@ -629,7 +629,7 @@ def load_database(database_path, bounding_boxes=None,
         # Ensure the smallest dimention of the image is never greater than
         # 300 (just to keep memory requirements for the benchmark sensible)
         smallest_axis_size = np.min(np.array(i.shape))
-        if smallest_axis_size > 300:
+        if smallest_axis_size > 400:
             rescale_factor = 300.0 / smallest_axis_size
             i = i.rescale(rescale_factor)
 
