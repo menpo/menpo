@@ -9,4 +9,5 @@
 
     introduction
     datatypes
+    convention
     vectorizing
