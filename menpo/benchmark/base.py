@@ -592,7 +592,7 @@ def load_database(database_path, bounding_boxes=None,
     final_path = os.path.join(database_path, '*')
 
     # get options
-    crop_proportion = db_loading_options.pop('crop_proportion', 0.1)
+    crop_proportion = db_loading_options.pop('crop_proportion', 0.5)
     convert_to_grey = db_loading_options.pop('convert_to_grey', True)
 
     # find number of files
@@ -625,6 +625,13 @@ def load_database(database_path, bounding_boxes=None,
         # convert it to greyscale if needed
         if convert_to_grey and i.n_channels == 3:
             i = i.as_greyscale(mode='luminosity')
+
+        # Ensure the smallest dimention of the image is never greater than
+        # 300 (just to keep memory requirements for the benchmark sensible)
+        smallest_axis_size = np.min(np.array(i.shape))
+        if smallest_axis_size > 300:
+            rescale_factor = 300.0 / smallest_axis_size
+            i = i.rescale(rescale_factor)
 
         # append it to the list
         images.append(i)
