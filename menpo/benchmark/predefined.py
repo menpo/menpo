@@ -104,7 +104,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.2,
+    db_loading_options = {'crop_proportion': 0.1,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
@@ -144,6 +144,8 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     # import bounding boxes
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
+    # for all fittings, we crop to 0.5
+    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -263,7 +265,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.2,
+    db_loading_options = {'crop_proportion': 0.5,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
@@ -303,6 +305,8 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     # import bounding boxes
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
+    # for all fittings, we crop to 0.5
+    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -421,7 +425,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.4,
+    db_loading_options = {'crop_proportion': 0.5,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
@@ -461,6 +465,8 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     # import bounding boxes
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
+    # for all fittings, we crop to 0.5
+    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -502,13 +508,14 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
                                  "function/closure or None")
 
     # predefined options
-    db_loading_options = {'crop_proportion': 0.2,
+    db_loading_options = {'crop_proportion': 0.8,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
                         'normalization_diagonal': 200,
                         'n_levels': 3,
-                        'downscale': 2,
+                        'downscale': 1.5,
+                        'noise_std': 0.08,
                         'pyramid_on_features': True,
                         'interpolator': 'scipy'
     }
@@ -526,7 +533,10 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
 
     # import bounding boxes
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
+    # predefined options
 
+    # for all fittings, we crop to 0.5
+    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
