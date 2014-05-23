@@ -3,16 +3,17 @@ import abc
 
 class Invertible(object):
     r"""
-    :map:`Transform` Mixin for invertible transforms. Provides an interface for
-    taking the psuedo or true inverse of a transform.
+    Mix-in for invertible transforms. Provides an interface for
+    taking the `psuedo` or true inverse of a transform.
+
+    Has to be implemented in conjunction with :map:`Transform`.
     """
 
     @abc.abstractproperty
     def has_true_inverse(self):
-        r"""
-        `True` if the pseudoinverse is an exact inverse.
+        r"""`True` if the pseudoinverse is an exact inverse.
 
-        :type: Boolean
+        :type: `bool`
         """
 
     @property
@@ -23,7 +24,7 @@ class Invertible(object):
         the transforms parameters. If the transform has a true inverse this
         is returned instead.
 
-        :type: :map:`Transform`
+        :type: ``type(self)``
         """
         return self._build_pseudoinverse()
 
@@ -38,25 +39,24 @@ class Invertible(object):
 
         Returns
         -------
-        pseudoinverse : `type(self)`
+        pseudoinverse : ``type(self)``
             The object representing the pseudoinverse of this object.
         """
 
 
 class VInvertible(Invertible):
     r"""
-    Transform Mixin for :map:`Vectorizable` invertible transforms.
+    Mix-in for :map:`Vectorizable` :map:`Invertible` :map:`Transform` s.
 
-    Prefer this Mixin over :map:`Invertible` if the :map:`Transform` in question
-    is :map:`Vectorizable` as this adds :meth:`from_vector` variants to the
-    :map:`Invertible` interface. These can be tuned for performance, and are,
-    for instance, needed by some of the machinery of AAMs.
+    Prefer this mix-in over :map:`Invertible` if the :map:`Transform` in
+    question is :map:`Vectorizable` as this adds :meth:`from_vector` variants
+    to the :map:`Invertible` interface. These can be tuned for performance,
+    and are, for instance, needed by some of the machinery of fit.
     """
-
     def pseudoinverse_vector(self, vector):
         r"""
         The vectorized pseudoinverse of a provided vector instance.
-        Syntactic sugar for
+        Syntactic sugar for::
 
             self.from_vector(vector).pseudoinverse.as_vector()
 
@@ -65,12 +65,12 @@ class VInvertible(Invertible):
 
         Parameters
         ----------
-        vector :  (P,) ndarray
-            A vectorized version of `self`
+        vector :  ``(n_parameters,)`` `ndarray`
+            A vectorized version of ``self``
 
         Returns
         -------
-        pseudoinverse_vector : (N,) ndarray
+        pseudoinverse_vector : ``(n_parameters,)`` `ndarray`
             The pseudoinverse of the vector provided
         """
         return self.from_vector(vector).pseudoinverse.as_vector()

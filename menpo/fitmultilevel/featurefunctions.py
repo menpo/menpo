@@ -4,43 +4,43 @@ def compute_features(image, feature_type):
 
     Parameters
     ----------
-    image: :class:`menpo.image.MaskedNDImage`
+    image : :map:`MaskedImage`
         The original image from which the features will be computed.
-    feature_type: string or closure
-        If None, no feature representation will be computed from the
+
+    feature_type : `string` or `function`
+        If ``None``, no feature representation will be computed from the
         original image.
-        If string or closure, the feature representation will be computed
-        in the following way:
-            If string, the feature representation will be extracted by
-            executing:
 
-                feature_image = eval('img.features.' + feature_type + '()')
+        If `string`, the feature representation will be extracted by
+        executing::
 
-            For this to work properly feature_type needs to be one of
-            Menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using its default
-            options.
+            feature_image = eval('img.features.' + feature_type + '()')
 
-            Non-default feature options and new experimental feature can be
-            used by defining a closure. In this case, the closure must define a
-            function that receives as an input an image and returns a
-            particular feature representation of that image. For example:
+        For this to work properly feature_type needs to be one of
+        Menpo's standard image feature methods. Note that, in this case,
+        the feature computation will be carried out using its default
+        options.
 
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
+        Non-default feature options and new experimental feature can be
+        used by defining a closure. In this case, the closure must define a
+        function that receives as an input an image and returns a
+        particular feature representation of that image. For example::
 
-            See `menpo.image.feature.py` for details more details on
-            Menpo's standard image features and feature options.
+            def igo_double_from_std_normalized_intensities(image)
+                image = deepcopy(image)
+                image.normalize_std_inplace()
+                return image.feature_type.igo(double_angles=True)
+
+        See :map:`ImageFeatures` for details more details on
+        Menpo's standard image features and feature options.
 
     Returns
     -------
-    feature_image: :class:`menpo.image.MaskedNDImage`
+    feature_image : :map:`MaskedImage`
         The resulting feature image.
     """
     if feature_type is not None:
-        if type(feature_type) is str:
+        if isinstance(feature_type, str):
             image = eval('image.features.' + feature_type + '()')
         elif hasattr(feature_type, '__call__'):
             image = feature_type(image)
@@ -54,4 +54,14 @@ def compute_features(image, feature_type):
 
 
 def sparse_hog(image):
-    return image.features.hog(mode='sparse')
+    r"""
+    Non-standard feature function that computes sparse HOGs.
+    """
+    return image.features.hog(mode='sparse', constrain_landmarks=True)
+
+
+def double_igo(image):
+    r"""
+    Non-standard feature function that computes IGOs with double angles.
+    """
+    return image.features.igo(double_angles=True)

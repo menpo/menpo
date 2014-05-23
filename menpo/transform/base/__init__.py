@@ -4,19 +4,21 @@ from copy import deepcopy
 
 class Transform(object):
     r"""
-    An abstract representation of any spatial transform.
+    Abstract representation of any spatial transform.
+
     Provides a unified interface to apply the transform with
     :meth:`apply_inplace` and :meth:`apply`.
 
     All Transforms support basic composition to form a :map:`TransformChain`.
 
     There are two useful forms of composition. Firstly, the mathematical
-    composition symbol `o` has the definition:
+    composition symbol `o` has the following definition::
 
         let a(x) and b(x) be two transforms on x.
         (a o b)(x) == a(b(x))
 
-    This functionality is provided by the compose_after() family of methods.
+    This functionality is provided by the :meth:`compose_after` family of
+    methods::
 
         (a.compose_after(b)).apply(x) == a.apply(b.apply(x))
 
@@ -25,33 +27,32 @@ class Transform(object):
     and composing on this chain adds another transform to the end (after all
     other preceding transforms have been performed).
 
-    For instance, let's say we want to rescale a
-    :map:`PointCloud`, `p`, around it's mean, and then translate
-    it some place else. It would be nice to be able to do something like
+    For instance, let's say we want to rescale a :map:`PointCloud` ``p``
+    around it's mean, and then translate it some place else. It would be nice
+    to be able to do something like::
 
         t = Translation(-p.centre)  # translate to centre
         s = Scale(2.0)  # rescale
-        move = Translate([10, 0 ,0]) # budge along the x axis
-
+        move = Translate([10, 0 ,0])  # budge along the x axis
         t.compose(s).compose(-t).compose(move)
 
-    in Menpo, this functionality is provided by the :meth:`compose_before()`
-    family of methods.
+    In Menpo, this functionality is provided by the :meth:`compose_before()`
+    family of methods::
 
         (a.compose_before(b)).apply(x) == b.apply(a.apply(x))
 
     For native composition, see the :map:`ComposableTransform` subclass and
-    the :map:`VComposition` mix-in.
-    For inversion, see the :map:`Invertable` and :map:`VInvertable` mix-ins.
-    For alignment, see the :map:`Alignment` mix in.
+    the :map:`VComposable` mix-in.
+    For inversion, see the :map:`Invertible` and :map:`VInvertible` mix-ins.
+    For alignment, see the :map:`Alignment` mix-in.
     """
-
     __metaclass__ = abc.ABCMeta
 
     @property
     def n_dims(self):
         r"""
         The dimensionality of the data the transform operates on.
+
         None if the transform is not dimension specific.
 
         :type: int or None
@@ -61,8 +62,9 @@ class Transform(object):
     @property
     def n_dims_output(self):
         r"""
-        The output of the data from the transform. None if the output
-        of the transform is not dimension specific.
+        The output of the data from the transform.
+
+        None if the output of the transform is not dimension specific.
 
         :type: int or None
         """
@@ -72,39 +74,43 @@ class Transform(object):
     @abc.abstractmethod
     def _apply(self, x, **kwargs):
         r"""
-        Applies the transform to the array `x`, returning the result.
+        Applies the transform to the array ``x``, returning the result.
+
+        This method does the actual work of transforming the data, and is the
+        one that subclasses must implement. :meth:`apply` and
+        :meth:`apply_inplace` both call this method to do that actual work.
 
         Parameters
         ----------
-        x : (N, D) ndarray
-            Array to be transformed.
+        x : ``(n_points, n_dims)`` `ndarray`
+            The array to be transformed.
+        kwargs : `dict`
+            Subclasses may need these in their ``_apply`` methods.
 
         Returns
         -------
-        transformed : (N, D) ndarray
-            Transformed array.
+        transformed : ``(n_points, n_dims_output)`` `ndarray`
+            The transformed array
         """
 
     def apply_inplace(self, x, **kwargs):
         r"""
-        Applies this transform to `x`. If `x` is :map:`Transformable`,
-        `x` will be handed this transform object to transform itself
-        inplace. If not, `x` is assumed to be a numpy array. The
-        transformation will be destructive, modifying the object in place.
-        Any `kwargs` will be passed to the specific transform
-        :meth:`_apply` methods.
+        Applies this transform to a :map:`Transformable` ``x`` destructively.
+
+        Any ``kwargs`` will be passed to the specific transform :meth:`_apply`
+        method.
 
         Parameters
         ----------
-        x : (N, D) ndarray or an object that implements :map:`Transformable`
-            The array or object to be transformed.
-        kwargs : dict
+        x : :map:`Transformable`
+            The :map:`Transformable` object to be transformed.
+        kwargs : `dict`
             Passed through to :meth:`_apply`.
 
         Returns
         -------
-        transformed : same as `x`
-            The transformed array or object.
+        transformed : ``type(x)``
+            The transformed object
         """
 
         def transform(x_):
@@ -117,31 +123,34 @@ class Transform(object):
         try:
             x._transform_inplace(transform)
         except AttributeError:
-            x[...] = self._apply(x, **kwargs)
+            raise ValueError('apply_inplace can only be used on Transformable'
+                             ' objects.')
 
     def apply(self, x, **kwargs):
         r"""
-        Applies this transform to `x`. If `x` is :map:`Transformable`,
-        `x` will be handed this transform object to transform itself
-        non-destructively (a transformed copy of the object will be
-        returned).
+        Applies this transform to ``x``.
 
-        If not, `x` is assumed to be a numpy array. The transformation
-        will be non-destructive, returning the transformed version. Any
-        `kwargs` will be passed to the specific transform
-        :meth:`_apply` methods.
+        If ``x`` is :map:`Transformable`, ``x`` will be handed this transform
+        object to transform itself non-destructively (a transformed copy of the
+        object will be returned).
+
+        If not, ``x`` is assumed to be an `ndarray`. The transformation
+        will be non-destructive, returning the transformed version.
+
+        Any ``kwargs`` will be passed to the specific transform :meth:`_apply`
+        method.
 
         Parameters
         ----------
-        x : (N, D) ndarray or an object that implements :map:`Transformable`
+        x : :map:`Transformable` or ``(n_points, n_dims)`` `ndarray`
             The array or object to be transformed.
-        kwargs : dict
+        kwargs : `dict`
             Passed through to :meth:`_apply`.
 
         Returns
         -------
-        transformed : same as `x`
-            The transformed array or object
+        transformed : ``type(x)``
+            The transformed object or array
         """
 
         def transform(x_):
@@ -159,12 +168,12 @@ class Transform(object):
     def compose_before(self, transform):
         r"""
         Returns a :map:`TransformChain` that represents **this** transform
-        composed **before** the given transform.
+        composed **before** the given transform::
 
             c = a.compose_before(b)
             c.apply(p) == b.apply(a.apply(p))
 
-        `a` and `b` are left unchanged.
+        ``a`` and ``b`` are left unchanged.
 
         Parameters
         ----------
@@ -181,12 +190,12 @@ class Transform(object):
     def compose_after(self, transform):
         r"""
         Returns a :map:`TransformChain` that represents **this** transform
-        composed **after** the given transform.
+        composed **after** the given transform::
 
             c = a.compose_after(b)
             c.apply(p) == a.apply(b.apply(p))
 
-        `a` and `b` are left unchanged.
+        ``a`` and ``b`` are left unchanged.
 
         This corresponds to the usual mathematical formalism for the compose
         operator, `o`.
@@ -206,10 +215,12 @@ class Transform(object):
 
 class Transformable(object):
     r"""
-    Interface for transformable objects. When :meth:`apply_inplace` is called
-    on an object, if the object has the method :meth:`_transform_inplace`,
-    the method is called, passing in the transforms :meth:`apply_inplace`
-    method.
+    Interface for objects that know how be transformed by the
+    :map:`Transform` interface.
+
+    When :map:`apply_inplace` is called on an object, the
+    :meth:`_transform_inplace` method is called, passing in the transforms'
+    :map:`_apply` function.
 
     This allows for the object to define how it should transform itself.
     """
@@ -218,17 +229,17 @@ class Transformable(object):
     @abc.abstractmethod
     def _transform_inplace(self, transform):
         r"""
-        Apply the transform given to the :map:`Transformable` object.
+        Apply the given transform function to ``self`` inplace.
 
         Parameters
         ----------
-        transform : func
+        transform : `function`
             Function that applies a transformation to the transformable object.
 
         Returns
         -------
-        transformed : :map:`Transformable`
-            The transformed object. Transformed in place.
+        transformed : ``type(self)``
+            The transformed object, having been transformed in place.
         """
 
     def _transform(self, transform):
@@ -238,12 +249,12 @@ class Transformable(object):
 
         Parameters
         ----------
-        transform : func
+        transform : `function`
             Function that applies a transformation to the transformable object.
 
         Returns
         -------
-        transformed : :map:`Transformable`
+        transformed : ``type(self)``
             A copy of the object, transformed.
         """
         copy_of_self = deepcopy(self)

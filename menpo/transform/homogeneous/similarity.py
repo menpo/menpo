@@ -16,9 +16,8 @@ class Similarity(Affine):
 
     """
 
-    def __init__(self, h_matrix):
-        Affine.__init__(self, h_matrix)
-        #TODO check that I am a similarity transform
+    def __init__(self, h_matrix, copy=True, skip_checks=False):
+        Affine.__init__(self, h_matrix, copy=copy, skip_checks=skip_checks)
 
     def _transform_str(self):
         r"""
@@ -34,13 +33,13 @@ class Similarity(Affine):
         list_str = [t._transform_str() for t in self.decompose()]
         return header + reduce(lambda x, y: x + '\n' + '  ' + y, list_str, '  ')
 
+    @property
+    def h_matrix_is_mutable(self):
+        return False
+
     @classmethod
     def identity(cls, n_dims):
         return Similarity(np.eye(n_dims + 1))
-
-    def set_h_matrix(self, value):
-        raise NotImplementedError("h_matrix cannot be set on a "
-                                  "Similarity transform")
 
     @property
     def n_parameters(self):
@@ -148,7 +147,7 @@ class Similarity(Affine):
             homog[0, 1] = -p[1]
             homog[1, 0] = p[1]
             homog[:2, 2] = p[2:]
-            Affine.set_h_matrix(self, homog)  # use the Affine setter cheekily
+            self._set_h_matrix(homog, skip_checks=True, copy=False)
         elif p.shape[0] == 7:
             raise NotImplementedError("3D similarity transforms cannot be "
                                       "vectorized yet.")
@@ -157,7 +156,8 @@ class Similarity(Affine):
                              "are currently supported.")
 
     def _build_pseudoinverse(self):
-        return Similarity(np.linalg.inv(self.h_matrix))
+        return Similarity(np.linalg.inv(self.h_matrix), copy=False,
+                          skip_checks=True)
 
     def d_dp(self, points):
         r"""
@@ -247,7 +247,7 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     def __init__(self, source, target, rotation=True):
         HomogFamilyAlignment.__init__(self, source, target)
         x = self._procrustes_alignment(source, target, rotation=rotation)
-        Similarity.__init__(self, x.h_matrix)
+        Similarity.__init__(self, x.h_matrix, copy=False, skip_checks=True)
 
     @staticmethod
     def _procrustes_alignment(source, target, rotation=True):
@@ -279,11 +279,18 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
 
     def _sync_state_from_target(self):
         similarity = self._procrustes_alignment(self.source, self.target)
-        # use Affine's h_matrix setter.
-        Affine.set_h_matrix(self, similarity.h_matrix)
+        self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
-    def copy_without_alignment(self):
-        return Similarity(self.h_matrix.copy())
+    def as_non_alignment(self):
+        r"""Returns a copy of this similarity without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Similarity`
+            A version of this similarity with the same transform behavior but
+            without the alignment logic.
+        """
+        return Similarity(self.h_matrix, skip_checks=True)
 
     def from_vector_inplace(self, p):
         r"""

@@ -180,9 +180,21 @@ def test_pca_orthogonalize_against():
     pca_model = PCAModel(pca_samples)
     lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
     lm_model = LinearModel(np.asarray(lm_samples))
+    # orthogonalize
+    pca_model.orthonormalize_against_inplace(lm_model)
+    # number of active components must remain the same
+    assert_equal(pca_model.n_active_components, 6)
+
+
+def test_pca_orthogonalize_against_with_less_active_components():
+    pca_samples = [PointCloud(np.random.randn(10)) for _ in range(10)]
+    pca_model = PCAModel(pca_samples)
+    lm_samples = np.asarray([np.random.randn(10) for _ in range(4)])
+    lm_model = LinearModel(np.asarray(lm_samples))
     # set number of active components
     pca_model.n_active_components = 5
     # orthogonalize
     pca_model.orthonormalize_against_inplace(lm_model)
     # number of active components must remain the same
     assert_equal(pca_model.n_active_components, 5)
+

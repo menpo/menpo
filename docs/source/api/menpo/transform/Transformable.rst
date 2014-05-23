@@ -9,3 +9,5 @@ Transformable
   :members:
   :inherited-members:
   :show-inheritance:
+
+  .. automethod:: Transformable._transform_inplace

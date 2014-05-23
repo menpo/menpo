@@ -8,9 +8,9 @@ import menpo.io as pio
 rgb_image = pio.import_builtin_asset('takeo.ppm')
 gray_image = rgb_image.as_greyscale()
 
-gray_template = gray_image.cropped_copy(np.array([70, 30]),
+gray_template = gray_image.crop(np.array([70, 30]),
                                         np.array([169, 129]))
-rgb_template = rgb_image.cropped_copy(np.array([70, 30]),
+rgb_template = rgb_image.crop(np.array([70, 30]),
                                       np.array([169, 129]))
 template_mask = gray_template.mask
 
@@ -18,7 +18,7 @@ initial_params = np.array([0, 0, 0, 0, 70, 30])
 row_indices, col_indices = np.meshgrid(np.arange(50, 100), np.arange(50, 100),
                                        indexing='ij')
 row_indices, col_indices = row_indices.flatten(), col_indices.flatten()
-multi_expected = rgb_image.cropped_copy([50, 50],
+multi_expected = rgb_image.crop([50, 50],
                                         [100, 100]).pixels.flatten()
 
 

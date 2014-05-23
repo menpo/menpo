@@ -3,7 +3,6 @@
 :mod:`menpo.transform`
 ======================
 
-
 Homogeneous Family
 ------------------
 
@@ -63,8 +62,8 @@ Radial Basis Functions
    R2LogRRBF
 
 
-Abstaract Bases
----------------
+Abstract Bases
+--------------
 
 .. toctree::
    :maxdepth: 1
@@ -75,5 +74,15 @@ Abstaract Bases
    Invertible
    Alignment
    MultipleAlignment
+   DiscreteAffine
+
+Performance Specializations
+---------------------------
+
+Mix-ins that provide fast vectorized varients of methods.
+
+.. toctree::
+   :maxdepth: 1
+
    VComposable
    VInvertible

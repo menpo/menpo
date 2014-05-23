@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from menpo.transform import (Affine, Similarity, Rotation, Scale,
-                             NonUniformScale, UniformScale, Translation)
+                             NonUniformScale, UniformScale, Translation,
+                             Homogeneous)
 from nose.tools import raises
 
 @raises(ValueError)
@@ -633,6 +634,12 @@ def test_affine_2d_n_parameters():
     assert(t.n_parameters == 6)
 
 
+def test_affine_2d_n_dims_output():
+    homo = np.eye(3)
+    t = Affine(homo)
+    assert(t.n_dims_output == 2)
+
+
 def test_affine_3d_n_parameters():
     homo = np.eye(4)
     t = Affine(homo)
@@ -738,3 +745,69 @@ def test_uniformscale_set_h_matrix_raises_notimplementederror():
 def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
     s = NonUniformScale([2, 3, 4])
     s.set_h_matrix(s.h_matrix)
+
+
+def test_homogeneous_print():
+    e = np.eye(3)
+    h = Homogeneous(e)
+    print h
+    assert(str(h) == 'Homogeneous\n[[ 1.  0.  0.]\n [ 0.  1.  0.]'
+                     '\n [ 0.  0.  1.]]')
+
+
+def test_homogeneous_eye():
+    e = np.eye(3)
+    h = Homogeneous.identity(2)
+    assert_allclose(e, h.h_matrix)
+
+
+def test_homogeneous_has_true_inverse():
+    h = Homogeneous.identity(2)
+    assert(h.has_true_inverse)
+
+
+def test_homogeneous_inverse():
+    e = np.eye(3) * 2
+    e[2, 2] = 1
+    e_inv = np.eye(3) * 0.5
+    e_inv[2, 2] = 1
+    h = Homogeneous(e)
+    assert_allclose(h.pseudoinverse.h_matrix, e_inv)
+
+
+def test_homogeneous_apply():
+    e = np.eye(3) * 2
+    p = np.random.rand(10, 2)
+    e[2, 2] = 1
+    e[:2, -1] = [2, 3]
+    print e
+    h = Homogeneous(e)
+    p_applied = h.apply(p)
+    p_manual = p * 2 + np.array([2, 3])
+    assert_allclose(p_applied, p_manual)
+
+
+def test_homogeneous_apply():
+    e = np.eye(3) * 2
+    p = np.random.rand(10, 2)
+    e[2, 2] = 1
+    e[:2, -1] = [2, 3]
+    h = Homogeneous(e)
+    p_applied = h.apply(p)
+    p_manual = p * 2 + np.array([2, 3])
+    assert_allclose(p_applied, p_manual)
+
+
+def test_homogeneous_as_vector():
+    e = np.eye(3) * 2
+    e[2, 2] = 1
+    h = Homogeneous(e)
+    assert_allclose(h.as_vector(), e.flatten())
+
+
+def test_homogeneous_from_vector_inplace():
+    h = Homogeneous(np.eye(3))
+    e = np.eye(3) * 2
+    e[2, 2] = 1
+    h.from_vector_inplace(e.ravel())
+    assert_allclose(h.h_matrix, e)

@@ -5,6 +5,7 @@ import numpy as np
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.fitmultilevel.featurefunctions import compute_features
 
 from .functions import mean_pointcloud
 
@@ -61,9 +62,9 @@ class DeformableModelBuilder(object):
                          var_name, n_levels)
         if not isinstance(max_components, list):
             max_components_list = [max_components] * n_levels
-        elif len(max_components) is 1:
+        elif len(max_components) == 1:
             max_components_list = [max_components[0]] * n_levels
-        elif len(max_components) is n_levels:
+        elif len(max_components) == n_levels:
             max_components_list = max_components
         else:
             raise ValueError(str_error)
@@ -75,27 +76,61 @@ class DeformableModelBuilder(object):
         return max_components_list
 
     @classmethod
-    def check_feature_type(cls, feature_type, n_levels):
+    def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
         r"""
-        Checks the feature type per level. It must be a string or a
-        function/closure or a list of those containing 1 or {n_levels} elements.
+        Checks the feature type per level.
+        If pyramid_on_features is False, it must be a string or a
+        function/closure or a list of those containing 1 or {n_levels}
+        elements.
+        If pyramid_on_features is True, it must be a string or a
+        function/closure or a list of 1 of those.
+
+        Parameters
+        ----------
+        n_levels: int
+            The number of pyramid levels.
+        pyramid_on_features: boolean
+            If True, the pyramid will be applied to the feature image, so
+            the user needs to define a single feature_type.
+            If False, the pyramid will be applied to the intensities image and
+            features will be extracted at each level, so the user can define
+            a feature_type per level.
+
+        Returns
+        -------
+        feature_type_list: list
+            A list of feature types.
+            If pyramid_on_features is True, the list will have length 1.
+            If pyramid_on_features is False, the list will have length
+            {n_levels}.
         """
-        feature_type_str_error = ("feature_type must be a str or a "
-                                  "function/closure or a list of "
-                                  "those containing 1 or {} "
-                                  "elements").format(n_levels)
-        if not isinstance(feature_type, list):
-            feature_type_list = [feature_type] * n_levels
-        elif len(feature_type) is 1:
-            feature_type_list = [feature_type[0]] * n_levels
-        elif len(feature_type) is n_levels:
-            feature_type_list = feature_type
+        if not pyramid_on_features:
+            feature_type_str_error = ("feature_type must be a str or a "
+                                      "function/closure or a list of "
+                                      "those containing 1 or {} "
+                                      "elements").format(n_levels)
+            if not isinstance(feature_type, list):
+                feature_type_list = [feature_type] * n_levels
+            elif len(feature_type) == 1:
+                feature_type_list = [feature_type[0]] * n_levels
+            elif len(feature_type) == n_levels:
+                feature_type_list = feature_type
+            else:
+                raise ValueError(feature_type_str_error)
         else:
-            raise ValueError(feature_type_str_error)
+            feature_type_str_error = ("pyramid_on_features is enabled so "
+                                      "feature_type must be a str or a "
+                                      "function/closure or a list "
+                                      "containing 1 of those")
+            if not isinstance(feature_type, list):
+                feature_type_list = [feature_type]
+            elif len(feature_type) == 1:
+                feature_type_list = feature_type
+            else:
+                raise ValueError(feature_type_str_error)
         for ft in feature_type_list:
-            if ft is not None:
-                if not isinstance(ft, str):
-                    if not hasattr(ft, '__call__'):
+            if (ft is not None and not isinstance(ft, str)
+                    and not hasattr(ft, '__call__')):
                         raise ValueError(feature_type_str_error)
         return feature_type_list
 
@@ -107,26 +142,25 @@ class DeformableModelBuilder(object):
         pass
 
     @classmethod
-    def _preprocessing(cls, images, group, label, normalization_diagonal,
-                       interpolator, scaled_shape_models, n_levels, downscale,
-                       verbose=False):
+    def _normalization_wrt_reference_shape(cls, images, group, label,
+                                           normalization_diagonal,
+                                           interpolator, verbose=False):
         r"""
-        Function that applies some preprocessing steps on a set of images.
-        These steps are essential before building a deformable model.
+        Function that normalizes the images sizes with respect to the reference
+        shape (mean shape) scaling. This step is essential before building a
+        deformable model.
 
-        The preprocessing includes:
+        The normalization includes:
         1) Computation of the reference shape as the mean shape of the images'
            landmarks.
         2) Scaling of the reference shape using the normalization_diagonal.
         3) Rescaling of all the images so that their shape's scale is in
            correspondence with the reference shape's scale.
-        4) Creation of the generator function for a smoothing or Gaussian
-           pyramid.
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.Image`
-            The set of landmarked images from which to build the AAM.
+        images: list of :class:`menpo.image.MaskedImage`
+            The set of landmarked images from which to build the model.
         group : string
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
@@ -148,18 +182,6 @@ class DeformableModelBuilder(object):
             the image size).
         interpolator: string
             The interpolator that should be used to perform the warps.
-        scaled_shape_models: boolean
-            If True, the original images will be smoothed with a smoothing
-            pyramid and the shape models (reference frames) will be scaled with
-            a Gaussian pyramid.
-            If False, the original images will be scaled with a Gaussian
-            pyramid and the shape models (reference frames) will have the same
-            scale (the one of the highest pyramidal level).
-        n_levels: int
-            The number of multi-resolution pyramidal levels to be used.
-        downscale: float
-            The downscale factor that will be used to create the different
-            pyramidal levels.
         verbose: bool, Optional
             Flag that controls information and progress printing.
 
@@ -167,18 +189,15 @@ class DeformableModelBuilder(object):
 
         Returns
         -------
-        reference_shape: Pointcloud
-            The reference shape that was used to resize all training images to a
-            consistent object size.
-        generator: function
-            The generator function of the smoothing or Gaussian pyramid.
+        reference_shape : :map:`PointCloud`
+            The reference shape that was used to resize all training images to
+            a consistent object size.
+        normalized_images : :map:`MaskedImage` list
+            A list with the normalized images.
         """
+        # the reference_shape is the mean shape of the images' landmarks
         if verbose:
-            intro_str = '- Preprocessing: '
-
-        # the mean shape of the images' landmarks is the reference_shape
-        if verbose:
-            print_dynamic('{}Computing reference shape'.format(intro_str))
+            print_dynamic('- Computing reference shape')
         shapes = [i.landmarks[group][label].lms for i in images]
         reference_shape = mean_pointcloud(shapes)
 
@@ -188,34 +207,78 @@ class DeformableModelBuilder(object):
             scale = normalization_diagonal / np.sqrt(x**2 + y**2)
             Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
 
-        # normalize the scaling of all shapes wrt the reference_shape
+        # normalize the scaling of all images wrt the reference_shape size
         normalized_images = []
         for c, i in enumerate(images):
             if verbose:
-                print_dynamic('{}Normalizing object size - {}'.format(
-                    intro_str, progress_bar_str(float(c + 1) / len(images),
-                                                show_bar=False)))
+                print_dynamic('- Normalizing images size: {}'.format(
+                    progress_bar_str((c + 1.) / len(images),
+                                     show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
                 reference_shape, group=group, label=label,
                 interpolator=interpolator))
 
-        # generate pyramid
         if verbose:
-            print_dynamic('{}Generating multilevel scale space'.format(
-                intro_str))
-        if scaled_shape_models:
-            generator = [i.smoothing_pyramid(n_levels=n_levels,
-                                             downscale=downscale)
-                         for i in normalized_images]
-        else:
+            print_dynamic('- Normalizing images size: Done\n')
+        return reference_shape, normalized_images
+
+    @classmethod
+    def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
+                        feature_type, verbose=False):
+        r"""
+        Function that creates a generator function for Gaussian pyramid. The
+        pyramid can be created either on the feature space or the original
+        (intensities) space.
+
+        Parameters
+        ----------
+        images: list of :class:`menpo.image.Image`
+            The set of landmarked images from which to build the AAM.
+        n_levels: int
+            The number of multi-resolution pyramidal levels to be used.
+        downscale: float
+            The downscale factor that will be used to create the different
+            pyramidal levels.
+        pyramid_on_features: boolean
+            If True, the features are extracted at the highest level and the
+            pyramid is created on the feature images.
+            If False, the pyramid is created on the original (intensities)
+            space.
+        feature_type: list of size 1 with str or function/closure or None
+            The feature type to be used in case pyramid_on_features is enabled.
+        verbose: bool, Optional
+            Flag that controls information and progress printing.
+
+            Default: False
+
+        Returns
+        -------
+        generator: function
+            The generator function of the Gaussian pyramid.
+        """
+        if pyramid_on_features:
+            # compute features at highest level
+            feature_images = []
+            for c, i in enumerate(images):
+                if verbose:
+                    print_dynamic('- Computing feature space: {}'.format(
+                        progress_bar_str((c + 1.) / len(images),
+                                         show_bar=False)))
+                feature_images.append(compute_features(i, feature_type[0]))
+            if verbose:
+                print_dynamic('- Computing feature space: Done\n')
+
+            # create pyramid on feature_images
             generator = [i.gaussian_pyramid(n_levels=n_levels,
                                             downscale=downscale)
-                         for i in normalized_images]
-
-        if verbose:
-            print_dynamic('{}Done\n'.format(intro_str))
-
-        return reference_shape, generator
+                         for i in feature_images]
+        else:
+            # create pyramid on intensities images
+            # features will be computed per level
+            generator = [i.gaussian_pyramid(n_levels=n_levels,
+                                            downscale=downscale)
+                         for i in images]
+        return generator
 
     #TODO: this seems useful on its own, maybe it shouldn't be underscored...
     @classmethod
@@ -225,7 +288,7 @@ class DeformableModelBuilder(object):
 
         Parameters
         ----------
-        shapes: list of :class:`Pointcloud`
+        shapes: list of :map:`PointCloud`
             The set of shapes from which to build the model.
         max_components: None or int or float
             Specifies the number of components of the trained shape model.

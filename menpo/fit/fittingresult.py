@@ -11,17 +11,15 @@ from menpo.visualize.base import (Viewable, GraphPlotter, FittingViewer,
 
 class FittingResult(Viewable):
     r"""
-    Object that holds the state of a Fitter object before, during
+    Object that holds the state of a :map:`Fitter` object before, during
     and after it has fitted a particular image.
 
     Parameters
     -----------
-    image: :class:`menpo.image.masked.MaskedImage`
+    image: :map:`MaskedImage`
         The fitted image.
-
-    fitter: :class:`menpo.fitter.base.Fitter`
+    fitter: :map:`Fitter`
         The Fitter object used to fitter the image.
-
     error_type: 'me_norm', 'me' or 'rmse', optional.
         Specifies the way in which the error between the fitted and
         ground truth shapes is to be computed.
@@ -31,8 +29,8 @@ class FittingResult(Viewable):
 
     def __init__(self, image, fitter, gt_shape=None, error_type='me_norm'):
         # Initialize the error internal properties
-        self._error_type, self._error_text = None, None
         self.image = deepcopy(image)
+        self._error_type, self._error_text = None, None
         self.fitter = fitter
         self.error_type = error_type
         self._gt_shape = gt_shape
@@ -64,13 +62,13 @@ class FittingResult(Viewable):
         r"""
         Sets the error type according to a set of predefined options.
         """
-        if error_type is 'me_norm':
+        if error_type == 'me_norm':
             self._error_text = ('Point-to-point error normalized by object '
                                 'size')
-        elif error_type is 'me':
-            NotImplementedError("me not implemented yet")
-        elif error_type is 'rmse':
-            NotImplementedError("rmse not implemented yet")
+        elif error_type == 'me':
+            raise NotImplementedError("me not implemented yet")
+        elif error_type == 'rmse':
+            raise NotImplementedError("rmse not implemented yet")
         else:
             raise ValueError('Unknown error_type string selected. Valid'
                              'options are: me_norm, me, rmse')
@@ -81,7 +79,6 @@ class FittingResult(Viewable):
         r"""
         Returns the number of iterations used to fit the image.
         """
-        pass
 
     @abc.abstractmethod
     def shapes(self, as_points=False):
@@ -91,18 +88,17 @@ class FittingResult(Viewable):
 
         Parameters
         -----------
-        as_points: boolean, optional
-            Whether the results is returned as a list of PointClouds or
+        as_points : boolean, optional
+            Whether the results is returned as a list of :map:`PointCloud`s or
             ndarrays.
 
-            Default: False
+            Default: `False`
 
         Returns
         -------
-        shapes: :class:`menpo.shape.PointCloud`s or ndarray list
+        shapes : :map:`PointCloud`s or ndarray list
             A list containing the shapes obtained at each fitting iteration.
         """
-        pass
 
     @property
     def errors(self):
@@ -122,14 +118,12 @@ class FittingResult(Viewable):
         r"""
         Returns the final fitted shape.
         """
-        pass
 
     @abc.abstractproperty
     def initial_shape(self):
         r"""
         Returns the initial shape from which the fitting started.
         """
-        pass
 
     @property
     def gt_shape(self):
@@ -142,6 +136,8 @@ class FittingResult(Viewable):
     def final_error(self):
         r"""
         Returns the final fitting error.
+
+        :type: float
         """
         if self.gt_shape is not None:
             return compute_error(self.final_shape.points,
@@ -155,6 +151,8 @@ class FittingResult(Viewable):
     def initial_error(self):
         r"""
         Returns the initial fitting error.
+
+        :type: float
         """
         if self.gt_shape is not None:
             return compute_error(self.initial_shape.points,
@@ -225,11 +223,11 @@ class NonParametricFittingResult(FittingResult):
     r"""
     """
 
-    def __init__(self, image, fitter, shape=None, costs=None,
+    def __init__(self, image, fitter, shapes=None, costs=None,
                  gt_shape=None, error_type='me_norm'):
         super(NonParametricFittingResult, self).__init__(
             image, fitter, gt_shape=gt_shape, error_type=error_type)
-        self.parameters = shape
+        self.parameters = shapes
         self.costs = costs
 
     @FittingResult.fitted.setter
@@ -597,16 +595,16 @@ class FittingResultList(list, Viewable):
         r"""
         Sets the error type according to a set of predefined options.
         """
-        if error_type is 'me_norm':
+        if error_type == 'me_norm':
             for f in self:
                 f.error_type = error_type
             self._error_stop = 0.1
             self._error_step = 0.001
             self._error_text = 'Point-to-point error normalized by object ' \
                                'size'
-        elif error_type is 'me':
+        elif error_type == 'me':
             NotImplementedError('me not implemented yet')
-        elif error_type is 'rmse':
+        elif error_type == 'rmse':
             NotImplementedError('rmse not implemented yet')
         else:
             raise ValueError('Unknown error_type string selected. Valid'

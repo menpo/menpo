@@ -1,5 +1,4 @@
 import abc
-from copy import deepcopy
 
 import numpy as np
 
@@ -32,7 +31,7 @@ class Landmarkable(object):
 
     @landmarks.setter
     def landmarks(self, value):
-        self._landmarks = deepcopy(value)
+        self._landmarks = value.copy()
         self._landmarks._target = self
 
     @property
@@ -40,7 +39,7 @@ class Landmarkable(object):
         r"""
         The number of landmark groups on this object.
 
-        :type: int
+        :type: `int`
         """
         return self.landmarks.n_groups
 
@@ -53,7 +52,7 @@ class LandmarkManager(Transformable, Viewable):
 
     Parameters
     ----------
-    target : :class:`menpo.landmarks.base.Landmarkable`
+    target : :map:`Landmarkable`
         The parent object that owns these landmarks
     """
 
@@ -62,11 +61,30 @@ class LandmarkManager(Transformable, Viewable):
         self.__target = target
         self._landmark_groups = {}
 
+    def copy(self):
+        r"""
+        An efficient copy of this landmark manager.
+
+        Note that the returned landmark manager will share the same target as
+        self - the target will not be copied.
+
+        Returns
+        -------
+
+        manager : :map:`LandmarkManager`
+            A manager with an identical set of annotations to this one.
+
+        """
+        new_manager = LandmarkManager(self._target)
+        new_manager._landmark_groups = {l: g.copy() for l, g in
+                                        self._landmark_groups.iteritems()}
+        return new_manager
+
     def __iter__(self):
         """
         Iterate over the internal landmark group dictionary
         """
-        return iter(self._landmark_groups.iteritems())
+        return iter(self._landmark_groups)
 
     def __setitem__(self, group_label, value):
         """
@@ -77,9 +95,10 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ----------
-        group_label : String
+        group_label : `string`
             Label of new group.
-        value : LandmarkGroup or PointCloud
+
+        value : :map:`LandmarkGroup` or :map:`PointCloud`
             The new landmark group to set.
 
         Raises
@@ -94,14 +113,16 @@ class LandmarkManager(Transformable, Viewable):
                 "Trying to set {}D landmarks on a "
                 "{}D shape".format(value.n_dims, self._target.n_dims))
         if isinstance(value, PointCloud):
+            # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
                 self._target, group_label, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
-            # TODO replace with copy function
-            lmark_group = LandmarkGroup(self._target, group_label,
-                                        value._pointcloud,
-                                        value._labels_to_masks)
+            # Copy the landmark group so that we now own it
+            lmark_group = value.copy()
+            # check the target is set correctly
+            lmark_group._group_label = group_label
+            lmark_group._target = self._target
         else:
             raise ValueError('Valid types are PointCloud or LandmarkGroup')
 
@@ -113,15 +134,12 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ---------
-        group_label : String, optional
+        group_label : `string`, optional
             The label of the group. If None is provided, and if there is only
             one group, the unambiguous group will be returned.
-
-            Default: None
-
         Returns
         -------
-        lmark_group : :class:`LandmarkGroup`
+        lmark_group : :map:`LandmarkGroup`
             The matching landmark group.
         """
         if group_label is None:
@@ -131,6 +149,17 @@ class LandmarkManager(Transformable, Viewable):
                 raise ValueError("Cannot use None as a key as there are {} "
                                  "landmark groups".format(self.n_groups))
         return self._landmark_groups[group_label]
+
+    def __delitem__(self, group_label):
+        """
+        Delete the group for the provided label.
+
+        Parameters
+        ---------
+        group_label : `string`
+            The label of the group.
+        """
+        del self._landmark_groups[group_label]
 
     @property
     def _target(self):
@@ -147,7 +176,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         Total number of labels.
 
-        :type: int
+        :type: `int`
         """
         return len(self._landmark_groups)
 
@@ -156,7 +185,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         Whether the object has landmarks or not
 
-        :type: int
+        :type: `int`
         """
         return self.n_groups != 0
 
@@ -165,23 +194,22 @@ class LandmarkManager(Transformable, Viewable):
         """
         All the labels for the landmark set.
 
-        :type: List of strings
+        :type: list of `string`
         """
         return self._landmark_groups.keys()
 
     def update(self, landmark_manager):
         """
         Update the manager with the groups from another manager. This performs
-        a deep copy on the other landmark manager and resets it's target.
+        a copy on the other landmark manager and resets it's target.
 
         Parameters
         ----------
-        landmark_manager : :class:`LandmarkManager`
+        landmark_manager : :map:`LandmarkManager`
             The landmark manager to copy from.
         """
-        # TODO: replace with copy function
-        new_landmark_manager = deepcopy(landmark_manager)
-        new_landmark_manager._target = self.__target
+        new_landmark_manager = landmark_manager.copy()
+        new_landmark_manager._target = self._target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
     def _transform_inplace(self, transform):
@@ -195,9 +223,10 @@ class LandmarkManager(Transformable, Viewable):
 
         Parameters
         ----------
-        include_labels : bool, optional
-            If `True`, also render the label names next to the landmarks.
-        kwargs : dict, optional
+        include_labels : `bool`, optional
+            If ``True``, also render the label names next to the landmarks.
+
+        kwargs : `dict`, optional
             Passed through to the viewer.
         """
         for group in self._landmark_groups.itervalues():
@@ -207,9 +236,9 @@ class LandmarkManager(Transformable, Viewable):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
                                                self.n_groups)
         if self.has_landmarks:
-            for label, group in self:
+            for label in self:
                 out_string += '\n'
-                out_string += '({}): {}'.format(label, group.__str__())
+                out_string += '({}): {}'.format(label, self[label].__str__())
 
         return out_string
 
@@ -223,20 +252,31 @@ class LandmarkGroup(Viewable):
 
     Parameters
     ----------
-    target : :class:`menpo.landmarks.base.Landmarkable`
+    target : :map:`Landmarkable`
         The parent object of this landmark group.
-    group_label : String
+
+    group_label : `string`
         The label of the group.
+
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : dict of string to boolean ndarrays
+
+    labels_to_masks : `dict` of `string` to `boolean` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
-    copy : boolean, optional
-        If true, a copy of the pointcloud is stored on the group.
 
-        Default True
+    copy : `boolean`, optional
+        If ``True``, a copy of the :map:`PointCloud` is stored on the group.
 
+    Raises
+    ------
+    ValueError
+        If no set of label masks is passed.
+    ValueError
+        If any of the label masks differs in size to the pointcloud.
+    ValueError
+        If there exists any point in the pointcloud that is not covered
+        by a label.
     """
 
     def __init__(self, target, group_label, pointcloud, labels_to_masks,
@@ -251,23 +291,35 @@ class LandmarkGroup(Viewable):
         if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
             raise ValueError('Each mask must have the same number of points '
                              'as the landmark pointcloud.')
-
-        unlabelled_points = np.sum(labels_to_masks.values(), axis=0) == 0
-        if np.any(unlabelled_points):
-            raise ValueError('Every point in the landmark pointcloud must be '
-                             'labelled. Points {0} were unlabelled.'.format(
-                np.nonzero(unlabelled_points)))
+        # Another sanity check
+        self._labels_to_masks = labels_to_masks
+        self._verify_all_labels_masked()
 
         self._group_label = group_label
         self._target = target
         if copy:
-            # TODO: Replace with copy function
-            self._pointcloud = deepcopy(pointcloud)
+            self._pointcloud = pointcloud.copy()
             self._labels_to_masks = {l: m.copy() for l, m in
                                      labels_to_masks.iteritems()}
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
+
+    def copy(self):
+        r"""
+        An efficient copy of this landmark group.
+
+        Note that the returned landmark group will share the same target as
+        self - the target will not be copied.
+
+        Returns
+        -------
+        group : :map:`LandmarkGroup`
+            A group with an identical set of points, labels, and masks
+            as this one.
+        """
+        return LandmarkGroup(self._target, self.group_label, self.lms,
+                             self._labels_to_masks, copy=True)
 
     def __iter__(self):
         """
@@ -281,9 +333,10 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label of landmark.
-        indices : (K,) ndarray
+
+        indices : ``(K,)`` `ndarray`
             Array of indices in to the pointcloud. Each index implies
             membership to the label.
         """
@@ -297,22 +350,54 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label to filter on.
 
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with a single label.
         """
         return self.with_labels(label)
+
+    def __delitem__(self, label):
+        """
+        Delete the semantic labelling for the provided label.
+
+         .. note::
+
+             You cannot delete a semantic label and leave the landmark group
+             partially unlabelled. Landmark groups must contain labels for
+             every point.
+
+        Parameters
+        ---------
+        label : `string`
+            The label to remove.
+
+        Raises
+        ------
+        ValueError
+            If deleting the label would leave some points unlabelled
+        """
+        # Pop the value off, which is akin to deleting it (removes it from the
+        # underlying dict). However, we keep it around so we can check if
+        # removing it causes an unlabelled point
+        value_to_delete = self._labels_to_masks.pop(label)
+
+        try:
+            self._verify_all_labels_masked()
+        except ValueError as e:
+            # Catch the error, restore the value and re-raise the exception!
+            self._labels_to_masks[label] = value_to_delete
+            raise e
 
     @property
     def group_label(self):
         """
         The label of this landmark group.
 
-        :type: String
+        :type: `string`
         """
         return self._group_label
 
@@ -321,7 +406,7 @@ class LandmarkGroup(Viewable):
         """
         The list of labels that belong to this group.
 
-        :type: [strings]
+        :type: list of `string`
         """
         return self._labels_to_masks.keys()
 
@@ -330,7 +415,7 @@ class LandmarkGroup(Viewable):
         """
         Number of labels in the group.
 
-        :type: int
+        :type: `int`
         """
         return len(self.labels)
 
@@ -339,7 +424,7 @@ class LandmarkGroup(Viewable):
         """
         The pointcloud representing all the landmarks in the group.
 
-        :type: :class:`menpo.shape.pointcloud.Pointcloud`
+        :type: :map:`PointCloud`
         """
         return self._pointcloud
 
@@ -348,7 +433,7 @@ class LandmarkGroup(Viewable):
         """
         The total number of landmarks in the group.
 
-        :type: int
+        :type: `int`
         """
         return self._pointcloud.n_points
 
@@ -357,7 +442,7 @@ class LandmarkGroup(Viewable):
         """
         The dimensionality of these landmarks.
 
-        :type: int
+        :type: `int`
         """
         return self._pointcloud.n_dims
 
@@ -367,15 +452,14 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        labels : String or List of strings, optional
+        labels : `string` or list of `string`, optional
             Labels that should be kept in the returned landmark group. If
             None is passed, and if there is only one label on this group,
             the label will be substituted automatically.
 
-            Default: None
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with the same group label but containing only
             the given label.
         """
@@ -398,12 +482,12 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        label : String
+        label : `string`
             Label to exclude.
 
         Returns
         -------
-        landmark_group : :class:`LandmarkGroup`
+        landmark_group : :map:`LandmarkGroup`
             A new landmark group with the same group label but containing all
             labels except the given label.
         """
@@ -413,6 +497,18 @@ class LandmarkGroup(Viewable):
         labels_to_keep = list(set(self.labels).difference(labels))
         return self._new_group_with_only_labels(labels_to_keep)
 
+    def _verify_all_labels_masked(self):
+        """
+        Verify that every point in the pointcloud is associated with a label.
+        If any one point is not covered by a label, then raise a
+        ``ValueError``.
+        """
+        unlabelled_points = np.sum(self._labels_to_masks.values(), axis=0) == 0
+        if np.any(unlabelled_points):
+            raise ValueError('Every point in the landmark pointcloud must be '
+                             'labelled. Points {0} were unlabelled.'.format(
+                np.nonzero(unlabelled_points)))
+
     def _new_group_with_only_labels(self, labels):
         """
         Deal with changing indices when you add and remove points. In this case
@@ -420,12 +516,12 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        labels : [String]
+        labels : list of `string`
             List of strings of the labels to keep
 
         Returns
         -------
-        lmark_group : :class:`LandmarkGroup`
+        lmark_group : :map:`LandmarkGroup`
             The new landmark group with only the requested labels.
         """
         set_difference = set(labels).difference(self.labels)
@@ -452,9 +548,9 @@ class LandmarkGroup(Viewable):
 
         Parameters
         ----------
-        include_labels : bool, optional
+        include_labels : `boolean`, optional
             If `True`, also render the label names next to the landmarks.
-        kwargs : dict, optional
+        kwargs : `dict`, optional
             Passed through to the viewer.
         """
         target_viewer = self._target.view(figure_id=figure_id,

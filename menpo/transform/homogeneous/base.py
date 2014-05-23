@@ -11,10 +11,40 @@ class HomogFamilyAlignment(Alignment):
     r"""
     Simple subclass of Alignment that adds the ability to create a copy of an
     alignment class without the alignment behavior.
+
+    Note that subclasses should inherit from :map:`HomogFamilyAlignment` first
+    to have the correct copy behavior.
     """
     @abc.abstractmethod
-    def copy_without_alignment(self):
-        pass
+    def as_non_alignment(self):
+        r"""
+        Returns a copy of this transform without it's alignment nature.
+
+        Returns
+        -------
+        transform : :map:`Homogeneous` but not :map:`Alignment` subclass
+            A version of this transform with the same transform behavior but
+            without the alignment logic.
+        """
+
+    def copy(self):
+        r"""
+        Returns an efficient copy of this Homogeneous family transform (i.e.
+        one with the same homogeneous matrix). If you need all state to be
+        perfectly replicated, consider deepcopy() instead.
+
+        Returns
+        -------
+        h_transform: :map:`Homogeneous` or :map:`Homogeneous` subclass
+            A copy fo the transform with the same h_matrix.
+        """
+        new = self.__class__.__new__(self.__class__)
+        # Update the h_matrix..
+        new._h_matrix = self._h_matrix.copy()
+        # And add the source and target
+        new._source = self.source
+        new._target = self.target
+        return new
 
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
@@ -25,17 +55,78 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     product, re-normalizes by division by the homogeneous coordinate,
     and returns the result.
 
-    Can be composed with another Homogeneous, so long as the dimensionality
-    matches.
+    Can be composed with another :map:`Homogeneous`, so long as the
+    dimensionality matches.
 
     Parameters
     ----------
-    h_matrix : (n_dims + 1, n_dims + 1) ndarray
-        The homogeneous matrix to be applied.
-
+    h_matrix : ``(n_dims + 1, n_dims + 1)`` `ndarray`
+        The homogeneous matrix defining this transform.
+    copy : `bool`, optional
+        If False avoid copying ``h_matrix``. Useful for performance.
+    skip_checks : `bool`, optional
+        If True avoid sanity checks on the ``h_matrix``. Useful for
+        performance.
     """
-    def __init__(self, h_matrix):
-        self._h_matrix = h_matrix.copy()
+    def __init__(self, h_matrix, copy=True, skip_checks=False):
+        self._h_matrix = None
+        # Delegate setting to the most specialized setter method possible
+        self._set_h_matrix(h_matrix, copy=copy, skip_checks=skip_checks)
+
+    @property
+    def h_matrix_is_mutable(self):
+        r"""
+        True iff :meth:`set_h_matrix` is permitted on this type of transform.
+        If this returns ``False`` calls to :meth:``set_h_matrix` will raise
+        a NonImplimentedError.
+
+        :type: `bool`
+        """
+        return True
+
+    def copy(self):
+        r"""
+        An efficient copy of this Homogeneous family transform (i.e.
+        one with the same homogeneous matrix).
+
+        If you need all state to be perfectly replicated, consider using
+        :meth:`deepcopy` instead.
+
+        Returns
+        -------
+        transform : ``type(self)``
+            A copy fo the transform with the same h_matrix.
+        """
+        # avoid the constructor (as each family member has it's own signature)
+        new = self.__class__.__new__(self.__class__)
+        # Just update the h_matrix and we are done
+        new._h_matrix = self._h_matrix.copy()
+        return new
+
+    def from_vector(self, vector):
+        """
+        Build a new instance of the object from it's vectorized state.
+
+        ``self`` is used to fill out the missing state required to
+        rebuild a full object from it's standardized flattened state. This
+        is the default implementation, which is which is a ``deepcopy`` of the
+        object followed by a call to :meth:`from_vector_inplace()`. This method
+        can be overridden for a performance benefit if desired.
+
+        Parameters
+        ----------
+        vector : ``(n_parameters,)`` `ndarray`
+           Flattened representation of the object.
+
+        Returns
+        -------
+        transform : ``type(self)``
+           An new instance of this class.
+        """
+        # avoid the deepcopy with an efficient copy
+        self_copy = self.copy()
+        self_copy.from_vector_inplace(vector)
+        return self_copy
 
     def __str__(self):
         rep = self._transform_str() + '\n'
@@ -44,12 +135,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     def _transform_str(self):
         r"""
-        A string representation explaining what this homogeneous transform does.
-        Has to be implemented by base classes.
+        A string representation explaining what this homogeneous transform
+        does. Has to be implemented by base classes.
 
         Returns
         -------
-        str : string
+        string : ``str``
             String representation of transform.
         """
         return 'Homogeneous'
@@ -62,9 +153,59 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def h_matrix(self):
         return self._h_matrix
 
-    def set_h_matrix(self, value):
-        # TODO add verification logic for homogeneous here
-        self._h_matrix = value.copy()
+    def set_h_matrix(self, value, copy=True, skip_checks=False):
+        r"""
+        Updates ``h_matrix``, optionally performing sanity checks.
+
+        Note that it won't always be possible to manually specify the
+        ``h_matrix`` through this method, specifically if changing the
+        ``h_matrix`` could change the nature of the transform. See
+        :attr:`h_matrix_is_mutable` for how you can discover if the
+        ``h_matrix`` is allowed to be set for a given class.
+
+        Parameters
+        ----------
+        value : ndarray
+            The new homogeneous matrix to set
+        copy : `bool`, optional
+            If False do not copy the h_matrix. Useful for performance.
+        skip_checks : `bool`, optional
+            If True skip checking. Useful for performance.
+
+        Raises
+        ------
+        NotImplementedError
+            If :attr:`h_matrix_is_mutable` returns ``False``.
+        """
+        if self.h_matrix_is_mutable:
+            self._set_h_matrix(value, copy=copy, skip_checks=skip_checks)
+        else:
+            raise NotImplementedError(
+                "h_matrix cannot be set on {}".format(self._transform_str()))
+
+    def _set_h_matrix(self, value, copy=True, skip_checks=False):
+        r"""
+        Actually updates the h_matrix, optionally performing sanity checks.
+
+        Called by :meth:`set_h_matrix` on classes that have
+        :attr:`h_matrix_is_mutable` as ``True``.
+
+        Every subclass should invoke this method internally when the
+        h_matrix needs to be set in order to get the most sanity checking
+        possible.
+
+        Parameters
+        ----------
+        value : ndarray
+            The new homogeneous matrix to set
+        copy : `bool`, optional
+            If False do not copy the h_matrix. Useful for performance.
+        skip_checks : `bool`, optional
+            If True skip checking. Useful for performance.
+        """
+        if copy:
+            value = value.copy()
+        self._h_matrix = value
 
     @property
     def n_dims(self):
@@ -87,7 +228,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return self.h_matrix.ravel()
 
     def from_vector_inplace(self, vector):
-        self.set_h_matrix(vector.reshape(self.h_matrix.shape))
+        self.set_h_matrix(vector.reshape(self.h_matrix.shape),
+                          copy=True, skip_checks=True)
 
     @property
     def composes_inplace_with(self):
@@ -134,17 +276,15 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # note that this overload of the basic _compose_before is just to
         # deal with the complexities of maintaining the correct class of
         # transform upon composition
-        from .affine import Affine
-        from .similarity import Similarity
         if isinstance(t, type(self)):
             # He is a subclass of me - I can swallow him.
             # What if I'm an Alignment though? Rules of composition state we
             # have to produce a non-Alignment result. Nasty, but we check
             # here to save a lot of repetition.
             if isinstance(self, HomogFamilyAlignment):
-                new_self = self.copy_without_alignment()
+                new_self = self.as_non_alignment()
             else:
-                new_self = copy.deepcopy(self)
+                new_self = self.copy()
             new_self._compose_before_inplace(t)
         elif isinstance(self, type(t)):
             # I am a subclass of him - he can swallow me
@@ -191,17 +331,15 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # note that this overload of the basic _compose_after is just to
         # deal with the complexities of maintaining the correct class of
         # transform upon composition
-        from .affine import Affine
-        from .similarity import Similarity
         if isinstance(t, type(self)):
             # He is a subclass of me - I can swallow him.
             # What if I'm an Alignment though? Rules of composition state we
             # have to produce a non-Alignment result. Nasty, but we check
             # here to save a lot of repetition.
             if isinstance(self, HomogFamilyAlignment):
-                new_self = self.copy_without_alignment()
+                new_self = self.as_non_alignment()
             else:
-                new_self = copy.deepcopy(self)
+                new_self = self.copy()
             new_self._compose_after_inplace(t)
         elif isinstance(self, type(t)):
             # I am a subclass of him - he can swallow me
@@ -221,21 +359,26 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         return new_self
 
     def _compose_before_inplace(self, transform):
-        # Force the Homogeneous variant. compose machinery will guarantee
-        # this is only invoked in the right circumstances (e.g. the types
-        # will match so we don't need to block the setting of the matrix)
-        Homogeneous.set_h_matrix(self, np.dot(transform.h_matrix,
-                                              self.h_matrix))
+        # Compose machinery will guarantee this is only invoked in the right
+        # circumstances (e.g. the types will match) so we don't need to block
+        # the setting of the matrix
+        self._set_h_matrix(np.dot(transform.h_matrix, self.h_matrix),
+                           copy=False, skip_checks=True)
 
     def _compose_after_inplace(self, transform):
-        # Force the Homogeneous variant. compose machinery will guarantee
-        # this is only invoked in the right circumstances (e.g. the types
-        # will match so we don't need to block the setting of the matrix)
-        Homogeneous.set_h_matrix(self, np.dot(self.h_matrix,
-                                              transform.h_matrix))
+        # Compose machinery will guarantee this is only invoked in the right
+        # circumstances (e.g. the types will match) so we don't need to block
+        # the setting of the matrix
+        self._set_h_matrix(np.dot(self.h_matrix, transform.h_matrix),
+                           copy=False, skip_checks=True)
 
+    @property
     def has_true_inverse(self):
         return True
 
     def _build_pseudoinverse(self):
-        return Homogeneous(np.linalg.inv(self.h_matrix))
+        return Homogeneous(np.linalg.inv(self.h_matrix), copy=False,
+                           skip_checks=True)
+
+from .affine import Affine
+from .similarity import Similarity
