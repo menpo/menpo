@@ -212,7 +212,7 @@ class MaskedImage(Image):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def as_vector(self, keep_channels=False):
+    def _as_vector(self, keep_channels=False):
         r"""
         Convert image to a vectorized form. Note that the only pixels
         returned here are from the masked region on the image.
@@ -238,7 +238,7 @@ class MaskedImage(Image):
         if keep_channels:
             return self.masked_pixels.reshape([-1, self.n_channels])
         else:
-            return self.masked_pixels.flatten()
+            return self.masked_pixels.ravel()
 
     def from_vector(self, vector, n_channels=None):
         r"""

@@ -39,7 +39,7 @@ class Translation(DiscreteAffine, Similarity):
         """
         return self.n_dims
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
