@@ -9,5 +9,5 @@
 
     introduction
     datatypes
-    convention
+    consistency
     vectorizing

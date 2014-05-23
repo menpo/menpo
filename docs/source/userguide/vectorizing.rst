@@ -4,7 +4,7 @@ Vectorizing Objects
 ===================
 
 
-.. figure:: vectorizing.png
+.. figure:: vectorizing.jpg
 
    **Figure 1:** `Vectorizing allows Menpo to have rich data types whilst
    simulatneously providing efficient linear algebra routines. Here an image is
@@ -34,22 +34,22 @@ the key methods of :map:`Vectorizable` are extensively used in Menpo. They are
 - :map:`from_vector` - rebuild one of our types from a vector
 - :map:`from_vector_inplace` - alter an object inplace to take on the new state
 
-Some key things to watch out for in vectorizing in Menpo:
+Key points
+----------
+1. **Each type defines it's own form of vectorization**. Calling
+:map:`as_vector` on a :map:`Image` returns all of the pixels in a single strip,
+whilst on a :map:`MaskedImage` only the true pixels are returned. This
+distinction means that much of Menpo's image algorithms work equally well with
+masked or unmasked data - it's the :map:`Vectorizable` interface that abstracts
+away the difference between the two.
 
-1. Each type defines it's own form of vectorizatoin. Calling as_vector() on
-an :map:`Image` returns all of the pixels in a single strip, whilst on a
-:map:`MaskedImage` only the true pixels are returned. This distinction means
-that much of Menpo's image alhorithms work equally well with masked or unmasked
-data - it's the :map:`Vectorizable` interface that abstracts away the difference
-between the two.
+2. **Lots of things are vectorizable, not just images.** Pointclouds are and
+lots of transforms are too.
 
-2. Lots of things are vectorizable, not just images. Pointclouds are and lots
-of transforms are too.
+3. **The length of the resulting vector of a type can be found by querying the
+``n_parameters`` property.**
 
-3. The length of the resulting vector of a type can be found by querying the
-``n_parameters`` property.
-
-4. The vectorized form of an object does not have to be 'complete'.
+4. **The vectorized form of an object does not have to be 'complete'.**
 :map:`from_vector` and :map:`from_vector_inplace` can use the object they are
 called on to rebuild a complete state. Think of vectorization more as a
 `parmeterization` of the object, not a complete serialization.
