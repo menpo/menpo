@@ -513,10 +513,12 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
     }
     training_options = {'group': 'PTS',
                         'normalization_diagonal': 200,
-                        'n_levels': 3,
-                        'downscale': 1.5,
-                        'noise_std': 0.08,
-                        'pyramid_on_features': True,
+                        'n_levels': 4,
+                        'downscale': 1.1,
+                        'noise_std': 0.1,
+                        'patch_shape': (16, 16),
+                        'n_perturbations': 15,
+                        'pyramid_on_features': False,
                         'interpolator': 'scipy'
     }
     fitting_options = {
