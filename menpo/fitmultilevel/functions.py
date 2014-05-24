@@ -186,8 +186,7 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
     parameter_range = np.hstack((parameters[:2], target.range()))
     noise = (parameter_range * noise_std *
              np.random.randn(transform.n_parameters))
-    parameters += noise
-    return Similarity.identity(source.n_dims).from_vector(parameters)
+    return Similarity.identity(source.n_dims).from_vector(parameters + noise)
 
 
 def align_shape_with_bb(shape, bounding_box):

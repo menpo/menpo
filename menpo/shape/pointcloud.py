@@ -105,7 +105,7 @@ class PointCloud(Shape):
         min_b, max_b = self.bounds()
         return (min_b + max_b) / 2
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Returns a flattened representation of the pointcloud.
         Note that the flattened representation is of the form
@@ -116,7 +116,7 @@ class PointCloud(Shape):
         flattened : ``(n_points,)`` `ndarray`
             The flattened points.
         """
-        return self.points.flatten()
+        return self.points.ravel()
 
     def tojson(self):
         r"""

@@ -160,12 +160,12 @@ class Affine(Homogeneous, DP, DX):
         """
         return self.n_dims * (self.n_dims + 1)
 
-    def as_vector(self):
-        r"""Return the parameters of the transform as a 1D array.
-
-        These parameters are parametrised as deltas from the identity warp.
-        This does not include the homogeneous part of the warp. Note that it
-        flattens using Fortran ordering, to stay consistent with Matlab.
+    def _as_vector(self):
+        r"""
+        Return the parameters of the transform as a 1D array. These parameters
+        are parametrised as deltas from the identity warp. This does not
+        include the homogeneous part of the warp. Note that it flattens using
+        Fortran ordering, to stay consistent with Matlab.
 
         **2D**
 
@@ -188,7 +188,7 @@ class Affine(Homogeneous, DP, DX):
             The values that parametrise the transform.
         """
         params = self.h_matrix - np.eye(self.n_dims + 1)
-        return params[:self.n_dims, :].flatten(order='F')
+        return params[:self.n_dims, :].ravel(order='F')
 
     def from_vector_inplace(self, p):
         r"""

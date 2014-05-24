@@ -428,7 +428,7 @@ class GradientImages(Residual):
 
         # reshape gradient
         # second_grad:  n_pixels  x  (n_channels x n_dims)
-        second_grad = second_grad.as_vector(keep_channels=True)
+        second_grad = second_grad.as_vector(keep_channels=True).copy()
 
         # reshape gradient
         # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims
@@ -521,7 +521,7 @@ class GradientCorrelation(Residual):
 
         # reshape gradient
         # second_grad:  n_pixels  x  (n_channels x n_dims)
-        second_grad = second_grad.as_vector(keep_channels=True)
+        second_grad = second_grad.as_vector(keep_channels=True).copy()
 
         # reshape IGOs gradient
         # second_grad:  n_pixels  x  n_channels  x  n_dims  x  n_dims

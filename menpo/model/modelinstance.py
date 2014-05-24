@@ -99,7 +99,7 @@ class ModelInstance(Targetable, Vectorizable, DP):
         """
         return self.model.project(target)
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the current parameters of this transform - this is the
         just the linear model's weights
@@ -233,7 +233,7 @@ class GlobalPDM(PDM):
     def _update_global_transform(self, target):
         self.global_transform.set_target(target)
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the current parameters of this transform - this is the
         just the linear model's weights

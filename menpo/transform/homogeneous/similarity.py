@@ -70,7 +70,7 @@ class Similarity(Affine):
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the parameters of the transform as a 1D array. These parameters
         are parametrised as deltas from the identity warp. The parameters
@@ -108,7 +108,7 @@ class Similarity(Affine):
         if n_dims == 2:
             params = self.h_matrix - np.eye(n_dims + 1)
             # Pick off a, b, tx, ty
-            params = params[:n_dims, :].flatten(order='F')
+            params = params[:n_dims, :].ravel(order='F')
             # Pick out a, b, tx, ty
             return params[[0, 1, 4, 5]]
         elif n_dims == 3:

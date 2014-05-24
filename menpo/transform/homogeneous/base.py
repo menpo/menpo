@@ -224,8 +224,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # normalize and return
         return (h_y / h_y[:, -1][:, None])[:, :-1]
 
-    def as_vector(self):
-        return self.h_matrix.flatten()
+    def _as_vector(self):
+        return self.h_matrix.ravel()
 
     def from_vector_inplace(self, vector):
         self.set_h_matrix(vector.reshape(self.h_matrix.shape),
