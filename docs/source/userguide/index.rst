@@ -8,4 +8,6 @@
     :maxdepth: 1
 
     introduction
+    datatypes
+    consistency
     vectorizing
