@@ -595,20 +595,9 @@ def load_database(database_path, bounding_boxes=None,
     crop_proportion = db_loading_options.pop('crop_proportion', 0.5)
     convert_to_grey = db_loading_options.pop('convert_to_grey', True)
 
-    # find number of files
-    n_files = len(mio.image_paths(final_path))
-    if n_files < 1:
-        raise ValueError('No image files in given path')
-
     # load images
     images = []
-    for c, i in enumerate(mio.import_images(final_path)):
-        # print progress bar
-        if verbose:
-            print_dynamic('- Loading database with {} images: {}'.format(
-                n_files, progress_bar_str(float(c + 1) / n_files,
-                                          show_bar=True)))
-
+    for i in mio.import_images(final_path, verbose=verbose):
         # If we have bounding boxes then we need to make sure we crop to them!
         # If we don't crop to the bounding box then we might crop out part of
         # the image the bounding box belongs to.
@@ -626,12 +615,10 @@ def load_database(database_path, bounding_boxes=None,
         if convert_to_grey and i.n_channels == 3:
             i = i.as_greyscale(mode='luminosity')
 
-
         # append it to the list
         images.append(i)
     if verbose:
-        print_dynamic('- Loading database with {} images: Done\n'.format(
-            n_files))
+        print("\nAssets loaded.")
     return images
 
 

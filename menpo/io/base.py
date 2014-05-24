@@ -3,6 +3,7 @@ from copy import deepcopy
 import os
 from glob import glob
 from menpo import menpo_src_dir_path
+from menpo.visualize import progress_bar_str, print_dynamic
 
 
 def data_dir_path():
@@ -208,7 +209,8 @@ def import_landmark_file(filepath):
     return _import(filepath, all_landmark_types, has_landmarks=False)
 
 
-def import_images(pattern, max_images=None, landmark_resolver=None):
+def import_images(pattern, max_images=None, landmark_resolver=None,
+                  verbose=False):
     r"""Multiple image import generator.
 
     Makes it's best effort to import and attach relevant related
@@ -222,22 +224,30 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
 
     Parameters
     ----------
-    pattern : String
+    pattern : `str`
         The glob path pattern to search for images.
-    max_images: positive integer, optional
-        If not `None`, only import the first max_images found. Else,
+
+    max_images : positive `int`, optional
+        If not ``None``, only import the first ``max_images`` found. Else,
         import all.
 
-        Default: `None`
-    landmark_resolver: function, optional
-        If not None, this function will be used to find landmarks for each
+    landmark_resolver : `function`, optional
+        If not ``None``, this function will be used to find landmarks for each
         image. The function should take one argument (an image itself) and
-        return a dictionary of the form {'group_name': 'landmark_filepath'}
+        return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
+
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported.
 
     Yields
     ------
-    :class:`menpo.image.MaskedImage`
+    :map:`MaskedImage`
         Images found to match the glob pattern provided.
+
+    Raises
+    ------
+    ValueError
+        If no images are found at the provided glob.
 
     Examples
     --------
@@ -247,18 +257,17 @@ def import_images(pattern, max_images=None, landmark_resolver=None):
         >>> for im in import_images('./massive_image_db/*'):
         >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
         >>>    images.append(im)
-        >>>
-
     """
     for asset in _import_glob_generator(pattern, all_image_types,
                                         max_assets=max_images,
                                         has_landmarks=True,
-                                        landmark_resolver=landmark_resolver):
+                                        landmark_resolver=landmark_resolver,
+                                        verbose=verbose):
         yield asset
 
 
 def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
-                  textures=True):
+                  textures=True, verbose=False):
     r"""Multiple mesh import generator.
 
     Makes it's best effort to import and attach relevant related
@@ -266,7 +275,7 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
     begin with the same filename and end in a supported extension.
 
     If texture coordinates and a suitable texture are found the object
-    returned will be a :class:`menpo.shape.TexturedTriMesh`.
+    returned will be a :map:`TexturedTriMesh`.
 
     Note that this is a generator function. This allows for pre-processing
     of data to take place as data is imported (e.g. cleaning meshes
@@ -274,26 +283,33 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
 
     Parameters
     ----------
-    pattern : String
+    pattern : `str`
         The glob path pattern to search for textures and meshes.
-    max_meshes: positive integer, optional
-        If not `None`, only import the first max_mesh meshes found. Else,
-        import all.
 
-        Default: `None`
-    landmark_resolver: function, optional
-        If not None, this function will be used to find landmarks for each
+    max_meshes : positive `int`, optional
+        If not ``None``, only import the first ``max_meshes`` meshes found.
+        Else, import all.
+
+    landmark_resolver : `function`, optional
+        If not ``None``, this function will be used to find landmarks for each
         mesh. The function should take one argument (a mesh itself) and
-        return a dictionary of the form {'group_name': 'landmark_filepath'}
-    texture: Boolean, optional
-        If False, don't search for textures.
+        return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
 
-        Default: True
+    texture : `bool`, optional
+        If ``False``, don't search for textures.
+
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported.
 
     Yields
     ------
-    :class:`menpo.shape.TriMesh` or :class:`menpo.shape.TexturedTriMesh`
+    :map:`TriMesh` or :map:`TexturedTriMesh`
         Meshes found to match the glob pattern provided.
+
+    Raises
+    ------
+    ValueError
+        If no meshes are found at the provided glob.
 
     """
     kwargs = {'texture': textures}
@@ -301,34 +317,43 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
                                         max_assets=max_meshes,
                                         has_landmarks=True,
                                         landmark_resolver=landmark_resolver,
-                                        importer_kwargs=kwargs):
+                                        importer_kwargs=kwargs,
+                                        verbose=verbose):
         yield asset
 
 
-def import_landmark_files(pattern, max_landmarks=None):
+def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     r"""Multiple landmark file import generator.
 
     Note that this is a generator function.
 
     Parameters
     ----------
-    pattern : String
+    pattern : `str`
         The glob path pattern to search for images.
-    max_landmark_files: positive integer, optional
-        If not `None`, only import the first max_landmark_files found. Else,
-        import all.
 
-        Default: `None`
+    max_landmark_files : positive `int`, optional
+        If not ``None``, only import the first ``max_landmark_files`` found.
+        Else, import all.
+
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported.
 
     Yields
     ------
-    :class:`menpo.landmark.LandmarkGroup`
+    :map:`LandmarkGroup`
         Landmark found to match the glob pattern provided.
+
+    Raises
+    ------
+    ValueError
+        If no landmarks are found at the provided glob.
 
     """
     for asset in _import_glob_generator(pattern, all_landmark_types,
                                         max_assets=max_landmarks,
-                                        has_landmarks=False):
+                                        has_landmarks=False,
+                                        verbose=verbose):
         yield asset
 
 
@@ -382,14 +407,21 @@ def image_paths(pattern):
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=None,
-                           importer_kwargs=None):
+                           importer_kwargs=None, verbose=False):
     filepaths = _glob_matching_extension(pattern, extension_map)
     if max_assets:
         filepaths = filepaths[:max_assets]
-    for asset in _multi_import_generator(filepaths, extension_map,
+    n_files = len(filepaths)
+    if n_files == 0:
+        raise ValueError('The glob {} yields no assets'.format(pattern))
+    for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
                                          has_landmarks=has_landmarks,
                                          landmark_resolver=landmark_resolver,
-                                         importer_kwargs=importer_kwargs):
+                                         importer_kwargs=importer_kwargs)):
+        if verbose:
+            print_dynamic('- Loading {} assets: {}'.format(
+                n_files, progress_bar_str(float(i + 1) / n_files,
+                                          show_bar=True)))
         yield asset
 
 
