@@ -35,20 +35,39 @@ and then some spatial data related to the image::
 
     t.apply(some_data)
 
-By the above indexing 
-The *worst* part about this is that once we go to voxel data (which
-:map:`Image` largely supports, and will fully support in the future), adds a
-z-axis. Now we drop all the swapping business - and the third axis of the spatial
-data once more corresponds with the third axis of the image data.
+Unfortunately the meaning of ``y`` in these two domains is different - some
+code would have to flip the order of applying the translation of the transform
+to an image, a potential cause of confusion.
 
-eg
+The *worst* part about this is that once we go to voxel data (which
+:map:`Image` largely supports, and will fully support in the future), a z-axis
+is added.
+Now we drop all the swapping business - and the third axis of the spatial
+data once more corresponds with the third axis of the image data. Trying to
+keep track of these rules muddies an otherwise very simple concept.
 
 Menpo's approach
 ----------------
 Menpo's solution to this problem is simple - **drop the insistence of calling
-axes x, y, and z!** The zeroth axis of the pixel data is simply that - the
+axes x, y, and z**. The zeroth axis of the pixel data is simply that - the
 zeroth axis. It corresponds exactly with the zeroth axis on the point cloud.
+If you have an image with annotations provided the zeroth axis of the
+`PointCloud` representing the annotations will correspond with the zeroth
+axis of the image. This rule makes working with images and spatial data simple -
+short you should never have to think about flipping axes in Menpo.
 
 It's natural to be concerned at this point that establishing such rules must
-make it really difficult ingest data into Menpo -
+make it really difficult ingest data which follows different conventions. This
+is incorrect - one of the biggest strengths of the :ref:`api-io-index` module
+is that each asset importer normalizes the format of the data to format Menpo's
+rules.
+
+Key Points
+----------
+- **Menpo is n-dimensional**. We try and avoid speaking of ``x`` and ``y`` because there are many different conventions in use.
+
+- **The IO module ensures that different data formats are normalized** upon loading into Menpo.
+
+- **axis 0 of landmarks corresponds to axis 0 of the container it is an annotation of**.
+
 

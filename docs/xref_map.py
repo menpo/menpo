@@ -45,6 +45,7 @@ xref_map = {
 'Similarity': ('class', 'menpo.transform.homogeneous.similarity.Similarity'),
 'Targetable': ('class', 'menpo.base.Targetable'),
 'Transform': ('class', 'menpo.transform.base.Transform'),
+'Translation': ('class', 'menpo.transform.homogeneous.translation.Translation'),
 'TransformChain': ('class', 'menpo.transform.base.composable.TransformChain'),
 'Transformable': ('class', 'menpo.transform.base.Transformable'),
 'TriMesh': ('class', 'menpo.shape.mesh.TriMesh'),
