@@ -200,3 +200,18 @@ def test_mesh_paths():
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
     assert(len(ls) == 5)
+
+
+@raises(ValueError)
+def test_import_meshes_wrong_path_raises_value_error():
+    list(mio.import_meshes('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+
+
+@raises(ValueError)
+def test_import_images_wrong_path_raises_value_error():
+    list(mio.import_images('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+
+
+@raises(ValueError)
+def test_import_landmark_files_wrong_path_raises_value_error():
+    list(mio.import_landmark_files('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))

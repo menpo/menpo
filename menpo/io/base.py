@@ -244,6 +244,11 @@ def import_images(pattern, max_images=None, landmark_resolver=None,
     :map:`MaskedImage`
         Images found to match the glob pattern provided.
 
+    Raises
+    ------
+    ValueError
+        If no images are found at the provided glob.
+
     Examples
     --------
     Import crops of the top 100 square pixels from a huge collection of images
@@ -301,6 +306,11 @@ def import_meshes(pattern, max_meshes=None, landmark_resolver=None,
     :map:`TriMesh` or :map:`TexturedTriMesh`
         Meshes found to match the glob pattern provided.
 
+    Raises
+    ------
+    ValueError
+        If no meshes are found at the provided glob.
+
     """
     kwargs = {'texture': textures}
     for asset in _import_glob_generator(pattern, mesh_types,
@@ -333,6 +343,11 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     ------
     :map:`LandmarkGroup`
         Landmark found to match the glob pattern provided.
+
+    Raises
+    ------
+    ValueError
+        If no landmarks are found at the provided glob.
 
     """
     for asset in _import_glob_generator(pattern, all_landmark_types,
@@ -397,6 +412,8 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     if max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
+    if n_files == 0:
+        raise ValueError('The glob {} yields no assets'.format(pattern))
     for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
                                          has_landmarks=has_landmarks,
                                          landmark_resolver=landmark_resolver,
