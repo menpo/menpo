@@ -1,17 +1,15 @@
 from __future__ import division
 import numpy as np
-from random import sample
 
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
-from menpo.transform import Scale, Translation
+from menpo.transform import Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.featurefunctions import compute_features
-from menpo.visualize import print_dynamic, progress_bar_str, print_bytes
-from ..functions import mean_pointcloud
+from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -40,8 +38,7 @@ class AAMBuilder(DeformableModelBuilder):
 
             If `string`, image features will be computed by executing::
 
-               feature_image = eval('img.feature_type.' +
-                                    feature_type[level] + '()')
+               feature_image = getattr(image.features, feature_type[level])()
 
             for each pyramidal level. For this to work properly each string
             needs to be one of menpo's standard image feature methods
@@ -250,11 +247,6 @@ class AAMBuilder(DeformableModelBuilder):
                 images, group, label, self.normalization_diagonal,
                 self.interpolator, verbose=verbose)
 
-        # estimate required ram memory
-        if verbose:
-            self._estimate_ram_requirements(images, group, label,
-                                            n_images=min([3, len(images)]))
-
         # create pyramid
         generators = self._create_pyramid(normalized_images, self.n_levels,
                                           self.downscale,
@@ -415,89 +407,6 @@ class AAMBuilder(DeformableModelBuilder):
                    self.downscale, self.scaled_shape_models,
                    self.pyramid_on_features, self.interpolator)
 
-    def _estimate_ram_requirements(self, images, group, label, n_images=3):
-        r"""
-        Estimates the RAM memory requirements in order to save the AAM model
-        that is about to be trained. Note that this function is only called if
-        verbose parameter of the builder is enabled.
-
-        Parameters
-        ----------
-        images : list of :map:`Image`
-            The set of landmarked images which will be used to build the AAM.
-
-        group : `string`
-            The key of the landmark set that will be used.
-
-        label : `string`
-            The label of of the landmark manager that will be used.
-
-        n_images : `int`, optional
-            The number of images to be used to train the temporary AAM and
-            estimate the RAM requirements. Note that the images are selected
-            randomly from the images list.
-        """
-        print_dynamic('- Estimating RAM memory requirements...')
-        # create images list
-        n_training_images = len(images)
-        which_images = sample(range(n_training_images), n_images)
-        images_ram = [images[i].copy() for i in which_images]
-        # normalize images with respect to reference shape
-        if self.normalization_diagonal is None:
-            shapes_ram = [i.landmarks[group][label].lms for i in images_ram]
-            reference_shape_ram = mean_pointcloud(shapes_ram)
-            x_ram, y_ram = reference_shape_ram.range()
-            x, y = self.reference_shape.range()
-            scale = np.sqrt(x**2 + y**2) / np.sqrt(x_ram**2 + y_ram**2)
-            Scale(scale, reference_shape_ram.n_dims).apply_inplace(
-                reference_shape_ram)
-            images_ram = [i.rescale_to_reference_shape(
-                reference_shape_ram, group=group, label=label,
-                interpolator=self.interpolator) for i in images_ram]
-
-        # Make a temporary AAM Builder so that we can compute the estimate
-        # of the ram given the images we just chose.
-        temp_builder = AAMBuilder(
-            feature_type=self.feature_type, transform=self.transform,
-            trilist=self.trilist,
-            normalization_diagonal=self.normalization_diagonal,
-            n_levels=self.n_levels, downscale=self.downscale,
-            scaled_shape_models=self.scaled_shape_models,
-            pyramid_on_features=self.pyramid_on_features,
-            max_shape_components=self.max_shape_components,
-            max_appearance_components=self.max_appearance_components,
-            boundary=self.boundary,
-            interpolator=self.interpolator)
-        # Train the temporary AAM
-        aam_ram = temp_builder.build(images_ram, group=group, label=label,
-                                     verbose=False)
-        # find required appearance components per level
-        n_components = []
-        for i in range(temp_builder.n_levels):
-            if temp_builder.max_appearance_components[i] is None:
-                n_components.append(n_training_images - 1)
-            elif isinstance(temp_builder.max_appearance_components[i], int):
-                n_components.append(
-                    min([n_training_images - 1,
-                         temp_builder.max_appearance_components[i]]))
-            elif isinstance(temp_builder.max_appearance_components[i], float):
-                n_comp = (int((n_training_images - 1) *
-                          temp_builder.max_appearance_components[i]))
-                n_components.append(n_comp)
-        # find bytes per appearance model
-        bytes_ram = [n_components[i] *
-                     aam_ram.appearance_models[i].components[0, :].nbytes
-                     for i in range(temp_builder.n_levels - 1, -1, -1)]
-        # convert and print bytes
-        print_bytes_ram = [print_bytes(i) for i in bytes_ram]
-        if len(print_bytes_ram) > 1:
-            print_dynamic("- Approximately {} {} of RAM required to store "
-                          "model.\n".format(print_bytes(sum(bytes_ram)),
-                                            print_bytes_ram))
-        else:
-            print_dynamic("- Approximately {} of RAM required to store "
-                          "model.\n".format(print_bytes(sum(bytes_ram))))
-
 
 class PatchBasedAAMBuilder(AAMBuilder):
     r"""
@@ -525,8 +434,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
             If string, image features will be computed by executing::
 
-               feature_image = eval('img.feature_type.' +
-                                    feature_type[level] + '()')
+               feature_image = getattr(image.features, feature_type[level])()
 
             for each pyramidal level. For this to work properly each string
             needs to be one of menpo's standard image feature methods
