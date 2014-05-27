@@ -53,8 +53,7 @@ class CLMBuilder(DeformableModelBuilder):
 
         If `string`, image features will be computed by executing::
 
-           feature_image = eval('img.feature_type.' +
-                                feature_type[level] + '()')
+           feature_image = getattr(image.features, feature_type[level])()
 
         for each pyramidal level. For this to work properly each `string`
         needs to be one of Menpo's standard image feature methods

@@ -255,7 +255,7 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             If `string`, the feature representation will be extracted by
             executing::
 
-                feature_image = eval('img.features.' + feature_type + '()')
+                feature_image = getattr(image.features, feature_type)()
 
             For this to work properly feature_type needs to be one of
             Menpo's standard image feature methods. Note that, in this case,
@@ -411,7 +411,7 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
             If `string`, the feature representation will be extracted by
             executing::
 
-                feature_image = eval('img.features.' + feature_type + '()')
+                feature_image = getattr(image.features, feature_type)()
 
             For this to work properly feature_type needs to be one of
             Menpo's standard image feature methods. Note that, in this case,
