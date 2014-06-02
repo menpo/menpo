@@ -204,11 +204,13 @@ class MeshImporter(Importer):
                 new_mesh = TexturedTriMesh(mesh.points.astype(np.float64),
                                            mesh.tcoords,
                                            import_image(self.texture_path),
-                                           trilist=mesh.trilist)
+                                           trilist=mesh.trilist,
+                                           copy=False)
             elif mesh.colour_per_vertex is not None:
                 new_mesh = ColouredTriMesh(mesh.points,
                                            colours=mesh.colour_per_vertex,
-                                           trilist=mesh.trilist)
+                                           trilist=mesh.trilist,
+                                           copy=False)
             else:
                 new_mesh = TriMesh(mesh.points, trilist=mesh.trilist)
 
