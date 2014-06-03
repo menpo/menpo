@@ -1,6 +1,7 @@
 import abc
 from copy import deepcopy
 import os
+from pathlib import Path
 from glob import glob
 from menpo import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
@@ -104,7 +105,7 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
     # MESHES
     #  find all meshes that we can import
-    mesh_files = mesh_paths(pattern)
+    mesh_files = list(mesh_paths(pattern))
     if max_meshes:
         mesh_files = mesh_files[:max_meshes]
     for mesh, mesh_i in _multi_import_generator(mesh_files, mesh_types,
@@ -116,7 +117,7 @@ def import_auto(pattern, max_meshes=None, max_images=None):
 
     # IMAGES
     # find all images that we can import
-    image_files = image_paths(pattern)
+    image_files = list(image_paths(pattern))
     image_files = _images_unrelated_to_meshes(image_files,
                                               texture_paths)
     if max_images:
@@ -395,20 +396,20 @@ def mesh_paths(pattern):
     r"""
     Return mesh filepaths that Menpo can import that match the glob pattern.
     """
-    return _glob_matching_extension(pattern, mesh_types)
+    return glob_with_suffix(pattern, mesh_types)
 
 
 def image_paths(pattern):
     r"""
     Return image filepaths that Menpo can import that match the glob pattern.
     """
-    return _glob_matching_extension(pattern, all_image_types)
+    return glob_with_suffix(pattern, all_image_types)
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=None,
                            importer_kwargs=None, verbose=False):
-    filepaths = _glob_matching_extension(pattern, extension_map)
+    filepaths = list(glob_with_suffix(pattern, extension_map))
     if max_assets:
         filepaths = filepaths[:max_assets]
     n_files = len(filepaths)
@@ -491,8 +492,7 @@ def _import(filepath, extensions_map, keep_importer=False,
             # user isn't customising how landmarks are found.
             lm_pattern = os.path.join(ioinfo.dir, ioinfo.filename + '.*')
             # find all the landmarks we can
-            lms_paths = _glob_matching_extension(lm_pattern, all_landmark_types)
-            for lm_path in lms_paths:
+            for lm_path in glob_with_suffix(lm_pattern, all_landmark_types):
                 # manually trigger _import (so we can set the asset!)
                 lms = _import(lm_path, all_landmark_types, keep_importer=False,
                               has_landmarks=False, asset=asset)
@@ -586,7 +586,47 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
             yield imported
 
 
-def _glob_matching_extension(pattern, extensions_map):
+def _pathlib_glob_for_pattern(pattern):
+    r"""Generator for glob matching a string path pattern
+
+    Splits the provided ``pattern`` into a root path for pathlib and a
+    subsequent glob pattern to be applied.
+
+    Parameters
+    ----------
+    pattern : `str`
+        Path including glob patterns. If no glob patterns are present and the
+        pattern is a dir, a '**/*' pattern will be automatically added.
+
+    Yields
+    ------
+    Path : A path to a file matching the provided pattern.
+
+    Raises
+    ------
+    ValueError
+        If the pattern doesn't contain a '*' wildcard and is not a directory
+    """
+    gsplit = pattern.split('*', 1)
+    if len(gsplit) == 1:
+        # no glob provided. Is the provided pattern a dir?
+        if Path(pattern).is_dir():
+            print 'yes'
+            preglob = pattern
+            pattern = '*'
+        else:
+            raise ValueError('{} is an invalid glob and '
+                             'not a dir'.format(pattern))
+    else:
+        preglob = gsplit[0]
+        pattern = '*' + gsplit[1]
+    print('preglob: {}'.format(preglob))
+    print('pattern: {}'.format(pattern))
+    p = Path(preglob)
+    return p.glob(str(pattern))
+
+
+def glob_with_suffix(pattern, extensions_map):
     r"""
     Filters the results from the glob pattern passed in to only those files
     that have an importer given in `extensions_map`.
@@ -600,17 +640,14 @@ def _glob_matching_extension(pattern, extensions_map):
         non-instantiated classes. The extensions are expected to
         contain the leading period eg. `.obj`.
 
-    Returns
-    -------
+    Yields
+    ------
     filepaths : list of string
         The list of filepaths that have valid extensions.
     """
-    pattern = _norm_path(pattern)
-    files = glob(pattern)
-    exts = [os.path.splitext(f)[1] for f in files]
-    matches = [ext in extensions_map for ext in exts]
-    return [f for f, does_match in zip(files, matches)
-            if does_match]
+    for path in _pathlib_glob_for_pattern(pattern):
+        if path.suffix in extensions_map:
+            yield str(path)
 
 
 def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
