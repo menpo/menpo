@@ -9,7 +9,7 @@ from vrml.vrml97.parser import buildParser as buildVRML97Parser
 import vrml.vrml97.basenodes as basenodes
 from vrml.node import NullNode
 from menpo.io.base import (Importer, find_alternative_files,
-                           map_filepath_to_importer)
+                           map_filepath_to_importer, import_image)
 from menpo.io.exceptions import MeshImportError
 from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
 
@@ -83,14 +83,17 @@ class MeshImporter(Importer):
     Abstract base class for importing meshes. Searches in the directory
     specified by filepath for landmarks and textures with the same basename as
     the mesh. If found, they are automatically attached. If a texture is found
-    then a :class:`menpo.shape.mesh.textured.TexturedTriMesh` is built, else a
-    :class:`menpo.shape.mesh.base.Trimesh` is built. Note that this behavior
-    can be overridden if desired.
+    then a :map:`TexturedTriMesh` is built, if colour information is found a
+    :map:`ColouredTriMesh` is built, and if neither is found a :map:`Trimesh`
+    is built. Note that this behavior can be overridden if desired.
 
     Parameters
     ----------
-    filepath : string
+    filepath : `str`
         Absolute filepath of the mesh.
+    texture: 'bool', optional
+        If ``False`` even if a texture exists a normal :map:`TriMesh` is
+        produced.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -101,20 +104,6 @@ class MeshImporter(Importer):
         self.import_textures = texture
         self.attempted_texture_search = False
         self.relative_texture_path = None
-        self.texture_importer = None
-
-    def _build_texture_importer(self):
-        r"""
-        Search for a texture in the same directory as the
-        mesh. If it exists, create an importer for it.
-        """
-        if self.texture_path is None or not path.exists(self.texture_path):
-            self.texture_importer = None
-        else:
-            # This import is here to avoid circular dependencies
-            from menpo.io.extensions import image_types
-            self.texture_importer = map_filepath_to_importer(self.texture_path,
-                                                             image_types)
 
     def _search_for_texture(self):
         r"""
@@ -122,8 +111,8 @@ class MeshImporter(Importer):
 
         Returns
         --------
-        relative_texture_path : string
-            The relative path to the texture or `None` if one can't be found
+        relative_texture_path : `str`
+            The relative path to the texture or ``None`` if one can't be found
         """
         # Stop searching every single time we access the property
         self.attempted_texture_search = True
@@ -141,25 +130,27 @@ class MeshImporter(Importer):
         Get the absolute path to the texture. Returns None if one can't be
         found. Makes it's best effort to find an appropriate texture by
         searching for textures with the same name as the mesh. Will only
-        search for the path the first time `texture_path` is invoked.
+        search for the path the first time ``texture_path`` is invoked.
 
-        Sets the `self.relative_texture_path` attribute.
+        Sets the :attr:`relative_texture_path`.
 
         Returns
         -------
-        texture_path : string
+        texture_path : `str`
             Absolute filepath to the texture
         """
         # Try find a texture path if we can
         if (self.relative_texture_path is None and not
                 self.attempted_texture_search):
             self.relative_texture_path = self._search_for_texture()
-
         try:
-            return path.join(self.folder, self.relative_texture_path)
+            texture_path = path.join(self.folder, self.relative_texture_path)
         # AttributeError POSIX, TypeError Windows
         except (AttributeError, TypeError):
             return None
+        if not path.isfile(texture_path):
+            texture_path = None
+        return texture_path
 
     @abc.abstractmethod
     def _parse_format(self):
@@ -178,7 +169,7 @@ class MeshImporter(Importer):
         tcoords  double ndarray (optional)
         ======== ==========================
 
-        May also set the `self.relative_texture_path` if it is specified by
+        May also set the :attr:`relative_texture_path` if it is specified by
         the format.
         """
         pass
@@ -202,20 +193,24 @@ class MeshImporter(Importer):
         """
         #
         self._parse_format()
-        if self.import_textures:
-            self._build_texture_importer()
+
+        # Only want to create textured meshes if there is a texture path
+        # and import_textures is True
+        textured = self.import_textures and self.texture_path is not None
 
         meshes = []
         for mesh in self.meshes:
-            if self.texture_importer is not None:
+            if textured:
                 new_mesh = TexturedTriMesh(mesh.points.astype(np.float64),
                                            mesh.tcoords,
-                                           self.texture_importer.build(),
-                                           trilist=mesh.trilist)
+                                           import_image(self.texture_path),
+                                           trilist=mesh.trilist,
+                                           copy=False)
             elif mesh.colour_per_vertex is not None:
                 new_mesh = ColouredTriMesh(mesh.points,
                                            colours=mesh.colour_per_vertex,
-                                           trilist=mesh.trilist)
+                                           trilist=mesh.trilist,
+                                           copy=False)
             else:
                 new_mesh = TriMesh(mesh.points, trilist=mesh.trilist)
 
