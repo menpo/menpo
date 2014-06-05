@@ -1,5 +1,4 @@
 import abc
-from copy import deepcopy
 import os
 from pathlib import Path
 from glob import glob
@@ -484,7 +483,7 @@ def _import(filepath, extensions_map, keep_importer=False,
 
     # attach ioinfo
     for x in built_objects:
-        x.ioinfo = deepcopy(ioinfo)
+        x.ioinfo = ioinfo.copy()
 
     # handle landmarks
     if has_landmarks:
@@ -498,7 +497,7 @@ def _import(filepath, extensions_map, keep_importer=False,
                               has_landmarks=False, asset=asset)
                 for x in built_objects:
                     try:
-                        x.landmarks[lms.group_label] = deepcopy(lms)
+                        x.landmarks[lms.group_label] = lms
                     except ValueError:
                         pass
         else:
@@ -611,7 +610,6 @@ def _pathlib_glob_for_pattern(pattern):
     if len(gsplit) == 1:
         # no glob provided. Is the provided pattern a dir?
         if Path(pattern).is_dir():
-            print 'yes'
             preglob = pattern
             pattern = '*'
         else:
@@ -620,8 +618,11 @@ def _pathlib_glob_for_pattern(pattern):
     else:
         preglob = gsplit[0]
         pattern = '*' + gsplit[1]
-    print('preglob: {}'.format(preglob))
-    print('pattern: {}'.format(pattern))
+    if not os.path.isdir(preglob):
+        # the glob pattern is in the middle of a path segment. pair back
+        # to the nearest dir and add the reminder to the pattern
+        preglob, pattern_prefix = os.path.split(preglob)
+        pattern  = pattern_prefix + pattern
     p = Path(preglob)
     return p.glob(str(pattern))
 
@@ -864,6 +865,9 @@ class IOInfo(object):
         self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
         self.extension = os.path.splitext(self.filepath)[1]
         self.dir = os.path.dirname(self.filepath)
+
+    def copy(self):
+        return IOInfo(self.filepath)
 
     def __str__(self):
         return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(

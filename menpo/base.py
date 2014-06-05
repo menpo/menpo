@@ -327,6 +327,4 @@ def menpo_src_dir_path():
     path : str
         The full path to the top of the Menpo package
     """
-    print __file__
-    print __FILE__
     return os.path.split(os.path.abspath(__file__))[0]
