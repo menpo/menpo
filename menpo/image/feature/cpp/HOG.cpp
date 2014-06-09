@@ -426,6 +426,9 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                             block[i][j][k] = h[y+i][x+j][k] / blockNorm;
                             if (block[i][j][k] > l2normClipping)
                                 block[i][j][k] = l2normClipping;
+                        } 
+                        else {
+                            block[i][j][k] = 0;
                         }
                     }
                 }
