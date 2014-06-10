@@ -35,6 +35,7 @@ else:
     ]
     # ---- CUDA  EXTENSIONS ---- #
     cython_cumodules = [
+        "menpo/cuda/cutools.pyx",
     ]
     
     # Build extensions
