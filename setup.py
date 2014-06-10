@@ -1,7 +1,13 @@
 import os
 from setuptools import setup, find_packages
+from Cython.Build import cythonize
+import glob
+from os.path import join
+from setuptools import setup
+from distutils.extension import Extension
+import subprocess
 import versioneer
-
+from cuda_build_ext import locate_cuda
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -11,16 +17,41 @@ if on_rtd:
     include_dirs = []
     cython_exts = []
 else:
-    from Cython.Build import cythonize
     import numpy as np
+
+    CUDA = locate_cuda()
+
+    # Obtain the numpy include directory. This logic works across numpy versions.
+    try:
+        numpy_include = np.get_include()
+    except AttributeError:
+        numpy_include = np.get_numpy_include()
 
     # ---- C/C++ EXTENSIONS ---- #
     cython_modules = ["menpo/shape/mesh/normals.pyx",
                       "menpo/transform/piecewiseaffine/fastpwa.pyx",
                       "menpo/image/feature/cppimagewindowiterator.pyx"]
+    
+    # Build extensions
+    cython_exts = list()
+    for module in cython_modules:
+        module_path = '/'.join(module.split('/')[:-1])
+        module_sources_cu = glob.glob(join(join(module_path, "cu"), "*.cu"))
+        module_sources_cpp = glob.glob(join(join(module_path, "cpp"), "*.cpp"))
+        
+        module_ext = Extension(name=module[:-4],
+                               sources=module_sources_cu + [name for name in module_sources_cpp if not name.endswith("main.cpp")] + [module], # sources = cuda files + cpp files (order seems important)
+                               library_dirs=[CUDA['lib64']],
+                               libraries=['cudart'],
+                               language='c++',
+                               runtime_library_dirs=[CUDA['lib64']],
+                               extra_compile_args={'gcc': [],
+                                                   'nvcc': ['-arch=sm_20', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]},
+                               include_dirs=[numpy_include, CUDA['include'], 'src'])
+        cython_exts.append(module_ext)
 
-    cython_exts = cythonize(cython_modules, quiet=True)
-    include_dirs = [np.get_include()]
+    #cython_exts = cythonize(cython_exts, quiet=True),
+    include_dirs = [numpy_include]
     install_requires = [# Core
                         'numpy>=1.8.0',
                         'scipy>=0.14.0',
@@ -59,7 +90,7 @@ setup(name='menpo',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=include_dirs,
-      ext_modules=cython_exts,
+      ext_modules=cythonize(cython_exts, quiet=True),
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},

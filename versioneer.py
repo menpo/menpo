@@ -872,10 +872,12 @@ class cmd_update_files(Command):
         # substitution.
         do_vcs_install(manifest_in, versionfile_source, ipy)
 
+from cuda_build_ext import cuda_build_ext
 def get_cmdclass():
     cmds = {'version': cmd_version,
             'versioneer': cmd_update_files,
             'build': cmd_build,
+            'build_ext': cuda_build_ext,
             'sdist': cmd_sdist,
             }
     if 'cx_Freeze' in sys.modules:  # cx_freeze enabled?
