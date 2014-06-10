@@ -28,17 +28,23 @@ else:
         numpy_include = np.get_numpy_include()
 
     # ---- C/C++ EXTENSIONS ---- #
-    cython_modules = ["menpo/shape/mesh/normals.pyx",
-                      "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/image/feature/cppimagewindowiterator.pyx"]
+    cython_modules = [
+        "menpo/shape/mesh/normals.pyx",
+        "menpo/transform/piecewiseaffine/fastpwa.pyx",
+        "menpo/image/feature/cppimagewindowiterator.pyx",
+    ]
+    # ---- CUDA  EXTENSIONS ---- #
+    cython_cumodules = [
+    ]
     
     # Build extensions
-    cython_exts = list()
-    for module in cython_modules:
+    cython_exts = cython_modules # C/C++ modules do not need any specific treatment (except cythonize, done after)
+    for module in cython_cumodules:
         module_path = '/'.join(module.split('/')[:-1])
         module_sources_cu = glob.glob(join(join(module_path, "cu"), "*.cu"))
         module_sources_cpp = glob.glob(join(join(module_path, "cpp"), "*.cpp"))
         
+        # Every library compiled that way will require the user to have CUDA libraries on its system
         module_ext = Extension(name=module[:-4],
                                sources=module_sources_cu + [name for name in module_sources_cpp if not name.endswith("main.cpp")] + [module], # sources = cuda files + cpp files (order seems important)
                                library_dirs=[CUDA['lib64']],
@@ -49,8 +55,7 @@ else:
                                                    'nvcc': ['-arch=sm_20', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]},
                                include_dirs=[numpy_include, CUDA['include'], 'src'])
         cython_exts.append(module_ext)
-
-    #cython_exts = cythonize(cython_exts, quiet=True),
+    
     include_dirs = [numpy_include]
     install_requires = [# Core
                         'numpy>=1.8.0',

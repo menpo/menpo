@@ -78,8 +78,13 @@ def customize_compiler_for_nvcc(self):
             # use only a subset of the extra_postargs, which are 1-1 translated
             # from the extra_compile_args in the Extension class
             postargs = extra_postargs['nvcc']
-        else:
+        # CU module case
+        elif isinstance(extra_postargs, dict) and 'gcc' in extra_postargs:
             postargs = extra_postargs['gcc']
+        # When generating extensions for C/C++ modules
+        # cythonize does not define extra_postargs['gcc']
+        else:
+            postargs = extra_postargs
 
         super(obj, src, ext, cc_args, postargs, pp_opts)
         # reset the default compiler_so, which we might have changed for cuda
