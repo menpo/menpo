@@ -19,7 +19,8 @@ else:
 
     CUDA = locate_cuda()
 
-    # Obtain the numpy include directory. This logic works across numpy versions.
+    # Obtain the numpy include directory.
+    # This logic works across numpy versions.
     try:
         numpy_include = np.get_include()
     except AttributeError:
@@ -40,22 +41,33 @@ else:
         cython_cumodules = []
     
     # Build extensions
-    cython_exts = cython_modules # C/C++ modules do not need any specific treatment (except cythonize, done after)
+    cython_exts = cython_modules # no specific treatment for C/C++ modules
     for module in cython_cumodules:
         module_path = '/'.join(module.split('/')[:-1])
         module_sources_cu = glob(join(join(module_path, "cu"), "*.cu"))
         module_sources_cpp = glob(join(join(module_path, "cpp"), "*.cpp"))
+        module_sources = module_sources_cu +\
+            [name for name in module_sources_cpp if not name.endswith("main.cpp")] +\
+            [module]
         
-        # Every library compiled that way will require the user to have CUDA libraries on its system
+        # Every library compiled that way will require the user
+        # to have CUDA libraries on its system
         module_ext = Extension(name=module[:-4],
-                               sources=module_sources_cu + [name for name in module_sources_cpp if not name.endswith("main.cpp")] + [module], # sources = cuda files + cpp files (order seems important)
+                               sources=module_sources,
                                library_dirs=[CUDA['lib64']],
                                libraries=['cudart'],
                                language='c++',
                                runtime_library_dirs=[CUDA['lib64']],
-                               extra_compile_args={'gcc': [],
-                                                   'nvcc': ['-arch=sm_20', '--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]},
-                               include_dirs=[numpy_include, CUDA['include'], 'src'])
+                               extra_compile_args={
+                                   'gcc': [],
+                                   'nvcc': [
+                                       '-arch=sm_20', '--ptxas-options=-v',
+                                       '-c', '--compiler-options', "'-fPIC'"
+                                   ]},
+                               include_dirs=[
+                                   numpy_include,
+                                   CUDA['include'], 'src'
+                               ])
         cython_exts.append(module_ext)
     
     cython_exts = cythonize(cython_exts, quiet=True)
