@@ -1,12 +1,6 @@
 import os
 from setuptools import setup, find_packages
-import glob
-from os.path import join
-from setuptools import setup
-from distutils.extension import Extension
-import subprocess
 import versioneer
-from cuda_build_ext import locate_cuda
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -18,6 +12,10 @@ if on_rtd:
 else:
     import numpy as np
     from Cython.Build import cythonize
+    from glob import glob
+    from os.path import join
+    from distutils.extension import Extension
+    from cuda_build_ext import locate_cuda
 
     CUDA = locate_cuda()
 
@@ -45,8 +43,8 @@ else:
     cython_exts = cython_modules # C/C++ modules do not need any specific treatment (except cythonize, done after)
     for module in cython_cumodules:
         module_path = '/'.join(module.split('/')[:-1])
-        module_sources_cu = glob.glob(join(join(module_path, "cu"), "*.cu"))
-        module_sources_cpp = glob.glob(join(join(module_path, "cpp"), "*.cpp"))
+        module_sources_cu = glob(join(join(module_path, "cu"), "*.cu"))
+        module_sources_cpp = glob(join(join(module_path, "cpp"), "*.cpp"))
         
         # Every library compiled that way will require the user to have CUDA libraries on its system
         module_ext = Extension(name=module[:-4],
