@@ -34,9 +34,12 @@ else:
         "menpo/image/feature/cppimagewindowiterator.pyx",
     ]
     # ---- CUDA  EXTENSIONS ---- #
-    cython_cumodules = [
-        "menpo/cuda/cutools.pyx",
-    ]
+    if CUDA:
+        cython_cumodules = [
+            "menpo/cuda/cutools.pyx",
+        ]
+    else:
+        cython_cumodules = []
     
     # Build extensions
     cython_exts = cython_modules # C/C++ modules do not need any specific treatment (except cythonize, done after)
