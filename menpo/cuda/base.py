@@ -1,24 +1,24 @@
 def is_cuda_available():
-    """
-    Check whether or not the system can launch a CUDA version of the code
-    
-    It checks:
-    1. Did the user compile menpo using nvcc?
-       In that case, 'from menpo.cuda.cutools import is_cuda_available'
-       should work
-    2. Does the user have setup CUDA on its machine?
-       In that case, 'from menpo.cuda.cutools import is_cuda_available'
-       should work
-       Otherwise, an exception will be raised by the module:
-        missing library libcudart.so
-    3. Does the user have a CUDA-capable GPU? Does its GPU has the required
-       'Compute Capability'?
+    r"""
+    Check if this system is capable of running CUDA Menpo code.
+
+    Returns
+    -------
+    is_cuda_available : `bool`
+        True iff the user has CUDA *and* a suitable driver installed.
     """
     
-    try: #1 #2
+    # The cutools module is only available if the user compiled with nvcc.
+    # Even if Menpo was compiled with nvcc, the user may not have the CUDA
+    # driver/lib available on its machine. In that case,
+    # 'from menpo.cuda.cutools import is_cuda_available' will fail due to
+    # missing dynamic libraries
+    try:
         from menpo.cuda import cutools
     except ImportError:
         return False
     
-    return cutools.is_cuda_available() #3
+    # Check if the user has a CUDA-capable GPU which has at least the
+    # minimum required 'Compute Capability'
+    return cutools.is_cuda_available()
 
