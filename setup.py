@@ -12,10 +12,8 @@ if on_rtd:
 else:
     import numpy as np
     from Cython.Build import cythonize
-    from glob import glob
-    from os.path import join
     from distutils.extension import Extension
-    from cuda_build_ext import locate_cuda
+    from cuda_build_ext import locate_cuda, convert_to_cuda_pyx
 
     CUDA = locate_cuda()
 
@@ -36,6 +34,7 @@ else:
     if CUDA:
         cython_cumodules = [
             "menpo/cuda/cutools.pyx",
+            #convert_to_cuda_pyx(my_c++_pyx_file),
         ]
     else:
         cython_cumodules = []
@@ -43,17 +42,10 @@ else:
     # Build extensions
     cython_exts = cython_modules # no specific treatment for C/C++ modules
     for module in cython_cumodules:
-        module_path = '/'.join(module.split('/')[:-1])
-        module_sources_cu = glob(join(join(module_path, "cu"), "*.cu"))
-        module_sources_cpp = glob(join(join(module_path, "cpp"), "*.cpp"))
-        module_sources = module_sources_cu +\
-            [name for name in module_sources_cpp if not name.endswith("main.cpp")] +\
-            [module]
-        
         # Every library compiled that way will require the user
         # to have CUDA libraries on its system
         module_ext = Extension(name=module[:-4],
-                               sources=module_sources,
+                               sources=[module],
                                library_dirs=[CUDA['lib64']],
                                libraries=['cudart'],
                                language='c++',

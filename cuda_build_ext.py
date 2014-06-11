@@ -4,6 +4,7 @@
 import os
 from distutils.command.build_ext import build_ext
 from os.path import join as pjoin
+import re
 
 def find_in_path(name, path):
     """
@@ -49,6 +50,47 @@ def locate_cuda():
 
     return cudaconfig
 CUDA = locate_cuda()
+
+def convert_to_cuda_pyx(pyx_filename):
+    """
+    Generate the CUDA equivalent for pyx_filename
+    """
+    
+    module_path = '/'.join(pyx_filename.split('/')[:-1])
+    pyx_shortname = pyx_filename.split('/')[-1]
+    if pyx_shortname.startswith("cpp"):
+        cupyx_filename = pjoin(module_path, "cu" + pyx_shortname[3:])
+    else:
+        cupyx_filename = pjoin(module_path, "cu" + pyx_shortname)
+    
+    # Read the pyx file
+    with open(pyx_filename, "r") as f:
+        pyx_content = f.read()
+    
+    # Look for C/C++ headers
+    tmp_sources = re.findall(
+            r'\ncdef extern from "(?P<directory>c(pp?))/(?P<source_no_ext>[^/]+).h"',
+            pyx_content)
+    
+    # Try to replace C/C++ header by CUDA header if it exists
+    for sourcetuple in tmp_sources:
+        directory = sourcetuple[0]
+        source_no_ext = sourcetuple[2]
+        tmp_source_name = pjoin(module_path, pjoin("cu", source_no_ext + ".h"))
+        if os.path.isfile(tmp_source_name):
+            pyx_content = re.sub(
+                    r"%s/%s.(cpp|c\s|c$)" % (directory, source_no_ext),
+                    r"cu/%s.cu" % source_no_ext,
+                    pyx_content)
+            pyx_content = pyx_content.replace(
+                    directory + "/" + source_no_ext + ".h",
+                    "cu/" + source_no_ext + ".h")
+    
+    # Save the pyx file
+    with open(cupyx_filename, "w+") as f:
+        f.write(pyx_content)
+    
+    return cupyx_filename
 
 def customize_compiler_for_nvcc(self):
     """

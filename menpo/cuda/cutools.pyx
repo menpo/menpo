@@ -1,3 +1,6 @@
+# distutils: language = c++
+# distutils: sources = menpo/cuda/cu/cutools.cu
+
 from libcpp cimport bool
 
 cdef extern from "cu/cutools.hpp":
