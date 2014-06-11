@@ -21,7 +21,8 @@ bool is_cuda_available_()
             {
                 cudaDeviceProp prop;
                 e = cudaGetDeviceProperties(&prop, i);
-                if (e == cudaSuccess && (prop.major > CUDA_MAJOR || (prop.major == CUDA_MAJOR && prop.minor >= CUDA_MINOR)))
+                if (e == cudaSuccess && (prop.major > CUDA_MAJOR
+                   || (prop.major == CUDA_MAJOR && prop.minor >= CUDA_MINOR)))
                 {
                     cudaSetDevice(i);
                     __DEVICE_COUNT__++;
