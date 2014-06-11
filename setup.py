@@ -1,6 +1,5 @@
 import os
 from setuptools import setup, find_packages
-from Cython.Build import cythonize
 import glob
 from os.path import join
 from setuptools import setup
@@ -18,6 +17,7 @@ if on_rtd:
     cython_exts = []
 else:
     import numpy as np
+    from Cython.Build import cythonize
 
     CUDA = locate_cuda()
 
@@ -60,6 +60,7 @@ else:
                                include_dirs=[numpy_include, CUDA['include'], 'src'])
         cython_exts.append(module_ext)
     
+    cython_exts = cythonize(cython_exts, quiet=True)
     include_dirs = [numpy_include]
     install_requires = [# Core
                         'numpy>=1.8.0',
@@ -99,7 +100,7 @@ setup(name='menpo',
       author='James Booth',
       author_email='james.booth08@imperial.ac.uk',
       include_dirs=include_dirs,
-      ext_modules=cythonize(cython_exts, quiet=True),
+      ext_modules=cython_exts,
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
