@@ -34,7 +34,7 @@ else:
     if CUDA:
         cython_cumodules = [
             "menpo/cuda/cutools.pyx",
-            #convert_to_cuda_pyx(my_c++_pyx_file),
+            convert_to_cuda_pyx("menpo/image/feature/cppimagewindowiterator.pyx"),
         ]
     else:
         cython_cumodules = []

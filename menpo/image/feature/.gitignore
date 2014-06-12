@@ -1,1 +1,3 @@
 cppimagewindowiterator.cpp
+cuimagewindowiterator.cpp
+cuimagewindowiterator.pyx
