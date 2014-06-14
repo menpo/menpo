@@ -1,5 +1,7 @@
 #include "HOG.h"
 
+#define MAX_THREADS_2D  16
+
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
          unsigned int numberOfOrientationBins,
@@ -67,7 +69,6 @@ void HOG::apply(double *windowImage, double *descriptorVector) {
                                 this->windowHeight, this->windowWidth,
                                 this->numberOfChannels, descriptorVector);
 }
-
 
 // ZHU & RAMANAN: Face Detection, Pose Estimation and Landmark Localization
 //                in the Wild
@@ -251,6 +252,135 @@ void ZhuRamananHOGdescriptor(double *inputImage,
     free(norm);
 }
 
+__device__ double atomicAdd(double* address, double val) {
+    // http://stackoverflow.com/questions/16882253/cuda-atomicadd-produces-wrong-result
+    unsigned long long int* address_as_ull = (unsigned long long int*) address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do
+    {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
+}
+
+__global__ void kernel_image_DalalTriggsHOGdescriptor(double *d_h,
+                                                      const dim3 h_dims,
+                                                      const double *d_inputImage,
+                                                      const unsigned int imageHeight,
+                                                      const unsigned int imageWidth,
+                                                      const unsigned int numberOfChannels,
+                                                      const unsigned int numberOfOrientationBins,
+                                                      const unsigned int cellHeightAndWidthInPixels,
+                                                      const unsigned signedOrUnsignedGradients,
+                                                      const double binsSize) {
+    // Retrieve pixel position
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int factor_z_dim = h_dims.x * h_dims.y;
+    unsigned int factor_y_dim = h_dims.x;
+     
+    // Check if position is inside the image
+    if (x >= imageWidth || y >= imageHeight)
+        return;
+    
+    // Compute deltas
+    double dx[3], dy[3];
+    
+    if (x == 0) {
+        for (unsigned int z = 0; z < numberOfChannels; z++)
+            dx[z] = d_inputImage[y + (x + 1) * imageHeight + z * imageHeight * imageWidth];
+    } else {
+        if (x == imageWidth - 1) {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dx[z] = -d_inputImage[y + (x - 1) * imageHeight + z * imageHeight * imageWidth];
+        } else {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dx[z] = d_inputImage[y + (x + 1) * imageHeight + z * imageHeight * imageWidth] - d_inputImage[y + (x - 1) * imageHeight + z * imageHeight * imageWidth];
+        }
+    }
+
+    if(y == 0) {
+        for (unsigned int z = 0; z < numberOfChannels; z++)
+            dy[z] = -d_inputImage[y + 1 + x * imageHeight + z * imageHeight * imageWidth];
+    } else {
+        if (y == imageHeight - 1) {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dy[z] = d_inputImage[y - 1 + x * imageHeight + z * imageHeight * imageWidth];
+        } else {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dy[z] = -d_inputImage[y + 1 + x * imageHeight + z * imageHeight * imageWidth] + d_inputImage[y - 1 + x * imageHeight + z * imageHeight * imageWidth];
+        }
+    }
+
+    // Choose dominant channel based on magnitude
+    double gradientMagnitude = sqrt(dx[0] * dx[0] + dy[0] * dy[0]);
+    double gradientOrientation = atan2(dy[0], dx[0]);
+    if (numberOfChannels > 1) {
+        double tempMagnitude = gradientMagnitude;
+        for (unsigned int cli = 1 ; cli < numberOfChannels ; ++cli) {
+            tempMagnitude= sqrt(dx[cli] * dx[cli] + dy[cli] * dy[cli]);
+            if (tempMagnitude > gradientMagnitude) {
+                gradientMagnitude = tempMagnitude;
+                gradientOrientation = atan2(dy[cli], dx[cli]);
+            }
+        }
+    }
+
+    if (gradientOrientation < 0)
+        gradientOrientation += pi + (signedOrUnsignedGradients == 1) * pi;
+
+    // Trilinear interpolation
+    int bin1 = (gradientOrientation / binsSize) - 1;
+    unsigned int bin2 = bin1 + 1;
+    int x1   = x / cellHeightAndWidthInPixels;
+    int x2   = x1 + 1;
+    int y1   = y / cellHeightAndWidthInPixels;
+    int y2   = y1 + 1;
+    
+    double Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
+    double Yc = (y1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
+    double Oc = (bin1 + 1 + 1 - 1.5) * binsSize;
+    
+    if (bin2 == numberOfOrientationBins)
+        bin2 = 0;
+    
+    if (bin1 < 0)
+        bin1 = numberOfOrientationBins - 1;
+    
+    atomicAdd(&d_h[y1 + x1 * factor_y_dim + bin1 * factor_z_dim], gradientMagnitude *
+                                                                  (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y1 + x1 * factor_y_dim + bin2 * factor_z_dim], gradientMagnitude *
+                                                                  (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y2 + x1 * factor_y_dim + bin1 * factor_z_dim], gradientMagnitude *
+                                                                  (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y2 + x1 * factor_y_dim + bin2 * factor_z_dim], gradientMagnitude *
+                                                                  (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y1 + x2 * factor_y_dim + bin1 * factor_z_dim], gradientMagnitude *
+                                                                  (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y1 + x2 * factor_y_dim + bin2 * factor_z_dim], gradientMagnitude *
+                                                                  (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y2 + x2 * factor_y_dim + bin1 * factor_z_dim], gradientMagnitude *
+                                                                  (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(&d_h[y2 + x2 * factor_y_dim + bin2 * factor_z_dim], gradientMagnitude *
+                                                                  (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                                                                  (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                                                                  (((gradientOrientation-Oc)/binsSize)));
+}
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
 void DalalTriggsHOGdescriptor(double *inputImage,
@@ -263,167 +393,59 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int numberOfChannels,
                               double *descriptorVector) {
     
-    numberOfOrientationBins = (int)numberOfOrientationBins;
-    cellHeightAndWidthInPixels = (double)cellHeightAndWidthInPixels;
-    blockHeightAndWidthInCells = (int)blockHeightAndWidthInCells;
-
-    unsigned int signedOrUnsignedGradients;
+    // Compute gradients (zero padding)
+    // Compute histograms
+    //  using CUDA
     
-    if (signedOrUnsignedGradientsBool) {
-        signedOrUnsignedGradients = 1;
-    } else {
-        signedOrUnsignedGradients = 0;
-    }
-
-    int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
-    int hist2 = 2 + (imageWidth / cellHeightAndWidthInPixels);
-
-    double binsSize = (1 + (signedOrUnsignedGradients == 1)) *
-                      pi / numberOfOrientationBins;
-
-    float *dx = new float[numberOfChannels];
-    float *dy = new float[numberOfChannels];
-    float gradientOrientation, gradientMagnitude, tempMagnitude, 
-          Xc, Yc, Oc, blockNorm;
-    int x1 = 0, x2 = 0, y1 = 0, y2 = 0, bin1 = 0, descriptorIndex = 0;
-    unsigned int x, y, i, j, k, bin2;
-
-    vector<vector<vector<double> > > h(hist1, vector<vector<double> >
-                                       (hist2, vector<double>
-                                        (numberOfOrientationBins, 0.0 ) ) );
+    const int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
+    const int hist2 = 2 + (imageWidth / cellHeightAndWidthInPixels);
+    const dim3 h_dims(hist1, hist2, numberOfOrientationBins);
+    const unsigned int factor_z_dim = h_dims.x * h_dims.y;
+    const unsigned int factor_y_dim = h_dims.x;
+    double *d_h;
+    cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double));
+    cudaMemset(d_h, 0., h_dims.x * h_dims.y * h_dims.z * sizeof(double));
+    
+    double *d_inputImage;
+    cudaMalloc(&d_inputImage, imageHeight * imageWidth * sizeof(double));
+    cudaMemcpy(d_inputImage, inputImage, imageHeight * imageWidth * sizeof(double), cudaMemcpyHostToDevice);
+    
+    const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
+    const dim3 dimGrid((imageWidth + dimBlock.x -1)/dimBlock.x, (imageHeight + dimBlock.y -1)/dimBlock.y, 1);
+    kernel_image_DalalTriggsHOGdescriptor<<<dimGrid, dimBlock>>>(d_h, h_dims,
+                                                                 d_inputImage, imageHeight, imageWidth, numberOfChannels,
+                                                                 numberOfOrientationBins, cellHeightAndWidthInPixels,
+                                                                 signedOrUnsignedGradientsBool ? 1 : 0 /*signedOrUnsignedGradients*/,
+                                                                 (1 + (signedOrUnsignedGradientsBool ? 1 : 0)) * pi / numberOfOrientationBins /*binsSize*/);
+    cudaThreadSynchronize(); // block until the device is finished
+    
+    double h[h_dims.x * h_dims.y * h_dims.z];
+    cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost);
+    
+    cudaFree(d_h);
+    cudaFree(d_inputImage);
+    
+    // Block normalization
+    
+    int descriptorIndex(0);
     vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
                                            (blockHeightAndWidthInCells, vector<double>
                                             (numberOfOrientationBins, 0.0) ) );
-
-    //Calculate gradients (zero padding)
-    for(unsigned int y = 0; y < imageHeight; y++) {
-        for(unsigned int x = 0; x < imageWidth; x++) {
-            if (x == 0) {
-                for (unsigned int z = 0; z < numberOfChannels; z++)
-                    dx[z] = inputImage[y + (x + 1) * imageHeight +
-                                       z * imageHeight * imageWidth];
-            }
-            else {
-                if (x == imageWidth - 1) {
-                    for (unsigned int z = 0; z < numberOfChannels; z++)
-                        dx[z] = -inputImage[y + (x - 1) * imageHeight +
-                                            z * imageHeight * imageWidth];
-                }
-                else {
-                    for (unsigned int z = 0; z < numberOfChannels; z++)
-                        dx[z] = inputImage[y + (x + 1) * imageHeight +
-                                           z * imageHeight * imageWidth] -
-                                inputImage[y + (x - 1) * imageHeight +
-                                           z * imageHeight * imageWidth];
-                }
-            }
-
-            if(y == 0) {
-                for (unsigned int z = 0; z < numberOfChannels; z++)
-                    dy[z] = -inputImage[y + 1 + x * imageHeight +
-                                        z * imageHeight * imageWidth];
-            }
-            else {
-                if (y == imageHeight - 1) {
-                    for (unsigned int z = 0; z < numberOfChannels; z++)
-                        dy[z] = inputImage[y - 1 + x * imageHeight +
-                                           z * imageHeight * imageWidth];
-                }
-                else {
-                    for (unsigned int z = 0; z < numberOfChannels; z++)
-                        dy[z] = -inputImage[y + 1 + x * imageHeight +
-                                            z * imageHeight * imageWidth] +
-                                 inputImage[y - 1 + x * imageHeight +
-                                            z * imageHeight * imageWidth];
-                }
-            }
-
-            // choose dominant channel based on magnitude
-            gradientMagnitude = sqrt(dx[0] * dx[0] + dy[0] * dy[0]);
-            gradientOrientation= atan2(dy[0], dx[0]);
-            if (numberOfChannels > 1) {
-                tempMagnitude = gradientMagnitude;
-                for (unsigned int cli = 1; cli < numberOfChannels; ++cli) {
-                    tempMagnitude= sqrt(dx[cli] * dx[cli] + dy[cli] * dy[cli]);
-                    if (tempMagnitude > gradientMagnitude) {
-                        gradientMagnitude = tempMagnitude;
-                        gradientOrientation = atan2(dy[cli], dx[cli]);
-                    }
-                }
-            }
-
-            if (gradientOrientation < 0)
-                gradientOrientation += pi +
-                                       (signedOrUnsignedGradients == 1) * pi;
-
-            // trilinear interpolation
-            bin1 = (gradientOrientation / binsSize) - 1;
-            bin2 = bin1 + 1;
-            x1   = x / cellHeightAndWidthInPixels;
-            x2   = x1 + 1;
-            y1   = y / cellHeightAndWidthInPixels;
-            y2   = y1 + 1;
-
-            Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-            Yc = (y1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-            Oc = (bin1 + 1 + 1 - 1.5) * binsSize;
-
-            if (bin2 == numberOfOrientationBins)
-                bin2 = 0;
-
-            if (bin1 < 0)
-                bin1 = numberOfOrientationBins - 1;
-
-            h[y1][x1][bin1] = h[y1][x1][bin1] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
-            h[y1][x1][bin2] = h[y1][x1][bin2] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
-            h[y2][x1][bin1] = h[y2][x1][bin1] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
-            h[y2][x1][bin2] = h[y2][x1][bin2] + gradientMagnitude *
-                              (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
-            h[y1][x2][bin1] = h[y1][x2][bin1] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
-            h[y1][x2][bin2] = h[y1][x2][bin2] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
-            h[y2][x2][bin1] = h[y2][x2][bin1] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (1-((gradientOrientation-Oc)/binsSize));
-            h[y2][x2][bin2] = h[y2][x2][bin2] + gradientMagnitude *
-                              (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                              (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                              (((gradientOrientation-Oc)/binsSize));
-        }
-    }
-
-    //Block normalization
-    for(x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
-        for (y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
-            blockNorm = 0;
-            for (i = 0; i < blockHeightAndWidthInCells; i++)
-                for(j = 0; j < blockHeightAndWidthInCells; j++)
-                    for(k = 0; k < numberOfOrientationBins; k++)
-                        blockNorm += h[y+i][x+j][k] * h[y+i][x+j][k];
+    
+    for (unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
+        for (unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
+            float blockNorm(0);
+            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++)
+                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++)
+                    for (unsigned int k = 0; k < numberOfOrientationBins; k++)
+                        blockNorm += h[y+i + (x+j) * factor_y_dim + k * factor_z_dim] * h[y+i + (x+j) * factor_y_dim + k * factor_z_dim];
 
             blockNorm = sqrt(blockNorm);
-            for (i = 0; i < blockHeightAndWidthInCells; i++) {
-                for(j = 0; j < blockHeightAndWidthInCells; j++) {
-                    for(k = 0; k < numberOfOrientationBins; k++) {
+            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++) {
+                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++) {
+                    for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
                         if (blockNorm > 0) {
-                            block[i][j][k] = h[y+i][x+j][k] / blockNorm;
+                            block[i][j][k] = h[y+i + (x+j) * factor_y_dim + k * factor_z_dim] / blockNorm;
                             if (block[i][j][k] > l2normClipping)
                                 block[i][j][k] = l2normClipping;
                         }
@@ -432,15 +454,15 @@ void DalalTriggsHOGdescriptor(double *inputImage,
             }
 
             blockNorm = 0;
-            for (i = 0; i < blockHeightAndWidthInCells; i++)
-                for(j = 0; j < blockHeightAndWidthInCells; j++)
-                    for(k = 0; k < numberOfOrientationBins; k++)
+            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++)
+                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++)
+                    for (unsigned int k = 0; k < numberOfOrientationBins; k++)
                         blockNorm += block[i][j][k] * block[i][j][k];
 
             blockNorm = sqrt(blockNorm);
-            for (i = 0; i < blockHeightAndWidthInCells; i++) {
-                for(j = 0; j < blockHeightAndWidthInCells; j++) {
-                    for(k = 0; k < numberOfOrientationBins; k++) {
+            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++) {
+                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++) {
+                    for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
                         if (blockNorm > 0)
                             descriptorVector[descriptorIndex] =
                                 block[i][j][k] / blockNorm;
@@ -452,6 +474,4 @@ void DalalTriggsHOGdescriptor(double *inputImage,
             }
         }
     }
-    delete[] dx;
-    delete[] dy;
 }
