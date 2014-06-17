@@ -79,8 +79,8 @@ def convert_to_cuda_pyx(pyx_filename):
         tmp_source_name = pjoin(module_path, pjoin("cu", source_no_ext + ".h"))
         if os.path.isfile(tmp_source_name):
             pyx_content = re.sub(
-                    r"%s/%s.(cpp|c\s|c$)" % (directory, source_no_ext),
-                    r"cu/%s.cu" % source_no_ext,
+                    r"{}/{}.(cpp|c\s|c$)".format(directory, source_no_ext),
+                    r"cu/{}.cu".format(source_no_ext),
                     pyx_content)
             pyx_content = pyx_content.replace(
                     directory + "/" + source_no_ext + ".h",
