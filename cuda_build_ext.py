@@ -3,6 +3,7 @@
 
 import os
 from distutils.command.build_ext import build_ext
+from os import path
 from os.path import join as pjoin
 import re
 
@@ -56,8 +57,7 @@ def convert_to_cuda_pyx(pyx_filename):
     Generate the CUDA equivalent for pyx_filename
     """
     
-    module_path = '/'.join(pyx_filename.split('/')[:-1])
-    pyx_shortname = pyx_filename.split('/')[-1]
+    module_path, pyx_shortname = path.split(pyx_filename)
     if pyx_shortname.startswith("cpp"):
         cupyx_filename = pjoin(module_path, "cu" + pyx_shortname[3:])
     else:
@@ -79,8 +79,8 @@ def convert_to_cuda_pyx(pyx_filename):
         tmp_source_name = pjoin(module_path, pjoin("cu", source_no_ext + ".h"))
         if os.path.isfile(tmp_source_name):
             pyx_content = re.sub(
-                    r"%s/%s.(cpp|c\s|c$)" % (directory, source_no_ext),
-                    r"cu/%s.cu" % source_no_ext,
+                    r"{}/{}.(cpp|c\s|c$)".format(directory, source_no_ext),
+                    r"cu/{}.cu".format(source_no_ext),
                     pyx_content)
             pyx_content = pyx_content.replace(
                     directory + "/" + source_no_ext + ".h",
