@@ -58,7 +58,7 @@ else:
                                    ]},
                                include_dirs=[
                                    numpy_include,
-                                   CUDA['include'], 'src'
+                                   CUDA['include'], 'src', 'menpo/cuda/cu',
                                ])
         cython_exts.append(module_ext)
     
