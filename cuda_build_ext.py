@@ -86,6 +86,11 @@ def convert_to_cuda_pyx(pyx_filename):
                     directory + "/" + source_no_ext + ".h",
                     "cu/" + source_no_ext + ".h")
     
+    # Add CUDA checks header
+    pyx_content = pyx_content.replace(
+            "# distutils: sources = ",
+            "# distutils: sources = menpo/cuda/cu/check_cuda_errors.cu ")
+    
     # Save the pyx file
     with open(cupyx_filename, "w+") as f:
         f.write(pyx_content)
