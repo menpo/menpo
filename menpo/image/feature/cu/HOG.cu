@@ -1,5 +1,5 @@
 #include "HOG.h"
-#include "../../../cuda/cu/check_cuda_errors.hpp"
+#include "check_cuda_errors.hpp"
 
 #define MAX_THREADS_2D  16
 
