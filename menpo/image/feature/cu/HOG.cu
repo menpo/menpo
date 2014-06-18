@@ -393,50 +393,56 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int imageWidth,
                               unsigned int numberOfChannels,
                               double *descriptorVector) {
-    
-    // Compute gradients (zero padding)
-    // Compute histograms
-    //  using CUDA
+   
+    // Variables
+    //  * Compute gradients & Compute histograms
     
     const int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
     const int hist2 = 2 + (imageWidth / cellHeightAndWidthInPixels);
     const dim3 h_dims(hist1, hist2, numberOfOrientationBins);
     const unsigned int factor_z_dim = h_dims.x * h_dims.y;
     const unsigned int factor_y_dim = h_dims.x;
-    double *d_h;
-    cudaErrorCheck_void(cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
-    cudaErrorCheck_void(cudaMemset(d_h, 0., h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
-    
-    double *d_inputImage;
-    cudaErrorCheck_void(cudaMalloc(&d_inputImage, imageHeight * imageWidth * sizeof(double)));
-    cudaErrorCheck_void(cudaMemcpy(d_inputImage, inputImage, imageHeight * imageWidth * sizeof(double), cudaMemcpyHostToDevice));
-    
+    double *d_h = 0, *d_inputImage = 0;
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
     const dim3 dimGrid((imageWidth + dimBlock.x -1)/dimBlock.x, (imageHeight + dimBlock.y -1)/dimBlock.y, 1);
+    cudaError_t error;
+    
+    //  * Block normalization
+    
+    double h[h_dims.x * h_dims.y * h_dims.z];
+    int descriptorIndex(0);
+    vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
+                                           (blockHeightAndWidthInCells, vector<double>
+                                            (numberOfOrientationBins, 0.0) ) );
+     
+    // Compute gradients (zero padding)
+    // Compute histograms
+    //  using CUDA
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
+    cudaErrorCheck_goto(cudaMemset(d_h, 0., h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_inputImage, imageHeight * imageWidth * sizeof(double)));
+    cudaErrorCheck_goto(cudaMemcpy(d_inputImage, inputImage, imageHeight * imageWidth * sizeof(double), cudaMemcpyHostToDevice));
+    
     kernel_image_DalalTriggsHOGdescriptor<<<dimGrid, dimBlock>>>(d_h, h_dims,
                                                                  d_inputImage, imageHeight, imageWidth, numberOfChannels,
                                                                  numberOfOrientationBins, cellHeightAndWidthInPixels,
                                                                  signedOrUnsignedGradientsBool ? 1 : 0 /*signedOrUnsignedGradients*/,
                                                                  (1 + (signedOrUnsignedGradientsBool ? 1 : 0)) * pi / numberOfOrientationBins /*binsSize*/);
     cudaThreadSynchronize(); // block until the device is finished
-    cudaError_t error = cudaGetLastError();
+    error = cudaGetLastError();
     if (error != cudaSuccess) {
         throwRuntimeError(cudaGetErrorString(error));
-        return;
+        goto onfailure;
     }
     
-    double h[h_dims.x * h_dims.y * h_dims.z];
-    cudaErrorCheck_void(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
+    cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
     
-    cudaErrorCheck_void(cudaFree(d_h));
-    cudaErrorCheck_void(cudaFree(d_inputImage));
+    cudaErrorCheck_goto(cudaFree(d_h));
+    cudaErrorCheck_goto(cudaFree(d_inputImage));
     
     // Block normalization
-    
-    int descriptorIndex(0);
-    vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
-                                           (blockHeightAndWidthInCells, vector<double>
-                                            (numberOfOrientationBins, 0.0) ) );
     
     for (unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
         for (unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
@@ -480,4 +486,8 @@ void DalalTriggsHOGdescriptor(double *inputImage,
             }
         }
     }
+    return;
+
+onfailure:
+    return;
 }
