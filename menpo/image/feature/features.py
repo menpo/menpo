@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 from .cppimagewindowiterator import CppImageWindowIterator
+from menpo.cuda import is_cuda_available
 
 
 def gradient(image_data):
@@ -39,7 +40,8 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
         window_height=1, window_width=1, window_unit='blocks',
         window_step_vertical=1, window_step_horizontal=1,
-        window_step_unit='pixels', padding=True, verbose=False):
+        window_step_unit='pixels', padding=True, verbose=False,
+        use_cuda=False):
     r"""
     Computes a 2-dimensional HOG features image with k number of channels, of
     size `(M, N, C)` and data type `np.float`.
@@ -134,6 +136,10 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
         Flag to print HOG related information.
 
         Default: False
+    use_cuda : bool
+        Flag that defines whether or not the CUDA version should be used
+        
+        Default: False
 
     Raises
     -------
@@ -161,6 +167,10 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
         Vertical window step must be > 0
     ValueError
         Window step unit must be either pixels or cells
+    ImportError
+        CUDA is not available on your system
+    ImportError
+        CUDA implementation of HOG is not available on yout computer
     """
     # Parse options
     if mode not in ['dense', 'sparse']:
@@ -197,7 +207,15 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
             raise ValueError("Vertical window step must be > 0")
         if window_step_unit not in ['pixels', 'cells']:
             raise ValueError("Window step unit must be either pixels or cells")
-
+    if use_cuda:
+        if not is_cuda_available:
+            raise ImportError("CUDA is not available on your system")
+        try:
+            from .cuimagewindowiterator \
+                import CppImageWindowIterator as CuImageWindowIterator
+        except ImportError:
+            raise ImportError("CUDA implementation of HOG is not available on yout computer")
+    
     # Correct input image_data
     image_data = np.asfortranarray(image_data)
     image_data *= 255.
@@ -227,9 +245,16 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
                                                  cell_size)
                 window_step_horizontal = np.uint32(window_step_horizontal *
                                                    cell_size)
-        iterator = CppImageWindowIterator(image_data, window_height,
-                                          window_width, window_step_horizontal,
-                                          window_step_vertical, padding)
+        if use_cuda:
+            iterator = CuImageWindowIterator(image_data, window_height,
+                                             window_width,
+                                             window_step_horizontal,
+                                             window_step_vertical, padding)
+        else:
+            iterator = CppImageWindowIterator(image_data, window_height,
+                                              window_width,
+                                              window_step_horizontal,
+                                              window_step_vertical, padding)
     # Sparse case
     else:
         # Create iterator
@@ -241,8 +266,12 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
             algorithm = 2
             window_size = 3*cell_size
             step = cell_size
-        iterator = CppImageWindowIterator(image_data, window_size, window_size,
-                                          step, step, False)
+        if use_cuda:
+            iterator = CuImageWindowIterator(image_data, window_size,
+                                             window_size, step, step, False)
+        else:
+            iterator = CppImageWindowIterator(image_data, window_size,
+                                              window_size, step, step, False)
     # Print iterator's info
     if verbose:
         print iterator

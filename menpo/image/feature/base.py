@@ -21,7 +21,7 @@ class ImageFeatures(object):
             window_height=1, window_width=1, window_unit='blocks',
             window_step_vertical=1, window_step_horizontal=1,
             window_step_unit='pixels', padding=True, verbose=False,
-            constrain_landmarks=True):
+            constrain_landmarks=True, use_cuda=False):
         r"""
         Represents a 2-dimensional HOG features image with C number of
         channels. The output object's class is either MaskedImage or Image
@@ -122,6 +122,10 @@ class ImageFeatures(object):
             Flag to print HOG related information.
 
             Default: False
+        use_cuda : bool
+            Flag that defines whether or not the CUDA version should be used
+            
+            Default: False
 
         Raises
         -------
@@ -149,6 +153,10 @@ class ImageFeatures(object):
             Vertical window step must be > 0
         ValueError
             Window step unit must be either pixels or cells
+        ImportError
+            CUDA is not available on your system
+        ImportError
+            CUDA implementation of HOG is not available on yout computer
         """
         # compute hog features and windows_centres
         hog, window_centres = fc.hog(self._image.pixels, mode=mode,
@@ -163,7 +171,8 @@ class ImageFeatures(object):
                                      window_step_horizontal=
                                      window_step_horizontal,
                                      window_step_unit=window_step_unit,
-                                     padding=padding, verbose=verbose)
+                                     padding=padding, verbose=verbose,
+                                     use_cuda=use_cuda)
         # create hog image object
         hog_image = self._init_feature_image(hog,
                                              window_centres=window_centres,
