@@ -402,7 +402,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     const dim3 h_dims(hist1, hist2, numberOfOrientationBins);
     const unsigned int factor_z_dim = h_dims.x * h_dims.y;
     const unsigned int factor_y_dim = h_dims.x;
-    double *d_h = 0, *d_inputImage = 0;
+    double *d_h = NULL, *d_inputImage = NULL;
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
     const dim3 dimGrid((imageWidth + dimBlock.x -1)/dimBlock.x, (imageHeight + dimBlock.y -1)/dimBlock.y, 1);
     cudaError_t error;
@@ -440,7 +440,9 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
     
     cudaErrorCheck_goto(cudaFree(d_h));
+    d_h = NULL;
     cudaErrorCheck_goto(cudaFree(d_inputImage));
+    d_inputImage = NULL;
     
     // Block normalization
     
@@ -489,5 +491,10 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     return;
 
 onfailure:
+    if (d_h != NULL)
+        cudaFree(d_h);
+    if (d_inputImage != NULL)
+        cudaFree(d_inputImage);
+    
     return;
 }
