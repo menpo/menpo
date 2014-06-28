@@ -422,8 +422,8 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     cudaErrorCheck_goto(cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
     cudaErrorCheck_goto(cudaMemset(d_h, 0., h_dims.x * h_dims.y * h_dims.z * sizeof(double)));
     
-    cudaErrorCheck_goto(cudaMalloc(&d_inputImage, imageHeight * imageWidth * sizeof(double)));
-    cudaErrorCheck_goto(cudaMemcpy(d_inputImage, inputImage, imageHeight * imageWidth * sizeof(double), cudaMemcpyHostToDevice));
+    cudaErrorCheck_goto(cudaMalloc(&d_inputImage, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
+    cudaErrorCheck_goto(cudaMemcpy(d_inputImage, inputImage, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
     
     kernel_image_DalalTriggsHOGdescriptor<<<dimGrid, dimBlock>>>(d_h, h_dims,
                                                                  d_inputImage, imageHeight, imageWidth, numberOfChannels,
