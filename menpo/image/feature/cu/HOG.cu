@@ -476,7 +476,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     // d_h[blockIdx.x][blockIdx.y][blockIdx.z]
     // the reduce operation concerns (2*cellHeightAndWidthInPixels) * (2*cellHeightAndWidthInPixels)
     // elements
-    const dim3 dimBlock_reduce(h_dims.x, h_dims.y, h_dims.z);
+    const dim3 dimGrid_reduce(h_dims.x, h_dims.y, h_dims.z);
     
     cudaError_t error;
     
@@ -511,7 +511,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
         goto onfailure;
     }
     
-    DalalTriggsHOGdescriptor_reduce_histograms<<<dimBlock_reduce,
+    DalalTriggsHOGdescriptor_reduce_histograms<<<dimGrid_reduce,
                                                  MAX_THREADS_1D>>>(d_h, h_dims,
                                                                     cellHeightAndWidthInPixels);
     cudaThreadSynchronize(); // block until the device is finished
