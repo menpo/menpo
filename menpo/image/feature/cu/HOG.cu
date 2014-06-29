@@ -404,7 +404,9 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
 __global__ void DalalTriggsHOGdescriptor_reduce_histograms(double *d_h,
                                                            const dim3 h_dims,
                                                            const unsigned int cellHeightAndWidthInPixels) {
-    __shared__ double cache[MAX_THREADS_1D];
+    // cache size has to be a power of 2
+    // usually set to MAX_THREADS_1D
+    extern __shared__ double cache[];
     
     // Compute factors
     unsigned int factor_a_dim = h_dims.x * h_dims.y * h_dims.z;
@@ -426,7 +428,7 @@ __global__ void DalalTriggsHOGdescriptor_reduce_histograms(double *d_h,
     if (a < numElements)
     {
         cache[a] = d_h[h_element_id + a*factor_a_dim];
-        for (unsigned int a_(a+MAX_THREADS_1D) ; a_ < numElements ; a_ += MAX_THREADS_1D)
+        for (unsigned int a_(a+blockDim.x) ; a_ < numElements ; a_ += blockDim.x)
             cache[a] += d_h[h_element_id + a_*factor_a_dim];
     }
     else
@@ -435,7 +437,7 @@ __global__ void DalalTriggsHOGdescriptor_reduce_histograms(double *d_h,
     
     // Reduce operation
     // all threads in the current block have to compute d_h[h_element_id]
-    int padding = MAX_THREADS_1D/2;
+    int padding = blockDim.x/2;
     while (padding != 0) {
         if (a < padding)
             cache[a] += cache[a + padding];
@@ -512,8 +514,10 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     }
     
     DalalTriggsHOGdescriptor_reduce_histograms<<<dimGrid_reduce,
-                                                 MAX_THREADS_1D>>>(d_h, h_dims,
-                                                                    cellHeightAndWidthInPixels);
+                                                 MAX_THREADS_1D,
+                                                 MAX_THREADS_1D*sizeof(double)>>>
+                                                    (d_h, h_dims,
+                                                     cellHeightAndWidthInPixels);
     cudaThreadSynchronize(); // block until the device is finished
     error = cudaGetLastError();
     if (error != cudaSuccess) {
