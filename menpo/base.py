@@ -1,6 +1,7 @@
 import abc
 from copy import deepcopy
 import os.path
+from pathlib import Path
 
 
 class Vectorizable(object):

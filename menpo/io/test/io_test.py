@@ -194,12 +194,12 @@ def test_ls_builtin_assets():
 
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
-    assert(len(ls) == 2)
+    assert(len(list(ls)) == 2)
 
 
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
-    assert(len(ls) == 5)
+    assert(len(list(ls)) == 5)
 
 
 @raises(ValueError)
