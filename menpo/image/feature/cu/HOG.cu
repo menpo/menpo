@@ -4,6 +4,10 @@
 #define MAX_THREADS_1D 256
 #define MAX_THREADS_2D  16
 
+#define MAX_THREADS_3DX  4
+#define MAX_THREADS_3DY  4
+#define MAX_THREADS_3DZ 16
+
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
          unsigned int numberOfOrientationBins,
@@ -450,6 +454,54 @@ __global__ void DalalTriggsHOGdescriptor_reduce_histograms(double *d_h,
         d_h[h_element_id] = cache[0];
 }
 
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
+                                                           const dim3 blockNorm_dims,
+                                                           const double *d_h,
+                                                           const dim3 h_dims,
+                                                           const unsigned int numberOfOrientationBins,
+                                                           const unsigned int blockHeightAndWidthInCells) {
+    // 2D-reduce to compute d_blockNorm for every (x,y)
+    
+    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
+    // and a power of 2
+    extern __shared__ double cache[];
+    
+    // Compute factors
+    unsigned int factor_z_dim = h_dims.x * h_dims.y;
+    unsigned int factor_y_dim = h_dims.x;
+    
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x +1;
+    unsigned int y = blockIdx.y +1;
+    
+    unsigned int i = threadIdx.x;
+    unsigned int j = threadIdx.y;
+    unsigned int k = threadIdx.z;
+    unsigned int current_id = i + j*blockDim.x
+                              + k*blockDim.x*blockDim.y;
+    
+    cache[current_id] = 0.;
+    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x)
+        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y)
+            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z)
+                cache[current_id] += d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim]
+                                     * d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim];
+    
+    // Reduce operation
+    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
+    int padding = blockDim.x*blockDim.y*blockDim.z/2;
+    while (padding != 0) {
+        if (current_id < padding)
+            cache[current_id] += cache[current_id + padding];
+        __syncthreads();
+        padding /= 2;
+    }
+    
+    // Several k values will have to participate to this value
+    if (i == 0 && j == 0)
+        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
+}
+
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
 void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int numberOfOrientationBins,
@@ -461,7 +513,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int numberOfChannels,
                               double *descriptorVector) {
    
-    // Variables
+    // ** VARIABLES **
     //  * Compute gradients & Compute histograms
     
     const int hist1 = 2 + (imageHeight / cellHeightAndWidthInPixels);
@@ -489,7 +541,28 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
                                            (blockHeightAndWidthInCells, vector<double>
                                             (numberOfOrientationBins, 0.0) ) );
-     
+    
+    // Each block has to compute its blockNorm[x][y]
+    // stored into d_blockNorm[x-1 + blockNorm_dims.x*(y-1)]
+    // Computation done with reduce-pattern
+    //   x: unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++
+    //      => requires (hist2 - blockHeightAndWidthInCells -1) Blocks
+    //   y: unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++
+    //      => requires (hist1 - blockHeightAndWidthInCells -1) Blocks
+    // Each block works on 3D-Threads
+    //   i: unsigned int i = 0; i < blockHeightAndWidthInCells; i++
+    //   j: unsigned int j = 0; j < blockHeightAndWidthInCells; j++
+    //      => usually: blockHeightAndWidthInCells=2
+    //   k: unsigned int k = 0; k < numberOfOrientationBins; k++
+    //      => usually: larger than blockHeightAndWidthInCells
+    double *d_blockNorm = NULL;
+    const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
+                              hist1 - blockHeightAndWidthInCells -1);
+    const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
+    const dim3 dimGrid_norm(blockNorm_dims.x, blockNorm_dims.y, 1);
+    double h_blockNorm[blockNorm_dims.x * blockNorm_dims.y];
+    
+    // ** GRADIENTS and HISTOGRAMS **
     // Compute gradients (zero padding)
     // Compute histograms
     //  using CUDA
@@ -527,22 +600,44 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     
     cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
     
-    cudaErrorCheck_goto(cudaFree(d_h));
-    d_h = NULL;
     cudaErrorCheck_goto(cudaFree(d_inputImage));
     d_inputImage = NULL;
     
-    // Block normalization
+    // ** BLOCK NORMALIZATION **
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_blockNorm, blockNorm_dims.x * blockNorm_dims.y * sizeof(double)));
+    cudaErrorCheck_goto(cudaMemset(d_blockNorm, 0., blockNorm_dims.x * blockNorm_dims.y * sizeof(double)));
+    
+    DalalTriggsHOGdescriptor_compute_blocknorm<<<dimGrid_norm,
+                                                 dimBlock_norm,
+                                                 MAX_THREADS_3DX
+                                                 * MAX_THREADS_3DY
+                                                 * MAX_THREADS_3DZ
+                                                 * sizeof(double)>>>
+                                                    (d_blockNorm, blockNorm_dims,
+                                                     d_h, h_dims,
+                                                     numberOfOrientationBins,
+                                                     cellHeightAndWidthInPixels);
+    cudaThreadSynchronize(); // block until the device is finished
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        throwRuntimeError(cudaGetErrorString(error));
+        goto onfailure;
+    }
+    
+    cudaErrorCheck_goto(cudaMemcpy(h_blockNorm, d_blockNorm,
+                                   blockNorm_dims.x * blockNorm_dims.y * sizeof(double),
+                                   cudaMemcpyDeviceToHost));
+    
+    cudaErrorCheck_goto(cudaFree(d_h));
+    d_h = NULL;
+    cudaErrorCheck_goto(cudaFree(d_blockNorm));
+    d_blockNorm = NULL;
     
     for (unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
         for (unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
-            float blockNorm(0);
-            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++)
-                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++)
-                    for (unsigned int k = 0; k < numberOfOrientationBins; k++)
-                        blockNorm += h[y+i + (x+j) * factor_y_dim + k * factor_z_dim] * h[y+i + (x+j) * factor_y_dim + k * factor_z_dim];
-
-            blockNorm = sqrt(blockNorm);
+            float blockNorm(sqrt(h_blockNorm[x-1 + blockNorm_dims.x*(y-1)]));
+            
             for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++) {
                 for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++) {
                     for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
@@ -581,6 +676,8 @@ void DalalTriggsHOGdescriptor(double *inputImage,
 onfailure:
     if (d_h != NULL)
         cudaFree(d_h);
+    if (d_blockNorm != NULL)
+        cudaFree(d_blockNorm);
     if (d_inputImage != NULL)
         cudaFree(d_inputImage);
     
