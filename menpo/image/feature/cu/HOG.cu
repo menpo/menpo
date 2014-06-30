@@ -608,12 +608,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                                      d_h, h_dims,
                                                      numberOfOrientationBins,
                                                      cellHeightAndWidthInPixels);
-    cudaThreadSynchronize(); // block until the device is finished
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        throwRuntimeError(cudaGetErrorString(error));
-        goto onfailure;
-    }
+    cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
     cudaErrorCheck_goto(cudaMemcpy(h_blockNorm, d_blockNorm,
                                    blockNorm_dims.x * blockNorm_dims.y * sizeof(double),
