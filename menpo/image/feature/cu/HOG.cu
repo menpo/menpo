@@ -506,24 +506,14 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                                                           numberOfOrientationBins, cellHeightAndWidthInPixels,
                                                                           signedOrUnsignedGradientsBool ? 1 : 0 /*signedOrUnsignedGradients*/,
                                                                           (1 + (signedOrUnsignedGradientsBool ? 1 : 0)) * pi / numberOfOrientationBins /*binsSize*/);
-    cudaThreadSynchronize(); // block until the device is finished
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        throwRuntimeError(cudaGetErrorString(error));
-        goto onfailure;
-    }
+    cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
     DalalTriggsHOGdescriptor_reduce_histograms<<<dimGrid_reduce,
                                                  MAX_THREADS_1D,
                                                  MAX_THREADS_1D*sizeof(double)>>>
                                                     (d_h, h_dims,
                                                      cellHeightAndWidthInPixels);
-    cudaThreadSynchronize(); // block until the device is finished
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        throwRuntimeError(cudaGetErrorString(error));
-        goto onfailure;
-    }
+    cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
     cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
     
