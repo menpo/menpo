@@ -508,6 +508,227 @@ def ibug_49_points(landmark_group):
     return new_landmark_group
 
 
+def ibug_open_eye_points(landmark_group):
+    """
+    Apply the ibug's "standard" open eye semantic labels to the
+    landmarks in the given landmark group.
+
+    The label applied to this new group will be 'ibug_open_eye_points'.
+
+    The semantic labels applied are as follows:
+
+      - upper eyelid
+      - lower eyelid
+      - iris
+      - pupil
+      - sclera
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark manager with label 'ibug_open_eye_ponts'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 38 points
+    """
+    group_label = 'ibug_open_eye_points'
+    n_points = landmark_group.lms.n_points
+
+    if landmark_group.lms.n_points != 38:
+        raise LabellingError("{0} mark-up expects exactly 38 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        landmark_group.lms.copy(),
+        {'all': np.ones(n_points, dtype=np.bool)})
+
+    new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
+                                                    np.arange(12, 17)))
+    new_landmark_group['lower_eyelid'] = np.hstack((6, np.arange(17, 22), 0,
+                                                    np.arange(7, 12)))
+    new_landmark_group['iris'] = np.arange(22, 30)
+    new_landmark_group['pupil'] = np.arange(30, 38)
+    new_landmark_group['sclera'] = np.hstack((0, np.arange(12, 17), 6,
+                                              np.arange(17, 22)))
+
+    return new_landmark_group
+
+
+def ibug_close_eye_points(landmark_group):
+    """
+    Apply the ibug's "standard" close eye semantic labels to the
+    landmarks in the given landmark group.
+
+    The label applied to this new group will be 'ibug_close_eye_points'.
+
+    The semantic labels applied are as follows:
+
+      - upper eyelid
+      - lower eyelid
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark manager with label 'ibug_close_eye_ponts'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 17 points
+    """
+    group_label = 'ibug_close_eye_points'
+    n_points = landmark_group.lms.n_points
+
+    if landmark_group.lms.n_points != 17:
+        raise LabellingError("{0} mark-up expects exactly 17 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        landmark_group.lms.copy(),
+        {'all': np.ones(n_points, dtype=np.bool)})
+
+    new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
+                                                    np.arange(12, 17)))
+    new_landmark_group['lower_eyelid'] = np.hstack((np.arange(6, 12), 0,
+                                                    np.arange(12, 17)))
+
+    return new_landmark_group
+
+
+def ibug_open_eye_trimesh(landmark_group):
+    """
+    Apply the ibug's "standard" open eye semantic labels to the
+    landmarks in the given landmark group.
+
+    The label applied to this new group will be 'ibug_open_eye_trimesh'.
+
+    The semantic labels applied are as follows:
+
+      - tri
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark manager with label 'ibug_open_eye_trimesh'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 38 points
+    """
+    from menpo.shape import TriMesh
+
+    group_label = 'ibug_open_eye_trimesh'
+    n_points = landmark_group.lms.n_points
+
+    if n_points != 38:
+        raise LabellingError("{0} mark-up expects exactly 38 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    tri_list = np.array([[29, 36, 28], [22, 13, 23], [12,  1,  2],
+                         [29, 30, 37], [13,  3, 14], [13, 12,  2],
+                         [19,  8,  9], [25, 33, 24], [36, 37, 33],
+                         [24, 32, 31], [33, 37, 31], [35, 34, 27],
+                         [35, 36, 33], [ 3, 13,  2], [14, 24, 23],
+                         [33, 32, 24], [15, 25, 14], [25, 26, 34],
+                         [22, 30, 29], [31, 37, 30], [24, 31, 23],
+                         [32, 33, 31], [22, 12, 13], [ 0,  1, 12],
+                         [14, 23, 13], [31, 30, 23], [28, 19, 20],
+                         [21, 11,  0], [12, 21,  0], [20, 11, 21],
+                         [20, 10, 11], [21, 29, 20], [21, 12, 22],
+                         [30, 22, 23], [29, 21, 22], [27, 19, 28],
+                         [29, 37, 36], [29, 28, 20], [36, 35, 28],
+                         [20, 19, 10], [10, 19,  9], [28, 35, 27],
+                         [19, 19,  8], [17, 16,  6], [18,  7,  8],
+                         [25, 34, 33], [18, 27, 17], [18, 19, 27],
+                         [18, 17,  7], [27, 26, 17], [17,  6,  7],
+                         [14, 25, 24], [34, 35, 33], [17, 26, 16],
+                         [27, 34, 26], [ 3, 15, 14], [15, 26, 25],
+                         [ 4, 15,  3], [16, 26, 15], [16,  4,  5],
+                         [16, 15,  4], [16,  5,  6], [8, 18, 19]])
+
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        TriMesh(landmark_group.lms.points.copy(), tri_list),
+        {'tri': np.ones(n_points, dtype=np.bool)})
+
+    return new_landmark_group
+
+
+def ibug_close_eye_trimesh(landmark_group):
+    """
+    Apply the ibug's "standard" close eye semantic labels to the
+    landmarks in the given landmark group.
+
+    The label applied to this new group will be 'ibug_close_eye_trimesh'.
+
+    The semantic labels applied are as follows:
+
+      - tri
+
+    Parameters
+    ----------
+    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+        New landmark manager with label 'ibug_close_eye_trimesh'
+
+    Raises
+    ------
+    :class:`pybug.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 38 points
+    """
+    from menpo.shape import TriMesh
+
+    group_label = 'ibug_close_eye_trimesh'
+    n_points = landmark_group.lms.n_points
+
+    if n_points != 17:
+        raise LabellingError("{0} mark-up expects exactly 17 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    tri_list = np.array([[10, 11, 13], [ 3, 13,  2], [ 4, 14,  3],
+                         [15,  5, 16], [12, 11,  0], [13, 14, 10],
+                         [13, 12,  2], [14, 13,  3], [ 0,  1, 12],
+                         [ 2, 12,  1], [13, 11, 12], [ 9, 10, 14],
+                         [15,  9, 14], [ 7,  8, 15], [ 5,  6, 16],
+                         [15, 14,  4], [ 7, 15, 16], [ 8,  9, 15],
+                         [15,  4,  5], [16,  6,  7]])
+
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        TriMesh(landmark_group.lms.points.copy(), tri_list),
+        {'tri': np.ones(n_points, dtype=np.bool)})
+
+    return new_landmark_group
+
+
 def labeller(landmarkable, group_label, label_func):
     """
     Takes a landmarkable object and a group label indicating which
