@@ -769,8 +769,8 @@ def ibug_tongue(landmark_group):
         landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
-    new_landmark_group['outline'] = np.hstack((np.arange(0, 12)))
-    new_landmark_group['bisector'] = np.hstack((np.arange(13, 18)))
+    new_landmark_group['outline'] = np.arange(0, 12)
+    new_landmark_group['bisector'] = np.arange(13, 18)
 
     return new_landmark_group
 
