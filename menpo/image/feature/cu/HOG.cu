@@ -557,6 +557,57 @@ __global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
         d_block[current_id] = 0.;
 }
 
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
+                                                            const dim3 blockNorm_dims,
+                                                            const double *d_block,
+                                                            const unsigned int numberOfOrientationBins,
+                                                            const unsigned int blockHeightAndWidthInCells) {
+    // 2D-reduce to compute d_blockNorm for every (x,y)
+    
+    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
+    // and a power of 2
+    extern __shared__ double cache[];
+    
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x +1;
+    unsigned int y = blockIdx.y +1;
+    
+    unsigned int i = threadIdx.x;
+    unsigned int j = threadIdx.y;
+    unsigned int k = threadIdx.z;
+    unsigned int current_id = i + j*blockDim.x
+                              + k*blockDim.x*blockDim.y;
+    
+    cache[current_id] = 0.;
+    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x) {
+        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y) {
+            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z) {
+                unsigned int current_id_norm = i_ + j_*blockHeightAndWidthInCells
+                              + k_*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins
+                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins*blockNorm_dims.x;
+                cache[current_id] += d_block[current_id_norm] * d_block[current_id_norm];
+            }
+        }
+    }
+    
+    // Reduce operation
+    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
+    int padding = blockDim.x*blockDim.y*blockDim.z/2;
+    while (padding != 0) {
+        if (current_id < padding)
+            cache[current_id] += cache[current_id + padding];
+        __syncthreads();
+        padding /= 2;
+    }
+    
+    // Several k values will have to participate to this value
+    if (i == 0 && j == 0)
+        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
+}
+
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
 void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int numberOfOrientationBins,
@@ -607,6 +658,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               hist1 - blockHeightAndWidthInCells -1);
     const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
     const dim3 dimGrid_norm(blockNorm_dims.x, blockNorm_dims.y, 1);
+    double h_blockNorm[blockNorm_dims.x * blockNorm_dims.y];
     
     // Each thread has to compute one value of block[i,j,k,x,y]
     // The corresponding is stored into
@@ -696,6 +748,24 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                                  l2normClipping);
     cudaErrorCheck_goto(cudaThreadSynchronize());
     
+    // Evaluate blockNorm based on d_block
+    DalalTriggsHOGdescriptor_compute_blocknorm2<<<dimGrid_norm,
+                                                  dimBlock_norm,
+                                                  MAX_THREADS_3DX
+                                                  * MAX_THREADS_3DY
+                                                  * MAX_THREADS_3DZ
+                                                  * sizeof(double)>>>
+                                                    (d_blockNorm, blockNorm_dims,
+                                                     d_block,
+                                                     numberOfOrientationBins,
+                                                     blockHeightAndWidthInCells);
+    cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
+    
+    // Copy to CPU
+    cudaErrorCheck_goto(cudaMemcpy(h_blockNorm, d_blockNorm,
+                                   blockNorm_dims.x * blockNorm_dims.y * sizeof(double),
+                                   cudaMemcpyDeviceToHost));
+    
     cudaErrorCheck_goto(cudaMemcpy(h_block, d_block,
                                    cellHeightAndWidthInPixels
                                    * cellHeightAndWidthInPixels
@@ -713,20 +783,7 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     
     for (unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
         for (unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
-            float blockNorm(0);
-            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++)
-                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++)
-                    for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
-                        unsigned int current_id = i + j*blockHeightAndWidthInCells
-                            + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                            + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                            + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x;
-                        blockNorm += h_block[current_id] * h_block[current_id];
-                    }
-
-            blockNorm = sqrt(blockNorm);
+            float blockNorm(sqrt(h_blockNorm[x-1 + blockNorm_dims.x*(y-1)]));
             for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++) {
                 for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++) {
                     for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
