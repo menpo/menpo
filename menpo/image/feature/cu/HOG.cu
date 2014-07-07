@@ -545,7 +545,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
                               + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
                                 *numberOfOrientationBins*blockNorm_dims.x;
     
-    double blockNorm = d_blockNorm[x-1 + blockNorm_dims.x*(y-1)];
+    
+    double blockNorm = sqrt(d_blockNorm[x-1 + blockNorm_dims.x*(y-1)]);
     if (blockNorm > 0) {
         double tmpValue = d_h[y+i + (x+j) * factor_y_dim + k * factor_z_dim] / blockNorm;
         if (tmpValue > l2normClipping)
