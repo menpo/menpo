@@ -748,6 +748,9 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                                  l2normClipping);
     cudaErrorCheck_goto(cudaThreadSynchronize());
     
+    cudaErrorCheck_goto(cudaFree(d_h));
+    d_h = NULL;
+    
     // Evaluate blockNorm based on d_block
     DalalTriggsHOGdescriptor_compute_blocknorm2<<<dimGrid_norm,
                                                   dimBlock_norm,
@@ -774,8 +777,6 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                    * sizeof(double),
                                    cudaMemcpyDeviceToHost));
     
-    cudaErrorCheck_goto(cudaFree(d_h));
-    d_h = NULL;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
     d_blockNorm = NULL;
     cudaErrorCheck_goto(cudaFree(d_block));
