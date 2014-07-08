@@ -525,17 +525,17 @@ def ibug_open_eye_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
         New landmark manager with label 'ibug_open_eye_ponts'
 
     Raises
     ------
-    :class:`pybug.landmark.exceptions.LabellingError`
+    :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
     group_label = 'ibug_open_eye_points'
@@ -577,17 +577,17 @@ def ibug_close_eye_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
         New landmark manager with label 'ibug_close_eye_ponts'
 
     Raises
     ------
-    :class:`pybug.landmark.exceptions.LabellingError`
+    :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 17 points
     """
     group_label = 'ibug_close_eye_points'
@@ -624,17 +624,17 @@ def ibug_open_eye_trimesh(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
         New landmark manager with label 'ibug_open_eye_trimesh'
 
     Raises
     ------
-    :class:`pybug.landmark.exceptions.LabellingError`
+    :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -690,17 +690,17 @@ def ibug_close_eye_trimesh(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
-    landmark_group : :class:`pybug.landmark.base.LandmarkGroup`
+    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
         New landmark manager with label 'ibug_close_eye_trimesh'
 
     Raises
     ------
-    :class:`pybug.landmark.exceptions.LabellingError`
+    :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
     from menpo.shape import TriMesh
@@ -725,6 +725,52 @@ def ibug_close_eye_trimesh(landmark_group):
         landmark_group._target, group_label,
         TriMesh(landmark_group.lms.points.copy(), tri_list),
         {'tri': np.ones(n_points, dtype=np.bool)})
+
+    return new_landmark_group
+
+
+def ibug_tongue(landmark_group):
+    """
+    Apply the ibug's "standard" tongue semantic labels to the landmarks in the
+    given landmark group.
+
+    The label applied to this new group will be 'ibug_tongue'.
+
+    The semantic labels applied are as follows:
+
+      - upper eyelid
+      - lower eyelid
+
+    Parameters
+    ----------
+    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+        The landmark group to apply semantic labels to.
+
+    Returns
+    -------
+    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+        New landmark manager with label 'ibug_tongue'
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given landmark group contains less than 19 points
+    """
+    group_label = 'ibug_tongue'
+    n_points = landmark_group.lms.n_points
+
+    if landmark_group.lms.n_points != 19:
+        raise LabellingError("{0} mark-up expects exactly 19 "
+                             "points. However, the given landmark group only "
+                             "has {1} points".format(group_label, n_points))
+
+    new_landmark_group = LandmarkGroup(
+        landmark_group._target, group_label,
+        landmark_group.lms.copy(),
+        {'all': np.ones(n_points, dtype=np.bool)})
+
+    new_landmark_group['outline'] = np.arange(0, 12)
+    new_landmark_group['bisector'] = np.arange(13, 18)
 
     return new_landmark_group
 
