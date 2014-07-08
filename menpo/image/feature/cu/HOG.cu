@@ -702,7 +702,6 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                               hist1 - blockHeightAndWidthInCells -1);
     const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
     const dim3 dimGrid_norm(blockNorm_dims.x, blockNorm_dims.y, 1);
-    double h_blockNorm[blockNorm_dims.x * blockNorm_dims.y];
     
     // Each thread has to compute one value of block[i,j,k,x,y]
     // The corresponding is stored into
@@ -716,9 +715,6 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     // The number of blocks in the grid depends on blockNorm_dims,
     // numberOfOrientationBins and blockHeightAndWidthInCells
     double *d_block = NULL;
-    double h_block[cellHeightAndWidthInPixels * cellHeightAndWidthInPixels
-                   * numberOfOrientationBins * blockNorm_dims.x
-                   * blockNorm_dims.y];
     const dim3 dimBlock_block(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
     const dim3 dimGrid_block(
             blockNorm_dims.x
