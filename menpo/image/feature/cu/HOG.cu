@@ -608,6 +608,52 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
         d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
 }
 
+__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_descriptorVector,
+                                                                  const double *d_block,
+                                                                  const double *d_blockNorm,
+                                                                  const dim3 blockNorm_dims,
+                                                                  const unsigned int numberOfOrientationBins,
+                                                                  const unsigned int blockHeightAndWidthInCells) {
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x;
+    unsigned int y = blockIdx.y;
+    
+    unsigned int i = threadIdx.x;
+    if (x >= blockNorm_dims.x) {
+        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
+        x = x % blockNorm_dims.x;
+    }
+    x += 1;
+    unsigned int j = threadIdx.y;
+    if (y >= blockNorm_dims.y) {
+        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
+        y = y % blockNorm_dims.y;
+    }
+    y += 1;
+    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
+    
+    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
+        || k >= numberOfOrientationBins)
+        return;
+    
+    unsigned int descriptorIndex = (x-1)*blockNorm_dims.y*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
+            + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
+            + i*blockHeightAndWidthInCells*numberOfOrientationBins
+            + j*numberOfOrientationBins + k;
+    double blockNorm = d_blockNorm[x-1 + blockNorm_dims.x*(y-1)];
+    if (blockNorm > 0) {
+        blockNorm = sqrt(blockNorm);
+        unsigned int current_id = i + j*blockHeightAndWidthInCells
+                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins
+                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins*blockNorm_dims.x;
+        d_descriptorVector[descriptorIndex] = d_block[current_id] / blockNorm;
+    } else
+        d_descriptorVector[descriptorIndex] = 0.;
+}
+
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
 void DalalTriggsHOGdescriptor(double *inputImage,
                               unsigned int numberOfOrientationBins,
@@ -637,8 +683,6 @@ void DalalTriggsHOGdescriptor(double *inputImage,
     const dim3 dimGrid_reduce(h_dims.x, h_dims.y, h_dims.z);
     
     //  * Block normalization
-    
-    int descriptorIndex(0);
     
     // Each block has to compute its blockNorm[x][y]
     // stored into d_blockNorm[x-1 + blockNorm_dims.x*(y-1)]
@@ -682,6 +726,11 @@ void DalalTriggsHOGdescriptor(double *inputImage,
             blockNorm_dims.y
             * ((blockHeightAndWidthInCells+MAX_THREADS_3DY-1)/MAX_THREADS_3DY),
             (numberOfOrientationBins + MAX_THREADS_3DZ -1)/MAX_THREADS_3DZ);
+    
+    double *d_descriptorVector = NULL;
+    const dim3 dimBlock_desc(dimBlock_block);
+    const dim3 dimGrid_desc(dimGrid_block);
+    const unsigned int desc_dim = blockNorm_dims.x*blockNorm_dims.y*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins;
     
     // ** GRADIENTS and HISTOGRAMS **
     // Compute gradients (zero padding)
@@ -764,47 +813,32 @@ void DalalTriggsHOGdescriptor(double *inputImage,
                                                      blockHeightAndWidthInCells);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
-    // Copy to CPU
-    cudaErrorCheck_goto(cudaMemcpy(h_blockNorm, d_blockNorm,
-                                   blockNorm_dims.x * blockNorm_dims.y * sizeof(double),
+    
+    
+    // Compute descriptorVector
+    cudaErrorCheck_goto(cudaMalloc(&d_descriptorVector, desc_dim * sizeof(double)));
+    DalalTriggsHOGdescriptor_compute_descriptorVector<<<dimGrid_desc,
+                                                        dimBlock_desc>>>
+                                                            (d_descriptorVector,
+                                                             d_block,
+                                                             d_blockNorm,
+                                                             blockNorm_dims,
+                                                             numberOfOrientationBins,
+                                                             blockHeightAndWidthInCells);
+    cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
+    
+    cudaErrorCheck_goto(cudaMemcpy(descriptorVector,
+                                   d_descriptorVector,
+                                   desc_dim * sizeof(double),
                                    cudaMemcpyDeviceToHost));
     
-    cudaErrorCheck_goto(cudaMemcpy(h_block, d_block,
-                                   cellHeightAndWidthInPixels
-                                   * cellHeightAndWidthInPixels
-                                   * numberOfOrientationBins
-                                   * blockNorm_dims.x * blockNorm_dims.y
-                                   * sizeof(double),
-                                   cudaMemcpyDeviceToHost));
-    
+    cudaErrorCheck_goto(cudaFree(d_descriptorVector));
+    d_descriptorVector = NULL;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
     d_blockNorm = NULL;
     cudaErrorCheck_goto(cudaFree(d_block));
     d_block = NULL;
     
-    for (unsigned int x = 1; x < hist2 - blockHeightAndWidthInCells; x++) {
-        for (unsigned int y = 1; y < hist1 - blockHeightAndWidthInCells; y++) {
-            float blockNorm(sqrt(h_blockNorm[x-1 + blockNorm_dims.x*(y-1)]));
-            for (unsigned int i = 0; i < blockHeightAndWidthInCells; i++) {
-                for (unsigned int j = 0; j < blockHeightAndWidthInCells; j++) {
-                    for (unsigned int k = 0; k < numberOfOrientationBins; k++) {
-                        unsigned int current_id = i + j*blockHeightAndWidthInCells
-                            + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                            + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                            + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x;
-                        if (blockNorm > 0)
-                            descriptorVector[descriptorIndex] =
-                                h_block[current_id] / blockNorm;
-                        else
-                            descriptorVector[descriptorIndex] = 0.0;
-                        descriptorIndex++;
-                    }
-                }
-            }
-        }
-    }
     return;
 
 onfailure:
@@ -814,6 +848,8 @@ onfailure:
         cudaFree(d_blockNorm);
     if (d_block != NULL)
         cudaFree(d_block);
+    if (d_descriptorVector != NULL)
+        cudaFree(d_descriptorVector);
     if (d_inputImage != NULL)
         cudaFree(d_inputImage);
     
