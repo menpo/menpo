@@ -2,7 +2,7 @@
 from menpo.io.landmark import (LM3Importer, LANImporter, LM2Importer,
                                BNDImporter, JSONImporter)
 from menpo.io.landmark_mesh import MeshPTSImporter
-from menpo.io.mesh import AssimpImporter, WRLImporter
+from menpo.io.mesh import AssimpImporter, WRLImporter, JSONMeshImporter
 from menpo.io.image import PILImporter
 from menpo.io.landmark_image import ImageASFImporter, ImagePTSImporter
 
@@ -50,7 +50,8 @@ mesh_types = {'.dae': AssimpImporter,
               '.pk3': AssimpImporter,
               '.mdc': AssimpImporter,
               # '.blend': AssimpImporter,
-              '.wrl': WRLImporter}
+              '.wrl': WRLImporter,
+              '.mjson': JSONMeshImporter}
 
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,

@@ -1,1 +1,1 @@
-from base import AssimpImporter, WRLImporter
+from base import AssimpImporter, WRLImporter, JSONMeshImporter
