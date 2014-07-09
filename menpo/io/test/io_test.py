@@ -165,7 +165,7 @@ def test_import_images():
 def test_import_auto():
     assets_glob = os.path.join(mio.data_dir_path(), '*')
     assets = list(mio.import_auto(assets_glob))
-    assert(len(assets) == 6)
+    assert(len(assets) == 7)
 
 
 def test_import_auto_max_images():
@@ -189,7 +189,8 @@ def test_ls_builtin_assets():
                                             'james.jpg', 'james.mtl',
                                             'james.obj', 'lenna.png',
                                             'lenna.pts', 'takeo.ppm',
-                                            'takeo.pts'})
+                                            'takeo.pts', 'tongue.jpg',
+                                            'tongue.pts'})
 
 
 def test_mesh_paths():
@@ -199,7 +200,7 @@ def test_mesh_paths():
 
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
-    assert(len(list(ls)) == 5)
+    assert(len(list(ls)) == 6)
 
 
 @raises(ValueError)
