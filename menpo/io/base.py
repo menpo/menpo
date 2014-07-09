@@ -703,7 +703,7 @@ def find_extensions_from_basename(filepath):
         as filepath. These files are found using `glob`.
 
     """
-    basename = os.path.splitext(os.path.basename(filepath))[0] + '*'
+    basename = os.path.splitext(os.path.basename(filepath))[0] + '.*'
     basepath = os.path.join(os.path.dirname(filepath), basename)
     return glob(basepath)
 
