@@ -1,8 +1,8 @@
 # A list of extensions that different importers support.
 from menpo.io.landmark import (LM3Importer, LANImporter, LM2Importer,
-                               BNDImporter, JSONImporter)
+                               BNDImporter, LJSONImporter)
 from menpo.io.landmark_mesh import MeshPTSImporter
-from menpo.io.mesh import AssimpImporter, WRLImporter, JSONMeshImporter
+from menpo.io.mesh import AssimpImporter, WRLImporter, MJSONImporter
 from menpo.io.image import PILImporter
 from menpo.io.landmark_image import ImageASFImporter, ImagePTSImporter
 
@@ -51,7 +51,7 @@ mesh_types = {'.dae': AssimpImporter,
               '.mdc': AssimpImporter,
               # '.blend': AssimpImporter,
               '.wrl': WRLImporter,
-              '.mjson': JSONMeshImporter}
+              '.mjson': MJSONImporter}
 
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,
@@ -87,13 +87,13 @@ image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter,
                         '.ptsx': ImagePTSImporter,
-                        '.json': JSONImporter}
+                        '.ljson': LJSONImporter}
 
 mesh_landmark_types = {'.pts3': MeshPTSImporter,
                        '.lm3': LM3Importer,
                        '.lan': LANImporter,
                        '.bnd': BNDImporter,
-                       '.json': JSONImporter}
+                       '.ljson': LJSONImporter}
 
 all_landmark_types = {}
 all_landmark_types.update(image_landmark_types)

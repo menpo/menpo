@@ -363,7 +363,7 @@ class WRLImporter(MeshImporter):
         return index_list[:, 1:]
 
 
-class JSONMeshImporter(MeshImporter):
+class MJSONImporter(MeshImporter):
     """
     Import meshes that are in a simple JSON format.
 
