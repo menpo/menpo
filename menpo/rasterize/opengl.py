@@ -1,17 +1,61 @@
 import numpy as np
 from cyrasterize.base import CyRasterizerBase
+
 from menpo.image import MaskedImage
+from menpo.transform import Homogeneous
 
+from .base import TextureRasterInfo
+from .transform import clip_to_image_transform
 
-# noinspection PyProtectedMember
-from menpo.rasterize.base import TextureRasterInfo
 
 # Subclass the CyRasterizerBase class to add Menpo-specific features
+# noinspection PyProtectedMember
 class GLRasterizer(CyRasterizerBase):
+
+    @property
+    def model_to_clip_matrix(self):
+        return np.dot(self.projection_matrix,
+                      np.dot(self.view_matrix, self.model_matrix))
+
+    @property
+    def model_transform(self):
+        return Homogeneous(self.model_matrix)
+
+    @property
+    def view_transform(self):
+        return Homogeneous(self.view_matrix)
+
+    @property
+    def projection_transform(self):
+        return Homogeneous(self.projection_matrix)
+
+    @property
+    def model_to_clip_transform(self):
+        r"""
+        Transform that takes 3D points from model space to 3D clip space
+        """
+        return Homogeneous(self.model_to_clip_matrix)
+
+    @property
+    def clip_to_image_transform(self):
+        r"""
+        Affine transform that converts 3D clip space coordinates into 2D image
+        space coordinates
+        """
+        return clip_to_image_transform(self.width, self.height)
+
+    @property
+    def model_to_image_transform(self):
+        r"""
+        TransformChain from 3D model space to 2D image space.
+        """
+        return self.model_to_clip_transform.compose_before(
+            self.clip_to_image_transform)
 
     def rasterize_mesh_with_f3v_interpolant(self, rasterizable,
                                             per_vertex_f3v=None):
-        r"""Rasterize the object to an image and generate an interpolated
+        r"""
+        Rasterize the object to an image and generate an interpolated
         3-float image from a per vertex float 3 vector.
 
         If no per_vertex_f3v is provided, the model's shape is used (making
@@ -43,10 +87,11 @@ class GLRasterizer(CyRasterizerBase):
         if rasterizable._rasterize_type_texture:
             # request the textured info for rasterizing
             r = rasterizable._rasterize_generate_textured_mesh()
-            return self._rasterize_texture_with_interp(
+            images = self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
         elif rasterizable._rasterize_type_colour:
             #TODO: This should use a different shader!
+            # TODO This should actually use the colour provided.
             # But I'm hacking it here to work quickly.
             colour_r = rasterizable._rasterize_generate_color_mesh()
 
@@ -55,7 +100,7 @@ class GLRasterizer(CyRasterizerBase):
             fake_tcoords = np.random.randn(colour_r.points.shape[0], 2)
             fake_texture = np.zeros([2, 2, 3])
             r = TextureRasterInfo(colour_r.points, colour_r.trilist,
-                              fake_tcoords, fake_texture)
+                                  fake_tcoords, fake_texture)
 
             # The RGB image is going to be broken due to the fake texture
             # information we passed in
@@ -64,7 +109,18 @@ class GLRasterizer(CyRasterizerBase):
             _, f3v_image = self._rasterize_texture_with_interp(
                 r, per_vertex_f3v=per_vertex_f3v)
 
-            return rgb_image, f3v_image
+            images = rgb_image, f3v_image
+        else:
+            raise ValueError("Cannot rasterize {}".format(rasterizable))
+
+        from menpo.landmark import Landmarkable
+        if isinstance(rasterizable, Landmarkable):
+            # Transform all landmarks and set them on the image
+            image_lms = self.model_to_image_transform.apply(
+                rasterizable.landmarks)
+            for image in images:
+                image.landmarks = image_lms
+        return images
 
     def rasterize_mesh_with_shape_image(self, rasterizable):
         r"""Rasterize the object to an image and generate an interpolated
