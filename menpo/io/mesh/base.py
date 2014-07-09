@@ -3,6 +3,8 @@ from collections import namedtuple
 import commands
 import os.path as path
 import tempfile
+import json
+
 import numpy as np
 from cyassimp import AIImporter
 from vrml.vrml97.parser import buildParser as buildVRML97Parser
@@ -201,16 +203,14 @@ class MeshImporter(Importer):
         meshes = []
         for mesh in self.meshes:
             if textured:
-                new_mesh = TexturedTriMesh(mesh.points.astype(np.float64),
+                new_mesh = TexturedTriMesh(mesh.points,
                                            mesh.tcoords,
                                            import_image(self.texture_path),
-                                           trilist=mesh.trilist,
-                                           copy=False)
+                                           trilist=mesh.trilist)
             elif mesh.colour_per_vertex is not None:
                 new_mesh = ColouredTriMesh(mesh.points,
                                            colours=mesh.colour_per_vertex,
-                                           trilist=mesh.trilist,
-                                           copy=False)
+                                           trilist=mesh.trilist)
             else:
                 new_mesh = TriMesh(mesh.points, trilist=mesh.trilist)
 
@@ -361,3 +361,18 @@ class WRLImporter(MeshImporter):
         index_list = np.array(index_list)
         # Slice of -1 delimiters
         return index_list[:, 1:]
+
+
+class MJSONImporter(MeshImporter):
+    """
+    Import meshes that are in a simple JSON format.
+
+    """
+
+    def _parse_format(self):
+        with open(self.filepath, 'rb') as f:
+            mesh_json = json.load(f)
+        mesh = MeshInfo(mesh_json['points'], mesh_json['trilist'],
+                        mesh_json.get('tcoords'),
+                        mesh_json.get('colour_per_vertex'))
+        self.meshes = [mesh]

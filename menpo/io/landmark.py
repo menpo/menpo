@@ -1,13 +1,12 @@
 import abc
 import json
-from collections import OrderedDict
-
 import numpy as np
 
-from menpo.io.base import Importer
 from menpo.landmark.base import LandmarkGroup
 from menpo.shape import PointCloud
 from menpo.transform import Scale
+
+from .base import Importer
 
 
 class LandmarkImporter(Importer):
@@ -493,11 +492,11 @@ class BNDImporter(LandmarkImporter):
         }
 
 
-class JSONImporter(LandmarkImporter):
+class LJSONImporter(LandmarkImporter):
     r"""
-    Importer for the Menpo JSON format. This is an nD
+    Importer for the Menpo JSON format. This is an n-dimensional
     landmark type for both images and meshes that encodes semantic labels in
-    the format
+    the format.
 
     Landmark set label: JSON
 
