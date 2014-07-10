@@ -52,6 +52,16 @@ Composite Transforms
    TransformChain
 
 
+Dimensional Manipulations
+-------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   ExtractNDims
+   AppendNDims
+
+
 Radial Basis Functions
 ----------------------
 
