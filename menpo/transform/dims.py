@@ -9,13 +9,14 @@ class AppendNDims(Transform):
     Parameters
     ----------
 
-    n : int
+    n : `int`
         The number of dimensions to add
 
-    value: float, optional
+    value : `float`, optional
         The value that the extra dims should be given
 
         Default: 0
+
     """
     def __init__(self, n, value=0):
         self.n = n
@@ -37,13 +38,14 @@ class AppendNDims(Transform):
 
 class ExtractNDims(Transform):
     r"""
-    Extracts out the first n dimensions of a shape.
+    Extracts out the first ``n`` dimensions of a shape.
 
     Parameters
     ----------
 
-    n : int
+    n : `int`
         The number of dimensions to extract
+
     """
     def __init__(self, n):
         self.n = n

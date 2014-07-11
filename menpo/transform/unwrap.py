@@ -6,24 +6,34 @@ from .homogeneous import Translation
 
 class CylindricalUnwrap(Transform):
     r"""
-    Unwraps 3D points into cylindrical coordinates:
-    x -> radius * theta
-    y -> z
-    z -> depth
+    Maps 3D points :math:`(x, y, z)` into cylindrical coordinates
+    :math:`(x', y', z')`
 
-    The cylinder is oriented st. it's axial vector is [0, 1, 0]
-    and it's centre is at the origin. discontinuity in theta values
-    occurs at y-z plane for NEGATIVE z values (i.e. the interesting
-    information you are wanting to unwrap better have positive z values).
+    .. math::
 
-    radius - the distance of the unwrapping from the axis.
-    z -  the distance along the axis of the cylinder (maps onto the y
-         coordinate exactly)
-    theta - the angular distance around the cylinder, in radians. Note
-         that theta itself is not outputted but theta * radius, preserving
-         distances.
+        x' &\leftarrow r \theta \\
+        y' &\leftarrow y \\
+        z' &\leftarrow d
 
-    depth - is the displacement away from the radius along the radial vector.
+    where
+
+    .. math::
+
+        d &= \sqrt{x^2 + y^2} - r \\
+        \theta &= \arctan{\left(\frac{x}{z}\right)}
+
+    The cylinder is oriented such that it's axial vector is ``[0, 1, 0]``
+    and it's centre is at the origin. Discontinuity in :math:`\theta` values
+    occurs at ``y-z`` plane for *negative* ``z`` values (i.e. the interesting
+    information you are wanting to preserve in the unwrapping better have
+    positive ``z`` values).
+
+    Parameters
+    ----------
+
+    radius : `float`
+        The distance of the unwrapping from the axis.
+
     """
     def __init__(self, radius):
         self.radius = radius
@@ -41,19 +51,18 @@ class CylindricalUnwrap(Transform):
 
 def optimal_cylindrical_unwrap(points):
     r"""
-    Returns a TransformChain of [Translation, CylindricalUnwrap] which
-    optimally cylindrically unwraps the points provided. This is done by:
+    Returns a :map:`TransformChain` of
+    [:map:`Translation`, :map:`CylindricalUnwrap`]
+    which optimally cylindrically unwraps the points provided. This is done by:
 
-    a. Finding the optimal Translation to centre the points provided (in the
-    x-z plane)
-
-    b. Calculating a CylindricalUnwrap using the optimal radius from a
-
-    c. Returning the chain of the two.
+    #. Find an optimal :map:`Translation` to centre the points in ``x-z`` plane
+    #. Use :map:`circle_fit` to find the optimal radius for fitting the points
+    #. Calculate a :map:`CylindricalUnwrap` using the optimal radius
+    #. Return a composition of the two.
 
     Parameters
     ----------
-    points: :map:`PointCloud`
+    points : :map:`PointCloud`
         The 3D points that will be used to find the optimum unwrapping position
 
     Returns
