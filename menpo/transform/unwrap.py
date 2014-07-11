@@ -1,5 +1,5 @@
 import numpy as np
-from menpo.math import circle_fit
+from menpo.math import radial_fit
 from .base import Transform
 from .homogeneous import Translation
 
@@ -75,9 +75,9 @@ def optimal_cylindrical_unwrap(points):
     """
     # find the optimum centre to unwrap
     xy = points.points[:, [0, 2]]  # just in the x-z plane
-    centre, radius = circle_fit(xy)
+    centre, radius = radial_fit(xy)
     # convert the 2D circle data into the 3D space
     translation = np.array([centre[0], 0, centre[1]])
     centring_transform = Translation(-translation)
     unwrap = CylindricalUnwrap(radius)
-    return centring_transform.compose_before(unwrap), radius
+    return centring_transform.compose_before(unwrap)
