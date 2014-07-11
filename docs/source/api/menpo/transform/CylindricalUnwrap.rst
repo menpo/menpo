@@ -6,4 +6,7 @@ CylindricalUnwrap
 =================
 
 .. autoclass:: CylindricalUnwrap
+  :members:
+  :inherited-members:
+  :show-inheritance:
 
