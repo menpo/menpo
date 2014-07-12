@@ -1,6 +1,4 @@
 from __future__ import division
-from copy import deepcopy
-
 import numpy as np
 from scipy.ndimage import binary_erosion
 
@@ -196,9 +194,6 @@ class MaskedImage(Image):
         r"""
         Return a new image with copies of the pixels, landmarks, and masks of
         this image.
-
-        This is an efficient copy method. If you need to copy all the state on
-        the object, consider deepcopy instead.
 
         Returns
         -------
@@ -593,7 +588,7 @@ class MaskedImage(Image):
         """
         grad_image_pixels = features.gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
-                                 mask=deepcopy(self.mask))
+                                 mask=self.mask.copy(), copy=False)
 
         if nullify_values_at_mask_boundaries:
             # Erode the edge of the mask in by one pixel

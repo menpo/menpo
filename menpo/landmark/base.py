@@ -1,4 +1,5 @@
 import abc
+from weakref import ref
 
 import numpy as np
 
@@ -58,8 +59,10 @@ class LandmarkManager(Transformable, Viewable):
 
     def __init__(self, target):
         super(LandmarkManager, self).__init__()
-        self.__target = target
+        self.__target = None
         self._landmark_groups = {}
+        # use the _target setter last one everything else is cleaned up
+        self._target = target
 
     def copy(self):
         r"""
@@ -163,13 +166,19 @@ class LandmarkManager(Transformable, Viewable):
 
     @property
     def _target(self):
-        return self.__target
+        if self.__target is not None:
+            return self.__target()
+        else:
+            return None
 
     @_target.setter
     def _target(self, value):
-        self.__target = value
+        if value is not None:
+            self.__target = ref(value)
+        else:
+            self.__target = None
         for group in self._landmark_groups.itervalues():
-            group._target = self.__target
+            group._target = self._target
 
     @property
     def n_groups(self):
@@ -296,6 +305,7 @@ class LandmarkGroup(Viewable):
         self._verify_all_labels_masked()
 
         self._group_label = group_label
+        self.__target = None
         self._target = target
         if copy:
             self._pointcloud = pointcloud.copy()
@@ -304,6 +314,20 @@ class LandmarkGroup(Viewable):
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
+
+    @property
+    def _target(self):
+        if self.__target is not None:
+            return self.__target()
+        else:
+            return None
+
+    @_target.setter
+    def _target(self, value):
+        if value is not None:
+            self.__target = ref(value)
+        else:
+            self.__target = None
 
     def copy(self):
         r"""
