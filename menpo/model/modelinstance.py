@@ -302,7 +302,7 @@ class OrthoPDM(GlobalPDM):
             model_cpy = model.copy()
         except AttributeError:
             warn('OrthoPDM() - no copy on model {}'
-                 'method, using deepcopy'.format(type(model).__name__))
+                 ', using deepcopy'.format(type(model).__name__))
             model_cpy = deepcopy(model)
         model_cpy.orthonormalize_against_inplace(self.similarity_model)
         self.similarity_weights = self.similarity_model.project(model_cpy.mean)
