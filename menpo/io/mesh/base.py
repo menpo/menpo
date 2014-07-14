@@ -399,11 +399,11 @@ def export_obj(path, mesh):
     """
     with open(path, 'wb') as f:
         for v in mesh.points:
-            f.write('v {:.6f} {:.6f} {:.6f}\n'.format(*v))
+            f.write('v {} {} {}\n'.format(*v))
         f.write('\n')
         if isinstance(mesh, TexturedTriMesh):
             for tc in mesh.tcoords.points:
-                f.write('vt {:.6f} {:.6f}\n'.format(*tc))
+                f.write('vt {} {}\n'.format(*tc))
             f.write('\n')
             # triangulation of points and tcoords is identical
             for t in (mesh.trilist + 1):
