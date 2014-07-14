@@ -1,7 +1,7 @@
 import abc
 from copy import deepcopy
 import os.path
-from pathlib import Path
+from warnings import warn
 
 
 class Vectorizable(object):
@@ -81,7 +81,12 @@ class Vectorizable(object):
         object : ``type(self)``
             An new instance of this class.
         """
-        self_copy = deepcopy(self)
+        try:
+            self_copy = self.copy()
+        except AttributeError:
+            warn('{}.from_vector() - no copy '
+                 'method, using deepcopy'.format(type(self).__name__))
+            self_copy = deepcopy(self)
         self_copy.from_vector_inplace(vector)
         return self_copy
 
