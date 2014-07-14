@@ -1,5 +1,6 @@
 import abc
 from copy import deepcopy
+from warnings import warn
 
 from menpo.transform.base import Transform
 
@@ -108,7 +109,7 @@ class ComposableTransform(Transform):
         Update ``self`` so that it represents **this** transform composed
         **before** the given transform::
 
-            a_orig = deepcopy(a)
+            a_orig = a.copy()
             a.compose_before_inplace(b)
             a.apply(p) == b.apply(a_orig.apply(p))
 
@@ -138,7 +139,7 @@ class ComposableTransform(Transform):
         Update ``self`` so that it represents **this** transform composed
         **after** the given transform::
 
-            a_orig = deepcopy(a)
+            a_orig = a.copy()
             a.compose_after_inplace(b)
             a.apply(p) == a_orig.apply(b.apply(p))
 
@@ -165,7 +166,7 @@ class ComposableTransform(Transform):
 
     def _compose_before(self, transform):
         r"""
-        Naive implementation of composition, ``deepcopy(self)`` and then
+        Naive implementation of composition, ``self.copy()`` and then
         :meth:``compose_before_inplace``. Apply this transform **first**.
 
         Parameters
@@ -178,14 +179,20 @@ class ComposableTransform(Transform):
         transform : :map:`ComposableTransform`
             The resulting transform.
         """
-        # naive approach - deepcopy followed by the inplace operation
-        new_transform = deepcopy(self)
-        new_transform._compose_before_inplace(transform)
-        return new_transform
+        # naive approach - copy followed by the inplace operation
+
+        try:
+            self_copy = self.copy()
+        except AttributeError:
+            warn('{}._compose_before() - no copy '
+                 'method, using deepcopy'.format(type(self).__name__))
+            self_copy = deepcopy(self)
+        self_copy._compose_before_inplace(transform)
+        return self_copy
 
     def _compose_after(self, transform):
         r"""
-        Naive implementation of composition, ``deepcopy(self)`` and then
+        Naive implementation of composition, ``self.copy()`` and then
         :meth:``compose_after_inplace``. Apply this transform **second**.
 
         Parameters
@@ -198,10 +205,15 @@ class ComposableTransform(Transform):
         transform : :map:`ComposableTransform`
             The resulting transform.
         """
-        # naive approach - deepcopy followed by the inplace operation
-        new_transform = deepcopy(self)
-        new_transform._compose_after_inplace(transform)
-        return new_transform
+        # naive approach - copy followed by the inplace operation
+        try:
+            self_copy = self.copy()
+        except AttributeError:
+            warn('{}._compose_after() - no copy '
+                 'method, using deepcopy'.format(type(self).__name__))
+            self_copy = deepcopy(self)
+        self_copy._compose_after_inplace(transform)
+        return self_copy
 
     @abc.abstractmethod
     def _compose_before_inplace(self, transform):

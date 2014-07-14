@@ -1,3 +1,4 @@
+from weakref import proxy
 import features as fc
 
 
@@ -14,7 +15,8 @@ class ImageFeatures(object):
     """
 
     def __init__(self, image):
-        self._image = image
+        # hold a weak ref to the image (to prevent cyclic references)
+        self._image = proxy(image)
 
     def hog(self, mode='dense', algorithm='dalaltriggs', num_bins=9,
             cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,

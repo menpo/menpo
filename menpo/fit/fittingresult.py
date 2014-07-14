@@ -1,6 +1,5 @@
 from __future__ import division
 import abc
-from copy import deepcopy
 import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
@@ -29,7 +28,7 @@ class FittingResult(Viewable):
 
     def __init__(self, image, fitter, gt_shape=None, error_type='me_norm'):
         # Initialize the error internal properties
-        self.image = deepcopy(image)
+        self.image = image.copy()
         self._error_type, self._error_text = None, None
         self.fitter = fitter
         self.error_type = error_type
@@ -182,7 +181,7 @@ class FittingResult(Viewable):
         r"""
         Displays the final fitting result.
         """
-        image = deepcopy(self.image)
+        image = self.image.copy()
         image.landmarks['fitting'] = self.final_shape
         return image.landmarks['fitting'].view(
             figure_id=figure_id, new_figure=new_figure).render(**kwargs)
@@ -191,7 +190,7 @@ class FittingResult(Viewable):
         r"""
         Displays the initialization from which the fitting started.
         """
-        image = deepcopy(self.image)
+        image = self.image.copy()
         image.landmarks['fitting'] = self.initial_shape
         return image.landmarks['fitting'].view(
             figure_id=figure_id, new_figure=new_figure).render(**kwargs)
@@ -201,7 +200,7 @@ class FittingResult(Viewable):
         Displays the ground truth annotation.
         """
         if self.gt_shape is not None:
-            image = deepcopy(self.image)
+            image = self.image.copy()
             image.landmarks['gt_shape'] = self.gt_shape
             return image.landmarks['gt_shape'].view(
                 figure_id=figure_id, new_figure=new_figure, **kwargs)
@@ -250,18 +249,18 @@ class NonParametricFittingResult(FittingResult):
 
     def shapes(self, as_points=False):
         if as_points:
-            return [deepcopy(s.points) for s in self.parameters]
+            return [s.points.copy() for s in self.parameters]
 
         else:
-            return deepcopy(self.parameters)
+            return [s.copy() for s in self.parameters]
 
     @property
     def final_shape(self):
-        return deepcopy(self.parameters[-1])
+        return self.parameters[-1].copy()
 
     @property
     def initial_shape(self):
-        return deepcopy(self.parameters[0])
+        return self.parameters[0].copy()
 
     @FittingResult.gt_shape.setter
     def gt_shape(self, value):
