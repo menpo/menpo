@@ -65,7 +65,7 @@ def test_texturedtrimesh_creation_copy_true():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    pixels = np.ones([10, 10])
+    pixels = np.ones([10, 10, 1])
     tcoords = np.ones([4, 2])
     texture = Image(pixels, copy=False)
     ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,

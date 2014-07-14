@@ -17,9 +17,6 @@ class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
-        super(Shape, self).__init__()
-
     def _transform_inplace(self, transform):
         """
         Transform the landmarks and the shape itself.

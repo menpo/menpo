@@ -21,14 +21,17 @@ class Landmarkable(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, n_dims):
-        super(Landmarkable, self).__init__()
-        self._landmarks = LandmarkManager(n_dims)
-        # typically subclasses will overwrite this and that's fine.
-        self.n_dims = n_dims
+    def __init__(self):
+        self._landmarks = None
+
+    @abc.abstractproperty
+    def n_dims(self):
+        pass
 
     @property
     def landmarks(self):
+        if self._landmarks is None:
+            self._landmarks = LandmarkManager(self.n_dims)
         return self._landmarks
 
     @landmarks.setter
@@ -121,7 +124,7 @@ class LandmarkManager(Transformable, Viewable):
         if isinstance(value, PointCloud):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
-                self._target, group_label, value,
+                group_label, value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
