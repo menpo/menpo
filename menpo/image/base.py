@@ -1,6 +1,5 @@
 from __future__ import division
 import abc
-from copy import deepcopy
 
 import numpy as np
 from scipy.misc import imrotate
@@ -634,7 +633,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
             Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        cropped_image = deepcopy(self)
+        cropped_image = self.copy()
         return cropped_image.crop_inplace(
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
@@ -1208,7 +1207,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
         greyscale_image: :class:`MaskedImage`
             A copy of this image in greyscale.
         """
-        greyscale = deepcopy(self)
+        greyscale = self.copy()
         if mode == 'luminosity':
             if self.n_dims != 2:
                 raise ValueError("The 'luminosity' mode only works on 2D RGB"

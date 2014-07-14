@@ -11,6 +11,8 @@ xref_map = {
 'AlignmentSimilarity': ('class', 'menpo.transform.homogeneous.similarity.AlignmentSimilarity'),
 'BooleanImage': ('class', 'menpo.image.boolean.BooleanImage'),
 'CLM': ('class', 'menpo.fitmultilevel.clm.builder.CLM'),
+'circle_fit': ('function', 'menpo.math.circlefit.circle_fit'),
+'CylindricalUnwrap': ('class', 'menpo.transform.unwrap.CylindricalUnwrap'),
 'ComposableTransform': ('class', 'menpo.transform.base.composable.ComposableTransform'),
 'DiscreteAffine': ('class', 'menpo.transform.homogeneous.affine.DiscreteAffine'),
 'DL': ('class', 'menpo.base.DL'),

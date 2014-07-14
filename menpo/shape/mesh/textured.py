@@ -1,11 +1,9 @@
-import copy
 import numpy as np
 
-from menpo.rasterize.base import TextureRasterInfo
 from menpo.shape import PointCloud
-from menpo.visualize import TexturedTriMeshViewer3d
+from menpo.rasterize import Rasterizable, TextureRasterInfo
 from menpo.transform import Scale
-from menpo.rasterize import Rasterizable
+from menpo.visualize import TexturedTriMeshViewer3d
 
 from .base import TriMesh
 
@@ -46,6 +44,15 @@ class TexturedTriMesh(TriMesh, Rasterizable):
             self.texture = texture
         else:
             self.texture = texture.copy()
+
+    @property
+    def _rasterize_type_texture(self):
+        return True  # TexturedTriMesh can specify texture rendering params
+
+    def _rasterize_generate_textured_mesh(self):
+        return TextureRasterInfo(self.points, self.trilist,
+                                 self.tcoords.points,
+                                 self.texture.pixels)
 
     def copy(self):
         r"""
@@ -175,12 +182,3 @@ class TexturedTriMesh(TriMesh, Rasterizable):
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(
             TriMesh.__str__(self), self.texture.shape, self.texture.n_channels)
-
-    @property
-    def _rasterize_type_texture(self):
-        return True  # TexturedTriMesh can specify texture rendering params
-
-    def _rasterize_generate_textured_mesh(self):
-        return TextureRasterInfo(self.points, self.trilist,
-                                 self.tcoords.points,
-                                 self.texture.pixels)

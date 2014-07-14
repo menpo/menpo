@@ -6,9 +6,14 @@ from menpo.fit.fittingresult import FittingResult
 from mock import Mock
 from menpo.shape import PointCloud
 from menpo.testing import is_same_array
+from menpo.image import MaskedImage
 
 
 class MockedFittingResult(FittingResult):
+
+    def __init__(self, image, fitter, **kwargs):
+        FittingResult.__init__(self, MaskedImage.blank((10, 10)), fitter,
+                               **kwargs)
     @property
     def n_iters(self):
         return 1

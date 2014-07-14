@@ -7,6 +7,9 @@ class MockTransformable(Transformable):
     def _transform_inplace(self, transform):
         transform()
 
+    def copy(self):
+        return MockTransformable()
+
 
 def transformable_transform_test():
     mocked = Mock(return_value=1)
