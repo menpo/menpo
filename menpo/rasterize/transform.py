@@ -2,6 +2,42 @@ import numpy as np
 from menpo.transform import Homogeneous, Translation, Scale, NonUniformScale
 
 
+def dims_3to2():
+    r"""
+
+    Returns
+     ------
+    :map`Homogeneous`
+        :map`Homogeneous` that strips off the 3D axis of a 3D shape
+        leaving just the first two axes.
+
+    """
+    return Homogeneous(np.array([[1, 0, 0, 0],
+                                 [0, 1, 0, 0],
+                                 [0, 0, 0, 1]]))
+
+
+def dims_2to3(x=0):
+    r"""
+    Return a :map`Homogeneous` that adds on a 3rd axis to a 2D shape.
+
+    Parameters
+    ----------
+    x : `float`, optional
+        The value that will be assigned to the new third dimension
+
+    Returns
+     ------
+    :map`Homogeneous`
+        :map`Homogeneous` that adds on a 3rd axis to a 2D shape.
+
+    """
+    return Homogeneous(np.array([[1, 0, 0],
+                                 [0, 1, 0],
+                                 [0, 0, x],
+                                 [0, 0, 1]]))
+
+
 def model_to_clip_transform(points, xy_scale=0.9, z_scale=0.3):
     r"""
     Produces an Affine Transform which centres and scales 3D points to fit
@@ -73,9 +109,7 @@ def clip_to_image_transform(width, height):
         space.
     """
     # 1. Remove the z axis from the clip space
-    rem_z = Homogeneous(np.array([[1, 0, 0, 0],
-                                  [0, 1, 0, 0],
-                                  [0, 0, 0, 1]]))
+    rem_z = dims_3to2()
     # 2. invert the y direction (up becomes down)
     invert_y = Scale([1, -1])
     # 3. [-1, 1] [-1, 1] -> [0, 2] [0, 2]
