@@ -53,6 +53,35 @@ class Landmarkable(object):
         return self.landmarks.n_groups
 
 
+class LandmarkableViewable(Landmarkable, Viewable):
+    r"""
+    Mixin for :map:`Landmarkable` and :map:`Viewable` objects. Provides a
+    single helper method for viewing Landmarks and slf on the same figure.
+    """
+
+    def view_landmarks(self, figure_id=None, new_figure=False, **kwargs):
+        """
+        View all landmarks on the current shape, using the default
+        shape view method. Kwargs passed in here will be passed through
+        to the shapes view method.
+
+        Parameters
+        ----------
+        include_labels : `boolean`, optional
+            If `True`, also render the label names next to the landmarks.
+
+        kwargs : `dict`, optional
+            Passed through to the viewer.
+
+        """
+        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
+                              **kwargs)
+        landmark_view = self.landmarks.view(figure_id=self_view.figure_id,
+                                            new_figure=False,
+                                            targettype=type(self))
+        return landmark_view
+
+
 class LandmarkManager(Transformable, Viewable):
     """
     Class for storing and manipulating Landmarks associated with an object.
@@ -535,28 +564,33 @@ class LandmarkGroup(Viewable):
         return LandmarkGroup(self.group_label,
                              self._pointcloud.from_mask(overlap),
                              dict(zip(labels, masks_to_keep)))
-    #
-    # def _view(self, figure_id=None, new_figure=False, include_labels=True,
-    #           **kwargs):
-    #     """
-    #     View all landmarks on the current shape, using the default
-    #     shape view method. Kwargs passed in here will be passed through
-    #     to the shapes view method.
-    #
-    #     Parameters
-    #     ----------
-    #     include_labels : `boolean`, optional
-    #         If `True`, also render the label names next to the landmarks.
-    #     kwargs : `dict`, optional
-    #         Passed through to the viewer.
-    #     """
-    #     target_viewer = self._target.view(figure_id=figure_id,
-    #                                       new_figure=new_figure, **kwargs)
-    #     landmark_viewer = LandmarkViewer(target_viewer.figure_id, False,
-    #                                      self.group_label, self._pointcloud,
-    #                                      self._labels_to_masks, self._target)
-    #
-    #     return landmark_viewer.render(include_labels=include_labels, **kwargs)
+
+    def _view(self, figure_id=None, new_figure=False, include_labels=True,
+              targettype=None, **kwargs):
+        """
+        View all landmarks. Kwargs passed in here will be passed through
+        to the shapes view method.
+
+        Parameters
+        ----------
+        include_labels : `boolean`, optional
+            If `True`, also render the label names next to the landmarks.
+
+        targettype : `type`, optional
+            Hint for the landmark viewer for the type of the object these
+            landmarks are attached to. If ``None``, The landmarks will be
+            visualized without special consideration for the type of the
+            target. Mainly used for :map:`Image` subclasses.
+
+        kwargs : `dict`, optional
+            Passed through to the viewer.
+
+        """
+        landmark_viewer = LandmarkViewer(figure_id, new_figure,
+                                         self.group_label, self._pointcloud,
+                                         self._labels_to_masks,
+                                         targettype=targettype)
+        return landmark_viewer.render(include_labels=include_labels, **kwargs)
 
     def __str__(self):
         return '{}: label: {}, n_labels: {}, n_points: {}'.format(

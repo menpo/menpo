@@ -9,10 +9,10 @@ from skimage.transform import pyramid_gaussian
 from skimage.transform.pyramids import _smooth
 
 from menpo.base import Vectorizable
-from menpo.landmark import Landmarkable
+from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
-from menpo.visualize.base import Viewable, ImageViewer
+from menpo.visualize.base import ImageViewer
 from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
@@ -43,7 +43,7 @@ class ImageBoundaryError(ValueError):
         self.snapped_max = snapped_max
 
 
-class Image(Vectorizable, Landmarkable, Viewable):
+class Image(Vectorizable, LandmarkableViewable):
     r"""
     An n-dimensional image.
 
@@ -82,7 +82,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, image_data, copy=True):
-        Landmarkable.__init__(self)
+        super(Image, self).__init__()
         if not copy:
             # Let's check we don't do a copy!
             image_data_handle = image_data
@@ -104,7 +104,7 @@ class Image(Vectorizable, Landmarkable, Viewable):
                     " - a {}D array "
                     "was provided".format(image_data.ndim))
             self.pixels = np.require(image_data, requirements=['C'])
-        # add FeatureExtraction functionality
+
         self.features = ImageFeatures(self)
 
     @classmethod
