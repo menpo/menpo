@@ -178,17 +178,17 @@ class Viewable(object):
         pass
 
 
-from menpo.visualize.viewmayavi import MayaviPointCloudViewer3d, \
-    MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d, \
-    MayaviColouredTriMeshViewer3d
-from menpo.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
-    MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
-    MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
-    MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d, \
-    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d, \
-    MatplotlibMultiImageSubplotsViewer2d, MatplotlibFittingViewer2d, \
-    MatplotlibFittingSubplotsViewer2d
+from menpo.visualize.viewmayavi import (
+    MayaviPointCloudViewer3d, MayaviTriMeshViewer3d,
+    MayaviTexturedTriMeshViewer3d, MayaviLandmarkViewer3d,
+    MayaviVectorViewer3d, MayaviColouredTriMeshViewer3d)
+from menpo.visualize.viewmatplotlib import (
+    MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
+    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
+    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
+    MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
+    MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
+    MatplotlibFittingViewer2d, MatplotlibFittingSubplotsViewer2d)
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
