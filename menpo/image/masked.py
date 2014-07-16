@@ -1,4 +1,5 @@
 from __future__ import division
+from warnings import warn
 import numpy as np
 from scipy.ndimage import binary_erosion
 
@@ -171,18 +172,25 @@ class MaskedImage(Image):
 
         """
         if self.mask.all_true:
-            if copy:
+            # reshape the vector into the image again
+            pixels = pixels.reshape(self.shape + (self.n_channels,))
+            if not copy:
+                if not pixels.flags.c_contiguous:
+                    warn('The copy flag was NOT honoured. A copy HAS been '
+                         'made. Copy can only be avoided if MaskedImage has '
+                         'an all_true mask and the pixels provided are '
+                         'C-contiguous.')
+                    pixels = pixels.copy()
+            else:
                 pixels = pixels.copy()
-            # Our mask is all True, so if they don't want a copy
-            # we can respect their wishes
-            self.pixels = pixels.reshape(self.shape + (self.n_channels,))
+            self.pixels = pixels
         else:
             self.pixels[self.mask.mask] = pixels
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. copy can only be avoided'
-                              ' if MaskedImage has an all_true mask.')
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                    'copy can only be avoided if MaskedImage has an all_true'
+                    'mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '

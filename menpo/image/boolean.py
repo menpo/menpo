@@ -1,3 +1,4 @@
+from warnings import warn
 import numpy as np
 
 from .base import Image
@@ -32,14 +33,11 @@ class BooleanImage(Image):
         # If we are trying not to copy, but the data we have isn't boolean,
         # then unfortunately, we forced to copy anyway!
         if mask_data.dtype != np.bool:
-            # Unfortunately, even if you were trying not to copy, if you don't
-            # have boolean data we have to copy!
+            mask_data = np.array(mask_data, dtype=np.bool, copy=True,
+                                 order='C')
             if not copy:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. Please use np.bool data'
-                              'to avoid this.')
-            mask_data = np.require(mask_data, dtype=np.bool,
-                                   requirements=['C'])
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                     'Please ensure the data you pass is C-contiguous.')
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod

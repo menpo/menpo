@@ -1,6 +1,5 @@
-from nose.tools import raises
+import warnings
 import numpy as np
-
 from menpo.shape import PointCloud
 from menpo.testing import is_same_array
 
@@ -40,11 +39,13 @@ def test_pointcloud_copy_true():
     assert (not is_same_array(p.points, points))
 
 
-@raises(Warning)
 def test_pointcloud_copy_warning():
     points = np.array([[1, 2, 3],
                        [1, 1, 1]], order='F')
-    PointCloud(points, copy=False)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        PointCloud(points, copy=False)
+        assert len(w) == 1
 
 
 def test_pointcloud_n_dims():
