@@ -164,6 +164,7 @@ class Residual(object):
             # transform
             template, transform, interpolator = forward
             gradient = gradient.warp_to_mask(template.mask, transform,
+                                             warp_landmarks=False,
                                              interpolator=interpolator)
         else:
             # Calculate the gradient over the image and remove one pixels at

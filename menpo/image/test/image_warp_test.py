@@ -9,10 +9,10 @@ import menpo.io as mio
 rgb_image = mio.import_builtin_asset('takeo.ppm')
 gray_image = rgb_image.as_greyscale()
 gray_template = gray_image.crop(np.array([70, 30]),
-                                        np.array([169, 129]))
+                                np.array([169, 129]))
 rgb_template = rgb_image.crop(np.array([70, 30]),
-                                      np.array([169, 129]))
-template_mask = gray_template.mask
+                              np.array([169, 129]))
+template_mask = BooleanImage.blank(gray_template.shape)
 
 initial_params = np.array([0, 0, 0, 0, 70, 30])
 row_indices, col_indices = np.meshgrid(np.arange(50, 100), np.arange(50, 100),
@@ -103,7 +103,7 @@ def test_warp_to_mask_masked_image():
 
 def test_warp_to_shape_equal_warp_to_mask():
     r = menpo.transform.UniformScale(2.0, n_dims=2)
-    b = mio.import_builtin_asset('breakingbad.jpg').as_unmasked()
+    b = mio.import_builtin_asset('breakingbad.jpg')
     m_shape = b.warp_to_shape([540, 960], r)
     m_mask = b.warp_to_mask(menpo.image.BooleanImage.blank([540, 960]), r)
     assert_allclose(m_shape.pixels, m_mask.pixels)

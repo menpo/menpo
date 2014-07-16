@@ -628,6 +628,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
         self.transform.set_target(shape)
         # TODO should the template be a mask or a shape? warp_to_shape here
         warped_image = image.warp_to_mask(self.template.mask, self.transform,
+                                          warp_landmarks=False,
                                           interpolator=self.interpolator)
         features = extract_parametric_features(
             self.appearance_model, warped_image, self.regression_features)

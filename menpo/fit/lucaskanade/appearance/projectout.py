@@ -20,6 +20,7 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute warp Jacobian
@@ -76,6 +77,7 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -136,6 +138,7 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute steepest descent parameter updates

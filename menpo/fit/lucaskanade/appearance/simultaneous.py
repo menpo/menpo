@@ -24,6 +24,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -41,6 +42,7 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute warp Jacobian
@@ -106,6 +108,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -123,6 +126,7 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute steepest descent images, VI_dW_dp
@@ -183,6 +187,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         if project:
             # Obtained weights by projection
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
             weights = self.appearance_model.project(IWxp)
             # Reset template
@@ -200,6 +205,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
             IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False,
                                       interpolator=self.interpolator)
 
             # Compute steepest descent images, VT_dW_dp
