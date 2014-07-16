@@ -16,7 +16,6 @@ def test_trimesh_copy():
 
     assert (not is_same_array(tmesh_copy.points, tmesh.points))
     assert (not is_same_array(tmesh_copy.trilist, tmesh.trilist))
-    assert (tmesh_copy.landmarks['test']._target is tmesh_copy)
     assert (not is_same_array(tmesh_copy.landmarks['test'].lms.points,
                               tmesh.landmarks['test'].lms.points))
 
@@ -35,7 +34,6 @@ def test_colouredtrimesh_copy():
     assert (not is_same_array(ctmesh_copy.points, ctmesh.points))
     assert (not is_same_array(ctmesh_copy.trilist, ctmesh.trilist))
     assert (not is_same_array(ctmesh_copy.colours, ctmesh.colours))
-    assert (ctmesh_copy.landmarks['test']._target is ctmesh_copy)
     assert (not is_same_array(ctmesh_copy.landmarks['test'].lms.points,
                               ctmesh.landmarks['test'].lms.points))
 
@@ -61,11 +59,8 @@ def test_texturedtrimesh_copy():
                               ttmesh.tcoords.points))
     assert (not is_same_array(ttmesh_copy.texture.pixels,
                               ttmesh.texture.pixels))
-    assert (ttmesh_copy.texture.landmarks['test_im']._target is
-            ttmesh_copy.texture)
     assert (not is_same_array(
         ttmesh_copy.texture.landmarks['test_im'].lms.points,
         ttmesh.texture.landmarks['test_im'].lms.points))
-    assert (ttmesh_copy.landmarks['test']._target is ttmesh_copy)
     assert (not is_same_array(ttmesh_copy.landmarks['test'].lms.points,
                               ttmesh.landmarks['test'].lms.points))

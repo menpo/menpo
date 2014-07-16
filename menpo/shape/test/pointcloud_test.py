@@ -20,7 +20,6 @@ def test_pointcloud_copy_method():
     p_copy = p.copy()
 
     assert (not is_same_array(p_copy.points, p.points))
-    assert (p_copy.landmarks['test']._target is p_copy)
     assert (not is_same_array(p_copy.landmarks['test'].lms.points,
                               p.landmarks['test'].lms.points))
 

@@ -48,8 +48,7 @@ def imm_58_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        landmark_group.lms.copy(),
+        group_label, landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(13)
@@ -111,8 +110,7 @@ def ibug_68_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        landmark_group.lms.copy(),
+        group_label, landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(17)
@@ -172,8 +170,8 @@ def ibug_68_contour(landmark_group):
                      np.arange(21, 26), np.arange(1)))
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label, new_landmarks,
-        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        group_label, new_landmarks, {'all': np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool)})
 
     return new_landmark_group
 
@@ -247,8 +245,7 @@ def ibug_68_trimesh(landmark_group):
                         [25, 44, 24], [25, 26, 44], [16, 15, 45], [16, 45, 26],
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        TriMesh(landmark_group.lms.points, tri_list),
+        group_label, TriMesh(landmark_group.lms.points, tri_list),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
@@ -300,8 +297,8 @@ def ibug_68_closed_mouth(landmark_group):
     new_landmarks = landmark_group.lms.copy()
     new_landmarks.points = new_landmarks.points[:-3]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label, new_landmarks,
-        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        group_label, new_landmarks, {'all': np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(17)
     new_landmark_group['leye'] = np.arange(36, 42)
@@ -366,7 +363,7 @@ def ibug_66_points(landmark_group):
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label, new_landmarks,
+        group_label, new_landmarks,
         {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
 
     new_landmark_group['chin'] = np.arange(17)
@@ -430,8 +427,8 @@ def ibug_51_points(landmark_group):
     ind = np.arange(17, 68)
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label, new_landmarks,
-        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        group_label, new_landmarks, {'all': np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool)})
 
     new_landmark_group['leye'] = np.arange(19, 25)
     new_landmark_group['reye'] = np.arange(25, 31)
@@ -495,7 +492,7 @@ def ibug_49_points(landmark_group):
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label, new_landmarks,
+        group_label, new_landmarks,
         {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
 
     new_landmark_group['leye'] = np.arange(19, 25)
@@ -547,8 +544,7 @@ def ibug_open_eye_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        landmark_group.lms.copy(),
+        group_label, landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
@@ -599,8 +595,7 @@ def ibug_close_eye_points(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        landmark_group.lms.copy(),
+        group_label, landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
@@ -670,8 +665,7 @@ def ibug_open_eye_trimesh(landmark_group):
                          [16, 15,  4], [16,  5,  6], [8, 18, 19]])
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        TriMesh(landmark_group.lms.points.copy(), tri_list),
+        group_label, TriMesh(landmark_group.lms.points.copy(), tri_list),
         {'tri': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
@@ -722,8 +716,7 @@ def ibug_close_eye_trimesh(landmark_group):
                          [15,  4,  5], [16,  6,  7]])
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        TriMesh(landmark_group.lms.points.copy(), tri_list),
+        group_label, TriMesh(landmark_group.lms.points.copy(), tri_list),
         {'tri': np.ones(n_points, dtype=np.bool)})
 
     return new_landmark_group
@@ -765,8 +758,7 @@ def ibug_tongue(landmark_group):
                              "has {1} points".format(group_label, n_points))
 
     new_landmark_group = LandmarkGroup(
-        landmark_group._target, group_label,
-        landmark_group.lms.copy(),
+        group_label, landmark_group.lms.copy(),
         {'all': np.ones(n_points, dtype=np.bool)})
 
     new_landmark_group['outline'] = np.arange(0, 12)
