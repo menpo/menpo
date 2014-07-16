@@ -396,6 +396,7 @@ class BooleanImage(Image):
         -------
         warped_image : :map:`BooleanImage`
             A copy of this image, warped.
+
         """
         # call the super variant and get ourselves an Image back
         warped_image = Image.warp_to_shape(self, template_shape, transform,
@@ -403,7 +404,7 @@ class BooleanImage(Image):
                                            order=1, mode=mode, cval=cval)
         # convert to a boolean mask and return
         b = BooleanImage(warped_image.pixels)
-        b.landmarks = warped_image
+        b.landmarks = warped_image.landmarks
         return b
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,

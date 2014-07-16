@@ -132,8 +132,7 @@ class Image(Vectorizable, LandmarkableViewable):
             An image with the same pixels and landmarks as this one, but with
             a mask.
         """
-        from .masked import MaskedImage
-        img = MaskedImage(self.pixels, copy=copy, mask=mask)
+        img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
         return img
 
@@ -847,6 +846,7 @@ class Image(Vectorizable, LandmarkableViewable):
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
+
         """
         # configure the interpolator we are going to use for the warp
         # currently only scipy is supported but in the future we may have CUDA
@@ -931,6 +931,7 @@ class Image(Vectorizable, LandmarkableViewable):
         -------
         warped_image : ``type(self)``
             A copy of this image, warped.
+
         """
         # skimage has an optimised Cython interpolation, if the transform
         # we are using is an Affine we get faster interpolation, so we'll be
