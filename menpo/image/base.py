@@ -1,5 +1,6 @@
 from __future__ import division
 import abc
+from warnings import warn
 
 import numpy as np
 from scipy.misc import imrotate
@@ -84,13 +85,10 @@ class Image(Vectorizable, LandmarkableViewable):
     def __init__(self, image_data, copy=True):
         super(Image, self).__init__()
         if not copy:
-            # Let's check we don't do a copy!
-            image_data_handle = image_data
-            self.pixels = np.require(image_data, requirements=['C'])
-            if self.pixels is not image_data_handle:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. Please ensure the data '
-                              'you pass is C-contiguous.')
+            if not image_data.flags.c_contiguous:
+                image_data = np.array(image_data, copy=True, order='C')
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                     'Please ensure the data you pass is C-contiguous.')
         else:
             image_data = np.array(image_data, copy=True, order='C')
             # Degenerate case whereby we can just put the extra axis
@@ -103,8 +101,7 @@ class Image(Vectorizable, LandmarkableViewable):
                     "1 channel) or 3D+ (2D+ shape, n_channels) "
                     " - a {}D array "
                     "was provided".format(image_data.ndim))
-            self.pixels = np.require(image_data, requirements=['C'])
-
+        self.pixels = image_data
         self.features = ImageFeatures(self)
 
     @classmethod
@@ -369,17 +366,15 @@ class Image(Vectorizable, LandmarkableViewable):
         the operation, in contrast to MaskedImage, where only the masked
         region is used in from_vector{_inplace}() and as_vector().
         """
-        if copy:
-            vector = vector.copy()
-            self.pixels = np.require(vector.reshape(self.pixels.shape),
-                                     requirements=['C'])
+        image_data = vector.reshape(self.pixels.shape)
+        if not copy:
+            if not image_data.flags.c_contiguous:
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                     'Please ensure the data you pass is C-contiguous.')
+                image_data = np.array(image_data, copy=True, order='C')
         else:
-            image_data_handle = vector.reshape(self.pixels.shape)
-            self.pixels = np.require(image_data_handle, requirements=['C'])
-            if self.pixels is not image_data_handle:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. Please ensure the vector '
-                              'you pass is C-contiguous.')
+            image_data = np.array(image_data, copy=True, order='C')
+        self.pixels = image_data
 
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""
