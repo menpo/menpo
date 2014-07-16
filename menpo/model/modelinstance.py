@@ -1,4 +1,5 @@
 from copy import deepcopy
+from warnings import warn
 import numpy as np
 
 from menpo.base import Targetable, Vectorizable, DP
@@ -99,7 +100,7 @@ class ModelInstance(Targetable, Vectorizable, DP):
         """
         return self.model.project(target)
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the current parameters of this transform - this is the
         just the linear model's weights
@@ -233,7 +234,7 @@ class GlobalPDM(PDM):
     def _update_global_transform(self, target):
         self.global_transform.set_target(target)
 
-    def as_vector(self):
+    def _as_vector(self):
         r"""
         Return the current parameters of this transform - this is the
         just the linear model's weights
@@ -297,10 +298,15 @@ class OrthoPDM(GlobalPDM):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
         # 2. Orthonormalize model and similarity model
-        model = deepcopy(model)
-        model.orthonormalize_against_inplace(self.similarity_model)
-        self.similarity_weights = self.similarity_model.project(model.mean)
-        super(OrthoPDM, self).__init__(model, global_transform_cls)
+        try:
+            model_cpy = model.copy()
+        except AttributeError:
+            warn('OrthoPDM() - no copy on model {}'
+                 ', using deepcopy'.format(type(model).__name__))
+            model_cpy = deepcopy(model)
+        model_cpy.orthonormalize_against_inplace(self.similarity_model)
+        self.similarity_weights = self.similarity_model.project(model_cpy.mean)
+        super(OrthoPDM, self).__init__(model_cpy, global_transform_cls)
 
     @property
     def global_parameters(self):

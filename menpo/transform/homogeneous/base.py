@@ -209,12 +209,12 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
 
     @property
     def n_dims(self):
-        return self.h_matrix.shape[0] - 1
+        return self.h_matrix.shape[1] - 1
 
     @property
     def n_dims_output(self):
         # doesn't have to be a square homogeneous matrix...
-        return self.h_matrix.shape[1] - 1
+        return self.h_matrix.shape[0] - 1
 
     def _apply(self, x, **kwargs):
         # convert to homogeneous
@@ -224,8 +224,8 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         # normalize and return
         return (h_y / h_y[:, -1][:, None])[:, :-1]
 
-    def as_vector(self):
-        return self.h_matrix.flatten()
+    def _as_vector(self):
+        return self.h_matrix.ravel()
 
     def from_vector_inplace(self, vector):
         self.set_h_matrix(vector.reshape(self.h_matrix.shape),

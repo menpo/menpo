@@ -53,8 +53,7 @@ class CLMBuilder(DeformableModelBuilder):
 
         If `string`, image features will be computed by executing::
 
-           feature_image = eval('img.feature_type.' +
-                                feature_type[level] + '()')
+           feature_image = getattr(image.features, feature_type[level])()
 
         for each pyramidal level. For this to work properly each `string`
         needs to be one of Menpo's standard image feature methods
@@ -670,7 +669,7 @@ class CLM(object):
             for i in range(self.n_levels - 1, -1, -1):
                 out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
                                                       down_str[i])
-                if self.pyramid_on_features is False:
+                if not self.pyramid_on_features:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
                 out = "{0}     - {1} shape components ({2:.2f}% of " \
@@ -719,9 +718,9 @@ def check_classifier_type(classifier_type, n_levels):
                  "of a list containing 1 or {} closures").format(n_levels)
     if not isinstance(classifier_type, list):
         classifier_type_list = [classifier_type] * n_levels
-    elif len(classifier_type) is 1:
+    elif len(classifier_type) == 1:
         classifier_type_list = [classifier_type[0]] * n_levels
-    elif len(classifier_type) is n_levels:
+    elif len(classifier_type) == n_levels:
         classifier_type_list = classifier_type
     else:
         raise ValueError(str_error)

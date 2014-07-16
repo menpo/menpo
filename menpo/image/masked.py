@@ -1,6 +1,5 @@
 from __future__ import division
-from copy import deepcopy
-
+from warnings import warn
 import numpy as np
 from scipy.ndimage import binary_erosion
 
@@ -196,18 +195,25 @@ class MaskedImage(Image):
 
         """
         if self.mask.all_true:
-            if copy:
+            # reshape the vector into the image again
+            pixels = pixels.reshape(self.shape + (self.n_channels,))
+            if not copy:
+                if not pixels.flags.c_contiguous:
+                    warn('The copy flag was NOT honoured. A copy HAS been '
+                         'made. Copy can only be avoided if MaskedImage has '
+                         'an all_true mask and the pixels provided are '
+                         'C-contiguous.')
+                    pixels = pixels.copy()
+            else:
                 pixels = pixels.copy()
-            # Our mask is all True, so if they don't want a copy
-            # we can respect their wishes
-            self.pixels = pixels.reshape(self.shape + (self.n_channels,))
+            self.pixels = pixels
         else:
             self.pixels[self.mask.mask] = pixels
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. copy can only be avoided'
-                              ' if MaskedImage has an all_true mask.')
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                    'copy can only be avoided if MaskedImage has an all_true'
+                    'mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
@@ -219,9 +225,6 @@ class MaskedImage(Image):
         r"""
         Return a new image with copies of the pixels, landmarks, and masks of
         this image.
-
-        This is an efficient copy method. If you need to copy all the state on
-        the object, consider deepcopy instead.
 
         Returns
         -------
@@ -235,7 +238,7 @@ class MaskedImage(Image):
         new_image.landmarks = self.landmarks
         return new_image
 
-    def as_vector(self, keep_channels=False):
+    def _as_vector(self, keep_channels=False):
         r"""
         Convert image to a vectorized form. Note that the only pixels
         returned here are from the masked region on the image.
@@ -261,7 +264,7 @@ class MaskedImage(Image):
         if keep_channels:
             return self.masked_pixels.reshape([-1, self.n_channels])
         else:
-            return self.masked_pixels.flatten()
+            return self.masked_pixels.ravel()
 
     def from_vector(self, vector, n_channels=None):
         r"""
@@ -657,7 +660,7 @@ class MaskedImage(Image):
         """
         grad_image_pixels = features.gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
-                                 mask=deepcopy(self.mask))
+                                 mask=self.mask.copy(), copy=False)
 
         if nullify_values_at_mask_boundaries:
             # Erode the edge of the mask in by one pixel

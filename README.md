@@ -5,18 +5,15 @@
 IMPORTANT
 =========
 
-Menpo is currently under **agressive development** and is very much a
-**work in progress**. Documentation and examples are outdated, docstrings
-may be incorrect, tests are missing, and even core ideas are not yet fully
-formed. The project is at a pre-alpha stage, and this should be kept in mind
-at all times.
+Menpo is very much a **work in progress**. The project is at a 
+beta stage, and this should be kept in mind at all times.
 
 Menpo. A deformable modelling toolkit.
 ======================================
 What is Menpo?
 --------------
 Menpo is a statistical modelling toolkit, providing all the tools 
-required to build, fit, visualize, and test deformable models like Active Appearance Models, Constrained Local Models, Supervised Descent Method and Morphable Models.
+required to build, fit, visualize, and test deformable models like Active Appearance Models, Constrained Local Models and Supervised Descent Method.
 
 > Menpo were facial armours which covered all or part of the face and provided a way to secure the top-heavy kabuto (helmet). The Shinobi-no-o (chin cord) of the kabuto would be tied under the chin of the menpo. There were small hooks called ori-kugi or posts called odome located on various places to help secure the kabuto's chin cord.
 >

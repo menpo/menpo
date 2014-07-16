@@ -1,12 +1,15 @@
 import numpy as np
+from warnings import warn
 from scipy.spatial import Delaunay
 
 from menpo.shape import PointCloud
-from menpo.shape.mesh.normals import compute_normals
+from menpo.rasterize import Rasterizable, ColourRasterInfo
 from menpo.visualize import TriMeshViewer
 
+from .normals import compute_normals
 
-class TriMesh(PointCloud):
+
+class TriMesh(PointCloud, Rasterizable):
     r"""
     A pointcloud with a connectivity defined by a triangle list. These are
     designed to be explicitly 2D or 3D.
@@ -34,15 +37,20 @@ class TriMesh(PointCloud):
         if trilist is None:
             trilist = Delaunay(points).simplices
         if not copy:
-            # Let's check we don't do a copy!
-            trilist_handle = trilist
-            self.trilist = np.require(trilist, requirements=['C'])
-            if self.trilist is not trilist_handle:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. Please ensure the data '
-                              'you pass is C-contiguous.')
+            if not trilist.flags.c_contiguous:
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                     'Please ensure the data you pass is C-contiguous.')
+                trilist = np.array(trilist, copy=True, order='C')
         else:
-            self.trilist = np.array(trilist, copy=True, order='C')
+            trilist = np.array(trilist, copy=True, order='C')
+        self.trilist = trilist
+
+    @property
+    def _rasterize_type_texture(self):
+        return False
+
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.points)
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),

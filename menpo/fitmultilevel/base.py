@@ -1,7 +1,6 @@
 from __future__ import division
 import abc
 import numpy as np
-from copy import deepcopy
 
 from menpo.fit.base import Fitter
 from menpo.transform import AlignmentAffine, Scale
@@ -107,7 +106,7 @@ class MultilevelFitter(Fitter):
             A fitting result object.
         """
         # copy image
-        image = deepcopy(image)
+        image = image.copy()
 
         # generate image pyramid
         images = self._prepare_image(image, initial_shape, gt_shape=gt_shape)
@@ -321,10 +320,10 @@ class MultilevelFitter(Fitter):
         if type(max_iters) is int:
             max_iters = [np.round(max_iters/n_levels)
                          for _ in range(n_levels)]
-        elif len(max_iters) is 1 and n_levels > 1:
+        elif len(max_iters) == 1 and n_levels > 1:
             max_iters = [np.round(max_iters[0]/n_levels)
                          for _ in range(n_levels)]
-        elif len(max_iters) is not n_levels:
+        elif len(max_iters) != n_levels:
             raise ValueError('max_iters can be integer, integer list '
                              'containing 1 or {} elements or '
                              'None'.format(self.n_levels))

@@ -175,7 +175,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
         raise ValueError("Block size (in cells) must be > 0")
     if l2_norm_clip <= 0.0:
         raise ValueError("Value for L2-norm clipping must be > 0.0")
-    if mode is 'dense':
+    if mode == 'dense':
         if window_unit not in ['pixels', 'blocks']:
             raise ValueError("Window unit must be either pixels or blocks")
         window_height_temp = window_height

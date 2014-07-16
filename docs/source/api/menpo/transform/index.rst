@@ -62,6 +62,16 @@ Radial Basis Functions
    R2LogRRBF
 
 
+Unwrappings
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   CylindricalUnwrap
+   optimal_cylindrical_unwrap
+
+
 Abstract Bases
 --------------
 

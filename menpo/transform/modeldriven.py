@@ -98,7 +98,18 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
         # and update our transform to the new state
         self.transform.set_target(self.target)
 
-    def as_vector(self):
+    @property
+    def n_parameters(self):
+        r"""
+        The total number of parameters.
+
+        Simply ``n_weights``.
+
+        :type: int
+        """
+        return self.pdm.n_parameters
+
+    def _as_vector(self):
         r"""
         Return the current weights of this transform - this is the
         just the linear model's weights

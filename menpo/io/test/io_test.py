@@ -66,8 +66,8 @@ def test_json_landmarks_bunny():
 def test_custom_landmark_logic_bunny():
     def f(mesh):
         return {
-            'no_nose': os.path.join(mesh.ioinfo.dir, 'bunny_no_nose.json'),
-            'full_set': os.path.join(mesh.ioinfo.dir, 'bunny.json')
+            'no_nose': os.path.join(mesh.ioinfo.dir, 'bunny_no_nose.ljson'),
+            'full_set': os.path.join(mesh.ioinfo.dir, 'bunny.ljson')
         }
     mesh = mio.import_mesh(mio.data_path_to('bunny.obj'), landmark_resolver=f)
     assert('no_nose' in mesh.landmarks.group_labels)
@@ -96,7 +96,7 @@ def test_custom_landmark_logic_None_bunny():
 
 
 def test_json_landmarks_bunny_direct():
-    lms = mio.import_landmark_file(mio.data_path_to('bunny.json'))
+    lms = mio.import_landmark_file(mio.data_path_to('bunny.ljson'))
     assert(lms.group_label == 'JSON')
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
@@ -165,7 +165,7 @@ def test_import_images():
 def test_import_auto():
     assets_glob = os.path.join(mio.data_dir_path(), '*')
     assets = list(mio.import_auto(assets_glob))
-    assert(len(assets) == 6)
+    assert(len(assets) == 7)
 
 
 def test_import_auto_max_images():
@@ -183,20 +183,36 @@ def test_import_auto_max_meshes():
 
 def test_ls_builtin_assets():
     assert(set(mio.ls_builtin_assets()) == {'breakingbad.jpg',
-                                            'breakingbad.pts', 'bunny.json',
-                                            'bunny.obj', 'bunny_no_nose.json',
+                                            'breakingbad.pts', 'bunny.ljson',
+                                            'bunny.obj', 'bunny_no_nose.ljson',
                                             'einstein.jpg', 'einstein.pts',
                                             'james.jpg', 'james.mtl',
                                             'james.obj', 'lenna.png',
                                             'lenna.pts', 'takeo.ppm',
-                                            'takeo.pts'})
+                                            'takeo.pts', 'tongue.jpg',
+                                            'tongue.pts'})
 
 
 def test_mesh_paths():
     ls = mio.mesh_paths(os.path.join(mio.data_dir_path(), '*'))
-    assert(len(ls) == 2)
+    assert(len(list(ls)) == 2)
 
 
 def test_image_paths():
     ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
-    assert(len(ls) == 5)
+    assert(len(list(ls)) == 6)
+
+
+@raises(ValueError)
+def test_import_meshes_wrong_path_raises_value_error():
+    list(mio.import_meshes('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+
+
+@raises(ValueError)
+def test_import_images_wrong_path_raises_value_error():
+    list(mio.import_images('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))
+
+
+@raises(ValueError)
+def test_import_landmark_files_wrong_path_raises_value_error():
+    list(mio.import_landmark_files('asldfjalkgjlaknglkajlekjaltknlaekstjlakj'))

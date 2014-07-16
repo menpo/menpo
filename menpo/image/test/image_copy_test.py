@@ -13,7 +13,6 @@ def test_image_copy():
     im_copy = im.copy()
 
     assert (not is_same_array(im.pixels, im_copy.pixels))
-    assert (im_copy.landmarks['test']._target is im_copy)
     assert (not is_same_array(im_copy.landmarks['test'].lms.points,
                               im.landmarks['test'].lms.points))
 
@@ -26,7 +25,6 @@ def test_booleanimage_copy():
     im_copy = im.copy()
 
     assert (not is_same_array(im.pixels, im_copy.pixels))
-    assert (im_copy.landmarks['test']._target is im_copy)
     assert (not is_same_array(im_copy.landmarks['test'].lms.points,
                               im.landmarks['test'].lms.points))
 
@@ -39,6 +37,5 @@ def test_maskedimage_copy():
     im_copy = im.copy()
 
     assert (not is_same_array(im.pixels, im_copy.pixels))
-    assert (im_copy.landmarks['test']._target is im_copy)
     assert (not is_same_array(im_copy.landmarks['test'].lms.points,
                               im.landmarks['test'].lms.points))

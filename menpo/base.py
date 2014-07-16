@@ -1,6 +1,7 @@
 import abc
 from copy import deepcopy
 import os.path
+from warnings import warn
 
 
 class Vectorizable(object):
@@ -22,9 +23,27 @@ class Vectorizable(object):
         """
         return (self.as_vector()).shape[0]
 
+    def as_vector(self, **kwargs):
+        """
+        Returns a flattened representation of the object as a single
+        vector.
+
+        Returns
+        -------
+        vector : (N,) ndarray
+            The core representation of the object, flattened into a
+            single vector. Note that this is always a view back on to the
+            original object, but is not writable.
+        """
+        v = self._as_vector(**kwargs)
+        v.flags.writeable = False
+        return v
+
     @abc.abstractmethod
-    def as_vector(self):
-        """A flattened representation of the object as a vector.
+    def _as_vector(self, **kwargs):
+        """
+        Returns a flattened representation of the object as a single
+        vector.
 
         Returns
         -------
@@ -62,7 +81,12 @@ class Vectorizable(object):
         object : ``type(self)``
             An new instance of this class.
         """
-        self_copy = deepcopy(self)
+        try:
+            self_copy = self.copy()
+        except AttributeError:
+            warn('{}.from_vector() - no copy '
+                 'method, using deepcopy'.format(type(self).__name__))
+            self_copy = deepcopy(self)
         self_copy.from_vector_inplace(vector)
         return self_copy
 

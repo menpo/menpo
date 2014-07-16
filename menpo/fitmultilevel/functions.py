@@ -99,10 +99,14 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
     image_size = np.array(image.shape, dtype=np.int)
     patch_shape = np.array(patch_shape, dtype=np.int)
     centres = np.require(centres.points, dtype=np.int)
-    half_patch_shape = np.require(np.ceil(patch_shape / 2), dtype=np.int)
+    half_patch_shape = np.require(np.floor(patch_shape / 2), dtype=np.int)
+    # deal with odd patch shapes
+    # - add_to_patch[axis] = 0 if patch_shape[axis] is odd
+    # - add_to_patch[axis] = 1 if patch_shape[axis] is even
+    add_to_patch = np.mod(patch_shape, 2)
     # 1. compute the extents
     c_min = centres - half_patch_shape
-    c_max = centres + half_patch_shape
+    c_max = centres + half_patch_shape + add_to_patch
     out_min_min = c_min < 0
     out_min_max = c_min > image_size
     out_max_min = c_max < 0
@@ -186,8 +190,7 @@ def noisy_align(source, target, noise_std=0.04, rotation=False):
     parameter_range = np.hstack((parameters[:2], target.range()))
     noise = (parameter_range * noise_std *
              np.random.randn(transform.n_parameters))
-    parameters += noise
-    return Similarity.identity(source.n_dims).from_vector(parameters)
+    return Similarity.identity(source.n_dims).from_vector(parameters + noise)
 
 
 def align_shape_with_bb(shape, bounding_box):
@@ -218,11 +221,11 @@ def align_shape_with_bb(shape, bounding_box):
 def compute_error(target, ground_truth, error_type='me_norm'):
     r"""
     """
-    if error_type is 'me_norm':
+    if error_type == 'me_norm':
         return _compute_me_norm(target, ground_truth)
-    elif error_type is 'me':
+    elif error_type == 'me':
         return _compute_me(target, ground_truth)
-    elif error_type is 'rmse':
+    elif error_type == 'rmse':
         return _compute_rmse(target, ground_truth)
     else:
         raise ValueError("Unknown error_type string selected. Valid options "

@@ -54,6 +54,13 @@ class ColouredTriMesh(TriMesh, Rasterizable):
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
 
+    @property
+    def _rasterize_type_texture(self):
+        return False
+
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.colours)
+
     def copy(self):
         r"""
         An efficient copy of this ColouredTriMesh.
@@ -106,10 +113,3 @@ class ColouredTriMesh(TriMesh, Rasterizable):
             return super(ColouredTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,
                                                       **kwargs)
-
-    @property
-    def _rasterize_type_texture(self):
-        return False
-
-    def _rasterize_generate_color_mesh(self):
-        return ColourRasterInfo(self.points, self.trilist, self.colours)

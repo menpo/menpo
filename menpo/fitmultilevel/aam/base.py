@@ -279,10 +279,10 @@ class LucasKanadeAAMFitter(AAMFitter):
             if type(n_shape) is int or type(n_shape) is float:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape
-            elif len(n_shape) is 1 and self.aam.n_levels > 1:
+            elif len(n_shape) == 1 and self.aam.n_levels > 1:
                 for sm in self.aam.shape_models:
                     sm.n_active_components = n_shape[0]
-            elif len(n_shape) is self.aam.n_levels:
+            elif len(n_shape) == self.aam.n_levels:
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
@@ -295,10 +295,10 @@ class LucasKanadeAAMFitter(AAMFitter):
             if type(n_appearance) is int or type(n_appearance) is float:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance
-            elif len(n_appearance) is 1 and self.aam.n_levels > 1:
+            elif len(n_appearance) == 1 and self.aam.n_levels > 1:
                 for am in self.aam.appearance_models:
                     am.n_active_components = n_appearance[0]
-            elif len(n_appearance) is self.aam.n_levels:
+            elif len(n_appearance) == self.aam.n_levels:
                 for am, n in zip(self.aam.appearance_models, n_appearance):
                     am.n_active_components = n
             else:
@@ -386,7 +386,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 out = "{}   - Pyramid was applied on feature space.\n   " \
                       "{}{} {} per image.\n".format(out, feat_str,
                                                     n_channels[0], ch_str[0])
-                if self.aam.scaled_shape_models is False:
+                if not self.aam.scaled_shape_models:
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out, self._fitters[0].appearance_model.n_features,
@@ -399,11 +399,11 @@ class LucasKanadeAAMFitter(AAMFitter):
             for i in range(self.n_levels - 1, -1, -1):
                 out = "{}   - Level {} {}: \n".format(out, self.n_levels - i,
                                                       down_str[i])
-                if self.pyramid_on_features is False:
+                if not self.pyramid_on_features:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
                 if (self.aam.scaled_shape_models or
-                        self.pyramid_on_features is False):
+                        (not self.pyramid_on_features)):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out, self._fitters[i].appearance_model.n_features,

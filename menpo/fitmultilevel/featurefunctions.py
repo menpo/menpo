@@ -14,7 +14,7 @@ def compute_features(image, feature_type):
         If `string`, the feature representation will be extracted by
         executing::
 
-            feature_image = eval('img.features.' + feature_type + '()')
+            feature_image = getattr(image.features, feature_type)()
 
         For this to work properly feature_type needs to be one of
         Menpo's standard image feature methods. Note that, in this case,
@@ -41,7 +41,7 @@ def compute_features(image, feature_type):
     """
     if feature_type is not None:
         if isinstance(feature_type, str):
-            image = eval('image.features.' + feature_type + '()')
+            image = getattr(image.features, feature_type)()
         elif hasattr(feature_type, '__call__'):
             image = feature_type(image)
         else:

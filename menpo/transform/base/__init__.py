@@ -1,5 +1,4 @@
 import abc
-from copy import deepcopy
 
 
 class Transform(object):
@@ -242,6 +241,18 @@ class Transformable(object):
             The transformed object, having been transformed in place.
         """
 
+    @abc.abstractmethod
+    def copy(self):
+        r"""
+        Return an efficient copy of self.
+
+        Returns
+        -------
+        copy : ``type(self)``
+            An efficient copy of self.
+
+        """
+
     def _transform(self, transform):
         r"""
         Apply the :map:`Transform` given in a non destructive manner -
@@ -257,7 +268,7 @@ class Transformable(object):
         transformed : ``type(self)``
             A copy of the object, transformed.
         """
-        copy_of_self = deepcopy(self)
+        copy_of_self = self.copy()
         # transform the copy destructively
         copy_of_self._transform_inplace(transform)
         return copy_of_self
