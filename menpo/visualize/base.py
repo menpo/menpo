@@ -178,17 +178,17 @@ class Viewable(object):
         pass
 
 
-from menpo.visualize.viewmayavi import MayaviPointCloudViewer3d, \
-    MayaviTriMeshViewer3d, MayaviTexturedTriMeshViewer3d, \
-    MayaviLandmarkViewer3d, MayaviVectorViewer3d, MayaviSurfaceViewer3d, \
-    MayaviColouredTriMeshViewer3d
-from menpo.visualize.viewmatplotlib import MatplotlibImageViewer2d, \
-    MatplotlibImageSubplotsViewer2d, MatplotlibPointCloudViewer2d, \
-    MatplotlibLandmarkViewer2d, MatplotlibLandmarkViewer2dImage, \
-    MatplotlibTriMeshViewer2d, MatplotlibAlignmentViewer2d, \
-    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d, \
-    MatplotlibMultiImageSubplotsViewer2d, MatplotlibFittingViewer2d, \
-    MatplotlibFittingSubplotsViewer2d
+from menpo.visualize.viewmayavi import (
+    MayaviPointCloudViewer3d, MayaviTriMeshViewer3d,
+    MayaviTexturedTriMeshViewer3d, MayaviLandmarkViewer3d,
+    MayaviVectorViewer3d, MayaviColouredTriMeshViewer3d)
+from menpo.visualize.viewmatplotlib import (
+    MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
+    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
+    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
+    MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
+    MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
+    MatplotlibFittingViewer2d, MatplotlibFittingSubplotsViewer2d)
 
 # Default importer types
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
@@ -220,31 +220,36 @@ class LandmarkViewer(object):
     figure_id : object
         A figure id. Could be any valid object that identifies
         a figure in a given framework (string, int, etc)
-    new_figure : bool
+
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    group_label : string
+
+    group_label : `str`
         The main label of the landmark set.
-    pointcloud : :class:`menpo.shape.pointcloud.PointCloud`
-        The pointclouds representing the landmarks.
-    labels_to_masks : dict(string, ndarray)
+
+    pointcloud : :map:`PointCloud`
+        The pointcloud representing the landmarks.
+
+    labels_to_masks : `dict(string, ndarray)`
         A dictionary of labels to masks into the pointcloud that represent
         which points belong to the given label.
-    target : :class:`menpo.landmarks.base.Landmarkable`
-        The parent shape that we are drawing the landmarks for.
-    """
 
-    def __init__(self, figure_id, new_figure,
-                 group_label, pointcloud, labels_to_masks, target):
+    targettype : `type` of :map:`Landmarkable`
+        The parent object that we are drawing the landmarks for.
+
+    """
+    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+                 labels_to_masks, targettype=None):
         self.pointcloud = pointcloud
         self.group_label = group_label
         self.labels_to_masks = labels_to_masks
-        self.target = target
         self.figure_id = figure_id
         self.new_figure = new_figure
+        self.targettype = targettype
 
     def render(self, **kwargs):
         r"""
-        Select the correct type of landmark viewer for the given parent shape.
+        Select the correct type of landmark viewer for the given parent object.
 
         Parameters
         ----------
@@ -264,7 +269,8 @@ class LandmarkViewer(object):
         if self.pointcloud.n_dims == 2:
             from menpo.image.base import Image
 
-            if isinstance(self.target, Image):
+            if (self.targettype is not None and
+                    issubclass(self.targettype, Image)):
                 return LandmarkViewer2dImage(
                     self.figure_id, self.new_figure,
                     self.group_label, self.pointcloud,

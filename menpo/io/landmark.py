@@ -47,7 +47,7 @@ class LandmarkImporter(Importer):
             Every point will be labelled.
         """
         self._parse_format(asset=asset)
-        return LandmarkGroup(None, self.group_label, self.pointcloud,
+        return LandmarkGroup(self.group_label, self.pointcloud,
                              self.labels_to_masks)
 
     @abc.abstractmethod
