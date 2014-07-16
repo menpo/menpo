@@ -102,6 +102,7 @@ class Image(Vectorizable, LandmarkableViewable):
                     " - a {}D array "
                     "was provided".format(image_data.ndim))
         self.pixels = image_data
+        self.features = ImageFeatures(self)
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
