@@ -31,7 +31,6 @@ class PointCloud(Shape):
         super(PointCloud, self).__init__()
         if not copy:
             if not points.flags.c_contiguous:
-                print 'array is non-contiguous'
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
                 points = np.array(points, copy=True, order='C')

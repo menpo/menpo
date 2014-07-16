@@ -87,10 +87,8 @@ class Image(Vectorizable, Landmarkable, Viewable):
         if not copy:
             if not image_data.flags.c_contiguous:
                 image_data = np.array(image_data, copy=True, order='C')
-                print('about to warn!')
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
                      'Please ensure the data you pass is C-contiguous.')
-                print 'you have been warned.'
         else:
             image_data = np.array(image_data, copy=True, order='C')
             # Degenerate case whereby we can just put the extra axis
