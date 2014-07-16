@@ -30,7 +30,8 @@ class Shape(Vectorizable, Transformable, LandmarkableViewable):
         self : `self`
             A pointer to `self` (the result of :meth:`_transform_self_inplace`).
         """
-        self.landmarks._transform_inplace(transform)
+        if self.has_landmarks:
+            self.landmarks._transform_inplace(transform)
         return self._transform_self_inplace(transform)
 
     @abc.abstractmethod
