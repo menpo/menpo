@@ -3,8 +3,42 @@ from copy import deepcopy
 import os.path
 from warnings import warn
 
+# To debug the Copyable interface, simply uncomment these lines and the four
+# lines in the copy() method. Then you can call print_copyable_log() to see
+# exactly what types have been skipped in copying and why.
+#
+# from collections import defaultdict
+# alien_copies = defaultdict(set)
+# non_copies = defaultdict(set)
+#
+#
+# def print_copyable_log():
+#     print('Has .copy() but not Copyable:')
+#     for k, v in alien_copies.iteritems():
+#         print('  {:15}|  {}'.format(k, ', '.join(v)))
+#
+#     print('\nNo .copy() (shallow copied):')
+#     for k, v in non_copies.iteritems():
+#         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
-class Vectorizable(object):
+
+class Copyable(object):
+
+    def copy(self):
+        # print('copy called on {}'.format(type(self).__name__))
+        new = self.__class__.__new__(self.__class__)
+        for k, v in self.__dict__.iteritems():
+            try:
+                new.__dict__[k] = v.copy()
+                # if not isinstance(v, Copyable):
+                #     alien_copies[type(v).__name__].add(type(self).__name__)
+            except AttributeError:
+                new.__dict__[k] = v
+                # non_copies[type(v).__name__].add(type(self).__name__)
+        return new
+
+
+class Vectorizable(Copyable):
     """Flattening of rich objects to vectors and rebuilding them back.
 
     Interface that provides methods for 'flattening' an object into a
@@ -91,7 +125,7 @@ class Vectorizable(object):
         return self_copy
 
 
-class Targetable(object):
+class Targetable(Copyable):
     """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
 
 
