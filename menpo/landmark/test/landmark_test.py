@@ -33,7 +33,7 @@ def test_LandmarkManager_set_LandmarkGroup():
     pcloud = PointCloud(points, copy=False)
     lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = lgroup
     assert (not is_same_array(man['test_set'].lms.points,
                               lgroup.lms.points))
@@ -46,7 +46,7 @@ def test_LandmarkManager_set_pointcloud():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
 
     lgroup = man['test_set']
@@ -76,7 +76,7 @@ def test_LandmarkManager_copy_method():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
     man_copy = man.copy()
 
@@ -90,7 +90,7 @@ def test_LandmarkManager_set_PointCloud_not_copy_target():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
     print(man['test_set'])
     assert (not is_same_array(man['test_set'].lms.points,
@@ -104,7 +104,7 @@ def test_LandmarkManager_iterate():
     pcloud = PointCloud(points, copy=False)
     target = PointCloud(points)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
 
     for l in man:
@@ -131,7 +131,7 @@ def test_LandmarkManager_get():
 
     lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man._landmark_groups['test_set'] = lgroup
 
     assert_equal(man['test_set'], lgroup)
@@ -144,7 +144,7 @@ def test_LandmarkManager_set():
 
     lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = lgroup
 
     assert_equal(man._landmark_groups['test_set'].group_label,
@@ -159,7 +159,7 @@ def test_LandmarkManager_del():
     pcloud = PointCloud(points, copy=False)
     target = PointCloud(points)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
 
     del man['test_set']
@@ -171,7 +171,7 @@ def test_LandmarkManager_in():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
 
     assert ('test_set' in man)
@@ -307,7 +307,7 @@ def test_LandmarkManager_str():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
 
-    man = LandmarkManager(3)
+    man = LandmarkManager()
     man['test_set'] = pcloud
 
     out_str = man.__str__()
