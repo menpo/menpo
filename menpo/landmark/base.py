@@ -34,6 +34,10 @@ class Landmarkable(object):
             self._landmarks = LandmarkManager(self.n_dims)
         return self._landmarks
 
+    @property
+    def has_landmarks(self):
+        return self._landmarks is None
+
     @landmarks.setter
     def landmarks(self, value):
         # firstly, make sure the dim is correct

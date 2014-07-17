@@ -547,6 +547,6 @@ def test_sdm2_fit():
 
 @attr('fuzzy')
 def test_sdm3_fit():
-    sdm_helper(sdm3, 0, None, '0.079', '4.891', 'me_norm', True)
-    sdm_helper(sdm3, 1, None, '7.294', '1.492', 'me', True)
-    sdm_helper(sdm3, 2, None, '10.69', '1.382', 'rmse', True)
+    sdm_helper(sdm3, 0, None, '0.079', '2.961', 'me_norm', True)
+    sdm_helper(sdm3, 1, None, '7.294', '9.005', 'me', True)
+    sdm_helper(sdm3, 2, None, '10.69', '1.517', 'rmse', True)

@@ -70,7 +70,7 @@ class Translation(DiscreteAffine, Similarity):
 
         :return: :class:`Translation`
         """
-        return Translation(-self.translation_component)
+        return Translation(-self.translation_component, skip_checks=True)
 
     def d_dp(self, points):
         # TODO implement d_dp for Translation
