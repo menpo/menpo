@@ -1,5 +1,3 @@
-from copy import deepcopy
-from warnings import warn
 import numpy as np
 
 from menpo.base import Targetable, Vectorizable, DP
@@ -298,12 +296,7 @@ class OrthoPDM(GlobalPDM):
         # 1. Construct similarity model from the mean of the model
         self.similarity_model = Similarity2dInstanceModel(model.mean)
         # 2. Orthonormalize model and similarity model
-        try:
-            model_cpy = model.copy()
-        except AttributeError:
-            warn('OrthoPDM() - no copy on model {}'
-                 ', using deepcopy'.format(type(model).__name__))
-            model_cpy = deepcopy(model)
+        model_cpy = model.copy()
         model_cpy.orthonormalize_against_inplace(self.similarity_model)
         self.similarity_weights = self.similarity_model.project(model_cpy.mean)
         super(OrthoPDM, self).__init__(model_cpy, global_transform_cls)
