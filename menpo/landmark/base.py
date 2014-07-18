@@ -111,16 +111,13 @@ class LandmarkManager(Transformable, Viewable):
 
     def copy(self):
         r"""
-        An efficient copy of this landmark manager.
-
-        Note that the returned landmark manager will share the same target as
-        self - the target will not be copied.
+        Generate an efficient copy of this :map:`LandmarkManager`.
 
         Returns
         -------
 
-        manager : :map:`LandmarkManager`
-            A manager with an identical set of annotations to this one.
+        ``type(self)``
+            A copy of this object
 
         """
         # do a normal copy. The dict will be shallow copied - rectify that here
@@ -345,16 +342,14 @@ class LandmarkGroup(Copyable, Viewable):
 
     def copy(self):
         r"""
-        An efficient copy of this landmark group.
-
-        Note that the returned landmark group will share the same target as
-        self - the target will not be copied.
+        Generate an efficient copy of this :map:`LandmarkGroup`.
 
         Returns
         -------
-        group : :map:`LandmarkGroup`
-            A group with an identical set of points, labels, and masks
-            as this one.
+
+        ``type(self)``
+            A copy of this object
+
         """
         new = Copyable.copy(self)
         for k, v in new._labels_to_masks.iteritems():

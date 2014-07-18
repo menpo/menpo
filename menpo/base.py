@@ -24,8 +24,31 @@ from warnings import warn
 
 
 class Copyable(object):
+    """
+    Efficient copying of classes containing numpy arrays
+
+    Interface that provides a single method for copying classes very
+    efficiently.
+    """
 
     def copy(self):
+        r"""
+        Generate an efficient copy of this object.
+
+        Note that Numpy arrays and other :map:`Copyable` objects on ``self``
+        will be deeply copied. Dictionaries and sets will be shallow copied,
+        and everything else will be assigned (no copy will be made).
+
+        Classes that store state other than numpy arrays and immutable types
+        should overwrite this method to ensure all state is copied.
+
+        Returns
+        -------
+
+        ``type(self)``
+            A copy of this object
+
+        """
         # print('copy called on {}'.format(type(self).__name__))
         new = self.__class__.__new__(self.__class__)
         for k, v in self.__dict__.iteritems():
@@ -40,7 +63,8 @@ class Copyable(object):
 
 
 class Vectorizable(Copyable):
-    """Flattening of rich objects to vectors and rebuilding them back.
+    """
+    Flattening of rich objects to vectors and rebuilding them back.
 
     Interface that provides methods for 'flattening' an object into a
     vector, and restoring from the same vectorized form. Useful for

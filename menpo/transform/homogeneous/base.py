@@ -29,14 +29,14 @@ class HomogFamilyAlignment(Alignment):
 
     def copy(self):
         r"""
-        Returns an efficient copy of this Homogeneous family transform (i.e.
-        one with the same homogeneous matrix). If you need all state to be
-        perfectly replicated, consider deepcopy() instead.
+        Generate an efficient copy of this :map:`HomogFamilyAlignment`.
 
         Returns
         -------
-        h_transform: :map:`Homogeneous` or :map:`Homogeneous` subclass
-            A copy fo the transform with the same h_matrix.
+
+        ``type(self)``
+            A copy of this object
+
         """
         new = self.__class__.__new__(self.__class__)
         # Shallow copy everything except the h_matrix
