@@ -61,24 +61,6 @@ class ColouredTriMesh(TriMesh, Rasterizable):
     def _rasterize_generate_color_mesh(self):
         return ColourRasterInfo(self.points, self.trilist, self.colours)
 
-    def copy(self):
-        r"""
-        An efficient copy of this ColouredTriMesh.
-
-        Only landmarks and points will be transferred. For a full copy consider
-        using `deepcopy()`.
-
-        Returns
-        -------
-        colouredtrimesh: :map:`ColouredTriMesh`
-            A ColouredTriMesh with the same points, trilist, colours and
-            landmarks as this one.
-        """
-        new_ctm = ColouredTriMesh(self.points, colours=self.colours,
-                                  trilist=self.trilist, copy=True)
-        new_ctm.landmarks = self.landmarks
-        return new_ctm
-
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
         Visualize the :class:`ColouredTriMesh`. Only 3D objects are currently

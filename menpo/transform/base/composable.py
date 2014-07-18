@@ -1,6 +1,4 @@
 import abc
-from copy import deepcopy
-from warnings import warn
 
 from menpo.transform.base import Transform
 
@@ -180,13 +178,7 @@ class ComposableTransform(Transform):
             The resulting transform.
         """
         # naive approach - copy followed by the inplace operation
-
-        try:
-            self_copy = self.copy()
-        except AttributeError:
-            warn('{}._compose_before() - no copy '
-                 'method, using deepcopy'.format(type(self).__name__))
-            self_copy = deepcopy(self)
+        self_copy = self.copy()
         self_copy._compose_before_inplace(transform)
         return self_copy
 
@@ -206,12 +198,7 @@ class ComposableTransform(Transform):
             The resulting transform.
         """
         # naive approach - copy followed by the inplace operation
-        try:
-            self_copy = self.copy()
-        except AttributeError:
-            warn('{}._compose_after() - no copy '
-                 'method, using deepcopy'.format(type(self).__name__))
-            self_copy = deepcopy(self)
+        self_copy = self.copy()
         self_copy._compose_after_inplace(transform)
         return self_copy
 

@@ -26,9 +26,6 @@ class MockedVInvertable(VInvertible, Vectorizable):
     def has_true_inverse(self):
         return True
 
-    def copy(self):
-        return MockedVInvertable()
-
 
 def vinertable_pseudoinverse_test():
     v = MockedVInvertable()

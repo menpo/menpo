@@ -11,6 +11,7 @@ Core interfaces of Menpo.
 .. toctree::
    :maxdepth: 1
 
+   Copyable
    Vectorizable
    Targetable
 

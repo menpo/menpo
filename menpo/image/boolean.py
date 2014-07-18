@@ -160,26 +160,6 @@ class BooleanImage(Image):
                 'of which is True'.format(self._str_shape, self.n_dims,
                                           self.proportion_true))
 
-    def copy(self):
-        r"""
-        Return a new image with copies of the pixels and landmarks of this
-        image.
-
-        This is an efficient copy method. If you need to copy all the state on
-        the object, consider deepcopy instead.
-
-        Returns
-        -------
-
-        image: :map:`BooleanImage`
-            A new image with the same pixels and landmarks as this one,
-            just copied.
-
-        """
-        new_image = BooleanImage(self.pixels[..., 0])
-        new_image.landmarks = self.landmarks
-        return new_image
-
     def from_vector(self, vector, copy=True):
         r"""
         Takes a flattened vector and returns a new :map:`BooleanImage` formed

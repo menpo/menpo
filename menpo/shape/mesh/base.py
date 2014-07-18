@@ -56,22 +56,6 @@ class TriMesh(PointCloud, Rasterizable):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
 
-    def copy(self):
-        r"""
-        An efficient copy of this TriMesh.
-
-        Only landmarks and points will be transferred. For a full copy consider
-        using `deepcopy()`.
-
-        Returns
-        -------
-        trimesh: :map:`TriMesh`
-            A TriMesh with the same points, trilist and landmarks as this one.
-        """
-        new_tm = TriMesh(self.points, trilist=self.trilist, copy=True)
-        new_tm.landmarks = self.landmarks
-        return new_tm
-
     def tojson(self):
         r"""
         Convert this `TriMesh` to a dictionary JSON representation.
