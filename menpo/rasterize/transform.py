@@ -1,3 +1,4 @@
+from functools import reduce
 import numpy as np
 from menpo.transform import Homogeneous, Translation, Scale, NonUniformScale
 

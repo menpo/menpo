@@ -251,7 +251,7 @@ class GradientDescentCLMFitter(CLMFitter):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].func_name)
+                    self.feature_type[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -267,7 +267,7 @@ class GradientDescentCLMFitter(CLMFitter):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].func_name))
+                        self.feature_type[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -305,7 +305,7 @@ class GradientDescentCLMFitter(CLMFitter):
                       "classifiers.\n".format(
                       out, self._fitters[i].transform.n_parameters,
                       len(self._fitters[i].classifiers),
-                      self._fitters[i].classifiers[0].func_name)
+                      self._fitters[i].classifiers[0].__name__)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -315,5 +315,5 @@ class GradientDescentCLMFitter(CLMFitter):
                   out, feat_str[0], n_channels[0], ch_str[0],
                   out, self._fitters[0].transform.n_parameters,
                   len(self._fitters[0].classifiers),
-                  self._fitters[0].classifiers[0].func_name)
+                  self._fitters[0].classifiers[0].__name__)
         return out
