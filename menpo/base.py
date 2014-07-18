@@ -1,7 +1,5 @@
 import abc
-from copy import deepcopy
 import os.path
-from warnings import warn
 
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
 # four lines in the copy() method.
@@ -25,7 +23,7 @@ from warnings import warn
 
 class Copyable(object):
     """
-    Efficient copying of classes containing numpy arrays
+    Efficient copying of classes containing numpy arrays.
 
     Interface that provides a single method for copying classes very
     efficiently.
@@ -140,14 +138,9 @@ class Vectorizable(Copyable):
         object : ``type(self)``
             An new instance of this class.
         """
-        try:
-            self_copy = self.copy()
-        except AttributeError:
-            warn('{}.from_vector() - no copy '
-                 'method, using deepcopy'.format(type(self).__name__))
-            self_copy = deepcopy(self)
-        self_copy.from_vector_inplace(vector)
-        return self_copy
+        new = self.copy()
+        new.from_vector_inplace(vector)
+        return new
 
 
 class Targetable(Copyable):

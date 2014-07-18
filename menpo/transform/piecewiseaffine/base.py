@@ -1,7 +1,7 @@
 import abc
 import numpy as np
-
-from menpo.base import DX, DL
+from copy import deepcopy
+from menpo.base import Copyable, DX, DL
 from menpo.transform import Affine
 from menpo.transform.base import Alignment, Invertible, Transform
 from .fastpwa import CLookupPWA
@@ -486,6 +486,11 @@ class CachedPWA(AbstractPWA):
         self._fastpwa = CLookupPWA(source_c, trilist_c)
         self.ti, self.tij, self.tik = None, None, None
         self._rebuild_target_vectors()
+
+    def copy(self):
+        new = Copyable.copy(self)
+        new._fastpwa = deepcopy(self._fastpwa)
+        return new
 
     def _rebuild_target_vectors(self):
         r"""
