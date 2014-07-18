@@ -1,1 +1,1 @@
-from base import AssimpImporter, WRLImporter, MJSONImporter
+from .base import AssimpImporter, WRLImporter, MJSONImporter
