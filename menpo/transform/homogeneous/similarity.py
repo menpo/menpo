@@ -39,7 +39,7 @@ class Similarity(Affine):
 
     @classmethod
     def identity(cls, n_dims):
-        return Similarity(np.eye(n_dims + 1))
+        return Similarity(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     @property
     def n_parameters(self):
@@ -246,39 +246,11 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     """
     def __init__(self, source, target, rotation=True):
         HomogFamilyAlignment.__init__(self, source, target)
-        x = self._procrustes_alignment(source, target, rotation=rotation)
+        x = procrustes_alignment(source, target, rotation=rotation)
         Similarity.__init__(self, x.h_matrix, copy=False, skip_checks=True)
 
-    @staticmethod
-    def _procrustes_alignment(source, target, rotation=True):
-        r"""
-        Returns the similarity transform that aligns the source to the target.
-
-        """
-        from .rotation import Rotation, optimal_rotation_matrix
-        from .translation import Translation
-        from .scale import UniformScale
-        target_translation = Translation(-target.centre)
-        centred_target = target_translation.apply(target)
-        # now translate the source to the origin
-        translation = Translation(-source.centre)
-        # apply the translation to the source
-        aligned_source = translation.apply(source)
-        scale = UniformScale(target.norm() / source.norm(), source.n_dims)
-        scaled_aligned_source = scale.apply(aligned_source)
-        # compute the target's inverse translation
-        inv_target_translation = target_translation.pseudoinverse
-        if rotation:
-            rotation = Rotation(optimal_rotation_matrix(scaled_aligned_source,
-                                                        centred_target))
-            return translation.compose_before(scale).compose_before(
-                rotation).compose_before(inv_target_translation)
-        else:
-            return translation.compose_before(scale).compose_before(
-                inv_target_translation)
-
     def _sync_state_from_target(self):
-        similarity = self._procrustes_alignment(self.source, self.target)
+        similarity = procrustes_alignment(self.source, self.target)
         self._set_h_matrix(similarity.h_matrix, copy=False, skip_checks=True)
 
     def as_non_alignment(self):
@@ -316,3 +288,58 @@ class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
         """
         Similarity.from_vector_inplace(self, p)
         self._sync_target_from_state()
+
+
+def procrustes_alignment(source, target, rotation=True):
+    r"""
+    Returns the similarity transform that aligns the source to the target.
+
+    Parameters
+    ----------
+
+
+    source : :map:`PointCloud`
+        The source pointcloud
+
+    target : :map:`PointCloud`
+        The target pointcloud
+
+    rotation : `bool`, optional
+        If `True`, rotation is allowed in the Procrustes calculation. If
+        False, only scale and translation effects are used.
+
+    Returns
+    -------
+
+    :map:`Similarity`
+        A :map:`Similarity Transform that optimally aligns the ``source`` to
+        ``target``.
+
+    """
+    from .rotation import Rotation, optimal_rotation_matrix
+    from .translation import Translation
+    from .scale import UniformScale
+    # Compute the transforms we need - centering translations...
+    tgt_t = Translation(-target.centre, skip_checks=True)
+    src_t = Translation(-source.centre, skip_checks=True)
+    # and a scale that matches the norm of the source to the norm of the target
+    src_s = UniformScale(target.norm() / source.norm(), source.n_dims,
+                         skip_checks=True)
+
+    # start building the Procrustes Alignment - src translation followed by
+    # scale
+    p = Similarity.identity(source.n_dims)
+    p.compose_before_inplace(src_t)
+    p.compose_before_inplace(src_s)
+
+    if rotation:
+        # to calculate optimal rotation we need the source and target in the
+        # centre and of the correct size. Use the current p to do this
+        aligned_src = p.apply(source)
+        aligned_tgt = tgt_t.apply(target)
+        r = Rotation(optimal_rotation_matrix(aligned_src, aligned_tgt),
+                     skip_checks=True)
+        p.compose_before_inplace(r)
+    # finally, translate the target back
+    p.compose_before_inplace(tgt_t.pseudoinverse)
+    return p

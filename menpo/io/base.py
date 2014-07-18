@@ -483,7 +483,7 @@ def _import(filepath, extensions_map, keep_importer=False,
 
     # attach ioinfo
     for x in built_objects:
-        x.ioinfo = ioinfo.copy()
+        x.ioinfo = ioinfo
 
     # handle landmarks
     if has_landmarks:
@@ -496,10 +496,8 @@ def _import(filepath, extensions_map, keep_importer=False,
                 lms = _import(lm_path, all_landmark_types, keep_importer=False,
                               has_landmarks=False, asset=asset)
                 for x in built_objects:
-                    try:
+                    if x.n_dims == lms.n_dims:
                         x.landmarks[lms.group_label] = lms
-                    except ValueError:
-                        pass
         else:
             for x in built_objects:
                 lm_paths = landmark_resolver(x)  # use the users fcn to find
@@ -865,9 +863,6 @@ class IOInfo(object):
         self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
         self.extension = os.path.splitext(self.filepath)[1]
         self.dir = os.path.dirname(self.filepath)
-
-    def copy(self):
-        return IOInfo(self.filepath)
 
     def __str__(self):
         return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(

@@ -2,12 +2,13 @@ import abc
 
 import numpy as np
 
+from menpo.base import Copyable
 from menpo.transform.base import Transformable
 from menpo.visualize import LandmarkViewer
 from menpo.visualize.base import Viewable
 
 
-class Landmarkable(object):
+class Landmarkable(Copyable):
     r"""
     Abstract interface for object that can have landmarks attached to them.
     Landmarkable objects have a public dictionary of landmarks which are
@@ -31,13 +32,18 @@ class Landmarkable(object):
     @property
     def landmarks(self):
         if self._landmarks is None:
-            self._landmarks = LandmarkManager(self.n_dims)
+            self._landmarks = LandmarkManager()
         return self._landmarks
+
+    @property
+    def has_landmarks(self):
+        return self._landmarks is not None
 
     @landmarks.setter
     def landmarks(self, value):
-        # firstly, make sure the dim is correct
-        if value.n_dims != self.n_dims:
+        # firstly, make sure the dim is correct. Note that the dim can be None
+        lm_n_dims = value.n_dims
+        if lm_n_dims is not None and lm_n_dims != self.n_dims:
             raise ValueError(
                 "Trying to set {}D landmarks on a "
                 "{}D object".format(value.n_dims, self.n_dims))
@@ -88,35 +94,37 @@ class LandmarkManager(Transformable, Viewable):
     This involves managing the internal dictionary, as well as providing
     convenience functions for operations like viewing.
 
-    Parameters
-    ----------
-    target : :map:`Landmarkable`
-        The parent object that owns these landmarks
-    """
+    A LandmarkManager ensures that all it's Landmarks are of the
+    same dimensionality.
 
-    def __init__(self, n_dims):
+    """
+    def __init__(self):
         super(LandmarkManager, self).__init__()
-        self.n_dims = n_dims
         self._landmark_groups = {}
+
+    @property
+    def n_dims(self):
+        if self.n_groups != 0:
+            return self._landmark_groups.itervalues().next().n_dims
+        else:
+            return None
 
     def copy(self):
         r"""
-        An efficient copy of this landmark manager.
-
-        Note that the returned landmark manager will share the same target as
-        self - the target will not be copied.
+        Generate an efficient copy of this :map:`LandmarkManager`.
 
         Returns
         -------
 
-        manager : :map:`LandmarkManager`
-            A manager with an identical set of annotations to this one.
+        ``type(self)``
+            A copy of this object
 
         """
-        new_manager = LandmarkManager(self.n_dims)
-        new_manager._landmark_groups = {l: g.copy() for l, g in
-                                        self._landmark_groups.iteritems()}
-        return new_manager
+        # do a normal copy. The dict will be shallow copied - rectify that here
+        new = Copyable.copy(self)
+        for k, v in new._landmark_groups.iteritems():
+            new._landmark_groups[k] = v.copy()
+        return new
 
     def __iter__(self):
         """
@@ -146,7 +154,8 @@ class LandmarkManager(Transformable, Viewable):
         """
         from menpo.shape import PointCloud
         # firstly, make sure the dim is correct
-        if value.n_dims != self.n_dims:
+        n_dims = self.n_dims
+        if n_dims is not None and value.n_dims != n_dims:
             raise ValueError(
                 "Trying to set {}D landmarks on a "
                 "{}D LandmarkManager".format(value.n_dims, self.n_dims))
@@ -270,7 +279,7 @@ class LandmarkManager(Transformable, Viewable):
         return out_string
 
 
-class LandmarkGroup(Viewable):
+class LandmarkGroup(Copyable, Viewable):
     """
     An immutable object that holds a :map:`PointCloud` (or a subclass) and
     stores labels for each point. These labels are defined via masks on the
@@ -333,19 +342,19 @@ class LandmarkGroup(Viewable):
 
     def copy(self):
         r"""
-        An efficient copy of this landmark group.
-
-        Note that the returned landmark group will share the same target as
-        self - the target will not be copied.
+        Generate an efficient copy of this :map:`LandmarkGroup`.
 
         Returns
         -------
-        group : :map:`LandmarkGroup`
-            A group with an identical set of points, labels, and masks
-            as this one.
+
+        ``type(self)``
+            A copy of this object
+
         """
-        return LandmarkGroup(self.group_label, self.lms,
-                             self._labels_to_masks, copy=True)
+        new = Copyable.copy(self)
+        for k, v in new._labels_to_masks.iteritems():
+            new._labels_to_masks[k] = v.copy()
+        return new
 
     def __iter__(self):
         """

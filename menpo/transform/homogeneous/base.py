@@ -29,21 +29,19 @@ class HomogFamilyAlignment(Alignment):
 
     def copy(self):
         r"""
-        Returns an efficient copy of this Homogeneous family transform (i.e.
-        one with the same homogeneous matrix). If you need all state to be
-        perfectly replicated, consider deepcopy() instead.
+        Generate an efficient copy of this :map:`HomogFamilyAlignment`.
 
         Returns
         -------
-        h_transform: :map:`Homogeneous` or :map:`Homogeneous` subclass
-            A copy fo the transform with the same h_matrix.
+
+        ``type(self)``
+            A copy of this object
+
         """
         new = self.__class__.__new__(self.__class__)
-        # Update the h_matrix..
-        new._h_matrix = self._h_matrix.copy()
-        # And add the source and target
-        new._source = self.source
-        new._target = self.target
+        # Shallow copy everything except the h_matrix
+        new.__dict__ = self.__dict__.copy()
+        new._h_matrix = new._h_matrix.copy()
         return new
 
 
@@ -83,25 +81,6 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
         :type: `bool`
         """
         return True
-
-    def copy(self):
-        r"""
-        An efficient copy of this Homogeneous family transform (i.e.
-        one with the same homogeneous matrix).
-
-        If you need all state to be perfectly replicated, consider using
-        :meth:`deepcopy` instead.
-
-        Returns
-        -------
-        transform : ``type(self)``
-            A copy fo the transform with the same h_matrix.
-        """
-        # avoid the constructor (as each family member has it's own signature)
-        new = self.__class__.__new__(self.__class__)
-        # Just update the h_matrix and we are done
-        new._h_matrix = self._h_matrix.copy()
-        return new
 
     def from_vector(self, vector):
         """

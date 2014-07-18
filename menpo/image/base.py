@@ -10,7 +10,7 @@ import skimage
 from skimage.transform import pyramid_gaussian
 from skimage.transform.pyramids import _smooth
 
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, Copyable
 from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale, Affine, Homogeneous)
@@ -135,6 +135,12 @@ class Image(Vectorizable, LandmarkableViewable):
         img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
         return img
+
+    def copy(self):
+        # For now, we need to reset the weakref on ImageFeatures on each copy.
+        new = Copyable.copy(self)
+        new.features = ImageFeatures(new)
+        return new
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
@@ -275,26 +281,6 @@ class Image(Vectorizable, LandmarkableViewable):
 
         """
         return np.indices(self.shape).reshape([self.n_dims, -1]).T
-
-    def copy(self):
-        r"""
-        Return a new image with copies of the pixels and landmarks of this
-        image.
-
-        This is an efficient copy method. If you need to copy all the state on
-        the object, consider deepcopy instead.
-
-        Returns
-        -------
-
-        image: :map:`Image`
-            A new image with the same pixels and landmarks as this one, just
-            copied.
-
-        """
-        new_image = Image(self.pixels)
-        new_image.landmarks = self.landmarks
-        return new_image
 
     def _as_vector(self, keep_channels=False):
         r"""

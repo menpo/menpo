@@ -54,25 +54,6 @@ class TexturedTriMesh(TriMesh, Rasterizable):
                                  self.tcoords.points,
                                  self.texture.pixels)
 
-    def copy(self):
-        r"""
-        An efficient copy of this :map:`TexturedTriMesh`.
-
-        Only landmarks and points will be transferred. For a full copy consider
-        using `deepcopy()`.
-
-        Returns
-        -------
-        texturedtrimesh: :map:`TexturedTriMesh`
-            A :map:`TexturedTriMesh` with the same points, trilist, tcoords,
-            texture and landmarks as this one.
-        """
-        new_ttm = TexturedTriMesh(self.points, self.tcoords.points,
-                                  self.texture, trilist=self.trilist,
-                                  copy=True)
-        new_ttm.landmarks = self.landmarks
-        return new_ttm
-
     def tcoords_pixel_scaled(self):
         r"""
         Returns a PointCloud that is modified to be suitable for directly

@@ -1,7 +1,8 @@
 import abc
+from menpo.base import Copyable
 
 
-class Transform(object):
+class Transform(Copyable):
     r"""
     Abstract representation of any spatial transform.
 
@@ -212,7 +213,7 @@ class Transform(object):
         return TransformChain([transform, self])
 
 
-class Transformable(object):
+class Transformable(Copyable):
     r"""
     Interface for objects that know how be transformed by the
     :map:`Transform` interface.
@@ -239,18 +240,6 @@ class Transformable(object):
         -------
         transformed : ``type(self)``
             The transformed object, having been transformed in place.
-        """
-
-    @abc.abstractmethod
-    def copy(self):
-        r"""
-        Return an efficient copy of self.
-
-        Returns
-        -------
-        copy : ``type(self)``
-            An efficient copy of self.
-
         """
 
     def _transform(self, transform):
