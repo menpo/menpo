@@ -636,7 +636,7 @@ class MaskedImage(Image):
         pwa = PiecewiseAffine(pc, pc)
         try:
             pwa.apply(self.indices)
-        except TriangleContainmentError, e:
+        except TriangleContainmentError as e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
