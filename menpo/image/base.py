@@ -9,7 +9,7 @@ import PIL.Image as PILImage
 from skimage.transform import pyramid_gaussian
 from skimage.transform.pyramids import _smooth
 
-from menpo.base import Vectorizable
+from menpo.base import Vectorizable, Copyable
 from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
@@ -103,6 +103,12 @@ class Image(Vectorizable, LandmarkableViewable):
                     "was provided".format(image_data.ndim))
         self.pixels = image_data
         self.features = ImageFeatures(self)
+
+    def copy(self):
+        # For now, we need to reset the weakref on ImageFeatures on each copy.
+        new = Copyable.copy(self)
+        new.features = ImageFeatures(new)
+        return new
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
