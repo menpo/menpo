@@ -3,10 +3,11 @@ from copy import deepcopy
 import os.path
 from warnings import warn
 
-# To debug the Copyable interface, simply uncomment these lines and the four
-# lines in the copy() method. Then you can call print_copyable_log() to see
-# exactly what types have been skipped in copying and why.
-#
+# To debug the Copyable interface, simply uncomment lines 11-23 below and the
+# four lines in the copy() method.
+# Then you can call print_copyable_log() to see exactly what types have been
+# skipped in copying and why.
+
 # from collections import defaultdict
 # alien_copies = defaultdict(set)
 # non_copies = defaultdict(set)
