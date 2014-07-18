@@ -14,7 +14,7 @@ from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale)
 from menpo.visualize.base import ImageViewer
-from .feature import ImageFeatures, features
+from menpo.feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
 

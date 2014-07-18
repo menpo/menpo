@@ -7,7 +7,7 @@ from menpo.visualize.base import ImageViewer
 
 from .base import Image
 from .boolean import BooleanImage
-from .feature import features
+from menpo.feature import features
 
 
 class MaskedImage(Image):
