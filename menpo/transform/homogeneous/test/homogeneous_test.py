@@ -76,7 +76,7 @@ def test_3d_rotation_inverse_eye():
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     transformed = rotation.compose_before(rotation.pseudoinverse)
-    print transformed.h_matrix
+    print(transformed.h_matrix)
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 
@@ -750,7 +750,7 @@ def test_nonuniformscale_set_h_matrix_raises_notimplementederror():
 def test_homogeneous_print():
     e = np.eye(3)
     h = Homogeneous(e)
-    print h
+    print(h)
     assert(str(h) == 'Homogeneous\n[[ 1.  0.  0.]\n [ 0.  1.  0.]'
                      '\n [ 0.  0.  1.]]')
 
@@ -780,7 +780,7 @@ def test_homogeneous_apply():
     p = np.random.rand(10, 2)
     e[2, 2] = 1
     e[:2, -1] = [2, 3]
-    print e
+    print(e)
     h = Homogeneous(e)
     p_applied = h.apply(p)
     p_manual = p * 2 + np.array([2, 3])
