@@ -5,7 +5,6 @@ import numpy as np
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
-from menpo.fitmultilevel.featurefunctions import compute_features
 
 from .functions import mean_pointcloud
 
@@ -264,7 +263,7 @@ class DeformableModelBuilder(object):
                     print_dynamic('- Computing feature space: {}'.format(
                         progress_bar_str((c + 1.) / len(images),
                                          show_bar=False)))
-                feature_images.append(compute_features(i, feature_type[0]))
+                feature_images.append(feature_type[0](i))
             if verbose:
                 print_dynamic('- Computing feature space: Done\n')
 

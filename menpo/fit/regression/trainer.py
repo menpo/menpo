@@ -7,7 +7,6 @@ from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
                                            extract_local_patches_fast,
                                            extract_local_patches)
 from menpo.feature import sparse_hog
-from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
                                      ParametricFittingResult)
@@ -307,8 +306,7 @@ class NonParametricRegressorTrainer(RegressorTrainer):
     def _set_up(self):
         # work out feature length per patch
         patch_img = Image.blank(self.patch_shape, fill=0)
-        self._feature_patch_length = compute_features(
-            patch_img, self.regression_features).n_parameters
+        self._feature_patch_length = self.regression_features(patch_img).n_parameters
 
     @property
     def algorithm(self):
@@ -356,8 +354,7 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             # build patch image
             patch_img = Image(patch, copy=False)
             # compute features
-            features[j, ...] = compute_features(
-                patch_img, self.regression_features).as_vector()
+            features[j, ...] = self.regression_features(patch_img).as_vector()
 
         return np.hstack((features.ravel(), 1))
 

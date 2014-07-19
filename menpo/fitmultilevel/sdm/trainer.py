@@ -13,7 +13,6 @@ from menpo.fit.regression.trainer import (
 from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
-from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.feature import sparse_hog
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
@@ -391,7 +390,7 @@ class SDTrainer(object):
                     print_dynamic('- Computing feature space: {}'.format(
                         progress_bar_str((c + 1.) / len(images),
                                          show_bar=False)))
-                feature_images.append(compute_features(i, feature_type[0]))
+                feature_images.append(feature_type[0](i))
             if verbose:
                 print_dynamic('- Computing feature space: Done\n')
 
@@ -472,8 +471,7 @@ class SDTrainer(object):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    current_images.append(compute_features(g.next(),
-                                                           feature_type[rj]))
+                    current_images.append(feature_type[rj](next(g)))
             feature_images.append(current_images)
         if verbose:
             print_dynamic('- Apply pyramid: Done\n')

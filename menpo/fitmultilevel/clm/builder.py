@@ -4,7 +4,6 @@ import numpy as np
 from menpo.image import Image
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
-from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
@@ -251,8 +250,7 @@ class CLMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(compute_features(
-                        g.next(), self.feature_type[rj]))
+                    feature_images.append(self.feature_type[rj](next(g)))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label].lms for i in feature_images]
@@ -555,7 +553,7 @@ class CLM(object):
         if self.n_levels > 1:
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = compute_features(image, self.feature_type[0])
+                feature_image = self.feature_type[0](image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -569,12 +567,11 @@ class CLM(object):
                     n_levels=self.n_levels, downscale=self.downscale)
 
                 # compute features at each level
-                images = [compute_features(
-                    i, self.feature_type[self.n_levels - j - 1])
-                    for j, i in enumerate(pyramid)]
+                images = [self.feature_type[self.n_levels - j - 1](i)
+                          for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type[0])]
+            images = [self.feature_type[0](image)]
 
         # initialize responses
         image = images[level]
@@ -609,12 +606,12 @@ class CLM(object):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = compute_features(temp_img, self.feature_type[0])
+            temp = self.feature_type[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = compute_features(temp_img, self.feature_type[j])
+                temp = self.feature_type[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
