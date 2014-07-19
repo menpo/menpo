@@ -495,7 +495,8 @@ class Image(Vectorizable, LandmarkableViewable):
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
-        grad_image_pixels = menpo.feature.gradient(self.pixels)
+        from menpo.feature import gradient
+        grad_image_pixels = gradient(self.pixels)
         grad_image = Image(grad_image_pixels, copy=False)
         grad_image.landmarks = self.landmarks
         return grad_image
@@ -1293,4 +1294,3 @@ def _create_feature_glyph(features, vbs):
                       features[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
-

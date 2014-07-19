@@ -5,7 +5,10 @@ import numpy as np
 cimport numpy as np
 from libcpp cimport bool
 from libcpp.string cimport string
+from collections import namedtuple
 
+WindowIteratorResult = namedtuple('WindowInteratorResult', ('pixels',
+                                                            'centres'))
 
 cdef extern from "math.h":
     double ceil(double)
@@ -166,7 +169,8 @@ cdef class WindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
-        return outputImage, windowsCenters
+        return WindowIteratorResult(np.array(outputImage, order='c'),
+                                    np.array(windowsCenters))
 
     def LBP(self, radius, samples, mapping_type, verbose):
         # find unique samples (thus lbp codes mappings)
@@ -237,7 +241,8 @@ cdef class WindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], lbp)
         del lbp
-        return outputImage, windowsCenters
+        return WindowIteratorResult(np.array(outputImage, order='c'),
+                                    np.array(windowsCenters))
 
 def _lbp_mapping_table(n_samples, mapping_type='riu2'):
     r"""

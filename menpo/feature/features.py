@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
 
-from .base import ndfeature
+from .base import ndfeature, winitfeature
 from .windowiterator import WindowIterator
 
 
@@ -40,7 +40,7 @@ def gradient(pixels):
     return np.concatenate(grad_per_channel, axis=-1)
 
 
-@ndfeature
+@winitfeature
 def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
         window_height=1, window_width=1, window_unit='blocks',
@@ -240,34 +240,32 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     if verbose:
         print iterator
     # Compute HOG
-    hog, window_centres = iterator.HOG(algorithm, num_bins, cell_size,
-                                       block_size, signed_gradient,
-                                       l2_norm_clip, verbose)
+    return iterator.HOG(algorithm, num_bins, cell_size, block_size,
+                        signed_gradient, l2_norm_clip, verbose)
 
     # store parameters
-    hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
-                                'num_bins': num_bins,
-                                'cell_size': cell_size,
-                                'block_size': block_size,
-                                'signed_gradient': signed_gradient,
-                                'l2_norm_clip': l2_norm_clip,
-
-                                'window_height': window_height,
-                                'window_width': window_width,
-                                'window_unit': window_unit,
-                                'window_step_vertical': window_step_vertical,
-                                'window_step_horizontal':
-                                    window_step_horizontal,
-                                'window_step_unit': window_step_unit,
-                                'padding': padding,
-
-                                'original_image_height':
-                                    self._image.pixels.shape[0],
-                                'original_image_width':
-                                    self._image.pixels.shape[1],
-                                'original_image_channels':
-                                    self._image.pixels.shape[2]}
-    return hog_image
+    # hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
+    #                             'num_bins': num_bins,
+    #                             'cell_size': cell_size,
+    #                             'block_size': block_size,
+    #                             'signed_gradient': signed_gradient,
+    #                             'l2_norm_clip': l2_norm_clip,
+    #
+    #                             'window_height': window_height,
+    #                             'window_width': window_width,
+    #                             'window_unit': window_unit,
+    #                             'window_step_vertical': window_step_vertical,
+    #                             'window_step_horizontal':
+    #                                 window_step_horizontal,
+    #                             'window_step_unit': window_step_unit,
+    #                             'padding': padding,
+    #
+    #                             'original_image_height':
+    #                                 self._image.pixels.shape[0],
+    #                             'original_image_width':
+    #                                 self._image.pixels.shape[1],
+    #                             'original_image_channels':
+    #                                 self._image.pixels.shape[2]}
 
 
 @ndfeature
@@ -312,13 +310,13 @@ def igo(pixels, double_angles=False, verbose=False):
     # compute angles
     grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
     # compute igo image
-    igo_data = np.empty((pixels.shape[0], pixels.shape[1],
-                         pixels.shape[-1] * feat_channels))
-    igo_data[..., ::feat_channels] = np.cos(grad_orient)
-    igo_data[..., 1::feat_channels] = np.sin(grad_orient)
+    igo_pixels = np.empty((pixels.shape[0], pixels.shape[1],
+                           pixels.shape[-1] * feat_channels))
+    igo_pixels[..., ::feat_channels] = np.cos(grad_orient)
+    igo_pixels[..., 1::feat_channels] = np.sin(grad_orient)
     if double_angles:
-        igo_data[..., 2::feat_channels] = np.cos(2 * grad_orient)
-        igo_data[..., 3::feat_channels] = np.sin(2 * grad_orient)
+        igo_pixels[..., 2::feat_channels] = np.cos(2 * grad_orient)
+        igo_pixels[..., 3::feat_channels] = np.sin(2 * grad_orient)
 
     # print information
     if verbose:
@@ -331,20 +329,20 @@ def igo(pixels, double_angles=False, verbose=False):
         else:
             info_str = "{}  - Double angles are disabled.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, igo_data.shape[1], igo_data.shape[0], igo_data.shape[2])
+            info_str, igo_pixels.shape[1], igo_pixels.shape[0],
+            igo_pixels.shape[2])
         print(info_str)
-    igo = igo_data
+    return igo_pixels
 
     # store parameters
-    igo_image.igo_parameters = {'double_angles': double_angles,
-
-                                'original_image_height':
-                                    self._image.pixels.shape[0],
-                                'original_image_width':
-                                    self._image.pixels.shape[1],
-                                'original_image_channels':
-                                    self._image.pixels.shape[2]}
-    return igo_image
+    # igo_image.igo_parameters = {'double_angles': double_angles,
+    #
+    #                             'original_image_height':
+    #                                 self._image.pixels.shape[0],
+    #                             'original_image_width':
+    #                                 self._image.pixels.shape[1],
+    #                             'original_image_channels':
+    #                                 self._image.pixels.shape[2]}
 
 
 def es(image_data, verbose=False):
@@ -381,10 +379,10 @@ def es(image_data, verbose=False):
     grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
-    es_data = np.empty((image_data.shape[0], image_data.shape[1],
+    es_pixels = np.empty((image_data.shape[0], image_data.shape[1],
                         image_data.shape[-1] * feat_channels))
-    es_data[..., ::feat_channels] = grad[..., ::2] / grad_abs
-    es_data[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
+    es_pixels[..., ::feat_channels] = grad[..., ::2] / grad_abs
+    es_pixels[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
     # print information
     if verbose:
         info_str = "ES Features:\n"
@@ -392,24 +390,21 @@ def es(image_data, verbose=False):
             info_str, image_data.shape[1], image_data.shape[0],
             image_data.shape[2])
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, es_data.shape[1], es_data.shape[0], es_data.shape[2])
+            info_str, es_pixels.shape[1], es_pixels.shape[0],
+            es_pixels.shape[2])
         print info_str
-    es = es_data
+    return es_pixels
 
-    # create es image object
-    es_image = self._init_feature_image(es, constrain_landmarks=
-    constrain_landmarks)
     # store parameters
-    es_image.es_parameters = {'original_image_height':
-                                  self._image.pixels.shape[0],
-                              'original_image_width':
-                                  self._image.pixels.shape[1],
-                              'original_image_channels':
-                                  self._image.pixels.shape[2]}
-    return es_image
+    # es_image.es_parameters = {'original_image_height':
+    #                               self._image.pixels.shape[0],
+    #                           'original_image_width':
+    #                               self._image.pixels.shape[1],
+    #                           'original_image_channels':
+    #                               self._image.pixels.shape[2]}
 
 
-@ndfeature
+@winitfeature
 def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         window_step_vertical=1, window_step_horizontal=1,
         window_step_unit='pixels', padding=True, verbose=False,
@@ -563,24 +558,22 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         print(iterator)
 
     # Compute LBP
-    lbp, window_centres = iterator.LBP(radius, samples, mapping_type,
-                                         verbose)
+    return iterator.LBP(radius, samples, mapping_type, verbose)
 
-    # store parameters
-    lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,
-                                'mapping_type': mapping_type,
-
-                                'window_step_vertical':
-                                    window_step_vertical,
-                                'window_step_horizontal':
-                                    window_step_horizontal,
-                                'window_step_unit': window_step_unit,
-                                'padding': padding,
-
-                                'original_image_height':
-                                    self._image.pixels.shape[0],
-                                'original_image_width':
-                                    self._image.pixels.shape[1],
-                                'original_image_channels':
-                                    self._image.pixels.shape[2]}
-    return lbp_image
+    # # store parameters
+    # lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,
+    #                             'mapping_type': mapping_type,
+    #
+    #                             'window_step_vertical':
+    #                                 window_step_vertical,
+    #                             'window_step_horizontal':
+    #                                 window_step_horizontal,
+    #                             'window_step_unit': window_step_unit,
+    #                             'padding': padding,
+    #
+    #                             'original_image_height':
+    #                                 self._image.pixels.shape[0],
+    #                             'original_image_width':
+    #                                 self._image.pixels.shape[1],
+    #                             'original_image_channels':
+    #                                 self._image.pixels.shape[2]}

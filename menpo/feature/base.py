@@ -1,6 +1,7 @@
 import numpy as np
 import wrapt
-from menpo.image import Image, MaskedImage
+from menpo.image import Image, MaskedImage, BooleanImage
+from menpo.transform import Translation, NonUniformScale
 
 
 def _init_feature_image(image, pixels, window_centres=None,
@@ -35,74 +36,47 @@ def _init_feature_image(image, pixels, window_centres=None,
         # if we have an Image object
         feature_image = Image(pixels, copy=False)
     # fix landmarks
-    transfer_landmarks(image, feature_image, window_centres=window_centres,
+    transfer_landmarks(image, feature_image, centres=window_centres,
                        constrain_landmarks=constrain_landmarks)
     if window_centres is not None:
         feature_image.window_centres = window_centres
     return feature_image
 
 
-def transfer_landmarks(image, feature_image, window_centres=None,
-                       constrain_landmarks=True):
+def lm_centres_correction(centres):
     r"""
-    Transfers its own landmarks to the target_image object after
-    appropriately correcting them. The landmarks correction is achieved
-    based on the windows_centres of the features object.
+    Construct a transform that will correct landmarks for a window
+    iterating feature calculation
 
     Parameters
     ----------
-    target_image :  Either MaskedImage or Image class.
-        The target image object that includes the windows_centres.
+    centres : `ndarray` (H, W, 2)
+        The location of the window centres in the features
 
-    window_centres : ndarray, optional
-        If set, use these window centres to rescale the landmarks
-        appropriately. If None, no scaling is applied.
-
-    constrain_landmarks : bool
-        Flag that if enabled, it constrains landmarks to image bounds.
-
-        Default: True
+    Returns
+    -------
+    :map:`Affine`
+        An affine transform that performs the correction.
+        Should be applied to the landmarks on the target image.
     """
-    feature_image.landmarks = image.landmarks
-    if window_centres is not None:
-        if feature_image.landmarks.has_landmarks:
-            for l_group in feature_image.landmarks:
-                l = feature_image.landmarks[l_group]
-                # find the vertical and horizontal sampling steps
-                step_vertical = window_centres[0, 0, 0]
-                if window_centres.shape[0] > 1:
-                    step_vertical = \
-                        (window_centres[1, 0, 0] -
-                         window_centres[0, 0, 0])
-                step_horizontal = window_centres[0, 0, 1]
-                if window_centres.shape[1] > 1:
-                    step_horizontal = \
-                        (window_centres[0, 1, 1] -
-                         window_centres[0, 0, 1])
-                # convert points by subtracting offset and dividing with
-                # step at each direction
-                l.lms.points[:, 0] = \
-                    (l.lms.points[:, 0] -
-                     window_centres[:, :, 0].min()) / \
-                    step_vertical
-                l.lms.points[:, 1] = \
-                    (l.lms.points[:, 1] -
-                     window_centres[:, :, 1].min()) / \
-                    step_horizontal
-    # constrain landmarks to image bounds if asked
-    if constrain_landmarks:
-        feature_image.constrain_landmarks_to_bounds()
+    t = Translation(-centres.min(axis=0).min(axis=0), skip_checks=True)
+    step_v = centres[0, 0, 0]
+    if centres.shape[0] > 1:
+        step_v = centres[1, 0, 0] - centres[0, 0, 0]
+    step_h = centres[0, 0, 1]
+    if centres.shape[1] > 1:
+        step_h = centres[0, 1, 1] - centres[0, 0, 1]
+    s = NonUniformScale((1./step_v, 1./step_h), skip_checks=True)
+    return t.compose_before(s)
 
 
-def transfer_mask(image, feature_image, window_centres=None):
+def sample_mask_for_centres(mask, centres):
     r"""
-    Transfers its own mask to the target_image object after
-    appropriately correcting it. The mask correction is achieved based on
-    the windows_centres of the features object.
+    Sample a mask at the centres
 
     Parameters
     ----------
-    target_image :  Either MaskedImage or Image class.
+    mask :  Either MaskedImage or Image class.
         The target image object that includes the windows_centres.
 
     window_centres : ndarray, optional
@@ -110,12 +84,7 @@ def transfer_mask(image, feature_image, window_centres=None):
         appropriately. If None, no scaling is applied.
 
     """
-    from menpo.image import BooleanImage
-    mask = image.mask.mask  # don't want a channel axis!
-    if window_centres is not None:
-        mask = mask[window_centres[..., 0], window_centres[..., 1]]
-    feature_image.mask = BooleanImage(mask)
-
+    return BooleanImage(mask[centres[..., 0], centres[..., 1]], copy=False)
 
 
 @wrapt.decorator
@@ -130,6 +99,7 @@ def imgfeature(wrapped, instance, args, kwargs):
             return wrapped(image, *args, **kwargs)
     return _execute(*args, **kwargs)
 
+
 @wrapt.decorator
 def ndfeature(wrapped, instance, args, kwargs):
     def _execute(image, *args, **kwargs):
@@ -140,4 +110,27 @@ def ndfeature(wrapped, instance, args, kwargs):
             return Image(feature, copy=False)
         else:
             return wrapped(image, *args, **kwargs)
+    return _execute(*args, **kwargs)
+
+
+@wrapt.decorator
+def winitfeature(wrapped, instance, args, kwargs):
+    def _execute(image, *args, **kwargs):
+        if not isinstance(image, np.ndarray):
+            # Image supplied to ndarray feature -
+            # extract pixels and go
+            feature, centres = wrapped(image.pixels, *args, **kwargs)
+            new_image = image.__class__.__new__(image.__class__)
+            new_image.pixels = feature
+            if hasattr(image, 'mask'):
+                new_image.mask = sample_mask_for_centres(image.mask.mask,
+                                                         centres)
+            if image.has_landmarks:
+                t = lm_centres_correction(centres)
+                new_image.landmarks = t.apply(image.landmarks)
+            return new_image
+        else:
+            # user just supplied ndarray - give them ndarray back
+            return wrapped(image, *args, **kwargs)[0]
+
     return _execute(*args, **kwargs)
