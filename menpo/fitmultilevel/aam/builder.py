@@ -690,12 +690,6 @@ class AAM(object):
             representation, i.e. no features will be extracted from the original
             images.
 
-            If `string`, the appearance model was built using one of Menpo's
-            default built-in feature representations - those
-            accessible at ``image.features.some_feature()``. Note that this case
-            can only be used with default feature parameters - for custom
-            feature weights, use the functional form of this argument instead.
-
             If `function`, the user can directly provide the feature that was
             calculated on the images. This class will simply invoke this
             function, passing in as the sole argument the image to be fitted,
@@ -1017,12 +1011,6 @@ class PatchBasedAAM(AAM):
             If ``None``, the appearance model was built using the original image
             representation, i.e. no features will be extracted from the original
             images.
-
-            If `string`, the appearance model was built using one of Menpo's
-            default built-in feature representations - those
-            accessible at ``image.features.some_feature()``. Note that this case
-            can only be used with default feature parameters - for custom
-            feature weights, use the functional form of this argument instead.
 
             If `function`, the user can directly provide the feature that was
             calculated on the images. This class will simply invoke this

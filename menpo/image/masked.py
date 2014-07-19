@@ -7,7 +7,6 @@ from menpo.visualize.base import ImageViewer
 
 from .base import Image
 from .boolean import BooleanImage
-from menpo.feature import features
 
 
 class MaskedImage(Image):
@@ -577,7 +576,8 @@ class MaskedImage(Image):
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
-        grad_image_pixels = features.gradient(self.pixels)
+        from menpo.feature import gradient
+        grad_image_pixels = gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
                                  mask=self.mask.copy(), copy=False)
 
