@@ -137,10 +137,10 @@ def test_verbose_mock(mock_stdout):
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_str_mock(mock_stdout):
-    print aam1
-    print aam2
-    print aam3
-    print aam4
+    print(aam1)
+    print(aam2)
+    print(aam3)
+    print(aam4)
 
 
 def test_aam_1():

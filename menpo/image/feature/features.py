@@ -245,7 +245,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
                                           step, step, False)
     # Print iterator's info
     if verbose:
-        print iterator
+        print(iterator)
     # Compute HOG
     output_image, windows_centers = iterator.HOG(algorithm, num_bins,
                                                  cell_size, block_size,
@@ -312,7 +312,7 @@ def igo(image_data, double_angles=False, verbose=False):
             info_str = "{}  - Double angles are disabled.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
             info_str, igo_data.shape[1], igo_data.shape[0], igo_data.shape[2])
-        print info_str
+        print(info_str)
     return igo_data
 
 
@@ -356,7 +356,7 @@ def es(image_data, verbose=False):
             image_data.shape[2])
         info_str = "{}Output image size {}W x {}H x {}.".format(
             info_str, es_data.shape[1], es_data.shape[0], es_data.shape[2])
-        print info_str
+        print(info_str)
     return es_data
 
 
@@ -497,7 +497,7 @@ def lbp(image_data, radius=range(1, 5), samples=[8]*4, mapping_type='riu2',
 
     # Print iterator's info
     if verbose:
-        print iterator
+        print(iterator)
 
     # Compute LBP
     output_image, windows_centers = iterator.LBP(radius, samples, mapping_type,

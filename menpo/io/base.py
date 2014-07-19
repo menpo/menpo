@@ -762,9 +762,9 @@ def find_alternative_files(file_type, filepath, extensions_map):
         all_paths = find_extensions_from_basename(filepath)
         base_names = filter_extensions(all_paths, extensions_map)
         if len(base_names) > 1:
-            print "Warning: More than one {0} was found: " \
+            print("Warning: More than one {0} was found: "
                   "{1}. Taking the first by default".format(
-                  file_type, base_names)
+                  file_type, base_names))
         return base_names[0]
     except Exception as e:
         raise ImportError("Failed to find a {0} for {1} from types {2}. "
