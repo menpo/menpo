@@ -17,7 +17,7 @@ else:
     # ---- C/C++ EXTENSIONS ---- #
     cython_modules = ["menpo/shape/mesh/normals.pyx",
                       "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/feature/cppimagewindowiterator.pyx"]
+                      "menpo/feature/windowiterator.pyx"]
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]

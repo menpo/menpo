@@ -58,7 +58,7 @@ cdef extern from "cpp/LBP.h":
             unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples)
         void apply(double *windowImage, double *descriptorVector)
 
-cdef class CppImageWindowIterator:
+cdef class WindowIterator:
     cdef ImageWindowIterator* iterator
 
     def __cinit__(self, np.ndarray[np.float64_t, ndim=3] image,
