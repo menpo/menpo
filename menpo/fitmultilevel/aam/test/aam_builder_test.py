@@ -8,7 +8,7 @@ import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.fitmultilevel.aam import AAMBuilder, PatchBasedAAMBuilder
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog
 
 # load images
 filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']

@@ -9,7 +9,7 @@ from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
 from menpo.transform.modeldriven import OrthoMDTransform
 from menpo.transform.homogeneous import AlignmentSimilarity
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 from menpo.fit.regression.regressionfunctions import mlr, mlr_svd
 from menpo.fit.regression.parametricfeatures import weights

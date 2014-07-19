@@ -13,7 +13,8 @@ from menpo.fit.regression.trainer import (
 from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
-from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
+from menpo.fitmultilevel.featurefunctions import compute_features
+from menpo.feature import sparse_hog
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
 

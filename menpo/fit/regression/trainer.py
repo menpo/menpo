@@ -6,7 +6,8 @@ from menpo.image import Image
 from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
                                            extract_local_patches_fast,
                                            extract_local_patches)
-from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
+from menpo.feature import sparse_hog
+from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
                                      ParametricFittingResult)

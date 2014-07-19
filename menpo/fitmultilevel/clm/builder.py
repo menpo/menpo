@@ -4,7 +4,8 @@ import numpy as np
 from menpo.image import Image
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.fitmultilevel.functions import build_sampling_grid
-from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
+from menpo.fitmultilevel.featurefunctions import compute_features
+from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
 from .classifierfunctions import classifier, linear_svm_lr

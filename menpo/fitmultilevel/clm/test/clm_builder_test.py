@@ -7,7 +7,7 @@ from nose.tools import raises
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 
 from sklearn import qda

@@ -12,7 +12,7 @@ from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.fitmultilevel.clm import GradientDescentCLMFitter
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog
 
 
 initial_shape = []
