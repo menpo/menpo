@@ -154,7 +154,7 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
+        feature_type = self.check_features(feature_type, n_levels,
                                                pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
         patch_shape = check_patch_shape(patch_shape)

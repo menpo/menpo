@@ -9,6 +9,7 @@ from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import DeformableModelBuilder
 from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.feature import igo
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -17,7 +18,7 @@ class AAMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    feature_type : ``None`` or `string` or `function` or list of those, optional
+    feature_type : `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
@@ -35,16 +36,6 @@ class AAMBuilder(DeformableModelBuilder):
             image representation, i.e. no features will be extracted from the
             original images.
 
-            If `string`, image features will be computed by executing::
-
-               feature_image = getattr(image.features, feature_type[level])()
-
-            for each pyramidal level. For this to work properly each string
-            needs to be one of menpo's standard image feature methods
-            ('igo', 'hog', ...).
-            Note that, in this case, the feature computation will be
-            carried out using the default options.
-
         Non-default feature options and new experimental features can be
         defined using `function`. In this case, the `function` must
         receive an image as input and return a particular feature
@@ -54,9 +45,6 @@ class AAMBuilder(DeformableModelBuilder):
                 image = deepcopy(image)
                 image.normalize_std_inplace()
                 return image.feature_type.igo(double_angles=``True``)
-
-        See :map:`ImageFeatures` for details more details on
-        menpo's standard image features and feature options.
 
     transform : :map:`PureAlignmentTransform`, optional
         The :map:`PureAlignmentTransform` that will be
@@ -181,7 +169,7 @@ class AAMBuilder(DeformableModelBuilder):
         ``pyramid_on_features`` is enabled so ``feature_type`` must be a
         `string` or a `function` or a list containing ``1`` of those
     """
-    def __init__(self, feature_type='igo', transform=PiecewiseAffine,
+    def __init__(self, feature_type=igo, transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
@@ -196,7 +184,7 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
+        feature_type = self.check_features(feature_type, n_levels,
                                                pyramid_on_features)
 
         # store parameters
@@ -585,7 +573,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
+        feature_type = self.check_features(feature_type, n_levels,
                                                pyramid_on_features)
 
         # store parameters

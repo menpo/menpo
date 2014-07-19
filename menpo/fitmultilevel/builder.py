@@ -75,14 +75,13 @@ class DeformableModelBuilder(object):
         return max_components_list
 
     @classmethod
-    def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
+    def check_features(cls, features, n_levels, pyramid_on_features):
         r"""
         Checks the feature type per level.
-        If pyramid_on_features is False, it must be a string or a
-        function/closure or a list of those containing 1 or {n_levels}
-        elements.
-        If pyramid_on_features is True, it must be a string or a
-        function/closure or a list of 1 of those.
+        If pyramid_on_features is False, it must be a function or a list of
+        those containing 1 or {n_levels} elements.
+        If pyramid_on_features is True, it must be a function or a list of 1
+        of those.
 
         Parameters
         ----------
@@ -97,41 +96,38 @@ class DeformableModelBuilder(object):
 
         Returns
         -------
-        feature_type_list: list
-            A list of feature types.
+        feature_list: list
+            A list of feature functtion.
             If pyramid_on_features is True, the list will have length 1.
             If pyramid_on_features is False, the list will have length
             {n_levels}.
         """
         if not pyramid_on_features:
-            feature_type_str_error = ("feature_type must be a str or a "
-                                      "function/closure or a list of "
-                                      "those containing 1 or {} "
+            feature_type_str_error = ("features must be a function or a list"
+                                      " of functions containing 1 or {} "
                                       "elements").format(n_levels)
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type] * n_levels
-            elif len(feature_type) == 1:
-                feature_type_list = [feature_type[0]] * n_levels
-            elif len(feature_type) == n_levels:
-                feature_type_list = feature_type
+            if not isinstance(features, list):
+                feature_list = [features] * n_levels
+            elif len(features) == 1:
+                feature_list = [features[0]] * n_levels
+            elif len(features) == n_levels:
+                feature_list = features
             else:
                 raise ValueError(feature_type_str_error)
         else:
             feature_type_str_error = ("pyramid_on_features is enabled so "
-                                      "feature_type must be a str or a "
-                                      "function or a list containing 1 of "
-                                      "those")
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type]
-            elif len(feature_type) == 1:
-                feature_type_list = feature_type
+                                      "features must be a function or a list"
+                                      " of exactly one function")
+            if not isinstance(features, list):
+                feature_list = [features]
+            elif len(features) == 1:
+                feature_list = features
             else:
                 raise ValueError(feature_type_str_error)
-        for ft in feature_type_list:
-            if (ft is not None and not isinstance(ft, str)
-                    and not hasattr(ft, '__call__')):
-                        raise ValueError(feature_type_str_error)
-        return feature_type_list
+        for ft in feature_list:
+            if ft is not None and not callable(ft):
+                raise ValueError(feature_type_str_error)
+        return feature_list
 
     @abc.abstractmethod
     def build(self, images, group=None, label='all'):
