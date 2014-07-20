@@ -577,3 +577,10 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     #                                 self._image.pixels.shape[1],
     #                             'original_image_channels':
     #                                 self._image.pixels.shape[2]}
+
+@ndfeature
+def no_op(image_data):
+    r"""
+    A no operation feature - does nothing but return the argument passed in.
+    """
+    return image_data

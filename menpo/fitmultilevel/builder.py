@@ -2,6 +2,7 @@ from __future__ import division
 import abc
 import numpy as np
 
+from menpo.feature import no_op
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
@@ -102,6 +103,7 @@ class DeformableModelBuilder(object):
             If pyramid_on_features is False, the list will have length
             {n_levels}.
         """
+        # Firstly, make sure we have a list of features
         if not pyramid_on_features:
             feature_type_str_error = ("features must be a function or a list"
                                       " of functions containing 1 or {} "
@@ -124,10 +126,16 @@ class DeformableModelBuilder(object):
                 feature_list = features
             else:
                 raise ValueError(feature_type_str_error)
+        # If we are here we have a list of features. Let's check they are all
+        # callable
+        all_callable_feature_list = []
         for ft in feature_list:
-            if ft is not None and not callable(ft):
+            if ft is None:
+                ft = no_op  # None is a no_op function
+            if not callable(ft):
                 raise ValueError(feature_type_str_error)
-        return feature_list
+            all_callable_feature_list.append(ft)
+        return all_callable_feature_list
 
     @abc.abstractmethod
     def build(self, images, group=None, label='all'):
