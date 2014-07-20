@@ -271,7 +271,7 @@ class AAMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(g.next())
+                    feature_images.append(next(g))
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):
@@ -875,7 +875,7 @@ class AAM(object):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].func_name)
+                    self.feature_type[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -891,7 +891,7 @@ class AAM(object):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].func_name))
+                        self.feature_type[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:

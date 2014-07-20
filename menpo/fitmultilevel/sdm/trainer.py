@@ -462,7 +462,7 @@ class SDTrainer(object):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    current_images.append(g.next())
+                    current_images.append(next(g))
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):

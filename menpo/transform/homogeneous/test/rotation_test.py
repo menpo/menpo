@@ -56,7 +56,7 @@ def test_3d_rotation_inverse_eye():
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
     transformed = rotation.compose_before(rotation.pseudoinverse)
-    print transformed.h_matrix
+    print(transformed.h_matrix)
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 

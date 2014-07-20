@@ -238,7 +238,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
                                   step, False)
     # Print iterator's info
     if verbose:
-        print iterator
+        print(iterator)
     # Compute HOG
     return iterator.HOG(algorithm, num_bins, cell_size, block_size,
                         signed_gradient, l2_norm_clip, verbose)
@@ -392,7 +392,7 @@ def es(image_data, verbose=False):
         info_str = "{}Output image size {}W x {}H x {}.".format(
             info_str, es_pixels.shape[1], es_pixels.shape[0],
             es_pixels.shape[2])
-        print info_str
+        print(info_str)
     return es_pixels
 
     # store parameters

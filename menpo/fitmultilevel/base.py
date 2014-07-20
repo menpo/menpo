@@ -132,7 +132,7 @@ class MultilevelFitter(Fitter):
             error_type=error_type)
 
         if verbose:
-            print multilevel_fitting_result
+            print(multilevel_fitting_result)
         if view:
             multilevel_fitting_result.view_final_fitting(new_figure=True)
 

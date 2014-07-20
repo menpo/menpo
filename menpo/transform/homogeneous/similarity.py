@@ -2,6 +2,7 @@ import numpy as np
 
 from .base import HomogFamilyAlignment
 from .affine import Affine
+from functools import reduce
 
 
 class Similarity(Affine):

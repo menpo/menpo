@@ -8,7 +8,7 @@ def test_squared_even_patches():
     patch_shape = (16, 16)
     patches = extract_local_patches_fast(
         image, image.landmarks['PTS'].lms, patch_shape)
-    print patches.shape
+    print(patches.shape)
     assert(patches.shape == (68,) + patch_shape + (3,))
 
 
