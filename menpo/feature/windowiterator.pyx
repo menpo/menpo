@@ -169,8 +169,8 @@ cdef class WindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
-        return WindowIteratorResult(np.array(outputImage, order='c'),
-                                    np.array(windowsCenters))
+        return WindowIteratorResult(np.ascontiguousarray(outputImage),
+                                    np.ascontiguousarray(windowsCenters))
 
     def LBP(self, radius, samples, mapping_type, verbose):
         # find unique samples (thus lbp codes mappings)
@@ -241,8 +241,8 @@ cdef class WindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], lbp)
         del lbp
-        return WindowIteratorResult(np.array(outputImage, order='c'),
-                                    np.array(windowsCenters))
+        return WindowIteratorResult(np.ascontiguousarray(outputImage),
+                                    np.ascontiguousarray(windowsCenters))
 
 def _lbp_mapping_table(n_samples, mapping_type='riu2'):
     r"""

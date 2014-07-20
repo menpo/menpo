@@ -344,7 +344,7 @@ def igo(pixels, double_angles=False, verbose=False):
     #                             'original_image_channels':
     #                                 self._image.pixels.shape[2]}
 
-
+@ndfeature
 def es(image_data, verbose=False):
     r"""
     Represents a 2-dimensional Edge Structure (ES) features image with N*C
@@ -581,6 +581,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 @ndfeature
 def no_op(image_data):
     r"""
-    A no operation feature - does nothing but return the argument passed in.
+    A no operation feature - does nothing but return a copy of the pixels
+    passed in.
     """
-    return image_data
+    return image_data.copy()

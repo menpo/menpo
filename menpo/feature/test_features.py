@@ -206,6 +206,7 @@ def test_igo_values():
 
 def test_es_values():
     image = Image([[1, 2], [2, 1]])
+    print image.shape
     es_img = es(image)
     k = 1 / (2 * (2**0.5))
     res = np.array([[[k, k], [-k, k]], [[k, -k], [-k, -k]]])
@@ -239,11 +240,12 @@ def test_constrain_landmarks():
     breaking_bad.crop_to_landmarks_inplace(boundary=20)
     breaking_bad.constrain_mask_to_landmarks()
     breaking_bad = breaking_bad.resize([50, 50])
-    hog_b = hog(breaking_bad, mode='sparse', constrain_landmarks=False)
+    hog_b = hog(breaking_bad, mode='sparse')
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)
     assert_allclose(len(x[0]) + len(y[0]), 12)
-    hog_b = hog(breaking_bad, mode='sparse', constrain_landmarks=True)
+    hog_b = hog(breaking_bad, mode='sparse')
+    hog_b.constrain_landmarks_to_bounds()
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)
     assert_allclose(len(x[0]) + len(y[0]), 0)

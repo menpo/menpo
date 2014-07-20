@@ -7,7 +7,7 @@ from nose.tools import raises
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
-from menpo.feature import sparse_hog
+from menpo.feature import sparse_hog, igo, no_op
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 
 from sklearn import qda
@@ -36,7 +36,7 @@ for i in range(4):
 # build clms
 clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
                   patch_shape=(5, 5),
-                  feature_type=['igo', sparse_hog, None],
+                  feature_type=[igo, sparse_hog, None],
                   normalization_diagonal=150,
                   n_levels=3,
                   downscale=2,
@@ -60,7 +60,7 @@ clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
 
 clm3 = CLMBuilder(classifier_type=[linear_svm_lr],
                   patch_shape=(2, 3),
-                  feature_type='igo',
+                  feature_type=igo,
                   normalization_diagonal=None,
                   n_levels=1,
                   downscale=3,
@@ -156,7 +156,7 @@ def test_clm_1():
     assert (clm1.n_training_images == 4)
     assert (clm1.n_levels == 3)
     assert (clm1.downscale == 2)
-    assert (clm1.feature_type[0] == 'igo' and clm1.feature_type[2] is None)
+    assert (clm1.feature_type[0] == igo and clm1.feature_type[2] is no_op)
     assert (clm1.interpolator == 'scipy')
     assert_allclose(np.around(clm1.reference_shape.range()), (109., 103.))
     assert (not clm1.scaled_shape_models)
@@ -183,7 +183,7 @@ def test_clm_2():
     assert (clm2.n_training_images == 4)
     assert (clm2.n_levels == 2)
     assert (clm2.downscale == 1.2)
-    assert (clm2.feature_type[0] is None and clm2.feature_type[1] is None)
+    assert (clm2.feature_type[0] is no_op and clm2.feature_type[1] is no_op)
     assert (clm2.interpolator == 'scipy')
     assert_allclose(np.around(clm2.reference_shape.range()), (169., 161.))
     assert clm2.scaled_shape_models
@@ -206,7 +206,7 @@ def test_clm_3():
     assert (clm3.n_training_images == 4)
     assert (clm3.n_levels == 1)
     assert (clm3.downscale == 3)
-    assert (clm3.feature_type[0] == 'igo' and len(clm3.feature_type) == 1)
+    assert (clm3.feature_type[0] == igo and len(clm3.feature_type) == 1)
     assert (clm3.interpolator == 'scipy')
     assert_allclose(np.around(clm3.reference_shape.range()), (169., 161.))
     assert clm3.scaled_shape_models

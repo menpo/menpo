@@ -49,26 +49,25 @@ def sample_mask_for_centres(mask, centres):
 
 
 def rebuild_feature_image(image, f_pixels):
-    new_image = image.__class__.__new__(image.__class__)
-    new_image.pixels = f_pixels
     if hasattr(image, 'mask'):
-        new_image.mask = image.mask.copy()
+        new_image = MaskedImage(f_pixels, mask=image.mask.copy(), copy=False)
+    else:
+        new_image = Image(f_pixels, copy=False)
     if image.has_landmarks:
         new_image.landmarks = image.landmarks
     return new_image
 
 
 def rebuild_feature_image_with_centres(image, f_pixels, centres):
-    new_image = image.__class__.__new__(image.__class__)
-    new_image.pixels = f_pixels
     if hasattr(image, 'mask'):
-        new_image.mask = sample_mask_for_centres(image.mask.mask,
-                                                 centres)
+        mask = sample_mask_for_centres(image.mask.mask, centres)
+        new_image = MaskedImage(f_pixels, mask=mask, copy=False)
+    else:
+        new_image = Image(f_pixels, copy=False)
     if image.has_landmarks:
         t = lm_centres_correction(centres)
         new_image.landmarks = t.apply(image.landmarks)
     return new_image
-
 
 @wrapt.decorator
 def imgfeature(wrapped, instance, args, kwargs):
