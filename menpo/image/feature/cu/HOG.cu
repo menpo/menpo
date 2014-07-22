@@ -486,6 +486,7 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
             for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z)
                 cache[current_id] += d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim]
                                      * d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim];
+    __syncthreads();
     
     // Reduce operation
     // all threads in the current block have to compute d_blockNorm[x + hist2*y]
@@ -497,8 +498,7 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
         padding /= 2;
     }
     
-    // Several k values will have to participate to this value
-    if (i == 0 && j == 0)
+    if (i == 0 && j == 0 && k == 0)
         d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
 }
 
