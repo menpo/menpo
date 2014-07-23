@@ -80,7 +80,7 @@ void ImageWindowIterator::apply(double *outputImage, int *windowsCenters, Window
 			}
 
             // Compute descriptor of window
-            windowFeature->apply(windowImage, descriptorVector);
+            windowFeature->applyOnChunk(windowImage, descriptorVector);
 
             // Store results
             for (d = 0; d < windowFeature->descriptorLengthPerWindow; d++)

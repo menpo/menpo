@@ -62,7 +62,7 @@ LBP::~LBP() {
 }
 
 
-void LBP::apply(double *windowImage, double *descriptorVector) {
+void LBP::applyOnChunk(double *windowImage, double *descriptorVector) {
     LBPdescriptor(windowImage, this->samples,
                   this->numberOfRadiusSamplesCombinations,
                   this->samples_x_tables, this->samples_y_tables,
