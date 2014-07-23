@@ -53,7 +53,7 @@ def test_import_incorrect_built_in():
 
 def test_json_landmarks_bunny():
     mesh = mio.import_builtin_asset('bunny.obj')
-    assert('JSON' in mesh.landmarks.group_labels)
+    assert('LJSON' in mesh.landmarks.group_labels)
     lms = mesh.landmarks['JSON']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
