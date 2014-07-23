@@ -398,6 +398,7 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
     // d_h contains (2*cellHeightAndWidthInPixels)*(2*cellHeightAndWidthInPixels)
     //  times required d_h
     //  which is equal to: 2*8*2*8 = 256
+    // d_h needs to be set to 0.
     
     d_h[y1 + x1*factor_y_dim + bin1*factor_z_dim + a*factor_a_dim] = gradientMagnitude *
                                                         (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
@@ -486,11 +487,21 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                           double *d_image,
                                           double *outputImage,
                                           int *windowsCenters) {
+    int rowFrom, rowCenter, columnFrom, columnCenter;
     double* descriptorVector = new double[this->descriptorLengthPerWindow];
+    
+    // Allocate some CUDA memory for DalalTriggsHOGdescriptor
+    const int hist1 = 2 + (this->windowHeight / this->cellHeightAndWidthInPixels);
+    const int hist2 = 2 + (this->windowWidth / this->cellHeightAndWidthInPixels);
+    const dim3 h_dims(hist1, hist2, this->numberOfOrientationBins);
+    const unsigned int numCopies_d_h = (2*this->cellHeightAndWidthInPixels) * (2*this->cellHeightAndWidthInPixels);
+    double *d_h = NULL;
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * numCopies_d_h * sizeof(double)));
+    
     for (unsigned int windowIndexVertical = 0; windowIndexVertical < iwi._numberOfWindowsVertically; windowIndexVertical++) {
         for (unsigned int windowIndexHorizontal = 0; windowIndexHorizontal < iwi._numberOfWindowsHorizontally; windowIndexHorizontal++) {
             // Find window limits
-            int rowFrom, rowCenter, columnFrom, columnCenter;
             if (!iwi._enablePadding) {
                 rowFrom = windowIndexVertical*iwi._windowStepVertical;
                 rowCenter = rowFrom + (int)round((double)iwi._windowHeight / 2.0) - 1;
@@ -512,7 +523,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                              iwi._imageHeight, iwi._imageWidth,
                              this->windowHeight, this->windowWidth,
                              this->numberOfChannels,
-                             rowFrom, columnFrom, descriptorVector);
+                             rowFrom, columnFrom, descriptorVector, d_h);
 
             // Store results
             for (unsigned int d = 0; d < this->descriptorLengthPerWindow; d++)
@@ -521,9 +532,14 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
             windowsCenters[windowIndexVertical+iwi._numberOfWindowsVertically*(windowIndexHorizontal+iwi._numberOfWindowsHorizontally)] = columnCenter;
         }
     }
-
+    
+    
     // Free temporary matrices
     delete[] descriptorVector;
+
+onfailure:
+    if (d_h != NULL)
+        cudaFree(d_h);
 }
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
@@ -537,7 +553,8 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
                               const int rowFrom, const int columnFrom, // parameters to compute corresponding pixel in d_inputImage
-                              double *descriptorVector) {
+                              double *descriptorVector,
+                              double *d_h /*already allocated CUDA memory */) {
    
     // Variables
     //  * Compute gradients & Compute histograms
@@ -547,7 +564,6 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
     const dim3 h_dims(hist1, hist2, numberOfOrientationBins);
     const unsigned int factor_z_dim = h_dims.x * h_dims.y;
     const unsigned int factor_y_dim = h_dims.x;
-    double *d_h = NULL;
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
     const dim3 dimGrid((windowWidth + dimBlock.x -1)/dimBlock.x, (windowHeight + dimBlock.y -1)/dimBlock.y, 1);
     const unsigned int numCopies_d_h = (2*cellHeightAndWidthInPixels) * (2*cellHeightAndWidthInPixels);
@@ -573,7 +589,6 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
     //  using CUDA
     
     // d_h is set numCopies_d_h times larger in order to benefit from reduce pattern
-    cudaErrorCheck_goto(cudaMalloc(&d_h, h_dims.x * h_dims.y * h_dims.z * numCopies_d_h * sizeof(double)));
     cudaErrorCheck_goto(cudaMemset(d_h, 0., h_dims.x * h_dims.y * h_dims.z * numCopies_d_h * sizeof(double)));
     
     DalalTriggsHOGdescriptor_precompute_histograms<<<dimGrid, dimBlock>>>(d_h, h_dims,
@@ -593,9 +608,6 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
     cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_dims.x * h_dims.y * h_dims.z * sizeof(double), cudaMemcpyDeviceToHost));
-    
-    cudaErrorCheck_goto(cudaFree(d_h));
-    d_h = NULL;
     
     // Block normalization
     
@@ -644,8 +656,5 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
     return;
 
 onfailure:
-    if (d_h != NULL)
-        cudaFree(d_h);
-    
     return;
 }

@@ -57,4 +57,5 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
                               const int rowFrom, const int columnFrom,
-                              double *descriptorVector);
+                              double *descriptorVector,
+                              double *d_h);
