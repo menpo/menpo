@@ -398,14 +398,14 @@ def test_max_iters_exception():
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_str_mock(mock_stdout):
-    print aam
+    print(aam)
     fitter = LucasKanadeAAMFitter(aam,
                                   algorithm=AlternatingInverseCompositional)
-    print fitter
-    print aam2
+    print(fitter)
+    print(aam2)
     fitter = LucasKanadeAAMFitter(aam2,
                                   algorithm=ProbabilisticForwardAdditive)
-    print fitter
+    print(fitter)
 
 
 def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,

@@ -4,6 +4,7 @@ import numpy as np
 
 from menpo.base import DX, DP
 from .base import Homogeneous, HomogFamilyAlignment
+from functools import reduce
 
 
 class Affine(Homogeneous, DP, DX):

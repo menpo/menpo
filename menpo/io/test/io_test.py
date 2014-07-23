@@ -42,7 +42,7 @@ def test_import_asset_james():
     assert(isinstance(mesh.trilist, np.ndarray))
     assert(mesh.trilist.shape[1] == 3)
     assert(isinstance(mesh.texture, MaskedImage))
-    print mesh.tcoords
+    print(mesh.tcoords)
     assert(isinstance(mesh.tcoords, PointCloud))
     assert(mesh.tcoords.points.shape[1] == 2)
 

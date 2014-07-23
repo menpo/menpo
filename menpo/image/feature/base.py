@@ -1,5 +1,5 @@
 from weakref import proxy
-import features as fc
+from . import features as fc
 
 
 class ImageFeatures(object):

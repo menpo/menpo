@@ -1,6 +1,7 @@
 import abc
 
 from menpo.transform.base import Transform
+from functools import reduce
 
 
 class ComposableTransform(Transform):

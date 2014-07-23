@@ -382,10 +382,10 @@ def test_max_iters_exception():
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_str_mock(mock_stdout):
-    print clm
+    print(clm)
     fitter = GradientDescentCLMFitter(
         clm, algorithm=RegularizedLandmarkMeanShift)
-    print fitter
+    print(fitter)
 
 
 #@attr('fuzzy')
