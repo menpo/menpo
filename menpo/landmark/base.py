@@ -65,7 +65,9 @@ class LandmarkableViewable(Landmarkable, Viewable):
     single helper method for viewing Landmarks and slf on the same figure.
     """
 
-    def view_landmarks(self, figure_id=None, new_figure=False, **kwargs):
+    def view_landmarks(self, figure_id=None, new_figure=False,
+                       group_label=None, render_labels=True,
+                       with_labels=None, without_labels=None, **kwargs):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
@@ -73,18 +75,39 @@ class LandmarkableViewable(Landmarkable, Viewable):
 
         Parameters
         ----------
-        include_labels : `boolean`, optional
+        group_label : `str`, optional
+            If ``None``, show all groups, else show only the provided group.
+        render_labels : `boolean`, optional
             If `True`, also render the label names next to the landmarks.
-
+        with_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
+        without_labels : ``None`` or `str` or `list` of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
         kwargs : `dict`, optional
             Passed through to the viewer.
 
+        Raises
+        ------
+        ValueError
+            If ``render_labels`` is ``True`` and both ``with_labels`` and
+            ``without_labels`` are passed.
+        ValueError
+            If the landmark manager doesn't contain the provided group label.
         """
         self_view = self.view(figure_id=figure_id, new_figure=new_figure,
                               **kwargs)
         landmark_view = self.landmarks.view(figure_id=self_view.figure_id,
                                             new_figure=False,
-                                            targettype=type(self))
+                                            group_label=group_label,
+                                            targettype=type(self),
+                                            render_labels=render_labels,
+                                            with_labels=with_labels,
+                                            without_labels=without_labels
+                                            )
         return landmark_view
 
 
@@ -162,7 +185,7 @@ class LandmarkManager(Transformable, Viewable):
         if isinstance(value, PointCloud):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
-                group_label, value,
+                value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
@@ -245,7 +268,6 @@ class LandmarkManager(Transformable, Viewable):
             The landmark manager to copy from.
         """
         new_landmark_manager = landmark_manager.copy()
-        new_landmark_manager._target = self._target
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
     def _transform_inplace(self, transform):
@@ -253,20 +275,48 @@ class LandmarkManager(Transformable, Viewable):
             group.lms._transform_inplace(transform)
         return self
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, group_label=None,
+              **kwargs):
         """
         View all landmarks groups on the current manager.
 
         Parameters
         ----------
-        include_labels : `bool`, optional
-            If ``True``, also render the label names next to the landmarks.
-
+        group_label : `str`, optional
+            If ``None``, show all groups, else show only the provided group.
+        render_labels : `boolean`, optional
+            If `True`, also render the label names next to the landmarks.
+        with_labels : None or `str` or list of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
+        without_labels : None or `str` or list of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
         kwargs : `dict`, optional
             Passed through to the viewer.
+
+        Raises
+        ------
+        ValueError
+            If ``render_labels`` is ``True`` and both ``with_labels`` and
+            ``without_labels`` are passed.
+        ValueError
+            If the landmark manager doesn't contain the provided group label.
         """
-        for group in self._landmark_groups.itervalues():
-            group._view(figure_id=figure_id, new_figure=new_figure, **kwargs)
+        if group_label is None:
+            for label in self._landmark_groups:
+                self._landmark_groups[label]._view(figure_id=figure_id,
+                                                   new_figure=new_figure,
+                                                   group_label=label, **kwargs)
+        elif group_label in self._landmark_groups:
+            self._landmark_groups[group_label]._view(figure_id=figure_id,
+                                                     new_figure=new_figure,
+                                                     group_label=group_label,
+                                                     **kwargs)
+        else:
+            raise ValueError('Unknown label {}'.format(group_label))
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -290,17 +340,13 @@ class LandmarkGroup(Copyable, Viewable):
     ----------
     target : :map:`Landmarkable`
         The parent object of this landmark group.
-
     group_label : `string`
         The label of the group.
-
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-
     labels_to_masks : `dict` of `string` to `boolean` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
-
     copy : `boolean`, optional
         If ``True``, a copy of the :map:`PointCloud` is stored on the group.
 
@@ -315,8 +361,7 @@ class LandmarkGroup(Copyable, Viewable):
         by a label.
     """
 
-    def __init__(self, group_label, pointcloud, labels_to_masks,
-                 copy=True):
+    def __init__(self, pointcloud, labels_to_masks, copy=True):
         super(LandmarkGroup, self).__init__()
 
         if not labels_to_masks:
@@ -331,7 +376,6 @@ class LandmarkGroup(Copyable, Viewable):
         self._labels_to_masks = labels_to_masks
         self._verify_all_labels_masked()
 
-        self._group_label = group_label
         if copy:
             self._pointcloud = pointcloud.copy()
             self._labels_to_masks = {l: m.copy() for l, m in
@@ -381,7 +425,8 @@ class LandmarkGroup(Copyable, Viewable):
 
     def __getitem__(self, label):
         """
-        Returns a new landmark group that contains ONLY the specified label.
+        Returns the PointCloud that contains this label represents on the group.
+        This will be a subset of the total landmark group PointCloud.
 
         Parameters
         ----------
@@ -390,10 +435,11 @@ class LandmarkGroup(Copyable, Viewable):
 
         Returns
         -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with a single label.
+        pcloud : :map:`PointCloud`
+            The PointCloud that this label represents. Will be a subset of the
+            entire group's landmarks.
         """
-        return self.with_labels(label)
+        return self._pointcloud.from_mask(self._labels_to_masks[label])
 
     def __delitem__(self, label):
         """
@@ -426,15 +472,6 @@ class LandmarkGroup(Copyable, Viewable):
             # Catch the error, restore the value and re-raise the exception!
             self._labels_to_masks[label] = value_to_delete
             raise e
-
-    @property
-    def group_label(self):
-        """
-        The label of this landmark group.
-
-        :type: `string`
-        """
-        return self._group_label
 
     @property
     def labels(self):
@@ -570,38 +607,63 @@ class LandmarkGroup(Copyable, Viewable):
         overlap = np.sum(masks_to_keep, axis=0) > 0
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
-        return LandmarkGroup(self.group_label,
-                             self._pointcloud.from_mask(overlap),
+        return LandmarkGroup(self._pointcloud.from_mask(overlap),
                              dict(zip(labels, masks_to_keep)))
 
-    def _view(self, figure_id=None, new_figure=False, include_labels=True,
-              targettype=None, **kwargs):
+    def _view(self, figure_id=None, new_figure=False, targettype=None,
+              render_labels=True, group_label='group', with_labels=None,
+              without_labels=None, **kwargs):
         """
         View all landmarks. Kwargs passed in here will be passed through
         to the shapes view method.
 
         Parameters
         ----------
-        include_labels : `boolean`, optional
-            If `True`, also render the label names next to the landmarks.
-
         targettype : `type`, optional
             Hint for the landmark viewer for the type of the object these
             landmarks are attached to. If ``None``, The landmarks will be
             visualized without special consideration for the type of the
             target. Mainly used for :map:`Image` subclasses.
-
+        render_labels : `boolean`, optional
+            If `True`, also render the label names next to the landmarks.
+        group_label : `str`, optional
+            The group label to prepend before the semantic labels
+        with_labels : None or `str` or list of `str`, optional
+            If not ``None``, only show the given label(s). Should **not** be
+            used with the ``without_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
+        without_labels : None or `str` or list of `str`, optional
+            If not ``None``, show all except the given label(s). Should **not**
+            be used with the ``with_labels`` kwarg. If ``render_labels`` is
+            ``False`` this kwarg is ignored.
         kwargs : `dict`, optional
             Passed through to the viewer.
 
+        Raises
+        ------
+        ValueError
+            If ``render_labels`` is ``True`` and both ``with_labels`` and
+            ``without_labels`` are passed.
         """
+        if render_labels:
+            if with_labels is not None and without_labels is not None:
+                raise ValueError('You may only pass one of `with_labels` or '
+                                 '`without_labels`.')
+            elif with_labels is not None:
+                lmark_group = self.with_labels(with_labels)
+            elif without_labels is not None:
+                lmark_group = self.without_labels(without_labels)
+            else:
+                lmark_group = self  # Fall through
+        else:
+            lmark_group = self
+
         landmark_viewer = LandmarkViewer(figure_id, new_figure,
-                                         self.group_label, self._pointcloud,
-                                         self._labels_to_masks,
+                                         group_label, lmark_group._pointcloud,
+                                         lmark_group._labels_to_masks,
                                          targettype=targettype)
-        return landmark_viewer.render(include_labels=include_labels, **kwargs)
+        return landmark_viewer.render(render_labels=render_labels, **kwargs)
 
     def __str__(self):
-        return '{}: label: {}, n_labels: {}, n_points: {}'.format(
-            type(self).__name__, self.group_label, self.n_labels,
-            self.n_landmarks)
+        return '{}: n_labels: {}, n_points: {}'.format(
+            type(self).__name__, self.n_labels, self.n_landmarks)

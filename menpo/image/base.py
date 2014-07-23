@@ -662,7 +662,7 @@ class Image(Vectorizable, LandmarkableViewable):
             Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         min_indices, max_indices = pc.bounds(boundary=boundary)
         return self.crop_inplace(min_indices, max_indices,
                                  constrain_to_boundary=constrain_to_boundary)
@@ -717,7 +717,7 @@ class Image(Vectorizable, LandmarkableViewable):
             Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         if minimum:
             boundary = boundary_proportion * np.min(pc.range())
         else:
@@ -948,7 +948,7 @@ class Image(Vectorizable, LandmarkableViewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         scale = AlignmentUniformScale(pc, reference_shape).as_vector().copy()
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)
@@ -992,7 +992,7 @@ class Image(Vectorizable, LandmarkableViewable):
         rescaled_image : type(self)
             A copy of this image, rescaled.
         """
-        x, y = self.landmarks[group][label].lms.range()
+        x, y = self.landmarks[group][label].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, interpolator=interpolator,
                             round=round, **kwargs)

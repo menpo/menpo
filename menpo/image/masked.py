@@ -627,7 +627,7 @@ class MaskedImage(Image):
         if self.n_dims != 2:
             raise ValueError("can only constrain mask on 2D images.")
 
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         if trilist is not None:
             from menpo.shape import TriMesh
 
@@ -698,7 +698,7 @@ class MaskedImage(Image):
 
             Default: 'all'
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         patch_size = np.ceil(patch_size)
         patch_half_size = patch_size / 2
         mask = np.zeros(self.shape)

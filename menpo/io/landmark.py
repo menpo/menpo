@@ -23,7 +23,6 @@ class LandmarkImporter(Importer):
 
     def __init__(self, filepath):
         super(LandmarkImporter, self).__init__(filepath)
-        self.group_label = 'default'
         self.pointcloud = None
         self.labels_to_masks = None
 
@@ -47,7 +46,7 @@ class LandmarkImporter(Importer):
             Every point will be labelled.
         """
         self._parse_format(asset=asset)
-        return LandmarkGroup(self.group_label, self.pointcloud,
+        return LandmarkGroup(self.pointcloud,
                              self.labels_to_masks)
 
     @abc.abstractmethod
@@ -160,7 +159,6 @@ class ASFImporter(LandmarkImporter):
         # TODO: Use connectivity and create a graph type instead of PointCloud
         # edges = scaled_points[connectivity]
 
-        self.group_label = 'ASF'
         self.pointcloud = PointCloud(points)
         self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
 
@@ -224,7 +222,6 @@ class PTSImporter(LandmarkImporter):
         # PTS landmarks are 1-based, need to convert to 0-based (subtract 1)
         points = self._build_points(xs - 1, ys - 1)
 
-        self.group_label = 'PTS'
         self.pointcloud = PointCloud(points)
         self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
 
@@ -304,7 +301,6 @@ class LM3Importer(LandmarkImporter):
         ys = np.array(ys, dtype=np.float).reshape((-1, 1))
         zs = np.array(zs, dtype=np.float).reshape((-1, 1))
 
-        self.group_label = 'LM3'
         self.pointcloud = PointCloud(np.hstack([xs, ys, zs]))
         # Create the mask whereby there is one landmark per label
         # (identity matrix)
@@ -398,7 +394,6 @@ class LM2Importer(LandmarkImporter):
         xs = np.array(xs, dtype=np.float).reshape((-1, 1))
         ys = np.array(ys, dtype=np.float).reshape((-1, 1))
 
-        self.group_label = 'LM2'
         # Flip the x and y
         self.pointcloud = PointCloud(np.hstack([ys, xs]))
         # Create the mask whereby there is one landmark per label
@@ -431,7 +426,6 @@ class LANImporter(LandmarkImporter):
             landmarks = np.fromfile(
                 f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
 
-        self.group_label = 'LM3'
         self.pointcloud = PointCloud(landmarks)
         self.labels_to_masks = {'all': np.ones(landmarks.shape[0],
                                                dtype=np.bool)}
@@ -479,7 +473,6 @@ class BNDImporter(LandmarkImporter):
             landmarks[i, :] = np.array([float(l[1]), float(l[2]), float(l[3])],
                                        dtype=np.float)
 
-        self.group_label = 'BND'
         self.pointcloud = PointCloud(landmarks)
         self.labels_to_masks = {
             'left_eye': _indices_to_mask(n_points, np.arange(8)),
@@ -506,7 +499,7 @@ class LJSONImporter(LandmarkImporter):
     def _parse_format(self, asset=None):
         with open(self.filepath, 'rb') as f:
             lms_dict = json.load(f)  # lms_dict is now a dict rep the JSON
-        self.group_label = 'JSON'
+
         all_points = []
         labels = []  # label per group
         labels_slices = []  # slices into the full pointcloud per label

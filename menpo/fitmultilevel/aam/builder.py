@@ -297,7 +297,7 @@ class AAMBuilder(DeformableModelBuilder):
                         next(g), self.feature_type[rj]))
 
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in feature_images]
+            shapes = [i.landmarks[group][label] for i in feature_images]
 
             # define shapes that will be used for training
             if j == 0:
@@ -323,7 +323,7 @@ class AAMBuilder(DeformableModelBuilder):
             if verbose:
                 print_dynamic('{}Computing transforms'.format(level_str))
             transforms = [self.transform(reference_frame.landmarks['source'].lms,
-                                         i.landmarks[group][label].lms)
+                                         i.landmarks[group][label])
                           for i in feature_images]
 
             # warp images to reference frame
