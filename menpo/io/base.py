@@ -405,6 +405,14 @@ def image_paths(pattern):
     return glob_with_suffix(pattern, all_image_types)
 
 
+def landmark_file_paths(pattern):
+    r"""
+    Return landmark file filepaths that Menpo can import that match the glob
+    pattern.
+    """
+    return glob_with_suffix(pattern, all_landmark_types)
+
+
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=None,
                            importer_kwargs=None, verbose=False):
@@ -423,6 +431,18 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
                 n_files, progress_bar_str(float(i + 1) / n_files,
                                           show_bar=True)))
         yield asset
+
+
+def same_name(asset):
+    r"""
+    Menpo's default landmark resolver. Returns all landmarks found to have
+    the same stem as the asset.
+    """
+    # pattern finding all landmarks with the same stem
+    pattern = os.path.join(asset.ioinfo.dir, asset.ioinfo.filename + '.*')
+    # find all the landmarks we can with this name
+    return {os.path.splitext(p)[-1][1:]: p
+            for p in landmark_file_paths(pattern)}
 
 
 def _import(filepath, extensions_map, keep_importer=False,
@@ -491,7 +511,7 @@ def _import(filepath, extensions_map, keep_importer=False,
             # user isn't customising how landmarks are found.
             lm_pattern = os.path.join(ioinfo.dir, ioinfo.filename + '.*')
             # find all the landmarks we can
-            for lm_path in glob_with_suffix(lm_pattern, all_landmark_types):
+            for lm_path in landmark_file_paths(lm_pattern):
                 # manually trigger _import (so we can set the asset!)
                 lms = _import(lm_path, all_landmark_types, keep_importer=False,
                               has_landmarks=False, asset=asset)
