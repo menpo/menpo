@@ -306,15 +306,18 @@ class LandmarkManager(Transformable, Viewable):
             If the landmark manager doesn't contain the provided group label.
         """
         if group_label is None:
+            viewers = []
             for label in self._landmark_groups:
-                self._landmark_groups[label]._view(figure_id=figure_id,
-                                                   new_figure=new_figure,
-                                                   group_label=label, **kwargs)
+                v = self._landmark_groups[label]._view(figure_id=figure_id,
+                                                       new_figure=new_figure,
+                                                       group_label=label,
+                                                       **kwargs)
+                viewers.append(v)
+            return viewers
         elif group_label in self._landmark_groups:
-            self._landmark_groups[group_label]._view(figure_id=figure_id,
-                                                     new_figure=new_figure,
-                                                     group_label=group_label,
-                                                     **kwargs)
+            return self._landmark_groups[group_label]._view(
+                figure_id=figure_id, new_figure=new_figure,
+                group_label=group_label, **kwargs)
         else:
             raise ValueError('Unknown label {}'.format(group_label))
 
