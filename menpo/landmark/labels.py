@@ -8,7 +8,7 @@ def imm_58_points(landmark_group):
     Apply the 58 point semantic labels from the
     IMM dataset to the landmarks in the given landmark group.
 
-    The label applied to this new manager will be 'imm_58_points'.
+    The group label will be 'imm_58_points'.
 
     The semantic labels applied are as follows:
 
@@ -27,8 +27,10 @@ def imm_58_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'imm_58_points'
     landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with group label 'imm_58_points'
+        New landmark group
 
     Raises
     ------
@@ -85,9 +87,10 @@ def ibug_68_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_68_points'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with group label 'ibug_68_points'. The pointcloud
-        is also copied.
+        New landmark group.
 
     Raises
     ------
@@ -128,7 +131,7 @@ def ibug_68_contour(landmark_group):
     original semantic labels of multiPIE) to the landmarks in
     the given landmark manager.
 
-    The label applied to this new group will be 'ibug_68_contour'.
+    The group label will be 'ibug_68_contour'.
 
     The semantic labels applied are as follows:
 
@@ -141,8 +144,10 @@ def ibug_68_contour(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_68_contour'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with label 'ibug_68_contour'
+        New landmark group.
 
     Raises
     ------
@@ -178,7 +183,7 @@ def ibug_68_trimesh(landmark_group):
     original semantic labels of multiPIE) to the landmarks in
     the given landmark group.
 
-    The label applied to this new group will be 'ibug_68_trimesh'.
+    The group label will be 'ibug_68_trimesh'.
 
     The semantic labels applied are as follows:
 
@@ -191,8 +196,10 @@ def ibug_68_trimesh(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_68_trimesh'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_68_trimesh'
+        New landmark group.
 
     Raises
     ------
@@ -255,7 +262,7 @@ def ibug_68_closed_mouth(landmark_group):
     the given landmark group - but ignore the 3 points that are coincident for
     a closed mouth. Therefore, there only 65 points are returned.
 
-    The label applied to this new group will be 'ibug_68_closed_mouth'.
+    The group label will be 'ibug_68_closed_mouth'.
 
     The semantic labels applied are as follows:
 
@@ -268,8 +275,10 @@ def ibug_68_closed_mouth(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_68_closed_mouth'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_68_closed_mouth'
+        New landmark group.
 
     Raises
     ------
@@ -329,9 +338,10 @@ def ibug_66_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_66_points'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with group label 'ibug_66_points'. The pointcloud
-        is also copied.
+        New landmark group.
 
     Raises
     ------
@@ -393,9 +403,10 @@ def ibug_51_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_51_points'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with group label 'ibug_51_points'. The pointcloud
-        is also copied.
+        New landmark group.
 
     Raises
     ------
@@ -455,9 +466,10 @@ def ibug_49_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_49_points'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group with group label 'ibug_49_points'. The pointcloud
-        is also copied.
+        New landmark group.
 
     Raises
     ------
@@ -499,7 +511,7 @@ def ibug_open_eye_points(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The label applied to this new group will be 'ibug_open_eye_points'.
+    The group label will be 'ibug_open_eye_points'.
 
     The semantic labels applied are as follows:
 
@@ -516,8 +528,10 @@ def ibug_open_eye_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_open_eye_points'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_open_eye_ponts'
+        New landmark group.
 
     Raises
     ------
@@ -552,7 +566,7 @@ def ibug_close_eye_points(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The label applied to this new group will be 'ibug_close_eye_points'.
+    The group label will be 'ibug_close_eye_points'.
 
     The semantic labels applied are as follows:
 
@@ -566,8 +580,10 @@ def ibug_close_eye_points(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_close_eye_ponts'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_close_eye_ponts'
+        New landmark group.
 
     Raises
     ------
@@ -598,7 +614,7 @@ def ibug_open_eye_trimesh(landmark_group):
     Apply the ibug's "standard" open eye semantic labels to the
     landmarks in the given landmark group.
 
-    The label applied to this new group will be 'ibug_open_eye_trimesh'.
+    The group label will be 'ibug_open_eye_trimesh'.
 
     The semantic labels applied are as follows:
 
@@ -611,8 +627,10 @@ def ibug_open_eye_trimesh(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_open_eye_trimesh'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_open_eye_trimesh'
+        New landmark group.
 
     Raises
     ------
@@ -662,7 +680,7 @@ def ibug_close_eye_trimesh(landmark_group):
     Apply the ibug's "standard" close eye semantic labels to the
     landmarks in the given landmark group.
 
-    The label applied to this new group will be 'ibug_close_eye_trimesh'.
+    The group label will be 'ibug_close_eye_trimesh'.
 
     The semantic labels applied are as follows:
 
@@ -675,8 +693,10 @@ def ibug_close_eye_trimesh(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_close_eye_trimesh'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_close_eye_trimesh'
+        New landmark group.
 
     Raises
     ------
@@ -712,7 +732,7 @@ def ibug_tongue(landmark_group):
     Apply the ibug's "standard" tongue semantic labels to the landmarks in the
     given landmark group.
 
-    The label applied to this new group will be 'ibug_tongue'.
+    The group label will be 'ibug_tongue'.
 
     The semantic labels applied are as follows:
 
@@ -726,8 +746,10 @@ def ibug_tongue(landmark_group):
 
     Returns
     -------
+    group_label : `str`
+        The group label: 'ibug_tongue'
     landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark manager with label 'ibug_tongue'
+        New landmark group.
 
     Raises
     ------
