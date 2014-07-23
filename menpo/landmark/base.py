@@ -381,7 +381,8 @@ class LandmarkGroup(Copyable, Viewable):
 
     def __getitem__(self, label):
         """
-        Returns a new landmark group that contains ONLY the specified label.
+        Returns the PointCloud that contains this label represents on the group.
+        This will be a subset of the total landmark group PointCloud.
 
         Parameters
         ----------
@@ -390,10 +391,11 @@ class LandmarkGroup(Copyable, Viewable):
 
         Returns
         -------
-        landmark_group : :map:`LandmarkGroup`
-            A new landmark group with a single label.
+        pcloud : :map:`PointCloud`
+            The PointCloud that this label represents. Will be a subset of the
+            entire group's landmarks.
         """
-        return self.with_labels(label)
+        return self._pointcloud.from_mask(self._labels_to_masks[label])
 
     def __delitem__(self, label):
         """

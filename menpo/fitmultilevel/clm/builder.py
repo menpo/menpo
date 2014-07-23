@@ -254,7 +254,7 @@ class CLMBuilder(DeformableModelBuilder):
                         next(g), self.feature_type[rj]))
 
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in feature_images]
+            shapes = [i.landmarks[group][label] for i in feature_images]
 
             # define shapes that will be used for training
             if j == 0:

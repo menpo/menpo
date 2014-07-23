@@ -57,10 +57,10 @@ def test_json_landmarks_bunny():
     lms = mesh.landmarks['JSON']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_custom_landmark_logic_bunny():
@@ -74,18 +74,18 @@ def test_custom_landmark_logic_bunny():
     lms = mesh.landmarks['no_nose']
     labels = {'reye', 'mouth', 'leye'}
     assert(len(set(lms.labels) - labels) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
     assert('full_set' in mesh.landmarks.group_labels)
     lms = mesh.landmarks['full_set']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(set(lms.labels) - labels) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_custom_landmark_logic_None_bunny():
@@ -100,10 +100,10 @@ def test_json_landmarks_bunny_direct():
     assert(lms.group_label == 'JSON')
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_breaking_bad_import():

@@ -215,7 +215,7 @@ class SDTrainer(object):
         images.reverse()
 
         # extract the ground truth shapes
-        gt_shapes = [[i.landmarks[group][label].lms for i in img]
+        gt_shapes = [[i.landmarks[group][label] for i in img]
                      for img in images]
 
         # build the regressors
@@ -863,7 +863,7 @@ class SDMTrainer(SDTrainer):
         reference_shape : :map:`PointCloud`
             The reference shape computed based on the given images.
         """
-        shapes = [i.landmarks[group][label].lms for i in images]
+        shapes = [i.landmarks[group][label] for i in images]
         return mean_pointcloud(shapes)
 
     def _rescale_reference_shape(self):

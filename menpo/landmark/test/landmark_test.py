@@ -38,7 +38,7 @@ def test_LandmarkManager_set_LandmarkGroup():
     assert (not is_same_array(man['test_set'].lms.points,
                               lgroup.lms.points))
     assert_equal(man['test_set'].group_label, 'test_set')
-    assert_allclose(man['test_set']['all'].lms.points, np.ones([10, 3]))
+    assert_allclose(man['test_set']['all'].points, np.ones([10, 3]))
     assert (man['test_set']._labels_to_masks is not lgroup._labels_to_masks)
 
 
@@ -95,7 +95,7 @@ def test_LandmarkManager_set_PointCloud_not_copy_target():
     print(man['test_set'])
     assert (not is_same_array(man['test_set'].lms.points,
                               pcloud.points))
-    assert_allclose(man['test_set']['all'].lms.points, np.ones([10, 3]))
+    assert_allclose(man['test_set']['all'].points, np.ones([10, 3]))
     assert_equal(man['test_set'].group_label, 'test_set')
 
 
@@ -185,8 +185,8 @@ def test_LandmarkGroup_get():
 
     lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
 
-    assert_allclose(lgroup['lower'].n_landmarks, 2)
-    assert_allclose(lgroup['upper'].n_landmarks, 1)
+    assert_allclose(lgroup['lower'].n_points, 2)
+    assert_allclose(lgroup['upper'].n_points, 1)
 
 
 def test_LandmarkGroup_in():
@@ -208,9 +208,9 @@ def test_LandmarkGroup_set():
 
     lgroup['lower'] = [0, 1]
 
-    assert_allclose(lgroup['lower'].n_landmarks, 2)
-    assert_allclose(lgroup['lower'].lms.points[0, :], [0, 1])
-    assert_allclose(lgroup['lower'].lms.points[1, :], [2, 3])
+    assert_allclose(lgroup['lower'].n_points, 2)
+    assert_allclose(lgroup['lower'].points[0, :], [0, 1])
+    assert_allclose(lgroup['lower'].points[1, :], [2, 3])
 
 
 def test_LandmarkGroup_del():
