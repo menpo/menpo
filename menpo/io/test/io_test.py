@@ -54,7 +54,7 @@ def test_import_incorrect_built_in():
 def test_json_landmarks_bunny():
     mesh = mio.import_builtin_asset('bunny.obj')
     assert('LJSON' in mesh.landmarks.group_labels)
-    lms = mesh.landmarks['JSON']
+    lms = mesh.landmarks['LJSON']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
     assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
