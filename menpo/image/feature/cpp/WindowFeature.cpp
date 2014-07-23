@@ -7,6 +7,6 @@ WindowFeature::WindowFeature() {
 WindowFeature::~WindowFeature() {
 }
 
-bool WindowFeature::isCUDA() {
+bool WindowFeature::isApplyOnImage() {
     return false;
 }

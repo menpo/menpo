@@ -72,7 +72,7 @@ void HOG::apply(double *windowImage, double *descriptorVector) {
                                 this->numberOfChannels, descriptorVector);
 }
 
-bool HOG::isCUDA() {
+bool HOG::isApplyOnImage() {
     if (this->method == 1) // easier to read this way
         return true;
     else
