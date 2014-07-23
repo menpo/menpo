@@ -79,11 +79,11 @@ class LandmarkableViewable(Landmarkable, Viewable):
             If ``None``, show all groups, else show only the provided group.
         render_labels : `boolean`, optional
             If `True`, also render the label names next to the landmarks.
-        with_labels : None or `str` or list of `str`, optional
+        with_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
             used with the ``without_labels`` kwarg. If ``render_labels`` is
             ``False`` this kwarg is ignored.
-        without_labels : None or `str` or list of `str`, optional
+        without_labels : ``None`` or `str` or `list` of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg. If ``render_labels`` is
             ``False`` this kwarg is ignored.
