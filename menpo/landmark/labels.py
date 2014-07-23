@@ -3,6 +3,14 @@ from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
 
+def _build_labelling_error_msg(group_label, n_expected_points,
+                               n_actual_points):
+    return '{} mark-up expects exactly {} ' \
+           'points. However, the given landmark group ' \
+           'has {} points'.format(group_label, n_expected_points,
+                                  n_actual_points)
+
+
 def imm_58_points(landmark_group):
     """
     Apply the 58 point semantic labels from the
@@ -41,12 +49,14 @@ def imm_58_points(landmark_group):
     -----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
+    group_label = 'imm_58_points'
+    n_expected_points = 58
     n_points = landmark_group.lms.n_points
 
-    if n_points != 58:
-        raise LabellingError("imm_58_points mark-up expects exactly 58 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
@@ -60,7 +70,7 @@ def imm_58_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(39, 47)
     new_landmark_group['nose'] = np.arange(47, 58)
 
-    return 'imm_58_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_68_points(landmark_group):
@@ -103,12 +113,14 @@ def ibug_68_points(landmark_group):
     """
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined by ibug (and thus not a PointCloud)
+    group_label = 'ibug_68_points'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if n_points != 68:
-        raise LabellingError("ibug_68_points mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
@@ -122,7 +134,7 @@ def ibug_68_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(48, 68)
     new_landmark_group['nose'] = np.arange(27, 36)
 
-    return 'ibug_68_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_68_contour(landmark_group):
@@ -160,12 +172,14 @@ def ibug_68_contour(landmark_group):
     """
     # TODO: This should probably be some sort of graph that maintains the
     # connectivity defined by ibug (and thus not a PointCloud)
+    group_label = 'ibug_68_contour'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if n_points != 68:
-        raise LabellingError("ibug_68_contour mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmarks = landmark_group.lms
     ind = np.hstack((np.arange(17), np.arange(16, 21),
@@ -174,7 +188,7 @@ def ibug_68_contour(landmark_group):
     new_landmark_group = LandmarkGroup(
         new_landmarks, {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
 
-    return 'ibug_68_contour', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_68_trimesh(landmark_group):
@@ -212,12 +226,14 @@ def ibug_68_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
+    group_label = 'ibug_68_trimesh'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if n_points != 68:
-        raise LabellingError("ibug_68_trimesh mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21], [47, 28,42],
                         [49, 61, 60], [40, 41, 37], [37, 19, 20], [28, 40, 39],
@@ -250,7 +266,7 @@ def ibug_68_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         {'all': np.ones(n_points, dtype=np.bool)})
 
-    return 'ibug_68_trimesh', new_landmark_group
+    return group_label, new_landmark_group
 
 # TODO: ibug_68_all? imports points, contour and trimesh?
 
@@ -289,12 +305,14 @@ def ibug_68_closed_mouth(landmark_group):
     ----------
     .. [1] http://www.multipie.org/
     """
+    group_label = 'ibug_68_closed_mouth'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 68:
-        raise LabellingError("ibug_68_closed_mouth mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     # Ignore the 3 coincident points (the last 3 points)
     new_landmarks = landmark_group.lms
@@ -310,7 +328,7 @@ def ibug_68_closed_mouth(landmark_group):
     new_landmark_group['mouth'] = np.arange(48, 65)
     new_landmark_group['nose'] = np.arange(27, 36)
 
-    return 'ibug_68_closed_mouth', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_66_points(landmark_group):
@@ -352,12 +370,14 @@ def ibug_66_points(landmark_group):
     ----------
     .. [1] http://www.multipie.org/
     """
+    group_label = 'ibug_66_points'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 68:
-        raise LabellingError("ibug_66_points mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     # Ignore the 2 inner mouth corners
     new_landmarks = landmark_group.lms
@@ -376,7 +396,7 @@ def ibug_66_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(48, 66)
     new_landmark_group['nose'] = np.arange(27, 36)
 
-    return 'ibug_66_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_51_points(landmark_group):
@@ -417,12 +437,14 @@ def ibug_51_points(landmark_group):
     ----------
     .. [1] http://www.multipie.org/
     """
+    group_label = 'ibug_51_points'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 68:
-        raise LabellingError("ibug_51_points mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     # Ignore the chin region
     new_landmarks = landmark_group.lms
@@ -438,7 +460,7 @@ def ibug_51_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(31, 51)
     new_landmark_group['nose'] = np.arange(10, 19)
 
-    return 'ibug_51_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_49_points(landmark_group):
@@ -480,12 +502,14 @@ def ibug_49_points(landmark_group):
     ----------
     .. [1] http://www.multipie.org/
     """
+    group_label = 'ibug_49_points'
+    n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 68:
-        raise LabellingError("ibug_49_points mark-up expects exactly 68 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     # Ignore the chin region and the 2 inner mouth corners
     new_landmarks = landmark_group.lms
@@ -503,7 +527,7 @@ def ibug_49_points(landmark_group):
     new_landmark_group['mouth'] = np.arange(31, 49)
     new_landmark_group['nose'] = np.arange(10, 19)
 
-    return 'ibug_49_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_open_eye_points(landmark_group):
@@ -538,12 +562,14 @@ def ibug_open_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
+    group_label = 'ibug_open_eye_points'
+    n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 38:
-        raise LabellingError("ibug_open_eye_points mark-up expects exactly 38 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
@@ -558,7 +584,7 @@ def ibug_open_eye_points(landmark_group):
     new_landmark_group['sclera'] = np.hstack((0, np.arange(12, 17), 6,
                                               np.arange(17, 22)))
 
-    return 'ibug_open_eye_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_close_eye_points(landmark_group):
@@ -590,12 +616,14 @@ def ibug_close_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 17 points
     """
+    group_label = 'ibug_close_eye_points'
+    n_expected_points = 17
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 17:
-        raise LabellingError("ibug_close_eye_points mark-up expects exactly 17 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
@@ -606,7 +634,7 @@ def ibug_close_eye_points(landmark_group):
     new_landmark_group['lower_eyelid'] = np.hstack((np.arange(6, 12), 0,
                                                     np.arange(12, 17)))
 
-    return 'ibug_close_eye_points', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_open_eye_trimesh(landmark_group):
@@ -639,12 +667,14 @@ def ibug_open_eye_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
+    group_label = 'ibug_open_eye_trimesh'
+    n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    if n_points != 38:
-        raise LabellingError("ibug_open_eye_trimesh mark-up expects exactly 38 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     tri_list = np.array([[29, 36, 28], [22, 13, 23], [12,  1,  2],
                          [29, 30, 37], [13,  3, 14], [13, 12,  2],
@@ -672,7 +702,7 @@ def ibug_open_eye_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         {'tri': np.ones(n_points, dtype=np.bool)})
 
-    return 'ibug_open_eye_trimesh', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_close_eye_trimesh(landmark_group):
@@ -705,12 +735,14 @@ def ibug_close_eye_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
+    group_label = 'ibug_close_eye_trimesh'
+    n_expected_points = 17
     n_points = landmark_group.lms.n_points
 
-    if n_points != 17:
-        raise LabellingError("ibug_close_eye_trimesh mark-up expects exactly 17 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     tri_list = np.array([[10, 11, 13], [ 3, 13,  2], [ 4, 14,  3],
                          [15,  5, 16], [12, 11,  0], [13, 14, 10],
@@ -724,7 +756,7 @@ def ibug_close_eye_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         {'tri': np.ones(n_points, dtype=np.bool)})
 
-    return 'ibug_close_eye_trimesh', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def ibug_tongue(landmark_group):
@@ -756,12 +788,14 @@ def ibug_tongue(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 19 points
     """
+    group_label = 'ibug_tongue'
+    n_expected_points = 19
     n_points = landmark_group.lms.n_points
 
-    if landmark_group.lms.n_points != 19:
-        raise LabellingError("ibug_tongue mark-up expects exactly 19 "
-                             "points. However, the given landmark group only "
-                             "has {1} points".format(n_points))
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
@@ -770,7 +804,7 @@ def ibug_tongue(landmark_group):
     new_landmark_group['outline'] = np.arange(0, 12)
     new_landmark_group['bisector'] = np.arange(13, 18)
 
-    return 'ibug_tongue', new_landmark_group
+    return group_label, new_landmark_group
 
 
 def labeller(landmarkable, group_label, label_func):
