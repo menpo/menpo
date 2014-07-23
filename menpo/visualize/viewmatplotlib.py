@@ -189,7 +189,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, include_labels, image_view, **kwargs):
+    def _plot_landmarks(self, render_labels, image_view, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
@@ -214,11 +214,11 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
-            if include_labels:
+            if render_labels:
                 ax = plt.gca()
                 points = pc.points[:, ::-1] if image_view else pc.points
-                for i, p in enumerate(points):
-                    ax.annotate(str(i), xy=(p[0], p[1]),
+                for k, p in enumerate(points):
+                    ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=halign,
                                 verticalalignment=valign, size=size)
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
@@ -230,8 +230,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
 
-    def _render(self, include_labels=True, **kwargs):
-        self._plot_landmarks(include_labels, False, **kwargs)
+    def _render(self, render_labels=True, **kwargs):
+        self._plot_landmarks(render_labels, False, **kwargs)
         return self
 
 
@@ -241,8 +241,8 @@ class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
         super(MatplotlibLandmarkViewer2dImage, self).__init__(
             figure_id, new_figure, group_label, pointcloud, labels_to_masks)
 
-    def _render(self, include_labels=True, **kwargs):
-        self._plot_landmarks(include_labels, True, **kwargs)
+    def _render(self, render_labels=True, **kwargs):
+        self._plot_landmarks(render_labels, True, **kwargs)
         return self
 
 
