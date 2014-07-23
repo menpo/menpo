@@ -398,7 +398,6 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
     // d_h contains (2*cellHeightAndWidthInPixels)*(2*cellHeightAndWidthInPixels)
     //  times required d_h
     //  which is equal to: 2*8*2*8 = 256
-    // d_h needs to be set to 0.
     
     d_h[y1 + x1*factor_y_dim + bin1*factor_z_dim + a*factor_a_dim] = gradientMagnitude *
                                                         (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
