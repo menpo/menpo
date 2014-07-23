@@ -10,4 +10,5 @@ public:
 	virtual ~WindowFeature();
 	virtual void apply(double *windowImage, double *descriptorVector) = 0;
 	unsigned int descriptorLengthPerWindow;
+    virtual bool isCUDA();
 };

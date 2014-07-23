@@ -72,6 +72,13 @@ void HOG::apply(double *windowImage, double *descriptorVector) {
                                 this->numberOfChannels, descriptorVector);
 }
 
+bool HOG::isCUDA() {
+    if (this->method == 1) // easier to read this way
+        return true;
+    else
+        return false;
+}
+
 // ZHU & RAMANAN: Face Detection, Pose Estimation and Landmark Localization
 //                in the Wild
 void ZhuRamananHOGdescriptor(double *inputImage,

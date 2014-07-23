@@ -6,3 +6,7 @@ WindowFeature::WindowFeature() {
 
 WindowFeature::~WindowFeature() {
 }
+
+bool WindowFeature::isCUDA() {
+    return false;
+}

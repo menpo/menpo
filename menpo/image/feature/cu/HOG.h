@@ -24,6 +24,7 @@ public:
 	    double l2normClipping);
 	virtual ~HOG();
 	void apply(double *windowImage, double *descriptorVector);
+    virtual bool isCUDA();
 	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally,
 	             numberOfBlocksPerWindowVertically;
 private:
