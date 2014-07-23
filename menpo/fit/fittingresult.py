@@ -183,8 +183,9 @@ class FittingResult(Viewable):
         """
         image = self.image.copy()
         image.landmarks['fitting'] = self.final_shape
-        return image.landmarks['fitting'].view(
-            figure_id=figure_id, new_figure=new_figure).render(**kwargs)
+        return image.view_landmarks(group_label='fitting',
+                                    figure_id=figure_id,
+                                    new_figure=new_figure, **kwargs)
 
     def view_initialization(self, figure_id=None, new_figure=False, **kwargs):
         r"""
@@ -192,8 +193,9 @@ class FittingResult(Viewable):
         """
         image = self.image.copy()
         image.landmarks['fitting'] = self.initial_shape
-        return image.landmarks['fitting'].view(
-            figure_id=figure_id, new_figure=new_figure).render(**kwargs)
+        return image.view_landmarks(group_label='fitting',
+                                    figure_id=figure_id,
+                                    new_figure=new_figure, **kwargs)
 
     def view_ground_truth(self, figure_id=None, new_figure=False, **kwargs):
         r"""
@@ -202,8 +204,9 @@ class FittingResult(Viewable):
         if self.gt_shape is not None:
             image = self.image.copy()
             image.landmarks['gt_shape'] = self.gt_shape
-            return image.landmarks['gt_shape'].view(
-                figure_id=figure_id, new_figure=new_figure, **kwargs)
+            return image.view_landmarks(group_label='gt_shape',
+                                        figure_id=figure_id,
+                                        new_figure=new_figure, **kwargs)
         else:
             raise ValueError('Ground truth shape has not been set.')
 

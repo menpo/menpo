@@ -307,6 +307,7 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
             # if we are overlaying points on an image, axis0 (the 'y' axis)
             # is flipped.
             plt.gca().invert_yaxis()
+        return self
 
 
 class MatplotlibGraphPlotter(MatplotlibRenderer):
@@ -338,6 +339,7 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         plt.title(self.title)
         plt.legend(self.legend, bbox_to_anchor=(1.05, 1), loc=2,
                    borderaxespad=0.)
+        return self
 
 
 class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
