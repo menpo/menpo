@@ -11,7 +11,7 @@ def test_LandmarkGroup_copy_true():
     points = np.ones((10, 3))
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
     pcloud = PointCloud(points, copy=False)
-    lgroup = LandmarkGroup('label', pcloud, mask_dict)
+    lgroup = LandmarkGroup(pcloud, mask_dict)
     assert (not is_same_array(lgroup.lms.points, points))
     assert (lgroup._labels_to_masks is not mask_dict)
     assert (lgroup.lms is not pcloud)
@@ -21,7 +21,7 @@ def test_LandmarkGroup_copy_false():
     points = np.ones((10, 3))
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
     pcloud = PointCloud(points, copy=False)
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
     assert (is_same_array(lgroup._pointcloud.points, points))
     assert (lgroup._labels_to_masks is mask_dict)
     assert (lgroup.lms is pcloud)
@@ -31,13 +31,12 @@ def test_LandmarkManager_set_LandmarkGroup():
     points = np.ones((10, 3))
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
     pcloud = PointCloud(points, copy=False)
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     man = LandmarkManager()
     man['test_set'] = lgroup
     assert (not is_same_array(man['test_set'].lms.points,
                               lgroup.lms.points))
-    assert_equal(man['test_set'].group_label, 'test_set')
     assert_allclose(man['test_set']['all'].points, np.ones([10, 3]))
     assert (man['test_set']._labels_to_masks is not lgroup._labels_to_masks)
 
@@ -59,7 +58,7 @@ def test_landmarkgroup_copy_method():
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
     pcloud = PointCloud(points, copy=False)
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
     lgroup_copy = lgroup.copy()
 
     assert (not is_same_array(lgroup_copy.lms.points,
@@ -83,7 +82,6 @@ def test_LandmarkManager_copy_method():
     assert (man_copy['test_set'] is not man['test_set'])
     assert (not is_same_array(man_copy['test_set'].lms.points,
                               man['test_set'].lms.points))
-    assert_equal(man['test_set'].group_label, 'test_set')
 
 
 def test_LandmarkManager_set_PointCloud_not_copy_target():
@@ -96,7 +94,6 @@ def test_LandmarkManager_set_PointCloud_not_copy_target():
     assert (not is_same_array(man['test_set'].lms.points,
                               pcloud.points))
     assert_allclose(man['test_set']['all'].points, np.ones([10, 3]))
-    assert_equal(man['test_set'].group_label, 'test_set')
 
 
 def test_LandmarkManager_iterate():
@@ -117,7 +114,7 @@ def test_LandmarkGroup_iterate():
     pcloud = PointCloud(points, copy=False)
     target = PointCloud(points)
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     for l in lgroup:
         assert_equal(l, 'all')
@@ -129,7 +126,7 @@ def test_LandmarkManager_get():
     target = PointCloud(points)
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     man = LandmarkManager()
     man._landmark_groups['test_set'] = lgroup
@@ -142,13 +139,11 @@ def test_LandmarkManager_set():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(10, dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     man = LandmarkManager()
     man['test_set'] = lgroup
 
-    assert_equal(man._landmark_groups['test_set'].group_label,
-                 'test_set')
     assert_allclose(man._landmark_groups['test_set'].lms.points,
                     lgroup.lms.points)
     assert_equal(man._landmark_groups['test_set'].n_labels, 1)
@@ -183,7 +178,7 @@ def test_LandmarkGroup_get():
     mask_dict = {'lower': np.array([1, 1, 0], dtype=np.bool),
                  'upper': np.array([0, 0, 1], dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     assert_allclose(lgroup['lower'].n_points, 2)
     assert_allclose(lgroup['upper'].n_points, 1)
@@ -194,7 +189,7 @@ def test_LandmarkGroup_in():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(3, dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     assert ('all' in lgroup)
 
@@ -204,7 +199,7 @@ def test_LandmarkGroup_set():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(3, dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     lgroup['lower'] = [0, 1]
 
@@ -218,7 +213,7 @@ def test_LandmarkGroup_del():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(3, dtype=np.bool),
                  'lower': np.array([1, 1, 0], dtype=np.bool)}
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     del lgroup['lower']
 
@@ -232,7 +227,7 @@ def test_LandmarkGroup_del_unlabelled():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(3, dtype=np.bool),
                  'lower': np.array([1, 1, 0], dtype=np.bool)}
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     del lgroup['all']
 
@@ -243,7 +238,7 @@ def test_LandmarkGroup_create_unlabelled():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.zeros(3, dtype=np.bool)}
 
-    LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    LandmarkGroup(pcloud, mask_dict, copy=False)
 
 
 @raises(ValueError)
@@ -251,7 +246,7 @@ def test_LandmarkGroup_create_no_mask():
     points = np.array([[0, 1], [2, 3], [4, 5]])
     pcloud = PointCloud(points, copy=False)
 
-    LandmarkGroup('label', pcloud, None, copy=False)
+    LandmarkGroup(pcloud, None, copy=False)
 
 
 @raises(ValueError)
@@ -260,7 +255,7 @@ def test_LandmarkGroup_create_incorrect_shape():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.zeros(5, dtype=np.bool)}
 
-    LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    LandmarkGroup(pcloud, mask_dict, copy=False)
 
 
 def test_LandmarkGroup_with_labels():
@@ -268,7 +263,7 @@ def test_LandmarkGroup_with_labels():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'lower': np.array([1, 1, 0], dtype=np.bool),
                  'upper': np.array([0, 0, 1], dtype=np.bool)}
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     new_lgroup = lgroup.with_labels('lower')
 
@@ -288,7 +283,7 @@ def test_LandmarkGroup_without_labels():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'lower': np.array([1, 1, 0], dtype=np.bool),
                  'upper': np.array([0, 0, 1], dtype=np.bool)}
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     new_lgroup = lgroup.without_labels('upper')
 
@@ -319,7 +314,7 @@ def test_LandmarkGroup_str():
     pcloud = PointCloud(points, copy=False)
     mask_dict = {'all': np.ones(3, dtype=np.bool)}
 
-    lgroup = LandmarkGroup('label', pcloud, mask_dict, copy=False)
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
 
     out_str = lgroup.__str__()
     assert (len(out_str) > 0)

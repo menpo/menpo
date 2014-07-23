@@ -162,7 +162,7 @@ class LandmarkManager(Transformable, Viewable):
         if isinstance(value, PointCloud):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
-                group_label, value,
+                value,
                 {'all': np.ones(value.n_points, dtype=np.bool)})
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
@@ -265,8 +265,10 @@ class LandmarkManager(Transformable, Viewable):
         kwargs : `dict`, optional
             Passed through to the viewer.
         """
-        for group in self._landmark_groups.itervalues():
-            group._view(figure_id=figure_id, new_figure=new_figure, **kwargs)
+        for label in self._landmark_groups:
+            self._landmark_groups[label]._view(figure_id=figure_id,
+                                               new_figure=new_figure,
+                                               group_label=label, **kwargs)
 
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
@@ -315,8 +317,7 @@ class LandmarkGroup(Copyable, Viewable):
         by a label.
     """
 
-    def __init__(self, group_label, pointcloud, labels_to_masks,
-                 copy=True):
+    def __init__(self, pointcloud, labels_to_masks, copy=True):
         super(LandmarkGroup, self).__init__()
 
         if not labels_to_masks:
@@ -331,7 +332,6 @@ class LandmarkGroup(Copyable, Viewable):
         self._labels_to_masks = labels_to_masks
         self._verify_all_labels_masked()
 
-        self._group_label = group_label
         if copy:
             self._pointcloud = pointcloud.copy()
             self._labels_to_masks = {l: m.copy() for l, m in
@@ -428,15 +428,6 @@ class LandmarkGroup(Copyable, Viewable):
             # Catch the error, restore the value and re-raise the exception!
             self._labels_to_masks[label] = value_to_delete
             raise e
-
-    @property
-    def group_label(self):
-        """
-        The label of this landmark group.
-
-        :type: `string`
-        """
-        return self._group_label
 
     @property
     def labels(self):
@@ -572,12 +563,11 @@ class LandmarkGroup(Copyable, Viewable):
         overlap = np.sum(masks_to_keep, axis=0) > 0
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
-        return LandmarkGroup(self.group_label,
-                             self._pointcloud.from_mask(overlap),
+        return LandmarkGroup(self._pointcloud.from_mask(overlap),
                              dict(zip(labels, masks_to_keep)))
 
     def _view(self, figure_id=None, new_figure=False, include_labels=True,
-              targettype=None, **kwargs):
+              targettype=None, group_label='', **kwargs):
         """
         View all landmarks. Kwargs passed in here will be passed through
         to the shapes view method.
@@ -598,12 +588,11 @@ class LandmarkGroup(Copyable, Viewable):
 
         """
         landmark_viewer = LandmarkViewer(figure_id, new_figure,
-                                         self.group_label, self._pointcloud,
+                                         group_label, self._pointcloud,
                                          self._labels_to_masks,
                                          targettype=targettype)
         return landmark_viewer.render(include_labels=include_labels, **kwargs)
 
     def __str__(self):
-        return '{}: label: {}, n_labels: {}, n_points: {}'.format(
-            type(self).__name__, self.group_label, self.n_labels,
-            self.n_landmarks)
+        return '{}: n_labels: {}, n_points: {}'.format(
+            type(self).__name__, self.n_labels, self.n_landmarks)

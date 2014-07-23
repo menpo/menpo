@@ -97,7 +97,6 @@ def test_custom_landmark_logic_None_bunny():
 
 def test_json_landmarks_bunny_direct():
     lms = mio.import_landmark_file(mio.data_path_to('bunny.ljson'))
-    assert(lms.group_label == 'JSON')
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
     assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
