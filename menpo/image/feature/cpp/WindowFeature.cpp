@@ -12,6 +12,6 @@ bool WindowFeature::isApplyOnImage() {
     return false;
 }
 
-void applyOnImage(const ImageWindowIterator &iwi, const double *image, double *outputImage, int *windowsCenters) {
+void WindowFeature::applyOnImage(const ImageWindowIterator &iwi, const double *image, double *outputImage, int *windowsCenters) {
     PyErr_SetString(PyExc_RuntimeError, "WindowFeature::applyOnImage is not implemented");
 }
