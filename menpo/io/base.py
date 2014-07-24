@@ -519,7 +519,8 @@ def _import(filepath, extensions_map, keep_importer=False,
                 continue
             for group_name, lm_path in lm_paths.iteritems():
                 lms = import_landmark_file(lm_path)
-                x.landmarks[group_name] = lms
+                if x.n_dims == lms.n_dims:
+                    x.landmarks[group_name] = lms
 
     # undo list-ification (if we added it!)
     if len(built_objects) == 1:
