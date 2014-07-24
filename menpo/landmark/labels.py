@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import numpy as np
 from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
@@ -60,7 +61,7 @@ def imm_58_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = np.arange(13)
     new_landmark_group['leye'] = np.arange(13, 21)
@@ -124,7 +125,7 @@ def ibug_68_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = np.arange(17)
     new_landmark_group['leye'] = np.arange(36, 42)
@@ -186,7 +187,8 @@ def ibug_68_contour(landmark_group):
                      np.arange(21, 26), np.arange(1)))
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        new_landmarks, {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool))]))
 
     return group_label, new_landmark_group
 
@@ -264,7 +266,7 @@ def ibug_68_trimesh(landmark_group):
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     return group_label, new_landmark_group
 
@@ -318,7 +320,8 @@ def ibug_68_closed_mouth(landmark_group):
     new_landmarks = landmark_group.lms
     new_landmarks.points = new_landmarks.points[:-3]
     new_landmark_group = LandmarkGroup(
-        new_landmarks, {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool))]))
 
     new_landmark_group['chin'] = np.arange(17)
     new_landmark_group['leye'] = np.arange(36, 42)
@@ -386,7 +389,7 @@ def ibug_66_points(landmark_group):
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
         new_landmarks,
-        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(new_landmarks.n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = np.arange(17)
     new_landmark_group['leye'] = np.arange(36, 42)
@@ -451,7 +454,8 @@ def ibug_51_points(landmark_group):
     ind = np.arange(17, 68)
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
-        new_landmarks, {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
+                                                    dtype=np.bool))]))
 
     new_landmark_group['leye'] = np.arange(19, 25)
     new_landmark_group['reye'] = np.arange(25, 31)
@@ -518,7 +522,7 @@ def ibug_49_points(landmark_group):
     new_landmarks.points = new_landmarks.points[ind]
     new_landmark_group = LandmarkGroup(
         new_landmarks,
-        {'all': np.ones(new_landmarks.n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(new_landmarks.n_points, dtype=np.bool))]))
 
     new_landmark_group['leye'] = np.arange(19, 25)
     new_landmark_group['reye'] = np.arange(25, 31)
@@ -573,7 +577,7 @@ def ibug_open_eye_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
                                                     np.arange(12, 17)))
@@ -627,7 +631,7 @@ def ibug_close_eye_points(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
                                                     np.arange(12, 17)))
@@ -700,7 +704,7 @@ def ibug_open_eye_trimesh(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
-        {'tri': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
     return group_label, new_landmark_group
 
@@ -754,7 +758,7 @@ def ibug_close_eye_trimesh(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
-        {'tri': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
     return group_label, new_landmark_group
 
@@ -799,7 +803,7 @@ def ibug_tongue(landmark_group):
 
     new_landmark_group = LandmarkGroup(
         landmark_group.lms,
-        {'all': np.ones(n_points, dtype=np.bool)})
+        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['outline'] = np.arange(0, 12)
     new_landmark_group['bisector'] = np.arange(13, 18)

@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 import json
 import numpy as np
 
@@ -160,7 +161,8 @@ class ASFImporter(LandmarkImporter):
         # edges = scaled_points[connectivity]
 
         self.pointcloud = PointCloud(points)
-        self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
+        self.labels_to_masks = OrderedDict(
+            [('all', np.ones(points.shape[0], dtype=np.bool))])
 
 
 class PTSImporter(LandmarkImporter):
@@ -223,7 +225,8 @@ class PTSImporter(LandmarkImporter):
         points = self._build_points(xs - 1, ys - 1)
 
         self.pointcloud = PointCloud(points)
-        self.labels_to_masks = {'all': np.ones(points.shape[0], dtype=np.bool)}
+        self.labels_to_masks = OrderedDict(
+            [('all', np.ones(points.shape[0], dtype=np.bool))])
 
 
 class LM3Importer(LandmarkImporter):
@@ -307,7 +310,7 @@ class LM3Importer(LandmarkImporter):
         masks = np.eye(num_points).astype(np.bool)
         masks = np.vsplit(masks, num_points)
         masks = [np.squeeze(m) for m in masks]
-        self.labels_to_masks = dict(zip(labels, masks))
+        self.labels_to_masks = OrderedDict(zip(labels, masks))
 
 
 class LM2Importer(LandmarkImporter):
@@ -401,7 +404,7 @@ class LM2Importer(LandmarkImporter):
         masks = np.eye(num_points).astype(np.bool)
         masks = np.vsplit(masks, num_points)
         masks = [np.squeeze(m) for m in masks]
-        self.labels_to_masks = dict(zip(labels, masks))
+        self.labels_to_masks = OrderedDict(zip(labels, masks))
 
 
 class LANImporter(LandmarkImporter):
@@ -427,8 +430,8 @@ class LANImporter(LandmarkImporter):
                 f, dtype=np.float32)[3:].reshape([-1, 3]).astype(np.double)
 
         self.pointcloud = PointCloud(landmarks)
-        self.labels_to_masks = {'all': np.ones(landmarks.shape[0],
-                                               dtype=np.bool)}
+        self.labels_to_masks = OrderedDict(
+            [('all', np.ones(landmarks.shape[0], dtype=np.bool))])
 
 
 class BNDImporter(LandmarkImporter):
@@ -474,15 +477,15 @@ class BNDImporter(LandmarkImporter):
                                        dtype=np.float)
 
         self.pointcloud = PointCloud(landmarks)
-        self.labels_to_masks = {
-            'left_eye': _indices_to_mask(n_points, np.arange(8)),
-            'right_eye': _indices_to_mask(n_points, np.arange(8, 16)),
-            'left_eyebrow': _indices_to_mask(n_points, np.arange(16, 26)),
-            'right_eyebrow': _indices_to_mask(n_points, np.arange(26, 36)),
-            'nose': _indices_to_mask(n_points, np.arange(36, 48)),
-            'mouth': _indices_to_mask(n_points, np.arange(48, 68)),
-            'chin': _indices_to_mask(n_points, np.arange(68, 83))
-        }
+        self.labels_to_masks = OrderedDict([
+            ('left_eye', _indices_to_mask(n_points, np.arange(8))),
+            ('right_eye', _indices_to_mask(n_points, np.arange(8, 16))),
+            ('left_eyebrow', _indices_to_mask(n_points, np.arange(16, 26))),
+            ('right_eyebrow', _indices_to_mask(n_points, np.arange(26, 36))),
+            ('nose', _indices_to_mask(n_points, np.arange(36, 48))),
+            ('mouth', _indices_to_mask(n_points, np.arange(48, 68))),
+            ('chin', _indices_to_mask(n_points, np.arange(68, 83)))
+        ])
 
 
 class LJSONImporter(LandmarkImporter):
@@ -512,7 +515,7 @@ class LJSONImporter(LandmarkImporter):
             for p in lms:
                 all_points.append(p['point'])
         self.pointcloud = PointCloud(np.array(all_points))
-        self.labels_to_masks = {}
+        self.labels_to_masks = OrderedDict()
         # go through each label and build the appropriate boolean array
         for label, l_slice in zip(labels, labels_slices):
             mask = np.zeros(self.pointcloud.n_points, dtype=np.bool)

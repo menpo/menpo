@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 
 import numpy as np
 
@@ -186,7 +187,7 @@ class LandmarkManager(Transformable, Viewable):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
                 value,
-                {'all': np.ones(value.n_points, dtype=np.bool)})
+                OrderedDict([('all', np.ones(value.n_points, dtype=np.bool))]))
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
             lmark_group = value.copy()
@@ -339,6 +340,9 @@ class LandmarkGroup(Copyable, Viewable):
     :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
     be immutable.
 
+    The labels to masks must be within an `OrderedDict` so that semantic
+    ordering can be maintained.
+
     Parameters
     ----------
     target : :map:`Landmarkable`
@@ -347,7 +351,7 @@ class LandmarkGroup(Copyable, Viewable):
         The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `dict` of `string` to `boolean` `ndarrays`
+    labels_to_masks : `OrderedDict` of `string` to `boolean` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
     copy : `boolean`, optional
@@ -355,6 +359,8 @@ class LandmarkGroup(Copyable, Viewable):
 
     Raises
     ------
+    ValueError
+        If `dict` passed instead of `OrderedDict`
     ValueError
         If no set of label masks is passed.
     ValueError
@@ -371,18 +377,21 @@ class LandmarkGroup(Copyable, Viewable):
             raise ValueError('Landmark groups are designed for their internal '
                              'state, other than owernship, to be immutable. '
                              'Empty label sets are not permitted.')
-
         if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
             raise ValueError('Each mask must have the same number of points '
                              'as the landmark pointcloud.')
+        if type(labels_to_masks) is dict:
+            raise ValueError('Must provide an OrderedDict to maintain the '
+                             'semantic meaning of the labels.')
+
         # Another sanity check
         self._labels_to_masks = labels_to_masks
         self._verify_all_labels_masked()
 
         if copy:
             self._pointcloud = pointcloud.copy()
-            self._labels_to_masks = {l: m.copy() for l, m in
-                                     labels_to_masks.iteritems()}
+            self._labels_to_masks = OrderedDict([(l, m.copy()) for l, m in
+                                                 labels_to_masks.items()])
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
