@@ -47,7 +47,8 @@ void ZhuRamananHOGdescriptor(double *inputImage,
                              unsigned int numberOfChannels,
                              double *descriptorMatrix);
 
-void DalalTriggsHOGdescriptor(double *d_inputImage,
+void DalalTriggsHOGdescriptor(double *h,
+                              unsigned int offsetH,
                               unsigned int numberOfOrientationBins,
                               unsigned int cellHeightAndWidthInPixels,
                               unsigned int blockHeightAndWidthInCells,
@@ -56,6 +57,4 @@ void DalalTriggsHOGdescriptor(double *d_inputImage,
                               unsigned int imageHeight, unsigned int imageWidth,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
-                              const int rowFrom, const int columnFrom,
-                              double *descriptorVector,
-                              double *d_h);
+                              double *descriptorVector);
