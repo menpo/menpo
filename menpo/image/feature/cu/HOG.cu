@@ -308,7 +308,9 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
                                                                const unsigned int cellHeightAndWidthInPixels,
                                                                const unsigned signedOrUnsignedGradients,
                                                                const double binsSize,
-                                                               const int numHistograms, const int numberOfWindowsVertically,
+                                                               const int numHistograms,
+                                                               const int numberOfWindowsVertically,
+                                                               const int numberOfWindowsHorizontally,
                                                                const bool enablePadding,
                                                                const int windowStepVertical, const int windowStepHorizontal) {
     // Pre-compute histograms values
@@ -319,10 +321,15 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
     
     // Retrieve pixel position
     int x_ = blockIdx.x * blockDim.x + threadIdx.x;
+    if (x_ >= numberOfWindowsHorizontally * windowWidth)
+        return;
+    int y_ = blockIdx.y * blockDim.y + threadIdx.y;
+    if (y_ >= numberOfWindowsVertically * windowHeight)
+        return;
+    
     int x = x_ % windowWidth;
     int windowIndexHorizontal = x_ / windowWidth;
     
-    int y_ = blockIdx.y * blockDim.y + threadIdx.y;
     int y = y_ % windowHeight;
     int windowIndexVertical = y_ / windowHeight;
     
@@ -341,10 +348,6 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
         columnFrom = windowIndexHorizontal*windowStepHorizontal - (int)ceil((double)windowWidth / 2.0) + 1;
     }
      
-    // Check if position is inside the image
-    if (x >= windowWidth || y >= windowHeight)
-        return;
-    
     // Compute deltas
     double dx[3], dy[3];
     
@@ -569,6 +572,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                                           this->enableSignedGradients ? 1 : 0 /*signedOrUnsignedGradients*/,
                                                                           (1 + (this->enableSignedGradients ? 1 : 0)) * pi / this->numberOfOrientationBins /*binsSize*/,
                                                                           numHistograms_d_h, iwi._numberOfWindowsVertically,
+                                                                          iwi._numberOfWindowsHorizontally,
                                                                           iwi._enablePadding, iwi._windowStepVertical, iwi._windowStepHorizontal);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
