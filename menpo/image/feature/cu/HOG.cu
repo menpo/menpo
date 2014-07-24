@@ -326,11 +326,12 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
     int y = y_ % windowHeight;
     int windowIndexVertical = y_ / windowHeight;
     
-    unsigned int factor_a_dim = h_dims.x * h_dims.y * h_dims.z * numHistograms;
-    unsigned int factor_z_dim = h_dims.x * h_dims.y;
     unsigned int factor_y_dim = h_dims.x;
+    unsigned int factor_z_dim = factor_y_dim * h_dims.y;
+    unsigned int factor_o_dim = factor_z_dim * h_dims.z;
+    unsigned int factor_a_dim = factor_o_dim * numHistograms;
     
-    int offsetWindow = h_dims.x * h_dims.y * h_dims.z * (windowIndexVertical + numberOfWindowsVertically * windowIndexHorizontal);
+    int offsetWindow = factor_o_dim * (windowIndexVertical + numberOfWindowsVertically * windowIndexHorizontal);
     int rowFrom, columnFrom;
     if (enablePadding) {
         rowFrom = windowIndexVertical*windowStepVertical;
