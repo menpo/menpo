@@ -69,24 +69,27 @@ class TriMesh(PointCloud, Rasterizable):
         json_dict['trilist'] = self.trilist.tolist()
         return json_dict
 
-    def from_vector(self, flattened):
-        r"""
-        Builds a new :class:`TriMesh` given then `flattened` vector.
-        This allows rebuilding pointclouds with the correct number of
-        dimensions from a vector. Note that the trilist will be drawn from
-        self.
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud and returns a new pointcloud containing only those
+        points that were ``True`` in the mask.
 
         Parameters
         ----------
-        flattened : (N,) ndarray
-            Vector representing a set of points.
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
 
         Returns
-        --------
-        trimesh : :class:`TriMesh`
-            A new trimesh created from the vector with self's trilist.
+        -------
+        pointcloud : :map:`PointCloud`
+            A new pointcloud that has been masked.
         """
-        return TriMesh(flattened.reshape([-1, self.n_dims]), self.trilist)
+        tm = self.copy()
+        if np.all(mask):  # Fast path for all true
+            return tm
+        return tm
 
     @property
     def vertex_normals(self):
