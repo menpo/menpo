@@ -540,7 +540,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const unsigned int numHistograms_d_h = iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally;
     const unsigned int numCopies_d_h = (2*this->cellHeightAndWidthInPixels) * (2*this->cellHeightAndWidthInPixels);
     double *d_h = NULL;
-    double h[h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h]; // contains all the histograms
+    double *h = new double[h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h]; // contains all the histograms
     
     // For pre-computation
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
@@ -614,12 +614,14 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     }
     
     
-    // Free temporary matrices
-    delete[] descriptorVector;
-
 onfailure:
     if (d_h != NULL)
         cudaFree(d_h);
+    
+    // Free temporary matrices
+    delete[] descriptorVector;
+    delete[] h;
+
 }
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
