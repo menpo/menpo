@@ -517,6 +517,12 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     unsigned int offsetH;
     double* descriptorVector = new double[this->descriptorLengthPerWindow];
     
+    // block is used by DalalTriggsHOGdescriptor
+    // building this vector only once save times 
+    vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
+                                           (blockHeightAndWidthInCells, vector<double>
+                                            (numberOfOrientationBins, 0.0) ) );
+    
     // Compute all the histograms together using CUDA
     //   h_dims: dimension of one histogram
     //   numHistograms_d_h: number of histograms to compute
@@ -603,7 +609,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                              iwi._imageHeight, iwi._imageWidth,
                              this->windowHeight, this->windowWidth,
                              this->numberOfChannels,
-                             descriptorVector);
+                             descriptorVector, block);
 
             // Store results
             for (unsigned int d = 0; d < this->descriptorLengthPerWindow; d++)
@@ -635,7 +641,8 @@ void DalalTriggsHOGdescriptor(double *h,
                               unsigned int imageHeight, unsigned int imageWidth,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
-                              double *descriptorVector) {
+                              double *descriptorVector,
+                              vector<vector<vector<double> > > block) {
    
     // Variables
     //  * Compute gradients & Compute histograms
@@ -649,9 +656,6 @@ void DalalTriggsHOGdescriptor(double *h,
     //  * Block normalization
     
     int descriptorIndex(0);
-    vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
-                                           (blockHeightAndWidthInCells, vector<double>
-                                            (numberOfOrientationBins, 0.0) ) );
      
     // Block normalization
     
