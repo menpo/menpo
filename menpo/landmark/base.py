@@ -129,7 +129,9 @@ class LandmarkManager(Transformable, Viewable):
     @property
     def n_dims(self):
         if self.n_groups != 0:
-            return self._landmark_groups.itervalues().next().n_dims
+            # Python version independent way of getting the first value
+            for v in self._landmark_groups.values():
+                return v.n_dims
         else:
             return None
 
@@ -146,7 +148,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         # do a normal copy. The dict will be shallow copied - rectify that here
         new = Copyable.copy(self)
-        for k, v in new._landmark_groups.iteritems():
+        for k, v in new._landmark_groups.items():
             new._landmark_groups[k] = v.copy()
         return new
 
@@ -272,7 +274,7 @@ class LandmarkManager(Transformable, Viewable):
         self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
     def _transform_inplace(self, transform):
-        for group in self._landmark_groups.itervalues():
+        for group in self._landmark_groups.values():
             group.lms._transform_inplace(transform)
         return self
 
@@ -408,7 +410,7 @@ class LandmarkGroup(Copyable, Viewable):
 
         """
         new = Copyable.copy(self)
-        for k, v in new._labels_to_masks.iteritems():
+        for k, v in new._labels_to_masks.items():
             new._labels_to_masks[k] = v.copy()
         return new
 
@@ -620,7 +622,7 @@ class LandmarkGroup(Copyable, Viewable):
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
         return LandmarkGroup(self._pointcloud.from_mask(overlap),
-                             dict(zip(labels, masks_to_keep)))
+                             OrderedDict(zip(labels, masks_to_keep)))
 
     def _view(self, figure_id=None, new_figure=False, targettype=None,
               render_labels=True, group_label='group', with_labels=None,
