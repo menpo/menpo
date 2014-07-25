@@ -183,7 +183,8 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                     points[self.adjacency_list[:, 1], :])
 
         ax = plt.gca()
-        lc = mc.LineCollection(lines, colors=colour_array, linewidths=2)
+        lc = mc.LineCollection(lines, colors=colour_array, linewidths=1,
+                               label=label)
         ax.add_collection(lc)
         ax.autoscale()
         return self
@@ -195,12 +196,13 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
         self.points = points
         self.trilist = trilist
 
-    def _render(self, image_view=False, label=None, **kwargs):
+    def _render(self, image_view=False, label=None, colour_array='b',
+                **kwargs):
         import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
         plt.triplot(points[:, 0], points[:, 1], self.trilist,
-                    label=label, color='b')
+                    label=label, color=colour_array, marker='.')
 
         return self
 
@@ -234,7 +236,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            kwargs['colour_array'] = [colours[:, i]] * np.sum(pc.points)
+            kwargs['colour_array'] = colours[:, i]
             kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
