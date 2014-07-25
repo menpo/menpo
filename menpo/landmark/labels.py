@@ -4,12 +4,117 @@ from menpo.landmark.base import LandmarkGroup
 from menpo.landmark.exceptions import LabellingError
 
 
+def _connectivity_from_range(range_tuple, close_loop=False):
+    r"""
+    Build the connectivity over a range. For example, given ::
+
+        range_array = np.arange(3)
+
+    Generate the connectivity of ::
+
+        [(0, 1), (1, 2), (2, 3)]
+
+    If ``close_loop`` is true, add an extra connection from the last point to
+    the first.
+    """
+    range_array = np.arange(*range_tuple)
+    conn = zip(range_array, range_array[1:])
+    if close_loop:
+        conn.append((range_array[-1], range_array[0]))
+    return np.asarray(conn)
+
+
+def _mask_from_range(range_tuple, n_points):
+    r"""
+    Generate a mask over the range. The mask will be true inside the range.
+    """
+    mask = np.zeros(n_points, dtype=np.bool)
+    range_slice = slice(*range_tuple)
+    mask[range_slice] = True
+    return mask
+
+
 def _build_labelling_error_msg(group_label, n_expected_points,
                                n_actual_points):
     return '{} mark-up expects exactly {} ' \
            'points. However, the given landmark group ' \
            'has {} points'.format(group_label, n_expected_points,
                                   n_actual_points)
+
+
+def _validate_input(landmark_group, n_expected_points, group_label):
+    r"""
+    Ensure that the input matches the number of expected points.
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        Landmark group to validate
+    n_expected_points : `int`
+        Number of expected points
+    group_label : `str`
+        Group label for error message
+
+    Raises
+    ------
+    LabellingError
+        If the number of expected points doesn't match the number of given
+        points
+    """
+    n_points = landmark_group.lms.n_points
+    if n_points != n_expected_points:
+        raise LabellingError(_build_labelling_error_msg(group_label,
+                                                        n_expected_points,
+                                                        n_points))
+
+
+def _relabel_group_from_dict(pointcloud, labels_to_ranges):
+    """
+    Label the given pointcloud according to the given ordered dictionary
+    of labels to ranges. This assumes that you can semantically label the group
+    by using ranges in to the existing points e.g ::
+
+        labels_to_ranges = {'chin': (0, 17, False)}
+
+    The third element of the range tuple is whether the range is a closed loop
+    or not. For example, for an eye landmark this would be ``True``, as you
+    do want to create a closed loop for an eye.
+
+    Parameters
+    ----------
+    pointcloud : :map:`PointCloud`
+        The pointcloud to apply semantic labels to.
+    labels_to_ranges : `OrderedDict`
+        Ordered dictionary of string labels to range tuples.
+
+    Returns
+    -------
+    landmark_group: :map:`LandmarkGroup`
+        New landmark group
+
+    Raises
+    ------
+    :class:`menpo.landmark.exceptions.LabellingError`
+        If the given pointcloud contains less than ``n_expected_points``
+        points.
+    """
+    from ..shape import PointGraph
+
+    n_points = pointcloud.n_points
+    masks = OrderedDict()
+    adjacency_lists = []
+    for label, tup in labels_to_ranges.items():
+        range_tuple = tup[:-1]
+        close_loop = tup[-1]
+        adjacency_lists.append(_connectivity_from_range(
+            range_tuple, close_loop=close_loop))
+        masks[label] = _mask_from_range(range_tuple, n_points)
+    adjacency_array = np.vstack(adjacency_lists)
+
+    new_landmark_group = LandmarkGroup(
+        PointGraph(pointcloud.points, adjacency_array), masks)
+
+    return new_landmark_group
 
 
 def imm_58_points(landmark_group):
@@ -51,27 +156,17 @@ def imm_58_points(landmark_group):
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
     group_label = 'imm_58_points'
-    n_expected_points = 58
-    n_points = landmark_group.lms.n_points
-
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    new_landmark_group = LandmarkGroup(
-        landmark_group.lms,
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
-
-    new_landmark_group['chin'] = np.arange(13)
-    new_landmark_group['leye'] = np.arange(13, 21)
-    new_landmark_group['reye'] = np.arange(21, 29)
-    new_landmark_group['leyebrow'] = np.arange(29, 34)
-    new_landmark_group['reyebrow'] = np.arange(34, 39)
-    new_landmark_group['mouth'] = np.arange(39, 47)
-    new_landmark_group['nose'] = np.arange(47, 58)
-
-    return group_label, new_landmark_group
+    _validate_input(landmark_group, 58, group_label)
+    labels = OrderedDict([
+        ('chin', (0, 13, False)),
+        ('leye', (13, 21, True)),
+        ('reye', (21, 29, True)),
+        ('leyebrow', (29, 34, False)),
+        ('reyebrow', (34, 39, False)),
+        ('mouth', (39, 47, True)),
+        ('nose', (47, 58, False))
+    ])
+    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def ibug_68_points(landmark_group):
@@ -93,14 +188,14 @@ def ibug_68_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_68_points'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -112,85 +207,18 @@ def ibug_68_points(landmark_group):
     ----------
     .. [1] http://www.multipie.org/
     """
-    # TODO: This should probably be some sort of graph that maintains the
-    # connectivity defined by ibug (and thus not a PointCloud)
     group_label = 'ibug_68_points'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
-
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    new_landmark_group = LandmarkGroup(
-        landmark_group.lms,
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
-
-    new_landmark_group['chin'] = np.arange(17)
-    new_landmark_group['leye'] = np.arange(36, 42)
-    new_landmark_group['reye'] = np.arange(42, 48)
-    new_landmark_group['leyebrow'] = np.arange(17, 22)
-    new_landmark_group['reyebrow'] = np.arange(22, 27)
-    new_landmark_group['mouth'] = np.arange(48, 68)
-    new_landmark_group['nose'] = np.arange(27, 36)
-
-    return group_label, new_landmark_group
-
-
-def ibug_68_contour(landmark_group):
-    """
-    Apply the ibug's "standard" 68 point semantic labels (based on the
-    original semantic labels of multiPIE) to the landmarks in
-    the given landmark manager.
-
-    The group label will be 'ibug_68_contour'.
-
-    The semantic labels applied are as follows:
-
-      - contour
-
-    Parameters
-    ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
-        The landmark group to apply semantic labels to.
-
-    Returns
-    -------
-    group_label : `str`
-        The group label: 'ibug_68_contour'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
-        New landmark group.
-
-    Raises
-    ------
-    :class:`menpo.landmark.exceptions.LabellingError`
-        If the given landmark set contains less than 68 points
-
-    References
-    ----------
-    .. [1] http://www.multipie.org/
-    """
-    # TODO: This should probably be some sort of graph that maintains the
-    # connectivity defined by ibug (and thus not a PointCloud)
-    group_label = 'ibug_68_contour'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
-
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    new_landmarks = landmark_group.lms
-    ind = np.hstack((np.arange(17), np.arange(16, 21),
-                     np.arange(21, 26), np.arange(1)))
-    new_landmarks.points = new_landmarks.points[ind]
-    new_landmark_group = LandmarkGroup(
-        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
-                                                    dtype=np.bool))]))
-
-    return group_label, new_landmark_group
+    _validate_input(landmark_group, 68, group_label)
+    labels = OrderedDict([
+        ('chin', (0, 17, False)),
+        ('leye', (36, 42, True)),
+        ('reye', (42, 48, True)),
+        ('leyebrow', (17, 22, False)),
+        ('reyebrow', (22, 27, False)),
+        ('mouth', (48, 68, True)),
+        ('nose', (27, 36, False))
+    ])
+    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def ibug_68_trimesh(landmark_group):
@@ -207,14 +235,14 @@ def ibug_68_trimesh(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_68_trimesh'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -232,10 +260,7 @@ def ibug_68_trimesh(landmark_group):
     n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
+    _validate_input(landmark_group, n_expected_points, group_label)
 
     tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21], [47, 28,42],
                         [49, 61, 60], [40, 41, 37], [37, 19, 20], [28, 40, 39],
@@ -266,11 +291,9 @@ def ibug_68_trimesh(landmark_group):
                         [22, 42, 43], [50, 51, 61], [27, 22, 42]])
     new_landmark_group = LandmarkGroup(
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
+        OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
     return group_label, new_landmark_group
-
-# TODO: ibug_68_all? imports points, contour and trimesh?
 
 
 def ibug_68_closed_mouth(landmark_group):
@@ -288,14 +311,14 @@ def ibug_68_closed_mouth(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_68_closed_mouth'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -308,30 +331,22 @@ def ibug_68_closed_mouth(landmark_group):
     .. [1] http://www.multipie.org/
     """
     group_label = 'ibug_68_closed_mouth'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
+    _validate_input(landmark_group, 68, group_label)
+    labels = OrderedDict([
+        ('chin', (0, 17, False)),
+        ('leye', (36, 42, True)),
+        ('reye', (42, 48, True)),
+        ('leyebrow', (17, 22, False)),
+        ('reyebrow', (22, 27, False)),
+        ('mouth', (48, 65, True)),  # Ignore 3 coincident points (last 3)
+        ('nose', (27, 36, False))
+    ])
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    # Ignore the 3 coincident points (the last 3 points)
-    new_landmarks = landmark_group.lms
+    new_landmarks = landmark_group.lms.copy()
+    # Ignore 3 coincident points
     new_landmarks.points = new_landmarks.points[:-3]
-    new_landmark_group = LandmarkGroup(
-        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
-                                                    dtype=np.bool))]))
-
-    new_landmark_group['chin'] = np.arange(17)
-    new_landmark_group['leye'] = np.arange(36, 42)
-    new_landmark_group['reye'] = np.arange(42, 48)
-    new_landmark_group['leyebrow'] = np.arange(17, 22)
-    new_landmark_group['reyebrow'] = np.arange(22, 27)
-    new_landmark_group['mouth'] = np.arange(48, 65)
-    new_landmark_group['nose'] = np.arange(27, 36)
-
-    return group_label, new_landmark_group
+    lg = _relabel_group_from_dict(new_landmarks, labels)
+    return group_label, lg
 
 
 def ibug_66_points(landmark_group):
@@ -354,14 +369,14 @@ def ibug_66_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_66_points'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -374,32 +389,25 @@ def ibug_66_points(landmark_group):
     .. [1] http://www.multipie.org/
     """
     group_label = 'ibug_66_points'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
+    _validate_input(landmark_group, 68, group_label)
+    labels = OrderedDict([
+        ('chin', (0, 17, False)),
+        ('leye', (36, 42, True)),
+        ('reye', (42, 48, True)),
+        ('leyebrow', (17, 22, False)),
+        ('reyebrow', (22, 27, False)),
+        ('mouth', (48, 66, True)),
+        ('nose', (27, 36, False))
+    ])
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    # Ignore the 2 inner mouth corners
-    new_landmarks = landmark_group.lms
-    ind = np.hstack((np.arange(0, 60), np.arange(61, 64),
+    new_landmarks = landmark_group.lms.copy()
+    # Ignore the two inner mouth points
+    ind = np.hstack((np.arange(60),
+                     np.arange(61, 64),
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
-    new_landmark_group = LandmarkGroup(
-        new_landmarks,
-        OrderedDict([('all', np.ones(new_landmarks.n_points, dtype=np.bool))]))
-
-    new_landmark_group['chin'] = np.arange(17)
-    new_landmark_group['leye'] = np.arange(36, 42)
-    new_landmark_group['reye'] = np.arange(42, 48)
-    new_landmark_group['leyebrow'] = np.arange(17, 22)
-    new_landmark_group['reyebrow'] = np.arange(22, 27)
-    new_landmark_group['mouth'] = np.arange(48, 66)
-    new_landmark_group['nose'] = np.arange(27, 36)
-
-    return group_label, new_landmark_group
+    lg = _relabel_group_from_dict(new_landmarks, labels)
+    return group_label, lg
 
 
 def ibug_51_points(landmark_group):
@@ -421,14 +429,14 @@ def ibug_51_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_51_points'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -441,30 +449,22 @@ def ibug_51_points(landmark_group):
     .. [1] http://www.multipie.org/
     """
     group_label = 'ibug_51_points'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
+    _validate_input(landmark_group, 68, group_label)
+    labels = OrderedDict([
+        ('leye', (19, 25, True)),
+        ('reye', (25, 31, True)),
+        ('leyebrow', (0, 5, False)),
+        ('reyebrow', (5, 10, False)),
+        ('mouth', (31, 51, True)),
+        ('nose', (10, 19, False))
+    ])
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
+    new_landmarks = landmark_group.lms.copy()
     # Ignore the chin region
-    new_landmarks = landmark_group.lms
     ind = np.arange(17, 68)
     new_landmarks.points = new_landmarks.points[ind]
-    new_landmark_group = LandmarkGroup(
-        new_landmarks, OrderedDict([('all', np.ones(new_landmarks.n_points,
-                                                    dtype=np.bool))]))
-
-    new_landmark_group['leye'] = np.arange(19, 25)
-    new_landmark_group['reye'] = np.arange(25, 31)
-    new_landmark_group['leyebrow'] = np.arange(0, 5)
-    new_landmark_group['reyebrow'] = np.arange(5, 10)
-    new_landmark_group['mouth'] = np.arange(31, 51)
-    new_landmark_group['nose'] = np.arange(10, 19)
-
-    return group_label, new_landmark_group
+    lg = _relabel_group_from_dict(new_landmarks, labels)
+    return group_label, lg
 
 
 def ibug_49_points(landmark_group):
@@ -487,14 +487,14 @@ def ibug_49_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_49_points'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -507,31 +507,37 @@ def ibug_49_points(landmark_group):
     .. [1] http://www.multipie.org/
     """
     group_label = 'ibug_49_points'
-    n_expected_points = 68
-    n_points = landmark_group.lms.n_points
+    _validate_input(landmark_group, 68, group_label)
+    labels = OrderedDict([
+        ('leye', (19, 25, True)),
+        ('reye', (25, 31, True)),
+        ('leyebrow', (0, 5, False)),
+        ('reyebrow', (5, 10, False)),
+        ('mouth', (31, 49, True)),
+        ('nose', (10, 19, False))
+    ])
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    # Ignore the chin region and the 2 inner mouth corners
-    new_landmarks = landmark_group.lms
-    ind = np.hstack((np.arange(17, 60), np.arange(61, 64),
+    new_landmarks = landmark_group.lms.copy()
+    # Ignore the chin region and two inner mouth points
+    ind = np.hstack((np.arange(17, 60),
+                     np.arange(61, 64),
                      np.arange(65, 68)))
     new_landmarks.points = new_landmarks.points[ind]
-    new_landmark_group = LandmarkGroup(
-        new_landmarks,
-        OrderedDict([('all', np.ones(new_landmarks.n_points, dtype=np.bool))]))
+    lg = _relabel_group_from_dict(new_landmarks, labels)
+    return group_label, lg
 
-    new_landmark_group['leye'] = np.arange(19, 25)
-    new_landmark_group['reye'] = np.arange(25, 31)
-    new_landmark_group['leyebrow'] = np.arange(0, 5)
-    new_landmark_group['reyebrow'] = np.arange(5, 10)
-    new_landmark_group['mouth'] = np.arange(31, 49)
-    new_landmark_group['nose'] = np.arange(10, 19)
 
-    return group_label, new_landmark_group
+def _build_upper_eyelid():
+    top_indices = np.arange(0, 7)
+    middle_indices = np.arange(12, 17)
+    upper_eyelid_indices = np.hstack((top_indices, middle_indices))
+
+    upper_eyelid_connectivity = zip(top_indices, top_indices[1:])
+    upper_eyelid_connectivity += [(0, 12)]
+    upper_eyelid_connectivity += zip(middle_indices, middle_indices[1:])
+    upper_eyelid_connectivity += [(16, 6)]
+
+    return upper_eyelid_indices, upper_eyelid_connectivity
 
 
 def ibug_open_eye_points(landmark_group):
@@ -551,14 +557,14 @@ def ibug_open_eye_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_open_eye_points'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -566,27 +572,53 @@ def ibug_open_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
+    from ..shape import PointGraph
+
     group_label = 'ibug_open_eye_points'
     n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
+    _validate_input(landmark_group, n_expected_points, group_label)
 
+    upper_el_indices, upper_el_connectivity = _build_upper_eyelid()
+
+    iris_range = (22, 30)
+    pupil_range = (30, 38)
+    sclera_top = np.arange(12, 17)
+    sclera_bottom = np.arange(17, 22)
+    sclera_indices = np.hstack((0, sclera_top, 6, sclera_bottom))
+    lower_el_top = np.arange(17, 22)
+    lower_el_bottom = np.arange(7, 12)
+    lower_el_indices = np.hstack((6, lower_el_top, 0, lower_el_bottom))
+
+    iris_connectivity = _connectivity_from_range(iris_range, close_loop=True)
+    pupil_connectivity = _connectivity_from_range(pupil_range, close_loop=True)
+
+    sclera_connectivity = zip(sclera_top, sclera_top[1:])
+    sclera_connectivity += [(0, 21)]
+    sclera_connectivity += zip(sclera_bottom, sclera_bottom[1:])
+    sclera_connectivity += [(6, 17)]
+
+    lower_el_connectivity = zip(lower_el_top, lower_el_top[1:])
+    lower_el_connectivity += [(6, 7)]
+    lower_el_connectivity += zip(lower_el_bottom, lower_el_bottom[1:])
+    lower_el_connectivity += [(11, 0)]
+
+    total_connectivity = np.asarray(upper_el_connectivity +
+                                    lower_el_connectivity +
+                                    iris_connectivity.tolist() +
+                                    pupil_connectivity.tolist() +
+                                    sclera_connectivity)
     new_landmark_group = LandmarkGroup(
-        landmark_group.lms,
+        PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
-                                                    np.arange(12, 17)))
-    new_landmark_group['lower_eyelid'] = np.hstack((6, np.arange(17, 22), 0,
-                                                    np.arange(7, 12)))
-    new_landmark_group['iris'] = np.arange(22, 30)
-    new_landmark_group['pupil'] = np.arange(30, 38)
-    new_landmark_group['sclera'] = np.hstack((0, np.arange(12, 17), 6,
-                                              np.arange(17, 22)))
+    new_landmark_group['upper_eyelid'] = upper_el_indices
+    new_landmark_group['lower_eyelid'] = lower_el_indices
+    new_landmark_group['pupil'] = np.arange(*pupil_range)
+    new_landmark_group['iris'] = np.arange(*iris_range)
+    new_landmark_group['sclera'] = sclera_indices
+    del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
 
@@ -605,14 +637,14 @@ def ibug_close_eye_points(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
-        The group label: 'ibug_close_eye_ponts'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+        The group label: 'ibug_close_eye_points'
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -620,23 +652,31 @@ def ibug_close_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 17 points
     """
+    from ..shape import PointGraph
+
     group_label = 'ibug_close_eye_points'
     n_expected_points = 17
     n_points = landmark_group.lms.n_points
+    _validate_input(landmark_group, n_expected_points, group_label)
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
+    upper_indices, upper_connectivity = _build_upper_eyelid()
 
+    middle_indices = np.arange(12, 17)
+    bottom_indices = np.arange(6, 12)
+    lower_indices = np.hstack((bottom_indices, 0, middle_indices))
+    lower_connectivity = zip(bottom_indices, bottom_indices[1:])
+    lower_connectivity += [(0, 12)]
+    lower_connectivity += zip(middle_indices, middle_indices[1:])
+    lower_connectivity += [(11, 0)]
+
+    total_connectivity = np.asarray(upper_connectivity + lower_connectivity)
     new_landmark_group = LandmarkGroup(
-        landmark_group.lms,
+        PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['upper_eyelid'] = np.hstack((np.arange(0, 7),
-                                                    np.arange(12, 17)))
-    new_landmark_group['lower_eyelid'] = np.hstack((np.arange(6, 12), 0,
-                                                    np.arange(12, 17)))
+    new_landmark_group['upper_eyelid'] = upper_indices
+    new_landmark_group['lower_eyelid'] = lower_indices
+    del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
 
@@ -654,14 +694,14 @@ def ibug_open_eye_trimesh(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_open_eye_trimesh'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -675,10 +715,7 @@ def ibug_open_eye_trimesh(landmark_group):
     n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
+    _validate_input(landmark_group, n_expected_points, group_label)
 
     tri_list = np.array([[29, 36, 28], [22, 13, 23], [12,  1,  2],
                          [29, 30, 37], [13,  3, 14], [13, 12,  2],
@@ -722,14 +759,14 @@ def ibug_close_eye_trimesh(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_close_eye_trimesh'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -743,10 +780,7 @@ def ibug_close_eye_trimesh(landmark_group):
     n_expected_points = 17
     n_points = landmark_group.lms.n_points
 
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
+    _validate_input(landmark_group, n_expected_points, group_label)
 
     tri_list = np.array([[10, 11, 13], [ 3, 13,  2], [ 4, 14,  3],
                          [15,  5, 16], [12, 11,  0], [13, 14, 10],
@@ -772,19 +806,19 @@ def ibug_tongue(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - upper eyelid
-      - lower eyelid
+      - outline
+      - bisector
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group_label : `str`
         The group label: 'ibug_tongue'
-    landmark_group : :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         New landmark group.
 
     Raises
@@ -793,22 +827,12 @@ def ibug_tongue(landmark_group):
         If the given landmark group contains less than 19 points
     """
     group_label = 'ibug_tongue'
-    n_expected_points = 19
-    n_points = landmark_group.lms.n_points
-
-    if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
-                                                        n_expected_points,
-                                                        n_points))
-
-    new_landmark_group = LandmarkGroup(
-        landmark_group.lms,
-        OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
-
-    new_landmark_group['outline'] = np.arange(0, 12)
-    new_landmark_group['bisector'] = np.arange(13, 18)
-
-    return group_label, new_landmark_group
+    _validate_input(landmark_group, 19, group_label)
+    labels = OrderedDict([
+        ('outline', (0, 12, False)),
+        ('bisector', (13, 18, False))
+    ])
+    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def labeller(landmarkable, group_label, label_func):
