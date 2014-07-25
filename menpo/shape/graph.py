@@ -1,6 +1,8 @@
-from . import PointCloud
-from menpo.visualize.base import PointGraphViewer
 import numpy as np
+
+from . import PointCloud
+from .adjacency import mask_adjacency_array, reindex_adjacency_array
+from ..visualize.base import PointGraphViewer
 
 
 class Graph(object):
@@ -57,23 +59,8 @@ class PointGraph(Graph, PointCloud):
         if np.all(mask):  # Shortcut for all true masks
             return pg
         else:
-            # Find the indices that have been asked to be removed
-            indices_to_remove = np.nonzero(~mask)[0]
-            # Set intersection to find any rows containing those elements,
-            # reshape back in to the same size as adjacency array
-            entries_to_remove = np.in1d(pg.adjacency_array,
-                                        indices_to_remove).reshape([-1, 2])
-            # Only keep those entries that are not flagged for removal
-            indices_to_keep = ~entries_to_remove.any(axis=1)
-            adj = pg.adjacency_array[indices_to_keep, :]
-
-            # Create a mapping vector (reindex the adjacency array)
-            remap_vector = np.arange(np.max(adj) + 1)
-            unique_values = np.unique(adj)
-            remap_vector[unique_values] = np.arange(unique_values.shape[0])
-
-            # Apply the mask
-            pg.adjacency_array = remap_vector[adj]
+            masked_adj = mask_adjacency_array(mask, pg.adjacency_array)
+            pg.adjacency_array = reindex_adjacency_array(masked_adj)
             pg.points = pg.points[mask, :]
             return pg
 
