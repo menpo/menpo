@@ -619,6 +619,35 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return LandmarkGroup(self._pointcloud.from_mask(overlap),
                              OrderedDict(zip(labels, masks_to_keep)))
 
+    def tojson(self):
+        r"""
+        Convert this `LandmarkGroup` to a dictionary JSON representation.
+
+        Returns
+        -------
+        Dictionary with 'groups' key. Groups contains a landmark label set,
+        containing the label, spatial points and connectivity information.
+        Suitable or use in the by the `json` standard library package.
+        """
+        from ..shape import TriMesh, PointGraph
+
+        groups = []
+        for label in self:
+            pcloud = self[label]
+            if isinstance(pcloud, TriMesh):
+                connectivity = [t.tolist()
+                                for t in pcloud.as_pointgraph().adjacency_array]
+            elif isinstance(pcloud, PointGraph):
+                connectivity = [t.tolist()
+                                for t in pcloud.adjacency_array]
+            else:
+                connectivity = []
+            landmarks = [{'point': p.tolist()} for p in pcloud.points]
+            groups.append({'connectivity': connectivity,
+                           'label': label,
+                           'landmarks': landmarks})
+        return {'groups': groups}
+
     def _view(self, figure_id=None, new_figure=False, targettype=None,
               render_labels=True, group_label='group', with_labels=None,
               without_labels=None, **kwargs):

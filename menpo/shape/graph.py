@@ -22,6 +22,17 @@ class Graph(object):
     def n_edges(self):
         return self.adjacency_array.shape[0]
 
+    def tojson(self):
+        r"""
+        Convert this `Graph` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'adjacency_array' key. Suitable or use in the by the
+        `json` standard library package.
+        """
+        return {'adjacency_array': self.adjacency_array.tolist()}
+
 
 class PointGraph(Graph, PointCloud):
 
@@ -63,6 +74,19 @@ class PointGraph(Graph, PointCloud):
             pg.adjacency_array = reindex_adjacency_array(masked_adj)
             pg.points = pg.points[mask, :]
             return pg
+
+    def tojson(self):
+        r"""
+        Convert this `PointGraph` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'points' and 'adjacency_array' keys. Both are lists
+        suitable or use in the by the `json` standard library package.
+        """
+        json_dict = PointCloud.tojson(self)
+        json_dict.update(Graph.tojson(self))
+        return json_dict
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return PointGraphViewer(figure_id, new_figure,

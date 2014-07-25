@@ -106,8 +106,8 @@ class PointCloud(Shape):
         Returns
         -------
         json_dict : `dict`
-        Dictionary with a 'points' key, the value of which is a list suitable
-        for use in the by the `json` standard library package.
+            Dictionary with a 'points' key, the value of which is a list
+            suitable for use in the by the `json` standard library package.
         """
         return {'points': self.points.tolist()}
 
