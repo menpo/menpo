@@ -2,9 +2,10 @@ import numpy as np
 from warnings import warn
 from scipy.spatial import Delaunay
 
-from menpo.shape import PointCloud
-from menpo.rasterize import Rasterizable, ColourRasterInfo
-from menpo.visualize import TriMeshViewer
+from .. import PointCloud
+from ..adjacency import mask_adjacency_array, reindex_adjacency_array
+from ...rasterize import Rasterizable, ColourRasterInfo
+from ...visualize import TriMeshViewer
 
 from .normals import compute_normals
 
@@ -86,10 +87,29 @@ class TriMesh(PointCloud, Rasterizable):
         pointcloud : :map:`PointCloud`
             A new pointcloud that has been masked.
         """
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this TriMesh.')
+
         tm = self.copy()
         if np.all(mask):  # Fast path for all true
             return tm
-        return tm
+        else:
+            # Find the triangles we need to keep
+            masked_adj = mask_adjacency_array(mask, self.trilist)
+            # Find isolated vertices (vertices that don't exist in valid
+            # triangles)
+            isolated_indices = np.setdiff1d(np.nonzero(mask)[0], masked_adj)
+
+            # Create a 'new mask' that contains the points the use asked
+            # for MINUS the points that we can't create triangles for
+            new_mask = mask.copy()
+            new_mask[isolated_indices] = False
+            # Recreate the adjacency array with the updated mask
+            masked_adj = mask_adjacency_array(new_mask, self.trilist)
+            tm.trilist = reindex_adjacency_array(masked_adj)
+            tm.points = tm.points[new_mask, :]
+            return tm
 
     @property
     def vertex_normals(self):
