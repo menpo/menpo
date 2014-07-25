@@ -829,8 +829,8 @@ def ibug_tongue(landmark_group):
     group_label = 'ibug_tongue'
     _validate_input(landmark_group, 19, group_label)
     labels = OrderedDict([
-        ('outline', (0, 12, False)),
-        ('bisector', (13, 18, False))
+        ('outline', (0, 13, False)),
+        ('bisector', (13, 19, False))
     ])
     return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
