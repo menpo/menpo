@@ -124,7 +124,6 @@ def test_LandmarkGroup_iterate():
 def test_LandmarkManager_get():
     points = np.ones((10, 3))
     pcloud = PointCloud(points, copy=False)
-    target = PointCloud(points)
     mask_dict = OrderedDict([('all', np.ones(10, dtype=np.bool))])
 
     lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
@@ -132,7 +131,7 @@ def test_LandmarkManager_get():
     man = LandmarkManager()
     man._landmark_groups['test_set'] = lgroup
 
-    assert_equal(man['test_set'], lgroup)
+    assert(man['test_set'] is lgroup)
 
 
 def test_LandmarkManager_set():
@@ -343,3 +342,14 @@ def test_LandmarkGroup_str():
 
     out_str = lgroup.__str__()
     assert (len(out_str) > 0)
+
+
+def test_LandmarkGroup_get_None():
+    points = np.ones((10, 3))
+    pcloud = PointCloud(points, copy=False)
+    mask_dict = OrderedDict([('all', np.ones(10, dtype=np.bool))])
+
+    lgroup = LandmarkGroup(pcloud, mask_dict, copy=False)
+
+    assert lgroup[None] is not pcloud
+    assert_allclose(lgroup[None].points, pcloud.points)

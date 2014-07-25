@@ -1,5 +1,5 @@
 import abc
-from collections import OrderedDict
+from collections import OrderedDict, MutableMapping
 
 import numpy as np
 
@@ -112,7 +112,7 @@ class LandmarkableViewable(Landmarkable, Viewable):
         return landmark_view
 
 
-class LandmarkManager(Transformable, Viewable):
+class LandmarkManager(MutableMapping, Transformable, Viewable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -233,6 +233,9 @@ class LandmarkManager(Transformable, Viewable):
         """
         del self._landmark_groups[group_label]
 
+    def __len__(self):
+        return len(self._landmark_groups)
+
     @property
     def n_groups(self):
         """
@@ -259,19 +262,6 @@ class LandmarkManager(Transformable, Viewable):
         :type: list of `string`
         """
         return self._landmark_groups.keys()
-
-    def update(self, landmark_manager):
-        """
-        Update the manager with the groups from another manager. This performs
-        a copy on the other landmark manager and resets it's target.
-
-        Parameters
-        ----------
-        landmark_manager : :map:`LandmarkManager`
-            The landmark manager to copy from.
-        """
-        new_landmark_manager = landmark_manager.copy()
-        self._landmark_groups.update(new_landmark_manager._landmark_groups)
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
@@ -335,7 +325,7 @@ class LandmarkManager(Transformable, Viewable):
         return out_string
 
 
-class LandmarkGroup(Copyable, Viewable):
+class LandmarkGroup(MutableMapping, Copyable, Viewable):
     """
     An immutable object that holds a :map:`PointCloud` (or a subclass) and
     stores labels for each point. These labels are defined via masks on the
@@ -437,7 +427,7 @@ class LandmarkGroup(Copyable, Viewable):
         mask[indices] = True
         self._labels_to_masks[label] = mask
 
-    def __getitem__(self, label):
+    def __getitem__(self, label=None):
         """
         Returns the PointCloud that contains this label represents on the group.
         This will be a subset of the total landmark group PointCloud.
@@ -453,6 +443,8 @@ class LandmarkGroup(Copyable, Viewable):
             The PointCloud that this label represents. Will be a subset of the
             entire group's landmarks.
         """
+        if label is None:
+            return self.lms.copy()
         return self._pointcloud.from_mask(self._labels_to_masks[label])
 
     def __delitem__(self, label):
@@ -486,6 +478,9 @@ class LandmarkGroup(Copyable, Viewable):
             # Catch the error, restore the value and re-raise the exception!
             self._labels_to_masks[label] = value_to_delete
             raise e
+
+    def __len__(self):
+        return len(self._labels_to_masks)
 
     @property
     def labels(self):
