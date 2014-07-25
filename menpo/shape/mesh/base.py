@@ -111,6 +111,21 @@ class TriMesh(PointCloud, Rasterizable):
             tm.points = tm.points[new_mask, :]
             return tm
 
+    def as_pointgraph(self, copy=True):
+        from .. import PointGraph
+        # Since we have triangles we need the last connection
+        # that 'completes' the triangle
+        wrap_around_adj = np.hstack([self.trilist[:, -1][..., None],
+                                     self.trilist[:, 0][..., None]])
+        # Build the array of all pairs
+        adjacency_array = np.concatenate([self.trilist[:, :2],
+                                          self.trilist[:, 1:],
+                                          wrap_around_adj])
+        pg = PointGraph(self.points, adjacency_array, copy=copy)
+        # This is always a copy
+        pg.landmarks = self.landmarks
+        return pg
+
     @property
     def vertex_normals(self):
         r"""
