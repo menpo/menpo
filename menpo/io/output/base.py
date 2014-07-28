@@ -22,11 +22,8 @@ def _normalise_extension(extension):
     return extension.lower()
 
 
-def _extension_to_export_function(file_extension, extensions_map,
-                                  is_path=False):
+def _extension_to_export_function(file_extension, extensions_map):
     try:
-        if is_path:
-            file_extension = file_extension.suffix
         file_extension = _normalise_extension(file_extension)
         return extensions_map[file_extension.lower()]
     except KeyError:
@@ -34,20 +31,28 @@ def _extension_to_export_function(file_extension, extensions_map,
                          'supported.')
 
 
+def _validate_filepath(filepath, file_extension, overwrite):
+    path_filepath = Path(_norm_path(filepath))
+    if path_filepath.exists() and not overwrite:
+        raise ValueError('File already exists. Please set the overwrite '
+                         'kwarg if you wish to overwrite the file.')
+    if file_extension is not None:
+        filepath_suffix = path_filepath.suffix
+        if _normalise_extension(file_extension) != filepath_suffix:
+            raise ValueError('The file path extension must match the '
+                             'requested file extension.')
+    return path_filepath
+
+
 def _export(obj, filepath, extensions_map, file_extension=None,
             overwrite=False):
     if isinstance(filepath, basestring):
-        filepath = Path(_norm_path(filepath))
-        if filepath.exists() and not overwrite:
-            raise ValueError('File already exists. Please set the overwrite '
-                             'kwarg if you wish to overwrite the file.')
-        # Little trick. You either passed us the extension or we try to find
-        # it from the path. We only need to find it from the path if the
-        # file_extension is ``None``
-        export_function = _extension_to_export_function(
-            filepath, extensions_map, file_extension is None)
+        path_filepath = _validate_filepath(filepath, file_extension, overwrite)
 
-        with open(str(filepath), 'wb') as file_handle:
+        export_function = _extension_to_export_function(
+            path_filepath.suffix, extensions_map)
+
+        with path_filepath.open('wb') as file_handle:
             export_function(obj, file_handle)
     else:
         # You MUST provide an export function if a file handle is given
@@ -62,12 +67,9 @@ def _export(obj, filepath, extensions_map, file_extension=None,
         try:
             # Follow PIL like behaviour. Check the file handle extension
             # and check if matches the given file_extension
-            file_handle_extension = Path(filepath.name).suffix
-            if file_handle_extension != _normalise_extension(file_extension):
-                raise ValueError('The file handle has an extension '
-                                 'that does not match the export_extension.')
+            _validate_filepath(filepath.name, file_extension, overwrite)
         except AttributeError:
             pass
-        export_function = _extension_to_export_function(file_extension,
-                                                        extensions_map)
+        export_function = _extension_to_export_function(
+            _normalise_extension(file_extension), extensions_map)
         export_function(obj, filepath)
