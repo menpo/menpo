@@ -214,7 +214,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.boundary = boundary
         self.interpolator = interpolator
 
-    def build(self, images, group=None, label='all', verbose=False):
+    def build(self, images, group=None, label=None, verbose=False):
         r"""
         Builds a Multilevel Active Appearance Model from a list of
         landmarked images.

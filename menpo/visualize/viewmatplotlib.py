@@ -165,18 +165,44 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
         return self
 
 
+class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
+    def __init__(self, figure_id, new_figure, points, adjacency_list):
+        super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
+                                                           new_figure)
+        self.points = points
+        self.adjacency_list = adjacency_list
+
+    def _render(self, image_view=False, cmap=None,
+                colour_array='b', label=None, **kwargs):
+        import matplotlib.pyplot as plt
+        from matplotlib import collections as mc
+
+        # Flip x and y for viewing if points are tied to an image
+        points = self.points[:, ::-1] if image_view else self.points
+        lines = zip(points[self.adjacency_list[:, 0], :],
+                    points[self.adjacency_list[:, 1], :])
+
+        ax = plt.gca()
+        lc = mc.LineCollection(lines, colors=colour_array, linewidths=1,
+                               label=label)
+        ax.add_collection(lc)
+        ax.autoscale()
+        return self
+
+
 class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, points, trilist):
         super(MatplotlibTriMeshViewer2d, self).__init__(figure_id, new_figure)
         self.points = points
         self.trilist = trilist
 
-    def _render(self, image_view=False, label=None, **kwargs):
+    def _render(self, image_view=False, label=None, colour_array='b',
+                **kwargs):
         import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
         plt.triplot(points[:, 0], points[:, 1], self.trilist,
-                    label=label, color='b')
+                    label=label, color=colour_array, marker='.')
 
         return self
 
@@ -210,7 +236,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            kwargs['colour_array'] = [colours[:, i]] * np.sum(pc.points)
+            kwargs['colour_array'] = colours[:, i]
             kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
