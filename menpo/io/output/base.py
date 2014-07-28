@@ -6,11 +6,83 @@ from ..utils import _norm_path
 
 def export_landmark_file(landmark_group, filepath, export_extension=None,
                          overwrite=False):
+    r"""
+    Exports a given landmark group. The ``filepath`` argument can be either
+    or a `str` or any Python type that acts like a file. If a file is provided,
+    the ``export_extension`` kwarg **must** be provided. If no
+    ``export_extension`` is provided and a `str` filepath is provided, then
+    the export type is calculated based on the filepath extension.
+
+    Due to the mix in string and file types, an explicit overwrite argument is
+    used which is ``False`` by default.
+
+    Parameters
+    ----------
+    landmark_group : :map:`LandmarkGroup`
+        The landmark group to export.
+    filepath : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
+    export_extension : `str` or None, optional
+        The export extension to use, this must match the file path if the file
+        path is a string. Determines the type of exporter that is used.
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        ``filepath`` is a `str` and the ``export_extension`` is not ``None``
+        and the two extensions do not match
+    ValueError
+        ``filepath`` is a `file`-like object and ``export_extension`` is
+        ``None``
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    """
     _export(landmark_group, filepath, landmark_types, export_extension,
             overwrite)
 
 
 def export_image(image, filepath, export_extension=None, overwrite=False):
+    r"""
+    Exports a given image. The ``filepath`` argument can be either
+    or a `str` or any Python type that acts like a file. If a file is provided,
+    the ``export_extension`` kwarg **must** be provided. If no
+    ``export_extension`` is provided and a `str` filepath is provided, then
+    the export type is calculated based on the filepath extension.
+
+    Due to the mix in string and file types, an explicit overwrite argument is
+    used which is ``False`` by default.
+
+    Parameters
+    ----------
+    image : :map:`Image` or subclass
+        The image to export.
+    filepath : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
+    export_extension : `str` or None, optional
+        The export extension to use, this must match the file path if the file
+        path is a string. Determines the type of exporter that is used.
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        ``filepath`` is a `str` and the ``export_extension`` is not ``None``
+        and the two extensions do not match
+    ValueError
+        ``filepath`` is a `file`-like object and ``export_extension`` is
+        ``None``
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    """
     _export(image, filepath, image_types, export_extension, overwrite)
 
 
