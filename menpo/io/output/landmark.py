@@ -16,9 +16,6 @@ def PTSExporter(landmark_group, file_handle):
     # Matlab which is 1 based
     pts = pts[:, [1, 0]] + 1
 
-    header = r"""version: 1
-n_points: {}
-{{""".format(pts.shape[0])
-
+    header = 'version: 1\nn_points: {}\n{{'.format(pts.shape[0])
     np.savetxt(file_handle, pts, delimiter=' ', header=header, footer='}',
                fmt='%.3f', comments='')
