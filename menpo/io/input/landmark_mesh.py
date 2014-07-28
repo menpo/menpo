@@ -1,6 +1,6 @@
 import numpy as np
 
-from menpo.io.input.landmark import PTSImporter
+from .landmark import PTSImporter
 
 
 class MeshPTSImporter(PTSImporter):

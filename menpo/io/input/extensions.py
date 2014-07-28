@@ -1,10 +1,10 @@
 # A list of extensions that different importers support.
-from menpo.io.input.landmark import (LM3Importer, LANImporter, LM2Importer,
-                               BNDImporter, LJSONImporter)
-from menpo.io.input.landmark_mesh import MeshPTSImporter
-from menpo.io.input.mesh import AssimpImporter, WRLImporter, MJSONImporter
-from menpo.io.input.image import PILImporter
-from menpo.io.input.landmark_image import ImageASFImporter, ImagePTSImporter
+from .landmark import (LM3Importer, LANImporter, LM2Importer, BNDImporter,
+                       LJSONImporter)
+from .landmark_mesh import MeshPTSImporter
+from .mesh import AssimpImporter, WRLImporter, MJSONImporter
+from .image import PILImporter
+from .landmark_image import ImageASFImporter, ImagePTSImporter
 
 
 mesh_types = {'.dae': AssimpImporter,
