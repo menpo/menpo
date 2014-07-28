@@ -4,6 +4,7 @@ from glob import glob
 
 from pathlib import Path
 
+from ..utils import _norm_path
 from menpo import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
 
@@ -776,17 +777,10 @@ class Importer(object):
         return IOInfo(self.filepath)
 
 
-def _norm_path(filepath):
-    r"""
-    Uses all the tricks in the book to expand a path out to an absolute one.
-    """
-    return os.path.abspath(os.path.normpath(
-        os.path.expandvars(os.path.expanduser(filepath))))
-
 # Avoid circular imports
 from menpo.io.input.extensions import (mesh_types, all_image_types,
-                                 all_mesh_and_image_types,
-                                 all_landmark_types)
+                                       all_mesh_and_image_types,
+                                       all_landmark_types)
 
 
 class IOInfo(object):
