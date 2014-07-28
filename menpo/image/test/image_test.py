@@ -580,6 +580,13 @@ def test_as_greyscale_channels():
     assert_allclose(new_image.pixels[..., 0], image.pixels[..., 0])
 
 
+def test_as_pil_image_1channel():
+    im = MaskedImage(np.random.randn(120, 120, 1))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    (im.pixels * 255).astype(np.uint8))
+
+
 def test_as_pil_image_3channels():
     im = MaskedImage(np.random.randn(120, 120, 3))
     new_im = im.as_PILImage()

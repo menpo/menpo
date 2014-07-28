@@ -1238,7 +1238,9 @@ class Image(Vectorizable, LandmarkableViewable):
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
                 self.n_channels, self.ndims))
-        return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
+        # Slice off the channel for greyscale images
+        pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
+        return PILImage.fromarray((pixels * 255).astype(np.uint8))
 
     def __str__(self):
         return ('{} {}D Image with {} channels'.format(
