@@ -2,7 +2,7 @@ import numpy as np
 
 from . import PointCloud
 from .adjacency import mask_adjacency_array, reindex_adjacency_array
-from ..visualize.base import PointGraphViewer
+from menpo.visualize import PointGraphViewer
 
 
 class Graph(object):
