@@ -166,7 +166,7 @@ class SDTrainer(object):
         self.n_perturbations = n_perturbations
         self.interpolator = interpolator
 
-    def train(self, images, group=None, label='all', verbose=False, **kwargs):
+    def train(self, images, group=None, label=None, verbose=False, **kwargs):
         r"""
         Trains a Supervised Descent Regressor given a list of landmarked
         images.
@@ -175,15 +175,12 @@ class SDTrainer(object):
         ----------
         images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the SD.
-
         group : `string`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label: `string`, optional
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-
         verbose: `boolean`, optional
             Flag that controls information and progress printing.
         """
