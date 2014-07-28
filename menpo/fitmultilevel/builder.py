@@ -135,7 +135,7 @@ class DeformableModelBuilder(object):
         return feature_type_list
 
     @abc.abstractmethod
-    def build(self, images, group=None, label='all'):
+    def build(self, images, group=None, label=None):
         r"""
         Builds a Multilevel Deformable Model.
         """

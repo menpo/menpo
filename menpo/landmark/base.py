@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict, MutableMapping
 
 import numpy as np
 
@@ -111,7 +112,7 @@ class LandmarkableViewable(Landmarkable, Viewable):
         return landmark_view
 
 
-class LandmarkManager(Transformable, Viewable):
+class LandmarkManager(MutableMapping, Transformable, Viewable):
     """
     Class for storing and manipulating Landmarks associated with an object.
     This involves managing the internal dictionary, as well as providing
@@ -128,7 +129,9 @@ class LandmarkManager(Transformable, Viewable):
     @property
     def n_dims(self):
         if self.n_groups != 0:
-            return self._landmark_groups.itervalues().next().n_dims
+            # Python version independent way of getting the first value
+            for v in self._landmark_groups.values():
+                return v.n_dims
         else:
             return None
 
@@ -145,7 +148,7 @@ class LandmarkManager(Transformable, Viewable):
         """
         # do a normal copy. The dict will be shallow copied - rectify that here
         new = Copyable.copy(self)
-        for k, v in new._landmark_groups.iteritems():
+        for k, v in new._landmark_groups.items():
             new._landmark_groups[k] = v.copy()
         return new
 
@@ -186,7 +189,7 @@ class LandmarkManager(Transformable, Viewable):
             # Copy the PointCloud so that we take ownership of the memory
             lmark_group = LandmarkGroup(
                 value,
-                {'all': np.ones(value.n_points, dtype=np.bool)})
+                OrderedDict([('all', np.ones(value.n_points, dtype=np.bool))]))
         elif isinstance(value, LandmarkGroup):
             # Copy the landmark group so that we now own it
             lmark_group = value.copy()
@@ -230,6 +233,9 @@ class LandmarkManager(Transformable, Viewable):
         """
         del self._landmark_groups[group_label]
 
+    def __len__(self):
+        return len(self._landmark_groups)
+
     @property
     def n_groups(self):
         """
@@ -257,21 +263,8 @@ class LandmarkManager(Transformable, Viewable):
         """
         return self._landmark_groups.keys()
 
-    def update(self, landmark_manager):
-        """
-        Update the manager with the groups from another manager. This performs
-        a copy on the other landmark manager and resets it's target.
-
-        Parameters
-        ----------
-        landmark_manager : :map:`LandmarkManager`
-            The landmark manager to copy from.
-        """
-        new_landmark_manager = landmark_manager.copy()
-        self._landmark_groups.update(new_landmark_manager._landmark_groups)
-
     def _transform_inplace(self, transform):
-        for group in self._landmark_groups.itervalues():
+        for group in self._landmark_groups.values():
             group.lms._transform_inplace(transform)
         return self
 
@@ -332,12 +325,15 @@ class LandmarkManager(Transformable, Viewable):
         return out_string
 
 
-class LandmarkGroup(Copyable, Viewable):
+class LandmarkGroup(MutableMapping, Copyable, Viewable):
     """
     An immutable object that holds a :map:`PointCloud` (or a subclass) and
     stores labels for each point. These labels are defined via masks on the
     :map:`PointCloud`. For this reason, the :map:`PointCloud` is considered to
     be immutable.
+
+    The labels to masks must be within an `OrderedDict` so that semantic
+    ordering can be maintained.
 
     Parameters
     ----------
@@ -347,7 +343,7 @@ class LandmarkGroup(Copyable, Viewable):
         The label of the group.
     pointcloud : :map:`PointCloud`
         The pointcloud representing the landmarks.
-    labels_to_masks : `dict` of `string` to `boolean` `ndarrays`
+    labels_to_masks : `OrderedDict` of `string` to `boolean` `ndarrays`
         For each label, the mask that specifies the indices in to the
         pointcloud that belong to the label.
     copy : `boolean`, optional
@@ -355,6 +351,8 @@ class LandmarkGroup(Copyable, Viewable):
 
     Raises
     ------
+    ValueError
+        If `dict` passed instead of `OrderedDict`
     ValueError
         If no set of label masks is passed.
     ValueError
@@ -371,18 +369,21 @@ class LandmarkGroup(Copyable, Viewable):
             raise ValueError('Landmark groups are designed for their internal '
                              'state, other than owernship, to be immutable. '
                              'Empty label sets are not permitted.')
-
         if np.vstack(labels_to_masks.values()).shape[1] != pointcloud.n_points:
             raise ValueError('Each mask must have the same number of points '
                              'as the landmark pointcloud.')
+        if type(labels_to_masks) is dict:
+            raise ValueError('Must provide an OrderedDict to maintain the '
+                             'semantic meaning of the labels.')
+
         # Another sanity check
         self._labels_to_masks = labels_to_masks
         self._verify_all_labels_masked()
 
         if copy:
             self._pointcloud = pointcloud.copy()
-            self._labels_to_masks = {l: m.copy() for l, m in
-                                     labels_to_masks.iteritems()}
+            self._labels_to_masks = OrderedDict([(l, m.copy()) for l, m in
+                                                 labels_to_masks.items()])
         else:
             self._pointcloud = pointcloud
             self._labels_to_masks = labels_to_masks
@@ -399,7 +400,7 @@ class LandmarkGroup(Copyable, Viewable):
 
         """
         new = Copyable.copy(self)
-        for k, v in new._labels_to_masks.iteritems():
+        for k, v in new._labels_to_masks.items():
             new._labels_to_masks[k] = v.copy()
         return new
 
@@ -426,7 +427,7 @@ class LandmarkGroup(Copyable, Viewable):
         mask[indices] = True
         self._labels_to_masks[label] = mask
 
-    def __getitem__(self, label):
+    def __getitem__(self, label=None):
         """
         Returns the PointCloud that contains this label represents on the group.
         This will be a subset of the total landmark group PointCloud.
@@ -442,6 +443,8 @@ class LandmarkGroup(Copyable, Viewable):
             The PointCloud that this label represents. Will be a subset of the
             entire group's landmarks.
         """
+        if label is None:
+            return self.lms.copy()
         return self._pointcloud.from_mask(self._labels_to_masks[label])
 
     def __delitem__(self, label):
@@ -475,6 +478,9 @@ class LandmarkGroup(Copyable, Viewable):
             # Catch the error, restore the value and re-raise the exception!
             self._labels_to_masks[label] = value_to_delete
             raise e
+
+    def __len__(self):
+        return len(self._labels_to_masks)
 
     @property
     def labels(self):
@@ -611,7 +617,36 @@ class LandmarkGroup(Copyable, Viewable):
         masks_to_keep = [l[overlap] for l in masks_to_keep]
 
         return LandmarkGroup(self._pointcloud.from_mask(overlap),
-                             dict(zip(labels, masks_to_keep)))
+                             OrderedDict(zip(labels, masks_to_keep)))
+
+    def tojson(self):
+        r"""
+        Convert this `LandmarkGroup` to a dictionary JSON representation.
+
+        Returns
+        -------
+        Dictionary with 'groups' key. Groups contains a landmark label set,
+        containing the label, spatial points and connectivity information.
+        Suitable or use in the by the `json` standard library package.
+        """
+        from ..shape import TriMesh, PointGraph
+
+        groups = []
+        for label in self:
+            pcloud = self[label]
+            if isinstance(pcloud, TriMesh):
+                connectivity = [t.tolist()
+                                for t in pcloud.as_pointgraph().adjacency_array]
+            elif isinstance(pcloud, PointGraph):
+                connectivity = [t.tolist()
+                                for t in pcloud.adjacency_array]
+            else:
+                connectivity = []
+            landmarks = [{'point': p.tolist()} for p in pcloud.points]
+            groups.append({'connectivity': connectivity,
+                           'label': label,
+                           'landmarks': landmarks})
+        return {'groups': groups}
 
     def _view(self, figure_id=None, new_figure=False, targettype=None,
               render_labels=True, group_label='group', with_labels=None,
