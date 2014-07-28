@@ -10,10 +10,13 @@ from cyassimp import AIImporter
 from vrml.vrml97.parser import buildParser as buildVRML97Parser
 import vrml.vrml97.basenodes as basenodes
 from vrml.node import NullNode
-from menpo.io.base import (Importer, find_alternative_files,
-                           map_filepath_to_importer, import_image)
+
+from menpo.io.input.base import (Importer, find_alternative_files,
+                                 import_image)
 from menpo.io.exceptions import MeshImportError
 from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
+
+
 
 # This formalises the return type of a mesh importer (before building)
 # However, at the moment there is a disconnect between this and the
@@ -119,7 +122,7 @@ class MeshImporter(Importer):
         # Stop searching every single time we access the property
         self.attempted_texture_search = True
         # This import is here to avoid circular dependencies
-        from menpo.io.extensions import image_types
+        from menpo.io.input.extensions import image_types
         try:
             return find_alternative_files('texture', self.filepath,
                                           image_types)

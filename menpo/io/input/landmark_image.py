@@ -1,5 +1,6 @@
-from menpo.io.landmark import ASFImporter, PTSImporter
 import numpy as np
+
+from menpo.io.input.landmark import ASFImporter, PTSImporter
 
 
 class ImageASFImporter(ASFImporter):

@@ -1,8 +1,0 @@
-<!DOCTYPE FilterScript>
-<FilterScript>
- <filter name="Remove isolated pieces (wrt face num)">
-  <Param type="RichInt" value="1000" name="MinComponentSize"/>
- </filter>
- <filter name="Remove Zero Area Faces"/>
- <filter name="Remove Unreferenced Vertex"/>
-</FilterScript>
