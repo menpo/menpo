@@ -6,6 +6,8 @@ import numpy as np
 from scipy.misc import imrotate
 import scipy.linalg
 import PIL.Image as PILImage
+pyramid_gaussian = None  # expensive, from skimage.transform
+_smooth = None  # expensive, from skimage.transform.pyramids
 
 from menpo.base import Vectorizable, Copyable
 from menpo.landmark import LandmarkableViewable
@@ -1083,7 +1085,9 @@ class Image(Vectorizable, LandmarkableViewable):
         image_pyramid:
             Generator yielding pyramid layers as menpo image objects.
         """
-        from skimage.transform import pyramid_gaussian  # expensive
+        global pyramid_gaussian
+        if pyramid_gaussian is None:
+            from skimage.transform import pyramid_gaussian  # expensive
         max_layer = n_levels - 1
         pyramid = pyramid_gaussian(self.pixels, max_layer=max_layer,
                                    downscale=downscale, sigma=sigma,
@@ -1140,7 +1144,9 @@ class Image(Vectorizable, LandmarkableViewable):
         image_pyramid:
             Generator yielding pyramid layers as menpo image objects.
         """
-        from skimage.transform.pyramids import _smooth  # expensive
+        global _smooth
+        if _smooth is None:
+            from skimage.transform.pyramids import _smooth  # expensive
         for j in range(n_levels):
             if j == 0:
                 yield self

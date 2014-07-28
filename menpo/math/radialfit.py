@@ -1,5 +1,8 @@
 import numpy as np
 from collections import namedtuple
+
+optimise = None  # expensive, from scipy
+
 RadialFitResult = namedtuple('RadialFitResult', ['centre', 'radius'])
 
 
@@ -24,7 +27,9 @@ def radial_fit(p):
     .. [1] http://www.scipy.org/Cookbook/Least_Squares_Circle
 
     """
-    from scipy import optimize  # expensive
+    global optimise
+    if optimise is None:
+        from scipy import optimize  # expensive
 
     def error(tuple_c, x):
         c = np.array(tuple_c)

@@ -1,4 +1,5 @@
 import numpy as np
+map_coordinates = None  # expensive, from scipy.ndimage
 
 
 def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
@@ -28,7 +29,9 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1):
     sampled_image : ndarray
         The pixel information sampled at each of the points.
     """
-    from scipy.ndimage import map_coordinates  # expensive
+    global map_coordinates
+    if map_coordinates is None:
+        from scipy.ndimage import map_coordinates  # expensive
     sampled_pixel_values = []
     # Loop over every channel in image - we know last axis is always channels
     # Note that map_coordinates uses the opposite (dims, points) convention
