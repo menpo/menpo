@@ -1,8 +1,6 @@
 import abc
 from collections import namedtuple
-import commands
 import os.path as path
-import tempfile
 import json
 
 import numpy as np
@@ -23,64 +21,6 @@ from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
 # Assimp type, and at some point they should become the same object
 MeshInfo = namedtuple('MeshInfo', ['points', 'trilist', 'tcoords',
                                    'colour_per_vertex'])
-
-
-def process_with_meshlabserver(file_path, output_dir=None, script_path=None,
-                               output_filetype=None, export_flags=None,
-                               meshlab_command='meshlabserver'):
-    r"""
-    Interface to `meshlabserver` to perform prepossessing on meshes before
-    import. Returns a path to the result of the meshlabserver call, ready for
-    import as usual. **Requires Meshlab to be installed**.
-
-    Parameters
-    ----------
-    file_path : string
-        Absolute filepath to the mesh
-    script_path : atring, optional
-        If specified this script will be run on the input mesh.
-
-        Default: `None`
-    output_dir : string, optional
-        The output directory for the processed mesh.
-
-        Default: The users tmp directory.
-    output_filetype : string, optional
-        The output filetype desired from meshlabserver. Takes the form of an
-        extension, eg `obj`.
-
-        Default: The same as the input mesh
-    export_flags : string, optional
-        Flags passed to the `-om` parameter. Allows for choosing
-        what aspects of the model will be exported (normals,
-        texture coords etc)
-    meshlab_command : string, optional
-        The meshlabserver executable to run.
-
-        Default: 'meshlabserver'
-
-    Returns
-    -------
-    output_path : string
-        The absolute filepath to the processed mesh.
-    """
-    if output_dir is None:
-        output_dir = tempfile.gettempdir()
-    filename = path.split(file_path)[-1]
-    if output_filetype is not None:
-        file_root = path.splitext(filename)[0]
-        output_filename = file_root + '.' + output_filetype
-    else:
-        output_filename = filename
-    output_path = path.join(output_dir, output_filename)
-    command = (meshlab_command + ' -i ' + file_path + ' -o ' +
-               output_path)
-    if script_path is not None:
-        command += ' -s ' + script_path
-    if export_flags is not None:
-        command += ' -om ' + export_flags
-    commands.getoutput(command)
-    return output_path
 
 
 class MeshImporter(Importer):
