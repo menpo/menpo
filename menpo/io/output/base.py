@@ -4,10 +4,10 @@ from .extensions import landmark_types, image_types
 from ..utils import _norm_path
 
 
-def export_landmark_file(landmark_group, filepath, export_extension=None,
+def export_landmark_file(fp, landmark_group, extension=None,
                          overwrite=False):
     r"""
-    Exports a given landmark group. The ``filepath`` argument can be either
+    Exports a given landmark group. The ``fp`` argument can be either
     or a `str` or any Python type that acts like a file. If a file is provided,
     the ``export_extension`` kwarg **must** be provided. If no
     ``export_extension`` is provided and a `str` filepath is provided, then
@@ -18,12 +18,12 @@ def export_landmark_file(landmark_group, filepath, export_extension=None,
 
     Parameters
     ----------
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
     landmark_group : :map:`LandmarkGroup`
         The landmark group to export.
-    filepath : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
-    export_extension : `str` or None, optional
-        The export extension to use, this must match the file path if the file
+    extension : `str` or None, optional
+        The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
@@ -33,22 +33,22 @@ def export_landmark_file(landmark_group, filepath, export_extension=None,
     ValueError
         File already exists and ``overwrite`` != ``True``
     ValueError
-        ``filepath`` is a `str` and the ``export_extension`` is not ``None``
+        ``fp`` is a `str` and the ``extension`` is not ``None``
         and the two extensions do not match
     ValueError
-        ``filepath`` is a `file`-like object and ``export_extension`` is
+        ``fp`` is a `file`-like object and ``extension`` is
         ``None``
     ValueError
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(landmark_group, filepath, landmark_types, export_extension,
+    _export(fp, landmark_group, landmark_types, extension,
             overwrite)
 
 
-def export_image(image, filepath, export_extension=None, overwrite=False):
+def export_image(fp, image, extension=None, overwrite=False):
     r"""
-    Exports a given image. The ``filepath`` argument can be either
+    Exports a given image. The ``fp`` argument can be either
     or a `str` or any Python type that acts like a file. If a file is provided,
     the ``export_extension`` kwarg **must** be provided. If no
     ``export_extension`` is provided and a `str` filepath is provided, then
@@ -59,12 +59,12 @@ def export_image(image, filepath, export_extension=None, overwrite=False):
 
     Parameters
     ----------
-    image : :map:`Image` or subclass
-        The image to export.
-    filepath : `str` or `file`-like object
+    fp : `str` or `file`-like object
         The string path or file-like object to save the object at/into.
-    export_extension : `str` or None, optional
-        The export extension to use, this must match the file path if the file
+    image : :map:`Image`
+        The image to export.
+    extension : `str` or None, optional
+        The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
@@ -74,16 +74,16 @@ def export_image(image, filepath, export_extension=None, overwrite=False):
     ValueError
         File already exists and ``overwrite`` != ``True``
     ValueError
-        ``filepath`` is a `str` and the ``export_extension`` is not ``None``
+        ``fp`` is a `str` and the ``extension`` is not ``None``
         and the two extensions do not match
     ValueError
-        ``filepath`` is a `file`-like object and ``export_extension`` is
+        ``fp`` is a `file`-like object and ``extension`` is
         ``None``
     ValueError
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(image, filepath, image_types, export_extension, overwrite)
+    _export(fp, image, image_types, extension, overwrite)
 
 
 def _normalise_extension(extension):
@@ -94,41 +94,40 @@ def _normalise_extension(extension):
     return extension.lower()
 
 
-def _extension_to_export_function(file_extension, extensions_map):
+def _extension_to_export_function(extension, extensions_map):
     try:
-        file_extension = _normalise_extension(file_extension)
-        return extensions_map[file_extension.lower()]
+        extension = _normalise_extension(extension)
+        return extensions_map[extension.lower()]
     except KeyError:
         raise ValueError('The output file extension provided is not currently '
                          'supported.')
 
 
-def _validate_filepath(filepath, file_extension, overwrite):
-    path_filepath = Path(_norm_path(filepath))
+def _validate_filepath(fp, extension, overwrite):
+    path_filepath = Path(_norm_path(fp))
     if path_filepath.exists() and not overwrite:
         raise ValueError('File already exists. Please set the overwrite '
                          'kwarg if you wish to overwrite the file.')
-    if file_extension is not None:
+    if extension is not None:
         filepath_suffix = path_filepath.suffix
-        if _normalise_extension(file_extension) != filepath_suffix:
+        if _normalise_extension(extension) != filepath_suffix:
             raise ValueError('The file path extension must match the '
                              'requested file extension.')
     return path_filepath
 
 
-def _export(obj, filepath, extensions_map, file_extension=None,
-            overwrite=False):
-    if isinstance(filepath, basestring):
-        path_filepath = _validate_filepath(filepath, file_extension, overwrite)
+def _export(fp, obj, extensions_map, extension=None, overwrite=False):
+    if isinstance(fp, basestring):
+        path_filepath = _validate_filepath(fp, extension, overwrite)
 
         export_function = _extension_to_export_function(
             path_filepath.suffix, extensions_map)
 
         with path_filepath.open('wb') as file_handle:
-            export_function(obj, file_handle)
+            export_function(file_handle, obj)
     else:
-        # You MUST provide an export function if a file handle is given
-        if file_extension is None:
+        # You MUST provide an extension if a file handle is given
+        if extension is None:
             raise ValueError('An export file extension must be provided if a '
                              'file-like object is passed.')
         # Apparently in Python 2.x there is no reliable way to detect something
@@ -138,10 +137,10 @@ def _export(obj, filepath, extensions_map, file_extension=None,
         # a correctly behaving object.
         try:
             # Follow PIL like behaviour. Check the file handle extension
-            # and check if matches the given file_extension
-            _validate_filepath(filepath.name, file_extension, overwrite)
+            # and check if matches the given extension
+            _validate_filepath(fp.name, extension, overwrite)
         except AttributeError:
             pass
         export_function = _extension_to_export_function(
-            _normalise_extension(file_extension), extensions_map)
-        export_function(obj, filepath)
+            _normalise_extension(extension), extensions_map)
+        export_function(fp, obj)

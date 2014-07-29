@@ -2,14 +2,14 @@ import json
 import numpy as np
 
 
-def LJSONExporter(landmark_group, file_handle):
+def LJSONExporter(file_handle, landmark_group):
     lg_json = landmark_group.tojson()
     # Add version string
     lg_json['version'] = 1
     return json.dump(lg_json, file_handle)
 
 
-def PTSExporter(landmark_group, file_handle):
+def PTSExporter(file_handle, landmark_group):
     pts = landmark_group.lms.points
     # Swap the x and y axis and add 1 to undo our processing
     # We are assuming (as on import) that the landmark file was created using
