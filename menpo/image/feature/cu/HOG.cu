@@ -74,7 +74,7 @@ void HOG::applyOnChunk(double *windowImage, double *descriptorVector) {
 
 void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
                        double *outputImage, int *windowsCenters) {
-    double *d_image = NULL;
+    double *d_image = 0;
     if (this->method == 1) {
         const unsigned int imageHeight = iwi._imageHeight;
         const unsigned int imageWidth = iwi._imageWidth;
@@ -84,15 +84,14 @@ void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
         this->DalalTriggsHOGdescriptorOnImage(iwi, d_image, outputImage, windowsCenters);
         cudaErrorCheck_goto(cudaFree(d_image));
-        d_image = NULL;
+        d_image = 0;
     } else
         PyErr_SetString(PyExc_RuntimeError,
                         "HOG::applyOnImage is not implemented for ZhuRamanan");
     return;
 
 onfailure:
-    if (d_image != NULL)
-        cudaFree(d_image);
+    cudaFree(d_image);
     return;
 }
 
@@ -477,7 +476,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const int hist1 = 2 + (this->windowHeight / this->cellHeightAndWidthInPixels);
     const int hist2 = 2 + (this->windowWidth / this->cellHeightAndWidthInPixels);
     
-    double *d_blockNorm = NULL, *d_block = NULL, *d_descriptorVector = NULL;
+    double *d_blockNorm = 0, *d_block = 0, *d_descriptorVector = 0;
     const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
                               hist1 - blockHeightAndWidthInCells -1);
     
@@ -485,7 +484,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const unsigned int numHistograms_d_h = iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally;
     const unsigned long int h_size = h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h;
     unsigned long long int d_h_size_t = h_size * sizeof(double);
-    double *d_h = NULL; // contains all the histograms
+    double *d_h = 0; // contains all the histograms
     
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
     const dim3 dimGrid((this->windowWidth * iwi._numberOfWindowsHorizontally + dimBlock.x -1)/dimBlock.x, (this->windowHeight * iwi._numberOfWindowsVertically + dimBlock.y -1)/dimBlock.y, 1);
@@ -576,26 +575,27 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     }
     
     cudaErrorCheck_goto(cudaFree(d_h));
-    d_h = NULL;
+    d_h = 0;
     cudaErrorCheck_goto(cudaFree(d_descriptorVector));
-    d_descriptorVector = NULL;
+    d_descriptorVector = 0;
     cudaErrorCheck_goto(cudaFree(d_block));
-    d_block = NULL;
+    d_block = 0;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
-    d_blockNorm = NULL;
+    d_blockNorm = 0;
+    
+    delete[] descriptorVector;
+    descriptorVector = NULL;
+    return;
     
 onfailure:
-    if (d_h != NULL)
-        cudaFree(d_h);
-    if (d_descriptorVector != NULL)
-        cudaFree(d_descriptorVector);
-    if (d_block != NULL)
-        cudaFree(d_block);
-    if (d_blockNorm != NULL)
-        cudaFree(d_blockNorm);
+    cudaFree(d_h);
+    cudaFree(d_descriptorVector);
+    cudaFree(d_block);
+    cudaFree(d_blockNorm);
     
     // Free temporary matrices
     delete[] descriptorVector;
+    return;
 }
 
 __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
