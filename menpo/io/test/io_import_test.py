@@ -4,7 +4,7 @@ import numpy as np
 
 import menpo.io as mio
 from menpo.shape import TriMesh, TexturedTriMesh, PointCloud
-from menpo.image import Image, MaskedImage
+from menpo.image import MaskedImage
 from numpy.testing import assert_allclose
 
 # ground truth bunny landmarks
@@ -159,25 +159,6 @@ def test_import_images():
     imgs_filenames = set(i.ioinfo.filename for i in imgs)
     exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna'}
     assert(len(exp_imgs_filenames - imgs_filenames) == 0)
-
-
-def test_import_auto():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob))
-    assert(len(assets) == 7)
-
-
-def test_import_auto_max_images():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob,  max_images=2))
-    assert(sum([isinstance(x, TriMesh) for x in assets]) == 2)
-    assert(sum([isinstance(x, Image) for x in assets]) == 2)
-
-
-def test_import_auto_max_meshes():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob, max_meshes=1))
-    assert(sum([isinstance(x, TriMesh) for x in assets]) == 1)
 
 
 def test_ls_builtin_assets():
