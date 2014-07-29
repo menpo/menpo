@@ -70,7 +70,7 @@ void HOG::applyOnChunk(double *windowImage, double *descriptorVector) {
 
 void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
                        double *outputImage, int *windowsCenters) {
-    double *d_image = NULL;
+    double *d_image = 0;
     if (this->method == 1) {
         const unsigned int imageHeight = iwi._imageHeight;
         const unsigned int imageWidth = iwi._imageWidth;
@@ -80,15 +80,14 @@ void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
         this->DalalTriggsHOGdescriptorOnImage(iwi, d_image, outputImage, windowsCenters);
         cudaErrorCheck_goto(cudaFree(d_image));
-        d_image = NULL;
+        d_image = 0;
     } else
         PyErr_SetString(PyExc_RuntimeError,
                         "HOG::applyOnImage is not implemented for ZhuRamanan");
     return;
 
 onfailure:
-    if (d_image != NULL)
-        cudaFree(d_image);
+    cudaFree(d_image);
     return;
 }
 
@@ -492,7 +491,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const unsigned long int h_size = h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h;
     unsigned long long int d_h_size_t = h_size * sizeof(double);
     
-    double *d_h = NULL;
+    double *d_h = 0;
     double *h = new double[h_size]; // contains all the histograms
     
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
@@ -515,7 +514,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     
     cudaErrorCheck_goto(cudaMemcpy(h, d_h, h_size * sizeof(double), cudaMemcpyDeviceToHost));
     cudaErrorCheck_goto(cudaFree(d_h));
-    d_h = NULL;
+    d_h = 0;
     
     // Histogram normalization
     // & windowsCenters initialization
@@ -561,14 +560,11 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     return;
     
 onfailure:
-    if (d_h != NULL)
-        cudaFree(d_h);
+    cudaFree(d_h);
     
     // Free temporary matrices
-    if (descriptorVector == NULL)
-        delete[] descriptorVector;
-    if (h == NULL)
-        delete[] h;
+    delete[] descriptorVector;
+    delete[] h;
     return;
 }
 
