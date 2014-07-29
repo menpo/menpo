@@ -554,13 +554,22 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
         }
     }
     
+    delete[] descriptorVector;
+    descriptorVector = NULL;
+    delete[] h;
+    h = NULL;
+    return;
+    
 onfailure:
     if (d_h != NULL)
         cudaFree(d_h);
     
     // Free temporary matrices
-    delete[] descriptorVector;
-    delete[] h;
+    if (descriptorVector == NULL)
+        delete[] descriptorVector;
+    if (h == NULL)
+        delete[] h;
+    return;
 }
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
