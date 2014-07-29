@@ -58,4 +58,6 @@ void DalalTriggsHOGdescriptor(double *h,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
                               double *d_blockNorm, double *block,
-                              double *d_descriptorVector);
+                              double *d_outputImage,
+                              unsigned int offsetOutputImage,
+                              unsigned int factorOutputImage);

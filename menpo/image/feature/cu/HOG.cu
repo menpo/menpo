@@ -469,21 +469,24 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                           int *windowsCenters) {
     int rowCenter, columnCenter;
     unsigned int offsetH;
-    double* descriptorVector = new double[this->descriptorLengthPerWindow];
     
     // Define useful variables
     
     const int hist1 = 2 + (this->windowHeight / this->cellHeightAndWidthInPixels);
     const int hist2 = 2 + (this->windowWidth / this->cellHeightAndWidthInPixels);
     
-    double *d_blockNorm = 0, *d_block = 0, *d_descriptorVector = 0;
+    double *d_blockNorm = 0, *d_block = 0, *d_outputImage = 0;
     const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
                               hist1 - blockHeightAndWidthInCells -1);
+    
+    const unsigned long long int d_outputImage_size_t = iwi._numberOfWindowsVertically
+            * iwi._numberOfWindowsHorizontally
+            * this->descriptorLengthPerWindow * sizeof(double);
     
     const dim3 h_dims(hist1, hist2, this->numberOfOrientationBins);
     const unsigned int numHistograms_d_h = iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally;
     const unsigned long int h_size = h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h;
-    unsigned long long int d_h_size_t = h_size * sizeof(double);
+    const unsigned long long int d_h_size_t = h_size * sizeof(double);
     double *d_h = 0; // contains all the histograms
     
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
@@ -504,8 +507,6 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                              * blockNorm_dims.x
                                              * blockNorm_dims.y
                                              * sizeof(double)));
-    cudaErrorCheck_goto(cudaMalloc(&d_descriptorVector, this->descriptorLengthPerWindow
-                                                        * sizeof(double)));
     
     // Compute all the histograms together using CUDA
     //   h_dims: dimension of one histogram
@@ -532,6 +533,10 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                                        iwi._numberOfWindowsHorizontally,
                                                                        iwi._enablePadding, iwi._windowStepVertical, iwi._windowStepHorizontal);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
+    
+    // Allocate memory for the CUDA version of outputImage
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_outputImage, d_outputImage_size_t));
     
     // Histogram normalization
     // & windowsCenters initialization
@@ -560,41 +565,35 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                              iwi._imageHeight, iwi._imageWidth,
                              this->windowHeight, this->windowWidth,
                              this->numberOfChannels,
-                             d_blockNorm, d_block, d_descriptorVector);
-            cudaErrorCheck_goto(cudaMemcpy(descriptorVector,
-                             d_descriptorVector,
-                             this->descriptorLengthPerWindow * sizeof(double),
-                             cudaMemcpyDeviceToHost));
+                             d_blockNorm, d_block,
+                             d_outputImage, windowIndexVertical+iwi._numberOfWindowsVertically*windowIndexHorizontal,
+                             iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally);
 
             // Store results
-            for (unsigned int d = 0; d < this->descriptorLengthPerWindow; d++)
-                outputImage[windowIndexVertical+iwi._numberOfWindowsVertically*(windowIndexHorizontal+iwi._numberOfWindowsHorizontally*d)] = descriptorVector[d];
             windowsCenters[windowIndexVertical+iwi._numberOfWindowsVertically*windowIndexHorizontal] = rowCenter;
             windowsCenters[windowIndexVertical+iwi._numberOfWindowsVertically*(windowIndexHorizontal+iwi._numberOfWindowsHorizontally)] = columnCenter;
         }
     }
     
+    cudaErrorCheck_goto(cudaMemcpy(
+            outputImage, d_outputImage,
+            d_outputImage_size_t, cudaMemcpyDeviceToHost));
+    cudaErrorCheck_goto(cudaFree(d_outputImage));
+    d_outputImage = 0;
+    
     cudaErrorCheck_goto(cudaFree(d_h));
     d_h = 0;
-    cudaErrorCheck_goto(cudaFree(d_descriptorVector));
-    d_descriptorVector = 0;
     cudaErrorCheck_goto(cudaFree(d_block));
     d_block = 0;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
     d_blockNorm = 0;
-    
-    delete[] descriptorVector;
-    descriptorVector = NULL;
     return;
     
 onfailure:
     cudaFree(d_h);
-    cudaFree(d_descriptorVector);
+    cudaFree(d_outputImage);
     cudaFree(d_block);
     cudaFree(d_blockNorm);
-    
-    // Free temporary matrices
-    delete[] descriptorVector;
     return;
 }
 
@@ -755,7 +754,9 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
         d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
 }
 
-__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_descriptorVector,
+__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_outputImage,
+                                                                  const unsigned int offsetOutputImage,
+                                                                  const unsigned int factorOutputImage,
                                                                   const double *d_block,
                                                                   const double *d_blockNorm,
                                                                   const dim3 blockNorm_dims,
@@ -796,9 +797,13 @@ __global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_desc
                                 *numberOfOrientationBins
                               + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
                                 *numberOfOrientationBins*blockNorm_dims.x;
-        d_descriptorVector[descriptorIndex] = d_block[current_id] / blockNorm;
+        d_outputImage[offsetOutputImage
+                      + factorOutputImage*descriptorIndex]
+                    = d_block[current_id] / blockNorm;
     } else
-        d_descriptorVector[descriptorIndex] = 0.;
+        d_outputImage[offsetOutputImage
+                      + factorOutputImage*descriptorIndex]
+                    = 0.;
 }
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
@@ -813,7 +818,10 @@ void DalalTriggsHOGdescriptor(double *d_h,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
                               double *d_blockNorm,
-                              double *d_block, double *d_descriptorVector) {
+                              double *d_block,
+                              double *d_outputImage,
+                              unsigned int offsetOutputImage,
+                              unsigned int factorOutputImage) {
    
     // ** VARIABLES **
     //  * General values
@@ -909,7 +917,9 @@ void DalalTriggsHOGdescriptor(double *d_h,
     // Compute descriptorVector
     DalalTriggsHOGdescriptor_compute_descriptorVector<<<dimGrid_desc,
                                                         dimBlock_desc>>>
-                                                            (d_descriptorVector,
+                                                            (d_outputImage,
+                                                             offsetOutputImage,
+                                                             factorOutputImage,
                                                              d_block,
                                                              d_blockNorm,
                                                              blockNorm_dims,
