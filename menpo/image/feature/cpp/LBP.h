@@ -19,7 +19,7 @@ public:
 	    unsigned int mapping_type, unsigned int *uniqueSamples,
 	    unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples);
 	virtual ~LBP();
-	void apply(double *windowImage, double *descriptorVector);
+	void applyOnChunk(double *windowImage, double *descriptorVector);
 private:
     unsigned int *samples, *whichMappingTable, **mapping_tables;
     unsigned int numberOfRadiusSamplesCombinations, windowHeight, windowWidth,

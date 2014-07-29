@@ -28,7 +28,7 @@ public:
 	    unsigned int blockHeightAndWidthInCells, bool enableSignedGradients,
 	    double l2normClipping);
 	virtual ~HOG();
-	void apply(double *windowImage, double *descriptorVector);
+	void applyOnChunk(double *windowImage, double *descriptorVector);
 	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally,
 	             numberOfBlocksPerWindowVertically;
 private:

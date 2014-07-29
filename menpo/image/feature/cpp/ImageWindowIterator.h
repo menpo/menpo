@@ -1,6 +1,7 @@
 #pragma once
 #include "WindowFeature.h"
 
+class WindowFeature;
 class ImageWindowIterator {
 public:
 	unsigned int _numberOfWindowsHorizontally, _numberOfWindowsVertically, _numberOfWindows;

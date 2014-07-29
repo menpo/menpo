@@ -32,7 +32,9 @@ cdef extern from "cpp/ImageWindowIterator.h":
 
 cdef extern from "cpp/WindowFeature.h":
     cdef cppclass WindowFeature:
-        void apply(double *windowImage, double *descriptorVector)
+        void applyOnChunk(double *windowImage, double *descriptorVector)
+        void applyOnImage(const ImageWindowIterator &iwi, const double *image, double *outputImage, int *windowsCenters)
+        bool isApplyOnImage()
         unsigned int descriptorLengthPerWindow
 
 cdef extern from "cpp/HOG.h":
@@ -43,7 +45,9 @@ cdef extern from "cpp/HOG.h":
             unsigned int cellHeightAndWidthInPixels,
             unsigned int blockHeightAndWidthInCells,
             bool enableSignedGradients, double l2normClipping)
-        void apply(double *windowImage, double *descriptorVector)
+        void applyOnChunk(double *windowImage, double *descriptorVector)
+        void applyOnImage(const ImageWindowIterator &iwi, const double *image, double *outputImage, int *windowsCenters)
+        bool isApplyOnImage()
         unsigned int descriptorLengthPerBlock, \
             numberOfBlocksPerWindowHorizontally, \
             numberOfBlocksPerWindowVertically
@@ -56,7 +60,9 @@ cdef extern from "cpp/LBP.h":
             unsigned int numberOfRadiusSamplesCombinations,
             unsigned int mapping_type, unsigned int *uniqueSamples,
             unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples)
-        void apply(double *windowImage, double *descriptorVector)
+        void applyOnChunk(double *windowImage, double *descriptorVector)
+        void applyOnImage(const ImageWindowIterator &iwi, const double *image, double *outputImage, int *windowsCenters)
+        bool isApplyOnImage()
 
 cdef class CppImageWindowIterator:
     cdef ImageWindowIterator* iterator

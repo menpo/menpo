@@ -53,7 +53,7 @@ HOG::~HOG() {
 }
 
 
-void HOG::apply(double *windowImage, double *descriptorVector) {
+void HOG::applyOnChunk(double *windowImage, double *descriptorVector) {
     if (this->method == 1)
         DalalTriggsHOGdescriptor(windowImage, this->numberOfOrientationBins,
                                  this->cellHeightAndWidthInPixels,
