@@ -472,11 +472,41 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     unsigned int offsetH;
     double* descriptorVector = new double[this->descriptorLengthPerWindow];
     
-    // block is used by DalalTriggsHOGdescriptor
-    // building this vector only once save times 
-    vector<vector<vector<double> > > block(blockHeightAndWidthInCells, vector<vector<double> >
-                                           (blockHeightAndWidthInCells, vector<double>
-                                            (numberOfOrientationBins, 0.0) ) );
+    // Define useful variables
+    
+    const int hist1 = 2 + (this->windowHeight / this->cellHeightAndWidthInPixels);
+    const int hist2 = 2 + (this->windowWidth / this->cellHeightAndWidthInPixels);
+    
+    double *d_blockNorm = NULL, *d_block = NULL, *d_descriptorVector = NULL;
+    const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
+                              hist1 - blockHeightAndWidthInCells -1);
+    
+    const dim3 h_dims(hist1, hist2, this->numberOfOrientationBins);
+    const unsigned int numHistograms_d_h = iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally;
+    const unsigned long int h_size = h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h;
+    unsigned long long int d_h_size_t = h_size * sizeof(double);
+    double *d_h = NULL; // contains all the histograms
+    
+    const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
+    const dim3 dimGrid((this->windowWidth * iwi._numberOfWindowsHorizontally + dimBlock.x -1)/dimBlock.x, (this->windowHeight * iwi._numberOfWindowsVertically + dimBlock.y -1)/dimBlock.y, 1);
+    
+    
+    // Pre-allocate CUDA memory for DalalTriggsHOGdescriptor
+    //
+    // Allocating/Deleting memory takes lots of time for small vectors
+    // Allocating/Deleting vectors before remove the cost of this operation
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_blockNorm, blockNorm_dims.x
+                                                 * blockNorm_dims.y
+                                                 * sizeof(double)));
+    cudaErrorCheck_goto(cudaMalloc(&d_block, cellHeightAndWidthInPixels
+                                             * cellHeightAndWidthInPixels
+                                             * numberOfOrientationBins
+                                             * blockNorm_dims.x
+                                             * blockNorm_dims.y
+                                             * sizeof(double)));
+    cudaErrorCheck_goto(cudaMalloc(&d_descriptorVector, this->descriptorLengthPerWindow
+                                                        * sizeof(double)));
     
     // Compute all the histograms together using CUDA
     //   h_dims: dimension of one histogram
@@ -489,17 +519,6 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     // where hx is a histogram
     //   and n = numHistograms_d_h
     
-    const int hist1 = 2 + (this->windowHeight / this->cellHeightAndWidthInPixels);
-    const int hist2 = 2 + (this->windowWidth / this->cellHeightAndWidthInPixels);
-    const dim3 h_dims(hist1, hist2, this->numberOfOrientationBins);
-    const unsigned int numHistograms_d_h = iwi._numberOfWindowsVertically*iwi._numberOfWindowsHorizontally;
-    const unsigned long int h_size = h_dims.x * h_dims.y * h_dims.z * numHistograms_d_h;
-    unsigned long long int d_h_size_t = h_size * sizeof(double);
-    double *d_h = NULL; // contains all the histograms
-    
-    const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
-    const dim3 dimGrid((this->windowWidth * iwi._numberOfWindowsHorizontally + dimBlock.x -1)/dimBlock.x, (this->windowHeight * iwi._numberOfWindowsVertically + dimBlock.y -1)/dimBlock.y, 1);
-     
     cudaErrorCheck_goto(cudaMalloc(&d_h, d_h_size_t));
     cudaErrorCheck_goto(cudaMemset(d_h, 0., d_h_size_t));
     
@@ -542,7 +561,11 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                              iwi._imageHeight, iwi._imageWidth,
                              this->windowHeight, this->windowWidth,
                              this->numberOfChannels,
-                             descriptorVector, block);
+                             d_blockNorm, d_block, d_descriptorVector);
+            cudaErrorCheck_goto(cudaMemcpy(descriptorVector,
+                             d_descriptorVector,
+                             this->descriptorLengthPerWindow * sizeof(double),
+                             cudaMemcpyDeviceToHost));
 
             // Store results
             for (unsigned int d = 0; d < this->descriptorLengthPerWindow; d++)
@@ -554,10 +577,22 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     
     cudaErrorCheck_goto(cudaFree(d_h));
     d_h = NULL;
+    cudaErrorCheck_goto(cudaFree(d_descriptorVector));
+    d_descriptorVector = NULL;
+    cudaErrorCheck_goto(cudaFree(d_block));
+    d_block = NULL;
+    cudaErrorCheck_goto(cudaFree(d_blockNorm));
+    d_blockNorm = NULL;
     
 onfailure:
     if (d_h != NULL)
         cudaFree(d_h);
+    if (d_descriptorVector != NULL)
+        cudaFree(d_descriptorVector);
+    if (d_block != NULL)
+        cudaFree(d_block);
+    if (d_blockNorm != NULL)
+        cudaFree(d_blockNorm);
     
     // Free temporary matrices
     delete[] descriptorVector;
@@ -777,8 +812,8 @@ void DalalTriggsHOGdescriptor(double *d_h,
                               unsigned int imageHeight, unsigned int imageWidth,
                               unsigned int windowHeight, unsigned int windowWidth,
                               unsigned int numberOfChannels,
-                              double *descriptorVector,
-                              vector<vector<vector<double> > > block) {
+                              double *d_blockNorm,
+                              double *d_block, double *d_descriptorVector) {
    
     // ** VARIABLES **
     //  * General values
@@ -802,7 +837,6 @@ void DalalTriggsHOGdescriptor(double *d_h,
     //      => usually: blockHeightAndWidthInCells=2
     //   k: unsigned int k = 0; k < numberOfOrientationBins; k++
     //      => usually: larger than blockHeightAndWidthInCells
-    double *d_blockNorm = NULL;
     const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
                               hist1 - blockHeightAndWidthInCells -1);
     const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
@@ -819,7 +853,6 @@ void DalalTriggsHOGdescriptor(double *d_h,
     //   d_block[current_id]
     // The number of blocks in the grid depends on blockNorm_dims,
     // numberOfOrientationBins and blockHeightAndWidthInCells
-    double *d_block = NULL;
     const dim3 dimBlock_block(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
     const dim3 dimGrid_block(
             blockNorm_dims.x
@@ -828,17 +861,13 @@ void DalalTriggsHOGdescriptor(double *d_h,
             * ((blockHeightAndWidthInCells+MAX_THREADS_3DY-1)/MAX_THREADS_3DY),
             (numberOfOrientationBins + MAX_THREADS_3DZ -1)/MAX_THREADS_3DZ);
     
-    double *d_descriptorVector = NULL;
     const dim3 dimBlock_desc(dimBlock_block);
     const dim3 dimGrid_desc(dimGrid_block);
-    const unsigned int desc_dim = blockNorm_dims.x*blockNorm_dims.y*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins;
     
     // ** BLOCK NORMALIZATION **
     
     // Evaluate blockNorm based on d_h
-    cudaErrorCheck_goto(cudaMalloc(&d_blockNorm, blockNorm_dims.x * blockNorm_dims.y * sizeof(double)));
     cudaErrorCheck_goto(cudaMemset(d_blockNorm, 0., blockNorm_dims.x * blockNorm_dims.y * sizeof(double)));
-    
     DalalTriggsHOGdescriptor_compute_blocknorm<<<dimGrid_norm,
                                                  dimBlock_norm,
                                                  MAX_THREADS_3DX
@@ -852,13 +881,6 @@ void DalalTriggsHOGdescriptor(double *d_h,
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
     // Compute block[i,j,k,x,y]
-    cudaErrorCheck_goto(cudaMalloc(&d_block, cellHeightAndWidthInPixels
-                                             * cellHeightAndWidthInPixels
-                                             * numberOfOrientationBins
-                                             * blockNorm_dims.x
-                                             * blockNorm_dims.y
-                                             * sizeof(double)));
-    
     DalalTriggsHOGdescriptor_compute_block<<<dimGrid_block,
                                              dimBlock_block>>>
                                                 (d_block,
@@ -885,7 +907,6 @@ void DalalTriggsHOGdescriptor(double *d_h,
     
     
     // Compute descriptorVector
-    cudaErrorCheck_goto(cudaMalloc(&d_descriptorVector, desc_dim * sizeof(double)));
     DalalTriggsHOGdescriptor_compute_descriptorVector<<<dimGrid_desc,
                                                         dimBlock_desc>>>
                                                             (d_descriptorVector,
@@ -896,27 +917,8 @@ void DalalTriggsHOGdescriptor(double *d_h,
                                                              blockHeightAndWidthInCells);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     
-    cudaErrorCheck_goto(cudaMemcpy(descriptorVector,
-                                   d_descriptorVector,
-                                   desc_dim * sizeof(double),
-                                   cudaMemcpyDeviceToHost));
-    
-    cudaErrorCheck_goto(cudaFree(d_descriptorVector));
-    d_descriptorVector = NULL;
-    cudaErrorCheck_goto(cudaFree(d_blockNorm));
-    d_blockNorm = NULL;
-    cudaErrorCheck_goto(cudaFree(d_block));
-    d_block = NULL;
-    
     return;
 
 onfailure:
-    if (d_blockNorm != NULL)
-        cudaFree(d_blockNorm);
-    if (d_block != NULL)
-        cudaFree(d_block);
-    if (d_descriptorVector != NULL)
-        cudaFree(d_descriptorVector);
-    
     return;
 }
