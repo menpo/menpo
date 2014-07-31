@@ -46,7 +46,12 @@ else:
         cython_cumodules = []
     
     # Build extensions
-    cython_exts = cython_modules # no specific treatment for C/C++ modules
+    cython_exts = []
+    for module in cython_modules:
+        cython_exts.append(
+                Extension(name=module[:-4],
+                          sources=[module],
+                          extra_compile_args=CUSTOM_FLAGS))
     for module in cython_cumodules:
         # Every library compiled that way will require the user
         # to have CUDA libraries on its system
