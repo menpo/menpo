@@ -1,8 +1,14 @@
 import os
+import sys
 from setuptools import setup, find_packages
 import versioneer
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+CUSTOM_FLAGS = []
+for arg in sys.argv:
+    if arg.startswith("-D"):
+        CUSTOM_FLAGS.append(arg)
+        sys.argv.remove(arg)
 
 if on_rtd:
     install_requires = []
@@ -40,7 +46,12 @@ else:
         cython_cumodules = []
     
     # Build extensions
-    cython_exts = cython_modules # no specific treatment for C/C++ modules
+    cython_exts = []
+    for module in cython_modules:
+        cython_exts.append(
+                Extension(name=module[:-4],
+                          sources=[module],
+                          extra_compile_args=CUSTOM_FLAGS))
     for module in cython_cumodules:
         # Every library compiled that way will require the user
         # to have CUDA libraries on its system
@@ -51,11 +62,11 @@ else:
                                language='c++',
                                runtime_library_dirs=[CUDA['lib64']],
                                extra_compile_args={
-                                   'gcc': [],
+                                   'gcc': CUSTOM_FLAGS,
                                    'nvcc': [
                                        '-arch=sm_20', '--ptxas-options=-v',
                                        '-c', '--compiler-options', "'-fPIC'"
-                                   ]},
+                                   ] + CUSTOM_FLAGS},
                                include_dirs=[
                                    numpy_include,
                                    CUDA['include'], 'src', 'menpo/cuda/cu',
