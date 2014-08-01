@@ -9,6 +9,28 @@
 #define MAX_THREADS_3DY  4
 #define MAX_THREADS_3DZ 16
 
+/* Kernels' signature declaration */
+
+__global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
+                                                            const dim3 h_dims,
+                                                            const double *d_inputImage,
+                                                            const unsigned int imageHeight,
+                                                            const unsigned int imageWidth,
+                                                            const unsigned int windowHeight,
+                                                            const unsigned int windowWidth,
+                                                            const unsigned int numberOfChannels,
+                                                            const unsigned int numberOfOrientationBins,
+                                                            const unsigned int cellHeightAndWidthInPixels,
+                                                            const unsigned signedOrUnsignedGradients,
+                                                            const double binsSize,
+                                                            const int numHistograms,
+                                                            const int numberOfWindowsVertically,
+                                                            const int numberOfWindowsHorizontally,
+                                                            const bool enablePadding,
+                                                            const int windowStepVertical, const int windowStepHorizontal);
+
+/* HOG methods */
+
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
          unsigned int numberOfOrientationBins,
@@ -287,185 +309,6 @@ void ZhuRamananHOGdescriptor(double *inputImage,
     }
     free(hist);
     free(norm);
-}
-
-__device__ double atomicAdd(double* address, double val) {
-    // http://stackoverflow.com/questions/16882253/cuda-atomicadd-produces-wrong-result
-    unsigned long long int* address_as_ull = (unsigned long long int*) address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do
-    {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
-    } while (assumed != old);
-    return __longlong_as_double(old);
-}
-
-#define getInImage(i,j,k) ((i+rowFrom<0 || i+rowFrom>imageHeight-1 || j+columnFrom<0 || j+columnFrom>imageWidth-1) ? 0. : d_inputImage[(i+rowFrom) + imageHeight*((j+columnFrom) + imageWidth*k)])
-__global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
-                                                               const dim3 h_dims,
-                                                               const double *d_inputImage,
-                                                               const unsigned int imageHeight,
-                                                               const unsigned int imageWidth,
-                                                               const unsigned int windowHeight,
-                                                               const unsigned int windowWidth,
-                                                               const unsigned int numberOfChannels,
-                                                               const unsigned int numberOfOrientationBins,
-                                                               const unsigned int cellHeightAndWidthInPixels,
-                                                               const unsigned signedOrUnsignedGradients,
-                                                               const double binsSize,
-                                                               const int numHistograms,
-                                                               const int numberOfWindowsVertically,
-                                                               const int numberOfWindowsHorizontally,
-                                                               const bool enablePadding,
-                                                               const int windowStepVertical, const int windowStepHorizontal) {
-    // Compute histograms values
-    
-    // Retrieve pixel position
-    int x_ = blockIdx.x * blockDim.x + threadIdx.x;
-    if (x_ >= numberOfWindowsHorizontally * windowWidth)
-        return;
-    int y_ = blockIdx.y * blockDim.y + threadIdx.y;
-    if (y_ >= numberOfWindowsVertically * windowHeight)
-        return;
-    
-    int x = x_ % windowWidth;
-    int windowIndexHorizontal = x_ / windowWidth;
-    
-    int y = y_ % windowHeight;
-    int windowIndexVertical = y_ / windowHeight;
-    
-    unsigned int factor_y_dim = h_dims.x;
-    unsigned int factor_z_dim = factor_y_dim * h_dims.y;
-    unsigned int factor_o_dim = factor_z_dim * h_dims.z;
-    
-    int offsetWindow = factor_o_dim * (windowIndexVertical + numberOfWindowsVertically * windowIndexHorizontal);
-    int rowFrom, columnFrom;
-    if (enablePadding) {
-        rowFrom = windowIndexVertical*windowStepVertical;
-        columnFrom = windowIndexHorizontal*windowStepHorizontal;
-    } else {
-        rowFrom = windowIndexVertical*windowStepVertical - (int)round((double)windowHeight / 2.0) + 1;
-        columnFrom = windowIndexHorizontal*windowStepHorizontal - (int)ceil((double)windowWidth / 2.0) + 1;
-    }
-     
-    // Compute deltas
-    double dx[3], dy[3];
-    
-    if (x == 0) {
-        for (unsigned int z = 0; z < numberOfChannels; z++)
-            dx[z] = getInImage(y, x+1, z);
-    } else {
-        if (x == windowWidth - 1) {
-            for (unsigned int z = 0; z < numberOfChannels; z++)
-                dx[z] = -getInImage(y, x-1, z);
-        } else {
-            for (unsigned int z = 0; z < numberOfChannels; z++)
-                dx[z] = getInImage(y, x+1, z) - getInImage(y, x-1, z);
-        }
-    }
-
-    if(y == 0) {
-        for (unsigned int z = 0; z < numberOfChannels; z++)
-            dy[z] = -getInImage(y+1, x, z);
-    } else {
-        if (y == windowHeight - 1) {
-            for (unsigned int z = 0; z < numberOfChannels; z++)
-                dy[z] = getInImage(y-1, x, z);
-        } else {
-            for (unsigned int z = 0; z < numberOfChannels; z++)
-                dy[z] = -getInImage(y+1, x, z) + getInImage(y-1, x, z);
-        }
-    }
-
-    // Choose dominant channel based on magnitude
-    double gradientMagnitude = sqrt(dx[0] * dx[0] + dy[0] * dy[0]);
-    double gradientOrientation = atan2(dy[0], dx[0]);
-    if (numberOfChannels > 1) {
-        double tempMagnitude = gradientMagnitude;
-        for (unsigned int cli = 1 ; cli < numberOfChannels ; ++cli) {
-            tempMagnitude= sqrt(dx[cli] * dx[cli] + dy[cli] * dy[cli]);
-            if (tempMagnitude > gradientMagnitude) {
-                gradientMagnitude = tempMagnitude;
-                gradientOrientation = atan2(dy[cli], dx[cli]);
-            }
-        }
-    }
-
-    if (gradientOrientation < 0)
-        gradientOrientation += pi + (signedOrUnsignedGradients == 1) * pi;
-
-    // Trilinear interpolation
-    int bin1 = (gradientOrientation / binsSize) - 1;
-    unsigned int bin2 = bin1 + 1;
-    int x1   = x / cellHeightAndWidthInPixels;
-    int x2   = x1 + 1;
-    int y1   = y / cellHeightAndWidthInPixels;
-    int y2   = y1 + 1;
-    
-    double Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-    double Yc = (y1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
-    double Oc = (bin1 + 1 + 1 - 1.5) * binsSize;
-    
-    if (bin2 == numberOfOrientationBins)
-        bin2 = 0;
-    
-    if (bin1 < 0)
-        bin1 = numberOfOrientationBins - 1;
-    
-    // Compute histograms
-    //  using reduce-pattern
-    //
-    // d_h needs to be set to 0.
-    
-    atomicAdd(
-            &d_h[offsetWindow + y1 + x1*factor_y_dim + bin1*factor_z_dim],
-            gradientMagnitude *
-                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (1-((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y1 + x1*factor_y_dim + bin2*factor_z_dim],
-            gradientMagnitude *
-                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y2 + x1*factor_y_dim + bin1*factor_z_dim],
-            gradientMagnitude *
-                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (1-((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y2 + x1*factor_y_dim + bin2*factor_z_dim],
-            gradientMagnitude *
-                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y1 + x2*factor_y_dim + bin1*factor_z_dim],
-            gradientMagnitude *
-                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (1-((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y1 + x2*factor_y_dim + bin2*factor_z_dim],
-            gradientMagnitude *
-                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y2 + x2*factor_y_dim + bin1*factor_z_dim],
-            gradientMagnitude *
-                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (1-((gradientOrientation-Oc)/binsSize)));
-    atomicAdd(
-            &d_h[offsetWindow + y2 + x2*factor_y_dim + bin2*factor_z_dim],
-            gradientMagnitude *
-                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
-                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
-                (((gradientOrientation-Oc)/binsSize)));
 }
 
 void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
@@ -945,4 +788,185 @@ void DalalTriggsHOGdescriptor(double *d_h,
 
 onfailure:
     return;
+}
+
+/* Kernels */
+
+__device__ double atomicAdd(double* address, double val) {
+    // http://stackoverflow.com/questions/16882253/cuda-atomicadd-produces-wrong-result
+    unsigned long long int* address_as_ull = (unsigned long long int*) address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do
+    {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
+}
+
+#define getInImage(i,j,k) ((i+rowFrom<0 || i+rowFrom>imageHeight-1 || j+columnFrom<0 || j+columnFrom>imageWidth-1) ? 0. : d_inputImage[(i+rowFrom) + imageHeight*((j+columnFrom) + imageWidth*k)])
+__global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
+                                                               const dim3 h_dims,
+                                                               const double *d_inputImage,
+                                                               const unsigned int imageHeight,
+                                                               const unsigned int imageWidth,
+                                                               const unsigned int windowHeight,
+                                                               const unsigned int windowWidth,
+                                                               const unsigned int numberOfChannels,
+                                                               const unsigned int numberOfOrientationBins,
+                                                               const unsigned int cellHeightAndWidthInPixels,
+                                                               const unsigned signedOrUnsignedGradients,
+                                                               const double binsSize,
+                                                               const int numHistograms,
+                                                               const int numberOfWindowsVertically,
+                                                               const int numberOfWindowsHorizontally,
+                                                               const bool enablePadding,
+                                                               const int windowStepVertical, const int windowStepHorizontal) {
+    // Compute histograms values
+    
+    // Retrieve pixel position
+    int x_ = blockIdx.x * blockDim.x + threadIdx.x;
+    if (x_ >= numberOfWindowsHorizontally * windowWidth)
+        return;
+    int y_ = blockIdx.y * blockDim.y + threadIdx.y;
+    if (y_ >= numberOfWindowsVertically * windowHeight)
+        return;
+    
+    int x = x_ % windowWidth;
+    int windowIndexHorizontal = x_ / windowWidth;
+    
+    int y = y_ % windowHeight;
+    int windowIndexVertical = y_ / windowHeight;
+    
+    unsigned int factor_y_dim = h_dims.x;
+    unsigned int factor_z_dim = factor_y_dim * h_dims.y;
+    unsigned int factor_o_dim = factor_z_dim * h_dims.z;
+    
+    int offsetWindow = factor_o_dim * (windowIndexVertical + numberOfWindowsVertically * windowIndexHorizontal);
+    int rowFrom, columnFrom;
+    if (enablePadding) {
+        rowFrom = windowIndexVertical*windowStepVertical;
+        columnFrom = windowIndexHorizontal*windowStepHorizontal;
+    } else {
+        rowFrom = windowIndexVertical*windowStepVertical - (int)round((double)windowHeight / 2.0) + 1;
+        columnFrom = windowIndexHorizontal*windowStepHorizontal - (int)ceil((double)windowWidth / 2.0) + 1;
+    }
+     
+    // Compute deltas
+    double dx[3], dy[3];
+    
+    if (x == 0) {
+        for (unsigned int z = 0; z < numberOfChannels; z++)
+            dx[z] = getInImage(y, x+1, z);
+    } else {
+        if (x == windowWidth - 1) {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dx[z] = -getInImage(y, x-1, z);
+        } else {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dx[z] = getInImage(y, x+1, z) - getInImage(y, x-1, z);
+        }
+    }
+
+    if(y == 0) {
+        for (unsigned int z = 0; z < numberOfChannels; z++)
+            dy[z] = -getInImage(y+1, x, z);
+    } else {
+        if (y == windowHeight - 1) {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dy[z] = getInImage(y-1, x, z);
+        } else {
+            for (unsigned int z = 0; z < numberOfChannels; z++)
+                dy[z] = -getInImage(y+1, x, z) + getInImage(y-1, x, z);
+        }
+    }
+
+    // Choose dominant channel based on magnitude
+    double gradientMagnitude = sqrt(dx[0] * dx[0] + dy[0] * dy[0]);
+    double gradientOrientation = atan2(dy[0], dx[0]);
+    if (numberOfChannels > 1) {
+        double tempMagnitude = gradientMagnitude;
+        for (unsigned int cli = 1 ; cli < numberOfChannels ; ++cli) {
+            tempMagnitude= sqrt(dx[cli] * dx[cli] + dy[cli] * dy[cli]);
+            if (tempMagnitude > gradientMagnitude) {
+                gradientMagnitude = tempMagnitude;
+                gradientOrientation = atan2(dy[cli], dx[cli]);
+            }
+        }
+    }
+
+    if (gradientOrientation < 0)
+        gradientOrientation += pi + (signedOrUnsignedGradients == 1) * pi;
+
+    // Trilinear interpolation
+    int bin1 = (gradientOrientation / binsSize) - 1;
+    unsigned int bin2 = bin1 + 1;
+    int x1   = x / cellHeightAndWidthInPixels;
+    int x2   = x1 + 1;
+    int y1   = y / cellHeightAndWidthInPixels;
+    int y2   = y1 + 1;
+    
+    double Xc = (x1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
+    double Yc = (y1 + 1 - 1.5) * cellHeightAndWidthInPixels + 0.5;
+    double Oc = (bin1 + 1 + 1 - 1.5) * binsSize;
+    
+    if (bin2 == numberOfOrientationBins)
+        bin2 = 0;
+    
+    if (bin1 < 0)
+        bin1 = numberOfOrientationBins - 1;
+    
+    // Compute histograms
+    //  using reduce-pattern
+    //
+    // d_h needs to be set to 0.
+    
+    atomicAdd(
+            &d_h[offsetWindow + y1 + x1*factor_y_dim + bin1*factor_z_dim],
+            gradientMagnitude *
+                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y1 + x1*factor_y_dim + bin2*factor_z_dim],
+            gradientMagnitude *
+                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y2 + x1*factor_y_dim + bin1*factor_z_dim],
+            gradientMagnitude *
+                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y2 + x1*factor_y_dim + bin2*factor_z_dim],
+            gradientMagnitude *
+                (1-((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y1 + x2*factor_y_dim + bin1*factor_z_dim],
+            gradientMagnitude *
+                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y1 + x2*factor_y_dim + bin2*factor_z_dim],
+            gradientMagnitude *
+                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (1-((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y2 + x2*factor_y_dim + bin1*factor_z_dim],
+            gradientMagnitude *
+                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (1-((gradientOrientation-Oc)/binsSize)));
+    atomicAdd(
+            &d_h[offsetWindow + y2 + x2*factor_y_dim + bin2*factor_z_dim],
+            gradientMagnitude *
+                (((x+1-Xc)/cellHeightAndWidthInPixels)) *
+                (((y+1-Yc)/cellHeightAndWidthInPixels)) *
+                (((gradientOrientation-Oc)/binsSize)));
 }
