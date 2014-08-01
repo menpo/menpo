@@ -11,24 +11,6 @@
 
 /* Kernels' signature declaration */
 
-__global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
-                                                            const dim3 h_dims,
-                                                            const double *d_inputImage,
-                                                            const unsigned int imageHeight,
-                                                            const unsigned int imageWidth,
-                                                            const unsigned int windowHeight,
-                                                            const unsigned int windowWidth,
-                                                            const unsigned int numberOfChannels,
-                                                            const unsigned int numberOfOrientationBins,
-                                                            const unsigned int cellHeightAndWidthInPixels,
-                                                            const unsigned signedOrUnsignedGradients,
-                                                            const double binsSize,
-                                                            const int numHistograms,
-                                                            const int numberOfWindowsVertically,
-                                                            const int numberOfWindowsHorizontally,
-                                                            const bool enablePadding,
-                                                            const int windowStepVertical, const int windowStepHorizontal);
-
 __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
                                                            const dim3 blockNorm_dims,
                                                            const double *d_h,
