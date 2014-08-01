@@ -9,43 +9,6 @@
 #define MAX_THREADS_3DY  4
 #define MAX_THREADS_3DZ 16
 
-/* Kernels' signature declaration */
-
-__global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
-                                                           const dim3 blockNorm_dims,
-                                                           const double *d_h,
-                                                           const dim3 h_dims,
-                                                           const unsigned int offsetH,
-                                                           const unsigned int numberOfOrientationBins,
-                                                           const unsigned int blockHeightAndWidthInCells);
-
-__global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
-                                                       const double *d_blockNorm,
-                                                       const dim3 blockNorm_dims,
-                                                       const double *d_h,
-                                                       const dim3 h_dims,
-                                                       const unsigned int offsetH,
-                                                       const unsigned int numberOfOrientationBins,
-                                                       const unsigned int blockHeightAndWidthInCells,
-                                                       const double l2normClipping);
-
-__global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
-                                                            const dim3 blockNorm_dims,
-                                                            const double *d_block,
-                                                            const unsigned int numberOfOrientationBins,
-                                                            const unsigned int blockHeightAndWidthInCells);
-
-__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_outputImage,
-                                                                  const unsigned int offsetOutputImage,
-                                                                  const unsigned int factorOutputImage,
-                                                                  const double *d_block,
-                                                                  const double *d_blockNorm,
-                                                                  const dim3 blockNorm_dims,
-                                                                  const unsigned int numberOfOrientationBins,
-                                                                  const unsigned int blockHeightAndWidthInCells);
-
-/* HOG methods */
-
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
          unsigned int numberOfOrientationBins,
