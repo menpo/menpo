@@ -74,17 +74,22 @@ void HOG::applyOnChunk(double *windowImage, double *descriptorVector) {
 
 void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
                        double *outputImage, int *windowsCenters) {
+    __CLOG__
     double *d_image = 0;
     if (this->method == 1) {
         const unsigned int imageHeight = iwi._imageHeight;
         const unsigned int imageWidth = iwi._imageWidth;
         const unsigned int numberOfChannels = iwi._numberOfChannels;
         
+        __START__
         cudaErrorCheck_goto(cudaMalloc(&d_image, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
+        __STOP__
         this->DalalTriggsHOGdescriptorOnImage(iwi, d_image, outputImage, windowsCenters);
+        __START__
         cudaErrorCheck_goto(cudaFree(d_image));
         d_image = 0;
+        __STOP__
     } else
         PyErr_SetString(PyExc_RuntimeError,
                         "HOG::applyOnImage is not implemented for ZhuRamanan");
@@ -467,6 +472,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                           double *d_image,
                                           double *outputImage,
                                           int *windowsCenters) {
+    __CLOG__
     int rowCenter, columnCenter;
     unsigned int offsetH;
     
@@ -498,6 +504,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     // Allocating/Deleting memory takes lots of time for small vectors
     // Allocating/Deleting vectors before remove the cost of this operation
     
+    __START__
     cudaErrorCheck_goto(cudaMalloc(&d_blockNorm, blockNorm_dims.x
                                                  * blockNorm_dims.y
                                                  * sizeof(double)));
@@ -522,7 +529,13 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     cudaErrorCheck_goto(cudaMalloc(&d_h, d_h_size_t));
     cudaErrorCheck_goto(cudaMemset(d_h, 0., d_h_size_t));
     
+    // Allocate memory for the CUDA version of outputImage
+    
+    cudaErrorCheck_goto(cudaMalloc(&d_outputImage, d_outputImage_size_t));
+    __STOP__
+    
     // Compute values for histograms
+    __START__
     DalalTriggsHOGdescriptor_compute_histograms<<<dimGrid, dimBlock>>>(d_h, h_dims,
                                                                        d_image, iwi._imageHeight, iwi._imageWidth,
                                                                        this->windowHeight, this->windowWidth, this->numberOfChannels,
@@ -533,15 +546,13 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                                        iwi._numberOfWindowsHorizontally,
                                                                        iwi._enablePadding, iwi._windowStepVertical, iwi._windowStepHorizontal);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
-    
-    // Allocate memory for the CUDA version of outputImage
-    
-    cudaErrorCheck_goto(cudaMalloc(&d_outputImage, d_outputImage_size_t));
+    __STOP__
     
     // Histogram normalization
     // & windowsCenters initialization
     //
     // Everything is done with native-C code (ie. without any CUDA implementation)
+    __START__
     for (unsigned int windowIndexVertical = 0; windowIndexVertical < iwi._numberOfWindowsVertically; windowIndexVertical++) {
         for (unsigned int windowIndexHorizontal = 0; windowIndexHorizontal < iwi._numberOfWindowsHorizontally; windowIndexHorizontal++) {
             // Find window limits
@@ -574,7 +585,9 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
             windowsCenters[windowIndexVertical+iwi._numberOfWindowsVertically*(windowIndexHorizontal+iwi._numberOfWindowsHorizontally)] = columnCenter;
         }
     }
+    __STOP__
     
+    __START__
     cudaErrorCheck_goto(cudaMemcpy(
             outputImage, d_outputImage,
             d_outputImage_size_t, cudaMemcpyDeviceToHost));
@@ -587,6 +600,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     d_block = 0;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
     d_blockNorm = 0;
+    __STOP__
     return;
     
 onfailure:
