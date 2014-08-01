@@ -156,7 +156,7 @@ class ImageFeatures(object):
         ImportError
             CUDA is not available on your system
         ImportError
-            CUDA implementation of HOG is not available on yout computer
+            CUDA implementation of HOG is not available on your computer
         """
         # compute hog features and windows_centres
         hog, window_centres = fc.hog(self._image.pixels, mode=mode,

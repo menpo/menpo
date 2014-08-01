@@ -170,7 +170,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
     ImportError
         CUDA is not available on your system
     ImportError
-        CUDA implementation of HOG is not available on yout computer
+        CUDA implementation of HOG is not available on your computer
     """
     # Parse options
     if mode not in ['dense', 'sparse']:
@@ -214,7 +214,7 @@ def hog(image_data, mode='dense', algorithm='dalaltriggs', num_bins=9,
             from .cuimagewindowiterator \
                 import CppImageWindowIterator as CuImageWindowIterator
         except ImportError:
-            raise ImportError("CUDA implementation of HOG is not available on yout computer")
+            raise ImportError("CUDA implementation of HOG is not available on your computer")
     
     # Correct input image_data
     image_data = np.asfortranarray(image_data)
