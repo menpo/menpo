@@ -29,6 +29,39 @@ __global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
                                                             const bool enablePadding,
                                                             const int windowStepVertical, const int windowStepHorizontal);
 
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
+                                                           const dim3 blockNorm_dims,
+                                                           const double *d_h,
+                                                           const dim3 h_dims,
+                                                           const unsigned int offsetH,
+                                                           const unsigned int numberOfOrientationBins,
+                                                           const unsigned int blockHeightAndWidthInCells);
+
+__global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
+                                                       const double *d_blockNorm,
+                                                       const dim3 blockNorm_dims,
+                                                       const double *d_h,
+                                                       const dim3 h_dims,
+                                                       const unsigned int offsetH,
+                                                       const unsigned int numberOfOrientationBins,
+                                                       const unsigned int blockHeightAndWidthInCells,
+                                                       const double l2normClipping);
+
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
+                                                            const dim3 blockNorm_dims,
+                                                            const double *d_block,
+                                                            const unsigned int numberOfOrientationBins,
+                                                            const unsigned int blockHeightAndWidthInCells);
+
+__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_outputImage,
+                                                                  const unsigned int offsetOutputImage,
+                                                                  const unsigned int factorOutputImage,
+                                                                  const double *d_block,
+                                                                  const double *d_blockNorm,
+                                                                  const dim3 blockNorm_dims,
+                                                                  const unsigned int numberOfOrientationBins,
+                                                                  const unsigned int blockHeightAndWidthInCells);
+
 /* HOG methods */
 
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
@@ -454,214 +487,6 @@ onfailure:
     return;
 }
 
-__global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
-                                                           const dim3 blockNorm_dims,
-                                                           const double *d_h,
-                                                           const dim3 h_dims,
-                                                           const unsigned int offsetH,
-                                                           const unsigned int numberOfOrientationBins,
-                                                           const unsigned int blockHeightAndWidthInCells) {
-    // 2D-reduce to compute d_blockNorm for every (x,y)
-    
-    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
-    // and a power of 2
-    extern __shared__ double cache[];
-    
-    // Compute factors
-    unsigned int factor_z_dim = h_dims.x * h_dims.y;
-    unsigned int factor_y_dim = h_dims.x;
-    
-    // Retrieve indice of the element
-    unsigned int x = blockIdx.x +1;
-    unsigned int y = blockIdx.y +1;
-    
-    unsigned int i = threadIdx.x;
-    unsigned int j = threadIdx.y;
-    unsigned int k = threadIdx.z;
-    unsigned int current_id = i + j*blockDim.x
-                              + k*blockDim.x*blockDim.y;
-    
-    cache[current_id] = 0.;
-    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x)
-        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y)
-            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z)
-                cache[current_id] += d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim + offsetH]
-                                     * d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim + offsetH];
-    __syncthreads();
-    
-    // Reduce operation
-    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
-    int padding = blockDim.x*blockDim.y*blockDim.z/2;
-    while (padding != 0) {
-        if (current_id < padding)
-            cache[current_id] += cache[current_id + padding];
-        __syncthreads();
-        padding /= 2;
-    }
-    
-    if (i == 0 && j == 0 && k == 0)
-        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
-}
-
-__global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
-                                                       const double *d_blockNorm,
-                                                       const dim3 blockNorm_dims,
-                                                       const double *d_h,
-                                                       const dim3 h_dims,
-                                                       const unsigned int offsetH,
-                                                       const unsigned int numberOfOrientationBins,
-                                                       const unsigned int blockHeightAndWidthInCells,
-                                                       const double l2normClipping) {
-    // Each thread has to compute one value of block[i,j,k,x,y]
-    
-    // Compute factors
-    unsigned int factor_z_dim = h_dims.x * h_dims.y;
-    unsigned int factor_y_dim = h_dims.x;
-    
-    // Retrieve indice of the element
-    unsigned int x = blockIdx.x;
-    unsigned int y = blockIdx.y;
-    
-    unsigned int i = threadIdx.x;
-    if (x >= blockNorm_dims.x) {
-        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
-        x = x % blockNorm_dims.x;
-    }
-    x += 1;
-    unsigned int j = threadIdx.y;
-    if (y >= blockNorm_dims.y) {
-        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
-        y = y % blockNorm_dims.y;
-    }
-    y += 1;
-    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
-    
-    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
-        || k >= numberOfOrientationBins)
-        return;
-    
-    unsigned int current_id = i + j*blockHeightAndWidthInCells
-                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x;
-    
-    
-    double blockNorm = sqrt(d_blockNorm[x-1 + blockNorm_dims.x*(y-1)]);
-    if (blockNorm > 0) {
-        double tmpValue = d_h[y+i + (x+j) * factor_y_dim
-                              + k * factor_z_dim + offsetH] / blockNorm;
-        if (tmpValue > l2normClipping)
-            d_block[current_id] = l2normClipping;
-        else
-            d_block[current_id] = tmpValue;
-    } else
-        d_block[current_id] = 0.;
-}
-
-__global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
-                                                            const dim3 blockNorm_dims,
-                                                            const double *d_block,
-                                                            const unsigned int numberOfOrientationBins,
-                                                            const unsigned int blockHeightAndWidthInCells) {
-    // 2D-reduce to compute d_blockNorm for every (x,y)
-    
-    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
-    // and a power of 2
-    extern __shared__ double cache[];
-    
-    // Retrieve indice of the element
-    unsigned int x = blockIdx.x +1;
-    unsigned int y = blockIdx.y +1;
-    
-    unsigned int i = threadIdx.x;
-    unsigned int j = threadIdx.y;
-    unsigned int k = threadIdx.z;
-    unsigned int current_id = i + j*blockDim.x
-                              + k*blockDim.x*blockDim.y;
-    
-    cache[current_id] = 0.;
-    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x) {
-        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y) {
-            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z) {
-                unsigned int current_id_norm = i_ + j_*blockHeightAndWidthInCells
-                              + k_*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x;
-                cache[current_id] += d_block[current_id_norm] * d_block[current_id_norm];
-            }
-        }
-    }
-    
-    // Reduce operation
-    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
-    int padding = blockDim.x*blockDim.y*blockDim.z/2;
-    while (padding != 0) {
-        if (current_id < padding)
-            cache[current_id] += cache[current_id + padding];
-        __syncthreads();
-        padding /= 2;
-    }
-    
-    // Several k values will have to participate to this value
-    if (i == 0 && j == 0)
-        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
-}
-
-__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_outputImage,
-                                                                  const unsigned int offsetOutputImage,
-                                                                  const unsigned int factorOutputImage,
-                                                                  const double *d_block,
-                                                                  const double *d_blockNorm,
-                                                                  const dim3 blockNorm_dims,
-                                                                  const unsigned int numberOfOrientationBins,
-                                                                  const unsigned int blockHeightAndWidthInCells) {
-    // Retrieve indice of the element
-    unsigned int x = blockIdx.x;
-    unsigned int y = blockIdx.y;
-    
-    unsigned int i = threadIdx.x;
-    if (x >= blockNorm_dims.x) {
-        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
-        x = x % blockNorm_dims.x;
-    }
-    x += 1;
-    unsigned int j = threadIdx.y;
-    if (y >= blockNorm_dims.y) {
-        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
-        y = y % blockNorm_dims.y;
-    }
-    y += 1;
-    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
-    
-    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
-        || k >= numberOfOrientationBins)
-        return;
-    
-    unsigned int descriptorIndex = (x-1)*blockNorm_dims.y*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
-            + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
-            + i*blockHeightAndWidthInCells*numberOfOrientationBins
-            + j*numberOfOrientationBins + k;
-    double blockNorm = d_blockNorm[x-1 + blockNorm_dims.x*(y-1)];
-    if (blockNorm > 0) {
-        blockNorm = sqrt(blockNorm);
-        unsigned int current_id = i + j*blockHeightAndWidthInCells
-                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x;
-        d_outputImage[offsetOutputImage
-                      + factorOutputImage*descriptorIndex]
-                    = d_block[current_id] / blockNorm;
-    } else
-        d_outputImage[offsetOutputImage
-                      + factorOutputImage*descriptorIndex]
-                    = 0.;
-}
 
 // DALAL & TRIGGS: Histograms of Oriented Gradients for Human Detection
 void DalalTriggsHOGdescriptor(double *d_h,
@@ -969,4 +794,213 @@ __global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
                 (((x+1-Xc)/cellHeightAndWidthInPixels)) *
                 (((y+1-Yc)/cellHeightAndWidthInPixels)) *
                 (((gradientOrientation-Oc)/binsSize)));
+}
+
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
+                                                           const dim3 blockNorm_dims,
+                                                           const double *d_h,
+                                                           const dim3 h_dims,
+                                                           const unsigned int offsetH,
+                                                           const unsigned int numberOfOrientationBins,
+                                                           const unsigned int blockHeightAndWidthInCells) {
+    // 2D-reduce to compute d_blockNorm for every (x,y)
+    
+    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
+    // and a power of 2
+    extern __shared__ double cache[];
+    
+    // Compute factors
+    unsigned int factor_z_dim = h_dims.x * h_dims.y;
+    unsigned int factor_y_dim = h_dims.x;
+    
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x +1;
+    unsigned int y = blockIdx.y +1;
+    
+    unsigned int i = threadIdx.x;
+    unsigned int j = threadIdx.y;
+    unsigned int k = threadIdx.z;
+    unsigned int current_id = i + j*blockDim.x
+                              + k*blockDim.x*blockDim.y;
+    
+    cache[current_id] = 0.;
+    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x)
+        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y)
+            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z)
+                cache[current_id] += d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim + offsetH]
+                                     * d_h[y+i_ + (x+j_) * factor_y_dim + k_ * factor_z_dim + offsetH];
+    __syncthreads();
+    
+    // Reduce operation
+    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
+    int padding = blockDim.x*blockDim.y*blockDim.z/2;
+    while (padding != 0) {
+        if (current_id < padding)
+            cache[current_id] += cache[current_id + padding];
+        __syncthreads();
+        padding /= 2;
+    }
+    
+    if (i == 0 && j == 0 && k == 0)
+        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
+}
+
+__global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
+                                                       const double *d_blockNorm,
+                                                       const dim3 blockNorm_dims,
+                                                       const double *d_h,
+                                                       const dim3 h_dims,
+                                                       const unsigned int offsetH,
+                                                       const unsigned int numberOfOrientationBins,
+                                                       const unsigned int blockHeightAndWidthInCells,
+                                                       const double l2normClipping) {
+    // Each thread has to compute one value of block[i,j,k,x,y]
+    
+    // Compute factors
+    unsigned int factor_z_dim = h_dims.x * h_dims.y;
+    unsigned int factor_y_dim = h_dims.x;
+    
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x;
+    unsigned int y = blockIdx.y;
+    
+    unsigned int i = threadIdx.x;
+    if (x >= blockNorm_dims.x) {
+        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
+        x = x % blockNorm_dims.x;
+    }
+    x += 1;
+    unsigned int j = threadIdx.y;
+    if (y >= blockNorm_dims.y) {
+        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
+        y = y % blockNorm_dims.y;
+    }
+    y += 1;
+    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
+    
+    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
+        || k >= numberOfOrientationBins)
+        return;
+    
+    unsigned int current_id = i + j*blockHeightAndWidthInCells
+                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins
+                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins*blockNorm_dims.x;
+    
+    
+    double blockNorm = sqrt(d_blockNorm[x-1 + blockNorm_dims.x*(y-1)]);
+    if (blockNorm > 0) {
+        double tmpValue = d_h[y+i + (x+j) * factor_y_dim
+                              + k * factor_z_dim + offsetH] / blockNorm;
+        if (tmpValue > l2normClipping)
+            d_block[current_id] = l2normClipping;
+        else
+            d_block[current_id] = tmpValue;
+    } else
+        d_block[current_id] = 0.;
+}
+
+__global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
+                                                            const dim3 blockNorm_dims,
+                                                            const double *d_block,
+                                                            const unsigned int numberOfOrientationBins,
+                                                            const unsigned int blockHeightAndWidthInCells) {
+    // 2D-reduce to compute d_blockNorm for every (x,y)
+    
+    // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
+    // and a power of 2
+    extern __shared__ double cache[];
+    
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x +1;
+    unsigned int y = blockIdx.y +1;
+    
+    unsigned int i = threadIdx.x;
+    unsigned int j = threadIdx.y;
+    unsigned int k = threadIdx.z;
+    unsigned int current_id = i + j*blockDim.x
+                              + k*blockDim.x*blockDim.y;
+    
+    cache[current_id] = 0.;
+    for (unsigned int i_=i ; i_ < blockHeightAndWidthInCells ; i_+=blockDim.x) {
+        for (unsigned int j_=j ; j_ < blockHeightAndWidthInCells ; j_+=blockDim.y) {
+            for (unsigned int k_=k ; k_ < numberOfOrientationBins ; k_+=blockDim.z) {
+                unsigned int current_id_norm = i_ + j_*blockHeightAndWidthInCells
+                              + k_*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins
+                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins*blockNorm_dims.x;
+                cache[current_id] += d_block[current_id_norm] * d_block[current_id_norm];
+            }
+        }
+    }
+    
+    // Reduce operation
+    // all threads in the current block have to compute d_blockNorm[x + hist2*y]
+    int padding = blockDim.x*blockDim.y*blockDim.z/2;
+    while (padding != 0) {
+        if (current_id < padding)
+            cache[current_id] += cache[current_id + padding];
+        __syncthreads();
+        padding /= 2;
+    }
+    
+    // Several k values will have to participate to this value
+    if (i == 0 && j == 0)
+        d_blockNorm[x-1 + blockNorm_dims.x*(y-1)] = cache[0];
+}
+
+__global__ void DalalTriggsHOGdescriptor_compute_descriptorVector(double *d_outputImage,
+                                                                  const unsigned int offsetOutputImage,
+                                                                  const unsigned int factorOutputImage,
+                                                                  const double *d_block,
+                                                                  const double *d_blockNorm,
+                                                                  const dim3 blockNorm_dims,
+                                                                  const unsigned int numberOfOrientationBins,
+                                                                  const unsigned int blockHeightAndWidthInCells) {
+    // Retrieve indice of the element
+    unsigned int x = blockIdx.x;
+    unsigned int y = blockIdx.y;
+    
+    unsigned int i = threadIdx.x;
+    if (x >= blockNorm_dims.x) {
+        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
+        x = x % blockNorm_dims.x;
+    }
+    x += 1;
+    unsigned int j = threadIdx.y;
+    if (y >= blockNorm_dims.y) {
+        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
+        y = y % blockNorm_dims.y;
+    }
+    y += 1;
+    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
+    
+    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
+        || k >= numberOfOrientationBins)
+        return;
+    
+    unsigned int descriptorIndex = (x-1)*blockNorm_dims.y*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
+            + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells*numberOfOrientationBins
+            + i*blockHeightAndWidthInCells*numberOfOrientationBins
+            + j*numberOfOrientationBins + k;
+    double blockNorm = d_blockNorm[x-1 + blockNorm_dims.x*(y-1)];
+    if (blockNorm > 0) {
+        blockNorm = sqrt(blockNorm);
+        unsigned int current_id = i + j*blockHeightAndWidthInCells
+                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins
+                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+                                *numberOfOrientationBins*blockNorm_dims.x;
+        d_outputImage[offsetOutputImage
+                      + factorOutputImage*descriptorIndex]
+                    = d_block[current_id] / blockNorm;
+    } else
+        d_outputImage[offsetOutputImage
+                      + factorOutputImage*descriptorIndex]
+                    = 0.;
 }
