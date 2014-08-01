@@ -84,12 +84,12 @@ void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
         __START__
         cudaErrorCheck_goto(cudaMalloc(&d_image, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
-        __STOP__
+        __STOP("@ Malloc & Memcpy for <image> @")
         this->DalalTriggsHOGdescriptorOnImage(iwi, d_image, outputImage, windowsCenters);
         __START__
         cudaErrorCheck_goto(cudaFree(d_image));
         d_image = 0;
-        __STOP__
+        __STOP("@ Free for <image> @")
     } else
         PyErr_SetString(PyExc_RuntimeError,
                         "HOG::applyOnImage is not implemented for ZhuRamanan");
@@ -532,7 +532,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     // Allocate memory for the CUDA version of outputImage
     
     cudaErrorCheck_goto(cudaMalloc(&d_outputImage, d_outputImage_size_t));
-    __STOP__
+    __STOP("@ Malloc & Memset for <output, d_h..> @")
     
     // Compute values for histograms
     __START__
@@ -546,7 +546,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                                        iwi._numberOfWindowsHorizontally,
                                                                        iwi._enablePadding, iwi._windowStepVertical, iwi._windowStepHorizontal);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
-    __STOP__
+    __STOP("@ Kernel: compute_histograms @")
     
     // Histogram normalization
     // & windowsCenters initialization
@@ -585,7 +585,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
             windowsCenters[windowIndexVertical+iwi._numberOfWindowsVertically*(windowIndexHorizontal+iwi._numberOfWindowsHorizontally)] = columnCenter;
         }
     }
-    __STOP__
+    __STOP("@ Histogram Normalization @")
     
     __START__
     cudaErrorCheck_goto(cudaMemcpy(
@@ -600,7 +600,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     d_block = 0;
     cudaErrorCheck_goto(cudaFree(d_blockNorm));
     d_blockNorm = 0;
-    __STOP__
+    __STOP("@ Memcpy & Free for <output, d_h..> @")
     return;
     
 onfailure:

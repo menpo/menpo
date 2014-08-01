@@ -14,18 +14,20 @@
             cudaEventCreate(&start); \
             cudaEventCreate(&stop); \
             cudaEventRecord(start, 0);
-    #define __STOP__ \
+    #define __STOP(__NAME__) \
             cudaEventRecord(stop, 0); \
             cudaEventSynchronize(stop); \
             cudaEventElapsedTime(&_time_, start, stop); \
             cudaEventDestroy(start); \
             cudaEventDestroy(stop); \
             printf("In %s at line %d\t%s\tTOOK: %fms\n", \
-                   __FILE__, __LINE__, __PRETTY_FUNCTION__, _time_);
+                   __FILE__, __LINE__, __NAME__, _time_);
+    #define __STOP__ __STOP(__PRETTY_FUNCTION__)
 #else
     #define __CLOG__
     #define __START__
     #define __STOP__
+    #define __STOP(__NAME__)
 #endif
 
 // raise an excpetion Python-side, does not leave C/C++ code
