@@ -100,7 +100,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
                                                        const unsigned int numberOfOrientationBins,
                                                        const unsigned int blockHeightAndWidthInCells,
                                                        const double l2normClipping,
-                                                       const unsigned int numWindows);
+                                                       const unsigned int numberOfWindowsVertically,
+                                                       const unsigned int block_size);
 
 __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
                                                             const dim3 blockNorm_dims,

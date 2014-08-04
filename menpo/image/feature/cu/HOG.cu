@@ -322,26 +322,39 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
     const dim3 dimGrid_norm(blockNorm_dims.x, blockNorm_dims.y, numWindows);
     
-    // Each thread has to compute one value of block[i,j,k,x,y]
-    // The corresponding is stored into
-    //   unsigned int current_id = i + j*blockHeightAndWidthInCells
-    //      + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-    //      + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-    //        *numberOfOrientationBins
-    //      + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-    //        *numberOfOrientationBins*blockNorm_dims.x;
-    //   d_block[current_id]
-    // The number of blocks in the grid depends on blockNorm_dims,
-    // numberOfOrientationBins and blockHeightAndWidthInCells
-    const dim3 dimBlock_block(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
-    const dim3 dimGrid_block(
+    // Each thread has to compute a single value of d_block for a given window
+    // - block[i,j,k,x,y]
+    //
+    // Idea of the size of block vector for a given window:
+    //    0 <= i < 2 (=blockHeightAndWidthInCells)
+    //    0 <= j < 2 (=blockHeightAndWidthInCells)
+    //    0 <= k < 9 (=numberOfOrientationBins)
+    //    0 <= x < 1 (=blockNorm_dims.x)
+    //    0 <= y < 1 (=blockNorm_dims.y)
+    // = 2x2x9 = 36 elements to compute << 256 (=MAX_THREADS_1D)
+    //(= block_size)
+    //
+    // For some configuration, it might be greater than MAX_THREADS_1D,
+    // the kernel handles this case
+    //
+    // A kernel's block corresponds to a window
+    // each kernel's block has to compute its elements of d_block
+    const dim3 dimBlock_block(MAX_THREADS_1D, 1, 1);
+    const dim3 dimGrid_block(iwi._numberOfWindowsHorizontally,
+                             iwi._numberOfWindowsVertically, 1);
+    const unsigned int block_size = blockHeightAndWidthInCells
+                                    * blockHeightAndWidthInCells
+                                    * numberOfOrientationBins
+                                    * blockNorm_dims.x
+                                    * blockNorm_dims.y;
+    
+    const dim3 dimBlock_desc(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
+    const dim3 dimGrid_desc(
             blockNorm_dims.x
             * ((blockHeightAndWidthInCells+MAX_THREADS_3DX-1)/MAX_THREADS_3DX),
             blockNorm_dims.y
             * ((blockHeightAndWidthInCells+MAX_THREADS_3DY-1)/MAX_THREADS_3DY),
             (numWindows*numberOfOrientationBins + MAX_THREADS_3DZ -1)/MAX_THREADS_3DZ);
-    const dim3 dimBlock_desc(dimBlock_block);
-    const dim3 dimGrid_desc(dimGrid_block);
     
     const unsigned long long int d_outputImage_size_t = iwi._numberOfWindowsVertically
             * iwi._numberOfWindowsHorizontally
@@ -434,7 +447,8 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                  numberOfOrientationBins,
                                                  blockHeightAndWidthInCells,
                                                  l2normClipping,
-                                                 numWindows);
+                                                 iwi._numberOfWindowsVertically,
+                                                 block_size);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     __STOP("@ Kernel: compute_block @")
     
@@ -756,59 +770,58 @@ __global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
                                                        const unsigned int numberOfOrientationBins,
                                                        const unsigned int blockHeightAndWidthInCells,
                                                        const double l2normClipping,
-                                                       const unsigned int numWindows) {
+                                                       const unsigned int numberOfWindowsVertically,
+                                                       const unsigned int block_size) {
     // Each thread has to compute one value of block[i,j,k,x,y]
+    // for a given windows (blockIdx.x, blockIdx.y)
+    
+    // Compute window's index
+    //unsigned int windowIndexHorizontal = blockIdx.x;
+    //unsigned int windowIndexVertical = blockIdx.y;
+    unsigned windowIndex = (blockIdx.y + numberOfWindowsVertically * blockIdx.x);
     
     // Compute factors
     unsigned int factor_z_dim = h_dims.x * h_dims.y;
     unsigned int factor_y_dim = h_dims.x;
     
-    // Retrieve indice of the element
-    unsigned int x = blockIdx.x;
-    unsigned int y = blockIdx.y;
-    
-    unsigned int i = threadIdx.x;
-    if (x >= blockNorm_dims.x) {
-        i += ((unsigned int) (x/blockNorm_dims.x)) * blockDim.x;
-        x = x % blockNorm_dims.x;
+    // Retrieve ids of elements to compute during this thread
+    // In most of the cases, the loop should be called only once
+    for (unsigned int elementIndex(threadIdx.x) ; elementIndex < block_size ; elementIndex += blockDim.x) {
+        //elementIndex = i + j*blockHeightAndWidthInCells
+        //               + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+        //               + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+        //                 *numberOfOrientationBins
+        //               + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
+        //                 *numberOfOrientationBins*blockNorm_dims.x
+        unsigned int i = elementIndex;
+        unsigned int j = i / blockHeightAndWidthInCells;
+        i %= blockHeightAndWidthInCells;
+        unsigned int k = j / blockHeightAndWidthInCells;
+        j %= blockHeightAndWidthInCells;
+        unsigned int x = k / numberOfOrientationBins;
+        k %= numberOfOrientationBins;
+        unsigned int y = (x / blockNorm_dims.x) +1;
+        x = (x % blockNorm_dims.x) +1;
+        
+        unsigned int current_id = elementIndex
+                                  + windowIndex * blockHeightAndWidthInCells
+                                    * blockHeightAndWidthInCells
+                                    * numberOfOrientationBins
+                                    * blockNorm_dims.x * blockNorm_dims.y;
+        
+        double blockNorm = sqrt(d_blockNorm[x-1 + blockNorm_dims.x*(y-1)
+                                            + blockNorm_dims.x*blockNorm_dims.y*windowIndex]);
+        if (blockNorm > 0) {
+            unsigned int offsetH = h_dims.x * h_dims.y * h_dims.z * windowIndex;
+            double tmpValue = d_h[y+i + (x+j) * factor_y_dim
+                                  + k * factor_z_dim + offsetH] / blockNorm;
+            if (tmpValue > l2normClipping)
+                d_block[current_id] = l2normClipping;
+            else
+                d_block[current_id] = tmpValue;
+        } else
+            d_block[current_id] = 0.;
     }
-    x += 1;
-    unsigned int j = threadIdx.y;
-    if (y >= blockNorm_dims.y) {
-        j += ((unsigned int) (y/blockNorm_dims.y)) * blockDim.y;
-        y = y % blockNorm_dims.y;
-    }
-    y += 1;
-    unsigned int k = threadIdx.z + blockIdx.z * blockDim.z;
-    
-    if (i >= blockHeightAndWidthInCells || j >= blockHeightAndWidthInCells
-        || k >= numberOfOrientationBins*numWindows)
-        return;
-    
-    unsigned int z = k / numberOfOrientationBins;
-    k = k % numberOfOrientationBins;
-    
-    unsigned int current_id = i + j*blockHeightAndWidthInCells
-                              + k*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                              + (x-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins
-                              + (y-1)*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x
-                              + z*blockHeightAndWidthInCells*blockHeightAndWidthInCells
-                                *numberOfOrientationBins*blockNorm_dims.x*blockNorm_dims.y;
-    
-    double blockNorm = sqrt(d_blockNorm[x-1 + blockNorm_dims.x*(y-1)
-                                        + blockNorm_dims.x*blockNorm_dims.y*z]);
-    if (blockNorm > 0) {
-        unsigned int offsetH = h_dims.x * h_dims.y * h_dims.z * z;
-        double tmpValue = d_h[y+i + (x+j) * factor_y_dim
-                              + k * factor_z_dim + offsetH] / blockNorm;
-        if (tmpValue > l2normClipping)
-            d_block[current_id] = l2normClipping;
-        else
-            d_block[current_id] = tmpValue;
-    } else
-        d_block[current_id] = 0.;
 }
 
 __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
