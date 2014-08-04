@@ -2,12 +2,13 @@
 #include "check_cuda_errors.hpp"
 #include "Python.h"
 
-#define MAX_THREADS_1D 256
-#define MAX_THREADS_2D  16
+#define MAX_THREADS_1D      256
+#define MAX_THREADS_1D_SMALL 64
+#define MAX_THREADS_2D       16
 
-#define MAX_THREADS_3DX  4
-#define MAX_THREADS_3DY  4
-#define MAX_THREADS_3DZ 16
+#define MAX_THREADS_3DX       4
+#define MAX_THREADS_3DY       4
+#define MAX_THREADS_3DZ      16
 
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
@@ -339,7 +340,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     //
     // A kernel's block corresponds to a window
     // each kernel's block has to compute its elements of d_block
-    const dim3 dimBlock_block(MAX_THREADS_1D, 1, 1);
+    const dim3 dimBlock_block(MAX_THREADS_1D_SMALL, 1, 1);
     const dim3 dimGrid_block(iwi._numberOfWindowsHorizontally,
                              iwi._numberOfWindowsVertically, 1);
     const unsigned int block_size = blockHeightAndWidthInCells
