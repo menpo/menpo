@@ -115,6 +115,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_outputImage(double *d_outputIma
                                                              const dim3 blockNorm_dims,
                                                              const unsigned int numberOfOrientationBins,
                                                              const unsigned int blockHeightAndWidthInCells,
-                                                             const unsigned int numWindows);
+                                                             const unsigned int numWindows,
+                                                             const unsigned int numberOfWindowsVertically,
+                                                             const unsigned int block_size);
 
 #endif
