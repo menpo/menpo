@@ -90,7 +90,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
                                                            const double *d_h,
                                                            const dim3 h_dims,
                                                            const unsigned int numberOfOrientationBins,
-                                                           const unsigned int blockHeightAndWidthInCells);
+                                                           const unsigned int blockHeightAndWidthInCells,
+                                                           const unsigned int numberOfWindowsVertically);
 
 __global__ void DalalTriggsHOGdescriptor_compute_block(double *d_block,
                                                        const double *d_blockNorm,
@@ -107,7 +108,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
                                                             const dim3 blockNorm_dims,
                                                             const double *d_block,
                                                             const unsigned int numberOfOrientationBins,
-                                                            const unsigned int blockHeightAndWidthInCells);
+                                                            const unsigned int blockHeightAndWidthInCells,
+                                                            const unsigned int numberOfWindowsVertically);
 
 __global__ void DalalTriggsHOGdescriptor_compute_outputImage(double *d_outputImage,
                                                              const double *d_block,

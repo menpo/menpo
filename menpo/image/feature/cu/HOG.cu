@@ -321,7 +321,8 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const dim3 blockNorm_dims(hist2 - blockHeightAndWidthInCells -1,
                               hist1 - blockHeightAndWidthInCells -1);
     const dim3 dimBlock_norm(MAX_THREADS_3DX, MAX_THREADS_3DY, MAX_THREADS_3DZ);
-    const dim3 dimGrid_norm(blockNorm_dims.x, blockNorm_dims.y, numWindows);
+    const dim3 dimGrid_norm(blockNorm_dims.x*iwi._numberOfWindowsHorizontally,
+                            blockNorm_dims.y*iwi._numberOfWindowsVertically, 1);
     
     // Each thread has to compute a single value of d_block for a given window
     // - block[i,j,k,x,y]
@@ -432,7 +433,8 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                     (d_blockNorm, blockNorm_dims,
                                                      d_h, h_dims,
                                                      numberOfOrientationBins,
-                                                     blockHeightAndWidthInCells);
+                                                     blockHeightAndWidthInCells,
+                                                     iwi._numberOfWindowsVertically);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     __STOP("@ Kernel: compute_blocknorm @")
     
@@ -462,7 +464,8 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
                                                     (d_blockNorm, blockNorm_dims,
                                                      d_block,
                                                      numberOfOrientationBins,
-                                                     blockHeightAndWidthInCells);
+                                                     blockHeightAndWidthInCells,
+                                                     iwi._numberOfWindowsVertically);
     cudaErrorCheck_goto(cudaThreadSynchronize()); // block until the device is finished
     __STOP("@ Kernel: compute_blocknorm2 @")
     
@@ -717,7 +720,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
                                                            const double *d_h,
                                                            const dim3 h_dims,
                                                            const unsigned int numberOfOrientationBins,
-                                                           const unsigned int blockHeightAndWidthInCells) {
+                                                           const unsigned int blockHeightAndWidthInCells,
+                                                           const unsigned int numberOfWindowsVertically) {
     // 2D-reduce to compute d_blockNorm for every (x,y)
     
     // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
@@ -729,9 +733,11 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm(double *d_blockNorm,
     unsigned int factor_y_dim = h_dims.x;
     
     // Retrieve indice of the element
-    unsigned int x = blockIdx.x +1;
-    unsigned int y = blockIdx.y +1;
-    unsigned int z = blockIdx.z;
+    unsigned int x = blockIdx.x;
+    unsigned int y = blockIdx.y;
+    unsigned int z = (y/blockNorm_dims.y) + numberOfWindowsVertically * (x/blockNorm_dims.x);
+    x = (x % blockNorm_dims.x) +1;
+    y = (y % blockNorm_dims.y) +1;
     unsigned int offsetH = h_dims.x * h_dims.y * h_dims.z * z;
     
     unsigned int i = threadIdx.x;
@@ -829,7 +835,8 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
                                                             const dim3 blockNorm_dims,
                                                             const double *d_block,
                                                             const unsigned int numberOfOrientationBins,
-                                                            const unsigned int blockHeightAndWidthInCells) {
+                                                            const unsigned int blockHeightAndWidthInCells,
+                                                            const unsigned int numberOfWindowsVertically) {
     // 2D-reduce to compute d_blockNorm for every (x,y)
     
     // Size of shared memory must be blockDim.x*blockDim.y*blockDim.z
@@ -837,9 +844,11 @@ __global__ void DalalTriggsHOGdescriptor_compute_blocknorm2(double *d_blockNorm,
     extern __shared__ double cache[];
     
     // Retrieve indice of the element
-    unsigned int x = blockIdx.x +1;
-    unsigned int y = blockIdx.y +1;
-    unsigned int z = blockIdx.z;
+    unsigned int x = blockIdx.x;
+    unsigned int y = blockIdx.y;
+    unsigned int z = (y/blockNorm_dims.y) + numberOfWindowsVertically * (x/blockNorm_dims.x);
+    x = (x % blockNorm_dims.x) +1;
+    y = (y % blockNorm_dims.y) +1;
     
     unsigned int i = threadIdx.x;
     unsigned int j = threadIdx.y;
