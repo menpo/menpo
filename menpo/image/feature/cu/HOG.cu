@@ -917,13 +917,10 @@ __global__ void DalalTriggsHOGdescriptor_compute_outputImage(double *d_outputIma
         x = (x % blockNorm_dims.x) +1;
         
         
-        unsigned int descriptorIndex = (x-1) * blockNorm_dims.y
-                 * blockHeightAndWidthInCells * blockHeightAndWidthInCells
-                 * numberOfOrientationBins
-               + (y-1) * blockHeightAndWidthInCells
-                 * blockHeightAndWidthInCells * numberOfOrientationBins
-               + i * blockHeightAndWidthInCells * numberOfOrientationBins
-               + j * numberOfOrientationBins + k;
+        unsigned int descriptorIndex = k + numberOfOrientationBins * (
+                j + blockHeightAndWidthInCells * (
+                i + blockHeightAndWidthInCells * (
+                y-1 + blockNorm_dims.y * (x-1))));
         
         double blockNorm = d_blockNorm[x-1 + blockNorm_dims.x*(y-1)
                            + blockNorm_dims.x*blockNorm_dims.y*windowIndex];
