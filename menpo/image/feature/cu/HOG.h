@@ -28,7 +28,6 @@ public:
                       double *outputImage, int *windowsCenters);
     bool isApplyOnImage();
     void DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
-                                         double *d_image,
                                          double *outputImage,
                                          int *windowsCenters);
 	unsigned int descriptorLengthPerBlock, numberOfBlocksPerWindowHorizontally,
@@ -69,7 +68,6 @@ void DalalTriggsHOGdescriptor(double *h,
 
 __global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
                                                             const dim3 h_dims,
-                                                            const double *d_inputImage,
                                                             const unsigned int imageHeight,
                                                             const unsigned int imageWidth,
                                                             const unsigned int windowHeight,

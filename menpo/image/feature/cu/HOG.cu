@@ -10,6 +10,12 @@
 #define MAX_THREADS_3DY       4
 #define MAX_THREADS_3DZ      16
 
+// Hardware does not support double precision
+// the technic is to used int2 instead
+//   int2 v = tex1Dfetch(t,i);
+//   __hiloint2double(v.y, v.x);
+texture<int2, 1, cudaReadModeElementType> t_image;
+
 HOG::HOG(unsigned int windowHeight, unsigned int windowWidth,
          unsigned int numberOfChannels, unsigned int method,
          unsigned int numberOfOrientationBins,
@@ -85,9 +91,11 @@ void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
         __START__
         cudaErrorCheck_goto(cudaMalloc(&d_image, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
+        cudaErrorCheck_goto(cudaBindTexture(NULL, t_image, d_image, iwi._imageHeight * iwi._imageWidth * numberOfChannels * sizeof(double)));
         __STOP("@ Malloc & Memcpy for <image> @")
-        this->DalalTriggsHOGdescriptorOnImage(iwi, d_image, outputImage, windowsCenters);
+        this->DalalTriggsHOGdescriptorOnImage(iwi, outputImage, windowsCenters);
         __START__
+        cudaErrorCheck_goto(cudaUnbindTexture(t_image));
         cudaErrorCheck_goto(cudaFree(d_image));
         d_image = 0;
         __STOP("@ Free for <image> @")
@@ -291,7 +299,6 @@ void ZhuRamananHOGdescriptor(double *inputImage,
 }
 
 void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
-                                          double *d_image,
                                           double *outputImage,
                                           int *windowsCenters) {
     __CLOG__
@@ -368,7 +375,6 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     const dim3 dimBlock(MAX_THREADS_2D, MAX_THREADS_2D, 1);
     const dim3 dimGrid((this->windowWidth * iwi._numberOfWindowsHorizontally + dimBlock.x -1)/dimBlock.x, (this->windowHeight * iwi._numberOfWindowsVertically + dimBlock.y -1)/dimBlock.y, 1);
     
-    
     // Pre-allocate CUDA memory for DalalTriggsHOGdescriptor
     //
     // Allocating/Deleting memory takes lots of time for small vectors
@@ -409,7 +415,7 @@ void HOG::DalalTriggsHOGdescriptorOnImage(const ImageWindowIterator &iwi,
     // Compute values for histograms
     __START__
     DalalTriggsHOGdescriptor_compute_histograms<<<dimGrid, dimBlock>>>(d_h, h_dims,
-                                                                       d_image, iwi._imageHeight, iwi._imageWidth,
+                                                                       iwi._imageHeight, iwi._imageWidth,
                                                                        this->windowHeight, this->windowWidth, this->numberOfChannels,
                                                                        this->numberOfOrientationBins, this->cellHeightAndWidthInPixels,
                                                                        this->enableSignedGradients ? 1 : 0 /*signedOrUnsignedGradients*/,
@@ -548,24 +554,29 @@ __device__ double atomicAdd(double* address, double val) {
     return __longlong_as_double(old);
 }
 
-#define getInImage(i,j,k) ((i+rowFrom<0 || i+rowFrom>imageHeight-1 || j+columnFrom<0 || j+columnFrom>imageWidth-1) ? 0. : d_inputImage[(i+rowFrom) + imageHeight*((j+columnFrom) + imageWidth*k)])
+// cf. https://devtalk.nvidia.com/default/topic/399816/double-texture-memory/
+static __inline__ __device__ double fetch_double(texture<int2, 1, cudaReadModeElementType> t, int i) {
+    int2 v = tex1Dfetch(t,i);
+    return __hiloint2double(v.y, v.x);
+}
+
+#define getInImage(i,j,k) ((i+rowFrom<0 || i+rowFrom>imageHeight-1 || j+columnFrom<0 || j+columnFrom>imageWidth-1) ? 0. : fetch_double(t_image, (i+rowFrom) + imageHeight*((j+columnFrom) + imageWidth*k)))
 __global__ void DalalTriggsHOGdescriptor_compute_histograms(double *d_h,
-                                                               const dim3 h_dims,
-                                                               const double *d_inputImage,
-                                                               const unsigned int imageHeight,
-                                                               const unsigned int imageWidth,
-                                                               const unsigned int windowHeight,
-                                                               const unsigned int windowWidth,
-                                                               const unsigned int numberOfChannels,
-                                                               const unsigned int numberOfOrientationBins,
-                                                               const unsigned int cellHeightAndWidthInPixels,
-                                                               const unsigned signedOrUnsignedGradients,
-                                                               const double binsSize,
-                                                               const int numHistograms,
-                                                               const int numberOfWindowsVertically,
-                                                               const int numberOfWindowsHorizontally,
-                                                               const bool enablePadding,
-                                                               const int windowStepVertical, const int windowStepHorizontal) {
+                                                            const dim3 h_dims,
+                                                            const unsigned int imageHeight,
+                                                            const unsigned int imageWidth,
+                                                            const unsigned int windowHeight,
+                                                            const unsigned int windowWidth,
+                                                            const unsigned int numberOfChannels,
+                                                            const unsigned int numberOfOrientationBins,
+                                                            const unsigned int cellHeightAndWidthInPixels,
+                                                            const unsigned signedOrUnsignedGradients,
+                                                            const double binsSize,
+                                                            const int numHistograms,
+                                                            const int numberOfWindowsVertically,
+                                                            const int numberOfWindowsHorizontally,
+                                                            const bool enablePadding,
+                                                            const int windowStepVertical, const int windowStepHorizontal) {
     // Compute histograms values
     
     // Retrieve pixel position
