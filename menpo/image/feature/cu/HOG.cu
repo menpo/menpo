@@ -332,7 +332,7 @@ __global__ void DalalTriggsHOGdescriptor_precompute_histograms(double *d_h,
     
     int offsetWindow = h_dims.x * h_dims.y * h_dims.z * (windowIndexVertical + numberOfWindowsVertically * windowIndexHorizontal);
     int rowFrom, columnFrom;
-    if (enablePadding) {
+    if (!enablePadding) {
         rowFrom = windowIndexVertical*windowStepVertical;
         columnFrom = windowIndexHorizontal*windowStepHorizontal;
     } else {
