@@ -91,7 +91,7 @@ void HOG::applyOnImage(const ImageWindowIterator &iwi, const double *image,
         __START__
         cudaErrorCheck_goto(cudaMalloc(&d_image, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
         cudaErrorCheck_goto(cudaMemcpy(d_image, image, imageHeight * imageWidth * numberOfChannels * sizeof(double), cudaMemcpyHostToDevice));
-        cudaErrorCheck_goto(cudaBindTexture(NULL, t_image, d_image, iwi._imageHeight * iwi._imageWidth * numberOfChannels * sizeof(double)));
+        cudaErrorCheck_goto(cudaBindTexture(NULL, t_image, d_image, imageHeight * imageWidth * numberOfChannels * sizeof(double)));
         __STOP("@ Malloc & Memcpy for <image> @")
         this->DalalTriggsHOGdescriptorOnImage(iwi, outputImage, windowsCenters);
         __START__
