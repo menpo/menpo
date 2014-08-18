@@ -7,7 +7,7 @@ from nose.tools import raises
 
 import menpo.io as mio
 from menpo.shape.pointcloud import PointCloud
-from menpo.landmark import labeller, ibug_68_trimesh
+from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine
 from menpo.fitmultilevel.aam import AAMBuilder
 from menpo.fitmultilevel.aam import LucasKanadeAAMFitter
@@ -305,7 +305,7 @@ training_images = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
-    labeller(im, 'PTS', ibug_68_trimesh)
+    labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
     training_images.append(im)
@@ -313,7 +313,7 @@ for i in range(4):
 # build aam
 aam = AAMBuilder(feature_type=['igo'],
                  transform=PiecewiseAffine,
-                 trilist=training_images[0].landmarks['ibug_68_trimesh'].
+                 trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
                  normalization_diagonal=150,
                  n_levels=3,
@@ -327,7 +327,7 @@ aam = AAMBuilder(feature_type=['igo'],
 
 aam2 = AAMBuilder(feature_type=['igo'],
                   transform=PiecewiseAffine,
-                  trilist=training_images[0].landmarks['ibug_68_trimesh'].
+                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,
                   normalization_diagonal=150,
                   n_levels=1,
