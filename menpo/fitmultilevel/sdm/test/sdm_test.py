@@ -5,7 +5,7 @@ from nose.plugins.attrib import attr
 
 import numpy as np
 import menpo.io as mio
-from menpo.landmark import labeller, ibug_68_trimesh
+from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
 from menpo.transform.modeldriven import OrthoMDTransform
 from menpo.transform.homogeneous import AlignmentSimilarity
@@ -302,7 +302,7 @@ training_images = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
-    labeller(im, 'PTS', ibug_68_trimesh)
+    labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
     training_images.append(im)
@@ -326,7 +326,7 @@ sdm1 = SDMTrainer(regression_type=mlr_svd,
 
 aam = AAMBuilder(feature_type=sparse_hog,
                  transform=PiecewiseAffine,
-                 trilist=training_images[0].landmarks['ibug_68_trimesh'].
+                 trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
                  normalization_diagonal=150,
                  n_levels=3,
