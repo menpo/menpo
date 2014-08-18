@@ -127,7 +127,7 @@ def import_mesh(filepath, landmark_resolver=same_name, texture=True):
                    landmark_resolver=landmark_resolver, importer_kwargs=kwargs)
 
 
-def import_landmark_file(filepath):
+def import_landmark_file(filepath, asset=None):
     r"""Single landmark group importer.
 
     Iff an landmark file is found at `filepath`, returns a :class:`menpo
@@ -144,7 +144,8 @@ def import_landmark_file(filepath):
         The :map:`LandmarkGroup` that the file format represents.
 
     """
-    return _import(filepath, all_landmark_types, has_landmarks=False)
+    return _import(filepath, all_landmark_types, has_landmarks=False,
+                   asset=asset)
 
 
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
@@ -441,7 +442,7 @@ def _import(filepath, extensions_map, keep_importer=False,
             if lm_paths is None:
                 continue
             for group_name, lm_path in lm_paths.iteritems():
-                lms = import_landmark_file(lm_path)
+                lms = import_landmark_file(lm_path, asset=x)
                 if x.n_dims == lms.n_dims:
                     x.landmarks[group_name] = lms
 
