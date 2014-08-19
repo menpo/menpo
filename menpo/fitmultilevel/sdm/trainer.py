@@ -280,7 +280,7 @@ class SDTrainer(object):
 
             if verbose:
                 print_dynamic('- Fitting shapes: computing mean error...')
-            mean_error = np.mean(np.array([fr.final_error
+            mean_error = np.mean(np.array([fr.final_error()
                                            for fr_list in fitting_results
                                            for fr in fr_list]))
             if verbose:

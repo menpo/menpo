@@ -253,3 +253,12 @@ def _compute_me_norm(target, ground_truth):
     normalizer = np.mean(np.max(ground_truth, axis=0) -
                          np.min(ground_truth, axis=0))
     return _compute_me(target, ground_truth) / normalizer
+
+
+def compute_cumulative_error(errors, x_axis):
+    r"""
+    """
+    n_errors = len(errors)
+    cumulative_error = [np.count_nonzero([errors <= x])
+                        for x in x_axis]
+    return np.array(cumulative_error) / n_errors
