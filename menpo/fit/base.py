@@ -3,16 +3,9 @@ import abc
 
 class Fitter(object):
     r"""
-    Interface that all Fitter objects must implement.
+    Abstract interface that all :map:`Fitter` objects must implement.
     """
     __metaclass__ = abc.ABCMeta
-
-    @abc.abstractproperty
-    def algorithm(self):
-        r"""
-        Returns the name of the fitter object.
-        """
-        pass
 
     @abc.abstractmethod
     def _set_up(self, **kwargs):
@@ -23,23 +16,21 @@ class Fitter(object):
 
     def fit(self, image, initial_parameters, gt_shape=None, **kwargs):
         r"""
-        Fits the fitter object to an image.
+        Fits the fitter to an image.
 
         Parameters
         -----------
-        image: :class:`menpo.image.masked.MaskedImage`
+        image: :map:`Image` or subclass
             The image to be fitted.
         initial_parameters: list
             The initial parameters of the model.
-        gt_shape: :class:`menpo.shape.PointCloud`, optional
-            The original ground truth shape associated to the image.
-
-            Default: None
+        gt_shape: :map:`PointCloud`
+            The ground truth shape associated to the image.
 
         Returns
         -------
-        fitting_result: `menpo.fit.fittingresult`
-            The fitting result.
+        fitting_result: :map:`FittingResult`
+            The fitting result containing the result of fitting procedure.
         """
         fitting_result = self._create_fitting_result(
             image, initial_parameters, gt_shape=gt_shape)

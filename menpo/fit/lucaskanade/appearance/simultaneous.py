@@ -78,7 +78,6 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -154,7 +153,6 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -232,5 +230,4 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result

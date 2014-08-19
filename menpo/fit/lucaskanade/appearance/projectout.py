@@ -52,7 +52,6 @@ class ProjectOutForwardAdditive(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -102,7 +101,6 @@ class ProjectOutForwardCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -156,5 +154,4 @@ class ProjectOutInverseCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
