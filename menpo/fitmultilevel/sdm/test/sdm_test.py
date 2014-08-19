@@ -460,10 +460,7 @@ def test_sdm_1():
     assert (sdm1.downscale == 1.3)
     assert (sdm1.feature_type[0] is None)
     assert (sdm1.interpolator == 'scipy')
-    assert (sdm1.algorithm == 'SDM-Non-Parametric')
     assert sdm1.pyramid_on_features
-    assert (sdm1._fitters[0].algorithm == sdm1._fitters[1].algorithm ==
-            'Non-Parametric')
     assert (sdm1._fitters[0].regressor.__name__ ==
             sdm1._fitters[1].regressor.__name__ == 'mlr_svd_fitting')
 
@@ -473,10 +470,7 @@ def test_sdm_2():
     assert (sdm2.n_levels == 3)
     assert (sdm2.downscale == 1.2)
     assert (sdm2.interpolator == 'scipy')
-    assert (sdm2.algorithm == 'SD-AAM-Parametric')
     assert sdm2.pyramid_on_features
-    assert (sdm2._fitters[0].algorithm == sdm2._fitters[1].algorithm ==
-            sdm2._fitters[2].algorithm == 'Parametric')
     assert (sdm2._fitters[0].regressor.__name__ ==
             sdm2._fitters[1].regressor.__name__ ==
             sdm2._fitters[2].regressor.__name__ == 'mlr_fitting')
@@ -487,9 +481,7 @@ def test_sdm_3():
     assert (sdm3.n_levels == 1)
     assert (sdm3.downscale == 1.1)
     assert (sdm3.interpolator == 'scipy')
-    assert (sdm3.algorithm == 'SD-CLM-Semi-Parametric')
     assert sdm3.pyramid_on_features
-    assert (sdm3._fitters[0].algorithm == 'Semi-Parametric')
     assert (sdm3._fitters[0].regressor.__name__ == 'mlr_fitting')
 
 
@@ -520,15 +512,17 @@ def sdm_helper(sdm, im_number, max_iters, initial_error, final_error,
     fitting_result = sdm.fit(
         training_images[im_number], initial_shape[im_number],
         gt_shape=training_images[im_number].landmarks['PTS'].lms,
-        max_iters=max_iters, error_type=error_type)
+        max_iters=max_iters)
     if str_flag:
-        ie = str(fitting_result.initial_error)
-        fe = str(fitting_result.final_error)
+        ie = str(fitting_result.initial_error(error_type=error_type))
+        fe = str(fitting_result.final_error(error_type=error_type))
         assert (ie[0:5] == initial_error)
         assert (fe[0:5] == final_error)
     else:
-        assert (np.around(fitting_result.initial_error, 5) == initial_error)
-        assert (np.around(fitting_result.final_error, 5) == final_error)
+        assert (np.around(fitting_result.initial_error(error_type=error_type),
+                          5) == initial_error)
+        assert (np.around(fitting_result.final_error(error_type=error_type),
+                          5) == final_error)
 
 
 @attr('fuzzy')

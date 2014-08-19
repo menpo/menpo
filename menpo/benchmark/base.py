@@ -6,7 +6,6 @@ from menpo.visualize.text_utils import print_dynamic, progress_bar_str
 from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
 from menpo.fitmultilevel.clm import CLMBuilder, GradientDescentCLMFitter
 from menpo.fitmultilevel.sdm import SDMTrainer, SDMFitter
-from menpo.fit.fittingresult import FittingResultList
 from menpo.landmark import labeller
 from menpo.visualize.base import GraphPlotter
 
@@ -125,10 +124,7 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
                                            perc2 * 100. / n_images))
 
-    # fit images
-    fitting_results_list = FittingResultList(fitting_results)
-
-    return fitting_results_list
+    return fitting_results
 
 
 def aam_build_benchmark(training_images, training_options=None, verbose=False):
@@ -301,10 +297,7 @@ def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
                                            perc2 * 100. / n_images))
 
-    # fit images
-    fitting_results_list = FittingResultList(fitting_results)
-
-    return fitting_results_list
+    return fitting_results
 
 
 def clm_build_benchmark(training_images, training_options=None, verbose=False):
@@ -474,10 +467,7 @@ def sdm_fit_benchmark(fitting_images, fitter, perturb_options=None,
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
                                            perc2 * 100. / n_images))
 
-    # fit images
-    fitting_results_list = FittingResultList(fitting_results)
-
-    return fitting_results_list
+    return fitting_results
 
 
 def sdm_build_benchmark(training_images, training_options=None, verbose=False):

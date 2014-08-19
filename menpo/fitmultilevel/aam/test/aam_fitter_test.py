@@ -415,9 +415,11 @@ def aam_helper(aam=aam, algorithm=AlternatingInverseCompositional, im_number=0,
     fitting_result = fitter.fit(
         training_images[im_number], initial_shape[im_number],
         gt_shape=training_images[im_number].landmarks['PTS'].lms,
-        max_iters=max_iters, error_type=error_type)
-    assert (np.around(fitting_result.initial_error, 5) == initial_error)
-    assert (np.around(fitting_result.final_error, 5) == final_error)
+        max_iters=max_iters)
+    assert (np.around(fitting_result.initial_error(error_type=error_type),
+                      5) == initial_error)
+    assert (np.around(fitting_result.final_error(error_type=error_type),
+                      5) == final_error)
 
 
 @attr('fuzzy')
