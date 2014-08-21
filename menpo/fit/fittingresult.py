@@ -31,7 +31,6 @@ class FittingResult(Viewable):
     """
     def __init__(self, image, fitter, gt_shape=None):
         self.image = image
-        self._error_type, self._error_text = None, None
         self.fitter = fitter
         self._gt_shape = gt_shape
 
