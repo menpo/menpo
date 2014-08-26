@@ -1,5 +1,4 @@
-from copy import deepcopy
-
+from warnings import warn
 import numpy as np
 
 from .base import Image
@@ -34,14 +33,11 @@ class BooleanImage(Image):
         # If we are trying not to copy, but the data we have isn't boolean,
         # then unfortunately, we forced to copy anyway!
         if mask_data.dtype != np.bool:
-            # Unfortunately, even if you were trying not to copy, if you don't
-            # have boolean data we have to copy!
+            mask_data = np.array(mask_data, dtype=np.bool, copy=True,
+                                 order='C')
             if not copy:
-                raise Warning('The copy flag was NOT honoured. '
-                              'A copy HAS been made. Please use np.bool data'
-                              'to avoid this.')
-            mask_data = np.require(mask_data, dtype=np.bool,
-                                   requirements=['C'])
+                warn('The copy flag was NOT honoured. A copy HAS been made. '
+                     'Please ensure the data you pass is C-contiguous.')
         super(BooleanImage, self).__init__(mask_data, copy=copy)
 
     @classmethod
@@ -163,26 +159,6 @@ class BooleanImage(Image):
         return ('{} {}D mask, {:.1%} '
                 'of which is True'.format(self._str_shape, self.n_dims,
                                           self.proportion_true))
-
-    def copy(self):
-        r"""
-        Return a new image with copies of the pixels and landmarks of this
-        image.
-
-        This is an efficient copy method. If you need to copy all the state on
-        the object, consider deepcopy instead.
-
-        Returns
-        -------
-
-        image: :map:`BooleanImage`
-            A new image with the same pixels and landmarks as this one,
-            just copied.
-
-        """
-        new_image = BooleanImage(self.pixels[..., 0])
-        new_image.landmarks = self.landmarks
-        return new_image
 
     def from_vector(self, vector, copy=True):
         r"""

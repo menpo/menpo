@@ -45,29 +45,32 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Recursively calculates a procrustes alignment.
         """
-        from menpo.shape import PointCloud
+        from menpo.shape import mean_pointcloud
+        from menpo.transform import Similarity
         if self.n_iterations > self.max_iterations:
             return False
-        av_aligned_source = sum(
-            t.aligned_source.points for t in self.transforms) / self.n_sources
-        new_target = PointCloud(av_aligned_source)
+        new_tgt = mean_pointcloud([t.aligned_source.points
+                                   for t in self.transforms])
         # rescale the new_target to be the same size as the original about
         # it's centre
-        rescale = UniformScale(
-            self.initial_target_scale / new_target.norm(), self.n_dims)
-        centre = Translation(-new_target.centre)
-        rescale_about_centre = centre.compose_before(rescale).compose_before(
-            centre.pseudoinverse)
-        rescale_about_centre.apply_inplace(new_target)
-        # check to see if  we have converged yet
-        delta_target = np.linalg.norm(self.target.points - new_target.points)
+        rescale = Similarity.identity(new_tgt.n_dims)
+
+        s = UniformScale(self.initial_target_scale / new_tgt.norm(),
+                         self.n_dims, skip_checks=True)
+        t = Translation(-new_tgt.centre, skip_checks=True)
+        rescale.compose_before_inplace(t)
+        rescale.compose_before_inplace(s)
+        rescale.compose_before_inplace(t.pseudoinverse)
+        rescale.apply_inplace(new_tgt)
+        # check to see if we have converged yet
+        delta_target = np.linalg.norm(self.target.points - new_tgt.points)
         if delta_target < 1e-6:
             return True
         else:
             self.n_iterations += 1
             for t in self.transforms:
-                t.set_target(new_target)
-            self.target = new_target
+                t.set_target(new_tgt)
+            self.target = new_tgt
             return self._recursive_procrustes()
 
     @property

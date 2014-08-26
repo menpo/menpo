@@ -1,11 +1,10 @@
 import abc
 from menpo.base import Vectorizable
-from menpo.landmark import Landmarkable
+from menpo.landmark import LandmarkableViewable
 from menpo.transform.base import Transformable
-from menpo.visualize.base import Viewable
 
 
-class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
+class Shape(Vectorizable, Transformable, LandmarkableViewable):
     """
     Abstract representation of shape. Shapes are :map:`Transformable`,
     :map:`Vectorizable`, :map:`Landmarkable` and :map:`Viewable`. This base
@@ -16,9 +15,6 @@ class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
     """
 
     __metaclass__ = abc.ABCMeta
-
-    def __init__(self):
-        super(Shape, self).__init__()
 
     def _transform_inplace(self, transform):
         """
@@ -34,7 +30,8 @@ class Shape(Vectorizable, Landmarkable, Transformable, Viewable):
         self : `self`
             A pointer to `self` (the result of :meth:`_transform_self_inplace`).
         """
-        self.landmarks._transform_inplace(transform)
+        if self.has_landmarks:
+            self.landmarks._transform_inplace(transform)
         return self._transform_self_inplace(transform)
 
     @abc.abstractmethod

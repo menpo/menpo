@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from nose.tools import raises
@@ -106,13 +107,14 @@ def test_image_from_vector_inplace_no_copy():
     assert(is_same_array(image.pixels, pixels2))
 
 
-@raises(Warning)
 def test_image_from_vector_inplace_no_copy_warning():
-    pixels = np.random.rand(10, 20, 2)
-    pixels2 = np.random.rand(10, 20, 2)
-    image = Image(pixels)
-    image.from_vector_inplace(pixels2.ravel()[::-1], copy=False)
-    assert(is_same_array(image.pixels, pixels2))
+        pixels = np.random.rand(10, 20, 2)
+        pixels2 = np.random.rand(10, 20, 2)
+        image = Image(pixels)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            image.from_vector_inplace(pixels2.ravel()[::-1], copy=False)
+            assert len(w) == 1
 
 
 def test_image_from_vector_inplace_copy_default():
@@ -189,11 +191,13 @@ def test_boolean_image_from_vector_no_copy():
     assert(is_same_array(image2.pixels.ravel(), vector))
 
 
-@raises(Warning)
 def test_boolean_image_from_vector_no_copy_raises():
     vector = np.zeros(16, dtype=np.bool)
     image = BooleanImage.blank((4, 4))
-    image.from_vector(vector[::-1], copy=False)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        image.from_vector(vector[::-1], copy=False)
+        assert len(w) == 1
 
 
 def test_boolean_image_invert_inplace():
@@ -244,10 +248,12 @@ def test_create_image_copy_true():
     assert (not is_same_array(image.pixels, pixels))
 
 
-@raises(Warning)
 def test_create_image_copy_false_not_c_contiguous():
     pixels = np.ones((100, 100, 1), order='F')
-    Image(pixels, copy=False)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        Image(pixels, copy=False)
+        assert(len(w) == 1)
 
 
 def mask_image_3d_test():
@@ -282,10 +288,12 @@ def test_boolean_copy_true():
     assert (not is_same_array(boolean_image.pixels, mask))
 
 
-@raises(Warning)
 def test_boolean_copy_false_non_boolean():
     mask = np.zeros((10, 10))
-    boolean_image = BooleanImage(mask, copy=False)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        BooleanImage(mask, copy=False)
+        assert(len(w) == 1)
 
 
 def test_mask_blank_rounding_floor():
@@ -570,6 +578,13 @@ def test_as_greyscale_channels():
     assert (new_image.shape == image.shape)
     assert (new_image.n_channels == 1)
     assert_allclose(new_image.pixels[..., 0], image.pixels[..., 0])
+
+
+def test_as_pil_image_1channel():
+    im = MaskedImage(np.random.randn(120, 120, 1))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    (im.pixels * 255).astype(np.uint8))
 
 
 def test_as_pil_image_3channels():

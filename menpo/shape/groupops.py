@@ -11,5 +11,4 @@ def mean_pointcloud(pointclouds):
     -------
     PointCloud: The mean of the pointclouds
     """
-    return PointCloud(sum(pointclouds) / len(pointclouds))
-
+    return PointCloud(sum(pointclouds) / len(pointclouds), copy=False)

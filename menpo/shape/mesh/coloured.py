@@ -54,23 +54,12 @@ class ColouredTriMesh(TriMesh, Rasterizable):
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
 
-    def copy(self):
-        r"""
-        An efficient copy of this ColouredTriMesh.
+    @property
+    def _rasterize_type_texture(self):
+        return False
 
-        Only landmarks and points will be transferred. For a full copy consider
-        using `deepcopy()`.
-
-        Returns
-        -------
-        colouredtrimesh: :map:`ColouredTriMesh`
-            A ColouredTriMesh with the same points, trilist, colours and
-            landmarks as this one.
-        """
-        new_ctm = ColouredTriMesh(self.points, colours=self.colours,
-                                  trilist=self.trilist, copy=True)
-        new_ctm.landmarks = self.landmarks
-        return new_ctm
+    def _rasterize_generate_color_mesh(self):
+        return ColourRasterInfo(self.points, self.trilist, self.colours)
 
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
@@ -106,10 +95,3 @@ class ColouredTriMesh(TriMesh, Rasterizable):
             return super(ColouredTriMesh, self)._view(figure_id=figure_id,
                                                       new_figure=new_figure,
                                                       **kwargs)
-
-    @property
-    def _rasterize_type_texture(self):
-        return False
-
-    def _rasterize_generate_color_mesh(self):
-        return ColourRasterInfo(self.points, self.trilist, self.colours)

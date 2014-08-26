@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.linalg.blas import dgemm
+from menpo.base import Copyable
 
 
-class LinearModel(object):
+class LinearModel(Copyable):
     r"""
     A Linear Model contains a matrix of vector components, each component
     vector being made up of `features`.

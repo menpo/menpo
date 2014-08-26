@@ -10,6 +10,7 @@ Classes
    :maxdepth: 1
 
    Landmarkable
+   LandmarkableViewable
    LandmarkManager
    LandmarkGroup
 

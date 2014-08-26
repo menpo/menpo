@@ -1,11 +1,68 @@
 import abc
-from copy import deepcopy
 import os.path
-from pathlib import Path
+
+# To debug the Copyable interface, simply uncomment lines 11-23 below and the
+# four lines in the copy() method.
+# Then you can call print_copyable_log() to see exactly what types have been
+# skipped in copying and why.
+
+# from collections import defaultdict
+# alien_copies = defaultdict(set)
+# non_copies = defaultdict(set)
+#
+#
+# def print_copyable_log():
+#     print('Has .copy() but not Copyable:')
+#     for k, v in alien_copies.iteritems():
+#         print('  {:15}|  {}'.format(k, ', '.join(v)))
+#
+#     print('\nNo .copy() (shallow copied):')
+#     for k, v in non_copies.iteritems():
+#         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
-class Vectorizable(object):
-    """Flattening of rich objects to vectors and rebuilding them back.
+class Copyable(object):
+    """
+    Efficient copying of classes containing numpy arrays.
+
+    Interface that provides a single method for copying classes very
+    efficiently.
+    """
+
+    def copy(self):
+        r"""
+        Generate an efficient copy of this object.
+
+        Note that Numpy arrays and other :map:`Copyable` objects on ``self``
+        will be deeply copied. Dictionaries and sets will be shallow copied,
+        and everything else will be assigned (no copy will be made).
+
+        Classes that store state other than numpy arrays and immutable types
+        should overwrite this method to ensure all state is copied.
+
+        Returns
+        -------
+
+        ``type(self)``
+            A copy of this object
+
+        """
+        # print('copy called on {}'.format(type(self).__name__))
+        new = self.__class__.__new__(self.__class__)
+        for k, v in self.__dict__.iteritems():
+            try:
+                new.__dict__[k] = v.copy()
+                # if not isinstance(v, Copyable):
+                #     alien_copies[type(v).__name__].add(type(self).__name__)
+            except AttributeError:
+                new.__dict__[k] = v
+                # non_copies[type(v).__name__].add(type(self).__name__)
+        return new
+
+
+class Vectorizable(Copyable):
+    """
+    Flattening of rich objects to vectors and rebuilding them back.
 
     Interface that provides methods for 'flattening' an object into a
     vector, and restoring from the same vectorized form. Useful for
@@ -81,12 +138,12 @@ class Vectorizable(object):
         object : ``type(self)``
             An new instance of this class.
         """
-        self_copy = deepcopy(self)
-        self_copy.from_vector_inplace(vector)
-        return self_copy
+        new = self.copy()
+        new.from_vector_inplace(vector)
+        return new
 
 
-class Targetable(object):
+class Targetable(Copyable):
     """Interface for objects that can produce a :attr:`target` :map:`PointCloud`.
 
 

@@ -181,7 +181,7 @@ class UniformScale(DiscreteAffine, Similarity):
         np.fill_diagonal(h_matrix, scale)
         h_matrix[-1, -1] = 1
         Similarity.__init__(self, h_matrix, copy=False,
-                            skip_checks=False)
+                            skip_checks=True)
 
     @classmethod
     def identity(cls, n_dims):

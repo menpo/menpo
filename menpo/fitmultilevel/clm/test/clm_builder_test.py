@@ -147,9 +147,9 @@ def test_verbose_mock(mock_stdout):
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_str_mock(mock_stdout):
-    print clm1
-    print clm2
-    print clm3
+    print(clm1)
+    print(clm2)
+    print(clm3)
 
 
 def test_clm_1():

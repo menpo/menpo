@@ -1,7 +1,6 @@
 from __future__ import division
 import abc
 import numpy as np
-from copy import deepcopy
 
 from menpo.fit.base import Fitter
 from menpo.transform import AlignmentAffine, Scale
@@ -107,7 +106,7 @@ class MultilevelFitter(Fitter):
             A fitting result object.
         """
         # copy image
-        image = deepcopy(image)
+        image = image.copy()
 
         # generate image pyramid
         images = self._prepare_image(image, initial_shape, gt_shape=gt_shape)
@@ -134,7 +133,7 @@ class MultilevelFitter(Fitter):
             error_type=error_type)
 
         if verbose:
-            print multilevel_fitting_result
+            print(multilevel_fitting_result)
         if view:
             multilevel_fitting_result.view_final_fitting(new_figure=True)
 

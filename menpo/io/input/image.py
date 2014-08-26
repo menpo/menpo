@@ -1,6 +1,7 @@
 import numpy as np
 import PIL.Image as PILImage
-from menpo.io.base import Importer
+
+from .base import Importer
 from menpo.image import MaskedImage
 
 

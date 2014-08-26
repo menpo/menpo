@@ -172,7 +172,7 @@ class CLMBuilder(DeformableModelBuilder):
         self.boundary = boundary
         self.interpolator = interpolator
 
-    def build(self, images, group=None, label='all', verbose=False):
+    def build(self, images, group=None, label=None, verbose=False):
         r"""
         Builds a Multilevel Constrained Local Model from a list of
         landmarked images.
@@ -181,15 +181,12 @@ class CLMBuilder(DeformableModelBuilder):
         ----------
         images : list of :map:`Image`
             The set of landmarked images from which to build the AAM.
-
         group : string, Optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label : `string`, optional
             The label of of the landmark manager that you wish to use. If
             ``None``, the convex hull of all landmarks is used.
-
         verbose : `boolean`, optional
             Flag that controls information and progress printing.
 
@@ -241,7 +238,7 @@ class CLMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(g.next())
+                    feature_images.append(next(g))
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):
@@ -251,10 +248,10 @@ class CLMBuilder(DeformableModelBuilder):
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
                     feature_images.append(compute_features(
-                        g.next(), self.feature_type[rj]))
+                        next(g), self.feature_type[rj]))
 
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in feature_images]
+            shapes = [i.landmarks[group][label] for i in feature_images]
 
             # define shapes that will be used for training
             if j == 0:
@@ -520,7 +517,7 @@ class CLM(object):
         shape_instance = sm.instance(shape_weights)
         return shape_instance
 
-    def response_image(self, image, group=None, label='all', level=-1):
+    def response_image(self, image, group=None, label=None, level=-1):
         r"""
         Generates a response image result of applying the classifiers of a
         particular pyramidal level of the CLM to an image.
@@ -529,15 +526,12 @@ class CLM(object):
         -----------
         image: :map:`Image`
             The image.
-
         group : `string`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label : `string`, optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-
         level: `int`, optional
             The pyramidal level to be used.
 
@@ -624,7 +618,7 @@ class CLM(object):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].func_name)
+                    self.feature_type[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -640,7 +634,7 @@ class CLM(object):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].func_name))
+                        self.feature_type[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -677,7 +671,7 @@ class CLM(object):
                       out, self.shape_models[i].n_components,
                       self.shape_models[i].variance_ratio * 100,
                       self.n_classifiers_per_level[i],
-                      self.classifiers[i][0].func_name)
+                      self.classifiers[i][0].__name__)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -688,7 +682,7 @@ class CLM(object):
                   self.shape_models[0].n_components,
                   self.shape_models[0].variance_ratio * 100,
                   self.n_classifiers_per_level[0],
-                  self.classifiers[0][0].func_name)
+                  self.classifiers[0][0].__name__)
         return out
 
 

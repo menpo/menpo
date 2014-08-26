@@ -1,8 +1,8 @@
 import abc
-from copy import deepcopy
+from menpo.base import Copyable
 
 
-class Transform(object):
+class Transform(Copyable):
     r"""
     Abstract representation of any spatial transform.
 
@@ -213,7 +213,7 @@ class Transform(object):
         return TransformChain([transform, self])
 
 
-class Transformable(object):
+class Transformable(Copyable):
     r"""
     Interface for objects that know how be transformed by the
     :map:`Transform` interface.
@@ -257,7 +257,7 @@ class Transformable(object):
         transformed : ``type(self)``
             A copy of the object, transformed.
         """
-        copy_of_self = deepcopy(self)
+        copy_of_self = self.copy()
         # transform the copy destructively
         copy_of_self._transform_inplace(transform)
         return copy_of_self

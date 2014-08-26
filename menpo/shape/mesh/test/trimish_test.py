@@ -1,5 +1,5 @@
+import warnings
 import numpy as np
-from nose.tools import raises
 from numpy.testing import assert_allclose
 from menpo.image import Image
 from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh
@@ -65,7 +65,7 @@ def test_texturedtrimesh_creation_copy_true():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]])
-    pixels = np.ones([10, 10])
+    pixels = np.ones([10, 10, 1])
     tcoords = np.ones([4, 2])
     texture = Image(pixels, copy=False)
     ttm = TexturedTriMesh(points, tcoords, texture, trilist=trilist,
@@ -104,7 +104,6 @@ def test_colouredtrimesh_creation_copy_true():
     assert (not is_same_array(ttm.colours, colours))
 
 
-@raises(Warning)
 def test_trimesh_creation_copy_warning():
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
@@ -112,7 +111,10 @@ def test_trimesh_creation_copy_warning():
                        [0, 1, 0]])
     trilist = np.array([[0, 1, 3],
                         [1, 2, 3]], order='F')
-    TriMesh(points, trilist, copy=False)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        TriMesh(points, trilist, copy=False)
+        assert len(w) == 1
 
 
 def test_trimesh_n_dims():
