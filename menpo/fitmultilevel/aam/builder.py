@@ -214,7 +214,7 @@ class AAMBuilder(DeformableModelBuilder):
         self.boundary = boundary
         self.interpolator = interpolator
 
-    def build(self, images, group=None, label='all', verbose=False):
+    def build(self, images, group=None, label=None, verbose=False):
         r"""
         Builds a Multilevel Active Appearance Model from a list of
         landmarked images.
@@ -284,7 +284,7 @@ class AAMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(g.next())
+                    feature_images.append(next(g))
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):
@@ -294,10 +294,10 @@ class AAMBuilder(DeformableModelBuilder):
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
                     feature_images.append(compute_features(
-                        g.next(), self.feature_type[rj]))
+                        next(g), self.feature_type[rj]))
 
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in feature_images]
+            shapes = [i.landmarks[group][label] for i in feature_images]
 
             # define shapes that will be used for training
             if j == 0:
@@ -323,7 +323,7 @@ class AAMBuilder(DeformableModelBuilder):
             if verbose:
                 print_dynamic('{}Computing transforms'.format(level_str))
             transforms = [self.transform(reference_frame.landmarks['source'].lms,
-                                         i.landmarks[group][label].lms)
+                                         i.landmarks[group][label])
                           for i in feature_images]
 
             # warp images to reference frame
@@ -895,7 +895,7 @@ class AAM(object):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].func_name)
+                    self.feature_type[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -911,7 +911,7 @@ class AAM(object):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].func_name))
+                        self.feature_type[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:

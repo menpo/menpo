@@ -349,7 +349,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].func_name)
+                    self.feature_type[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -365,7 +365,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].func_name))
+                        self.feature_type[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:

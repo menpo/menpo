@@ -106,8 +106,8 @@ class PointCloud(Shape):
         Returns
         -------
         json_dict : `dict`
-        Dictionary with a 'points' key, the value of which is a list suitable
-        for use in the by the `json` standard library package.
+            Dictionary with a 'points' key, the value of which is a list
+            suitable for use in the by the `json` standard library package.
         """
         return {'points': self.points.tolist()}
 
@@ -234,24 +234,15 @@ class PointCloud(Shape):
         -------
         pointcloud : :map:`PointCloud`
             A new pointcloud that has been masked.
-        """
-        return PointCloud(self.points[mask, :])
 
-    def update_from_mask(self, mask):
+        Raises
+        ------
+        ValueError
+            Mask must have same number of points as pointcloud.
         """
-        A 1D boolean array with the same number of elements as the number of
-        points in the pointcloud. This is then broadcast across the dimensions
-        of the pointcloud. The same pointcloud is updated in place.
-
-        Parameters
-        ----------
-        mask : ``(n_points,)`` `ndarray`
-            1D array of booleans
-
-        Returns
-        -------
-        pointcloud : :map:`PointCloud`
-            A pointer to self.
-        """
-        self.points = self.points[mask, :]
-        return self
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this PointCloud.')
+        pc = self.copy()
+        pc.points = pc.points[mask, :]
+        return pc

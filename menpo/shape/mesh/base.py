@@ -2,7 +2,8 @@ import numpy as np
 from warnings import warn
 from scipy.spatial import Delaunay
 
-from menpo.shape import PointCloud
+from .. import PointCloud
+from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from menpo.rasterize import Rasterizable, ColourRasterInfo
 from menpo.visualize import TriMeshViewer
 
@@ -69,24 +70,61 @@ class TriMesh(PointCloud, Rasterizable):
         json_dict['trilist'] = self.trilist.tolist()
         return json_dict
 
-    def from_vector(self, flattened):
-        r"""
-        Builds a new :class:`TriMesh` given then `flattened` vector.
-        This allows rebuilding pointclouds with the correct number of
-        dimensions from a vector. Note that the trilist will be drawn from
-        self.
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the pointcloud. This is then broadcast across the dimensions
+        of the pointcloud and returns a new pointcloud containing only those
+        points that were ``True`` in the mask.
 
         Parameters
         ----------
-        flattened : (N,) ndarray
-            Vector representing a set of points.
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
 
         Returns
-        --------
-        trimesh : :class:`TriMesh`
-            A new trimesh created from the vector with self's trilist.
+        -------
+        pointcloud : :map:`PointCloud`
+            A new pointcloud that has been masked.
         """
-        return TriMesh(flattened.reshape([-1, self.n_dims]), self.trilist)
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this TriMesh.')
+
+        tm = self.copy()
+        if np.all(mask):  # Fast path for all true
+            return tm
+        else:
+            # Find the triangles we need to keep
+            masked_adj = mask_adjacency_array(mask, self.trilist)
+            # Find isolated vertices (vertices that don't exist in valid
+            # triangles)
+            isolated_indices = np.setdiff1d(np.nonzero(mask)[0], masked_adj)
+
+            # Create a 'new mask' that contains the points the use asked
+            # for MINUS the points that we can't create triangles for
+            new_mask = mask.copy()
+            new_mask[isolated_indices] = False
+            # Recreate the adjacency array with the updated mask
+            masked_adj = mask_adjacency_array(new_mask, self.trilist)
+            tm.trilist = reindex_adjacency_array(masked_adj)
+            tm.points = tm.points[new_mask, :]
+            return tm
+
+    def as_pointgraph(self, copy=True):
+        from .. import PointGraph
+        # Since we have triangles we need the last connection
+        # that 'completes' the triangle
+        wrap_around_adj = np.hstack([self.trilist[:, -1][..., None],
+                                     self.trilist[:, 0][..., None]])
+        # Build the array of all pairs
+        adjacency_array = np.concatenate([self.trilist[:, :2],
+                                          self.trilist[:, 1:],
+                                          wrap_around_adj])
+        pg = PointGraph(self.points, adjacency_array, copy=copy)
+        # This is always a copy
+        pg.landmarks = self.landmarks
+        return pg
 
     @property
     def vertex_normals(self):

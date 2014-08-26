@@ -166,7 +166,7 @@ class SDTrainer(object):
         self.n_perturbations = n_perturbations
         self.interpolator = interpolator
 
-    def train(self, images, group=None, label='all', verbose=False, **kwargs):
+    def train(self, images, group=None, label=None, verbose=False, **kwargs):
         r"""
         Trains a Supervised Descent Regressor given a list of landmarked
         images.
@@ -175,15 +175,12 @@ class SDTrainer(object):
         ----------
         images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the SD.
-
         group : `string`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label: `string`, optional
             The label of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-
         verbose: `boolean`, optional
             Flag that controls information and progress printing.
         """
@@ -215,7 +212,7 @@ class SDTrainer(object):
         images.reverse()
 
         # extract the ground truth shapes
-        gt_shapes = [[i.landmarks[group][label].lms for i in img]
+        gt_shapes = [[i.landmarks[group][label] for i in img]
                      for img in images]
 
         # build the regressors
@@ -461,7 +458,7 @@ class SDTrainer(object):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    current_images.append(g.next())
+                    current_images.append(next(g))
             else:
                 # extract features of images returned from generator
                 for c, g in enumerate(generators):
@@ -470,7 +467,7 @@ class SDTrainer(object):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    current_images.append(compute_features(g.next(),
+                    current_images.append(compute_features(next(g),
                                                            feature_type[rj]))
             feature_images.append(current_images)
         if verbose:
@@ -862,7 +859,7 @@ class SDMTrainer(SDTrainer):
         reference_shape : :map:`PointCloud`
             The reference shape computed based on the given images.
         """
-        shapes = [i.landmarks[group][label].lms for i in images]
+        shapes = [i.landmarks[group][label] for i in images]
         return mean_pointcloud(shapes)
 
     def _rescale_reference_shape(self):

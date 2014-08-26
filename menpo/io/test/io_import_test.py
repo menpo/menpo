@@ -4,7 +4,7 @@ import numpy as np
 
 import menpo.io as mio
 from menpo.shape import TriMesh, TexturedTriMesh, PointCloud
-from menpo.image import Image, MaskedImage
+from menpo.image import Image
 from numpy.testing import assert_allclose
 
 # ground truth bunny landmarks
@@ -42,7 +42,6 @@ def test_import_asset_james():
     assert(isinstance(mesh.trilist, np.ndarray))
     assert(mesh.trilist.shape[1] == 3)
     assert(isinstance(mesh.texture, Image))
-    print mesh.tcoords
     assert(isinstance(mesh.tcoords, PointCloud))
     assert(mesh.tcoords.points.shape[1] == 2)
 
@@ -53,14 +52,14 @@ def test_import_incorrect_built_in():
 
 def test_json_landmarks_bunny():
     mesh = mio.import_builtin_asset('bunny.obj')
-    assert('JSON' in mesh.landmarks.group_labels)
-    lms = mesh.landmarks['JSON']
+    assert('LJSON' in mesh.landmarks.group_labels)
+    lms = mesh.landmarks['LJSON']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_custom_landmark_logic_bunny():
@@ -74,18 +73,18 @@ def test_custom_landmark_logic_bunny():
     lms = mesh.landmarks['no_nose']
     labels = {'reye', 'mouth', 'leye'}
     assert(len(set(lms.labels) - labels) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
     assert('full_set' in mesh.landmarks.group_labels)
     lms = mesh.landmarks['full_set']
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(set(lms.labels) - labels) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_custom_landmark_logic_None_bunny():
@@ -97,13 +96,12 @@ def test_custom_landmark_logic_None_bunny():
 
 def test_json_landmarks_bunny_direct():
     lms = mio.import_landmark_file(mio.data_path_to('bunny.ljson'))
-    assert(lms.group_label == 'JSON')
     labels = {'reye', 'mouth', 'nose', 'leye'}
     assert(len(labels - set(lms.labels)) == 0)
-    assert_allclose(lms['leye'].lms.points, bunny_leye, atol=1e-7)
-    assert_allclose(lms['reye'].lms.points, bunny_reye, atol=1e-7)
-    assert_allclose(lms['nose'].lms.points, bunny_nose, atol=1e-7)
-    assert_allclose(lms['mouth'].lms.points, bunny_mouth, atol=1e-7)
+    assert_allclose(lms['leye'].points, bunny_leye, atol=1e-7)
+    assert_allclose(lms['reye'].points, bunny_reye, atol=1e-7)
+    assert_allclose(lms['nose'].points, bunny_nose, atol=1e-7)
+    assert_allclose(lms['mouth'].points, bunny_mouth, atol=1e-7)
 
 
 def test_breaking_bad_import():
@@ -160,25 +158,6 @@ def test_import_images():
     imgs_filenames = set(i.ioinfo.filename for i in imgs)
     exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna'}
     assert(len(exp_imgs_filenames - imgs_filenames) == 0)
-
-
-def test_import_auto():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob))
-    assert(len(assets) == 7)
-
-
-def test_import_auto_max_images():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob,  max_images=2))
-    assert(sum([isinstance(x, TriMesh) for x in assets]) == 2)
-    assert(sum([isinstance(x, Image) for x in assets]) == 2)
-
-
-def test_import_auto_max_meshes():
-    assets_glob = os.path.join(mio.data_dir_path(), '*')
-    assets = list(mio.import_auto(assets_glob, max_meshes=1))
-    assert(sum([isinstance(x, TriMesh) for x in assets]) == 1)
 
 
 def test_ls_builtin_assets():

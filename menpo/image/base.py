@@ -651,7 +651,7 @@ class Image(Vectorizable, LandmarkableViewable):
             min_indices, max_indices,
             constrain_to_boundary=constrain_to_boundary)
 
-    def crop_to_landmarks_inplace(self, group=None, label='all', boundary=0,
+    def crop_to_landmarks_inplace(self, group=None, label=None, boundary=0,
                                   constrain_to_boundary=True):
         r"""
         Crop this image to be bounded around a set of landmarks with an
@@ -664,18 +664,15 @@ class Image(Vectorizable, LandmarkableViewable):
             and if there is only one set of landmarks, this set will be used.
 
             Default: `None`
-
         label : string, Optional
             The label of of the landmark manager that you wish to use. If
-            'all' all landmarks in the group are used.
+            `None` all landmarks in the group are used.
 
-            Default: 'all'
-
+            Default: `None`
         boundary : int, Optional
             An extra padding to be added all around the landmarks bounds.
 
             Default: `0`
-
         constrain_to_boundary : boolean, optional
             If `True` the crop will be snapped to not go beyond this images
             boundary. If `False`, an :map`ImageBoundaryError` will be raised if
@@ -694,13 +691,13 @@ class Image(Vectorizable, LandmarkableViewable):
             Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         min_indices, max_indices = pc.bounds(boundary=boundary)
         return self.crop_inplace(min_indices, max_indices,
                                  constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
-                                             group=None, label='all',
+                                             group=None, label=None,
                                              minimum=True,
                                              constrain_to_boundary=True):
         r"""
@@ -721,9 +718,9 @@ class Image(Vectorizable, LandmarkableViewable):
             Default: `None`
         label : string, Optional
             The label of of the landmark manager that you wish to use. If
-            'all' all landmarks in the group are used.
+            `None` all landmarks in the group are used.
 
-            Default: 'all'
+            Default: `None`
         minimum : bool, Optional
             If `True` the specified proportion is relative to the minimum
             value of the landmarks' per-dimension range; if `False` w.r.t. the
@@ -749,7 +746,7 @@ class Image(Vectorizable, LandmarkableViewable):
             Raised if `constrain_to_boundary` is `False`, and an attempt is made
             to crop the image in a way that violates the image bounds.
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         if minimum:
             boundary = boundary_proportion * np.min(pc.range())
         else:
@@ -1016,7 +1013,7 @@ class Image(Vectorizable, LandmarkableViewable):
                                   mode='nearest')
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
-                                   label='all', round='ceil', order=1):
+                                   label=None, round='ceil', order=1):
         r"""
         Return a copy of this image, rescaled so that the scale of a
         particular group of landmarks matches the scale of the passed
@@ -1034,7 +1031,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If
-            'all' all landmarks in the group are used.
+            `None` all landmarks in the group are used.
 
         round: {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
@@ -1053,17 +1050,16 @@ class Image(Vectorizable, LandmarkableViewable):
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
         """
-        pc = self.landmarks[group][label].lms
-        scale = AlignmentUniformScale(pc, reference_shape).as_vector()
+        pc = self.landmarks[group][label]
+        scale = AlignmentUniformScale(pc, reference_shape).as_vector().copy()
         return self.rescale(scale, round=round, order=order)
 
     def rescale_landmarks_to_diagonal_range(self, diagonal_range, group=None,
-                                            label='all', round='ceil',
-                                            order=1):
+                                            label=None, round='ceil', order=1):
         r"""
         Return a copy of this image, rescaled so that the diagonal_range of the
-        bounding box containing its landmarks matches the specified diagonal_range
-        range.
+        bounding box containing its landmarks matches the specified
+        diagonal_range range.
 
         Parameters
         ----------
@@ -1077,7 +1073,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         label: `str`, optional
             The label of of the landmark manager that you wish to use. If
-            'all' all landmarks in the group are used.
+            `None` all landmarks in the group are used.
 
         round: {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
@@ -1096,7 +1092,7 @@ class Image(Vectorizable, LandmarkableViewable):
         rescaled_image : ``type(self)``
             A copy of this image, rescaled.
         """
-        x, y = self.landmarks[group][label].lms.range()
+        x, y = self.landmarks[group][label].range()
         scale = diagonal_range / np.sqrt(x ** 2 + y ** 2)
         return self.rescale(scale, round=round, order=order)
 
@@ -1342,7 +1338,9 @@ class Image(Vectorizable, LandmarkableViewable):
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
                 self.n_channels, self.ndims))
-        return PILImage.fromarray((self.pixels * 255).astype(np.uint8))
+        # Slice off the channel for greyscale images
+        pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
+        return PILImage.fromarray((pixels * 255).astype(np.uint8))
 
     def __str__(self):
         return ('{} {}D Image with {} channels'.format(
