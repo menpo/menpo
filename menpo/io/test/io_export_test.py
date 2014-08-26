@@ -187,3 +187,29 @@ def test_export_image_jpg(mock_open, exists, PILImage):
         type(f).name = PropertyMock(return_value='/tmp/test.jpg')
         mio.export_image(f, test_img, extension='jpg')
     PILImage.save.assert_called_once()
+
+
+import os.path as p
+import tempfile
+from numpy.testing import assert_allclose, assert_equal
+
+
+def test_export_obj_textured():
+    i = mio.import_builtin_asset('james.obj')
+    o_path = p.join(tempfile.gettempdir(), 'test.obj')
+    img_path = p.join(tempfile.gettempdir(), 'test.jpg')
+    mio.export_mesh(o_path, i, overwrite=True)
+    i.texture.as_PILImage().save(img_path)
+    o = mio.import_mesh(o_path)
+    assert_allclose(i.points, o.points)
+    assert_equal(i.trilist, o.trilist)
+    assert_allclose(i.tcoords.points, o.tcoords.points)
+
+
+def test_export_obj_nontextured():
+    i = mio.import_builtin_asset('bunny.obj')
+    o_path = p.join(tempfile.gettempdir(), 'test.obj')
+    mio.export_mesh(o_path, i, overwrite=True)
+    o = mio.import_mesh(o_path)
+    assert_allclose(i.points, o.points)
+    assert_equal(i.trilist, o.trilist)

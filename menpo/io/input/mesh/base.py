@@ -8,6 +8,7 @@ from cyassimp import AIImporter
 from vrml.vrml97.parser import buildParser as buildVRML97Parser
 import vrml.vrml97.basenodes as basenodes
 from vrml.node import NullNode
+
 from menpo.io.input.base import (Importer, find_alternative_files,
                                  import_image)
 from menpo.io.exceptions import MeshImportError
@@ -318,40 +319,3 @@ class MJSONImporter(MeshImporter):
                         mesh_json.get('tcoords'),
                         mesh_json.get('colour_per_vertex'))
         self.meshes = [mesh]
-
-
-def export_obj(path, mesh):
-    r"""
-    Exports a Menpo TriMesh to an obj file.
-
-    Note that this does not save out textures of textured images, and so should
-    not be used in isolation.
-
-    Parameters
-    ----------
-
-    path : `str`
-        The full path where the obj will be saved out.
-
-    mesh : instance of :map:`TriMesh`
-        Any subclass of :map:`TriMesh`. If :map:`TexturedTriMesh` texture
-        coordinates will be saved out. Note that :map:`ColouredTriMesh`
-        will only have shape data saved out, as .OBJ doesn't robustly support
-        per-vertex colour information.
-
-    """
-    with open(path, 'wb') as f:
-        for v in mesh.points:
-            f.write('v {} {} {}\n'.format(*v))
-        f.write('\n')
-        if isinstance(mesh, TexturedTriMesh):
-            for tc in mesh.tcoords.points:
-                f.write('vt {} {}\n'.format(*tc))
-            f.write('\n')
-            # triangulation of points and tcoords is identical
-            for t in (mesh.trilist + 1):
-                f.write('f {0}/{0} {1}/{1} {2}/{2}\n'.format(*t))
-        else:
-            # no tcoords - so triangulation is straight forward
-            for t in (mesh.trilist + 1):
-                f.write('f {} {} {}\n'.format(*t))

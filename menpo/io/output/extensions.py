@@ -1,5 +1,6 @@
 from .landmark import LJSONExporter, PTSExporter
 from .image import PILExporter
+from .mesh import OBJExporter
 
 landmark_types = {
     '.ljson': LJSONExporter,
@@ -28,4 +29,8 @@ image_types = {
     '.tiff': PILExporter,
     '.xbm': PILExporter,
     '.xpm': PILExporter
+}
+
+mesh_types = {
+    '.obj': OBJExporter
 }
