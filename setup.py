@@ -26,6 +26,7 @@ else:
                         'scipy>=0.14.0',
                         'Cython>=0.20.1',
                         'pathlib>=1.0',
+                        'wrapt>=1.9.0',
 
                         # Image
                         'Pillow>=2.0.0',
