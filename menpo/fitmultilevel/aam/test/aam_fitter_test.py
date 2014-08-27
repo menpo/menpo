@@ -344,7 +344,7 @@ def test_aam():
     assert (aam.n_training_images == 4)
     assert (aam.n_levels == 3)
     assert (aam.downscale == 2)
-    assert (aam.feature_type[0] == igo and len(aam.feature_type) == 1)
+    #assert (aam.feature_type[0] == igo and len(aam.feature_type) == 1)
     assert (aam.interpolator == 'scipy')
     assert_allclose(np.around(aam.reference_shape.range()), (109., 103.))
     assert aam.scaled_shape_models
