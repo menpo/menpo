@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/menpo/menpo.png?label=ready&title=Ready)](https://waffle.io/menpo/menpo)
 [![Build Status](http://img.shields.io/travis/menpo/menpo.svg?style=flat)](https://travis-ci.org/menpo/menpo)
 [![Coverage Status](http://img.shields.io/coveralls/menpo/menpo.svg?style=flat)](https://coveralls.io/r/menpo/menpo)
 [![PyPI Release](http://img.shields.io/pypi/v/menpo.svg?style=flat)](https://pypi.python.org/pypi/menpo)

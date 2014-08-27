@@ -663,38 +663,33 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             visualized without special consideration for the type of the
             target. Mainly used for :map:`Image` subclasses.
         render_labels : `boolean`, optional
-            If `True`, also render the label names next to the landmarks.
+            If `True`, also render the label numbers next to the landmarks and
+            the legend.
         group_label : `str`, optional
             The group label to prepend before the semantic labels
         with_labels : None or `str` or list of `str`, optional
             If not ``None``, only show the given label(s). Should **not** be
-            used with the ``without_labels`` kwarg. If ``render_labels`` is
-            ``False`` this kwarg is ignored.
+            used with the ``without_labels`` kwarg.
         without_labels : None or `str` or list of `str`, optional
             If not ``None``, show all except the given label(s). Should **not**
-            be used with the ``with_labels`` kwarg. If ``render_labels`` is
-            ``False`` this kwarg is ignored.
+            be used with the ``with_labels`` kwarg.
         kwargs : `dict`, optional
             Passed through to the viewer.
 
         Raises
         ------
         ValueError
-            If ``render_labels`` is ``True`` and both ``with_labels`` and
-            ``without_labels`` are passed.
+            If both ``with_labels`` and ``without_labels`` are passed.
         """
-        if render_labels:
-            if with_labels is not None and without_labels is not None:
-                raise ValueError('You may only pass one of `with_labels` or '
-                                 '`without_labels`.')
-            elif with_labels is not None:
-                lmark_group = self.with_labels(with_labels)
-            elif without_labels is not None:
-                lmark_group = self.without_labels(without_labels)
-            else:
-                lmark_group = self  # Fall through
+        if with_labels is not None and without_labels is not None:
+            raise ValueError('You may only pass one of `with_labels` or '
+                             '`without_labels`.')
+        elif with_labels is not None:
+            lmark_group = self.with_labels(with_labels)
+        elif without_labels is not None:
+            lmark_group = self.without_labels(without_labels)
         else:
-            lmark_group = self
+            lmark_group = self  # Fall through
 
         landmark_viewer = LandmarkViewer(figure_id, new_figure,
                                          group_label, lmark_group._pointcloud,

@@ -1,7 +1,10 @@
 import abc
 import os
-from pathlib import Path
 from glob import glob
+
+from pathlib import Path
+
+from ..utils import _norm_path
 from menpo import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
 
@@ -43,86 +46,6 @@ def data_path_to(asset_filename):
         raise ValueError("{} is not a builtin asset: {}".format(
             asset_filename, ls_builtin_assets()))
     return asset_path
-
-
-def import_auto(pattern, max_meshes=None, max_images=None):
-    r"""Smart mixed asset import generator.
-
-    Makes it's best effort to import and attach relevant related
-    information such as landmarks. It searches the directory for files that
-    begin with the same filename and end in a supported extension.
-    Furthermore, this method attempts to handle mixed assets (e.g. textured
-    meshes in the same folder as images) without 'double importing' anything.
-
-    Note that this is a generator function. This allows for pre-processing
-    of data to take place as data is imported (e.g. cropping images to
-    landmarks as they are imported for memory efficiency).
-
-
-    Parameters
-    ----------
-    pattern : String
-        The glob path pattern to search for textures and meshes.
-    max_meshes: positive integer, optional
-        If not `None`, only import the first max_mesh meshes found. Else,
-        import all.
-
-        Default: `None`
-    max_images: positive integer, optional
-        If not `None`, only import the first max_images found. Else,
-        import all.
-
-        Default: `None`
-
-    Yields
-    ------
-    asset
-        Assets found to match the glob pattern provided.
-
-    Examples
-    --------
-    Import all meshes that have file extension `.obj`:
-
-        >>> meshes = list(import_auto('*.obj'))
-
-    (note the cast to a list as auto_import is a generator and we want to
-    exhaust it's values)
-
-    Look for all files that begin with the string `test`:
-
-        >>> test_images = list(import_auto('test.*'))
-
-    Assuming that in the current directory that are two files, `bunny.obj`
-    and `bunny.pts`, which represent a mesh and it's landmarks, calling
-
-        >>> bunny = list(import_auto('bunny.obj'))
-
-    Will create a mesh object that **includes** the landmarks automatically.
-
-    """
-    texture_paths = []
-
-    # MESHES
-    #  find all meshes that we can import
-    mesh_files = list(mesh_paths(pattern))
-    if max_meshes:
-        mesh_files = mesh_files[:max_meshes]
-    for mesh, mesh_i in _multi_import_generator(mesh_files, mesh_types,
-                                                keep_importers=True):
-        # need to keep track of texture images to not double import
-        if mesh_i.texture_path is not None:
-            texture_paths.append(mesh_i.texture_path)
-        yield mesh
-
-    # IMAGES
-    # find all images that we can import
-    image_files = list(image_paths(pattern))
-    image_files = _images_unrelated_to_meshes(image_files,
-                                              texture_paths)
-    if max_images:
-        image_files = image_files[:max_images]
-    for image in _multi_import_generator(image_files, all_image_types):
-        yield image
 
 
 def same_name(asset):
@@ -854,17 +777,10 @@ class Importer(object):
         return IOInfo(self.filepath)
 
 
-def _norm_path(filepath):
-    r"""
-    Uses all the tricks in the book to expand a path out to an absolute one.
-    """
-    return os.path.abspath(os.path.normpath(
-        os.path.expandvars(os.path.expanduser(filepath))))
-
 # Avoid circular imports
-from menpo.io.extensions import (mesh_types, all_image_types,
-                                 all_mesh_and_image_types,
-                                 all_landmark_types)
+from menpo.io.input.extensions import (mesh_types, all_image_types,
+                                       all_mesh_and_image_types,
+                                       all_landmark_types)
 
 
 class IOInfo(object):

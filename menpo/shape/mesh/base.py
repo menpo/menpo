@@ -5,8 +5,8 @@ Delaunay = None  # expensive, from scipy.spatial
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from ...rasterize import Rasterizable, ColourRasterInfo
-from ...visualize import TriMeshViewer
+from menpo.rasterize import Rasterizable, ColourRasterInfo
+from menpo.visualize import TriMeshViewer
 
 from .normals import compute_normals
 

@@ -98,7 +98,7 @@ def _relabel_group_from_dict(pointcloud, labels_to_ranges):
         If the given pointcloud contains less than ``n_expected_points``
         points.
     """
-    from ..shape import PointGraph
+    from menpo.shape import PointGraph
 
     n_points = pointcloud.n_points
     masks = OrderedDict()
@@ -572,7 +572,7 @@ def ibug_open_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 38 points
     """
-    from ..shape import PointGraph
+    from menpo.shape import PointGraph
 
     group_label = 'ibug_open_eye_points'
     n_expected_points = 38
@@ -652,7 +652,7 @@ def ibug_close_eye_points(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 17 points
     """
-    from ..shape import PointGraph
+    from menpo.shape import PointGraph
 
     group_label = 'ibug_close_eye_points'
     n_expected_points = 17

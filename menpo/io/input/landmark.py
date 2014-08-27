@@ -1,12 +1,12 @@
 import abc
 from collections import OrderedDict
 import json
+
 import numpy as np
 
 from menpo.landmark.base import LandmarkGroup
 from menpo.shape import PointCloud
 from menpo.transform import Scale
-
 from .base import Importer
 
 
