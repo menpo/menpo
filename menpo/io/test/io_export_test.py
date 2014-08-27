@@ -192,7 +192,7 @@ def test_export_image_jpg(mock_open, exists, PILImage):
 
 @patch('menpo.io.output.base.Path.exists')
 @patch('{}.open'.format(__name__), create=True)
-def test_export_obj_textured(mock_open, exists):
+def test_export_obj_untextured(mock_open, exists):
     exists.return_value = False
     with open('/tmp/test.obj') as f:
         type(f).name = PropertyMock(return_value='/tmp/test.obj')
