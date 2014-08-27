@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .extensions import landmark_types, image_types
+from .extensions import landmark_types, image_types, mesh_types
 from ..utils import _norm_path
 
 
@@ -9,8 +9,8 @@ def export_landmark_file(fp, landmark_group, extension=None,
     r"""
     Exports a given landmark group. The ``fp`` argument can be either
     or a `str` or any Python type that acts like a file. If a file is provided,
-    the ``export_extension`` kwarg **must** be provided. If no
-    ``export_extension`` is provided and a `str` filepath is provided, then
+    the ``extension`` kwarg **must** be provided. If no
+    ``extension`` is provided and a `str` filepath is provided, then
     the export type is calculated based on the filepath extension.
 
     Due to the mix in string and file types, an explicit overwrite argument is
@@ -49,12 +49,12 @@ def export_landmark_file(fp, landmark_group, extension=None,
 def export_image(fp, image, extension=None, overwrite=False):
     r"""
     Exports a given image. The ``fp`` argument can be either
-    or a `str` or any Python type that acts like a file. If a file is provided,
-    the ``export_extension`` kwarg **must** be provided. If no
-    ``export_extension`` is provided and a `str` filepath is provided, then
+    a `str` or any Python type that acts like a file. If a file is provided,
+    the ``extension`` kwarg **must** be provided. If no
+    ``extension`` is provided and a `str` filepath is provided, then
     the export type is calculated based on the filepath extension.
 
-    Due to the mix in string and file types, an explicit overwrite argument is
+    Due to the mix of string and file types, an explicit overwrite argument is
     used which is ``False`` by default.
 
     Parameters
@@ -84,6 +84,100 @@ def export_image(fp, image, extension=None, overwrite=False):
         (the output type is not supported).
     """
     _export(fp, image, image_types, extension, overwrite)
+
+
+def export_mesh(fp, mesh, extension=None, overwrite=False):
+    r"""
+    Exports a given mesh. The ``fp`` argument can be either
+    a `str` or any Python type that acts like a file. If a file is provided,
+    the ``extension`` kwarg **must** be provided. If no
+    ``extension`` is provided and a `str` filepath is provided, then
+    the export type is calculated based on the filepath extension.
+
+    Due to the mix of string and file types, an explicit overwrite argument is
+    used which is ``False`` by default.
+
+    Parameters
+    ----------
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
+    mesh : :map:`PointCloud`
+        The mesh to export.
+    extension : `str` or None, optional
+        The extension to use, this must match the file path if the file
+        path is a string. Determines the type of exporter that is used.
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        ``fp`` is a `str` and the ``extension`` is not ``None``
+        and the two extensions do not match
+    ValueError
+        ``fp`` is a `file`-like object and ``extension`` is
+        ``None``
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    """
+    _export(fp, mesh, mesh_types, extension, overwrite)
+
+
+def export_textured_mesh(filepath, mesh, extension=None,
+                         texture_extension='jpg', overwrite=False):
+    r"""
+    Exports a given textured mesh. The ``filepath`` argument must be a string
+    containing the filepath to write the mesh out to. Unlike the other export
+    methods, this cannot take a file-like object because two files are written.
+
+    If no ``extension`` is provided then the export type is calculated based on
+    the filepath extension.
+
+    The exported texture is always placed in the same directory as the exported
+    mesh and is given the same base name.
+
+    Parameters
+    ----------
+    filepath : `str`
+        The string path to save the object at/into.
+    mesh : :map:`PointCloud`
+        The mesh to export.
+    extension : `str` or None, optional
+        The extension to use for the exported mesh, this must match the file
+        path if the file path is a string. Determines the type of exporter that
+        is used for the mesh.
+    texture_extension : `str`, optional
+        Determines the type of exporter that is used for the texture.
+
+        Default: 'jpg'
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        ``fp`` is a `str` and the ``extension`` is not ``None``
+        and the two extensions do not match
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    ValueError
+        The mesh is not textured.
+    """
+    if not hasattr(mesh, 'texture'):
+        raise ValueError('Must supply a textured mesh.')
+    _export(filepath, mesh, mesh_types, extension, overwrite)
+
+    # Put the image next to the mesh
+    image_output_path = Path(filepath).with_suffix(
+        _normalise_extension(texture_extension))
+    _export(str(image_output_path), mesh.texture,
+            image_types, texture_extension, overwrite)
 
 
 def _normalise_extension(extension):

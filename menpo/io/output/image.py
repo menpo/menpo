@@ -3,7 +3,8 @@ def PILExporter(file_handle, image):
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the image data. No value is returned.
 
-    Uses PIL to save the image and so supports most commonly used image formats.
+    Uses PIL to save the image and so supports most commonly used image
+    formats.
 
     Parameters
     ----------
