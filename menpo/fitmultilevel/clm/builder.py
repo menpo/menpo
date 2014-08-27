@@ -172,7 +172,7 @@ class CLMBuilder(DeformableModelBuilder):
         self.boundary = boundary
         self.interpolator = interpolator
 
-    def build(self, images, group=None, label='all', verbose=False):
+    def build(self, images, group=None, label=None, verbose=False):
         r"""
         Builds a Multilevel Constrained Local Model from a list of
         landmarked images.
@@ -181,15 +181,12 @@ class CLMBuilder(DeformableModelBuilder):
         ----------
         images : list of :map:`Image`
             The set of landmarked images from which to build the AAM.
-
         group : string, Optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label : `string`, optional
             The label of of the landmark manager that you wish to use. If
             ``None``, the convex hull of all landmarks is used.
-
         verbose : `boolean`, optional
             Flag that controls information and progress printing.
 
@@ -253,7 +250,7 @@ class CLMBuilder(DeformableModelBuilder):
                     feature_images.append(self.feature_type[rj](next(g)))
 
             # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label].lms for i in feature_images]
+            shapes = [i.landmarks[group][label] for i in feature_images]
 
             # define shapes that will be used for training
             if j == 0:
@@ -513,7 +510,7 @@ class CLM(object):
         shape_instance = sm.instance(shape_weights)
         return shape_instance
 
-    def response_image(self, image, group=None, label='all', level=-1):
+    def response_image(self, image, group=None, label=None, level=-1):
         r"""
         Generates a response image result of applying the classifiers of a
         particular pyramidal level of the CLM to an image.
@@ -522,15 +519,12 @@ class CLM(object):
         -----------
         image: :map:`Image`
             The image.
-
         group : `string`, optional
             The key of the landmark set that should be used. If ``None``,
             and if there is only one set of landmarks, this set will be used.
-
         label : `string`, optional
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
-
         level: `int`, optional
             The pyramidal level to be used.
 

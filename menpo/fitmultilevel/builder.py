@@ -138,7 +138,7 @@ class DeformableModelBuilder(object):
         return all_callable_feature_list
 
     @abc.abstractmethod
-    def build(self, images, group=None, label='all'):
+    def build(self, images, group=None, label=None):
         r"""
         Builds a Multilevel Deformable Model.
         """
@@ -201,7 +201,7 @@ class DeformableModelBuilder(object):
         # the reference_shape is the mean shape of the images' landmarks
         if verbose:
             print_dynamic('- Computing reference shape')
-        shapes = [i.landmarks[group][label].lms for i in images]
+        shapes = [i.landmarks[group][label] for i in images]
         reference_shape = mean_pointcloud(shapes)
 
         # fix the reference_shape's diagonal length if asked

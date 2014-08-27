@@ -465,7 +465,6 @@ class MaskedImage(Image):
         return warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
-
         r"""
         Normalizes this image such that it's pixel values have zero mean and
         unit variance.
@@ -473,15 +472,14 @@ class MaskedImage(Image):
         Parameters
         ----------
 
-        mode: {'all', 'per_channel'}
+        mode : {'all', 'per_channel'}
             If 'all', the normalization is over all channels. If
             'per_channel', each channel individually is mean centred and
             normalized in variance.
-
-        limit_to_mask: Boolean
-            If True, the normalization is only performed wrt the masked
+        limit_to_mask : `bool`
+            If ``True``, the normalization is only performed wrt the masked
             pixels.
-            If False, the normalization is wrt all pixels, regardless of
+            If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
         """
         self._normalize_inplace(np.std, mode=mode,
@@ -489,7 +487,6 @@ class MaskedImage(Image):
 
     def normalize_norm_inplace(self, mode='all', limit_to_mask=True,
                                **kwargs):
-
         r"""
         Normalizes this image such that it's pixel values have zero mean and
         its norm equals 1.
@@ -497,15 +494,15 @@ class MaskedImage(Image):
         Parameters
         ----------
 
-        mode: {'all', 'per_channel'}
+        mode : {'all', 'per_channel'}
             If 'all', the normalization is over all channels. If
             'per_channel', each channel individually is mean centred and
             normalized in variance.
 
-        limit_to_mask: Boolean
-            If True, the normalization is only performed wrt the masked
+        limit_to_mask : `bool`
+            If ``True``, the normalization is only performed wrt the masked
             pixels.
-            If False, the normalization is wrt all pixels, regardless of
+            If ``False``, the normalization is wrt all pixels, regardless of
             their masking value.
         """
 
@@ -627,7 +624,7 @@ class MaskedImage(Image):
         if self.n_dims != 2:
             raise ValueError("can only constrain mask on 2D images.")
 
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         if trilist is not None:
             from menpo.shape import TriMesh
 
@@ -677,28 +674,28 @@ class MaskedImage(Image):
                                                 **kwargs)
 
     def build_mask_around_landmarks(self, patch_size, group=None,
-                                    label='all'):
+                                    label=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
         around the landmarks chosen.
 
         Parameters
         ----------
-        patch_shape: tuple
+        patch_shape : tuple
             The size of the patch. Any floating point values are rounded up
             to the nearest integer.
-        group : string, Optional
+        group : `string`, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
 
-            Default: None
-        label: string, Optional
+            Default: `None`
+        label : `string`, optional
             The label of of the landmark manager that you wish to use. If
-            'all' all landmarks are used.
+            `None` all landmarks are used.
 
-            Default: 'all'
+            Default: `None`
         """
-        pc = self.landmarks[group][label].lms
+        pc = self.landmarks[group][label]
         patch_size = np.ceil(patch_size)
         patch_half_size = patch_size / 2
         mask = np.zeros(self.shape)
