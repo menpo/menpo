@@ -458,7 +458,7 @@ def test_sdm_1():
     assert (sdm1._n_training_images == 4)
     assert (sdm1.n_levels == 2)
     assert (sdm1.downscale == 1.3)
-    assert (sdm1.feature_type[0] is None)
+    assert (sdm1.feature_type[0] is no_op)
     assert (sdm1.interpolator == 'scipy')
     assert (sdm1.algorithm == 'SDM-Non-Parametric')
     assert sdm1.pyramid_on_features

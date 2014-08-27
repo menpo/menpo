@@ -10,6 +10,18 @@ from menpo.visualize import print_dynamic, progress_bar_str
 from .functions import mean_pointcloud
 
 
+# tests currently expect that all features automatically constrain landmarks
+# small wrapper which does this.
+def constrain_landmarks(f):
+
+    def constrained(image, *args, **kwargs):
+        feature = f(image, *args, **kwargs)
+        feature.constrain_landmarks_to_bounds()
+        return feature
+
+    return constrained
+
+
 def validate_features(features, n_levels, pyramid_on_features):
     r"""
     Checks the feature type per level.
@@ -68,7 +80,10 @@ def validate_features(features, n_levels, pyramid_on_features):
             raise ValueError("{} is not callable (did you mean to pass "
                              "menpo.feature.no_op?)".format(ft))
         all_callable_feature_list.append(ft)
-    return all_callable_feature_list
+    all_callable_constrained = []
+    for ft in all_callable_feature_list:
+        all_callable_constrained.append(constrain_landmarks(ft))
+    return all_callable_constrained
 
 
 class DeformableModelBuilder(object):
