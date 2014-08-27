@@ -13,6 +13,7 @@ test_lg = LandmarkGroup(
     pc, OrderedDict([('all', np.ones(pc.n_points, dtype=np.bool))]))
 test_img = Image(np.random.random([100, 100]))
 fake_path = '/tmp/test.fake'
+test_obj = mio.import_builtin_asset('james.obj')
 
 
 @patch('menpo.io.output.base.landmark_types')
@@ -189,27 +190,19 @@ def test_export_image_jpg(mock_open, exists, PILImage):
     PILImage.save.assert_called_once()
 
 
-import os.path as p
-import tempfile
-from numpy.testing import assert_allclose, assert_equal
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(__name__), create=True)
+def test_export_obj_textured(mock_open, exists):
+    exists.return_value = False
+    with open('/tmp/test.obj') as f:
+        type(f).name = PropertyMock(return_value='/tmp/test.obj')
+        mio.export_mesh(f, test_obj, extension='obj')
 
 
-def test_export_obj_textured():
-    i = mio.import_builtin_asset('james.obj')
-    o_path = p.join(tempfile.gettempdir(), 'test.obj')
-    img_path = p.join(tempfile.gettempdir(), 'test.jpg')
-    mio.export_mesh(o_path, i, overwrite=True)
-    i.texture.as_PILImage().save(img_path)
-    o = mio.import_mesh(o_path)
-    assert_allclose(i.points, o.points)
-    assert_equal(i.trilist, o.trilist)
-    assert_allclose(i.tcoords.points, o.tcoords.points)
-
-
-def test_export_obj_nontextured():
-    i = mio.import_builtin_asset('bunny.obj')
-    o_path = p.join(tempfile.gettempdir(), 'test.obj')
-    mio.export_mesh(o_path, i, overwrite=True)
-    o = mio.import_mesh(o_path)
-    assert_allclose(i.points, o.points)
-    assert_equal(i.trilist, o.trilist)
+@patch('menpo.image.base.PILImage')
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(__name__), create=True)
+def test_export_obj_textured(mock_open, exists, PILImage):
+    exists.return_value = False
+    mio.export_textured_mesh('/tmp/test.obj', test_obj, extension='obj')
+    PILImage.save.assert_called_once()
