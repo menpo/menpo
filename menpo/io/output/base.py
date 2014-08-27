@@ -131,7 +131,7 @@ def export_textured_mesh(filepath, mesh, extension=None,
     r"""
     Exports a given textured mesh. The ``filepath`` argument must be a string
     containing the filepath to write the mesh out to. Unlike the other export
-    methods, this cannot take a file-like object because two files are written,
+    methods, this cannot take a file-like object because two files are written.
 
     If no ``extension`` is provided then the export type is calculated based on
     the filepath extension.
