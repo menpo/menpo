@@ -22,7 +22,7 @@ for i in range(4):
     training.append(im)
 
 # build aams
-aam1 = AAMBuilder(feature_type=[igo, sparse_hog, None],
+aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
                   transform=PiecewiseAffine,
                   trilist=training[0].landmarks['ibug_68_trimesh'].lms.trilist,
                   normalization_diagonal=150,
@@ -35,7 +35,7 @@ aam1 = AAMBuilder(feature_type=[igo, sparse_hog, None],
                   boundary=3,
                   interpolator='scipy').build(training, group='PTS')
 
-aam2 = AAMBuilder(feature_type=None,
+aam2 = AAMBuilder(feature_type=no_op,
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,

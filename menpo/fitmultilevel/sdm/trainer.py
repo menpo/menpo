@@ -13,6 +13,7 @@ from menpo.fit.regression.trainer import (
 from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
+from menpo.fitmultilevel.builder import validate_features
 from menpo.feature import sparse_hog
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
@@ -148,8 +149,8 @@ class SDTrainer(object):
         # check parameters
         regression_type_list = self.check_regression_type(regression_type,
                                                           n_levels)
-        feature_type = self.check_feature_type(feature_type, n_levels,
-                                               pyramid_on_features)
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
         self.check_n_permutations(n_perturbations)
@@ -473,74 +474,6 @@ class SDTrainer(object):
         if verbose:
             print_dynamic('- Apply pyramid: Done\n')
         return feature_images
-
-    @classmethod
-    def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
-        r"""
-        Checks the feature type per level.
-
-        If ``pyramid_on_features`` is ``False``, it must be a string or a
-        function/closure or a list of those containing ``1`` or ``n_levels``
-        elements.
-
-        If ``pyramid_on_features`` is ``True``, it must be a string or a
-        function/closure or a list of 1 of those.
-
-        Parameters
-        ----------
-        feature_type : `string` or `function` or ``None`` or list of those
-            The feature type to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        pyramid_on_features : `boolean`
-            If ``True``, the pyramid will be applied to the feature image, so
-            the user needs to define a single ``feature_type``.
-
-            If ``False``, the pyramid will be applied to the intensities image
-            and features will be extracted at each level, so the user can define
-            a ``feature_type`` per level.
-
-        Returns
-        -------
-        feature_type_list : l`ist`
-            A list of feature types.
-
-            If pyramid_on_features is ``True``, the list will have length ``1``.
-
-            If pyramid_on_features is ``False``, the list will have length
-            ``n_levels``.
-        """
-        if not pyramid_on_features:
-            feature_type_str_error = ("feature_type must be a str or a "
-                                      "function/closure or a list of "
-                                      "those containing 1 or {} "
-                                      "elements").format(n_levels)
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type] * n_levels
-            elif len(feature_type) == 1:
-                feature_type_list = [feature_type[0]] * n_levels
-            elif len(feature_type) == n_levels:
-                feature_type_list = feature_type
-            else:
-                raise ValueError(feature_type_str_error)
-        else:
-            feature_type_str_error = ("pyramid_on_features is enabled so "
-                                      "feature_type must be a str or a "
-                                      "function/closure or a list "
-                                      "containing 1 of those")
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type]
-            elif len(feature_type) == 1:
-                feature_type_list = feature_type
-            else:
-                raise ValueError(feature_type_str_error)
-        for ft in feature_type_list:
-            if (ft is not None and not isinstance(ft, str)
-                    and not hasattr(ft, '__call__')):
-                        raise ValueError(feature_type_str_error)
-        return feature_type_list
 
     @classmethod
     def check_regression_type(cls, regression_type, n_levels):

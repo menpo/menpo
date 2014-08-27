@@ -9,7 +9,7 @@ from menpo.landmark import labeller, ibug_68_trimesh
 from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
 from menpo.transform.modeldriven import OrthoMDTransform
 from menpo.transform.homogeneous import AlignmentSimilarity
-from menpo.feature import sparse_hog
+from menpo.feature import sparse_hog, no_op
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
 from menpo.fit.regression.regressionfunctions import mlr, mlr_svd
 from menpo.fit.regression.parametricfeatures import weights
@@ -314,7 +314,7 @@ np.random.seed(seed=1000)
 sdm1 = SDMTrainer(regression_type=mlr_svd,
                   regression_features=sparse_hog,
                   patch_shape=(16, 16),
-                  feature_type=None,
+                  feature_type=no_op,
                   normalization_diagonal=150,
                   n_levels=2,
                   downscale=1.3,
@@ -435,7 +435,7 @@ def test_verbose_mock(mock_stdout):
     sdm = SDMTrainer(regression_type=mlr_svd,
                      regression_features=sparse_hog,
                      patch_shape=(16, 16),
-                     feature_type=None,
+                     feature_type=no_op,
                      normalization_diagonal=150,
                      n_levels=1,
                      downscale=1.3,

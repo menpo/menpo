@@ -2,7 +2,8 @@ from __future__ import division, print_function
 import numpy as np
 
 from menpo.image import Image
-from menpo.fitmultilevel.builder import DeformableModelBuilder
+from menpo.fitmultilevel.builder import (DeformableModelBuilder,
+                                         validate_features)
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
@@ -154,8 +155,8 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        feature_type = self.check_features(feature_type, n_levels,
-                                               pyramid_on_features)
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 

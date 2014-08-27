@@ -36,7 +36,7 @@ for i in range(4):
 # build clms
 clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
                   patch_shape=(5, 5),
-                  feature_type=[igo, sparse_hog, None],
+                  feature_type=[igo, sparse_hog, no_op],
                   normalization_diagonal=150,
                   n_levels=3,
                   downscale=2,
@@ -48,7 +48,7 @@ clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
 
 clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
                   patch_shape=(3, 10),
-                  feature_type=None,
+                  feature_type=no_op,
                   normalization_diagonal=None,
                   n_levels=2,
                   downscale=1.2,
@@ -91,15 +91,15 @@ def test_patch_shape_2_exception():
 
 @raises(ValueError)
 def test_feature_type_exception():
-    clm = CLMBuilder(feature_type=['igo', sparse_hog],
+    clm = CLMBuilder(feature_type=[igo, sparse_hog],
                      pyramid_on_features=False).build(training_images,
                                                       group='PTS')
 
 
 @raises(ValueError)
 def test_feature_type_with_pyramid_on_features_exception():
-    clm = CLMBuilder(feature_type=['igo', sparse_hog]).build(training_images,
-                                                             group='PTS')
+    clm = CLMBuilder(feature_type=[igo, sparse_hog]).build(training_images,
+                                                           group='PTS')
 
 
 @raises(ValueError)

@@ -7,7 +7,8 @@ from menpo.transform import Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
-from menpo.fitmultilevel.builder import DeformableModelBuilder
+from menpo.fitmultilevel.builder import (DeformableModelBuilder,
+                                         validate_features)
 from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.feature import igo
 
@@ -184,9 +185,8 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_features(feature_type, n_levels,
-                                               pyramid_on_features)
-
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
         # store parameters
         self.feature_type = feature_type
         self.transform = transform
@@ -573,8 +573,8 @@ class PatchBasedAAMBuilder(AAMBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_features(feature_type, n_levels,
-                                               pyramid_on_features)
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
 
         # store parameters
         self.feature_type = feature_type
