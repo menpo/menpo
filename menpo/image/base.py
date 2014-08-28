@@ -6,9 +6,10 @@ import numpy as np
 from scipy.misc import imrotate
 import scipy.linalg
 import PIL.Image as PILImage
-import skimage
-from skimage.transform import pyramid_gaussian
-from skimage.transform.pyramids import _smooth
+
+pyramid_gaussian = None  # expensive, from skimage.transform
+_smooth = None  # expensive, from skimage.transform.pyramids
+skwarp = None  # expensive, from skimage.transform.warp (as skwarp)
 
 from menpo.base import Vectorizable, Copyable
 from menpo.landmark import LandmarkableViewable
@@ -916,6 +917,9 @@ class Image(Vectorizable, LandmarkableViewable):
             A copy of this image, warped.
 
         """
+        global skwarp
+        if skwarp is None:
+            from skimage.transform import warp as skwarp  # expensive
         # skimage has an optimised Cython interpolation, if the transform
         # we are using is an Affine we get faster interpolation, so we'll be
         # go through them
@@ -926,11 +930,9 @@ class Image(Vectorizable, LandmarkableViewable):
         else:
             # just give skimage a closure that applies our transform chain.
             mapping = lambda x: t.apply(x)
-        warped_pixels = skimage.transform.warp(self.pixels,
-                                               inverse_map=mapping,
-                                               output_shape=template_shape,
-                                               order=order, mode=mode,
-                                               cval=cval)
+        warped_pixels = skwarp(self.pixels, inverse_map=mapping,
+                               output_shape=template_shape, order=order,
+                               mode=mode, cval=cval)
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
@@ -1188,6 +1190,9 @@ class Image(Vectorizable, LandmarkableViewable):
         image_pyramid:
             Generator yielding pyramid layers as menpo image objects.
         """
+        global pyramid_gaussian
+        if pyramid_gaussian is None:
+            from skimage.transform import pyramid_gaussian  # expensive
         max_layer = n_levels - 1
         pyramid = pyramid_gaussian(self.pixels, max_layer=max_layer,
                                    downscale=downscale, sigma=sigma,
@@ -1244,6 +1249,9 @@ class Image(Vectorizable, LandmarkableViewable):
         image_pyramid:
             Generator yielding pyramid layers as menpo image objects.
         """
+        global _smooth
+        if _smooth is None:
+            from skimage.transform.pyramids import _smooth  # expensive
         for j in range(n_levels):
             if j == 0:
                 yield self
