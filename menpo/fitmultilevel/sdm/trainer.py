@@ -14,7 +14,7 @@ from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.fitmultilevel.functions import mean_pointcloud
 from menpo.fitmultilevel.builder import validate_features
-from menpo.feature import sparse_hog
+from menpo.feature import sparse_hog, no_op
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
 
@@ -752,7 +752,7 @@ class SDMTrainer(SDTrainer):
         or a list of those containing 1 or ``n_level`` elements
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
-                 patch_shape=(16, 16), feature_type=None, n_levels=3,
+                 patch_shape=(16, 16), feature_type=no_op, n_levels=3,
                  downscale=1.5, pyramid_on_features=False, noise_std=0.04,
                  rotation=False, n_perturbations=10,
                  normalization_diagonal=None, interpolator='scipy'):
