@@ -130,8 +130,31 @@ class MultilevelFittingResult(FittingResult):
     # TODO: this should print more information than just this...
     # image, fitter, n_iters run, ...
     def __str__(self):
-        out = "Initial error: {0:.4f}\nFinal error: {1:.4f}".format(
-            self.initial_error(), self.final_error())
+        # string about features
+        if self.fitter.pyramid_on_features:
+            if isinstance(self.fitter.feature_type[0], str):
+                feat_str = self.fitter.feature_type[0]
+            elif self.fitter.feature_type[0] is None:
+                feat_str = "no"
+            else:
+                feat_str = self.fitter.feature_type[0].__name__
+        else:
+            feat_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.fitter.feature_type[j], str):
+                    feat_str.append(self.fitter.feature_type[j])
+                elif self.fitter.feature_type[j] is None:
+                    feat_str.append("none")
+                else:
+                    feat_str.append(self.fitter.feature_type[j].__name__)
+        out = "{0} Fitting Result\n" \
+              " - Initial error: {1:.4f}\n" \
+              " - Final error: {2:.4f}\n" \
+              " - {3} optimization with {4} pyramid levels, {5} iterations " \
+              "and using {6} features.".format(
+              self.fitter.aam._str_title, self.initial_error(),
+              self.final_error(), self.fitter._fitters[0].algorithm,
+              self.n_levels, self.n_iters, feat_str)
         return out
 
 

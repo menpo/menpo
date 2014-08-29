@@ -36,7 +36,7 @@ class FittingResult(Viewable):
 
     @property
     def n_iters(self):
-        return len(self.shapes) - 1
+        return len(self.shapes()) - 1
 
     @abc.abstractmethod
     def shapes(self, as_points=False):
@@ -391,3 +391,6 @@ class ParametricFittingResult(SemiParametricFittingResult):
             error_images.append(error_image)
 
         return error_images
+
+    #@property
+    #def shape_appearance_reconstructions(self):
