@@ -4,13 +4,7 @@ import os.path as path
 import json
 
 import numpy as np
-from cyassimp import AIImporter
-from vrml.vrml97.parser import buildParser as buildVRML97Parser
-import vrml.vrml97.basenodes as basenodes
-from vrml.node import NullNode
-
-from menpo.io.input.base import (Importer, find_alternative_files,
-                                 import_image)
+from menpo.io.input.base import Importer, find_alternative_files, import_image
 from menpo.io.exceptions import MeshImportError
 from menpo.shape.mesh import ColouredTriMesh, TexturedTriMesh, TriMesh
 
@@ -174,6 +168,7 @@ class AssimpImporter(MeshImporter):
         Absolute filepath of the mesh.
     """
     def __init__(self, filepath, texture=True):
+        from cyassimp import AIImporter  # expensive import
         MeshImporter.__init__(self, filepath, texture=texture)
         self.ai_importer = AIImporter(filepath)
 
@@ -218,6 +213,10 @@ class WRLImporter(MeshImporter):
         MeshImportError
             If no transform or shape is found in the scenegraph
         """
+        # inlined expensive imports
+        from vrml.vrml97.parser import buildParser as buildVRML97Parser
+        import vrml.vrml97.basenodes as basenodes
+        from vrml.node import NullNode
         with open(self.filepath) as f:
             self.text = f.read()
 

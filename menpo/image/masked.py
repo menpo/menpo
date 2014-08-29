@@ -1,7 +1,7 @@
 from __future__ import division
 from warnings import warn
 import numpy as np
-from scipy.ndimage import binary_erosion
+binary_erosion = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
 
@@ -574,6 +574,9 @@ class MaskedImage(Image):
             The length of a 2D, 3-channel image, will have length `6`.
         """
         from menpo.feature import gradient
+        global binary_erosion
+        if binary_erosion is None:
+            from scipy.ndimage import binary_erosion  # expensive
         grad_image_pixels = gradient(self.pixels)
         grad_image = MaskedImage(grad_image_pixels,
                                  mask=self.mask.copy(), copy=False)
