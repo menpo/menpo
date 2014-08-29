@@ -1,6 +1,10 @@
-language: python
-python:
-  - 2.7
+#language: python
+#python:
+#  - 2.7
+os:
+  - linux
+  - osx
+
 notifications:
   email: false
   flowdock: 769202b66114a5ce0e61df484dfeb177
