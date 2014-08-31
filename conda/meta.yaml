@@ -1,6 +1,6 @@
 package:
   name: menpo
-  version: {{ environ['MENPO_VERSION'] }}
+  version: "{{ environ['MENPO_VERSION'] }}"
 
 requirements:
   build:
