@@ -1,4 +1,5 @@
 import os
+import sys
 from setuptools import setup, find_packages
 import versioneer
 
@@ -25,7 +26,6 @@ else:
                         'numpy>=1.8.0',
                         'scipy>=0.14.0',
                         'Cython>=0.20.1',
-                        'pathlib>=1.0',
 
                         # Image
                         'Pillow>=2.0.0',
@@ -44,6 +44,9 @@ else:
                         # Visualization
                         'matplotlib>=1.2.1',
                         'mayavi>=4.3.0']
+
+    if sys.version_info.major == 2:
+        install_requires.append('pathlib>=1.0')
 
 # Versioneer allows us to automatically generate versioning from
 # our git tagging system which makes releases simpler.

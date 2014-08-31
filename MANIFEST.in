@@ -1,4 +1,3 @@
-recursive-include menpo *.py
 recursive-include menpo *.pyx
 recursive-include menpo *.c
 recursive-include menpo *.h
