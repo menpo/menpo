@@ -27,7 +27,7 @@ requirements:
     - cython
     - nose
     - mock
-    - pathlib
+    - pathlib  # [not py3k]
     - pip
 
 test:
