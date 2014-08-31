@@ -1,0 +1,46 @@
+package:
+  name: menpo
+  version: VERSION_NUMBER
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - cython
+
+  run:
+    - python
+    - numpy
+    - scipy
+    - cyrasterize
+    - cyassimp
+    - imaging # [not py3k]
+    - pillow  # [py3k]
+    - mayavi  # [not py3k]
+    - scikit-image
+    - scikit-learn
+    - matplotlib
+    - decorator
+    - ipython-notebook
+    - menpo-pyvrml97  # [not py3k]
+    - cython
+    - nose
+    - mock
+    - pathlib
+    - pip
+
+test:
+  requires:
+  - coverage
+
+  imports:
+  - menpo
+  - menpo.base
+
+  commands:
+  - nosetests $(python -c "import menpo; print(menpo.menpo_src_dir_path())") # [not win]
+
+about:
+  home: https://github.com/menpo/menpo/
+  license: BSD
