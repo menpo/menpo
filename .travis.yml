@@ -16,8 +16,8 @@ matrix:
 
 install:
 - wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
-- python traviconda.py setup --python $PYTHON_VERSION --channel menpo
 - export MENPO_VERSION=$(python traviconda.py version)
+- python traviconda.py setup --python $PYTHON_VERSION --channel menpo
 - export PATH=/home/travis/miniconda/bin:$PATH
 
 script:
