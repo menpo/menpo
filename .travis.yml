@@ -6,37 +6,22 @@ env:
   global:
   - secure: jrAuM2d8/Pu83cps6cIzoZl/uOcz3cd53Sb/16kWujrb03dKFn+avOSRapOqU9eYMRIMi75fYsKc0rK4UHGRoCBmYLMHVZdZJvlcVxLqIF/+CQjwvYCezyoRLW5POIuTcJr/jGOuoilYQgx56Dv97ZIndeczZocAk3u2glcpT64=
   matrix:
-  # Linux
-  - MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh
-  - MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda3-3.6.0-Linux-x86_64.sh
-  # OS X
-  - MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda-3.6.0-MacOSX-x86_64.sh
-  - MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda3-3.6.0-MacOSX-x86_64.sh
+  - PYTHON_VERSION=2
+  - PYTHON_VERSION=3
 
 matrix:
-  exclude:
-  - os: linux
-    env: MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda-3.6.0-MacOSX-x86_64.sh
-  - os: linux
-    env: MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda3-3.6.0-MacOSX-x86_64.sh
-  - os: osx
-    env: MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh
-  - os: osx
-    env: MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda3-3.6.0-Linux-x86_64.sh
   allow_failures:
-  - env: MINICONDA_URL=http://repo.continuum.io/miniconda/Miniconda3-3.6.0-Linux-x86_64.sh
+  - env: PYTHON_VERSION=3
   - os: osx
 
 install:
-- export MENPO_VERSION=$(git describe --tags | sed 's/-/_/g' | cut -c2-)
-- wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O
-  traviconda.py
-- chmod +x traviconda.py
-- ./traviconda.py setup ./conda --url $MINICONDA_URL --channel menpo
+- wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
+- python traviconda.py setup --python $PYTHON_VERSION --channel menpo
+- export MENPO_VERSION=$(python traviconda.py version)
 - export PATH=/home/travis/miniconda/bin:$PATH
 
 script:
-- ./traviconda.py build ./conda --user menpo --key $BINSTAR_KEY
+- python traviconda.py build --path ./conda --user menpo --key $BINSTAR_KEY
 
 notifications:
   email: false
