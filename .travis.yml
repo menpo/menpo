@@ -28,6 +28,7 @@ matrix:
   - os: osx
 
 install:
+- export MENPO_VERSION=$(git describe --tags | sed 's/-/_/g' | cut -c2-)
 - wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O
   traviconda.py
 - chmod +x traviconda.py
