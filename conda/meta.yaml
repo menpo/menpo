@@ -39,7 +39,7 @@ test:
   - menpo.base
 
   commands:
-  - nosetests $(python -c "import menpo; print(menpo.menpo_src_dir_path())") # [not win]
+  - python -c "import nose; nose.main()" -s menpo
 
 about:
   home: https://github.com/menpo/menpo/
