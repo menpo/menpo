@@ -1,23 +1,17 @@
 from mock import patch
 from nose.tools import raises
 from StringIO import StringIO
-from nose.plugins.attrib import attr
 
 import numpy as np
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_68_trimesh
-from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
-from menpo.transform.modeldriven import OrthoMDTransform
-from menpo.transform.homogeneous import AlignmentSimilarity
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer
+from menpo.feature import sparse_hog, igo, hog, no_op
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
-from menpo.fit.regression.regressionfunctions import mlr, mlr_svd
-from menpo.fit.regression.parametricfeatures import weights
+from menpo.fit.regression.regressionfunctions import mlr_svd
 from menpo.transform import PiecewiseAffine
 from menpo.fitmultilevel.aam import AAMBuilder
 from menpo.fitmultilevel.clm import CLMBuilder
-from menpo.model.modelinstance import OrthoPDM
-from menpo.shape import PointCloud
 
 # load images
 filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']
@@ -61,13 +55,13 @@ clm = CLMBuilder(classifier_type=linear_svm_lr,
 
 @raises(ValueError)
 def test_feature_type_exception():
-    sdm = SDMTrainer(feature_type=['igo', sparse_hog],
+    sdm = SDMTrainer(feature_type=[igo, sparse_hog],
                      n_levels=3).train(training_images, group='PTS')
 
 
 @raises(ValueError)
 def test_feature_type_with_pyramid_on_features_exception():
-    sdm = SDMTrainer(feature_type=['igo', sparse_hog, 'hog'],
+    sdm = SDMTrainer(feature_type=[igo, sparse_hog, hog],
                      n_levels=3,
                      pyramid_on_features=True).train(training_images,
                                                      group='PTS')
@@ -75,19 +69,19 @@ def test_feature_type_with_pyramid_on_features_exception():
 
 @raises(ValueError)
 def test_regression_features_sdmtrainer_exception_1():
-    sdm = SDMTrainer(n_levels=2, regression_features=[None, None, None]).\
+    sdm = SDMTrainer(n_levels=2, regression_features=[no_op, no_op, no_op]).\
         train(training_images, group='PTS')
 
 
 @raises(ValueError)
 def test_regression_features_sdmtrainer_exception_2():
-    sdm = SDMTrainer(n_levels=3, regression_features=[None, sparse_hog, 1]).\
+    sdm = SDMTrainer(n_levels=3, regression_features=[no_op, sparse_hog, 1]).\
         train(training_images, group='PTS')
 
 
 @raises(ValueError)
 def test_regression_features_sdaamtrainer_exception_1():
-    sdm = SDAAMTrainer(aam, regression_features=[None, sparse_hog]).\
+    sdm = SDAAMTrainer(aam, regression_features=[no_op, sparse_hog]).\
         train(training_images, group='PTS')
 
 
@@ -122,7 +116,7 @@ def test_verbose_mock(mock_stdout):
     sdm = SDMTrainer(regression_type=mlr_svd,
                      regression_features=sparse_hog,
                      patch_shape=(16, 16),
-                     feature_type=None,
+                     feature_type=no_op,
                      normalization_diagonal=150,
                      n_levels=1,
                      downscale=1.3,
@@ -132,4 +126,3 @@ def test_verbose_mock(mock_stdout):
                      n_perturbations=2,
                      interpolator='scipy').train(training_images, group='PTS',
                                                  verbose=True)
-

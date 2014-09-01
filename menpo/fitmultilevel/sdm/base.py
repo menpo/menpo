@@ -2,7 +2,6 @@ import numpy as np
 
 from menpo.image import Image
 from menpo.fitmultilevel.base import MultilevelFitter
-from menpo.fitmultilevel.featurefunctions import compute_features
 from menpo.fitmultilevel.aam.base import AAMFitter
 from menpo.fitmultilevel.clm.base import CLMFitter
 
@@ -246,12 +245,12 @@ class SDMFitter(SDFitter):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(40, 40))
         if self.pyramid_on_features:
-            temp = compute_features(temp_img, self.feature_type[0])
+            temp = self.feature_type[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = compute_features(temp_img, self.feature_type[j])
+                temp = self.feature_type[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:

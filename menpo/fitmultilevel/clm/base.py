@@ -6,7 +6,6 @@ from menpo.transform import AlignmentSimilarity
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.base import MultilevelFitter
-from menpo.fitmultilevel.featurefunctions import compute_features
 
 
 class CLMFitter(MultilevelFitter):
@@ -235,12 +234,12 @@ class GradientDescentCLMFitter(CLMFitter):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = compute_features(temp_img, self.feature_type[0])
+            temp = self.feature_type[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = compute_features(temp_img, self.feature_type[j])
+                temp = self.feature_type[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
