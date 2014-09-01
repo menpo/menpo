@@ -29,6 +29,7 @@ requirements:
     - mock
     - pathlib  # [not py3k]
     - pip
+    - wrapt
 
 test:
   requires:
