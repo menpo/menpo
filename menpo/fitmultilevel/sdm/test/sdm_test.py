@@ -534,8 +534,8 @@ def sdm_helper(sdm, im_number, max_iters, initial_error, final_error,
 @attr('fuzzy')
 def test_sdm1_fit():
     sdm_helper(sdm1, 0, None, 0.084, 0.03716, 'me_norm', False)
-    sdm_helper(sdm1, 1, 10, 8.66397, 1.98782, 'me', False)
-    sdm_helper(sdm1, 2, [5, 10], 13.94481, 8.01723, 'rmse', False)
+    sdm_helper(sdm1, 1, 10, 8.46832, 2.14853, 'me', False)
+    sdm_helper(sdm1, 2, [5, 10], 13.30226, 8.10526, 'rmse', False)
 
 
 @attr('fuzzy')
