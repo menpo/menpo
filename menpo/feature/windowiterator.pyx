@@ -1,11 +1,14 @@
 # distutils: language = c++
-# distutils: sources = menpo/image/feature/cpp/ImageWindowIterator.cpp menpo/image/feature/cpp/WindowFeature.cpp menpo/image/feature/cpp/HOG.cpp menpo/image/feature/cpp/LBP.cpp
+# distutils: sources = menpo/feature/cpp/ImageWindowIterator.cpp menpo/feature/cpp/WindowFeature.cpp menpo/feature/cpp/HOG.cpp menpo/feature/cpp/LBP.cpp
 
 import numpy as np
 cimport numpy as np
 from libcpp cimport bool
 from libcpp.string cimport string
+from collections import namedtuple
 
+WindowIteratorResult = namedtuple('WindowInteratorResult', ('pixels',
+                                                            'centres'))
 
 cdef extern from "math.h":
     double ceil(double)
@@ -58,7 +61,7 @@ cdef extern from "cpp/LBP.h":
             unsigned int *whichMappingTable, unsigned int numberOfUniqueSamples)
         void apply(double *windowImage, double *descriptorVector)
 
-cdef class CppImageWindowIterator:
+cdef class WindowIterator:
     cdef ImageWindowIterator* iterator
 
     def __cinit__(self, np.ndarray[np.float64_t, ndim=3] image,
@@ -166,7 +169,8 @@ cdef class CppImageWindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], hog)
         del hog
-        return outputImage, windowsCenters
+        return WindowIteratorResult(np.ascontiguousarray(outputImage),
+                                    np.ascontiguousarray(windowsCenters))
 
     def LBP(self, radius, samples, mapping_type, verbose):
         # find unique samples (thus lbp codes mappings)
@@ -237,7 +241,8 @@ cdef class CppImageWindowIterator:
             print info_str
         self.iterator.apply(&outputImage[0,0,0], &windowsCenters[0,0,0], lbp)
         del lbp
-        return outputImage, windowsCenters
+        return WindowIteratorResult(np.ascontiguousarray(outputImage),
+                                    np.ascontiguousarray(windowsCenters))
 
 def _lbp_mapping_table(n_samples, mapping_type='riu2'):
     r"""

@@ -7,9 +7,10 @@ from menpo.transform import Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
-from menpo.fitmultilevel.builder import DeformableModelBuilder
-from menpo.fitmultilevel.featurefunctions import compute_features
+from menpo.fitmultilevel.builder import (DeformableModelBuilder,
+                                         validate_features)
 from menpo.visualize import print_dynamic, progress_bar_str
+from menpo.feature import igo
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -18,7 +19,7 @@ class AAMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    feature_type : ``None`` or `string` or `function` or list of those, optional
+    feature_type : `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
@@ -36,16 +37,6 @@ class AAMBuilder(DeformableModelBuilder):
             image representation, i.e. no features will be extracted from the
             original images.
 
-            If `string`, image features will be computed by executing::
-
-               feature_image = getattr(image.features, feature_type[level])()
-
-            for each pyramidal level. For this to work properly each string
-            needs to be one of menpo's standard image feature methods
-            ('igo', 'hog', ...).
-            Note that, in this case, the feature computation will be
-            carried out using the default options.
-
         Non-default feature options and new experimental features can be
         defined using `function`. In this case, the `function` must
         receive an image as input and return a particular feature
@@ -55,9 +46,6 @@ class AAMBuilder(DeformableModelBuilder):
                 image = deepcopy(image)
                 image.normalize_std_inplace()
                 return image.feature_type.igo(double_angles=``True``)
-
-        See :map:`ImageFeatures` for details more details on
-        menpo's standard image features and feature options.
 
     transform : :map:`PureAlignmentTransform`, optional
         The :map:`PureAlignmentTransform` that will be
@@ -182,7 +170,7 @@ class AAMBuilder(DeformableModelBuilder):
         ``pyramid_on_features`` is enabled so ``feature_type`` must be a
         `string` or a `function` or a list containing ``1`` of those
     """
-    def __init__(self, feature_type='igo', transform=PiecewiseAffine,
+    def __init__(self, feature_type=igo, transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
@@ -197,9 +185,8 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
-                                               pyramid_on_features)
-
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
         # store parameters
         self.feature_type = feature_type
         self.transform = transform
@@ -293,8 +280,7 @@ class AAMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(compute_features(
-                        next(g), self.feature_type[rj]))
+                    feature_images.append(self.feature_type[rj](next(g)))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label] for i in feature_images]
@@ -587,8 +573,8 @@ class PatchBasedAAMBuilder(AAMBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = self.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
-                                               pyramid_on_features)
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
 
         # store parameters
         self.feature_type = feature_type
@@ -703,12 +689,6 @@ class AAM(object):
             If ``None``, the appearance model was built using the original image
             representation, i.e. no features will be extracted from the original
             images.
-
-            If `string`, the appearance model was built using one of Menpo's
-            default built-in feature representations - those
-            accessible at ``image.features.some_feature()``. Note that this case
-            can only be used with default feature parameters - for custom
-            feature weights, use the functional form of this argument instead.
 
             If `function`, the user can directly provide the feature that was
             calculated on the images. This class will simply invoke this
@@ -1031,12 +1011,6 @@ class PatchBasedAAM(AAM):
             If ``None``, the appearance model was built using the original image
             representation, i.e. no features will be extracted from the original
             images.
-
-            If `string`, the appearance model was built using one of Menpo's
-            default built-in feature representations - those
-            accessible at ``image.features.some_feature()``. Note that this case
-            can only be used with default feature parameters - for custom
-            feature weights, use the functional form of this argument instead.
 
             If `function`, the user can directly provide the feature that was
             calculated on the images. This class will simply invoke this
