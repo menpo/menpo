@@ -217,7 +217,7 @@ class NonParametricFittingResult(FittingResult):
             return [deepcopy(s.points) for s in self.parameters]
 
         else:
-            return self.parameters.copy()
+            return self.parameters
 
     @property
     def final_shape(self):
