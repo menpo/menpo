@@ -2,9 +2,10 @@ from __future__ import division, print_function
 import numpy as np
 
 from menpo.image import Image
-from menpo.fitmultilevel.builder import DeformableModelBuilder
+from menpo.fitmultilevel.builder import (DeformableModelBuilder,
+                                         validate_features)
 from menpo.fitmultilevel.functions import build_sampling_grid
-from menpo.fitmultilevel.featurefunctions import compute_features, sparse_hog
+from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
 from .classifierfunctions import classifier, linear_svm_lr
@@ -154,8 +155,8 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        feature_type = self.check_feature_type(feature_type, n_levels,
-                                               pyramid_on_features)
+        feature_type = validate_features(feature_type, n_levels,
+                                         pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 
@@ -247,8 +248,7 @@ class CLMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(compute_features(
-                        next(g), self.feature_type[rj]))
+                    feature_images.append(self.feature_type[rj](next(g)))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label] for i in feature_images]
@@ -397,12 +397,6 @@ class CLM(object):
             image representation, i.e. no features will be extracted from the
             original images.
 
-            If `string`, the appearance model was built using one of Menpo's
-            default built-in feature representations - those
-            accessible at ``image.features.some_feature()``. Note that this case
-            can only be used with default feature parameters - for custom
-            feature weights, use the functional form of this argument instead.
-
             If `function`, the user can directly provide the feature that was
             calculated on the images. This class will simply invoke this
             function, passing in as the sole argument the image to be fitted,
@@ -548,7 +542,7 @@ class CLM(object):
         if self.n_levels > 1:
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = compute_features(image, self.feature_type[0])
+                feature_image = self.feature_type[0](image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -562,12 +556,11 @@ class CLM(object):
                     n_levels=self.n_levels, downscale=self.downscale)
 
                 # compute features at each level
-                images = [compute_features(
-                    i, self.feature_type[self.n_levels - j - 1])
-                    for j, i in enumerate(pyramid)]
+                images = [self.feature_type[self.n_levels - j - 1](i)
+                          for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [compute_features(image, self.feature_type[0])]
+            images = [self.feature_type[0](image)]
 
         # initialize responses
         image = images[level]
@@ -602,12 +595,12 @@ class CLM(object):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = compute_features(temp_img, self.feature_type[0])
+            temp = self.feature_type[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = compute_features(temp_img, self.feature_type[j])
+                temp = self.feature_type[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:

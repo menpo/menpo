@@ -788,12 +788,28 @@ class IOInfo(object):
     r"""
     Simple state object for recording IO information.
     """
-
     def __init__(self, filepath):
-        self.filepath = os.path.abspath(os.path.expanduser(filepath))
-        self.filename = os.path.splitext(os.path.basename(self.filepath))[0]
-        self.extension = os.path.splitext(self.filepath)[1]
-        self.dir = os.path.dirname(self.filepath)
+        self._path = Path(os.path.abspath(os.path.expanduser(filepath)))
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def filepath(self):
+        return str(self._path)
+
+    @property
+    def filename(self):
+        return self._path.stem
+
+    @property
+    def dir(self):
+        return str(self._path.parent)
+
+    @property
+    def extension(self):
+        return ''.join(self._path.suffixes)
 
     def __str__(self):
         return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(

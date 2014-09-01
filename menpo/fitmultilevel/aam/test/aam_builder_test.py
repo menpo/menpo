@@ -8,23 +8,23 @@ import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.fitmultilevel.aam import AAMBuilder, PatchBasedAAMBuilder
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog, igo, lbp, no_op
 
 # load images
 filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']
-training_images = []
+training = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
     labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
-    training_images.append(im)
+    training.append(im)
 
 # build aams
-aam1 = AAMBuilder(feature_type=['igo', sparse_hog, None],
+aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
                   transform=PiecewiseAffine,
-                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
+                  trilist=training[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,
                   normalization_diagonal=150,
                   n_levels=3,
@@ -34,9 +34,9 @@ aam1 = AAMBuilder(feature_type=['igo', sparse_hog, None],
                   max_shape_components=[1, 2, 3],
                   max_appearance_components=[3, 3, 3],
                   boundary=3,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  interpolator='scipy').build(training, group='PTS')
 
-aam2 = AAMBuilder(feature_type=None,
+aam2 = AAMBuilder(feature_type=no_op,
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,
@@ -47,9 +47,9 @@ aam2 = AAMBuilder(feature_type=None,
                   max_shape_components=None,
                   max_appearance_components=1,
                   boundary=0,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  interpolator='scipy').build(training, group='PTS')
 
-aam3 = AAMBuilder(feature_type='igo',
+aam3 = AAMBuilder(feature_type=igo,
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,
@@ -60,9 +60,9 @@ aam3 = AAMBuilder(feature_type='igo',
                   max_shape_components=[2],
                   max_appearance_components=10,
                   boundary=2,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  interpolator='scipy').build(training, group='PTS')
 
-aam4 = PatchBasedAAMBuilder(feature_type='lbp',
+aam4 = PatchBasedAAMBuilder(feature_type=lbp,
                             patch_shape=(10, 13),
                             normalization_diagonal=200,
                             n_levels=2,
@@ -72,67 +72,63 @@ aam4 = PatchBasedAAMBuilder(feature_type='lbp',
                             max_shape_components=1,
                             max_appearance_components=None,
                             boundary=2,
-                            interpolator='scipy').build(training_images,
+                            interpolator='scipy').build(training,
                                                         group='PTS')
 
 
 @raises(ValueError)
 def test_feature_type_exception():
-    aam = AAMBuilder(feature_type=['igo', sparse_hog],
-                     pyramid_on_features=False).build(training_images,
-                                                      group='PTS')
+    AAMBuilder(feature_type=[igo, sparse_hog],
+               pyramid_on_features=False).build(training, group='PTS')
 
 
 @raises(ValueError)
 def test_feature_type_with_pyramid_on_features_exception():
-    aam = AAMBuilder(feature_type=['igo', sparse_hog]).build(training_images,
-                                                             group='PTS')
+    AAMBuilder(feature_type=[igo, sparse_hog]).build(training,
+                                                     group='PTS')
 
 
 @raises(ValueError)
 def test_n_levels_exception():
-    aam = AAMBuilder(n_levels=0).build(training_images,
-                                       group='PTS')
+    AAMBuilder(n_levels=0).build(training, group='PTS')
 
 
 @raises(ValueError)
 def test_downscale_exception():
-    aam = AAMBuilder(downscale=1).build(training_images,
+    aam = AAMBuilder(downscale=1).build(training,
                                         group='PTS')
     assert (aam.downscale == 1)
-    aam = AAMBuilder(downscale=0).build(training_images,
-                                        group='PTS')
+    AAMBuilder(downscale=0).build(training, group='PTS')
 
 
 @raises(ValueError)
 def test_normalization_diagonal_exception():
-    aam = AAMBuilder(normalization_diagonal=100).build(training_images,
+    aam = AAMBuilder(normalization_diagonal=100).build(training,
                                                        group='PTS')
     assert (aam.appearance_models[0].n_features == 410)
-    aam = AAMBuilder(normalization_diagonal=10).build(training_images,
-                                                      group='PTS')
+    AAMBuilder(normalization_diagonal=10).build(training, group='PTS')
 
 
 @raises(ValueError)
 def test_max_shape_components_exception():
-    aam = AAMBuilder(max_shape_components=[1, 0.2, 'a']).build(training_images,
-                                                               group='PTS')
+    AAMBuilder(max_shape_components=[1, 0.2, 'a']).build(training,
+                                                         group='PTS')
 
 
 @raises(ValueError)
 def test_max_appearance_components_exception():
-    aam = AAMBuilder(max_appearance_components=[1, 2]).build(training_images,
-                                                             group='PTS')
+    AAMBuilder(max_appearance_components=[1, 2]).build(training,
+                                                       group='PTS')
 
 
 @raises(ValueError)
 def test_boundary_exception():
-    aam = AAMBuilder(boundary=-1).build(training_images, group='PTS')
+    AAMBuilder(boundary=-1).build(training, group='PTS')
 
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_verbose_mock(mock_stdout):
-    aam = AAMBuilder().build(training_images, group='PTS', verbose=True)
+    AAMBuilder().build(training, group='PTS', verbose=True)
 
 
 @patch('sys.stdout', new_callable=StringIO)
@@ -144,14 +140,14 @@ def test_str_mock(mock_stdout):
 
 
 def test_aam_1():
-    assert (aam1.n_training_images == 4)
-    assert (aam1.n_levels == 3)
-    assert (aam1.downscale == 2)
-    assert (aam1.feature_type[0] == 'igo' and aam1.feature_type[2] is None)
-    assert (aam1.interpolator == 'scipy')
+    assert(aam1.n_training_images == 4)
+    assert(aam1.n_levels == 3)
+    assert(aam1.downscale == 2)
+    #assert(aam1.feature_type[0] == igo and aam1.feature_type[2] == no_op)
+    assert(aam1.interpolator == 'scipy')
     assert_allclose(np.around(aam1.reference_shape.range()), (109., 103.))
-    assert (not aam1.scaled_shape_models)
-    assert (not aam1.pyramid_on_features)
+    assert(not aam1.scaled_shape_models)
+    assert(not aam1.pyramid_on_features)
     assert_allclose([aam1.shape_models[j].n_components
                      for j in range(aam1.n_levels)], (1, 2, 3))
     assert (np.all([aam1.appearance_models[j].n_components == 3
@@ -166,7 +162,7 @@ def test_aam_2():
     assert (aam2.n_training_images == 4)
     assert (aam2.n_levels == 2)
     assert (aam2.downscale == 1.2)
-    assert (aam2.feature_type[0] is None and aam2.feature_type[1] is None)
+    #assert (aam2.feature_type[0] == no_op and aam2.feature_type[1] == no_op)
     assert (aam2.interpolator == 'scipy')
     assert_allclose(np.around(aam2.reference_shape.range()), (169., 161.))
     assert aam2.scaled_shape_models
@@ -185,7 +181,7 @@ def test_aam_3():
     assert (aam3.n_training_images == 4)
     assert (aam3.n_levels == 1)
     assert (aam3.downscale == 3)
-    assert (aam3.feature_type[0] == 'igo' and len(aam3.feature_type) == 1)
+    #assert (aam3.feature_type[0] == igo and len(aam3.feature_type) == 1)
     assert (aam3.interpolator == 'scipy')
     assert_allclose(np.around(aam3.reference_shape.range()), (169., 161.))
     assert aam3.scaled_shape_models
@@ -204,7 +200,7 @@ def test_aam_4():
     assert (aam4.n_training_images == 4)
     assert (aam4.n_levels == 2)
     assert (aam4.downscale == 1.2)
-    assert (aam4.feature_type[0] == 'lbp')
+    #assert (aam4.feature_type[0] == lbp)
     assert (aam4.interpolator == 'scipy')
     assert_allclose(np.around(aam4.reference_shape.range()), (145., 138.))
     assert aam4.scaled_shape_models
