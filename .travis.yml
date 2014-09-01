@@ -20,6 +20,8 @@ install:
 - export PATH=/home/travis/miniconda/bin:$PATH
 
 script:
+- which python
+- python --version
 - python traviconda.py build --path ./conda --user menpo --key $BINSTAR_KEY
 
 notifications:
