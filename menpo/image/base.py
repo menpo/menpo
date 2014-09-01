@@ -11,12 +11,11 @@ pyramid_gaussian = None  # expensive, from skimage.transform
 _smooth = None  # expensive, from skimage.transform.pyramids
 skwarp = None  # expensive, from skimage.transform.warp (as skwarp)
 
-from menpo.base import Vectorizable, Copyable
+from menpo.base import Vectorizable
 from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
                              AlignmentUniformScale, Affine, Homogeneous)
 from menpo.visualize.base import ImageViewer
-from .feature import ImageFeatures, features
 from .interpolation import scipy_interpolation
 
 
@@ -67,17 +66,13 @@ class Image(Vectorizable, LandmarkableViewable):
     image_data : ``(M, N ..., Q, C)`` `ndarray`
         Array representing the image pixels, with the last axis being
         channels.
+
     copy : `bool`, optional
         If ``False``, the ``image_data`` will not be copied on assignment.
         Note that this will miss out on additional checks. Further note that we
         still demand that the array is C-contiguous - if it isn't, a copy will
         be generated anyway.
         In general, this should only be used if you know what you are doing.
-
-    Attributes
-    ----------
-    features : :map:`ImageFeatures`
-        Gives access to all the feature types that we support.
 
     Raises
     ------
@@ -109,7 +104,6 @@ class Image(Vectorizable, LandmarkableViewable):
                     " - a {}D array "
                     "was provided".format(image_data.ndim))
         self.pixels = image_data
-        self.features = ImageFeatures(self)
 
     def as_masked(self, mask=None, copy=True):
         r"""
@@ -136,12 +130,6 @@ class Image(Vectorizable, LandmarkableViewable):
         img = MaskedImage(self.pixels, mask=mask, copy=copy)
         img.landmarks = self.landmarks
         return img
-
-    def copy(self):
-        # For now, we need to reset the weakref on ImageFeatures on each copy.
-        new = Copyable.copy(self)
-        new.features = ImageFeatures(new)
-        return new
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float):
@@ -540,7 +528,8 @@ class Image(Vectorizable, LandmarkableViewable):
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
-        grad_image_pixels = features.gradient(self.pixels)
+        from menpo.feature import gradient
+        grad_image_pixels = gradient(self.pixels)
         grad_image = Image(grad_image_pixels, copy=False)
         grad_image.landmarks = self.landmarks
         return grad_image

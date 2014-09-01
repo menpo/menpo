@@ -27,7 +27,7 @@ before_install:
 install:
   - conda install --yes python pip atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
   - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
-  - pip install coverage coveralls mock pathlib
+  - pip install coverage coveralls mock pathlib wrapt
   - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
   - python setup.py build_ext --inplace
  
