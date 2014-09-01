@@ -12,7 +12,6 @@ env:
 matrix:
   allow_failures:
   - env: PYTHON_VERSION=3
-  - os: osx
 
 install:
 - wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
