@@ -338,6 +338,7 @@ class BooleanImage(Image):
                                   warp_landmarks=warp_landmarks,
                                   order=0, mode=mode, cval=cval)
 
+    # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       mode='constant', cval=0.):
         """
