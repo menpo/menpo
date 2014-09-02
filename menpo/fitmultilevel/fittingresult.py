@@ -251,6 +251,33 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         return _flatten_out(
             [f.error_images for f in self.fitting_results])
 
+    @property
+    def aam_reconstructions(self):
+        r"""
+        The list containing the aam reconstruction (i.e. the appearance
+        reconstruction warped on the shape instance reconstruction) obtained at
+        each fitting iteration.
+
+        :type: list` of :map:`Image` or subclass
+        """
+        aam_reconstructions = []
+        for level, f in enumerate(self.fitting_results):
+            if f.weights:
+                for (sw, aw) in zip(f.parameters, f.weights):
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=awt, level=level))
+            else:
+                for sw in f.parameters:
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=None,
+                        level=level))
+        return aam_reconstructions
+
 
 def _flatten_out(list_of_lists):
     return [i for l in list_of_lists for i in l]
