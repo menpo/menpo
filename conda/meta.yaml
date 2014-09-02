@@ -1,0 +1,47 @@
+package:
+  name: menpo
+  version: "{{ environ['MENPO_VERSION'] }}"
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - cython
+
+  run:
+    - python
+    - numpy
+    - scipy
+    - cyrasterize
+    - cyassimp
+    - imaging # [not py3k]
+    - pillow  # [py3k]
+    - mayavi  # [not py3k]
+    - scikit-image
+    - scikit-learn
+    - matplotlib
+    - decorator
+    - ipython-notebook
+    - menpo-pyvrml97  # [not py3k]
+    - cython
+    - nose
+    - mock
+    - pathlib  # [not py3k]
+    - pip
+    - wrapt
+
+test:
+  requires:
+  - coverage
+
+  imports:
+  - menpo
+  - menpo.base
+
+  commands:
+  - python -c "import nose; nose.main()" -s menpo
+
+about:
+  home: https://github.com/menpo/menpo/
+  license: BSD
