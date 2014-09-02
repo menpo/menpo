@@ -51,7 +51,6 @@ class Regressor(Fitter):
             fitting_result.parameters.append(parameters)
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
     @abc.abstractmethod

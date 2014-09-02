@@ -5,7 +5,7 @@ from nose.tools import raises
 from StringIO import StringIO
 
 import menpo.io as mio
-from menpo.landmark import labeller, ibug_68_trimesh
+from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.fitmultilevel.aam import AAMBuilder, PatchBasedAAMBuilder
 from menpo.feature import sparse_hog, igo, lbp, no_op
@@ -16,7 +16,7 @@ training = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
-    labeller(im, 'PTS', ibug_68_trimesh)
+    labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
     training.append(im)
@@ -24,7 +24,8 @@ for i in range(4):
 # build aams
 aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
                   transform=PiecewiseAffine,
-                  trilist=training[0].landmarks['ibug_68_trimesh'].lms.trilist,
+                  trilist=training[0].landmarks['ibug_face_68_trimesh'].
+                  lms.trilist,
                   normalization_diagonal=150,
                   n_levels=3,
                   downscale=2,

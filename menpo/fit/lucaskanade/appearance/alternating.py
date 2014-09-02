@@ -56,7 +56,6 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -110,7 +109,6 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -168,5 +166,4 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result

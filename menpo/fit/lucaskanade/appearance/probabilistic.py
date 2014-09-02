@@ -54,7 +54,6 @@ class ProbabilisticForwardAdditive(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -106,7 +105,6 @@ class ProbabilisticForwardCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
 
 
@@ -160,5 +158,4 @@ class ProbabilisticInverseCompositional(AppearanceLucasKanade):
             error = np.abs(norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result

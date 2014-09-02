@@ -11,34 +11,35 @@ from .functions import noisy_align, align_shape_with_bb
 
 class MultilevelFitter(Fitter):
     r"""
-    Mixin that all MultilevelFitter objects must implement.
+    Abstract interface that all :map:`MultilevelFitter` must implement.
     """
 
     @abc.abstractproperty
     def reference_shape(self):
         r"""
-        Returns the reference shape. Typically, the mean of the shape model.
+        The reference shape of the multilevel fitter.
         """
         pass
 
     @abc.abstractproperty
     def feature_type(self):
         r"""
-        Defines the feature computation function.
+        Returns the feature computation functions applied at each pyramidal
+        level.
         """
         pass
 
     @abc.abstractproperty
     def n_levels(self):
         r"""
-        Returns the number of levels used by the fitter.
+        The number of pyramidal levels.
         """
         pass
 
     @abc.abstractproperty
     def downscale(self):
         r"""
-        Returns the downscale factor used by the fitter.
+        The downscale factor used by the multiple fitter.
         """
         pass
 
@@ -59,84 +60,61 @@ class MultilevelFitter(Fitter):
         pass
 
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
-            error_type='me_norm', verbose=False, view=False, **kwargs):
+            **kwargs):
         r"""
-        Fits a single image.
+        Fits the multilevel fitter to an image.
 
         Parameters
         -----------
-        image: :class:`menpo.image.masked.MaskedImage`
+        image: :map:`Image` or subclass
             The image to be fitted.
-        initial_shape: :class:`menpo.shape.PointCloud`
+
+        initial_shape: :map:`PointCloud`
             The initial shape estimate from which the fitting procedure
             will start.
-        max_iters: int or list, optional
+
+        max_iters: `int` or `list` of `int`, optional
             The maximum number of iterations.
-            If int, then this will be the overall maximum number of iterations
-            for all the pyramidal levels.
-            If list, then a maximum number of iterations is specified for each
-            pyramidal level.
+            If `int`, specifies the overall maximum number of iterations.
+            If `list` of `int`, specifies the maximum number of iterations per
+            level.
 
-            Default: 50
-        gt_shape: PointCloud
-            The groundtruth shape of the image.
-
-            Default: None
-        error_type: 'me_norm', 'me' or 'rmse', optional.
-            Specifies the way in which the error between the fitted and
-            ground truth shapes is to be computed.
-
-            Default: 'me_norm'
-        verbose: boolean, optional
-            If True, it prints information related to the fitting results (such
-            as: final error, convergence, ...).
-
-            Default: False
-        view: boolean, optional
-            If True, the final fitting result will be visualized.
-
-            Default: False
+        gt_shape: :map:`PointCloud`
+            The ground truth shape associated to the image.
 
         **kwargs:
+            Additional keyword arguments that can be passed to specific
+            implementations of ``_fit`` method.
 
         Returns
         -------
-        fitting_list: :map:`FittingResultList`
-            A fitting result object.
+        multi_fitting_result: :map:`MultilevelFittingResult`
+            The multilevel fitting result containing the result of
+            fitting procedure.
         """
-        # copy image
-        image = image.copy()
+        # generate the list of images to be fitted
+        images, initial_shapes, gt_shapes = self._prepare_image(
+            image, initial_shape, gt_shape=gt_shape)
 
-        # generate image pyramid
-        images = self._prepare_image(image, initial_shape, gt_shape=gt_shape)
-
-        # get ground truth shape per level
+        # detach added landmarks from image
+        del image.landmarks['initial_shape']
         if gt_shape:
-            gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
-        else:
-            gt_shapes = None
+            del image.landmarks['gt_shape']
 
-        # get initial shape per level
-        initial_shapes = [i.landmarks['initial_shape'].lms for i in images]
-
+        # work out the affine transform between the initial shape of the
+        # highest pyramidal level and the initial shape of the original image
         affine_correction = AlignmentAffine(initial_shapes[-1], initial_shape)
 
-        # execute multilevel fitting
+        # run multilevel fitting
         fitting_results = self._fit(images, initial_shapes[0],
                                     max_iters=max_iters,
                                     gt_shapes=gt_shapes, **kwargs)
 
-        # store result
-        multilevel_fitting_result = self._create_fitting_result(
-            image, fitting_results, affine_correction, gt_shape=gt_shape,
-            error_type=error_type)
+        # build multilevel fitting result
+        multi_fitting_result = self._create_fitting_result(
+            image, fitting_results, affine_correction, gt_shape=gt_shape)
 
-        if verbose:
-            print(multilevel_fitting_result)
-        if view:
-            multilevel_fitting_result.view_final_fitting(new_figure=True)
-
-        return multilevel_fitting_result
+        return multi_fitting_result
 
     def perturb_shape(self, gt_shape, noise_std=0.04, rotation=False):
         r"""
@@ -189,39 +167,48 @@ class MultilevelFitter(Fitter):
 
     def _prepare_image(self, image, initial_shape, gt_shape=None):
         r"""
-        The image is first rescaled wrt the reference_landmarks and then the
-        gaussian pyramid is computed. Depending on the pyramid_on_features
-        flag, the pyramid is either applied on the feature image or
-        features are extracted at each pyramidal level.
+        Prepares the image to be fitted.
+
+        The image is first rescaled wrt the ``reference_landmarks`` and then
+        a gaussian pyramid is applied. Depending on the
+        ``pyramid_on_features`` flag, the pyramid is either applied to the
+        features image computed from the rescaled imaged or applied to the
+        rescaled image and features extracted at each pyramidal level.
 
         Parameters
         ----------
-        image: :class:`menpo.image.MaskedImage`
+        image : :map:`Image` or subclass
             The image to be fitted.
-        initial_shape: class:`menpo.shape.PointCloud`
-            The initial shape from which the fitting will start.
-        gt_shape: class:`menpo.shape.PointCloud`, optional
-            The original ground truth shape associated to the image.
 
-            Default: None
+        initial_shape : :map:`PointCloud`
+            The initial shape from which the fitting will start.
+
+        gt_shape : class : :map:`PointCloud`, optional
+            The original ground truth shape associated to the image.
 
         Returns
         -------
-        images: list of :class:`menpo.image.masked.MaskedImage`
-            List of images, each being the result of applying the pyramid.
-        """
-        # rescale image wrt the scale factor between reference_shape and
-        # initial_shape
-        image.landmarks['initial_shape'] = initial_shape
-        image = image.rescale_to_reference_shape(self.reference_shape,
-                                                 group='initial_shape')
+        images : `list` of :map:`Image` or subclass
+            The list of images that will be fitted by the fitters.
 
-        # attach given ground truth shape
+        initial_shapes : `list` of :map:`PointCloud`
+            The initial shape for each one of the previous images.
+
+        gt_shapes : `list` of :map:`PointCloud`
+            The ground truth shape for each one of the previous images.
+        """
+        # attach landmarks to the image
+        image.landmarks['initial_shape'] = initial_shape
         if gt_shape:
             image.landmarks['gt_shape'] = gt_shape
 
-        # apply pyramid
+        # rescale image wrt the scale factor between reference_shape and
+        # initial_shape
+        image = image.rescale_to_reference_shape(self.reference_shape,
+                                                 group='initial_shape')
+
         if self.n_levels > 1:
+            # pyramid cases
             if self.pyramid_on_features:
                 # compute features at highest level
                 feature_image = self.feature_type[0](image)
@@ -233,7 +220,7 @@ class MultilevelFitter(Fitter):
                 # get rescaled feature images
                 images = list(pyramid)
             else:
-                # create pyramid on intensities image
+                # apply pyramid on intensities image
                 pyramid = image.gaussian_pyramid(
                     n_levels=self.n_levels, downscale=self.downscale)
 
@@ -242,11 +229,23 @@ class MultilevelFitter(Fitter):
                           for j, i in enumerate(pyramid)]
             images.reverse()
         else:
+            # single image case
             images = [self.feature_type[0](image)]
-        return images
+
+        # get initial shapes per level
+        initial_shapes = [i.landmarks['initial_shape'].lms for i in images]
+
+        # get ground truth shapes per level
+        if gt_shape:
+            gt_shapes = [i.landmarks['gt_shape'].lms for i in images]
+            del image.landmarks['gt_shape']
+        else:
+            gt_shapes = None
+
+        return images, initial_shapes, gt_shapes
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
-                               gt_shape=None, error_type='me_norm'):
+                               gt_shape=None):
         r"""
         Creates the :class: `menpo.aam.fitting.MultipleFitting` object
         associated with a particular Fitter object.
@@ -277,8 +276,7 @@ class MultilevelFitter(Fitter):
             The fitting object that will hold the state of the fitter.
         """
         return MultilevelFittingResult(image, self, fitting_results,
-                                       affine_correction, gt_shape=gt_shape,
-                                       error_type=error_type)
+                                       affine_correction, gt_shape=gt_shape)
 
     def _fit(self, images, initial_shape, gt_shapes=None, max_iters=50,
              **kwargs):
@@ -312,6 +310,7 @@ class MultilevelFitter(Fitter):
             procedure.
         """
         shape = initial_shape
+        gt_shape = None
         n_levels = self.n_levels
 
         # check max_iters parameter
@@ -326,16 +325,15 @@ class MultilevelFitter(Fitter):
                              'containing 1 or {} elements or '
                              'None'.format(self.n_levels))
 
-        # fitting
-        gt = None
+        # fit images
         fitting_results = []
         for j, (i, f, it) in enumerate(zip(images, self._fitters, max_iters)):
             if gt_shapes is not None:
-                gt = gt_shapes[j]
+                gt_shape = gt_shapes[j]
 
             parameters = f.get_parameters(shape)
-            fitting_result = f.fit(i, parameters, gt_shape=gt, max_iters=it,
-                                   **kwargs)
+            fitting_result = f.fit(i, parameters, gt_shape=gt_shape,
+                                   max_iters=it, **kwargs)
             fitting_results.append(fitting_result)
 
             shape = fitting_result.final_shape

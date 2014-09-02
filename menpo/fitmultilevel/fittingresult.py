@@ -1,104 +1,66 @@
 from __future__ import division
-import numpy as np
 
 from menpo.transform import Scale
-from menpo.visualize.base import GraphPlotter, MultipleImageViewer
 from menpo.fit.fittingresult import FittingResult
 
 
 class MultilevelFittingResult(FittingResult):
     r"""
-    Object that holds the state of a MultipleFitter object (to which it is
-    linked) after it has fitted a particular image.
+    Class that holds the state of a :map:`MultilevelFitter` object before,
+    during and after it has fitted a particular image.
 
     Parameters
     -----------
-    image: :class:`menpo.image.masked.MaskedImage`
+    image : :map:`Image` or subclass
         The fitted image.
 
-    multiple_fitter: :class:`menpo.fitter.base.Fitter`
-        The fitter object used to fitter the image.
+    multilevel_fitter : :map:`MultilevelFitter`
+        The multilevel fitter object used to fit the image.
 
-    fitting_results: :class:`menpo.fitter.fittingresult.FittingResult` list
-        A list of basic fitting objects.
+    fitting_results : `list` of :map:`FittingResult`
+        The list of fitting results.
 
-    affine_correction: :class: `menpo.transforms.affine.Affine`
-        An affine transform that maps the result of the top resolution
-        fitting level to the space scale of the original image.
+    affine_correction : :map:`Affine`
+        The affine transform between the initial shape of the highest
+        pyramidal level and the initial shape of the original image
 
-    gt_shape: class:`menpo.shape.PointCloud`, optional
+    gt_shape : class:`PointCloud`, optional
         The ground truth shape associated to the image.
 
-        Default: None
-
-    error_type: 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between the fitted and
-        ground truth shapes is to be computed.
-
-        Default: 'me_norm'
+    error_type : 'me_norm', 'me' or 'rmse', optional.
+        Specifies the way in which the error between is computed.
     """
-
-    def __init__(self, image, multiple_fitter, fitting_results, affine_correction,
-                 gt_shape=None, error_type='me_norm'):
-        self._error_stop = None  # Internal attribute of error_type setter
+    def __init__(self, image, multiple_fitter, fitting_results,
+                 affine_correction, gt_shape=None):
+        super(MultilevelFittingResult, self).__init__(
+            image, multiple_fitter, gt_shape=gt_shape)
         self.fitting_results = fitting_results
         self._affine_correction = affine_correction
-        super(MultilevelFittingResult, self).__init__(
-            image, multiple_fitter, gt_shape=gt_shape, error_type=error_type)
 
     @property
     def n_levels(self):
         r"""
-        Returns the number of levels of the fitter object.
+        The number of levels of the fitter object.
+
+        :type: `int`
         """
         return self.fitter.n_levels
 
     @property
     def downscale(self):
         r"""
-        Returns the downscale factor used by the multiple fitter.
+        The downscale factor used by the multiple fitter.
+
+        :type: `float`
         """
         return self.fitter.downscale
 
     @property
-    def scaled_levels(self):
-        r"""
-        Returns True if the shape results returned by the basic fitting_results
-        must be scaled.
-        """
-        return True  # self.fitter.scaled_levels
-
-    @property
-    def fitted(self):
-        r"""
-        Returns the fitted state of each fitting object.
-        """
-        return [f.fitted for f in self.fitting_results]
-
-    @FittingResult.error_type.setter
-    def error_type(self, error_type):
-        r"""
-        Sets the error type according to a set of predefined options.
-        """
-        if error_type == 'me_norm':
-            for f in self.fitting_results:
-                f.error_type = error_type
-            self._error_stop = 0.1
-            self._error_text = 'Point-to-point error normalized by object ' \
-                               'size'
-        elif error_type == 'me':
-            NotImplementedError("erro_type 'me' not implemented yet")
-        elif error_type == 'rmse':
-            NotImplementedError("error_type 'rmse' not implemented yet")
-        else:
-            raise ValueError("Unknown error_type string selected. Valid"
-                             "options are: 'me_norm', 'me', 'rmse'")
-        self._error_type = error_type
-
-    @property
     def n_iters(self):
         r"""
-        Returns the total number of iterations used to fitter the image.
+        The total number of iterations used to fitter the image.
+
+        :type: `int`
         """
         n_iters = 0
         for f in self.fitting_results:
@@ -112,36 +74,32 @@ class MultilevelFittingResult(FittingResult):
 
         Parameters
         -----------
-        as_points: boolean, optional
-            Whether the results is returned as a list of PointClouds or
-            ndarrays.
-
-            Default: False
+        as_points : `boolean`, optional
+            Whether the result is returned as a `list` of :map:`PointCloud` or
+            a `list` of `ndarrays`.
 
         Returns
         -------
-        shapes: :class:`menpo.shape.PointCoulds or ndarray list
-            A list containing the shapes obtained at each fitting iteration.
+        shapes : `list` of :map:`PointCoulds` or `list` of `ndarray`
+            A list containing the fitted shapes at each iteration of
+            the fitting procedure.
         """
         n = self.n_levels - 1
-
         shapes = []
         for j, f in enumerate(self.fitting_results):
-            if self.scaled_levels:
-                transform = Scale(self.downscale**(n-j), 2)
-                for t in f.shapes(as_points=as_points):
-                    transform.apply_inplace(t)
-                    shapes.append(self._affine_correction.apply(t))
-            else:
-                for t in f.shapes(as_points=as_points):
-                    shapes.append(self._affine_correction.apply(t))
+            transform = Scale(self.downscale**(n-j), f.final_shape.n_dims)
+            for t in f.shapes(as_points=as_points):
+                t = transform.apply(t)
+                shapes.append(self._affine_correction.apply(t))
 
         return shapes
 
     @property
     def final_shape(self):
         r"""
-        Returns the final fitted shape.
+        The final fitted shape.
+
+        :type: :map:`PointCloud`
         """
         return self._affine_correction.apply(
             self.fitting_results[-1].final_shape)
@@ -149,14 +107,14 @@ class MultilevelFittingResult(FittingResult):
     @property
     def initial_shape(self):
         r"""
-        Returns the initial shape from which the fitting started.
+        The initial shape from which the fitting started.
+
+        :type: :map:`PointCloud`
         """
         n = self.n_levels - 1
-
         initial_shape = self.fitting_results[0].initial_shape
-        if self.scaled_levels:
-            Scale(self.downscale ** n,
-                  initial_shape.n_dims).apply_inplace(initial_shape)
+        Scale(self.downscale ** n, initial_shape.n_dims).apply_inplace(
+            initial_shape)
 
         return self._affine_correction.apply(initial_shape)
 
@@ -164,92 +122,80 @@ class MultilevelFittingResult(FittingResult):
     def gt_shape(self, value):
         r"""
         Setter for the ground truth shape associated to the image.
+
+        type: :map:`PointCloud`
         """
         self._gt_shape = value
 
-    def plot_error(self, figure_id=None, new_figure=False, **kwargs):
-        r"""
-        Plots the error evolution throughout the fitting.
-        """
-        if self.gt_shape is not None:
-            title = 'Error evolution'
-            legend = [self.algorithm]
-            x_label = 'Number of iterations'
-            y_label = self._error_text
-            errors = self.errors
-            x_limit = self.n_iters + self.n_levels
-            axis_limits = [0, x_limit, 0, np.max(errors)]
-            return GraphPlotter(figure_id, new_figure, range(0, x_limit),
-                                [errors], title=title, legend=legend,
-                                x_label=x_label, y_label=y_label,
-                                axis_limits=axis_limits).render(**kwargs)
-        else:
-            raise ValueError('Ground truth shape has not been set, error '
-                             'cannot be plotted')
-
     def __str__(self):
-        out = "Initial error: {0:.4f}\nFinal error: {1:.4f}".format(
-            self.initial_error, self.final_error)
+        if self.fitter.pyramid_on_features:
+            if isinstance(self.fitter.feature_type[0], str):
+                feat_str = self.fitter.feature_type[0]
+            elif self.fitter.feature_type[0] is None:
+                feat_str = "no"
+            else:
+                feat_str = self.fitter.feature_type[0].__name__
+        else:
+            feat_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.fitter.feature_type[j], str):
+                    feat_str.append(self.fitter.feature_type[j])
+                elif self.fitter.feature_type[j] is None:
+                    feat_str.append("none")
+                else:
+                    feat_str.append(self.fitter.feature_type[j].__name__)
+        out = "Fitting Result\n" \
+              " - Initial error: {0:.4f}\n" \
+              " - Final error: {1:.4f}\n" \
+              " - {2} method with {3} pyramid levels, {4} iterations " \
+              "and using {5} features.".format(
+              self.initial_error(), self.final_error(), self.fitter.algorithm,
+              self.n_levels, self.n_iters, feat_str)
         return out
 
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):
     r"""
-    Object let us recover the state of an AAM Fitter after the latter has
-    fitted a particular image.
+    Class that holds the state of a :map:`AAMFitter` object before,
+    during and after it has fitted a particular image.
 
     Parameters
     -----------
-    image: :class:`pybug.image.masked.MaskedImage`
+    image : :map:`Image` or subclass
         The fitted image.
 
-    aam_fitter: :class:`pybug.aam.fitter.AAMFitter`
-        The aam_fitter object used to fitter the image.
+    multilevel_fitter : :map:`MultilevelFitter`
+        The multilevel fitter object used to fit the image.
 
-    basic_fittings: :class:`pybug.aam.fitting.BasicFitting` list
-        A list of basic fitting objects.
+    fitting_results : `list` of :map:`FittingResult`
+        The list of fitting results.
 
-    _affine_correction: :class: `pybug.transforms.affine.Affine`
-            An affine transform that maps the result of the top resolution
-            fitting level to the space scale of the original image.
+    affine_correction : :map:`Affine`
+        The affine transform between the initial shape of the highest
+        pyramidal level and the initial shape of the original image
 
-    gt_shape: class:`pybug.shape.PointCloud`, optional
+    gt_shape : class:`PointCloud`, optional
         The ground truth shape associated to the image.
 
-        Default: None
-
-    error_type: 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between the fitted and
-        ground truth shapes is to be computed.
-
-        Default: 'me_norm'
+    error_type : 'me_norm', 'me' or 'rmse', optional.
+        Specifies the way in which the error between is computed.
     """
-
-    @property
-    def residual(self):
-        r"""
-        Returns the type of residual used by the basic fitter associated to
-        each basic fitting.
-        """
-        # TODO: ensure that all basic_fitting residuals are the same?
-        return self.fitting_results[-1].residual.type
-
     @property
     def costs(self):
         r"""
         Returns a list containing the cost at each fitting iteration.
+
+        :type: `list` of `float`
         """
         raise ValueError('costs not implemented yet.')
         #return self._flatten_out([f.costs for f in self.basic_fittings])
-
-    @staticmethod
-    def _flatten_out(list_of_lists):
-        return [i for l in list_of_lists for i in l]
 
     @property
     def final_cost(self):
         r"""
         Returns the final fitting cost.
+
+        :type: `float`
         """
         return self.fitting_results[-1].final_cost
 
@@ -257,130 +203,83 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
     def initial_cost(self):
         r"""
         Returns the initial fitting cost.
+
+        :type: `float`
         """
         return self.fitting_results[0].initial_cost
 
-    def warped_images(self, from_basic_fittings=False, as_pixels=False):
+    @property
+    def warped_images(self):
         r"""
-        Generates a list containing the warped images obtained at each fitting
+        The list containing the warped images obtained at each fitting
         iteration.
 
-        Parameters
-        -----------
-        from_basic_fittings : `boolean`, optional
-            If ``True``, the returned transform per iteration is used to warp
-            the internal image representation used by each basic fitter.
-            If ``False``, the transforms are used to warp original image.
-
-        as_pixels : `boolean`, optional
-            Whether the result is returned as a list of :map:`Image` or
-            `ndarray`.
-
-        Returns
-        -------
-        warped_images : :map:`MaskedImage` or `ndarray` list
-            A list containing the warped images obtained at each fitting
-            iteration.
+        :type: `list` of :map:`Image` or subclass
         """
-        if from_basic_fittings:
-            return self._flatten_out([f.warped_images(as_pixels=as_pixels)
-                                      for f in self.fitting_results])
-        else:
-            mask = self.fitting_results[-1].fitter.template.mask
-            transform = self.fitting_results[-1].fitter.transform
-            interpolator = self.fitting_results[-1].fitter.interpolator
-            warped_images = []
-            for t in self.shapes():
-                transform.set_target(t)
-                image = self.image.warp_to_mask(mask, transform,
-                                                interpolator=interpolator)
-                if as_pixels:
-                    image = image.pixels
-
-                warped_images.append(image)
+        mask = self.fitting_results[-1].fitter.template.mask
+        transform = self.fitting_results[-1].fitter.transform
+        interpolator = self.fitting_results[-1].fitter.interpolator
+        warped_images = []
+        for s in self.shapes():
+            transform.set_target(s)
+            image = self.image.warp_to_mask(mask, transform,
+                                            interpolator=interpolator)
+            warped_images.append(image)
 
         return warped_images
 
-    def appearance_reconstructions(self, as_pixels=False):
+    @property
+    def appearance_reconstructions(self):
         r"""
-        Generates a list containing the appearance reconstruction obtained at
+        The list containing the appearance reconstruction obtained at
         each fitting iteration.
 
-        Parameters
-        ----------
-        as_pixels : `boolean`, optional
-            Whether the result is returned as a list of :map:`Image` or
-            `ndarray`.
-
-        Returns
-        -------
-        appearance_reconstructions : :map:`MaskedImage` or `ndarray` list
-            A list containing the appearance reconstructions obtained at each
-            fitting iteration.
+        :type: `list` of :map:`Image` or subclass
         """
-        return self._flatten_out(
-            [f.appearance_reconstructions(as_pixels=as_pixels)
-             for f in self.fitting_results])
+        return _flatten_out(
+            [f.appearance_reconstructions for f in self.fitting_results])
 
-    def plot_cost(self, figure_id=None, new_figure=False, **kwargs):
+    @property
+    def error_images(self):
         r"""
-        Plots the cost evolution throughout the fitting.
-        """
-        title = 'Cost evolution'
-        legend = self.algorithm
-        x_label = 'Number of iterations'
-        y_label = 'Normalized cost'
-        costs = [c for cost in self.costs for c in cost]
-        total_n_iters = self.n_iters + self.n_levels
-        axis_limits = [0, total_n_iters, 0, max(costs)]
-        return GraphPlotter(figure_id, new_figure,
-                            range(0, self.n_iters+self.n_levels), costs,
-                            title=title, legend=legend, x_label=x_label,
-                            y_label=y_label,
-                            axis_limits=axis_limits).render(**kwargs)
+        The list containing the error images obtained at each fitting
+        iteration.
 
-    def view_warped_images(self, figure_id=None, new_figure=False,
-                           channels=None, from_basic_fittings=False,
-                           **kwargs):
+        :type: `list` of :map:`Image` or subclass
+        """
+        return _flatten_out(
+            [f.error_images for f in self.fitting_results])
+
+    @property
+    def aam_reconstructions(self):
         r"""
-        Displays the warped images.
+        The list containing the aam reconstruction (i.e. the appearance
+        reconstruction warped on the shape instance reconstruction) obtained at
+        each fitting iteration.
+
+        Note that this reconstruction is only tested to work for the
+        :map:`OrthoMDTransform`
+
+        :type: list` of :map:`Image` or subclass
         """
-        pixels_list = self.warped_images(
-            from_basic_fittings=from_basic_fittings, as_pixels=True)
-        return self._view_images(pixels_list, figure_id=figure_id,
-                                 new_figure=new_figure, channels=channels,
-                                 **kwargs)
+        aam_reconstructions = []
+        for level, f in enumerate(self.fitting_results):
+            if f.weights:
+                for sw, aw in zip(f.parameters, f.weights):
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=awt, level=level))
+            else:
+                for sw in f.parameters:
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=None,
+                        level=level))
+        return aam_reconstructions
 
-    def view_appearance_reconstructions(self, figure_id=None,
-                                        new_figure=False, channels=None,
-                                        **kwargs):
-        r"""
-        Displays the appearance reconstructions.
-        """
-        pixels_list = self.appearance_reconstructions(as_pixels=True)
-        return self._view_images(pixels_list, figure_id=figure_id,
-                                 new_figure=new_figure, channels=channels,
-                                 **kwargs)
 
-    def view_error_images(self, figure_id=None, new_figure=False,
-                          channels=None, **kwargs):
-        r"""
-        Displays the error images.
-        """
-        warped_images = self.warped_images(as_pixels=True)
-        appearances = self.appearance_reconstructions(as_pixels=True)
-        pixels_list = [a - i for a, i in zip(appearances, warped_images)]
-        return self._view_images(pixels_list, figure_id=figure_id,
-                                 new_figure=new_figure, channels=channels,
-                                 **kwargs)
-
-    def _view_images(self, pixels_list, figure_id=None, new_figure=False,
-                     channels=None, **kwargs):
-        return MultipleImageViewer(figure_id, new_figure,
-                                   self.image.n_dims, pixels_list,
-                                   channels=channels).render(**kwargs)
-
-    def print_fitting_info(self):
-        super(AAMMultilevelFittingResult, self).print_fitting_info()
-        #print "Initial cost: {}".format(self.initial_cost)
-        #print "Final cost: {}".format(self.final_cost)
+def _flatten_out(list_of_lists):
+    return [i for l in list_of_lists for i in l]

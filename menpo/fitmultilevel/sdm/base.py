@@ -17,7 +17,7 @@ class SDFitter(MultilevelFitter):
         pass
 
     def fit(self, image, initial_shape, max_iters=None, gt_shape=None,
-            error_type='me_norm', verbose=False, view=False, **kwargs):
+            **kwargs):
         r"""
         Fits a single image.
 
@@ -40,17 +40,6 @@ class SDFitter(MultilevelFitter):
         gt_shape : :map:`PointCloud`
             The groundtruth shape of the image.
 
-        error_type : {'me_norm', 'me', 'rmse'}, optional.
-            Specifies the way in which the error between the fitted and
-            ground truth shapes is to be computed.
-
-        verbose: `boolean`, optional
-            Whether or not to print information related to the fitting
-            results (such as: ``final error``, ``convergence``, ...).
-
-        view : `boolean`, optional
-            Whether or not the fitting results are to be displayed.
-
         **kwargs : `dict`
             optional arguments to be passed through.
 
@@ -63,8 +52,7 @@ class SDFitter(MultilevelFitter):
             max_iters = self.n_levels
         return MultilevelFitter.fit(self, image, initial_shape,
                                     max_iters=max_iters, gt_shape=gt_shape,
-                                    error_type=error_type, verbose=verbose,
-                                    view=view, **kwargs)
+                                    **kwargs)
 
 
 class SDMFitter(SDFitter):
