@@ -1,6 +1,6 @@
 import numpy as np
 
-from .landmark import ASFImporter, PTSImporter, TXTImporter
+from .landmark import ASFImporter, PTSImporter
 
 
 class ImageASFImporter(ASFImporter):
