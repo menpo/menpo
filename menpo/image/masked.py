@@ -4,6 +4,7 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
+gradient = None  # avoid circular reference, from menpo.feature
 
 from .base import Image
 from .boolean import BooleanImage
@@ -611,8 +612,8 @@ class MaskedImage(Image):
 
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
-        Returns a MaskedImage which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
+        Returns a :map:`MaskedImage` which is the gradient of this one. In the
+        case of multiple channels, it returns the gradient over each axis over
         each channel as a flat list.
 
         Parameters
@@ -627,20 +628,19 @@ class MaskedImage(Image):
 
         Returns
         -------
-        gradient : :class:`MaskedImage`
+        gradient : :map:`MaskedImage`
             The gradient over each axis over each channel. Therefore, the
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
-        from menpo.feature import gradient
-        global binary_erosion
-        if binary_erosion is None:
-            from scipy.ndimage import binary_erosion  # expensive
-        grad_image_pixels = gradient(self.pixels)
-        grad_image = MaskedImage(grad_image_pixels,
-                                 mask=self.mask.copy(), copy=False)
-
+        global binary_erosion, gradient
+        if gradient is None:
+            from menpo.feature import gradient  # avoid circular reference
+        # use the feature to take the gradient as normal
+        grad_image = gradient(self)
         if nullify_values_at_mask_boundaries:
+            if binary_erosion is None:
+                from scipy.ndimage import binary_erosion  # expensive
             # Erode the edge of the mask in by one pixel
             eroded_mask = binary_erosion(self.mask.mask, iterations=1)
 
@@ -649,11 +649,10 @@ class MaskedImage(Image):
             np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
-        grad_image.landmarks = self.landmarks
         return grad_image
 
     # TODO maybe we should be stricter about the trilist here, feels flakey
-    def constrain_mask_to_landmarks(self, group=None, label='all',
+    def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
@@ -698,8 +697,7 @@ class MaskedImage(Image):
         except TriangleContainmentError as e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 
-    def build_mask_around_landmarks(self, patch_size, group=None,
-                                    label=None):
+    def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
         around the landmarks chosen.

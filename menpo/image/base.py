@@ -529,10 +529,7 @@ class Image(Vectorizable, LandmarkableViewable):
             The length of a 2D, 3-channel image, will have length `6`.
         """
         from menpo.feature import gradient
-        grad_image_pixels = gradient(self.pixels)
-        grad_image = Image(grad_image_pixels, copy=False)
-        grad_image.landmarks = self.landmarks
-        return grad_image
+        return gradient(self)
 
     def crop_inplace(self, min_indices, max_indices,
                      constrain_to_boundary=True):
