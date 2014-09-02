@@ -1,6 +1,5 @@
 from __future__ import division
 import abc
-from copy import deepcopy
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
@@ -210,7 +209,7 @@ class NonParametricFittingResult(FittingResult):
 
     def shapes(self, as_points=False):
         if as_points:
-            return [deepcopy(s.points) for s in self.parameters]
+            return [s.points.copy() for s in self.parameters]
 
         else:
             return self.parameters
