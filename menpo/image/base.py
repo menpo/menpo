@@ -830,8 +830,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # build a warped version of the image
         warped_image = self._build_warped_to_mask(template_mask,
                                                   sampled_pixel_values)
-
-        if warp_landmarks:
+        if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
@@ -911,7 +910,7 @@ class Image(Vectorizable, LandmarkableViewable):
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
-        if warp_landmarks:
+        if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse.apply_inplace(warped_image.landmarks)
         return warped_image
