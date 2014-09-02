@@ -297,7 +297,7 @@ class BooleanImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     mode='constant', cval=0., interpolator='scipy'):
+                     mode='constant', cval=0.):
         r"""
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
@@ -328,9 +328,6 @@ class BooleanImage(Image):
             Used in conjunction with mode 'constant', the value outside
             the image boundaries.
 
-        interpolator : ``'scipy'``, optional
-            The interpolator that should be used to perform the warp.
-
         Returns
         -------
         warped_image : :map:`BooleanImage`
@@ -339,8 +336,7 @@ class BooleanImage(Image):
         # enforce the order as 0, for this boolean data, then call super
         return Image.warp_to_mask(self, template_mask, transform,
                                   warp_landmarks=warp_landmarks,
-                                  order=0, mode=mode, cval=cval,
-                                  interpolator=interpolator)
+                                  order=0, mode=mode, cval=cval)
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,

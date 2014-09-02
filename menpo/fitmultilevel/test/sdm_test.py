@@ -38,8 +38,7 @@ aam = AAMBuilder(feature_type=sparse_hog,
                  pyramid_on_features=True,
                  max_shape_components=None,
                  max_appearance_components=3,
-                 boundary=3,
-                 interpolator='scipy').build(training_images, group='PTS')
+                 boundary=3).build(training_images, group='PTS')
 
 clm = CLMBuilder(classifier_type=linear_svm_lr,
                  feature_type=[sparse_hog],
@@ -50,8 +49,7 @@ clm = CLMBuilder(classifier_type=linear_svm_lr,
                  scaled_shape_models=True,
                  pyramid_on_features=True,
                  max_shape_components=25,
-                 boundary=3,
-                 interpolator='scipy').build(training_images, group='PTS')
+                 boundary=3).build(training_images, group='PTS')
 
 @raises(ValueError)
 def test_feature_type_exception():
@@ -123,6 +121,5 @@ def test_verbose_mock(mock_stdout):
                      pyramid_on_features=True,
                      noise_std=0.04,
                      rotation=False,
-                     n_perturbations=2,
-                     interpolator='scipy').train(training_images, group='PTS',
-                                                 verbose=True)
+                     n_perturbations=2).train(training_images, group='PTS',
+                                              verbose=True)

@@ -33,8 +33,7 @@ aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
                   pyramid_on_features=False,
                   max_shape_components=[1, 2, 3],
                   max_appearance_components=[3, 3, 3],
-                  boundary=3,
-                  interpolator='scipy').build(training, group='PTS')
+                  boundary=3).build(training, group='PTS')
 
 aam2 = AAMBuilder(feature_type=no_op,
                   transform=ThinPlateSplines,
@@ -46,8 +45,7 @@ aam2 = AAMBuilder(feature_type=no_op,
                   pyramid_on_features=False,
                   max_shape_components=None,
                   max_appearance_components=1,
-                  boundary=0,
-                  interpolator='scipy').build(training, group='PTS')
+                  boundary=0).build(training, group='PTS')
 
 aam3 = AAMBuilder(feature_type=igo,
                   transform=ThinPlateSplines,
@@ -59,8 +57,7 @@ aam3 = AAMBuilder(feature_type=igo,
                   pyramid_on_features=True,
                   max_shape_components=[2],
                   max_appearance_components=10,
-                  boundary=2,
-                  interpolator='scipy').build(training, group='PTS')
+                  boundary=2).build(training, group='PTS')
 
 aam4 = PatchBasedAAMBuilder(feature_type=lbp,
                             patch_shape=(10, 13),
@@ -71,9 +68,7 @@ aam4 = PatchBasedAAMBuilder(feature_type=lbp,
                             pyramid_on_features=True,
                             max_shape_components=1,
                             max_appearance_components=None,
-                            boundary=2,
-                            interpolator='scipy').build(training,
-                                                        group='PTS')
+                            boundary=2).build(training, group='PTS')
 
 
 @raises(ValueError)
@@ -144,7 +139,6 @@ def test_aam_1():
     assert(aam1.n_levels == 3)
     assert(aam1.downscale == 2)
     #assert(aam1.feature_type[0] == igo and aam1.feature_type[2] == no_op)
-    assert(aam1.interpolator == 'scipy')
     assert_allclose(np.around(aam1.reference_shape.range()), (109., 103.))
     assert(not aam1.scaled_shape_models)
     assert(not aam1.pyramid_on_features)
@@ -163,7 +157,6 @@ def test_aam_2():
     assert (aam2.n_levels == 2)
     assert (aam2.downscale == 1.2)
     #assert (aam2.feature_type[0] == no_op and aam2.feature_type[1] == no_op)
-    assert (aam2.interpolator == 'scipy')
     assert_allclose(np.around(aam2.reference_shape.range()), (169., 161.))
     assert aam2.scaled_shape_models
     assert (not aam2.pyramid_on_features)
@@ -182,7 +175,6 @@ def test_aam_3():
     assert (aam3.n_levels == 1)
     assert (aam3.downscale == 3)
     #assert (aam3.feature_type[0] == igo and len(aam3.feature_type) == 1)
-    assert (aam3.interpolator == 'scipy')
     assert_allclose(np.around(aam3.reference_shape.range()), (169., 161.))
     assert aam3.scaled_shape_models
     assert aam3.pyramid_on_features
@@ -201,7 +193,6 @@ def test_aam_4():
     assert (aam4.n_levels == 2)
     assert (aam4.downscale == 1.2)
     #assert (aam4.feature_type[0] == lbp)
-    assert (aam4.interpolator == 'scipy')
     assert_allclose(np.around(aam4.reference_shape.range()), (145., 138.))
     assert aam4.scaled_shape_models
     assert aam4.pyramid_on_features

@@ -165,7 +165,7 @@ class DeformableModelBuilder(object):
     @classmethod
     def _normalization_wrt_reference_shape(cls, images, group, label,
                                            normalization_diagonal,
-                                           interpolator, verbose=False):
+                                           verbose=False):
         r"""
         Function that normalizes the images sizes with respect to the reference
         shape (mean shape) scaling. This step is essential before building a
@@ -180,14 +180,17 @@ class DeformableModelBuilder(object):
 
         Parameters
         ----------
-        images: list of :class:`menpo.image.MaskedImage`
+        images: list of :map:`MaskedImage`
             The set of landmarked images from which to build the model.
+
         group : string
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
+
         label: string
             The label of of the landmark manager that you wish to use. If no
             label is passed, the convex hull of all landmarks is used.
+
         normalization_diagonal: int
             During building an AAM, all images are rescaled to ensure that the
             scale of their landmarks matches the scale of the mean shape.
@@ -201,8 +204,7 @@ class DeformableModelBuilder(object):
             landmarks, this kwarg also specifies the diagonal length of the
             reference frame (provided that features computation does not change
             the image size).
-        interpolator: string
-            The interpolator that should be used to perform the warps.
+
         verbose: bool, Optional
             Flag that controls information and progress printing.
 

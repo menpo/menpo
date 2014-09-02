@@ -151,8 +151,7 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
                                 'max_appearance_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the AAMBuilder
         documentation.
@@ -323,8 +322,7 @@ def clm_build_benchmark(training_images, training_options=None, verbose=False):
                                 'scaled_shape_models': True,
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the CLMBuilder
         documentation.
@@ -494,8 +492,7 @@ def sdm_build_benchmark(training_images, training_options=None, verbose=False):
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
                                 'max_appearance_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the AAMBuilder
         documentation.

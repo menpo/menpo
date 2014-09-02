@@ -135,9 +135,6 @@ class CLMBuilder(DeformableModelBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
     Returns
     -------
     clm : :map:`CLMBuilder`
@@ -147,7 +144,7 @@ class CLMBuilder(DeformableModelBuilder):
                  feature_type=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
                  pyramid_on_features=False, max_shape_components=None,
-                 boundary=3, interpolator='scipy'):
+                 boundary=3):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -171,7 +168,6 @@ class CLMBuilder(DeformableModelBuilder):
         self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
     def build(self, images, group=None, label=None, verbose=False):
         r"""
@@ -197,10 +193,10 @@ class CLMBuilder(DeformableModelBuilder):
             The CLM object
         """
         # compute reference_shape and normalize images size
-        self.reference_shape, normalized_images = \
+        self.reference_shape, normalized_images = (
             self._normalization_wrt_reference_shape(
                 images, group, label, self.normalization_diagonal,
-                self.interpolator, verbose=verbose)
+                verbose=verbose))
 
         # create pyramid
         generators = self._create_pyramid(normalized_images, self.n_levels,
@@ -352,7 +348,7 @@ class CLMBuilder(DeformableModelBuilder):
         return CLM(shape_models, classifiers, n_training_images,
                    self.patch_shape, self.feature_type, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
-                   self.pyramid_on_features, self.interpolator)
+                   self.pyramid_on_features)
 
 
 class CLM(object):
@@ -426,12 +422,10 @@ class CLM(object):
         If False, the Gaussian pyramid was applied on the original images
         (intensities) and then features were extracted at each level.
 
-    interpolator : `string`
-        The interpolator that was used to build the CLM.
     """
     def __init__(self, shape_models, classifiers, n_training_images,
                  patch_shape, feature_type, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features, interpolator):
+                 scaled_shape_models, pyramid_on_features):
         self.shape_models = shape_models
         self.classifiers = classifiers
         self.n_training_images = n_training_images
@@ -441,7 +435,6 @@ class CLM(object):
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
-        self.interpolator = interpolator
 
     @property
     def n_levels(self):

@@ -75,15 +75,6 @@ class AAMFitter(MultilevelFitter):
         """
         return self.aam.pyramid_on_features
 
-    @property
-    def interpolator(self):
-        r"""
-        The interpolator used during AAM building.
-
-        :type: `str`
-        """
-        return self.aam.interpolator
-
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None):
         r"""

@@ -52,13 +52,6 @@ class MultilevelFitter(Fitter):
         """
         pass
 
-    @abc.abstractproperty
-    def interpolator(self):
-        r"""
-        Returns the type of interpolator used by the fitter.
-        """
-        pass
-
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
             **kwargs):
         r"""

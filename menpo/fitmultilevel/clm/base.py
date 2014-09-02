@@ -75,15 +75,6 @@ class CLMFitter(MultilevelFitter):
         """
         return self.clm.pyramid_on_features
 
-    @property
-    def interpolator(self):
-        r"""
-        The interpolator used during CLM building.
-
-        :type: `string`
-        """
-        return self.clm.interpolator
-
 
 class GradientDescentCLMFitter(CLMFitter):
     r"""

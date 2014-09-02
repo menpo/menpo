@@ -423,7 +423,7 @@ class MaskedImage(Image):
                           constrain_to_boundary=constrain_to_boundary)
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     order=1, mode='constant', cval=0., interpolator='scipy'):
+                     order=1, mode='constant', cval=0.):
         r"""
         Warps this image into a different reference space.
 
@@ -459,9 +459,6 @@ class MaskedImage(Image):
             Used in conjunction with mode 'constant', the value outside
             the image boundaries.
 
-        interpolator : ``'scipy'``, optional
-            The interpolator that should be used to perform the warp.
-
         Returns
         -------
         warped_image : ``type(self)``
@@ -471,12 +468,10 @@ class MaskedImage(Image):
         # with a blank mask
         warped_image = Image.warp_to_mask(self, template_mask, transform,
                                           warp_landmarks=warp_landmarks,
-                                          order=order, mode=mode, cval=cval,
-                                          interpolator=interpolator)
+                                          order=order, mode=mode, cval=cval)
         warped_mask = self.mask.warp_to_mask(template_mask, transform,
                                              warp_landmarks=warp_landmarks,
-                                             mode=mode, cval=cval,
-                                             interpolator=interpolator)
+                                             mode=mode, cval=cval)
         warped_image.mask = warped_mask
         return warped_image
 

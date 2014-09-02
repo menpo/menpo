@@ -773,7 +773,7 @@ class Image(Vectorizable, LandmarkableViewable):
         return bounded_points
 
     def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
-                     order=1, mode='constant', cval=0., interpolator='scipy'):
+                     order=1, mode='constant', cval=0.):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -812,22 +812,12 @@ class Image(Vectorizable, LandmarkableViewable):
             Used in conjunction with mode 'constant', the value outside
             the image boundaries.
 
-        interpolator : ``'scipy'``, optional
-            The interpolator that should be used to perform the warp.
-
         Returns
         -------
         warped_image : :map:`MaskedImage`
             A copy of this image, warped.
 
         """
-        # configure the interpolator we are going to use for the warp
-        # currently only scipy is supported but in the future we may have CUDA
-        if interpolator == 'scipy':
-            _interpolator = scipy_interpolation
-        else:
-            raise ValueError("Don't understand interpolator '{}': needs to "
-                             "be 'scipy'".format(interpolator))
         if self.n_dims != transform.n_dims:
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
@@ -836,9 +826,8 @@ class Image(Vectorizable, LandmarkableViewable):
         points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of
         # sampled pixels. Store those in a (n_pixels, n_channels) array.
-        sampled_pixel_values = _interpolator(self.pixels, points_to_sample,
-                                             order=order, mode=mode,
-                                             cval=cval)
+        sampled_pixel_values = scipy_interpolation(
+            self.pixels, points_to_sample, order=order, mode=mode, cval=cval)
         # set any nan values to 0
         sampled_pixel_values[np.isnan(sampled_pixel_values)] = 0
         # build a warped version of the image

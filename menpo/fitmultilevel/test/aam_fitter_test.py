@@ -322,8 +322,7 @@ aam = AAMBuilder(feature_type=[igo],
                  pyramid_on_features=True,
                  max_shape_components=[1, 2, 3],
                  max_appearance_components=[3, 2, 1],
-                 boundary=3,
-                 interpolator='scipy').build(training_images, group='PTS')
+                 boundary=3).build(training_images, group='PTS')
 
 aam2 = AAMBuilder(feature_type=[igo],
                   transform=PiecewiseAffine,
@@ -336,8 +335,7 @@ aam2 = AAMBuilder(feature_type=[igo],
                   pyramid_on_features=True,
                   max_shape_components=[1],
                   max_appearance_components=[1],
-                  boundary=3,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  boundary=3).build(training_images, group='PTS')
 
 
 def test_aam():
@@ -345,7 +343,6 @@ def test_aam():
     assert (aam.n_levels == 3)
     assert (aam.downscale == 2)
     #assert (aam.feature_type[0] == igo and len(aam.feature_type) == 1)
-    assert (aam.interpolator == 'scipy')
     assert_allclose(np.around(aam.reference_shape.range()), (109., 103.))
     assert aam.scaled_shape_models
     assert aam.pyramid_on_features

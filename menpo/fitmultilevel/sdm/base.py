@@ -125,9 +125,6 @@ class SDMFitter(SDFitter):
 
         If ``False``, the Gaussian pyramid is applied on the original images
         (intensities) and then features will be extracted at each level.
-        
-    interpolator : `string`
-        The interpolator that was used during training.
 
     References
     ----------
@@ -138,13 +135,11 @@ class SDMFitter(SDFitter):
        May, 2013
     """
     def __init__(self, regressors, n_training_images, feature_type,
-                 reference_shape, downscale, pyramid_on_features,
-                 interpolator):
+                 reference_shape, downscale, pyramid_on_features):
         self._fitters = regressors
         self._feature_type = feature_type
         self._reference_shape = reference_shape
         self._downscale = downscale
-        self._interpolator = interpolator
         self._pyramid_on_features = pyramid_on_features
         self._n_training_images = n_training_images
 
@@ -208,15 +203,6 @@ class SDMFitter(SDFitter):
         :type: `boolean`
         """
         return self._pyramid_on_features
-
-    @property
-    def interpolator(self):
-        r"""
-        The employed interpolator.
-
-        :type: `string`
-        """
-        return self._interpolator
 
     def __str__(self):
         out = "Supervised Descent Method\n" \

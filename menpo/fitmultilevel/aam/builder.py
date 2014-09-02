@@ -138,10 +138,6 @@ class AAMBuilder(DeformableModelBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
-
     Returns
     -------
     aam : :map:`AAMBuilder`
@@ -174,8 +170,7 @@ class AAMBuilder(DeformableModelBuilder):
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
-                 max_appearance_components=None, boundary=3,
-                 interpolator='scipy'):
+                 max_appearance_components=None, boundary=3):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -199,7 +194,6 @@ class AAMBuilder(DeformableModelBuilder):
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
     def build(self, images, group=None, label=None, verbose=False):
         r"""
@@ -229,10 +223,10 @@ class AAMBuilder(DeformableModelBuilder):
             to highest level
         """
         # compute reference_shape and normalize images size
-        self.reference_shape, normalized_images = \
+        self.reference_shape, normalized_images = (
             self._normalization_wrt_reference_shape(
                 images, group, label, self.normalization_diagonal,
-                self.interpolator, verbose=verbose)
+                verbose=verbose))
 
         # create pyramid
         generators = self._create_pyramid(normalized_images, self.n_levels,
@@ -320,8 +314,7 @@ class AAMBuilder(DeformableModelBuilder):
                         level_str,
                         progress_bar_str(float(c + 1) / len(feature_images),
                                          show_bar=False)))
-                warped_images.append(i.warp_to_mask(
-                    reference_frame.mask, t, interpolator=self.interpolator))
+                warped_images.append(i.warp_to_mask(reference_frame.mask, t))
 
             # attach reference_frame to images' source shape
             for i in warped_images:
@@ -391,7 +384,7 @@ class AAMBuilder(DeformableModelBuilder):
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.feature_type, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
-                   self.pyramid_on_features, self.interpolator)
+                   self.pyramid_on_features)
 
 
 class PatchBasedAAMBuilder(AAMBuilder):
@@ -528,9 +521,6 @@ class PatchBasedAAMBuilder(AAMBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
     Returns
     -------
     aam : ::map:`PatchBasedAAMBuilder`
@@ -563,7 +553,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
                  normalization_diagonal=None, n_levels=3, downscale=2,
                  scaled_shape_models=True, pyramid_on_features=True,
                  max_shape_components=None, max_appearance_components=None,
-                 boundary=3, interpolator='scipy'):
+                 boundary=3):
         # check parameters
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -587,7 +577,6 @@ class PatchBasedAAMBuilder(AAMBuilder):
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
         # patch-based AAMs can only work with TPS transform
         self.transform = ThinPlateSplines
@@ -645,7 +634,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
                              self.transform, self.feature_type,
                              self.reference_shape, self.downscale,
                              self.scaled_shape_models,
-                             self.pyramid_on_features, self.interpolator)
+                             self.pyramid_on_features)
 
 
 class AAM(object):
@@ -726,12 +715,10 @@ class AAM(object):
         Note that from our experience, if ``pyramid_on_features`` is ``True``,
         AAMs tend to have slightly better performance.
 
-    interpolator : `string`
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, feature_type, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features, interpolator):
+                 scaled_shape_models, pyramid_on_features):
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
@@ -741,7 +728,6 @@ class AAM(object):
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
-        self.interpolator = interpolator
 
     @property
     def n_levels(self):
@@ -833,7 +819,7 @@ class AAM(object):
             reference_frame.landmarks['source'].lms, landmarks)
 
         return appearance_instance.warp_to_mask(
-            reference_frame.mask, transform, self.interpolator)
+            reference_frame.mask, transform)
 
     def _build_reference_frame(self, reference_shape, landmarks):
         if type(landmarks) == TriMesh:
@@ -896,8 +882,8 @@ class AAM(object):
                     ch_str.append("channel")
                 else:
                     ch_str.append("channels")
-        out = "{} - Warp using {} transform with '{}' interpolation.\n".format(
-            out, self.transform.__name__, self.interpolator)
+        out = "{} - Warp using {} transform.\n".format(out,
+                                                       self.transform.__name__)
         if self.n_levels > 1:
             if self.scaled_shape_models:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
@@ -1047,18 +1033,14 @@ class PatchBasedAAM(AAM):
 
         Note that from our experience, if ``pyramid_on_features`` is ``True``,
         AAMs tend to have slightly better performance.
-
-    interpolator : string
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  patch_shape, transform, feature_type, reference_shape,
-                 downscale, scaled_shape_models, pyramid_on_features,
-                 interpolator):
+                 downscale, scaled_shape_models, pyramid_on_features):
         super(PatchBasedAAM, self).__init__(
             shape_models, appearance_models, n_training_images, transform,
             feature_type, reference_shape, downscale, scaled_shape_models,
-            pyramid_on_features, interpolator)
+            pyramid_on_features)
         self.patch_shape = patch_shape
 
     def _build_reference_frame(self, reference_shape, landmarks):

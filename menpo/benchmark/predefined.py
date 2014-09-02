@@ -40,8 +40,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -118,8 +117,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                         'pyramid_on_features': False,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -200,8 +198,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -279,8 +276,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 100,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -360,8 +356,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
                         'scaled_shape_models': True,
                         'pyramid_on_features': False,
                         'max_shape_components': None,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                        'pdm_transform': OrthoPDM,
@@ -438,8 +433,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                         'scaled_shape_models': True,
                         'pyramid_on_features': False,
                         'max_shape_components': None,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                        'pdm_transform': OrthoPDM,
@@ -518,8 +512,7 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
                         'noise_std': 0.08,
                         'patch_shape': (16, 16),
                         'n_perturbations': 15,
-                        'pyramid_on_features': False,
-                        'interpolator': 'scipy'
+                        'pyramid_on_features': False
     }
     fitting_options = {
                        'error_type': 'me_norm'
@@ -644,8 +637,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                             'pyramid_on_features': True,
                             'max_shape_components': 25,
                             'max_appearance_components': 250,
-                            'boundary': 3,
-                            'interpolator': 'scipy'
+                            'boundary': 3
                             }
         fitting_options = {'algorithm': AlternatingInverseCompositional,
                            'md_transform': OrthoMDTransform,
@@ -777,8 +769,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                             'scaled_shape_models': False,
                             'pyramid_on_features': True,
                             'max_shape_components': None,
-                            'boundary': 3,
-                            'interpolator': 'scipy'
+                            'boundary': 3
                             }
         fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                            'pdm_transform': OrthoPDM,
