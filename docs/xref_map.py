@@ -1,6 +1,7 @@
 xref_map = {
 'as_vector': ('function', 'menpo.base.Vectorizable.as_vector'),
 'AAM': ('class', 'menpo.fitmultilevel.aam.builder.AAM'),
+'AAMFitter': ('class', 'menpo.fitmultilevel.aam.base.AAMFitter'),
 'AAMMultilevelFittingResult': ('class', 'menpo.fitmultilevel.fittingresult.AAMMultilevelFittingResult'),
 'AppearanceLucasKanade': ('class', 'menpo.fit.lucaskanade.appearance.base.AppearanceLucasKanade'),
 '_apply': ('function', 'menpo.transform.base.Transform._apply'),
@@ -38,8 +39,10 @@ xref_map = {
 'MaskedImage': ('class', 'menpo.image.masked.MaskedImage'),
 'ModelDrivenTransform': ('class', 'menpo.transform.modeldriven.ModelDrivenTransform'),
 'MeanInstanceLinearModel': ('class', 'menpo.model.base.MeanInstanceLinearModel'),
+'MultilevelFitter': ('class', 'menpo.fitmultilevel.base.MultilevelFitter'),
 'MultipleAlignment': ('class', 'menpo.transform.groupalign.base.MultipleAlignment'),
 'OrthoPDM':  ('class', 'menpo.model.modelinstance.OrthoPDM'),
+'OrthoMDTransform':  ('class', 'menpo.transform.modeldriven.OrthoMDTransform'),
 'PCAModel': ('class', 'menpo.model.pca.PCAModel'),
 'PDM': ('class', 'menpo.model.modelinstance.PDM'),
 'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),

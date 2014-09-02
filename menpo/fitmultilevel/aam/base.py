@@ -85,7 +85,7 @@ class AAMFitter(MultilevelFitter):
         return self.aam.interpolator
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
-                               gt_shape=None, error_type='me_norm'):
+                               gt_shape=None):
         r"""
         Creates a :map:`AAMMultilevelFittingResult` associated to a
         particular fitting of the AAM fitter.
@@ -117,8 +117,7 @@ class AAMFitter(MultilevelFitter):
             fitter for a particular fitting.
         """
         return AAMMultilevelFittingResult(
-            image, self, fitting_results, affine_correction, gt_shape=gt_shape,
-            error_type=error_type)
+            image, self, fitting_results, affine_correction, gt_shape=gt_shape)
 
 
 class LucasKanadeAAMFitter(AAMFitter):

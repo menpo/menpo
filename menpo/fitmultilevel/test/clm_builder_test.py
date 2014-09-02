@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from nose.tools import raises
 
 import menpo.io as mio
-from menpo.landmark import labeller, ibug_68_trimesh
+from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.feature import sparse_hog, igo, no_op
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
@@ -28,7 +28,7 @@ training_images = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
-    labeller(im, 'PTS', ibug_68_trimesh)
+    labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
     training_images.append(im)

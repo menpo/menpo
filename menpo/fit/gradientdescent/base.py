@@ -204,5 +204,4 @@ class RegularizedLandmarkMeanShift(GradientDescent):
             error = np.abs(np.linalg.norm(delta_p))
             n_iters += 1
 
-        fitting_result.fitted = True
         return fitting_result
