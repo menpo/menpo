@@ -1,4 +1,5 @@
 import os
+import sys
 from setuptools import setup, find_packages
 import versioneer
 
@@ -45,6 +46,9 @@ else:
                         # Visualization
                         'matplotlib>=1.2.1',
                         'mayavi>=4.3.0']
+
+    if sys.version_info.major == 2:
+        install_requires.append('pathlib>=1.0')
 
 # Versioneer allows us to automatically generate versioning from
 # our git tagging system which makes releases simpler.
