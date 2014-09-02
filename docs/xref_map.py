@@ -42,6 +42,7 @@ xref_map = {
 'MultilevelFitter': ('class', 'menpo.fitmultilevel.base.MultilevelFitter'),
 'MultipleAlignment': ('class', 'menpo.transform.groupalign.base.MultipleAlignment'),
 'OrthoPDM':  ('class', 'menpo.model.modelinstance.OrthoPDM'),
+'OrthoMDTransform':  ('class', 'menpo.transform.modeldriven.OrthoMDTransform'),
 'PCAModel': ('class', 'menpo.model.pca.PCAModel'),
 'PDM': ('class', 'menpo.model.modelinstance.PDM'),
 'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),

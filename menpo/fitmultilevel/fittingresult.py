@@ -258,12 +258,15 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         reconstruction warped on the shape instance reconstruction) obtained at
         each fitting iteration.
 
+        Note that this reconstruction is only tested to work for the
+        :map:`OrthoMDTransform`
+
         :type: list` of :map:`Image` or subclass
         """
         aam_reconstructions = []
         for level, f in enumerate(self.fitting_results):
             if f.weights:
-                for (sw, aw) in zip(f.parameters, f.weights):
+                for sw, aw in zip(f.parameters, f.weights):
                     sw = sw[4:]
                     swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
                     awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
