@@ -1,8 +1,9 @@
 from __future__ import division
 import abc
 import numpy as np
+import wrapt
 
-from menpo.feature import no_op
+
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
@@ -11,15 +12,18 @@ from .functions import mean_pointcloud
 
 
 # tests currently expect that all features automatically constrain landmarks
-# small wrapper which does this.
-def constrain_landmarks(f):
+# small wrapper which does this. Note that this decorator only works when
+# called with menpo Image instances.
+@wrapt.decorator
+def constrain_landmarks(wrapped, instance, args, kwargs):
 
-    def constrained(image, *args, **kwargs):
-        feature = f(image, *args, **kwargs)
+    def _execute(image, *args, **kwargs):
+        feature = wrapped(image, *args, **kwargs)
+        # after calculation, constrain the landmarks to the bounds
         feature.constrain_landmarks_to_bounds()
         return feature
 
-    return constrained
+    return _execute(*args, **kwargs)
 
 
 def validate_features(features, n_levels, pyramid_on_features):
