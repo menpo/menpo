@@ -1,13 +1,9 @@
 from __future__ import division
 import abc
 from copy import deepcopy
-from collections import OrderedDict
-
-import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
-from menpo.landmark import LandmarkGroup
 from menpo.fitmultilevel.functions import compute_error
 from menpo.visualize.base import Viewable, FittingViewer
 
