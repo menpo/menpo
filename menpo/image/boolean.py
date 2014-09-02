@@ -338,7 +338,6 @@ class BooleanImage(Image):
                                   warp_landmarks=warp_landmarks,
                                   order=0, mode=mode, cval=cval)
 
-    # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
                       mode='constant', cval=0.):
         """
@@ -375,13 +374,15 @@ class BooleanImage(Image):
 
         """
         # call the super variant and get ourselves an Image back
-        warped_image = Image.warp_to_shape(self, template_shape, transform,
-                                           warp_landmarks=warp_landmarks,
-                                           order=1, mode=mode, cval=cval)
-        # convert to a boolean mask and return
-        b = BooleanImage(warped_image.pixels)
-        b.landmarks = warped_image.landmarks
-        return b
+        # note that we force the use of order=1 for BooleanImages.
+        warped = Image.warp_to_shape(self, template_shape, transform,
+                                     warp_landmarks=warp_landmarks,
+                                     order=1, mode=mode, cval=0.)
+        # unfortunately we can't escape copying here, let BooleanImage
+        # convert us to np.bool
+        boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
+        boolean_image.landmarks = warped.landmarks
+        return boolean_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
                               **kwargs):
@@ -398,42 +399,3 @@ class BooleanImage(Image):
             # we have to fill out mask with the sampled mask..
             warped_img.pixels[warped_img.mask] = sampled_pixel_values
         return warped_img
-
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
-                      **kwargs):
-        r"""
-        Return a copy of this :map:`BooleanImage` warped into a different
-        reference space.
-
-        Parameters
-        ----------
-        template_shape : (n_dims, ) tuple or ndarray
-            Defines the shape of the result, and what pixel indices should be
-            sampled (all of them).
-        transform : :map:`Transform`
-            Transform **from the template_shape space back to this image**.
-            Defines, for each index on template_shape, which pixel location
-            should be sampled from on this image.
-        warp_landmarks : bool, optional
-            If `True`, warped_image will have the same landmark dictionary
-            as self, but with each landmark updated to the warped position.
-
-            Default: `False`
-
-        Returns
-        -------
-        warped_image : :map:`BooleanImage`
-            A copy of this image, warped.
-
-        """
-        # call the super variant and get ourselves an Image back
-        warped_image = Image.warp_to_shape(self, template_shape, transform,
-                                           warp_landmarks=warp_landmarks,
-                                           **kwargs)
-        # unfortunately we can't escape copying here, let BooleanImage
-        # convert us to np.bool
-        warped_boolean_image = BooleanImage(
-            warped_image.pixels.reshape(template_shape))
-        warped_boolean_image.landmarks = warped_image.landmarks
-
-        return warped_boolean_image
