@@ -238,7 +238,6 @@ def pcd_features_yeswhiten_yescentre_nobias_test():
     eigenvectors, eigenvalues, mean_vector = output
 
     assert_almost_equal(eigenvalues, eigenvalues_centered_no_bias_f)
-    print(eigenvectors)
     assert_almost_equal(eigenvectors, centered_eigenvectors_biased_f)
     assert_almost_equal(mean_vector, mean_vector_f)
 

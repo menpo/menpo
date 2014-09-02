@@ -91,7 +91,6 @@ def test_LandmarkManager_set_PointCloud_not_copy_target():
 
     man = LandmarkManager()
     man['test_set'] = pcloud
-    print(man['test_set'])
     assert (not is_same_array(man['test_set'].lms.points,
                               pcloud.points))
     assert_allclose(man['test_set']['all'].points, np.ones([10, 3]))
