@@ -127,11 +127,30 @@ class MultilevelFittingResult(FittingResult):
         """
         self._gt_shape = value
 
-    # TODO: this should print more information than just this...
-    # image, fitter, n_iters run, ...
     def __str__(self):
-        out = "Initial error: {0:.4f}\nFinal error: {1:.4f}".format(
-            self.initial_error(), self.final_error())
+        if self.fitter.pyramid_on_features:
+            if isinstance(self.fitter.feature_type[0], str):
+                feat_str = self.fitter.feature_type[0]
+            elif self.fitter.feature_type[0] is None:
+                feat_str = "no"
+            else:
+                feat_str = self.fitter.feature_type[0].__name__
+        else:
+            feat_str = []
+            for j in range(self.n_levels):
+                if isinstance(self.fitter.feature_type[j], str):
+                    feat_str.append(self.fitter.feature_type[j])
+                elif self.fitter.feature_type[j] is None:
+                    feat_str.append("none")
+                else:
+                    feat_str.append(self.fitter.feature_type[j].__name__)
+        out = "Fitting Result\n" \
+              " - Initial error: {0:.4f}\n" \
+              " - Final error: {1:.4f}\n" \
+              " - {2} method with {3} pyramid levels, {4} iterations " \
+              "and using {5} features.".format(
+              self.initial_error(), self.final_error(), self.fitter.algorithm,
+              self.n_levels, self.n_iters, feat_str)
         return out
 
 
@@ -231,6 +250,36 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         """
         return _flatten_out(
             [f.error_images for f in self.fitting_results])
+
+    @property
+    def aam_reconstructions(self):
+        r"""
+        The list containing the aam reconstruction (i.e. the appearance
+        reconstruction warped on the shape instance reconstruction) obtained at
+        each fitting iteration.
+
+        Note that this reconstruction is only tested to work for the
+        :map:`OrthoMDTransform`
+
+        :type: list` of :map:`Image` or subclass
+        """
+        aam_reconstructions = []
+        for level, f in enumerate(self.fitting_results):
+            if f.weights:
+                for sw, aw in zip(f.parameters, f.weights):
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=awt, level=level))
+            else:
+                for sw in f.parameters:
+                    sw = sw[4:]
+                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                    aam_reconstructions.append(self.fitter.aam.instance(
+                        shape_weights=swt, appearance_weights=None,
+                        level=level))
+        return aam_reconstructions
 
 
 def _flatten_out(list_of_lists):

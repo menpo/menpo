@@ -1,13 +1,8 @@
 from __future__ import division
 import abc
-from copy import deepcopy
-from collections import OrderedDict
-
-import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
-from menpo.landmark import LandmarkGroup
 from menpo.fitmultilevel.functions import compute_error
 from menpo.visualize.base import Viewable, FittingViewer
 
@@ -31,13 +26,12 @@ class FittingResult(Viewable):
     """
     def __init__(self, image, fitter, gt_shape=None):
         self.image = image
-        self._error_type, self._error_text = None, None
         self.fitter = fitter
         self._gt_shape = gt_shape
 
     @property
     def n_iters(self):
-        return len(self.shapes) - 1
+        return len(self.shapes()) - 1
 
     @abc.abstractmethod
     def shapes(self, as_points=False):
@@ -215,10 +209,10 @@ class NonParametricFittingResult(FittingResult):
 
     def shapes(self, as_points=False):
         if as_points:
-            return [deepcopy(s.points) for s in self.parameters]
+            return [s.points.copy() for s in self.parameters]
 
         else:
-            return self.parameters.copy()
+            return self.parameters
 
     @property
     def final_shape(self):
@@ -371,7 +365,7 @@ class ParametricFittingResult(SemiParametricFittingResult):
             return [self.fitter.appearance_model.instance(w)
                     for w in self.weights]
         else:
-            return [self.fitter.template for _ in self.shapes]
+            return [self.fitter.template for _ in self.shapes()]
 
     @property
     def error_images(self):

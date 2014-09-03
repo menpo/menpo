@@ -1,13 +1,93 @@
 from __future__ import division
 import abc
 import numpy as np
+import wrapt
+
 
 from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
-from menpo.fitmultilevel.featurefunctions import compute_features
 
 from .functions import mean_pointcloud
+
+
+# tests currently expect that all features automatically constrain landmarks
+# small wrapper which does this. Note that this decorator only works when
+# called with menpo Image instances.
+@wrapt.decorator
+def constrain_landmarks(wrapped, instance, args, kwargs):
+
+    def _execute(image, *args, **kwargs):
+        feature = wrapped(image, *args, **kwargs)
+        # after calculation, constrain the landmarks to the bounds
+        feature.constrain_landmarks_to_bounds()
+        return feature
+
+    return _execute(*args, **kwargs)
+
+
+def validate_features(features, n_levels, pyramid_on_features):
+    r"""
+    Checks the feature type per level.
+    If pyramid_on_features is False, it must be a function or a list of
+    those containing 1 or {n_levels} elements.
+    If pyramid_on_features is True, it must be a function or a list of 1
+    of those.
+
+    Parameters
+    ----------
+    n_levels: int
+        The number of pyramid levels.
+    pyramid_on_features: boolean
+        If True, the pyramid will be applied to the feature image, so
+        the user needs to define a single feature_type.
+        If False, the pyramid will be applied to the intensities image and
+        features will be extracted at each level, so the user can define
+        a feature_type per level.
+
+    Returns
+    -------
+    feature_list: list
+        A list of feature function.
+        If pyramid_on_features is True, the list will have length 1.
+        If pyramid_on_features is False, the list will have length
+        {n_levels}.
+    """
+    # Firstly, make sure we have a list of features
+    if not pyramid_on_features:
+        feature_type_str_error = ("features must be a function or a list"
+                                  " of functions containing 1 or {} "
+                                  "elements").format(n_levels)
+        if not isinstance(features, list):
+            feature_list = [features] * n_levels
+        elif len(features) == 1:
+            feature_list = [features[0]] * n_levels
+        elif len(features) == n_levels:
+            feature_list = features
+        else:
+            raise ValueError(feature_type_str_error)
+    else:
+        feature_type_str_error = ("pyramid_on_features is enabled so "
+                                  "features must be a function or a list"
+                                  " of exactly one function")
+        if not isinstance(features, list):
+            feature_list = [features]
+        elif len(features) == 1:
+            feature_list = features
+        else:
+            raise ValueError(feature_type_str_error)
+    # If we are here we have a list of features. Let's check they are all
+    # callable
+    all_callable_feature_list = []
+    for ft in feature_list:
+        if not callable(ft):
+            raise ValueError("{} is not callable (did you mean to pass "
+                             "menpo.feature.no_op?)".format(ft))
+        all_callable_feature_list.append(ft)
+    all_callable_constrained = []
+    for ft in all_callable_feature_list:
+        all_callable_constrained.append(constrain_landmarks(ft))
+    return all_callable_constrained
 
 
 class DeformableModelBuilder(object):
@@ -74,65 +154,6 @@ class DeformableModelBuilder(object):
                     if not isinstance(comp, float):
                         raise ValueError(str_error)
         return max_components_list
-
-    @classmethod
-    def check_feature_type(cls, feature_type, n_levels, pyramid_on_features):
-        r"""
-        Checks the feature type per level.
-        If pyramid_on_features is False, it must be a string or a
-        function/closure or a list of those containing 1 or {n_levels}
-        elements.
-        If pyramid_on_features is True, it must be a string or a
-        function/closure or a list of 1 of those.
-
-        Parameters
-        ----------
-        n_levels: int
-            The number of pyramid levels.
-        pyramid_on_features: boolean
-            If True, the pyramid will be applied to the feature image, so
-            the user needs to define a single feature_type.
-            If False, the pyramid will be applied to the intensities image and
-            features will be extracted at each level, so the user can define
-            a feature_type per level.
-
-        Returns
-        -------
-        feature_type_list: list
-            A list of feature types.
-            If pyramid_on_features is True, the list will have length 1.
-            If pyramid_on_features is False, the list will have length
-            {n_levels}.
-        """
-        if not pyramid_on_features:
-            feature_type_str_error = ("feature_type must be a str or a "
-                                      "function/closure or a list of "
-                                      "those containing 1 or {} "
-                                      "elements").format(n_levels)
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type] * n_levels
-            elif len(feature_type) == 1:
-                feature_type_list = [feature_type[0]] * n_levels
-            elif len(feature_type) == n_levels:
-                feature_type_list = feature_type
-            else:
-                raise ValueError(feature_type_str_error)
-        else:
-            feature_type_str_error = ("pyramid_on_features is enabled so "
-                                      "feature_type must be a str or a "
-                                      "function/closure or a list "
-                                      "containing 1 of those")
-            if not isinstance(feature_type, list):
-                feature_type_list = [feature_type]
-            elif len(feature_type) == 1:
-                feature_type_list = feature_type
-            else:
-                raise ValueError(feature_type_str_error)
-        for ft in feature_type_list:
-            if (ft is not None and not isinstance(ft, str)
-                    and not hasattr(ft, '__call__')):
-                        raise ValueError(feature_type_str_error)
-        return feature_type_list
 
     @abc.abstractmethod
     def build(self, images, group=None, label=None):
@@ -264,7 +285,7 @@ class DeformableModelBuilder(object):
                     print_dynamic('- Computing feature space: {}'.format(
                         progress_bar_str((c + 1.) / len(images),
                                          show_bar=False)))
-                feature_images.append(compute_features(i, feature_type[0]))
+                feature_images.append(feature_type[0](i))
             if verbose:
                 print_dynamic('- Computing feature space: Done\n')
 

@@ -1,6 +1,7 @@
 import numpy as np
 from warnings import warn
-from scipy.spatial import Delaunay
+
+Delaunay = None  # expensive, from scipy.spatial
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
@@ -36,6 +37,9 @@ class TriMesh(PointCloud, Rasterizable):
         #TODO add inheritance from Graph once implemented
         super(TriMesh, self).__init__(points, copy=copy)
         if trilist is None:
+            global Delaunay
+            if Delaunay is None:
+                from scipy.spatial import Delaunay  # expensive
             trilist = Delaunay(points).simplices
         if not copy:
             if not trilist.flags.c_contiguous:

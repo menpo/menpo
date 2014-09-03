@@ -1,4 +1,5 @@
 import os
+import sys
 from setuptools import setup, find_packages
 import versioneer
 
@@ -17,7 +18,7 @@ else:
     # ---- C/C++ EXTENSIONS ---- #
     cython_modules = ["menpo/shape/mesh/normals.pyx",
                       "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/image/feature/cppimagewindowiterator.pyx"]
+                      "menpo/feature/windowiterator.pyx"]
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
@@ -26,6 +27,7 @@ else:
                         'scipy>=0.14.0',
                         'Cython>=0.20.1',
                         'pathlib>=1.0',
+                        'wrapt>=1.9.0',
 
                         # Image
                         'Pillow>=2.0.0',
@@ -44,6 +46,9 @@ else:
                         # Visualization
                         'matplotlib>=1.2.1',
                         'mayavi>=4.3.0']
+
+    if sys.version_info.major == 2:
+        install_requires.append('pathlib>=1.0')
 
 # Versioneer allows us to automatically generate versioning from
 # our git tagging system which makes releases simpler.

@@ -3,7 +3,7 @@ from menpo.fit.lucaskanade.appearance import *
 from menpo.transform import PiecewiseAffine, ThinPlateSplines
 from menpo.transform.modeldriven import GlobalMDTransform, OrthoMDTransform
 from menpo.transform import AlignmentSimilarity
-from menpo.fitmultilevel.featurefunctions import sparse_hog
+from menpo.feature import sparse_hog
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr

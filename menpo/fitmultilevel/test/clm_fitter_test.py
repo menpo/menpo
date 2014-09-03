@@ -1,23 +1,18 @@
-from mock import patch
-from nose.tools import raises
 from StringIO import StringIO
-from nose.plugins.attrib import attr
-
+from mock import patch
 import numpy as np
+from numpy.testing import assert_allclose
+from nose.tools import raises
+
 import menpo.io as mio
+from menpo.shape.pointcloud import PointCloud
 from menpo.landmark import labeller, ibug_face_68_trimesh
-from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer, SDCLMTrainer
-from menpo.transform.modeldriven import OrthoMDTransform
-from menpo.transform.homogeneous import AlignmentSimilarity
-from menpo.fitmultilevel.featurefunctions import sparse_hog
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
-from menpo.fit.regression.regressionfunctions import mlr, mlr_svd
-from menpo.fit.regression.parametricfeatures import weights
-from menpo.transform import PiecewiseAffine
-from menpo.fitmultilevel.aam import AAMBuilder
 from menpo.fitmultilevel.clm import CLMBuilder
-from menpo.model.modelinstance import OrthoPDM
-from menpo.shape import PointCloud
+from menpo.fitmultilevel.clm import GradientDescentCLMFitter
+from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
+from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.feature import sparse_hog
+
 
 initial_shape = []
 initial_shape.append(PointCloud(np.array([[150.9737801, 1.85331141],
@@ -307,194 +302,69 @@ for i in range(4):
         im = im.as_greyscale(mode='luminosity')
     training_images.append(im)
 
-# Seed the random number generator
-np.random.seed(seed=1000)
-
-# build sdms
-sdm1 = SDMTrainer(regression_type=mlr_svd,
-                  regression_features=sparse_hog,
-                  patch_shape=(16, 16),
-                  feature_type=None,
-                  normalization_diagonal=150,
-                  n_levels=2,
-                  downscale=1.3,
-                  pyramid_on_features=True,
-                  noise_std=0.04,
-                  rotation=False,
-                  n_perturbations=2,
-                  interpolator='scipy').train(training_images, group='PTS')
-
-aam = AAMBuilder(feature_type=sparse_hog,
-                 transform=PiecewiseAffine,
-                 trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
-                 lms.trilist,
+# build clm
+clm = CLMBuilder(classifier_type=linear_svm_lr,
+                 patch_shape=(8, 8),
+                 feature_type=[sparse_hog],
                  normalization_diagonal=150,
                  n_levels=3,
-                 downscale=1.2,
-                 scaled_shape_models=False,
-                 pyramid_on_features=True,
-                 max_shape_components=None,
-                 max_appearance_components=3,
-                 boundary=3,
-                 interpolator='scipy').build(training_images, group='PTS')
-
-sdm2 = SDAAMTrainer(aam,
-                    regression_type=mlr,
-                    regression_features=weights,
-                    noise_std=0.04,
-                    rotation=False,
-                    n_perturbations=1,
-                    update='compositional',
-                    md_transform=OrthoMDTransform,
-                    global_transform=AlignmentSimilarity,
-                    n_shape=25,
-                    n_appearance=None).train(training_images, group='PTS')
-
-clm = CLMBuilder(classifier_type=linear_svm_lr,
-                 feature_type=[sparse_hog],
-                 normalization_diagonal=100,
-                 patch_shape=(5, 5),
-                 n_levels=1,
                  downscale=1.1,
                  scaled_shape_models=True,
                  pyramid_on_features=True,
-                 max_shape_components=25,
+                 max_shape_components=[1, 2, 3],
                  boundary=3,
                  interpolator='scipy').build(training_images, group='PTS')
 
-sdm3 = SDCLMTrainer(clm,
-                    regression_type=mlr,
-                    noise_std=0.04,
-                    rotation=False,
-                    n_perturbations=1,
-                    pdm_transform=OrthoPDM,
-                    global_transform=AlignmentSimilarity,
-                    n_shape=None).train(training_images, group='PTS')
+
+def test_clm():
+    assert (clm.n_training_images == 4)
+    assert (clm.n_levels == 3)
+    assert (clm.downscale == 1.1)
+    #assert (clm.feature_type[0] == sparse_hog and len(clm.feature_type) == 1)
+    assert (clm.interpolator == 'scipy')
+    assert_allclose(np.around(clm.reference_shape.range()), (109., 103.))
+    assert clm.scaled_shape_models
+    assert clm.pyramid_on_features
+    assert_allclose(clm.patch_shape, (8, 8))
+    assert_allclose([clm.shape_models[j].n_components
+                     for j in range(clm.n_levels)], (1, 2, 3))
+    assert_allclose(clm.n_classifiers_per_level, [68, 68, 68])
+    assert (clm.
+            classifiers[0][np.random.
+            randint(0, clm.n_classifiers_per_level[0])].__name__
+            == 'linear_svm_predict')
+    assert (clm.
+            classifiers[1][np.random.
+            randint(0, clm.n_classifiers_per_level[1])].__name__
+            == 'linear_svm_predict')
+    assert (clm.
+            classifiers[2][np.random.
+            randint(0, clm.n_classifiers_per_level[2])].__name__
+            == 'linear_svm_predict')
 
 
 @raises(ValueError)
-def test_feature_type_exception():
-    sdm = SDMTrainer(feature_type=['igo', sparse_hog],
-                     n_levels=3).train(training_images, group='PTS')
+def test_n_shape_1_exception():
+    fitter = GradientDescentCLMFitter(clm, n_shape=[3, 6, 'a'])
 
 
 @raises(ValueError)
-def test_feature_type_with_pyramid_on_features_exception():
-    sdm = SDMTrainer(feature_type=['igo', sparse_hog, 'hog'],
-                     n_levels=3,
-                     pyramid_on_features=True).train(training_images,
-                                                     group='PTS')
+def test_n_shape_2_exception():
+    fitter = GradientDescentCLMFitter(clm, n_shape=[10, 20])
 
 
-@raises(ValueError)
-def test_regression_features_sdmtrainer_exception_1():
-    sdm = SDMTrainer(n_levels=2, regression_features=[None, None, None]).\
-        train(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_regression_features_sdmtrainer_exception_2():
-    sdm = SDMTrainer(n_levels=3, regression_features=[None, sparse_hog, 1]).\
-        train(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_regression_features_sdaamtrainer_exception_1():
-    sdm = SDAAMTrainer(aam, regression_features=[None, sparse_hog]).\
-        train(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_regression_features_sdaamtrainer_exception_2():
-    sdm = SDAAMTrainer(aam, regression_features=7).\
-        train(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_n_levels_exception():
-    sdm = SDMTrainer(n_levels=0).train(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_downscale_exception():
-    sdm = SDMTrainer(downscale=1).train(training_images,
-                                        group='PTS')
-    assert (aam.downscale == 1)
-    sdm = SDMTrainer(downscale=0).train(training_images,
-                                        group='PTS')
-
-
-@raises(ValueError)
-def test_n_perturbations_exception():
-    sdm = SDAAMTrainer(aam, n_perturbations=-10).train(training_images,
-                                                       group='PTS')
-
-
-@patch('sys.stdout', new_callable=StringIO)
-def test_verbose_mock(mock_stdout):
-    sdm = SDMTrainer(regression_type=mlr_svd,
-                     regression_features=sparse_hog,
-                     patch_shape=(16, 16),
-                     feature_type=None,
-                     normalization_diagonal=150,
-                     n_levels=1,
-                     downscale=1.3,
-                     pyramid_on_features=True,
-                     noise_std=0.04,
-                     rotation=False,
-                     n_perturbations=2,
-                     interpolator='scipy').train(training_images, group='PTS',
-                                                 verbose=True)
-
-
-@patch('sys.stdout', new_callable=StringIO)
-def test_str_mock(mock_stdout):
-    print(sdm1)
-    print(sdm2)
-    print(sdm3)
-    
-    
-def test_sdm_1():
-    assert (sdm1._n_training_images == 4)
-    assert (sdm1.n_levels == 2)
-    assert (sdm1.downscale == 1.3)
-    assert (sdm1.feature_type[0] is None)
-    assert (sdm1.interpolator == 'scipy')
-    assert sdm1.pyramid_on_features
-    assert (sdm1._fitters[0].regressor.__name__ ==
-            sdm1._fitters[1].regressor.__name__ == 'mlr_svd_fitting')
-
-
-def test_sdm_2():
-    assert (sdm2._n_training_images == 4)
-    assert (sdm2.n_levels == 3)
-    assert (sdm2.downscale == 1.2)
-    assert (sdm2.interpolator == 'scipy')
-    assert sdm2.pyramid_on_features
-    assert (sdm2._fitters[0].regressor.__name__ ==
-            sdm2._fitters[1].regressor.__name__ ==
-            sdm2._fitters[2].regressor.__name__ == 'mlr_fitting')
-
-
-def test_sdm_3():
-    assert (sdm3._n_training_images == 4)
-    assert (sdm3.n_levels == 1)
-    assert (sdm3.downscale == 1.1)
-    assert (sdm3.interpolator == 'scipy')
-    assert sdm3.pyramid_on_features
-    assert (sdm3._fitters[0].regressor.__name__ == 'mlr_fitting')
-
-
-def test_pertrurb_shape():
-    s = sdm1.perturb_shape(training_images[0].landmarks['PTS'].lms,
-                           noise_std=0.08, rotation=False)
+def test_pertrube_shape():
+    fitter = GradientDescentCLMFitter(clm)
+    s = fitter.perturb_shape(training_images[0].landmarks['PTS'].lms,
+                             noise_std=0.08, rotation=False)
     assert (s.n_dims == 2)
     assert (s.n_landmark_groups == 0)
     assert (s.n_points == 68)
 
 
 def test_obtain_shape_from_bb():
-    s = sdm2.obtain_shape_from_bb(np.array([[26, 49], [350, 400]]))
+    fitter = GradientDescentCLMFitter(clm)
+    s = fitter.obtain_shape_from_bb(np.array([[26, 49], [350, 400]]))
     assert ((np.around(s.points) == np.around(initial_shape[3].points)).
             all())
     assert (s.n_dims == 2)
@@ -504,43 +374,26 @@ def test_obtain_shape_from_bb():
 
 @raises(ValueError)
 def test_max_iters_exception():
-    sdm3.fit(training_images[0], initial_shape[0], max_iters=[10, 20, 30, 40])
+    fitter = GradientDescentCLMFitter(clm)
+    fitter.fit(training_images[0], initial_shape[0],
+               max_iters=[10, 20, 30, 40])
 
 
-def sdm_helper(sdm, im_number, max_iters, initial_error, final_error,
-               error_type, str_flag):
-    fitting_result = sdm.fit(
-        training_images[im_number], initial_shape[im_number],
-        gt_shape=training_images[im_number].landmarks['PTS'].lms,
-        max_iters=max_iters)
-    if str_flag:
-        ie = str(fitting_result.initial_error(error_type=error_type))
-        fe = str(fitting_result.final_error(error_type=error_type))
-        assert (ie[0:5] == initial_error)
-        assert (fe[0:5] == final_error)
-    else:
-        assert (np.around(fitting_result.initial_error(error_type=error_type),
-                          5) == initial_error)
-        assert (np.around(fitting_result.final_error(error_type=error_type),
-                          5) == final_error)
+@patch('sys.stdout', new_callable=StringIO)
+def test_str_mock(mock_stdout):
+    print(clm)
+    fitter = GradientDescentCLMFitter(
+        clm, algorithm=RegularizedLandmarkMeanShift)
+    print(fitter)
 
 
-@attr('fuzzy')
-def test_sdm1_fit():
-    sdm_helper(sdm1, 0, None, 0.084, 0.03716, 'me_norm', False)
-    sdm_helper(sdm1, 1, 10, 8.66397, 1.98782, 'me', False)
-    sdm_helper(sdm1, 2, [5, 10], 13.94481, 8.01723, 'rmse', False)
-
-
-@attr('fuzzy')
-def test_sdm2_fit():
-    sdm_helper(sdm2, 0, None, 0.08166, 5.17755, 'me_norm', False)
-    sdm_helper(sdm2, 1, 10, 7.8825, 140.20838, 'me', False)
-    sdm_helper(sdm2, 2, [5, 10, 15], 11.43388, 369.90081, 'rmse', False)
-
-
-@attr('fuzzy')
-def test_sdm3_fit():
-    sdm_helper(sdm3, 0, None, '0.079', '2.961', 'me_norm', True)
-    sdm_helper(sdm3, 1, None, '7.294', '9.005', 'me', True)
-    sdm_helper(sdm3, 2, None, '10.69', '1.517', 'rmse', True)
+#@attr('fuzzy')
+#def test_rlms_0():
+#    fitter = GradientDescentCLMFitter(
+#        clm, algorithm=RegularizedLandmarkMeanShift)
+#    fitting_result = fitter.fit(
+#        training_images[0], initial_shape[0],
+#        gt_shape=training_images[0].landmarks['PTS'].lms,
+#        max_iters=6, error_type='me_norm')
+#    assert (np.around(fitting_result.initial_error, 5) == initial_error)
+#    assert (np.around(fitting_result.final_error, 5) == final_error)

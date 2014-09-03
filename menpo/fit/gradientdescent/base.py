@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from scipy.stats import multivariate_normal
+multivariate_normal = None  # expensive, from scipy.stats
 
 from menpo.fit.base import Fitter
 from menpo.fit.fittingresult import SemiParametricFittingResult
@@ -112,6 +112,9 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         return 'RLMS'
 
     def _set_up(self):
+        global multivariate_normal
+        if multivariate_normal is None:
+            from scipy.stats import multivariate_normal  # expensive
         # Build the sampling grid associated to the patch shape
         self._sampling_grid = build_sampling_grid(self.patch_shape)
         # Define the 2-dimensional gaussian distribution

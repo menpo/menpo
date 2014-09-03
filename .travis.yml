@@ -1,40 +1,33 @@
-language: python
-python:
-  - 2.7
+os:
+- linux
+- osx
+
+env:
+  global:
+  - secure: jrAuM2d8/Pu83cps6cIzoZl/uOcz3cd53Sb/16kWujrb03dKFn+avOSRapOqU9eYMRIMi75fYsKc0rK4UHGRoCBmYLMHVZdZJvlcVxLqIF/+CQjwvYCezyoRLW5POIuTcJr/jGOuoilYQgx56Dv97ZIndeczZocAk3u2glcpT64=
+  matrix:
+  - PYTHON_VERSION=2
+  - PYTHON_VERSION=3
+
+matrix:
+  allow_failures:
+  - env: PYTHON_VERSION=3
+
+install:
+- wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
+- export MENPO_VERSION=$(python traviconda.py version)
+- python traviconda.py setup --python $PYTHON_VERSION --channel menpo
+- export PATH="$HOME/miniconda/bin:$PATH"
+
+script:
+- python traviconda.py build --path ./conda --user menpo --key $BINSTAR_KEY
+
 notifications:
   email: false
   flowdock: 769202b66114a5ce0e61df484dfeb177
-  # notify gitter
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/7599ff4870c99ba51310
-    on_success: always  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # default: never
-
- 
-# Setup anaconda
-before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
-  - conda update --yes conda
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-# Install packages
-install:
-  - conda install --yes python pip atlas numpy scipy matplotlib mayavi scikit-image scikit-learn imaging cython nose
-  - conda install --yes -c menpo cyrasterize cyassimp menpo-pyvrml97
-  - pip install coverage coveralls mock pathlib
-  - python setup.py install --single-version-externally-managed --record=/tmp/record.txt
-  - python setup.py build_ext --inplace
- 
-# Run test
-script:
-  - nosetests --with-coverage --cover-package=menpo menpo
-
-# Update coveralls
-after_success:
-  - coveralls
+    - https://webhooks.gitter.im/e/7599ff4870c99ba51310
+    on_success: always
+    on_failure: always
+    on_start: never

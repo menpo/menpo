@@ -4,8 +4,7 @@ from .landmark import (LM3Importer, LANImporter, LM2Importer, BNDImporter,
 from .landmark_mesh import MeshPTSImporter
 from .mesh import AssimpImporter, WRLImporter, MJSONImporter
 from .image import PILImporter
-from .landmark_image import (ImageASFImporter, ImagePTSImporter,
-                             ImageTXTImporter)
+from .landmark_image import ImageASFImporter, ImagePTSImporter
 
 
 mesh_types = {'.dae': AssimpImporter,
@@ -88,8 +87,7 @@ image_landmark_types = {'.asf': ImageASFImporter,
                         '.lm2': LM2Importer,
                         '.pts': ImagePTSImporter,
                         '.ptsx': ImagePTSImporter,
-                        '.ljson': LJSONImporter,
-                        '.txt': ImageTXTImporter}
+                        '.ljson': LJSONImporter}
 
 mesh_landmark_types = {'.pts3': MeshPTSImporter,
                        '.lm3': LM3Importer,

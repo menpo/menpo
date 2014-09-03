@@ -6,20 +6,20 @@ from numpy.testing import assert_allclose
 from nose.tools import raises
 
 import menpo.io as mio
+from menpo.feature import igo
 from menpo.shape.pointcloud import PointCloud
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine
-from menpo.fitmultilevel.aam import AAMBuilder
-from menpo.fitmultilevel.aam import LucasKanadeAAMFitter
-from menpo.fit.lucaskanade.appearance import \
-    (AlternatingForwardAdditive, AlternatingForwardCompositional,
-     AlternatingInverseCompositional, AdaptiveForwardAdditive,
-     AdaptiveForwardCompositional, AdaptiveInverseCompositional,
-     SimultaneousForwardAdditive, SimultaneousForwardCompositional,
-     SimultaneousInverseCompositional, ProjectOutForwardAdditive,
-     ProjectOutForwardCompositional, ProjectOutInverseCompositional,
-     ProbabilisticForwardAdditive, ProbabilisticForwardCompositional,
-     ProbabilisticInverseCompositional)
+from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
+from menpo.fit.lucaskanade.appearance import (
+    AlternatingForwardAdditive, AlternatingForwardCompositional,
+    AlternatingInverseCompositional, AdaptiveForwardAdditive,
+    AdaptiveForwardCompositional, AdaptiveInverseCompositional,
+    SimultaneousForwardAdditive, SimultaneousForwardCompositional,
+    SimultaneousInverseCompositional, ProjectOutForwardAdditive,
+    ProjectOutForwardCompositional, ProjectOutInverseCompositional,
+    ProbabilisticForwardAdditive, ProbabilisticForwardCompositional,
+    ProbabilisticInverseCompositional)
 
 
 initial_shape = []
@@ -311,7 +311,7 @@ for i in range(4):
     training_images.append(im)
 
 # build aam
-aam = AAMBuilder(feature_type=['igo'],
+aam = AAMBuilder(feature_type=[igo],
                  transform=PiecewiseAffine,
                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
@@ -325,7 +325,7 @@ aam = AAMBuilder(feature_type=['igo'],
                  boundary=3,
                  interpolator='scipy').build(training_images, group='PTS')
 
-aam2 = AAMBuilder(feature_type=['igo'],
+aam2 = AAMBuilder(feature_type=[igo],
                   transform=PiecewiseAffine,
                   trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,
@@ -344,7 +344,7 @@ def test_aam():
     assert (aam.n_training_images == 4)
     assert (aam.n_levels == 3)
     assert (aam.downscale == 2)
-    assert (aam.feature_type[0] == 'igo' and len(aam.feature_type) == 1)
+    #assert (aam.feature_type[0] == igo and len(aam.feature_type) == 1)
     assert (aam.interpolator == 'scipy')
     assert_allclose(np.around(aam.reference_shape.range()), (109., 103.))
     assert aam.scaled_shape_models
