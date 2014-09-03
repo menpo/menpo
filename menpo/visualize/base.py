@@ -482,7 +482,7 @@ class ImageViewer(object):
             returned.
         """
         if mask is not None:
-            pixels[~mask] = min(pixels.min(), 0)
+            pixels[~mask] = max(pixels.max(), 0)
         return pixels
 
     def render(self, **kwargs):
