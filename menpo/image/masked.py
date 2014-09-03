@@ -594,7 +594,7 @@ class MaskedImage(Image):
         return grad_image
 
     # TODO maybe we should be stricter about the trilist here, feels flakey
-    def constrain_mask_to_landmarks(self, group=None, label='all',
+    def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
