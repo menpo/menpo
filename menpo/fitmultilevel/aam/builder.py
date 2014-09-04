@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from hdf5able import HDF5able, SerializableCallable
 
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
@@ -647,7 +648,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
                              self.pyramid_on_features, self.interpolator)
 
 
-class AAM(object):
+class AAM(HDF5able):
     r"""
     Active Appearance Model class.
 
@@ -741,6 +742,23 @@ class AAM(object):
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
         self.interpolator = interpolator
+
+    def h5_dict_to_serializable_dict(self):
+        import menpo.transform
+        d = self.__dict__.copy()
+        transform = d.pop('transform')
+        d['transform'] = SerializableCallable(transform, [menpo.transform])
+
+        features = d.pop('feature_type')
+        d['features'] = [SerializableCallable(f, [menpo.feature])
+                         for f in features]
+        return d
+
+    @classmethod
+    def h5_dict_from_serialized_dict(cls, d, version):
+        # anticipating https://github.com/menpo/menpo/pull/426
+        d['feature_type'] = d.pop('features')
+        return d
 
     @property
     def n_levels(self):
