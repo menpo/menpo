@@ -36,7 +36,7 @@ for i in range(4):
 # build clms
 clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
                   patch_shape=(5, 5),
-                  feature_type=[igo, sparse_hog, no_op],
+                  features=[igo, sparse_hog, no_op],
                   normalization_diagonal=150,
                   n_levels=3,
                   downscale=2,
@@ -48,7 +48,7 @@ clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
 
 clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
                   patch_shape=(3, 10),
-                  feature_type=no_op,
+                  features=no_op,
                   normalization_diagonal=None,
                   n_levels=2,
                   downscale=1.2,
@@ -60,7 +60,7 @@ clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
 
 clm3 = CLMBuilder(classifier_type=[linear_svm_lr],
                   patch_shape=(2, 3),
-                  feature_type=igo,
+                  features=igo,
                   normalization_diagonal=None,
                   n_levels=1,
                   downscale=3,
@@ -90,14 +90,14 @@ def test_patch_shape_2_exception():
     CLMBuilder(patch_shape=(5, 6, 7)).build(training_images, group='PTS')
 
 @raises(ValueError)
-def test_feature_type_exception():
-    CLMBuilder(feature_type=[igo, sparse_hog],
+def test_features_exception():
+    CLMBuilder(features=[igo, sparse_hog],
                pyramid_on_features=False).build(training_images, group='PTS')
 
 
 @raises(ValueError)
-def test_feature_type_with_pyramid_on_features_exception():
-    CLMBuilder(feature_type=[igo, sparse_hog]).build(training_images,
+def test_features_with_pyramid_on_features_exception():
+    CLMBuilder(features=[igo, sparse_hog]).build(training_images,
                                                      group='PTS')
 
 
@@ -152,7 +152,7 @@ def test_clm_1():
     assert (clm1.n_training_images == 4)
     assert (clm1.n_levels == 3)
     assert (clm1.downscale == 2)
-    #assert (clm1.feature_type[0] == igo and clm1.feature_type[2] is no_op)
+    #assert (clm1.features[0] == igo and clm1.features[2] is no_op)
     assert (clm1.interpolator == 'scipy')
     assert_allclose(np.around(clm1.reference_shape.range()), (109., 103.))
     assert (not clm1.scaled_shape_models)
@@ -179,7 +179,7 @@ def test_clm_2():
     assert (clm2.n_training_images == 4)
     assert (clm2.n_levels == 2)
     assert (clm2.downscale == 1.2)
-    #assert (clm2.feature_type[0] is no_op and clm2.feature_type[1] is no_op)
+    #assert (clm2.features[0] is no_op and clm2.features[1] is no_op)
     assert (clm2.interpolator == 'scipy')
     assert_allclose(np.around(clm2.reference_shape.range()), (169., 161.))
     assert clm2.scaled_shape_models
@@ -202,7 +202,7 @@ def test_clm_3():
     assert (clm3.n_training_images == 4)
     assert (clm3.n_levels == 1)
     assert (clm3.downscale == 3)
-    #assert (clm3.feature_type[0] == igo and len(clm3.feature_type) == 1)
+    #assert (clm3.features[0] == igo and len(clm3.features) == 1)
     assert (clm3.interpolator == 'scipy')
     assert_allclose(np.around(clm3.reference_shape.range()), (169., 161.))
     assert clm3.scaled_shape_models
