@@ -1,2 +1,2 @@
-from .base import CachedPWA as PiecewiseAffine  # the default PWA is the C one.
+from .base import CachedPWA as PiecewiseAffine  # the default PWA caches
 from .base import TriangleContainmentError
