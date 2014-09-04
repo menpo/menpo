@@ -749,15 +749,9 @@ class AAM(HDF5able):
         transform = d.pop('transform')
         d['transform'] = SerializableCallable(transform, [menpo.transform])
 
-        features = d.pop('feature_type')
+        features = d.pop('features')
         d['features'] = [SerializableCallable(f, [menpo.feature])
                          for f in features]
-        return d
-
-    @classmethod
-    def h5_dict_from_serialized_dict(cls, d, version):
-        # anticipating https://github.com/menpo/menpo/pull/426
-        d['feature_type'] = d.pop('features')
         return d
 
     @property
