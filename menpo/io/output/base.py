@@ -1,7 +1,26 @@
 from pathlib import Path
+from hdf5able import save as h5_save
 
 from .extensions import landmark_types, image_types, mesh_types
 from ..utils import _norm_path
+
+
+def save(path, hdf5able):
+    r"""
+    Serialized a collection of Menpo objects and base types to disk in a
+    HDF5 file container.
+
+    Parameters
+    ----------
+    path : `str`
+        A path to a HDF5 file that conforms to the hdf5able specification.
+
+    hdf5able : `HDF5able` or base types
+        Any collection of base types (dict, list, str, etc) along with any
+        HDG5able Menpo type.
+
+    """
+    h5_save(path, hdf5able)
 
 
 def export_landmark_file(fp, landmark_group, extension=None,
