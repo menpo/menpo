@@ -1,6 +1,8 @@
 import abc
 import os.path
 
+from hdf5able import HDF5able
+
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
 # four lines in the copy() method.
 # Then you can call print_copyable_log() to see exactly what types have been
@@ -21,7 +23,7 @@ import os.path
 #         print('  {:15}|  {}'.format(k, ', '.join(v)))
 
 
-class Copyable(object):
+class Copyable(HDF5able):
     """
     Efficient copying of classes containing numpy arrays.
 
