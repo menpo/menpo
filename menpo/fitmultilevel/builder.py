@@ -40,10 +40,10 @@ def validate_features(features, n_levels, pyramid_on_features):
         The number of pyramid levels.
     pyramid_on_features: boolean
         If True, the pyramid will be applied to the feature image, so
-        the user needs to define a single feature_type.
+        the user needs to define a single features.
         If False, the pyramid will be applied to the intensities image and
         features will be extracted at each level, so the user can define
-        a feature_type per level.
+        a features per level.
 
     Returns
     -------
@@ -55,9 +55,9 @@ def validate_features(features, n_levels, pyramid_on_features):
     """
     # Firstly, make sure we have a list of features
     if not pyramid_on_features:
-        feature_type_str_error = ("features must be a function or a list"
-                                  " of functions containing 1 or {} "
-                                  "elements").format(n_levels)
+        features_str_error = ("features must be a function or a list of "
+                              "functions containing "
+                              "1 or {} elements").format(n_levels)
         if not isinstance(features, list):
             feature_list = [features] * n_levels
         elif len(features) == 1:
@@ -65,17 +65,17 @@ def validate_features(features, n_levels, pyramid_on_features):
         elif len(features) == n_levels:
             feature_list = features
         else:
-            raise ValueError(feature_type_str_error)
+            raise ValueError(features_str_error)
     else:
-        feature_type_str_error = ("pyramid_on_features is enabled so "
-                                  "features must be a function or a list"
-                                  " of exactly one function")
+        features_str_error = ("pyramid_on_features is enabled so features "
+                              "must be a function or a list of exactly one "
+                              "function")
         if not isinstance(features, list):
             feature_list = [features]
         elif len(features) == 1:
             feature_list = features
         else:
-            raise ValueError(feature_type_str_error)
+            raise ValueError(features_str_error)
     # If we are here we have a list of features. Let's check they are all
     # callable
     all_callable_feature_list = []
@@ -245,7 +245,7 @@ class DeformableModelBuilder(object):
 
     @classmethod
     def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
-                        feature_type, verbose=False):
+                        features, verbose=False):
         r"""
         Function that creates a generator function for Gaussian pyramid. The
         pyramid can be created either on the feature space or the original
@@ -265,7 +265,7 @@ class DeformableModelBuilder(object):
             pyramid is created on the feature images.
             If False, the pyramid is created on the original (intensities)
             space.
-        feature_type: list of size 1 with str or function/closure or None
+        features: list of size 1 with str or function/closure or None
             The feature type to be used in case pyramid_on_features is enabled.
         verbose: bool, Optional
             Flag that controls information and progress printing.
@@ -285,7 +285,7 @@ class DeformableModelBuilder(object):
                     print_dynamic('- Computing feature space: {}'.format(
                         progress_bar_str((c + 1.) / len(images),
                                          show_bar=False)))
-                feature_images.append(feature_type[0](i))
+                feature_images.append(features[0](i))
             if verbose:
                 print_dynamic('- Computing feature space: Done\n')
 

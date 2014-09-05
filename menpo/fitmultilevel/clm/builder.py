@@ -34,7 +34,7 @@ class CLMBuilder(DeformableModelBuilder):
     patch_shape : tuple of `int`
         The shape of the patches used by the previous classifier closure.
 
-    feature_type : ``None`` or `string` or `function` or list of those, optional
+    features : ``None`` or `string` or `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         disabled, so that the features are extracted at each level.
@@ -54,7 +54,7 @@ class CLMBuilder(DeformableModelBuilder):
 
         If `string`, image features will be computed by executing::
 
-           feature_image = getattr(image.features, feature_type[level])()
+           feature_image = getattr(image.features, features[level])()
 
         for each pyramidal level. For this to work properly each `string`
         needs to be one of Menpo's standard image feature methods
@@ -70,7 +70,7 @@ class CLMBuilder(DeformableModelBuilder):
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=True)
+                return image.features.igo(double_angles=True)
 
         See :map:`ImageFeatures` for details more details on
         Menpo's standard image features and feature options.
@@ -144,7 +144,7 @@ class CLMBuilder(DeformableModelBuilder):
         The CLM Builder object
     """
     def __init__(self, classifier_type=linear_svm_lr, patch_shape=(5, 5),
-                 feature_type=sparse_hog, normalization_diagonal=None,
+                 features=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
                  pyramid_on_features=False, max_shape_components=None,
                  boundary=3, interpolator='scipy'):
@@ -155,15 +155,15 @@ class CLMBuilder(DeformableModelBuilder):
         self.check_boundary(boundary)
         max_shape_components = self.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        feature_type = validate_features(feature_type, n_levels,
-                                         pyramid_on_features)
+        features = validate_features(features, n_levels,
+                                     pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 
         # store parameters
         self.classifier_type = classifier_type
         self.patch_shape = patch_shape
-        self.feature_type = feature_type
+        self.features = features
         self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
         self.downscale = downscale
@@ -206,7 +206,7 @@ class CLMBuilder(DeformableModelBuilder):
         generators = self._create_pyramid(normalized_images, self.n_levels,
                                           self.downscale,
                                           self.pyramid_on_features,
-                                          self.feature_type, verbose=verbose)
+                                          self.features, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -248,7 +248,7 @@ class CLMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(self.feature_type[rj](next(g)))
+                    feature_images.append(self.features[rj](next(g)))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label] for i in feature_images]
@@ -350,7 +350,7 @@ class CLMBuilder(DeformableModelBuilder):
         n_training_images = len(images)
 
         return CLM(shape_models, classifiers, n_training_images,
-                   self.patch_shape, self.feature_type, self.reference_shape,
+                   self.patch_shape, self.features, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
                    self.pyramid_on_features, self.interpolator)
 
@@ -374,7 +374,7 @@ class CLM(object):
     patch_shape : tuple of `int`
         The shape of the patches used to train the classifiers.
 
-    feature_type : ``None`` or `string` or `function` or list of those
+    features : ``None`` or `string` or `function` or list of those
         The image feature that was be used to build the ``appearance_models``.
         Will subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -430,13 +430,13 @@ class CLM(object):
         The interpolator that was used to build the CLM.
     """
     def __init__(self, shape_models, classifiers, n_training_images,
-                 patch_shape, feature_type, reference_shape, downscale,
+                 patch_shape, features, reference_shape, downscale,
                  scaled_shape_models, pyramid_on_features, interpolator):
         self.shape_models = shape_models
         self.classifiers = classifiers
         self.n_training_images = n_training_images
         self.patch_shape = patch_shape
-        self.feature_type = feature_type
+        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
@@ -542,7 +542,7 @@ class CLM(object):
         if self.n_levels > 1:
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = self.feature_type[0](image)
+                feature_image = self.features[0](image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -556,11 +556,11 @@ class CLM(object):
                     n_levels=self.n_levels, downscale=self.downscale)
 
                 # compute features at each level
-                images = [self.feature_type[self.n_levels - j - 1](i)
+                images = [self.features[self.n_levels - j - 1](i)
                           for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [self.feature_type[0](image)]
+            images = [self.features[0](image)]
 
         # initialize responses
         image = images[level]
@@ -595,23 +595,23 @@ class CLM(object):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = self.feature_type[0](temp_img)
+            temp = self.features[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = self.feature_type[j](temp_img)
+                temp = self.features[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.feature_type[0], str):
+            if isinstance(self.features[0], str):
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0])
-            elif self.feature_type[0] is None:
+                    self.features[0])
+            elif self.features[0] is None:
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].__name__)
+                    self.features[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -620,14 +620,14 @@ class CLM(object):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.feature_type[j], str):
+                if isinstance(self.features[j], str):
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j]))
-                elif self.feature_type[j] is None:
+                        self.features[j]))
+                elif self.features[j] is None:
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].__name__))
+                        self.features[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:

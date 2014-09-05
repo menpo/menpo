@@ -141,7 +141,7 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
         If None, the default options will be used.
         This is an example of the dictionary with the default options:
             training_options = {'group': 'PTS',
-                                'feature_type': 'igo',
+                                'features': 'igo',
                                 'transform': PiecewiseAffine,
                                 'trilist': None,
                                 'normalization_diagonal': None,
@@ -316,7 +316,7 @@ def clm_build_benchmark(training_images, training_options=None, verbose=False):
             training_options = {'group': 'PTS',
                                 'classifier_type': linear_svm_lr,
                                 'patch_shape': (5, 5),
-                                'feature_type': sparse_hog,
+                                'features': sparse_hog,
                                 'normalization_diagonal': None,
                                 'n_levels': 3,
                                 'downscale': 1.1,
@@ -484,7 +484,7 @@ def sdm_build_benchmark(training_images, training_options=None, verbose=False):
         If None, the default options will be used.
         This is an example of the dictionary with the default options:
             training_options = {'group': 'PTS',
-                                'feature_type': 'igo',
+                                'features': 'igo',
                                 'transform': PiecewiseAffine,
                                 'trilist': None,
                                 'normalization_diagonal': None,

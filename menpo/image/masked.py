@@ -594,7 +594,7 @@ class MaskedImage(Image):
         return grad_image
 
     # TODO maybe we should be stricter about the trilist here, feels flakey
-    def constrain_mask_to_landmarks(self, group=None, label='all',
+    def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
@@ -635,7 +635,9 @@ class MaskedImage(Image):
 
         pwa = PiecewiseAffine(pc, pc)
         try:
-            pwa.apply(self.indices)
+            # Call the superclass indices property because we actually want
+            # ALL the indices, not just the true ones.
+            pwa.apply(Image.indices.fget(self))
         except TriangleContainmentError as e:
             self.mask.from_vector_inplace(~e.points_outside_source_domain)
 
