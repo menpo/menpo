@@ -1,2 +1,2 @@
-from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
-from .trainer import (SDMTrainer, SDAAMTrainer, SDCLMTrainer)
+from .trainer import SDMTrainer, SDAAMTrainer, SDCLMTrainer
+from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
