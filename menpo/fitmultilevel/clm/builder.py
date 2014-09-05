@@ -3,8 +3,11 @@ import numpy as np
 
 from menpo.image import Image
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         validate_features)
+                                         validate_features,
+                                         normalization_wrt_reference_shape,
+                                         build_shape_model, create_pyramid)
 from menpo.fitmultilevel.functions import build_sampling_grid
+from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
@@ -149,11 +152,11 @@ class CLMBuilder(DeformableModelBuilder):
                  pyramid_on_features=False, max_shape_components=None,
                  boundary=3, interpolator='scipy'):
         # check parameters
-        self.check_n_levels(n_levels)
-        self.check_downscale(downscale)
-        self.check_normalization_diagonal(normalization_diagonal)
-        self.check_boundary(boundary)
-        max_shape_components = self.check_max_components(
+        checks.check_n_levels(n_levels)
+        checks.check_downscale(downscale)
+        checks.check_normalization_diagonal(normalization_diagonal)
+        checks.check_boundary(boundary)
+        max_shape_components = checks.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
         features = validate_features(features, n_levels,
                                      pyramid_on_features)
@@ -198,15 +201,14 @@ class CLMBuilder(DeformableModelBuilder):
         """
         # compute reference_shape and normalize images size
         self.reference_shape, normalized_images = \
-            self._normalization_wrt_reference_shape(
+            normalization_wrt_reference_shape(
                 images, group, label, self.normalization_diagonal,
                 self.interpolator, verbose=verbose)
 
         # create pyramid
-        generators = self._create_pyramid(normalized_images, self.n_levels,
-                                          self.downscale,
-                                          self.pyramid_on_features,
-                                          self.features, verbose=verbose)
+        generators = create_pyramid(normalized_images, self.n_levels,
+                                    self.downscale,  self.pyramid_on_features,
+                                    self.features, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -266,7 +268,7 @@ class CLMBuilder(DeformableModelBuilder):
             # train shape model and find reference frame
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
-            shape_model = self._build_shape_model(
+            shape_model = build_shape_model(
                 train_shapes, self.max_shape_components[rj])
 
             # add shape model to the list
