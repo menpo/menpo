@@ -9,7 +9,9 @@ from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         validate_features)
+                                         validate_features,
+                                         normalization_wrt_reference_shape,
+                                         build_shape_model, create_pyramid)
 from menpo.fitmultilevel import checks
 from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.feature import igo
@@ -232,15 +234,15 @@ class AAMBuilder(DeformableModelBuilder):
         """
         # compute reference_shape and normalize images size
         self.reference_shape, normalized_images = \
-            self._normalization_wrt_reference_shape(
-                images, group, label, self.normalization_diagonal,
-                self.interpolator, verbose=verbose)
+            normalization_wrt_reference_shape(images, group, label,
+                                              self.normalization_diagonal,
+                                              self.interpolator,
+                                              verbose=verbose)
 
         # create pyramid
-        generators = self._create_pyramid(normalized_images, self.n_levels,
-                                          self.downscale,
-                                          self.pyramid_on_features,
-                                          self.features, verbose=verbose)
+        generators = create_pyramid(normalized_images, self.n_levels,
+                                    self.downscale, self.pyramid_on_features,
+                                    self.features, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -300,7 +302,7 @@ class AAMBuilder(DeformableModelBuilder):
             # train shape model and find reference frame
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
-            shape_model = self._build_shape_model(
+            shape_model = build_shape_model(
                 train_shapes, self.max_shape_components[rj])
             reference_frame = self._build_reference_frame(shape_model.mean)
 
