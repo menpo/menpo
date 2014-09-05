@@ -3,7 +3,6 @@ import numpy as np
 
 from menpo.image import Image
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         validate_features,
                                          normalization_wrt_reference_shape,
                                          build_shape_model, create_pyramid)
 from menpo.fitmultilevel.functions import build_sampling_grid
@@ -158,8 +157,8 @@ class CLMBuilder(DeformableModelBuilder):
         checks.check_boundary(boundary)
         max_shape_components = checks.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        features = validate_features(features, n_levels,
-                                     pyramid_on_features)
+        features = checks.check_features(features, n_levels,
+                                         pyramid_on_features)
         classifier_type = check_classifier_type(classifier_type, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 

@@ -13,7 +13,7 @@ from menpo.fit.regression.trainer import (
 from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.shape import mean_pointcloud
-from menpo.fitmultilevel.builder import validate_features
+from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog, no_op
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
@@ -149,7 +149,7 @@ class SDTrainer(object):
         # check parameters
         regression_type_list = self.check_regression_type(regression_type,
                                                           n_levels)
-        features = validate_features(features, n_levels,
+        features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
