@@ -27,7 +27,7 @@ for i in range(4):
 # Seed the random number generator
 np.random.seed(seed=1000)
 
-aam = AAMBuilder(feature_type=sparse_hog,
+aam = AAMBuilder(features=sparse_hog,
                  transform=PiecewiseAffine,
                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
@@ -42,7 +42,7 @@ aam = AAMBuilder(feature_type=sparse_hog,
                  interpolator='scipy').build(training_images, group='PTS')
 
 clm = CLMBuilder(classifier_type=linear_svm_lr,
-                 feature_type=[sparse_hog],
+                 features=[sparse_hog],
                  normalization_diagonal=100,
                  patch_shape=(5, 5),
                  n_levels=1,
@@ -54,14 +54,14 @@ clm = CLMBuilder(classifier_type=linear_svm_lr,
                  interpolator='scipy').build(training_images, group='PTS')
 
 @raises(ValueError)
-def test_feature_type_exception():
-    sdm = SDMTrainer(feature_type=[igo, sparse_hog],
+def test_features_exception():
+    sdm = SDMTrainer(features=[igo, sparse_hog],
                      n_levels=3).train(training_images, group='PTS')
 
 
 @raises(ValueError)
-def test_feature_type_with_pyramid_on_features_exception():
-    sdm = SDMTrainer(feature_type=[igo, sparse_hog, hog],
+def test_features_with_pyramid_on_features_exception():
+    sdm = SDMTrainer(features=[igo, sparse_hog, hog],
                      n_levels=3,
                      pyramid_on_features=True).train(training_images,
                                                      group='PTS')
@@ -116,7 +116,7 @@ def test_verbose_mock(mock_stdout):
     sdm = SDMTrainer(regression_type=mlr_svd,
                      regression_features=sparse_hog,
                      patch_shape=(16, 16),
-                     feature_type=no_op,
+                     features=no_op,
                      normalization_diagonal=150,
                      n_levels=1,
                      downscale=1.3,

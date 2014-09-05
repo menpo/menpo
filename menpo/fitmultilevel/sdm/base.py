@@ -68,7 +68,7 @@ class SDMFitter(SDFitter):
         The number of images that were used to train the SDM fitter. It is
         only used for informational reasons.
         
-    feature_type : ``None`` or `string` or `function` or list of those, optional
+     : ``None`` or `string` or `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
@@ -88,7 +88,7 @@ class SDMFitter(SDFitter):
 
             If `string`, image features will be computed by executing::
 
-               feature_image = getattr(image.features, feature_type[level])()
+               feature_image = getattr(image.features, [level])()
 
             for each pyramidal level. For this to work properly each string
             needs to be one of menpo's standard image feature methods
@@ -104,7 +104,7 @@ class SDMFitter(SDFitter):
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=True)
+                return image..igo(double_angles=True)
 
         See :map:`ImageFeatures` for details more details on
         Menpo's standard image features and feature options.
@@ -137,11 +137,11 @@ class SDMFitter(SDFitter):
        IEEE International Conference on Computer Vision and Pattern Recognition
        May, 2013
     """
-    def __init__(self, regressors, n_training_images, feature_type,
+    def __init__(self, regressors, n_training_images, features,
                  reference_shape, downscale, pyramid_on_features,
                  interpolator):
         self._fitters = regressors
-        self._feature_type = feature_type
+        self._features = features
         self._reference_shape = reference_shape
         self._downscale = downscale
         self._interpolator = interpolator
@@ -167,14 +167,14 @@ class SDMFitter(SDFitter):
         return self._reference_shape
 
     @property
-    def feature_type(self):
+    def features(self):
         r"""
         The feature type per pyramid level. Note that they are stored from
         lowest to highest level resolution.
 
         :type: `list`
         """
-        return self._feature_type
+        return self._features
 
     @property
     def n_levels(self):
@@ -233,23 +233,23 @@ class SDMFitter(SDFitter):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(40, 40))
         if self.pyramid_on_features:
-            temp = self.feature_type[0](temp_img)
+            temp = self.features[0](temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
             for j in range(self.n_levels):
-                temp = self.feature_type[j](temp_img)
+                temp = self.features[j](temp_img)
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.feature_type[0], str):
+            if isinstance(self.features[0], str):
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0])
-            elif self.feature_type[0] is None:
+                    self.features[0])
+            elif self.features[0] is None:
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].__name__)
+                    self.features[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -258,14 +258,14 @@ class SDMFitter(SDFitter):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.feature_type[j], str):
+                if isinstance(self.features[j], str):
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j]))
-                elif self.feature_type[j] is None:
+                        self.features[j]))
+                elif self.features[j] is None:
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].__name__))
+                        self.features[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
