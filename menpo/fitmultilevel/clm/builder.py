@@ -203,7 +203,7 @@ class CLMBuilder(DeformableModelBuilder):
         self.reference_shape, normalized_images = \
             normalization_wrt_reference_shape(
                 images, group, label, self.normalization_diagonal,
-                self.interpolator, verbose=verbose)
+                verbose=verbose)
 
         # create pyramid
         generators = create_pyramid(normalized_images, self.n_levels,

@@ -236,7 +236,6 @@ class AAMBuilder(DeformableModelBuilder):
         self.reference_shape, normalized_images = \
             normalization_wrt_reference_shape(images, group, label,
                                               self.normalization_diagonal,
-                                              self.interpolator,
                                               verbose=verbose)
 
         # create pyramid

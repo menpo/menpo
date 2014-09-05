@@ -3,6 +3,9 @@ import numpy as np
 from menpo.transform import AlignmentSimilarity, UniformScale, Translation
 from .base import MultipleAlignment
 
+mean_pointcloud = None  # to avoid circular imports
+PointCloud = None       # to avoid circular imports
+Similarity = None       # to avoid circular imports
 
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
@@ -45,11 +48,14 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         r"""
         Recursively calculates a procrustes alignment.
         """
-        from menpo.shape import mean_pointcloud
-        from menpo.transform import Similarity
+        global mean_pointcloud, PointCloud, Similarity
+        if mean_pointcloud is None or PointCloud is None or Similarity is None:
+            from menpo.shape import mean_pointcloud, PointCloud
+            from menpo.transform import Similarity
         if self.n_iterations > self.max_iterations:
             return False
-        new_tgt = mean_pointcloud([t.aligned_source.points
+        new_tgt = mean_pointcloud([PointCloud(t.aligned_source.points,
+                                              copy=False)
                                    for t in self.transforms])
         # rescale the new_target to be the same size as the original about
         # it's centre
@@ -100,3 +106,4 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         else:
             return ('Failed to converge after %d iterations with av. error '
                     '%f' % (self.n_iterations, self.av_alignment_error))
+

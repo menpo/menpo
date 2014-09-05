@@ -8,7 +8,7 @@ from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
 
-from .functions import mean_pointcloud
+from menpo.shape import mean_pointcloud
 
 
 # tests currently expect that all features automatically constrain landmarks
@@ -91,8 +91,7 @@ def validate_features(features, n_levels, pyramid_on_features):
 
 
 def normalization_wrt_reference_shape(images, group, label,
-                                      normalization_diagonal,
-                                      interpolator, verbose=False):
+                                      normalization_diagonal, verbose=False):
     r"""
     Function that normalizes the images sizes with respect to the reference
     shape (mean shape) scaling. This step is essential before building a
@@ -109,12 +108,15 @@ def normalization_wrt_reference_shape(images, group, label,
     ----------
     images: list of :class:`menpo.image.MaskedImage`
         The set of landmarked images from which to build the model.
+
     group : string
         The key of the landmark set that should be used. If None,
         and if there is only one set of landmarks, this set will be used.
+
     label: string
         The label of of the landmark manager that you wish to use. If no
         label is passed, the convex hull of all landmarks is used.
+
     normalization_diagonal: int
         During building an AAM, all images are rescaled to ensure that the
         scale of their landmarks matches the scale of the mean shape.
@@ -128,8 +130,7 @@ def normalization_wrt_reference_shape(images, group, label,
         landmarks, this kwarg also specifies the diagonal length of the
         reference frame (provided that features computation does not change
         the image size).
-    interpolator: string
-        The interpolator that should be used to perform the warps.
+
     verbose: bool, Optional
         Flag that controls information and progress printing.
 
@@ -163,8 +164,7 @@ def normalization_wrt_reference_shape(images, group, label,
                 progress_bar_str((c + 1.) / len(images),
                                  show_bar=False)))
         normalized_images.append(i.rescale_to_reference_shape(
-            reference_shape, group=group, label=label,
-            interpolator=interpolator))
+            reference_shape, group=group, label=label))
 
     if verbose:
         print_dynamic('- Normalizing images size: Done\n')
