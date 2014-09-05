@@ -3,7 +3,7 @@ import numpy as np
 from menpo.image import Image
 from menpo.fitmultilevel.base import MultilevelFitter
 from menpo.fitmultilevel.aam.fitter import AAMFitter
-from menpo.fitmultilevel.clm.base import CLMFitter
+from menpo.fitmultilevel.clm.fitter import CLMFitter
 
 
 class SDFitter(MultilevelFitter):

@@ -1,2 +1,2 @@
-from .fitter import LucasKanadeAAMFitter
 from .builder import AAMBuilder, PatchBasedAAMBuilder
+from .fitter import LucasKanadeAAMFitter
