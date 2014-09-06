@@ -9,6 +9,7 @@ from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.feature import sparse_hog, igo, no_op
 from menpo.fitmultilevel.clm.classifier import linear_svm_lr
+from menpo.fitmultilevel.base import name_of_callable
 
 from sklearn import qda
 
@@ -161,18 +162,17 @@ def test_clm_1():
     assert_allclose([clm1.shape_models[j].n_components
                      for j in range(clm1.n_levels)], (1, 2, 3))
     assert_allclose(clm1.n_classifiers_per_level, [68, 68, 68])
-    assert (clm1.
-            classifiers[0][np.random.
-            randint(0, clm1.n_classifiers_per_level[0])].__name__
-            == 'linear_svm_predict')
-    assert (clm1.
-            classifiers[1][np.random.
-            randint(0, clm1.n_classifiers_per_level[1])].__name__
-            == 'linear_svm_predict')
-    assert (clm1.
-            classifiers[2][np.random.
-            randint(0, clm1.n_classifiers_per_level[2])].__name__
-            == 'linear_svm_predict')
+
+    ran_0 = np.random.randint(0, clm1.n_classifiers_per_level[0])
+    ran_1 = np.random.randint(0, clm1.n_classifiers_per_level[1])
+    ran_2 = np.random.randint(0, clm1.n_classifiers_per_level[2])
+
+    assert (name_of_callable(clm1.classifiers[0][ran_0])
+            == 'linear_svm_lr')
+    assert (name_of_callable(clm1.classifiers[1][ran_1])
+            == 'linear_svm_lr')
+    assert (name_of_callable(clm1.classifiers[2][ran_2])
+            == 'linear_svm_lr')
 
 
 def test_clm_2():
@@ -188,14 +188,14 @@ def test_clm_2():
     assert (np.all([clm2.shape_models[j].n_components == 3
                     for j in range(clm2.n_levels)]))
     assert_allclose(clm2.n_classifiers_per_level, [68, 68])
-    assert (clm2.
-            classifiers[0][np.random.
-            randint(0, clm2.n_classifiers_per_level[0])].__name__
+
+    ran_0 = np.random.randint(0, clm2.n_classifiers_per_level[0])
+    ran_1 = np.random.randint(0, clm2.n_classifiers_per_level[1])
+
+    assert (name_of_callable(clm2.classifiers[0][ran_0])
             == 'random_forest_predict')
-    assert (clm2.
-            classifiers[1][np.random.
-            randint(0, clm2.n_classifiers_per_level[1])].__name__
-            == 'linear_svm_predict')
+    assert (name_of_callable(clm2.classifiers[1][ran_1])
+            == 'linear_svm_lr')
 
 
 def test_clm_3():
@@ -211,7 +211,7 @@ def test_clm_3():
     assert (np.all([clm3.shape_models[j].n_components == 1
                     for j in range(clm3.n_levels)]))
     assert_allclose(clm3.n_classifiers_per_level, [68])
-    assert (clm3.
-            classifiers[0][np.random.
-            randint(0, clm3.n_classifiers_per_level[0])].__name__
-            == 'linear_svm_predict')
+    ran_0 = np.random.randint(0, clm3.n_classifiers_per_level[0])
+
+    assert (name_of_callable(clm3.classifiers[0][ran_0])
+            == 'linear_svm_lr')

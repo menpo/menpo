@@ -218,6 +218,7 @@ class CLM(object):
         return 'Constrained Local Model'
 
     def __str__(self):
+        from menpo.fitmultilevel.base import name_of_callable
         out = "{}\n - {} training images.\n".format(self._str_title,
                                                     self.n_training_images)
         # small strings about number of channels, channels string and downscale
@@ -246,7 +247,7 @@ class CLM(object):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+                    name_of_callable(self.features[0]))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -262,7 +263,7 @@ class CLM(object):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.features[j].__name__))
+                        name_of_callable(self.features[j])))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -299,7 +300,7 @@ class CLM(object):
                     out, self.shape_models[i].n_components,
                     self.shape_models[i].variance_ratio * 100,
                     self.n_classifiers_per_level[i],
-                    self.classifiers[i][0].__name__)
+                    name_of_callable(self.classifiers[i][0]))
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -310,6 +311,6 @@ class CLM(object):
                 self.shape_models[0].n_components,
                 self.shape_models[0].variance_ratio * 100,
                 self.n_classifiers_per_level[0],
-                self.classifiers[0][0].__name__)
+                name_of_callable(self.classifiers[0][0]))
         return out
 
