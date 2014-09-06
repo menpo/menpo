@@ -140,24 +140,6 @@ def extract_local_patches_fast(image, centres, patch_shape, out=None):
     return patches
 
 
-def mean_pointcloud(pointclouds):
-    r"""
-    Compute the mean of a list of point cloud objects
-
-    Parameters
-    ----------
-    pointclouds: list of :class:`menpo.shape.PointCloud`
-        List of point cloud objects from which we want to
-        compute the mean.
-
-    Returns
-    -------
-    mean_pointcloud: class:`menpo.shape.PointCloud`
-        The mean point cloud.
-    """
-    return PointCloud(np.mean([pc.points for pc in pointclouds], axis=0))
-
-
 # TODO: Should this be a method on Similarity? AlignableTransforms?
 def noisy_align(source, target, noise_std=0.04, rotation=False):
     r"""

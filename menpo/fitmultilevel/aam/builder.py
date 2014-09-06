@@ -9,7 +9,6 @@ from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         validate_features,
                                          normalization_wrt_reference_shape,
                                          build_shape_model, create_pyramid)
 from menpo.fitmultilevel import checks
@@ -25,7 +24,7 @@ class AAMBuilder(DeformableModelBuilder):
     ----------
     features : `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
+        This requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
         The first element of the list specifies the features to be extracted at
         the lowest pyramidal level and so on.
@@ -35,21 +34,6 @@ class AAMBuilder(DeformableModelBuilder):
             be applied to the highest level.
             If ``pyramid_on_features`` is ``False``, the specified feature will
             be applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model will be built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-        Non-default feature options and new experimental features can be
-        defined using `function`. In this case, the `function` must
-        receive an image as input and return a particular feature
-        representation of that image. For example::
-
-            def igo_double_from_std_normalized_intensities(image)
-                image = deepcopy(image)
-                image.normalize_std_inplace()
-                return image.features.igo(double_angles=``True``)
 
     transform : :map:`PureAlignmentTransform`, optional
         The :map:`PureAlignmentTransform` that will be
@@ -189,7 +173,7 @@ class AAMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = checks.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        features = validate_features(features, n_levels,
+        features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
         # store parameters
         self.features = features
@@ -236,7 +220,6 @@ class AAMBuilder(DeformableModelBuilder):
         self.reference_shape, normalized_images = \
             normalization_wrt_reference_shape(images, group, label,
                                               self.normalization_diagonal,
-                                              self.interpolator,
                                               verbose=verbose)
 
         # create pyramid
@@ -577,7 +560,8 @@ class PatchBasedAAMBuilder(AAMBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         max_appearance_components = checks.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        features = validate_features(features, n_levels, pyramid_on_features)
+        features = checks.check_features(features, n_levels,
+                                         pyramid_on_features)
 
         # store parameters
         self.features = features

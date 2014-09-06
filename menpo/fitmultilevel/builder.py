@@ -1,98 +1,15 @@
 from __future__ import division
 import abc
 import numpy as np
-import wrapt
 
-
-from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.model.pca import PCAModel
+from menpo.shape import mean_pointcloud
+from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.visualize import print_dynamic, progress_bar_str
-
-from .functions import mean_pointcloud
-
-
-# tests currently expect that all features automatically constrain landmarks
-# small wrapper which does this. Note that this decorator only works when
-# called with menpo Image instances.
-@wrapt.decorator
-def constrain_landmarks(wrapped, instance, args, kwargs):
-
-    def _execute(image, *args, **kwargs):
-        feature = wrapped(image, *args, **kwargs)
-        # after calculation, constrain the landmarks to the bounds
-        feature.constrain_landmarks_to_bounds()
-        return feature
-
-    return _execute(*args, **kwargs)
-
-
-def validate_features(features, n_levels, pyramid_on_features):
-    r"""
-    Checks the feature type per level.
-    If pyramid_on_features is False, it must be a function or a list of
-    those containing 1 or {n_levels} elements.
-    If pyramid_on_features is True, it must be a function or a list of 1
-    of those.
-
-    Parameters
-    ----------
-    n_levels: int
-        The number of pyramid levels.
-    pyramid_on_features: boolean
-        If True, the pyramid will be applied to the feature image, so
-        the user needs to define a single features.
-        If False, the pyramid will be applied to the intensities image and
-        features will be extracted at each level, so the user can define
-        a features per level.
-
-    Returns
-    -------
-    feature_list: list
-        A list of feature function.
-        If pyramid_on_features is True, the list will have length 1.
-        If pyramid_on_features is False, the list will have length
-        {n_levels}.
-    """
-    # Firstly, make sure we have a list of features
-    if not pyramid_on_features:
-        features_str_error = ("features must be a function or a list of "
-                              "functions containing "
-                              "1 or {} elements").format(n_levels)
-        if not isinstance(features, list):
-            feature_list = [features] * n_levels
-        elif len(features) == 1:
-            feature_list = [features[0]] * n_levels
-        elif len(features) == n_levels:
-            feature_list = features
-        else:
-            raise ValueError(features_str_error)
-    else:
-        features_str_error = ("pyramid_on_features is enabled so features "
-                              "must be a function or a list of exactly one "
-                              "function")
-        if not isinstance(features, list):
-            feature_list = [features]
-        elif len(features) == 1:
-            feature_list = features
-        else:
-            raise ValueError(features_str_error)
-    # If we are here we have a list of features. Let's check they are all
-    # callable
-    all_callable_feature_list = []
-    for ft in feature_list:
-        if not callable(ft):
-            raise ValueError("{} is not callable (did you mean to pass "
-                             "menpo.feature.no_op?)".format(ft))
-        all_callable_feature_list.append(ft)
-    all_callable_constrained = []
-    for ft in all_callable_feature_list:
-        all_callable_constrained.append(constrain_landmarks(ft))
-    return all_callable_constrained
 
 
 def normalization_wrt_reference_shape(images, group, label,
-                                      normalization_diagonal,
-                                      interpolator, verbose=False):
+                                      normalization_diagonal, verbose=False):
     r"""
     Function that normalizes the images sizes with respect to the reference
     shape (mean shape) scaling. This step is essential before building a
@@ -109,12 +26,15 @@ def normalization_wrt_reference_shape(images, group, label,
     ----------
     images: list of :class:`menpo.image.MaskedImage`
         The set of landmarked images from which to build the model.
+
     group : string
         The key of the landmark set that should be used. If None,
         and if there is only one set of landmarks, this set will be used.
+
     label: string
         The label of of the landmark manager that you wish to use. If no
         label is passed, the convex hull of all landmarks is used.
+
     normalization_diagonal: int
         During building an AAM, all images are rescaled to ensure that the
         scale of their landmarks matches the scale of the mean shape.
@@ -128,8 +48,7 @@ def normalization_wrt_reference_shape(images, group, label,
         landmarks, this kwarg also specifies the diagonal length of the
         reference frame (provided that features computation does not change
         the image size).
-    interpolator: string
-        The interpolator that should be used to perform the warps.
+
     verbose: bool, Optional
         Flag that controls information and progress printing.
 
@@ -163,8 +82,7 @@ def normalization_wrt_reference_shape(images, group, label,
                 progress_bar_str((c + 1.) / len(images),
                                  show_bar=False)))
         normalized_images.append(i.rescale_to_reference_shape(
-            reference_shape, group=group, label=label,
-            interpolator=interpolator))
+            reference_shape, group=group, label=label))
 
     if verbose:
         print_dynamic('- Normalizing images size: Done\n')
