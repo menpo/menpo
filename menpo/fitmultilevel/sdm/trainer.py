@@ -74,7 +74,7 @@ class SDTrainer(object):
 
         Examples of such closures can be found in :ref:`regression_functions`.
 
-    regression_features :`` None`` or `string` or `function` or list of those, optional
+    regression_features :`` None`` or `callable` or `[callable]`, optional
         The features that are used during the regression.
 
         If `list`, a regression feature is defined per level.
