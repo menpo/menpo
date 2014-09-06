@@ -44,18 +44,6 @@ class AAM(HDF5able):
             If ``pyramid_on_features`` is ``False``, the specified feature was
             applied to all pyramid levels.
 
-        Per level:
-            If ``None``, the appearance model was built using the original image
-            representation, i.e. no features will be extracted from the original
-            images.
-
-            If `function`, the user can directly provide the feature that was
-            calculated on the images. This class will simply invoke this
-            function, passing in as the sole argument the image to be fitted,
-            and expect as a return type an :map:`Image` representing the feature
-            calculation ready for further fitting. See the examples for
-            details.
-
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
         consistent object size.
@@ -355,7 +343,7 @@ class PatchBasedAAM(AAM):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    features : ``None`` or `string` or `function` or list of those
+    features : `function` or list of those
         The image feature that was be used to build the appearance_models. Will
         subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -373,17 +361,6 @@ class PatchBasedAAM(AAM):
             If ``pyramid_on_features`` is ``False``, the specified feature was
             applied to all pyramid levels.
 
-        Per level:
-            If ``None``, the appearance model was built using the original image
-            representation, i.e. no features will be extracted from the original
-            images.
-
-            If `function`, the user can directly provide the feature that was
-            calculated on the images. This class will simply invoke this
-            function, passing in as the sole argument the image to be fitted,
-            and expect as a return type an :map:`Image` representing the feature
-            calculation ready for further fitting. See the examples for
-            details.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -443,4 +420,3 @@ class PatchBasedAAM(AAM):
         out_splitted.insert(5, "   - Patch size is {}W x {}H.".format(
             self.patch_shape[1], self.patch_shape[0]))
         return '\n'.join(out_splitted)
-
