@@ -11,8 +11,8 @@ class CLM(object):
     shape_models : :map:`PCAModel` list
         A list containing the shape models of the CLM.
 
-    classifiers : ``classifier_closure`` list of lists
-        A list containing the list of classifier_closures per each pyramidal
+    classifiers : ``[[callable]]``
+        A list containing the list of classifier callables per each pyramidal
         level of the CLM.
 
     n_training_images : `int`
@@ -21,7 +21,7 @@ class CLM(object):
     patch_shape : tuple of `int`
         The shape of the patches used to train the classifiers.
 
-    features : ``None`` or `string` or `function` or list of those
+    features : `function` or list of those
         The image feature that was be used to build the ``appearance_models``.
         Will subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -38,18 +38,6 @@ class CLM(object):
 
             If ``pyramid_on_features`` is ``False``, the specified feature was
             applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model was built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-            If `function`, the user can directly provide the feature that was
-            calculated on the images. This class will simply invoke this
-            function, passing in as the sole argument the image to be fitted,
-            and expect as a return type an :map:`Image` representing the feature
-            calculation ready for further fitting. See the examples for
-            details.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -230,6 +218,7 @@ class CLM(object):
         return 'Constrained Local Model'
 
     def __str__(self):
+        from menpo.fitmultilevel.base import name_of_callable
         out = "{}\n - {} training images.\n".format(self._str_title,
                                                     self.n_training_images)
         # small strings about number of channels, channels string and downscale
@@ -258,7 +247,7 @@ class CLM(object):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+                    name_of_callable(self.features[0]))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -274,7 +263,7 @@ class CLM(object):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.features[j].__name__))
+                        name_of_callable(self.features[j])))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -311,7 +300,7 @@ class CLM(object):
                     out, self.shape_models[i].n_components,
                     self.shape_models[i].variance_ratio * 100,
                     self.n_classifiers_per_level[i],
-                    self.classifiers[i][0].__name__)
+                    name_of_callable(self.classifiers[i][0]))
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -322,6 +311,6 @@ class CLM(object):
                 self.shape_models[0].n_components,
                 self.shape_models[0].variance_ratio * 100,
                 self.n_classifiers_per_level[0],
-                self.classifiers[0][0].__name__)
+                name_of_callable(self.classifiers[0][0]))
         return out
 

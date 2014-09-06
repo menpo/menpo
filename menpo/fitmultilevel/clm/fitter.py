@@ -217,6 +217,7 @@ class GradientDescentCLMFitter(CLMFitter):
                                            pdm_trans, **kwargs))
 
     def __str__(self):
+        from menpo.fitmultilevel.base import name_of_callable
         out = "{0} Fitter\n" \
               " - Gradient-Descent {1}\n" \
               " - Transform is {2}.\n" \
@@ -250,7 +251,7 @@ class GradientDescentCLMFitter(CLMFitter):
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+                    name_of_callable(self.features[0]))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -266,7 +267,7 @@ class GradientDescentCLMFitter(CLMFitter):
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.features[j].__name__))
+                        name_of_callable(self.features[j])))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -304,7 +305,7 @@ class GradientDescentCLMFitter(CLMFitter):
                       "classifiers.\n".format(
                     out, self._fitters[i].transform.n_parameters,
                     len(self._fitters[i].classifiers),
-                    self._fitters[i].classifiers[0].__name__)
+                    name_of_callable(self._fitters[i].classifiers[0]))
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -314,5 +315,5 @@ class GradientDescentCLMFitter(CLMFitter):
                 out, feat_str[0], n_channels[0], ch_str[0],
                 out, self._fitters[0].transform.n_parameters,
                 len(self._fitters[0].classifiers),
-                self._fitters[0].classifiers[0].__name__)
+                name_of_callable(self._fitters[0].classifiers[0]))
         return out

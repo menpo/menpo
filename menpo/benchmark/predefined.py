@@ -6,7 +6,7 @@ from menpo.transform import AlignmentSimilarity
 from menpo.feature import sparse_hog
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.clm.classifier import linear_svm_lr
 from .io import import_bounding_boxes
 
 from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
@@ -337,7 +337,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
 
 
 def clm_basic_noise(training_db_path,  fitting_db_path,
-                    features=sparse_hog, classifier_type=linear_svm_lr,
+                    features=sparse_hog, classifiers=linear_svm_lr,
                     noise_std=0.04, verbose=False, plot=False):
     # check feature
     if not isinstance(features, str):
@@ -351,7 +351,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
-                        'classifier_type': linear_svm_lr,
+                        'classifiers': linear_svm_lr,
                         'patch_shape': (5, 5),
                         'features': sparse_hog,
                         'normalization_diagonal': None,
@@ -375,7 +375,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
 
     # set passed parameters
     training_options['features'] = features
-    training_options['classifier_type'] = classifier_type
+    training_options['classifiers'] = classifiers
     perturb_options['noise_std'] = noise_std
 
     # run experiment
@@ -405,7 +405,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
             training_options['features'],
-            training_options['classifier_type'])
+            training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -415,7 +415,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
 
 
 def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
-                   features=sparse_hog, classifier_type=linear_svm_lr,
+                   features=sparse_hog, classifiers=linear_svm_lr,
                    verbose=False, plot=False):
     # check feature
     if not isinstance(features, str):
@@ -429,7 +429,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'classifier_type': linear_svm_lr,
+                        'classifiers': linear_svm_lr,
                         'patch_shape': (5, 5),
                         'features': sparse_hog,
                         'normalization_diagonal': None,
@@ -451,7 +451,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
 
     # set passed parameters
     training_options['features'] = features
-    training_options['classifier_type'] = classifier_type
+    training_options['classifiers'] = classifiers
 
     # run experiment
     training_images = load_database(training_db_path,
@@ -488,7 +488,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
             training_options['features'],
-            training_options['classifier_type'])
+            training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -698,7 +698,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
 
 
 def clm_params_combinations_noise(training_db_path, fitting_db_path,
-                                  n_experiments=1, classifier_type=None,
+                                  n_experiments=1, classifiers=None,
                                   patch_shape=None, features=None,
                                   scaled_shape_models=None,
                                   pyramid_on_features=None, n_shape=None,
@@ -706,10 +706,10 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                                   plot=False):
 
     # parse input
-    if classifier_type is None:
-        classifier_type = [linear_svm_lr] * n_experiments
-    elif len(classifier_type) is not n_experiments:
-        raise ValueError("classifier_type has wrong length")
+    if classifiers is None:
+        classifiers = [linear_svm_lr] * n_experiments
+    elif len(classifiers) is not n_experiments:
+        raise ValueError("classifiers has wrong length")
     if patch_shape is None:
         patch_shape = [(5, 5)] * n_experiments
     elif len(patch_shape) is not n_experiments:
@@ -758,17 +758,17 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
     for i in range(n_experiments):
         if verbose:
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
-            print("- classifier_type: {}\n- patch_shape: {}\n"
+            print("- classifiers: {}\n- patch_shape: {}\n"
                   "- features: {}\n- scaled_shape_models: {}\n"
                   "- pyramid_on_features: {}\n- n_shape: {}\n"
                   "- noise_std: {}\n- rotation: {}".format(
-                  classifier_type[i], patch_shape[i], features[i],
+                  classifiers[i], patch_shape[i], features[i],
                   scaled_shape_models[i], pyramid_on_features[i], n_shape[i],
                   noise_std[i], rotation[i]))
 
         # predefined option dictionaries
         training_options = {'group': 'PTS',
-                            'classifier_type': linear_svm_lr,
+                            'classifiers': linear_svm_lr,
                             'patch_shape': (5, 5),
                             'features': sparse_hog,
                             'normalization_diagonal': None,
@@ -791,7 +791,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                            'rotation': False}
 
         # training
-        training_options['classifier_type'] = classifier_type[i]
+        training_options['classifiers'] = classifiers[i]
         training_options['patch_shape'] = patch_shape[i]
         training_options['features'] = features[i]
         training_options['scaled_shape_models'] = scaled_shape_models[i]

@@ -10,7 +10,8 @@ from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.fitmultilevel.clm import GradientDescentCLMFitter
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.clm.classifier import linear_svm_lr
+from menpo.fitmultilevel.base import name_of_callable
 from menpo.feature import sparse_hog
 
 
@@ -303,7 +304,7 @@ for i in range(4):
     training_images.append(im)
 
 # build clm
-clm = CLMBuilder(classifier_type=linear_svm_lr,
+clm = CLMBuilder(classifier_trainers=linear_svm_lr,
                  patch_shape=(8, 8),
                  features=sparse_hog,
                  normalization_diagonal=150,
@@ -329,18 +330,17 @@ def test_clm():
     assert_allclose([clm.shape_models[j].n_components
                      for j in range(clm.n_levels)], (1, 2, 3))
     assert_allclose(clm.n_classifiers_per_level, [68, 68, 68])
-    assert (clm.
-            classifiers[0][np.random.
-            randint(0, clm.n_classifiers_per_level[0])].__name__
-            == 'linear_svm_predict')
-    assert (clm.
-            classifiers[1][np.random.
-            randint(0, clm.n_classifiers_per_level[1])].__name__
-            == 'linear_svm_predict')
-    assert (clm.
-            classifiers[2][np.random.
-            randint(0, clm.n_classifiers_per_level[2])].__name__
-            == 'linear_svm_predict')
+
+    ran_0 = np.random.randint(0, clm.n_classifiers_per_level[0])
+    ran_1 = np.random.randint(0, clm.n_classifiers_per_level[1])
+    ran_2 = np.random.randint(0, clm.n_classifiers_per_level[2])
+
+    assert (name_of_callable(clm.classifiers[0][ran_0])
+            == 'linear_svm_lr')
+    assert (name_of_callable(clm.classifiers[1][ran_1])
+            == 'linear_svm_lr')
+    assert (name_of_callable(clm.classifiers[2][ran_2])
+            == 'linear_svm_lr')
 
 
 @raises(ValueError)

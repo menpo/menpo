@@ -341,3 +341,10 @@ class MultilevelFitter(Fitter):
             Scale(self.downscale, n_dims=shape.n_dims).apply_inplace(shape)
 
         return fitting_results
+
+
+def name_of_callable(c):
+    try:
+        return c.__name__  # function
+    except AttributeError:
+        return c.__class__.__name__  # callable class
