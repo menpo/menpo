@@ -8,7 +8,7 @@ import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.feature import sparse_hog, igo, no_op
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.clm.classifiers import linear_svm_lr
 
 from sklearn import qda
 
@@ -34,7 +34,7 @@ for i in range(4):
     training_images.append(im)
 
 # build clms
-clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
+clm1 = CLMBuilder(classifiers=[linear_svm_lr],
                   patch_shape=(5, 5),
                   features=[igo, sparse_hog, no_op],
                   normalization_diagonal=150,
@@ -46,7 +46,7 @@ clm1 = CLMBuilder(classifier_type=[linear_svm_lr],
                   boundary=3,
                   interpolator='scipy').build(training_images, group='PTS')
 
-clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
+clm2 = CLMBuilder(classifiers=[random_forest, linear_svm_lr],
                   patch_shape=(3, 10),
                   features=no_op,
                   normalization_diagonal=None,
@@ -58,7 +58,7 @@ clm2 = CLMBuilder(classifier_type=[random_forest, linear_svm_lr],
                   boundary=0,
                   interpolator='scipy').build(training_images, group='PTS')
 
-clm3 = CLMBuilder(classifier_type=[linear_svm_lr],
+clm3 = CLMBuilder(classifiers=[linear_svm_lr],
                   patch_shape=(2, 3),
                   features=igo,
                   normalization_diagonal=None,
@@ -73,12 +73,12 @@ clm3 = CLMBuilder(classifier_type=[linear_svm_lr],
 
 @raises(ValueError)
 def test_classifier_type_1_exception():
-    CLMBuilder(classifier_type=[linear_svm_lr, linear_svm_lr]).build(
+    CLMBuilder(classifiers=[linear_svm_lr, linear_svm_lr]).build(
         training_images, group='PTS')
 
 @raises(ValueError)
 def test_classifier_type_2_exception():
-    CLMBuilder(classifier_type=['linear_svm_lr']).build(training_images,
+    CLMBuilder(classifiers=['linear_svm_lr']).build(training_images,
                                                         group='PTS')
 
 @raises(ValueError)

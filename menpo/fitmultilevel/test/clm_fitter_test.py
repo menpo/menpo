@@ -10,7 +10,7 @@ from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.clm import CLMBuilder
 from menpo.fitmultilevel.clm import GradientDescentCLMFitter
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.clm.classifiers import linear_svm_lr
 from menpo.feature import sparse_hog
 
 
@@ -303,7 +303,7 @@ for i in range(4):
     training_images.append(im)
 
 # build clm
-clm = CLMBuilder(classifier_type=linear_svm_lr,
+clm = CLMBuilder(classifiers=linear_svm_lr,
                  patch_shape=(8, 8),
                  features=[sparse_hog],
                  normalization_diagonal=150,

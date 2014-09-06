@@ -21,7 +21,7 @@ class CLM(object):
     patch_shape : tuple of `int`
         The shape of the patches used to train the classifiers.
 
-    features : ``None`` or `string` or `function` or list of those
+    features : `function` or list of those
         The image feature that was be used to build the ``appearance_models``.
         Will subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -38,18 +38,6 @@ class CLM(object):
 
             If ``pyramid_on_features`` is ``False``, the specified feature was
             applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model was built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-            If `function`, the user can directly provide the feature that was
-            calculated on the images. This class will simply invoke this
-            function, passing in as the sole argument the image to be fitted,
-            and expect as a return type an :map:`Image` representing the feature
-            calculation ready for further fitting. See the examples for
-            details.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a

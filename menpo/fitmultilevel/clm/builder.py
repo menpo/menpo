@@ -1,7 +1,6 @@
 from __future__ import division, print_function
 import numpy as np
 
-from menpo.image import Image
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
                                          normalization_wrt_reference_shape,
                                          build_shape_model, create_pyramid)
@@ -10,7 +9,7 @@ from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
-from .classifierfunctions import classifier, linear_svm_lr
+from .classifiers import linear_svm_lr
 
 
 class CLMBuilder(DeformableModelBuilder):
@@ -19,24 +18,24 @@ class CLMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    classifier_type : ``classifier_closure`` or list of those
-        If list of length ``n_levels``, then a classifier function is defined
+    classifiers : ``callable`` or ``[callable]``
+        If list of length ``n_levels``, then a classifier callable is defined
         per level. The first element of the list specifies the classifier to be
         used at the lowest pyramidal level and so on.
 
-        If not a list or a list with length ``1``, then the specified classifier
-        function will be used for all levels.
+        If not a list or a list with length ``1``, then the specified
+        classifier will be used for all levels.
 
         Per level:
-             A closure implementing a binary classifier.
+             A callable implementing a binary classifier.
 
         Examples of such closures can be found in
         :ref:`clm_builders`
 
     patch_shape : tuple of `int`
-        The shape of the patches used by the previous classifier closure.
+        The shape of the patches used by the previous classifier callable.
 
-    features : `function` or list of those, optional
+    features : ``callable`` or ``[callable]``, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         disabled, so that the features are extracted at each level.
@@ -117,12 +116,13 @@ class CLMBuilder(DeformableModelBuilder):
     clm : :map:`CLMBuilder`
         The CLM Builder object
     """
-    def __init__(self, classifier_type=linear_svm_lr, patch_shape=(5, 5),
+    def __init__(self, classifiers=linear_svm_lr, patch_shape=(5, 5),
                  features=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
                  pyramid_on_features=False, max_shape_components=None,
                  boundary=3, interpolator='scipy'):
-        # check parameters
+
+        # general deformable model checks
         checks.check_n_levels(n_levels)
         checks.check_downscale(downscale)
         checks.check_normalization_diagonal(normalization_diagonal)
@@ -131,11 +131,13 @@ class CLMBuilder(DeformableModelBuilder):
             max_shape_components, n_levels, 'max_shape_components')
         features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
-        classifier_type = check_classifier_type(classifier_type, n_levels)
+
+        # CLM specific checks
+        classifiers = check_classifier(classifiers, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 
         # store parameters
-        self.classifier_type = classifier_type
+        self.classifiers = classifiers
         self.patch_shape = patch_shape
         self.features = features
         self.normalization_diagonal = normalization_diagonal
@@ -307,7 +309,7 @@ class CLMBuilder(DeformableModelBuilder):
                 X = np.vstack((positive_samples, negative_samples))
                 t = np.hstack((positive_labels, negative_labels))
 
-                clf = classifier(X, t, self.classifier_type[rj])
+                clf = self.classifiers[rj](X, t)
                 level_classifiers.append(clf)
 
             # add level classifiers to the list
@@ -346,25 +348,25 @@ def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):
     return positive, negative
 
 
-def check_classifier_type(classifier_type, n_levels):
+def check_classifier(classifiers, n_levels):
     r"""
-    Checks the classifier type per level. It must be a classifier
-    function closure or a list containing 1 or {n_levels} closures.
+    Checks the classifier type per level. It must be a callable
+    or a list containing 1 or {n_levels} callables.
     """
-    str_error = ("classifier_type must be a classifier function closure "
-                 "of a list containing 1 or {} closures").format(n_levels)
-    if not isinstance(classifier_type, list):
-        classifier_type_list = [classifier_type] * n_levels
-    elif len(classifier_type) == 1:
-        classifier_type_list = [classifier_type[0]] * n_levels
-    elif len(classifier_type) == n_levels:
-        classifier_type_list = classifier_type
+    str_error = ("classifier must be a callable "
+                 "of a list containing 1 or {} callables").format(n_levels)
+    if not isinstance(classifiers, list):
+        classifier_list = [classifiers] * n_levels
+    elif len(classifiers) == 1:
+        classifier_list = [classifiers[0]] * n_levels
+    elif len(classifiers) == n_levels:
+        classifier_list = classifiers
     else:
         raise ValueError(str_error)
-    for clas in classifier_type_list:
-        if not hasattr(clas, '__call__'):
+    for classifier in classifier_list:
+        if not callable(classifier):
             raise ValueError(str_error)
-    return classifier_type_list
+    return classifier_list
 
 
 def check_patch_shape(patch_shape):

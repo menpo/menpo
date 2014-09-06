@@ -7,7 +7,7 @@ import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.fitmultilevel.sdm import SDMTrainer, SDAAMTrainer
 from menpo.feature import sparse_hog, igo, hog, no_op
-from menpo.fitmultilevel.clm.classifierfunctions import linear_svm_lr
+from menpo.fitmultilevel.clm.classifiers import linear_svm_lr
 from menpo.fit.regression.regressionfunctions import mlr_svd
 from menpo.transform import PiecewiseAffine
 from menpo.fitmultilevel.aam import AAMBuilder
@@ -41,7 +41,7 @@ aam = AAMBuilder(features=sparse_hog,
                  boundary=3,
                  interpolator='scipy').build(training_images, group='PTS')
 
-clm = CLMBuilder(classifier_type=linear_svm_lr,
+clm = CLMBuilder(classifiers=linear_svm_lr,
                  features=[sparse_hog],
                  normalization_diagonal=100,
                  patch_shape=(5, 5),

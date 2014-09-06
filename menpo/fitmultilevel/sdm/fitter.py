@@ -8,13 +8,12 @@ from menpo.fitmultilevel.clm.fitter import CLMFitter
 
 class SDFitter(MultilevelFitter):
     r"""
-    Mixin for Supervised Descent Fitters.
+    Abstract Supervised Descent Fitter.
     """
     def _set_up(self):
         r"""
         Sets up the SD fitter object.
         """
-        pass
 
     def fit(self, image, initial_shape, max_iters=None, gt_shape=None,
             **kwargs):
@@ -38,7 +37,7 @@ class SDFitter(MultilevelFitter):
             pyramidal level.
 
         gt_shape : :map:`PointCloud`
-            The groundtruth shape of the image.
+            The ground truth shape of the image.
 
         **kwargs : `dict`
             optional arguments to be passed through.
