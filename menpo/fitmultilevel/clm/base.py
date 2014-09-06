@@ -11,8 +11,8 @@ class CLM(object):
     shape_models : :map:`PCAModel` list
         A list containing the shape models of the CLM.
 
-    classifiers : ``classifier_closure`` list of lists
-        A list containing the list of classifier_closures per each pyramidal
+    classifiers : ``[[callable]]``
+        A list containing the list of classifier callables per each pyramidal
         level of the CLM.
 
     n_training_images : `int`

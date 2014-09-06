@@ -9,7 +9,7 @@ from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog
 from menpo.visualize import print_dynamic, progress_bar_str
 
-from .classifiers import linear_svm_lr
+from .classifier import linear_svm_lr
 
 
 class CLMBuilder(DeformableModelBuilder):
@@ -18,22 +18,29 @@ class CLMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    classifiers : ``callable`` or ``[callable]``
-        If list of length ``n_levels``, then a classifier callable is defined
-        per level. The first element of the list specifies the classifier to be
-        used at the lowest pyramidal level and so on.
+    classifier_trainers : ``callable -> callable`` or ``[callable -> callable]``
+
+        Each ``classifier_trainers`` is a callable that will be invoked as:
+
+            classifer = classifier_trainer(X, t)
+
+        where X is a matrix of samples and t is a matrix of classifications
+        for each sample. `classifier` is then itself a callable,
+        which will be used to classify novel instance by the CLM.
+
+        If list of length ``n_levels``, then a classifier_trainer callable is
+        defined per level. The first element of the list specifies the
+        classifier_trainer to be used at the lowest pyramidal level and so on.
 
         If not a list or a list with length ``1``, then the specified
-        classifier will be used for all levels.
+        classifier_trainer will be used for all levels.
 
-        Per level:
-             A callable implementing a binary classifier.
 
-        Examples of such closures can be found in
-        :ref:`clm_builders`
+        Examples of such classifier trainers can be found in
+        `menpo.fitmultilevel.clm.classifier`
 
     patch_shape : tuple of `int`
-        The shape of the patches used by the previous classifier callable.
+        The shape of the patches used by the classifier trainers.
 
     features : ``callable`` or ``[callable]``, optional
         If list of length ``n_levels``, then a feature is defined per level.
@@ -116,7 +123,7 @@ class CLMBuilder(DeformableModelBuilder):
     clm : :map:`CLMBuilder`
         The CLM Builder object
     """
-    def __init__(self, classifiers=linear_svm_lr, patch_shape=(5, 5),
+    def __init__(self, classifier_trainers=linear_svm_lr, patch_shape=(5, 5),
                  features=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
                  pyramid_on_features=False, max_shape_components=None,
@@ -133,11 +140,11 @@ class CLMBuilder(DeformableModelBuilder):
                                          pyramid_on_features)
 
         # CLM specific checks
-        classifiers = check_classifier(classifiers, n_levels)
+        classifier_trainers = check_classifier_trainers(classifier_trainers, n_levels)
         patch_shape = check_patch_shape(patch_shape)
 
         # store parameters
-        self.classifiers = classifiers
+        self.classifier_trainers = classifier_trainers
         self.patch_shape = patch_shape
         self.features = features
         self.normalization_diagonal = normalization_diagonal
@@ -309,7 +316,7 @@ class CLMBuilder(DeformableModelBuilder):
                 X = np.vstack((positive_samples, negative_samples))
                 t = np.hstack((positive_labels, negative_labels))
 
-                clf = self.classifiers[rj](X, t)
+                clf = self.classifier_trainers[rj](X, t)
                 level_classifiers.append(clf)
 
             # add level classifiers to the list
@@ -348,19 +355,21 @@ def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):
     return positive, negative
 
 
-def check_classifier(classifiers, n_levels):
+def check_classifier_trainers(classifier_trainers, n_levels):
     r"""
-    Checks the classifier type per level. It must be a callable
-    or a list containing 1 or {n_levels} callables.
+    Checks the classifier_trainers. Must be a ``callable`` ->
+    ``callable`` or
+    or a list containing 1 or {n_levels} callables each of which returns a
+    callable.
     """
     str_error = ("classifier must be a callable "
                  "of a list containing 1 or {} callables").format(n_levels)
-    if not isinstance(classifiers, list):
-        classifier_list = [classifiers] * n_levels
-    elif len(classifiers) == 1:
-        classifier_list = [classifiers[0]] * n_levels
-    elif len(classifiers) == n_levels:
-        classifier_list = classifiers
+    if not isinstance(classifier_trainers, list):
+        classifier_list = [classifier_trainers] * n_levels
+    elif len(classifier_trainers) == 1:
+        classifier_list = [classifier_trainers[0]] * n_levels
+    elif len(classifier_trainers) == n_levels:
+        classifier_list = classifier_trainers
     else:
         raise ValueError(str_error)
     for classifier in classifier_list:

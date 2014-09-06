@@ -6,7 +6,7 @@ from menpo.transform import AlignmentSimilarity
 from menpo.feature import sparse_hog
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.clm.classifiers import linear_svm_lr
+from menpo.fitmultilevel.clm.classifier import linear_svm_lr
 from .io import import_bounding_boxes
 
 from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
