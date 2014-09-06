@@ -9,7 +9,7 @@ from menpo.transform import Similarity, AlignmentSimilarity
 def build_sampling_grid(patch_shape):
     r"""
     """
-    patch_shape= np.array(patch_shape)
+    patch_shape = np.array(patch_shape)
     patch_half_shape = np.require(np.round(patch_shape / 2), dtype=int)
     start = -patch_half_shape
     end = patch_half_shape + 1

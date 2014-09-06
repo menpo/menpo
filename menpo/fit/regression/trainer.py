@@ -613,7 +613,7 @@ class SemiParametricClassifierBasedRegressorTrainer(
 
     Parameters
     ----------
-    classifiers : list of :ref:`classifier_functions`
+    classifiers : list of :map:`classifiers`
         List of classifiers.
 
     transform : :map:`Affine`
