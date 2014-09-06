@@ -16,7 +16,7 @@ from menpo.shape import mean_pointcloud
 from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog, no_op
 
-from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
+from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
 
 
 class SDTrainer(object):
