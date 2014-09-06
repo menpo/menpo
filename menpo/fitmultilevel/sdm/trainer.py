@@ -142,7 +142,7 @@ class SDTrainer(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, regression_type=mlr, regression_features=None,
-                 features=None, n_levels=3, downscale=1.2,
+                 features=no_op, n_levels=3, downscale=1.2,
                  pyramid_on_features=True, noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy'):
 
@@ -151,6 +151,8 @@ class SDTrainer(object):
                                                           n_levels)
         features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
+        regression_features = check_regression_features(regression_features,
+                                                        n_levels)
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
         self.check_n_permutations(n_perturbations)
@@ -537,25 +539,6 @@ class SDTrainer(object):
         if n_permutations < 1:
             raise ValueError("n_permutations must be > 0")
 
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        Parameters
-        ----------
-        regression_features : `string` or `function` or ``None`` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        pass
-
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
         r"""
@@ -756,12 +739,14 @@ class SDMTrainer(SDTrainer):
                  downscale=1.5, pyramid_on_features=False, noise_std=0.04,
                  rotation=False, n_perturbations=10,
                  normalization_diagonal=None, interpolator='scipy'):
-        # check regression features
-        regression_features_list = self.check_regression_features(
-            regression_features, n_levels)
+        # in the SDM context regression features are image features,
+        # so check them
+        regression_features = checks.check_features(regression_features,
+                                                    n_levels,
+                                                    pyramid_on_features)
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
-            regression_features=regression_features_list,
+            regression_features=regression_features,
             features=features, n_levels=n_levels, downscale=downscale,
             pyramid_on_features=pyramid_on_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations,
@@ -844,44 +829,6 @@ class SDMTrainer(SDTrainer):
         return SDMFitter(regressors, self.n_training_images, self.features,
                          self.reference_shape, self.downscale,
                          self.pyramid_on_features, self.interpolator)
-
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        It must be a `string` or a function` or a list of those
-        containing ``1`` or ``n_levels`` elements.
-
-        Parameters
-        ----------
-        regression_features : `string` or `function` or ``None`` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        regression_features_str_error = ("regression_features must be None "
-                                         "or a str or a function/closure or "
-                                         "a list of those containing 1 or {} "
-                                         "elements").format(n_levels)
-        if not isinstance(regression_features, list):
-            regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) == 1:
-            regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) == n_levels:
-            regression_features_list = regression_features
-        else:
-            raise ValueError(regression_features_str_error)
-        for rf in regression_features_list:
-            if (rf is not None and not isinstance(rf, str)
-                    and not hasattr(rf, '__call__')):
-                        raise ValueError(regression_features_str_error)
-        return regression_features_list
 
 
 class SDAAMTrainer(SDTrainer):
@@ -993,12 +940,9 @@ class SDAAMTrainer(SDTrainer):
                  update='compositional', md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
-        # check regression features
-        regression_features_list = self.check_regression_features(
-            regression_features, aam.n_levels)
         super(SDAAMTrainer, self).__init__(
             regression_type=regression_type,
-            regression_features=regression_features_list,
+            regression_features=regression_features,
             features=aam.features, n_levels=aam.n_levels,
             downscale=aam.downscale,
             pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
@@ -1145,43 +1089,6 @@ class SDAAMTrainer(SDTrainer):
             The SDM fitter object.
         """
         return SDAAMFitter(self.aam, regressors, self.n_training_images)
-
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        It must be a function/closure or a list of those containing ``1`` or
-        ``n_levels`` elements.
-
-        Parameters
-        ----------
-        regression_features : `function` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        regression_features_str_error = ("regression_features must be "
-                                         "a function/closure or "
-                                         "a list of those containing 1 or {} "
-                                         "elements").format(n_levels)
-        if not isinstance(regression_features, list):
-            regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) == 1:
-            regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) == n_levels:
-            regression_features_list = regression_features
-        else:
-            raise ValueError(regression_features_str_error)
-        for rf in regression_features_list:
-            if not hasattr(rf, '__call__'):
-                raise ValueError(regression_features_str_error)
-        return regression_features_list
 
 
 class SDCLMTrainer(SDTrainer):
@@ -1351,3 +1258,11 @@ class SDCLMTrainer(SDTrainer):
             The SDM fitter object.
         """
         return SDCLMFitter(self.clm, regressors, self.n_training_images)
+
+
+def check_regression_features(regression_features, n_levels):
+    try:
+        return checks.check_list_callables(regression_features, n_levels)
+    except ValueError:
+        raise ValueError("regression_features must be a callable or a list of "
+                         "{} callables".format(n_levels))
