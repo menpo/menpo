@@ -42,41 +42,36 @@ def check_features(features, n_levels, pyramid_on_features):
         If pyramid_on_features is False, the list will have length
         {n_levels}.
     """
-    # Firstly, make sure we have a list of features
+    # Firstly, make sure we have a list of callables of the right length
     if not pyramid_on_features:
-        features_str_error = ("features must be a function or a list of "
-                              "functions containing "
-                              "1 or {} elements").format(n_levels)
-        if not isinstance(features, list):
-            feature_list = [features] * n_levels
-        elif len(features) == 1:
-            feature_list = [features[0]] * n_levels
-        elif len(features) == n_levels:
-            feature_list = features
-        else:
-            raise ValueError(features_str_error)
+        try:
+            all_callables = check_list_callables(features, n_levels)
+        except ValueError:
+            raise ValueError("features must be a callable or a list of "
+                             "{} callables".format(n_levels))
     else:
-        features_str_error = ("pyramid_on_features is enabled so features "
-                              "must be a function or a list of exactly one "
-                              "function")
-        if not isinstance(features, list):
-            feature_list = [features]
-        elif len(features) == 1:
-            feature_list = features
-        else:
-            raise ValueError(features_str_error)
-    # If we are here we have a list of features. Let's check they are all
-    # callable
-    all_callable_feature_list = []
-    for ft in feature_list:
-        if not callable(ft):
-            raise ValueError("{} is not callable (did you mean to pass "
-                             "menpo.feature.no_op?)".format(ft))
-        all_callable_feature_list.append(ft)
+        if not callable(features):
+            raise ValueError("pyramid_on_features is enabled so features "
+                             "must be a single callable")
+        all_callables = check_list_callables(features, n_levels)
+
+    # constrain each feature to the bounds
     all_callable_constrained = []
-    for ft in all_callable_feature_list:
+    for ft in all_callables:
         all_callable_constrained.append(constrain_landmarks(ft))
     return all_callable_constrained
+
+
+def check_list_callables(callables, n_callables):
+    if not isinstance(callables, list):
+        return [callables] * n_callables
+    for c in callables:
+        if not callable(c):
+            raise ValueError("All items must be callables")
+    if len(callables) != n_callables:
+        raise ValueError("List of callables must be {} "
+                         "long".format(n_callables))
+    return callables
 
 
 def check_n_levels(n_levels):
