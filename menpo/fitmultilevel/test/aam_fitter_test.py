@@ -311,7 +311,7 @@ for i in range(4):
     training_images.append(im)
 
 # build aam
-aam = AAMBuilder(features=[igo],
+aam = AAMBuilder(features=igo,
                  transform=PiecewiseAffine,
                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
@@ -325,7 +325,7 @@ aam = AAMBuilder(features=[igo],
                  boundary=3,
                  interpolator='scipy').build(training_images, group='PTS')
 
-aam2 = AAMBuilder(features=[igo],
+aam2 = AAMBuilder(features=igo,
                   transform=PiecewiseAffine,
                   trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,

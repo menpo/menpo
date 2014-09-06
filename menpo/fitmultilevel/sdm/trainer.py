@@ -19,6 +19,46 @@ from menpo.feature import sparse_hog, no_op
 from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
 
 
+def check_regression_features(regression_features, n_levels):
+    try:
+        return checks.check_list_callables(regression_features, n_levels)
+    except ValueError:
+        raise ValueError("regression_features must be a callable or a list of "
+                         "{} callables".format(n_levels))
+
+
+def check_regression_type(regression_type, n_levels):
+    r"""
+    Checks the regression type (method) per level.
+
+    It must be a callable or a list of those from the family of
+    functions defined in :ref:`regression_functions`
+
+    Parameters
+    ----------
+    regression_type : `function` or list of those
+        The regression type to check.
+
+    n_levels : `int`
+        The number of pyramid levels.
+
+    Returns
+    -------
+    regression_type_list : `list`
+        A list of regression types that has length ``n_levels``.
+    """
+    try:
+        return checks.check_list_callables(regression_type, n_levels)
+    except ValueError:
+        raise ValueError("regression_type must be a callable or a list of "
+                         "{} callables".format(n_levels))
+
+
+def check_n_permutations(n_permutations):
+    if n_permutations < 1:
+        raise ValueError("n_permutations must be > 0")
+
+
 class SDTrainer(object):
     r"""
     Mixin for Supervised Descent Trainers.
@@ -34,7 +74,7 @@ class SDTrainer(object):
 
         Examples of such closures can be found in :ref:`regression_functions`.
 
-    regression_features :`` None`` or `string` or `function` or list of those, optional
+    regression_features :`` None`` or `callable` or `[callable]`, optional
         The features that are used during the regression.
 
         If `list`, a regression feature is defined per level.
@@ -45,7 +85,7 @@ class SDTrainer(object):
         Depending on the :map:`SDTrainer` object, this parameter can take
         different types.
 
-    features : ``None`` or `string` or `function` or list of those, optional
+    features : `callable` or ``[callable]``, optional
         Defines the features that will be extracted from the image.
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
@@ -53,40 +93,12 @@ class SDTrainer(object):
         The first element of the list specifies the features to be extracted
         at the lowest pyramidal level and so on.
 
-        If not a list or a list with length ``1``:
+        If not a list:
             If ``pyramid_on_features`` is ``True``, the specified feature will
             be applied to the highest level.
 
             If ``pyramid_on_features`` is ``False``, the specified feature will
             be applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model will be built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-            If `string`, image features will be computed by executing::
-
-               feature_image = getattr(image.features, features[level])()
-
-            for each pyramidal level. For this to work properly each string
-            needs to be one of menpo's standard image feature methods
-            ('igo', 'hog', ...).
-            Note that, in this case, the feature computation will be
-            carried out using the default options.
-
-        Non-default feature options and new experimental features can be
-        defined using functions/closures. In this case, the functions must
-        receive an image as input and return a particular feature
-        representation of that image. For example::
-
-            def igo_double_from_std_normalized_intensities(image)
-                image = deepcopy(image)
-                image.normalize_std_inplace()
-                return image.features.igo(double_angles=True)
-
-        See :map:`ImageFeatures` for details more details on
-        Menpo's standard image features and feature options.
 
     n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
@@ -142,18 +154,22 @@ class SDTrainer(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, regression_type=mlr, regression_features=None,
-                 features=None, n_levels=3, downscale=1.2,
+                 features=no_op, n_levels=3, downscale=1.2,
                  pyramid_on_features=True, noise_std=0.04, rotation=False,
                  n_perturbations=10, interpolator='scipy'):
 
-        # check parameters
-        regression_type_list = self.check_regression_type(regression_type,
-                                                          n_levels)
+        # general deformable model checks
+        checks.check_n_levels(n_levels)
+        checks.check_downscale(downscale)
         features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
-        self.check_n_levels(n_levels)
-        self.check_downscale(downscale)
-        self.check_n_permutations(n_perturbations)
+
+        # SDM specific checks
+        regression_type_list = check_regression_type(regression_type,
+                                                     n_levels)
+        regression_features = check_regression_features(regression_features,
+                                                        n_levels)
+        check_n_permutations(n_perturbations)
 
         # store parameters
         self.regression_type = regression_type_list
@@ -475,87 +491,6 @@ class SDTrainer(object):
             print_dynamic('- Apply pyramid: Done\n')
         return feature_images
 
-    @classmethod
-    def check_regression_type(cls, regression_type, n_levels):
-        r"""
-        Checks the regression type (method) per level.
-
-        It must be a function/closure or a list of those from the family of
-        functions defined in :ref:`regression_functions`
-
-        Parameters
-        ----------
-        regression_type : `function` or list of those
-            The regression type to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_type_list : `list`
-            A list of regression types that has length ``n_levels``.
-        """
-        regression_type_str_error = ("regression_type must be a "
-                                     "function/closure or a list of "
-                                     "those containing 1 or {} "
-                                     "elements").format(n_levels)
-        if not isinstance(regression_type, list):
-            regression_type_list = [regression_type] * n_levels
-        elif len(regression_type) == 1:
-            regression_type_list = [regression_type[0]] * n_levels
-        elif len(regression_type) == n_levels:
-            regression_type_list = regression_type
-        else:
-            raise ValueError(regression_type_str_error)
-        for rt in regression_type_list:
-            if not hasattr(rt, '__call__'):
-                raise ValueError(regression_type_str_error)
-        return regression_type_list
-
-    @classmethod
-    def check_n_levels(cls, n_levels):
-        r"""
-        Checks the number of pyramid levels that must be `int` > ``0``.
-        """
-        if not isinstance(n_levels, int) or n_levels < 1:
-            raise ValueError("n_levels must be int > 0")
-
-    @classmethod
-    def check_downscale(cls, downscale):
-        r"""
-        Checks the downscale factor of the pyramid that must be >= ``1``.
-        """
-        if downscale < 1:
-            raise ValueError("downscale must be >= 1")
-
-    @classmethod
-    def check_n_permutations(cls, n_permutations):
-        r"""
-        Checks the n_permutations that must be > ``0``.
-        """
-        if n_permutations < 1:
-            raise ValueError("n_permutations must be > 0")
-
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        Parameters
-        ----------
-        regression_features : `string` or `function` or ``None`` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        pass
-
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
         r"""
@@ -631,74 +566,37 @@ class SDMTrainer(SDTrainer):
         The function/closures should be one of the methods defined in
         :ref:`regression_functions`
 
-    regression_features: ``None`` or `string` or `function` or list of those, optional
+    regression_features: ``None`` or  `callable` or `[callable]`, optional
         If list of length ``n_levels``, then a feature is defined per level.
 
-        If not a list or a list with length 1, then the specified feature will
-        be applied to all pyramid levels.
+        If not a list, then the specified feature will be applied to all
+        pyramid levels.
 
         Per level:
             If ``None``, no features are extracted, thus specified
             ``features`` is used in the regressor.
 
-            If `string`, image features will be computed using one of Menpo's
-            standard image feature methods ('igo', 'hog', ...).
-
-            Note that, in this case, the feature computation will be
-            carried out using the default options.
-            If function/closure, non-default feature options features can be
-            defined using functions/closures. Such examples exist in
-            :ref:`feature_functions`.
-
             It is recommended to set the desired features using this option,
-            leaving ``features`` equal to ``None``. This means that the
+            leaving ``features`` equal to :map:`no_op`. This means that the
             images will remain in the intensities space and the features will
             be extracted by the regressor.
 
     patch_shape: tuple of `int`
         The shape of the patches used by the SDM.
 
-    features : `None` or `string` or `function` or list of those, optional
+    features : `callable` or `[callable]`, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
         The first element of the list specifies the features to be extracted at
         the lowest pyramidal level and so on.
 
-        If not a list or a list with length ``1``, then:
+        If not a list:
             If ``pyramid_on_features`` is ``True``, the specified feature will
             be applied to the highest level.
 
             If ``pyramid_on_features`` is ``False``, the specified feature will
             be applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model will be built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-            If `string`, image features will be computed by executing::
-
-               feature_image = getattr(image.features, features[level])()
-
-        for each pyramidal level. For this to work properly each string
-        needs to be one of menpo's standard image feature methods
-        ('igo', 'hog', ...).
-        Note that, in this case, the feature computation will be
-        carried out using the default options.
-
-        Non-default feature options and new experimental features can be
-        defined using functions/closures. In this case, the functions must
-        receive an image as input and return a particular feature
-        representation of that image. For example::
-
-            def igo_double_from_std_normalized_intensities(image)
-                image = deepcopy(image)
-                image.normalize_std_inplace()
-                return image.features.igo(double_angles=True)
-
-        See :map:`ImageFeatures` for details more details on
-        Menpo's standard image features and feature options.
 
     n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
@@ -756,12 +654,14 @@ class SDMTrainer(SDTrainer):
                  downscale=1.5, pyramid_on_features=False, noise_std=0.04,
                  rotation=False, n_perturbations=10,
                  normalization_diagonal=None, interpolator='scipy'):
-        # check regression features
-        regression_features_list = self.check_regression_features(
-            regression_features, n_levels)
+        # in the SDM context regression features are image features,
+        # so check them
+        regression_features = checks.check_features(regression_features,
+                                                    n_levels,
+                                                    pyramid_on_features)
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
-            regression_features=regression_features_list,
+            regression_features=regression_features,
             features=features, n_levels=n_levels, downscale=downscale,
             pyramid_on_features=pyramid_on_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations,
@@ -844,44 +744,6 @@ class SDMTrainer(SDTrainer):
         return SDMFitter(regressors, self.n_training_images, self.features,
                          self.reference_shape, self.downscale,
                          self.pyramid_on_features, self.interpolator)
-
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        It must be a `string` or a function` or a list of those
-        containing ``1`` or ``n_levels`` elements.
-
-        Parameters
-        ----------
-        regression_features : `string` or `function` or ``None`` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        regression_features_str_error = ("regression_features must be None "
-                                         "or a str or a function/closure or "
-                                         "a list of those containing 1 or {} "
-                                         "elements").format(n_levels)
-        if not isinstance(regression_features, list):
-            regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) == 1:
-            regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) == n_levels:
-            regression_features_list = regression_features
-        else:
-            raise ValueError(regression_features_str_error)
-        for rf in regression_features_list:
-            if (rf is not None and not isinstance(rf, str)
-                    and not hasattr(rf, '__call__')):
-                        raise ValueError(regression_features_str_error)
-        return regression_features_list
 
 
 class SDAAMTrainer(SDTrainer):
@@ -993,12 +855,9 @@ class SDAAMTrainer(SDTrainer):
                  update='compositional', md_transform=OrthoMDTransform,
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None):
-        # check regression features
-        regression_features_list = self.check_regression_features(
-            regression_features, aam.n_levels)
         super(SDAAMTrainer, self).__init__(
             regression_type=regression_type,
-            regression_features=regression_features_list,
+            regression_features=regression_features,
             features=aam.features, n_levels=aam.n_levels,
             downscale=aam.downscale,
             pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
@@ -1145,43 +1004,6 @@ class SDAAMTrainer(SDTrainer):
             The SDM fitter object.
         """
         return SDAAMFitter(self.aam, regressors, self.n_training_images)
-
-    def check_regression_features(self, regression_features, n_levels):
-        r"""
-        Checks the regression features per level.
-
-        It must be a function/closure or a list of those containing ``1`` or
-        ``n_levels`` elements.
-
-        Parameters
-        ----------
-        regression_features : `function` or list of those
-            The regression features to check.
-
-        n_levels : `int`
-            The number of pyramid levels.
-
-        Returns
-        -------
-        regression_features_list : `list`
-            A list of regression features with length ``n_levels``.
-        """
-        regression_features_str_error = ("regression_features must be "
-                                         "a function/closure or "
-                                         "a list of those containing 1 or {} "
-                                         "elements").format(n_levels)
-        if not isinstance(regression_features, list):
-            regression_features_list = [regression_features] * n_levels
-        elif len(regression_features) == 1:
-            regression_features_list = [regression_features[0]] * n_levels
-        elif len(regression_features) == n_levels:
-            regression_features_list = regression_features
-        else:
-            raise ValueError(regression_features_str_error)
-        for rf in regression_features_list:
-            if not hasattr(rf, '__call__'):
-                raise ValueError(regression_features_str_error)
-        return regression_features_list
 
 
 class SDCLMTrainer(SDTrainer):

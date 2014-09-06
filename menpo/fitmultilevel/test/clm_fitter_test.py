@@ -306,7 +306,7 @@ for i in range(4):
 # build clm
 clm = CLMBuilder(classifier_trainers=linear_svm_lr,
                  patch_shape=(8, 8),
-                 features=[sparse_hog],
+                 features=sparse_hog,
                  normalization_diagonal=150,
                  n_levels=3,
                  downscale=1.1,

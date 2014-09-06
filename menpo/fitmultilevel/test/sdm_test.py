@@ -42,7 +42,7 @@ aam = AAMBuilder(features=sparse_hog,
                  interpolator='scipy').build(training_images, group='PTS')
 
 clm = CLMBuilder(classifier_trainers=linear_svm_lr,
-                 features=[sparse_hog],
+                 features=sparse_hog,
                  normalization_diagonal=100,
                  patch_shape=(5, 5),
                  n_levels=1,
