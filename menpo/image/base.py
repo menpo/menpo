@@ -769,7 +769,7 @@ class Image(Vectorizable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0.):
         r"""
         Return a copy of this image warped into a different reference space.

@@ -423,7 +423,7 @@ class MaskedImage(Image):
         self.crop_inplace(min_indices, max_indices,
                           constrain_to_boundary=constrain_to_boundary)
 
-    def warp_to_mask(self, template_mask, transform, warp_landmarks=True,
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
                      order=1, mode='constant', cval=0.):
         r"""
         Warps this image into a different reference space.
@@ -476,7 +476,7 @@ class MaskedImage(Image):
         warped_image.mask = warped_mask
         return warped_image
 
-    def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
                       order=1, mode='constant', cval=0.):
         """
         Return a copy of this :map:`MaskedImage` warped into a different
