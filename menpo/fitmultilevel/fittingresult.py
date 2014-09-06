@@ -129,21 +129,21 @@ class MultilevelFittingResult(FittingResult):
 
     def __str__(self):
         if self.fitter.pyramid_on_features:
-            if isinstance(self.fitter.feature_type[0], str):
-                feat_str = self.fitter.feature_type[0]
-            elif self.fitter.feature_type[0] is None:
+            if isinstance(self.fitter.features[0], str):
+                feat_str = self.fitter.features[0]
+            elif self.fitter.features[0] is None:
                 feat_str = "no"
             else:
-                feat_str = self.fitter.feature_type[0].__name__
+                feat_str = self.fitter.features[0].__name__
         else:
             feat_str = []
             for j in range(self.n_levels):
-                if isinstance(self.fitter.feature_type[j], str):
-                    feat_str.append(self.fitter.feature_type[j])
-                elif self.fitter.feature_type[j] is None:
+                if isinstance(self.fitter.features[j], str):
+                    feat_str.append(self.fitter.features[j])
+                elif self.fitter.features[j] is None:
                     feat_str.append("none")
                 else:
-                    feat_str.append(self.fitter.feature_type[j].__name__)
+                    feat_str.append(self.fitter.features[j].__name__)
         out = "Fitting Result\n" \
               " - Initial error: {0:.4f}\n" \
               " - Final error: {1:.4f}\n" \

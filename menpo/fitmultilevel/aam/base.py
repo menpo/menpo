@@ -30,14 +30,14 @@ class AAMFitter(MultilevelFitter):
         return self.aam.reference_shape
 
     @property
-    def feature_type(self):
+    def features(self):
         r"""
         The feature extracted at each pyramidal level during AAM building.
         Stored in ascending pyramidal order.
 
         :type: `list`
         """
-        return self.aam.feature_type
+        return self.aam.features
 
     @property
     def n_levels(self):
@@ -332,14 +332,14 @@ class LucasKanadeAAMFitter(AAMFitter):
                     self.downscale**(self.n_levels - j - 1)))
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.feature_type[0], str):
+            if isinstance(self.features[0], str):
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0])
-            elif self.feature_type[0] is None:
+                    self.features[0])
+            elif self.features[0] is None:
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].__name__)
+                    self.features[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -348,14 +348,14 @@ class LucasKanadeAAMFitter(AAMFitter):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.feature_type[j], str):
+                if isinstance(self.features[j], str):
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j]))
-                elif self.feature_type[j] is None:
+                        self.features[j]))
+                elif self.features[j] is None:
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].__name__))
+                        self.features[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:

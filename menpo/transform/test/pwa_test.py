@@ -1,27 +1,42 @@
-import numpy as np
+import menpo
 from numpy.testing import assert_equal
-from menpo.transform.piecewiseaffine.base import DiscreteAffinePWA
-from menpo.shape import PointCloud, TriMesh
+from menpo.transform.piecewiseaffine.base import (CythonPWA, CachedPWA,
+                                                  PythonPWA)
 
-src_points = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])
-tgt_points = np.array([[0, 0], [2, 0], [0, 2], [2, 3]])
-trilist = np.array([[0, 1, 2], [1, 3, 2]])
-src = TriMesh(src_points, trilist)
-tgt = PointCloud(tgt_points)
-
-a_affine = np.array(
-    [[2.,  0.,  0.],
-     [0.,  2.,  0.],
-     [0.,  0.,  1.]])
-
-b_affine = np.array(
-    [[2.,  0.,  0.],
-     [1.,  3., -1.],
-     [0.,  0.,  1.]])
+b = menpo.io.import_builtin_asset('breakingbad.jpg')
+b.crop_to_landmarks_proportion_inplace(0.1)
+b = b.rescale_landmarks_to_diagonal_range(120)
+b.constrain_mask_to_landmarks()
+points = b.mask.true_indices
+src = b.landmarks['PTS'][None]
+tgt = src.copy()
 
 
-def test_pwa_discrete_affine_transforms():
-    pwa = DiscreteAffinePWA(src, tgt)
-    assert(len(pwa.transforms) == 2)
-    assert_equal(pwa.transforms[0].h_matrix, a_affine)
-    assert_equal(pwa.transforms[1].h_matrix, b_affine)
+def test_cached_pwa_same_as_python_pwa():
+    cached_pwa = CythonPWA(src, tgt)
+    python_pwa = PythonPWA(src, tgt)
+    assert_equal(python_pwa.apply(points), cached_pwa.apply(points))
+
+
+def test_cython_pwa_same_as_python_pwa():
+    python = PythonPWA(src, tgt)
+    cython = CythonPWA(src, tgt)
+    assert_equal(python.apply(points), cython.apply(points))
+
+
+def test_cached_pwa_same_twice():
+    cached_pwa = CachedPWA(src, tgt)
+    r1 = cached_pwa.apply(points)
+    # now using cache
+    r2 = cached_pwa.apply(points)
+    assert_equal(r1, r2)
+
+
+def test_cached_pwa_forgets_cache():
+    cached_pwa = CachedPWA(src, tgt)
+    r1 = cached_pwa.apply(points)
+    cached_pwa.apply(points[40:60])
+    # cache is now set to something other than points
+    # should clear cache and be fine
+    r2 = cached_pwa.apply(points)
+    assert_equal(r1, r2)

@@ -1,6 +1,6 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
-
+import numpy as np
 from collections import Iterable
 
 
@@ -469,8 +469,8 @@ class ImageViewer(object):
     def _masked_pixels(self, pixels, mask):
         r"""
         Return the masked pixels using a given boolean mask. In order to make
-        sure that the non-masked pixels are visualized in black, their value
-        is set to the minimum between min(pixels) and 0.
+        sure that the non-masked pixels are visualized in white, their value
+        is set to the maximum of pixels.
 
         Parameters
         ----------
@@ -478,11 +478,11 @@ class ImageViewer(object):
             The image's pixels to render.
         mask: (N, D) ndarray
             A boolean mask to be applied to the image. All points outside the
-            mask are set to 0. If mask is None, then the initial pixels are
-            returned.
+            mask are set to the image max.
+            If mask is None, then the initial pixels are returned.
         """
         if mask is not None:
-            pixels[~mask] = min(pixels.min(), 0)
+            pixels[~mask] = np.nanmax(pixels) + 1
         return pixels
 
     def render(self, **kwargs):

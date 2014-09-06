@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from hdf5able import HDF5able, SerializableCallable
 
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
@@ -8,7 +9,9 @@ from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         validate_features)
+                                         normalization_wrt_reference_shape,
+                                         build_shape_model, create_pyramid)
+from menpo.fitmultilevel import checks
 from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.feature import igo
 
@@ -19,9 +22,9 @@ class AAMBuilder(DeformableModelBuilder):
 
     Parameters
     ----------
-    feature_type : `function` or list of those, optional
+    features : `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
+        This requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
         The first element of the list specifies the features to be extracted at
         the lowest pyramidal level and so on.
@@ -31,21 +34,6 @@ class AAMBuilder(DeformableModelBuilder):
             be applied to the highest level.
             If ``pyramid_on_features`` is ``False``, the specified feature will
             be applied to all pyramid levels.
-
-        Per level:
-            If ``None``, the appearance model will be built using the original
-            image representation, i.e. no features will be extracted from the
-            original images.
-
-        Non-default feature options and new experimental features can be
-        defined using `function`. In this case, the `function` must
-        receive an image as input and return a particular feature
-        representation of that image. For example::
-
-            def igo_double_from_std_normalized_intensities(image)
-                image = deepcopy(image)
-                image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=``True``)
 
     transform : :map:`PureAlignmentTransform`, optional
         The :map:`PureAlignmentTransform` that will be
@@ -160,30 +148,30 @@ class AAMBuilder(DeformableModelBuilder):
         ``0`` <= `float` <= ``1`` or a list of those containing 1 or
         ``n_levels`` elements
     ValueError
-        ``feature_type`` must be a `string` or a `function` or a list of those
+        ``features`` must be a `function` or a list of those
         containing ``1`` or ``n_levels`` elements
     ValueError
-        ``pyramid_on_features`` is enabled so ``feature_type`` must be a
+        ``pyramid_on_features`` is enabled so ``features`` must be a
         `string` or a `function` or a list containing ``1`` of those
     """
-    def __init__(self, feature_type=igo, transform=PiecewiseAffine,
+    def __init__(self, features=igo, transform=PiecewiseAffine,
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3):
         # check parameters
-        self.check_n_levels(n_levels)
-        self.check_downscale(downscale)
-        self.check_normalization_diagonal(normalization_diagonal)
-        self.check_boundary(boundary)
-        max_shape_components = self.check_max_components(
+        checks.check_n_levels(n_levels)
+        checks.check_downscale(downscale)
+        checks.check_normalization_diagonal(normalization_diagonal)
+        checks.check_boundary(boundary)
+        max_shape_components = checks.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        max_appearance_components = self.check_max_components(
+        max_appearance_components = checks.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = validate_features(feature_type, n_levels,
+        features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
         # store parameters
-        self.feature_type = feature_type
+        self.features = features
         self.transform = transform
         self.trilist = trilist
         self.normalization_diagonal = normalization_diagonal
@@ -223,16 +211,15 @@ class AAMBuilder(DeformableModelBuilder):
             to highest level
         """
         # compute reference_shape and normalize images size
-        self.reference_shape, normalized_images = (
-            self._normalization_wrt_reference_shape(
-                images, group, label, self.normalization_diagonal,
-                verbose=verbose))
+        self.reference_shape, normalized_images = \
+            normalization_wrt_reference_shape(images, group, label,
+                                              self.normalization_diagonal,
+                                              verbose=verbose)
 
         # create pyramid
-        generators = self._create_pyramid(normalized_images, self.n_levels,
-                                          self.downscale,
-                                          self.pyramid_on_features,
-                                          self.feature_type, verbose=verbose)
+        generators = create_pyramid(normalized_images, self.n_levels,
+                                    self.downscale, self.pyramid_on_features,
+                                    self.features, verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:
@@ -274,7 +261,7 @@ class AAMBuilder(DeformableModelBuilder):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(self.feature_type[rj](next(g)))
+                    feature_images.append(self.features[rj](next(g)))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label] for i in feature_images]
@@ -292,7 +279,7 @@ class AAMBuilder(DeformableModelBuilder):
             # train shape model and find reference frame
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
-            shape_model = self._build_shape_model(
+            shape_model = build_shape_model(
                 train_shapes, self.max_shape_components[rj])
             reference_frame = self._build_reference_frame(shape_model.mean)
 
@@ -382,7 +369,7 @@ class AAMBuilder(DeformableModelBuilder):
             The trained AAM object.
         """
         return AAM(shape_models, appearance_models, n_training_images,
-                   self.transform, self.feature_type, self.reference_shape,
+                   self.transform, self.features, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
                    self.pyramid_on_features)
 
@@ -393,7 +380,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
     Parameters
     ----------
-    feature_type : ``None`` or string or `function` or list of those, optional
+    features : ``None`` or string or `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
@@ -413,7 +400,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
 
             If string, image features will be computed by executing::
 
-               feature_image = getattr(image.features, feature_type[level])()
+               feature_image = getattr(image.features, features[level])()
 
             for each pyramidal level. For this to work properly each string
             needs to be one of menpo's standard image feature methods
@@ -429,7 +416,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=``True``)
+                return image.features.igo(double_angles=``True``)
 
         See :map:`ImageFeatures` for details more details on
         Menpo's standard image features and feature options.
@@ -543,31 +530,31 @@ class PatchBasedAAMBuilder(AAMBuilder):
         ``0`` <= `float` <= ``1`` or a list of those containing ``1``
         or ``n_levels`` elements
     ValueError
-        ``feature_type`` must be a `string` or a `function` or a list of those
+        ``features`` must be a `string` or a `function` or a list of those
         containing 1 or ``n_levels`` elements
     ValueError
-        ``pyramid_on_features`` is enabled so ``feature_type`` must be a
+        ``pyramid_on_features`` is enabled so ``features`` must be a
         `string` or a `function` or a list containing one of those
     """
-    def __init__(self, feature_type='hog', patch_shape=(16, 16),
+    def __init__(self, features='hog', patch_shape=(16, 16),
                  normalization_diagonal=None, n_levels=3, downscale=2,
                  scaled_shape_models=True, pyramid_on_features=True,
                  max_shape_components=None, max_appearance_components=None,
                  boundary=3):
         # check parameters
-        self.check_n_levels(n_levels)
-        self.check_downscale(downscale)
-        self.check_normalization_diagonal(normalization_diagonal)
-        self.check_boundary(boundary)
-        max_shape_components = self.check_max_components(
+        checks.check_n_levels(n_levels)
+        checks.check_downscale(downscale)
+        checks.check_normalization_diagonal(normalization_diagonal)
+        checks.check_boundary(boundary)
+        max_shape_components = checks.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        max_appearance_components = self.check_max_components(
+        max_appearance_components = checks.check_max_components(
             max_appearance_components, n_levels, 'max_appearance_components')
-        feature_type = validate_features(feature_type, n_levels,
+        features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
 
         # store parameters
-        self.feature_type = feature_type
+        self.features = features
         self.patch_shape = patch_shape
         self.normalization_diagonal = normalization_diagonal
         self.n_levels = n_levels
@@ -631,13 +618,13 @@ class PatchBasedAAMBuilder(AAMBuilder):
         """
         return PatchBasedAAM(shape_models, appearance_models,
                              n_training_images, self.patch_shape,
-                             self.transform, self.feature_type,
+                             self.transform, self.features,
                              self.reference_shape, self.downscale,
                              self.scaled_shape_models,
                              self.pyramid_on_features)
 
 
-class AAM(object):
+class AAM(HDF5able):
     r"""
     Active Appearance Model class.
 
@@ -656,7 +643,7 @@ class AAM(object):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    feature_type : ``None`` or `string` or `function` or list of those
+    features : ``None`` or `string` or `function` or list of those
         The image feature that was be used to build the ``appearance_models``.
         Will subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -717,17 +704,28 @@ class AAM(object):
 
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
-                 transform, feature_type, reference_shape, downscale,
+                 transform, features, reference_shape, downscale,
                  scaled_shape_models, pyramid_on_features):
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
         self.transform = transform
-        self.feature_type = feature_type
+        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
+
+    def h5_dict_to_serializable_dict(self):
+        import menpo.transform
+        d = self.__dict__.copy()
+        transform = d.pop('transform')
+        d['transform'] = SerializableCallable(transform, [menpo.transform])
+
+        features = d.pop('features')
+        d['features'] = [SerializableCallable(f, [menpo.feature])
+                         for f in features]
+        return d
 
     @property
     def n_levels(self):
@@ -854,14 +852,14 @@ class AAM(object):
                     self.downscale**(self.n_levels - j - 1)))
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.feature_type[0], str):
+            if isinstance(self.features[0], str):
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0])
-            elif self.feature_type[0] is None:
+                    self.features[0])
+            elif self.features[0] is None:
                 feat_str = "- No features extracted. "
             else:
                 feat_str = "- Feature is {} with ".format(
-                    self.feature_type[0].__name__)
+                    self.features[0].__name__)
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -870,14 +868,14 @@ class AAM(object):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.feature_type[j], str):
+                if isinstance(self.features[j], str):
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j]))
-                elif self.feature_type[j] is None:
+                        self.features[j]))
+                elif self.features[j] is None:
                     feat_str.append("- No features extracted. ")
                 else:
                     feat_str.append("- Feature is {} with ".format(
-                        self.feature_type[j].__name__))
+                        self.features[j].__name__))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
@@ -975,7 +973,7 @@ class PatchBasedAAM(AAM):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    feature_type : ``None`` or `string` or `function` or list of those
+    features : ``None`` or `string` or `function` or list of those
         The image feature that was be used to build the appearance_models. Will
         subsequently be used by fitter objects using this class to fit to
         novel images.
@@ -1035,11 +1033,11 @@ class PatchBasedAAM(AAM):
         AAMs tend to have slightly better performance.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
-                 patch_shape, transform, feature_type, reference_shape,
+                 patch_shape, transform, features, reference_shape,
                  downscale, scaled_shape_models, pyramid_on_features):
         super(PatchBasedAAM, self).__init__(
             shape_models, appearance_models, n_training_images, transform,
-            feature_type, reference_shape, downscale, scaled_shape_models,
+            features, reference_shape, downscale, scaled_shape_models,
             pyramid_on_features)
         self.patch_shape = patch_shape
 

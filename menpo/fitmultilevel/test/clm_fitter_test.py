@@ -305,7 +305,7 @@ for i in range(4):
 # build clm
 clm = CLMBuilder(classifier_type=linear_svm_lr,
                  patch_shape=(8, 8),
-                 feature_type=[sparse_hog],
+                 features=[sparse_hog],
                  normalization_diagonal=150,
                  n_levels=3,
                  downscale=1.1,
@@ -319,7 +319,7 @@ def test_clm():
     assert (clm.n_training_images == 4)
     assert (clm.n_levels == 3)
     assert (clm.downscale == 1.1)
-    #assert (clm.feature_type[0] == sparse_hog and len(clm.feature_type) == 1)
+    #assert (clm.features[0] == sparse_hog and len(clm.features) == 1)
     assert_allclose(np.around(clm.reference_shape.range()), (109., 103.))
     assert clm.scaled_shape_models
     assert clm.pyramid_on_features

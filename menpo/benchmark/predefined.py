@@ -16,13 +16,13 @@ from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
 
 
 def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
-                                  feature_type='igo', noise_std=0.04,
+                                  features='igo', noise_std=0.04,
                                   verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -30,7 +30,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
-                        'feature_type': 'igo',
+                        'features': 'igo',
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -54,7 +54,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                        'rotation': False}
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
     perturb_options['noise_std'] = noise_std
 
     # run experiment
@@ -83,7 +83,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['feature_type'])
+            training_options['features'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -93,13 +93,13 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
 
 
 def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
-                                 fitting_bboxes_path, feature_type='igo',
+                                 fitting_bboxes_path, features='igo',
                                  verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -107,7 +107,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'feature_type': 'igo',
+                        'features': 'igo',
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -129,7 +129,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     }
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
 
     # run experiment
     training_images = load_database(training_db_path,
@@ -164,7 +164,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['feature_type'])
+            training_options['features'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -174,13 +174,13 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
 
 
 def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
-                                           feature_type='igo', noise_std=0.04,
+                                           features='igo', noise_std=0.04,
                                            verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -188,7 +188,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
-                        'feature_type': 'igo',
+                        'features': 'igo',
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -212,7 +212,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                        'rotation': False}
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
     perturb_options['noise_std'] = noise_std
 
     # run experiment
@@ -241,7 +241,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['feature_type'])
+            training_options['features'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -252,13 +252,13 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
 
 def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                                           fitting_bboxes_path,
-                                          feature_type='igo', verbose=False,
+                                          features='igo', verbose=False,
                                           plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -266,7 +266,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'feature_type': 'igo',
+                        'features': 'igo',
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': 200,
@@ -288,7 +288,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     }
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
 
     # run experiment
     training_images = load_database(training_db_path,
@@ -323,7 +323,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['feature_type'])
+            training_options['features'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -333,13 +333,13 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
 
 
 def clm_basic_noise(training_db_path,  fitting_db_path,
-                    feature_type=sparse_hog, classifier_type=linear_svm_lr,
+                    features=sparse_hog, classifier_type=linear_svm_lr,
                     noise_std=0.04, verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -349,7 +349,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     training_options = {'group': 'PTS',
                         'classifier_type': linear_svm_lr,
                         'patch_shape': (5, 5),
-                        'feature_type': sparse_hog,
+                        'features': sparse_hog,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 1.1,
@@ -369,7 +369,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
                        'rotation': False}
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
     training_options['classifier_type'] = classifier_type
     perturb_options['noise_std'] = noise_std
 
@@ -399,7 +399,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['feature_type'],
+            training_options['features'],
             training_options['classifier_type'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -410,13 +410,13 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
 
 
 def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
-                   feature_type=sparse_hog, classifier_type=linear_svm_lr,
+                   features=sparse_hog, classifier_type=linear_svm_lr,
                    verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -426,7 +426,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     training_options = {'group': 'PTS',
                         'classifier_type': linear_svm_lr,
                         'patch_shape': (5, 5),
-                        'feature_type': sparse_hog,
+                        'features': sparse_hog,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 1.1,
@@ -444,7 +444,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     }
 
     # set passed parameters
-    training_options['feature_type'] = feature_type
+    training_options['features'] = features
     training_options['classifier_type'] = classifier_type
 
     # run experiment
@@ -481,7 +481,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['feature_type'],
+            training_options['features'],
             training_options['classifier_type'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -492,13 +492,13 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
 
 
 def sdm_fastest_bbox(training_db_path, fitting_db_path,
-                                 fitting_bboxes_path, feature_type=None,
+                                 fitting_bboxes_path, features=None,
                                  verbose=False, plot=False):
     # check feature
-    if not isinstance(feature_type, str):
-        if not hasattr(feature_type, '__call__'):
-            if feature_type is not None:
-                raise ValueError("feature_type must be a string or "
+    if not isinstance(features, str):
+        if not hasattr(features, '__call__'):
+            if features is not None:
+                raise ValueError("features must be a string or "
                                  "function/closure or None")
 
     # predefined options
@@ -552,7 +552,7 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "SDMs using default (sparse hogs)".format(
-            training_options['feature_type'])
+            training_options['features'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -562,17 +562,17 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
 
 
 def aam_params_combinations_noise(training_db_path, fitting_db_path,
-                                  n_experiments=1, feature_type=None,
+                                  n_experiments=1, features=None,
                                   scaled_shape_models=None,
                                   pyramid_on_features=None, n_shape=None,
                                   n_appearance=None, noise_std=None,
                                   rotation=None, verbose=False, plot=False):
 
     # parse input
-    if feature_type is None:
-        feature_type = ['igo'] * n_experiments
-    elif len(feature_type) is not n_experiments:
-        raise ValueError("feature_type has wrong length")
+    if features is None:
+        features = ['igo'] * n_experiments
+    elif len(features) is not n_experiments:
+        raise ValueError("features has wrong length")
     if scaled_shape_models is None:
         scaled_shape_models = [True] * n_experiments
     elif len(scaled_shape_models) is not n_experiments:
@@ -617,17 +617,17 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
     for i in range(n_experiments):
         if verbose:
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
-            print("- feature_type: {}\n- scaled_shape_models: {}\n"
+            print("- features: {}\n- scaled_shape_models: {}\n"
                   "- pyramid_on_features: {}\n- n_shape: {}\n"
                   "- n_appearance: {}\n- noise_std: {}\n"
                   "- rotation: {}".format(
-                  feature_type[i], scaled_shape_models[i],
+                  features[i], scaled_shape_models[i],
                   pyramid_on_features[i], n_shape[i], n_appearance[i],
                   noise_std[i], rotation[i]))
 
         # predefined option dictionaries
         training_options = {'group': 'PTS',
-                            'feature_type': 'igo',
+                            'features': 'igo',
                             'transform': PiecewiseAffine,
                             'trilist': ibug_face_68_trimesh,
                             'normalization_diagonal': None,
@@ -651,7 +651,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                            'rotation': False}
 
         # training
-        training_options['feature_type'] = feature_type[i]
+        training_options['features'] = features[i]
         training_options['scaled_shape_models'] = scaled_shape_models[i]
         training_options['pyramid_on_features'] = pyramid_on_features[i]
         aam = aam_build_benchmark(training_images,
@@ -691,7 +691,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
 
 def clm_params_combinations_noise(training_db_path, fitting_db_path,
                                   n_experiments=1, classifier_type=None,
-                                  patch_shape=None, feature_type=None,
+                                  patch_shape=None, features=None,
                                   scaled_shape_models=None,
                                   pyramid_on_features=None, n_shape=None,
                                   noise_std=None, rotation=None, verbose=False,
@@ -706,10 +706,10 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         patch_shape = [(5, 5)] * n_experiments
     elif len(patch_shape) is not n_experiments:
         raise ValueError("patch_shape has wrong length")
-    if feature_type is None:
-        feature_type = ['igo'] * n_experiments
-    elif len(feature_type) is not n_experiments:
-        raise ValueError("feature_type has wrong length")
+    if features is None:
+        features = ['igo'] * n_experiments
+    elif len(features) is not n_experiments:
+        raise ValueError("features has wrong length")
     if scaled_shape_models is None:
         scaled_shape_models = [True] * n_experiments
     elif len(scaled_shape_models) is not n_experiments:
@@ -751,10 +751,10 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         if verbose:
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
             print("- classifier_type: {}\n- patch_shape: {}\n"
-                  "- feature_type: {}\n- scaled_shape_models: {}\n"
+                  "- features: {}\n- scaled_shape_models: {}\n"
                   "- pyramid_on_features: {}\n- n_shape: {}\n"
                   "- noise_std: {}\n- rotation: {}".format(
-                  classifier_type[i], patch_shape[i], feature_type[i],
+                  classifier_type[i], patch_shape[i], features[i],
                   scaled_shape_models[i], pyramid_on_features[i], n_shape[i],
                   noise_std[i], rotation[i]))
 
@@ -762,7 +762,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         training_options = {'group': 'PTS',
                             'classifier_type': linear_svm_lr,
                             'patch_shape': (5, 5),
-                            'feature_type': sparse_hog,
+                            'features': sparse_hog,
                             'normalization_diagonal': None,
                             'n_levels': 3,
                             'downscale': 1.1,
@@ -784,7 +784,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         # training
         training_options['classifier_type'] = classifier_type[i]
         training_options['patch_shape'] = patch_shape[i]
-        training_options['feature_type'] = feature_type[i]
+        training_options['features'] = features[i]
         training_options['scaled_shape_models'] = scaled_shape_models[i]
         training_options['pyramid_on_features'] = pyramid_on_features[i]
         clm = clm_build_benchmark(training_images,

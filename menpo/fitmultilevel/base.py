@@ -22,7 +22,7 @@ class MultilevelFitter(Fitter):
         pass
 
     @abc.abstractproperty
-    def feature_type(self):
+    def features(self):
         r"""
         Returns the feature computation functions applied at each pyramidal
         level.
@@ -204,7 +204,7 @@ class MultilevelFitter(Fitter):
             # pyramid cases
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = self.feature_type[0](image)
+                feature_image = self.features[0](image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -218,12 +218,12 @@ class MultilevelFitter(Fitter):
                     n_levels=self.n_levels, downscale=self.downscale)
 
                 # compute features at each level
-                images = [self.feature_type[self.n_levels - j - 1](i)
+                images = [self.features[self.n_levels - j - 1](i)
                           for j, i in enumerate(pyramid)]
             images.reverse()
         else:
             # single image case
-            images = [self.feature_type[0](image)]
+            images = [self.features[0](image)]
 
         # get initial shapes per level
         initial_shapes = [i.landmarks['initial_shape'].lms for i in images]

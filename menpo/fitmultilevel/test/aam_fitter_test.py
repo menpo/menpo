@@ -311,7 +311,7 @@ for i in range(4):
     training_images.append(im)
 
 # build aam
-aam = AAMBuilder(feature_type=[igo],
+aam = AAMBuilder(features=[igo],
                  transform=PiecewiseAffine,
                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                  lms.trilist,
@@ -324,7 +324,7 @@ aam = AAMBuilder(feature_type=[igo],
                  max_appearance_components=[3, 2, 1],
                  boundary=3).build(training_images, group='PTS')
 
-aam2 = AAMBuilder(feature_type=[igo],
+aam2 = AAMBuilder(features=[igo],
                   transform=PiecewiseAffine,
                   trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,
@@ -342,7 +342,7 @@ def test_aam():
     assert (aam.n_training_images == 4)
     assert (aam.n_levels == 3)
     assert (aam.downscale == 2)
-    #assert (aam.feature_type[0] == igo and len(aam.feature_type) == 1)
+    #assert (aam.features[0] == igo and len(aam.features) == 1)
     assert_allclose(np.around(aam.reference_shape.range()), (109., 103.))
     assert aam.scaled_shape_models
     assert aam.pyramid_on_features

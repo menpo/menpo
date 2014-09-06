@@ -22,7 +22,7 @@ for i in range(4):
     training.append(im)
 
 # build aams
-aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
+aam1 = AAMBuilder(features=[igo, sparse_hog, no_op],
                   transform=PiecewiseAffine,
                   trilist=training[0].landmarks['ibug_face_68_trimesh'].
                   lms.trilist,
@@ -35,7 +35,7 @@ aam1 = AAMBuilder(feature_type=[igo, sparse_hog, no_op],
                   max_appearance_components=[3, 3, 3],
                   boundary=3).build(training, group='PTS')
 
-aam2 = AAMBuilder(feature_type=no_op,
+aam2 = AAMBuilder(features=no_op,
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,
@@ -47,7 +47,7 @@ aam2 = AAMBuilder(feature_type=no_op,
                   max_appearance_components=1,
                   boundary=0).build(training, group='PTS')
 
-aam3 = AAMBuilder(feature_type=igo,
+aam3 = AAMBuilder(features=igo,
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,
@@ -59,7 +59,7 @@ aam3 = AAMBuilder(feature_type=igo,
                   max_appearance_components=10,
                   boundary=2).build(training, group='PTS')
 
-aam4 = PatchBasedAAMBuilder(feature_type=lbp,
+aam4 = PatchBasedAAMBuilder(features=lbp,
                             patch_shape=(10, 13),
                             normalization_diagonal=200,
                             n_levels=2,
@@ -72,14 +72,14 @@ aam4 = PatchBasedAAMBuilder(feature_type=lbp,
 
 
 @raises(ValueError)
-def test_feature_type_exception():
-    AAMBuilder(feature_type=[igo, sparse_hog],
+def test_features_exception():
+    AAMBuilder(features=[igo, sparse_hog],
                pyramid_on_features=False).build(training, group='PTS')
 
 
 @raises(ValueError)
-def test_feature_type_with_pyramid_on_features_exception():
-    AAMBuilder(feature_type=[igo, sparse_hog]).build(training,
+def test_features_with_pyramid_on_features_exception():
+    AAMBuilder(features=[igo, sparse_hog]).build(training,
                                                      group='PTS')
 
 
@@ -138,7 +138,7 @@ def test_aam_1():
     assert(aam1.n_training_images == 4)
     assert(aam1.n_levels == 3)
     assert(aam1.downscale == 2)
-    #assert(aam1.feature_type[0] == igo and aam1.feature_type[2] == no_op)
+    #assert(aam1.features[0] == igo and aam1.features[2] == no_op)
     assert_allclose(np.around(aam1.reference_shape.range()), (109., 103.))
     assert(not aam1.scaled_shape_models)
     assert(not aam1.pyramid_on_features)
@@ -156,7 +156,7 @@ def test_aam_2():
     assert (aam2.n_training_images == 4)
     assert (aam2.n_levels == 2)
     assert (aam2.downscale == 1.2)
-    #assert (aam2.feature_type[0] == no_op and aam2.feature_type[1] == no_op)
+    #assert (aam2.features[0] == no_op and aam2.features[1] == no_op)
     assert_allclose(np.around(aam2.reference_shape.range()), (169., 161.))
     assert aam2.scaled_shape_models
     assert (not aam2.pyramid_on_features)
@@ -174,7 +174,7 @@ def test_aam_3():
     assert (aam3.n_training_images == 4)
     assert (aam3.n_levels == 1)
     assert (aam3.downscale == 3)
-    #assert (aam3.feature_type[0] == igo and len(aam3.feature_type) == 1)
+    #assert (aam3.features[0] == igo and len(aam3.features) == 1)
     assert_allclose(np.around(aam3.reference_shape.range()), (169., 161.))
     assert aam3.scaled_shape_models
     assert aam3.pyramid_on_features
@@ -192,7 +192,7 @@ def test_aam_4():
     assert (aam4.n_training_images == 4)
     assert (aam4.n_levels == 2)
     assert (aam4.downscale == 1.2)
-    #assert (aam4.feature_type[0] == lbp)
+    #assert (aam4.features[0] == lbp)
     assert_allclose(np.around(aam4.reference_shape.range()), (145., 138.))
     assert aam4.scaled_shape_models
     assert aam4.pyramid_on_features

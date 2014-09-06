@@ -243,39 +243,13 @@ class NonParametricRegressorTrainer(RegressorTrainer):
         Examples of such closures can be found in
         :ref:`regression_functions`
 
-    regression_features : ``None`` or `string` or `function`, optional
+    regression_features : `function`, optional
         The features that are used during the regression.
 
-        If ``None``, no feature representation will be computed from the
-        original image.
-
-        If `string` or `function`, the feature representation will be computed
-        in the following way:
-        
-            If `string`, the feature representation will be extracted by
-            executing::
-
-                feature_image = getattr(image.features, feature_type)()
-
-            For this to work properly feature_type needs to be one of
-            Menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using its default
-            options.
-
-            Non-default feature options and new experimental feature can be
-            used by defining a closure. In this case, the closure must define a
-            function that receives as an input an image and returns a
-            particular feature representation of that image. For example::
-
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
-
-            See :map:`ImageFeatures` for details more details on
-            Menpo's standard image features and feature options.
-            See :ref:`feature_functions` for non standard
-            features definitions.
+        See `menpo.features` for details more details on
+        Menpo's standard image features and feature options.
+        See :ref:`feature_functions` for non standard
+        features definitions.
 
     patch_shape : tuple, optional
         The shape of the patches that will be extracted.
@@ -397,39 +371,13 @@ class SemiParametricRegressorTrainer(NonParametricRegressorTrainer):
         Examples of such closures can be found in
         :ref:`regression_functions`
 
-    regression_features : ``None`` or `string` or `function`, optional
+    regression_features : `function`, optional
         The features that are used during the regression.
 
-        If ``None``, no feature representation will be computed from the
-        original image.
-
-        If `string` or `function`, the feature representation will be computed
-        in the following way:
-
-            If `string`, the feature representation will be extracted by
-            executing::
-
-                feature_image = getattr(image.features, feature_type)()
-
-            For this to work properly feature_type needs to be one of
-            Menpo's standard image feature methods. Note that, in this case,
-            the feature computation will be carried out using its default
-            options.
-
-            Non-default feature options and new experimental feature can be
-            used by defining a closure. In this case, the closure must define a
-            function that receives as an input an image and returns a
-            particular feature representation of that image. For example::
-
-                def igo_double_from_std_normalized_intensities(image)
-                    image = deepcopy(image)
-                    image.normalize_std_inplace()
-                    return image.feature_type.igo(double_angles=True)
-
-            See :map:`ImageFeatures` for details more details on
-            Menpo's standard image features and feature options.
-            See :ref:`feature_functions` for non standard
-            features definitions.
+        See `menpo.features` for details more details on
+        Menpo's standard image features and feature options.
+        See :ref:`feature_functions` for non standard
+        features definitions.
 
     patch_shape : tuple, optional
         The shape of the patches that will be extracted.

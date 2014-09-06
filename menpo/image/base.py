@@ -1357,19 +1357,19 @@ class Image(Vectorizable, LandmarkableViewable):
                 self.landmarks[l_group] = l
 
 
-def _create_feature_glyph(features, vbs):
+def _create_feature_glyph(feature, vbs):
     r"""
     Create glyph of feature pixels.
 
     Parameters
     ----------
-    feature_type : (N, D) ndarray
+    feature : (N, D) ndarray
         The feature pixels to use.
     vbs: int
         Defines the size of each block with vectors of the glyph image.
     """
     # vbs = Vector block size
-    num_bins = features.shape[2]
+    num_bins = feature.shape[2]
     # construct a "glyph" for each orientation
     block_image_temp = np.zeros((vbs, vbs))
     # Create a vertical line of ones, to be the first vector
@@ -1384,9 +1384,9 @@ def _create_feature_glyph(features, vbs):
         block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
 
     # make pictures of positive feature_data by adding up weighted glyphs
-    features[features < 0] = 0
+    feature[feature < 0] = 0
     glyph_im = np.sum(block_im[None, None, :, :, :] *
-                      features[:, :, None, None, :], axis=-1)
+                      feature[:, :, None, None, :], axis=-1)
     glyph_im = np.bmat(glyph_im.tolist())
     return glyph_im
 

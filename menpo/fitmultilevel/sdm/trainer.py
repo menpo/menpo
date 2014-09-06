@@ -12,8 +12,8 @@ from menpo.fit.regression.trainer import (
     SemiParametricClassifierBasedRegressorTrainer)
 from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
-from menpo.fitmultilevel.functions import mean_pointcloud
-from menpo.fitmultilevel.builder import validate_features
+from menpo.shape import mean_pointcloud
+from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog, no_op
 
 from .base import (SDMFitter, SDAAMFitter, SDCLMFitter)
@@ -45,7 +45,7 @@ class SDTrainer(object):
         Depending on the :map:`SDTrainer` object, this parameter can take
         different types.
 
-    feature_type : ``None`` or `string` or `function` or list of those, optional
+    features : ``None`` or `string` or `function` or list of those, optional
         Defines the features that will be extracted from the image.
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
@@ -67,7 +67,7 @@ class SDTrainer(object):
 
             If `string`, image features will be computed by executing::
 
-               feature_image = getattr(image.features, feature_type[level])()
+               feature_image = getattr(image.features, features[level])()
 
             for each pyramidal level. For this to work properly each string
             needs to be one of menpo's standard image feature methods
@@ -83,7 +83,7 @@ class SDTrainer(object):
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=True)
+                return image.features.igo(double_angles=True)
 
         See :map:`ImageFeatures` for details more details on
         Menpo's standard image features and feature options.
@@ -133,20 +133,20 @@ class SDTrainer(object):
     ValueError
         ``n_perturbations`` must be > 0
     ValueError
-        ``feature_type`` must be a `string` or a `function` or a list of those
+        ``features`` must be a `string` or a `function` or a list of those
         containing ``1`` or ``n_levels`` elements
     """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, regression_type=mlr, regression_features=None,
-                 feature_type=None, n_levels=3, downscale=1.2,
+                 features=None, n_levels=3, downscale=1.2,
                  pyramid_on_features=True, noise_std=0.04, rotation=False,
                  n_perturbations=10):
 
         # check parameters
         regression_type_list = self.check_regression_type(regression_type,
                                                           n_levels)
-        feature_type = validate_features(feature_type, n_levels,
+        features = checks.check_features(features, n_levels,
                                          pyramid_on_features)
         self.check_n_levels(n_levels)
         self.check_downscale(downscale)
@@ -155,7 +155,7 @@ class SDTrainer(object):
         # store parameters
         self.regression_type = regression_type_list
         self.regression_features = regression_features
-        self.feature_type = feature_type
+        self.features = features
         self.n_levels = n_levels
         self.downscale = downscale
         self.pyramid_on_features = pyramid_on_features
@@ -197,12 +197,12 @@ class SDTrainer(object):
         generators = self._create_pyramid(normalized_images, self.n_levels,
                                           self.downscale,
                                           self.pyramid_on_features,
-                                          self.feature_type, verbose=verbose)
+                                          self.features, verbose=verbose)
 
         # get feature images of all levels
         images = self._apply_pyramid_on_images(
             generators, self.n_levels, self.pyramid_on_features,
-            self.feature_type, verbose=verbose)
+            self.features, verbose=verbose)
 
         # this .reverse sets the lowest resolution as the first level
         images.reverse()
@@ -333,7 +333,7 @@ class SDTrainer(object):
 
     @classmethod
     def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
-                        feature_type, verbose=False):
+                        features, verbose=False):
         r"""
         Function that creates a generator function for Gaussian pyramid. The
         pyramid can be created either on the feature space or the original
@@ -358,8 +358,8 @@ class SDTrainer(object):
             If ``False``, the pyramid is created on the original (intensities)
             space.
 
-        feature_type : list with `string` or `function` or ``None``
-            In case ``pyramid_on_features`` is ``True``, ``feature_type[0]``
+        features : list with `string` or `function` or ``None``
+            In case ``pyramid_on_features`` is ``True``, ``features[0]``
             will be used as features type.
 
         verbose : `boolean`, Optional
@@ -378,7 +378,7 @@ class SDTrainer(object):
                     print_dynamic('- Computing feature space: {}'.format(
                         progress_bar_str((c + 1.) / len(images),
                                          show_bar=False)))
-                feature_images.append(feature_type[0](i))
+                feature_images.append(features[0](i))
             if verbose:
                 print_dynamic('- Computing feature space: Done\n')
 
@@ -396,7 +396,7 @@ class SDTrainer(object):
 
     @classmethod
     def _apply_pyramid_on_images(cls, generators, n_levels,
-                                 pyramid_on_features, feature_type,
+                                 pyramid_on_features, features,
                                  verbose=False):
         r"""
         Function that applies the generators of a pyramid on images.
@@ -418,7 +418,7 @@ class SDTrainer(object):
             If ``False``, the pyramid is created on the original (intensities)
             space.
 
-        feature_type: list of length ``n_levels`` with `string` or `function` or ``None``
+        features: list of length ``n_levels`` with `string` or `function` or ``None``
             The feature type per level to be used in case
             ``pyramid_on_features`` is enabled.
 
@@ -459,7 +459,7 @@ class SDTrainer(object):
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    current_images.append(feature_type[rj](next(g)))
+                    current_images.append(features[rj](next(g)))
             feature_images.append(current_images)
         if verbose:
             print_dynamic('- Apply pyramid: Done\n')
@@ -629,7 +629,7 @@ class SDMTrainer(SDTrainer):
 
         Per level:
             If ``None``, no features are extracted, thus specified
-            ``feature_type`` is used in the regressor.
+            ``features`` is used in the regressor.
 
             If `string`, image features will be computed using one of Menpo's
             standard image feature methods ('igo', 'hog', ...).
@@ -641,14 +641,14 @@ class SDMTrainer(SDTrainer):
             :ref:`feature_functions`.
 
             It is recommended to set the desired features using this option,
-            leaving ``feature_type`` equal to ``None``. This means that the
+            leaving ``features`` equal to ``None``. This means that the
             images will remain in the intensities space and the features will
             be extracted by the regressor.
 
     patch_shape: tuple of `int`
         The shape of the patches used by the SDM.
 
-    feature_type : `None` or `string` or `function` or list of those, optional
+    features : `None` or `string` or `function` or list of those, optional
         If list of length ``n_levels``, then a feature is defined per level.
         However, this requires that the ``pyramid_on_features`` flag is
         ``False``, so that the features are extracted at each level.
@@ -669,7 +669,7 @@ class SDMTrainer(SDTrainer):
 
             If `string`, image features will be computed by executing::
 
-               feature_image = getattr(image.features, feature_type[level])()
+               feature_image = getattr(image.features, features[level])()
 
         for each pyramidal level. For this to work properly each string
         needs to be one of menpo's standard image feature methods
@@ -685,7 +685,7 @@ class SDMTrainer(SDTrainer):
             def igo_double_from_std_normalized_intensities(image)
                 image = deepcopy(image)
                 image.normalize_std_inplace()
-                return image.feature_type.igo(double_angles=True)
+                return image.features.igo(double_angles=True)
 
         See :map:`ImageFeatures` for details more details on
         Menpo's standard image features and feature options.
@@ -739,7 +739,7 @@ class SDMTrainer(SDTrainer):
         or a list of those containing 1 or ``n_level`` elements
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
-                 patch_shape=(16, 16), feature_type=no_op, n_levels=3,
+                 patch_shape=(16, 16), features=no_op, n_levels=3,
                  downscale=1.5, pyramid_on_features=False, noise_std=0.04,
                  rotation=False, n_perturbations=10,
                  normalization_diagonal=None):
@@ -749,7 +749,7 @@ class SDMTrainer(SDTrainer):
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features_list,
-            feature_type=feature_type, n_levels=n_levels, downscale=downscale,
+            features=features, n_levels=n_levels, downscale=downscale,
             pyramid_on_features=pyramid_on_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
@@ -827,7 +827,7 @@ class SDMTrainer(SDTrainer):
         fitter : :map:`SDMFitter`
             The SDM fitter object.
         """
-        return SDMFitter(regressors, self.n_training_images, self.feature_type,
+        return SDMFitter(regressors, self.n_training_images, self.features,
                          self.reference_shape, self.downscale,
                          self.pyramid_on_features)
 
@@ -985,7 +985,7 @@ class SDAAMTrainer(SDTrainer):
         super(SDAAMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features_list,
-            feature_type=aam.feature_type, n_levels=aam.n_levels,
+            features=aam.features, n_levels=aam.n_levels,
             downscale=aam.downscale,
             pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
@@ -1239,7 +1239,7 @@ class SDCLMTrainer(SDTrainer):
         super(SDCLMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=[None] * clm.n_levels,
-            feature_type=clm.feature_type, n_levels=clm.n_levels,
+            features=clm.features, n_levels=clm.n_levels,
             downscale=clm.downscale,
             pyramid_on_features=clm.pyramid_on_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
