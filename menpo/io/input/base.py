@@ -317,7 +317,7 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
         yield asset
 
 
-def import_builtin_asset(asset_name):
+def _import_builtin_asset(asset_name):
     r"""Single builtin asset (mesh or image) importer.
 
     Imports the relevant builtin asset from the ./data directory that
@@ -351,6 +351,25 @@ def ls_builtin_assets():
     return os.listdir(data_dir_path())
 
 
+def import_builtin(x):
+
+    def execute():
+        return _import_builtin_asset(x)
+
+    return execute
+
+
+class BuiltinAssets(object):
+
+    def __call__(self, asset_name):
+        return _import_builtin_asset(asset_name)
+
+import_builtin_asset = BuiltinAssets()
+
+for asset in ls_builtin_assets():
+    setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
+
+
 def mesh_paths(pattern):
     r"""
     Return mesh filepaths that Menpo can import that match the glob pattern.
@@ -376,6 +395,7 @@ def landmark_file_paths(pattern):
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=same_name,
                            importer_kwargs=None, verbose=False):
+    pattern = _norm_path(pattern)
     filepaths = list(glob_with_suffix(pattern, extension_map))
     if max_assets:
         filepaths = filepaths[:max_assets]
