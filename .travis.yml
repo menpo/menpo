@@ -16,11 +16,11 @@ matrix:
 install:
 - wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
 - export MENPO_VERSION=$(python traviconda.py version)
-- python traviconda.py setup --python $PYTHON_VERSION --channel menpo
+- python traviconda.py setup $PYTHON_VERSION --channel menpo
 - export PATH="$HOME/miniconda/bin:$PATH"
 
 script:
-- python traviconda.py build --path ./conda --user menpo --key $BINSTAR_KEY
+- python traviconda.py auto ./conda --binstaruser menpo --binstarkey $BINSTAR_KEY --pypiuser $PYPI_USERNAME  --pypipassword $PYPI_PASSWORD
 
 notifications:
   email: false
