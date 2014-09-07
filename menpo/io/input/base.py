@@ -360,7 +360,9 @@ def import_builtin(x):
 
 
 class BuiltinAssets(object):
-    pass
+
+    def __call__(self, asset_name):
+        return _import_builtin_asset(asset_name)
 
 import_builtin_asset = BuiltinAssets()
 
@@ -393,6 +395,7 @@ def landmark_file_paths(pattern):
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=same_name,
                            importer_kwargs=None, verbose=False):
+    pattern = _norm_path(pattern)
     filepaths = list(glob_with_suffix(pattern, extension_map))
     if max_assets:
         filepaths = filepaths[:max_assets]
