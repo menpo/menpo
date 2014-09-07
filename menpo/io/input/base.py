@@ -317,7 +317,7 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
         yield asset
 
 
-def import_builtin_asset(asset_name):
+def _import_builtin_asset(asset_name):
     r"""Single builtin asset (mesh or image) importer.
 
     Imports the relevant builtin asset from the ./data directory that
@@ -349,6 +349,23 @@ def ls_builtin_assets():
 
     """
     return os.listdir(data_dir_path())
+
+
+def import_builtin(x):
+
+    def execute():
+        return _import_builtin_asset(x)
+
+    return execute
+
+
+class BuiltinAssets(object):
+    pass
+
+import_builtin_asset = BuiltinAssets()
+
+for asset in ls_builtin_assets():
+    setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
 
 
 def mesh_paths(pattern):
