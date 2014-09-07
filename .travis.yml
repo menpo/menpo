@@ -20,7 +20,7 @@ install:
 - export PATH="$HOME/miniconda/bin:$PATH"
 
 script:
-- python traviconda.py build --path ./conda --user menpo --key $BINSTAR_KEY
+- python traviconda.py auto ./conda --binstaruser menpo --binstarkey $BINSTAR_KEY --pypiuser $PYPI_USERNAME  --pypipassword $PYPI_PASSWORD
 
 notifications:
   email: false
