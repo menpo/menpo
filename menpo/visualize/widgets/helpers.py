@@ -1,6 +1,7 @@
 from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
-                                  LatexWidget, CheckboxWidget,
-                                  ToggleButtonWidget)
+                                  IntSliderWidget, CheckboxWidget,
+                                  ToggleButtonWidget, RadioButtonsWidget,
+                                  IntTextWidget)
 
 
 def figure_options(x_scale_default=1.5, y_scale_default=0.5,
@@ -34,6 +35,8 @@ def figure_options(x_scale_default=1.5, y_scale_default=0.5,
         The initial value of the coupled checkbox.
     show_axes_default : `boolean`, optional
         The initial value of the axes visibility checkbox.
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
     figure_scales_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
     figure_scales_step : `float`, optional
@@ -148,3 +151,177 @@ def format_figure_options(figure_options_wid):
     figure_options_wid.children[1].add_class('hbox')
     figure_options_wid.children[1].children[0].set_css('width', '3cm')
     figure_options_wid.children[1].children[1].set_css('width', '3cm')
+
+
+def channel_options(n_channels, toggle_show_default=True):
+    r"""
+    Creates a widget with Channel Options. Specifically, it has:
+        1) Two radiobuttons that select an options mode, depending on whether
+           the user wants to visialize a "Single" or "Multiple" channels.
+        2) If mode is "Single", the channel number is selected by one slider.
+           If mode is "Multiple", the channel range is selected by two sliders.
+        3) If mode is "Multiple", there is a checkbox option to visualize the
+           sum of the channels.
+        4) If mode is "Multiple", there is a checkbox option to visualize the
+           glyph.
+        5) The glyph option is accompanied by a block size text field and a
+           checkbox that enables negative values visualization.
+        6) A toggle button that controls the visibility of all the above, i.e.
+           the channel options.
+    The structure of the widgets is the following:
+        channel_options_wid.children = [toggle_button, all_but_toggle]
+        all_but_toggle.children = [mode_radiobuttons, all_but_radiobuttons]
+        all_but_radiobuttons.children = [all_sliders, multiple_checkboxes]
+        all_sliders.children = [first_slider, second_slider]
+        multiple_checkboxes.children = [sum_checkbox, glyph_all]
+        glyph_all.children = [glyph_checkbox, glyph_options]
+        glyph_options.children = [block_size_text, use_negative_checkbox]
+
+    To fix the alignment within this widget please refer to
+    `format_channel_options()` function.
+
+    Parameters
+    ----------
+    n_channels : `int`
+        The number of channels.
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+    """
+    # Create all necessary widgets
+    but = ToggleButtonWidget(description='Channels Options',
+                             value=toggle_show_default)
+    mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
+                              description='Mode:')
+    mode.visible = toggle_show_default
+    first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
+                                       value=0, description='Channel')
+    first_slider_wid.visible = toggle_show_default
+    second_slider_wid = IntSliderWidget(min=1, max=n_channels-1, step=1,
+                                        value=n_channels-1, description='To',
+                                        visible=False)
+    sum_wid = CheckboxWidget(value=False, description='Sum', visible=False)
+    glyph_wid = CheckboxWidget(value=False, description='Glyph', visible=False)
+    glyph_block_size = IntTextWidget(description='Block size', value='10',
+                                     visible=False)
+    glyph_use_negative = CheckboxWidget(description='Negative values',
+                                        value=False, visible=False)
+
+    # Group widgets
+    glyph_options = ContainerWidget(children=[glyph_block_size,
+                                              glyph_use_negative])
+    glyph_all = ContainerWidget(children=[glyph_wid, glyph_options])
+    multiple_checkboxes = ContainerWidget(children=[sum_wid, glyph_all])
+    sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
+    all_but_radiobuttons = ContainerWidget(children=[sliders,
+                                                     multiple_checkboxes])
+    all_but_toggle = ContainerWidget(children=[mode, all_but_radiobuttons])
+    channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
+
+    # Define mode visibility
+    def mode_selection(name, value):
+        if value == 'Single':
+            first_slider_wid.description = 'Channel'
+            first_slider_wid.min = 0
+            first_slider_wid.max = n_channels-1
+            second_slider_wid.visible = False
+            sum_wid.visible = False
+            sum_wid.value = False
+            glyph_wid.visible = False
+            glyph_wid.value = False
+            glyph_options.children[0].visible = False
+            glyph_options.children[1].visible = False
+            glyph_options.children[0].value = '10'
+            glyph_options.children[1].value = False
+        else:
+            first_slider_wid.description = 'From'
+            first_slider_wid.min = 0
+            first_slider_wid.max = n_channels-1
+            second_slider_wid.min = 0
+            second_slider_wid.max = n_channels-1
+            if first_slider_wid.value < n_channels - 2:
+                second_slider_wid.value = first_slider_wid.value + 1
+            else:
+                second_slider_wid.value = n_channels - 1
+            second_slider_wid.visible = True
+            sum_wid.visible = True
+            sum_wid.value = True
+            glyph_wid.visible = True
+            glyph_wid.value = False
+            glyph_options.children[0].visible = False
+            glyph_options.children[1].visible = False
+            glyph_options.children[0].value = '10'
+            glyph_options.children[1].value = False
+    mode.on_trait_change(mode_selection, 'value')
+
+    # Define glyph visibility
+    def glyph_options_visibility(name, value):
+        if value:
+            glyph_options.children[0].visible = True
+            glyph_options.children[1].visible = True
+        else:
+            glyph_options.children[0].visible = False
+            glyph_options.children[1].visible = False
+    glyph_wid.on_trait_change(glyph_options_visibility, 'value')
+
+    # Define multiple channels sliders functionality
+    def first_slider_val(name, value):
+        if mode.value == 'Multiple' and value >= second_slider_wid.value:
+            first_slider_wid.value = second_slider_wid.value - 1
+    def second_slider_val(name, value):
+        if mode.value == 'Multiple' and value <= first_slider_wid.value:
+            second_slider_wid.value = first_slider_wid.value + 1
+        else:
+            first_slider_wid.max = n_channels - 1
+    first_slider_wid.on_trait_change(first_slider_val, 'value')
+    second_slider_wid.on_trait_change(second_slider_val, 'value')
+
+    # Toggle button function
+    def toggle_image_options(name, value):
+        if value:
+            mode.visible = True
+            if mode.value == 'Single':
+                first_slider_wid.visible = True
+            else:
+                first_slider_wid.visible = True
+                second_slider_wid.visible = True
+                sum_wid.visible = True
+                glyph_wid.visible = True
+                glyph_options_visibility('', glyph_wid.value)
+        else:
+            mode.visible = False
+            first_slider_wid.visible = False
+            second_slider_wid.visible = False
+            sum_wid.visible = False
+            glyph_wid.visible = False
+            glyph_options.children[0].visible = False
+            glyph_options.children[1].visible = False
+    but.on_trait_change(toggle_image_options, 'value')
+
+    return channel_options_wid
+
+
+def format_channel_options(channel_options_wid):
+    r"""
+    Functions that corrects the align (style format) of a given channel_options
+    widget. Usage example:
+        channel_options_wid = channel_options()
+        display(channel_options_wid)
+        format_channel_options(channel_options_wid)
+
+    Parameters
+    ----------
+    channel_options_wid :
+        The widget object generated by the `channel_options()` function.
+    """
+    # align glyph options
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].remove_class('vbox')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].add_class('hbox')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].set_css('width', '0.8cm')
+
+    # align sum and glyph checkboxes
+    channel_options_wid.children[1].children[1].children[1].remove_class('vbox')
+    channel_options_wid.children[1].children[1].children[1].add_class('hbox')
+
+    # align radiobuttons with the rest
+    channel_options_wid.children[1].remove_class('vbox')
+    channel_options_wid.children[1].add_class('hbox')
