@@ -1,6 +1,126 @@
-from IPython.html.widgets import interact, fixed
+from IPython.html.widgets import (interact, fixed, IntSliderWidget,
+                                  PopupWidget, ContainerWidget)
+from IPython.display import display, clear_output
+
+from .helpers import (figure_options, format_figure_options, channel_options,
+                      format_channel_options)
 
 import numpy as np
+from numpy import asarray
+
+
+def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
+                     popup=True, **kwargs):
+    r"""
+    Allows browsing through a list of images.
+
+    Parameters
+    -----------
+    images : `list` of :map:`Images` or subclass
+        The list of images to be displayed.
+
+        .. note::
+        This function assumes that all images have the same number of
+        channels and that they all have the same landmark groups.
+
+    with_labels : ``None`` or `str` or `list` of `str`, optional
+        If not ``None``, only show the given label(s). Should **not** be
+        used with the ``without_labels`` kwarg. If ``render_labels`` is
+        ``False`` this kwarg is ignored.
+
+    without_labels : ``None`` or `str` or `list` of `str`, optional
+        If not ``None``, show all except the given label(s). Should **not**
+        be used with the ``with_labels`` kwarg. If ``render_labels`` is
+        ``False`` this kwarg is ignored.
+
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+
+    figure_scales : (`float`, `float`), optional
+        The range of scales that can be optionally applied to the figure.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    import matplotlib.pylab as plt
+
+    # Create options widgets
+    image_number_wid = IntSliderWidget(min=0, max=len(images)-1, step=1,
+                                       value=1, description='Image Number')
+    channel_options_wid = channel_options(images[0].n_channels,
+                                          toggle_show_default=False)
+    figure_options_wid = figure_options(x_scale_default=figure_scales[0],
+                                        y_scale_default=figure_scales[1],
+                                        toggle_show_default=False)
+
+    # Define function
+    def show_img(name, value):
+        # clear current figure
+        clear_output()
+
+        # get channels
+        if channel_options_wid.children[1].children[0].value == "Single":
+            channels = channel_options_wid.children[1].children[1].children[0].children[0].value
+        else:
+            channels = [channel_options_wid.children[1].children[1].children[0].children[0].value,
+                        channel_options_wid.children[1].children[1].children[0].children[1].value]
+            channels = list(set(channels))
+
+        # get glyph and sum flags
+        glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
+        sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
+
+        # plot
+        if glyph_enabled:
+            s1 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value
+            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
+            images[image_number_wid.value].glyph(vectors_block_size=s1,
+                                                 use_negative=s2,
+                                                 channels=channels).view()
+        elif sum_enabled:
+            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
+            images[image_number_wid.value].glyph(vectors_block_size=1,
+                                                 use_negative=s2,
+                                                 channels=channels).view()
+        else:
+            images[image_number_wid.value].view(channels=channels)
+
+        # set figure size
+        x_scale = figure_options_wid.children[1].children[0].value
+        y_scale = figure_options_wid.children[1].children[1].value
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        # turn axis on/off
+        if not figure_options_wid.children[2].value:
+            plt.axis('off')
+
+    # Define traits
+    image_number_wid.on_trait_change(show_img, 'value')
+    figure_options_wid.children[1].children[0].on_trait_change(show_img,
+                                                               'value')
+    figure_options_wid.children[1].children[1].on_trait_change(show_img,
+                                                               'value')
+    figure_options_wid.children[2].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[0].children[0].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[0].children[1].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_img, 'value')
+
+    # Display widget
+    if popup:
+        wid = PopupWidget(children=[image_number_wid, channel_options_wid, figure_options_wid], button_text='Browse Images')
+    else:
+        wid = ContainerWidget(children=[image_number_wid, channel_options_wid, figure_options_wid])
+    display(wid)
+    format_figure_options(figure_options_wid)
+    format_channel_options(channel_options_wid)
+
+    # Reset value to enable initial visualization
+    image_number_wid.value = 0
 
 
 def browse_images(images, with_labels=None, without_labels=None,

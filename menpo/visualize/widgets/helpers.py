@@ -29,20 +29,28 @@ def figure_options(x_scale_default=1.5, y_scale_default=0.5,
     ----------
     x_scale_default : `float`, optional
         The initial value of the horizontal axis scale.
+
     y_scale_default : `float`, optional
         The initial value of the vertical axis scale.
+
     coupled_default : `boolean`, optional
         The initial value of the coupled checkbox.
+
     show_axes_default : `boolean`, optional
         The initial value of the axes visibility checkbox.
+
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
+
     figure_scales_bounds : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
+
     figure_scales_step : `float`, optional
         The step of the scale sliders.
+
     figure_scales_visible : `boolean`, optional
         The visibility of the figure scales sliders.
+
     show_axes_visible : `boolean`, optional
         The visibility of the axes checkbox.
     """
@@ -184,6 +192,7 @@ def channel_options(n_channels, toggle_show_default=True):
     ----------
     n_channels : `int`
         The number of channels.
+
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
     """
