@@ -174,14 +174,28 @@ def visualize_images(images, with_labels=None, without_labels=None,
     else:
         wid = ContainerWidget(children=[image_number_wid, cont1, cont2])
     display(wid)
-    format_channel_options(channel_options_wid)
-    format_landmark_options(landmark_options_wid)
-    format_figure_options(figure_options_wid)
-    format_info_print(info_wid, font_size_in_pt=9)
-    cont1.remove_class('vbox')
-    cont1.add_class('hbox')
-    cont2.remove_class('vbox')
-    cont2.add_class('hbox')
+
+    # Format widget
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold')
+    format_landmark_options(landmark_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold')
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold')
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold')
+    #cont1.remove_class('vbox')
+    #cont1.add_class('hbox')
+    #cont2.remove_class('vbox')
+    #cont2.add_class('hbox')
 
     # Reset value to enable initial visualization
     image_number_wid.value = 0
