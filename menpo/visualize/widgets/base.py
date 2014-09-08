@@ -10,7 +10,7 @@ from numpy import asarray
 
 
 def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
-                     popup=True, **kwargs):
+                     popup=False, **kwargs):
     r"""
     Allows browsing through a list of images.
 
