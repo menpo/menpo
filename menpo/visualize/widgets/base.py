@@ -4,7 +4,7 @@ from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, landmark_options,
-                      format_landmark_options)
+                      format_landmark_options, info_print, format_info_print)
 
 import numpy as np
 from numpy import asarray
@@ -61,6 +61,7 @@ def visualize_images(images, with_labels=None, without_labels=None,
     figure_options_wid = figure_options(x_scale_default=figure_scales[0],
                                         y_scale_default=figure_scales[1],
                                         toggle_show_default=False)
+    info_wid = info_print(toggle_show_default=False)
 
     # Define function
     def show_img(name, value):
@@ -71,9 +72,9 @@ def visualize_images(images, with_labels=None, without_labels=None,
         if channel_options_wid.children[1].children[0].value == "Single":
             channels = channel_options_wid.children[1].children[1].children[0].children[0].value
         else:
-            channels = [channel_options_wid.children[1].children[1].children[0].children[0].value,
-                        channel_options_wid.children[1].children[1].children[0].children[1].value]
-            channels = list(set(channels))
+            channels = range(
+                channel_options_wid.children[1].children[1].children[0].children[0].value,
+                channel_options_wid.children[1].children[1].children[0].children[1].value + 1)
 
         # get flag values
         glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
@@ -127,6 +128,20 @@ def visualize_images(images, with_labels=None, without_labels=None,
         if not figure_options_wid.children[2].value:
             plt.axis('off')
 
+        # change info_wid info
+        txt = "$\\bullet~\\texttt{Image of size " + \
+              "{}".format(images[image_number_wid.value]._str_shape) + \
+              " with " + \
+              "{}".format(images[image_number_wid.value].n_channels) + \
+              " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(images[image_number_wid.value].landmarks['PTS'].lms.n_points) + \
+              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
+              "{0:.3f}".format(images[image_number_wid.value].pixels.min()) + \
+              ", max=" + \
+              "{0:.3f}".format(images[image_number_wid.value].pixels.max()) + \
+              "}$"
+        info_wid.children[1].value = txt
+
     # Define traits
     image_number_wid.on_trait_change(show_img, 'value')
     figure_options_wid.children[1].children[0].on_trait_change(show_img,
@@ -149,18 +164,24 @@ def visualize_images(images, with_labels=None, without_labels=None,
                                                                  'value')
 
     # Display widget
+    cont1 = ContainerWidget(children=[channel_options_wid,
+                                      landmark_options_wid])
+    cont2 = ContainerWidget(children=[figure_options_wid,
+                                      info_wid])
     if popup:
-        wid = PopupWidget(children=[image_number_wid, channel_options_wid,
-                                    landmark_options_wid, figure_options_wid],
+        wid = PopupWidget(children=[image_number_wid, cont1, cont2],
                           button_text='View Images')
     else:
-        wid = ContainerWidget(children=[image_number_wid, channel_options_wid,
-                                        landmark_options_wid,
-                                        figure_options_wid])
+        wid = ContainerWidget(children=[image_number_wid, cont1, cont2])
     display(wid)
     format_channel_options(channel_options_wid)
     format_landmark_options(landmark_options_wid)
     format_figure_options(figure_options_wid)
+    format_info_print(info_wid, font_size_in_pt=9)
+    cont1.remove_class('vbox')
+    cont1.add_class('hbox')
+    cont2.remove_class('vbox')
+    cont2.add_class('hbox')
 
     # Reset value to enable initial visualization
     image_number_wid.value = 0
