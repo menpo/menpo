@@ -367,7 +367,7 @@ def landmark_options(group_keys, toggle_show_default=True,
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, landmarks_checkbox,
                                          landmark_more]
-        landmark_more.children = [labels_checkbox, group_dropdownmenu]
+        landmark_more.children = [group_dropdownmenu, labels_checkbox]
     To fix the alignment within this widget please refer to
     `format_landmark_options()` function.
 

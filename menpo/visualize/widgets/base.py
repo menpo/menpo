@@ -3,14 +3,16 @@ from IPython.html.widgets import (interact, fixed, IntSliderWidget,
 from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
-                      format_channel_options)
+                      format_channel_options, landmark_options,
+                      format_landmark_options)
 
 import numpy as np
 from numpy import asarray
 
 
-def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
-                     popup=False, **kwargs):
+def visualize_images(images, with_labels=None, without_labels=None,
+                     figure_size=(7, 7), figure_scales=(0.5, 1.5), popup=False,
+                     **kwargs):
     r"""
     Allows browsing through a list of images.
 
@@ -52,6 +54,10 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
                                        value=1, description='Image Number')
     channel_options_wid = channel_options(images[0].n_channels,
                                           toggle_show_default=False)
+    landmark_options_wid = landmark_options(images[0].landmarks.keys(),
+                                            toggle_show_default=False,
+                                            landmarks_default=True,
+                                            labels_default=False)
     figure_options_wid = figure_options(x_scale_default=figure_scales[0],
                                         y_scale_default=figure_scales[1],
                                         toggle_show_default=False)
@@ -69,24 +75,49 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
                         channel_options_wid.children[1].children[1].children[0].children[1].value]
             channels = list(set(channels))
 
-        # get glyph and sum flags
+        # get flag values
         glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
         sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
+        landmarks_enabled = landmark_options_wid.children[1].value
+        labels_enabled = landmark_options_wid.children[2].children[0].value
+        group = landmark_options_wid.children[2].children[0].value
 
         # plot
         if glyph_enabled:
             s1 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value
             s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
-            images[image_number_wid.value].glyph(vectors_block_size=s1,
-                                                 use_negative=s2,
-                                                 channels=channels).view()
+            if landmarks_enabled:
+                images[image_number_wid.value].glyph(vectors_block_size=s1,
+                                                     use_negative=s2,
+                                                     channels=channels).\
+                    view_landmarks(group_label=group, with_labels=with_labels,
+                                   without_labels=without_labels,
+                                   render_labels=labels_enabled, **kwargs)
+            else:
+                images[image_number_wid.value].glyph(vectors_block_size=s1,
+                                                     use_negative=s2,
+                                                     channels=channels).view()
         elif sum_enabled:
             s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
-            images[image_number_wid.value].glyph(vectors_block_size=1,
-                                                 use_negative=s2,
-                                                 channels=channels).view()
+            if landmarks_enabled:
+                images[image_number_wid.value].glyph(vectors_block_size=1,
+                                                     use_negative=s2,
+                                                     channels=channels).\
+                    view_landmarks(group_label=group, with_labels=with_labels,
+                                   without_labels=without_labels,
+                                   render_labels=labels_enabled, **kwargs)
+            else:
+                images[image_number_wid.value].glyph(vectors_block_size=1,
+                                                     use_negative=s2,
+                                                     channels=channels).view()
         else:
-            images[image_number_wid.value].view(channels=channels)
+            if landmarks_enabled:
+                images[image_number_wid.value].view_landmarks(
+                    group_label=group, with_labels=with_labels,
+                    without_labels=without_labels, render_labels=labels_enabled,
+                    channels=channels, **kwargs)
+            else:
+                images[image_number_wid.value].view(channels=channels)
 
         # set figure size
         x_scale = figure_options_wid.children[1].children[0].value
@@ -111,15 +142,25 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
     channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_img, 'value')
+    landmark_options_wid.children[1].on_trait_change(show_img, 'value')
+    landmark_options_wid.children[2].children[0].on_trait_change(show_img,
+                                                                 'value')
+    landmark_options_wid.children[2].children[1].on_trait_change(show_img,
+                                                                 'value')
 
     # Display widget
     if popup:
-        wid = PopupWidget(children=[image_number_wid, channel_options_wid, figure_options_wid], button_text='Browse Images')
+        wid = PopupWidget(children=[image_number_wid, channel_options_wid,
+                                    landmark_options_wid, figure_options_wid],
+                          button_text='View Images')
     else:
-        wid = ContainerWidget(children=[image_number_wid, channel_options_wid, figure_options_wid])
+        wid = ContainerWidget(children=[image_number_wid, channel_options_wid,
+                                        landmark_options_wid,
+                                        figure_options_wid])
     display(wid)
-    format_figure_options(figure_options_wid)
     format_channel_options(channel_options_wid)
+    format_landmark_options(landmark_options_wid)
+    format_figure_options(figure_options_wid)
 
     # Reset value to enable initial visualization
     image_number_wid.value = 0
