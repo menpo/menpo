@@ -1,7 +1,7 @@
 from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntSliderWidget, CheckboxWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
-                                  IntTextWidget, DropdownWidget)
+                                  IntTextWidget, DropdownWidget, LatexWidget)
 
 
 def figure_options(x_scale_default=1.5, y_scale_default=0.5,
@@ -438,3 +438,50 @@ def format_landmark_options(landmark_options_wid):
     """
     landmark_options_wid.children[2].remove_class('vbox')
     landmark_options_wid.children[2].add_class('hbox')
+
+
+def info_print(title, n_bullets, toggle_show_default=True):
+    r"""
+    Creates a widget that can print information. Specifically, it has:
+        1) n_bullets number of latex widgets to be used as bullets.
+        2) An extra latex widget if title is True to be used as title.
+        4) A toggle button that controls the visibility of all the above, i.e.
+           the info printing.
+    The structure of the widgets is the following:
+        info_wid.children = [toggle_button, text_widgets]
+        text_widgets.children = [late_widget] * n_bullets or
+        text_widgets.children = [late_widget] * (n_bullets + 1)
+
+    Parameters
+    ----------
+    title : `boolean`
+        If True, a latex widget is created to be used as title field.
+
+    n_bullets : `int`, optional
+        Defines the number of latex widgets to be created for info fields.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the info will be visible upon construction.
+    """
+    # Create toggle button
+    but = ToggleButtonWidget(description='Info', value=toggle_show_default)
+
+    # Create children
+    children = [LatexWidget(value="")]
+    if title:
+        children *= n_bullets + 1
+    else:
+        children *= n_bullets
+
+    # Toggle button function
+    def show_options(name, value):
+        for c in children:
+            c.visible = value
+    show_options('', toggle_show_default)
+    but.on_trait_change(show_options, 'value')
+
+    # Group widgets
+    text_wid = ContainerWidget(children=children)
+    info_wid = ContainerWidget(children=[but, text_wid])
+
+    return info_wid
