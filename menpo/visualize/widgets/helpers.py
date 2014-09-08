@@ -157,7 +157,7 @@ def channel_options(n_channels, toggle_show_default=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
         1) Two radiobuttons that select an options mode, depending on whether
-           the user wants to visialize a "Single" or "Multiple" channels.
+           the user wants to visualize a "Single" or "Multiple" channels.
         2) If mode is "Single", the channel number is selected by one slider.
            If mode is "Multiple", the channel range is selected by two sliders.
         3) If mode is "Multiple", there is a checkbox option to visualize the
@@ -201,7 +201,7 @@ def channel_options(n_channels, toggle_show_default=True):
                                         visible=False)
     sum_wid = CheckboxWidget(value=False, description='Sum', visible=False)
     glyph_wid = CheckboxWidget(value=False, description='Glyph', visible=False)
-    glyph_block_size = IntTextWidget(description='Block size', value='10',
+    glyph_block_size = IntTextWidget(description='Block size', value='3',
                                      visible=False)
     glyph_use_negative = CheckboxWidget(description='Negative values',
                                         value=False, visible=False)
@@ -230,7 +230,7 @@ def channel_options(n_channels, toggle_show_default=True):
             glyph_wid.value = False
             glyph_options.children[0].visible = False
             glyph_options.children[1].visible = False
-            glyph_options.children[0].value = '10'
+            glyph_options.children[0].value = '3'
             glyph_options.children[1].value = False
         else:
             first_slider_wid.description = 'From'
@@ -244,12 +244,12 @@ def channel_options(n_channels, toggle_show_default=True):
                 second_slider_wid.value = n_channels - 1
             second_slider_wid.visible = True
             sum_wid.visible = True
-            sum_wid.value = True
+            sum_wid.value = False
             glyph_wid.visible = True
             glyph_wid.value = False
             glyph_options.children[0].visible = False
             glyph_options.children[1].visible = False
-            glyph_options.children[0].value = '10'
+            glyph_options.children[0].value = '3'
             glyph_options.children[1].value = False
     mode.on_trait_change(mode_selection, 'value')
 
@@ -258,10 +258,17 @@ def channel_options(n_channels, toggle_show_default=True):
         if value:
             glyph_options.children[0].visible = True
             glyph_options.children[1].visible = True
+            sum_wid.value = False
         else:
             glyph_options.children[0].visible = False
             glyph_options.children[1].visible = False
     glyph_wid.on_trait_change(glyph_options_visibility, 'value')
+
+    # Define sum functionality
+    def sum_fun(name, value):
+        if value:
+            glyph_wid.value = False
+    sum_wid.on_trait_change(sum_fun, 'value')
 
     # Define multiple channels sliders functionality
     def first_slider_val(name, value):
