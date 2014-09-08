@@ -215,6 +215,17 @@ def channel_options(n_channels, toggle_show_default=True):
     glyph_use_negative = CheckboxWidget(description='Negative values',
                                         value=False, visible=False)
 
+    # if single channel, disable multiple options
+    if n_channels == 1:
+        mode.value = "Single"
+        mode.disabled = True
+        first_slider_wid.disabled = True
+        second_slider_wid.disabled = True
+        sum_wid.disabled = True
+        glyph_wid.disabled = True
+        glyph_block_size.disabled = True
+        glyph_use_negative.disabled = True
+
     # Group widgets
     glyph_options = ContainerWidget(children=[glyph_block_size,
                                               glyph_use_negative])

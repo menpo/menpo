@@ -103,6 +103,8 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
     figure_options_wid.children[1].children[1].on_trait_change(show_img,
                                                                'value')
     figure_options_wid.children[2].on_trait_change(show_img, 'value')
+    channel_options_wid.children[1].children[0].on_trait_change(show_img,
+                                                                'value')
     channel_options_wid.children[1].children[1].children[0].children[0].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[0].children[1].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
