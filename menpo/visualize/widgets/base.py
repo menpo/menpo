@@ -54,7 +54,10 @@ def visualize_images(images, with_labels=None, without_labels=None,
                                        value=1, description='Image Number')
     channel_options_wid = channel_options(images[0].n_channels,
                                           toggle_show_default=False)
-    landmark_options_wid = landmark_options(images[0].landmarks.keys(),
+    all_groups_keys = images[0].landmarks.keys()
+    all_subgroups_keys = [images[0].landmarks[g].keys()
+                          for g in all_groups_keys]
+    landmark_options_wid = landmark_options(all_groups_keys, all_subgroups_keys,
                                             toggle_show_default=False,
                                             landmarks_default=True,
                                             labels_default=False)
@@ -82,6 +85,8 @@ def visualize_images(images, with_labels=None, without_labels=None,
         landmarks_enabled = landmark_options_wid.children[1].value
         labels_enabled = landmark_options_wid.children[2].children[0].value
         group = landmark_options_wid.children[2].children[0].value
+        subgroup = landmark_options_wid.children[2].children[1].value
+        print subgroup
 
         # plot
         if glyph_enabled:
