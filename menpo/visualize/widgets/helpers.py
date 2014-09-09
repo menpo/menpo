@@ -1,10 +1,11 @@
 from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntSliderWidget, CheckboxWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
-                                  IntTextWidget, DropdownWidget, LatexWidget)
+                                  IntTextWidget, DropdownWidget, LatexWidget,
+                                  ButtonWidget)
 
 
-def figure_options(x_scale_default=1.5, y_scale_default=0.5,
+def figure_options(x_scale_default=1., y_scale_default=1.,
                    coupled_default=False, show_axes_default=True,
                    toggle_show_default=True,
                    figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
@@ -651,26 +652,30 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     info_wid.set_css('border', container_border)
 
 
-def model_parameters(params_numbers, params_str, params_bounds=(-3., 3.),
+def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
                      mode='multiple', toggle_show_default=True,
                      toggle_show_visible=True):
     r"""
     Creates a widget with Model Parameters. Specifically, it has:
         1) A slider for each parameter if mode is 'multiple'.
         2) A single slider and a drop down menu selection if mode is 'single'.
+        3) A reset button.
     The structure of the widgets is the following:
-        model_parameters_wid.children = [toggle_button, parameters_widgets]
+        model_parameters_wid.children = [toggle_button, parameters_and_reset]
+        parameters_and_reset.children = [parameters_widgets, reset_button]
         If mode is single:
         parameters_widgets.children = [drop_down_menu, slider]
         If mode is multiple:
         parameters_widgets.children = [all_sliders]
+    The model_parameters_wid object also holds the mode and parameters_values
+    information.
     To fix the alignment within this widget please refer to
     `format_model_parameters()` function.
 
     Parameters
     ----------
-    params_numbers : `list` of `int`
-        A list of parameters indices corresponding to eigenvectors.
+    n_params : `int`
+        The number of principal components to use for the sliders.
 
     params_str : `str`
         The string that will be used for each parameters name.
@@ -689,35 +694,64 @@ def model_parameters(params_numbers, params_str, params_bounds=(-3., 3.),
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    # Initialize values list
+    parameters_values = [0] * n_params
     # Toggle button that controls visibility
     but = ToggleButtonWidget(description='Parameters',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
     # Create widgets
+    reset_button = ButtonWidget(description='Reset')
     if mode == 'multiple':
         sliders = [FloatSliderWidget(description="{}{}".format(params_str, p),
                                      min=params_bounds[0],
                                      max=params_bounds[1],
-                                     value=0.) for p in params_numbers]
+                                     value=0.) for p in range(n_params)]
         parameters_wid = ContainerWidget(children=sliders)
     else:
-        vals = ["{}{}".format(params_str, p) for p in params_numbers]
+        vals = ["{}{}".format(params_str, p) for p in range(n_params)]
         slider = FloatSliderWidget(description='',
                                    min=params_bounds[0],
                                    max=params_bounds[1],
                                    value=0.)
         text = DropdownWidget(values=vals)
         parameters_wid = ContainerWidget(children=[text, slider])
+    params_and_reset = ContainerWidget(children=[parameters_wid, reset_button])
+    model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
+
+    # set fields
+    model_parameters_wid.mode = mode
+    model_parameters_wid.parameters_values = parameters_values
+
+    # reset function
+    def reset_params(name):
+        if mode == 'multiple':
+            for ww in parameters_wid.children:
+                ww.value = 0.
+        else:
+            parameters_wid.children[0].value = \
+                parameters_wid.children[0].values[0]
+            parameters_wid.children[1].value = 0.
+        model_parameters_wid.parameters_values = [0] * n_params
+    reset_button.on_click(reset_params)
+
+    # parameters sliders function
+    def get_params_values(name, value):
+        if mode == 'multiple':
+            model_parameters_wid.parameters_values = [
+                p_wid.value for p_wid in parameters_wid.children]
+        else:
+            i_param = text.value
+            print i_param
+    for w in parameters_wid.children:
+        w.on_trait_change(get_params_values, 'value')
 
     # Toggle button function
     def show_options(name, value):
         parameters_wid.visible = value
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
-
-    model_parameters_wid = ContainerWidget(children=[but, parameters_wid])
-    model_parameters_wid.mode = mode
 
     return model_parameters_wid
 
@@ -752,8 +786,11 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
     """
     if model_parameters_wid.mode == 'single':
         # align drop down menu and slider
-        model_parameters_wid.children[1].remove_class('vbox')
-        model_parameters_wid.children[1].add_class('hbox')
+        model_parameters_wid.children[1].children[0].remove_class('vbox')
+        model_parameters_wid.children[1].children[0].add_class('hbox')
+
+    # align reset button to right
+    model_parameters_wid.children[1].add_class('align-end')
 
     # set toggle button font bold
     model_parameters_wid.children[0].set_css('font-weight',

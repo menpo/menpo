@@ -132,7 +132,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
               " with " + \
               "{}".format(images[image_number_wid.value].n_channels) + \
               " channels.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(images[image_number_wid.value].landmarks['PTS'].lms.n_points) + \
+              "{}".format(images[image_number_wid.value].landmarks[group].lms.n_points) + \
               " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
               "{0:.3f}".format(images[image_number_wid.value].pixels.min()) + \
               ", max=" + \
@@ -178,12 +178,18 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     display(wid)
 
     # Format widget
-    if tab:
+    if tab and popup:
         wid.children[0].set_title(0, 'Image number')
         wid.children[0].set_title(1, 'Channels options')
         wid.children[0].set_title(2, 'Landmarks options')
         wid.children[0].set_title(3, 'Figure options')
         wid.children[0].set_title(4, 'Image info')
+    elif tab and not popup:
+        wid.set_title(0, 'Image number')
+        wid.set_title(1, 'Channels options')
+        wid.set_title(2, 'Landmarks options')
+        wid.set_title(3, 'Figure options')
+        wid.set_title(4, 'Image info')
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',
@@ -205,9 +211,237 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     image_number_wid.value = 0
 
 
-def visualize_aam(aam, bounds=(-3.0, 3.0), with_labels=None,
-                  without_labels=None, figure_size=(7, 7),
-                  figure_scales=(0.5, 1.5), **kwargs):
+def visualize_appearance_model(appearance_models, n_parameters=10,
+                               parameters_bounds=(-3.0, 3.0),
+                               figure_size=(7, 7), mode='multiple',
+                               popup=False, tab=False, **kwargs):
+    r"""
+    Allows the dynamic visualization of an AAM by means of six simple sliders
+    that control three weights associated to the first three shape and
+    appearance components.
+
+    Parameters
+    -----------
+    appearance_model : `list` of :map:`PCAModel` or subclass
+        The AAM to be displayed.
+
+    n_parameters : `int`, optional
+        The number of principal components to be used for the parameters sliders
+
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+
+    mode : 'single' or 'multiple', optional
+        If single, only a single slider is constructed along with a drop down
+        menu.
+        If multiple, a slider is constructed for each parameter.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    tab : `boolean`, optional
+        If enabled, the widget will appear as a tab window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    import matplotlib.pylab as plt
+
+    # Create options widgets
+    n_levels = len(appearance_models)
+    level_wid = IntSliderWidget(min=0, max=n_levels-1, step=1,
+                                value=1, description='Pyramid level')
+    model_parameters_wid = model_parameters(
+        n_params=n_parameters, params_str='parameter',
+        params_bounds=parameters_bounds, mode=mode, toggle_show_default=True,
+        toggle_show_visible=False)
+    channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
+                                          toggle_show_default=tab,
+                                          toggle_show_visible=not tab)
+    all_groups_keys = appearance_models[0].mean.landmarks.keys()
+    all_subgroups_keys = [appearance_models[0].mean.landmarks[g].keys()
+                          for g in all_groups_keys]
+    landmark_options_wid = landmark_options(all_groups_keys, all_subgroups_keys,
+                                            toggle_show_default=tab,
+                                            landmarks_default=True,
+                                            labels_default=False,
+                                            toggle_show_visible=not tab)
+    figure_options_wid = figure_options(x_scale_default=1.,
+                                        y_scale_default=1.,
+                                        toggle_show_default=tab,
+                                        toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=tab,
+                          toggle_show_visible=not tab)
+
+    # Define function
+    def show_instance(name, value):
+        # clear current figure
+        clear_output()
+
+        # selected level
+        level = level_wid.value
+
+        # get channels
+        if channel_options_wid.children[1].children[0].value == "Single":
+            channels = channel_options_wid.children[1].children[1].children[0].children[0].value
+        else:
+            channels = range(
+                channel_options_wid.children[1].children[1].children[0].children[0].value,
+                channel_options_wid.children[1].children[1].children[0].children[1].value + 1)
+
+        # get flag values
+        glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
+        sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
+        landmarks_enabled = landmark_options_wid.children[1].children[0].value
+        labels_enabled = landmark_options_wid.children[1].children[1].value
+        group = landmark_options_wid.children[2].children[0].value
+        with_labels = []
+        for ww in landmark_options_wid.children[2].children[1].children[1].children:
+            if ww.value:
+                with_labels.append(str(ww.description))
+
+        # compute instance
+        instance = appearance_models[level].mean
+        #print model_parameters_wid.parameters_values
+
+        # plot
+        if glyph_enabled:
+            s1 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value
+            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
+            if landmarks_enabled:
+                instance.glyph(vectors_block_size=s1, use_negative=s2,
+                               channels=channels).view_landmarks(
+                    group_label=group, with_labels=with_labels,
+                    render_labels=labels_enabled, **kwargs)
+            else:
+                instance.glyph(vectors_block_size=s1, use_negative=s2,
+                               channels=channels).view()
+        elif sum_enabled:
+            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
+            if landmarks_enabled:
+                instance.glyph(vectors_block_size=1, use_negative=s2,
+                               channels=channels).view_landmarks(
+                    group_label=group, with_labels=with_labels,
+                    render_labels=labels_enabled, **kwargs)
+            else:
+                instance.glyph(vectors_block_size=1, use_negative=s2,
+                               channels=channels).view()
+        else:
+            if landmarks_enabled:
+                instance.view_landmarks(group_label=group,
+                                        with_labels=with_labels,
+                                        render_labels=labels_enabled,
+                                        channels=channels, **kwargs)
+            else:
+                instance.view(channels=channels)
+
+        # set figure size
+        x_scale = figure_options_wid.children[1].children[0].value
+        y_scale = figure_options_wid.children[1].children[1].value
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        # turn axis on/off
+        if not figure_options_wid.children[2].value:
+            plt.axis('off')
+
+        # change info_wid info
+        txt = "$\\bullet~\\texttt{Image of size " + \
+              "{}".format(instance._str_shape) + \
+              " with " + \
+              "{}".format(instance.n_channels) + \
+              " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(instance.landmarks[group].lms.n_points) + \
+              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
+              "{0:.3f}".format(instance.pixels.min()) + \
+              ", max=" + \
+              "{0:.3f}".format(instance.pixels.max()) + \
+              "}$"
+        info_wid.children[1].value = txt
+
+    # Define traits
+    level_wid.on_trait_change(show_instance, 'value')
+    figure_options_wid.children[1].children[0].on_trait_change(show_instance,
+                                                               'value')
+    figure_options_wid.children[1].children[1].on_trait_change(show_instance,
+                                                               'value')
+    figure_options_wid.children[2].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[0].on_trait_change(show_instance,
+                                                                'value')
+    channel_options_wid.children[1].children[1].children[0].children[0].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[1].children[0].children[1].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
+    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_instance, 'value')
+    landmark_options_wid.children[1].children[0].on_trait_change(show_instance,
+                                                                 'value')
+    landmark_options_wid.children[1].children[1].on_trait_change(show_instance,
+                                                                 'value')
+    landmark_options_wid.children[2].children[0].on_trait_change(show_instance,
+                                                                 'value')
+    for w in landmark_options_wid.children[2].children[1].children[1].children:
+        w.on_trait_change(show_instance, 'value')
+    for w in model_parameters_wid.children[1].children[0].children:
+        w.on_trait_change(show_instance, 'value')
+
+    # Display widget
+    if tab:
+        tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
+        wid = TabWidget(children=[tmp_wid, channel_options_wid,
+                                  landmark_options_wid, figure_options_wid,
+                                  info_wid])
+    else:
+        wid = ContainerWidget(children=[level_wid, model_parameters_wid,
+                                        channel_options_wid,
+                                        landmark_options_wid,
+                                        figure_options_wid, info_wid])
+    if popup:
+        wid = PopupWidget(children=[wid])
+    display(wid)
+
+    # Format widget
+    if tab and popup:
+        wid.children[0].set_title(0, 'Appearance parameters')
+        wid.children[0].set_title(1, 'Channels options')
+        wid.children[0].set_title(2, 'Landmarks options')
+        wid.children[0].set_title(3, 'Figure options')
+        wid.children[0].set_title(4, 'Image info')
+    elif tab and not popup:
+        wid.set_title(0, 'Appearance parameters')
+        wid.set_title(1, 'Channels options')
+        wid.set_title(2, 'Landmarks options')
+        wid.set_title(3, 'Figure options')
+        wid.set_title(4, 'Image info')
+    format_model_parameters(model_parameters_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold')
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold')
+    format_landmark_options(landmark_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold')
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold')
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold')
+
+    # Reset value to enable initial visualization
+    level_wid.value = 0
+
+
+def visualize_aam_joan(aam, bounds=(-3.0, 3.0), with_labels=None,
+                       without_labels=None, figure_size=(7, 7),
+                       figure_scales=(0.5, 1.5), **kwargs):
     r"""
     Allows the dynamic visualization of an AAM by means of six simple sliders
     that control three weights associated to the first three shape and
