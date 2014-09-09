@@ -694,8 +694,11 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    from collections import OrderedDict
+
     # Initialize values list
-    parameters_values = [0] * n_params
+    #parameters_values = [0] * n_params
+    parameters_values = [1.2, 2.1, 3., -0.3, -2.4]
     # Toggle button that controls visibility
     but = ToggleButtonWidget(description='Parameters',
                              value=toggle_show_default,
@@ -710,13 +713,15 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
                                      value=0.) for p in range(n_params)]
         parameters_wid = ContainerWidget(children=sliders)
     else:
-        vals = ["{}{}".format(params_str, p) for p in range(n_params)]
+        vals = OrderedDict()
+        for p in range(n_params):
+            vals["{}{}".format(params_str, p)] = p
         slider = FloatSliderWidget(description='',
                                    min=params_bounds[0],
                                    max=params_bounds[1],
                                    value=0.)
-        text = DropdownWidget(values=vals)
-        parameters_wid = ContainerWidget(children=[text, slider])
+        dropdown_params = DropdownWidget(values=vals)
+        parameters_wid = ContainerWidget(children=[dropdown_params, slider])
     params_and_reset = ContainerWidget(children=[parameters_wid, reset_button])
     model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
 
@@ -725,31 +730,36 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
     model_parameters_wid.parameters_values = parameters_values
 
     # reset function
-    def reset_params(name):
-        if mode == 'multiple':
-            for ww in parameters_wid.children:
-                ww.value = 0.
-        else:
-            parameters_wid.children[0].value = \
-                parameters_wid.children[0].values[0]
-            parameters_wid.children[1].value = 0.
-        model_parameters_wid.parameters_values = [0] * n_params
-    reset_button.on_click(reset_params)
+    #def reset_params(name):
+    #    if mode == 'multiple':
+    #        for ww in parameters_wid.children:
+    #            ww.value = 0.
+    #    else:
+    #        parameters_wid.children[0].value = "{}0".format(params_str)
+    #        parameters_wid.children[1].value = 0.
+    #    model_parameters_wid.parameters_values = [0] * n_params
+    #reset_button.on_click(reset_params)
 
     # parameters sliders function
-    def get_params_values(name, value):
-        if mode == 'multiple':
-            model_parameters_wid.parameters_values = [
-                p_wid.value for p_wid in parameters_wid.children]
-        else:
-            i_param = text.value
-            print i_param
-    for w in parameters_wid.children:
-        w.on_trait_change(get_params_values, 'value')
+    #def get_params_values(name, value):
+    #    if mode == 'multiple':
+    #        model_parameters_wid.parameters_values = [
+    #            p_wid.value for p_wid in parameters_wid.children]
+    #    else:
+    #        model_parameters_wid.parameters_values[dropdown_params.value] = slider.value
+    #for w in parameters_wid.children:
+    #    w.on_trait_change(get_params_values, 'value')
+
+    # drop down menu function
+    if mode == 'single':
+        def set_slider_value(name, value):
+            print model_parameters_wid.parameters_values[value]
+            slider.value = model_parameters_wid.parameters_values[value]
+        dropdown_params.on_trait_change(set_slider_value, 'value')
 
     # Toggle button function
     def show_options(name, value):
-        parameters_wid.visible = value
+        params_and_reset.visible = value
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
