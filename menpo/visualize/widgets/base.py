@@ -82,11 +82,13 @@ def visualize_images(images, with_labels=None, without_labels=None,
         # get flag values
         glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
         sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
-        landmarks_enabled = landmark_options_wid.children[1].value
-        labels_enabled = landmark_options_wid.children[2].children[0].value
+        landmarks_enabled = landmark_options_wid.children[1].children[0].value
+        labels_enabled = landmark_options_wid.children[1].children[1].value
         group = landmark_options_wid.children[2].children[0].value
-        subgroup = landmark_options_wid.children[2].children[1].value
-        print subgroup
+        with_labels = []
+        for w in landmark_options_wid.children[2].children[1].children:
+            if w.value:
+                with_labels.append(str(w.description))
 
         # plot
         if glyph_enabled:
@@ -162,11 +164,14 @@ def visualize_images(images, with_labels=None, without_labels=None,
     channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
     channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_img, 'value')
-    landmark_options_wid.children[1].on_trait_change(show_img, 'value')
+    landmark_options_wid.children[1].children[0].on_trait_change(show_img,
+                                                                 'value')
+    landmark_options_wid.children[1].children[1].on_trait_change(show_img,
+                                                                 'value')
     landmark_options_wid.children[2].children[0].on_trait_change(show_img,
                                                                  'value')
-    landmark_options_wid.children[2].children[1].on_trait_change(show_img,
-                                                                 'value')
+    for w in landmark_options_wid.children[2].children[1].children:
+        w.on_trait_change(show_img, 'value')
 
     # Display widget
     cont1 = ContainerWidget(children=[channel_options_wid,

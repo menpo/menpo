@@ -412,15 +412,15 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
-        2) A dropdown menu with the available landmark groups.
-        3) A dropdown menu with the available landmark sub-groups.
+        2) A drop down menu with the available landmark groups.
+        3) Several toggle buttons with the available landmark sub-groups.
         4) A checkbox that controls the labels' visibility.
         5) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, landmarks_checkbox,
                                          landmark_more]
-        landmark_more.children = [group_drop_down_menu, subgroup_drop_down_menu,
+        landmark_more.children = [group_drop_down_menu, subgroup_toggle_buttons,
                                   labels_checkbox]
     To fix the alignment within this widget please refer to
     `format_landmark_options()` function.
@@ -429,6 +429,9 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     ----------
     group_keys : `list` of `str`
         A list of the available landmark groups.
+
+    subgroup_keys : `list` of `str`
+        A list of lists of each landmark group's subgroups.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -447,35 +450,31 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     labels = CheckboxWidget(description='Show labels', value=labels_default)
-    group = DropdownWidget(values=group_keys, value=group_keys[0],
-                           description='Group')
-    subgroup = DropdownWidget(values=subgroup_keys[0],
-                              value=subgroup_keys[0][0], description='')
+    group = DropdownWidget(values=group_keys, description='Group')
+    subgroup_toggles = [[ToggleButtonWidget(description=k, value=True)
+                         for k in s_keys]
+                        for s_keys in subgroup_keys]
+    subgroup = ContainerWidget(children=subgroup_toggles[0])
 
     # Group widgets
-    partial_wid = ContainerWidget(children=[group, subgroup, labels])
-    landmark_options_wid = ContainerWidget(children=[but, landmarks,
-                                                     partial_wid])
-
-    # Initialize widgets values
-    if not landmarks_default:
-        labels.disabled = True
-        group.disabled = True
-        subgroup.disabled = True
+    checkboxes_wid = ContainerWidget(children=[landmarks, labels])
+    group_wid = ContainerWidget(children=[group, subgroup])
+    landmark_options_wid = ContainerWidget(children=[but, checkboxes_wid,
+                                                     group_wid])
 
     # Disability control
     def landmarks_fun(name, value):
         labels.disabled = not value
         group.disabled = not value
-        subgroup.disabled = not value
+        for s in subgroup_toggles:
+            for w in s:
+                w.disabled = not value
     landmarks.on_trait_change(landmarks_fun, 'value')
+    landmarks_fun('', landmarks_default)
 
     # Group drop down method function
     def group_fun(name, value):
-        print group_keys.index(value)
-        subgroup.values = subgroup_keys[group_keys.index(value)]
-        print subgroup.values[0]
-        subgroup.value = subgroup.values[0]
+        subgroup.children = subgroup_toggles[group_keys.index(value)]
     group.on_trait_change(group_fun, 'value')
 
     # Toggle button function
@@ -518,9 +517,13 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
     """
-    # align drop down menus and labels checkbox
-    landmark_options_wid.children[2].remove_class('vbox')
-    landmark_options_wid.children[2].add_class('hbox')
+    # align subgroup toggle buttons
+    landmark_options_wid.children[2].children[1].remove_class('vbox')
+    landmark_options_wid.children[2].children[1].add_class('hbox')
+
+    # align checkboxes
+    landmark_options_wid.children[1].remove_class('vbox')
+    landmark_options_wid.children[1].add_class('hbox')
 
     # set toggle button font bold
     landmark_options_wid.children[0].set_css('font-weight',
