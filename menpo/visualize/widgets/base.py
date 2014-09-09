@@ -10,8 +10,7 @@ import numpy as np
 from numpy import asarray
 
 
-def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
-                     popup=False, **kwargs):
+def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     r"""
     Allows browsing through a list of images.
 
@@ -26,9 +25,6 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
 
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-
-    figure_scales : (`float`, `float`), optional
-        The range of scales that can be optionally applied to the figure.
 
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
@@ -75,9 +71,9 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
         labels_enabled = landmark_options_wid.children[1].children[1].value
         group = landmark_options_wid.children[2].children[0].value
         with_labels = []
-        for w in landmark_options_wid.children[2].children[1].children:
-            if w.value:
-                with_labels.append(str(w.description))
+        for ww in landmark_options_wid.children[2].children[1].children[1].children:
+            if ww.value:
+                with_labels.append(str(ww.description))
 
         # plot
         if glyph_enabled:
@@ -88,7 +84,6 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
                                                      use_negative=s2,
                                                      channels=channels).\
                     view_landmarks(group_label=group, with_labels=with_labels,
-                                   without_labels=without_labels,
                                    render_labels=labels_enabled, **kwargs)
             else:
                 images[image_number_wid.value].glyph(vectors_block_size=s1,
@@ -101,7 +96,6 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
                                                      use_negative=s2,
                                                      channels=channels).\
                     view_landmarks(group_label=group, with_labels=with_labels,
-                                   without_labels=without_labels,
                                    render_labels=labels_enabled, **kwargs)
             else:
                 images[image_number_wid.value].glyph(vectors_block_size=1,
@@ -111,8 +105,7 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
             if landmarks_enabled:
                 images[image_number_wid.value].view_landmarks(
                     group_label=group, with_labels=with_labels,
-                    without_labels=without_labels, render_labels=labels_enabled,
-                    channels=channels, **kwargs)
+                    render_labels=labels_enabled, channels=channels, **kwargs)
             else:
                 images[image_number_wid.value].view(channels=channels)
 
@@ -159,7 +152,7 @@ def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
                                                                  'value')
     landmark_options_wid.children[2].children[0].on_trait_change(show_img,
                                                                  'value')
-    for w in landmark_options_wid.children[2].children[1].children:
+    for w in landmark_options_wid.children[2].children[1].children[1].children:
         w.on_trait_change(show_img, 'value')
 
     # Display widget

@@ -420,7 +420,8 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, checkboxes, groups]
         checkboxes.children = [landmarks_checkbox, labels_checkbox]
-        groups.children = [group_drop_down_menu, subgroup_toggle_buttons]
+        groups.children = [group_drop_down_menu, subgroup]
+        subgroup.children = [subgroup_text, subgroup_toggle_buttons]
     To fix the alignment within this widget please refer to
     `format_landmark_options()` function.
 
@@ -453,11 +454,13 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     subgroup_toggles = [[ToggleButtonWidget(description=k, value=True)
                          for k in s_keys]
                         for s_keys in subgroup_keys]
+    subgroup_text = LatexWidget(value='Subgroup')
     subgroup = ContainerWidget(children=subgroup_toggles[0])
 
     # Group widgets
     checkboxes_wid = ContainerWidget(children=[landmarks, labels])
-    group_wid = ContainerWidget(children=[group, subgroup])
+    subgroup_and_text = ContainerWidget(children=[subgroup_text, subgroup])
+    group_wid = ContainerWidget(children=[group, subgroup_and_text])
     landmark_options_wid = ContainerWidget(children=[but, checkboxes_wid,
                                                      group_wid])
 
@@ -466,22 +469,33 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
         labels.disabled = not value
         group.disabled = not value
         for s in subgroup_toggles:
-            for w in s:
-                w.disabled = not value
+            for ww in s:
+                ww.disabled = not value
+        all_values = [ww.value for ww in subgroup.children]
+        if all(item is False for item in all_values):
+            for ww in subgroup.children:
+                ww.value = True
     landmarks.on_trait_change(landmarks_fun, 'value')
     landmarks_fun('', landmarks_default)
 
-    # Group drop down method function
+    # Group drop down method
     def group_fun(name, value):
         subgroup.children = subgroup_toggles[group_keys.index(value)]
     group.on_trait_change(group_fun, 'value')
 
+    # Subgroup function
+    def subgroup_fun(name, value):
+        all_values = [ww.value for ww in subgroup.children]
+        if all(item is False for item in all_values):
+            landmarks.value = False
+    for s_group in subgroup_toggles:
+        for w in s_group:
+            w.on_trait_change(subgroup_fun, 'value')
+
     # Toggle button function
     def show_options(name, value):
-        landmarks.visible = value
-        labels.visible = value
-        group.visible = value
-        subgroup.visible = value
+        group_wid.visible = value
+        checkboxes_wid.visible = value
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
@@ -517,12 +531,14 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
         The font weight of the toggle button, e.g. 'bold'
     """
     # align subgroup toggle buttons
+    landmark_options_wid.children[2].children[1].children[1].remove_class('vbox')
+    landmark_options_wid.children[2].children[1].children[1].add_class('hbox')
+
+    # align subgroup buttons with text
+    landmark_options_wid.children[2].children[1].children[0].set_css(
+        'margin-right', '5px')
     landmark_options_wid.children[2].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].add_class('hbox')
-
-    # align group container
-    landmark_options_wid.children[2].remove_class('vbox')
-    landmark_options_wid.children[2].add_class('hbox')
 
     # align checkboxes
     landmark_options_wid.children[1].remove_class('vbox')
