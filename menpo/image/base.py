@@ -8,7 +8,6 @@ import scipy.linalg
 import PIL.Image as PILImage
 pyramid_gaussian = None  # expensive, from skimage.transform
 _smooth = None  # expensive, from skimage.transform.pyramids
-PointCloud = None  # avoid circular import
 
 from menpo.base import Vectorizable
 from menpo.landmark import LandmarkableViewable
