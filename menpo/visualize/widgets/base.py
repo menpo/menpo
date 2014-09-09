@@ -4,7 +4,8 @@ from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, landmark_options,
-                      format_landmark_options, info_print, format_info_print)
+                      format_landmark_options, info_print, format_info_print,
+                      model_parameters, format_model_parameters)
 
 import numpy as np
 from numpy import asarray
