@@ -46,8 +46,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                             toggle_show_default=False,
                                             landmarks_default=True,
                                             labels_default=False)
-    figure_options_wid = figure_options(x_scale_default=figure_scales[0],
-                                        y_scale_default=figure_scales[1],
+    figure_options_wid = figure_options(x_scale_default=1.,
+                                        y_scale_default=1.,
                                         toggle_show_default=False)
     info_wid = info_print(toggle_show_default=False)
 
@@ -184,110 +184,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                       container_margin='6px',
                       container_border='1px solid black',
                       toggle_button_font_weight='bold')
-    #cont1.remove_class('vbox')
-    #cont1.add_class('hbox')
-    #cont2.remove_class('vbox')
-    #cont2.add_class('hbox')
 
     # Reset value to enable initial visualization
     image_number_wid.value = 0
-
-
-def browse_images(images, with_labels=None, without_labels=None,
-                  figure_size=(7, 7), figure_scales=(0.5, 1.5), **kwargs):
-    r"""
-    Allows browsing through a list of images using a simple slider.
-
-    Parameters
-    -----------
-    images : `list` of :map:`Images` or subclass
-        The list of images to be displayed.
-
-        .. note::
-        This function assumes that all images have the same number of
-        channels and that they all have the same landmark groups.
-
-    with_labels : ``None`` or `str` or `list` of `str`, optional
-        If not ``None``, only show the given label(s). Should **not** be
-        used with the ``without_labels`` kwarg. If ``render_labels`` is
-        ``False`` this kwarg is ignored.
-
-    without_labels : ``None`` or `str` or `list` of `str`, optional
-        If not ``None``, show all except the given label(s). Should **not**
-        be used with the ``with_labels`` kwarg. If ``render_labels`` is
-        ``False`` this kwarg is ignored.
-
-    figure_size : (`int`, `int`), optional
-        The size of the plotted figures.
-
-    figure_scales : (`float`, `float`), optional
-        The range of scales that can be optionally applied to the figure.
-
-    kwargs : `dict`, optional
-        Passed through to the viewer.
-    """
-    import matplotlib.pylab as plt
-
-    # define relevant visualization options
-    image_indices = (0, len(images)-1)
-    groups = images[0].landmarks.keys()
-    n_channels = images[0].n_channels
-    if n_channels == 1:
-        channels = [0]
-    elif n_channels == 3:
-        channels = range(n_channels) + [None, 'all']
-        channel_indices = (0, n_channels + 1)
-    else:
-        channels = range(n_channels) + ['all']
-        channel_indices = (0, n_channels)
-
-    # define the visualization function
-    def view_image(landmarks, group, labels, channel_index, figure_scale,
-                   axis, image_index):
-        if landmarks:
-            # view image with landmarks
-            images[image_index].view_landmarks(
-                group_label=group, with_labels=with_labels,
-                without_labels=without_labels, render_labels=labels,
-                channels=channels[channel_index], **kwargs)
-        else:
-            # view image without landmarks
-            images[image_index].view(channels=channels[channel_index],
-                                     **kwargs)
-        # set figure size
-        plt.gcf().set_size_inches(figure_scale*np.asarray(figure_size))
-        if not axis:
-            # turn axis on/off
-            plt.axis('off')
-
-    # set the appropriate options in the image visualization function
-    if groups:
-        # image with landmarks
-        if len(channels) == 1:
-            # uni-channel image
-            interact(view_image, landmarks=True, group=groups, labels=True,
-                     figure_scale=figure_scales, axis=True,
-                     channel_index=fixed(0),
-                     image_index=image_indices)
-        else:
-            # multi-channel image
-            interact(view_image, landmarks=True, group=groups, labels=True,
-                     figure_scale=figure_scales, axis=True,
-                     channel_index=channel_indices, image_index=image_indices)
-    else:
-        #image without landmarks
-        if len(channels) == 1:
-            # multi-channel image
-            interact(view_image, landmarks=fixed(False), group=fixed(None),
-                     labels=fixed(False), figure_scale=figure_scales,
-                     axis=True, channel_index=fixed(0),
-                     image_index=image_indices)
-        else:
-            # multi-channel image
-            interact(view_image, landmarks=fixed(False), group=fixed(None),
-                     labels=fixed(False), figure_scale=figure_scales,
-                     axis=True, channel_index=channel_indices,
-                     image_index=image_indices)
 
 
 def visualize_aam(aam, bounds=(-3.0, 3.0), with_labels=None,

@@ -449,12 +449,12 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     # Create widgets
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
-    labels = CheckboxWidget(description='Show labels', value=labels_default)
+    labels = CheckboxWidget(description='Show legend', value=labels_default)
     group = DropdownWidget(values=group_keys, description='Group')
     subgroup_toggles = [[ToggleButtonWidget(description=k, value=True)
                          for k in s_keys]
                         for s_keys in subgroup_keys]
-    subgroup_text = LatexWidget(value='Subgroup')
+    subgroup_text = LatexWidget(value='Labels')
     subgroup = ContainerWidget(children=subgroup_toggles[0])
 
     # Group widgets
