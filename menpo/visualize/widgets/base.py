@@ -1,5 +1,5 @@
 from IPython.html.widgets import (interact, fixed, IntSliderWidget,
-                                  PopupWidget, ContainerWidget)
+                                  PopupWidget, ContainerWidget, TabWidget)
 from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
@@ -10,7 +10,8 @@ import numpy as np
 from numpy import asarray
 
 
-def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
+def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
+                     **kwargs):
     r"""
     Allows browsing through a list of images.
 
@@ -29,6 +30,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
 
+    tab : `boolean`, optional
+        If enabled, the widget will appear as a tab window.
+
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
@@ -38,18 +42,22 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     image_number_wid = IntSliderWidget(min=0, max=len(images)-1, step=1,
                                        value=1, description='Image Number')
     channel_options_wid = channel_options(images[0].n_channels,
-                                          toggle_show_default=False)
+                                          toggle_show_default=tab,
+                                          toggle_show_visible=not tab)
     all_groups_keys = images[0].landmarks.keys()
     all_subgroups_keys = [images[0].landmarks[g].keys()
                           for g in all_groups_keys]
     landmark_options_wid = landmark_options(all_groups_keys, all_subgroups_keys,
-                                            toggle_show_default=False,
+                                            toggle_show_default=tab,
                                             landmarks_default=True,
-                                            labels_default=False)
+                                            labels_default=False,
+                                            toggle_show_visible=not tab)
     figure_options_wid = figure_options(x_scale_default=1.,
                                         y_scale_default=1.,
-                                        toggle_show_default=False)
-    info_wid = info_print(toggle_show_default=False)
+                                        toggle_show_default=tab,
+                                        toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=tab,
+                          toggle_show_visible=not tab)
 
     # Define function
     def show_img(name, value):
@@ -156,18 +164,25 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         w.on_trait_change(show_img, 'value')
 
     # Display widget
-    cont1 = ContainerWidget(children=[channel_options_wid,
-                                      landmark_options_wid])
-    cont2 = ContainerWidget(children=[figure_options_wid,
-                                      info_wid])
-    if popup:
-        wid = PopupWidget(children=[image_number_wid, cont1, cont2],
-                          button_text='View Images')
+    if tab:
+        wid = TabWidget(children=[image_number_wid, channel_options_wid,
+                                  landmark_options_wid, figure_options_wid,
+                                  info_wid])
     else:
-        wid = ContainerWidget(children=[image_number_wid, cont1, cont2])
+        wid = ContainerWidget(children=[image_number_wid, channel_options_wid,
+                                        landmark_options_wid,
+                                        figure_options_wid, info_wid])
+    if popup:
+        wid = PopupWidget(children=[wid])
     display(wid)
 
     # Format widget
+    if tab:
+        wid.children[0].set_title(0, 'Image number')
+        wid.children[0].set_title(1, 'Channels options')
+        wid.children[0].set_title(2, 'Landmarks options')
+        wid.children[0].set_title(3, 'Figure options')
+        wid.children[0].set_title(4, 'Image info')
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',

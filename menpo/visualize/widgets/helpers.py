@@ -8,7 +8,8 @@ def figure_options(x_scale_default=1.5, y_scale_default=0.5,
                    coupled_default=False, show_axes_default=True,
                    toggle_show_default=True,
                    figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
-                   figure_scales_visible=True, show_axes_visible=True):
+                   figure_scales_visible=True, show_axes_visible=True,
+                   toggle_show_visible=True):
     r"""
     Creates a small widget with Figure Options. Specifically, it has:
         1) Two sliders that control the horizontal and vertical scaling of the
@@ -53,10 +54,14 @@ def figure_options(x_scale_default=1.5, y_scale_default=0.5,
 
     show_axes_visible : `boolean`, optional
         The visibility of the axes checkbox.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
     """
     # Toggle button that controls options' visibility
     but = ToggleButtonWidget(description='Figure Options',
-                             value=toggle_show_default)
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
 
     # Figure scale container
     X_scale = FloatSliderWidget(description='Figure size: X scale',
@@ -188,7 +193,8 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     figure_options_wid.set_css('border', container_border)
 
 
-def channel_options(n_channels, toggle_show_default=True):
+def channel_options(n_channels, toggle_show_default=True,
+                    toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
         1) Two radiobuttons that select an options mode, depending on whether
@@ -222,10 +228,14 @@ def channel_options(n_channels, toggle_show_default=True):
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
     """
     # Create all necessary widgets
     but = ToggleButtonWidget(description='Channels Options',
-                             value=toggle_show_default)
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
     mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
                               description='Mode:')
     mode.visible = toggle_show_default
@@ -408,7 +418,8 @@ def format_channel_options(channel_options_wid, container_padding='6px',
 
 
 def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
-                     landmarks_default=True, labels_default=True):
+                     landmarks_default=True, labels_default=True,
+                     toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
@@ -441,10 +452,14 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
 
     labels_default : `boolean`, optional
         The initial value of the labels visibility checkbox.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
     """
     # Toggle button that controls options' visibility
     but = ToggleButtonWidget(description='Landmark Options',
-                             value=toggle_show_default)
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
 
     # Create widgets
     landmarks = CheckboxWidget(description='Show landmarks',
@@ -554,7 +569,7 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     landmark_options_wid.set_css('border', container_border)
 
 
-def info_print(toggle_show_default=True):
+def info_print(toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget that can print information. Specifically, it has:
         1) A latex widget where user can write the info text in latex format.
@@ -567,9 +582,13 @@ def info_print(toggle_show_default=True):
     ----------
     toggle_show_default : `boolean`, optional
         Defines whether the info will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
     """
     # Create toggle button
-    but = ToggleButtonWidget(description='Info', value=toggle_show_default)
+    but = ToggleButtonWidget(description='Info', value=toggle_show_default,
+                             visible=toggle_show_visible)
 
     # Create text widget
     text_wid = LatexWidget(value="$\\bullet~$")
