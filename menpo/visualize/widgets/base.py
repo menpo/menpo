@@ -10,9 +10,8 @@ import numpy as np
 from numpy import asarray
 
 
-def visualize_images(images, with_labels=None, without_labels=None,
-                     figure_size=(7, 7), figure_scales=(0.5, 1.5), popup=False,
-                     **kwargs):
+def visualize_images(images, figure_size=(7, 7), figure_scales=(0.5, 1.5),
+                     popup=False, **kwargs):
     r"""
     Allows browsing through a list of images.
 
@@ -24,16 +23,6 @@ def visualize_images(images, with_labels=None, without_labels=None,
         .. note::
         This function assumes that all images have the same number of
         channels and that they all have the same landmark groups.
-
-    with_labels : ``None`` or `str` or `list` of `str`, optional
-        If not ``None``, only show the given label(s). Should **not** be
-        used with the ``without_labels`` kwarg. If ``render_labels`` is
-        ``False`` this kwarg is ignored.
-
-    without_labels : ``None`` or `str` or `list` of `str`, optional
-        If not ``None``, show all except the given label(s). Should **not**
-        be used with the ``with_labels`` kwarg. If ``render_labels`` is
-        ``False`` this kwarg is ignored.
 
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.

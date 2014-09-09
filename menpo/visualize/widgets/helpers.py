@@ -418,10 +418,9 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
         5) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
     The structure of the widgets is the following:
-        landmark_options_wid.children = [toggle_button, landmarks_checkbox,
-                                         landmark_more]
-        landmark_more.children = [group_drop_down_menu, subgroup_toggle_buttons,
-                                  labels_checkbox]
+        landmark_options_wid.children = [toggle_button, checkboxes, groups]
+        checkboxes.children = [landmarks_checkbox, labels_checkbox]
+        groups.children = [group_drop_down_menu, subgroup_toggle_buttons]
     To fix the alignment within this widget please refer to
     `format_landmark_options()` function.
 
@@ -520,6 +519,10 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     # align subgroup toggle buttons
     landmark_options_wid.children[2].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].add_class('hbox')
+
+    # align group container
+    landmark_options_wid.children[2].remove_class('vbox')
+    landmark_options_wid.children[2].add_class('hbox')
 
     # align checkboxes
     landmark_options_wid.children[1].remove_class('vbox')
