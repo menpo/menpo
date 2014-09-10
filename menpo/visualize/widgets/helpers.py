@@ -791,7 +791,8 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
 def model_parameters(n_params, plot_function=None, params_str='',
                      mode='multiple', params_bounds=(-3., 3.),
                      plot_eig_visible=True, plot_eig_function=None,
-                     toggle_show_default=True, toggle_show_visible=True):
+                     toggle_show_default=True, toggle_show_visible=True,
+                     toggle_show_name='Parameters'):
     r"""
     Creates a widget with Model Parameters. Specifically, it has:
         1) A slider for each parameter if mode is 'multiple'.
@@ -853,6 +854,9 @@ def model_parameters(n_params, plot_function=None, params_str='',
 
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
+
+    toggle_show_name : `str`, optional
+        The name of the toggle button.
     """
     from collections import OrderedDict
 
@@ -864,7 +868,7 @@ def model_parameters(n_params, plot_function=None, params_str='',
         mode = 'multiple'
 
     # Toggle button that controls visibility
-    but = ToggleButtonWidget(description='Parameters',
+    but = ToggleButtonWidget(description=toggle_show_name,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
