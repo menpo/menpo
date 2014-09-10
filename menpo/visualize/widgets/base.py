@@ -39,132 +39,90 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     """
     import matplotlib.pylab as plt
 
+    # Define plot function
+    def show_img(name, value):
+        # clear current figure
+        clear_output()
+
+        # get params
+        im = image_number_wid.value
+        channels = channel_options_wid.channels
+        glyph_enabled = channel_options_wid.glyph_enabled
+        glyph_block_size = channel_options_wid.glyph_block_size
+        glyph_use_negative = channel_options_wid.glyph_use_negative
+        sum_enabled = channel_options_wid.sum_enabled
+        landmarks_enabled = landmark_options_wid.landmarks_enabled
+        legend_enabled = landmark_options_wid.legend_enabled
+        group = landmark_options_wid.group
+        with_labels = landmark_options_wid.with_labels
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        axes_visible = figure_options_wid.axes_visible
+
+        # plot
+        if glyph_enabled or sum_enabled:
+            if landmarks_enabled:
+                images[im].glyph(vectors_block_size=glyph_block_size,
+                                 use_negative=glyph_use_negative,
+                                 channels=channels).\
+                    view_landmarks(group_label=group, with_labels=with_labels,
+                                   render_labels=legend_enabled, **kwargs)
+            else:
+                images[im].glyph(vectors_block_size=glyph_block_size,
+                                 use_negative=glyph_use_negative,
+                                 channels=channels).view()
+        else:
+            if landmarks_enabled:
+                images[im].view_landmarks(group_label=group,
+                                          with_labels=with_labels,
+                                          render_labels=legend_enabled,
+                                          channels=channels, **kwargs)
+            else:
+                images[im].view(channels=channels)
+
+        # set figure size
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        # turn axis on/off
+        if not axes_visible:
+            plt.axis('off')
+
+        # change info_wid info
+        txt = "$\\bullet~\\texttt{Image of size " + \
+              "{}".format(images[im]._str_shape) + \
+              " with " + \
+              "{}".format(images[im].n_channels) + \
+              " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(images[im].landmarks[group].lms.n_points) + \
+              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
+              "{0:.3f}".format(images[im].pixels.min()) + \
+              ", max=" + \
+              "{0:.3f}".format(images[im].pixels.max()) + \
+              "}$"
+        info_wid.children[1].value = txt
+
     # Create options widgets
     image_number_wid = IntSliderWidget(min=0, max=len(images)-1, step=1,
                                        value=1, description='Image Number')
-    channel_options_wid = channel_options(images[0].n_channels,
+    image_number_wid.on_trait_change(show_img, 'value')
+    channel_options_wid = channel_options(images[0].n_channels, show_img,
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = images[0].landmarks.keys()
-    all_subgroups_keys = [images[0].landmarks[g].keys()
-                          for g in all_groups_keys]
-    landmark_options_wid = landmark_options(all_groups_keys, all_subgroups_keys,
+    all_labels_keys = [images[0].landmarks[g].keys() for g in all_groups_keys]
+    landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
+                                            show_img,
                                             toggle_show_default=tab,
                                             landmarks_default=True,
-                                            labels_default=False,
+                                            legend_default=False,
                                             toggle_show_visible=not tab)
-    figure_options_wid = figure_options(x_scale_default=1.,
+    figure_options_wid = figure_options(show_img, x_scale_default=1.,
                                         y_scale_default=1.,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
     info_wid = info_print(toggle_show_default=tab,
                           toggle_show_visible=not tab)
 
-    # Define function
-    def show_img(name, value):
-        # clear current figure
-        clear_output()
-
-        # get channels
-        if channel_options_wid.children[1].children[0].value == "Single":
-            channels = channel_options_wid.children[1].children[1].children[0].children[0].value
-        else:
-            channels = range(
-                channel_options_wid.children[1].children[1].children[0].children[0].value,
-                channel_options_wid.children[1].children[1].children[0].children[1].value + 1)
-
-        # get flag values
-        glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
-        sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
-        landmarks_enabled = landmark_options_wid.children[1].children[0].value
-        labels_enabled = landmark_options_wid.children[1].children[1].value
-        group = landmark_options_wid.children[2].children[0].value
-        with_labels = []
-        for ww in landmark_options_wid.children[2].children[1].children[1].children:
-            if ww.value:
-                with_labels.append(str(ww.description))
-
-        # plot
-        if glyph_enabled:
-            s1 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value
-            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
-            if landmarks_enabled:
-                images[image_number_wid.value].glyph(vectors_block_size=s1,
-                                                     use_negative=s2,
-                                                     channels=channels).\
-                    view_landmarks(group_label=group, with_labels=with_labels,
-                                   render_labels=labels_enabled, **kwargs)
-            else:
-                images[image_number_wid.value].glyph(vectors_block_size=s1,
-                                                     use_negative=s2,
-                                                     channels=channels).view()
-        elif sum_enabled:
-            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
-            if landmarks_enabled:
-                images[image_number_wid.value].glyph(vectors_block_size=1,
-                                                     use_negative=s2,
-                                                     channels=channels).\
-                    view_landmarks(group_label=group, with_labels=with_labels,
-                                   render_labels=labels_enabled, **kwargs)
-            else:
-                images[image_number_wid.value].glyph(vectors_block_size=1,
-                                                     use_negative=s2,
-                                                     channels=channels).view()
-        else:
-            if landmarks_enabled:
-                images[image_number_wid.value].view_landmarks(
-                    group_label=group, with_labels=with_labels,
-                    render_labels=labels_enabled, channels=channels, **kwargs)
-            else:
-                images[image_number_wid.value].view(channels=channels)
-
-        # set figure size
-        x_scale = figure_options_wid.children[1].children[0].value
-        y_scale = figure_options_wid.children[1].children[1].value
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
-        # turn axis on/off
-        if not figure_options_wid.children[2].value:
-            plt.axis('off')
-
-        # change info_wid info
-        txt = "$\\bullet~\\texttt{Image of size " + \
-              "{}".format(images[image_number_wid.value]._str_shape) + \
-              " with " + \
-              "{}".format(images[image_number_wid.value].n_channels) + \
-              " channels.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(images[image_number_wid.value].landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
-              "{0:.3f}".format(images[image_number_wid.value].pixels.min()) + \
-              ", max=" + \
-              "{0:.3f}".format(images[image_number_wid.value].pixels.max()) + \
-              "}$"
-        info_wid.children[1].value = txt
-
-    # Define traits
-    image_number_wid.on_trait_change(show_img, 'value')
-    figure_options_wid.children[1].children[0].on_trait_change(show_img,
-                                                               'value')
-    figure_options_wid.children[1].children[1].on_trait_change(show_img,
-                                                               'value')
-    figure_options_wid.children[2].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[0].on_trait_change(show_img,
-                                                                'value')
-    channel_options_wid.children[1].children[1].children[0].children[0].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[1].children[0].children[1].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_img, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_img, 'value')
-    landmark_options_wid.children[1].children[0].on_trait_change(show_img,
-                                                                 'value')
-    landmark_options_wid.children[1].children[1].on_trait_change(show_img,
-                                                                 'value')
-    landmark_options_wid.children[2].children[0].on_trait_change(show_img,
-                                                                 'value')
-    for w in landmark_options_wid.children[2].children[1].children[1].children:
-        w.on_trait_change(show_img, 'value')
-
-    # Display widget
+    # Create final widget
     if tab:
         wid = TabWidget(children=[image_number_wid, channel_options_wid,
                                   landmark_options_wid, figure_options_wid,
@@ -174,10 +132,10 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
                                         landmark_options_wid,
                                         figure_options_wid, info_wid])
     if popup:
-        wid = PopupWidget(children=[wid])
-    display(wid)
+        wid = PopupWidget(children=[wid], button_text='View Images Menu')
 
-    # Format widget
+    # Display and format widget
+    display(wid)
     if tab and popup:
         wid.children[0].set_title(0, 'Image number')
         wid.children[0].set_title(1, 'Channels options')

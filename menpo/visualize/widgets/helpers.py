@@ -383,6 +383,12 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
             glyph_wid.value = False
     sum_wid.on_trait_change(sum_fun, 'value')
 
+    # Check block size value
+    def block_size_fun(name, value):
+        if value <= 0:
+            glyph_block_size.value = 1
+    glyph_block_size.on_trait_change(block_size_fun, 'value')
+
     # Function that gets glyph/sum options
     def get_glyph_options(name, value):
         channel_options_wid.glyph_enabled = glyph_wid.value
@@ -556,7 +562,6 @@ def landmark_options(group_keys, labels_keys, plot_function,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    nontas = 0
     # Toggle button that controls options' visibility
     but = ToggleButtonWidget(description='Landmark Options',
                              value=toggle_show_default,
@@ -606,17 +611,21 @@ def landmark_options(group_keys, labels_keys, plot_function,
     def group_fun(name, value):
         landmark_options_wid.group = value
         labels.children = labels_toggles[group_keys.index(value)]
-    group.on_trait_change(group_fun, 'value')
-
-    # Labels function
-    def labels_fun(name, value):
         landmark_options_wid.with_labels = []
         for ww in labels.children:
             if ww.value:
                 landmark_options_wid.with_labels.append(str(ww.description))
+    group.on_trait_change(group_fun, 'value')
+
+    # Labels function
+    def labels_fun(name, value):
         all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
             landmarks.value = False
+        landmark_options_wid.with_labels = []
+        for ww in labels.children:
+            if ww.value:
+                landmark_options_wid.with_labels.append(str(ww.description))
     for s_group in labels_toggles:
         for w in s_group:
             w.on_trait_change(labels_fun, 'value')
