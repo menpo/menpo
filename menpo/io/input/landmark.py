@@ -523,7 +523,7 @@ class LJSONImporter(LandmarkImporter):
                 all_points.append(p['point'])
             offset += len(lms)
 
-        # Dont' create a PointGraph with no connectivity
+        # Don't create a PointGraph with no connectivity
         points = np.array(all_points)
         if len(connectivity) == 0:
             self.pointcloud = PointCloud(points)
