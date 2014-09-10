@@ -593,7 +593,6 @@ class MaskedImage(Image):
         grad_image.landmarks = self.landmarks
         return grad_image
 
-    # TODO maybe we should be stricter about the trilist here, feels flakey
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -621,25 +620,8 @@ class MaskedImage(Image):
 
             Default: None
         """
-        from menpo.transform.piecewiseaffine import PiecewiseAffine
-        from menpo.transform.piecewiseaffine import TriangleContainmentError
-
-        if self.n_dims != 2:
-            raise ValueError("can only constrain mask on 2D images.")
-
-        pc = self.landmarks[group][label]
-        if trilist is not None:
-            from menpo.shape import TriMesh
-
-            pc = TriMesh(pc.points, trilist)
-
-        pwa = PiecewiseAffine(pc, pc)
-        try:
-            # Call the superclass indices property because we actually want
-            # ALL the indices, not just the true ones.
-            pwa.apply(Image.indices.fget(self))
-        except TriangleContainmentError as e:
-            self.mask.from_vector_inplace(~e.points_outside_source_domain)
+        self.mask.constrain_to_pointcloud(self.landmarks[group][label],
+                                          trilist=trilist)
 
     def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
         r"""A copy of this MaskedImage, rescaled by a given factor.
