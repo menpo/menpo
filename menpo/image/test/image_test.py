@@ -601,3 +601,23 @@ def test_image_gradient_sanity():
     assert(type(new_image) == Image)
     assert(new_image.shape == image.shape)
     assert(new_image.n_channels == image.n_channels * 2)
+
+
+def test_image_extract_channels():
+    image = Image(np.random.rand(120, 120, 3))
+    extracted = image.extract_channels(0)
+    assert_equal(extracted.pixels, image.pixels[..., [0]])
+
+
+def test_image_extract_channels_multiple():
+    image = Image(np.random.rand(120, 120, 3))
+    extracted = image.extract_channels([0, 2])
+    assert_equal(extracted.pixels[..., 0], image.pixels[..., 0])
+    assert_equal(extracted.pixels[..., 1], image.pixels[..., 2])
+
+
+def test_image_extract_channels_multiple_reversed():
+    image = Image(np.random.rand(120, 120, 3))
+    extracted = image.extract_channels([2, 0])
+    assert_equal(extracted.pixels[..., 0], image.pixels[..., 2])
+    assert_equal(extracted.pixels[..., 1], image.pixels[..., 0])
