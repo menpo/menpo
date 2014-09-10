@@ -790,16 +790,23 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
 
 def model_parameters(n_params, plot_function=None, params_str='',
                      mode='multiple', params_bounds=(-3., 3.),
+                     plot_eig_visible=True, plot_eig_function=None,
                      toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Model Parameters. Specifically, it has:
         1) A slider for each parameter if mode is 'multiple'.
         2) A single slider and a drop down menu selection if mode is 'single'.
         3) A reset button.
+        4) A button and two radio buttons for plotting the eigenvalues variance
+           ratio.
 
     The structure of the widgets is the following:
         model_parameters_wid.children = [toggle_button, parameters_and_reset]
-        parameters_and_reset.children = [parameters_widgets, reset_button]
+        parameters_and_reset.children = [parameters_widgets, reset]
+        If plot_eig_visible is True:
+        reset = [plot_eigenvalues, reset_button]
+        Else:
+        reset = reset_button
         If mode is single:
         parameters_widgets.children = [drop_down_menu, slider]
         If mode is multiple:
@@ -808,6 +815,7 @@ def model_parameters(n_params, plot_function=None, params_str='',
     The returned widget saves the selected values in the following fields:
         model_parameters_wid.parameters_values
         model_parameters_wid.mode
+        model_parameters_wid.plot_eig_visible
 
     To fix the alignment within this widget please refer to
     `format_model_parameters()` function.
@@ -831,6 +839,14 @@ def model_parameters(n_params, plot_function=None, params_str='',
 
     params_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
+
+    plot_eig_visible : `boolean`, optional
+        Defines whether the options for plotting the eigenvalues variance ratio
+        will be visible upon construction.
+
+    plot_eig_function : `function` or None, optional
+        The plot function that is executed when the plot eigenvalues button is
+        clicked. If None, then nothing is assigned.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -872,7 +888,16 @@ def model_parameters(n_params, plot_function=None, params_str='',
         parameters_wid = ContainerWidget(children=[dropdown_params, slider])
 
     # Group widgets
-    params_and_reset = ContainerWidget(children=[parameters_wid, reset_button])
+    if plot_eig_visible:
+        plot_button = ButtonWidget(description='Plot eigenvalues')
+        if plot_eig_function is not None:
+            plot_button.on_click(plot_eig_function)
+        plot_and_reset = ContainerWidget(children=[plot_button, reset_button])
+        params_and_reset = ContainerWidget(children=[parameters_wid,
+                                                     plot_and_reset])
+    else:
+        params_and_reset = ContainerWidget(children=[parameters_wid,
+                                                     reset_button])
 
     # Widget container
     model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
@@ -880,6 +905,7 @@ def model_parameters(n_params, plot_function=None, params_str='',
     # Save mode and parameters values
     model_parameters_wid.parameters_values = parameters_values
     model_parameters_wid.mode = mode
+    model_parameters_wid.plot_eig_visible = plot_eig_visible
 
     # set up functions
     if mode == 'single':
@@ -962,11 +988,18 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
         model_parameters_wid.children[1].children[0].add_class('hbox')
 
     # align reset button to right
+    if model_parameters_wid.plot_eig_visible:
+        model_parameters_wid.children[1].children[1].remove_class('vbox')
+        model_parameters_wid.children[1].children[1].add_class('hbox')
     model_parameters_wid.children[1].add_class('align-end')
 
     # set toggle button font bold
     model_parameters_wid.children[0].set_css('font-weight',
                                              toggle_button_font_weight)
+
+    # margin and border around plot_eigenvalues widget
+    if model_parameters_wid.plot_eig_visible:
+        model_parameters_wid.children[1].children[1].children[0].set_css('margin-right', container_margin)
 
     # margin and border around container widget
     model_parameters_wid.set_css('padding', container_padding)

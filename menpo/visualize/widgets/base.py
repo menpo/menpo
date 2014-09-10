@@ -1,6 +1,6 @@
 from IPython.html.widgets import (interact, fixed, IntSliderWidget,
                                   PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget)
+                                  RadioButtonsWidget, ButtonWidget)
 from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
@@ -263,11 +263,15 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
             plt.axis('off')
 
         # change info_wid info
-        txt = "$\\bullet~\\texttt{" + \
+        txt = "$\\bullet~\\texttt{Level: " + \
+              "{}".format(level+1) + \
+              " out of " + \
+              "{}".format(n_levels) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(appearance_models[level].n_components) + \
-              "~components in total.}\\\\ \\bullet~\\texttt{" + \
+              " components in total.}\\\\ \\bullet~\\texttt{" + \
               "{}".format(appearance_models[level].n_active_components) + \
-              "~active components.}\\\\ \\bullet~\\texttt{" + \
+              " active components.}\\\\ \\bullet~\\texttt{" + \
               "{0:.1f}".format(appearance_models[level].variance_ratio*100) + \
               "% variance kept.}\\\\ " \
               "\\bullet~\\texttt{Reference shape of size~" + \
@@ -285,23 +289,49 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
               "}$"
         info_wid.children[1].value = txt
 
+    # Plot eigenvalues function
+    def plot_eigenvalues(name):
+        level = level_wid.value
+        # plot eigenvalues ratio
+        plt.subplot(211)
+        plt.bar(range(len(appearance_models[level].eigenvalues_ratio)),
+                appearance_models[level].eigenvalues_ratio)
+        plt.ylabel('Variance Ratio')
+        plt.xlabel('Component Number')
+        plt.grid("on")
+        # plot eigenvalues cumulative ratio
+        plt.subplot(212)
+        plt.bar(range(len(appearance_models[level].eigenvalues_cumulative_ratio)),
+                appearance_models[level].eigenvalues_cumulative_ratio)
+        plt.ylabel('Cumulative Variance Ratio')
+        plt.xlabel('Component Number')
+        plt.grid("on")
+        # set figure size
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+
     # Create options widgets
     n_levels = len(appearance_models)
-    radio_str = OrderedDict()
-    for l in range(n_levels):
-        if l == 0:
-            radio_str["Level {} (low)".format(l)] = l
-        elif l == n_levels - 1:
-            radio_str["Level {} (high)".format(l)] = l
-        else:
-            radio_str["Level {}".format(l)] = l
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+    else:
+        radio_str = {'Level 0': 0, 'Level 1': 1}
     level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
-                                   value=1)
+                                   value=1, visible=n_levels != 1)
     level_wid.on_trait_change(show_instance, 'value')
     model_parameters_wid = model_parameters(
-        n_parameters, plot_function=show_instance, params_str='parameter',
+        n_parameters, plot_function=show_instance, params_str='param ',
         mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
-        toggle_show_visible=False)
+        toggle_show_visible=False, plot_eig_visible=True,
+        plot_eig_function=plot_eigenvalues)
     channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
                                           show_instance,
                                           toggle_show_default=tab,
@@ -324,14 +354,14 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
                           toggle_show_visible=not tab)
 
     # Create final widget
+    tmp_wid = ContainerWidget(children=[level_wid,
+                                        model_parameters_wid])
     if tab:
-        tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
         wid = TabWidget(children=[tmp_wid, channel_options_wid,
                                   landmark_options_wid, figure_options_wid,
                                   info_wid])
     else:
-        wid = ContainerWidget(children=[level_wid, model_parameters_wid,
-                                        channel_options_wid,
+        wid = ContainerWidget(children=[tmp_wid, channel_options_wid,
                                         landmark_options_wid,
                                         figure_options_wid, info_wid])
     if popup:
@@ -351,6 +381,8 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
         wid.set_title(2, 'Landmarks options')
         wid.set_title(3, 'Figure options')
         wid.set_title(4, 'Model info')
+    tmp_wid.remove_class('vbox')
+    tmp_wid.add_class('hbox')
     format_model_parameters(model_parameters_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
