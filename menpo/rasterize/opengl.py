@@ -1,5 +1,6 @@
 import numpy as np
 from cyrasterize.base import CyRasterizerBase
+from hdf5able import HDF5able
 
 from menpo.image import MaskedImage
 from menpo.transform import Homogeneous
@@ -10,7 +11,18 @@ from .transform import clip_to_image_transform
 
 # Subclass the CyRasterizerBase class to add Menpo-specific features
 # noinspection PyProtectedMember
-class GLRasterizer(CyRasterizerBase):
+class GLRasterizer(CyRasterizerBase, HDF5able):
+
+    def h5_dict_to_serializable_dict(self):
+        return {'width': self.width,
+                'height': self.height,
+                'model_matrix': self.model_matrix,
+                'view_matrix': self.view_matrix,
+                'projection_matrix': self.projection_matrix}
+
+    @classmethod
+    def h5_rebuild_from_dict(cls, d):
+        return GLRasterizer(**d)
 
     @property
     def model_to_clip_matrix(self):
@@ -220,5 +232,5 @@ class GLRasterizer(CyRasterizerBase):
         rgb_pixels, f3v_pixels, mask = self._rasterize(
             r.points, r.trilist, r.texture, r.tcoords,
             per_vertex_f3v=per_vertex_f3v)
-        return (MaskedImage(rgb_pixels, mask=mask),
-                MaskedImage(f3v_pixels, mask=mask))
+        return (MaskedImage(np.array(rgb_pixels, dtype=np.float), mask=mask),
+                MaskedImage(np.array(f3v_pixels, dtype=np.float), mask=mask))

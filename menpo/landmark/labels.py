@@ -143,12 +143,12 @@ def ibug_face_68(landmark_group):
     The semantic labels applied are as follows:
 
       - jaw
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
-      - mouth
+      - left_eyebrow
+      - right_eyebrow
       - nose
+      - left_eye
+      - right_eye
+      - mouth
 
     Parameters
     ----------
@@ -178,45 +178,47 @@ def ibug_face_68(landmark_group):
     _validate_input(landmark_group, 68, group_label)
 
     jaw_indices = np.arange(0, 17)
-    leye_indices = np.arange(36, 42)
-    reye_indices = np.arange(42, 48)
     lbrow_indices = np.arange(17, 22)
     rbrow_indices = np.arange(22, 27)
-    outer_mouth_indices = np.arange(48, 60)
-    inner_mouth_indices = np.arange(60, 68)
     upper_nose_indices = np.arange(27, 31)
     lower_nose_indices = np.arange(31, 36)
+    leye_indices = np.arange(36, 42)
+    reye_indices = np.arange(42, 48)
+    outer_mouth_indices = np.arange(48, 60)
+    inner_mouth_indices = np.arange(60, 68)
 
     jaw_connectivity = _connectivity_from_array(jaw_indices)
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
-    mouth_connectivity = np.vstack(
-        (_connectivity_from_array(outer_mouth_indices, close_loop=True),
-         _connectivity_from_array(inner_mouth_indices, close_loop=True)))
-    nose_connectivity = np.vstack(
-        (_connectivity_from_array(upper_nose_indices),
-         _connectivity_from_array(lower_nose_indices)))
+    nose_connectivity = np.vstack([
+        _connectivity_from_array(upper_nose_indices),
+        _connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        _connectivity_from_array(outer_mouth_indices, close_loop=True),
+        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack(
-        (jaw_connectivity, leye_connectivity, reye_connectivity,
-         lbrow_connectivity, rbrow_connectivity, mouth_connectivity,
-         nose_connectivity))
+    total_connectivity = np.vstack([
+        jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
+        nose_connectivity, leye_connectivity, reye_connectivity,
+        mouth_connectivity
+    ])
 
     new_landmark_group = LandmarkGroup(
         PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
-    new_landmark_group['left eye'] = leye_indices
-    new_landmark_group['right eye'] = reye_indices
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
     new_landmark_group['nose'] = np.hstack((upper_nose_indices,
                                             lower_nose_indices))
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
+                                             inner_mouth_indices))
+
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -233,12 +235,12 @@ def ibug_face_66(landmark_group):
     The semantic labels applied are as follows:
 
       - jaw
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
-      - mouth
+      - left_eyebrow
+      - right_eyebrow
       - nose
+      - left_eye
+      - right_eye
+      - mouth
 
     Parameters
     ----------
@@ -268,32 +270,34 @@ def ibug_face_66(landmark_group):
     _validate_input(landmark_group, 68, group_label)
 
     jaw_indices = np.arange(0, 17)
-    leye_indices = np.arange(36, 42)
-    reye_indices = np.arange(42, 48)
     lbrow_indices = np.arange(17, 22)
     rbrow_indices = np.arange(22, 27)
+    upper_nose_indices = np.arange(27, 31)
+    lower_nose_indices = np.arange(31, 36)
+    leye_indices = np.arange(36, 42)
+    reye_indices = np.arange(42, 48)
     outer_mouth_indices = np.arange(48, 60)
     inner_mouth_indices = np.hstack((48, np.arange(60, 63),
                                      54, np.arange(63, 66)))
-    upper_nose_indices = np.arange(27, 31)
-    lower_nose_indices = np.arange(31, 36)
+
 
     jaw_connectivity = _connectivity_from_array(jaw_indices)
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
-    mouth_connectivity = np.vstack(
-        (_connectivity_from_array(outer_mouth_indices, close_loop=True),
-         _connectivity_from_array(inner_mouth_indices, close_loop=True)))
-    nose_connectivity = np.vstack(
-        (_connectivity_from_array(upper_nose_indices),
-         _connectivity_from_array(lower_nose_indices)))
+    nose_connectivity = np.vstack([
+        _connectivity_from_array(upper_nose_indices),
+        _connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        _connectivity_from_array(outer_mouth_indices, close_loop=True),
+        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack(
-        (jaw_connectivity, leye_connectivity, reye_connectivity,
-         lbrow_connectivity, rbrow_connectivity, mouth_connectivity,
-         nose_connectivity))
+
+    total_connectivity = np.vstack([
+        jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
+        nose_connectivity, leye_connectivity, reye_connectivity,
+        mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(60), np.arange(61, 64), np.arange(65, 68)))
@@ -302,14 +306,15 @@ def ibug_face_66(landmark_group):
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
-    new_landmark_group['left eye'] = leye_indices
-    new_landmark_group['right eye'] = reye_indices
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
-    new_landmark_group['nose'] = np.hstack((upper_nose_indices,
-                                            lower_nose_indices))
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
+    new_landmark_group['nose'] = np.hstack([upper_nose_indices,
+                                            lower_nose_indices])
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['mouth'] = np.hstack([outer_mouth_indices,
+                                             inner_mouth_indices])
+
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -325,12 +330,12 @@ def ibug_face_51(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
-      - mouth
+      - left_eyebrow
+      - right_eyebrow
       - nose
+      - left_eye
+      - right_eye
+      - mouth
 
     Parameters
     ----------
@@ -359,29 +364,30 @@ def ibug_face_51(landmark_group):
     n_points = 51
     _validate_input(landmark_group, 68, group_label)
 
-    leye_indices = np.arange(19, 25)
-    reye_indices = np.arange(25, 31)
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
-    outer_mouth_indices = np.arange(31, 43)
-    inner_mouth_indices = np.arange(43, 51)
     upper_nose_indices = np.arange(10, 14)
     lower_nose_indices = np.arange(14, 19)
+    leye_indices = np.arange(19, 25)
+    reye_indices = np.arange(25, 31)
+    outer_mouth_indices = np.arange(31, 43)
+    inner_mouth_indices = np.arange(43, 51)
 
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
-    mouth_connectivity = np.vstack(
-        (_connectivity_from_array(outer_mouth_indices, close_loop=True),
-         _connectivity_from_array(inner_mouth_indices, close_loop=True)))
-    nose_connectivity = np.vstack(
-        (_connectivity_from_array(upper_nose_indices),
-         _connectivity_from_array(lower_nose_indices)))
+    nose_connectivity = np.vstack([
+        _connectivity_from_array(upper_nose_indices),
+        _connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        _connectivity_from_array(outer_mouth_indices, close_loop=True),
+        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack(
-        (leye_connectivity, reye_connectivity, lbrow_connectivity,
-         rbrow_connectivity, mouth_connectivity, nose_connectivity))
+
+    total_connectivity = np.vstack([
+        lbrow_connectivity, rbrow_connectivity, nose_connectivity,
+        leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.arange(17, 68)
@@ -389,14 +395,15 @@ def ibug_face_51(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['left eye'] = leye_indices
-    new_landmark_group['right eye'] = reye_indices
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
-    new_landmark_group['nose'] = np.hstack((upper_nose_indices,
-                                            lower_nose_indices))
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
+    new_landmark_group['nose'] = np.hstack([upper_nose_indices,
+                                            lower_nose_indices])
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['mouth'] = np.hstack([outer_mouth_indices,
+                                             inner_mouth_indices])
+
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -413,12 +420,12 @@ def ibug_face_49(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
-      - mouth
+      - left_eyebrow
+      - right_eyebrow
       - nose
+      - left_eye
+      - right_eye
+      - mouth
 
     Parameters
     ----------
@@ -447,30 +454,30 @@ def ibug_face_49(landmark_group):
     n_points = 49
     _validate_input(landmark_group, 68, group_label)
 
-    leye_indices = np.arange(19, 25)
-    reye_indices = np.arange(25, 31)
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
+    upper_nose_indices = np.arange(10, 14)
+    lower_nose_indices = np.arange(14, 19)
+    leye_indices = np.arange(19, 25)
+    reye_indices = np.arange(25, 31)
     outer_mouth_indices = np.arange(31, 43)
     inner_mouth_indices = np.hstack((31, np.arange(43, 46),
                                      37, np.arange(46, 49)))
-    upper_nose_indices = np.arange(10, 14)
-    lower_nose_indices = np.arange(14, 19)
 
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
-    mouth_connectivity = np.vstack(
-        (_connectivity_from_array(outer_mouth_indices, close_loop=True),
-         _connectivity_from_array(inner_mouth_indices, close_loop=True)))
-    nose_connectivity = np.vstack(
-        (_connectivity_from_array(upper_nose_indices),
-         _connectivity_from_array(lower_nose_indices)))
+    nose_connectivity = np.vstack([
+        _connectivity_from_array(upper_nose_indices),
+        _connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        _connectivity_from_array(outer_mouth_indices, close_loop=True),
+        _connectivity_from_array(inner_mouth_indices, close_loop=True)])
 
-    total_connectivity = np.vstack(
-        (leye_connectivity, reye_connectivity, lbrow_connectivity,
-         rbrow_connectivity, mouth_connectivity, nose_connectivity))
+    total_connectivity = np.vstack([
+        lbrow_connectivity, rbrow_connectivity, nose_connectivity,
+        leye_connectivity, reye_connectivity, mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.hstack((np.arange(17, 60), np.arange(61, 64), np.arange(65, 68)))
@@ -478,14 +485,15 @@ def ibug_face_49(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['left eye'] = leye_indices
-    new_landmark_group['right eye'] = reye_indices
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
-    new_landmark_group['nose'] = np.hstack((upper_nose_indices,
-                                            lower_nose_indices))
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
+    new_landmark_group['nose'] = np.hstack([upper_nose_indices,
+                                            lower_nose_indices])
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['mouth'] = np.hstack([outer_mouth_indices,
+                                             inner_mouth_indices])
+
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -577,12 +585,12 @@ def ibug_face_65_closed_mouth(landmark_group):
     The semantic labels applied are as follows:
 
       - jaw
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
-      - mouth
+      - left_eyebrow
+      - right_eyebrow
       - nose
+      - left_eye
+      - right_eye
+      - mouth
 
     Parameters
     ----------
@@ -612,31 +620,31 @@ def ibug_face_65_closed_mouth(landmark_group):
     _validate_input(landmark_group, 68, group_label)
 
     jaw_indices = np.arange(0, 17)
-    leye_indices = np.arange(36, 42)
-    reye_indices = np.arange(42, 48)
     lbrow_indices = np.arange(17, 22)
     rbrow_indices = np.arange(22, 27)
-    outer_mouth_indices = np.arange(48, 60)
-    inner_mouth_indices = np.arange(60, 65)
     upper_nose_indices = np.arange(27, 31)
     lower_nose_indices = np.arange(31, 36)
+    leye_indices = np.arange(36, 42)
+    reye_indices = np.arange(42, 48)
+    outer_mouth_indices = np.arange(48, 60)
+    inner_mouth_indices = np.arange(60, 65)
 
     jaw_connectivity = _connectivity_from_array(jaw_indices)
-    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
-    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
     lbrow_connectivity = _connectivity_from_array(lbrow_indices)
     rbrow_connectivity = _connectivity_from_array(rbrow_indices)
-    mouth_connectivity = np.vstack(
-        (_connectivity_from_array(outer_mouth_indices, close_loop=True),
-         _connectivity_from_array(inner_mouth_indices)))
-    nose_connectivity = np.vstack(
-        (_connectivity_from_array(upper_nose_indices),
-         _connectivity_from_array(lower_nose_indices)))
+    nose_connectivity = np.vstack([
+        _connectivity_from_array(upper_nose_indices),
+        _connectivity_from_array(lower_nose_indices)])
+    leye_connectivity = _connectivity_from_array(leye_indices, close_loop=True)
+    reye_connectivity = _connectivity_from_array(reye_indices, close_loop=True)
+    mouth_connectivity = np.vstack([
+        _connectivity_from_array(outer_mouth_indices, close_loop=True),
+        _connectivity_from_array(inner_mouth_indices)])
 
-    total_connectivity = np.vstack(
-        (jaw_connectivity, leye_connectivity, reye_connectivity,
-         lbrow_connectivity, rbrow_connectivity, mouth_connectivity,
-         nose_connectivity))
+    total_connectivity = np.vstack([
+        jaw_connectivity, lbrow_connectivity, rbrow_connectivity,
+        nose_connectivity, leye_connectivity, reye_connectivity,
+        mouth_connectivity])
 
     # Ignore the two inner mouth points
     ind = np.arange(65)
@@ -645,14 +653,14 @@ def ibug_face_65_closed_mouth(landmark_group):
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['jaw'] = jaw_indices
-    new_landmark_group['left eye'] = leye_indices
-    new_landmark_group['right eye'] = reye_indices
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
-    new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
-                                             inner_mouth_indices))
-    new_landmark_group['nose'] = np.hstack((upper_nose_indices,
-                                            lower_nose_indices))
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
+    new_landmark_group['nose'] = np.hstack([upper_nose_indices,
+                                            lower_nose_indices])
+    new_landmark_group['left_eye'] = leye_indices
+    new_landmark_group['right_eye'] = reye_indices
+    new_landmark_group['mouth'] = np.hstack([outer_mouth_indices,
+                                             inner_mouth_indices])
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -668,10 +676,10 @@ def imm_face(landmark_group):
     The semantic labels applied are as follows:
 
       - jaw
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
+      - left_eye
+      - right_eye
+      - left_eyebrow
+      - right_eyebrow
       - mouth
       - nose
 
@@ -700,10 +708,10 @@ def imm_face(landmark_group):
     _validate_input(landmark_group, 58, group_label)
     labels = OrderedDict([
         ('jaw', (0, 13, False)),
-        ('left eye', (13, 21, True)),
-        ('right eye', (21, 29, True)),
-        ('left eyebrow', (29, 34, False)),
-        ('right eyebrow', (34, 39, False)),
+        ('left_eye', (13, 21, True)),
+        ('right_eye', (21, 29, True)),
+        ('left _eyebrow', (29, 34, False)),
+        ('right_eyebrow', (34, 39, False)),
         ('mouth', (39, 47, True)),
         ('nose', (47, 58, False))
     ])
@@ -720,10 +728,10 @@ def lfpw_face(landmark_group):
     The semantic labels applied are as follows:
 
       - chin
-      - left eye
-      - right eye
-      - left eyebrow
-      - right eyebrow
+      - left_eye
+      - right_eye
+      - left_eyebrow
+      - right_eyebrow
       - mouth
       - nose
 
@@ -792,12 +800,12 @@ def lfpw_face(landmark_group):
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
     new_landmark_group['chin'] = chin_indices
-    new_landmark_group['left eye'] = np.hstack((outer_leye_indices,
+    new_landmark_group['left_eye'] = np.hstack((outer_leye_indices,
                                                 pupil_leye_indices))
-    new_landmark_group['right eye'] = np.hstack((outer_reye_indices,
+    new_landmark_group['right_eye'] = np.hstack((outer_reye_indices,
                                                  pupil_reye_indices))
-    new_landmark_group['left eyebrow'] = lbrow_indices
-    new_landmark_group['right eyebrow'] = rbrow_indices
+    new_landmark_group['left_eyebrow'] = lbrow_indices
+    new_landmark_group['right_eyebrow'] = rbrow_indices
     new_landmark_group['mouth'] = np.hstack((outer_mouth_indices,
                                              inner_mouth_indices))
     new_landmark_group['nose'] = nose_indices
@@ -828,8 +836,8 @@ def ibug_open_eye(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - upper eyelid
-      - lower eyelid
+      - upper_eyelid
+      - lower_eyelid
       - iris
       - pupil
       - sclera
@@ -892,8 +900,8 @@ def ibug_open_eye(landmark_group):
         PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['upper eyelid'] = upper_el_indices
-    new_landmark_group['lower eyelid'] = lower_el_indices
+    new_landmark_group['upper_eyelid'] = upper_el_indices
+    new_landmark_group['lower_eyelid'] = lower_el_indices
     new_landmark_group['pupil'] = np.arange(*pupil_range)
     new_landmark_group['iris'] = np.arange(*iris_range)
     new_landmark_group['sclera'] = sclera_indices
@@ -911,8 +919,8 @@ def ibug_close_eye_points(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - upper eyelid
-      - lower eyelid
+      - upper_eyelid
+      - lower_eyelid
 
     Parameters
     ----------
@@ -953,8 +961,8 @@ def ibug_close_eye_points(landmark_group):
         PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['upper eyelid'] = upper_indices
-    new_landmark_group['lower eyelid'] = lower_indices
+    new_landmark_group['upper_eyelid'] = upper_indices
+    new_landmark_group['lower_eyelid'] = lower_indices
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1201,12 +1209,12 @@ def stickmen_pose(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - head
       - torso
-      - left upper arm
-      - right upper arm
-      - left lower arm
-      - right lower arm
+      - right_upper_arm
+      - left_upper_arm
+      - right_lower_arm
+      - left_lower_arm
+      - head
 
     Parameters
     ----------
@@ -1232,12 +1240,12 @@ def stickmen_pose(landmark_group):
     group_label = 'stickmen_pose'
     _validate_input(landmark_group, 12, group_label)
     labels = OrderedDict([
-        ('head', (10, 12, False)),
         ('torso', (0, 2, False)),
-        ('left upper arm', (4, 6, False)),
-        ('right upper arm', (2, 4, False)),
-        ('left lower arm', (8, 10, False)),
-        ('right lower arm', (6, 8, False))
+        ('right_upper arm', (2, 4, False)),
+        ('left_upper arm', (4, 6, False)),
+        ('right_lower_arm', (6, 8, False)),
+        ('left_lower_arm', (8, 10, False)),
+        ('head', (10, 12, False))
     ])
     return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
@@ -1251,11 +1259,11 @@ def lsp_pose(landmark_group):
 
     The semantic labels applied are as follows:
 
+      - left_leg
+      - right_leg
+      - left_arm
+      - right_arm
       - head
-      - left arm
-      - right  arm
-      - left leg
-      - right leg
 
     Parameters
     ----------
@@ -1284,33 +1292,34 @@ def lsp_pose(landmark_group):
     n_points = landmark_group.lms.n_points
     _validate_input(landmark_group, 14, group_label)
 
-    head_indices = np.arange(12, 14)
-    left_arm_indices = np.arange(6, 9)
-    right_arm_indices = np.arange(9, 12)
     left_leg_indices = np.arange(0, 3)
     right_leg_indices = np.arange(3, 6)
+    left_arm_indices = np.arange(6, 9)
+    right_arm_indices = np.arange(9, 12)
+    head_indices = np.arange(12, 14)
 
-    head_connectivity = _connectivity_from_array(head_indices)
-    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
-    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
     left_leg_connectivity = _connectivity_from_array(left_leg_indices)
     right_leg_connectivity = _connectivity_from_array(right_leg_indices)
+    left_arm_connectivity = _connectivity_from_array(left_arm_indices)
+    right_arm_connectivity = _connectivity_from_array(right_arm_indices)
+    head_connectivity = _connectivity_from_array(head_indices)
 
-    total_connectivity = np.vstack((head_connectivity,
+    total_connectivity = np.vstack([left_leg_connectivity,
+                                    right_leg_connectivity,
                                     left_arm_connectivity,
                                     right_arm_connectivity,
-                                    left_leg_connectivity,
-                                    right_leg_connectivity))
+                                    head_connectivity])
 
     new_landmark_group = LandmarkGroup(
         PointGraph(landmark_group.lms.points, total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['head'] = head_indices
-    new_landmark_group['left_arm'] = left_arm_indices
-    new_landmark_group['right_arm'] = right_arm_indices
     new_landmark_group['left_leg'] = left_leg_indices
     new_landmark_group['right_leg'] = right_leg_indices
+    new_landmark_group['left_arm'] = left_arm_indices
+    new_landmark_group['right_arm'] = right_arm_indices
+    new_landmark_group['head'] = head_indices
+
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1325,10 +1334,10 @@ def flic_pose(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - face
-      - left arm
-      - right arm
+      - left_arm
+      - right_arm
       - hips
+      - face
 
     Parameters
     ----------
@@ -1354,10 +1363,11 @@ def flic_pose(landmark_group):
     group_label = 'flic_pose'
     _validate_input(landmark_group, 11, group_label)
     labels = OrderedDict([
-        ('face', (8, 11, True)),
-        ('left arm', (0, 3, False)),
-        ('right arm', (3, 6, False)),
-        ('hips', (6, 8, False))])
+        ('left_arm', (0, 3, False)),
+        ('right_arm', (3, 6, False)),
+        ('hips', (6, 8, False)),
+        ('face', (8, 11, True))])
+
     return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
@@ -1440,7 +1450,7 @@ def streetscene_car_view_1(landmark_group):
       - front
       - bonnet
       - windshield
-      - left side
+      - left_side
 
     Parameters
     ----------
@@ -1494,7 +1504,7 @@ def streetscene_car_view_1(landmark_group):
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
     new_landmark_group['windshield'] = windshield_indices
-    new_landmark_group['left side'] = left_side_indices
+    new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1509,7 +1519,7 @@ def streetscene_car_view_2(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - left side
+      - left_side
 
     Parameters
     ----------
@@ -1550,7 +1560,7 @@ def streetscene_car_view_2(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['left side'] = left_side_indices
+    new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1565,7 +1575,7 @@ def streetscene_car_view_3(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - left side
+      - left_side
       - rear windshield
       - trunk
       - rear
@@ -1619,8 +1629,8 @@ def streetscene_car_view_3(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['left side'] = left_side_indices
-    new_landmark_group['rear windshield'] = rear_windshield_indices
+    new_landmark_group['left_side'] = left_side_indices
+    new_landmark_group['rear_windshield'] = rear_windshield_indices
     new_landmark_group['trunk'] = trunk_indices
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -1640,7 +1650,7 @@ def streetscene_car_view_4(landmark_group):
       - front
       - bonnet
       - windshield
-      - right side
+      - right_side
 
     Parameters
     ----------
@@ -1695,7 +1705,7 @@ def streetscene_car_view_4(landmark_group):
     new_landmark_group['front'] = front_indices
     new_landmark_group['bonnet'] = bonnet_indices
     new_landmark_group['windshield'] = windshield_indices
-    new_landmark_group['right side'] = right_side_indices
+    new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1710,7 +1720,7 @@ def streetscene_car_view_5(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - right side
+      - right_side
 
     Parameters
     ----------
@@ -1751,7 +1761,7 @@ def streetscene_car_view_5(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['right side'] = right_side_indices
+    new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
     return group_label, new_landmark_group
@@ -1766,8 +1776,8 @@ def streetscene_car_view_6(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - right side
-      - rear windshield
+      - right_side
+      - rear_windshield
       - trunk
       - rear
 
@@ -1820,8 +1830,8 @@ def streetscene_car_view_6(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['right side'] = right_side_indices
-    new_landmark_group['rear windshield'] = rear_windshield_indices
+    new_landmark_group['right_side'] = right_side_indices
+    new_landmark_group['rear_windshield'] = rear_windshield_indices
     new_landmark_group['trunk'] = trunk_indices
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
@@ -1838,7 +1848,7 @@ def streetscene_car_view_7(landmark_group):
 
     The semantic labels applied are as follows:
 
-      - rear windshield
+      - rear_windshield
       - trunk
       - rear
 
@@ -1887,7 +1897,7 @@ def streetscene_car_view_7(landmark_group):
         PointGraph(landmark_group.lms.points[ind], total_connectivity),
         OrderedDict([('all', np.ones(n_points, dtype=np.bool))]))
 
-    new_landmark_group['rear windshield'] = rear_windshield_indices
+    new_landmark_group['rear_windshield'] = rear_windshield_indices
     new_landmark_group['trunk'] = trunk_indices
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
