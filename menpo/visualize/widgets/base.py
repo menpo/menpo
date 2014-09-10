@@ -170,20 +170,20 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     image_number_wid.value = 0
 
 
-def visualize_appearance_model(appearance_models, n_parameters=None,
-                               parameters_bounds=(-3.0, 3.0),
-                               figure_size=(7, 7), mode='multiple',
-                               popup=False, tab=False, **kwargs):
+def visualize_shape_model(shape_models, n_parameters=None,
+                          parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
+                          mode='multiple', popup=False, tab=False, **kwargs):
     r"""
-    Allows the dynamic visualization of a multilevel appearance model.
+    Allows the dynamic visualization of a multilevel shape model.
 
     Parameters
     -----------
-    appearance_models : `list` of :map:`PCAModel` or subclass
-        The AAM to be displayed.
+    shape_models : `list` of :map:`PCAModel` or subclass
+        The multilevel shape model to be displayed.
 
     n_parameters : `int`, optional
-        The number of principal components to be used for the parameters sliders
+        The number of principal components to be used for the parameters
+        sliders.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -208,7 +208,189 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
     import matplotlib.pylab as plt
     from collections import OrderedDict
 
-    # fix n_parameters
+    # Check n_parameters
+    if n_parameters is None:
+        n_parameters = shape_models[0].n_active_components
+
+    # Define plot function
+    def show_instance(name, value):
+        # clear current figure
+        clear_output()
+
+        # get params
+        level = level_wid.value
+        parameters_values = model_parameters_wid.parameters_values
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        axes_visible = figure_options_wid.axes_visible
+
+        # compute instance
+        weights = parameters_values * shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5
+        instance = shape_models[level].instance(weights)
+
+        # plot
+        instance.view_landmarks(**kwargs)
+        plt.axis('image')
+
+        # set figure size
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        # turn axis on/off
+        if not axes_visible:
+            plt.axis('off')
+
+        # change info_wid info
+        tmp_range = instance.range()
+        txt = "$\\bullet~\\texttt{Level: " + \
+              "{}".format(level+1) + \
+              " out of " + \
+              "{}".format(n_levels) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(shape_models[level].n_components) + \
+              " components in total.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(shape_models[level].n_active_components) + \
+              " active components.}\\\\ \\bullet~\\texttt{" + \
+              "{0:.1f}".format(shape_models[level].variance_ratio*100) + \
+              "% variance kept.}\\\\ " \
+              "\\bullet~\\texttt{Instance range: " + \
+              "{0:.1f} x {1:.1f}".format(tmp_range[0], tmp_range[1]) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(instance.n_points) + \
+              " landmark points, " + \
+              "{}".format(shape_models[level].n_features) + \
+              " features.}$"
+        info_wid.children[1].value = txt
+
+    # Plot eigenvalues function
+    def plot_eigenvalues(name):
+        # clear current figure
+        clear_output()
+
+        # plot eigenvalues ratio
+        level = level_wid.value
+        plt.subplot(211)
+        plt.bar(range(len(shape_models[level].eigenvalues_ratio)),
+                shape_models[level].eigenvalues_ratio)
+        plt.ylabel('Variance Ratio')
+        plt.xlabel('Component Number')
+        plt.grid("on")
+        # plot eigenvalues cumulative ratio
+        plt.subplot(212)
+        plt.bar(range(len(shape_models[level].eigenvalues_cumulative_ratio)),
+                shape_models[level].eigenvalues_cumulative_ratio)
+        plt.ylabel('Cumulative Variance Ratio')
+        plt.xlabel('Component Number')
+        plt.grid("on")
+        # set figure size
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+
+    # Create options widgets
+    n_levels = len(shape_models)
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+    else:
+        radio_str = {'Level 0': 0, 'Level 1': 1}
+    level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
+                                   value=1, visible=n_levels != 1)
+    level_wid.on_trait_change(show_instance, 'value')
+    model_parameters_wid = model_parameters(
+        n_parameters, plot_function=show_instance, params_str='param ',
+        mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
+        toggle_show_visible=False, plot_eig_visible=True,
+        plot_eig_function=plot_eigenvalues)
+    figure_options_wid = figure_options(show_instance, x_scale_default=1.,
+                                        y_scale_default=1.,
+                                        show_axes_default=False,
+                                        toggle_show_default=tab,
+                                        toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
+
+    # Create final widget
+    tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
+    if tab:
+        wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
+    else:
+        wid = ContainerWidget(children=[tmp_wid, figure_options_wid, info_wid])
+    if popup:
+        wid = PopupWidget(children=[wid], button_text='Shape Model Menu')
+
+    # Display and format widget
+    display(wid)
+    if tab and popup:
+        wid.children[0].set_title(0, 'Shape parameters')
+        wid.children[0].set_title(1, 'Figure options')
+        wid.children[0].set_title(2, 'Model info')
+    elif tab and not popup:
+        wid.set_title(0, 'Shape parameters')
+        wid.set_title(1, 'Figure options')
+        wid.set_title(2, 'Model info')
+    tmp_wid.remove_class('vbox')
+    tmp_wid.add_class('hbox')
+    format_model_parameters(model_parameters_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold')
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold')
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold')
+
+    # Reset value to enable initial visualization
+    level_wid.value = 0
+
+
+def visualize_appearance_model(appearance_models, n_parameters=None,
+                               parameters_bounds=(-3.0, 3.0),
+                               figure_size=(7, 7), mode='multiple',
+                               popup=False, tab=False, **kwargs):
+    r"""
+    Allows the dynamic visualization of a multilevel appearance model.
+
+    Parameters
+    -----------
+    appearance_models : `list` of :map:`PCAModel` or subclass
+        The multilevel appearance model to be displayed.
+
+    n_parameters : `int`, optional
+        The number of principal components to be used for the parameters
+        sliders.
+
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+
+    mode : 'single' or 'multiple', optional
+        If single, only a single slider is constructed along with a drop down
+        menu.
+        If multiple, a slider is constructed for each parameter.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    tab : `boolean`, optional
+        If enabled, the widget will appear as a tab window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    import matplotlib.pylab as plt
+    from collections import OrderedDict
+
+    # Check n_parameters
     if n_parameters is None:
         n_parameters = appearance_models[0].n_active_components
 
@@ -248,7 +430,7 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
             else:
                 instance.glyph(vectors_block_size=glyph_block_size,
                                use_negative=glyph_use_negative,
-                               channels=channels).view()
+                               channels=channels).view(**kwargs)
         else:
             if landmarks_enabled:
                 instance.view_landmarks(group_label=group,
@@ -256,7 +438,7 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
                                         render_labels=legend_enabled,
                                         channels=channels, **kwargs)
             else:
-                instance.view(channels=channels)
+                instance.view(channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -293,8 +475,11 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
-        level = level_wid.value
+        # clear current figure
+        clear_output()
+
         # plot eigenvalues ratio
+        level = level_wid.value
         plt.subplot(211)
         plt.bar(range(len(appearance_models[level].eigenvalues_ratio)),
                 appearance_models[level].eigenvalues_ratio)
