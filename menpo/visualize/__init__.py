@@ -7,5 +7,4 @@ from .base import (
 from .text_utils import progress_bar_str, print_dynamic, print_bytes
 from .widgets import (visualize_images, visualize_shape_model,
                       visualize_appearance_model, visualize_aam,
-                      visualize_aam_joan, browse_fitted_images,
-                      browse_iter_images, plot_ced)
+                      browse_fitted_images, browse_iter_images, plot_ced)
