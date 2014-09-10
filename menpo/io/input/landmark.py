@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 from menpo.landmark.base import LandmarkGroup
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, PointGraph
 from menpo.transform import Scale
 from .base import Importer
 
@@ -507,15 +507,28 @@ class LJSONImporter(LandmarkImporter):
         all_points = []
         labels = []  # label per group
         labels_slices = []  # slices into the full pointcloud per label
-        start = 0
+        offset = 0
+        connectivity = []
         for group in lms_dict['groups']:
             lms = group['landmarks']
             labels.append(group['label'])
-            labels_slices.append(slice(start, len(lms) + start))
-            start = len(lms) + start
+            labels_slices.append(slice(offset, len(lms) + offset))
+            # Create the connectivity if it exists
+            conn = group.get('connectivity', [])
+            if conn:
+                # Offset relative connectivity according to the current index
+                conn = offset + np.asarray(conn)
+                connectivity.append(conn)
             for p in lms:
                 all_points.append(p['point'])
-        self.pointcloud = PointCloud(np.array(all_points))
+            offset += len(lms)
+
+        # Dont' create a PointGraph with no connectivity
+        points = np.array(all_points)
+        if len(connectivity) == 0:
+            self.pointcloud = PointCloud(points)
+        else:
+            self.pointcloud = PointGraph(points, np.vstack(connectivity))
         self.labels_to_masks = OrderedDict()
         # go through each label and build the appropriate boolean array
         for label, l_slice in zip(labels, labels_slices):
