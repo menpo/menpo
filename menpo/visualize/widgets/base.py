@@ -1,5 +1,6 @@
 from IPython.html.widgets import (interact, fixed, IntSliderWidget,
-                                  PopupWidget, ContainerWidget, TabWidget)
+                                  PopupWidget, ContainerWidget, TabWidget,
+                                  RadioButtonsWidget)
 from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
@@ -207,144 +208,122 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
         Passed through to the viewer.
     """
     import matplotlib.pylab as plt
+    from collections import OrderedDict
 
-    # Create options widgets
-    n_levels = len(appearance_models)
-    level_wid = IntSliderWidget(min=0, max=n_levels-1, step=1,
-                                value=1, description='Pyramid level')
-    model_parameters_wid = model_parameters(
-        n_params=n_parameters, params_str='parameter',
-        params_bounds=parameters_bounds, mode=mode, toggle_show_default=True,
-        toggle_show_visible=False)
-    channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
-                                          toggle_show_default=tab,
-                                          toggle_show_visible=not tab)
-    all_groups_keys = appearance_models[0].mean.landmarks.keys()
-    all_subgroups_keys = [appearance_models[0].mean.landmarks[g].keys()
-                          for g in all_groups_keys]
-    landmark_options_wid = landmark_options(all_groups_keys, all_subgroups_keys,
-                                            toggle_show_default=tab,
-                                            landmarks_default=True,
-                                            labels_default=False,
-                                            toggle_show_visible=not tab)
-    figure_options_wid = figure_options(x_scale_default=1.,
-                                        y_scale_default=1.,
-                                        toggle_show_default=tab,
-                                        toggle_show_visible=not tab)
-    info_wid = info_print(toggle_show_default=tab,
-                          toggle_show_visible=not tab)
-
-    # Define function
+    # Define plot function
     def show_instance(name, value):
         # clear current figure
         clear_output()
 
-        # selected level
+        # get params
         level = level_wid.value
-
-        # get channels
-        if channel_options_wid.children[1].children[0].value == "Single":
-            channels = channel_options_wid.children[1].children[1].children[0].children[0].value
-        else:
-            channels = range(
-                channel_options_wid.children[1].children[1].children[0].children[0].value,
-                channel_options_wid.children[1].children[1].children[0].children[1].value + 1)
-
-        # get flag values
-        glyph_enabled = channel_options_wid.children[1].children[1].children[1].children[1].children[0].value
-        sum_enabled = channel_options_wid.children[1].children[1].children[1].children[0].value
-        landmarks_enabled = landmark_options_wid.children[1].children[0].value
-        labels_enabled = landmark_options_wid.children[1].children[1].value
-        group = landmark_options_wid.children[2].children[0].value
-        with_labels = []
-        for ww in landmark_options_wid.children[2].children[1].children[1].children:
-            if ww.value:
-                with_labels.append(str(ww.description))
+        parameters_values = model_parameters_wid.parameters_values
+        channels = channel_options_wid.channels
+        glyph_enabled = channel_options_wid.glyph_enabled
+        glyph_block_size = channel_options_wid.glyph_block_size
+        glyph_use_negative = channel_options_wid.glyph_use_negative
+        sum_enabled = channel_options_wid.sum_enabled
+        landmarks_enabled = landmark_options_wid.landmarks_enabled
+        legend_enabled = landmark_options_wid.legend_enabled
+        group = landmark_options_wid.group
+        with_labels = landmark_options_wid.with_labels
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        axes_visible = figure_options_wid.axes_visible
 
         # compute instance
-        instance = appearance_models[level].mean
-        #print model_parameters_wid.parameters_values
+        weights = parameters_values * appearance_models[level].eigenvalues[:len(parameters_values)] ** 0.5
+        instance = appearance_models[level].instance(weights)
 
         # plot
-        if glyph_enabled:
-            s1 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value
-            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
+        if glyph_enabled or sum_enabled:
             if landmarks_enabled:
-                instance.glyph(vectors_block_size=s1, use_negative=s2,
-                               channels=channels).view_landmarks(
-                    group_label=group, with_labels=with_labels,
-                    render_labels=labels_enabled, **kwargs)
+                instance.glyph(vectors_block_size=glyph_block_size,
+                               use_negative=glyph_use_negative,
+                               channels=channels).\
+                    view_landmarks(group_label=group, with_labels=with_labels,
+                                   render_labels=legend_enabled, **kwargs)
             else:
-                instance.glyph(vectors_block_size=s1, use_negative=s2,
-                               channels=channels).view()
-        elif sum_enabled:
-            s2 = channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value
-            if landmarks_enabled:
-                instance.glyph(vectors_block_size=1, use_negative=s2,
-                               channels=channels).view_landmarks(
-                    group_label=group, with_labels=with_labels,
-                    render_labels=labels_enabled, **kwargs)
-            else:
-                instance.glyph(vectors_block_size=1, use_negative=s2,
+                instance.glyph(vectors_block_size=glyph_block_size,
+                               use_negative=glyph_use_negative,
                                channels=channels).view()
         else:
             if landmarks_enabled:
                 instance.view_landmarks(group_label=group,
                                         with_labels=with_labels,
-                                        render_labels=labels_enabled,
+                                        render_labels=legend_enabled,
                                         channels=channels, **kwargs)
             else:
                 instance.view(channels=channels)
 
         # set figure size
-        x_scale = figure_options_wid.children[1].children[0].value
-        y_scale = figure_options_wid.children[1].children[1].value
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
         # turn axis on/off
-        if not figure_options_wid.children[2].value:
+        if not axes_visible:
             plt.axis('off')
 
         # change info_wid info
-        txt = "$\\bullet~\\texttt{Image of size " + \
-              "{}".format(instance._str_shape) + \
+        txt = "$\\bullet~\\texttt{" + \
+              "{}".format(appearance_models[level].n_components) + \
+              "~components in total.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(appearance_models[level].n_active_components) + \
+              "~active components.}\\\\ \\bullet~\\texttt{" + \
+              "{0:.1f}".format(appearance_models[level].variance_ratio*100) + \
+              "% variance kept.}\\\\ " \
+              "\\bullet~\\texttt{Reference shape of size~" + \
+              instance._str_shape + \
               " with " + \
               "{}".format(instance.n_channels) + \
               " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(appearance_models[level].n_features) + \
+              " features.}\\\\ \\bullet~\\texttt{" + \
               "{}".format(instance.landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
+              " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
               "{0:.3f}".format(instance.pixels.min()) + \
               ", max=" + \
               "{0:.3f}".format(instance.pixels.max()) + \
               "}$"
         info_wid.children[1].value = txt
 
-    # Define traits
+    # Create options widgets
+    n_levels = len(appearance_models)
+    radio_str = OrderedDict()
+    for l in range(n_levels):
+        if l == 0:
+            radio_str["Level {} (low)".format(l)] = l
+        elif l == n_levels - 1:
+            radio_str["Level {} (high)".format(l)] = l
+        else:
+            radio_str["Level {}".format(l)] = l
+    level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
+                                   value=1)
     level_wid.on_trait_change(show_instance, 'value')
-    figure_options_wid.children[1].children[0].on_trait_change(show_instance,
-                                                               'value')
-    figure_options_wid.children[1].children[1].on_trait_change(show_instance,
-                                                               'value')
-    figure_options_wid.children[2].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[0].on_trait_change(show_instance,
-                                                                'value')
-    channel_options_wid.children[1].children[1].children[0].children[0].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[1].children[0].children[1].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].on_trait_change(show_instance, 'value')
-    channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].on_trait_change(show_instance, 'value')
-    landmark_options_wid.children[1].children[0].on_trait_change(show_instance,
-                                                                 'value')
-    landmark_options_wid.children[1].children[1].on_trait_change(show_instance,
-                                                                 'value')
-    landmark_options_wid.children[2].children[0].on_trait_change(show_instance,
-                                                                 'value')
-    for w in landmark_options_wid.children[2].children[1].children[1].children:
-        w.on_trait_change(show_instance, 'value')
-    for w in model_parameters_wid.children[1].children[0].children:
-        w.on_trait_change(show_instance, 'value')
+    model_parameters_wid = model_parameters(
+        n_parameters, plot_function=show_instance, params_str='parameter',
+        mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
+        toggle_show_visible=False)
+    channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
+                                          show_instance,
+                                          toggle_show_default=tab,
+                                          toggle_show_visible=not tab)
+    all_groups_keys = appearance_models[0].mean.landmarks.keys()
+    all_labels_keys = [appearance_models[0].mean.landmarks[g].keys()
+                       for g in all_groups_keys]
+    landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
+                                            show_instance,
+                                            toggle_show_default=tab,
+                                            landmarks_default=True,
+                                            legend_default=False,
+                                            toggle_show_visible=not tab)
+    figure_options_wid = figure_options(show_instance, x_scale_default=1.,
+                                        y_scale_default=1.,
+                                        show_axes_default=False,
+                                        toggle_show_default=tab,
+                                        toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=tab,
+                          toggle_show_visible=not tab)
 
-    # Display widget
+    # Create final widget
     if tab:
         tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
         wid = TabWidget(children=[tmp_wid, channel_options_wid,
@@ -356,22 +335,22 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
                                         landmark_options_wid,
                                         figure_options_wid, info_wid])
     if popup:
-        wid = PopupWidget(children=[wid])
-    display(wid)
+        wid = PopupWidget(children=[wid], button_text='Appearance Model Menu')
 
-    # Format widget
+    # Display and format widget
+    display(wid)
     if tab and popup:
         wid.children[0].set_title(0, 'Appearance parameters')
         wid.children[0].set_title(1, 'Channels options')
         wid.children[0].set_title(2, 'Landmarks options')
         wid.children[0].set_title(3, 'Figure options')
-        wid.children[0].set_title(4, 'Image info')
+        wid.children[0].set_title(4, 'Model info')
     elif tab and not popup:
         wid.set_title(0, 'Appearance parameters')
         wid.set_title(1, 'Channels options')
         wid.set_title(2, 'Landmarks options')
         wid.set_title(3, 'Figure options')
-        wid.set_title(4, 'Image info')
+        wid.set_title(4, 'Model info')
     format_model_parameters(model_parameters_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
