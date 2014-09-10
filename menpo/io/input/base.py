@@ -25,7 +25,7 @@ def load(path):
         Any collection of HDF5able objects.
 
     """
-    return hdf5able.load(path)
+    return hdf5able.load(_norm_path(path))
 
 
 def data_dir_path():
@@ -395,7 +395,6 @@ def landmark_file_paths(pattern):
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=same_name,
                            importer_kwargs=None, verbose=False):
-    pattern = _norm_path(pattern)
     filepaths = list(glob_with_suffix(pattern, extension_map))
     if max_assets:
         filepaths = filepaths[:max_assets]
@@ -581,6 +580,7 @@ def _pathlib_glob_for_pattern(pattern):
     ValueError
         If the pattern doesn't contain a '*' wildcard and is not a directory
     """
+    pattern = _norm_path(pattern)
     gsplit = pattern.split('*', 1)
     if len(gsplit) == 1:
         # no glob provided. Is the provided pattern a dir?
