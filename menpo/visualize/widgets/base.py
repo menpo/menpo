@@ -170,7 +170,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     image_number_wid.value = 0
 
 
-def visualize_appearance_model(appearance_models, n_parameters=10,
+def visualize_appearance_model(appearance_models, n_parameters=None,
                                parameters_bounds=(-3.0, 3.0),
                                figure_size=(7, 7), mode='multiple',
                                popup=False, tab=False, **kwargs):
@@ -209,6 +209,10 @@ def visualize_appearance_model(appearance_models, n_parameters=10,
     """
     import matplotlib.pylab as plt
     from collections import OrderedDict
+
+    # fix n_parameters
+    if n_parameters is None:
+        n_parameters = appearance_models[0].n_active_components
 
     # Define plot function
     def show_instance(name, value):
