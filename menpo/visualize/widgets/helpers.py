@@ -652,8 +652,8 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     info_wid.set_css('border', container_border)
 
 
-def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
-                     mode='multiple', toggle_show_default=True,
+def model_parameters(n_params, params_str, mode='multiple',
+                     params_bounds=(-3., 3.), toggle_show_default=True,
                      toggle_show_visible=True):
     r"""
     Creates a widget with Model Parameters. Specifically, it has:
@@ -680,13 +680,13 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
     params_str : `str`
         The string that will be used for each parameters name.
 
-    bounds : (`float`, `float`), optional
-        The minimum and maximum bounds, in std units, for the sliders.
-
     mode : 'single' or 'multiple', optional
         If single, only a single slider is constructed along with a drop down
         menu.
         If multiple, a slider is constructed for each parameter.
+
+    params_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -697,8 +697,8 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
     from collections import OrderedDict
 
     # Initialize values list
-    #parameters_values = [0] * n_params
-    parameters_values = [1.2, 2.1, 3., -0.3, -2.4]
+    parameters_values = [0.0] * n_params
+
     # Toggle button that controls visibility
     but = ToggleButtonWidget(description='Parameters',
                              value=toggle_show_default,
@@ -722,40 +722,53 @@ def model_parameters(n_params, params_str, params_bounds=(-3., 3.),
                                    value=0.)
         dropdown_params = DropdownWidget(values=vals)
         parameters_wid = ContainerWidget(children=[dropdown_params, slider])
+
+    # Group widgets
     params_and_reset = ContainerWidget(children=[parameters_wid, reset_button])
     model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
 
-    # set fields
+    # Save mode and parameters values
     model_parameters_wid.mode = mode
     model_parameters_wid.parameters_values = parameters_values
 
-    # reset function
-    #def reset_params(name):
-    #    if mode == 'multiple':
-    #        for ww in parameters_wid.children:
-    #            ww.value = 0.
-    #    else:
-    #        parameters_wid.children[0].value = "{}0".format(params_str)
-    #        parameters_wid.children[1].value = 0.
-    #    model_parameters_wid.parameters_values = [0] * n_params
-    #reset_button.on_click(reset_params)
-
-    # parameters sliders function
-    #def get_params_values(name, value):
-    #    if mode == 'multiple':
-    #        model_parameters_wid.parameters_values = [
-    #            p_wid.value for p_wid in parameters_wid.children]
-    #    else:
-    #        model_parameters_wid.parameters_values[dropdown_params.value] = slider.value
-    #for w in parameters_wid.children:
-    #    w.on_trait_change(get_params_values, 'value')
-
-    # drop down menu function
+    # set up functions
+    # plot
+    def plot(name, value):
+        print model_parameters_wid.parameters_values
     if mode == 'single':
+        # save slider value to parameters values list
+        def save_slider_value(name, value):
+            model_parameters_wid.parameters_values[dropdown_params.value] = value
+        slider.on_trait_change(save_slider_value, 'value')
+
+        # set correct value to slider when drop down menu value changes
         def set_slider_value(name, value):
-            print model_parameters_wid.parameters_values[value]
             slider.value = model_parameters_wid.parameters_values[value]
         dropdown_params.on_trait_change(set_slider_value, 'value')
+
+        # assign main plotting function when slider value changes
+        slider.on_trait_change(plot, 'value')
+    else:
+        # save all sliders value to parameters values list
+        def save_sliders_values(name, value):
+            model_parameters_wid.parameters_values = \
+                [p_wid.value for p_wid in parameters_wid.children]
+
+        # assign saving values and main plotting function to all sliders
+        for w in parameters_wid.children:
+            w.on_trait_change(save_sliders_values, 'value')
+            w.on_trait_change(plot, 'value')
+
+    # reset function
+    def reset_params(name):
+        model_parameters_wid.parameters_values = [0.0] * n_params
+        if mode == 'multiple':
+            for ww in parameters_wid.children:
+                ww.value = 0.
+        else:
+            parameters_wid.children[0].value = 0
+            parameters_wid.children[1].value = 0.
+    reset_button.on_click(reset_params)
 
     # Toggle button function
     def show_options(name, value):
