@@ -501,7 +501,8 @@ class LJSONImporter(LandmarkImporter):
     """
     def _parse_format(self, asset=None):
         with open(self.filepath, 'rb') as f:
-            lms_dict = json.load(f)  # lms_dict is now a dict rep the JSON
+            # lms_dict is now a dict rep the JSON
+            lms_dict = json.load(f, object_pairs_hook=OrderedDict)
 
         all_points = []
         labels = []  # label per group
