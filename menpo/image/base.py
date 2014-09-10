@@ -350,6 +350,26 @@ class Image(Vectorizable, LandmarkableViewable):
             image_data = np.array(image_data, copy=True, order='C')
         self.pixels = image_data
 
+    def extract_channels(self, channels):
+        r"""
+        A copy of this image with only the specified channels.
+
+        Parameters
+        ----------
+        channels : `int` or `[int]`
+            The channel index or list of channel indices to retain
+
+        Returns
+        -------
+        image : type(self)
+            A copy of this image with only the channels requested.
+        """
+        copy = self.copy()
+        if not isinstance(channels, list):
+            channels = [channels]  # ensure we don't remove the channel axis
+        copy.pixels = self.pixels[..., channels]
+        return copy
+
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""
         Histogram binning of the values of this image.
