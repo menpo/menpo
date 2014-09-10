@@ -175,13 +175,11 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
                                figure_size=(7, 7), mode='multiple',
                                popup=False, tab=False, **kwargs):
     r"""
-    Allows the dynamic visualization of an AAM by means of six simple sliders
-    that control three weights associated to the first three shape and
-    appearance components.
+    Allows the dynamic visualization of a multilevel appearance model.
 
     Parameters
     -----------
-    appearance_model : `list` of :map:`PCAModel` or subclass
+    appearance_models : `list` of :map:`PCAModel` or subclass
         The AAM to be displayed.
 
     n_parameters : `int`, optional
@@ -354,12 +352,10 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
                                         show_axes_default=False,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
-    info_wid = info_print(toggle_show_default=tab,
-                          toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
-    tmp_wid = ContainerWidget(children=[level_wid,
-                                        model_parameters_wid])
+    tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
     if tab:
         wid = TabWidget(children=[tmp_wid, channel_options_wid,
                                   landmark_options_wid, figure_options_wid,
