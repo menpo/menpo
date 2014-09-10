@@ -5,7 +5,7 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   ButtonWidget)
 
 
-def figure_options(x_scale_default=1., y_scale_default=1.,
+def figure_options(plot_function, x_scale_default=1., y_scale_default=1.,
                    coupled_default=False, show_axes_default=True,
                    toggle_show_default=True,
                    figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
@@ -19,16 +19,27 @@ def figure_options(x_scale_default=1., y_scale_default=1.,
         3) A checkbox that controls the visibility of the figure's axes.
         4) A toggle button that controls the visibility of all the above, i.e.
            the figure options.
+
     The structure of the widgets is the following:
         figure_options_wid.children = [toggle_button, figure_scale,
                                        show_axes_checkbox]
         figure_scale.children = [X_scale_slider, Y_scale_slider,
                                  coupled_checkbox]
+
+    The returned widget saves the selected values in the following fields:
+        figure_options_wid.x_scale
+        figure_options_wid.y_scale
+        figure_options_wid.axes_visible
+
     To fix the alignment within this widget please refer to
     `format_figure_options()` function.
 
     Parameters
     ----------
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
     x_scale_default : `float`, optional
         The initial value of the horizontal axis scale.
 
@@ -89,6 +100,11 @@ def figure_options(x_scale_default=1., y_scale_default=1.,
     figure_options_wid = ContainerWidget(children=[but, figure_scale,
                                                    show_axes])
 
+    # Initialize variables
+    figure_options_wid.x_scale = x_scale_default
+    figure_options_wid.y_scale = y_scale_default
+    figure_options_wid.axes_visible = show_axes_default
+
     # Toggle button function
     if figure_scales_visible and show_axes_visible:
         def show_options(name, value):
@@ -140,10 +156,28 @@ def figure_options(x_scale_default=1., y_scale_default=1.,
             Y_scale.disabled = False
     coupled.on_trait_change(coupled_sliders, 'value')
 
+    # X scale slider function
     def x_fun(name, old_value, value):
+        figure_options_wid.x_scale = value
         if coupled.value:
             Y_scale.value += value - old_value
     X_scale.on_trait_change(x_fun, 'value')
+
+    # Y scale slider function
+    def y_fun(name, value):
+        figure_options_wid.y_scale = value
+    Y_scale.on_trait_change(y_fun, 'value')
+
+    # show axes checkbox function
+    def show_axes_fun(name, value):
+        figure_options_wid.axes_visible = value
+    show_axes.on_trait_change(show_axes_fun, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        X_scale.on_trait_change(plot_function, 'value')
+        Y_scale.on_trait_change(plot_function, 'value')
+        show_axes.on_trait_change(plot_function, 'value')
 
     return figure_options_wid
 
@@ -194,7 +228,7 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     figure_options_wid.set_css('border', container_border)
 
 
-def channel_options(n_channels, toggle_show_default=True,
+def channel_options(n_channels, plot_function, toggle_show_default=True,
                     toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
@@ -210,6 +244,7 @@ def channel_options(n_channels, toggle_show_default=True,
            checkbox that enables negative values visualization.
         6) A toggle button that controls the visibility of all the above, i.e.
            the channel options.
+
     The structure of the widgets is the following:
         channel_options_wid.children = [toggle_button, all_but_toggle]
         all_but_toggle.children = [mode_radiobuttons, all_but_radiobuttons]
@@ -219,6 +254,13 @@ def channel_options(n_channels, toggle_show_default=True,
         glyph_all.children = [glyph_checkbox, glyph_options]
         glyph_options.children = [block_size_text, use_negative_checkbox]
 
+    The returned widget saves the selected values in the following fields:
+        channel_options_wid.channels
+        channel_options_wid.glyph_enabled
+        channel_options_wid.glyph_block_size
+        channel_options_wid.glyph_use_negative
+        channel_options_wid.sum_enabled
+
     To fix the alignment within this widget please refer to
     `format_channel_options()` function.
 
@@ -226,6 +268,10 @@ def channel_options(n_channels, toggle_show_default=True,
     ----------
     n_channels : `int`
         The number of channels.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -273,7 +319,16 @@ def channel_options(n_channels, toggle_show_default=True,
     all_but_radiobuttons = ContainerWidget(children=[sliders,
                                                      multiple_checkboxes])
     all_but_toggle = ContainerWidget(children=[mode, all_but_radiobuttons])
+
+    # Widget container
     channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
+
+    # Initialize variables
+    channel_options_wid.channels = 0
+    channel_options_wid.glyph_enabled = False
+    channel_options_wid.glyph_block_size = 3
+    channel_options_wid.glyph_use_negative = False
+    channel_options_wid.sum_enabled = False
 
     # Define mode visibility
     def mode_selection(name, value):
@@ -296,10 +351,10 @@ def channel_options(n_channels, toggle_show_default=True,
             first_slider_wid.max = n_channels-1
             second_slider_wid.min = 0
             second_slider_wid.max = n_channels-1
-            if first_slider_wid.value < n_channels - 2:
-                second_slider_wid.value = first_slider_wid.value + 1
-            else:
+            if first_slider_wid.value == n_channels - 1:
                 second_slider_wid.value = n_channels - 1
+            else:
+                second_slider_wid.value = first_slider_wid.value + 1
             second_slider_wid.visible = True
             sum_wid.visible = True
             sum_wid.value = False
@@ -328,18 +383,40 @@ def channel_options(n_channels, toggle_show_default=True,
             glyph_wid.value = False
     sum_wid.on_trait_change(sum_fun, 'value')
 
+    # Function that gets glyph/sum options
+    def get_glyph_options(name, value):
+        channel_options_wid.glyph_enabled = glyph_wid.value
+        channel_options_wid.sum_enabled = sum_wid.value
+        channel_options_wid.glyph_use_negative = glyph_use_negative.value
+        channel_options_wid.glyph_block_size = glyph_block_size.value
+        if channel_options_wid.sum_enabled:
+            channel_options_wid.glyph_block_size = 1
+    glyph_wid.on_trait_change(get_glyph_options, 'value')
+    sum_wid.on_trait_change(get_glyph_options, 'value')
+    glyph_use_negative.on_trait_change(get_glyph_options, 'value')
+    glyph_block_size.on_trait_change(get_glyph_options, 'value')
+
     # Define multiple channels sliders functionality
     def first_slider_val(name, value):
-        if mode.value == 'Multiple' and value >= second_slider_wid.value:
-            first_slider_wid.value = second_slider_wid.value - 1
+        if mode.value == 'Multiple' and value > second_slider_wid.value:
+            first_slider_wid.value = second_slider_wid.value
 
     def second_slider_val(name, value):
-        if mode.value == 'Multiple' and value <= first_slider_wid.value:
-            second_slider_wid.value = first_slider_wid.value + 1
+        if mode.value == 'Multiple' and value < first_slider_wid.value:
+            second_slider_wid.value = first_slider_wid.value
+
+    def get_channels(name, value):
+        if mode.value == "Single":
+            channel_options_wid.channels = first_slider_wid.value
         else:
-            first_slider_wid.max = n_channels - 1
+            channel_options_wid.channels = range(first_slider_wid.value,
+                                                 second_slider_wid.value + 1)
     first_slider_wid.on_trait_change(first_slider_val, 'value')
     second_slider_wid.on_trait_change(second_slider_val, 'value')
+    first_slider_wid.on_trait_change(get_channels, 'value')
+    second_slider_wid.on_trait_change(get_channels, 'value')
+    mode.on_trait_change(get_channels, 'value')
+    mode.on_trait_change(get_glyph_options, 'value')
 
     # Toggle button function
     def toggle_image_options(name, value):
@@ -362,6 +439,16 @@ def channel_options(n_channels, toggle_show_default=True,
             glyph_options.children[0].visible = False
             glyph_options.children[1].visible = False
     but.on_trait_change(toggle_image_options, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        mode.on_trait_change(plot_function, 'value')
+        first_slider_wid.on_trait_change(plot_function, 'value')
+        second_slider_wid.on_trait_change(plot_function, 'value')
+        sum_wid.on_trait_change(plot_function, 'value')
+        glyph_wid.on_trait_change(plot_function, 'value')
+        glyph_block_size.on_trait_change(plot_function, 'value')
+        glyph_use_negative.on_trait_change(plot_function, 'value')
 
     return channel_options_wid
 
@@ -418,22 +505,30 @@ def format_channel_options(channel_options_wid, container_padding='6px',
     channel_options_wid.set_css('border', container_border)
 
 
-def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
-                     landmarks_default=True, labels_default=True,
-                     toggle_show_visible=True):
+def landmark_options(group_keys, labels_keys, plot_function,
+                     toggle_show_default=True, landmarks_default=True,
+                     legend_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
         2) A drop down menu with the available landmark groups.
-        3) Several toggle buttons with the available landmark sub-groups.
-        4) A checkbox that controls the labels' visibility.
+        3) Several toggle buttons with the group's available labels.
+        4) A checkbox that controls the legend's visibility.
         5) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
+
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, checkboxes, groups]
-        checkboxes.children = [landmarks_checkbox, labels_checkbox]
-        groups.children = [group_drop_down_menu, subgroup]
-        subgroup.children = [subgroup_text, subgroup_toggle_buttons]
+        checkboxes.children = [landmarks_checkbox, legend_checkbox]
+        groups.children = [group_drop_down_menu, labels]
+        labels.children = [labels_text, labels_toggle_buttons]
+
+    The returned widget saves the selected values in the following fields:
+        landmark_options_wid.landmarks_enabled
+        landmark_options_wid.legend_enabled
+        landmark_options_wid.group
+        landmark_options_wid.with_labels
+
     To fix the alignment within this widget please refer to
     `format_landmark_options()` function.
 
@@ -442,8 +537,12 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     group_keys : `list` of `str`
         A list of the available landmark groups.
 
-    subgroup_keys : `list` of `str`
-        A list of lists of each landmark group's subgroups.
+    labels_keys : `list` of `str`
+        A list of lists of each landmark group's labels.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -451,12 +550,13 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     landmarks_default : `boolean`, optional
         The initial value of the landmarks visibility checkbox.
 
-    labels_default : `boolean`, optional
-        The initial value of the labels visibility checkbox.
+    legend_default : `boolean`, optional
+        The initial value of the legend's visibility checkbox.
 
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    nontas = 0
     # Toggle button that controls options' visibility
     but = ToggleButtonWidget(description='Landmark Options',
                              value=toggle_show_default,
@@ -465,48 +565,66 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
     # Create widgets
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
-    labels = CheckboxWidget(description='Show legend', value=labels_default)
+    legend = CheckboxWidget(description='Show legend', value=legend_default)
     group = DropdownWidget(values=group_keys, description='Group')
-    subgroup_toggles = [[ToggleButtonWidget(description=k, value=True)
-                         for k in s_keys]
-                        for s_keys in subgroup_keys]
-    subgroup_text = LatexWidget(value='Labels')
-    subgroup = ContainerWidget(children=subgroup_toggles[0])
+    labels_toggles = [[ToggleButtonWidget(description=k, value=True)
+                       for k in s_keys] for s_keys in labels_keys]
+    labels_text = LatexWidget(value='Labels')
+    labels = ContainerWidget(children=labels_toggles[0])
 
     # Group widgets
-    checkboxes_wid = ContainerWidget(children=[landmarks, labels])
-    subgroup_and_text = ContainerWidget(children=[subgroup_text, subgroup])
-    group_wid = ContainerWidget(children=[group, subgroup_and_text])
+    checkboxes_wid = ContainerWidget(children=[landmarks, legend])
+    labels_and_text = ContainerWidget(children=[labels_text, labels])
+    group_wid = ContainerWidget(children=[group, labels_and_text])
+
+    # Widget container
     landmark_options_wid = ContainerWidget(children=[but, checkboxes_wid,
                                                      group_wid])
 
+    # Initialize variables
+    landmark_options_wid.landmarks_enabled = landmarks_default
+    landmark_options_wid.legend_enabled = legend_default
+    landmark_options_wid.group = group_keys[0]
+    landmark_options_wid.with_labels = labels_keys[0]
+
     # Disability control
     def landmarks_fun(name, value):
-        labels.disabled = not value
+        landmark_options_wid.landmarks_enabled = value
+        legend.disabled = not value
         group.disabled = not value
-        for s in subgroup_toggles:
+        for s in labels_toggles:
             for ww in s:
                 ww.disabled = not value
-        all_values = [ww.value for ww in subgroup.children]
+        all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
-            for ww in subgroup.children:
+            for ww in labels.children:
                 ww.value = True
     landmarks.on_trait_change(landmarks_fun, 'value')
     landmarks_fun('', landmarks_default)
 
     # Group drop down method
     def group_fun(name, value):
-        subgroup.children = subgroup_toggles[group_keys.index(value)]
+        landmark_options_wid.group = value
+        labels.children = labels_toggles[group_keys.index(value)]
     group.on_trait_change(group_fun, 'value')
 
-    # Subgroup function
-    def subgroup_fun(name, value):
-        all_values = [ww.value for ww in subgroup.children]
+    # Labels function
+    def labels_fun(name, value):
+        landmark_options_wid.with_labels = []
+        for ww in labels.children:
+            if ww.value:
+                landmark_options_wid.with_labels.append(str(ww.description))
+        all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
             landmarks.value = False
-    for s_group in subgroup_toggles:
+    for s_group in labels_toggles:
         for w in s_group:
-            w.on_trait_change(subgroup_fun, 'value')
+            w.on_trait_change(labels_fun, 'value')
+
+    # Legend function
+    def legend_fun(name, value):
+        landmark_options_wid.legend_enabled = value
+    legend.on_trait_change(legend_fun, 'value')
 
     # Toggle button function
     def show_options(name, value):
@@ -514,6 +632,14 @@ def landmark_options(group_keys, subgroup_keys, toggle_show_default=True,
         checkboxes_wid.visible = value
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        landmarks.on_trait_change(plot_function, 'value')
+        legend.on_trait_change(plot_function, 'value')
+        group.on_trait_change(plot_function, 'value')
+        for w in labels.children:
+            w.on_trait_change(plot_function, 'value')
 
     return landmark_options_wid
 
@@ -576,6 +702,7 @@ def info_print(toggle_show_default=True, toggle_show_visible=True):
         1) A latex widget where user can write the info text in latex format.
         2) A toggle button that controls the visibility of all the above, i.e.
            the info printing.
+
     The structure of the widgets is the following:
         info_wid.children = [toggle_button, text_widget]
 
@@ -652,14 +779,15 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     info_wid.set_css('border', container_border)
 
 
-def model_parameters(n_params, params_str, mode='multiple',
-                     params_bounds=(-3., 3.), toggle_show_default=True,
-                     toggle_show_visible=True):
+def model_parameters(n_params, plot_function=None, params_str='',
+                     mode='multiple', params_bounds=(-3., 3.),
+                     toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Model Parameters. Specifically, it has:
         1) A slider for each parameter if mode is 'multiple'.
         2) A single slider and a drop down menu selection if mode is 'single'.
         3) A reset button.
+
     The structure of the widgets is the following:
         model_parameters_wid.children = [toggle_button, parameters_and_reset]
         parameters_and_reset.children = [parameters_widgets, reset_button]
@@ -667,8 +795,11 @@ def model_parameters(n_params, params_str, mode='multiple',
         parameters_widgets.children = [drop_down_menu, slider]
         If mode is multiple:
         parameters_widgets.children = [all_sliders]
-    The model_parameters_wid object also holds the mode and parameters_values
-    information.
+
+    The returned widget saves the selected values in the following fields:
+        model_parameters_wid.parameters_values
+        model_parameters_wid.mode
+
     To fix the alignment within this widget please refer to
     `format_model_parameters()` function.
 
@@ -677,7 +808,11 @@ def model_parameters(n_params, params_str, mode='multiple',
     n_params : `int`
         The number of principal components to use for the sliders.
 
-    params_str : `str`
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    params_str : `str`, optional
         The string that will be used for each parameters name.
 
     mode : 'single' or 'multiple', optional
@@ -698,6 +833,10 @@ def model_parameters(n_params, params_str, mode='multiple',
 
     # Initialize values list
     parameters_values = [0.0] * n_params
+
+    # If only one slider, set mode to multiple
+    if n_params == 1:
+        mode = 'multiple'
 
     # Toggle button that controls visibility
     but = ToggleButtonWidget(description='Parameters',
@@ -725,16 +864,15 @@ def model_parameters(n_params, params_str, mode='multiple',
 
     # Group widgets
     params_and_reset = ContainerWidget(children=[parameters_wid, reset_button])
+
+    # Widget container
     model_parameters_wid = ContainerWidget(children=[but, params_and_reset])
 
     # Save mode and parameters values
-    model_parameters_wid.mode = mode
     model_parameters_wid.parameters_values = parameters_values
+    model_parameters_wid.mode = mode
 
     # set up functions
-    # plot
-    def plot(name, value):
-        print model_parameters_wid.parameters_values
     if mode == 'single':
         # save slider value to parameters values list
         def save_slider_value(name, value):
@@ -747,7 +885,8 @@ def model_parameters(n_params, params_str, mode='multiple',
         dropdown_params.on_trait_change(set_slider_value, 'value')
 
         # assign main plotting function when slider value changes
-        slider.on_trait_change(plot, 'value')
+        if plot_function is not None:
+            slider.on_trait_change(plot_function, 'value')
     else:
         # save all sliders value to parameters values list
         def save_sliders_values(name, value):
@@ -757,7 +896,8 @@ def model_parameters(n_params, params_str, mode='multiple',
         # assign saving values and main plotting function to all sliders
         for w in parameters_wid.children:
             w.on_trait_change(save_sliders_values, 'value')
-            w.on_trait_change(plot, 'value')
+            if plot_function is not None:
+                w.on_trait_change(plot_function, 'value')
 
     # reset function
     def reset_params(name):
