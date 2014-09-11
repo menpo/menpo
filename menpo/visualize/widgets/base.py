@@ -129,6 +129,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_img, x_scale_default=1.,
                                         y_scale_default=1.,
+                                        coupled_default=True,
                                         show_axes_default=False,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -136,15 +137,17 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                           toggle_show_visible=not tab)
 
     # Create final widget
-    final_children = [channel_options_wid, landmark_options_wid,
-                      figure_options_wid, info_wid]
-    tab_titles = ['Channels options', 'Landmarks options',
-                  'Figure options', 'Image info']
+    final_children = [info_wid, channel_options_wid, landmark_options_wid,
+                      figure_options_wid]
+    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
+                  'Figure options']
     if n_images > 1:
         image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
                                            value=0, description='Image Number')
         image_number_wid.on_trait_change(show_img, 'value')
+        final_children.insert(3, final_children.pop(0))
         final_children.insert(0, image_number_wid)
+        tab_titles.insert(3, tab_titles.pop(0))
         tab_titles.insert(0, 'Image number')
     if tab:
         wid = TabWidget(children=final_children)
@@ -378,6 +381,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plot_eig_function=plot_eigenvalues)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
+                                        coupled_default=True,
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -626,6 +630,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
+                                        coupled_default=True,
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -1000,6 +1005,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
+                                        coupled_default=True, 
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
