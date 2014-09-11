@@ -348,3 +348,64 @@ class BooleanImage(Image):
         # more manually than other image classes.
         warped_image.pixels[warped_image.mask] = sampled_pixel_values
         return warped_image
+
+    def constrain_to_landmarks(self, group=None, label=None, trilist=None):
+        r"""
+        Restricts this mask to be equal to the convex hull around the
+        landmarks chosen.
+
+        Parameters
+        ----------
+        group : string, Optional
+            The key of the landmark set that should be used. If None,
+            and if there is only one set of landmarks, this set will be used.
+
+            Default: None
+
+        label: string, Optional
+            The label of of the landmark manager that you wish to use. If no
+            label is passed, the convex hull of all landmarks is used.
+
+            Default: None
+
+        trilist: (t, 3) ndarray, Optional
+            Triangle list to be used on the landmarked points in selecting
+            the mask region. If None defaults to performing Delaunay
+            triangulation on the points.
+
+            Default: None
+        """
+        self.constrain_to_pointcloud(self.landmarks[group][label],
+                                     trilist=trilist)
+
+    def constrain_to_pointcloud(self, pointcloud, trilist=None):
+        r"""
+        Restricts this mask to be equal to the convex hull around a point cloud
+
+        Parameters
+        ----------
+        pointcloud : :map:`PointCloud`
+            The pointcloud of points that should be constrained to
+
+        trilist: (t, 3) ndarray, Optional
+            Triangle list to be used on the points in selecting
+            the mask region. If None defaults to performing Delaunay
+            triangulation on the points.
+
+            Default: None
+        """
+        from menpo.transform.piecewiseaffine import PiecewiseAffine
+        from menpo.transform.piecewiseaffine import TriangleContainmentError
+
+        if self.n_dims != 2:
+            raise ValueError("can only constrain mask on 2D images.")
+
+        if trilist is not None:
+            from menpo.shape import TriMesh
+            pointcloud = TriMesh(pointcloud.points, trilist)
+
+        pwa = PiecewiseAffine(pointcloud, pointcloud)
+        try:
+            pwa.apply(self.indices)
+        except TriangleContainmentError as e:
+            self.from_vector_inplace(~e.points_outside_source_domain)
