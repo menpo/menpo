@@ -40,6 +40,17 @@ def gradient(pixels):
     return np.concatenate(grad_per_channel, axis=-1)
 
 
+from scipy.ndimage import gaussian_filter as s_gf
+
+
+@ndfeature
+def gaussian_filter(pixels, sigma):
+    output = np.empty(pixels.shape)
+    for dim in range(pixels.shape[2]):
+        s_gf(pixels[..., dim], sigma, output=output[..., dim])
+    return output
+
+
 @winitfeature
 def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
