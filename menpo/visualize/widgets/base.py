@@ -784,31 +784,117 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         if not axes_visible:
             plt.axis('off')
 
-        # change info_wid info
-        txt = "$\\bullet~\\texttt{Level: " + \
-              "{}".format(level+1) + \
-              " out of " + \
-              "{}".format(n_levels) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(aam.appearance_models[level].n_components) + \
-              " components in total.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(aam.appearance_models[level].n_active_components) + \
-              " active components.}\\\\ \\bullet~\\texttt{" + \
-              "{0:.1f}".format(aam.appearance_models[level].variance_ratio*100) + \
-              "% variance kept.}\\\\ " \
-              "\\bullet~\\texttt{Reference shape of size " + \
-              instance._str_shape + \
-              " with " + \
-              "{}".format(instance.n_channels) + \
-              " channels.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(aam.appearance_models[level].n_features) + \
-              " features.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(instance.landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
-              "{0:.3f}".format(instance.pixels.min()) + \
-              ", max=" + \
-              "{0:.3f}".format(instance.pixels.max()) + \
-              "}$"
+        # Change info_wid info
+        # features info
+        if isinstance(aam.features[level], str):
+            if aam.appearance_models[level].mean.n_channels == 1:
+                tmp_feat = "Feature is {} with 1 channel.".\
+                    format(aam.features[level])
+            else:
+                tmp_feat = "Feature is {} with {} channels.".\
+                    format(aam.features[level],
+                           aam.appearance_models[level].mean.n_channels)
+        elif aam.features[level] is None:
+            tmp_feat = "No features extracted."
+        else:
+            if aam.appearance_models[level].mean.n_channels == 1:
+                tmp_feat = "Feature is {} with 1 channel.".\
+                    format(aam.features[level].__name__)
+            else:
+                tmp_feat = "Feature is {} with {} channels.".\
+                    format(aam.features[level].__name__,
+                           aam.appearance_models[level].mean.n_channels)
+        # create final str
+        if n_levels > 1:
+            # shape models info
+            if aam.scaled_shape_models:
+                tmp_shape_models = "Each level has a scaled shape model " \
+                                   "(reference frame)."
+            else:
+                tmp_shape_models = "Shape models (reference frames) are " \
+                                   "not scaled."
+
+            # pyramid info
+            if aam.pyramid_on_features:
+                tmp_pyramid = "Pyramid was applied on feature space."
+            else:
+                tmp_pyramid = "Features were extracted at each pyramid level."
+
+            txt = "$\\bullet~\\texttt{" + \
+                  "{}".format(aam.n_training_images) + \
+                  " training images.}" + \
+                  "\\\\ \\bullet~\\texttt{Warp using " + \
+                  aam.transform.__name__ + \
+                  " transform with '" + \
+                  aam.interpolator + \
+                  "' interpolation.}" + \
+                  "\\\\ \\bullet~\\texttt{Level " + \
+                  "{}/{}".format(level+1, aam.n_levels) + \
+                  " (downscale=" + \
+                  "{0:.1f}".format(aam.downscale) + \
+                  ").}" + \
+                  "\\\\ \\bullet~\\texttt{" + \
+                  tmp_shape_models + \
+                  "}" + \
+                  "\\\\ \\bullet~\\texttt{" + \
+                  tmp_pyramid + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  tmp_feat + \
+                  "}\\\\ \\bullet~\\texttt{Reference frame of length " + \
+                  "{} ({} x {}C, {} x {}C).".format(
+                      aam.appearance_models[level].n_features,
+                      aam.appearance_models[level].template_instance.n_true_pixels,
+                      aam.appearance_models[level].mean.n_channels,
+                      aam.appearance_models[level].template_instance._str_shape,
+                      aam.appearance_models[level].mean.n_channels) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{0} shape components ({1:.2f}% of variance).".format(
+                      aam.shape_models[level].n_components,
+                      aam.shape_models[level].variance_ratio * 100) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{0} appearance components ({1:.2f}% of variance).".format(
+                      aam.appearance_models[level].n_components,
+                      aam.appearance_models[level].variance_ratio * 100) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{}".format(instance.landmarks[group].lms.n_points) + \
+                  " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
+                  "{0:.3f}".format(instance.pixels.min()) + \
+                  ", max=" + \
+                  "{0:.3f}".format(instance.pixels.max()) + \
+                  "}$"
+        else:
+            txt = "$\\bullet~\\texttt{" + \
+                  "{}".format(aam.n_training_images) + \
+                  " training images.}" + \
+                  "\\\\ \\bullet~\\texttt{Warp using " + \
+                  aam.transform.__name__ + \
+                  " transform with '" + \
+                  aam.interpolator + \
+                  "' interpolation.}" + \
+                  "\\\\ \\bullet~\\texttt{" + \
+                  tmp_feat + \
+                  "}\\\\ \\bullet~\\texttt{Reference frame of length " + \
+                  "{} ({} x {}C, {} x {}C).".format(
+                      aam.appearance_models[level].n_features,
+                      aam.appearance_models[level].template_instance.n_true_pixels,
+                      aam.appearance_models[level].mean.n_channels,
+                      aam.appearance_models[level].template_instance._str_shape,
+                      aam.appearance_models[level].mean.n_channels) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{0} shape components ({1:.2f}% of variance).".format(
+                      aam.shape_models[level].n_components,
+                      aam.shape_models[level].variance_ratio * 100) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{0} appearance components ({1:.2f}% of variance).".format(
+                      aam.appearance_models[level].n_components,
+                      aam.appearance_models[level].variance_ratio * 100) + \
+                  "}\\\\ \\bullet~\\texttt{" + \
+                  "{}".format(instance.landmarks[group].lms.n_points) + \
+                  " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
+                  "{0:.3f}".format(instance.pixels.min()) + \
+                  ", max=" + \
+                  "{0:.3f}".format(instance.pixels.max()) + \
+                  "}$"
         info_wid.children[1].value = txt
 
     # Plot eigenvalues function
