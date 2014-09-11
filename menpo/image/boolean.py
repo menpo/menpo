@@ -378,11 +378,12 @@ class BooleanImage(Image):
         # note that we force the use of order=1 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
                                      warp_landmarks=warp_landmarks,
-                                     order=1, mode=mode, cval=0.)
+                                     order=1, mode=mode, cval=cval)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
-        boolean_image.landmarks = warped.landmarks
+        if warped.has_landmarks:
+            boolean_image.landmarks = warped.landmarks
         return boolean_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,

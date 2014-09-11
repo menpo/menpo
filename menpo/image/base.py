@@ -9,14 +9,13 @@ import PIL.Image as PILImage
 
 pyramid_gaussian = None  # expensive, from skimage.transform
 _smooth = None  # expensive, from skimage.transform.pyramids
-skwarp = None  # expensive, from skimage.transform.warp (as skwarp)
 
 from menpo.base import Vectorizable
 from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale, UniformScale,
-                             AlignmentUniformScale, Affine, Homogeneous)
+                             AlignmentUniformScale, Affine)
 from menpo.visualize.base import ImageViewer
-from .interpolation import scipy_interpolation
+from .interpolation import scipy_interpolation, cython_interpolation
 
 
 class ImageBoundaryError(ValueError):
@@ -44,10 +43,16 @@ class ImageBoundaryError(ValueError):
         self.snapped_min = snapped_min
         self.snapped_max = snapped_max
 
-# Store out a transform that simply switches the x and y axis
-xy_yx = Homogeneous(np.array([[0., 1., 0.],
-                              [1., 0., 0.],
-                              [0., 0., 1.]]))
+
+def indices_for_image_of_shape(shape):
+    r"""
+    The indices of all pixels in an image with a given shape (without
+    channel information).
+
+    :type: (`n_dims`, `n_pixels`) ndarray
+
+    """
+    return np.indices(shape).reshape([len(shape), -1]).T
 
 
 class Image(Vectorizable, LandmarkableViewable):
@@ -269,7 +274,7 @@ class Image(Vectorizable, LandmarkableViewable):
         :type: (`n_dims`, `n_pixels`) ndarray
 
         """
-        return np.indices(self.shape).reshape([self.n_dims, -1]).T
+        return indices_for_image_of_shape(self.shape)
 
     def _as_vector(self, keep_channels=False):
         r"""
@@ -911,22 +916,24 @@ class Image(Vectorizable, LandmarkableViewable):
             A copy of this image, warped.
 
         """
-        global skwarp
-        if skwarp is None:
-            from skimage.transform import warp as skwarp  # expensive
-        # skimage has an optimised Cython interpolation, if the transform
-        # we are using is an Affine we get faster interpolation, so we'll be
-        # go through them
-        # unfortunately they consider xy -> yx
-        t = xy_yx.compose_before(transform).compose_before(xy_yx)
-        if isinstance(transform, Affine):
-            mapping = t.h_matrix
+        if (isinstance(transform, Affine) and order in range(4) and
+            self.n_dims == 2):
+            # skimage has an optimised Cython interpolation for 2D affine
+            # warps
+            sampled = cython_interpolation(self.pixels, template_shape,
+                                           transform, order=order,
+                                           mode=mode, cval=cval)
         else:
-            # just give skimage a closure that applies our transform chain.
-            mapping = lambda x: t.apply(x)
-        warped_pixels = skwarp(self.pixels, inverse_map=mapping,
-                               output_shape=template_shape, order=order,
-                               mode=mode, cval=cval)
+            template_points = indices_for_image_of_shape(template_shape)
+            points_to_sample = transform.apply(template_points)
+            # we want to sample each channel in turn, returning a vector of
+            # sampled pixels. Store those in a (n_pixels, n_channels) array.
+            sampled = scipy_interpolation(self.pixels, points_to_sample,
+                                          order=order, mode=mode, cval=cval)
+        # set any nan values to 0
+        sampled[np.isnan(sampled)] = 0
+        # build a warped version of the image
+        warped_pixels = sampled.reshape(template_shape + (self.n_channels,))
         warped_image = Image(warped_pixels, copy=False)
 
         # warp landmarks if requested.
@@ -992,7 +999,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # while respecting the users rounding preference.
         template_shape = round_image_shape(transform.apply(self.shape),
                                            round)
-        # due to image indexing, we can't just apply the pseduoinverse
+        # due to image indexing, we can't just apply the pseudoinverse
         # transform to achieve the scaling we want though!
         # Consider a 3x rescale on a 2x4 image. Looking at each dimension:
         #    H 2 -> 6 so [0-1] -> [0-5] = 5/1 = 5x

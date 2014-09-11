@@ -104,6 +104,6 @@ def test_warp_to_mask_masked_image():
 def test_warp_to_shape_equal_warp_to_mask():
     r = menpo.transform.UniformScale(2.0, n_dims=2)
     b = mio.import_builtin_asset('breakingbad.jpg')
-    m_shape = b.warp_to_shape([540, 960], r)
-    m_mask = b.warp_to_mask(menpo.image.BooleanImage.blank([540, 960]), r)
+    m_shape = b.warp_to_shape((540, 960), r)
+    m_mask = b.warp_to_mask(menpo.image.BooleanImage.blank((540, 960)), r)
     assert_allclose(m_shape.pixels, m_mask.pixels)
