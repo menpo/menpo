@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature
 from .windowiterator import WindowIterator
@@ -40,14 +41,14 @@ def gradient(pixels):
     return np.concatenate(grad_per_channel, axis=-1)
 
 
-from scipy.ndimage import gaussian_filter as s_gf
-
-
 @ndfeature
 def gaussian_filter(pixels, sigma):
+    global scipy_gaussian_filter
+    if scipy_gaussian_filter is None:
+        from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
     output = np.empty(pixels.shape)
     for dim in range(pixels.shape[2]):
-        s_gf(pixels[..., dim], sigma, output=output[..., dim])
+        scipy_gaussian_filter(pixels[..., dim], sigma, output=output[..., dim])
     return output
 
 
