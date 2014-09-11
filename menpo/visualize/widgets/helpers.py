@@ -228,8 +228,8 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     figure_options_wid.set_css('border', container_border)
 
 
-def channel_options(n_channels, plot_function, toggle_show_default=True,
-                    toggle_show_visible=True):
+def channel_options(n_channels, plot_function, masked_default=False,
+                    toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
         1) Two radiobuttons that select an options mode, depending on whether
@@ -242,12 +242,14 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
            glyph.
         5) The glyph option is accompanied by a block size text field and a
            checkbox that enables negative values visualization.
-        6) A toggle button that controls the visibility of all the above, i.e.
+        6) A checkbox that defines whether the masked image will be displayed.
+        7) A toggle button that controls the visibility of all the above, i.e.
            the channel options.
 
     The structure of the widgets is the following:
         channel_options_wid.children = [toggle_button, all_but_toggle]
-        all_but_toggle.children = [mode_radiobuttons, all_but_radiobuttons]
+        all_but_toggle.children = [mode_and_masked, all_but_radiobuttons]
+        mode_and_masked.children = [mode_radiobuttons, masked_checkbox]
         all_but_radiobuttons.children = [all_sliders, multiple_checkboxes]
         all_sliders.children = [first_slider, second_slider]
         multiple_checkboxes.children = [sum_checkbox, glyph_all]
@@ -260,6 +262,7 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
         channel_options_wid.glyph_block_size
         channel_options_wid.glyph_use_negative
         channel_options_wid.sum_enabled
+        channel_options_wid.masked
 
     To fix the alignment within this widget please refer to
     `format_channel_options()` function.
@@ -272,6 +275,9 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
+
+    masked_default : `boolean`, optional
+        Defines whether the masked image will be displayed.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -286,6 +292,7 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
     mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
                               description='Mode:')
     mode.visible = toggle_show_default
+    masked = CheckboxWidget(value=masked_default, description='Masked')
     first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
                                        value=0, description='Channel')
     first_slider_wid.visible = toggle_show_default
@@ -318,7 +325,8 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
     sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
     all_but_radiobuttons = ContainerWidget(children=[sliders,
                                                      multiple_checkboxes])
-    all_but_toggle = ContainerWidget(children=[mode, all_but_radiobuttons])
+    mode_and_masked = ContainerWidget(children=[mode, masked])
+    all_but_toggle = ContainerWidget(children=[mode_and_masked, all_but_radiobuttons])
 
     # Widget container
     channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
@@ -329,6 +337,7 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
     channel_options_wid.glyph_block_size = 3
     channel_options_wid.glyph_use_negative = False
     channel_options_wid.sum_enabled = False
+    channel_options_wid.masked = masked_default
 
     # Define mode visibility
     def mode_selection(name, value):
@@ -382,6 +391,11 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
         if value:
             glyph_wid.value = False
     sum_wid.on_trait_change(sum_fun, 'value')
+
+    # Define masked functionality
+    def masked_fun(name, value):
+        channel_options_wid.masked = value
+    masked.on_trait_change(masked_fun, 'value')
 
     # Check block size value
     def block_size_fun(name, value):
@@ -449,6 +463,7 @@ def channel_options(n_channels, plot_function, toggle_show_default=True,
     # assign plot_function
     if plot_function is not None:
         mode.on_trait_change(plot_function, 'value')
+        masked.on_trait_change(plot_function, 'value')
         first_slider_wid.on_trait_change(plot_function, 'value')
         second_slider_wid.on_trait_change(plot_function, 'value')
         sum_wid.on_trait_change(plot_function, 'value')

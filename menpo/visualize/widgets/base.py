@@ -53,6 +53,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
         glyph_block_size = channel_options_wid.glyph_block_size
         glyph_use_negative = channel_options_wid.glyph_use_negative
         sum_enabled = channel_options_wid.sum_enabled
+        masked = channel_options_wid.masked
         landmarks_enabled = landmark_options_wid.landmarks_enabled
         legend_enabled = landmark_options_wid.legend_enabled
         group = landmark_options_wid.group
@@ -66,19 +67,21 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
             if landmarks_enabled:
                 glyph(images[im], vectors_block_size=glyph_block_size,
                       use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(group_label=group, with_labels=with_labels,
+                    view_landmarks(masked=masked, group_label=group,
+                                   with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
                 glyph(images[im], vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).view()
+                      use_negative=glyph_use_negative, channels=channels).\
+                    view(masked=masked, **kwargs)
         else:
             if landmarks_enabled:
-                images[im].view_landmarks(group_label=group,
+                images[im].view_landmarks(masked=masked, group_label=group,
                                           with_labels=with_labels,
                                           render_labels=legend_enabled,
                                           channels=channels, **kwargs)
             else:
-                images[im].view(channels=channels)
+                images[im].view(masked=masked, channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -108,6 +111,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                                        value=1, description='Image Number')
     image_number_wid.on_trait_change(show_img, 'value')
     channel_options_wid = channel_options(images[0].n_channels, show_img,
+                                          masked_default=False,
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = images[0].landmarks.keys()
@@ -480,6 +484,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         glyph_block_size = channel_options_wid.glyph_block_size
         glyph_use_negative = channel_options_wid.glyph_use_negative
         sum_enabled = channel_options_wid.sum_enabled
+        masked = channel_options_wid.masked
         landmarks_enabled = landmark_options_wid.landmarks_enabled
         legend_enabled = landmark_options_wid.legend_enabled
         group = landmark_options_wid.group
@@ -500,20 +505,21 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
             if landmarks_enabled:
                 glyph(instance, vectors_block_size=glyph_block_size,
                       use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(group_label=group, with_labels=with_labels,
+                    view_landmarks(masked=masked, group_label=group,
+                                   with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
                 glyph(instance, vectors_block_size=glyph_block_size,
                       use_negative=glyph_use_negative,
-                      channels=channels).view(**kwargs)
+                      channels=channels).view(masked=masked, **kwargs)
         else:
             if landmarks_enabled:
-                instance.view_landmarks(group_label=group,
+                instance.view_landmarks(masked=masked, group_label=group,
                                         with_labels=with_labels,
                                         render_labels=legend_enabled,
                                         channels=channels, **kwargs)
             else:
-                instance.view(channels=channels, **kwargs)
+                instance.view(masked=masked, channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -602,7 +608,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         toggle_show_visible=False, plot_eig_visible=True,
         plot_eig_function=plot_eigenvalues)
     channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
-                                          show_instance,
+                                          show_instance, masked_default=True,
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = appearance_models[0].mean.landmarks.keys()
@@ -738,6 +744,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         glyph_block_size = channel_options_wid.glyph_block_size
         glyph_use_negative = channel_options_wid.glyph_use_negative
         sum_enabled = channel_options_wid.sum_enabled
+        masked = channel_options_wid.masked
         landmarks_enabled = landmark_options_wid.landmarks_enabled
         legend_enabled = landmark_options_wid.legend_enabled
         group = landmark_options_wid.group
@@ -755,20 +762,21 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             if landmarks_enabled:
                 glyph(instance, vectors_block_size=glyph_block_size,
                       use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(group_label=group, with_labels=with_labels,
+                    view_landmarks(masked=masked, group_label=group,
+                                   with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
                 glyph(instance, vectors_block_size=glyph_block_size,
                       use_negative=glyph_use_negative,
-                      channels=channels).view(**kwargs)
+                      channels=channels).view(masked=masked, **kwargs)
         else:
             if landmarks_enabled:
-                instance.view_landmarks(group_label=group,
+                instance.view_landmarks(masked=masked, group_label=group,
                                         with_labels=with_labels,
                                         render_labels=legend_enabled,
                                         channels=channels, **kwargs)
             else:
-                instance.view(channels=channels, **kwargs)
+                instance.view(masked=masked, channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -882,7 +890,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         plot_eig_visible=True, plot_eig_function=plot_appearance_eigenvalues)
     channel_options_wid = channel_options(
         aam.appearance_models[0].mean.n_channels, show_instance,
-        toggle_show_default=tab, toggle_show_visible=not tab)
+        masked_default=True, toggle_show_default=tab,
+        toggle_show_visible=not tab)
     all_groups_keys = aam.appearance_models[0].mean.landmarks.keys()
     all_labels_keys = [aam.appearance_models[0].mean.landmarks[g].keys()
                        for g in all_groups_keys]
