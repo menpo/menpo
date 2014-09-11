@@ -41,6 +41,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     import matplotlib.pylab as plt
     from menpo.visualize.image import glyph
 
+    # make sure that images is a list even of one image
+    if not isinstance(images, list):
+        images = [images]
     n_images = len(images)
 
     # Define plot function
@@ -98,12 +101,14 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
         if images[im].n_channels == 1:
             ch_str = 'channel'
         txt = "$\\bullet~\\texttt{Image of size " + \
-              "{}".format(images[im]._str_shape) + \
-              " with " + \
-              "{} {}".format(images[im].n_channels, ch_str) + \
+              "{} with {} {}".format(images[im]._str_shape,
+                                     images[im].n_channels, ch_str) + \
               ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(images[im].landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
+              "{} landmark points.".format(
+                  images[im].landmarks[group].lms.n_points) + \
+              "}\\\\ \\bullet~\\texttt{" + \
+              "{} masked pixels.".format(images[im].n_true_pixels) + \
+              "}\\\\ \\bullet~\\texttt{min=" + \
               "{0:.3f}".format(images[im].pixels.min()) + \
               ", max=" + \
               "{0:.3f}".format(images[im].pixels.max()) + \
@@ -394,8 +399,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
                 radio_str["Level {} (high)".format(l)] = l
             else:
                 radio_str["Level {}".format(l)] = l
-        level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
-                                       value=1, visible=n_levels != 1)
+        level_wid = RadioButtonsWidget(values=radio_str,
+                                       description='Pyramid:', value=0)
         level_wid.on_trait_change(show_instance, 'value')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
@@ -478,6 +483,8 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     from collections import OrderedDict
     from menpo.visualize.image import glyph
 
+    n_levels = len(appearance_models)
+
     # Check n_parameters
     if n_parameters is None:
         n_parameters = appearance_models[0].n_active_components
@@ -485,7 +492,9 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     # Define plot function
     def show_instance(name, value):
         # get params
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         parameters_values = model_parameters_wid.parameters_values
         channels = channel_options_wid.channels
         glyph_enabled = channel_options_wid.glyph_enabled
@@ -571,7 +580,9 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         clear_output()
 
         # plot eigenvalues ratio
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         plt.subplot(211)
         plt.bar(range(len(appearance_models[level].eigenvalues_ratio)),
                 appearance_models[level].eigenvalues_ratio)
@@ -595,21 +606,6 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
 
     # Create options widgets
-    n_levels = len(appearance_models)
-    if n_levels > 1:
-        radio_str = OrderedDict()
-        for l in range(n_levels):
-            if l == 0:
-                radio_str["Level {} (low)".format(l)] = l
-            elif l == n_levels - 1:
-                radio_str["Level {} (high)".format(l)] = l
-            else:
-                radio_str["Level {}".format(l)] = l
-    else:
-        radio_str = {'Level 0': 0, 'Level 1': 1}
-    level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
-                                   value=1, visible=n_levels != 1)
-    level_wid.on_trait_change(show_instance, 'value')
     model_parameters_wid = model_parameters(
         n_parameters, plot_function=show_instance, params_str='param ',
         mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
@@ -630,13 +626,27 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
-                                        show_axes_default=False,
+                                        show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
-    tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
+    tmp_children = [model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = RadioButtonsWidget(values=radio_str,
+                                       description='Pyramid:', value=0)
+        level_wid.on_trait_change(show_instance, 'value')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ContainerWidget(children=tmp_children)
     if tab:
         wid = TabWidget(children=[tmp_wid, channel_options_wid,
                                   landmark_options_wid, figure_options_wid,
@@ -686,7 +696,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                       toggle_button_font_weight='bold')
 
     # Reset value to enable initial visualization
-    level_wid.value = 0
+    figure_options_wid.children[2].value = False
 
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
@@ -732,6 +742,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     from collections import OrderedDict
     from menpo.visualize.image import glyph
 
+    n_levels = aam.n_levels
+
     # Check n_shape_parameters and n_appearance_parameters
     if n_shape_parameters is None:
         n_shape_parameters = aam.shape_models[0].n_active_components
@@ -744,7 +756,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         clear_output()
 
         # get params
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         shape_weights = shape_model_parameters_wid.parameters_values
         appearance_weights = appearance_model_parameters_wid.parameters_values
         channels = channel_options_wid.channels
@@ -911,7 +925,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         clear_output()
 
         # plot eigenvalues ratio
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         plt.subplot(211)
         plt.bar(range(len(aam.shape_models[level].eigenvalues_ratio)),
                 aam.shape_models[level].eigenvalues_ratio)
@@ -935,7 +951,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         clear_output()
 
         # plot eigenvalues ratio
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         plt.subplot(211)
         plt.bar(range(len(aam.appearance_models[level].eigenvalues_ratio)),
                 aam.appearance_models[level].eigenvalues_ratio)
@@ -955,21 +973,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
 
     # Create options widgets
-    n_levels = aam.n_levels
-    if n_levels > 1:
-        radio_str = OrderedDict()
-        for l in range(n_levels):
-            if l == 0:
-                radio_str["Level {} (low)".format(l)] = l
-            elif l == n_levels - 1:
-                radio_str["Level {} (high)".format(l)] = l
-            else:
-                radio_str["Level {}".format(l)] = l
-    else:
-        radio_str = {'Level 0': 0, 'Level 1': 1}
-    level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
-                                   value=1, visible=n_levels != 1)
-    level_wid.on_trait_change(show_instance, 'value')
     shape_model_parameters_wid = model_parameters(
         n_shape_parameters, plot_function=show_instance,
         params_str='param ', mode=mode, params_bounds=parameters_bounds,
@@ -997,7 +1000,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
-                                        show_axes_default=False,
+                                        show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
@@ -1006,7 +1009,21 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     model_parameters_wid = ContainerWidget(
         children=[shape_model_parameters_wid,
                   appearance_model_parameters_wid])
-    tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
+    tmp_children = [model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = RadioButtonsWidget(values=radio_str,
+                                       description='Pyramid:', value=0)
+        level_wid.on_trait_change(show_instance, 'value')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ContainerWidget(children=tmp_children)
     if tab:
         wid = TabWidget(children=[tmp_wid, channel_options_wid,
                                   landmark_options_wid, figure_options_wid,
@@ -1032,8 +1049,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         wid.set_title(2, 'Landmarks options')
         wid.set_title(3, 'Figure options')
         wid.set_title(4, 'Model info')
-    tmp_wid.remove_class('vbox')
-    tmp_wid.add_class('hbox')
+    if n_levels > 1:
+        tmp_wid.remove_class('vbox')
+        tmp_wid.add_class('hbox')
     format_model_parameters(shape_model_parameters_wid,
                             container_padding='6px', container_margin='6px',
                             container_border='1px solid black',
@@ -1060,7 +1078,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                       toggle_button_font_weight='bold')
 
     # Reset value to enable initial visualization
-    level_wid.value = 0
+    figure_options_wid.children[2].value = False
 
 
 def browse_fitted_images(fitted_images, figure_size=(21, 21),
