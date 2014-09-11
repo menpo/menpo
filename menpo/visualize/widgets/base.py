@@ -1,6 +1,6 @@
 from IPython.html.widgets import (interact, fixed, IntSliderWidget,
                                   PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, ButtonWidget)
+                                  RadioButtonsWidget, CheckboxWidget)
 from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
@@ -12,7 +12,7 @@ import numpy as np
 from numpy import asarray
 
 
-def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
+def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                      **kwargs):
     r"""
     Allows browsing through a list of images.
@@ -39,6 +39,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
         Passed through to the viewer.
     """
     import matplotlib.pylab as plt
+    from menpo.visualize.image import glyph
 
     # Define plot function
     def show_img(name, value):
@@ -63,15 +64,13 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
         # plot
         if glyph_enabled or sum_enabled:
             if landmarks_enabled:
-                images[im].glyph(vectors_block_size=glyph_block_size,
-                                 use_negative=glyph_use_negative,
-                                 channels=channels).\
+                glyph(images[im], vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
                     view_landmarks(group_label=group, with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
-                images[im].glyph(vectors_block_size=glyph_block_size,
-                                 use_negative=glyph_use_negative,
-                                 channels=channels).view()
+                glyph(images[im], vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).view()
         else:
             if landmarks_enabled:
                 images[im].view_landmarks(group_label=group,
@@ -88,11 +87,14 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
             plt.axis('off')
 
         # change info_wid info
+        ch_str = 'channels'
+        if images[im].n_channels == 1:
+            ch_str = 'channel'
         txt = "$\\bullet~\\texttt{Image of size " + \
               "{}".format(images[im]._str_shape) + \
               " with " + \
-              "{}".format(images[im].n_channels) + \
-              " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{} {}".format(images[im].n_channels, ch_str) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(images[im].landmarks[group].lms.n_points) + \
               " landmark points.}\\\\ \\bullet~\\texttt{min=" + \
               "{0:.3f}".format(images[im].pixels.min()) + \
@@ -118,6 +120,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_img, x_scale_default=1.,
                                         y_scale_default=1.,
+                                        show_axes_default=False,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
     info_wid = info_print(toggle_show_default=tab,
@@ -170,9 +173,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=False,
     image_number_wid.value = 0
 
 
-def visualize_shape_model(shape_models, n_parameters=None,
+def visualize_shape_model(shape_models, n_parameters=5,
                           parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
-                          mode='multiple', popup=False, tab=False, **kwargs):
+                          mode='multiple', popup=False, tab=True, **kwargs):
     r"""
     Allows the dynamic visualization of a multilevel shape model.
 
@@ -181,9 +184,9 @@ def visualize_shape_model(shape_models, n_parameters=None,
     shape_models : `list` of :map:`PCAModel` or subclass
         The multilevel shape model to be displayed.
 
-    n_parameters : `int`, optional
+    n_parameters : `int` or None, optional
         The number of principal components to be used for the parameters
-        sliders.
+        sliders.  If None, all the components will be employed.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -214,24 +217,70 @@ def visualize_shape_model(shape_models, n_parameters=None,
 
     # Define plot function
     def show_instance(name, value):
-        # clear current figure
-        clear_output()
-
         # get params
         level = level_wid.value
+        def_mode = mode_wid.value
+        axis_mode = axes_mode_wid.value
         parameters_values = model_parameters_wid.parameters_values
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
         axes_visible = figure_options_wid.axes_visible
 
-        # compute instance
+        # compute weights
         weights = parameters_values * shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5
-        instance = shape_models[level].instance(weights)
 
-        # plot
-        instance.view_landmarks(**kwargs)
-        plt.axis('image')
+        # clear current figure
+        clear_output()
 
+        # invert axis if image mode is enabled
+        if axis_mode == 1:
+            plt.gca().invert_yaxis()
+
+        # compute and show instance
+        if def_mode == 1:
+            # Deformation mode
+            # compute instance
+            instance = shape_models[level].instance(weights)
+
+            # plot
+            if mean_wid.value:
+                shape_models[level].mean.view(image_view=axis_mode == 1,
+                                              colour_array='y', **kwargs)
+                plt.hold = True
+            instance.view(image_view=axis_mode == 1, **kwargs)
+
+            # instance range
+            tmp_range = instance.range()
+        else:
+            # Vectors mode
+            # compute instance
+            instance_lower = shape_models[level].instance([-p for p in weights])
+            instance_upper = shape_models[level].instance(weights)
+
+            # plot
+            shape_models[level].mean.view(image_view=axis_mode == 1, **kwargs)
+            plt.hold = True
+            for p in range(shape_models[level].mean.n_points):
+                xm = shape_models[level].mean.points[p, 0]
+                ym = shape_models[level].mean.points[p, 1]
+                xl = instance_lower.points[p, 0]
+                yl = instance_lower.points[p, 1]
+                xu = instance_upper.points[p, 0]
+                yu = instance_upper.points[p, 1]
+                if axis_mode == 1:
+                    # image mode
+                    plt.plot([ym, yl], [xm, xl], 'r-', lw=2)
+                    plt.plot([ym, yu], [xm, xu], 'g-', lw=2)
+                else:
+                    # point cloud mode
+                    plt.plot([xm, xl], [ym, yl], 'r-', lw=2)
+                    plt.plot([xm, xu], [ym, yu], 'g-', lw=2)
+
+            # instance range
+            tmp_range = shape_models[level].mean.range()
+
+        plt.hold = False
+        plt.gca().axis('equal')
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
         # turn axis on/off
@@ -239,7 +288,6 @@ def visualize_shape_model(shape_models, n_parameters=None,
             plt.axis('off')
 
         # change info_wid info
-        tmp_range = instance.range()
         txt = "$\\bullet~\\texttt{Level: " + \
               "{}".format(level+1) + \
               " out of " + \
@@ -254,7 +302,7 @@ def visualize_shape_model(shape_models, n_parameters=None,
               "\\bullet~\\texttt{Instance range: " + \
               "{0:.1f} x {1:.1f}".format(tmp_range[0], tmp_range[1]) + \
               ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(instance.n_points) + \
+              "{}".format(shape_models[level].mean.n_points) + \
               " landmark points, " + \
               "{}".format(shape_models[level].n_features) + \
               " features.}$"
@@ -272,15 +320,19 @@ def visualize_shape_model(shape_models, n_parameters=None,
                 shape_models[level].eigenvalues_ratio)
         plt.ylabel('Variance Ratio')
         plt.xlabel('Component Number')
+        plt.title('Variance Ratio per Eigenvector')
         plt.grid("on")
         # plot eigenvalues cumulative ratio
         plt.subplot(212)
         plt.bar(range(len(shape_models[level].eigenvalues_cumulative_ratio)),
                 shape_models[level].eigenvalues_cumulative_ratio)
+        plt.ylim((0., 1.))
         plt.ylabel('Cumulative Variance Ratio')
         plt.xlabel('Component Number')
+        plt.title('Cumulative Variance Ratio')
         plt.grid("on")
         # set figure size
+        plt.gcf().tight_layout()
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -301,6 +353,22 @@ def visualize_shape_model(shape_models, n_parameters=None,
     level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
                                    value=1, visible=n_levels != 1)
     level_wid.on_trait_change(show_instance, 'value')
+    mode_dict = OrderedDict()
+    mode_dict['Deformation'] = 1
+    mode_dict['Vectors'] = 2
+    mode_wid = RadioButtonsWidget(values=mode_dict, description='Mode:',
+                                  value=1)
+    mode_wid.on_trait_change(show_instance, 'value')
+    mean_wid = CheckboxWidget(value=False, description='Show mean shape')
+    mean_wid.on_trait_change(show_instance, 'value')
+
+    def mean_visible(name, value):
+        if value == 1:
+            mean_wid.disabled = False
+        else:
+            mean_wid.disabled = True
+            mean_wid.value = False
+    mode_wid.on_trait_change(mean_visible, 'value')
     model_parameters_wid = model_parameters(
         n_parameters, plot_function=show_instance, params_str='param ',
         mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
@@ -311,10 +379,17 @@ def visualize_shape_model(shape_models, n_parameters=None,
                                         show_axes_default=False,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
+    axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
+                                       description='Axes mode:', value=1)
+    axes_mode_wid.on_trait_change(show_instance, 'value')
+    ch = list(figure_options_wid.children)
+    ch.insert(3, axes_mode_wid)
+    figure_options_wid.children = ch
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
-    tmp_wid = ContainerWidget(children=[level_wid, model_parameters_wid])
+    radio_wids = ContainerWidget(children=[level_wid, mode_wid, mean_wid])
+    tmp_wid = ContainerWidget(children=[radio_wids, model_parameters_wid])
     if tab:
         wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
     else:
@@ -351,10 +426,10 @@ def visualize_shape_model(shape_models, n_parameters=None,
     level_wid.value = 0
 
 
-def visualize_appearance_model(appearance_models, n_parameters=None,
+def visualize_appearance_model(appearance_models, n_parameters=5,
                                parameters_bounds=(-3.0, 3.0),
                                figure_size=(7, 7), mode='multiple',
-                               popup=False, tab=False, **kwargs):
+                               popup=False, tab=True, **kwargs):
     r"""
     Allows the dynamic visualization of a multilevel appearance model.
 
@@ -363,9 +438,9 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
     appearance_models : `list` of :map:`PCAModel` or subclass
         The multilevel appearance model to be displayed.
 
-    n_parameters : `int`, optional
+    n_parameters : `int` or None, optional
         The number of principal components to be used for the parameters
-        sliders.
+        sliders. If None, all the components will be employed.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -389,6 +464,7 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
     """
     import matplotlib.pylab as plt
     from collections import OrderedDict
+    from menpo.visualize.image import glyph
 
     # Check n_parameters
     if n_parameters is None:
@@ -396,9 +472,6 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
 
     # Define plot function
     def show_instance(name, value):
-        # clear current figure
-        clear_output()
-
         # get params
         level = level_wid.value
         parameters_values = model_parameters_wid.parameters_values
@@ -419,18 +492,20 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
         weights = parameters_values * appearance_models[level].eigenvalues[:len(parameters_values)] ** 0.5
         instance = appearance_models[level].instance(weights)
 
+        # clear current figure
+        clear_output()
+
         # plot
         if glyph_enabled or sum_enabled:
             if landmarks_enabled:
-                instance.glyph(vectors_block_size=glyph_block_size,
-                               use_negative=glyph_use_negative,
-                               channels=channels).\
+                glyph(instance, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
                     view_landmarks(group_label=group, with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
-                instance.glyph(vectors_block_size=glyph_block_size,
-                               use_negative=glyph_use_negative,
-                               channels=channels).view(**kwargs)
+                glyph(instance, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative,
+                      channels=channels).view(**kwargs)
         else:
             if landmarks_enabled:
                 instance.view_landmarks(group_label=group,
@@ -447,6 +522,9 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
             plt.axis('off')
 
         # change info_wid info
+        ch_str = 'channels'
+        if instance.n_channels == 1:
+            ch_str = 'channel'
         txt = "$\\bullet~\\texttt{Level: " + \
               "{}".format(level+1) + \
               " out of " + \
@@ -458,11 +536,11 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
               " active components.}\\\\ \\bullet~\\texttt{" + \
               "{0:.1f}".format(appearance_models[level].variance_ratio*100) + \
               "% variance kept.}\\\\ " \
-              "\\bullet~\\texttt{Reference shape of size~" + \
+              "\\bullet~\\texttt{Reference shape of size " + \
               instance._str_shape + \
               " with " + \
-              "{}".format(instance.n_channels) + \
-              " channels.}\\\\ \\bullet~\\texttt{" + \
+              "{} {}".format(instance.n_channels, ch_str) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(appearance_models[level].n_features) + \
               " features.}\\\\ \\bullet~\\texttt{" + \
               "{}".format(instance.landmarks[group].lms.n_points) + \
@@ -485,15 +563,19 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
                 appearance_models[level].eigenvalues_ratio)
         plt.ylabel('Variance Ratio')
         plt.xlabel('Component Number')
+        plt.title('Variance Ratio per Eigenvector')
         plt.grid("on")
         # plot eigenvalues cumulative ratio
         plt.subplot(212)
         plt.bar(range(len(appearance_models[level].eigenvalues_cumulative_ratio)),
                 appearance_models[level].eigenvalues_cumulative_ratio)
+        plt.ylim((0., 1.))
         plt.ylabel('Cumulative Variance Ratio')
         plt.xlabel('Component Number')
+        plt.title('Cumulative Variance Ratio')
         plt.grid("on")
         # set figure size
+        plt.gcf().tight_layout()
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -593,9 +675,9 @@ def visualize_appearance_model(appearance_models, n_parameters=None,
     level_wid.value = 0
 
 
-def visualize_aam(aam, n_shape_parameters=None, n_appearance_parameters=None,
+def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
-                  mode='multiple', popup=False, tab=False, **kwargs):
+                  mode='multiple', popup=False, tab=True, **kwargs):
     r"""
     Allows the dynamic visualization of a multilevel AAM.
 
@@ -604,13 +686,13 @@ def visualize_aam(aam, n_shape_parameters=None, n_appearance_parameters=None,
     aam : :map:`AAM` or subclass
         The multilevel AAM to be displayed.
 
-    n_shape_parameters : `int`, optional
+    n_shape_parameters : `int` or None, optional
         The number of shape principal components to be used for the parameters
-        sliders.
+        sliders.  If None, all the components will be employed.
 
-    n_appearance_parameters : `int`, optional
+    n_appearance_parameters : `int` or None, optional
         The number of appearance principal components to be used for the
-        parameters sliders.
+        parameters sliders.  If None, all the components will be employed.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -634,6 +716,7 @@ def visualize_aam(aam, n_shape_parameters=None, n_appearance_parameters=None,
     """
     import matplotlib.pylab as plt
     from collections import OrderedDict
+    from menpo.visualize.image import glyph
 
     # Check n_shape_parameters and n_appearance_parameters
     if n_shape_parameters is None:
@@ -670,15 +753,14 @@ def visualize_aam(aam, n_shape_parameters=None, n_appearance_parameters=None,
         # plot
         if glyph_enabled or sum_enabled:
             if landmarks_enabled:
-                instance.glyph(vectors_block_size=glyph_block_size,
-                               use_negative=glyph_use_negative,
-                               channels=channels).\
+                glyph(instance, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
                     view_landmarks(group_label=group, with_labels=with_labels,
                                    render_labels=legend_enabled, **kwargs)
             else:
-                instance.glyph(vectors_block_size=glyph_block_size,
-                               use_negative=glyph_use_negative,
-                               channels=channels).view(**kwargs)
+                glyph(instance, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative,
+                      channels=channels).view(**kwargs)
         else:
             if landmarks_enabled:
                 instance.view_landmarks(group_label=group,
