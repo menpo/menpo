@@ -225,7 +225,8 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     # margin and border around container widget
     figure_options_wid.set_css('padding', container_padding)
     figure_options_wid.set_css('margin', container_margin)
-    figure_options_wid.set_css('border', container_border)
+    if figure_options_wid.children[0].visible:
+        figure_options_wid.set_css('border', container_border)
 
 
 def channel_options(n_channels, plot_function, masked_default=False,
@@ -290,12 +291,12 @@ def channel_options(n_channels, plot_function, masked_default=False,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
     mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
-                              description='Mode:')
-    mode.visible = toggle_show_default
-    masked = CheckboxWidget(value=masked_default, description='Masked')
+                              description='Mode:', visible=toggle_show_default)
+    masked = CheckboxWidget(value=masked_default, description='Masked',
+                            visible=toggle_show_default)
     first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
-                                       value=0, description='Channel')
-    first_slider_wid.visible = toggle_show_default
+                                       value=0, description='Channel',
+                                       visible=toggle_show_default)
     second_slider_wid = IntSliderWidget(min=1, max=n_channels-1, step=1,
                                         value=n_channels-1, description='To',
                                         visible=False)
@@ -442,6 +443,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
     def toggle_image_options(name, value):
         if value:
             mode.visible = True
+            masked.visible = True
             if mode.value == 'Single':
                 first_slider_wid.visible = True
             else:
@@ -452,6 +454,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
                 glyph_options_visibility('', glyph_wid.value)
         else:
             mode.visible = False
+            masked.visible = False
             first_slider_wid.visible = False
             second_slider_wid.visible = False
             sum_wid.visible = False
@@ -523,7 +526,8 @@ def format_channel_options(channel_options_wid, container_padding='6px',
     # margin and border around container widget
     channel_options_wid.set_css('padding', container_padding)
     channel_options_wid.set_css('margin', container_margin)
-    channel_options_wid.set_css('border', container_border)
+    if channel_options_wid.children[0].visible:
+        channel_options_wid.set_css('border', container_border)
 
 
 def landmark_options(group_keys, labels_keys, plot_function,
@@ -717,7 +721,8 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     # margin and border around container widget
     landmark_options_wid.set_css('padding', container_padding)
     landmark_options_wid.set_css('margin', container_margin)
-    landmark_options_wid.set_css('border', container_border)
+    if landmark_options_wid.children[0].visible:
+        landmark_options_wid.set_css('border', container_border)
 
 
 def info_print(toggle_show_default=True, toggle_show_visible=True):
@@ -800,7 +805,8 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     # margin and border around container widget
     info_wid.set_css('padding', container_padding)
     info_wid.set_css('margin', container_margin)
-    info_wid.set_css('border', container_border)
+    if info_wid.children[0].visible:
+        info_wid.set_css('border', container_border)
 
 
 def model_parameters(n_params, plot_function=None, params_str='',
