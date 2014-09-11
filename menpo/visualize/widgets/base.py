@@ -41,13 +41,17 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     import matplotlib.pylab as plt
     from menpo.visualize.image import glyph
 
+    n_images = len(images)
+
     # Define plot function
     def show_img(name, value):
         # clear current figure
         clear_output()
 
         # get params
-        im = image_number_wid.value
+        im = 0
+        if n_images > 1:
+            im = image_number_wid.value
         channels = channel_options_wid.channels
         glyph_enabled = channel_options_wid.glyph_enabled
         glyph_block_size = channel_options_wid.glyph_block_size
@@ -107,9 +111,6 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
         info_wid.children[1].value = txt
 
     # Create options widgets
-    image_number_wid = IntSliderWidget(min=0, max=len(images)-1, step=1,
-                                       value=1, description='Image Number')
-    image_number_wid.on_trait_change(show_img, 'value')
     channel_options_wid = channel_options(images[0].n_channels, show_img,
                                           masked_default=False,
                                           toggle_show_default=tab,
@@ -117,10 +118,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     all_groups_keys = images[0].landmarks.keys()
     all_labels_keys = [images[0].landmarks[g].keys() for g in all_groups_keys]
     landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
-                                            show_img,
-                                            toggle_show_default=tab,
+                                            show_img, toggle_show_default=tab,
                                             landmarks_default=True,
-                                            legend_default=False,
+                                            legend_default=True,
                                             toggle_show_visible=not tab)
     figure_options_wid = figure_options(show_img, x_scale_default=1.,
                                         y_scale_default=1.,
@@ -131,31 +131,33 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                           toggle_show_visible=not tab)
 
     # Create final widget
+    final_children = [channel_options_wid, landmark_options_wid,
+                      figure_options_wid, info_wid]
+    tab_titles = ['Channels options', 'Landmarks options',
+                  'Figure options', 'Image info']
+    if n_images > 1:
+        image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
+                                           value=0, description='Image Number')
+        image_number_wid.on_trait_change(show_img, 'value')
+        final_children.insert(0, image_number_wid)
+        tab_titles.insert(0, 'Image number')
     if tab:
-        wid = TabWidget(children=[image_number_wid, channel_options_wid,
-                                  landmark_options_wid, figure_options_wid,
-                                  info_wid])
+        wid = TabWidget(children=final_children)
     else:
-        wid = ContainerWidget(children=[image_number_wid, channel_options_wid,
-                                        landmark_options_wid,
-                                        figure_options_wid, info_wid])
+        wid = ContainerWidget(children=final_children)
     if popup:
-        wid = PopupWidget(children=[wid], button_text='View Images Menu')
+        wid = PopupWidget(children=[wid], button_text='Images Menu')
+        if n_images == 1:
+            wid.button_text = 'Image Menu'
 
     # Display and format widget
     display(wid)
     if tab and popup:
-        wid.children[0].set_title(0, 'Image number')
-        wid.children[0].set_title(1, 'Channels options')
-        wid.children[0].set_title(2, 'Landmarks options')
-        wid.children[0].set_title(3, 'Figure options')
-        wid.children[0].set_title(4, 'Image info')
+        for (k, tl) in enumerate(tab_titles):
+            wid.children[0].set_title(k, tl)
     elif tab and not popup:
-        wid.set_title(0, 'Image number')
-        wid.set_title(1, 'Channels options')
-        wid.set_title(2, 'Landmarks options')
-        wid.set_title(3, 'Figure options')
-        wid.set_title(4, 'Image info')
+        for (k, tl) in enumerate(tab_titles):
+            wid.set_title(k, tl)
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',
@@ -173,8 +175,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                       container_border='1px solid black',
                       toggle_button_font_weight='bold')
 
-    # Reset value to enable initial visualization
-    image_number_wid.value = 0
+    # Reset value to trigger initial visualization
+    landmark_options_wid.children[1].children[1].value = False
 
 
 def visualize_shape_model(shape_models, n_parameters=5,
@@ -215,6 +217,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
     import matplotlib.pylab as plt
     from collections import OrderedDict
 
+    n_levels = len(shape_models)
+
     # Check n_parameters
     if n_parameters is None:
         n_parameters = shape_models[0].n_active_components
@@ -222,7 +226,9 @@ def visualize_shape_model(shape_models, n_parameters=5,
     # Define plot function
     def show_instance(name, value):
         # get params
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         def_mode = mode_wid.value
         axis_mode = axes_mode_wid.value
         parameters_values = model_parameters_wid.parameters_values
@@ -318,7 +324,9 @@ def visualize_shape_model(shape_models, n_parameters=5,
         clear_output()
 
         # plot eigenvalues ratio
-        level = level_wid.value
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
         plt.subplot(211)
         plt.bar(range(len(shape_models[level].eigenvalues_ratio)),
                 shape_models[level].eigenvalues_ratio)
@@ -342,21 +350,6 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
 
     # Create options widgets
-    n_levels = len(shape_models)
-    if n_levels > 1:
-        radio_str = OrderedDict()
-        for l in range(n_levels):
-            if l == 0:
-                radio_str["Level {} (low)".format(l)] = l
-            elif l == n_levels - 1:
-                radio_str["Level {} (high)".format(l)] = l
-            else:
-                radio_str["Level {}".format(l)] = l
-    else:
-        radio_str = {'Level 0': 0, 'Level 1': 1}
-    level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
-                                   value=1, visible=n_levels != 1)
-    level_wid.on_trait_change(show_instance, 'value')
     mode_dict = OrderedDict()
     mode_dict['Deformation'] = 1
     mode_dict['Vectors'] = 2
@@ -380,7 +373,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plot_eig_function=plot_eigenvalues)
     figure_options_wid = figure_options(show_instance, x_scale_default=1.,
                                         y_scale_default=1.,
-                                        show_axes_default=False,
+                                        show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
     axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
@@ -392,7 +385,22 @@ def visualize_shape_model(shape_models, n_parameters=5,
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
-    radio_wids = ContainerWidget(children=[level_wid, mode_wid, mean_wid])
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = RadioButtonsWidget(values=radio_str, description='Pyramid:',
+                                       value=1, visible=n_levels != 1)
+        level_wid.on_trait_change(show_instance, 'value')
+        radio_children = [level_wid, mode_wid, mean_wid]
+    else:
+        radio_children = [mode_wid, mean_wid]
+    radio_wids = ContainerWidget(children=radio_children)
     tmp_wid = ContainerWidget(children=[radio_wids, model_parameters_wid])
     if tab:
         wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
@@ -427,7 +435,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
                       toggle_button_font_weight='bold')
 
     # Reset value to enable initial visualization
-    level_wid.value = 0
+    figure_options_wid.children[2].value = False
 
 
 def visualize_appearance_model(appearance_models, n_parameters=5,
