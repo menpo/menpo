@@ -8,6 +8,7 @@ xy_yx = Homogeneous(np.array([[0., 1., 0.],
                               [1., 0., 0.],
                               [0., 0., 1.]]))
 
+
 def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
                         cval=0.):
     r"""
@@ -17,19 +18,22 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
     ----------
     pixels : (M, N, ..., n_channels) ndarray
         The image to be sampled from, the final axis containing channel
-        information.
+        information
+
     points_to_sample : (n_points, n_dims) ndarray
         The points which should be sampled from pixels
+
     mode : {'constant', 'nearest', 'reflect', 'wrap'}, optional
         Points outside the boundaries of the input are filled according to the
-        given mode.
+        given mode
 
-        Default: 'constant' (0)
     order : int, optional
         The order of the spline interpolation. The order has to be in the
-        range 0-5.
+        range 0-5
 
-        Default: 1
+    cval : float, optional
+        The value that should be used for points that are sampled from
+        outside the image bounds if mode is 'constant'
 
     Returns
     -------
@@ -57,25 +61,28 @@ def scipy_interpolation(pixels, points_to_sample, mode='constant', order=1,
 def cython_interpolation(pixels, template_shape, h_transform, mode='constant',
                          order=1, cval=0.):
     r"""
-    Interpolation utilizing SciPy's map_coordinates function.
+    Interpolation utilizing skimage's fast cython warp function.
 
     Parameters
     ----------
     pixels : (M, N, ..., n_channels) ndarray
         The image to be sampled from, the final axis containing channel
         information.
-    points_to_sample : (n_points, n_dims) ndarray
-        The points which should be sampled from pixels
+
+    template_shape : tuple
+        The shape of the new image that will be sampled
+
     mode : {'constant', 'nearest', 'reflect', 'wrap'}, optional
         Points outside the boundaries of the input are filled according to the
         given mode.
 
-        Default: 'constant' (0)
     order : int, optional
         The order of the spline interpolation. The order has to be in the
         range 0-5.
 
-        Default: 1
+    cval : float, optional
+        The value that should be used for points that are sampled from
+        outside the image bounds if mode is 'constant'
 
     Returns
     -------
