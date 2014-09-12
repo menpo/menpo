@@ -24,7 +24,6 @@ xref_map = {
 'from_vector': ('function', 'menpo.base.Vectorizable.from_vector'),
 'Fitter': ('class', 'menpo.fit.Fitter'),
 'FittingResult': ('class', 'menpo.fit.fittingresult.FittingResult'),
-'FittingResultList': ('class', 'menpo.fit.fittingresult.FittingResultList'),
 'GlobalPDM': ('class', 'menpo.model.modelinstance.GlobalPDM'),
 'GradientDescent': ('class', 'menpo.fit.gradientdescent.base.GradientDescent'),
 'Homogeneous': ('class', 'menpo.transform.homogeneous.Homogeneous'),
