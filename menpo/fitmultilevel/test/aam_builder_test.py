@@ -100,7 +100,7 @@ def test_downscale_exception():
 def test_normalization_diagonal_exception():
     aam = AAMBuilder(normalization_diagonal=100).build(training,
                                                        group='PTS')
-    assert (aam.appearance_models[0].n_features == 410)
+    assert (aam.appearance_models[0].n_features == 382)
     AAMBuilder(normalization_diagonal=10).build(training, group='PTS')
 
 
@@ -167,7 +167,7 @@ def test_aam_2():
     assert (np.all([aam2.appearance_models[j].template_instance.n_channels == 1
                     for j in range(aam2.n_levels)]))
     assert_allclose([aam2.appearance_models[j].components.shape[1]
-                     for j in range(aam2.n_levels)], (12851, 18518))
+                     for j in range(aam2.n_levels)], (12827, 18518))
 
 
 def test_aam_3():
@@ -203,4 +203,4 @@ def test_aam_4():
     assert (np.all([aam4.appearance_models[j].template_instance.n_channels == 4
                     for j in range(aam4.n_levels)]))
     assert_allclose([aam4.appearance_models[j].components.shape[1]
-                     for j in range(aam4.n_levels)], (23648, 25988))
+                     for j in range(aam4.n_levels)], (23656, 25988))

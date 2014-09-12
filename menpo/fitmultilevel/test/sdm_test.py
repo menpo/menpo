@@ -96,9 +96,6 @@ def test_n_levels_exception():
 
 @raises(ValueError)
 def test_downscale_exception():
-    sdm = SDMTrainer(downscale=1).train(training_images,
-                                        group='PTS')
-    assert (aam.downscale == 1)
     sdm = SDMTrainer(downscale=0).train(training_images,
                                         group='PTS')
 
