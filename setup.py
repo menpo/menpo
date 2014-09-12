@@ -32,7 +32,6 @@ else:
 
                         # Image
                         'Pillow>=2.0.0',
-                        'scikit-image>=0.8.2',
 
                         # ML
                         'scikit-learn>=0.14.1',
