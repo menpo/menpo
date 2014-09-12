@@ -19,12 +19,6 @@ from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
 def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                                   features=igo, noise_std=0.04,
                                   verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -86,7 +80,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -98,12 +92,6 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
 def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                                  fitting_bboxes_path, features=igo,
                                  verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -147,7 +135,6 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -169,7 +156,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -181,12 +168,6 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
 def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                                            features=igo, noise_std=0.04,
                                            verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -261,12 +242,6 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                                           fitting_bboxes_path,
                                           features=igo, verbose=False,
                                           plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -310,7 +285,6 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -332,7 +306,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -344,12 +318,6 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
 def clm_basic_noise(training_db_path,  fitting_db_path,
                     features=sparse_hog, classifiers=linear_svm_lr,
                     noise_std=0.04, verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -410,7 +378,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['features'],
+            training_options['features'].__name__,
             training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -423,12 +391,6 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
 def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                    features=sparse_hog, classifiers=linear_svm_lr,
                    verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -472,7 +434,6 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -494,7 +455,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['features'],
+            training_options['features'].__name__,
             training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -507,12 +468,6 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
 def sdm_fastest_bbox(training_db_path, fitting_db_path,
                                  fitting_bboxes_path, features=None,
                                  verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
     error_type = 'me_norm'
@@ -544,7 +499,6 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -566,7 +520,7 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "SDMs using default (sparse hogs)".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
