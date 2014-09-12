@@ -127,9 +127,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                                             landmarks_default=True,
                                             legend_default=True,
                                             toggle_show_visible=not tab)
-    figure_options_wid = figure_options(show_img, x_scale_default=1.,
-                                        y_scale_default=1.,
-                                        coupled_default=True,
+    figure_options_wid = figure_options(show_img, scale_default=1.,
                                         show_axes_default=False,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -388,9 +386,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
         toggle_show_visible=False, plot_eig_visible=True,
         plot_eig_function=plot_eigenvalues)
-    figure_options_wid = figure_options(show_instance, x_scale_default=1.,
-                                        y_scale_default=1.,
-                                        coupled_default=True,
+    figure_options_wid = figure_options(show_instance, scale_default=1.,
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -637,9 +633,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                             landmarks_default=True,
                                             legend_default=False,
                                             toggle_show_visible=not tab)
-    figure_options_wid = figure_options(show_instance, x_scale_default=1.,
-                                        y_scale_default=1.,
-                                        coupled_default=True,
+    figure_options_wid = figure_options(show_instance, scale_default=1.,
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
@@ -1012,9 +1006,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                             landmarks_default=True,
                                             legend_default=False,
                                             toggle_show_visible=not tab)
-    figure_options_wid = figure_options(show_instance, x_scale_default=1.,
-                                        y_scale_default=1.,
-                                        coupled_default=True, 
+    figure_options_wid = figure_options(show_instance, scale_default=1.,
                                         show_axes_default=True,
                                         toggle_show_default=tab,
                                         toggle_show_visible=not tab)
