@@ -20,7 +20,7 @@ def save(path, hdf5able):
         HDG5able Menpo type.
 
     """
-    h5_save(path, hdf5able)
+    h5_save(_norm_path(path), hdf5able)
 
 
 def export_landmark_file(fp, landmark_group, extension=None,
