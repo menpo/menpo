@@ -137,26 +137,35 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                           toggle_show_visible=not tab)
 
     # Create final widget
-    final_children = [info_wid, channel_options_wid, landmark_options_wid,
-                      figure_options_wid]
-    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
-                  'Figure options']
     if n_images > 1:
         image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
                                            value=0, description='Image Number')
         image_number_wid.on_trait_change(show_img, 'value')
-        final_children.insert(3, final_children.pop(0))
-        final_children.insert(0, image_number_wid)
-        tab_titles.insert(3, tab_titles.pop(0))
-        tab_titles.insert(0, 'Image number')
-    if tab:
-        wid = TabWidget(children=final_children)
+        if tab:
+            image_wid = ContainerWidget(children=[image_number_wid, info_wid])
+            wid = TabWidget(children=[image_wid, channel_options_wid,
+                                      landmark_options_wid, figure_options_wid])
+            tab_titles = ['Images', 'Channels options', 'Landmarks options',
+                          'Figure options']
+        else:
+            wid = ContainerWidget(children=[image_number_wid,
+                                            channel_options_wid,
+                                            landmark_options_wid,
+                                            figure_options_wid, info_wid])
+        button_title = 'Images Menu'
     else:
-        wid = ContainerWidget(children=final_children)
+        if tab:
+            wid = TabWidget(children=[info_wid, channel_options_wid,
+                                      landmark_options_wid, figure_options_wid])
+            tab_titles = ['Image info', 'Channels options', 'Landmarks options',
+                          'Figure options']
+        else:
+            wid = ContainerWidget(children=[channel_options_wid,
+                                            landmark_options_wid,
+                                            figure_options_wid, info_wid])
+        button_title = 'Image Menu'
     if popup:
-        wid = PopupWidget(children=[wid], button_text='Images Menu')
-        if n_images == 1:
-            wid.button_text = 'Image Menu'
+        wid = PopupWidget(children=[wid], button_text=button_title)
 
     # Display and format widget
     display(wid)
