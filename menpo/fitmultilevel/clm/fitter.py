@@ -5,7 +5,7 @@ from menpo.image import Image
 from menpo.transform import AlignmentSimilarity
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.base import MultilevelFitter
+from menpo.fitmultilevel.fitter import MultilevelFitter
 
 
 class CLMFitter(MultilevelFitter):

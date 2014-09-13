@@ -1,7 +1,8 @@
 import numpy as np
 
 from menpo.image import Image
-from menpo.fitmultilevel.base import MultilevelFitter, name_of_callable
+from menpo.fitmultilevel.base import name_of_callable
+from menpo.fitmultilevel.fitter import MultilevelFitter
 from menpo.fitmultilevel.aam.fitter import AAMFitter
 from menpo.fitmultilevel.clm.fitter import CLMFitter
 

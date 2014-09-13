@@ -4,7 +4,8 @@ from menpo.transform import AlignmentSimilarity
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity
 from menpo.fit.lucaskanade.appearance import AlternatingInverseCompositional
-from menpo.fitmultilevel.base import MultilevelFitter, name_of_callable
+from menpo.fitmultilevel.base import name_of_callable
+from menpo.fitmultilevel.fitter import MultilevelFitter
 from menpo.fitmultilevel.fittingresult import AAMMultilevelFittingResult
 
 
