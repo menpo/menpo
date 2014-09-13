@@ -8,6 +8,9 @@ from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 from menpo.visualize import print_dynamic, progress_bar_str
 
 
+from .base import pyramid_on_features
+
+
 def normalization_wrt_reference_shape(images, group, label,
                                       normalization_diagonal, verbose=False):
     r"""
@@ -123,8 +126,7 @@ def build_shape_model(shapes, max_components):
     return shape_model
 
 
-def create_pyramid(images, n_levels, downscale, pyramid_on_features,
-                   features):
+def create_pyramid(images, n_levels, downscale, features):
     r"""
     Function that creates a generator function for Gaussian pyramid. The
     pyramid can be created either on the feature space or the original
@@ -142,13 +144,11 @@ def create_pyramid(images, n_levels, downscale, pyramid_on_features,
         The downscale factor that will be used to create the different
         pyramidal levels.
 
-    pyramid_on_features: boolean
-        If True, the features are extracted at the highest level and the
-        pyramid is created on the feature images.
-        If False, the pyramid is created on the original (intensities)
-        space, and the feature is extracted at each level.
-
-    features: callable or list of callables
+    features: ``callable`` ``[callable]``
+        If a single callable, then the feature calculation will happen once
+        followed by a gaussian pyramid. If a list of callables then a
+        gaussian pyramid is generated with features extracted at each level
+        (after downsizing and blurring).
 
     Returns
     -------
@@ -156,19 +156,17 @@ def create_pyramid(images, n_levels, downscale, pyramid_on_features,
         The generator function of the Gaussian pyramid.
 
     """
-    return [pyramid_of_feature_images(n_levels, downscale,
-                                      pyramid_on_features, features, i)
+    return [pyramid_of_feature_images(n_levels, downscale, features, i)
             for i in images]
 
 
-def pyramid_of_feature_images(n_levels, downscale, pyramid_on_features,
-                              features, image):
+def pyramid_of_feature_images(n_levels, downscale, features, image):
     r"""
     Generates a gaussian pyramid of feature images for a single image.
     """
-    if pyramid_on_features:
-        # compute highest level feature
-        feature_image = features[0](image)
+    if callable(features):
+        # compute feature image at the top
+        feature_image = features(image)
         # create pyramid on the feature image
         return feature_image.gaussian_pyramid(n_levels=n_levels,
                                               downscale=downscale)
@@ -198,3 +196,12 @@ class DeformableModelBuilder(object):
         r"""
         Builds a Multilevel Deformable Model.
         """
+
+    @property
+    def pyramid_on_features(self):
+        r"""
+        True if feature extraction happens once and then a gaussian pyramid
+        is taken. False if a gaussian pyramid is taken and then features are
+        extracted at each level.
+        """
+        return pyramid_on_features(self.features)
