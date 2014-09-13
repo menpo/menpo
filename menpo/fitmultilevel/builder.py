@@ -183,7 +183,7 @@ def pyramid_of_feature_images(n_levels, downscale, pyramid_on_features,
 
 # adds feature extraction to a generator of images
 def feature_images(images, features):
-    for feature, level in zip(features, images):
+    for feature, level in zip(reversed(features), images):
         yield feature(level)
 
 
