@@ -641,3 +641,12 @@ def test_diagonal_greyscale_ndim():
 def test_diagonal_kchannel_ndim():
     image = Image.blank((100, 250, 50), n_channels=5)
     assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+
+
+def test_rescale_to_diagonal():
+    image = Image.blank((8, 6), n_channels=2)
+    assert image.diagonal == 10
+    rescaled = image.rescale_to_diagonal(5)
+    assert rescaled.shape == (4, 3)
+    assert rescaled.n_channels == 2
+
