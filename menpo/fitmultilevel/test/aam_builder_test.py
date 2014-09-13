@@ -30,19 +30,17 @@ aam1 = AAMBuilder(features=[igo, sparse_hog, no_op],
                   n_levels=3,
                   downscale=2,
                   scaled_shape_models=False,
-                  pyramid_on_features=False,
                   max_shape_components=[1, 2, 3],
                   max_appearance_components=[3, 3, 3],
                   boundary=3).build(training, group='PTS')
 
-aam2 = AAMBuilder(features=no_op,
+aam2 = AAMBuilder(features=[no_op, no_op],
                   transform=ThinPlateSplines,
                   trilist=None,
                   normalization_diagonal=None,
                   n_levels=2,
                   downscale=1.2,
                   scaled_shape_models=True,
-                  pyramid_on_features=False,
                   max_shape_components=None,
                   max_appearance_components=1,
                   boundary=0).build(training, group='PTS')
@@ -54,7 +52,6 @@ aam3 = AAMBuilder(features=igo,
                   n_levels=1,
                   downscale=3,
                   scaled_shape_models=True,
-                  pyramid_on_features=True,
                   max_shape_components=[2],
                   max_appearance_components=10,
                   boundary=2).build(training, group='PTS')
@@ -65,7 +62,6 @@ aam4 = PatchBasedAAMBuilder(features=lbp,
                             n_levels=2,
                             downscale=1.2,
                             scaled_shape_models=True,
-                            pyramid_on_features=True,
                             max_shape_components=1,
                             max_appearance_components=None,
                             boundary=2).build(training, group='PTS')
@@ -73,14 +69,7 @@ aam4 = PatchBasedAAMBuilder(features=lbp,
 
 @raises(ValueError)
 def test_features_exception():
-    AAMBuilder(features=[igo, sparse_hog],
-               pyramid_on_features=False).build(training, group='PTS')
-
-
-@raises(ValueError)
-def test_features_with_pyramid_on_features_exception():
-    AAMBuilder(features=[igo, sparse_hog]).build(training,
-                                                     group='PTS')
+    AAMBuilder(features=[igo, sparse_hog]).build(training, group='PTS')
 
 
 @raises(ValueError)

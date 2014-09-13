@@ -43,14 +43,13 @@ class MultilevelFitter(Fitter):
         """
         pass
 
-    @abc.abstractproperty
     def pyramid_on_features(self):
         r"""
         Returns True if the pyramid is computed on the feature image and False
         if it is computed on the original (intensities) image and features are
         extracted at each level.
         """
-        pass
+        return pyramid_on_features(self.features)
 
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
             **kwargs):
@@ -204,7 +203,7 @@ class MultilevelFitter(Fitter):
             # pyramid cases
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = self.features[0](image)
+                feature_image = self.features(image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -223,7 +222,7 @@ class MultilevelFitter(Fitter):
             images.reverse()
         else:
             # single image case
-            images = [self.features[0](image)]
+            images = [self.features(image)]
 
         # get initial shapes per level
         initial_shapes = [i.landmarks['initial_shape'].lms for i in images]
