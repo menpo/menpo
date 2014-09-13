@@ -115,9 +115,6 @@ class CLMBuilder(DeformableModelBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
     Returns
     -------
     clm : :map:`CLMBuilder`
@@ -127,7 +124,7 @@ class CLMBuilder(DeformableModelBuilder):
                  features=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
                  pyramid_on_features=False, max_shape_components=None,
-                 boundary=3, interpolator='scipy'):
+                 boundary=3):
 
         # general deformable model checks
         checks.check_n_levels(n_levels)
@@ -154,7 +151,6 @@ class CLMBuilder(DeformableModelBuilder):
         self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
     def build(self, images, group=None, label=None, verbose=False):
         r"""
@@ -335,7 +331,7 @@ class CLMBuilder(DeformableModelBuilder):
         return CLM(shape_models, classifiers, n_training_images,
                    self.patch_shape, self.features, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
-                   self.pyramid_on_features, self.interpolator)
+                   self.pyramid_on_features)
 
 
 def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):

@@ -60,13 +60,10 @@ class CLM(object):
         the Gaussian pyramid was applied on the feature images.
         If False, the Gaussian pyramid was applied on the original images
         (intensities) and then features were extracted at each level.
-
-    interpolator : `string`
-        The interpolator that was used to build the CLM.
     """
     def __init__(self, shape_models, classifiers, n_training_images,
                  patch_shape, features, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features, interpolator):
+                 scaled_shape_models, pyramid_on_features):
         self.shape_models = shape_models
         self.classifiers = classifiers
         self.n_training_images = n_training_images
@@ -76,7 +73,6 @@ class CLM(object):
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
-        self.interpolator = interpolator
 
     @property
     def n_levels(self):
@@ -313,4 +309,3 @@ class CLM(object):
                 self.n_classifiers_per_level[0],
                 name_of_callable(self.classifiers[0][0]))
         return out
-

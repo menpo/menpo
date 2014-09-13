@@ -285,7 +285,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 for sm, n in zip(self.aam.shape_models, n_shape):
                     sm.n_active_components = n
             else:
-                raise ValueError('n_shape can be an integer or a float or None'
+                raise ValueError('n_shape can be an integer or a float or None '
                                  'or a list containing 1 or {} of '
                                  'those'.format(self.aam.n_levels))
 

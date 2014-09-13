@@ -1,5 +1,4 @@
 from __future__ import division
-import abc
 import numpy as np
 
 from menpo.fit.base import Fitter
@@ -23,29 +22,23 @@ class LucasKanade(Fitter):
         .. note:: Only the image is expected within the base class because
             different algorithms expect different kinds of template
             (image/model)
-    residual : :map:`Residual`
+
     residual : :map:`Residual`
         The kind of residual to be calculated. This is used to quantify the
         error between the input image and the reference object.
+
     transform : :map:`Alignment`
         The transformation type used to warp the image in to the appropriate
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
-    warp : function
-        A function that takes 3 arguments,
 
-            warp(:map:`Image`, :map:`Image`, :map:`Alignment`)
-
-        This function is intended to perform sub-pixel interpolation of the
-        pixel locations calculated by transforming the given image into the
-        reference frame of the template. Appropriate functions are given in
-        :module:`menpo.image.interpolation`.
     optimisation : ('GN',), optional
         A tuple containing the optimisation technique used to calculate the
         Hessian approximation. The first element is the string identifier and
         the remaining elements are any parameters for the technique.
 
         Default: ('GN',)
+
     eps : float, optional
         The convergence value. When calculating the level of convergence, if
         the norm of the delta parameter updates is less than `eps`, the
@@ -77,13 +70,11 @@ class LucasKanade(Fitter):
        "An iterative image registration technique with an application to
        stereo vision." IJCAI. Vol. 81. 1981.
     """
-    def __init__(self, residual, transform,
-                 interpolator='scipy', optimisation=('GN',), eps=10**-10):
+    def __init__(self, residual, transform, optimisation=('GN',), eps=10**-10):
         # set basic state for all Lucas Kanade algorithms
         self.transform = transform
         self.residual = residual
         self.eps = eps
-        self.interpolator = interpolator
         # select the optimisation approach and warp function
         self._calculate_delta_p = self._select_optimisation(optimisation)
 

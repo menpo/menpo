@@ -348,10 +348,9 @@ class ParametricFittingResult(SemiParametricFittingResult):
         """
         mask = self.fitter.template.mask
         transform = self.fitter.transform
-        interpolator = self.fitter.interpolator
-        return [self.image.warp_to(mask, transform.from_vector(p),
-                                   interpolator=interpolator)
+        return [self.image.warp_to_mask(mask, transform.from_vector(p))
                 for p in self.parameters]
+
 
     @property
     def appearance_reconstructions(self):

@@ -128,9 +128,6 @@ class SDTrainer(object):
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-    interpolator : `string`, optional
-        The interpolator in use.
-
     Returns
     -------
     fitter : :map:`MultilevelFitter`
@@ -156,7 +153,7 @@ class SDTrainer(object):
     def __init__(self, regression_type=mlr, regression_features=None,
                  features=no_op, n_levels=3, downscale=1.2,
                  pyramid_on_features=True, noise_std=0.04, rotation=False,
-                 n_perturbations=10, interpolator='scipy'):
+                 n_perturbations=10):
 
         # general deformable model checks
         checks.check_n_levels(n_levels)
@@ -181,7 +178,6 @@ class SDTrainer(object):
         self.noise_std = noise_std
         self.rotation = rotation
         self.n_perturbations = n_perturbations
-        self.interpolator = interpolator
 
     def train(self, images, group=None, label=None, verbose=False, **kwargs):
         r"""
@@ -211,8 +207,7 @@ class SDTrainer(object):
         # normalize the scaling of all images wrt the reference_shape size
         self._rescale_reference_shape()
         normalized_images = self._normalization_wrt_reference_shape(
-            images, group, label, self.reference_shape, self.interpolator,
-            verbose=verbose)
+            images, group, label, self.reference_shape, verbose=verbose)
 
         # create pyramid
         generators = self._create_pyramid(normalized_images, self.n_levels,
@@ -308,10 +303,9 @@ class SDTrainer(object):
 
     @classmethod
     def _normalization_wrt_reference_shape(cls, images, group, label,
-                                           reference_shape, interpolator,
-                                           verbose=False):
+                                           reference_shape, verbose=False):
         r"""
-        Function that normalizes the images sizes with respect to the reference
+        Normalizes the images sizes with respect to the reference
         shape (mean shape) scaling. This step is essential before building a
         deformable model.
 
@@ -332,9 +326,6 @@ class SDTrainer(object):
             The reference shape that is used to resize all training images to
             a consistent object size.
 
-        interpolator : `string`
-            The interpolator that should be used to perform the warps.
-
         verbose: bool, optional
             Flag that controls information and progress printing.
 
@@ -350,8 +341,7 @@ class SDTrainer(object):
                     progress_bar_str((c + 1.) / len(images),
                                      show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
-                reference_shape, group=group, label=label,
-                interpolator=interpolator))
+                reference_shape, group=group, label=label))
 
         if verbose:
             print_dynamic('- Normalizing images size: Done\n')
@@ -640,9 +630,6 @@ class SDMTrainer(SDTrainer):
         reference frame (provided that features computation does not change
         the image size).
 
-    interpolator : `string`, optional
-        The interpolator in use.
-
     Raises
     ------
     ValueError
@@ -653,7 +640,7 @@ class SDMTrainer(SDTrainer):
                  patch_shape=(16, 16), features=no_op, n_levels=3,
                  downscale=1.5, pyramid_on_features=False, noise_std=0.04,
                  rotation=False, n_perturbations=10,
-                 normalization_diagonal=None, interpolator='scipy'):
+                 normalization_diagonal=None):
         # in the SDM context regression features are image features,
         # so check them
         regression_features = checks.check_features(regression_features,
@@ -664,8 +651,7 @@ class SDMTrainer(SDTrainer):
             regression_features=regression_features,
             features=features, n_levels=n_levels, downscale=downscale,
             pyramid_on_features=pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=interpolator)
+            rotation=rotation, n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
         self.normalization_diagonal = normalization_diagonal
         self.pyramid_on_features = pyramid_on_features
@@ -743,7 +729,7 @@ class SDMTrainer(SDTrainer):
         """
         return SDMFitter(regressors, self.n_training_images, self.features,
                          self.reference_shape, self.downscale,
-                         self.pyramid_on_features, self.interpolator)
+                         self.pyramid_on_features)
 
 
 class SDAAMTrainer(SDTrainer):
@@ -861,8 +847,7 @@ class SDAAMTrainer(SDTrainer):
             features=aam.features, n_levels=aam.n_levels,
             downscale=aam.downscale,
             pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=aam.interpolator)
+            rotation=rotation, n_perturbations=n_perturbations)
         self.aam = aam
         self.update = update
         self.md_transform = md_transform
@@ -950,8 +935,7 @@ class SDAAMTrainer(SDTrainer):
             A list with the normalized images.
         """
         return [i.rescale_to_reference_shape(self.reference_shape,
-                                             group=group, label=label,
-                                             interpolator=self.interpolator)
+                                             group=group, label=label)
                 for i in images]
 
     def _set_regressor_trainer(self, level):
@@ -986,8 +970,7 @@ class SDAAMTrainer(SDTrainer):
             regression_type=self.regression_type[level],
             regression_features=self.regression_features[level],
             update=self.update, noise_std=self.noise_std,
-            rotation=self.rotation, n_perturbations=self.n_perturbations,
-            interpolator=self.interpolator)
+            rotation=self.rotation, n_perturbations=self.n_perturbations)
 
     def _build_supervised_descent_fitter(self, regressors):
         r"""
@@ -1081,8 +1064,7 @@ class SDCLMTrainer(SDTrainer):
             features=clm.features, n_levels=clm.n_levels,
             downscale=clm.downscale,
             pyramid_on_features=clm.pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=clm.interpolator)
+            rotation=rotation, n_perturbations=n_perturbations)
         self.clm = clm
         self.patch_shape = clm.patch_shape
         self.pdm_transform = pdm_transform

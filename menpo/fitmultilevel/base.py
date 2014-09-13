@@ -52,13 +52,6 @@ class MultilevelFitter(Fitter):
         """
         pass
 
-    @abc.abstractproperty
-    def interpolator(self):
-        r"""
-        Returns the type of interpolator used by the fitter.
-        """
-        pass
-
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
             **kwargs):
         r"""
@@ -204,9 +197,8 @@ class MultilevelFitter(Fitter):
 
         # rescale image wrt the scale factor between reference_shape and
         # initial_shape
-        image = image.rescale_to_reference_shape(
-            self.reference_shape, group='initial_shape',
-            interpolator=self.interpolator)
+        image = image.rescale_to_reference_shape(self.reference_shape,
+                                                 group='initial_shape')
 
         if self.n_levels > 1:
             # pyramid cases

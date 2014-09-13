@@ -125,10 +125,6 @@ class AAMBuilder(DeformableModelBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
-
     Returns
     -------
     aam : :map:`AAMBuilder`
@@ -161,8 +157,7 @@ class AAMBuilder(DeformableModelBuilder):
                  trilist=None, normalization_diagonal=None, n_levels=3,
                  downscale=2, scaled_shape_models=True,
                  pyramid_on_features=True, max_shape_components=None,
-                 max_appearance_components=None, boundary=3,
-                 interpolator='scipy'):
+                 max_appearance_components=None, boundary=3):
         # check parameters
         checks.check_n_levels(n_levels)
         checks.check_downscale(downscale)
@@ -186,7 +181,6 @@ class AAMBuilder(DeformableModelBuilder):
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
     def build(self, images, group=None, label=None, verbose=False):
         r"""
@@ -306,8 +300,7 @@ class AAMBuilder(DeformableModelBuilder):
                         level_str,
                         progress_bar_str(float(c + 1) / len(feature_images),
                                          show_bar=False)))
-                warped_images.append(i.warp_to(reference_frame.mask, t,
-                                               interpolator=self.interpolator))
+                warped_images.append(i.warp_to_mask(reference_frame.mask, t))
 
             # attach reference_frame to images' source shape
             for i in warped_images:
@@ -378,7 +371,7 @@ class AAMBuilder(DeformableModelBuilder):
         return AAM(shape_models, appearance_models, n_training_images,
                    self.transform, self.features, self.reference_shape,
                    self.downscale, self.scaled_shape_models,
-                   self.pyramid_on_features, self.interpolator)
+                   self.pyramid_on_features)
 
 
 class PatchBasedAAMBuilder(AAMBuilder):
@@ -487,9 +480,6 @@ class PatchBasedAAMBuilder(AAMBuilder):
         of the reference frame (has potential effects on the gradient
         computation).
 
-    interpolator : `string`, optional
-        The interpolator that should be used to perform the warps.
-
     Returns
     -------
     aam : ::map:`PatchBasedAAMBuilder`
@@ -522,7 +512,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
                  normalization_diagonal=None, n_levels=3, downscale=2,
                  scaled_shape_models=True, pyramid_on_features=True,
                  max_shape_components=None, max_appearance_components=None,
-                 boundary=3, interpolator='scipy'):
+                 boundary=3):
         # check parameters
         checks.check_n_levels(n_levels)
         checks.check_downscale(downscale)
@@ -546,7 +536,6 @@ class PatchBasedAAMBuilder(AAMBuilder):
         self.max_shape_components = max_shape_components
         self.max_appearance_components = max_appearance_components
         self.boundary = boundary
-        self.interpolator = interpolator
 
         # patch-based AAMs can only work with TPS transform
         self.transform = ThinPlateSplines
@@ -605,7 +594,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
                              self.transform, self.features,
                              self.reference_shape, self.downscale,
                              self.scaled_shape_models,
-                             self.pyramid_on_features, self.interpolator)
+                             self.pyramid_on_features)
 
 
 def build_reference_frame(landmarks, boundary=3, group='source',

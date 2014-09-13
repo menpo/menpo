@@ -98,27 +98,28 @@ def aam_fit_benchmark(fitting_images, aam, fitting_options=None,
             # shape from perturbation
             s = fitter.perturb_shape(gt_s, **perturb_options)
         # fit
-        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters,
-                        error_type=error_type, verbose=False)
+        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters)
         fitting_results.append(fr)
 
         # print
+        final_error = fr.final_error(error_type=error_type)
+        initial_error = fr.initial_error(error_type=error_type)
         if verbose:
             if error_type == 'me_norm':
-                if fr.final_error <= 0.03:
+                if final_error <= 0.03:
                     perc1 += 1.
-                if fr.final_error <= 0.04:
+                if final_error <= 0.04:
                     perc2 += 1.
             elif error_type == 'rmse':
-                if fr.final_error <= 0.05:
+                if final_error <= 0.05:
                     perc1 += 1.
-                if fr.final_error <= 0.06:
+                if final_error <= 0.06:
                     perc2 += 1.
             print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
                           'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
                 progress_bar_str(float(j + 1) / n_images, show_bar=False),
                 perc1 * 100. / n_images, perc2 * 100. / n_images, j + 1,
-                n_images, fr.initial_error, fr.final_error))
+                n_images, initial_error, final_error))
     if verbose:
         print_dynamic('- Fitting completed: [<=0.03: {0:.1f}%, <=0.04: '
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
@@ -151,8 +152,7 @@ def aam_build_benchmark(training_images, training_options=None, verbose=False):
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
                                 'max_appearance_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the AAMBuilder
         documentation.
@@ -270,28 +270,29 @@ def clm_fit_benchmark(fitting_images, clm, fitting_options=None,
             # shape from perturbation
             s = fitter.perturb_shape(gt_s, **perturb_options)
         # fit
-        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters,
-                        error_type=error_type, verbose=False)
+        fr = fitter.fit(i, s, gt_shape=gt_s, max_iters=max_iters)
         fitting_results.append(fr)
 
         # print
+        final_error = fr.final_error(error_type=error_type)
+        initial_error = fr.initial_error(error_type=error_type)
         if verbose:
             if error_type == 'me_norm':
-                if fr.final_error <= 0.03:
+                if final_error <= 0.03:
                     perc1 += 1.
-                if fr.final_error <= 0.04:
+                if final_error <= 0.04:
                     perc2 += 1.
             elif error_type == 'rmse':
-                if fr.final_error <= 0.05:
+                if final_error <= 0.05:
                     perc1 += 1.
-                if fr.final_error <= 0.06:
+                if final_error <= 0.06:
                     perc2 += 1.
             print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
                           'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
                           progress_bar_str(float(j + 1) / n_images,
                                            show_bar=False),
                           perc1 * 100. / n_images, perc2 * 100. / n_images,
-                          j + 1, n_images, fr.initial_error, fr.final_error))
+                          j + 1, n_images, initial_error, final_error))
     if verbose:
         print_dynamic('- Fitting completed: [<=0.03: {0:.1f}%, <=0.04: '
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
@@ -323,8 +324,7 @@ def clm_build_benchmark(training_images, training_options=None, verbose=False):
                                 'scaled_shape_models': True,
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the CLMBuilder
         documentation.
@@ -441,27 +441,28 @@ def sdm_fit_benchmark(fitting_images, fitter, perturb_options=None,
             # shape from perturbation
             s = fitter.perturb_shape(gt_s, **perturb_options)
         # fit
-        fr = fitter.fit(i, s, gt_shape=gt_s, error_type=error_type,
-                        verbose=False)
+        fr = fitter.fit(i, s, gt_shape=gt_s)
         fitting_results.append(fr)
 
         # print
+        final_error = fr.final_error(error_type=error_type)
+        initial_error = fr.initial_error(error_type=error_type)
         if verbose:
             if error_type == 'me_norm':
-                if fr.final_error <= 0.03:
+                if final_error <= 0.03:
                     perc1 += 1.
-                if fr.final_error <= 0.04:
+                if final_error <= 0.04:
                     perc2 += 1.
             elif error_type == 'rmse':
-                if fr.final_error <= 0.05:
+                if final_error <= 0.05:
                     perc1 += 1.
-                if fr.final_error <= 0.06:
+                if final_error <= 0.06:
                     perc2 += 1.
             print_dynamic('- {0} - [<=0.03: {1:.1f}%, <=0.04: {2:.1f}%] - '
                           'Image {3}/{4} (error: {5:.3f} --> {6:.3f})'.format(
                 progress_bar_str(float(j + 1) / n_images, show_bar=False),
                 perc1 * 100. / n_images, perc2 * 100. / n_images, j + 1,
-                n_images, fr.initial_error, fr.final_error))
+                n_images, initial_error, final_error))
     if verbose:
         print_dynamic('- Fitting completed: [<=0.03: {0:.1f}%, <=0.04: '
                       '{1:.1f}%]\n'.format(perc1 * 100. / n_images,
@@ -494,8 +495,7 @@ def sdm_build_benchmark(training_images, training_options=None, verbose=False):
                                 'pyramid_on_features': True,
                                 'max_shape_components': None,
                                 'max_appearance_components': None,
-                                'boundary': 3,
-                                'interpolator': 'scipy'
+                                'boundary': 3
                                 }
         For an explanation of the options, please refer to the AAMBuilder
         documentation.
@@ -613,7 +613,7 @@ def load_database(database_path, bounding_boxes=None,
 
 
 def convert_fitting_results_to_ced(fitting_results, max_error_bin=0.05,
-                                   bins_error_step=0.005):
+                                   bins_error_step=0.005, error_type='me_norm'):
     r"""
     Method that given a fitting_result object, it converts it to the
     cumulative error distribution values that can be used for plotting.
@@ -640,12 +640,17 @@ def convert_fitting_results_to_ced(fitting_results, max_error_bin=0.05,
     """
     error_bins = np.arange(0., max_error_bin + bins_error_step,
                            bins_error_step)
+    final_error = [f.final_error(error_type=error_type)
+                   for f in fitting_results]
+    initial_error = [f.initial_error(error_type=error_type)
+                     for f in fitting_results]
+
     final_error_dist = np.array(
-        [float(np.sum(fitting_results.final_error <= k)) /
-         len(fitting_results.final_error) for k in error_bins])
+        [float(np.sum(final_error <= k)) /
+         len(final_error) for k in error_bins])
     initial_error_dist = np.array(
-        [float(np.sum(fitting_results.initial_error <= k)) /
-         len(fitting_results.final_error) for k in error_bins])
+        [float(np.sum(initial_error <= k)) /
+         len(final_error) for k in error_bins])
     return final_error_dist, initial_error_dist, error_bins
 
 

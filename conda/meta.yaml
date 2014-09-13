@@ -18,7 +18,6 @@ requirements:
     - imaging # [not py3k]
     - pillow  # [py3k]
     - mayavi  # [not py3k]
-    - scikit-image
     - scikit-learn
     - matplotlib
     - decorator
