@@ -18,7 +18,8 @@ else:
     # ---- C/C++ EXTENSIONS ---- #
     cython_modules = ["menpo/shape/mesh/normals.pyx",
                       "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/feature/windowiterator.pyx"]
+                      "menpo/feature/windowiterator.pyx",
+                      "menpo/external/skimage/_warps_cy.pyx"]
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
@@ -31,7 +32,6 @@ else:
 
                         # Image
                         'Pillow>=2.0.0',
-                        'scikit-image>=0.8.2',
 
                         # ML
                         'scikit-learn>=0.14.1',

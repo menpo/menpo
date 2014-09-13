@@ -151,7 +151,7 @@ class Residual(object):
         ----------
         image : :class:`menpo.image.base.Image`
             The image to calculate the gradients for
-        forward : (:class:`template <menpo.image.base.Image>`, :class:`template <menpo.transform.base.AlignableTransform>`, `warp`), optional
+        forward : (:map:`Image`, :map:`AlignableTransform>`), optional
             A tuple containing the extra weights required for the function
             `warp` (which should be passed as a function handle).
 
@@ -162,9 +162,9 @@ class Residual(object):
             gradient = image.gradient()
             # Warp gradient for forward additive, if we've been given a
             # transform
-            template, transform, interpolator = forward
-            gradient = gradient.warp_to(template.mask, transform,
-                                        interpolator=interpolator)
+            template, transform = forward
+            gradient = gradient.warp_to_mask(template.mask, transform,
+                                             warp_landmarks=False)
         else:
             # Calculate the gradient over the image and remove one pixels at
             # the borders of the image mask

@@ -73,12 +73,10 @@ class AAM(HDF5able):
         Note that from our experience, if ``pyramid_on_features`` is ``True``,
         AAMs tend to have slightly better performance.
 
-    interpolator : `string`
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, features, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features, interpolator):
+                 scaled_shape_models, pyramid_on_features):
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
@@ -88,7 +86,6 @@ class AAM(HDF5able):
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
         self.pyramid_on_features = pyramid_on_features
-        self.interpolator = interpolator
 
     def h5_dict_to_serializable_dict(self):
         import menpo.transform
@@ -190,8 +187,8 @@ class AAM(HDF5able):
         transform = self.transform(
             reference_frame.landmarks['source'].lms, landmarks)
 
-        return appearance_instance.warp_to(
-            reference_frame.mask, transform, self.interpolator)
+        return appearance_instance.warp_to_mask(reference_frame.mask,
+                                                transform)
 
     def _build_reference_frame(self, reference_shape, landmarks):
         if type(landmarks) == TriMesh:
@@ -254,8 +251,7 @@ class AAM(HDF5able):
                     ch_str.append("channel")
                 else:
                     ch_str.append("channels")
-        out = "{} - Warp using {} transform with '{}' interpolation.\n".format(
-            out, self.transform.__name__, self.interpolator)
+        out = "{} - Warp.\n".format(out, self.transform.__name__)
         if self.n_levels > 1:
             if self.scaled_shape_models:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
@@ -394,18 +390,14 @@ class PatchBasedAAM(AAM):
 
         Note that from our experience, if ``pyramid_on_features`` is ``True``,
         AAMs tend to have slightly better performance.
-
-    interpolator : string
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  patch_shape, transform, features, reference_shape,
-                 downscale, scaled_shape_models, pyramid_on_features,
-                 interpolator):
+                 downscale, scaled_shape_models, pyramid_on_features):
         super(PatchBasedAAM, self).__init__(
             shape_models, appearance_models, n_training_images, transform,
             features, reference_shape, downscale, scaled_shape_models,
-            pyramid_on_features, interpolator)
+            pyramid_on_features)
         self.patch_shape = patch_shape
 
     def _build_reference_frame(self, reference_shape, landmarks):

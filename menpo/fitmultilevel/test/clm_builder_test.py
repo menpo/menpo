@@ -44,8 +44,7 @@ clm1 = CLMBuilder(classifier_trainers=[linear_svm_lr],
                   scaled_shape_models=False,
                   pyramid_on_features=False,
                   max_shape_components=[1, 2, 3],
-                  boundary=3,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  boundary=3).build(training_images, group='PTS')
 
 clm2 = CLMBuilder(classifier_trainers=[random_forest, linear_svm_lr],
                   patch_shape=(3, 10),
@@ -56,8 +55,7 @@ clm2 = CLMBuilder(classifier_trainers=[random_forest, linear_svm_lr],
                   scaled_shape_models=True,
                   pyramid_on_features=False,
                   max_shape_components=None,
-                  boundary=0,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  boundary=0).build(training_images, group='PTS')
 
 clm3 = CLMBuilder(classifier_trainers=[linear_svm_lr],
                   patch_shape=(2, 3),
@@ -68,8 +66,7 @@ clm3 = CLMBuilder(classifier_trainers=[linear_svm_lr],
                   scaled_shape_models=True,
                   pyramid_on_features=True,
                   max_shape_components=[1],
-                  boundary=2,
-                  interpolator='scipy').build(training_images, group='PTS')
+                  boundary=2).build(training_images, group='PTS')
 
 
 @raises(ValueError)
@@ -154,7 +151,6 @@ def test_clm_1():
     assert (clm1.n_levels == 3)
     assert (clm1.downscale == 2)
     #assert (clm1.features[0] == igo and clm1.features[2] is no_op)
-    assert (clm1.interpolator == 'scipy')
     assert_allclose(np.around(clm1.reference_shape.range()), (109., 103.))
     assert (not clm1.scaled_shape_models)
     assert (not clm1.pyramid_on_features)
@@ -180,7 +176,6 @@ def test_clm_2():
     assert (clm2.n_levels == 2)
     assert (clm2.downscale == 1.2)
     #assert (clm2.features[0] is no_op and clm2.features[1] is no_op)
-    assert (clm2.interpolator == 'scipy')
     assert_allclose(np.around(clm2.reference_shape.range()), (169., 161.))
     assert clm2.scaled_shape_models
     assert (not clm2.pyramid_on_features)
@@ -203,7 +198,6 @@ def test_clm_3():
     assert (clm3.n_levels == 1)
     assert (clm3.downscale == 3)
     #assert (clm3.features[0] == igo and len(clm3.features) == 1)
-    assert (clm3.interpolator == 'scipy')
     assert_allclose(np.around(clm3.reference_shape.range()), (169., 161.))
     assert clm3.scaled_shape_models
     assert clm3.pyramid_on_features

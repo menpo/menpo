@@ -230,10 +230,10 @@ def test_boolean_bounds_false():
     assert(np.all(max_b == np.array([5, 4])))
 
 
-@raises(ValueError)
+@raises(TypeError)
 def test_boolean_prevent_order_kwarg():
     mask = BooleanImage.blank((8, 8), fill=True)
-    mask.warp_to(mask, None, order=4)
+    mask.warp_to_mask(mask, None, order=4)
 
 
 def test_create_image_copy_false():

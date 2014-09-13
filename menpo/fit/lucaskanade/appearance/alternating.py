@@ -20,8 +20,8 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute appearance
             weights = self.appearance_model.project(IWxp)
@@ -33,8 +33,7 @@ class AlternatingForwardAdditive(AppearanceLucasKanade):
 
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(
-                image, dW_dp, forward=(self.template, self.transform,
-                                       self.interpolator))
+                image, dW_dp, forward=(self.template, self.transform))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -78,8 +77,8 @@ class AlternatingForwardCompositional(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute template by projection
             weights = self.appearance_model.project(IWxp)
@@ -130,8 +129,8 @@ class AlternatingInverseCompositional(AppearanceLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute appearance
             weights = self.appearance_model.project(IWxp)

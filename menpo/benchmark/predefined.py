@@ -1,13 +1,14 @@
 from menpo.landmark import *
 from menpo.fit.lucaskanade.appearance import *
-from menpo.transform import PiecewiseAffine, ThinPlateSplines
-from menpo.transform.modeldriven import GlobalMDTransform, OrthoMDTransform
+from menpo.transform import PiecewiseAffine
+from menpo.transform.modeldriven import OrthoMDTransform
 from menpo.transform import AlignmentSimilarity
 from menpo.feature import sparse_hog
-from menpo.model.modelinstance import PDM, OrthoPDM
+from menpo.model.modelinstance import  OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
 from menpo.fitmultilevel.clm.classifier import linear_svm_lr
 from .io import import_bounding_boxes
+from menpo.feature import igo
 
 from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
                    clm_build_benchmark, clm_fit_benchmark,
@@ -16,21 +17,16 @@ from .base import (load_database, aam_build_benchmark, aam_fit_benchmark,
 
 
 def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
-                                  features='igo', noise_std=0.04,
+                                  features=igo, noise_std=0.04,
                                   verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
-                        'features': 'igo',
+                        'features': igo,
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -40,8 +36,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -79,12 +74,13 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -94,21 +90,16 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
 
 
 def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
-                                 fitting_bboxes_path, features='igo',
+                                 fitting_bboxes_path, features=igo,
                                  verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.1,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'features': 'igo',
+                        'features': igo,
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -118,8 +109,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                         'pyramid_on_features': False,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -145,7 +135,6 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -161,12 +150,13 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -176,21 +166,16 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
 
 
 def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
-                                           features='igo', noise_std=0.04,
+                                           features=igo, noise_std=0.04,
                                            verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.2,
                           'convert_to_grey': True
                           }
     training_options = {'group': 'PTS',
-                        'features': 'igo',
+                        'features': igo,
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
@@ -200,8 +185,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -209,7 +193,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                        'n_shape': [3, 6, 12],
                        'n_appearance': 50,
                        'max_iters': 50,
-                       'error_type': 'me_norm'
+                       'error_type': error_type
                        }
     perturb_options = {'noise_std': 0.04,
                        'rotation': False}
@@ -239,12 +223,13 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -255,21 +240,16 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
 
 def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                                           fitting_bboxes_path,
-                                          features='igo', verbose=False,
+                                          features=igo, verbose=False,
                                           plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.5,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'features': 'igo',
+                        'features': igo,
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': 200,
@@ -279,8 +259,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                         'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 100,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': AlternatingInverseCompositional,
                        'md_transform': OrthoMDTransform,
@@ -288,7 +267,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                        'n_shape': [3, 6, 12],
                        'n_appearance': 50,
                        'max_iters': 50,
-                       'error_type': 'me_norm'
+                       'error_type': error_type
     }
 
     # set passed parameters
@@ -306,7 +285,6 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -322,12 +300,13 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "AAMs using {} and Alternating IC".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -339,14 +318,9 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
 def clm_basic_noise(training_db_path,  fitting_db_path,
                     features=sparse_hog, classifiers=linear_svm_lr,
                     noise_std=0.04, verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.4,
                           'convert_to_grey': True
                           }
@@ -360,15 +334,14 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
                         'scaled_shape_models': True,
                         'pyramid_on_features': False,
                         'max_shape_components': None,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
                         }
     fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                        'pdm_transform': OrthoPDM,
                        'global_transform': AlignmentSimilarity,
                        'n_shape': [3, 6, 12],
                        'max_iters': 50,
-                       'error_type': 'me_norm'
+                       'error_type': error_type
                        }
     perturb_options = {'noise_std': 0.01,
                        'rotation': False}
@@ -399,12 +372,13 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['features'],
+            training_options['features'].__name__,
             training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -417,14 +391,9 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
 def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                    features=sparse_hog, classifiers=linear_svm_lr,
                    verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.5,
                           'convert_to_grey': True
     }
@@ -438,15 +407,14 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
                         'scaled_shape_models': True,
                         'pyramid_on_features': False,
                         'max_shape_components': None,
-                        'boundary': 3,
-                        'interpolator': 'scipy'
+                        'boundary': 3
     }
     fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                        'pdm_transform': OrthoPDM,
                        'global_transform': AlignmentSimilarity,
                        'n_shape': [3, 6, 12],
                        'max_iters': 50,
-                       'error_type': 'me_norm'
+                       'error_type': error_type
     }
 
     # set passed parameters
@@ -466,7 +434,6 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -482,12 +449,13 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "CLMs with {} and {} classifier using RLMS".format(
-            training_options['features'],
+            training_options['features'].__name__,
             training_options['classifiers'])
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
@@ -500,14 +468,9 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
 def sdm_fastest_bbox(training_db_path, fitting_db_path,
                                  fitting_bboxes_path, features=None,
                                  verbose=False, plot=False):
-    # check feature
-    if not isinstance(features, str):
-        if not hasattr(features, '__call__'):
-            if features is not None:
-                raise ValueError("features must be a string or "
-                                 "function/closure or None")
 
     # predefined options
+    error_type = 'me_norm'
     db_loading_options = {'crop_proportion': 0.8,
                           'convert_to_grey': True
     }
@@ -518,11 +481,10 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
                         'noise_std': 0.08,
                         'patch_shape': (16, 16),
                         'n_perturbations': 15,
-                        'pyramid_on_features': False,
-                        'interpolator': 'scipy'
+                        'pyramid_on_features': False
     }
     fitting_options = {
-                       'error_type': 'me_norm'
+                       'error_type': error_type
     }
 
     # run experiment
@@ -535,10 +497,8 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
 
     # import bounding boxes
     bboxes_list = import_bounding_boxes(fitting_bboxes_path)
-    # predefined options
 
     # for all fittings, we crop to 0.5
-    db_loading_options['crop_proportion'] = 0.5
     fitting_images = load_database(fitting_db_path,
                                    db_loading_options=db_loading_options,
                                    bounding_boxes=bboxes_list,
@@ -554,12 +514,13 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
     final_error_curve, initial_error_curve, error_bins = \
         convert_fitting_results_to_ced(fitting_results,
                                        max_error_bin=max_error_bin,
-                                       bins_error_step=bins_error_step)
+                                       bins_error_step=bins_error_step,
+                                       error_type=error_type)
 
     # plot results
     if plot:
         title = "SDMs using default (sparse hogs)".format(
-            training_options['features'])
+            training_options['features'].__name__)
         y_axis = [final_error_curve, initial_error_curve]
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
@@ -577,7 +538,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
 
     # parse input
     if features is None:
-        features = ['igo'] * n_experiments
+        features = [igo] * n_experiments
     elif len(features) is not n_experiments:
         raise ValueError("features has wrong length")
     if scaled_shape_models is None:
@@ -633,8 +594,9 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                   noise_std[i], rotation[i]))
 
         # predefined option dictionaries
+        error_type = 'me_norm'
         training_options = {'group': 'PTS',
-                            'features': 'igo',
+                            'features': igo,
                             'transform': PiecewiseAffine,
                             'trilist': ibug_face_68_trimesh,
                             'normalization_diagonal': None,
@@ -644,8 +606,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                             'pyramid_on_features': True,
                             'max_shape_components': 25,
                             'max_appearance_components': 250,
-                            'boundary': 3,
-                            'interpolator': 'scipy'
+                            'boundary': 3
                             }
         fitting_options = {'algorithm': AlternatingInverseCompositional,
                            'md_transform': OrthoMDTransform,
@@ -653,7 +614,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                            'n_shape': [3, 6, 12],
                            'n_appearance': 50,
                            'max_iters': 50,
-                           'error_type': 'me_norm'
+                           'error_type': error_type
                            }
         pertrub_options = {'noise_std': 0.04,
                            'rotation': False}
@@ -679,9 +640,10 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
 
         # convert results
         final_error_curve, initial_error_curve, error_bins = \
-            convert_fitting_results_to_ced(fitting_results,
-                                           max_error_bin=max_error_bin,
-                                           bins_error_step=bins_error_step)
+            convert_fitting_results_to_ced(
+                fitting_results, max_error_bin=max_error_bin,
+                bins_error_step=bins_error_step,
+                error_type=error_type)
         curves_to_plot.append(final_error_curve)
         if i == n_experiments - 1:
             curves_to_plot.append(initial_error_curve)
@@ -715,7 +677,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
     elif len(patch_shape) is not n_experiments:
         raise ValueError("patch_shape has wrong length")
     if features is None:
-        features = ['igo'] * n_experiments
+        features = [igo] * n_experiments
     elif len(features) is not n_experiments:
         raise ValueError("features has wrong length")
     if scaled_shape_models is None:
@@ -767,6 +729,7 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                   noise_std[i], rotation[i]))
 
         # predefined option dictionaries
+        error_type = 'me_norm'
         training_options = {'group': 'PTS',
                             'classifiers': linear_svm_lr,
                             'patch_shape': (5, 5),
@@ -777,15 +740,14 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                             'scaled_shape_models': False,
                             'pyramid_on_features': True,
                             'max_shape_components': None,
-                            'boundary': 3,
-                            'interpolator': 'scipy'
+                            'boundary': 3
                             }
         fitting_options = {'algorithm': RegularizedLandmarkMeanShift,
                            'pdm_transform': OrthoPDM,
                            'global_transform': AlignmentSimilarity,
                            'n_shape': [3, 6, 12],
                            'max_iters': 50,
-                           'error_type': 'me_norm'
+                           'error_type': error_type
                            }
         perturb_options = {'noise_std': 0.01,
                            'rotation': False}
@@ -812,9 +774,10 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
 
         # convert results
         final_error_curve, initial_error_curve, error_bins = \
-            convert_fitting_results_to_ced(fitting_results,
-                                           max_error_bin=max_error_bin,
-                                           bins_error_step=bins_error_step)
+            convert_fitting_results_to_ced(
+                fitting_results, max_error_bin=max_error_bin,
+                bins_error_step=bins_error_step,
+                error_type=error_type)
         curves_to_plot.append(final_error_curve)
         if i == n_experiments - 1:
             curves_to_plot.append(initial_error_curve)

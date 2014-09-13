@@ -218,13 +218,10 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         """
         mask = self.fitting_results[-1].fitter.template.mask
         transform = self.fitting_results[-1].fitter.transform
-        interpolator = self.fitting_results[-1].fitter.interpolator
-
         warped_images = []
         for s in self.shapes():
             transform.set_target(s)
-            image = self.image.warp_to(mask, transform,
-                                       interpolator=interpolator)
+            image = self.image.warp_to_mask(mask, transform)
             warped_images.append(image)
 
         return warped_images

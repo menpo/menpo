@@ -1,8 +1,7 @@
 import numpy as np
 import PIL.Image as PILImage
-
 from .base import Importer
-from menpo.image import MaskedImage
+from menpo.image import Image
 
 
 class PILImporter(Importer):
@@ -26,4 +25,4 @@ class PILImporter(Importer):
         """
         self._pil_image = PILImage.open(self.filepath)
         image_pixels = np.array(self._pil_image, dtype=np.float) / 255.0
-        return MaskedImage(image_pixels)
+        return Image(image_pixels)

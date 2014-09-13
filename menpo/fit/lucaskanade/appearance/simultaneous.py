@@ -23,8 +23,8 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         # Initial appearance weights
         if project:
             # Obtained weights by projection
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
             weights = self.appearance_model.project(IWxp)
             # Reset template
             self.template = self.appearance_model.instance(weights)
@@ -40,16 +40,15 @@ class SimultaneousForwardAdditive(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute warp Jacobian
             dW_dp = self.transform.d_dp(self.template.mask.true_indices)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(
-                image, dW_dp, forward=(self.template, self.transform,
-                                       self.interpolator))
+                image, dW_dp, forward=(self.template, self.transform))
 
             # Concatenate VI_dW_dp with appearance model Jacobian
             self._J = np.hstack((J, appearance_jacobian))
@@ -104,8 +103,8 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         # Initial appearance weights
         if project:
             # Obtained weights by projection
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
             weights = self.appearance_model.project(IWxp)
             # Reset template
             self.template = self.appearance_model.instance(weights)
@@ -121,8 +120,8 @@ class SimultaneousForwardCompositional(AppearanceLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute steepest descent images, VI_dW_dp
             J = self.residual.steepest_descent_images(IWxp, self._dW_dp)
@@ -180,8 +179,8 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         # Initial appearance weights
         if project:
             # Obtained weights by projection
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
             weights = self.appearance_model.project(IWxp)
             # Reset template
             self.template = self.appearance_model.instance(weights)
@@ -197,8 +196,8 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute steepest descent images, VT_dW_dp
             J = self.residual.steepest_descent_images(self.template,
