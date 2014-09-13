@@ -621,3 +621,32 @@ def test_image_extract_channels_multiple_reversed():
     extracted = image.extract_channels([2, 0])
     assert_equal(extracted.pixels[..., 0], image.pixels[..., 2])
     assert_equal(extracted.pixels[..., 1], image.pixels[..., 0])
+
+
+def test_diagonal_greyscale():
+    image = Image.blank((100, 250), n_channels=1)
+    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+
+
+def test_diagonal_color():
+    image = Image.blank((100, 250), n_channels=3)
+    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+
+
+def test_diagonal_greyscale_ndim():
+    image = Image.blank((100, 250, 50), n_channels=1)
+    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+
+
+def test_diagonal_kchannel_ndim():
+    image = Image.blank((100, 250, 50), n_channels=5)
+    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+
+
+def test_rescale_to_diagonal():
+    image = Image.blank((8, 6), n_channels=2)
+    assert image.diagonal == 10
+    rescaled = image.rescale_to_diagonal(5)
+    assert rescaled.shape == (4, 3)
+    assert rescaled.n_channels == 2
+

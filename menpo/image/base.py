@@ -209,6 +209,15 @@ class Image(Vectorizable, LandmarkableViewable):
         return self.pixels.shape[:-1]
 
     @property
+    def diagonal(self):
+        r"""
+        The diagonal size of this image
+
+        :type: float
+        """
+        return np.sqrt(np.sum(np.array(self.shape) ** 2))
+
+    @property
     def centre(self):
         r"""
         The geometric centre of the Image - the subpixel that is in the
@@ -914,6 +923,24 @@ class Image(Vectorizable, LandmarkableViewable):
         return self.warp_to(template_mask, inverse_transform,
                             warp_landmarks=True,
                             interpolator=interpolator, **kwargs)
+
+    def rescale_to_diagonal(self, diagonal, round='ceil'):
+        r"""
+        Return a copy of this image, rescaled so that the it's diagonal is a
+        new size.
+
+        Parameters
+        ----------
+        diagonal: int
+            The diagonal size of the new image
+
+        Returns
+        -------
+        rescaled_image : type(self)
+            A copy of this image, rescaled.
+
+        """
+        return self.rescale(diagonal / self.diagonal, round=round)
 
     def rescale_to_reference_shape(self, reference_shape, group=None,
                                    label=None, interpolator='scipy',
