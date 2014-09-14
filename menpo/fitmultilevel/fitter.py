@@ -41,6 +41,7 @@ class MultilevelFitter(Fitter):
         """
         pass
 
+    @property
     def pyramid_on_features(self):
         r"""
         Returns True if the pyramid is computed on the feature image and False
