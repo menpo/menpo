@@ -164,7 +164,7 @@ def pyramid_of_feature_images(n_levels, downscale, features, image):
     r"""
     Generates a gaussian pyramid of feature images for a single image.
     """
-    if callable(features):
+    if pyramid_on_features(features):
         # compute feature image at the top
         feature_image = features(image)
         # create pyramid on the feature image
@@ -173,10 +173,10 @@ def pyramid_of_feature_images(n_levels, downscale, features, image):
     else:
         # create pyramid on intensities image
         # feature will be computed per level
-        pyramid_generator = image.gaussian_pyramid(n_levels=n_levels,
-                                                   downscale=downscale)
+        pyramid = image.gaussian_pyramid(n_levels=n_levels,
+                                         downscale=downscale)
         # add the feature generation here
-        return feature_images(pyramid_generator, features)
+        return feature_images(pyramid, features)
 
 
 # adds feature extraction to a generator of images

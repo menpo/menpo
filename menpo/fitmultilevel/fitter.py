@@ -5,7 +5,7 @@ from menpo.fitmultilevel.base import pyramid_on_features
 from menpo.transform import AlignmentAffine, Scale
 from menpo.fitmultilevel.fittingresult import MultilevelFittingResult
 from menpo.fitmultilevel.functions import noisy_align, align_shape_with_bb
-
+from menpo.fitmultilevel.builder import pyramid_of_feature_images
 
 class MultilevelFitter(Fitter):
     r"""
@@ -198,30 +198,8 @@ class MultilevelFitter(Fitter):
         image = image.rescale_to_reference_shape(self.reference_shape,
                                                  group='initial_shape')
 
-        if self.n_levels > 1:
-            # pyramid cases
-            if self.pyramid_on_features:
-                # compute features at highest level
-                feature_image = self.features(image)
-
-                # apply pyramid on feature image
-                pyramid = feature_image.gaussian_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-
-                # get rescaled feature images
-                images = list(pyramid)
-            else:
-                # apply pyramid on intensities image
-                pyramid = image.gaussian_pyramid(
-                    n_levels=self.n_levels, downscale=self.downscale)
-
-                # compute features at each level
-                images = [self.features[self.n_levels - j - 1](i)
-                          for j, i in enumerate(pyramid)]
-            images.reverse()
-        else:
-            # single image case
-            images = [self.features(image)]
+        images = list(reversed(list(pyramid_of_feature_images(
+            self.n_levels, self.downscale, self.features, image))))
 
         # get initial shapes per level
         initial_shapes = [i.landmarks['initial_shape'].lms for i in images]
