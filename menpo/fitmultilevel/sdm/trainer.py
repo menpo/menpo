@@ -14,6 +14,7 @@ from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.shape import mean_pointcloud
 from menpo.fitmultilevel import checks
+from menpo.fitmultilevel.builder import create_pyramid
 from menpo.feature import sparse_hog, no_op
 
 from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
@@ -57,6 +58,33 @@ def check_regression_type(regression_type, n_levels):
 def check_n_permutations(n_permutations):
     if n_permutations < 1:
         raise ValueError("n_permutations must be > 0")
+
+
+def apply_pyramid_on_images(generators, n_levels, verbose=False):
+    r"""
+    Exhausts the pyramid generators verbosely
+    """
+    all_images = []
+    for j in range(n_levels):
+
+        if verbose:
+            level_str = '- Apply pyramid: '
+            if n_levels > 1:
+                level_str = '- Apply pyramid: [Level {} - '.format(j + 1)
+
+        level_images = []
+        for c, g in enumerate(generators):
+            if verbose:
+                print_dynamic(
+                    '{}Computing feature space/rescaling - {}'.format(
+                        level_str,
+                        progress_bar_str((c + 1.) / len(generators),
+                                         show_bar=False)))
+            level_images.append(next(g))
+        all_images.append(level_images)
+    if verbose:
+        print_dynamic('- Apply pyramid: Done\n')
+    return all_images
 
 
 class SDTrainer(object):
@@ -210,15 +238,13 @@ class SDTrainer(object):
             images, group, label, self.reference_shape, verbose=verbose)
 
         # create pyramid
-        generators = self._create_pyramid(normalized_images, self.n_levels,
-                                          self.downscale,
-                                          self.pyramid_on_features,
-                                          self.features, verbose=verbose)
+        generators = create_pyramid(normalized_images, self.n_levels,
+                                    self.downscale,  self.pyramid_on_features,
+                                    self.features)
 
         # get feature images of all levels
-        images = self._apply_pyramid_on_images(
-            generators, self.n_levels, self.pyramid_on_features,
-            self.features, verbose=verbose)
+        images = apply_pyramid_on_images(generators, self.n_levels,
+                                         verbose=verbose)
 
         # this .reverse sets the lowest resolution as the first level
         images.reverse()
@@ -346,140 +372,6 @@ class SDTrainer(object):
         if verbose:
             print_dynamic('- Normalizing images size: Done\n')
         return normalized_images
-
-    @classmethod
-    def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
-                        features, verbose=False):
-        r"""
-        Function that creates a generator function for Gaussian pyramid. The
-        pyramid can be created either on the feature space or the original
-        (intensities) space.
-
-        Parameters
-        ----------
-        images : list of :map:`MaskedImage`
-            The set of landmarked images.
-
-        n_levels : `int`
-            The number of multi-resolution pyramidal levels to be used.
-
-        downscale : `float`
-            The downscale factor that will be used to create the different
-            pyramidal levels.
-
-        pyramid_on_features : `boolean`
-            If ``True``, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-
-            If ``False``, the pyramid is created on the original (intensities)
-            space.
-
-        features : list with `string` or `function` or ``None``
-            In case ``pyramid_on_features`` is ``True``, ``features[0]``
-            will be used as features type.
-
-        verbose : `boolean`, Optional
-            Flag that controls information and progress printing.
-
-        Returns
-        -------
-        generator : `function`
-            The generator function of the Gaussian pyramid.
-        """
-        if pyramid_on_features:
-            # compute features at highest level
-            feature_images = []
-            for c, i in enumerate(images):
-                if verbose:
-                    print_dynamic('- Computing feature space: {}'.format(
-                        progress_bar_str((c + 1.) / len(images),
-                                         show_bar=False)))
-                feature_images.append(features[0](i))
-            if verbose:
-                print_dynamic('- Computing feature space: Done\n')
-
-            # create pyramid on feature_images
-            generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                            downscale=downscale)
-                         for i in feature_images]
-        else:
-            # create pyramid on intensities images
-            # features will be computed per level
-            generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                            downscale=downscale)
-                         for i in images]
-        return generator
-
-    @classmethod
-    def _apply_pyramid_on_images(cls, generators, n_levels,
-                                 pyramid_on_features, features,
-                                 verbose=False):
-        r"""
-        Function that applies the generators of a pyramid on images.
-
-        Parameters
-        ----------
-        images : list of :map:`MaskedImage`
-            The set of landmarked images.
-
-        generators : list of generator `function`
-            The generator functions of the Gaussian pyramid for all images.
-
-        n_levels: `int`
-            The number of multi-resolution pyramidal levels to be used.
-
-        pyramid_on_features: boolean
-            If ``True``, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-            If ``False``, the pyramid is created on the original (intensities)
-            space.
-
-        features: list of length ``n_levels`` with `string` or `function` or ``None``
-            The feature type per level to be used in case
-            ``pyramid_on_features`` is enabled.
-
-        verbose: `boolean`, optional
-            Flag that controls information and progress printing.
-
-        Returns
-        -------
-        feature_images: list of lists of :map:`MaskedImage`
-            The set of pyramidal images.
-        """
-        feature_images = []
-        for j in range(n_levels):
-            # since generators are built from highest to lowest level, the
-            # parameters in form of list need to use a reversed index
-            rj = n_levels - j - 1
-
-            if verbose:
-                level_str = '- Apply pyramid: '
-                if n_levels > 1:
-                    level_str = '- Apply pyramid: [Level {} - '.format(j + 1)
-
-            current_images = []
-            if pyramid_on_features:
-                # features are already computed, so just call generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Rescaling feature space - {}]'.format(
-                            level_str,
-                            progress_bar_str((c + 1.) / len(generators),
-                                             show_bar=False)))
-                    current_images.append(next(g))
-            else:
-                # extract features of images returned from generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Computing feature space - {}]'.format(
-                            level_str,
-                            progress_bar_str((c + 1.) / len(generators),
-                                             show_bar=False)))
-                    current_images.append(features[rj](next(g)))
-            feature_images.append(current_images)
-        if verbose:
-            print_dynamic('- Apply pyramid: Done\n')
-        return feature_images
 
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):

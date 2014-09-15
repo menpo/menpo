@@ -184,7 +184,7 @@ class CLMBuilder(DeformableModelBuilder):
         # create pyramid
         generators = create_pyramid(normalized_images, self.n_levels,
                                     self.downscale,  self.pyramid_on_features,
-                                    self.features, verbose=verbose)
+                                    self.features)
 
         # build the model at each pyramid level
         if verbose:
@@ -209,24 +209,14 @@ class CLMBuilder(DeformableModelBuilder):
 
             # get images of current level
             feature_images = []
-            if self.pyramid_on_features:
-                # features are already computed, so just call generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Rescaling feature space - {}'.format(
+            for c, g in enumerate(generators):
+                if verbose:
+                    print_dynamic(
+                        '{}Computing feature space/rescaling - {}'.format(
                             level_str,
                             progress_bar_str((c + 1.) / len(generators),
                                              show_bar=False)))
-                    feature_images.append(next(g))
-            else:
-                # extract features of images returned from generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Computing feature space - {}'.format(
-                            level_str,
-                            progress_bar_str((c + 1.) / len(generators),
-                                             show_bar=False)))
-                    feature_images.append(self.features[rj](next(g)))
+                feature_images.append(next(g))
 
             # extract potentially rescaled shapes
             shapes = [i.landmarks[group][label] for i in feature_images]

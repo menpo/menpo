@@ -124,7 +124,7 @@ def build_shape_model(shapes, max_components):
 
 
 def create_pyramid(images, n_levels, downscale, pyramid_on_features,
-                   features, verbose=False):
+                   features):
     r"""
     Function that creates a generator function for Gaussian pyramid. The
     pyramid can be created either on the feature space or the original
@@ -132,53 +132,59 @@ def create_pyramid(images, n_levels, downscale, pyramid_on_features,
 
     Parameters
     ----------
-    images: list of :class:`menpo.image.Image`
+    images: list of :map:`Image`
         The set of landmarked images from which to build the AAM.
+
     n_levels: int
         The number of multi-resolution pyramidal levels to be used.
+
     downscale: float
         The downscale factor that will be used to create the different
         pyramidal levels.
+
     pyramid_on_features: boolean
         If True, the features are extracted at the highest level and the
         pyramid is created on the feature images.
         If False, the pyramid is created on the original (intensities)
-        space.
-    features: list of size 1 with str or function/closure or None
-        The feature type to be used in case pyramid_on_features is enabled.
-    verbose: bool, Optional
-        Flag that controls information and progress printing.
+        space, and the feature is extracted at each level.
 
-        Default: False
+    features: callable or list of callables
 
     Returns
     -------
-    generator: function
+    list of generators :
         The generator function of the Gaussian pyramid.
+
+    """
+    return [pyramid_of_feature_images(n_levels, downscale,
+                                      pyramid_on_features, features, i)
+            for i in images]
+
+
+def pyramid_of_feature_images(n_levels, downscale, pyramid_on_features,
+                              features, image):
+    r"""
+    Generates a gaussian pyramid of feature images for a single image.
     """
     if pyramid_on_features:
-        # compute features at highest level
-        feature_images = []
-        for c, i in enumerate(images):
-            if verbose:
-                print_dynamic('- Computing feature space: {}'.format(
-                    progress_bar_str((c + 1.) / len(images),
-                                     show_bar=False)))
-            feature_images.append(features[0](i))
-        if verbose:
-            print_dynamic('- Computing feature space: Done\n')
-
-        # create pyramid on feature_images
-        generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                        downscale=downscale)
-                     for i in feature_images]
+        # compute highest level feature
+        feature_image = features[0](image)
+        # create pyramid on the feature image
+        return feature_image.gaussian_pyramid(n_levels=n_levels,
+                                              downscale=downscale)
     else:
-        # create pyramid on intensities images
-        # features will be computed per level
-        generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                        downscale=downscale)
-                     for i in images]
-    return generator
+        # create pyramid on intensities image
+        # feature will be computed per level
+        pyramid_generator = image.gaussian_pyramid(n_levels=n_levels,
+                                                   downscale=downscale)
+        # add the feature generation here
+        return feature_images(pyramid_generator, features)
+
+
+# adds feature extraction to a generator of images
+def feature_images(images, features):
+    for feature, level in zip(reversed(features), images):
+        yield feature(level)
 
 
 class DeformableModelBuilder(object):
