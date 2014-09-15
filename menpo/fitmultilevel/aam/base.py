@@ -174,7 +174,7 @@ class AAM(DeformableModel, HDF5able):
             reference_frame.landmarks['source'].lms, landmarks)
 
         return appearance_instance.warp_to_mask(reference_frame.mask,
-                                                transform)
+                                                transform, warp_landmarks=True)
 
     def _build_reference_frame(self, reference_shape, landmarks):
         if type(landmarks) == TriMesh:

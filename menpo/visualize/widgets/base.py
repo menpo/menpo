@@ -523,8 +523,10 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     import matplotlib.pylab as plt
     from collections import OrderedDict
     from menpo.visualize.image import glyph
+    from menpo.image import MaskedImage
 
     n_levels = len(appearance_models)
+    images_are_masked = isinstance(appearance_models[0].mean, MaskedImage)
 
     # Check n_parameters
     if n_parameters is None:
@@ -559,25 +561,46 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         clear_output()
 
         # plot
-        if glyph_enabled or sum_enabled:
-            if landmarks_enabled:
-                glyph(instance, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(masked=masked, group_label=group,
-                                   with_labels=with_labels,
-                                   render_labels=legend_enabled, **kwargs)
+        if images_are_masked:
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(masked=masked, group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative,
+                          channels=channels).view(masked=masked, **kwargs)
             else:
-                glyph(instance, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative,
-                      channels=channels).view(masked=masked, **kwargs)
+                if landmarks_enabled:
+                    instance.view_landmarks(masked=masked, group_label=group,
+                                            with_labels=with_labels,
+                                            render_labels=legend_enabled,
+                                            channels=channels, **kwargs)
+                else:
+                    instance.view(masked=masked, channels=channels, **kwargs)
         else:
-            if landmarks_enabled:
-                instance.view_landmarks(masked=masked, group_label=group,
-                                        with_labels=with_labels,
-                                        render_labels=legend_enabled,
-                                        channels=channels, **kwargs)
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative,
+                          channels=channels).view(**kwargs)
             else:
-                instance.view(masked=masked, channels=channels, **kwargs)
+                if landmarks_enabled:
+                    instance.view_landmarks(group_label=group,
+                                            with_labels=with_labels,
+                                            render_labels=legend_enabled,
+                                            channels=channels, **kwargs)
+                else:
+                    instance.view(channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -654,6 +677,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         plot_eig_function=plot_eigenvalues)
     channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
                                           show_instance, masked_default=True,
+                                          masked_visible=images_are_masked,
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = appearance_models[0].mean.landmarks.keys()
@@ -781,8 +805,10 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     import matplotlib.pylab as plt
     from collections import OrderedDict
     from menpo.visualize.image import glyph
+    from menpo.image import MaskedImage
 
     n_levels = aam.n_levels
+    images_are_masked = isinstance(aam.appearance_models[0].mean, MaskedImage)
 
     # Check n_shape_parameters and n_appearance_parameters
     if n_shape_parameters is None:
@@ -820,25 +846,46 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                 appearance_weights=appearance_weights)
 
         # plot
-        if glyph_enabled or sum_enabled:
-            if landmarks_enabled:
-                glyph(instance, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(masked=masked, group_label=group,
-                                   with_labels=with_labels,
-                                   render_labels=legend_enabled, **kwargs)
+        if images_are_masked:
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(masked=masked, group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative,
+                          channels=channels).view(masked=masked, **kwargs)
             else:
-                glyph(instance, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative,
-                      channels=channels).view(masked=masked, **kwargs)
+                if landmarks_enabled:
+                    instance.view_landmarks(masked=masked, group_label='source',
+                                            with_labels=['all'],
+                                            render_labels=legend_enabled,
+                                            channels=channels, **kwargs)
+                else:
+                    instance.view(masked=masked, channels=channels, **kwargs)
         else:
-            if landmarks_enabled:
-                instance.view_landmarks(masked=masked, group_label=group,
-                                        with_labels=with_labels,
-                                        render_labels=legend_enabled,
-                                        channels=channels, **kwargs)
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(instance, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative,
+                          channels=channels).view(**kwargs)
             else:
-                instance.view(masked=masked, channels=channels, **kwargs)
+                if landmarks_enabled:
+                    instance.view_landmarks(group_label=group,
+                                            with_labels=with_labels,
+                                            render_labels=legend_enabled,
+                                            channels=channels, **kwargs)
+                else:
+                    instance.view(channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -848,23 +895,22 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
         # Change info_wid info
         # features info
-        if isinstance(aam.features[level], str):
-            if aam.appearance_models[level].mean.n_channels == 1:
+        from menpo.fitmultilevel.base import name_of_callable
+        if aam.appearance_models[level].mean.n_channels == 1:
+            if aam.pyramid_on_features:
                 tmp_feat = "Feature is {} with 1 channel.".\
-                    format(aam.features[level])
+                    format(name_of_callable(aam.features))
             else:
-                tmp_feat = "Feature is {} with {} channels.".\
-                    format(aam.features[level],
-                           aam.appearance_models[level].mean.n_channels)
-        elif aam.features[level] is None:
-            tmp_feat = "No features extracted."
+                tmp_feat = "Feature is {} with 1 channel.".\
+                    format(name_of_callable(aam.features[level]))
         else:
-            if aam.appearance_models[level].mean.n_channels == 1:
-                tmp_feat = "Feature is {} with 1 channel.".\
-                    format(aam.features[level].__name__)
+            if aam.pyramid_on_features:
+                tmp_feat = "Feature is {} with {} channel.".\
+                    format(name_of_callable(aam.features),
+                           aam.appearance_models[level].mean.n_channels)
             else:
-                tmp_feat = "Feature is {} with {} channels.".\
-                    format(aam.features[level].__name__,
+                tmp_feat = "Feature is {} with {} channel.".\
+                    format(name_of_callable(aam.features[level]),
                            aam.appearance_models[level].mean.n_channels)
         # create final str
         if n_levels > 1:
@@ -887,10 +933,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   " training images.}" + \
                   "\\\\ \\bullet~\\texttt{Warp using " + \
                   aam.transform.__name__ + \
-                  " transform with '" + \
-                  aam.interpolator + \
-                  "' interpolation.}" + \
-                  "\\\\ \\bullet~\\texttt{Level " + \
+                  " transform.} \\\\ \\bullet~\\texttt{Level " + \
                   "{}/{}".format(level+1, aam.n_levels) + \
                   " (downscale=" + \
                   "{0:.1f}".format(aam.downscale) + \
@@ -1027,8 +1070,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         plot_eig_visible=True, plot_eig_function=plot_appearance_eigenvalues)
     channel_options_wid = channel_options(
         aam.appearance_models[0].mean.n_channels, show_instance,
-        masked_default=True, toggle_show_default=tab,
-        toggle_show_visible=not tab)
+        masked_default=True, masked_visible=images_are_masked,
+        toggle_show_default=tab, toggle_show_visible=not tab)
     all_groups_keys = aam.appearance_models[0].mean.landmarks.keys()
     all_labels_keys = [aam.appearance_models[0].mean.landmarks[g].keys()
                        for g in all_groups_keys]
