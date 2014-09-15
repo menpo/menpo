@@ -95,7 +95,7 @@ class FittingResult(Viewable):
     @property
     def iter_image(self):
         r"""
-        Returns a copy of the fitted image with a as many landmark groups as
+        Returns a copy of the fitted image with as many landmark groups as
         iteration run by fitting procedure:
             - ``iter_0``, containing the initial shape.
             - ``iter_1``, containing the the fitted shape at the first
@@ -231,7 +231,7 @@ class NonParametricFittingResult(FittingResult):
             self._gt_shape = value
         else:
             raise ValueError("Accepted values for gt_shape setter are "
-                             "`menpo.shape.PointClouds`.")
+                             "PointClouds.")
 
 
 class SemiParametricFittingResult(FittingResult):
@@ -307,7 +307,7 @@ class SemiParametricFittingResult(FittingResult):
             self._gt_shape = transform.target
         else:
             raise ValueError("Accepted values for gt_shape setter are "
-                             "`menpo.shape.PointClouds` or float lists"
+                             "PointClouds or float lists "
                              "specifying transform shapes.")
 
 
@@ -350,7 +350,6 @@ class ParametricFittingResult(SemiParametricFittingResult):
         transform = self.fitter.transform
         return [self.image.warp_to_mask(mask, transform.from_vector(p))
                 for p in self.parameters]
-
 
     @property
     def appearance_reconstructions(self):

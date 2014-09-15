@@ -15,22 +15,15 @@ class MultilevelFittingResult(FittingResult):
     -----------
     image : :map:`Image` or subclass
         The fitted image.
-
     multilevel_fitter : :map:`MultilevelFitter`
         The multilevel fitter object used to fit the image.
-
     fitting_results : `list` of :map:`FittingResult`
         The list of fitting results.
-
     affine_correction : :map:`Affine`
         The affine transform between the initial shape of the highest
         pyramidal level and the initial shape of the original image
-
     gt_shape : class:`PointCloud`, optional
         The ground truth shape associated to the image.
-
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between is computed.
     """
     def __init__(self, image, multiple_fitter, fitting_results,
                  affine_correction, gt_shape=None):
@@ -155,27 +148,6 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
     r"""
     Class that holds the state of a :map:`AAMFitter` object before,
     during and after it has fitted a particular image.
-
-    Parameters
-    -----------
-    image : :map:`Image` or subclass
-        The fitted image.
-
-    multilevel_fitter : :map:`MultilevelFitter`
-        The multilevel fitter object used to fit the image.
-
-    fitting_results : `list` of :map:`FittingResult`
-        The list of fitting results.
-
-    affine_correction : :map:`Affine`
-        The affine transform between the initial shape of the highest
-        pyramidal level and the initial shape of the original image
-
-    gt_shape : class:`PointCloud`, optional
-        The ground truth shape associated to the image.
-
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between is computed.
     """
     @property
     def costs(self):
@@ -185,7 +157,6 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         :type: `list` of `float`
         """
         raise ValueError('costs not implemented yet.')
-        #return self._flatten_out([f.costs for f in self.basic_fittings])
 
     @property
     def final_cost(self):
@@ -194,7 +165,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `float`
         """
-        return self.fitting_results[-1].final_cost
+        raise ValueError('costs not implemented yet.')
 
     @property
     def initial_cost(self):
@@ -203,7 +174,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `float`
         """
-        return self.fitting_results[0].initial_cost
+        raise ValueError('costs not implemented yet.')
 
     @property
     def warped_images(self):
