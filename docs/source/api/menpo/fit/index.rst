@@ -160,7 +160,6 @@ Fitting Result
    :maxdepth: 1
 
    FittingResult
-   FittingResultList
    ParametricFittingResult
    SemiParametricFittingResult
    NonParametricFittingResult

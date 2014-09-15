@@ -311,10 +311,8 @@ clm = CLMBuilder(classifier_trainers=linear_svm_lr,
                  n_levels=3,
                  downscale=1.1,
                  scaled_shape_models=True,
-                 pyramid_on_features=True,
                  max_shape_components=[1, 2, 3],
-                 boundary=3,
-                 interpolator='scipy').build(training_images, group='PTS')
+                 boundary=3).build(training_images, group='PTS')
 
 
 def test_clm():
@@ -322,7 +320,6 @@ def test_clm():
     assert (clm.n_levels == 3)
     assert (clm.downscale == 1.1)
     #assert (clm.features[0] == sparse_hog and len(clm.features) == 1)
-    assert (clm.interpolator == 'scipy')
     assert_allclose(np.around(clm.reference_shape.range()), (109., 103.))
     assert clm.scaled_shape_models
     assert clm.pyramid_on_features

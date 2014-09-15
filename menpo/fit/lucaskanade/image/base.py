@@ -7,10 +7,9 @@ from menpo.fit.lucaskanade.base import LucasKanade
 class ImageLucasKanade(LucasKanade):
 
     def __init__(self, template, residual, transform,
-                 interpolator='scipy', optimisation=('GN',), eps=10 ** -6):
+                 optimisation=('GN',), eps=10 ** -6):
         super(ImageLucasKanade, self).__init__(
-            residual, transform, interpolator=interpolator,
-            optimisation=optimisation, eps=eps)
+            residual, transform, optimisation=optimisation, eps=eps)
         # in image alignment, we align a template image to the target image
         self.template = template
         # pre-compute
@@ -32,8 +31,8 @@ class ImageForwardAdditive(ImageLucasKanade):
         # Forward Additive Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute the Jacobian of the warp
             dW_dp = self.transform.d_dp(self.template.indices)
@@ -41,8 +40,7 @@ class ImageForwardAdditive(ImageLucasKanade):
             # TODO: rename kwarg "forward" to "forward_additive"
             # Compute steepest descent images, VI_dW_dp
             self._J = self.residual.steepest_descent_images(
-                image, dW_dp, forward=(self.template, self.transform,
-                                       self.interpolator))
+                image, dW_dp, forward=(self.template, self.transform))
 
             # Compute Hessian and inverse
             self._H = self.residual.calculate_hessian(self._J)
@@ -90,8 +88,8 @@ class ImageForwardCompositional(ImageLucasKanade):
         # Forward Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # TODO: add "forward_compositional" kwarg with options
             # In the forward compositional algorithm there are two different
@@ -155,8 +153,8 @@ class ImageInverseCompositional(ImageLucasKanade):
         # Baker-Matthews, Inverse Compositional Algorithm
         while n_iters < max_iters and error > self.eps:
             # Compute warped image with current weights
-            IWxp = image.warp_to(self.template.mask, self.transform,
-                                 interpolator=self.interpolator)
+            IWxp = image.warp_to_mask(self.template.mask, self.transform,
+                                      warp_landmarks=False)
 
             # Compute steepest descent parameter updates.
             sd_delta_p = self.residual.steepest_descent_update(

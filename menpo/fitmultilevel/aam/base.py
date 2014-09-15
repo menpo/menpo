@@ -4,10 +4,11 @@ import numpy as np
 from hdf5able import HDF5able, SerializableCallable
 
 from menpo.shape import TriMesh
+from menpo.fitmultilevel.base import DeformableModel, name_of_callable
 from .builder import build_patch_reference_frame, build_reference_frame
 
 
-class AAM(HDF5able):
+class AAM(DeformableModel, HDF5able):
     r"""
     Active Appearance Model class.
 
@@ -26,23 +27,19 @@ class AAM(HDF5able):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    features : ``None`` or `string` or `function` or list of those
-        The image feature that was be used to build the ``appearance_models``.
-        Will subsequently be used by fitter objects using this class to fit to
-        novel images.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If list of length ``n_levels``, then a feature was defined per level.
-        This means that the ``pyramid_on_features`` flag was ``False``
-        and the features were extracted at each level. The first element of
-        the list specifies the features of the lowest pyramidal level and so
-        on.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
-        If not a list or a list with length ``1``, then:
-            If ``pyramid_on_features`` is ``True``, the specified feature was
-            applied to the highest level.
-
-            If ``pyramid_on_features`` is ``False``, the specified feature was
-            applied to all pyramid levels.
+        Note that from our experience, this approach of extracting features
+        once and then creating a pyramid on top tends to lead to better
+        performing AAMs.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -63,32 +60,18 @@ class AAM(HDF5able):
         Note that from our experience, if scaled_shape_models is ``False``, AAMs
         tend to have slightly better performance.
 
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space was computed once at the highest scale
-        and the Gaussian pyramid was applied on the feature images.
-
-        If ``False``, the Gaussian pyramid was applied on the original images
-        (intensities) and then features were extracted at each level.
-
-        Note that from our experience, if ``pyramid_on_features`` is ``True``,
-        AAMs tend to have slightly better performance.
-
-    interpolator : `string`
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, features, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features, interpolator):
+                 scaled_shape_models):
+        DeformableModel.__init__(self, features)
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
         self.transform = transform
-        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
-        self.pyramid_on_features = pyramid_on_features
-        self.interpolator = interpolator
 
     def h5_dict_to_serializable_dict(self):
         import menpo.transform
@@ -190,8 +173,8 @@ class AAM(HDF5able):
         transform = self.transform(
             reference_frame.landmarks['source'].lms, landmarks)
 
-        return appearance_instance.warp_to(
-            reference_frame.mask, transform, self.interpolator)
+        return appearance_instance.warp_to_mask(reference_frame.mask,
+                                                transform)
 
     def _build_reference_frame(self, reference_shape, landmarks):
         if type(landmarks) == TriMesh:
@@ -226,14 +209,8 @@ class AAM(HDF5able):
                     self.downscale**(self.n_levels - j - 1)))
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.features[0], str):
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0])
-            elif self.features[0] is None:
-                feat_str = "- No features extracted. "
-            else:
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+            feat_str = "- Feature is {} with ".format(
+                name_of_callable(self.features))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -242,20 +219,13 @@ class AAM(HDF5able):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.features[j], str):
-                    feat_str.append("- Feature is {} with ".format(
-                        self.features[j]))
-                elif self.features[j] is None:
-                    feat_str.append("- No features extracted. ")
-                else:
-                    feat_str.append("- Feature is {} with ".format(
-                        self.features[j].__name__))
+                feat_str.append("- Feature is {} with ".format(
+                    name_of_callable(self.features[j])))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
                     ch_str.append("channels")
-        out = "{} - Warp using {} transform with '{}' interpolation.\n".format(
-            out, self.transform.__name__, self.interpolator)
+        out = "{} - {} Warp.\n".format(out, name_of_callable(self.transform))
         if self.n_levels > 1:
             if self.scaled_shape_models:
                 out = "{} - Gaussian pyramid with {} levels and downscale " \
@@ -347,24 +317,19 @@ class PatchBasedAAM(AAM):
         The transform used to warp the images from which the AAM was
         constructed.
 
-    features : `function` or list of those
-        The image feature that was be used to build the appearance_models. Will
-        subsequently be used by fitter objects using this class to fit to
-        novel images.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If list of length ``n_levels``, then a feature was defined per level.
-        This means that the ``pyramid_on_features`` flag was ``False``
-        and the features were extracted at each level. The first element of
-        the list specifies the features of the lowest pyramidal level and so
-        on.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
-        If not a list or a list with length ``1``, then:
-            If ``pyramid_on_features`` is ``True``, the specified feature was
-            applied to the highest level.
-
-            If ``pyramid_on_features`` is ``False``, the specified feature was
-            applied to all pyramid levels.
-
+        Note that from our experience, this approach of extracting features
+        once and then creating a pyramid on top tends to lead to better
+        performing AAMs.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -385,27 +350,13 @@ class PatchBasedAAM(AAM):
         Note that from our experience, if ``scaled_shape_models`` is ``False``,
         AAMs tend to have slightly better performance.
 
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space was computed once at the highest scale and
-        the Gaussian pyramid was applied on the feature images.
-
-        If ``False``, the Gaussian pyramid was applied on the original images
-        (intensities) and then features were extracted at each level.
-
-        Note that from our experience, if ``pyramid_on_features`` is ``True``,
-        AAMs tend to have slightly better performance.
-
-    interpolator : string
-        The interpolator that was used to build the AAM.
     """
     def __init__(self, shape_models, appearance_models, n_training_images,
                  patch_shape, transform, features, reference_shape,
-                 downscale, scaled_shape_models, pyramid_on_features,
-                 interpolator):
+                 downscale, scaled_shape_models):
         super(PatchBasedAAM, self).__init__(
             shape_models, appearance_models, n_training_images, transform,
-            features, reference_shape, downscale, scaled_shape_models,
-            pyramid_on_features, interpolator)
+            features, reference_shape, downscale, scaled_shape_models)
         self.patch_shape = patch_shape
 
     def _build_reference_frame(self, reference_shape, landmarks):

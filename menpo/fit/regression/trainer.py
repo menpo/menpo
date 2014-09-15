@@ -514,14 +514,11 @@ class ParametricRegressorTrainer(RegressorTrainer):
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-    interpolator : `string`
-        Specifies the interpolator used in warping.
-
     """
     def __init__(self, appearance_model, transform, reference_shape,
                  regression_type=mlr, regression_features=weights,
                  update='compositional', noise_std=0.04, rotation=False,
-                 n_perturbations=10, interpolator='scipy'):
+                 n_perturbations=10):
         super(ParametricRegressorTrainer, self).__init__(
             reference_shape, regression_type=regression_type,
             regression_features=regression_features, noise_std=noise_std,
@@ -531,8 +528,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
         self.regression_features = regression_features
         self.transform = transform
         self.update = update
-        self.interpolator = interpolator
-    
+
     @property
     def algorithm(self):
         r"""
@@ -572,8 +568,9 @@ class ParametricRegressorTrainer(RegressorTrainer):
             The current shape.
         """
         self.transform.set_target(shape)
-        warped_image = image.warp_to(self.template.mask, self.transform,
-                                     interpolator=self.interpolator)
+        # TODO should the template be a mask or a shape? warp_to_shape here
+        warped_image = image.warp_to_mask(self.template.mask, self.transform,
+                                          warp_landmarks=False)
         features = extract_parametric_features(
             self.appearance_model, warped_image, self.regression_features)
         return np.hstack((features, 1))
@@ -642,8 +639,6 @@ class SemiParametricClassifierBasedRegressorTrainer(
         Defines the number of perturbations that will be applied to the
         training shapes.
 
-    interpolator : `string`
-        Specifies the interpolator used in warping.
     """
     def __init__(self, classifiers, transform, reference_shape,
                  regression_type=mlr, patch_shape=(16, 16),

@@ -5,7 +5,7 @@ from menpo.image import Image
 from menpo.transform import AlignmentSimilarity
 from menpo.model.modelinstance import PDM, OrthoPDM
 from menpo.fit.gradientdescent import RegularizedLandmarkMeanShift
-from menpo.fitmultilevel.base import MultilevelFitter
+from menpo.fitmultilevel.fitter import MultilevelFitter
 
 
 class CLMFitter(MultilevelFitter):
@@ -60,29 +60,6 @@ class CLMFitter(MultilevelFitter):
         :type: `float`
         """
         return self.clm.downscale
-
-    @property
-    def pyramid_on_features(self):
-        r"""
-        Flag that defined the nature of Gaussian pyramid used to build the
-        CLM.
-        If ``True``, the feature space is computed once at the highest scale
-        and the Gaussian pyramid is applied to the feature images.
-        If ``False``, the Gaussian pyramid is applied to the original images
-        and features are extracted at each level.
-
-        :type: `boolean`
-        """
-        return self.clm.pyramid_on_features
-
-    @property
-    def interpolator(self):
-        r"""
-        The interpolator used during CLM building.
-
-        :type: `string`
-        """
-        return self.clm.interpolator
 
 
 class GradientDescentCLMFitter(CLMFitter):
@@ -235,7 +212,7 @@ class GradientDescentCLMFitter(CLMFitter):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = self.features[0](temp_img)
+            temp = self.features(temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
@@ -244,14 +221,8 @@ class GradientDescentCLMFitter(CLMFitter):
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.features[0], str):
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0])
-            elif self.features[0] is None:
-                feat_str = "- No features extracted. "
-            else:
-                feat_str = "- Feature is {} with ".format(
-                    name_of_callable(self.features[0]))
+            feat_str = "- Feature is {} with ".format(
+                name_of_callable(self.features))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:

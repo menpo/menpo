@@ -3,7 +3,7 @@ from numpy.testing import assert_equal
 from menpo.transform.piecewiseaffine.base import (CythonPWA, CachedPWA,
                                                   PythonPWA)
 
-b = menpo.io.import_builtin_asset('breakingbad.jpg')
+b = menpo.io.import_builtin_asset('breakingbad.jpg').as_masked()
 b.crop_to_landmarks_proportion_inplace(0.1)
 b = b.rescale_landmarks_to_diagonal_range(120)
 b.constrain_mask_to_landmarks()

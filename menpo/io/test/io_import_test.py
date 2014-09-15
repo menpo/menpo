@@ -4,7 +4,7 @@ import numpy as np
 
 import menpo.io as mio
 from menpo.shape import TriMesh, TexturedTriMesh, PointCloud
-from menpo.image import MaskedImage
+from menpo.image import Image
 from numpy.testing import assert_allclose
 
 # ground truth bunny landmarks
@@ -41,7 +41,7 @@ def test_import_asset_james():
     assert(mesh.points.shape[1] == 3)
     assert(isinstance(mesh.trilist, np.ndarray))
     assert(mesh.trilist.shape[1] == 3)
-    assert(isinstance(mesh.texture, MaskedImage))
+    assert(isinstance(mesh.texture, Image))
     assert(isinstance(mesh.tcoords, PointCloud))
     assert(mesh.tcoords.points.shape[1] == 2)
 

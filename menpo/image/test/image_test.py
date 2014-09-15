@@ -230,10 +230,10 @@ def test_boolean_bounds_false():
     assert(np.all(max_b == np.array([5, 4])))
 
 
-@raises(ValueError)
+@raises(TypeError)
 def test_boolean_prevent_order_kwarg():
     mask = BooleanImage.blank((8, 8), fill=True)
-    mask.warp_to(mask, None, order=4)
+    mask.warp_to_mask(mask, None, order=4)
 
 
 def test_create_image_copy_false():
@@ -621,3 +621,32 @@ def test_image_extract_channels_multiple_reversed():
     extracted = image.extract_channels([2, 0])
     assert_equal(extracted.pixels[..., 0], image.pixels[..., 2])
     assert_equal(extracted.pixels[..., 1], image.pixels[..., 0])
+
+
+def test_diagonal_greyscale():
+    image = Image.blank((100, 250), n_channels=1)
+    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+
+
+def test_diagonal_color():
+    image = Image.blank((100, 250), n_channels=3)
+    assert image.diagonal == (100 ** 2 + 250 ** 2) ** 0.5
+
+
+def test_diagonal_greyscale_ndim():
+    image = Image.blank((100, 250, 50), n_channels=1)
+    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+
+
+def test_diagonal_kchannel_ndim():
+    image = Image.blank((100, 250, 50), n_channels=5)
+    assert image.diagonal == (100 ** 2 + 250 ** 2 + 50 ** 2) ** 0.5
+
+
+def test_rescale_to_diagonal():
+    image = Image.blank((8, 6), n_channels=2)
+    assert image.diagonal == 10
+    rescaled = image.rescale_to_diagonal(5)
+    assert rescaled.shape == (4, 3)
+    assert rescaled.n_channels == 2
+

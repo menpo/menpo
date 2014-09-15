@@ -14,6 +14,7 @@ from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.shape import mean_pointcloud
 from menpo.fitmultilevel import checks
+from menpo.fitmultilevel.base import DeformableModel, create_pyramid
 from menpo.feature import sparse_hog, no_op
 
 from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
@@ -59,7 +60,34 @@ def check_n_permutations(n_permutations):
         raise ValueError("n_permutations must be > 0")
 
 
-class SDTrainer(object):
+def apply_pyramid_on_images(generators, n_levels, verbose=False):
+    r"""
+    Exhausts the pyramid generators verbosely
+    """
+    all_images = []
+    for j in range(n_levels):
+
+        if verbose:
+            level_str = '- Apply pyramid: '
+            if n_levels > 1:
+                level_str = '- Apply pyramid: [Level {} - '.format(j + 1)
+
+        level_images = []
+        for c, g in enumerate(generators):
+            if verbose:
+                print_dynamic(
+                    '{}Computing feature space/rescaling - {}'.format(
+                        level_str,
+                        progress_bar_str((c + 1.) / len(generators),
+                                         show_bar=False)))
+            level_images.append(next(g))
+        all_images.append(level_images)
+    if verbose:
+        print_dynamic('- Apply pyramid: Done\n')
+    return all_images
+
+
+class SDTrainer(DeformableModel):
     r"""
     Mixin for Supervised Descent Trainers.
 
@@ -86,19 +114,14 @@ class SDTrainer(object):
         different types.
 
     features : `callable` or ``[callable]``, optional
-        Defines the features that will be extracted from the image.
-        If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
-        ``False``, so that the features are extracted at each level.
-        The first element of the list specifies the features to be extracted
-        at the lowest pyramidal level and so on.
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If not a list:
-            If ``pyramid_on_features`` is ``True``, the specified feature will
-            be applied to the highest level.
-
-            If ``pyramid_on_features`` is ``False``, the specified feature will
-            be applied to all pyramid levels.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
     n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
@@ -108,13 +131,6 @@ class SDTrainer(object):
         pyramidal levels. The scale factor will be::
 
             (downscale ** k) for k in range(n_levels)
-
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-
-        If ``False``, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
 
     noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
@@ -127,9 +143,6 @@ class SDTrainer(object):
     n_perturbations : `int` > ``0``, optional
         Defines the number of perturbations that will be applied to the
         training shapes.
-
-    interpolator : `string`, optional
-        The interpolator in use.
 
     Returns
     -------
@@ -154,15 +167,14 @@ class SDTrainer(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, regression_type=mlr, regression_features=None,
-                 features=no_op, n_levels=3, downscale=1.2,
-                 pyramid_on_features=True, noise_std=0.04, rotation=False,
-                 n_perturbations=10, interpolator='scipy'):
+                 features=no_op, n_levels=3, downscale=1.2, noise_std=0.04,
+                 rotation=False, n_perturbations=10):
+        features = checks.check_features(features, n_levels)
+        DeformableModel.__init__(self, features)
 
         # general deformable model checks
         checks.check_n_levels(n_levels)
         checks.check_downscale(downscale)
-        features = checks.check_features(features, n_levels,
-                                         pyramid_on_features)
 
         # SDM specific checks
         regression_type_list = check_regression_type(regression_type,
@@ -174,14 +186,11 @@ class SDTrainer(object):
         # store parameters
         self.regression_type = regression_type_list
         self.regression_features = regression_features
-        self.features = features
         self.n_levels = n_levels
         self.downscale = downscale
-        self.pyramid_on_features = pyramid_on_features
         self.noise_std = noise_std
         self.rotation = rotation
         self.n_perturbations = n_perturbations
-        self.interpolator = interpolator
 
     def train(self, images, group=None, label=None, verbose=False, **kwargs):
         r"""
@@ -211,19 +220,15 @@ class SDTrainer(object):
         # normalize the scaling of all images wrt the reference_shape size
         self._rescale_reference_shape()
         normalized_images = self._normalization_wrt_reference_shape(
-            images, group, label, self.reference_shape, self.interpolator,
-            verbose=verbose)
+            images, group, label, self.reference_shape, verbose=verbose)
 
         # create pyramid
-        generators = self._create_pyramid(normalized_images, self.n_levels,
-                                          self.downscale,
-                                          self.pyramid_on_features,
-                                          self.features, verbose=verbose)
+        generators = create_pyramid(normalized_images, self.n_levels,
+                                    self.downscale, self.features)
 
         # get feature images of all levels
-        images = self._apply_pyramid_on_images(
-            generators, self.n_levels, self.pyramid_on_features,
-            self.features, verbose=verbose)
+        images = apply_pyramid_on_images(generators, self.n_levels,
+                                         verbose=verbose)
 
         # this .reverse sets the lowest resolution as the first level
         images.reverse()
@@ -308,10 +313,9 @@ class SDTrainer(object):
 
     @classmethod
     def _normalization_wrt_reference_shape(cls, images, group, label,
-                                           reference_shape, interpolator,
-                                           verbose=False):
+                                           reference_shape, verbose=False):
         r"""
-        Function that normalizes the images sizes with respect to the reference
+        Normalizes the images sizes with respect to the reference
         shape (mean shape) scaling. This step is essential before building a
         deformable model.
 
@@ -332,9 +336,6 @@ class SDTrainer(object):
             The reference shape that is used to resize all training images to
             a consistent object size.
 
-        interpolator : `string`
-            The interpolator that should be used to perform the warps.
-
         verbose: bool, optional
             Flag that controls information and progress printing.
 
@@ -350,146 +351,11 @@ class SDTrainer(object):
                     progress_bar_str((c + 1.) / len(images),
                                      show_bar=False)))
             normalized_images.append(i.rescale_to_reference_shape(
-                reference_shape, group=group, label=label,
-                interpolator=interpolator))
+                reference_shape, group=group, label=label))
 
         if verbose:
             print_dynamic('- Normalizing images size: Done\n')
         return normalized_images
-
-    @classmethod
-    def _create_pyramid(cls, images, n_levels, downscale, pyramid_on_features,
-                        features, verbose=False):
-        r"""
-        Function that creates a generator function for Gaussian pyramid. The
-        pyramid can be created either on the feature space or the original
-        (intensities) space.
-
-        Parameters
-        ----------
-        images : list of :map:`MaskedImage`
-            The set of landmarked images.
-
-        n_levels : `int`
-            The number of multi-resolution pyramidal levels to be used.
-
-        downscale : `float`
-            The downscale factor that will be used to create the different
-            pyramidal levels.
-
-        pyramid_on_features : `boolean`
-            If ``True``, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-
-            If ``False``, the pyramid is created on the original (intensities)
-            space.
-
-        features : list with `string` or `function` or ``None``
-            In case ``pyramid_on_features`` is ``True``, ``features[0]``
-            will be used as features type.
-
-        verbose : `boolean`, Optional
-            Flag that controls information and progress printing.
-
-        Returns
-        -------
-        generator : `function`
-            The generator function of the Gaussian pyramid.
-        """
-        if pyramid_on_features:
-            # compute features at highest level
-            feature_images = []
-            for c, i in enumerate(images):
-                if verbose:
-                    print_dynamic('- Computing feature space: {}'.format(
-                        progress_bar_str((c + 1.) / len(images),
-                                         show_bar=False)))
-                feature_images.append(features[0](i))
-            if verbose:
-                print_dynamic('- Computing feature space: Done\n')
-
-            # create pyramid on feature_images
-            generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                            downscale=downscale)
-                         for i in feature_images]
-        else:
-            # create pyramid on intensities images
-            # features will be computed per level
-            generator = [i.gaussian_pyramid(n_levels=n_levels,
-                                            downscale=downscale)
-                         for i in images]
-        return generator
-
-    @classmethod
-    def _apply_pyramid_on_images(cls, generators, n_levels,
-                                 pyramid_on_features, features,
-                                 verbose=False):
-        r"""
-        Function that applies the generators of a pyramid on images.
-
-        Parameters
-        ----------
-        images : list of :map:`MaskedImage`
-            The set of landmarked images.
-
-        generators : list of generator `function`
-            The generator functions of the Gaussian pyramid for all images.
-
-        n_levels: `int`
-            The number of multi-resolution pyramidal levels to be used.
-
-        pyramid_on_features: boolean
-            If ``True``, the features are extracted at the highest level and the
-            pyramid is created on the feature images.
-            If ``False``, the pyramid is created on the original (intensities)
-            space.
-
-        features: list of length ``n_levels`` with `string` or `function` or ``None``
-            The feature type per level to be used in case
-            ``pyramid_on_features`` is enabled.
-
-        verbose: `boolean`, optional
-            Flag that controls information and progress printing.
-
-        Returns
-        -------
-        feature_images: list of lists of :map:`MaskedImage`
-            The set of pyramidal images.
-        """
-        feature_images = []
-        for j in range(n_levels):
-            # since generators are built from highest to lowest level, the
-            # parameters in form of list need to use a reversed index
-            rj = n_levels - j - 1
-
-            if verbose:
-                level_str = '- Apply pyramid: '
-                if n_levels > 1:
-                    level_str = '- Apply pyramid: [Level {} - '.format(j + 1)
-
-            current_images = []
-            if pyramid_on_features:
-                # features are already computed, so just call generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Rescaling feature space - {}]'.format(
-                            level_str,
-                            progress_bar_str((c + 1.) / len(generators),
-                                             show_bar=False)))
-                    current_images.append(next(g))
-            else:
-                # extract features of images returned from generator
-                for c, g in enumerate(generators):
-                    if verbose:
-                        print_dynamic('{}Computing feature space - {}]'.format(
-                            level_str,
-                            progress_bar_str((c + 1.) / len(generators),
-                                             show_bar=False)))
-                    current_images.append(features[rj](next(g)))
-            feature_images.append(current_images)
-        if verbose:
-            print_dynamic('- Apply pyramid: Done\n')
-        return feature_images
 
     @abc.abstractmethod
     def _compute_reference_shape(self, images, group, label):
@@ -584,19 +450,15 @@ class SDMTrainer(SDTrainer):
     patch_shape: tuple of `int`
         The shape of the patches used by the SDM.
 
-    features : `callable` or `[callable]`, optional
-        If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
-        ``False``, so that the features are extracted at each level.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
         The first element of the list specifies the features to be extracted at
         the lowest pyramidal level and so on.
 
-        If not a list:
-            If ``pyramid_on_features`` is ``True``, the specified feature will
-            be applied to the highest level.
-
-            If ``pyramid_on_features`` is ``False``, the specified feature will
-            be applied to all pyramid levels.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
     n_levels : `int` > ``0``, optional
         The number of multi-resolution pyramidal levels to be used.
@@ -606,13 +468,6 @@ class SDMTrainer(SDTrainer):
         pyramidal levels. The scale factor will be::
 
             (downscale ** k) for k in range(n_levels)
-
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-
-        If ``False``, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
 
     noise_std : `float`, optional
         The standard deviation of the gaussian noise used to produce the
@@ -640,9 +495,6 @@ class SDMTrainer(SDTrainer):
         reference frame (provided that features computation does not change
         the image size).
 
-    interpolator : `string`, optional
-        The interpolator in use.
-
     Raises
     ------
     ValueError
@@ -651,24 +503,17 @@ class SDMTrainer(SDTrainer):
     """
     def __init__(self, regression_type=mlr, regression_features=sparse_hog,
                  patch_shape=(16, 16), features=no_op, n_levels=3,
-                 downscale=1.5, pyramid_on_features=False, noise_std=0.04,
+                 downscale=1.5, noise_std=0.04,
                  rotation=False, n_perturbations=10,
-                 normalization_diagonal=None, interpolator='scipy'):
-        # in the SDM context regression features are image features,
-        # so check them
-        regression_features = checks.check_features(regression_features,
-                                                    n_levels,
-                                                    pyramid_on_features)
+                 normalization_diagonal=None):
         super(SDMTrainer, self).__init__(
             regression_type=regression_type,
             regression_features=regression_features,
             features=features, n_levels=n_levels, downscale=downscale,
-            pyramid_on_features=pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=interpolator)
+            noise_std=noise_std, rotation=rotation,
+            n_perturbations=n_perturbations)
         self.patch_shape = patch_shape
         self.normalization_diagonal = normalization_diagonal
-        self.pyramid_on_features = pyramid_on_features
 
     def _compute_reference_shape(self, images, group, label):
         r"""
@@ -742,8 +587,7 @@ class SDMTrainer(SDTrainer):
             The SDM fitter object.
         """
         return SDMFitter(regressors, self.n_training_images, self.features,
-                         self.reference_shape, self.downscale,
-                         self.pyramid_on_features, self.interpolator)
+                         self.reference_shape, self.downscale)
 
 
 class SDAAMTrainer(SDTrainer):
@@ -859,10 +703,8 @@ class SDAAMTrainer(SDTrainer):
             regression_type=regression_type,
             regression_features=regression_features,
             features=aam.features, n_levels=aam.n_levels,
-            downscale=aam.downscale,
-            pyramid_on_features=aam.pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=aam.interpolator)
+            downscale=aam.downscale, noise_std=noise_std,
+            rotation=rotation, n_perturbations=n_perturbations)
         self.aam = aam
         self.update = update
         self.md_transform = md_transform
@@ -950,8 +792,7 @@ class SDAAMTrainer(SDTrainer):
             A list with the normalized images.
         """
         return [i.rescale_to_reference_shape(self.reference_shape,
-                                             group=group, label=label,
-                                             interpolator=self.interpolator)
+                                             group=group, label=label)
                 for i in images]
 
     def _set_regressor_trainer(self, level):
@@ -986,8 +827,7 @@ class SDAAMTrainer(SDTrainer):
             regression_type=self.regression_type[level],
             regression_features=self.regression_features[level],
             update=self.update, noise_std=self.noise_std,
-            rotation=self.rotation, n_perturbations=self.n_perturbations,
-            interpolator=self.interpolator)
+            rotation=self.rotation, n_perturbations=self.n_perturbations)
 
     def _build_supervised_descent_fitter(self, regressors):
         r"""
@@ -1079,10 +919,8 @@ class SDCLMTrainer(SDTrainer):
             regression_type=regression_type,
             regression_features=[None] * clm.n_levels,
             features=clm.features, n_levels=clm.n_levels,
-            downscale=clm.downscale,
-            pyramid_on_features=clm.pyramid_on_features, noise_std=noise_std,
-            rotation=rotation, n_perturbations=n_perturbations,
-            interpolator=clm.interpolator)
+            downscale=clm.downscale, noise_std=noise_std,
+            rotation=rotation, n_perturbations=n_perturbations)
         self.clm = clm
         self.patch_shape = clm.patch_shape
         self.pdm_transform = pdm_transform

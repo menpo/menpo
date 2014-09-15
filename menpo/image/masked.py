@@ -4,6 +4,7 @@ import numpy as np
 binary_erosion = None  # expensive, from scipy.ndimage
 
 from menpo.visualize.base import ImageViewer
+gradient = None  # avoid circular reference, from menpo.feature
 
 from .base import Image
 from .boolean import BooleanImage
@@ -62,6 +63,29 @@ class MaskedImage(Image):
         else:
             # no mask provided - make the default.
             self.mask = BooleanImage.blank(self.shape, fill=True)
+
+    def as_unmasked(self, copy=True):
+        r"""
+        Return a copy of this image without the masking behavior.
+
+        By default the mask is simply discarded. In the future more options
+        may be possible.
+
+        Parameters
+        ----------
+        copy : `bool`, optional
+            If False, the produced :map:`Image` will share pixels with
+            ``self``. Only suggested to be used for performance.
+
+        Returns
+        -------
+        image : :map:`Image`
+            An image with the same pixels and landmarks as this one, but with
+            no mask.
+        """
+        img = Image(self.pixels, copy=copy)
+        img.landmarks = self.landmarks
+        return img
 
     @classmethod
     def blank(cls, shape, n_channels=1, fill=0, dtype=np.float, mask=None):
@@ -321,7 +345,7 @@ class MaskedImage(Image):
                            mask=mask).render(**kwargs)
 
     def crop_inplace(self, min_indices, max_indices,
-             constrain_to_boundary=True):
+                     constrain_to_boundary=True):
         r"""
         Crops this image using the given minimum and maximum indices.
         Landmarks are correctly adjusted so they maintain their position
@@ -364,7 +388,7 @@ class MaskedImage(Image):
             constrain_to_boundary=constrain_to_boundary)
         # crop our mask
         self.mask.crop_inplace(min_indices, max_indices,
-                       constrain_to_boundary=constrain_to_boundary)
+                               constrain_to_boundary=constrain_to_boundary)
         return self
 
     def crop_to_true_mask(self, boundary=0, constrain_to_boundary=True):
@@ -397,72 +421,118 @@ class MaskedImage(Image):
             boundary=boundary, constrain_to_bounds=False)
         # no point doing the bounds check twice - let the crop do it only.
         self.crop_inplace(min_indices, max_indices,
-                  constrain_to_boundary=constrain_to_boundary)
+                          constrain_to_boundary=constrain_to_boundary)
 
-    def warp_to(self, template_mask, transform, warp_landmarks=False,
-                warp_mask=False, interpolator='scipy', **kwargs):
+    def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
+                     order=1, mode='constant', cval=0.):
         r"""
         Warps this image into a different reference space.
 
         Parameters
         ----------
-        template_mask : :class:`menpo.image.boolean.BooleanImage`
+        template_mask : :map:`BooleanImage`
             Defines the shape of the result, and what pixels should be
             sampled.
-        transform : :class:`menpo.transform.base.Transform`
+
+        transform : :map:`Transform`
             Transform **from the template space back to this image**.
             Defines, for each pixel location on the template, which pixel
             location should be sampled from on this image.
-        warp_landmarks : bool, optional
+
+        warp_landmarks : `bool`, optional
             If `True`, warped_image will have the same landmark dictionary
             as self, but with each landmark updated to the warped position.
 
-            Default: `False`
-        warp_mask : bool, optional
-            If `True`, sample the `image.mask` at all `template_image`
-            points, setting the returned image mask to the sampled value
-            **within the masked region of `template_image`**.
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
 
-            Default: `False`
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
 
-            .. note::
-
-                This is most commonly set `True` in combination with an all
-                True `template_mask`, as this is then a warp of the image
-                and it's full mask. If `template_mask`
-                has False mask values, only the True region of the mask
-                will be updated, which is rarely the desired behavior,
-                but is possible for completion.
-        interpolator : 'scipy', optional
-            The interpolator that should be used to perform the warp.
-
-            Default: 'scipy'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
 
         Returns
         -------
-        warped_image : type(self)
+        warped_image : ``type(self)``
             A copy of this image, warped.
         """
-        warped_image = Image.warp_to(self, template_mask, transform,
-                                     warp_landmarks=warp_landmarks,
-                                     interpolator=interpolator,
-                                     **kwargs)
-        # note that _build_warped_image for MaskedImage classes attaches
-        # the template mask by default. If the user doesn't want to warp the
-        # mask, we are done. If they do want to warp the mask, we warp the
-        # mask separately and reattach.
-        # TODO an optimisation could be added here for the case where mask
-        # is all true/all false.
-        if warp_mask:
-            warped_mask = self.mask.warp_to(template_mask, transform,
-                                            warp_landmarks=warp_landmarks,
-                                            interpolator=interpolator,
-                                            **kwargs)
-            warped_image.mask = warped_mask
+        # call the super variant and get ourselves a MaskedImage back
+        # with a blank mask
+        warped_image = Image.warp_to_mask(self, template_mask, transform,
+                                          warp_landmarks=warp_landmarks,
+                                          order=order, mode=mode, cval=cval)
+        warped_mask = self.mask.warp_to_mask(template_mask, transform,
+                                             warp_landmarks=warp_landmarks,
+                                             mode=mode, cval=cval)
+        warped_image.mask = warped_mask
         return warped_image
+
+    def warp_to_shape(self, template_shape, transform, warp_landmarks=False,
+                      order=1, mode='constant', cval=0.):
+        """
+        Return a copy of this :map:`MaskedImage` warped into a different
+        reference space.
+
+        Parameters
+        ----------
+        template_shape : (n_dims, ) tuple or ndarray
+            Defines the shape of the result, and what pixel indices should be
+            sampled (all of them).
+
+        transform : :map:`Transform`
+            Transform **from the template_shape space back to this image**.
+            Defines, for each index on template_shape, which pixel location
+            should be sampled from on this image.
+
+        warp_landmarks : `bool`, optional
+            If `True`, ``warped_image`` will have the same landmark dictionary
+            as self, but with each landmark updated to the warped position.
+
+        order : `int`, optional
+            The order of interpolation. The order has to be in the range 0-5:
+            * 0: Nearest-neighbor
+            * 1: Bi-linear (default)
+            * 2: Bi-quadratic
+            * 3: Bi-cubic
+            * 4: Bi-quartic
+            * 5: Bi-quintic
+
+        mode : `str`, optional
+            Points outside the boundaries of the input are filled according
+            to the given mode ('constant', 'nearest', 'reflect' or 'wrap').
+
+        cval : `float`, optional
+            Used in conjunction with mode 'constant', the value outside
+            the image boundaries.
+
+        Returns
+        -------
+        warped_image : :map:`MaskedImage`
+            A copy of this image, warped.
+        """
+        # call the super variant and get ourselves an Image back
+        warped_image = Image.warp_to_shape(self, template_shape, transform,
+                                           warp_landmarks=warp_landmarks,
+                                           order=order, mode=mode, cval=cval)
+        # warp the mask separately and reattach.
+        mask = self.mask.warp_to_shape(template_shape, transform,
+                                       warp_landmarks=warp_landmarks,
+                                       mode=mode, cval=cval)
+        # efficiently turn the Image into a MaskedImage, attaching the
+        # landmarks
+        masked_warped_image = MaskedImage(warped_image.pixels, mask=mask,
+                                          copy=False)
+        masked_warped_image.landmarks = warped_image.landmarks
+        return masked_warped_image
 
     def normalize_std_inplace(self, mode='all', limit_to_mask=True):
         r"""
@@ -540,20 +610,10 @@ class MaskedImage(Image):
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
 
-    def _build_warped_image(self, template_mask, sampled_pixel_values,
-                            **kwargs):
-        r"""
-        Builds the warped image from the template mask and
-        sampled pixel values. Overridden for BooleanImage as we can't use
-        the usual from_vector_inplace method.
-        """
-        return super(MaskedImage, self)._build_warped_image(
-            template_mask, sampled_pixel_values, mask=template_mask)
-
     def gradient(self, nullify_values_at_mask_boundaries=False):
         r"""
-        Returns a MaskedImage which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
+        Returns a :map:`MaskedImage` which is the gradient of this one. In the
+        case of multiple channels, it returns the gradient over each axis over
         each channel as a flat list.
 
         Parameters
@@ -568,20 +628,19 @@ class MaskedImage(Image):
 
         Returns
         -------
-        gradient : :class:`MaskedImage`
+        gradient : :map:`MaskedImage`
             The gradient over each axis over each channel. Therefore, the
             gradient of a 2D, single channel image, will have length `2`.
             The length of a 2D, 3-channel image, will have length `6`.
         """
-        from menpo.feature import gradient
-        global binary_erosion
-        if binary_erosion is None:
-            from scipy.ndimage import binary_erosion  # expensive
-        grad_image_pixels = gradient(self.pixels)
-        grad_image = MaskedImage(grad_image_pixels,
-                                 mask=self.mask.copy(), copy=False)
-
+        global binary_erosion, gradient
+        if gradient is None:
+            from menpo.feature import gradient  # avoid circular reference
+        # use the feature to take the gradient as normal
+        grad_image = gradient(self)
         if nullify_values_at_mask_boundaries:
+            if binary_erosion is None:
+                from scipy.ndimage import binary_erosion  # expensive
             # Erode the edge of the mask in by one pixel
             eroded_mask = binary_erosion(self.mask.mask, iterations=1)
 
@@ -590,10 +649,8 @@ class MaskedImage(Image):
             np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
             grad_image.pixels[eroded_mask] = 0.0
-        grad_image.landmarks = self.landmarks
         return grad_image
 
-    # TODO maybe we should be stricter about the trilist here, feels flakey
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -621,65 +678,10 @@ class MaskedImage(Image):
 
             Default: None
         """
-        from menpo.transform.piecewiseaffine import PiecewiseAffine
-        from menpo.transform.piecewiseaffine import TriangleContainmentError
+        self.mask.constrain_to_pointcloud(self.landmarks[group][label],
+                                          trilist=trilist)
 
-        if self.n_dims != 2:
-            raise ValueError("can only constrain mask on 2D images.")
-
-        pc = self.landmarks[group][label]
-        if trilist is not None:
-            from menpo.shape import TriMesh
-
-            pc = TriMesh(pc.points, trilist)
-
-        pwa = PiecewiseAffine(pc, pc)
-        try:
-            # Call the superclass indices property because we actually want
-            # ALL the indices, not just the true ones.
-            pwa.apply(Image.indices.fget(self))
-        except TriangleContainmentError as e:
-            self.mask.from_vector_inplace(~e.points_outside_source_domain)
-
-    def rescale(self, scale, interpolator='scipy', round='ceil', **kwargs):
-        r"""A copy of this MaskedImage, rescaled by a given factor.
-
-        All image information (landmarks and mask) are rescaled appropriately.
-
-        Parameters
-        ----------
-        scale : float or tuple
-            The scale factor. If a tuple, the scale to apply to each dimension.
-            If a single float, the scale will be applied uniformly across
-            each dimension.
-        round: {'ceil', 'floor', 'round'}
-            Rounding function to be applied to floating point shapes.
-
-            Default: 'ceil'
-        kwargs : dict
-            Passed through to the interpolator. See `menpo.interpolation`
-            for details.
-
-        Returns
-        -------
-        rescaled_image : type(self)
-            A copy of this image, rescaled.
-
-        Raises
-        ------
-        ValueError:
-            If less scales than dimensions are provided.
-            If any scale is less than or equal to 0.
-        """
-        # just call normal Image version, passing the warp_mask=True flag
-        return super(MaskedImage, self).rescale(scale,
-                                                interpolator=interpolator,
-                                                round=round,
-                                                warp_mask=True,
-                                                **kwargs)
-
-    def build_mask_around_landmarks(self, patch_size, group=None,
-                                    label=None):
+    def build_mask_around_landmarks(self, patch_size, group=None, label=None):
         r"""
         Restricts this image's mask to be equal to the convex hull
         around the landmarks chosen.
@@ -719,107 +721,3 @@ class MaskedImage(Image):
             mask[x.flatten(), y.flatten()] = True
 
         self.mask = BooleanImage(mask)
-
-    def gaussian_pyramid(self, n_levels=3, downscale=2, sigma=None, order=1,
-                         mode='reflect', cval=0):
-        r"""
-        Return the gaussian pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image.
-
-        Parameters
-        ----------
-        n_levels : int
-            Number of levels in the pyramid. When set to -1 the maximum
-            number of levels will be build.
-
-            Default: 3
-
-        downscale : float, optional
-            Downscale factor.
-
-            Default: 2
-
-        sigma : float, optional
-            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
-            corresponds to a filter mask twice the size of the scale factor
-            that covers more than 99% of the gaussian distribution.
-
-            Default: None
-
-        order : int, optional
-            Order of splines used in interpolation of downsampling. See
-            `scipy.ndimage.map_coordinates` for detail.
-
-            Default: 1
-
-        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
-            The mode parameter determines how the array borders are handled,
-            where cval is the value when mode is equal to 'constant'.
-
-            Default: 'reflect'
-
-        cval : float, optional
-            Value to fill past edges of input if mode is 'constant'.
-
-            Default: 0
-
-        Returns
-        -------
-        image_pyramid:
-            Generator yielding pyramid layers as menpo image objects.
-        """
-        image_pyramid = Image.gaussian_pyramid(
-            self, n_levels=n_levels, downscale=downscale, sigma=sigma,
-            order=order, mode=mode, cval=cval)
-        for image in image_pyramid:
-            image.mask = self.mask.resize(image.shape)
-            yield image
-
-    def smoothing_pyramid(self, n_levels=3, downscale=2, sigma=None,
-                          mode='reflect', cval=0):
-        r"""
-        Return the smoothing pyramid of this image. The first image of the
-        pyramid will be the original, unmodified, image.
-
-        Parameters
-        ----------
-        n_levels : int
-            Number of levels in the pyramid. When set to -1 the maximum
-            number of levels will be build.
-
-            Default: 3
-
-        downscale : float, optional
-            Downscale factor.
-
-            Default: 2
-
-        sigma : float, optional
-            Sigma for gaussian filter. Default is `2 * downscale / 6.0` which
-            corresponds to a filter mask twice the size of the scale factor
-            that covers more than 99% of the gaussian distribution.
-
-            Default: None
-
-        mode :  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional
-            The mode parameter determines how the array borders are handled,
-            where cval is the value when mode is equal to 'constant'.
-
-            Default: 'reflect'
-
-        cval : float, optional
-            Value to fill past edges of input if mode is 'constant'.
-
-            Default: 0
-
-        Returns
-        -------
-        image_pyramid:
-            Generator yielding pyramid layers as menpo image objects.
-        """
-        image_pyramid = Image.smoothing_pyramid(
-            self, n_levels=n_levels, downscale=downscale, sigma=sigma,
-            mode=mode, cval=cval)
-        for image in image_pyramid:
-            image.mask = self.mask
-            yield image
