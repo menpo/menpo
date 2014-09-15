@@ -92,7 +92,8 @@ class NonUniformScale(DiscreteAffine, Affine):
 
         :type: (D,) ndarray
         """
-        return self.h_matrix.diagonal()[:-1]
+        # Copy the vector as Numpy 1.10 will return a writeable view
+        return self.h_matrix.diagonal()[:-1].copy()
 
     def _transform_str(self):
         message = 'NonUniformScale by {}'.format(self.scale)
