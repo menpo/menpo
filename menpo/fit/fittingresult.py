@@ -197,7 +197,7 @@ class FittingResult(Viewable):
         if self.parameters is not None:
             parameters = [p.copy() for p in self.parameters]
         else:
-            parameters = None
+            parameters = []
         gt_shape = self.gt_shape.copy() if self.gt_shape else None
         return SerializableFittingResult(self.image.copy(),
                                          parameters,
@@ -227,6 +227,8 @@ class NonParametricFittingResult(FittingResult):
                                                          gt_shape=gt_shape)
         self.fitter = fitter
         self._shapes = shapes
+        # The parameters are the shapes for Non-Parametric algorithms
+        self.parameters = shapes
 
     def shapes(self, as_points=False):
         if as_points:
@@ -247,7 +249,7 @@ class NonParametricFittingResult(FittingResult):
         r"""
         Setter for the ground truth shape associated to the image.
         """
-        if isinstance(PointCloud):
+        if isinstance(value, PointCloud):
             self._gt_shape = value
         else:
             raise ValueError("Accepted values for gt_shape setter are "

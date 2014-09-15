@@ -160,7 +160,7 @@ class MultilevelFittingResult(FittingResult):
         if self.parameters is not None:
             parameters = [p.copy() for p in self.parameters]
         else:
-            parameters = None
+            parameters = []
         gt_shape = self.gt_shape.copy() if self.gt_shape else None
         return SerializableMultilevelFittingResult(
             self.image.copy(), parameters, [s.copy() for s in self.shapes()],
