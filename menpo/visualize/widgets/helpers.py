@@ -412,7 +412,8 @@ def format_figure_options_two_scales(figure_options_wid,
 
 
 def channel_options(n_channels, plot_function, masked_default=False,
-                    toggle_show_default=True, toggle_show_visible=True):
+                    masked_visible=True, toggle_show_default=True,
+                    toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
         1) Two radiobuttons that select an options mode, depending on whether
@@ -445,6 +446,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
         channel_options_wid.glyph_block_size
         channel_options_wid.glyph_use_negative
         channel_options_wid.sum_enabled
+        channel_options_wid.image_is_masked
         channel_options_wid.masked
 
     To fix the alignment within this widget please refer to
@@ -462,12 +464,18 @@ def channel_options(n_channels, plot_function, masked_default=False,
     masked_default : `boolean`, optional
         Defines whether the masked image will be displayed.
 
+    masked_visible : `boolean`, optional
+        The visibility of the masked checkbox.
+
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
 
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    if not masked_visible:
+        masked_default = False
+
     # Create all necessary widgets
     but = ToggleButtonWidget(description='Channels Options',
                              value=toggle_show_default,
@@ -475,7 +483,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
     mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
                               description='Mode:', visible=toggle_show_default)
     masked = CheckboxWidget(value=masked_default, description='Masked',
-                            visible=toggle_show_default)
+                            visible=toggle_show_default and masked_visible)
     first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
                                        value=0, description='Channel',
                                        visible=toggle_show_default)
@@ -509,7 +517,8 @@ def channel_options(n_channels, plot_function, masked_default=False,
     all_but_radiobuttons = ContainerWidget(children=[sliders,
                                                      multiple_checkboxes])
     mode_and_masked = ContainerWidget(children=[mode, masked])
-    all_but_toggle = ContainerWidget(children=[mode_and_masked, all_but_radiobuttons])
+    all_but_toggle = ContainerWidget(children=[mode_and_masked,
+                                               all_but_radiobuttons])
 
     # Widget container
     channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
@@ -520,6 +529,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
     channel_options_wid.glyph_block_size = 3
     channel_options_wid.glyph_use_negative = False
     channel_options_wid.sum_enabled = False
+    channel_options_wid.image_is_masked = masked_visible
     channel_options_wid.masked = masked_default
 
     # Define mode visibility
@@ -625,7 +635,7 @@ def channel_options(n_channels, plot_function, masked_default=False,
     def toggle_image_options(name, value):
         if value:
             mode.visible = True
-            masked.visible = True
+            masked.visible = masked_visible
             if mode.value == 'Single':
                 first_slider_wid.visible = True
             else:

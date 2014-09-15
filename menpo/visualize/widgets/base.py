@@ -40,11 +40,13 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     """
     import matplotlib.pylab as plt
     from menpo.visualize.image import glyph
+    from menpo.image import MaskedImage
 
     # make sure that images is a list even of one image
     if not isinstance(images, list):
         images = [images]
     n_images = len(images)
+    images_are_masked = isinstance(images[0], MaskedImage)
 
     # Define plot function
     def show_img(name, value):
@@ -70,25 +72,46 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
         axes_visible = figure_options_wid.axes_visible
 
         # plot
-        if glyph_enabled or sum_enabled:
-            if landmarks_enabled:
-                glyph(images[im], vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(masked=masked, group_label=group,
-                                   with_labels=with_labels,
-                                   render_labels=legend_enabled, **kwargs)
+        if images_are_masked:
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(images[im], vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(masked=masked, group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(images[im], vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view(masked=masked, **kwargs)
             else:
-                glyph(images[im], vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view(masked=masked, **kwargs)
+                if landmarks_enabled:
+                    images[im].view_landmarks(masked=masked, group_label=group,
+                                              with_labels=with_labels,
+                                              render_labels=legend_enabled,
+                                              channels=channels, **kwargs)
+                else:
+                    images[im].view(masked=masked, channels=channels, **kwargs)
         else:
-            if landmarks_enabled:
-                images[im].view_landmarks(masked=masked, group_label=group,
-                                          with_labels=with_labels,
-                                          render_labels=legend_enabled,
-                                          channels=channels, **kwargs)
+            if glyph_enabled or sum_enabled:
+                if landmarks_enabled:
+                    glyph(images[im], vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view_landmarks(group_label=group,
+                                       with_labels=with_labels,
+                                       render_labels=legend_enabled, **kwargs)
+                else:
+                    glyph(images[im], vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view(**kwargs)
             else:
-                images[im].view(masked=masked, channels=channels, **kwargs)
+                if landmarks_enabled:
+                    images[im].view_landmarks(group_label=group,
+                                              with_labels=with_labels,
+                                              render_labels=legend_enabled,
+                                              channels=channels, **kwargs)
+                else:
+                    images[im].view(channels=channels, **kwargs)
 
         # set figure size
         plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
@@ -97,27 +120,36 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
             plt.axis('off')
 
         # change info_wid info
+        masked_str = "Image"
+        if images_are_masked:
+            masked_str = "Masked image"
         ch_str = 'channels'
         if images[im].n_channels == 1:
             ch_str = 'channel'
-        txt = "$\\bullet~\\texttt{Image of size " + \
-              "{} with {} {}".format(images[im]._str_shape,
-                                     images[im].n_channels, ch_str) + \
+
+        txt = "$\\bullet~\\texttt{" + \
+              "{} of size {} with {} {}".format(
+                  masked_str, images[im]._str_shape,
+                  images[im].n_channels, ch_str) + \
               ".}\\\\ \\bullet~\\texttt{" + \
               "{} landmark points.".format(
                   images[im].landmarks[group].lms.n_points) + \
-              "}\\\\ \\bullet~\\texttt{" + \
-              "{} masked pixels.".format(images[im].n_true_pixels) + \
-              "}\\\\ \\bullet~\\texttt{min=" + \
-              "{0:.3f}".format(images[im].pixels.min()) + \
-              ", max=" + \
-              "{0:.3f}".format(images[im].pixels.max()) + \
-              "}$"
+              "}\\\\ "
+        if images_are_masked:
+              txt += "\\bullet~\\texttt{" + \
+                     "{} masked pixels.".format(images[im].n_true_pixels) + \
+                     "}\\\\ "
+        txt += "\\bullet~\\texttt{min=" + \
+               "{0:.3f}".format(images[im].pixels.min()) + \
+               ", max=" + \
+               "{0:.3f}".format(images[im].pixels.max()) + \
+               "}$"
         info_wid.children[1].value = txt
 
     # Create options widgets
     channel_options_wid = channel_options(images[0].n_channels, show_img,
                                           masked_default=False,
+                                          masked_visible=images_are_masked,
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = images[0].landmarks.keys()
