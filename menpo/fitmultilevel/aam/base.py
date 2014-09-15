@@ -4,11 +4,11 @@ import numpy as np
 from hdf5able import HDF5able, SerializableCallable
 
 from menpo.shape import TriMesh
-from menpo.fitmultilevel.base import is_pyramid_on_features, name_of_callable
+from menpo.fitmultilevel.base import DeformableModel, name_of_callable
 from .builder import build_patch_reference_frame, build_reference_frame
 
 
-class AAM(HDF5able):
+class AAM(DeformableModel, HDF5able):
     r"""
     Active Appearance Model class.
 
@@ -64,11 +64,11 @@ class AAM(HDF5able):
     def __init__(self, shape_models, appearance_models, n_training_images,
                  transform, features, reference_shape, downscale,
                  scaled_shape_models):
+        DeformableModel.__init__(self, features)
         self.n_training_images = n_training_images
         self.shape_models = shape_models
         self.appearance_models = appearance_models
         self.transform = transform
-        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
@@ -92,10 +92,6 @@ class AAM(HDF5able):
         :type: `int`
         """
         return len(self.appearance_models)
-
-    @property
-    def pyramid_on_features(self):
-        return is_pyramid_on_features(self.features)
 
     def instance(self, shape_weights=None, appearance_weights=None, level=-1):
         r"""

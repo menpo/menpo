@@ -74,3 +74,13 @@ def pyramid_of_feature_images(n_levels, downscale, features, image):
 def feature_images(images, features):
     for feature, level in zip(reversed(features), images):
         yield feature(level)
+
+
+class DeformableModel(object):
+
+    def __init__(self, features):
+        self.features = features
+
+    @property
+    def pyramid_on_features(self):
+        return is_pyramid_on_features(self.features)

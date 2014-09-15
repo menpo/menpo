@@ -14,7 +14,7 @@ from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.shape import mean_pointcloud
 from menpo.fitmultilevel import checks
-from menpo.fitmultilevel.base import is_pyramid_on_features, create_pyramid
+from menpo.fitmultilevel.base import DeformableModel, create_pyramid
 from menpo.feature import sparse_hog, no_op
 
 from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter
@@ -87,7 +87,7 @@ def apply_pyramid_on_images(generators, n_levels, verbose=False):
     return all_images
 
 
-class SDTrainer(object):
+class SDTrainer(DeformableModel):
     r"""
     Mixin for Supervised Descent Trainers.
 
@@ -169,11 +169,12 @@ class SDTrainer(object):
     def __init__(self, regression_type=mlr, regression_features=None,
                  features=no_op, n_levels=3, downscale=1.2, noise_std=0.04,
                  rotation=False, n_perturbations=10):
+        features = checks.check_features(features, n_levels)
+        DeformableModel.__init__(self, features)
 
         # general deformable model checks
         checks.check_n_levels(n_levels)
         checks.check_downscale(downscale)
-        features = checks.check_features(features, n_levels)
 
         # SDM specific checks
         regression_type_list = check_regression_type(regression_type,
@@ -185,16 +186,11 @@ class SDTrainer(object):
         # store parameters
         self.regression_type = regression_type_list
         self.regression_features = regression_features
-        self.features = features
         self.n_levels = n_levels
         self.downscale = downscale
         self.noise_std = noise_std
         self.rotation = rotation
         self.n_perturbations = n_perturbations
-
-    @property
-    def pyramid_on_features(self):
-        return is_pyramid_on_features(self.features)
 
     def train(self, images, group=None, label=None, verbose=False, **kwargs):
         r"""

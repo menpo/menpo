@@ -1,9 +1,9 @@
 import numpy as np
 from menpo.image import Image
-from menpo.fitmultilevel.base import is_pyramid_on_features
+from menpo.fitmultilevel.base import DeformableModel
 
 
-class CLM(object):
+class CLM(DeformableModel):
     r"""
     Constrained Local Model class.
 
@@ -52,18 +52,14 @@ class CLM(object):
     def __init__(self, shape_models, classifiers, n_training_images,
                  patch_shape, features, reference_shape, downscale,
                  scaled_shape_models):
+        DeformableModel.__init__(self, features)
         self.shape_models = shape_models
         self.classifiers = classifiers
         self.n_training_images = n_training_images
         self.patch_shape = patch_shape
-        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
-
-    @property
-    def pyramid_on_features(self):
-        return is_pyramid_on_features(self.features)
 
     @property
     def n_levels(self):
