@@ -1,9 +1,10 @@
 from __future__ import division, print_function
 import numpy as np
+from menpo.fitmultilevel.base import create_pyramid
 
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
                                          normalization_wrt_reference_shape,
-                                         build_shape_model, create_pyramid)
+                                         build_shape_model)
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog

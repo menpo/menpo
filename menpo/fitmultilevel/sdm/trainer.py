@@ -14,8 +14,7 @@ from menpo.fit.regression.regressionfunctions import mlr
 from menpo.fit.regression.parametricfeatures import weights
 from menpo.shape import mean_pointcloud
 from menpo.fitmultilevel import checks
-from menpo.fitmultilevel.base import pyramid_on_features
-from menpo.fitmultilevel.builder import create_pyramid
+from menpo.fitmultilevel.base import pyramid_on_features, create_pyramid
 from menpo.feature import sparse_hog, no_op
 
 from .fitter import SDMFitter, SDAAMFitter, SDCLMFitter

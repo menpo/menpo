@@ -1,11 +1,12 @@
 import abc
 import numpy as np
 from menpo.fit.base import Fitter
-from menpo.fitmultilevel.base import pyramid_on_features
+from menpo.fitmultilevel.base import pyramid_on_features, \
+    pyramid_of_feature_images
 from menpo.transform import AlignmentAffine, Scale
 from menpo.fitmultilevel.fittingresult import MultilevelFittingResult
 from menpo.fitmultilevel.functions import noisy_align, align_shape_with_bb
-from menpo.fitmultilevel.builder import pyramid_of_feature_images
+
 
 class MultilevelFitter(Fitter):
     r"""

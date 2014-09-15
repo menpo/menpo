@@ -5,11 +5,12 @@ from menpo.shape import TriMesh
 from menpo.image import MaskedImage
 from menpo.transform import Translation
 from menpo.transform.piecewiseaffine import PiecewiseAffine
+from menpo.fitmultilevel.base import create_pyramid
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
                                          normalization_wrt_reference_shape,
-                                         build_shape_model, create_pyramid)
+                                         build_shape_model)
 from menpo.fitmultilevel import checks
 from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.feature import igo
