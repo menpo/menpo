@@ -4,7 +4,8 @@ from menpo.transform import AlignmentSimilarity
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
 from menpo.fit.lucaskanade.residual import LSIntensity
 from menpo.fit.lucaskanade.appearance import AlternatingInverseCompositional
-from menpo.fitmultilevel.base import MultilevelFitter
+from menpo.fitmultilevel.base import name_of_callable
+from menpo.fitmultilevel.fitter import MultilevelFitter
 from menpo.fitmultilevel.fittingresult import AAMMultilevelFittingResult
 
 
@@ -60,29 +61,6 @@ class AAMFitter(MultilevelFitter):
         :type: `float`
         """
         return self.aam.downscale
-
-    @property
-    def pyramid_on_features(self):
-        r"""
-        Flag that defined the nature of Gaussian pyramid used to build the
-        AAM.
-        If ``True``, the feature space is computed once at the highest scale
-        and the Gaussian pyramid is applied to the feature images.
-        If ``False``, the Gaussian pyramid is applied to the original images
-        and features are extracted at each level.
-
-        :type: `boolean`
-        """
-        return self.aam.pyramid_on_features
-
-    @property
-    def interpolator(self):
-        r"""
-        The interpolator used during AAM building.
-
-        :type: `str`
-        """
-        return self.aam.interpolator
 
     def _create_fitting_result(self, image, fitting_results, affine_correction,
                                gt_shape=None):
@@ -341,14 +319,8 @@ class LucasKanadeAAMFitter(AAMFitter):
                     self.downscale**(self.n_levels - j - 1)))
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.features[0], str):
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0])
-            elif self.features[0] is None:
-                feat_str = "- No features extracted. "
-            else:
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+            feat_str = "- Feature is {} with ".format(name_of_callable(
+                self.features))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:

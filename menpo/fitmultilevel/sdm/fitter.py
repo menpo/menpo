@@ -1,7 +1,8 @@
 import numpy as np
 
 from menpo.image import Image
-from menpo.fitmultilevel.base import MultilevelFitter
+from menpo.fitmultilevel.base import name_of_callable
+from menpo.fitmultilevel.fitter import MultilevelFitter
 from menpo.fitmultilevel.aam.fitter import AAMFitter
 from menpo.fitmultilevel.clm.fitter import CLMFitter
 
@@ -67,18 +68,15 @@ class SDMFitter(SDFitter):
         The number of images that were used to train the SDM fitter. It is
         only used for informational reasons.
 
-    features : `function` or list of those, optional
-        If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
-        ``False``, so that the features are extracted at each level.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
         The first element of the list specifies the features to be extracted at
         the lowest pyramidal level and so on.
 
-        If not a list or a list with length ``1``, then:
-            If ``pyramid_on_features`` is ``True``, the specified feature will
-            be applied to the highest level.
-            If ``pyramid_on_features`` is ``False``, the specified feature will
-            be applied to all pyramid levels.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -90,13 +88,6 @@ class SDMFitter(SDFitter):
 
             (downscale ** k) for k in range(n_levels)
 
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-
-        If ``False``, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
-
     References
     ----------
     .. [XiongD13] Supervised Descent Method and its Applications to
@@ -106,12 +97,11 @@ class SDMFitter(SDFitter):
        May, 2013
     """
     def __init__(self, regressors, n_training_images, features,
-                 reference_shape, downscale, pyramid_on_features):
+                 reference_shape, downscale):
         self._fitters = regressors
         self._features = features
         self._reference_shape = reference_shape
         self._downscale = downscale
-        self._pyramid_on_features = pyramid_on_features
         self._n_training_images = n_training_images
 
     @property
@@ -161,20 +151,6 @@ class SDMFitter(SDFitter):
         """
         return self._downscale
 
-    @property
-    def pyramid_on_features(self):
-        r"""
-        Flag that controls the Gaussian pyramid of the testing image based on
-        the pyramid used during building.
-        If True, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-        If False, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
-
-        :type: `boolean`
-        """
-        return self._pyramid_on_features
-
     def __str__(self):
         out = "Supervised Descent Method\n" \
               " - Non-Parametric '{}' Regressor\n" \
@@ -190,7 +166,7 @@ class SDMFitter(SDFitter):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(40, 40))
         if self.pyramid_on_features:
-            temp = self.features[0](temp_img)
+            temp = self.features(temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
@@ -199,14 +175,8 @@ class SDMFitter(SDFitter):
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.features[0], str):
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0])
-            elif self.features[0] is None:
-                feat_str = "- No features extracted. "
-            else:
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0].__name__)
+            feat_str = "- Feature is {} with ".format(
+                name_of_callable(self.features))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:

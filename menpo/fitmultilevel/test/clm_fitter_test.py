@@ -311,7 +311,6 @@ clm = CLMBuilder(classifier_trainers=linear_svm_lr,
                  n_levels=3,
                  downscale=1.1,
                  scaled_shape_models=True,
-                 pyramid_on_features=True,
                  max_shape_components=[1, 2, 3],
                  boundary=3).build(training_images, group='PTS')
 

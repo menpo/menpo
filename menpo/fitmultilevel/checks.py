@@ -1,4 +1,5 @@
 import wrapt
+from .base import is_pyramid_on_features
 
 # tests currently expect that all features automatically constrain landmarks
 # small wrapper which does this. Note that this decorator only works when
@@ -15,56 +16,45 @@ def constrain_landmarks(wrapped, instance, args, kwargs):
     return _execute(*args, **kwargs)
 
 
-def check_features(features, n_levels, pyramid_on_features):
+def check_features(features, n_levels):
     r"""
     Checks the feature type per level.
-    If pyramid_on_features is False, it must be a function or a list of
-    those containing 1 or {n_levels} elements.
-    If pyramid_on_features is True, it must be a function or a list of 1
-    of those.
-
     Parameters
     ----------
-    n_levels: int
+
+    features : callable or list of callables
+    n_levels : int
         The number of pyramid levels.
-    pyramid_on_features: boolean
-        If True, the pyramid will be applied to the feature image, so
-        the user needs to define a single features.
-        If False, the pyramid will be applied to the intensities image and
-        features will be extracted at each level, so the user can define
-        a features per level.
+
 
     Returns
     -------
     feature_list: list
         A list of feature function.
-        If pyramid_on_features is True, the list will have length 1.
-        If pyramid_on_features is False, the list will have length
-        {n_levels}.
     """
     # Firstly, make sure we have a list of callables of the right length
-    if not pyramid_on_features:
+    if is_pyramid_on_features(features):
+        return constrain_landmarks(features)
+    else:
         try:
-            all_callables = check_list_callables(features, n_levels)
+            all_callables = check_list_callables(features, n_levels,
+                                                 allow_single=False)
         except ValueError:
             raise ValueError("features must be a callable or a list of "
                              "{} callables".format(n_levels))
-    else:
-        if not callable(features):
-            raise ValueError("pyramid_on_features is enabled so features "
-                             "must be a single callable")
-        all_callables = check_list_callables(features, n_levels)
-
-    # constrain each feature to the bounds
-    all_callable_constrained = []
-    for ft in all_callables:
-        all_callable_constrained.append(constrain_landmarks(ft))
-    return all_callable_constrained
+        # constrain each feature to the bounds
+        return [constrain_landmarks(f) for f in all_callables]
 
 
-def check_list_callables(callables, n_callables):
+def check_list_callables(callables, n_callables, allow_single=True):
     if not isinstance(callables, list):
-        return [callables] * n_callables
+        if allow_single:
+            # expand to a list of callables for them
+            callables = [callables] * n_callables
+        else:
+            raise ValueError("Expected a list of callables "
+                             "(allow_single=False)")
+    # must have a list by now
     for c in callables:
         if not callable(c):
             raise ValueError("All items must be callables")

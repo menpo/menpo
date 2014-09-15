@@ -42,18 +42,16 @@ clm1 = CLMBuilder(classifier_trainers=[linear_svm_lr],
                   n_levels=3,
                   downscale=2,
                   scaled_shape_models=False,
-                  pyramid_on_features=False,
                   max_shape_components=[1, 2, 3],
                   boundary=3).build(training_images, group='PTS')
 
 clm2 = CLMBuilder(classifier_trainers=[random_forest, linear_svm_lr],
                   patch_shape=(3, 10),
-                  features=no_op,
+                  features=[no_op, no_op],
                   normalization_diagonal=None,
                   n_levels=2,
                   downscale=1.2,
                   scaled_shape_models=True,
-                  pyramid_on_features=False,
                   max_shape_components=None,
                   boundary=0).build(training_images, group='PTS')
 
@@ -64,7 +62,6 @@ clm3 = CLMBuilder(classifier_trainers=[linear_svm_lr],
                   n_levels=1,
                   downscale=3,
                   scaled_shape_models=True,
-                  pyramid_on_features=True,
                   max_shape_components=[1],
                   boundary=2).build(training_images, group='PTS')
 
@@ -89,15 +86,7 @@ def test_patch_shape_2_exception():
 
 @raises(ValueError)
 def test_features_exception():
-    CLMBuilder(features=[igo, sparse_hog],
-               pyramid_on_features=False).build(training_images, group='PTS')
-
-
-@raises(ValueError)
-def test_features_with_pyramid_on_features_exception():
-    CLMBuilder(features=[igo, sparse_hog]).build(training_images,
-                                                     group='PTS')
-
+    CLMBuilder(features=[igo, sparse_hog]).build(training_images, group='PTS')
 
 @raises(ValueError)
 def test_n_levels_exception():

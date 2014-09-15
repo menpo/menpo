@@ -1,9 +1,10 @@
 from __future__ import division, print_function
 import numpy as np
+from menpo.fitmultilevel.base import create_pyramid
 
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
                                          normalization_wrt_reference_shape,
-                                         build_shape_model, create_pyramid)
+                                         build_shape_model)
 from menpo.fitmultilevel.functions import build_sampling_grid
 from menpo.fitmultilevel import checks
 from menpo.feature import sparse_hog
@@ -42,18 +43,16 @@ class CLMBuilder(DeformableModelBuilder):
     patch_shape : tuple of `int`
         The shape of the patches used by the classifier trainers.
 
-    features : ``callable`` or ``[callable]``, optional
-        If list of length ``n_levels``, then a feature is defined per level.
-        However, this requires that the ``pyramid_on_features`` flag is
-        disabled, so that the features are extracted at each level.
-        The first element of the list specifies the features to be extracted
-        at the lowest pyramidal level and so on.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If not a list or a list with length ``1``, then:
-            If ``pyramid_on_features`` is ``True``, the specified feature will
-            be applied to the highest level.
-            If ``pyramid_on_features`` is ``False``, the specified feature will
-            be applied to all pyramid levels.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
+
 
     normalization_diagonal : `int` >= ``20``, optional
         During building an AAM, all images are rescaled to ensure that the
@@ -86,13 +85,6 @@ class CLMBuilder(DeformableModelBuilder):
         of the highest level, so the shape models will not be scaled; they will
         have the same size.
 
-    pyramid_on_features : `boolean`, optional
-        If ``True``, the feature space is computed once at the highest scale and
-        the Gaussian pyramid is applied on the feature images.
-
-        If ``False``, the Gaussian pyramid is applied on the original images
-        (intensities) and then features will be extracted at each level.
-
     max_shape_components : ``None`` or `int` > ``0`` or ``0`` <= `float` <= ``1`` or list of those, optional
         If list of length ``n_levels``, then a number of shape components is
         defined per level. The first element of the list specifies the number
@@ -123,8 +115,7 @@ class CLMBuilder(DeformableModelBuilder):
     def __init__(self, classifier_trainers=linear_svm_lr, patch_shape=(5, 5),
                  features=sparse_hog, normalization_diagonal=None,
                  n_levels=3, downscale=1.1, scaled_shape_models=True,
-                 pyramid_on_features=False, max_shape_components=None,
-                 boundary=3):
+                 max_shape_components=None, boundary=3):
 
         # general deformable model checks
         checks.check_n_levels(n_levels)
@@ -133,8 +124,7 @@ class CLMBuilder(DeformableModelBuilder):
         checks.check_boundary(boundary)
         max_shape_components = checks.check_max_components(
             max_shape_components, n_levels, 'max_shape_components')
-        features = checks.check_features(features, n_levels,
-                                         pyramid_on_features)
+        features = checks.check_features(features, n_levels)
 
         # CLM specific checks
         classifier_trainers = check_classifier_trainers(classifier_trainers, n_levels)
@@ -148,7 +138,6 @@ class CLMBuilder(DeformableModelBuilder):
         self.n_levels = n_levels
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
-        self.pyramid_on_features = pyramid_on_features
         self.max_shape_components = max_shape_components
         self.boundary = boundary
 
@@ -183,8 +172,7 @@ class CLMBuilder(DeformableModelBuilder):
 
         # create pyramid
         generators = create_pyramid(normalized_images, self.n_levels,
-                                    self.downscale,  self.pyramid_on_features,
-                                    self.features)
+                                    self.downscale, self.features)
 
         # build the model at each pyramid level
         if verbose:
@@ -320,8 +308,7 @@ class CLMBuilder(DeformableModelBuilder):
         from .base import CLM
         return CLM(shape_models, classifiers, n_training_images,
                    self.patch_shape, self.features, self.reference_shape,
-                   self.downscale, self.scaled_shape_models,
-                   self.pyramid_on_features)
+                   self.downscale, self.scaled_shape_models)
 
 
 def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):

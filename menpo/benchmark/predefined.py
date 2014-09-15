@@ -33,7 +33,6 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
                         'n_levels': 3,
                         'downscale': 2,
                         'scaled_shape_models': True,
-                        'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
                         'boundary': 3
@@ -99,14 +98,13 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
                           'convert_to_grey': True
     }
     training_options = {'group': 'PTS',
-                        'features': igo,
+                        'features': [igo] * 3,
                         'transform': PiecewiseAffine,
                         'trilist': ibug_face_68_trimesh,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 2,
                         'scaled_shape_models': True,
-                        'pyramid_on_features': False,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
                         'boundary': 3
@@ -182,7 +180,6 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
                         'n_levels': 3,
                         'downscale': 1.2,
                         'scaled_shape_models': False,
-                        'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 250,
                         'boundary': 3
@@ -256,7 +253,6 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
                         'n_levels': 3,
                         'downscale': 2,
                         'scaled_shape_models': True,
-                        'pyramid_on_features': True,
                         'max_shape_components': 25,
                         'max_appearance_components': 100,
                         'boundary': 3
@@ -327,12 +323,11 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
     training_options = {'group': 'PTS',
                         'classifiers': linear_svm_lr,
                         'patch_shape': (5, 5),
-                        'features': sparse_hog,
+                        'features': [sparse_hog] * 3,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 1.1,
                         'scaled_shape_models': True,
-                        'pyramid_on_features': False,
                         'max_shape_components': None,
                         'boundary': 3
                         }
@@ -400,12 +395,11 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
     training_options = {'group': 'PTS',
                         'classifiers': linear_svm_lr,
                         'patch_shape': (5, 5),
-                        'features': sparse_hog,
+                        'features': [sparse_hog] * 3,
                         'normalization_diagonal': None,
                         'n_levels': 3,
                         'downscale': 1.1,
                         'scaled_shape_models': True,
-                        'pyramid_on_features': False,
                         'max_shape_components': None,
                         'boundary': 3
     }
@@ -481,7 +475,6 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
                         'noise_std': 0.08,
                         'patch_shape': (16, 16),
                         'n_perturbations': 15,
-                        'pyramid_on_features': False
     }
     fitting_options = {
                        'error_type': error_type
@@ -532,7 +525,7 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
 def aam_params_combinations_noise(training_db_path, fitting_db_path,
                                   n_experiments=1, features=None,
                                   scaled_shape_models=None,
-                                  pyramid_on_features=None, n_shape=None,
+                                  n_shape=None,
                                   n_appearance=None, noise_std=None,
                                   rotation=None, verbose=False, plot=False):
 
@@ -545,10 +538,6 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
         scaled_shape_models = [True] * n_experiments
     elif len(scaled_shape_models) is not n_experiments:
         raise ValueError("scaled_shape_models has wrong length")
-    if pyramid_on_features is None:
-        pyramid_on_features = [True] * n_experiments
-    elif len(pyramid_on_features) is not n_experiments:
-        raise ValueError("pyramid_on_features has wrong length")
     if n_shape is None:
         n_shape = [[3, 6, 12]] * n_experiments
     elif len(n_shape) is not n_experiments:
@@ -586,12 +575,11 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
         if verbose:
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
             print("- features: {}\n- scaled_shape_models: {}\n"
-                  "- pyramid_on_features: {}\n- n_shape: {}\n"
+                  "- n_shape: {}\n"
                   "- n_appearance: {}\n- noise_std: {}\n"
                   "- rotation: {}".format(
                   features[i], scaled_shape_models[i],
-                  pyramid_on_features[i], n_shape[i], n_appearance[i],
-                  noise_std[i], rotation[i]))
+                  n_shape[i], n_appearance[i], noise_std[i], rotation[i]))
 
         # predefined option dictionaries
         error_type = 'me_norm'
@@ -603,7 +591,6 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
                             'n_levels': 3,
                             'downscale': 1.1,
                             'scaled_shape_models': True,
-                            'pyramid_on_features': True,
                             'max_shape_components': 25,
                             'max_appearance_components': 250,
                             'boundary': 3
@@ -622,7 +609,6 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
         # training
         training_options['features'] = features[i]
         training_options['scaled_shape_models'] = scaled_shape_models[i]
-        training_options['pyramid_on_features'] = pyramid_on_features[i]
         aam = aam_build_benchmark(training_images,
                                   training_options=training_options,
                                   verbose=verbose)
@@ -662,8 +648,7 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
 def clm_params_combinations_noise(training_db_path, fitting_db_path,
                                   n_experiments=1, classifiers=None,
                                   patch_shape=None, features=None,
-                                  scaled_shape_models=None,
-                                  pyramid_on_features=None, n_shape=None,
+                                  scaled_shape_models=None, n_shape=None,
                                   noise_std=None, rotation=None, verbose=False,
                                   plot=False):
 
@@ -684,10 +669,6 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         scaled_shape_models = [True] * n_experiments
     elif len(scaled_shape_models) is not n_experiments:
         raise ValueError("scaled_shape_models has wrong length")
-    if pyramid_on_features is None:
-        pyramid_on_features = [True] * n_experiments
-    elif len(pyramid_on_features) is not n_experiments:
-        raise ValueError("pyramid_on_features has wrong length")
     if n_shape is None:
         n_shape = [[3, 6, 12]] * n_experiments
     elif len(n_shape) is not n_experiments:
@@ -722,10 +703,10 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
             print("\nEXPERIMENT {}/{}:".format(i + 1, n_experiments))
             print("- classifiers: {}\n- patch_shape: {}\n"
                   "- features: {}\n- scaled_shape_models: {}\n"
-                  "- pyramid_on_features: {}\n- n_shape: {}\n"
+                  "- n_shape: {}\n"
                   "- noise_std: {}\n- rotation: {}".format(
                   classifiers[i], patch_shape[i], features[i],
-                  scaled_shape_models[i], pyramid_on_features[i], n_shape[i],
+                  scaled_shape_models[i], n_shape[i],
                   noise_std[i], rotation[i]))
 
         # predefined option dictionaries
@@ -738,7 +719,6 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
                             'n_levels': 3,
                             'downscale': 1.1,
                             'scaled_shape_models': False,
-                            'pyramid_on_features': True,
                             'max_shape_components': None,
                             'boundary': 3
                             }
@@ -757,7 +737,6 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
         training_options['patch_shape'] = patch_shape[i]
         training_options['features'] = features[i]
         training_options['scaled_shape_models'] = scaled_shape_models[i]
-        training_options['pyramid_on_features'] = pyramid_on_features[i]
         clm = clm_build_benchmark(training_images,
                                   training_options=training_options,
                                   verbose=verbose)

@@ -1,8 +1,9 @@
 import numpy as np
 from menpo.image import Image
+from menpo.fitmultilevel.base import DeformableModel
 
 
-class CLM(object):
+class CLM(DeformableModel):
     r"""
     Constrained Local Model class.
 
@@ -21,23 +22,15 @@ class CLM(object):
     patch_shape : tuple of `int`
         The shape of the patches used to train the classifiers.
 
-    features : `function` or list of those
-        The image feature that was be used to build the ``appearance_models``.
-        Will subsequently be used by fitter objects using this class to fit to
-        novel images.
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
 
-        If list of length ``n_levels``, then a feature was defined per level.
-        This means that the ``pyramid_on_features`` flag was ``False``
-        and the features were extracted at each level. The first element of
-        the list specifies the features of the lowest pyramidal level and so
-        on.
-
-        If not a list or a list with length ``1``, then:
-            If ``pyramid_on_features`` is ``True``, the specified feature
-            was applied to the highest level.
-
-            If ``pyramid_on_features`` is ``False``, the specified feature was
-            applied to all pyramid levels.
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
 
     reference_shape : :map:`PointCloud`
         The reference shape that was used to resize all training images to a
@@ -55,24 +48,18 @@ class CLM(object):
         the highest level, so the shape models are not scaled; they have the
         same size.
 
-    pyramid_on_features : `boolean`, optional
-        If True, the feature space was computed once at the highest scale and
-        the Gaussian pyramid was applied on the feature images.
-        If False, the Gaussian pyramid was applied on the original images
-        (intensities) and then features were extracted at each level.
     """
     def __init__(self, shape_models, classifiers, n_training_images,
                  patch_shape, features, reference_shape, downscale,
-                 scaled_shape_models, pyramid_on_features):
+                 scaled_shape_models):
+        DeformableModel.__init__(self, features)
         self.shape_models = shape_models
         self.classifiers = classifiers
         self.n_training_images = n_training_images
         self.patch_shape = patch_shape
-        self.features = features
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
-        self.pyramid_on_features = pyramid_on_features
 
     @property
     def n_levels(self):
@@ -173,7 +160,7 @@ class CLM(object):
         if self.n_levels > 1:
             if self.pyramid_on_features:
                 # compute features at highest level
-                feature_image = self.features[0](image)
+                feature_image = self.features(image)
 
                 # apply pyramid on feature image
                 pyramid = feature_image.gaussian_pyramid(
@@ -191,7 +178,7 @@ class CLM(object):
                           for j, i in enumerate(pyramid)]
             images.reverse()
         else:
-            images = [self.features[0](image)]
+            images = [self.features(image)]
 
         # initialize responses
         image = images[level]
@@ -227,7 +214,7 @@ class CLM(object):
                     self.downscale**(self.n_levels - j - 1)))
         temp_img = Image(image_data=np.random.rand(50, 50))
         if self.pyramid_on_features:
-            temp = self.features[0](temp_img)
+            temp = self.features(temp_img)
             n_channels = [temp.n_channels] * self.n_levels
         else:
             n_channels = []
@@ -236,14 +223,8 @@ class CLM(object):
                 n_channels.append(temp.n_channels)
         # string about features and channels
         if self.pyramid_on_features:
-            if isinstance(self.features[0], str):
-                feat_str = "- Feature is {} with ".format(
-                    self.features[0])
-            elif self.features[0] is None:
-                feat_str = "- No features extracted. "
-            else:
-                feat_str = "- Feature is {} with ".format(
-                    name_of_callable(self.features[0]))
+            feat_str = "- Feature is {} with ".format(
+                name_of_callable(self.features))
             if n_channels[0] == 1:
                 ch_str = ["channel"]
             else:
@@ -252,14 +233,8 @@ class CLM(object):
             feat_str = []
             ch_str = []
             for j in range(self.n_levels):
-                if isinstance(self.features[j], str):
-                    feat_str.append("- Feature is {} with ".format(
-                        self.features[j]))
-                elif self.features[j] is None:
-                    feat_str.append("- No features extracted. ")
-                else:
-                    feat_str.append("- Feature is {} with ".format(
-                        name_of_callable(self.features[j])))
+                feat_str.append("- Feature is {} with ".format(
+                    name_of_callable(self.features[j])))
                 if n_channels[j] == 1:
                     ch_str.append("channel")
                 else:
