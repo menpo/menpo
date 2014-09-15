@@ -1,6 +1,6 @@
 import numpy as np
 from menpo.image import Image
-from menpo.fitmultilevel.base import pyramid_on_features
+from menpo.fitmultilevel.base import is_pyramid_on_features
 
 
 class CLM(object):
@@ -63,7 +63,7 @@ class CLM(object):
 
     @property
     def pyramid_on_features(self):
-        return pyramid_on_features(self.features)
+        return is_pyramid_on_features(self.features)
 
     @property
     def n_levels(self):

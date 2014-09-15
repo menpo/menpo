@@ -1,8 +1,8 @@
 import abc
 import numpy as np
 from menpo.fit.base import Fitter
-from menpo.fitmultilevel.base import pyramid_on_features, \
-    pyramid_of_feature_images
+from menpo.fitmultilevel.base import (is_pyramid_on_features,
+                                      pyramid_of_feature_images)
 from menpo.transform import AlignmentAffine, Scale
 from menpo.fitmultilevel.fittingresult import MultilevelFittingResult
 from menpo.fitmultilevel.functions import noisy_align, align_shape_with_bb
@@ -49,7 +49,7 @@ class MultilevelFitter(Fitter):
         if it is computed on the original (intensities) image and features are
         extracted at each level.
         """
-        return pyramid_on_features(self.features)
+        return is_pyramid_on_features(self.features)
 
     def fit(self, image, initial_shape, max_iters=50, gt_shape=None,
             **kwargs):

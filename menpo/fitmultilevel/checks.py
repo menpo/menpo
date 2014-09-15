@@ -1,5 +1,5 @@
 import wrapt
-from .base import pyramid_on_features
+from .base import is_pyramid_on_features
 
 # tests currently expect that all features automatically constrain landmarks
 # small wrapper which does this. Note that this decorator only works when
@@ -33,7 +33,7 @@ def check_features(features, n_levels):
         A list of feature function.
     """
     # Firstly, make sure we have a list of callables of the right length
-    if pyramid_on_features(features):
+    if is_pyramid_on_features(features):
         return constrain_landmarks(features)
     else:
         try:

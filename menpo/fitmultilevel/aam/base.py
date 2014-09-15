@@ -4,7 +4,7 @@ import numpy as np
 from hdf5able import HDF5able, SerializableCallable
 
 from menpo.shape import TriMesh
-from menpo.fitmultilevel.base import pyramid_on_features, name_of_callable
+from menpo.fitmultilevel.base import is_pyramid_on_features, name_of_callable
 from .builder import build_patch_reference_frame, build_reference_frame
 
 
@@ -95,7 +95,7 @@ class AAM(HDF5able):
 
     @property
     def pyramid_on_features(self):
-        return pyramid_on_features(self.features)
+        return is_pyramid_on_features(self.features)
 
     def instance(self, shape_weights=None, appearance_weights=None, level=-1):
         r"""

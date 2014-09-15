@@ -8,7 +8,7 @@ def name_of_callable(c):
         return c.__class__.__name__  # callable class
 
 
-def pyramid_on_features(features):
+def is_pyramid_on_features(features):
     r"""
     True if feature extraction happens once and then a gaussian pyramid
     is taken. False if a gaussian pyramid is taken and then features are
@@ -55,7 +55,7 @@ def pyramid_of_feature_images(n_levels, downscale, features, image):
     r"""
     Generates a gaussian pyramid of feature images for a single image.
     """
-    if pyramid_on_features(features):
+    if is_pyramid_on_features(features):
         # compute feature image at the top
         feature_image = features(image)
         # create pyramid on the feature image

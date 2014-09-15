@@ -7,7 +7,7 @@ from menpo.transform import Scale, Translation, GeneralizedProcrustesAnalysis
 
 from menpo.model.pca import PCAModel
 from menpo.visualize import print_dynamic, progress_bar_str
-from .base import pyramid_on_features
+from .base import is_pyramid_on_features
 
 
 def normalization_wrt_reference_shape(images, group, label,
@@ -144,4 +144,4 @@ class DeformableModelBuilder(object):
         is taken. False if a gaussian pyramid is taken and then features are
         extracted at each level.
         """
-        return pyramid_on_features(self.features)
+        return is_pyramid_on_features(self.features)
