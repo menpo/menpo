@@ -147,6 +147,16 @@ class MultilevelFittingResult(FittingResult):
         return out
 
     def as_serializable(self):
+        r""""
+        Returns a serializable version of the fitting result. This is a much
+        lighter weight object than the initial fitting result. For example,
+        it won't contain the original fitting object.
+
+        Returns
+        -------
+        serializable_fitting_result : :map:`SerializableFittingResult`
+            The lightweight serializable version of this fitting result.
+        """
         if self.parameters is not None:
             parameters = [p.copy() for p in self.parameters]
         else:
@@ -264,6 +274,31 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
 
 class SerializableMultilevelFittingResult(SerializableFittingResult):
+    r"""
+    Designed to allow the fitting results to be easily serializable. In
+    comparison to the other fitting result objects, the serializable fitting
+    results contain a much stricter set of data. For example, the major data
+    components of a serializable fitting result are the fitted shapes, the
+    parameters and the fitted image.
+
+    Parameters
+    -----------
+    image : :map:`Image`
+        The fitted image.
+    parameters : `list` of `ndarray`
+        The list of optimal transform parameters per iteration of the fitting
+        procedure.
+    shapes : `list` of :map:`PointCloud`
+        The list of fitted shapes per iteration of the fitting procedure.
+    gt_shape : :map:`PointCloud`
+        The ground truth shape associated to the image.
+    n_levels : `int`
+        Number of levels within the multilevel fitter.
+    downscale : `int`
+        Scale of downscaling applied to the image.
+    n_iters : `int`
+        Number of iterations the fitter performed.
+    """
     def __init__(self, image, parameters, shapes, gt_shape, n_levels,
                  downscale, n_iters):
         SerializableFittingResult.__init__(self, image, parameters, shapes,

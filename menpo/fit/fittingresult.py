@@ -17,7 +17,7 @@ class FittingResult(Viewable):
     -----------
     image : :map:`Image` or subclass
         The fitted image.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
 
@@ -184,6 +184,16 @@ class FittingResult(Viewable):
                              targets).render(**kwargs)
 
     def as_serializable(self):
+        r""""
+        Returns a serializable version of the fitting result. This is a much
+        lighter weight object than the initial fitting result. For example,
+        it won't contain the original fitting object.
+
+        Returns
+        -------
+        serializable_fitting_result : :map:`SerializableFittingResult`
+            The lightweight serializable version of this fitting result.
+        """
         if self.parameters is not None:
             parameters = [p.copy() for p in self.parameters]
         else:
@@ -208,7 +218,7 @@ class NonParametricFittingResult(FittingResult):
         The Fitter object used to fitter the image.
     shapes : `list` of :map:`PointCloud`
         The list of fitted shapes per iteration of the fitting procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
 
@@ -258,7 +268,7 @@ class SemiParametricFittingResult(FittingResult):
     parameters : `list` of `ndarray`
         The list of optimal transform parameters per iteration of the fitting
         procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
 
@@ -339,7 +349,7 @@ class ParametricFittingResult(SemiParametricFittingResult):
     weights : `list` of `ndarray`
         The list of optimal appearance parameters per iteration of the fitting
         procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
     def __init__(self, image, fitter, parameters=None, weights=None,
@@ -397,6 +407,25 @@ class ParametricFittingResult(SemiParametricFittingResult):
 
 
 class SerializableFittingResult(HDF5able, FittingResult):
+    r"""
+    Designed to allow the fitting results to be easily serializable. In
+    comparison to the other fitting result objects, the serializable fitting
+    results contain a much stricter set of data. For example, the major data
+    components of a serializable fitting result are the fitted shapes, the
+    parameters and the fitted image.
+
+    Parameters
+    -----------
+    image : :map:`Image`
+        The fitted image.
+    parameters : `list` of `ndarray`
+        The list of optimal transform parameters per iteration of the fitting
+        procedure.
+    shapes : `list` of :map:`PointCloud`
+        The list of fitted shapes per iteration of the fitting procedure.
+    gt_shape : :map:`PointCloud`
+        The ground truth shape associated to the image.
+    """
     def __init__(self, image, parameters, shapes, gt_shape):
         FittingResult.__init__(self, image, gt_shape=gt_shape)
         HDF5able.__init__(self)
