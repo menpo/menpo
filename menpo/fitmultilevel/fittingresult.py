@@ -1,7 +1,10 @@
 from __future__ import division
 
+from itertools import chain
+from hdf5able import HDF5able
+
 from menpo.transform import Scale
-from menpo.fit.fittingresult import FittingResult
+from menpo.fit.fittingresult import FittingResult, SerializableFittingResult
 
 from .base import name_of_callable
 
@@ -27,8 +30,8 @@ class MultilevelFittingResult(FittingResult):
     """
     def __init__(self, image, multiple_fitter, fitting_results,
                  affine_correction, gt_shape=None):
-        super(MultilevelFittingResult, self).__init__(
-            image, multiple_fitter, gt_shape=gt_shape)
+        super(MultilevelFittingResult, self).__init__(image, gt_shape=gt_shape)
+        self.fitter = multiple_fitter
         self.fitting_results = fitting_results
         self._affine_correction = affine_correction
 
@@ -143,6 +146,16 @@ class MultilevelFittingResult(FittingResult):
               self.n_levels, self.n_iters, feat_str)
         return out
 
+    def as_serializable(self):
+        if self.parameters is not None:
+            parameters = [p.copy() for p in self.parameters]
+        else:
+            parameters = None
+        gt_shape = self.gt_shape.copy() if self.gt_shape else None
+        return SerializableMultilevelFittingResult(
+            self.image.copy(), parameters, [s.copy() for s in self.shapes()],
+            gt_shape, self.n_levels, self.downscale, self.n_iters)
+
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):
     r"""
@@ -202,8 +215,8 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `list` of :map:`Image` or subclass
         """
-        return _flatten_out(
-            [f.appearance_reconstructions for f in self.fitting_results])
+        return list(chain(
+            *[f.appearance_reconstructions for f in self.fitting_results]))
 
     @property
     def error_images(self):
@@ -213,8 +226,8 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `list` of :map:`Image` or subclass
         """
-        return _flatten_out(
-            [f.error_images for f in self.fitting_results])
+        return list(chain(
+            *[f.error_images for f in self.fitting_results]))
 
     @property
     def aam_reconstructions(self):
@@ -231,21 +244,38 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         aam_reconstructions = []
         for level, f in enumerate(self.fitting_results):
             if f.weights:
-                for sw, aw in zip(f.parameters, f.weights):
-                    sw = sw[4:]
-                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
-                    awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
+                for shape_w, aw in zip(f.parameters, f.weights):
+                    shape_w = shape_w[4:]
+                    sm_level = self.fitter.aam.shape_models[level]
+                    am_level = self.fitter.aam.appearance_models[level]
+                    swt = shape_w / sm_level.eigenvalues[:len(shape_w)] ** 0.5
+                    awt = aw / am_level.eigenvalues[:len(aw)] ** 0.5
                     aam_reconstructions.append(self.fitter.aam.instance(
                         shape_weights=swt, appearance_weights=awt, level=level))
             else:
-                for sw in f.parameters:
-                    sw = sw[4:]
-                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                for shape_w in f.parameters:
+                    shape_w = shape_w[4:]
+                    sm_level = self.fitter.aam.shape_models[level]
+                    swt = shape_w / sm_level.eigenvalues[:len(shape_w)] ** 0.5
                     aam_reconstructions.append(self.fitter.aam.instance(
                         shape_weights=swt, appearance_weights=None,
                         level=level))
         return aam_reconstructions
 
 
-def _flatten_out(list_of_lists):
-    return [i for l in list_of_lists for i in l]
+class SerializableMultilevelFittingResult(SerializableFittingResult):
+    def __init__(self, image, parameters, shapes, gt_shape, n_levels,
+                 downscale, n_iters):
+        SerializableFittingResult.__init__(self, image, parameters, shapes,
+                                           gt_shape)
+        HDF5able.__init__(self)
+
+        self.parameters = parameters
+        self._shapes = shapes
+        self.n_levels = n_levels
+        self._n_iters = n_iters
+        self.downscale = downscale
+
+    @property
+    def n_iters(self):
+        return self.n_iters

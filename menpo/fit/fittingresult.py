@@ -1,5 +1,6 @@
 from __future__ import division
 import abc
+from hdf5able import HDF5able
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
@@ -9,25 +10,21 @@ from menpo.visualize.base import Viewable, FittingViewer
 
 class FittingResult(Viewable):
     r"""
-    Object that holds the state of a :map:`Fitter` object before, during
-    and after it has fitted a particular image.
+    Object that holds the state of a single fitting object, during and after it
+    has fitted a particular image.
 
     Parameters
     -----------
     image : :map:`Image` or subclass
         The fitted image.
-    fitter : :map:`Fitter`
-        The fitter object used to fitter the image.
     gt_shape: :map:`PointCloud`
         The ground truth shape associated to the image.
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between the fitted and
-        ground truth shapes is to be computed.
     """
-    def __init__(self, image, fitter, gt_shape=None):
+
+    def __init__(self, image, gt_shape=None):
         self.image = image
-        self.fitter = fitter
         self._gt_shape = gt_shape
+        self.parameters = None
 
     @property
     def n_iters(self):
@@ -107,7 +104,8 @@ class FittingResult(Viewable):
         """
         image = Image(self.image.pixels)
         for j, s in enumerate(self.shapes()):
-            image.landmarks['iter_'+str(j)] = s
+            key = 'iter_{}'.format(j)
+            image.landmarks[key] = s
         return image
 
     def errors(self, error_type='me_norm'):
@@ -185,6 +183,17 @@ class FittingResult(Viewable):
         return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
                              targets).render(**kwargs)
 
+    def as_serializable(self):
+        if self.parameters is not None:
+            parameters = [p.copy() for p in self.parameters]
+        else:
+            parameters = None
+        gt_shape = self.gt_shape.copy() if self.gt_shape else None
+        return SerializableFittingResult(self.image.copy(),
+                                         parameters,
+                                         [s.copy() for s in self.shapes()],
+                                         gt_shape)
+
 
 class NonParametricFittingResult(FittingResult):
     r"""
@@ -202,32 +211,33 @@ class NonParametricFittingResult(FittingResult):
     gt_shape: :map:`PointCloud`
         The ground truth shape associated to the image.
     """
+
     def __init__(self, image, fitter, shapes=None, gt_shape=None):
-        super(NonParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
-        self.parameters = shapes
+        super(NonParametricFittingResult, self).__init__(image,
+                                                         gt_shape=gt_shape)
+        self.fitter = fitter
+        self._shapes = shapes
 
     def shapes(self, as_points=False):
         if as_points:
-            return [s.points.copy() for s in self.parameters]
-
+            return [s.points.copy() for s in self._shapes]
         else:
-            return self.parameters
+            return self._shapes
 
     @property
     def final_shape(self):
-        return self.parameters[-1].copy()
+        return self._shapes[-1].copy()
 
     @property
     def initial_shape(self):
-        return self.parameters[0].copy()
+        return self._shapes[0].copy()
 
     @FittingResult.gt_shape.setter
     def gt_shape(self, value):
         r"""
         Setter for the ground truth shape associated to the image.
         """
-        if type(value) is PointCloud:
+        if isinstance(PointCloud):
             self._gt_shape = value
         else:
             raise ValueError("Accepted values for gt_shape setter are "
@@ -251,9 +261,10 @@ class SemiParametricFittingResult(FittingResult):
     gt_shape: :map:`PointCloud`
         The ground truth shape associated to the image.
     """
+
     def __init__(self, image, fitter, parameters=None, gt_shape=None):
-        super(SemiParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+        self.fitter = fitter
         self.parameters = parameters
 
     @property
@@ -333,9 +344,8 @@ class ParametricFittingResult(SemiParametricFittingResult):
     """
     def __init__(self, image, fitter, parameters=None, weights=None,
                  gt_shape=None):
-        super(ParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
-        self.parameters = parameters
+        SemiParametricFittingResult.__init__(self, image, fitter, parameters,
+                                             gt_shape=gt_shape)
         self.weights = weights
 
     @property
@@ -384,3 +394,26 @@ class ParametricFittingResult(SemiParametricFittingResult):
             error_images.append(error_image)
 
         return error_images
+
+
+class SerializableFittingResult(HDF5able, FittingResult):
+    def __init__(self, image, parameters, shapes, gt_shape):
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+        HDF5able.__init__(self)
+
+        self.parameters = parameters
+        self._shapes = shapes
+
+    def shapes(self, as_points=False):
+        if as_points:
+            return [s.points.copy() for s in self._shapes]
+        else:
+            return self._shapes
+
+    @property
+    def initial_shape(self):
+        return self._shapes[0]
+
+    @property
+    def final_shape(self):
+        return self._shapes[-1]
