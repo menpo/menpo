@@ -340,10 +340,14 @@ class BooleanImage(Image):
 
     # noinspection PyMethodOverriding
     def warp_to_shape(self, template_shape, transform, warp_landmarks=True,
-                      mode='constant', cval=0.):
+                      mode='constant', cval=0., order=None):
         """
         Return a copy of this :map:`BooleanImage` warped into a different
         reference space.
+
+        Note that the order keyword argument is in fact ignored, as any order
+        other than 0 makes no sense on a binary image. The keyword argument is
+        present only for compatibility with the Image warp_to_shape API.
 
         Parameters
         ----------
@@ -375,10 +379,10 @@ class BooleanImage(Image):
 
         """
         # call the super variant and get ourselves an Image back
-        # note that we force the use of order=1 for BooleanImages.
+        # note that we force the use of order=0 for BooleanImages.
         warped = Image.warp_to_shape(self, template_shape, transform,
                                      warp_landmarks=warp_landmarks,
-                                     order=1, mode=mode, cval=cval)
+                                     order=0, mode=mode, cval=cval)
         # unfortunately we can't escape copying here, let BooleanImage
         # convert us to np.bool
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
