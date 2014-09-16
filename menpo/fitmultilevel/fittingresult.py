@@ -1,9 +1,24 @@
 from __future__ import division
 
+from itertools import chain
+from hdf5able import HDF5able
+
 from menpo.transform import Scale
 from menpo.fit.fittingresult import FittingResult
 
 from .base import name_of_callable
+
+
+def _rescale_shapes_to_reference(fitting_results, n_levels, downscale,
+                                 affine_correction):
+    n = n_levels - 1
+    shapes = []
+    for j, f in enumerate(fitting_results):
+        transform = Scale(downscale ** (n - j), f.final_shape.n_dims)
+        for t in f.shapes:
+            t = transform.apply(t)
+            shapes.append(affine_correction.apply(t))
+    return shapes
 
 
 class MultilevelFittingResult(FittingResult):
@@ -15,27 +30,20 @@ class MultilevelFittingResult(FittingResult):
     -----------
     image : :map:`Image` or subclass
         The fitted image.
-
     multilevel_fitter : :map:`MultilevelFitter`
         The multilevel fitter object used to fit the image.
-
     fitting_results : `list` of :map:`FittingResult`
         The list of fitting results.
-
     affine_correction : :map:`Affine`
         The affine transform between the initial shape of the highest
         pyramidal level and the initial shape of the original image
-
     gt_shape : class:`PointCloud`, optional
         The ground truth shape associated to the image.
-
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between is computed.
     """
     def __init__(self, image, multiple_fitter, fitting_results,
                  affine_correction, gt_shape=None):
-        super(MultilevelFittingResult, self).__init__(
-            image, multiple_fitter, gt_shape=gt_shape)
+        super(MultilevelFittingResult, self).__init__(image, gt_shape=gt_shape)
+        self.fitter = multiple_fitter
         self.fitting_results = fitting_results
         self._affine_correction = affine_correction
 
@@ -69,32 +77,11 @@ class MultilevelFittingResult(FittingResult):
             n_iters += f.n_iters
         return n_iters
 
-    def shapes(self, as_points=False):
-        r"""
-        Generates a list containing the shapes obtained at each fitting
-        iteration.
-
-        Parameters
-        -----------
-        as_points : `boolean`, optional
-            Whether the result is returned as a `list` of :map:`PointCloud` or
-            a `list` of `ndarrays`.
-
-        Returns
-        -------
-        shapes : `list` of :map:`PointCoulds` or `list` of `ndarray`
-            A list containing the fitted shapes at each iteration of
-            the fitting procedure.
-        """
-        n = self.n_levels - 1
-        shapes = []
-        for j, f in enumerate(self.fitting_results):
-            transform = Scale(self.downscale**(n-j), f.final_shape.n_dims)
-            for t in f.shapes(as_points=as_points):
-                t = transform.apply(t)
-                shapes.append(self._affine_correction.apply(t))
-
-        return shapes
+    @property
+    def shapes(self):
+        return _rescale_shapes_to_reference(self.fitting_results, self.n_levels,
+                                            self.downscale,
+                                            self._affine_correction)
 
     @property
     def final_shape(self):
@@ -150,32 +137,30 @@ class MultilevelFittingResult(FittingResult):
               self.n_levels, self.n_iters, feat_str)
         return out
 
+    def as_serializable(self):
+        r""""
+        Returns a serializable version of the fitting result. This is a much
+        lighter weight object than the initial fitting result. For example,
+        it won't contain the original fitting object.
+
+        Returns
+        -------
+        serializable_fitting_result : :map:`SerializableFittingResult`
+            The lightweight serializable version of this fitting result.
+        """
+        gt_shape = self.gt_shape.copy() if self.gt_shape else None
+        fr_copies = [fr.as_serializable() for fr in self.fitting_results]
+
+        return SerializableMultilevelFittingResult(
+            self.image.copy(), fr_copies,
+            gt_shape, self.n_levels, self.downscale, self.n_iters,
+            self._affine_correction.copy())
+
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):
     r"""
     Class that holds the state of a :map:`AAMFitter` object before,
     during and after it has fitted a particular image.
-
-    Parameters
-    -----------
-    image : :map:`Image` or subclass
-        The fitted image.
-
-    multilevel_fitter : :map:`MultilevelFitter`
-        The multilevel fitter object used to fit the image.
-
-    fitting_results : `list` of :map:`FittingResult`
-        The list of fitting results.
-
-    affine_correction : :map:`Affine`
-        The affine transform between the initial shape of the highest
-        pyramidal level and the initial shape of the original image
-
-    gt_shape : class:`PointCloud`, optional
-        The ground truth shape associated to the image.
-
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between is computed.
     """
     @property
     def costs(self):
@@ -185,7 +170,6 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         :type: `list` of `float`
         """
         raise ValueError('costs not implemented yet.')
-        #return self._flatten_out([f.costs for f in self.basic_fittings])
 
     @property
     def final_cost(self):
@@ -194,7 +178,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `float`
         """
-        return self.fitting_results[-1].final_cost
+        raise ValueError('costs not implemented yet.')
 
     @property
     def initial_cost(self):
@@ -203,7 +187,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `float`
         """
-        return self.fitting_results[0].initial_cost
+        raise ValueError('costs not implemented yet.')
 
     @property
     def warped_images(self):
@@ -231,8 +215,8 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `list` of :map:`Image` or subclass
         """
-        return _flatten_out(
-            [f.appearance_reconstructions for f in self.fitting_results])
+        return list(chain(
+            *[f.appearance_reconstructions for f in self.fitting_results]))
 
     @property
     def error_images(self):
@@ -242,8 +226,8 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
 
         :type: `list` of :map:`Image` or subclass
         """
-        return _flatten_out(
-            [f.error_images for f in self.fitting_results])
+        return list(chain(
+            *[f.error_images for f in self.fitting_results]))
 
     @property
     def aam_reconstructions(self):
@@ -260,21 +244,71 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         aam_reconstructions = []
         for level, f in enumerate(self.fitting_results):
             if f.weights:
-                for sw, aw in zip(f.parameters, f.weights):
-                    sw = sw[4:]
-                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
-                    awt = aw / self.fitter.aam.appearance_models[level].eigenvalues[:len(aw)] ** 0.5
+                for shape_w, aw in zip(f.parameters, f.weights):
+                    shape_w = shape_w[4:]
+                    sm_level = self.fitter.aam.shape_models[level]
+                    am_level = self.fitter.aam.appearance_models[level]
+                    swt = shape_w / sm_level.eigenvalues[:len(shape_w)] ** 0.5
+                    awt = aw / am_level.eigenvalues[:len(aw)] ** 0.5
                     aam_reconstructions.append(self.fitter.aam.instance(
                         shape_weights=swt, appearance_weights=awt, level=level))
             else:
-                for sw in f.parameters:
-                    sw = sw[4:]
-                    swt = sw / self.fitter.aam.shape_models[level].eigenvalues[:len(sw)] ** 0.5
+                for shape_w in f.parameters:
+                    shape_w = shape_w[4:]
+                    sm_level = self.fitter.aam.shape_models[level]
+                    swt = shape_w / sm_level.eigenvalues[:len(shape_w)] ** 0.5
                     aam_reconstructions.append(self.fitter.aam.instance(
                         shape_weights=swt, appearance_weights=None,
                         level=level))
         return aam_reconstructions
 
 
-def _flatten_out(list_of_lists):
-    return [i for l in list_of_lists for i in l]
+class SerializableMultilevelFittingResult(HDF5able, FittingResult):
+    r"""
+    Designed to allow the fitting results to be easily serializable. In
+    comparison to the other fitting result objects, the serializable fitting
+    results contain a much stricter set of data. For example, the major data
+    components of a serializable fitting result are the fitted shapes, the
+    parameters and the fitted image.
+
+    Parameters
+    -----------
+    image : :map:`Image`
+        The fitted image.
+    shapes : `list` of :map:`PointCloud`
+        The list of fitted shapes per iteration of the fitting procedure.
+    gt_shape : :map:`PointCloud`
+        The ground truth shape associated to the image.
+    n_levels : `int`
+        Number of levels within the multilevel fitter.
+    downscale : `int`
+        Scale of downscaling applied to the image.
+    n_iters : `int`
+        Number of iterations the fitter performed.
+    """
+    def __init__(self, image, fitting_results, gt_shape, n_levels,
+                 downscale, n_iters, affine_correction):
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+        self.fitting_results = fitting_results
+        self.n_levels = n_levels
+        self._n_iters = n_iters
+        self.downscale = downscale
+        self.affine_correction = affine_correction
+
+    @property
+    def n_iters(self):
+        return self.n_iters
+
+    @property
+    def final_shape(self):
+        return self.shapes[-1]
+
+    @property
+    def initial_shape(self):
+        return self.shapes[0]
+
+    @property
+    def shapes(self):
+        return _rescale_shapes_to_reference(self.fitting_results, self.n_levels,
+                                            self.downscale,
+                                            self.affine_correction)

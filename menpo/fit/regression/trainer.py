@@ -304,7 +304,7 @@ class NonParametricRegressorTrainer(RegressorTrainer):
         gt_shape : :map:`PointCloud`
             The ground truth shape.
         """
-        return NonParametricFittingResult(image, self, shapes=[shapes],
+        return NonParametricFittingResult(image, self, parameters=[shapes],
                                           gt_shape=gt_shape)
 
     def features(self, image, shape):

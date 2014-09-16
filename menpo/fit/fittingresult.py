@@ -1,5 +1,6 @@
 from __future__ import division
 import abc
+from hdf5able import HDF5able
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
@@ -9,48 +10,31 @@ from menpo.visualize.base import Viewable, FittingViewer
 
 class FittingResult(Viewable):
     r"""
-    Object that holds the state of a :map:`Fitter` object before, during
-    and after it has fitted a particular image.
+    Object that holds the state of a single fitting object, during and after it
+    has fitted a particular image.
 
     Parameters
     -----------
     image : :map:`Image` or subclass
         The fitted image.
-    fitter : :map:`Fitter`
-        The fitter object used to fitter the image.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
-    error_type : 'me_norm', 'me' or 'rmse', optional.
-        Specifies the way in which the error between the fitted and
-        ground truth shapes is to be computed.
     """
-    def __init__(self, image, fitter, gt_shape=None):
+
+    def __init__(self, image, gt_shape=None):
         self.image = image
-        self.fitter = fitter
         self._gt_shape = gt_shape
 
     @property
     def n_iters(self):
-        return len(self.shapes()) - 1
+        return len(self.shapes) - 1
 
-    @abc.abstractmethod
-    def shapes(self, as_points=False):
+    @abc.abstractproperty
+    def shapes(self):
         r"""
-        Generates a list containing the shapes obtained at each fitting
-        iteration.
+        A list containing the shapes obtained at each fitting iteration.
 
-        Parameters
-        -----------
-        as_points : boolean, optional
-            Whether the results is returned as a list of :map:`PointCloud`s or
-            ndarrays.
-
-            Default: `False`
-
-        Returns
-        -------
-        shapes : :map:`PointCloud`s or ndarray list
-            A list containing the shapes obtained at each fitting iteration.
+        :type: `list` of :map:`PointCloud`
         """
 
     @abc.abstractproperty
@@ -95,7 +79,7 @@ class FittingResult(Viewable):
     @property
     def iter_image(self):
         r"""
-        Returns a copy of the fitted image with a as many landmark groups as
+        Returns a copy of the fitted image with as many landmark groups as
         iteration run by fitting procedure:
             - ``iter_0``, containing the initial shape.
             - ``iter_1``, containing the the fitted shape at the first
@@ -106,8 +90,9 @@ class FittingResult(Viewable):
         :type: :map:`Image`
         """
         image = Image(self.image.pixels)
-        for j, s in enumerate(self.shapes()):
-            image.landmarks['iter_'+str(j)] = s
+        for j, s in enumerate(self.shapes):
+            key = 'iter_{}'.format(j)
+            image.landmarks[key] = s
         return image
 
     def errors(self, error_type='me_norm'):
@@ -126,8 +111,8 @@ class FittingResult(Viewable):
             The errors at each iteration of the fitting process.
         """
         if self.gt_shape is not None:
-            return [compute_error(t, self.gt_shape.points, error_type)
-                    for t in self.shapes(as_points=True)]
+            return [compute_error(t, self.gt_shape, error_type)
+                    for t in self.shapes]
         else:
             raise ValueError('Ground truth has not been set, errors cannot '
                              'be computed')
@@ -148,8 +133,7 @@ class FittingResult(Viewable):
             The final error at the end of the fitting procedure.
         """
         if self.gt_shape is not None:
-            return compute_error(self.final_shape.points,
-                                 self.gt_shape.points, error_type)
+            return compute_error(self.final_shape, self.gt_shape, error_type)
         else:
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
@@ -170,8 +154,7 @@ class FittingResult(Viewable):
             The initial error at the start of the fitting procedure.
         """
         if self.gt_shape is not None:
-            return compute_error(self.initial_shape.points,
-                                 self.gt_shape.points, error_type)
+            return compute_error(self.initial_shape, self.gt_shape, error_type)
         else:
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
@@ -181,9 +164,30 @@ class FittingResult(Viewable):
         Displays the whole fitting procedure.
         """
         pixels = self.image.pixels
-        targets = self.shapes(as_points=True)
+        targets = [s.points for s in self.shapes]
         return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
                              targets).render(**kwargs)
+
+    def as_serializable(self):
+        r""""
+        Returns a serializable version of the fitting result. This is a much
+        lighter weight object than the initial fitting result. For example,
+        it won't contain the original fitting object.
+
+        Returns
+        -------
+        serializable_fitting_result : :map:`SerializableFittingResult`
+            The lightweight serializable version of this fitting result.
+        """
+        if self.parameters is not None:
+            parameters = [p.copy() for p in self.parameters]
+        else:
+            parameters = []
+        gt_shape = self.gt_shape.copy() if self.gt_shape else None
+        return SerializableFittingResult(self.image.copy(),
+                                         parameters,
+                                         [s.copy() for s in self.shapes],
+                                         gt_shape)
 
 
 class NonParametricFittingResult(FittingResult):
@@ -199,20 +203,20 @@ class NonParametricFittingResult(FittingResult):
         The Fitter object used to fitter the image.
     shapes : `list` of :map:`PointCloud`
         The list of fitted shapes per iteration of the fitting procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
-    def __init__(self, image, fitter, shapes=None, gt_shape=None):
-        super(NonParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
-        self.parameters = shapes
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [s.points.copy() for s in self.parameters]
+    def __init__(self, image, fitter, parameters=None, gt_shape=None):
+        super(NonParametricFittingResult, self).__init__(image,
+                                                         gt_shape=gt_shape)
+        self.fitter = fitter
+        # The parameters are the shapes for Non-Parametric algorithms
+        self.parameters = parameters
 
-        else:
-            return self.parameters
+    @property
+    def shapes(self):
+        return self.parameters
 
     @property
     def final_shape(self):
@@ -227,11 +231,11 @@ class NonParametricFittingResult(FittingResult):
         r"""
         Setter for the ground truth shape associated to the image.
         """
-        if type(value) is PointCloud:
+        if isinstance(value, PointCloud):
             self._gt_shape = value
         else:
             raise ValueError("Accepted values for gt_shape setter are "
-                             "`menpo.shape.PointClouds`.")
+                             "PointClouds.")
 
 
 class SemiParametricFittingResult(FittingResult):
@@ -248,12 +252,13 @@ class SemiParametricFittingResult(FittingResult):
     parameters : `list` of `ndarray`
         The list of optimal transform parameters per iteration of the fitting
         procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
+
     def __init__(self, image, fitter, parameters=None, gt_shape=None):
-        super(SemiParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+        self.fitter = fitter
         self.parameters = parameters
 
     @property
@@ -278,14 +283,10 @@ class SemiParametricFittingResult(FittingResult):
         """
         return self.fitter.transform.from_vector(self.parameters[0])
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [self.fitter.transform.from_vector(p).target.points
-                    for p in self.parameters]
-
-        else:
-            return [self.fitter.transform.from_vector(p).target
-                    for p in self.parameters]
+    @property
+    def shapes(self):
+        return [self.fitter.transform.from_vector(p).target
+                for p in self.parameters]
 
     @property
     def final_shape(self):
@@ -307,7 +308,7 @@ class SemiParametricFittingResult(FittingResult):
             self._gt_shape = transform.target
         else:
             raise ValueError("Accepted values for gt_shape setter are "
-                             "`menpo.shape.PointClouds` or float lists"
+                             "PointClouds or float lists "
                              "specifying transform shapes.")
 
 
@@ -328,14 +329,13 @@ class ParametricFittingResult(SemiParametricFittingResult):
     weights : `list` of `ndarray`
         The list of optimal appearance parameters per iteration of the fitting
         procedure.
-    gt_shape: :map:`PointCloud`
+    gt_shape : :map:`PointCloud`
         The ground truth shape associated to the image.
     """
     def __init__(self, image, fitter, parameters=None, weights=None,
                  gt_shape=None):
-        super(ParametricFittingResult, self).__init__(
-            image, fitter, gt_shape=gt_shape)
-        self.parameters = parameters
+        SemiParametricFittingResult.__init__(self, image, fitter, parameters,
+                                             gt_shape=gt_shape)
         self.weights = weights
 
     @property
@@ -350,7 +350,6 @@ class ParametricFittingResult(SemiParametricFittingResult):
         transform = self.fitter.transform
         return [self.image.warp_to_mask(mask, transform.from_vector(p))
                 for p in self.parameters]
-
 
     @property
     def appearance_reconstructions(self):
@@ -385,3 +384,42 @@ class ParametricFittingResult(SemiParametricFittingResult):
             error_images.append(error_image)
 
         return error_images
+
+
+class SerializableFittingResult(HDF5able, FittingResult):
+    r"""
+    Designed to allow the fitting results to be easily serializable. In
+    comparison to the other fitting result objects, the serializable fitting
+    results contain a much stricter set of data. For example, the major data
+    components of a serializable fitting result are the fitted shapes, the
+    parameters and the fitted image.
+
+    Parameters
+    -----------
+    image : :map:`Image`
+        The fitted image.
+    parameters : `list` of `ndarray`
+        The list of optimal transform parameters per iteration of the fitting
+        procedure.
+    shapes : `list` of :map:`PointCloud`
+        The list of fitted shapes per iteration of the fitting procedure.
+    gt_shape : :map:`PointCloud`
+        The ground truth shape associated to the image.
+    """
+    def __init__(self, image, parameters, shapes, gt_shape):
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+
+        self.parameters = parameters
+        self._shapes = shapes
+
+    @property
+    def shapes(self):
+        return self._shapes
+
+    @property
+    def initial_shape(self):
+        return self._shapes[0]
+
+    @property
+    def final_shape(self):
+        return self._shapes[-1]
