@@ -86,7 +86,7 @@ class MultilevelFittingResult(FittingResult):
         shapes = []
         for j, f in enumerate(self.fitting_results):
             transform = Scale(self.downscale**(n-j), f.final_shape.n_dims)
-            for t in f.shapes(as_points=as_points):
+            for t in f.shapes:
                 t = transform.apply(t)
                 shapes.append(self._affine_correction.apply(t))
 
@@ -303,7 +303,6 @@ class SerializableMultilevelFittingResult(SerializableFittingResult):
                  downscale, n_iters):
         SerializableFittingResult.__init__(self, image, parameters, shapes,
                                            gt_shape)
-        HDF5able.__init__(self)
 
         self.parameters = parameters
         self._shapes = shapes

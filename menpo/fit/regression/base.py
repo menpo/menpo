@@ -97,7 +97,7 @@ class NonParametricRegressor(Regressor):
         gt_shape: :class:`menpo.shape.PointCloud`
             The ground truth shape.
         """
-        return NonParametricFittingResult(image, self, shapes=[shapes],
+        return NonParametricFittingResult(image, self, parameters=[shapes],
                                           gt_shape=gt_shape)
 
     def update(self, delta_shape, initial_shape):

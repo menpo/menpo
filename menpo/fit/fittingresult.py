@@ -24,30 +24,17 @@ class FittingResult(Viewable):
     def __init__(self, image, gt_shape=None):
         self.image = image
         self._gt_shape = gt_shape
-        self.parameters = None
 
     @property
     def n_iters(self):
-        return len(self.shapes()) - 1
+        return len(self.shapes) - 1
 
-    @abc.abstractmethod
-    def shapes(self, as_points=False):
+    @abc.abstractproperty
+    def shapes(self):
         r"""
-        Generates a list containing the shapes obtained at each fitting
-        iteration.
+        A list containing the shapes obtained at each fitting iteration.
 
-        Parameters
-        -----------
-        as_points : boolean, optional
-            Whether the results is returned as a list of :map:`PointCloud`s or
-            ndarrays.
-
-            Default: `False`
-
-        Returns
-        -------
-        shapes : :map:`PointCloud`s or ndarray list
-            A list containing the shapes obtained at each fitting iteration.
+        :type: list of :map:`PointCloud
         """
 
     @abc.abstractproperty
@@ -103,7 +90,7 @@ class FittingResult(Viewable):
         :type: :map:`Image`
         """
         image = Image(self.image.pixels)
-        for j, s in enumerate(self.shapes()):
+        for j, s in enumerate(self.shapes):
             key = 'iter_{}'.format(j)
             image.landmarks[key] = s
         return image
@@ -124,8 +111,8 @@ class FittingResult(Viewable):
             The errors at each iteration of the fitting process.
         """
         if self.gt_shape is not None:
-            return [compute_error(t, self.gt_shape.points, error_type)
-                    for t in self.shapes(as_points=True)]
+            return [compute_error(t, self.gt_shape, error_type)
+                    for t in self.shapes]
         else:
             raise ValueError('Ground truth has not been set, errors cannot '
                              'be computed')
@@ -146,8 +133,7 @@ class FittingResult(Viewable):
             The final error at the end of the fitting procedure.
         """
         if self.gt_shape is not None:
-            return compute_error(self.final_shape.points,
-                                 self.gt_shape.points, error_type)
+            return compute_error(self.final_shape, self.gt_shape, error_type)
         else:
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
@@ -168,8 +154,7 @@ class FittingResult(Viewable):
             The initial error at the start of the fitting procedure.
         """
         if self.gt_shape is not None:
-            return compute_error(self.initial_shape.points,
-                                 self.gt_shape.points, error_type)
+            return compute_error(self.initial_shape, self.gt_shape, error_type)
         else:
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
@@ -179,7 +164,7 @@ class FittingResult(Viewable):
         Displays the whole fitting procedure.
         """
         pixels = self.image.pixels
-        targets = self.shapes(as_points=True)
+        targets = [s.points for s in self.shapes]
         return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
                              targets).render(**kwargs)
 
@@ -201,7 +186,7 @@ class FittingResult(Viewable):
         gt_shape = self.gt_shape.copy() if self.gt_shape else None
         return SerializableFittingResult(self.image.copy(),
                                          parameters,
-                                         [s.copy() for s in self.shapes()],
+                                         [s.copy() for s in self.shapes],
                                          gt_shape)
 
 
@@ -222,27 +207,24 @@ class NonParametricFittingResult(FittingResult):
         The ground truth shape associated to the image.
     """
 
-    def __init__(self, image, fitter, shapes=None, gt_shape=None):
+    def __init__(self, image, fitter, parameters=None, gt_shape=None):
         super(NonParametricFittingResult, self).__init__(image,
                                                          gt_shape=gt_shape)
         self.fitter = fitter
-        self._shapes = shapes
         # The parameters are the shapes for Non-Parametric algorithms
-        self.parameters = shapes
+        self.parameters = parameters
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [s.points.copy() for s in self._shapes]
-        else:
-            return self._shapes
+    @property
+    def shapes(self):
+        return self.parameters
 
     @property
     def final_shape(self):
-        return self._shapes[-1].copy()
+        return self.parameters[-1].copy()
 
     @property
     def initial_shape(self):
-        return self._shapes[0].copy()
+        return self.parameters[0].copy()
 
     @FittingResult.gt_shape.setter
     def gt_shape(self, value):
@@ -301,14 +283,10 @@ class SemiParametricFittingResult(FittingResult):
         """
         return self.fitter.transform.from_vector(self.parameters[0])
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [self.fitter.transform.from_vector(p).target.points
-                    for p in self.parameters]
-
-        else:
-            return [self.fitter.transform.from_vector(p).target
-                    for p in self.parameters]
+    @property
+    def shapes(self):
+        return [self.fitter.transform.from_vector(p).target
+                for p in self.parameters]
 
     @property
     def final_shape(self):
@@ -430,16 +408,13 @@ class SerializableFittingResult(HDF5able, FittingResult):
     """
     def __init__(self, image, parameters, shapes, gt_shape):
         FittingResult.__init__(self, image, gt_shape=gt_shape)
-        HDF5able.__init__(self)
 
         self.parameters = parameters
         self._shapes = shapes
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [s.points.copy() for s in self._shapes]
-        else:
-            return self._shapes
+    @property
+    def shapes(self):
+        return self._shapes
 
     @property
     def initial_shape(self):

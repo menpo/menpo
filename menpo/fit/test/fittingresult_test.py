@@ -17,11 +17,9 @@ class MockedFittingResult(FittingResult):
     def n_iters(self):
         return 1
 
-    def shapes(self, as_points=False):
-        if as_points:
-            return [np.ones([3, 2])]
-        else:
-            return [PointCloud(np.ones([3, 2]))]
+    @property
+    def shapes(self):
+        return [PointCloud(np.ones([3, 2]))]
 
     @property
     def final_shape(self):
