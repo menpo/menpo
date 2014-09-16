@@ -34,7 +34,7 @@ class FittingResult(Viewable):
         r"""
         A list containing the shapes obtained at each fitting iteration.
 
-        :type: list of :map:`PointCloud
+        :type: `list` of :map:`PointCloud`
         """
 
     @abc.abstractproperty

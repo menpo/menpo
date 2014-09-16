@@ -4,9 +4,21 @@ from itertools import chain
 from hdf5able import HDF5able
 
 from menpo.transform import Scale
-from menpo.fit.fittingresult import FittingResult, SerializableFittingResult
+from menpo.fit.fittingresult import FittingResult
 
 from .base import name_of_callable
+
+
+def _rescale_shapes_to_reference(fitting_results, n_levels, downscale,
+                                 affine_correction):
+    n = n_levels - 1
+    shapes = []
+    for j, f in enumerate(fitting_results):
+        transform = Scale(downscale ** (n - j), f.final_shape.n_dims)
+        for t in f.shapes:
+            t = transform.apply(t)
+            shapes.append(affine_correction.apply(t))
+    return shapes
 
 
 class MultilevelFittingResult(FittingResult):
@@ -65,32 +77,11 @@ class MultilevelFittingResult(FittingResult):
             n_iters += f.n_iters
         return n_iters
 
-    def shapes(self, as_points=False):
-        r"""
-        Generates a list containing the shapes obtained at each fitting
-        iteration.
-
-        Parameters
-        -----------
-        as_points : `boolean`, optional
-            Whether the result is returned as a `list` of :map:`PointCloud` or
-            a `list` of `ndarrays`.
-
-        Returns
-        -------
-        shapes : `list` of :map:`PointCoulds` or `list` of `ndarray`
-            A list containing the fitted shapes at each iteration of
-            the fitting procedure.
-        """
-        n = self.n_levels - 1
-        shapes = []
-        for j, f in enumerate(self.fitting_results):
-            transform = Scale(self.downscale**(n-j), f.final_shape.n_dims)
-            for t in f.shapes:
-                t = transform.apply(t)
-                shapes.append(self._affine_correction.apply(t))
-
-        return shapes
+    @property
+    def shapes(self):
+        return _rescale_shapes_to_reference(self.fitting_results, self.n_levels,
+                                            self.downscale,
+                                            self._affine_correction)
 
     @property
     def final_shape(self):
@@ -157,14 +148,13 @@ class MultilevelFittingResult(FittingResult):
         serializable_fitting_result : :map:`SerializableFittingResult`
             The lightweight serializable version of this fitting result.
         """
-        if self.parameters is not None:
-            parameters = [p.copy() for p in self.parameters]
-        else:
-            parameters = []
         gt_shape = self.gt_shape.copy() if self.gt_shape else None
+        fr_copies = [fr.as_serializable() for fr in self.fitting_results]
+
         return SerializableMultilevelFittingResult(
-            self.image.copy(), parameters, [s.copy() for s in self.shapes()],
-            gt_shape, self.n_levels, self.downscale, self.n_iters)
+            self.image.copy(), fr_copies,
+            gt_shape, self.n_levels, self.downscale, self.n_iters,
+            self._affine_correction.copy())
 
 
 class AAMMultilevelFittingResult(MultilevelFittingResult):
@@ -273,7 +263,7 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         return aam_reconstructions
 
 
-class SerializableMultilevelFittingResult(SerializableFittingResult):
+class SerializableMultilevelFittingResult(HDF5able, FittingResult):
     r"""
     Designed to allow the fitting results to be easily serializable. In
     comparison to the other fitting result objects, the serializable fitting
@@ -285,9 +275,6 @@ class SerializableMultilevelFittingResult(SerializableFittingResult):
     -----------
     image : :map:`Image`
         The fitted image.
-    parameters : `list` of `ndarray`
-        The list of optimal transform parameters per iteration of the fitting
-        procedure.
     shapes : `list` of :map:`PointCloud`
         The list of fitted shapes per iteration of the fitting procedure.
     gt_shape : :map:`PointCloud`
@@ -299,17 +286,29 @@ class SerializableMultilevelFittingResult(SerializableFittingResult):
     n_iters : `int`
         Number of iterations the fitter performed.
     """
-    def __init__(self, image, parameters, shapes, gt_shape, n_levels,
-                 downscale, n_iters):
-        SerializableFittingResult.__init__(self, image, parameters, shapes,
-                                           gt_shape)
-
-        self.parameters = parameters
-        self._shapes = shapes
+    def __init__(self, image, fitting_results, gt_shape, n_levels,
+                 downscale, n_iters, affine_correction):
+        FittingResult.__init__(self, image, gt_shape=gt_shape)
+        self.fitting_results = fitting_results
         self.n_levels = n_levels
         self._n_iters = n_iters
         self.downscale = downscale
+        self.affine_correction = affine_correction
 
     @property
     def n_iters(self):
         return self.n_iters
+
+    @property
+    def final_shape(self):
+        return self.shapes[-1]
+
+    @property
+    def initial_shape(self):
+        return self.shapes[0]
+
+    @property
+    def shapes(self):
+        return _rescale_shapes_to_reference(self.fitting_results, self.n_levels,
+                                            self.downscale,
+                                            self.affine_correction)
