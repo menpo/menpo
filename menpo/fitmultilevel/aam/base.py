@@ -80,8 +80,13 @@ class AAM(DeformableModel, HDF5able):
         d['transform'] = SerializableCallable(transform, [menpo.transform])
 
         features = d.pop('features')
-        d['features'] = [SerializableCallable(f, [menpo.feature])
-                         for f in features]
+        if self.pyramid_on_features:
+            # features is a single callable
+            d['features'] = SerializableCallable(features, [menpo.feature])
+        else:
+            # features is a list of callables
+            d['features'] = [SerializableCallable(f, [menpo.feature])
+                             for f in features]
         return d
 
     @property

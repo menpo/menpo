@@ -203,12 +203,15 @@ def align_shape_with_bb(shape, bounding_box):
 def compute_error(target, ground_truth, error_type='me_norm'):
     r"""
     """
+    gt_points = ground_truth.points
+    target_points = target.points
+
     if error_type == 'me_norm':
-        return _compute_me_norm(target, ground_truth)
+        return _compute_me_norm(target_points, gt_points)
     elif error_type == 'me':
-        return _compute_me(target, ground_truth)
+        return _compute_me(target_points, gt_points)
     elif error_type == 'rmse':
-        return _compute_rmse(target, ground_truth)
+        return _compute_rmse(target_points, gt_points)
     else:
         raise ValueError("Unknown error_type string selected. Valid options "
                          "are: me_norm, me, rmse'")
