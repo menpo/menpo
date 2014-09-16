@@ -2,10 +2,13 @@ from nose.plugins.attrib import attr
 import numpy as np
 from numpy.testing import assert_approx_equal
 from nose.tools import raises
-from menpo.fit.fittingresult import FittingResult
+from menpo.fit.fittingresult import (FittingResult, NonParametricFittingResult,
+                                     SemiParametricFittingResult,
+                                     ParametricFittingResult)
 from menpo.shape import PointCloud
 from menpo.testing import is_same_array
 from menpo.image import MaskedImage
+from mock import MagicMock
 
 
 class MockedFittingResult(FittingResult):
@@ -76,3 +79,31 @@ def test_fittingresult_initial_error_me_norm():
 def test_fittingresult_initial_error_no_gt():
     fr = MockedFittingResult()
     fr.initial_error()
+
+
+def test_nonpara_fittingresult_as_serialized():
+    image = MagicMock()
+    fitter = MagicMock()
+    parameters = [MagicMock()]
+    gt_shape = MagicMock()
+    fr = NonParametricFittingResult(image, fitter, parameters=parameters,
+                                    gt_shape=gt_shape)
+    s_fr = fr.as_serializable()
+
+    image.copy.assert_called_once()
+    parameters[0].copy.assert_called_once()
+    gt_shape.copy.assert_called_once()
+
+
+def test_nonpara_fittingresult_as_serialized():
+    image = MagicMock()
+    fitter = MagicMock()
+    parameters = [MagicMock()]
+    gt_shape = MagicMock()
+    fr = NonParametricFittingResult(image, fitter, parameters=parameters,
+                                    gt_shape=gt_shape)
+    s_fr = fr.as_serializable()
+
+    image.copy.assert_called_once()
+    parameters[0].copy.assert_called_once()
+    gt_shape.copy.assert_called_once()
