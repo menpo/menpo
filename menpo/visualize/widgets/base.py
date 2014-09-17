@@ -171,9 +171,16 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                           toggle_show_visible=not tab)
 
     # Create final widget
+    def update_wrt_n_channels(name, value):
+        update_channel_options(channel_options_wid,
+                               n_channels=images[value].n_channels,
+                               image_is_masked=isinstance(images[value],
+                                                          MaskedImage))
+
     if n_images > 1:
         image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
                                            value=0, description='Image Number')
+        image_number_wid.on_trait_change(update_wrt_n_channels, 'value')
         image_number_wid.on_trait_change(show_img, 'value')
         if tab:
             image_wid = ContainerWidget(children=[image_number_wid, info_wid])
@@ -203,6 +210,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
 
     # Display and format widget
     display(wid)
+    update_wrt_n_channels('', 0)
     if tab and popup:
         for (k, tl) in enumerate(tab_titles):
             wid.children[0].set_title(k, tl)
