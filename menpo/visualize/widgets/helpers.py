@@ -1222,3 +1222,180 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
     model_parameters_wid.set_css('padding', container_padding)
     model_parameters_wid.set_css('margin', container_margin)
     model_parameters_wid.set_css('border', container_border)
+
+
+def final_result_options(group_keys, plot_function=None,
+                         show_image_default=True,
+                         subplots_enabled_default=False, legend_default=True,
+                         toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with Final Result Options. Specifically, it has:
+        1) A set of toggle buttons representing usually the initial, final and
+           ground truth shapes.
+        2) A checkbox that controls the visibility of the image.
+        3) A set of radio buttons that define whether subplots are enabled.
+        4) A checkbox that controls the legend's visibility.
+        5) A toggle button that controls the visibility of all the above, i.e.
+           the final result options.
+
+    The structure of the widgets is the following:
+        final_result_wid.children = [toggle_button, shapes_toggle_buttons,
+                                     show_image_checkbox, options]
+        options.children = [plot_mode_radio_buttons, legend_checkbox]
+
+    The returned widget saves the selected values in the following fields:
+        final_result_wid.groups
+        final_result_wid.show_image
+        final_result_wid.subplots_enabled
+        final_result_wid.legend_enabled
+
+    To fix the alignment within this widget please refer to
+    `format_final_result_options()` function.
+
+    Parameters
+    ----------
+    group_keys : `list` of `str`
+        A list of the available landmark groups.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    show_image_default : `boolean`, optional
+        The initial value of the image's visibility checkbox.
+
+    subplots_enabled_default : `boolean`, optional
+        The initial value of the plot options' radio buttons that determine
+        whether a single plot or subplots will be used.
+
+    legend_default : `boolean`, optional
+        The initial value of the legend's visibility checkbox.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='Final Result',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # Create widgets
+    shapes_checkboxes = [ToggleButtonWidget(description=group, value=True)
+                         for group in group_keys]
+    shapes_checkboxes.insert(0, LatexWidget(value='Select shape:'))
+    show_image = CheckboxWidget(description='Show image',
+                                value=show_image_default)
+    mode = RadioButtonsWidget(description='Plot mode:',
+                              values={'Single': False, 'Multiple': True})
+    mode.value = subplots_enabled_default
+    show_legend = CheckboxWidget(description='Show legend', value=False)
+
+    # Group widgets
+    shapes_wid = ContainerWidget(children=shapes_checkboxes)
+    opts = ContainerWidget(children=[mode, show_legend])
+
+    # Widget container
+    final_result_wid = ContainerWidget(children=[but, shapes_wid, show_image,
+                                                 opts])
+
+    # Initialize variables
+    final_result_wid.groups = group_keys
+    final_result_wid.show_image = show_image_default
+    final_result_wid.subplots_enabled = subplots_enabled_default
+    final_result_wid.legend_enabled = legend_default
+
+    # Groups function
+    def groups_fun(name, value):
+        final_result_wid.groups = []
+        for i in shapes_wid.children[1::]:
+            if i.value:
+                final_result_wid.groups.append(str(i.description))
+    for w in shapes_wid.children[1::]:
+        w.on_trait_change(groups_fun, 'value')
+
+    # Show image function
+    def show_image_fun(name, value):
+        final_result_wid.show_image = value
+    show_image.on_trait_change(show_image_fun, 'value')
+
+    # Plot mode function
+    def plot_mode_fun(name, value):
+        final_result_wid.subplots_enabled = value
+    mode.on_trait_change(plot_mode_fun, 'value')
+
+    # Legend function
+    def legend_fun(name, value):
+        final_result_wid.legend_enabled = value
+    show_legend.on_trait_change(legend_fun, 'value')
+
+    # Toggle button function
+    def show_options(name, value):
+        shapes_wid.visible = value
+        show_image.visible = value
+        opts.visible = value
+    show_options('', toggle_show_default)
+    but.on_trait_change(show_options, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        show_image.on_trait_change(plot_function, 'value')
+        mode.on_trait_change(plot_function, 'value')
+        show_legend.on_trait_change(plot_function, 'value')
+        for w in shapes_wid.children[1::]:
+            w.on_trait_change(plot_function, 'value')
+
+    return final_result_wid
+
+
+def format_final_result_options(final_result_wid, container_padding='6px',
+                                container_margin='6px',
+                                container_border='1px solid black',
+                                toggle_button_font_weight='bold'):
+    r"""
+    Function that corrects the align (style format) of a given
+    final_result_options widget. Usage example:
+        final_result_wid = final_result_options()
+        display(final_result_wid)
+        format_final_result_options(final_result_wid)
+
+    Parameters
+    ----------
+    final_result_wid :
+        The widget object generated by the `final_result_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+    """
+    # align shapes toggle buttons
+    final_result_wid.children[1].remove_class('vbox')
+    final_result_wid.children[1].add_class('hbox')
+    final_result_wid.children[1].add_class('align-center')
+    final_result_wid.children[1].children[0].set_css('margin-right',
+                                                     container_margin)
+
+    # align mode and legend options
+    final_result_wid.children[3].remove_class('vbox')
+    final_result_wid.children[3].add_class('hbox')
+    final_result_wid.children[3].children[0].set_css('margin-right', '20px')
+
+    # set toggle button font bold
+    final_result_wid.children[0].set_css('font-weight',
+                                         toggle_button_font_weight)
+    final_result_wid.children[1].set_css('margin-top', container_margin)
+
+    # margin and border around container widget
+    final_result_wid.set_css('padding', container_padding)
+    final_result_wid.set_css('margin', container_margin)
+    final_result_wid.set_css('border', container_border)
