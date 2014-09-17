@@ -6,7 +6,10 @@ from IPython.display import display, clear_output
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, landmark_options,
                       format_landmark_options, info_print, format_info_print,
-                      model_parameters, format_model_parameters)
+                      model_parameters, format_model_parameters,
+                      final_result_options, format_final_result_options,
+                      iterations_result_options,
+                      format_iterations_result_options)
 
 import numpy as np
 from numpy import asarray

@@ -1250,7 +1250,7 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
         model_parameters_wid.set_css('border', container_border)
 
 
-def final_result_options(group_keys, plot_function=None,
+def final_result_options(group_keys, plot_function=None, title='Final Result',
                          show_image_default=True,
                          subplots_enabled_default=False, legend_default=True,
                          toggle_show_default=True, toggle_show_visible=True):
@@ -1287,6 +1287,9 @@ def final_result_options(group_keys, plot_function=None,
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
 
+    title : `str`, optional
+        The title of the widget printed at the toggle button.
+
     show_image_default : `boolean`, optional
         The initial value of the image's visibility checkbox.
 
@@ -1304,20 +1307,24 @@ def final_result_options(group_keys, plot_function=None,
         The visibility of the toggle button.
     """
     # Toggle button that controls options' visibility
-    but = ToggleButtonWidget(description='Final Result',
+    but = ToggleButtonWidget(description=title,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
     # Create widgets
-    shapes_checkboxes = [ToggleButtonWidget(description=group, value=True)
-                         for group in group_keys]
-    shapes_checkboxes.insert(0, LatexWidget(value='Select shape:'))
+    shapes_checkboxes = [LatexWidget(value='Select shape:')]
+    for group in group_keys:
+        t = ToggleButtonWidget(description=group, value=False)
+        if group == 'final':
+            t.value = True
+        shapes_checkboxes.append(t)
     show_image = CheckboxWidget(description='Show image',
                                 value=show_image_default)
     mode = RadioButtonsWidget(description='Plot mode:',
                               values={'Single': False, 'Multiple': True})
     mode.value = subplots_enabled_default
-    show_legend = CheckboxWidget(description='Show legend', value=False)
+    show_legend = CheckboxWidget(description='Show legend',
+                                 value=legend_default)
 
     # Group widgets
     shapes_wid = ContainerWidget(children=shapes_checkboxes)
@@ -1328,7 +1335,7 @@ def final_result_options(group_keys, plot_function=None,
                                                  opts])
 
     # Initialize variables
-    final_result_wid.groups = group_keys
+    final_result_wid.groups = ['final']
     final_result_wid.show_image = show_image_default
     final_result_wid.subplots_enabled = subplots_enabled_default
     final_result_wid.legend_enabled = legend_default
@@ -1430,3 +1437,266 @@ def format_final_result_options(final_result_wid, container_padding='6px',
     final_result_wid.set_css('margin', container_margin)
     if border_visible:
         final_result_wid.set_css('border', container_border)
+
+
+def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
+                              title='Iterations Result',
+                              show_image_default=True,
+                              subplots_enabled_default=False,
+                              legend_default=True, toggle_show_default=True,
+                              toggle_show_visible=True):
+    r"""
+    Creates a widget with Iterations Result Options. Specifically, it has:
+        1) Two radio buttons that select an options mode, depending on whether
+           the user wants to visualize a "Single" or "Multiple" iterations.
+        2) If mode is "Single", an iteration number is selected by one slider.
+           If mode is "Multiple", the iterations range is selected by two
+           sliders.
+        3) A checkbox that controls the visibility of the image.
+        4) A set of radio buttons that define whether subplots are enabled.
+        5) A checkbox that controls the legend's visibility.
+        6) A toggle button that controls the visibility of all the above, i.e.
+           the final result options.
+
+    The structure of the widgets is the following:
+        iterations_result_wid.children = [toggle_button,
+                                          iterations_mode_and_sliders,
+                                          show_image_checkbox, options]
+        iterations_mode_and_sliders.children = [iterations_mode_radio_buttons,
+                                                all_sliders]
+        all_sliders.children = [first_slider, second_slider]
+        options.children = [plot_mode_radio_buttons, legend_checkbox]
+
+    The returned widget saves the selected values in the following fields:
+        iterations_result_wid.groups
+        iterations_result_wid.show_image
+        iterations_result_wid.subplots_enabled
+        iterations_result_wid.legend_enabled
+
+    To fix the alignment within this widget please refer to
+    `format_iterations_result_options()` function.
+
+    Parameters
+    ----------
+    n_iters : `int`
+        The number of iterations.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    iter_str : `str`, optional
+        The str that is used in the landmark groups shapes.
+        E.g. if iter_str == "iter_" then the group label of iteration i has the
+        form "{}{}".format(iter_str, i)
+
+    title : `str`, optional
+        The title of the widget printed at the toggle button.
+
+    show_image_default : `boolean`, optional
+        The initial value of the image's visibility checkbox.
+
+    subplots_enabled_default : `boolean`, optional
+        The initial value of the plot options' radio buttons that determine
+        whether a single plot or subplots will be used.
+
+    legend_default : `boolean`, optional
+        The initial value of the legend's visibility checkbox.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description=title, value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # Create widgets
+    iterations_mode = RadioButtonsWidget(values={'Single': 0, 'Multiple': 1},
+                                         value=0,
+                                         description='Iterations mode:',
+                                         visible=toggle_show_default)
+    first_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
+                                       value=0, description='Iteration',
+                                       visible=toggle_show_default)
+    second_slider_wid = IntSliderWidget(min=1, max=n_iters-1, step=1,
+                                        value=n_iters-1, description='To',
+                                        visible=False)
+    show_image = CheckboxWidget(description='Show image',
+                                value=show_image_default)
+    plot_mode = RadioButtonsWidget(description='Plot mode:',
+                                   values={'Single': False, 'Multiple': True})
+    plot_mode.value = subplots_enabled_default
+    show_legend = CheckboxWidget(description='Show legend',
+                                 value=legend_default)
+
+    # if single iteration, disable multiple options
+    if n_iters == 1:
+        iterations_mode.value = 0
+        iterations_mode.disabled = True
+        first_slider_wid.disabled = True
+        second_slider_wid.disabled = True
+
+    # Group widgets
+    sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
+    iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
+                                                            sliders])
+    opts = ContainerWidget(children=[plot_mode, show_legend])
+
+    # Widget container
+    iterations_result_wid = ContainerWidget(children=[
+        but, iterations_mode_and_sliders, show_image, opts])
+
+    # convert iterations to groups
+    def convert_iterations_to_groups(from_iter, to_iter):
+        return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter+1)]
+
+    # Initialize variables
+    iterations_result_wid.groups = convert_iterations_to_groups(0, 0)
+    iterations_result_wid.show_image = show_image_default
+    iterations_result_wid.subplots_enabled = subplots_enabled_default
+    iterations_result_wid.legend_enabled = legend_default
+
+    # Define iterations mode visibility
+    def iterations_mode_selection(name, value):
+        if value == 0:
+            first_slider_wid.description = 'Iteration'
+            first_slider_wid.min = 0
+            first_slider_wid.max = n_iters-1
+            second_slider_wid.visible = False
+        else:
+            first_slider_wid.description = 'From'
+            first_slider_wid.min = 0
+            first_slider_wid.max = n_iters-1
+            second_slider_wid.min = 0
+            second_slider_wid.max = n_iters-1
+            if first_slider_wid.value == n_iters - 1:
+                second_slider_wid.value = n_iters - 1
+            else:
+                second_slider_wid.value = first_slider_wid.value + 1
+            second_slider_wid.visible = True
+    iterations_mode.on_trait_change(iterations_mode_selection, 'value')
+
+    # Define multiple channels sliders functionality
+    def first_slider_val(name, value):
+        if iterations_mode.value == 1 and value > second_slider_wid.value:
+            first_slider_wid.value = second_slider_wid.value
+
+    def second_slider_val(name, value):
+        if iterations_mode.value == 1 and value < first_slider_wid.value:
+            second_slider_wid.value = first_slider_wid.value
+
+    def get_groups(name, value):
+        if iterations_mode.value == 0:
+            iterations_result_wid.groups = convert_iterations_to_groups(
+                first_slider_wid.value, first_slider_wid.value)
+        else:
+            iterations_result_wid.groups = convert_iterations_to_groups(
+                first_slider_wid.value, second_slider_wid.value)
+    first_slider_wid.on_trait_change(first_slider_val, 'value')
+    second_slider_wid.on_trait_change(second_slider_val, 'value')
+    first_slider_wid.on_trait_change(get_groups, 'value')
+    second_slider_wid.on_trait_change(get_groups, 'value')
+    iterations_mode.on_trait_change(get_groups, 'value')
+
+    # Show image function
+    def show_image_fun(name, value):
+        iterations_result_wid.show_image = value
+    show_image.on_trait_change(show_image_fun, 'value')
+
+    # Plot mode function
+    def plot_mode_fun(name, value):
+        iterations_result_wid.subplots_enabled = value
+    plot_mode.on_trait_change(plot_mode_fun, 'value')
+
+    # Legend function
+    def legend_fun(name, value):
+        iterations_result_wid.legend_enabled = value
+    show_legend.on_trait_change(legend_fun, 'value')
+
+    # Toggle button function
+    def show_options(name, value):
+        iterations_mode.visible = value
+        show_image.visible = value
+        opts.visible = value
+        if value:
+            if iterations_mode.value == 0:
+                first_slider_wid.visible = True
+            else:
+                first_slider_wid.visible = True
+                second_slider_wid.visible = True
+        else:
+            first_slider_wid.visible = False
+            second_slider_wid.visible = False
+    show_options('', toggle_show_default)
+    but.on_trait_change(show_options, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        first_slider_wid.on_trait_change(plot_function, 'value')
+        second_slider_wid.on_trait_change(plot_function, 'value')
+        iterations_mode.on_trait_change(plot_function, 'value')
+        show_image.on_trait_change(plot_function, 'value')
+        plot_mode.on_trait_change(plot_function, 'value')
+        show_legend.on_trait_change(plot_function, 'value')
+
+    return iterations_result_wid
+
+
+def format_iterations_result_options(iterations_result_wid,
+                                     container_padding='6px',
+                                     container_margin='6px',
+                                     container_border='1px solid black',
+                                     toggle_button_font_weight='bold',
+                                     border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given
+    iterations_result_options widget. Usage example:
+        iterations_result_wid = iterations_result_options()
+        display(iterations_result_wid)
+        format_iterations_result_options(iterations_result_wid)
+
+    Parameters
+    ----------
+    iterations_result_wid :
+        The widget object generated by the `iterations_result_options()`
+        function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align sliders and iterations_mode
+    iterations_result_wid.children[1].remove_class('vbox')
+    iterations_result_wid.children[1].add_class('hbox')
+    iterations_result_wid.children[1].add_class('align-start')
+
+    # align plot_mode and legend options
+    iterations_result_wid.children[3].remove_class('vbox')
+    iterations_result_wid.children[3].add_class('hbox')
+    iterations_result_wid.children[3].children[0].set_css('margin-right',
+                                                          '20px')
+
+    # set toggle button font bold
+    iterations_result_wid.children[0].set_css('font-weight',
+                                              toggle_button_font_weight)
+    iterations_result_wid.children[1].set_css('margin-top', container_margin)
+
+    # margin and border around container widget
+    iterations_result_wid.set_css('padding', container_padding)
+    iterations_result_wid.set_css('margin', container_margin)
+    if border_visible:
+        iterations_result_wid.set_css('border', container_border)
