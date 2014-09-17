@@ -148,7 +148,8 @@ def figure_options(plot_function, scale_default=1., show_axes_default=True,
 def format_figure_options(figure_options_wid, container_padding='6px',
                           container_margin='6px',
                           container_border='1px solid black',
-                          toggle_button_font_weight='bold'):
+                          toggle_button_font_weight='bold',
+                          border_visible=True):
     r"""
     Function that corrects the align (style format) of a given figure_options
     widget. Usage example:
@@ -172,6 +173,9 @@ def format_figure_options(figure_options_wid, container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # set toggle button font bold
     figure_options_wid.children[0].set_css('font-weight',
@@ -180,7 +184,7 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     # margin and border around container widget
     figure_options_wid.set_css('padding', container_padding)
     figure_options_wid.set_css('margin', container_margin)
-    if figure_options_wid.children[0].visible:
+    if border_visible:
         figure_options_wid.set_css('border', container_border)
 
 
@@ -366,7 +370,8 @@ def format_figure_options_two_scales(figure_options_wid,
                                      container_padding='6px',
                                      container_margin='6px',
                                      container_border='1px solid black',
-                                     toggle_button_font_weight='bold'):
+                                     toggle_button_font_weight='bold',
+                                     border_visible=True):
     r"""
     Function that corrects the align (style format) of a given figure_options
     widget. Usage example:
@@ -391,6 +396,9 @@ def format_figure_options_two_scales(figure_options_wid,
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # align figure scale sliders and checkbox
     figure_options_wid.children[1].remove_class('vbox')
@@ -407,7 +415,7 @@ def format_figure_options_two_scales(figure_options_wid,
     # margin and border around container widget
     figure_options_wid.set_css('padding', container_padding)
     figure_options_wid.set_css('margin', container_margin)
-    if figure_options_wid.children[0].visible:
+    if border_visible:
         figure_options_wid.set_css('border', container_border)
 
 
@@ -672,7 +680,8 @@ def channel_options(n_channels, plot_function, masked_default=False,
 def format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',
-                           toggle_button_font_weight='bold'):
+                           toggle_button_font_weight='bold',
+                           border_visible=True):
     r"""
     Function that corrects the align (style format) of a given channel_options
     widget. Usage example:
@@ -696,6 +705,9 @@ def format_channel_options(channel_options_wid, container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # align glyph options
     channel_options_wid.children[1].children[1].children[1].children[1].children[1].remove_class('vbox')
@@ -718,7 +730,7 @@ def format_channel_options(channel_options_wid, container_padding='6px',
     # margin and border around container widget
     channel_options_wid.set_css('padding', container_padding)
     channel_options_wid.set_css('margin', container_margin)
-    if channel_options_wid.children[0].visible:
+    if border_visible:
         channel_options_wid.set_css('border', container_border)
 
 
@@ -867,7 +879,8 @@ def landmark_options(group_keys, labels_keys, plot_function,
 def format_landmark_options(landmark_options_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
-                            toggle_button_font_weight='bold'):
+                            toggle_button_font_weight='bold',
+                            border_visible=True):
     r"""
     Function that corrects the align (style format) of a given landmark_options
     widget. Usage example:
@@ -891,6 +904,9 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # align subgroup toggle buttons
     landmark_options_wid.children[2].children[1].children[1].remove_class('vbox')
@@ -913,7 +929,7 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     # margin and border around container widget
     landmark_options_wid.set_css('padding', container_padding)
     landmark_options_wid.set_css('margin', container_margin)
-    if landmark_options_wid.children[0].visible:
+    if border_visible:
         landmark_options_wid.set_css('border', container_border)
 
 
@@ -957,7 +973,8 @@ def info_print(toggle_show_default=True, toggle_show_visible=True):
 def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
                       container_margin='6px',
                       container_border='1px solid black',
-                      toggle_button_font_weight='bold'):
+                      toggle_button_font_weight='bold',
+                      border_visible=True):
     r"""
     Function that corrects the align (style format) of a given info widget.
     Usage example:
@@ -984,6 +1001,9 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # latex widget formatting
     info_wid.children[1].set_css({'border': '1px dashed gray',
@@ -997,7 +1017,7 @@ def format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
     # margin and border around container widget
     info_wid.set_css('padding', container_padding)
     info_wid.set_css('margin', container_margin)
-    if info_wid.children[0].visible:
+    if border_visible:
         info_wid.set_css('border', container_border)
 
 
@@ -1174,7 +1194,8 @@ def model_parameters(n_params, plot_function=None, params_str='',
 def format_model_parameters(model_parameters_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
-                            toggle_button_font_weight='bold'):
+                            toggle_button_font_weight='bold',
+                            border_visible=True):
     r"""
     Function that corrects the align (style format) of a given model_parameters
     widget. Usage example:
@@ -1198,6 +1219,9 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     if model_parameters_wid.mode == 'single':
         # align drop down menu and slider
@@ -1216,12 +1240,14 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
 
     # margin and border around plot_eigenvalues widget
     if model_parameters_wid.plot_eig_visible:
-        model_parameters_wid.children[1].children[1].children[0].set_css('margin-right', container_margin)
+        model_parameters_wid.children[1].children[1].children[0].set_css(
+            'margin-right', container_margin)
 
     # margin and border around container widget
     model_parameters_wid.set_css('padding', container_padding)
     model_parameters_wid.set_css('margin', container_margin)
-    model_parameters_wid.set_css('border', container_border)
+    if border_visible:
+        model_parameters_wid.set_css('border', container_border)
 
 
 def final_result_options(group_keys, plot_function=None,
@@ -1353,7 +1379,8 @@ def final_result_options(group_keys, plot_function=None,
 def format_final_result_options(final_result_wid, container_padding='6px',
                                 container_margin='6px',
                                 container_border='1px solid black',
-                                toggle_button_font_weight='bold'):
+                                toggle_button_font_weight='bold',
+                                border_visible=True):
     r"""
     Function that corrects the align (style format) of a given
     final_result_options widget. Usage example:
@@ -1377,6 +1404,9 @@ def format_final_result_options(final_result_wid, container_padding='6px',
 
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
     """
     # align shapes toggle buttons
     final_result_wid.children[1].remove_class('vbox')
@@ -1398,4 +1428,5 @@ def format_final_result_options(final_result_wid, container_padding='6px',
     # margin and border around container widget
     final_result_wid.set_css('padding', container_padding)
     final_result_wid.set_css('margin', container_margin)
-    final_result_wid.set_css('border', container_border)
+    if border_visible:
+        final_result_wid.set_css('border', container_border)
