@@ -1461,9 +1461,12 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     The structure of the widgets is the following:
         iterations_result_wid.children = [toggle_button,
                                           iterations_mode_and_sliders,
-                                          show_image_checkbox, options]
+                                          show_image_and_plot_errors,
+                                          options]
         iterations_mode_and_sliders.children = [iterations_mode_radio_buttons,
                                                 all_sliders]
+        show_image_and_plot_errors.children = [show_image_checkbox,
+                                               plot_errors_button]
         all_sliders.children = [first_slider, second_slider]
         options.children = [plot_mode_radio_buttons, legend_checkbox]
 
@@ -1526,6 +1529,7 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
                                         visible=False)
     show_image = CheckboxWidget(description='Show image',
                                 value=show_image_default)
+    plot_errors_button = ButtonWidget(description='Plot Errors')
     plot_mode = RadioButtonsWidget(description='Plot mode:',
                                    values={'Single': False, 'Multiple': True})
     plot_mode.value = subplots_enabled_default
@@ -1543,11 +1547,13 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
     iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
                                                             sliders])
+    show_image_and_plot_errors = ContainerWidget(children=[show_image,
+                                                           plot_errors_button])
     opts = ContainerWidget(children=[plot_mode, show_legend])
 
     # Widget container
     iterations_result_wid = ContainerWidget(children=[
-        but, iterations_mode_and_sliders, show_image, opts])
+        but, iterations_mode_and_sliders, show_image_and_plot_errors, opts])
 
     # convert iterations to groups
     def convert_iterations_to_groups(from_iter, to_iter):
@@ -1683,6 +1689,13 @@ def format_iterations_result_options(iterations_result_wid,
     iterations_result_wid.children[1].remove_class('vbox')
     iterations_result_wid.children[1].add_class('hbox')
     iterations_result_wid.children[1].add_class('align-start')
+
+    # align show image and plot errors
+    iterations_result_wid.children[2].remove_class('vbox')
+    iterations_result_wid.children[2].add_class('hbox')
+    iterations_result_wid.children[2].add_class('align-center')
+    iterations_result_wid.children[2].children[0].set_css('margin-right',
+                                                          '20px')
 
     # align plot_mode and legend options
     iterations_result_wid.children[3].remove_class('vbox')
