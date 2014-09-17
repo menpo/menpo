@@ -7,8 +7,8 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, landmark_options,
                       format_landmark_options, info_print, format_info_print,
                       model_parameters, format_model_parameters,
-                      final_result_options, format_final_result_options,
-                      iterations_result_options,
+                      update_model_parameters, final_result_options,
+                      format_final_result_options, iterations_result_options,
                       format_iterations_result_options)
 
 import numpy as np
@@ -223,7 +223,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
                       container_margin='6px',
                       container_border='1px solid black',
-                      toggle_button_font_weight='bold')
+                      toggle_button_font_weight='bold', border_visible=False)
 
     # Reset value to trigger initial visualization
     landmark_options_wid.children[1].children[1].value = False
@@ -270,8 +270,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
     n_levels = len(shape_models)
 
     # Check n_parameters
-    if n_parameters is None:
-        n_parameters = shape_models[0].n_active_components
+    max_n_params = max([sp.n_active_components for sp in shape_models])
+    n_parameters = _check_parameters(n_parameters, max_n_params)
 
     # Define plot function
     def show_instance(name, value):
@@ -346,6 +346,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
+        plt.show()
 
         # change info_wid info
         txt = "$\\bullet~\\texttt{Level: " + \
@@ -434,6 +435,12 @@ def visualize_shape_model(shape_models, n_parameters=5,
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
+    def update_wrt_level(name, value):
+        n_params = min([n_parameters, shape_models[value].n_active_components])
+        model_parameters_wid.parameters_values = model_parameters_wid.parameters_values[:n_params]
+        update_model_parameters(model_parameters_wid, n_params,
+                                params_str='param ')
+
     if n_levels > 1:
         radio_str = OrderedDict()
         for l in range(n_levels):
@@ -445,6 +452,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = RadioButtonsWidget(values=radio_str,
                                        description='Pyramid:', value=0)
+        level_wid.on_trait_change(update_wrt_level, 'value')
         level_wid.on_trait_change(show_instance, 'value')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
@@ -460,6 +468,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
     # Display and format widget
     display(wid)
+    update_wrt_level('', 0)
     if tab and popup:
         wid.children[0].set_title(0, 'Shape parameters')
         wid.children[0].set_title(1, 'Figure options')
@@ -532,8 +541,8 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     images_are_masked = isinstance(appearance_models[0].mean, MaskedImage)
 
     # Check n_parameters
-    if n_parameters is None:
-        n_parameters = appearance_models[0].n_active_components
+    max_n_params = max([ap.n_active_components for ap in appearance_models])
+    n_parameters = _check_parameters(n_parameters, max_n_params)
 
     # Define plot function
     def show_instance(name, value):
@@ -610,6 +619,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
+        plt.show()
 
         # change info_wid info
         ch_str = 'channels'
@@ -699,6 +709,12 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
+    # Create final widget
+    def update_wrt_level(name, value):
+        n_params = min([n_parameters, appearance_models[value].n_active_components])
+        model_parameters_wid.parameters_values = model_parameters_wid.parameters_values[:n_params]
+        update_model_parameters(model_parameters_wid, n_params,
+                                params_str='param ')
     tmp_children = [model_parameters_wid]
     if n_levels > 1:
         radio_str = OrderedDict()
@@ -711,6 +727,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = RadioButtonsWidget(values=radio_str,
                                        description='Pyramid:', value=0)
+        level_wid.on_trait_change(update_wrt_level, 'value')
         level_wid.on_trait_change(show_instance, 'value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ContainerWidget(children=tmp_children)
@@ -727,6 +744,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
 
     # Display and format widget
     display(wid)
+    update_wrt_level('', 0)
     if tab and popup:
         wid.children[0].set_title(0, 'Appearance parameters')
         wid.children[0].set_title(1, 'Channels options')
@@ -814,10 +832,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     images_are_masked = isinstance(aam.appearance_models[0].mean, MaskedImage)
 
     # Check n_shape_parameters and n_appearance_parameters
-    if n_shape_parameters is None:
-        n_shape_parameters = aam.shape_models[0].n_active_components
-    if n_appearance_parameters is None:
-        n_appearance_parameters = aam.appearance_models[0].n_active_components
+    max_n_shape = max([sp.n_active_components for sp in aam.shape_models])
+    max_n_appearance = max([ap.n_active_components
+                            for ap in aam.appearance_models])
+    n_shape_parameters = _check_parameters(n_shape_parameters, max_n_shape)
+    n_appearance_parameters = _check_parameters(n_appearance_parameters,
+                                                max_n_appearance)
 
     # Define plot function
     def show_instance(name, value):
@@ -895,6 +915,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
+        plt.show()
 
         # Change info_wid info
         # features info
@@ -1091,6 +1112,16 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
 
     # Create final widget
+    def update_wrt_level(name, value):
+        n_shape_params = min([n_shape_parameters, aam.shape_models[value].n_active_components])
+        shape_model_parameters_wid.parameters_values = shape_model_parameters_wid.parameters_values[:n_shape_params]
+        n_appearance_params = min([n_appearance_parameters, aam.appearance_models[value].n_active_components])
+        appearance_model_parameters_wid.parameters_values = appearance_model_parameters_wid.parameters_values[:n_appearance_params]
+        update_model_parameters(shape_model_parameters_wid, n_shape_params,
+                                params_str='param ')
+        update_model_parameters(appearance_model_parameters_wid,
+                                n_appearance_params, params_str='param ')
+
     model_parameters_wid = ContainerWidget(
         children=[shape_model_parameters_wid,
                   appearance_model_parameters_wid])
@@ -1106,6 +1137,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = RadioButtonsWidget(values=radio_str,
                                        description='Pyramid:', value=0)
+        level_wid.on_trait_change(update_wrt_level, 'value')
         level_wid.on_trait_change(show_instance, 'value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ContainerWidget(children=tmp_children)
@@ -1122,6 +1154,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Display and format widget
     display(wid)
+    update_wrt_level('', 0)
     if tab and popup:
         wid.children[0].set_title(0, 'AAM parameters')
         wid.children[0].set_title(1, 'Channels options')
@@ -1310,3 +1343,12 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
         plt.gcf().set_size_inches(plot_size)
 
     interact(plot_graph, x_limit=(0.0, x_axis[-1], 0.001))
+
+
+def _check_parameters(n_params, max_n_params):
+    if n_params is None:
+        n_params = max_n_params
+    elif n_params > max_n_params:
+        raise ValueError("too many parameters asked "
+                         "(maximum {})".format(max_n_params))
+    return n_params
