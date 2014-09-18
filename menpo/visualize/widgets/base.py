@@ -50,7 +50,6 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     if not isinstance(images, list):
         images = [images]
     n_images = len(images)
-    images_are_masked = isinstance(images[0], MaskedImage)
 
     # Define plot function
     def show_img(name, value):
@@ -76,7 +75,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
         axes_visible = figure_options_wid.axes_visible
 
         # plot
-        if images_are_masked:
+        if channel_options_wid.image_is_masked:
             if glyph_enabled or sum_enabled:
                 if landmarks_enabled:
                     glyph(images[im], vectors_block_size=glyph_block_size,
@@ -125,7 +124,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
 
         # change info_wid info
         masked_str = "Image"
-        if images_are_masked:
+        if channel_options_wid.image_is_masked:
             masked_str = "Masked image"
         ch_str = 'channels'
         if images[im].n_channels == 1:
@@ -139,7 +138,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
               "{} landmark points.".format(
                   images[im].landmarks[group].lms.n_points) + \
               "}\\\\ "
-        if images_are_masked:
+        if channel_options_wid.image_is_masked:
               txt += "\\bullet~\\texttt{" + \
                      "{} masked pixels.".format(images[im].n_true_pixels) + \
                      "}\\\\ "
@@ -153,7 +152,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
     # Create options widgets
     channel_options_wid = channel_options(images[0].n_channels, show_img,
                                           masked_default=False,
-                                          masked_visible=images_are_masked,
+                                          masked_visible=isinstance(images[0],MaskedImage),
                                           toggle_show_default=tab,
                                           toggle_show_visible=not tab)
     all_groups_keys = images[0].landmarks.keys()
@@ -172,10 +171,11 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
 
     # Create final widget
     def update_wrt_n_channels(name, value):
+        image_is_masked = isinstance(images[value], MaskedImage)
         update_channel_options(channel_options_wid,
                                n_channels=images[value].n_channels,
-                               image_is_masked=isinstance(images[value],
-                                                          MaskedImage))
+                               image_is_masked=image_is_masked)
+        channel_options_wid.image_is_masked = image_is_masked
 
     if n_images > 1:
         image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,

@@ -762,12 +762,14 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked):
     previous_n_channels = channel_options_wid.children[1].children[1].children[0].children[1].max + 1
     if n_channels != previous_n_channels:
         channel_options_wid.n_channels = n_channels
+        channel_options_wid.channels = 0
         if n_channels == 1:
+            channel_options_wid.children[1].children[1].children[0].children[1].value = 0
+            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
             # set mode
             channel_options_wid.children[1].children[0].children[0].value = "Single"
             channel_options_wid.children[1].children[0].children[0].disabled = True
             # set first slider
-            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
             channel_options_wid.children[1].children[1].children[0].children[0].min = 0
             channel_options_wid.children[1].children[1].children[0].children[0].max = 0
             channel_options_wid.children[1].children[1].children[0].children[0].disabled = True
@@ -781,15 +783,15 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked):
             channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].disabled = True
         else:
             # set mode
+            channel_options_wid.children[1].children[1].children[0].children[1].value = 0
+            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
             channel_options_wid.children[1].children[0].children[0].value = "Single"
             channel_options_wid.children[1].children[0].children[0].disabled = False
             # set first slider
-            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
             channel_options_wid.children[1].children[1].children[0].children[0].min = 0
             channel_options_wid.children[1].children[1].children[0].children[0].max = n_channels - 1
             channel_options_wid.children[1].children[1].children[0].children[0].disabled = False
             # set first slider
-            channel_options_wid.children[1].children[1].children[0].children[1].value = 1
             channel_options_wid.children[1].children[1].children[0].children[1].min = 0
             channel_options_wid.children[1].children[1].children[0].children[1].max = n_channels - 1
             channel_options_wid.children[1].children[1].children[0].children[1].visible = False
