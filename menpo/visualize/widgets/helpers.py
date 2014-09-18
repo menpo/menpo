@@ -419,8 +419,8 @@ def format_figure_options_two_scales(figure_options_wid,
         figure_options_wid.set_css('border', container_border)
 
 
-def channel_options(n_channels, plot_function=None, masked_default=False,
-                    masked_visible=True, toggle_show_default=True,
+def channel_options(n_channels, image_is_masked, plot_function=None,
+                    masked_default=False, toggle_show_default=True,
                     toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
@@ -449,13 +449,14 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
         glyph_options.children = [block_size_text, use_negative_checkbox]
 
     The returned widget saves the selected values in the following fields:
+        channel_options_wid.n_channels
+        channel_options_wid.image_is_masked
         channel_options_wid.channels
         channel_options_wid.glyph_enabled
         channel_options_wid.glyph_block_size
         channel_options_wid.glyph_use_negative
         channel_options_wid.sum_enabled
-        channel_options_wid.image_is_masked
-        channel_options_wid.masked
+        channel_options_wid.masked_enabled
 
     To fix the alignment within this widget please refer to
     `format_channel_options()` function.
@@ -465,15 +466,16 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     n_channels : `int`
         The number of channels.
 
+    image_is_masked : `boolean`
+        Flag that defines whether the image is an instance of :map:`MaskedImage`
+        or subclass.
+
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
 
     masked_default : `boolean`, optional
-        Defines whether the masked image will be displayed.
-
-    masked_visible : `boolean`, optional
-        The visibility of the masked checkbox.
+        The initial value of the masked checkbox.
 
     toggle_show_default : `boolean`, optional
         Defines whether the options will be visible upon construction.
@@ -481,7 +483,8 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    if not masked_visible:
+    # if image is not masked, then masked flag should be disabled
+    if not image_is_masked:
         masked_default = False
 
     # Create all necessary widgets
@@ -491,7 +494,7 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     mode = RadioButtonsWidget(values=["Single", "Multiple"], value="Single",
                               description='Mode:', visible=toggle_show_default)
     masked = CheckboxWidget(value=masked_default, description='Masked',
-                            visible=toggle_show_default and masked_visible)
+                            visible=toggle_show_default and image_is_masked)
     first_slider_wid = IntSliderWidget(min=0, max=n_channels-1, step=1,
                                        value=0, description='Channel',
                                        visible=toggle_show_default)
@@ -505,7 +508,8 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     glyph_use_negative = CheckboxWidget(description='Negative values',
                                         value=False, visible=False)
 
-    # if single channel, disable multiple options
+    # if single channel, disable all options
+    # apart from masked
     if n_channels == 1:
         mode.value = "Single"
         mode.disabled = True
@@ -531,62 +535,57 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     # Widget container
     channel_options_wid = ContainerWidget(children=[but, all_but_toggle])
 
-    # Initialize variables
+    # Initialize output variables
     channel_options_wid.n_channels = n_channels
+    channel_options_wid.image_is_masked = image_is_masked
     channel_options_wid.channels = 0
     channel_options_wid.glyph_enabled = False
     channel_options_wid.glyph_block_size = 3
     channel_options_wid.glyph_use_negative = False
     channel_options_wid.sum_enabled = False
-    channel_options_wid.image_is_masked = masked_visible
-    channel_options_wid.masked = masked_default
+    channel_options_wid.masked_enabled = masked_default
 
     # Define mode visibility
-    def mode_selection(name, value):
+    def mode_selection_fun(name, value):
         if value == 'Single':
             first_slider_wid.description = 'Channel'
             first_slider_wid.min = 0
-            first_slider_wid.max = channel_options_wid.n_channels-1
+            first_slider_wid.max = channel_options_wid.n_channels - 1
             second_slider_wid.visible = False
             sum_wid.visible = False
             sum_wid.value = False
             glyph_wid.visible = False
             glyph_wid.value = False
-            glyph_options.children[0].visible = False
-            glyph_options.children[1].visible = False
-            glyph_options.children[0].value = '3'
-            glyph_options.children[1].value = False
+            glyph_block_size.visible = False
+            glyph_block_size.value = '3'
+            glyph_use_negative.visible = False
+            glyph_use_negative.value = False
         else:
             first_slider_wid.description = 'From'
             first_slider_wid.min = 0
-            first_slider_wid.max = channel_options_wid.n_channels-1
+            first_slider_wid.max = channel_options_wid.n_channels - 1
             second_slider_wid.min = 0
-            second_slider_wid.max = channel_options_wid.n_channels-1
-            if first_slider_wid.value == channel_options_wid.n_channels - 1:
-                second_slider_wid.value = channel_options_wid.n_channels - 1
-            else:
-                second_slider_wid.value = first_slider_wid.value + 1
+            second_slider_wid.max = channel_options_wid.n_channels - 1
+            second_slider_wid.value = first_slider_wid.value
             second_slider_wid.visible = True
             sum_wid.visible = True
             sum_wid.value = False
             glyph_wid.visible = True
             glyph_wid.value = False
-            glyph_options.children[0].visible = False
-            glyph_options.children[1].visible = False
-            glyph_options.children[0].value = '3'
-            glyph_options.children[1].value = False
-    mode.on_trait_change(mode_selection, 'value')
+            glyph_block_size.visible = False
+            glyph_block_size.value = '3'
+            glyph_use_negative.visible = False
+            glyph_use_negative.value = False
+    mode.on_trait_change(mode_selection_fun, 'value')
 
     # Define glyph visibility
-    def glyph_options_visibility(name, value):
-        if value:
-            glyph_options.children[0].visible = True
-            glyph_options.children[1].visible = True
+    def glyph_options_visibility_fun(name, value):
+        glyph_block_size.visible = glyph_wid.value
+        glyph_use_negative.visible = glyph_wid.value
+        if glyph_wid.value:
             sum_wid.value = False
-        else:
-            glyph_options.children[0].visible = False
-            glyph_options.children[1].visible = False
-    glyph_wid.on_trait_change(glyph_options_visibility, 'value')
+    glyph_wid.on_trait_change(glyph_options_visibility_fun, 'value')
+    glyph_wid.on_trait_change(glyph_options_visibility_fun, 'visible')
 
     # Define sum functionality
     def sum_fun(name, value):
@@ -596,13 +595,15 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
 
     # Define masked functionality
     def masked_fun(name, value):
-        channel_options_wid.masked = value
+        channel_options_wid.masked_enabled = value
     masked.on_trait_change(masked_fun, 'value')
 
     # Check block size value
     def block_size_fun(name, value):
         if value <= 0:
             glyph_block_size.value = 1
+        if value >25:
+            glyph_block_size.value = 25
     glyph_block_size.on_trait_change(block_size_fun, 'value')
 
     # Function that gets glyph/sum options
@@ -617,6 +618,7 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     sum_wid.on_trait_change(get_glyph_options, 'value')
     glyph_use_negative.on_trait_change(get_glyph_options, 'value')
     glyph_block_size.on_trait_change(get_glyph_options, 'value')
+    mode.on_trait_change(get_glyph_options, 'value')
 
     # Define multiple channels sliders functionality
     def first_slider_val(name, value):
@@ -638,13 +640,12 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
     first_slider_wid.on_trait_change(get_channels, 'value')
     second_slider_wid.on_trait_change(get_channels, 'value')
     mode.on_trait_change(get_channels, 'value')
-    mode.on_trait_change(get_glyph_options, 'value')
 
     # Toggle button function
     def toggle_image_options(name, value):
+        mode.visible = value
         if value:
-            mode.visible = True
-            masked.visible = masked_visible
+            masked.visible = channel_options_wid.image_is_masked
             if mode.value == 'Single':
                 first_slider_wid.visible = True
             else:
@@ -652,9 +653,7 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
                 second_slider_wid.visible = True
                 sum_wid.visible = True
                 glyph_wid.visible = True
-                glyph_options_visibility('', glyph_wid.value)
         else:
-            mode.visible = False
             masked.visible = False
             first_slider_wid.visible = False
             second_slider_wid.visible = False
@@ -666,7 +665,7 @@ def channel_options(n_channels, plot_function=None, masked_default=False,
 
     # assign plot_function
     if plot_function is not None:
-        mode.on_trait_change(plot_function, 'value')
+        #mode.on_trait_change(plot_function, 'value')
         masked.on_trait_change(plot_function, 'value')
         first_slider_wid.on_trait_change(plot_function, 'value')
         second_slider_wid.on_trait_change(plot_function, 'value')
@@ -735,15 +734,15 @@ def format_channel_options(channel_options_wid, container_padding='6px',
         channel_options_wid.set_css('border', container_border)
 
 
-def update_channel_options(channel_options_wid, n_channels, image_is_masked):
+def update_channel_options(channel_options_wid, n_channels, image_is_masked, masked_default=False):
     r"""
     Function that updates the state of a given channel_options widget if the
-    requested number of channels or the masked flag has changed. Usage example:
-        channel_options_wid = channel_options(n_channels=2)
+    image's number of channels or its masked flag has changed. Usage example:
+        channel_options_wid = channel_options(n_channels=2, image_is_masked=True)
         display(channel_options_wid)
         format_channel_options(channel_options_wid)
-        update_channel_options(channel_options_wid, n_channels=2,
-                               masked_visible=False)
+        update_channel_options(channel_options_wid, n_channels=36,
+                               image_is_masked=False)
 
     Parameters
     ----------
@@ -751,56 +750,77 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked):
         The widget object generated by the `channel_options()` function.
 
     n_channels : `int`
-        The requested number of channels.
+        The number of channels.
 
     image_is_masked : `boolean`
-        The visibility of the masked checkbox.
+        Flag that defines whether the image is an instance of :map:`MaskedImage` or subclass.
+
+    masked_default : `boolean`, optional
+        The value to be assigned at the masked checkbox.
     """
+    # if image_is_masked flag has actually changed from the previous value
     if image_is_masked != channel_options_wid.image_is_masked:
-        channel_options_wid.children[1].children[0].children[1].visible = image_is_masked
+        # change the channel_options output
+        channel_options_wid.image_is_masked = image_is_masked
+        channel_options_wid.masked_enabled = masked_default
+        # set the masked checkbox state
+        channel_options_wid.children[1].children[0].children[1].visible = channel_options_wid.children[0].value and image_is_masked
         channel_options_wid.children[1].children[0].children[1].value = False
-    previous_n_channels = channel_options_wid.children[1].children[1].children[0].children[1].max + 1
-    if n_channels != previous_n_channels:
+
+    # if n_channels are actually different from the previous value
+    if n_channels != channel_options_wid.n_channels:
+        # change the channel_options output
         channel_options_wid.n_channels = n_channels
         channel_options_wid.channels = 0
+        # set the channel options state (apart from the masked checkbox)
         if n_channels == 1:
-            channel_options_wid.children[1].children[1].children[0].children[1].value = 0
-            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
-            # set mode
-            channel_options_wid.children[1].children[0].children[0].value = "Single"
-            channel_options_wid.children[1].children[0].children[0].disabled = True
-            # set first slider
+            # set sliders max and min values
+            channel_options_wid.children[1].children[1].children[0].children[0].max = 1
+            channel_options_wid.children[1].children[1].children[0].children[1].max = 1
             channel_options_wid.children[1].children[1].children[0].children[0].min = 0
-            channel_options_wid.children[1].children[1].children[0].children[0].max = 0
+            channel_options_wid.children[1].children[1].children[0].children[1].min = 0
+            # set sliders state
             channel_options_wid.children[1].children[1].children[0].children[0].disabled = True
-            # set second slider
             channel_options_wid.children[1].children[1].children[0].children[1].visible = False
-            # set sum checkbox
+            # set glyph/sum state
             channel_options_wid.children[1].children[1].children[1].children[0].disabled = True
-            # set glyph options
             channel_options_wid.children[1].children[1].children[1].children[1].children[0].disabled = True
             channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].disabled = True
             channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].disabled = True
+            # set mode state
+            channel_options_wid.children[1].children[0].children[0].disabled = True
+            # set mode and sliders values
+            for k in range(3):
+                if k == 0:
+                    channel_options_wid.children[1].children[0].children[0].value = "Single"
+                elif k == 1:
+                    channel_options_wid.children[1].children[1].children[0].children[0].value = 0
+                else:
+                    channel_options_wid.children[1].children[1].children[0].children[1].value = 0
         else:
-            # set mode
-            channel_options_wid.children[1].children[1].children[0].children[1].value = 0
-            channel_options_wid.children[1].children[1].children[0].children[0].value = 0
-            channel_options_wid.children[1].children[0].children[0].value = "Single"
-            channel_options_wid.children[1].children[0].children[0].disabled = False
-            # set first slider
-            channel_options_wid.children[1].children[1].children[0].children[0].min = 0
+            # set sliders max and min values
             channel_options_wid.children[1].children[1].children[0].children[0].max = n_channels - 1
-            channel_options_wid.children[1].children[1].children[0].children[0].disabled = False
-            # set first slider
-            channel_options_wid.children[1].children[1].children[0].children[1].min = 0
             channel_options_wid.children[1].children[1].children[0].children[1].max = n_channels - 1
+            channel_options_wid.children[1].children[1].children[0].children[0].min = 0
+            channel_options_wid.children[1].children[1].children[0].children[1].min = 0
+            # set sliders state
+            channel_options_wid.children[1].children[1].children[0].children[0].disabled = False
             channel_options_wid.children[1].children[1].children[0].children[1].visible = False
-            # set sum checkbox
+            # set glyph/sum state
             channel_options_wid.children[1].children[1].children[1].children[0].disabled = False
-            # set glyph options
             channel_options_wid.children[1].children[1].children[1].children[1].children[0].disabled = False
             channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].disabled = False
             channel_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].disabled = False
+            # set mode state
+            channel_options_wid.children[1].children[0].children[0].disabled = False
+            # set mode and sliders values
+            for k in range(3):
+                if k == 0:
+                    channel_options_wid.children[1].children[0].children[0].value = "Single"
+                elif k == 1:
+                    channel_options_wid.children[1].children[1].children[0].children[0].value = 0
+                else:
+                    channel_options_wid.children[1].children[1].children[0].children[1].value = 0
 
 
 def landmark_options(group_keys, labels_keys, plot_function,
