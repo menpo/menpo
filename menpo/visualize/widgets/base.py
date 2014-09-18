@@ -5,15 +5,14 @@ from IPython.display import display, clear_output
 
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, update_channel_options,
-                      landmark_options,
-                      format_landmark_options, info_print, format_info_print,
+                      landmark_options, format_landmark_options,
+                      update_landmark_options, info_print, format_info_print,
                       model_parameters, format_model_parameters,
                       update_model_parameters, final_result_options,
                       format_final_result_options, iterations_result_options,
                       format_iterations_result_options)
 
 import numpy as np
-from numpy import asarray
 
 
 def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
@@ -117,7 +116,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, tab=True,
                     images[im].view(channels=channels, **kwargs)
 
         # set figure size
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
@@ -351,7 +350,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plt.hold = False
         plt.gca().axis('equal')
         # set figure size
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
@@ -407,7 +406,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plt.gcf().tight_layout()
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
     # Create options widgets
     mode_dict = OrderedDict()
@@ -624,7 +623,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                     instance.view(channels=channels, **kwargs)
 
         # set figure size
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
@@ -689,7 +688,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         plt.gcf().tight_layout()
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
     # Create options widgets
     model_parameters_wid = model_parameters(
@@ -920,7 +919,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                     instance.view(channels=channels, **kwargs)
 
         # set figure size
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
         # turn axis on/off
         if not axes_visible:
             plt.axis('off')
@@ -1060,7 +1059,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         # set figure size
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
     def plot_appearance_eigenvalues(name):
         # clear current figure
@@ -1086,7 +1085,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         # set figure size
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * asarray(figure_size))
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
     # Create options widgets
     shape_model_parameters_wid = model_parameters(

@@ -4,6 +4,8 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
                                   ButtonWidget)
 
+import numpy as np
+
 
 def figure_options(plot_function, scale_default=1., show_axes_default=True,
                    toggle_show_default=True, figure_scale_bounds=(0.1, 2),
@@ -823,9 +825,9 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked, mas
                     channel_options_wid.children[1].children[1].children[0].children[1].value = 0
 
 
-def landmark_options(group_keys, labels_keys, plot_function,
-                     toggle_show_default=True, landmarks_default=True,
-                     legend_default=True, toggle_show_visible=True):
+def landmark_options(group_keys, labels_keys, plot_function=None,
+                     landmarks_default=True, legend_default=True,
+                     toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
@@ -842,6 +844,9 @@ def landmark_options(group_keys, labels_keys, plot_function,
         labels.children = [labels_text, labels_toggle_buttons]
 
     The returned widget saves the selected values in the following fields:
+        landmark_options_wid.group_keys = group_keys
+        landmark_options_wid.labels_keys = labels_keys
+        landmark_options_wid.labels_toggles = labels_toggles
         landmark_options_wid.landmarks_enabled
         landmark_options_wid.legend_enabled
         landmark_options_wid.group
@@ -855,15 +860,12 @@ def landmark_options(group_keys, labels_keys, plot_function,
     group_keys : `list` of `str`
         A list of the available landmark groups.
 
-    labels_keys : `list` of `str`
+    labels_keys : `list` of `list` of `str`
         A list of lists of each landmark group's labels.
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
-    toggle_show_default : `boolean`, optional
-        Defines whether the options will be visible upon construction.
 
     landmarks_default : `boolean`, optional
         The initial value of the landmarks visibility checkbox.
@@ -871,15 +873,16 @@ def landmark_options(group_keys, labels_keys, plot_function,
     legend_default : `boolean`, optional
         The initial value of the legend's visibility checkbox.
 
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    # Toggle button that controls options' visibility
-    but = ToggleButtonWidget(description='Landmark Options',
+    # Create all necessary widgets
+    but = ToggleButtonWidget(description='Landmarks Options',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
-
-    # Create widgets
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     legend = CheckboxWidget(description='Show legend', value=legend_default)
@@ -898,7 +901,10 @@ def landmark_options(group_keys, labels_keys, plot_function,
     landmark_options_wid = ContainerWidget(children=[but, checkboxes_wid,
                                                      group_wid])
 
-    # Initialize variables
+    # Initialize output variables
+    landmark_options_wid.group_keys = group_keys
+    landmark_options_wid.labels_keys = labels_keys
+    landmark_options_wid.labels_toggles = labels_toggles
     landmark_options_wid.landmarks_enabled = landmarks_default
     landmark_options_wid.legend_enabled = legend_default
     landmark_options_wid.group = group_keys[0]
@@ -906,12 +912,17 @@ def landmark_options(group_keys, labels_keys, plot_function,
 
     # Disability control
     def landmarks_fun(name, value):
+        # get landmarks_enabled value
         landmark_options_wid.landmarks_enabled = value
+        # disable legend checkbox and group drop down menu
         legend.disabled = not value
         group.disabled = not value
-        for s in labels_toggles:
-            for ww in s:
-                ww.disabled = not value
+        # disable all labels toggles
+        for s_keys in landmark_options_wid.labels_toggles:
+            for k in s_keys:
+                k.disabled = not value
+        # if all currently selected labels toggles are False,
+        # set them all to True
         all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
             for ww in labels.children:
@@ -921,24 +932,35 @@ def landmark_options(group_keys, labels_keys, plot_function,
 
     # Group drop down method
     def group_fun(name, value):
+        # get group value
         landmark_options_wid.group = value
-        labels.children = labels_toggles[group_keys.index(value)]
+        # assign the correct children to the labels toggles
+        labels.children = landmark_options_wid.labels_toggles[landmark_options_wid.group_keys.index(value)]
+        # get with_labels value
         landmark_options_wid.with_labels = []
         for ww in labels.children:
             if ww.value:
                 landmark_options_wid.with_labels.append(str(ww.description))
+        # assign plot_function to all enabled labels
+        if plot_function is not None:
+            for ww in labels.children:
+                ww.on_trait_change(plot_function, 'value')
+
     group.on_trait_change(group_fun, 'value')
 
     # Labels function
     def labels_fun(name, value):
+        # if all labels toggles are False, set landmarks checkbox to False
         all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
             landmarks.value = False
+        # get with_labels value
         landmark_options_wid.with_labels = []
         for ww in labels.children:
             if ww.value:
                 landmark_options_wid.with_labels.append(str(ww.description))
-    for s_group in labels_toggles:
+    # assign labels_fun to all labels toggles (even hidden ones)
+    for s_group in landmark_options_wid.labels_toggles:
         for w in s_group:
             w.on_trait_change(labels_fun, 'value')
 
@@ -956,9 +978,12 @@ def landmark_options(group_keys, labels_keys, plot_function,
 
     # assign plot_function
     if plot_function is not None:
+        # assign plot_function to landmarks checkbox, legend
+        # checkbox and group drop down menu
         landmarks.on_trait_change(plot_function, 'value')
         legend.on_trait_change(plot_function, 'value')
         group.on_trait_change(plot_function, 'value')
+        # assign plot_function to all currently active labels toggles
         for w in labels.children:
             w.on_trait_change(plot_function, 'value')
 
@@ -1006,6 +1031,7 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
         'margin-right', '5px')
     landmark_options_wid.children[2].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].add_class('hbox')
+    landmark_options_wid.children[2].children[1].add_class('align-center')
 
     # align checkboxes
     landmark_options_wid.children[1].remove_class('vbox')
@@ -1020,6 +1046,110 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     landmark_options_wid.set_css('margin', container_margin)
     if border_visible:
         landmark_options_wid.set_css('border', container_border)
+
+
+def update_landmark_options(landmark_options_wid, group_keys, labels_keys, plot_function):
+    r"""
+    Function that updates the state of a given landmark_options widget if the
+    group or label keus of an image has changed. Usage example:
+        landmark_options_wid = landmark_options(group_keys=['group1', 'group2'],
+                                                labels_keys=[['label11'], ['label21', 'label22']])
+        display(landmark_options_wid)
+        format_landmark_options(landmark_options_wid)
+        update_landmark_options(landmark_options_wid,
+                                group_keys=['group3'],
+                                labels_keys=['label31', 'label32', 'label33'])
+
+    Parameters
+    ----------
+    landmark_options_wid :
+        The widget object generated by the `landmark_options()` function.
+
+    group_keys : `list` of `str`
+        A list of the available landmark groups.
+
+    labels_keys : `list` of `list` of `str`
+        A list of lists of each landmark group's labels.
+
+    plot_function : `function` or None
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+    """
+    # check if the new group_keys and labels_keys are the same as the old ones
+    if not _compare_groups_and_labels(group_keys, labels_keys,
+                                     landmark_options_wid.group_keys, landmark_options_wid.labels_keys):
+        # Create all necessary widgets
+        group = DropdownWidget(values=group_keys, description='Group')
+        labels_toggles = [[ToggleButtonWidget(description=k, value=True)
+                           for k in s_keys] for s_keys in labels_keys]
+
+        # Group widgets
+        landmark_options_wid.children[2].children = (group, landmark_options_wid.children[2].children[1])
+        landmark_options_wid.children[2].children[1].children[1].children = labels_toggles[0]
+
+        # Initialize output variables
+        landmark_options_wid.group_keys = group_keys
+        landmark_options_wid.labels_keys = labels_keys
+        landmark_options_wid.labels_toggles = labels_toggles
+        landmark_options_wid.group = group_keys[0]
+        landmark_options_wid.with_labels = labels_keys[0]
+
+        # Disability control
+        group.disabled = not landmark_options_wid.landmarks_enabled
+        # disable all labels toggles
+        for s_keys in labels_toggles:
+            for k in s_keys:
+                k.disabled = not landmark_options_wid.landmarks_enabled
+
+        # Group drop down method
+        def group_fun(name, value):
+            # get group value
+            landmark_options_wid.group = value
+            # assign the correct children to the labels toggles
+            landmark_options_wid.children[2].children[1].children[1].children = landmark_options_wid.labels_toggles[landmark_options_wid.group_keys.index(value)]
+            # get with_labels value
+            landmark_options_wid.with_labels = []
+            for ww in landmark_options_wid.children[2].children[1].children[1].children:
+                if ww.value:
+                    landmark_options_wid.with_labels.append(str(ww.description))
+            # assign plot_function to all enabled labels
+            if plot_function is not None:
+                for w in landmark_options_wid.children[2].children[1].children[1].children:
+                    w.on_trait_change(plot_function, 'value')
+
+        group.on_trait_change(group_fun, 'value')
+
+        # Labels function
+        def labels_fun(name, value):
+            # if all labels toggles are False, set landmarks checkbox to False
+            all_values = [ww.value for ww in landmark_options_wid.children[2].children[1].children[1].children]
+            if all(item is False for item in all_values):
+                landmark_options_wid.children[1].children[0].value = False
+            # get with_labels value
+            landmark_options_wid.with_labels = []
+            for ww in landmark_options_wid.children[2].children[1].children[1].children:
+                if ww.value:
+                    landmark_options_wid.with_labels.append(str(ww.description))
+        # assign labels_fun to all labels toggles (even hidden ones)
+        for s_group in labels_toggles:
+            for w in s_group:
+                w.on_trait_change(labels_fun, 'value')
+
+        # assign plot_function
+        if plot_function is not None:
+            # assign plot_function to landmarks checkbox, legend
+            # checkbox and group drop down menu
+            group.on_trait_change(plot_function, 'value')
+            # assign plot_function to all currently active labels toggles
+            for w in labels_toggles[0]:
+                w.on_trait_change(plot_function, 'value')
+
+        # Toggle button function
+        def show_options(name, value):
+            landmark_options_wid.children[2].visible = value
+            landmark_options_wid.children[1].visible = value
+        show_options('', landmark_options_wid.children[0].value)
+        landmark_options_wid.children[0].on_trait_change(show_options, 'value')
 
 
 def info_print(toggle_show_default=True, toggle_show_visible=True):
@@ -1849,3 +1979,38 @@ def format_iterations_result_options(iterations_result_wid,
     iterations_result_wid.set_css('margin', container_margin)
     if border_visible:
         iterations_result_wid.set_css('border', container_border)
+
+
+def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
+    r"""
+    Function that compares two sets of landmarks groups and labels and returns
+    Trues if they are identical else False.
+
+    Parameters
+    ----------
+    group1 : `list` of `str`
+        The first list of landmark groups.
+
+    labels1 : `list` of `list` of `str`
+        A first list of lists of each landmark group's labels.
+
+    group2 : `list` of `str`
+        The second list of landmark groups.
+
+    labels2 : `list` of `list` of `str`
+        A second list of lists of each landmark group's labels.
+    """
+    # function that compares two lists without taking into account the order
+    def comp_lists(l1, l2):
+        return len(l1) == len(l2) and \
+               np.all([g1 == g2 for g1, g2 in zip(l1, l2)])
+
+    # comparison of the given groups
+    groups_same = comp_lists(groups1, groups2)
+
+    # if groups are the same, compare the labels
+    if groups_same:
+        return len(labels1) == len(labels2) and \
+               np.all([comp_lists(g1, g2) for g1, g2 in zip(labels1, labels2)])
+    else:
+        return False
