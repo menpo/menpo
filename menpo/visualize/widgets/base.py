@@ -5,7 +5,7 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       model_parameters, format_model_parameters,
                       update_model_parameters, final_result_options,
                       format_final_result_options, iterations_result_options,
-                      format_iterations_result_options, _extract_groups_labels)
+                      format_iterations_result_options)
 from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
                                   ContainerWidget, TabWidget,
                                   RadioButtonsWidget, CheckboxWidget)
@@ -1464,6 +1464,28 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
 
     # show plot
     plt.show()
+
+
+def _extract_groups_labels(image):
+    r"""
+    Function that extracts the groups and labels from an image's landmarks.
+
+    Parameters
+    ----------
+    image : :map:`Image` or subclass
+       The input image object.
+
+    Returns
+    -------
+    group_keys : `list` of `str`
+        The list of landmark groups found.
+
+    labels_keys : `list` of `str`
+        The list of lists of each landmark group's labels.
+    """
+    groups_keys = image.landmarks.keys()
+    labels_keys = [image.landmarks[g].keys() for g in groups_keys]
+    return groups_keys, labels_keys
 
 
 def _check_parameters(n_params, max_n_params):

@@ -425,7 +425,7 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
                     toggle_show_visible=True):
     r"""
     Creates a widget with Channel Options. Specifically, it has:
-        1) Two radiobuttons that select an options mode, depending on whether
+        1) Two radio buttons that select an options mode, depending on whether
            the user wants to visualize a "Single" or "Multiple" channels.
         2) If mode is "Single", the channel number is selected by one slider.
            If mode is "Multiple", the channel range is selected by two sliders.
@@ -441,9 +441,9 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
 
     The structure of the widgets is the following:
         channel_options_wid.children = [toggle_button, all_but_toggle]
-        all_but_toggle.children = [mode_and_masked, all_but_radiobuttons]
-        mode_and_masked.children = [mode_radiobuttons, masked_checkbox]
-        all_but_radiobuttons.children = [all_sliders, multiple_checkboxes]
+        all_but_toggle.children = [mode_and_masked, all_but_radio_buttons]
+        mode_and_masked.children = [mode_radio_buttons, masked_checkbox]
+        all_but_radio_buttons.children = [all_sliders, multiple_checkboxes]
         all_sliders.children = [first_slider, second_slider]
         multiple_checkboxes.children = [sum_checkbox, glyph_all]
         glyph_all.children = [glyph_checkbox, glyph_options]
@@ -738,7 +738,8 @@ def format_channel_options(channel_options_wid, container_padding='6px',
         channel_options_wid.set_css('border', container_border)
 
 
-def update_channel_options(channel_options_wid, n_channels, image_is_masked, masked_default=False):
+def update_channel_options(channel_options_wid, n_channels, image_is_masked,
+                           masked_default=False):
     r"""
     Function that updates the state of a given channel_options widget if the
     image's number of channels or its masked flag has changed. Usage example:
@@ -1278,13 +1279,13 @@ def model_parameters(n_params, plot_function=None, params_str='',
         model_parameters_wid.children = [toggle_button, parameters_and_reset]
         parameters_and_reset.children = [parameters_widgets, reset]
         If plot_eig_visible is True:
-        reset = [plot_eigenvalues, reset_button]
+            reset = [plot_eigenvalues, reset_button]
         Else:
-        reset = reset_button
+            reset = reset_button
         If mode is single:
-        parameters_widgets.children = [drop_down_menu, slider]
+            parameters_widgets.children = [drop_down_menu, slider]
         If mode is multiple:
-        parameters_widgets.children = [all_sliders]
+            parameters_widgets.children = [all_sliders]
 
     The returned widget saves the selected values in the following fields:
         model_parameters_wid.parameters_values
@@ -1293,6 +1294,9 @@ def model_parameters(n_params, plot_function=None, params_str='',
 
     To fix the alignment within this widget please refer to
     `format_model_parameters()` function.
+
+    To update the state of this widget, please refer to
+    `update_model_parameters()` function.
 
     Parameters
     ----------
@@ -1333,31 +1337,27 @@ def model_parameters(n_params, plot_function=None, params_str='',
     """
     from collections import OrderedDict
 
-    # If only one slider, set mode to multiple
+    # If only one slider requested, then set mode to multiple
     if n_params == 1:
         mode = 'multiple'
 
-    # Toggle button that controls visibility
+    # Create all necessary widgets
     but = ToggleButtonWidget(description=toggle_show_name,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
-
-    # Create widgets
     reset_button = ButtonWidget(description='Reset')
     if mode == 'multiple':
         sliders = [FloatSliderWidget(description="{}{}".format(params_str, p),
-                                     min=params_bounds[0],
-                                     max=params_bounds[1],
-                                     value=0.) for p in range(n_params)]
+                                     min=params_bounds[0], max=params_bounds[1],
+                                     value=0.)
+                   for p in range(n_params)]
         parameters_wid = ContainerWidget(children=sliders)
     else:
         vals = OrderedDict()
         for p in range(n_params):
             vals["{}{}".format(params_str, p)] = p
-        slider = FloatSliderWidget(description='',
-                                   min=params_bounds[0],
-                                   max=params_bounds[1],
-                                   value=0.)
+        slider = FloatSliderWidget(description='', min=params_bounds[0],
+                                   max=params_bounds[1], value=0.)
         dropdown_params = DropdownWidget(values=vals)
         parameters_wid = ContainerWidget(children=[dropdown_params, slider])
 
@@ -1383,9 +1383,10 @@ def model_parameters(n_params, plot_function=None, params_str='',
 
     # set up functions
     if mode == 'single':
-        # save slider value to parameters values list
+        # assign slider value to parameters values list
         def save_slider_value(name, value):
-            model_parameters_wid.parameters_values[dropdown_params.value] = value
+            model_parameters_wid.parameters_values[dropdown_params.value] = \
+                value
         slider.on_trait_change(save_slider_value, 'value')
 
         # set correct value to slider when drop down menu value changes
@@ -1397,16 +1398,25 @@ def model_parameters(n_params, plot_function=None, params_str='',
         if plot_function is not None:
             slider.on_trait_change(plot_function, 'value')
     else:
-        # save all sliders value to parameters values list
-        def save_sliders_values(name, value):
-            model_parameters_wid.parameters_values = []
-            for p_wid in parameters_wid.children:
-                if not p_wid.disabled:
-                    model_parameters_wid.parameters_values.append(p_wid.value)
+        # assign slider value to parameters values list
+        def save_slider_value_from_id(description, name, value):
+            i = int(description[len(params_str)::])
+            model_parameters_wid.parameters_values[i] = value
+
+        # partial function that helps get the widget's description str
+        def partial_widget(description):
+            return lambda name, value: save_slider_value_from_id(description,
+                                                                 name, value)
 
         # assign saving values and main plotting function to all sliders
         for w in parameters_wid.children:
-            w.on_trait_change(save_sliders_values, 'value')
+            # The widget (w) is lexically scoped and so we need a way of
+            # ensuring that we don't just receive the final value of w at every
+            # iteration. Therefore we create another lambda function that
+            # creates a new lexical scoping so that we can ensure the value of w
+            # is maintained (as x) at each iteration.
+            # In JavaScript, we would just use the 'let' keyword...
+            w.on_trait_change(partial_widget(w.description), 'value')
             if plot_function is not None:
                 w.on_trait_change(plot_function, 'value')
 
@@ -1467,6 +1477,9 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
         # align drop down menu and slider
         model_parameters_wid.children[1].children[0].remove_class('vbox')
         model_parameters_wid.children[1].children[0].add_class('hbox')
+    else:
+        # align sliders
+        model_parameters_wid.children[1].children[0].add_class('start')
 
     # align reset button to right
     if model_parameters_wid.plot_eig_visible:
@@ -1490,7 +1503,8 @@ def format_model_parameters(model_parameters_wid, container_padding='6px',
         model_parameters_wid.set_css('border', container_border)
 
 
-def update_model_parameters(model_parameters_wid, n_params, params_str=''):
+def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
+                            params_str=''):
     r"""
     Function that updates the state of a given model_parameters widget if the
     requested number of parameters has changed. Usage example:
@@ -1507,33 +1521,68 @@ def update_model_parameters(model_parameters_wid, n_params, params_str=''):
     n_params : `int`
         The requested number of parameters.
 
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
     params_str : `str`, optional
         The string that will be used for each parameters name.
     """
     from collections import OrderedDict
 
     if model_parameters_wid.mode == 'multiple':
-        enabled_params = sum([not w.disabled
-                              for w in model_parameters_wid.children[1].children[0].children])
+        # get the number of enabled parameters (number of sliders)
+        enabled_params = len(model_parameters_wid.children[1].children[0].children)
         if n_params != enabled_params:
-            available_n_params = len(model_parameters_wid.children[1].children[0].children)
-            if n_params <= available_n_params:
-                model_parameters_wid.parameters_values = [0.0] * n_params
-                for w in model_parameters_wid.children[1].children[0].children[:n_params]:
-                    w.disabled = False
-                for w in model_parameters_wid.children[1].children[0].children[n_params::]:
-                    w.disabled = True
-                for w in model_parameters_wid.children[1].children[0].children:
-                    w.value = 0.
+            # reset all parameters values
+            model_parameters_wid.parameters_values = [0.0] * n_params
+            # get params_bounds
+            pb = [model_parameters_wid.children[1].children[0].children[0].min,
+                  model_parameters_wid.children[1].children[0].children[0].max]
+            # create sliders widgets
+            sliders = [FloatSliderWidget(description="{}{}".format(params_str,
+                                                                   p),
+                                         min=pb[0], max=pb[1], value=0.)
+                       for p in range(n_params)]
+            # assign sliders to container
+            model_parameters_wid.children[1].children[0].children = sliders
+
+            # assign slider value to parameters values list
+            def save_slider_value_from_id(description, name, value):
+                i = int(description[len(params_str)::])
+                model_parameters_wid.parameters_values[i] = value
+
+            # partial function that helps get the widget's description str
+            def partial_widget(description):
+               return lambda name, value: save_slider_value_from_id(description,
+                                                                    name, value)
+
+            # assign saving values and main plotting function to all sliders
+            for w in model_parameters_wid.children[1].children[0].children:
+                # The widget (w) is lexically scoped and so we need a way of
+                # ensuring that we don't just receive the final value of w at
+                # every iteration. Therefore we create another lambda function
+                # that creates a new lexical scoping so that we can ensure the
+                # value of w is maintained (as x) at each iteration
+                # In JavaScript, we would just use the 'let' keyword...
+                w.on_trait_change(partial_widget(w.description), 'value')
+                if plot_function is not None:
+                    w.on_trait_change(plot_function, 'value')
     else:
+        # get the number of enabled parameters (len of list of drop down menu)
         enabled_params = len(model_parameters_wid.children[1].children[0].children[0].values)
         if n_params != enabled_params:
+            # reset all parameters values
             model_parameters_wid.parameters_values = [0.0] * n_params
+            # change drop down menu values
             vals = OrderedDict()
             for p in range(n_params):
                 vals["{}{}".format(params_str, p)] = p
-            model_parameters_wid.children[1].children[0].children[0].values = vals
-            model_parameters_wid.children[1].children[0].children[0].value = vals["{}{}".format(params_str, 0)]
+            model_parameters_wid.children[1].children[0].children[0].values = \
+                vals
+            # set initial value to the first and slider value to zero
+            model_parameters_wid.children[1].children[0].children[0].value = \
+                vals["{}{}".format(params_str, 0)]
             model_parameters_wid.children[1].children[0].children[1].value = 0.
 
 
@@ -2035,25 +2084,3 @@ def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
                np.all([comp_lists(g1, g2) for g1, g2 in zip(labels1, labels2)])
     else:
         return False
-
-
-def _extract_groups_labels(image):
-    r"""
-    Function that extracts the groups and labels from an image's landmarks.
-
-    Parameters
-    ----------
-    image : :map:`Image` or subclass
-       The input image object.
-
-    Returns
-    -------
-    group_keys : `list` of `str`
-        The list of landmark groups found.
-
-    labels_keys : `list` of `str`
-        The list of lists of each landmark group's labels.
-    """
-    groups_keys = image.landmarks.keys()
-    labels_keys = [image.landmarks[g].keys() for g in groups_keys]
-    return groups_keys, labels_keys
