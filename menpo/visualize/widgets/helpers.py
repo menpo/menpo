@@ -3,7 +3,6 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
                                   ButtonWidget)
-
 import numpy as np
 
 
@@ -1040,10 +1039,8 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     landmark_options_wid.children[2].children[1].add_class('align-center')
 
     # align group drop down menu with labels toggle buttons
-    landmark_options_wid.children[2].children[0].set_css('margin-right', '25px')
-    landmark_options_wid.children[2].remove_class('vbox')
-    landmark_options_wid.children[2].add_class('hbox')
-    landmark_options_wid.children[2].add_class('align-center')
+    landmark_options_wid.children[2].children[1].set_css('margin-top', '10px')
+    landmark_options_wid.children[2].add_class('start')
 
     # align checkboxes
     landmark_options_wid.children[1].children[0].set_css('margin-right', '25px')
@@ -1074,6 +1071,10 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys, plot_
         update_landmark_options(landmark_options_wid,
                                 group_keys=['group3'],
                                 labels_keys=['label31', 'label32', 'label33'])
+        format_landmark_options(landmark_options_wid)
+
+    Note that the `format_landmark_options()` function needs to be called again
+    after the `update_landmark_options()` function.
 
     Parameters
     ----------
@@ -2034,3 +2035,25 @@ def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
                np.all([comp_lists(g1, g2) for g1, g2 in zip(labels1, labels2)])
     else:
         return False
+
+
+def _extract_groups_labels(image):
+    r"""
+    Function that extracts the groups and labels from an image's landmarks.
+
+    Parameters
+    ----------
+    image : :map:`Image` or subclass
+       The input image object.
+
+    Returns
+    -------
+    group_keys : `list` of `str`
+        The list of landmark groups found.
+
+    labels_keys : `list` of `str`
+        The list of lists of each landmark group's labels.
+    """
+    groups_keys = image.landmarks.keys()
+    labels_keys = [image.landmarks[g].keys() for g in groups_keys]
+    return groups_keys, labels_keys

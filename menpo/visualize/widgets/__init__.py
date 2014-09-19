@@ -1,5 +1,5 @@
-from .base import (visualize_images, visualize_shape_model,
-                   visualize_appearance_model, visualize_aam, plot_ced)
+from .base import (visualize_shape_model, visualize_appearance_model,
+                   visualize_aam, plot_ced)
 from .helpers import (figure_options, format_figure_options,
                       figure_options_two_scales,
                       format_figure_options_two_scales, channel_options,
@@ -9,4 +9,4 @@ from .helpers import (figure_options, format_figure_options,
                       model_parameters, format_model_parameters,
                       update_model_parameters, final_result_options,
                       format_final_result_options, iterations_result_options,
-                      format_iterations_result_options)
+                      format_iterations_result_options, _extract_groups_labels)
