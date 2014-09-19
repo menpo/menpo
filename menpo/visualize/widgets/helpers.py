@@ -463,6 +463,9 @@ def channel_options(n_channels, image_is_masked, plot_function=None,
     To fix the alignment within this widget please refer to
     `format_channel_options()` function.
 
+    To update the state of this widget, please refer to
+    `update_channel_options()` function.
+
     Parameters
     ----------
     n_channels : `int`
@@ -844,16 +847,19 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         labels.children = [labels_text, labels_toggle_buttons]
 
     The returned widget saves the selected values in the following fields:
-        landmark_options_wid.group_keys = group_keys
-        landmark_options_wid.labels_keys = labels_keys
-        landmark_options_wid.labels_toggles = labels_toggles
+        landmark_options_wid.group_keys
+        landmark_options_wid.labels_keys
+        landmark_options_wid.labels_toggles
         landmark_options_wid.landmarks_enabled
         landmark_options_wid.legend_enabled
         landmark_options_wid.group
         landmark_options_wid.with_labels
 
-    To fix the alignment within this widget please refer to
+    To fix the alignment within this widget, please refer to
     `format_landmark_options()` function.
+
+    To update the state of this widget, please refer to
+    `update_landmark_options()` function.
 
     Parameters
     ----------
@@ -921,8 +927,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         for s_keys in landmark_options_wid.labels_toggles:
             for k in s_keys:
                 k.disabled = not value
-        # if all currently selected labels toggles are False,
-        # set them all to True
+        # if all currently selected labels toggles are False, set them all
+        # to True
         all_values = [ww.value for ww in labels.children]
         if all(item is False for item in all_values):
             for ww in labels.children:
@@ -943,8 +949,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
                 landmark_options_wid.with_labels.append(str(ww.description))
         # assign plot_function to all enabled labels
         if plot_function is not None:
-            for ww in labels.children:
-                ww.on_trait_change(plot_function, 'value')
+            for w in labels.children:
+                w.on_trait_change(plot_function, 'value')
 
     group.on_trait_change(group_fun, 'value')
 
@@ -1022,18 +1028,25 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
     """
-    # align subgroup toggle buttons
+    # align labels toggle buttons
     landmark_options_wid.children[2].children[1].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].children[1].add_class('hbox')
 
-    # align subgroup buttons with text
+    # align labels buttons with text
     landmark_options_wid.children[2].children[1].children[0].set_css(
         'margin-right', '5px')
     landmark_options_wid.children[2].children[1].remove_class('vbox')
     landmark_options_wid.children[2].children[1].add_class('hbox')
     landmark_options_wid.children[2].children[1].add_class('align-center')
 
+    # align group drop down menu with labels toggle buttons
+    landmark_options_wid.children[2].children[0].set_css('margin-right', '25px')
+    landmark_options_wid.children[2].remove_class('vbox')
+    landmark_options_wid.children[2].add_class('hbox')
+    landmark_options_wid.children[2].add_class('align-center')
+
     # align checkboxes
+    landmark_options_wid.children[1].children[0].set_css('margin-right', '25px')
     landmark_options_wid.children[1].remove_class('vbox')
     landmark_options_wid.children[1].add_class('hbox')
 
@@ -1051,9 +1064,11 @@ def format_landmark_options(landmark_options_wid, container_padding='6px',
 def update_landmark_options(landmark_options_wid, group_keys, labels_keys, plot_function):
     r"""
     Function that updates the state of a given landmark_options widget if the
-    group or label keus of an image has changed. Usage example:
-        landmark_options_wid = landmark_options(group_keys=['group1', 'group2'],
-                                                labels_keys=[['label11'], ['label21', 'label22']])
+    group or label keys of an image has changed. Usage example:
+        group_keys = ['group1', 'group2']
+        labels_keys = [['label11'], ['label21', 'label22']]
+        landmark_options_wid = landmark_options(group_keys=group_keys,
+                                                labels_keys=labels_keys)
         display(landmark_options_wid)
         format_landmark_options(landmark_options_wid)
         update_landmark_options(landmark_options_wid,
@@ -1077,15 +1092,20 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys, plot_
     """
     # check if the new group_keys and labels_keys are the same as the old ones
     if not _compare_groups_and_labels(group_keys, labels_keys,
-                                     landmark_options_wid.group_keys, landmark_options_wid.labels_keys):
+                                      landmark_options_wid.group_keys,
+                                      landmark_options_wid.labels_keys):
         # Create all necessary widgets
         group = DropdownWidget(values=group_keys, description='Group')
         labels_toggles = [[ToggleButtonWidget(description=k, value=True)
                            for k in s_keys] for s_keys in labels_keys]
 
         # Group widgets
-        landmark_options_wid.children[2].children = (group, landmark_options_wid.children[2].children[1])
-        landmark_options_wid.children[2].children[1].children[1].children = labels_toggles[0]
+        landmark_options_wid.children[2].children[1].children[1].children = \
+            labels_toggles[0]
+        labels = landmark_options_wid.children[2].children[1]
+        cont = ContainerWidget(children=[group, labels])
+        landmark_options_wid.children = [landmark_options_wid.children[0],
+                                         landmark_options_wid.children[1], cont]
 
         # Initialize output variables
         landmark_options_wid.group_keys = group_keys
@@ -1146,8 +1166,8 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys, plot_
 
         # Toggle button function
         def show_options(name, value):
-            landmark_options_wid.children[2].visible = value
             landmark_options_wid.children[1].visible = value
+            landmark_options_wid.children[2].visible = value
         show_options('', landmark_options_wid.children[0].value)
         landmark_options_wid.children[0].on_trait_change(show_options, 'value')
 
@@ -1992,13 +2012,13 @@ def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
         The first list of landmark groups.
 
     labels1 : `list` of `list` of `str`
-        A first list of lists of each landmark group's labels.
+        The first list of lists of each landmark group's labels.
 
     group2 : `list` of `str`
         The second list of landmark groups.
 
     labels2 : `list` of `list` of `str`
-        A second list of lists of each landmark group's labels.
+        The second list of lists of each landmark group's labels.
     """
     # function that compares two lists without taking into account the order
     def comp_lists(l1, l2):
