@@ -10,7 +10,217 @@ from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
                                   ContainerWidget, TabWidget,
                                   RadioButtonsWidget, CheckboxWidget)
 from IPython.display import display, clear_output
+import matplotlib.pylab as plt
 import numpy as np
+
+# This glyph import is called frequently during visualisation, so we ensure
+# that we only import it once
+glyph = None
+
+
+def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
+    r"""
+    Widget that allows browsing through a list of images.
+
+    Parameters
+    -----------
+    images : `list` of :map:`Image` or subclass
+        The list of images to be displayed. Note that the images can have
+        different attributes between them, i.e. different landmark groups and
+        labels, different number of channels etc.
+
+    figure_size : (`int`, `int`), optional
+        The initial size of the plotted figures.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    from menpo.image import MaskedImage
+
+    # make sure that images is a list even with one image member
+    if not isinstance(images, list):
+        images = [images]
+
+    # find number of images
+    n_images = len(images)
+
+    # define plot function
+    def plot_function(name, value):
+        # get selected image number
+        im = 0
+        if n_images > 1:
+            im = image_number_wid.value
+
+        # show image with selected options
+        _show_image(images[im],
+                    channel_options_wid.channels,
+                    channel_options_wid.glyph_enabled,
+                    channel_options_wid.glyph_block_size,
+                    channel_options_wid.glyph_use_negative,
+                    channel_options_wid.sum_enabled,
+                    landmark_options_wid.landmarks_enabled,
+                    landmark_options_wid.legend_enabled,
+                    landmark_options_wid.group,
+                    landmark_options_wid.with_labels,
+                    figure_options_wid.x_scale, figure_options_wid.y_scale,
+                    figure_options_wid.axes_visible,
+                    channel_options_wid.image_is_masked,
+                    channel_options_wid.masked_enabled,
+                    figure_size,
+                    **kwargs)
+
+        # update info text widget
+        update_info(images[im],
+                    channel_options_wid.image_is_masked,
+                    landmark_options_wid.group)
+
+    # define function that updates info text
+    def update_info(image, image_is_masked, group):
+        # prepare masked (or non-masked) str
+        masked_str = "Image"
+        if image_is_masked:
+            masked_str = "Masked image"
+
+        # prepare channels str
+        ch_str = 'channels'
+        if image.n_channels == 1:
+            ch_str = 'channel'
+
+        # create info str
+        txt = "$\\bullet~\\texttt{" + \
+              "{} of size {} with {} {}".format(masked_str, image._str_shape,
+                                                image.n_channels, ch_str) + \
+              ".}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(image.landmarks[group].lms.n_points) + \
+              " landmark points.}\\\\ "
+        if image_is_masked:
+            txt += "\\bullet~\\texttt{" + \
+                   "{} masked pixels.".format(image.n_true_pixels) + "}\\\\ "
+        txt += "\\bullet~\\texttt{min=" + \
+               "{0:.3f}".format(image.pixels.min()) + ", max=" + \
+               "{0:.3f}".format(image.pixels.max()) + "}$"
+
+        # update info widget text
+        info_wid.children[1].value = txt
+
+    # create options widgets
+    channel_options_wid = channel_options(images[0].n_channels,
+                                          isinstance(images[0], MaskedImage),
+                                          plot_function,
+                                          masked_default=False,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+    all_groups_keys, all_labels_keys = _extract_groups_labels(images[0])
+    landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
+                                            plot_function,
+                                            toggle_show_default=True,
+                                            landmarks_default=True,
+                                            legend_default=True,
+                                            toggle_show_visible=False)
+    figure_options_wid = figure_options(plot_function, scale_default=1.,
+                                        show_axes_default=False,
+                                        toggle_show_default=True,
+                                        figure_scale_bounds=(0.1, 2),
+                                        figure_scale_step=0.1,
+                                        figure_scale_visible=True,
+                                        toggle_show_visible=False)
+    info_wid = info_print(toggle_show_default=True,
+                          toggle_show_visible=False)
+
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        # get new groups and labels, update landmark options and format them
+        group_keys, labels_keys = _extract_groups_labels(images[value])
+        update_landmark_options(landmark_options_wid, group_keys, labels_keys,
+                                plot_function)
+        format_landmark_options(landmark_options_wid, container_padding='6px',
+                                container_margin='6px',
+                                container_border='1px solid black',
+                                toggle_button_font_weight='bold',
+                                border_visible=False)
+        # update channel options
+        update_channel_options(channel_options_wid,
+                               n_channels=images[value].n_channels,
+                               image_is_masked=isinstance(images[value],
+                                                          MaskedImage))
+
+    # create final widget
+    if n_images > 1:
+        # image selection slider
+        image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
+                                           value=0, description='Image Number')
+        image_number_wid.on_trait_change(update_widgets, 'value')
+        image_number_wid.on_trait_change(plot_function, 'value')
+
+        # final widget
+        cont_wid = TabWidget(children=[info_wid, channel_options_wid,
+                                       landmark_options_wid,
+                                       figure_options_wid])
+        wid = ContainerWidget(children=[image_number_wid, cont_wid])
+        button_title = 'Images Menu'
+    else:
+        # final widget
+        wid = TabWidget(children=[info_wid, channel_options_wid,
+                                  landmark_options_wid, figure_options_wid])
+        button_title = 'Image Menu'
+    # create popup widget if asked
+    if popup:
+        wid = PopupWidget(children=[wid], button_text=button_title)
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    tab_titles = ['Image info', 'Channels options', 'Landmarks options',
+                  'Figure options']
+    if popup:
+        if n_images > 1:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[0].children[1].set_title(k, tl)
+        else:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[0].set_title(k, tl)
+    else:
+        if n_images > 1:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[1].set_title(k, tl)
+        else:
+            for (k, tl) in enumerate(tab_titles):
+                wid.set_title(k, tl)
+
+    # align-start the image number widget and the rest
+    if n_images > 1:
+        wid.add_class('align-start')
+
+    # format options' widgets
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold',
+                           border_visible=False)
+    format_landmark_options(landmark_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold',
+                            border_visible=False)
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False)
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold', border_visible=False)
+
+    # update widgets' state for image number 0
+    update_widgets('', 0)
+
+    # Reset value to trigger initial visualization
+    landmark_options_wid.children[1].children[1].value = False
 
 
 def visualize_shape_model(shape_models, n_parameters=5,
@@ -48,7 +258,6 @@ def visualize_shape_model(shape_models, n_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    import matplotlib.pylab as plt
     from collections import OrderedDict
 
     n_levels = len(shape_models)
@@ -316,9 +525,9 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    import matplotlib.pylab as plt
     from collections import OrderedDict
     from menpo.visualize.image import glyph
+    from menpo.image import MaskedImage
 
     n_levels = len(appearance_models)
     images_are_masked = isinstance(appearance_models[0].mean, MaskedImage)
@@ -606,9 +815,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    import matplotlib.pylab as plt
     from collections import OrderedDict
     from menpo.visualize.image import glyph
+    from menpo.image import MaskedImage
 
     n_levels = aam.n_levels
     images_are_masked = isinstance(aam.appearance_models[0].mean, MaskedImage)
@@ -1046,7 +1255,6 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    import matplotlib.pylab as plt
     from menpo.fitmultilevel.functions import compute_cumulative_error
 
     if type(final_errors[0]) != list:
@@ -1125,6 +1333,137 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
         plt.gcf().set_size_inches(plot_size)
 
     interact(plot_graph, x_limit=(0.0, x_axis[-1], 0.001))
+
+
+def _show_image(image, channels, glyph_enabled, glyph_block_size,
+                glyph_use_negative, sum_enabled, landmarks_enabled,
+                legend_enabled, group, with_labels, x_scale, y_scale,
+                axes_visible, image_is_masked, masked_enabled, figure_size,
+                **kwargs):
+    r"""
+    Helper function that plots and image given a set of selected options.
+
+    Parameters
+    -----------
+    image : :map:`Image` or subclass
+       The image to be displayed.
+
+    channels : `int` or `list` of `int`
+        The image channels to be displayed.
+
+    glyph_enabled : `boolean`
+        Defines whether to display the image as glyph or not.
+
+    glyph_block_size : `int`
+        The size of the glyph's blocks.
+
+    glyph_use_negative : `boolean`
+        Whether to use the negative hist values.
+
+    sum_enabled : `boolean`
+        If true, the image will be displayed as glyph with glyph_block_size=1,
+        thus the sum of the image's selected channels.
+
+    landmarks_enabled : `boolean`
+        Whether to also display the landmarks on top of the image.
+
+    legend_enabled : `boolean`
+        Whether to show the legend for the landmarks. If True, it also prints
+        the landmark points' numbers.
+
+    group : `str`
+        The landmark group to be displayed.
+
+    with_labels : `list` of `str`
+        The group's labels to be displayed.
+
+    x_scale : `float`
+        The scale of x axis.
+
+    y_scale : `float`
+        The scale of y axis.
+
+    axes_visible : `boolean`
+        If False, the figure's axes will be invisible.
+
+    image_is_masked : `boolean`
+        If True, image is an instance of :map:`MaskedImage`.
+        If False, image is an instance of :map:`Image`.
+
+    masked_enabled : `boolean`
+        If True and the image is an instance of :map:`MaskedImage`, then only
+        the masked pixels will be displayed.
+
+    figure_size : (`int`, `int`)
+        The size of the plotted figures.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    global glyph
+    if glyph is None:
+        from menpo.visualize.image import glyph
+    # clear current figure
+    clear_output()
+
+    # plot
+    if image_is_masked:
+        if glyph_enabled or sum_enabled:
+            if landmarks_enabled:
+                # image is masked, glyph and has landmarks
+                glyph(image, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
+                    view_landmarks(masked=masked_enabled, group_label=group,
+                                   with_labels=with_labels,
+                                   render_labels=legend_enabled, **kwargs)
+            else:
+                # image is masked, glyph and doesn't have landmarks
+                glyph(image, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
+                    view(masked=masked_enabled, **kwargs)
+        else:
+            if landmarks_enabled:
+                # image is masked, non-glyph and has landmarks
+                image.view_landmarks(masked=masked_enabled, group_label=group,
+                                     with_labels=with_labels,
+                                     render_labels=legend_enabled,
+                                     channels=channels, **kwargs)
+            else:
+                # image is masked, non-glyph and doesn't have landmarks
+                image.view(masked=masked_enabled, channels=channels, **kwargs)
+    else:
+        if glyph_enabled or sum_enabled:
+            if landmarks_enabled:
+                # image is non-masked, glyph and has landmarks
+                glyph(image, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
+                    view_landmarks(group_label=group,
+                                   with_labels=with_labels,
+                                   render_labels=legend_enabled, **kwargs)
+            else:
+                # image is non-masked, glyph and doesn't have landmarks
+                glyph(image, vectors_block_size=glyph_block_size,
+                      use_negative=glyph_use_negative, channels=channels).\
+                    view(**kwargs)
+        else:
+            if landmarks_enabled:
+                # image is non-masked, non-glyph and has landmarks
+                image.view_landmarks(group_label=group, with_labels=with_labels,
+                                     render_labels=legend_enabled,
+                                     channels=channels, **kwargs)
+            else:
+                # image is non-masked, non-glyph and doesn't have landmarks
+                image.view(channels=channels, **kwargs)
+
+    # set figure size
+    plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+    # turn axis on/off
+    if not axes_visible:
+        plt.axis('off')
+
+    # show plot
+    plt.show()
 
 
 def _check_parameters(n_params, max_n_params):
