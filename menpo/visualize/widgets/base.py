@@ -225,7 +225,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
 def visualize_shape_model(shape_models, n_parameters=5,
                           parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
-                          mode='multiple', popup=False, tab=True, **kwargs):
+                          mode='multiple', popup=False, **kwargs):
     r"""
     Allows the dynamic visualization of a multilevel shape model.
 
@@ -252,22 +252,27 @@ def visualize_shape_model(shape_models, n_parameters=5,
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
 
-    tab : `boolean`, optional
-        If enabled, the widget will appear as a tab window.
-
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
     from collections import OrderedDict
 
+    # make sure that shape_models is a list even with one member
+    if not isinstance(shape_models, list):
+        shape_models = [shape_models]
+
+    # find number of levels (i.e. number of shape models)
     n_levels = len(shape_models)
 
-    # Check n_parameters
-    max_n_params = max([sp.n_active_components for sp in shape_models])
-    n_parameters = _check_parameters(n_parameters, max_n_params)
+    # find maximum number of components per level
+    max_n_params = [sp.n_active_components for sp in shape_models]
+
+    # check given n_parameters
+    # the returned n_parameters is a list of len n_levels
+    n_parameters = _check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define plot function
-    def show_instance(name, value):
+    def plot_function(name, value):
         # get params
         level = 0
         if n_levels > 1:
@@ -342,24 +347,20 @@ def visualize_shape_model(shape_models, n_parameters=5,
         plt.show()
 
         # change info_wid info
-        txt = "$\\bullet~\\texttt{Level: " + \
-              "{}".format(level+1) + \
-              " out of " + \
-              "{}".format(n_levels) + \
+        txt = "$\\bullet~\\texttt{Level: " + "{}".format(level+1) + \
+              " out of " + "{}".format(n_levels) + \
               ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(shape_models[level].n_components) + \
               " components in total.}\\\\ \\bullet~\\texttt{" + \
               "{}".format(shape_models[level].n_active_components) + \
               " active components.}\\\\ \\bullet~\\texttt{" + \
               "{0:.1f}".format(shape_models[level].variance_ratio*100) + \
-              "% variance kept.}\\\\ " \
-              "\\bullet~\\texttt{Instance range: " + \
+              "% variance kept.}\\\\ \\bullet~\\texttt{Instance range: " + \
               "{0:.1f} x {1:.1f}".format(tmp_range[0], tmp_range[1]) + \
               ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(shape_models[level].mean.n_points) + \
               " landmark points, " + \
-              "{}".format(shape_models[level].n_features) + \
-              " features.}$"
+              "{}".format(shape_models[level].n_features) + " features.}$"
         info_wid.children[1].value = txt
 
     # Plot eigenvalues function
@@ -393,16 +394,17 @@ def visualize_shape_model(shape_models, n_parameters=5,
         y_scale = figure_options_wid.y_scale
         plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
-    # Create options widgets
+    # create options widgets
     mode_dict = OrderedDict()
     mode_dict['Deformation'] = 1
     mode_dict['Vectors'] = 2
     mode_wid = RadioButtonsWidget(values=mode_dict, description='Mode:',
                                   value=1)
-    mode_wid.on_trait_change(show_instance, 'value')
+    mode_wid.on_trait_change(plot_function, 'value')
     mean_wid = CheckboxWidget(value=False, description='Show mean shape')
-    mean_wid.on_trait_change(show_instance, 'value')
+    mean_wid.on_trait_change(plot_function, 'value')
 
+    # controls mean shape checkbox visibility
     def mean_visible(name, value):
         if value == 1:
             mean_wid.disabled = False
@@ -410,30 +412,31 @@ def visualize_shape_model(shape_models, n_parameters=5,
             mean_wid.disabled = True
             mean_wid.value = False
     mode_wid.on_trait_change(mean_visible, 'value')
-    model_parameters_wid = model_parameters(
-        n_parameters, plot_function=show_instance, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
-        toggle_show_visible=False, plot_eig_visible=True,
-        plot_eig_function=plot_eigenvalues)
-    figure_options_wid = figure_options(show_instance, scale_default=1.,
+    model_parameters_wid = model_parameters(n_parameters[0], plot_function,
+                                            params_str='param ', mode=mode,
+                                            params_bounds=parameters_bounds,
+                                            toggle_show_default=True,
+                                            toggle_show_visible=False,
+                                            plot_eig_visible=True,
+                                            plot_eig_function=plot_eigenvalues)
+    figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=True,
-                                        toggle_show_default=tab,
-                                        toggle_show_visible=not tab)
+                                        toggle_show_default=True,
+                                        toggle_show_visible=False)
     axes_mode_wid = RadioButtonsWidget(values={'Image': 1, 'Point cloud': 2},
                                        description='Axes mode:', value=1)
-    axes_mode_wid.on_trait_change(show_instance, 'value')
+    axes_mode_wid.on_trait_change(plot_function, 'value')
     ch = list(figure_options_wid.children)
     ch.insert(3, axes_mode_wid)
     figure_options_wid.children = ch
-    info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
+    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
 
-    # Create final widget
-    def update_wrt_level(name, value):
-        n_params = min([n_parameters, shape_models[value].n_active_components])
-        model_parameters_wid.parameters_values = model_parameters_wid.parameters_values[:n_params]
-        update_model_parameters(model_parameters_wid, n_params,
-                                params_str='param ')
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        update_model_parameters(model_parameters_wid, n_parameters[value],
+                                plot_function, params_str='param ')
 
+    # create final widget
     if n_levels > 1:
         radio_str = OrderedDict()
         for l in range(n_levels):
@@ -445,45 +448,49 @@ def visualize_shape_model(shape_models, n_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = RadioButtonsWidget(values=radio_str,
                                        description='Pyramid:', value=0)
-        level_wid.on_trait_change(update_wrt_level, 'value')
-        level_wid.on_trait_change(show_instance, 'value')
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(plot_function, 'value')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
         radio_children = [mode_wid, mean_wid]
     radio_wids = ContainerWidget(children=radio_children)
     tmp_wid = ContainerWidget(children=[radio_wids, model_parameters_wid])
-    if tab:
-        wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
-    else:
-        wid = ContainerWidget(children=[tmp_wid, figure_options_wid, info_wid])
+    wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
     if popup:
         wid = PopupWidget(children=[wid], button_text='Shape Model Menu')
 
-    # Display and format widget
+    # display final widget
     display(wid)
-    update_wrt_level('', 0)
-    if tab and popup:
-        wid.children[0].set_title(0, 'Shape parameters')
-        wid.children[0].set_title(1, 'Figure options')
-        wid.children[0].set_title(2, 'Model info')
-    elif tab and not popup:
-        wid.set_title(0, 'Shape parameters')
-        wid.set_title(1, 'Figure options')
-        wid.set_title(2, 'Model info')
+
+    # set final tab titles
+    tab_titles = ['Shape parameters', 'Figure options', 'Model info']
+    if popup:
+        for (k, tl) in enumerate(tab_titles):
+            wid.children[0].set_title(k, tl)
+    else:
+        for (k, tl) in enumerate(tab_titles):
+            wid.set_title(k, tl)
+
+    # align widgets
     tmp_wid.remove_class('vbox')
     tmp_wid.add_class('hbox')
     format_model_parameters(model_parameters_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
-                            toggle_button_font_weight='bold')
+                            toggle_button_font_weight='bold',
+                            border_visible=True)
     format_figure_options(figure_options_wid, container_padding='6px',
                           container_margin='6px',
                           container_border='1px solid black',
-                          toggle_button_font_weight='bold')
+                          toggle_button_font_weight='bold',
+                          border_visible=False)
     format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
                       container_margin='6px',
                       container_border='1px solid black',
-                      toggle_button_font_weight='bold')
+                      toggle_button_font_weight='bold', border_visible=False)
+
+    # update widgets' state for image number 0
+    update_widgets('', 0)
 
     # Reset value to enable initial visualization
     figure_options_wid.children[2].value = False
@@ -1488,10 +1495,29 @@ def _extract_groups_labels(image):
     return groups_keys, labels_keys
 
 
-def _check_parameters(n_params, max_n_params):
-    if n_params is None:
-        n_params = max_n_params
-    elif n_params > max_n_params:
-        raise ValueError("too many parameters asked "
-                         "(maximum {})".format(max_n_params))
-    return n_params
+def _check_n_parameters(n_params, n_levels, max_n_params):
+    r"""
+    Checks the maximum number of components per level either of the shape
+    or the appearance model. It must be None or int or float or a list of
+    those containing 1 or {n_levels} elements.
+    """
+    str_error = ("n_params must be None or 1 <= int <= max_n_params or "
+                 "a list of those containing 1 or {} elements").format(n_levels)
+    if not isinstance(n_params, list):
+        n_params_list = [n_params] * n_levels
+    elif len(n_params) == 1:
+        n_params_list = [n_params[0]] * n_levels
+    elif len(n_params) == n_levels:
+        n_params_list = n_params
+    else:
+        raise ValueError(str_error)
+    for i, comp in enumerate(n_params_list):
+        if comp is None:
+            n_params_list[i] = max_n_params[i]
+        else:
+            if isinstance(comp, int):
+                if comp > max_n_params[i]:
+                    n_params_list[i] = max_n_params[i]
+            else:
+                raise ValueError(str_error)
+    return n_params_list
