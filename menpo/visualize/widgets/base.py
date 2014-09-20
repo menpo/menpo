@@ -365,34 +365,15 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
-        # clear current figure
-        clear_output()
-
-        # plot eigenvalues ratio
+        # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
-        plt.subplot(211)
-        plt.bar(range(len(shape_models[level].eigenvalues_ratio)),
-                shape_models[level].eigenvalues_ratio)
-        plt.ylabel('Variance Ratio')
-        plt.xlabel('Component Number')
-        plt.title('Variance Ratio per Eigenvector')
-        plt.grid("on")
-        # plot eigenvalues cumulative ratio
-        plt.subplot(212)
-        plt.bar(range(len(shape_models[level].eigenvalues_cumulative_ratio)),
-                shape_models[level].eigenvalues_cumulative_ratio)
-        plt.ylim((0., 1.))
-        plt.ylabel('Cumulative Variance Ratio')
-        plt.xlabel('Component Number')
-        plt.title('Cumulative Variance Ratio')
-        plt.grid("on")
-        # set figure size
-        plt.gcf().tight_layout()
-        x_scale = figure_options_wid.x_scale
-        y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+        # show eigenvalues plots
+        _plot_eigenvalues(shape_models[level], figure_size,
+                          figure_options_wid.x_scale,
+                          figure_options_wid.y_scale)
 
     # create options widgets
     mode_dict = OrderedDict()
@@ -499,7 +480,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
 def visualize_appearance_model(appearance_models, n_parameters=5,
                                parameters_bounds=(-3.0, 3.0),
                                figure_size=(7, 7), mode='multiple',
-                               popup=False, tab=True, **kwargs):
+                               popup=False, **kwargs):
     r"""
     Allows the dynamic visualization of a multilevel appearance model.
 
@@ -526,108 +507,69 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
 
-    tab : `boolean`, optional
-        If enabled, the widget will appear as a tab window.
-
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
     from collections import OrderedDict
-    from menpo.visualize.image import glyph
     from menpo.image import MaskedImage
 
+    # make sure that appearance_models is a list even with one member
+    if not isinstance(appearance_models, list):
+        appearance_models = [appearance_models]
+
+    # find number of levels (i.e. number of appearance models)
     n_levels = len(appearance_models)
-    images_are_masked = isinstance(appearance_models[0].mean, MaskedImage)
 
-    # Check n_parameters
-    max_n_params = max([ap.n_active_components for ap in appearance_models])
-    n_parameters = _check_parameters(n_parameters, max_n_params)
+    # find maximum number of components per level
+    max_n_params = [ap.n_active_components for ap in appearance_models]
 
-    # Define plot function
-    def show_instance(name, value):
-        # get params
+    # check given n_parameters
+    # the returned n_parameters is a list of len n_levels
+    n_parameters = _check_n_parameters(n_parameters, n_levels, max_n_params)
+
+    # define plot function
+    def plot_function(name, value):
+        # get selected level
         level = 0
         if n_levels > 1:
             level = level_wid.value
+
+        # get parameters values
         parameters_values = model_parameters_wid.parameters_values
-        channels = channel_options_wid.channels
-        glyph_enabled = channel_options_wid.glyph_enabled
-        glyph_block_size = channel_options_wid.glyph_block_size
-        glyph_use_negative = channel_options_wid.glyph_use_negative
-        sum_enabled = channel_options_wid.sum_enabled
-        masked = channel_options_wid.masked
-        landmarks_enabled = landmark_options_wid.landmarks_enabled
-        legend_enabled = landmark_options_wid.legend_enabled
-        group = landmark_options_wid.group
-        with_labels = landmark_options_wid.with_labels
-        x_scale = figure_options_wid.x_scale
-        y_scale = figure_options_wid.y_scale
-        axes_visible = figure_options_wid.axes_visible
 
         # compute instance
         weights = parameters_values * appearance_models[level].eigenvalues[:len(parameters_values)] ** 0.5
         instance = appearance_models[level].instance(weights)
 
-        # clear current figure
-        clear_output()
+        # show image with selected options
+        _show_image(instance, channel_options_wid.channels,
+                    channel_options_wid.glyph_enabled,
+                    channel_options_wid.glyph_block_size,
+                    channel_options_wid.glyph_use_negative,
+                    channel_options_wid.sum_enabled,
+                    landmark_options_wid.landmarks_enabled,
+                    landmark_options_wid.legend_enabled,
+                    landmark_options_wid.group,
+                    landmark_options_wid.with_labels,
+                    figure_options_wid.x_scale, figure_options_wid.y_scale,
+                    figure_options_wid.axes_visible,
+                    channel_options_wid.image_is_masked,
+                    channel_options_wid.masked_enabled,
+                    figure_size, **kwargs)
 
-        # plot
-        if images_are_masked:
-            if glyph_enabled or sum_enabled:
-                if landmarks_enabled:
-                    glyph(instance, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative, channels=channels).\
-                        view_landmarks(masked=masked, group_label=group,
-                                       with_labels=with_labels,
-                                       render_labels=legend_enabled, **kwargs)
-                else:
-                    glyph(instance, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative,
-                          channels=channels).view(masked=masked, **kwargs)
-            else:
-                if landmarks_enabled:
-                    instance.view_landmarks(masked=masked, group_label=group,
-                                            with_labels=with_labels,
-                                            render_labels=legend_enabled,
-                                            channels=channels, **kwargs)
-                else:
-                    instance.view(masked=masked, channels=channels, **kwargs)
-        else:
-            if glyph_enabled or sum_enabled:
-                if landmarks_enabled:
-                    glyph(instance, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative, channels=channels).\
-                        view_landmarks(group_label=group,
-                                       with_labels=with_labels,
-                                       render_labels=legend_enabled, **kwargs)
-                else:
-                    glyph(instance, vectors_block_size=glyph_block_size,
-                          use_negative=glyph_use_negative,
-                          channels=channels).view(**kwargs)
-            else:
-                if landmarks_enabled:
-                    instance.view_landmarks(group_label=group,
-                                            with_labels=with_labels,
-                                            render_labels=legend_enabled,
-                                            channels=channels, **kwargs)
-                else:
-                    instance.view(channels=channels, **kwargs)
+        # update info text widget
+        update_info(instance, level, landmark_options_wid.group)
 
-        # set figure size
-        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
-        # turn axis on/off
-        if not axes_visible:
-            plt.axis('off')
-        plt.show()
-
-        # change info_wid info
+    # define function that updates info text
+    def update_info(image, level, group):
+        # prepare channels str
         ch_str = 'channels'
-        if instance.n_channels == 1:
+        if image.n_channels == 1:
             ch_str = 'channel'
-        txt = "$\\bullet~\\texttt{Level: " + \
-              "{}".format(level+1) + \
-              " out of " + \
-              "{}".format(n_levels) + \
+
+        # create info str
+        txt = "$\\bullet~\\texttt{Level: " + "{}".format(level+1) + \
+              " out of " + "{}".format(n_levels) + \
               ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(appearance_models[level].n_components) + \
               " components in total.}\\\\ \\bullet~\\texttt{" + \
@@ -636,84 +578,71 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
               "{0:.1f}".format(appearance_models[level].variance_ratio*100) + \
               "% variance kept.}\\\\ " \
               "\\bullet~\\texttt{Reference shape of size " + \
-              instance._str_shape + \
-              " with " + \
-              "{} {}".format(instance.n_channels, ch_str) + \
+              image._str_shape + " with " + \
+              "{} {}".format(image.n_channels, ch_str) + \
               ".}\\\\ \\bullet~\\texttt{" + \
               "{}".format(appearance_models[level].n_features) + \
               " features.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(instance.landmarks[group].lms.n_points) + \
+              "{}".format(image.landmarks[group].lms.n_points) + \
               " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
-              "{0:.3f}".format(instance.pixels.min()) + \
-              ", max=" + \
-              "{0:.3f}".format(instance.pixels.max()) + \
-              "}$"
+              "{0:.3f}".format(image.pixels.min()) + \
+              ", max=" + "{0:.3f}".format(image.pixels.max()) + "}$"
+
+        # update info widget text
         info_wid.children[1].value = txt
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
-        # clear current figure
-        clear_output()
-
-        # plot eigenvalues ratio
+        # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
-        plt.subplot(211)
-        plt.bar(range(len(appearance_models[level].eigenvalues_ratio)),
-                appearance_models[level].eigenvalues_ratio)
-        plt.ylabel('Variance Ratio')
-        plt.xlabel('Component Number')
-        plt.title('Variance Ratio per Eigenvector')
-        plt.grid("on")
-        # plot eigenvalues cumulative ratio
-        plt.subplot(212)
-        plt.bar(range(len(appearance_models[level].eigenvalues_cumulative_ratio)),
-                appearance_models[level].eigenvalues_cumulative_ratio)
-        plt.ylim((0., 1.))
-        plt.ylabel('Cumulative Variance Ratio')
-        plt.xlabel('Component Number')
-        plt.title('Cumulative Variance Ratio')
-        plt.grid("on")
-        # set figure size
-        plt.gcf().tight_layout()
-        x_scale = figure_options_wid.x_scale
-        y_scale = figure_options_wid.y_scale
-        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
-    # Create options widgets
-    model_parameters_wid = model_parameters(
-        n_parameters, plot_function=show_instance, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, toggle_show_default=True,
-        toggle_show_visible=False, plot_eig_visible=True,
-        plot_eig_function=plot_eigenvalues)
+        # show eigenvalues plots
+        _plot_eigenvalues(appearance_models[level], figure_size,
+                          figure_options_wid.x_scale,
+                          figure_options_wid.y_scale)
+
+    # create options widgets
+    model_parameters_wid = model_parameters(n_parameters[0], plot_function,
+                                            params_str='param ', mode=mode,
+                                            params_bounds=parameters_bounds,
+                                            toggle_show_default=True,
+                                            toggle_show_visible=False,
+                                            plot_eig_visible=True,
+                                            plot_eig_function=plot_eigenvalues)
     channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
-                                          show_instance, masked_default=True,
-                                          masked_visible=images_are_masked,
-                                          toggle_show_default=tab,
-                                          toggle_show_visible=not tab)
-    all_groups_keys = appearance_models[0].mean.landmarks.keys()
-    all_labels_keys = [appearance_models[0].mean.landmarks[g].keys()
-                       for g in all_groups_keys]
+                                          isinstance(appearance_models[0].mean,
+                                                     MaskedImage),
+                                          plot_function, masked_default=True,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+    all_groups_keys, all_labels_keys = \
+        _extract_groups_labels(appearance_models[0].mean)
     landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
-                                            show_instance,
-                                            toggle_show_default=tab,
+                                            plot_function,
+                                            toggle_show_default=True,
                                             landmarks_default=True,
                                             legend_default=False,
-                                            toggle_show_visible=not tab)
-    figure_options_wid = figure_options(show_instance, scale_default=1.,
+                                            toggle_show_visible=False)
+    figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=True,
-                                        toggle_show_default=tab,
-                                        toggle_show_visible=not tab)
-    info_wid = info_print(toggle_show_default=tab, toggle_show_visible=not tab)
+                                        toggle_show_default=True,
+                                        toggle_show_visible=False)
+    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
 
-    # Create final widget
-    # Create final widget
-    def update_wrt_level(name, value):
-        n_params = min([n_parameters, appearance_models[value].n_active_components])
-        model_parameters_wid.parameters_values = model_parameters_wid.parameters_values[:n_params]
-        update_model_parameters(model_parameters_wid, n_params,
-                                params_str='param ')
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        # update model parameters
+        update_model_parameters(model_parameters_wid, n_parameters[value],
+                                plot_function, params_str='param ')
+        # update channel options
+        update_channel_options(channel_options_wid,
+                               appearance_models[value].mean.n_channels,
+                               isinstance(appearance_models[0].mean,
+                                          MaskedImage))
+
+    # create final widget
     tmp_children = [model_parameters_wid]
     if n_levels > 1:
         radio_str = OrderedDict()
@@ -726,58 +655,59 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = RadioButtonsWidget(values=radio_str,
                                        description='Pyramid:', value=0)
-        level_wid.on_trait_change(update_wrt_level, 'value')
-        level_wid.on_trait_change(show_instance, 'value')
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(plot_function, 'value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ContainerWidget(children=tmp_children)
-    if tab:
-        wid = TabWidget(children=[tmp_wid, channel_options_wid,
-                                  landmark_options_wid, figure_options_wid,
-                                  info_wid])
-    else:
-        wid = ContainerWidget(children=[tmp_wid, channel_options_wid,
-                                        landmark_options_wid,
-                                        figure_options_wid, info_wid])
+    wid = TabWidget(children=[tmp_wid, channel_options_wid,
+                              landmark_options_wid, figure_options_wid,
+                              info_wid])
     if popup:
         wid = PopupWidget(children=[wid], button_text='Appearance Model Menu')
 
-    # Display and format widget
+    # display final widget
     display(wid)
-    update_wrt_level('', 0)
-    if tab and popup:
-        wid.children[0].set_title(0, 'Appearance parameters')
-        wid.children[0].set_title(1, 'Channels options')
-        wid.children[0].set_title(2, 'Landmarks options')
-        wid.children[0].set_title(3, 'Figure options')
-        wid.children[0].set_title(4, 'Model info')
-    elif tab and not popup:
-        wid.set_title(0, 'Appearance parameters')
-        wid.set_title(1, 'Channels options')
-        wid.set_title(2, 'Landmarks options')
-        wid.set_title(3, 'Figure options')
-        wid.set_title(4, 'Model info')
+
+    # set final tab titles
+    tab_titles = ['Appearance parameters', 'Channels options',
+                  'Landmarks options', 'Figure options', 'Model info']
+    if popup:
+        for (k, tl) in enumerate(tab_titles):
+            wid.children[0].set_title(k, tl)
+    else:
+        for (k, tl) in enumerate(tab_titles):
+            wid.set_title(k, tl)
+
+    # align widgets
     tmp_wid.remove_class('vbox')
     tmp_wid.add_class('hbox')
     format_model_parameters(model_parameters_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
-                            toggle_button_font_weight='bold')
+                            toggle_button_font_weight='bold',
+                            border_visible=True)
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',
-                           toggle_button_font_weight='bold')
+                           toggle_button_font_weight='bold',
+                           border_visible=False)
     format_landmark_options(landmark_options_wid, container_padding='6px',
                             container_margin='6px',
                             container_border='1px solid black',
-                            toggle_button_font_weight='bold')
+                            toggle_button_font_weight='bold',
+                            border_visible=False)
     format_figure_options(figure_options_wid, container_padding='6px',
                           container_margin='6px',
                           container_border='1px solid black',
-                          toggle_button_font_weight='bold')
+                          toggle_button_font_weight='bold',
+                          border_visible=False)
     format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
                       container_margin='6px',
                       container_border='1px solid black',
-                      toggle_button_font_weight='bold')
+                      toggle_button_font_weight='bold', border_visible=False)
+
+    # update widgets' state for level 0
+    update_widgets('', 0)
 
     # Reset value to enable initial visualization
     figure_options_wid.children[2].value = False
@@ -1348,7 +1278,7 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
                 axes_visible, image_is_masked, masked_enabled, figure_size,
                 **kwargs):
     r"""
-    Helper function that plots and image given a set of selected options.
+    Helper function that plots an image given a set of selected options.
 
     Parameters
     -----------
@@ -1471,6 +1401,51 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
 
     # show plot
     plt.show()
+
+
+def _plot_eigenvalues(model, figure_size, x_scale, y_scale):
+    r"""
+    Helper function that plots a model's eigenvalues.
+
+    Parameters
+    -----------
+    model : :map:`PCAModel` or subclass
+       The model to be used.
+
+    figure_size : (`int`, `int`)
+        The size of the plotted figures.
+
+    x_scale : `float`
+        The scale of x axis.
+
+    y_scale : `float`
+        The scale of y axis.
+    """
+    # clear current figure
+    clear_output()
+
+    # plot eigenvalues ratio
+    plt.subplot(211)
+    plt.bar(range(len(model.eigenvalues_ratio)),
+            model.eigenvalues_ratio)
+    plt.ylabel('Variance Ratio')
+    plt.xlabel('Component Number')
+    plt.title('Variance Ratio per Eigenvector')
+    plt.grid("on")
+
+    # plot eigenvalues cumulative ratio
+    plt.subplot(212)
+    plt.bar(range(len(model.eigenvalues_cumulative_ratio)),
+            model.eigenvalues_cumulative_ratio)
+    plt.ylim((0., 1.))
+    plt.ylabel('Cumulative Variance Ratio')
+    plt.xlabel('Component Number')
+    plt.title('Cumulative Variance Ratio')
+    plt.grid("on")
+
+    # set figure size
+    plt.gcf().tight_layout()
+    plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
 
 def _extract_groups_labels(image):
