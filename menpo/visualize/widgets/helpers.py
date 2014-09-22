@@ -2,7 +2,7 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntSliderWidget, CheckboxWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
-                                  ButtonWidget)
+                                  ButtonWidget, SelectWidget)
 import numpy as np
 
 
@@ -1850,8 +1850,10 @@ def update_final_result_options(final_result_wid, group_keys, plot_function):
                 w.on_trait_change(plot_function, 'value')
 
 
-def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
-                              title='Iterations Result',
+def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
+                              plot_function=None, plot_errors_function=None,
+                              plot_displacements_function=None,
+                              iter_str='iter_', title='Iterations Result',
                               show_image_default=True,
                               subplots_enabled_default=False,
                               legend_default=True, toggle_show_default=True,
@@ -1866,26 +1868,34 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
         3) A checkbox that controls the visibility of the image.
         4) A set of radio buttons that define whether subplots are enabled.
         5) A checkbox that controls the legend's visibility.
-        6) A toggle button that controls the visibility of all the above, i.e.
+        6) A button to plot the error evolution.
+        7) A button to plot the landmark points' displacement.
+        8) A drop down menu to select which displacement to plot.
+        9) A toggle button that controls the visibility of all the above, i.e.
            the final result options.
 
     The structure of the widgets is the following:
         iterations_result_wid.children = [toggle_button,
                                           iterations_mode_and_sliders,
-                                          show_image_and_plot_errors,
                                           options]
         iterations_mode_and_sliders.children = [iterations_mode_radio_buttons,
                                                 all_sliders]
-        show_image_and_plot_errors.children = [show_image_checkbox,
-                                               plot_errors_button]
         all_sliders.children = [first_slider, second_slider]
-        options.children = [plot_mode_radio_buttons, legend_checkbox]
+        options.children = [plot_mode_radio_buttons, show_image_checkbox,
+                            show_legend_checkbox, plot_errors_button,
+                            plot_displacements]
+        plot_displacements.children = [plot_displacements_button,
+                                       plot_displacements_drop_down_menu]
 
     The returned widget saves the selected values in the following fields:
         iterations_result_wid.groups
+        iterations_result_wid.image_has_gt_shape
+        iterations_result_wid.n_iters
+        iterations_result_wid.n_points
         iterations_result_wid.show_image
         iterations_result_wid.subplots_enabled
         iterations_result_wid.legend_enabled
+        iterations_result_wid.displacement_type
 
     To fix the alignment within this widget please refer to
     `format_iterations_result_options()` function.
@@ -1895,8 +1905,25 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     n_iters : `int`
         The number of iterations.
 
+    image_has_gt_shape : `boolean`
+        Flag that defines whether the fitted image has a ground shape attached.
+
+    n_points : `int`
+        The number of the object's  landmark points. It is required by the
+        displacement dorp down menu.
+
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    plot_errors_function : `function` or None, optional
+        The plot function that is executed when the 'Plot Errors' button is
+        pressed.
+        If None, then nothing is assigned.
+
+    plot_displacements_function : `function` or None, optional
+        The plot function that is executed when the 'Plot Displacements' button
+        is pressed.
         If None, then nothing is assigned.
 
     iter_str : `str`, optional
@@ -1923,11 +1950,11 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    # Toggle button that controls options' visibility
+    from collections import OrderedDict
+
+    # Create all necessary widgets
     but = ToggleButtonWidget(description=title, value=toggle_show_default,
                              visible=toggle_show_visible)
-
-    # Create widgets
     iterations_mode = RadioButtonsWidget(values={'Single': 0, 'Multiple': 1},
                                          value=0,
                                          description='Iterations mode:',
@@ -1941,6 +1968,16 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     show_image = CheckboxWidget(description='Show image',
                                 value=show_image_default)
     plot_errors_button = ButtonWidget(description='Plot Errors')
+    plot_displacements_button = ButtonWidget(description='Plot Displacements')
+    dropdown_menu = OrderedDict()
+    dropdown_menu['mean'] = 'mean'
+    dropdown_menu['median'] = 'median'
+    dropdown_menu['max'] = 'max'
+    dropdown_menu['min'] = 'min'
+    for p in range(n_points):
+        #dropdown_menu.append("point {}".format(p+1))
+        dropdown_menu["point {}".format(p+1)] = p
+    plot_displacements_menu = SelectWidget(values=dropdown_menu, value='mean')
     plot_mode = RadioButtonsWidget(description='Plot mode:',
                                    values={'Single': False, 'Multiple': True})
     plot_mode.value = subplots_enabled_default
@@ -1953,46 +1990,47 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
         iterations_mode.disabled = True
         first_slider_wid.disabled = True
         second_slider_wid.disabled = True
+        plot_errors_button.disabled = True
+        plot_displacements_button.disabled = True
+        plot_displacements_menu.disabled = True
 
     # Group widgets
     sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
     iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
                                                             sliders])
-    show_image_and_plot_errors = ContainerWidget(children=[show_image,
-                                                           plot_errors_button])
-    opts = ContainerWidget(children=[plot_mode, show_legend])
+    plot_displacements = ContainerWidget(children=[plot_displacements_button,
+                                                   plot_displacements_menu])
+    opts = ContainerWidget(children=[plot_mode, show_image, show_legend,
+                                     plot_errors_button, plot_displacements])
 
     # Widget container
     iterations_result_wid = ContainerWidget(children=[
-        but, iterations_mode_and_sliders, show_image_and_plot_errors, opts])
-
-    # convert iterations to groups
-    def convert_iterations_to_groups(from_iter, to_iter):
-        return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter+1)]
+        but, iterations_mode_and_sliders, opts])
 
     # Initialize variables
-    iterations_result_wid.groups = convert_iterations_to_groups(0, 0)
+    iterations_result_wid.groups = _convert_iterations_to_groups(0, 0, iter_str)
+    iterations_result_wid.image_has_gt_shape = image_has_gt_shape
+    iterations_result_wid.n_iters = n_iters
+    iterations_result_wid.n_points = n_points
     iterations_result_wid.show_image = show_image_default
     iterations_result_wid.subplots_enabled = subplots_enabled_default
     iterations_result_wid.legend_enabled = legend_default
+    iterations_result_wid.displacement_type = 'mean'
 
     # Define iterations mode visibility
     def iterations_mode_selection(name, value):
         if value == 0:
             first_slider_wid.description = 'Iteration'
             first_slider_wid.min = 0
-            first_slider_wid.max = n_iters-1
+            first_slider_wid.max = iterations_result_wid.n_iters - 1
             second_slider_wid.visible = False
         else:
             first_slider_wid.description = 'From'
             first_slider_wid.min = 0
-            first_slider_wid.max = n_iters-1
+            first_slider_wid.max = iterations_result_wid.n_iters - 1
             second_slider_wid.min = 0
-            second_slider_wid.max = n_iters-1
-            if first_slider_wid.value == n_iters - 1:
-                second_slider_wid.value = n_iters - 1
-            else:
-                second_slider_wid.value = first_slider_wid.value + 1
+            second_slider_wid.max = iterations_result_wid.n_iters - 1
+            second_slider_wid.value = first_slider_wid.value
             second_slider_wid.visible = True
     iterations_mode.on_trait_change(iterations_mode_selection, 'value')
 
@@ -2007,11 +2045,11 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
 
     def get_groups(name, value):
         if iterations_mode.value == 0:
-            iterations_result_wid.groups = convert_iterations_to_groups(
-                first_slider_wid.value, first_slider_wid.value)
+            iterations_result_wid.groups = _convert_iterations_to_groups(
+                first_slider_wid.value, first_slider_wid.value, iter_str)
         else:
-            iterations_result_wid.groups = convert_iterations_to_groups(
-                first_slider_wid.value, second_slider_wid.value)
+            iterations_result_wid.groups = _convert_iterations_to_groups(
+                first_slider_wid.value, second_slider_wid.value, iter_str)
     first_slider_wid.on_trait_change(first_slider_val, 'value')
     second_slider_wid.on_trait_change(second_slider_val, 'value')
     first_slider_wid.on_trait_change(get_groups, 'value')
@@ -2033,11 +2071,23 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
         iterations_result_wid.legend_enabled = value
     show_legend.on_trait_change(legend_fun, 'value')
 
+    # Displacement type function
+    def displacement_type_fun(name, value):
+        iterations_result_wid.displacement_type = value
+    plot_displacements_menu.on_trait_change(displacement_type_fun, 'value')
+
     # Toggle button function
     def show_options(name, value):
         iterations_mode.visible = value
+        plot_mode.visible = value
         show_image.visible = value
-        opts.visible = value
+        show_legend.visible = value
+        if image_has_gt_shape and value:
+            plot_errors_button.visible = True
+            plot_displacements.visible = True
+        else:
+            plot_errors_button.visible = False
+            plot_displacements.visible = False
         if value:
             if iterations_mode.value == 0:
                 first_slider_wid.visible = True
@@ -2050,7 +2100,7 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
-    # assign plot_function
+    # assign general plot_function
     if plot_function is not None:
         first_slider_wid.on_trait_change(plot_function, 'value')
         second_slider_wid.on_trait_change(plot_function, 'value')
@@ -2058,6 +2108,14 @@ def iterations_result_options(n_iters, plot_function=None, iter_str='iter_',
         show_image.on_trait_change(plot_function, 'value')
         plot_mode.on_trait_change(plot_function, 'value')
         show_legend.on_trait_change(plot_function, 'value')
+
+    # assign plot function of errors button
+    if plot_errors_function is not None:
+        plot_errors_button.on_click(plot_errors_function)
+
+    # assign plot function of displacements button
+    if plot_displacements_function is not None:
+        plot_displacements_button.on_click(plot_displacements_function)
 
     return iterations_result_wid
 
@@ -2096,23 +2154,30 @@ def format_iterations_result_options(iterations_result_wid,
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
     """
+    # align displacement button and dropdown menu
+    iterations_result_wid.children[2].children[4].add_class('align-center')
+    iterations_result_wid.children[2].children[4].children[1].set_css('width',
+                                                                      '2.5cm')
+    iterations_result_wid.children[2].children[4].children[1].set_css('height',
+                                                                      '2cm')
+
+    # align options
+    iterations_result_wid.children[2].remove_class('vbox')
+    iterations_result_wid.children[2].add_class('hbox')
+    iterations_result_wid.children[2].add_class('align-start')
+    iterations_result_wid.children[2].children[0].set_css('margin-right',
+                                                          '20px')
+    iterations_result_wid.children[2].children[1].set_css('margin-right',
+                                                          '10px')
+    iterations_result_wid.children[2].children[2].set_css('margin-right',
+                                                          '20px')
+    iterations_result_wid.children[2].children[3].set_css('margin-right',
+                                                          '10px')
+
     # align sliders and iterations_mode
     iterations_result_wid.children[1].remove_class('vbox')
     iterations_result_wid.children[1].add_class('hbox')
     iterations_result_wid.children[1].add_class('align-start')
-
-    # align show image and plot errors
-    iterations_result_wid.children[2].remove_class('vbox')
-    iterations_result_wid.children[2].add_class('hbox')
-    iterations_result_wid.children[2].add_class('align-center')
-    iterations_result_wid.children[2].children[0].set_css('margin-right',
-                                                          '20px')
-
-    # align plot_mode and legend options
-    iterations_result_wid.children[3].remove_class('vbox')
-    iterations_result_wid.children[3].add_class('hbox')
-    iterations_result_wid.children[3].children[0].set_css('margin-right',
-                                                          '20px')
 
     # set toggle button font bold
     iterations_result_wid.children[0].set_css('font-weight',
@@ -2124,6 +2189,105 @@ def format_iterations_result_options(iterations_result_wid,
     iterations_result_wid.set_css('margin', container_margin)
     if border_visible:
         iterations_result_wid.set_css('border', container_border)
+
+
+def update_iterations_result_options(iterations_result_wid, n_iters,
+                                     image_has_gt_shape, n_points,
+                                     iter_str='iter_'):
+    r"""
+    Function that updates the state of a given iterations_result_options widget
+    if the number of iterations or the number of landmark points or the
+    image_has_gt_shape flag has changed. Usage example:
+        iterations_result_wid = iterations_result_options(
+            n_iters=50, image_has_gt_shape=True, n_points=68)
+        display(iterations_result_wid)
+        format_iterations_result_options(iterations_result_wid)
+        update_iterations_result_options(iterations_result_wid, n_iters=52,
+                                         image_has_gt_shape=False, n_points=68)
+
+    Parameters
+    ----------
+    n_iters : `int`
+        The number of iterations.
+
+    image_has_gt_shape : `boolean`
+        Flag that defines whether the fitted image has a ground shape attached.
+
+    n_points : `int`
+        The number of the object's  landmark points. It is required by the
+        displacement dorp down menu.
+
+    iter_str : `str`, optional
+        The str that is used in the landmark groups shapes.
+        E.g. if iter_str == "iter_" then the group label of iteration i has the
+        form "{}{}".format(iter_str, i)
+    """
+    from collections import OrderedDict
+
+    # if image_has_gt_shape flag has actually changed from the previous value
+    if image_has_gt_shape != iterations_result_wid.image_has_gt_shape:
+        # set the plot buttons visibility
+        iterations_result_wid.children[2].children[3].visible = \
+            iterations_result_wid.children[0].value and image_has_gt_shape
+        iterations_result_wid.children[2].children[4].visible = \
+            iterations_result_wid.children[0].value and image_has_gt_shape
+        # store the flag
+        iterations_result_wid.image_has_gt_shape = image_has_gt_shape
+
+    # if n_points has actually changed from the previous value
+    if n_points != iterations_result_wid.n_points:
+        # change the contents of the displacement types
+        select_menu = OrderedDict()
+        select_menu['mean'] = 'mean'
+        select_menu['median'] = 'median'
+        select_menu['max'] = 'max'
+        select_menu['min'] = 'min'
+        for p in range(n_points):
+            select_menu["point {}".format(p+1)] = p
+        iterations_result_wid.children[2].children[4].children[1].values = \
+            select_menu
+        # store the number of points
+        iterations_result_wid.n_points = n_points
+
+    # if n_iters are actually different from the previous value
+    if n_iters != iterations_result_wid.n_iters:
+        # change the iterations_result_wid output
+        iterations_result_wid.n_iters = n_iters
+        iterations_result_wid.groups = _convert_iterations_to_groups(0, 0,
+                                                                     iter_str)
+        # set the iterations options state
+        if n_iters == 1:
+            # set sliders max and min values
+            iterations_result_wid.children[1].children[1].children[0].max = 1
+            iterations_result_wid.children[1].children[1].children[1].max = 1
+            iterations_result_wid.children[1].children[1].children[0].min = 0
+            iterations_result_wid.children[1].children[1].children[1].min = 0
+            # set sliders state
+            iterations_result_wid.children[1].children[1].children[0].disabled = True
+            iterations_result_wid.children[1].children[1].children[1].visible = False
+            # set mode state
+            iterations_result_wid.children[1].children[0].disabled = True
+        else:
+            # set sliders max and min values
+            iterations_result_wid.children[1].children[1].children[0].max = \
+                n_iters - 1
+            iterations_result_wid.children[1].children[1].children[1].max = \
+                n_iters - 1
+            iterations_result_wid.children[1].children[1].children[0].min = 0
+            iterations_result_wid.children[1].children[1].children[1].min = 0
+            # set sliders state
+            iterations_result_wid.children[1].children[1].children[0].disabled = False
+            iterations_result_wid.children[1].children[1].children[1].visible = False
+            # set mode state
+            iterations_result_wid.children[1].children[0].disabled = False
+        # set mode and sliders values
+        for k in range(3):
+            if k == 0:
+                iterations_result_wid.children[1].children[0].value = 0
+            elif k == 1:
+                iterations_result_wid.children[1].children[1].children[0].value = 0
+            else:
+                iterations_result_wid.children[1].children[1].children[1].value = 0
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
@@ -2159,3 +2323,11 @@ def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
                np.all([comp_lists(g1, g2) for g1, g2 in zip(labels1, labels2)])
     else:
         return False
+
+
+def _convert_iterations_to_groups(from_iter, to_iter, iter_str):
+    r"""
+    Function that generates a list of group labels given the range bounds and
+    the str to be used.
+    """
+    return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter+1)]
