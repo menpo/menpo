@@ -4,8 +4,10 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       update_landmark_options, info_print, format_info_print,
                       model_parameters, format_model_parameters,
                       update_model_parameters, final_result_options,
-                      format_final_result_options, iterations_result_options,
-                      format_iterations_result_options)
+                      format_final_result_options, update_final_result_options,
+                      iterations_result_options,
+                      format_iterations_result_options,
+                      update_iterations_result_options)
 from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
                                   ContainerWidget, TabWidget,
                                   RadioButtonsWidget, CheckboxWidget)
