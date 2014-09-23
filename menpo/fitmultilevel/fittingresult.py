@@ -88,56 +88,6 @@ class MultilevelFittingResult(FittingResult):
                                             self.downscale,
                                             self._affine_correction)
 
-    def displacements(self, displacement_type='mean'):
-        r"""
-        A list containing the displacement between the shape of each iteration
-        and the shape of the previous one.
-
-        Parameters
-        -----------
-        displacement_type : `str` ``{'mean', 'median', 'min',
-                                     'max', 'point %d'}``, optional
-            Specifies the way in which the displacement is to be computed.
-            'mean' returns the mean point-to-point Euclidean distance.
-            'median' returns the median point-to-point Euclidean distance.
-            'max' returns the maximum point-to-point Euclidean distance.
-            'min' returns the minimum point-to-point Euclidean distance.
-            'point %d' returns the Euclidean distance of the specified landmark
-            point, e.g. 'point 10'.
-
-        Returns
-        -------
-        displacements : `list` of `float`
-            The displacement at each iteration of the fitting process.
-        """
-        from numpy import median, mean, max, min
-        from numpy.linalg import norm
-
-        s = self.shapes
-        error_str = "displacement_type must be 'mean', 'median', 'min', " \
-                    "'max' or a point str, e.g. 'point 10'"
-        if displacement_type == 'mean':
-            return [mean(norm(s[k-1].points - s[k].points, axis=1))
-                    for k in range(1, len(s))]
-        elif displacement_type == 'median':
-            return [median(norm(s[k-1].points - s[k].points, axis=1))
-                    for k in range(1, len(s))]
-        elif displacement_type == 'max':
-            return [max(norm(s[k-1].points - s[k].points, axis=1))
-                    for k in range(1, len(s))]
-        elif displacement_type == 'min':
-            return [min(norm(s[k-1].points - s[k].points, axis=1))
-                    for k in range(1, len(s))]
-        elif displacement_type[:6] == 'point ':
-            # find and check the selected landmark point
-            p = int(displacement_type[6::])
-            if p > s[0].n_points - 1 or p < 0:
-                raise ValueError(error_str)
-            return [norm(s[k-1].points[p, :] - s[k].points[p, :])
-                    for k in range(1, len(s))]
-        else:
-            raise ValueError(error_str)
-
     @property
     def final_shape(self):
         r"""

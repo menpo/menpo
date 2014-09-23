@@ -1,6 +1,7 @@
 from __future__ import division
 import abc
 from hdf5able import HDF5able
+import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
@@ -59,6 +60,29 @@ class FittingResult(Viewable):
         displacements : `list` of `float`
             The displacement at each iteration of the fitting process.
         """
+        error_str = "displacement_type must be 'mean', 'median', 'min', " \
+                    "'max' or a point str, e.g. 'point 10'"
+        shapes = self.shapes
+        # compute norm (euclidean distance) between all consecutive shapes pairs
+        diffs = [np.linalg.norm(s1.points - s2.points, axis=1)
+                 for s1, s2 in zip(shapes, shapes[1:])]
+        if displacement_type == 'mean':
+            return [np.mean(d) for d in diffs]
+        elif displacement_type == 'median':
+            return [np.median(d) for d in diffs]
+        elif displacement_type == 'max':
+            return [np.max(d) for d in diffs]
+        elif displacement_type == 'min':
+            return [np.min(d) for d in diffs]
+        elif displacement_type[:6] == 'point ':
+            # find and check the selected landmark point
+            p = int(displacement_type[6::])
+            if p > shapes[0].n_points - 1 or p < 0:
+                raise ValueError(error_str)
+            return [np.linalg.norm(s1.points[p, :] - s2.points[p, :], axis=1)
+                    for s1, s2 in zip(shapes, shapes[1:])]
+        else:
+            raise ValueError(error_str)
 
     @abc.abstractproperty
     def final_shape(self):
