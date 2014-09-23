@@ -37,6 +37,29 @@ class FittingResult(Viewable):
         :type: `list` of :map:`PointCloud`
         """
 
+    def displacements(self, displacement_type='mean'):
+        r"""
+        A list containing the displacement between the shape of each iteration
+        and the shape of the previous one.
+
+        Parameters
+        -----------
+        displacement_type : `str` ``{'mean', 'median', 'min',
+                                     'max', 'point %d'}``, optional
+            Specifies the way in which the displacement is to be computed.
+            'mean' returns the mean point-to-point Euclidean distance.
+            'median' returns the median point-to-point Euclidean distance.
+            'max' returns the maximum point-to-point Euclidean distance.
+            'min' returns the minimum point-to-point Euclidean distance.
+            'point %d' returns the Euclidean distance of the specified landmark
+            point, e.g. 'point 10'.
+
+        Returns
+        -------
+        displacements : `list` of `float`
+            The displacement at each iteration of the fitting process.
+        """
+
     @abc.abstractproperty
     def final_shape(self):
         r"""
