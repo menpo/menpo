@@ -42,7 +42,6 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         Passed through to the viewer.
     """
     from menpo.image import MaskedImage
-    import time
 
     # make sure that images is a list even with one image member
     if not isinstance(images, list):
@@ -58,56 +57,34 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         if n_images > 1:
             im = image_number_wid.value
 
-        # show image with selected options
-        t = time.time()
-        _show_image(images[im],
-                    channel_options_wid.channels,
-                    channel_options_wid.glyph_enabled,
-                    channel_options_wid.glyph_block_size,
-                    channel_options_wid.glyph_use_negative,
-                    channel_options_wid.sum_enabled,
-                    landmark_options_wid.landmarks_enabled,
-                    landmark_options_wid.legend_enabled,
-                    landmark_options_wid.group,
-                    landmark_options_wid.with_labels,
-                    figure_options_wid.x_scale, figure_options_wid.y_scale,
-                    figure_options_wid.axes_visible,
-                    channel_options_wid.image_is_masked,
-                    channel_options_wid.masked_enabled,
-                    figure_size,
-                    **kwargs)
-        t1 = time.time() - t
-
-        t = time.time()
-        _show_image_long(images[im],
-                         channel_options_wid.image_is_masked,
-                         channel_options_wid.masked_enabled,
-                         1,
-                         channel_options_wid.channels,
-                         channel_options_wid.glyph_enabled,
-                         channel_options_wid.glyph_block_size,
-                         channel_options_wid.glyph_use_negative,
-                         channel_options_wid.sum_enabled,
-                         landmark_options_wid.landmarks_enabled,
-                         [landmark_options_wid.group],
-                         [landmark_options_wid.with_labels],
-                         dict(),
-                         dict(),
-                         True,
-                         False,
-                         landmark_options_wid.legend_enabled,
-                         figure_options_wid.x_scale,
-                         figure_options_wid.y_scale,
-                         figure_options_wid.axes_visible,
-                         figure_size,
-                         **kwargs)
-        t2 = time.time() - t
-        print t1, t2
-
         # update info text widget
         update_info(images[im],
                     channel_options_wid.image_is_masked,
                     landmark_options_wid.group)
+
+        # show image with selected options
+        _plot_figure(image=images[im],
+                     image_enabled=True,
+                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
+                     image_is_masked=channel_options_wid.image_is_masked,
+                     masked_enabled=channel_options_wid.masked_enabled,
+                     channels=channel_options_wid.channels,
+                     glyph_enabled=channel_options_wid.glyph_enabled,
+                     glyph_block_size=channel_options_wid.glyph_block_size,
+                     glyph_use_negative=channel_options_wid.glyph_use_negative,
+                     sum_enabled=channel_options_wid.sum_enabled,
+                     groups=[landmark_options_wid.group],
+                     with_labels=[landmark_options_wid.with_labels],
+                     groups_colours=dict(),
+                     subplots_enabled=False,
+                     subplots_titles=dict(),
+                     image_axes_mode=True,
+                     legend_enabled=landmark_options_wid.legend_enabled,
+                     x_scale=figure_options_wid.x_scale,
+                     y_scale=figure_options_wid.x_scale,
+                     axes_visible=figure_options_wid.axes_visible,
+                     figure_size=figure_size,
+                     **kwargs)
 
     # define function that updates info text
     def update_info(image, image_is_masked, group):
@@ -320,7 +297,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         weights = parameters_values * shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5
 
         # clear current figure
-        clear_output()
+        clear_output(wait=True)
 
         # invert axis if image mode is enabled
         if axis_mode == 1:
@@ -574,20 +551,28 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         instance = appearance_models[level].instance(weights)
 
         # show image with selected options
-        _show_image(instance, channel_options_wid.channels,
-                    channel_options_wid.glyph_enabled,
-                    channel_options_wid.glyph_block_size,
-                    channel_options_wid.glyph_use_negative,
-                    channel_options_wid.sum_enabled,
-                    landmark_options_wid.landmarks_enabled,
-                    landmark_options_wid.legend_enabled,
-                    landmark_options_wid.group,
-                    landmark_options_wid.with_labels,
-                    figure_options_wid.x_scale, figure_options_wid.y_scale,
-                    figure_options_wid.axes_visible,
-                    channel_options_wid.image_is_masked,
-                    channel_options_wid.masked_enabled,
-                    figure_size, **kwargs)
+        _plot_figure(image=instance,
+                     image_enabled=True,
+                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
+                     image_is_masked=channel_options_wid.image_is_masked,
+                     masked_enabled=channel_options_wid.masked_enabled,
+                     channels=channel_options_wid.channels,
+                     glyph_enabled=channel_options_wid.glyph_enabled,
+                     glyph_block_size=channel_options_wid.glyph_block_size,
+                     glyph_use_negative=channel_options_wid.glyph_use_negative,
+                     sum_enabled=channel_options_wid.sum_enabled,
+                     groups=[landmark_options_wid.group],
+                     with_labels=[landmark_options_wid.with_labels],
+                     groups_colours=dict(),
+                     subplots_enabled=False,
+                     subplots_titles=dict(),
+                     image_axes_mode=True,
+                     legend_enabled=landmark_options_wid.legend_enabled,
+                     x_scale=figure_options_wid.x_scale,
+                     y_scale=figure_options_wid.y_scale,
+                     axes_visible=figure_options_wid.axes_visible,
+                     figure_size=figure_size,
+                     **kwargs)
 
         # update info text widget
         update_info(instance, level, landmark_options_wid.group)
@@ -812,20 +797,28 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                 appearance_weights=appearance_weights)
 
         # show image with selected options
-        _show_image(instance, channel_options_wid.channels,
-                    channel_options_wid.glyph_enabled,
-                    channel_options_wid.glyph_block_size,
-                    channel_options_wid.glyph_use_negative,
-                    channel_options_wid.sum_enabled,
-                    landmark_options_wid.landmarks_enabled,
-                    landmark_options_wid.legend_enabled,
-                    landmark_options_wid.group,
-                    landmark_options_wid.with_labels,
-                    figure_options_wid.x_scale, figure_options_wid.y_scale,
-                    figure_options_wid.axes_visible,
-                    channel_options_wid.image_is_masked,
-                    channel_options_wid.masked_enabled,
-                    figure_size, **kwargs)
+        _plot_figure(image=instance,
+                     image_enabled=True,
+                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
+                     image_is_masked=channel_options_wid.image_is_masked,
+                     masked_enabled=channel_options_wid.masked_enabled,
+                     channels=channel_options_wid.channels,
+                     glyph_enabled=channel_options_wid.glyph_enabled,
+                     glyph_block_size=channel_options_wid.glyph_block_size,
+                     glyph_use_negative=channel_options_wid.glyph_use_negative,
+                     sum_enabled=channel_options_wid.sum_enabled,
+                     groups=[landmark_options_wid.group],
+                     with_labels=[landmark_options_wid.with_labels],
+                     groups_colours=dict(),
+                     subplots_enabled=False,
+                     subplots_titles=dict(),
+                     image_axes_mode=True,
+                     legend_enabled=landmark_options_wid.legend_enabled,
+                     x_scale=figure_options_wid.x_scale,
+                     y_scale=figure_options_wid.y_scale,
+                     axes_visible=figure_options_wid.axes_visible,
+                     figure_size=figure_size,
+                     **kwargs)
 
         # update info text widget
         update_info(aam, instance, level, landmark_options_wid.group)
@@ -1217,143 +1210,12 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
     interact(plot_graph, x_limit=(0.0, x_axis[-1], 0.001))
 
 
-# def _show_image(image, channels, glyph_enabled, glyph_block_size,
-#                 glyph_use_negative, sum_enabled, landmarks_enabled,
-#                 legend_enabled, group, with_labels, x_scale, y_scale,
-#                 axes_visible, image_is_masked, masked_enabled, figure_size,
-#                 **kwargs):
-#     r"""
-#     Helper function that plots an image given a set of selected options.
-#
-#     Parameters
-#     -----------
-#     image : :map:`Image` or subclass
-#        The image to be displayed.
-#
-#     channels : `int` or `list` of `int`
-#         The image channels to be displayed.
-#
-#     glyph_enabled : `boolean`
-#         Defines whether to display the image as glyph or not.
-#
-#     glyph_block_size : `int`
-#         The size of the glyph's blocks.
-#
-#     glyph_use_negative : `boolean`
-#         Whether to use the negative hist values.
-#
-#     sum_enabled : `boolean`
-#         If true, the image will be displayed as glyph with glyph_block_size=1,
-#         thus the sum of the image's selected channels.
-#
-#     landmarks_enabled : `boolean`
-#         Whether to also display the landmarks on top of the image.
-#
-#     legend_enabled : `boolean`
-#         Whether to show the legend for the landmarks. If True, it also prints
-#         the landmark points' numbers.
-#
-#     group : `str`
-#         The landmark group to be displayed.
-#
-#     with_labels : `list` of `str`
-#         The group's labels to be displayed.
-#
-#     x_scale : `float`
-#         The scale of x axis.
-#
-#     y_scale : `float`
-#         The scale of y axis.
-#
-#     axes_visible : `boolean`
-#         If False, the figure's axes will be invisible.
-#
-#     image_is_masked : `boolean`
-#         If True, image is an instance of :map:`MaskedImage`.
-#         If False, image is an instance of :map:`Image`.
-#
-#     masked_enabled : `boolean`
-#         If True and the image is an instance of :map:`MaskedImage`, then only
-#         the masked pixels will be displayed.
-#
-#     figure_size : (`int`, `int`)
-#         The size of the plotted figures.
-#
-#     kwargs : `dict`, optional
-#         Passed through to the viewer.
-#     """
-#     global glyph
-#     if glyph is None:
-#         from menpo.visualize.image import glyph
-#     # clear current figure
-#     clear_output()
-#
-#     # plot
-#     if image_is_masked:
-#         if glyph_enabled or sum_enabled:
-#             if landmarks_enabled:
-#                 # image is masked, glyph and has landmarks
-#                 glyph(image, vectors_block_size=glyph_block_size,
-#                       use_negative=glyph_use_negative, channels=channels).\
-#                     view_landmarks(masked=masked_enabled, group_label=group,
-#                                    with_labels=with_labels,
-#                                    render_labels=legend_enabled, **kwargs)
-#             else:
-#                 # image is masked, glyph and doesn't have landmarks
-#                 glyph(image, vectors_block_size=glyph_block_size,
-#                       use_negative=glyph_use_negative, channels=channels).\
-#                     view(masked=masked_enabled, **kwargs)
-#         else:
-#             if landmarks_enabled:
-#                 # image is masked, non-glyph and has landmarks
-#                 image.view_landmarks(masked=masked_enabled, group_label=group,
-#                                      with_labels=with_labels,
-#                                      render_labels=legend_enabled,
-#                                      channels=channels, **kwargs)
-#             else:
-#                 # image is masked, non-glyph and doesn't have landmarks
-#                 image.view(masked=masked_enabled, channels=channels, **kwargs)
-#     else:
-#         if glyph_enabled or sum_enabled:
-#             if landmarks_enabled:
-#                 # image is non-masked, glyph and has landmarks
-#                 glyph(image, vectors_block_size=glyph_block_size,
-#                       use_negative=glyph_use_negative, channels=channels).\
-#                     view_landmarks(group_label=group,
-#                                    with_labels=with_labels,
-#                                    render_labels=legend_enabled, **kwargs)
-#             else:
-#                 # image is non-masked, glyph and doesn't have landmarks
-#                 glyph(image, vectors_block_size=glyph_block_size,
-#                       use_negative=glyph_use_negative, channels=channels).\
-#                     view(**kwargs)
-#         else:
-#             if landmarks_enabled:
-#                 # image is non-masked, non-glyph and has landmarks
-#                 image.view_landmarks(group_label=group, with_labels=with_labels,
-#                                      render_labels=legend_enabled,
-#                                      channels=channels, **kwargs)
-#             else:
-#                 # image is non-masked, non-glyph and doesn't have landmarks
-#                 image.view(channels=channels, **kwargs)
-#
-#     # set figure size
-#     plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
-#
-#     # turn axis on/off
-#     if not axes_visible:
-#         plt.axis('off')
-#
-#     # show plot
-#     plt.show()
-
-
-def _show_image(image, image_enabled, landmarks_enabled, image_is_masked,
-                masked_enabled, channels, glyph_enabled, glyph_block_size,
-                glyph_use_negative, sum_enabled, groups, with_labels,
-                groups_colours, subplots_enabled, subplots_titles,
-                image_axes_mode, legend_enabled, x_scale, y_scale, axes_visible,
-                figure_size, **kwargs):
+def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
+                 masked_enabled, channels, glyph_enabled, glyph_block_size,
+                 glyph_use_negative, sum_enabled, groups, with_labels,
+                 groups_colours, subplots_enabled, subplots_titles,
+                 image_axes_mode, legend_enabled, x_scale, y_scale,
+                 axes_visible, figure_size, **kwargs):
     r"""
     Helper function that plots an object given a set of selected options.
 
@@ -1601,7 +1463,7 @@ def _plot_eigenvalues(model, figure_size, x_scale, y_scale):
         The scale of y axis.
     """
     # clear current figure
-    clear_output()
+    clear_output(wait=True)
 
     # plot eigenvalues ratio
     plt.subplot(211)
