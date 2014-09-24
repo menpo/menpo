@@ -13,6 +13,7 @@ from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
                                   RadioButtonsWidget, CheckboxWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
+from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 import numpy as np
 
 # This glyph import is called frequently during visualisation, so we ensure
@@ -41,6 +42,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         Passed through to the viewer.
     """
     from menpo.image import MaskedImage
+    import time
 
     # make sure that images is a list even with one image member
     if not isinstance(images, list):
@@ -57,6 +59,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             im = image_number_wid.value
 
         # show image with selected options
+        t = time.time()
         _show_image(images[im],
                     channel_options_wid.channels,
                     channel_options_wid.glyph_enabled,
@@ -73,6 +76,33 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                     channel_options_wid.masked_enabled,
                     figure_size,
                     **kwargs)
+        t1 = time.time() - t
+
+        t = time.time()
+        _show_image_long(images[im],
+                         channel_options_wid.image_is_masked,
+                         channel_options_wid.masked_enabled,
+                         1,
+                         channel_options_wid.channels,
+                         channel_options_wid.glyph_enabled,
+                         channel_options_wid.glyph_block_size,
+                         channel_options_wid.glyph_use_negative,
+                         channel_options_wid.sum_enabled,
+                         landmark_options_wid.landmarks_enabled,
+                         [landmark_options_wid.group],
+                         [landmark_options_wid.with_labels],
+                         dict(),
+                         dict(),
+                         True,
+                         False,
+                         landmark_options_wid.legend_enabled,
+                         figure_options_wid.x_scale,
+                         figure_options_wid.y_scale,
+                         figure_options_wid.axes_visible,
+                         figure_size,
+                         **kwargs)
+        t2 = time.time() - t
+        print t1, t2
 
         # update info text widget
         update_info(images[im],
@@ -1187,18 +1217,164 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
     interact(plot_graph, x_limit=(0.0, x_axis[-1], 0.001))
 
 
-def _show_image(image, channels, glyph_enabled, glyph_block_size,
-                glyph_use_negative, sum_enabled, landmarks_enabled,
-                legend_enabled, group, with_labels, x_scale, y_scale,
-                axes_visible, image_is_masked, masked_enabled, figure_size,
-                **kwargs):
+# def _show_image(image, channels, glyph_enabled, glyph_block_size,
+#                 glyph_use_negative, sum_enabled, landmarks_enabled,
+#                 legend_enabled, group, with_labels, x_scale, y_scale,
+#                 axes_visible, image_is_masked, masked_enabled, figure_size,
+#                 **kwargs):
+#     r"""
+#     Helper function that plots an image given a set of selected options.
+#
+#     Parameters
+#     -----------
+#     image : :map:`Image` or subclass
+#        The image to be displayed.
+#
+#     channels : `int` or `list` of `int`
+#         The image channels to be displayed.
+#
+#     glyph_enabled : `boolean`
+#         Defines whether to display the image as glyph or not.
+#
+#     glyph_block_size : `int`
+#         The size of the glyph's blocks.
+#
+#     glyph_use_negative : `boolean`
+#         Whether to use the negative hist values.
+#
+#     sum_enabled : `boolean`
+#         If true, the image will be displayed as glyph with glyph_block_size=1,
+#         thus the sum of the image's selected channels.
+#
+#     landmarks_enabled : `boolean`
+#         Whether to also display the landmarks on top of the image.
+#
+#     legend_enabled : `boolean`
+#         Whether to show the legend for the landmarks. If True, it also prints
+#         the landmark points' numbers.
+#
+#     group : `str`
+#         The landmark group to be displayed.
+#
+#     with_labels : `list` of `str`
+#         The group's labels to be displayed.
+#
+#     x_scale : `float`
+#         The scale of x axis.
+#
+#     y_scale : `float`
+#         The scale of y axis.
+#
+#     axes_visible : `boolean`
+#         If False, the figure's axes will be invisible.
+#
+#     image_is_masked : `boolean`
+#         If True, image is an instance of :map:`MaskedImage`.
+#         If False, image is an instance of :map:`Image`.
+#
+#     masked_enabled : `boolean`
+#         If True and the image is an instance of :map:`MaskedImage`, then only
+#         the masked pixels will be displayed.
+#
+#     figure_size : (`int`, `int`)
+#         The size of the plotted figures.
+#
+#     kwargs : `dict`, optional
+#         Passed through to the viewer.
+#     """
+#     global glyph
+#     if glyph is None:
+#         from menpo.visualize.image import glyph
+#     # clear current figure
+#     clear_output()
+#
+#     # plot
+#     if image_is_masked:
+#         if glyph_enabled or sum_enabled:
+#             if landmarks_enabled:
+#                 # image is masked, glyph and has landmarks
+#                 glyph(image, vectors_block_size=glyph_block_size,
+#                       use_negative=glyph_use_negative, channels=channels).\
+#                     view_landmarks(masked=masked_enabled, group_label=group,
+#                                    with_labels=with_labels,
+#                                    render_labels=legend_enabled, **kwargs)
+#             else:
+#                 # image is masked, glyph and doesn't have landmarks
+#                 glyph(image, vectors_block_size=glyph_block_size,
+#                       use_negative=glyph_use_negative, channels=channels).\
+#                     view(masked=masked_enabled, **kwargs)
+#         else:
+#             if landmarks_enabled:
+#                 # image is masked, non-glyph and has landmarks
+#                 image.view_landmarks(masked=masked_enabled, group_label=group,
+#                                      with_labels=with_labels,
+#                                      render_labels=legend_enabled,
+#                                      channels=channels, **kwargs)
+#             else:
+#                 # image is masked, non-glyph and doesn't have landmarks
+#                 image.view(masked=masked_enabled, channels=channels, **kwargs)
+#     else:
+#         if glyph_enabled or sum_enabled:
+#             if landmarks_enabled:
+#                 # image is non-masked, glyph and has landmarks
+#                 glyph(image, vectors_block_size=glyph_block_size,
+#                       use_negative=glyph_use_negative, channels=channels).\
+#                     view_landmarks(group_label=group,
+#                                    with_labels=with_labels,
+#                                    render_labels=legend_enabled, **kwargs)
+#             else:
+#                 # image is non-masked, glyph and doesn't have landmarks
+#                 glyph(image, vectors_block_size=glyph_block_size,
+#                       use_negative=glyph_use_negative, channels=channels).\
+#                     view(**kwargs)
+#         else:
+#             if landmarks_enabled:
+#                 # image is non-masked, non-glyph and has landmarks
+#                 image.view_landmarks(group_label=group, with_labels=with_labels,
+#                                      render_labels=legend_enabled,
+#                                      channels=channels, **kwargs)
+#             else:
+#                 # image is non-masked, non-glyph and doesn't have landmarks
+#                 image.view(channels=channels, **kwargs)
+#
+#     # set figure size
+#     plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+#
+#     # turn axis on/off
+#     if not axes_visible:
+#         plt.axis('off')
+#
+#     # show plot
+#     plt.show()
+
+
+def _show_image(image, image_enabled, landmarks_enabled, image_is_masked,
+                masked_enabled, channels, glyph_enabled, glyph_block_size,
+                glyph_use_negative, sum_enabled, groups, with_labels,
+                groups_colours, subplots_enabled, subplots_titles,
+                image_axes_mode, legend_enabled, x_scale, y_scale, axes_visible,
+                figure_size, **kwargs):
     r"""
-    Helper function that plots an image given a set of selected options.
+    Helper function that plots an object given a set of selected options.
 
     Parameters
     -----------
     image : :map:`Image` or subclass
        The image to be displayed.
+
+    image_enabled : `boolean`
+        Flag that determines whether to display the image.
+
+    landmarks_enabled : `boolean`
+        Flag that determines whether to display the landmarks.
+
+    image_is_masked : `boolean`
+        If True, image is an instance of :map:`MaskedImage`.
+        If False, image is an instance of :map:`Image`.
+
+    masked_enabled : `boolean`
+        If True and the image is an instance of :map:`MaskedImage`, then only
+        the masked pixels will be displayed.
 
     channels : `int` or `list` of `int`
         The image channels to be displayed.
@@ -1216,18 +1392,33 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
         If true, the image will be displayed as glyph with glyph_block_size=1,
         thus the sum of the image's selected channels.
 
-    landmarks_enabled : `boolean`
-        Whether to also display the landmarks on top of the image.
+    groups : `list` of `str`
+        A list of the landmark groups to be displayed.
+
+    with_labels : `list` of `list` of `str`
+        The labels to be displayed for each group in groups.
+
+    groups_colours : `dict` of `str`
+        A dictionary that defines a colour for each of the groups, e.g.
+        subplots_titles[groups[0]] = 'b'
+        subplots_titles[groups[1]] = 'r'
+
+    subplots_enabled : `boolean`
+        Flag that determines whether to plot all selected landmark groups in a
+        single axes object or in subplots.
+
+    subplots_titles : `dict` of `str`
+        A dictionary that defines a subplot title for each of the groups, e.g.
+        subplots_titles[groups[0]] = 'first group'
+        subplots_titles[groups[1]] = 'second group'
+
+    image_axes_mode : `boolean`
+        If True, then the point clouds are plotted with the axes in the image
+        mode.
 
     legend_enabled : `boolean`
-        Whether to show the legend for the landmarks. If True, it also prints
-        the landmark points' numbers.
-
-    group : `str`
-        The landmark group to be displayed.
-
-    with_labels : `list` of `str`
-        The group's labels to be displayed.
+        Flag that determines whether to show the legend for the landmarks.
+        If True, it also prints the landmark points' numbers.
 
     x_scale : `float`
         The scale of x axis.
@@ -1238,14 +1429,6 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
     axes_visible : `boolean`
         If False, the figure's axes will be invisible.
 
-    image_is_masked : `boolean`
-        If True, image is an instance of :map:`MaskedImage`.
-        If False, image is an instance of :map:`Image`.
-
-    masked_enabled : `boolean`
-        If True and the image is an instance of :map:`MaskedImage`, then only
-        the masked pixels will be displayed.
-
     figure_size : (`int`, `int`)
         The size of the plotted figures.
 
@@ -1255,57 +1438,138 @@ def _show_image(image, channels, glyph_enabled, glyph_block_size,
     global glyph
     if glyph is None:
         from menpo.visualize.image import glyph
-    # clear current figure
-    clear_output()
+    # clear current figure, but wait until the new date to be displayed are
+    # generated
+    clear_output(wait=True)
 
     # plot
-    if image_is_masked:
-        if glyph_enabled or sum_enabled:
-            if landmarks_enabled:
-                # image is masked, glyph and has landmarks
-                glyph(image, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(masked=masked_enabled, group_label=group,
-                                   with_labels=with_labels,
-                                   render_labels=legend_enabled, **kwargs)
-            else:
-                # image is masked, glyph and doesn't have landmarks
-                glyph(image, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view(masked=masked_enabled, **kwargs)
+    if image_enabled:
+        # image will be displayed
+        if landmarks_enabled and len(groups) > 0:
+            # there are selected landmark groups and they will be displayed
+            if subplots_enabled:
+                # calculate subplots structure
+                subplots = MatplotlibSubplots()._subplot_layout(len(groups))
+            # show image with landmarks
+            for k, group in enumerate(groups):
+                if subplots_enabled:
+                    # create subplot
+                    plt.subplot(subplots[0], subplots[1], k + 1)
+                    if legend_enabled:
+                        # set subplot's title
+                        plt.title(subplots_titles[group])
+                    if not axes_visible:
+                        # turn axes on/off
+                        plt.axis('off')
+                if image_is_masked:
+                    if glyph_enabled or sum_enabled:
+                        # image, landmarks, masked, glyph
+                        glyph(image, vectors_block_size=glyph_block_size,
+                              use_negative=glyph_use_negative,
+                              channels=channels).\
+                            view_landmarks(masked=masked_enabled,
+                                           group_label=group,
+                                           with_labels=with_labels[k],
+                                           render_labels=(legend_enabled and
+                                                          not subplots_enabled),
+                                           **kwargs)
+                    else:
+                        # image, landmarks, masked, not glyph
+                        image.view_landmarks(masked=masked_enabled,
+                                             group_label=group,
+                                             with_labels=with_labels[k],
+                                             render_labels=(legend_enabled and
+                                                            not subplots_enabled),
+                                             channels=channels, **kwargs)
+                else:
+                    if glyph_enabled or sum_enabled:
+                        # image, landmarks, not masked, glyph
+                        glyph(image, vectors_block_size=glyph_block_size,
+                              use_negative=glyph_use_negative,
+                              channels=channels).\
+                            view_landmarks(group_label=group,
+                                           with_labels=with_labels[k],
+                                           render_labels=(legend_enabled and
+                                                          not subplots_enabled),
+                                           **kwargs)
+                    else:
+                        # image, landmarks, not masked, not glyph
+                        image.view_landmarks(group_label=group,
+                                             with_labels=with_labels[k],
+                                             render_labels=(legend_enabled and
+                                                            not subplots_enabled),
+                                             channels=channels, **kwargs)
+                #if subplots_enabled:
+                #    if legend_enabled:
+                #        # set subplot's title
+                #        plt.title(subplots_titles[group])
+                #    if not axes_visible:
+                #        # turn axes on/off
+                #        plt.axis('off')
         else:
-            if landmarks_enabled:
-                # image is masked, non-glyph and has landmarks
-                image.view_landmarks(masked=masked_enabled, group_label=group,
-                                     with_labels=with_labels,
-                                     render_labels=legend_enabled,
-                                     channels=channels, **kwargs)
+            # either there are not any landmark groups selected or they won't
+            # be displayed
+            if image_is_masked:
+                if glyph_enabled or sum_enabled:
+                    # image, not landmarks, masked, glyph
+                    glyph(image, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view(masked=masked_enabled, **kwargs)
+                else:
+                    # image, not landmarks, masked, not glyph
+                    image.view(masked=masked_enabled, channels=channels,
+                               **kwargs)
             else:
-                # image is masked, non-glyph and doesn't have landmarks
-                image.view(masked=masked_enabled, channels=channels, **kwargs)
+                if glyph_enabled or sum_enabled:
+                    # image, not landmarks, not masked, glyph
+                    glyph(image, vectors_block_size=glyph_block_size,
+                          use_negative=glyph_use_negative, channels=channels).\
+                        view(**kwargs)
+                else:
+                    # image, not landmarks, not masked, not glyph
+                    image.view(channels=channels, **kwargs)
     else:
-        if glyph_enabled or sum_enabled:
-            if landmarks_enabled:
-                # image is non-masked, glyph and has landmarks
-                glyph(image, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view_landmarks(group_label=group,
-                                   with_labels=with_labels,
-                                   render_labels=legend_enabled, **kwargs)
-            else:
-                # image is non-masked, glyph and doesn't have landmarks
-                glyph(image, vectors_block_size=glyph_block_size,
-                      use_negative=glyph_use_negative, channels=channels).\
-                    view(**kwargs)
-        else:
-            if landmarks_enabled:
-                # image is non-masked, non-glyph and has landmarks
-                image.view_landmarks(group_label=group, with_labels=with_labels,
-                                     render_labels=legend_enabled,
-                                     channels=channels, **kwargs)
-            else:
-                # image is non-masked, non-glyph and doesn't have landmarks
-                image.view(channels=channels, **kwargs)
+        # image won't be displayed
+        if landmarks_enabled and len(groups) > 0:
+            # there are selected landmark groups and they will be displayed
+            if subplots_enabled:
+                # calculate subplots structure
+                subplots = MatplotlibSubplots()._subplot_layout(len(groups))
+            # not image, landmarks
+            for k, group in enumerate(groups):
+                if subplots_enabled:
+                    # create subplot
+                    plt.subplot(subplots[0], subplots[1], k + 1)
+                    # set axes to equal spacing
+                    plt.gca().axis('equal')
+                    if legend_enabled:
+                        # set subplot's title
+                        plt.title(subplots_titles[group])
+                    if not axes_visible:
+                        # turn axes on/off
+                        plt.axis('off')
+                    if image_axes_mode:
+                        # set axes mode to image
+                        plt.gca().invert_yaxis()
+                image.landmarks[group].lms.view(image_view=image_axes_mode,
+                                                colour_array=groups_colours[group], **kwargs)
+                #if subplots_enabled:
+                #    plt.gca().axis('equal')
+                #    if legend_enabled:
+                #        plt.title(subplots_titles[group])
+                #    if not axes_visible:
+                #        plt.axis('off')
+                #    if image_axes_mode:
+                #        plt.gca().invert_yaxis()
+            if not subplots_enabled:
+                # set axes to equal spacing
+                plt.gca().axis('equal')
+                if legend_enabled:
+                    # display legend on side
+                    plt.legend(groups, loc='best')
+                if image_axes_mode:
+                    # set axes mode to image
+                    plt.gca().invert_yaxis()
 
     # set figure size
     plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
