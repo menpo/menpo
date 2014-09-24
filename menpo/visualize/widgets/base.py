@@ -7,7 +7,8 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       format_final_result_options, update_final_result_options,
                       iterations_result_options,
                       format_iterations_result_options,
-                      update_iterations_result_options)
+                      update_iterations_result_options, animation_options,
+                      format_animation_options)
 from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
                                   ContainerWidget, TabWidget,
                                   RadioButtonsWidget, CheckboxWidget)
