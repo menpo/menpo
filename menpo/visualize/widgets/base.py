@@ -171,10 +171,6 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             index_text_editable=True, loop_default=True, interval_default=0.1,
             toggle_show_title='Image Options', toggle_show_default=True,
             toggle_show_visible=False)
-        #image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
-        #                                   value=0, description='Image Number')
-        #image_number_wid.on_trait_change(update_widgets, 'value')
-        #image_number_wid.on_trait_change(plot_function, 'value')
 
         # final widget
         cont_wid = TabWidget(children=[info_wid, channel_options_wid,
