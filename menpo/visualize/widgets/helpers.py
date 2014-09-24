@@ -2290,6 +2290,218 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
                 iterations_result_wid.children[1].children[1].children[1].value = 0
 
 
+def index_selection_slider(index_min_val,
+                           index_max_val,
+                           plot_function=None,
+                           index_step=1,
+                           index_default=None,
+                           description='Image Number:'):
+    r"""
+    Creates a widget for selecting an index. Specifically, it has:
+        1) A slider.
+
+    The structure of the widget is the following:
+        index_wid = slider
+
+    The returned widget saves the selected values in the following fields:
+        index_wid.index
+
+    To fix the alignment within this widget please refer to
+    `format_index_selection()` function.
+
+    Parameters
+    ----------
+    index_min_val : `int`
+        The minimum index value.
+
+    index_max_val : `int`
+        The minimum index value.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when the index value changes.
+        If None, then nothing is assigned.
+
+    index_step : `int`
+        The step of the index slider.
+
+    index_default : `int`
+        The default index value.
+
+    description : `str`
+        The title of the widget.
+    """
+    # Check default value
+    if index_default is None:
+        index_default = index_min_val
+
+    # Create widget
+    index_wid = IntSliderWidget(min=index_min_val, max=index_max_val,
+                                value=index_default, step=index_step,
+                                description=description)
+
+    # Initialize output
+    index_wid.index = index_default
+
+    # When value changes
+    def value_changed(name, old_value, value):
+        index_wid.index = value
+    index_wid.on_trait_change(value_changed, 'value')
+
+    # assign given plot_function
+    if plot_function is not None:
+        index_wid.on_trait_change(plot_function, 'value')
+
+    return index_wid
+
+
+def index_selection_buttons(index_min_val,
+                            index_max_val,
+                            plot_function=None,
+                            index_step=1,
+                            index_default=None,
+                            description='Image Number:',
+                            minus_description='-',
+                            plus_description='+',
+                            loop=True, text_editable=True):
+    r"""
+    Creates a widget for selecting an index. Specifically, it has:
+        1) Two buttons to increase and decrease the index.
+        2) A text area with the selected widget. It can either be editable or
+           not.
+
+    The structure of the widget is the following:
+        index_wid = [title, minus_button, text, plus_button]
+
+    The returned widget saves the selected values in the following fields:
+        index_wid.index
+
+    To fix the alignment within this widget please refer to
+    `format_index_selection()` function.
+
+    Parameters
+    ----------
+    index_min_val : `int`
+        The minimum index value.
+
+    index_max_val : `int`
+        The minimum index value.
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when the index value changes.
+        If None, then nothing is assigned.
+
+    index_step : `int`
+        The step of the index slider.
+
+    index_default : `int`
+        The default index value.
+
+    description : `str`
+        The title of the widget.
+
+    minus_description : `str`
+        The title of the button that decreases the index.
+
+    plus_description : `str`
+        The title of the button that increases the index.
+
+    loop : `boolean`
+        If True, if by pressing the buttons we reach the minimum/maximum index
+        values, then the counting will continue from the end/beginning.
+        If False, the counting will stop at the minimum/maximum value.
+
+    text_editable : `boolean`
+        Flag that determines whether the index text will be editable.
+    """
+    # Check default value
+    if index_default is None:
+        index_default = index_min_val
+
+    # Create widgets
+    tlt = LatexWidget(value=description)
+    but_minus = ButtonWidget(description=minus_description)
+    but_plus = ButtonWidget(description=plus_description)
+    if text_editable:
+        val = IntTextWidget(value=index_default)
+    else:
+        val = IntTextWidget(value=index_default, disabled=True)
+    index_wid = ContainerWidget(children=[tlt, but_minus, val, but_plus])
+
+    # Initialize output
+    index_wid.index = index_default
+
+    # plus button pressed
+    def change_value_plus(name):
+        tmp_val = int(val.value) + index_step
+        if tmp_val > index_max_val:
+            if loop:
+                val.value = str(index_min_val)
+            else:
+                val.value = str(index_max_val)
+        else:
+            val.value = str(tmp_val)
+    but_plus.on_click(change_value_plus)
+
+    # minus button pressed
+    def change_value_minus(name):
+        tmp_val = int(val.value) - index_step
+        if tmp_val < index_min_val:
+            if loop:
+                val.value = str(index_max_val)
+            else:
+                val.value = str(index_min_val)
+        else:
+            val.value = str(tmp_val)
+    but_minus.on_click(change_value_minus)
+
+    # When value changes
+    def value_changed(name, old_value, value):
+        # check value
+        tmp_val = int(value)
+        if tmp_val > index_max_val or tmp_val < index_min_val:
+            val.value = int(old_value)
+    val.on_trait_change(value_changed, 'value')
+
+    # assign given plot_function
+    if plot_function is not None:
+        val.on_trait_change(plot_function, 'value')
+
+    return index_wid
+
+
+def format_index_selection(index_wid, text_width='0.5cm'):
+    r"""
+    Function that corrects the align (style format) of a given index_selection
+    widget. It can be used with both `index_selection_buttons()` and
+    `index_selection_slider()` functions. Usage example:
+        index_wid = index_selection_buttons()
+        display(index_wid)
+        format_index_selection(index_wid)
+
+    Parameters
+    ----------
+    index_wid :
+        The widget object generated by either the `index_selection_buttons()`
+        or the `index_selection_slider()` function.
+
+    text_width : `str`, optional
+        The width of the index text area in the case of
+        `index_selection_buttons()`.
+    """
+    if not isinstance(index_wid, IntSliderWidget):
+        # align all widgets
+        index_wid.remove_class('vbox')
+        index_wid.add_class('hbox')
+        index_wid.add_class('align-center')
+
+        # set text width
+        index_wid.children[2].set_css('width', text_width)
+        index_wid.children[2].add_class('center')
+
+        # set margins
+        index_wid.children[0].set_css('margin-right', '6px')
+
+
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
     r"""
     Function that compares two sets of landmarks groups and labels and returns
