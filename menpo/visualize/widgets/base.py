@@ -57,7 +57,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # get selected image number
         im = 0
         if n_images > 1:
-            im = image_number_wid.value
+            #im = image_number_wid.value
+            im = image_number_wid.children[1].children[0].index
 
         # update info text widget
         update_info(images[im],
@@ -161,10 +162,19 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     # create final widget
     if n_images > 1:
         # image selection slider
-        image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
-                                           value=0, description='Image Number')
-        image_number_wid.on_trait_change(update_widgets, 'value')
-        image_number_wid.on_trait_change(plot_function, 'value')
+        image_number_wid = animation_options(
+            index_min_val=0, index_max_val=n_images-1,
+            plot_function=plot_function, update_function=update_widgets,
+            index_step=1, index_default=0,
+            index_description='Image Number', index_minus_description='<',
+            index_plus_description='>', index_style='buttons',
+            index_text_editable=True, loop_default=True, interval_default=0.1,
+            toggle_show_title='Image Options', toggle_show_default=True,
+            toggle_show_visible=False)
+        #image_number_wid = IntSliderWidget(min=0, max=n_images-1, step=1,
+        #                                   value=0, description='Image Number')
+        #image_number_wid.on_trait_change(update_widgets, 'value')
+        #image_number_wid.on_trait_change(plot_function, 'value')
 
         # final widget
         cont_wid = TabWidget(children=[info_wid, channel_options_wid,
@@ -207,6 +217,12 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         wid.add_class('align-start')
 
     # format options' widgets
+    if n_images > 1:
+        format_animation_options(image_number_wid, container_padding='6px',
+                                 container_margin='6px',
+                                 container_border='1px solid black',
+                                 toggle_button_font_weight='bold',
+                                 border_visible=False)
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',

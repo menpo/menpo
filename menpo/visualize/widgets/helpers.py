@@ -2291,8 +2291,8 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
 
 
 def index_selection_slider(index_min_val, index_max_val, plot_function=None,
-                           index_step=1, index_default=None,
-                           description='Image Number:'):
+                           update_function=None, index_step=1,
+                           index_default=None, description='Image Number:'):
     r"""
     Creates a widget for selecting an index. Specifically, it has:
         1) A slider.
@@ -2319,6 +2319,10 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
+        If None, then nothing is assigned.
+
+    update_function : `function` or None, optional
+        The update function that is executed when the index value changes.
         If None, then nothing is assigned.
 
     index_step : `int`, optional
@@ -2350,6 +2354,10 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
         index_wid.index = value
     index_wid.on_trait_change(value_changed, 'value')
 
+    # assign given update_function
+    if update_function is not None:
+        index_wid.on_trait_change(update_function, 'value')
+
     # assign given plot_function
     if plot_function is not None:
         index_wid.on_trait_change(plot_function, 'value')
@@ -2358,10 +2366,10 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
 
 
 def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
-                            index_step=1, index_default=None,
-                            description='Image Number:', minus_description='-',
-                            plus_description='+', loop=True,
-                            text_editable=True):
+                            update_function=None, index_step=1,
+                            index_default=None, description='Image Number:',
+                            minus_description='-', plus_description='+',
+                            loop=True, text_editable=True):
     r"""
     Creates a widget for selecting an index. Specifically, it has:
         1) Two buttons to increase and decrease the index.
@@ -2390,6 +2398,10 @@ def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
+        If None, then nothing is assigned.
+
+    update_function : `function` or None, optional
+        The update function that is executed when the index value changes.
         If None, then nothing is assigned.
 
     index_step : `int`, optional
@@ -2468,6 +2480,10 @@ def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
         index_wid.index = tmp_val
     val.on_trait_change(value_changed, 'value')
 
+    # assign given update_function
+    if update_function is not None:
+        val.on_trait_change(update_function, 'value')
+
     # assign given plot_function
     if plot_function is not None:
         val.on_trait_change(plot_function, 'value')
@@ -2509,8 +2525,8 @@ def format_index_selection(index_wid, text_width='0.5cm'):
 
 
 def update_index_selection(index_wid, index_min_val, index_max_val,
-                           plot_function=None, index_step=1,
-                           index_default=None):
+                           plot_function=None, update_function=None,
+                           index_step=1, index_default=None):
     r"""
     Function that updates the state of a given index_selection widget if the
     index bounds have changed. It can be used with both
@@ -2562,19 +2578,25 @@ def update_index_selection(index_wid, index_min_val, index_max_val,
             index_wid.max = index_max_val
             index_wid.step = index_step
             index_wid.value = index_default
+            # assign given update_function
+            if update_function is not None:
+                index_wid.on_trait_change(update_function, 'value')
             # assign given plot_function
             if plot_function is not None:
                 index_wid.on_trait_change(plot_function, 'value')
         else:
             # created by `index_selection_buttons()` function
             index_wid.children[2].value = str(index_default)
+            # assign given update_function
+            if update_function is not None:
+                index_wid.children[2].on_trait_change(update_function, 'value')
             # assign given plot_function
             if plot_function is not None:
                 index_wid.children[2].on_trait_change(plot_function, 'value')
 
 
 def animation_options(index_min_val, index_max_val, plot_function=None,
-                      index_step=1, index_default=None,
+                      update_function=None, index_step=1, index_default=None,
                       index_description='Image Number',
                       index_minus_description='-', index_plus_description='+',
                       index_style='buttons', index_text_editable=True,
@@ -2620,6 +2642,10 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
+        If None, then nothing is assigned.
+
+    update_function : `function` or None, optional
+        The update function that is executed when the index value changes.
         If None, then nothing is assigned.
 
     index_step : `int`, optional
@@ -2674,16 +2700,18 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     if index_style == 'buttons':
         index_wid = index_selection_buttons(
             index_min_val=index_min_val, index_max_val=index_max_val,
-            plot_function=plot_function, index_step=index_step,
-            index_default=index_default, description=index_description,
+            plot_function=plot_function, update_function=update_function,
+            index_step=index_step, index_default=index_default,
+            description=index_description,
             minus_description=index_minus_description,
             plus_description=index_plus_description, loop=True,
             text_editable=index_text_editable)
     else:
         index_wid = index_selection_slider(
             index_min_val=index_min_val, index_max_val=index_max_val,
-            plot_function=plot_function, index_step=index_step,
-            index_default=index_default, description=index_description)
+            plot_function=plot_function, update_function=update_function,
+            index_step=index_step, index_default=index_default,
+            description=index_description)
     play_but = ToggleButtonWidget(description='Play >', value=False)
     stop_but = ToggleButtonWidget(description='Stop', value=True, disabled=True)
     play_options = ToggleButtonWidget(description='Options', value=False)
