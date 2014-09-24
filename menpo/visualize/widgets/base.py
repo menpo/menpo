@@ -15,6 +15,7 @@ from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 import numpy as np
+from collections import OrderedDict
 
 # This glyph import is called frequently during visualisation, so we ensure
 # that we only import it once
@@ -241,11 +242,16 @@ def visualize_shape_model(shape_models, n_parameters=5,
     Parameters
     -----------
     shape_models : `list` of :map:`PCAModel` or subclass
-        The multilevel shape model to be displayed.
+        The multilevel shape model to be displayed. Note that each level can
+        have different number of components.
 
-    n_parameters : `int` or None, optional
+    n_parameters : `int` or `list` of `int` or None, optional
         The number of principal components to be used for the parameters
-        sliders.  If None, all the components will be employed.
+        sliders.
+        If int, then the number of sliders per level is the minimum between
+        n_parameters and the number of active components per level.
+        If list of int, then a number of sliders is defined per level.
+        If None, all the active components per level will have a slider.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -264,8 +270,6 @@ def visualize_shape_model(shape_models, n_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    from collections import OrderedDict
-
     # make sure that shape_models is a list even with one member
     if not isinstance(shape_models, list):
         shape_models = [shape_models]
@@ -496,11 +500,17 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     Parameters
     -----------
     appearance_models : `list` of :map:`PCAModel` or subclass
-        The multilevel appearance model to be displayed.
+        The multilevel appearance model to be displayed. Note that each level
+        can have different attributes, e.g. number of parameters, feature type,
+        number of channels.
 
-    n_parameters : `int` or None, optional
+    n_parameters : `int` or `list` of `int` or None, optional
         The number of principal components to be used for the parameters
-        sliders. If None, all the components will be employed.
+        sliders.
+        If int, then the number of sliders per level is the minimum between
+        n_parameters and the number of active components per level.
+        If list of int, then a number of sliders is defined per level.
+        If None, all the active components per level will have a slider.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -519,7 +529,6 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    from collections import OrderedDict
     from menpo.image import MaskedImage
 
     # make sure that appearance_models is a list even with one member
@@ -739,15 +748,25 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     Parameters
     -----------
     aam : :map:`AAM` or subclass
-        The multilevel AAM to be displayed.
+        The multilevel AAM to be displayed. Note that each level can have
+        different attributes, e.g. number of active components, feature type,
+        number of channels.
 
-    n_shape_parameters : `int` or None, optional
+    n_shape_parameters : `int` or `list` of `int` or None, optional
         The number of shape principal components to be used for the parameters
-        sliders.  If None, all the components will be employed.
+        sliders.
+        If int, then the number of sliders per level is the minimum between
+        n_parameters and the number of active components per level.
+        If list of int, then a number of sliders is defined per level.
+        If None, all the active components per level will have a slider.
 
-    n_appearance_parameters : `int` or None, optional
+    n_appearance_parameters : `int` or `list` of `int` or None, optional
         The number of appearance principal components to be used for the
-        parameters sliders.  If None, all the components will be employed.
+        parameters sliders.
+        If int, then the number of sliders per level is the minimum between
+        n_parameters and the number of active components per level.
+        If list of int, then a number of sliders is defined per level.
+        If None, all the active components per level will have a slider.
 
     parameters_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
@@ -766,7 +785,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
-    from collections import OrderedDict
     from menpo.image import MaskedImage
 
     # find number of levels
@@ -1060,6 +1078,337 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # update widgets' state for level 0
     update_widgets('', 0)
+
+    # Reset value to enable initial visualization
+    figure_options_wid.children[2].value = False
+
+
+def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
+                              **kwargs):
+    r"""
+    Widget that allows browsing through a list of fitting results.
+
+    Parameters
+    -----------
+    fitting_results : `list` of :map:`FittingResult` or subclass
+        The list of fitting results to be displayed. Note that the fitting
+        results can have different attributes between them, i.e. different
+        number of iterations, number of channels etc.
+
+    figure_size : (`int`, `int`), optional
+        The initial size of the plotted figures.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    from menpo.image import MaskedImage
+
+    # make sure that fitting_results is a list even with one fitting_result
+    if not isinstance(fitting_results, list):
+        fitting_results = [fitting_results]
+
+    # find number of fitting_results
+    n_fitting_results = len(fitting_results)
+
+    # create dictionaries
+    iter_str = 'iter_'
+    groups_final_dict = dict()
+    colour_final_dict = dict()
+    groups_final_dict['initial'] = 'Initial shape'
+    colour_final_dict['initial'] = 'r'
+    groups_final_dict['final'] = 'Final shape'
+    colour_final_dict['final'] = 'b'
+    groups_final_dict['ground'] = 'Ground-truth shape'
+    colour_final_dict['ground'] = 'y'
+
+    # define function that plots errors curve
+    def plot_errors_function(name):
+        # clear current figure
+        clear_output(wait=True)
+
+        # get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.value
+
+        # plot errors curve
+        plt.plot(range(len(fitting_results[im].errors())),
+                 fitting_results[im].errors(), '-bo')
+        plt.axis([0, len(fitting_results[im].errors())-1,
+                  0, np.max(fitting_results[im].errors())])
+        plt.xlabel('Iteration')
+        plt.ylabel('Fitting Error')
+        plt.title("Fitting error evolution of Image {}".format(im))
+        plt.grid("on")
+
+        # set figure size
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+    # define function that plots displacements curve
+    def plot_displacements_function(name):
+        # clear current figure
+        clear_output(wait=True)
+
+        # get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.value
+
+        # plot errors curve
+        plt.plot(range(len(fitting_results[im].errors())),
+                 fitting_results[im].errors(), '-bo')
+        plt.axis([0, len(fitting_results[im].errors())-1,
+                  0, np.max(fitting_results[im].errors())])
+        plt.xlabel('Iteration')
+        plt.ylabel('Fitting Error')
+        plt.title("Fitting error evolution of Image {}".format(im))
+        plt.grid("on")
+
+        # set figure size
+        x_scale = figure_options_wid.x_scale
+        y_scale = figure_options_wid.y_scale
+        plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+    # define plot function
+    def plot_function(name, value):
+        # get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.value
+
+        # selected mode: final or iterations
+        final_enabled = False
+        if result_wid.selected_index == 0:
+            final_enabled = True
+
+        # update info text widget
+        update_info('', error_rype_wid.value)
+
+        # call helper _plot_figure
+        if final_enabled:
+            _plot_figure(image=fitting_results[im].fitted_image,
+                         image_enabled=final_result_wid.show_image,
+                         landmarks_enabled=True,
+                         image_is_masked=False,
+                         masked_enabled=False,
+                         channels=channel_options_wid.channels,
+                         glyph_enabled=channel_options_wid.glyph_enabled,
+                         glyph_block_size=channel_options_wid.glyph_block_size,
+                         glyph_use_negative=channel_options_wid.glyph_use_negative,
+                         sum_enabled=channel_options_wid.sum_enabled,
+                         groups=final_result_wid.groups,
+                         with_labels=[None] * len(final_result_wid.groups),
+                         groups_colours=colour_final_dict,
+                         subplots_enabled=final_result_wid.subplots_enabled,
+                         subplots_titles=groups_final_dict,
+                         image_axes_mode=True,
+                         legend_enabled=final_result_wid.legend_enabled,
+                         x_scale=figure_options_wid.x_scale,
+                         y_scale=figure_options_wid.y_scale,
+                         axes_visible=figure_options_wid.axes_visible,
+                         figure_size=figure_size,
+                         **kwargs)
+        else:
+            # create subplot titles dict and colours dict
+            groups_dict = dict()
+            colour_dict = dict()
+            cols = np.random.random([3, len(iterations_wid.groups)])
+            for i, group in enumerate(iterations_wid.groups):
+                iter_num = group[len(iter_str)::]
+                groups_dict[iter_str + iter_num] = "Iteration " + iter_num
+                colour_dict[iter_str + iter_num] = cols[:, i]
+
+            # plot
+            _plot_figure(image=fitting_results[im].iter_image,
+                         image_enabled=iterations_wid.show_image,
+                         landmarks_enabled=True,
+                         image_is_masked=False,
+                         masked_enabled=False,
+                         channels=channel_options_wid.channels,
+                         glyph_enabled=channel_options_wid.glyph_enabled,
+                         glyph_block_size=channel_options_wid.glyph_block_size,
+                         glyph_use_negative=channel_options_wid.glyph_use_negative,
+                         sum_enabled=channel_options_wid.sum_enabled,
+                         groups=iterations_wid.groups,
+                         with_labels=[None] * len(iterations_wid.groups),
+                         groups_colours=colour_dict,
+                         subplots_enabled=iterations_wid.subplots_enabled,
+                         subplots_titles=groups_dict,
+                         image_axes_mode=True,
+                         legend_enabled=iterations_wid.legend_enabled,
+                         x_scale=figure_options_wid.x_scale,
+                         y_scale=figure_options_wid.y_scale,
+                         axes_visible=figure_options_wid.axes_visible,
+                         figure_size=figure_size,
+                         **kwargs)
+
+    # define function that updates info text
+    def update_info(name, value):
+        # get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.value
+
+        # create output str
+        txt = "$\\bullet~\\texttt{Initial error: " + \
+              "{0:.4f}".format(fitting_results[im].initial_error(error_type=
+                                                                 value)) + \
+              "}\\\\ \\bullet~\\texttt{Final error: " + \
+              "{0:.4f}".format(fitting_results[im].final_error(error_type=
+                                                               value)) + \
+              "}\\\\ \\bullet~\\texttt{" + \
+              "{}".format(fitting_results[im].n_iters) + \
+              " iterations.}\\\\ \\bullet~\\texttt{" + \
+              "{0} levels with downscale of {1:.1f}".format(
+                  fitting_results[im].n_levels,
+                  fitting_results[im].downscale) + \
+              "}.$"
+        info_wid.children[1].value = txt
+
+    # Create options widgets
+    channel_options_wid = channel_options(
+        fitting_results[0].fitted_image.n_channels,
+        isinstance(fitting_results[0].fitted_image, MaskedImage), plot_function,
+        masked_default=False, toggle_show_default=True,
+        toggle_show_visible=False)
+    figure_options_wid = figure_options(plot_function, scale_default=1.,
+                                        show_axes_default=True,
+                                        toggle_show_default=True,
+                                        toggle_show_visible=False)
+    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+
+    # Create landmark groups checkboxes
+    all_groups_keys, all_labels_keys = _extract_groups_labels(
+        fitting_results[0].fitted_image)
+    final_result_wid = final_result_options(all_groups_keys, plot_function,
+                                            title='Final',
+                                            show_image_default=True,
+                                            subplots_enabled_default=True,
+                                            legend_default=True,
+                                            toggle_show_default=True,
+                                            toggle_show_visible=False)
+    iterations_wid = iterations_result_options(
+        fitting_results[0].n_iters, not fitting_results[0].gt_shape is None,
+        fitting_results[0].fitted_image.landmarks['final'].lms.n_points,
+        plot_function, plot_errors_function, plot_displacements_function,
+        iter_str=iter_str, title='Iterations', show_image_default=True,
+        subplots_enabled_default=False, legend_default=True,
+        toggle_show_default=True, toggle_show_visible=False)
+    iterations_wid.children[2].children[3].on_click(plot_errors_function)
+    iterations_wid.children[2].children[4].children[0].on_click(
+        plot_displacements_function)
+
+    # Create error type radio buttons
+    error_type_values = OrderedDict()
+    error_type_values['Point-to-point Normalized Mean Error'] = 'me_norm'
+    error_type_values['Point-to-point Mean Error'] = 'me'
+    error_type_values['RMS Error'] = 'rmse'
+    error_rype_wid = RadioButtonsWidget(values=error_type_values,
+                                        value='me_norm',
+                                        description='Error type')
+    error_rype_wid.on_trait_change(update_info, 'value')
+
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        # get new groups and labels, update landmark options and format them
+        group_keys, labels_keys = _extract_groups_labels(
+            fitting_results[value].fitted_image)
+        # update channel options
+        update_channel_options(
+            channel_options_wid,
+            n_channels=fitting_results[value].fitted_image.n_channels,
+            image_is_masked=isinstance(fitting_results[value].fitted_image,
+                                       MaskedImage))
+        # update final result's options
+        update_final_result_options(final_result_wid, group_keys, plot_function)
+        # update iterations result's options
+        update_iterations_result_options(
+            iterations_wid, fitting_results[value].n_iters,
+            not fitting_results[value].gt_shape is None,
+            fitting_results[value].fitted_image.landmarks['final'].lms.n_points,
+            iter_str=iter_str)
+
+    # Create final widget
+    options_wid = TabWidget(children=[channel_options_wid, figure_options_wid,
+                                      error_rype_wid])
+    result_wid = TabWidget(children=[final_result_wid, iterations_wid])
+    result_wid.on_trait_change(plot_function, 'selected_index')
+    if n_fitting_results > 1:
+        # image selection slider
+        image_number_wid = IntSliderWidget(min=0, max=n_fitting_results-1,
+                                           step=1, value=0,
+                                           description='Image Number')
+        image_number_wid.on_trait_change(update_widgets, 'value')
+        image_number_wid.on_trait_change(plot_function, 'value')
+
+        # final widget
+        tab_wid = TabWidget(children=[info_wid, result_wid, options_wid])
+        wid = ContainerWidget(children=[image_number_wid, tab_wid])
+        tab_titles = ['Info', 'Result', 'Options']
+        button_title = 'Fitting Results Menu'
+    else:
+        # final widget
+        wid = TabWidget(children=[info_wid, result_wid, options_wid])
+        tab_titles = ['Image info', 'Result', 'Options']
+        button_title = 'Fitting Result Menu'
+    # create popup widget if asked
+    if popup:
+        wid = PopupWidget(children=[wid], button_text=button_title)
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    if popup:
+        if n_fitting_results > 1:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[0].children[1].set_title(k, tl)
+        else:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[0].set_title(k, tl)
+    else:
+        if n_fitting_results > 1:
+            for (k, tl) in enumerate(tab_titles):
+                wid.children[1].set_title(k, tl)
+        else:
+            for (k, tl) in enumerate(tab_titles):
+                wid.set_title(k, tl)
+    result_wid.set_title(0, 'Final Fitting')
+    result_wid.set_title(1, 'Iterations')
+    options_wid.set_title(0, 'Channels')
+    options_wid.set_title(1, 'Figure')
+    options_wid.set_title(2, 'Error Type')
+
+    # format options' widgets
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold',
+                           border_visible=False)
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False)
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold', border_visible=False)
+    format_final_result_options(final_result_wid, container_padding='6px',
+                                container_margin='6px',
+                                container_border='1px solid black',
+                                toggle_button_font_weight='bold',
+                                border_visible=False)
+    format_iterations_result_options(iterations_wid, container_padding='6px',
+                                     container_margin='6px',
+                                     container_border='1px solid black',
+                                     toggle_button_font_weight='bold',
+                                     border_visible=False)
 
     # Reset value to enable initial visualization
     figure_options_wid.children[2].value = False
@@ -1361,13 +1710,6 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
                                              render_labels=(legend_enabled and
                                                             not subplots_enabled),
                                              channels=channels, **kwargs)
-                #if subplots_enabled:
-                #    if legend_enabled:
-                #        # set subplot's title
-                #        plt.title(subplots_titles[group])
-                #    if not axes_visible:
-                #        # turn axes on/off
-                #        plt.axis('off')
         else:
             # either there are not any landmark groups selected or they won't
             # be displayed
@@ -1415,14 +1757,6 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
                         plt.gca().invert_yaxis()
                 image.landmarks[group].lms.view(image_view=image_axes_mode,
                                                 colour_array=groups_colours[group], **kwargs)
-                #if subplots_enabled:
-                #    plt.gca().axis('equal')
-                #    if legend_enabled:
-                #        plt.title(subplots_titles[group])
-                #    if not axes_visible:
-                #        plt.axis('off')
-                #    if image_axes_mode:
-                #        plt.gca().invert_yaxis()
             if not subplots_enabled:
                 # set axes to equal spacing
                 plt.gca().axis('equal')
