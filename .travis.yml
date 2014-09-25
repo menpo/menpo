@@ -4,27 +4,27 @@ os:
 
 env:
   global:
-  - secure: jrAuM2d8/Pu83cps6cIzoZl/uOcz3cd53Sb/16kWujrb03dKFn+avOSRapOqU9eYMRIMi75fYsKc0rK4UHGRoCBmYLMHVZdZJvlcVxLqIF/+CQjwvYCezyoRLW5POIuTcJr/jGOuoilYQgx56Dv97ZIndeczZocAk3u2glcpT64=
+    - BINSTAR_USER: menpo
   matrix:
-  - PYTHON_VERSION=2
-  - PYTHON_VERSION=3
+    - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3.4
 
 matrix:
   allow_failures:
-  - env: PYTHON_VERSION=3
+    - env: PYTHON_VERSION=3.4
+    - os: osx  # waiting for OS X builds of cyrasterize, cyassimp
 
 install:
-- wget https://raw.githubusercontent.com/jabooth/traviconda/master/traviconda.py -O traviconda.py
-- export MENPO_VERSION=$(python traviconda.py version)
-- python traviconda.py setup $PYTHON_VERSION --channel menpo
-- export PATH="$HOME/miniconda/bin:$PATH"
+- wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py -O condaci.py
+- python condaci.py setup $PYTHON_VERSION --channel $BINSTAR_USER
+- export PATH=$HOME/miniconda/bin:$PATH
 
 script:
-- python traviconda.py auto ./conda --binstaruser menpo --binstarkey $BINSTAR_KEY --pypiuser $PYPI_USERNAME  --pypipassword $PYPI_PASSWORD
+- python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
 
 notifications:
+  slack: menpo:19gyWImMkOfCj0iDAgTbDlDA
   email: false
-  flowdock: 769202b66114a5ce0e61df484dfeb177
   webhooks:
     urls:
     - https://webhooks.gitter.im/e/7599ff4870c99ba51310

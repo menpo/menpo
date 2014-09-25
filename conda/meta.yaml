@@ -1,35 +1,41 @@
 package:
   name: menpo
-  version: "{{ environ['MENPO_VERSION'] }}"
+  version: {{ environ['CONDACI_VERSION'] }}
 
 requirements:
   build:
     - python
     - setuptools
-    - numpy
-    - cython
+    - numpy 1.9.0
+    - cython 0.21
 
   run:
     - python
-    - numpy
-    - scipy
-    - cyrasterize
-    - cyassimp
-    - imaging # [not py3k]
-    - pillow  # [py3k]
-    - mayavi  # [not py3k]
-    - scikit-learn
-    - matplotlib
-    - decorator
-    - ipython-notebook
-    - menpo-pyvrml97  # [not py3k]
-    - cython
-    - nose
+    - pathlib 1.0 # [not py3k]
+
+    # Scientific Python Stack
+    - numpy 1.9.0
+    - scipy 0.14.0
+    - matplotlib 1.4.0
+    - scikit-learn 0.15.2
+    - imaging 1.1.7 # [not py3k]
+    - pillow  2.5.1 # [py3k]
+    - mayavi  4.3.1 # [not py3k]
+
+    # Menpo Project
+    - hdf5able 0.3.3
+    - cyassimp 0.2.0
+    - cyrasterize 0.2.0
+    - menpo-pyvrml97 2.3.0a4  # [not py3k]
+
+    # Other
+    - wrapt 1.9.0
+
+    # Convienience dependences (not strictly required)
     - mock
-    - pathlib  # [not py3k]
+    - nose
     - pip
-    - hdf5able
-    - wrapt
+    - ipython-notebook
 
 test:
   requires:
@@ -37,7 +43,6 @@ test:
 
   imports:
   - menpo
-  - menpo.base
 
   commands:
   - python -c "import nose; nose.main()" -s menpo
