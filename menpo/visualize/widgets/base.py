@@ -57,7 +57,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # get selected image number
         im = 0
         if n_images > 1:
-            im = image_number_wid.children[1].children[0].index
+            im = image_number_wid.selected_index
 
         # update info text widget
         update_info(images[im],
@@ -213,7 +213,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # format options' widgets
     if n_images > 1:
-        format_animation_options(image_number_wid, container_padding='6px',
+        format_animation_options(image_number_wid, index_text_width='0.5cm',
+                                 container_padding='6px',
                                  container_margin='6px',
                                  container_border='1px solid black',
                                  toggle_button_font_weight='bold',
@@ -985,7 +986,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     channel_options_wid = channel_options(
         aam.appearance_models[0].mean.n_channels,
         isinstance(aam.appearance_models[0].mean, MaskedImage), plot_function,
-        masked_default=True, toggle_show_default=True, toggle_show_visible=False)
+        masked_default=True, toggle_show_default=True,
+        toggle_show_visible=False)
     all_groups_keys, all_labels_keys = \
         _extract_groups_labels(aam.appearance_models[0].mean)
     landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
@@ -1144,7 +1146,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.children[1].children[0].index
+            im = image_number_wid.selected_index
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1169,7 +1171,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.children[1].children[0].index
+            im = image_number_wid.selected_index
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1191,7 +1193,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.children[1].children[0].index
+            im = image_number_wid.selected_index
 
         # selected mode: final or iterations
         final_enabled = False
@@ -1264,7 +1266,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.children[1].children[0].index
+            im = image_number_wid.selected_index
 
         # create output str
         txt = "$\\bullet~\\texttt{Initial error: " + \
@@ -1349,9 +1351,10 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     # If animation is activated and the user selects the iterations tab, then
     # the animation stops.
     def results_tab_fun(name, value):
-        if value == 1 and \
-                image_number_wid.children[1].children[1].children[0].children[0].value:
-            image_number_wid.children[1].children[1].children[0].children[1].value = True
+        if (value == 1 and
+                image_number_wid.children[1].children[1].children[0].children[0].value):
+            image_number_wid.children[1].children[1].children[0].children[1].\
+                value = True
 
     # Create final widget
     options_wid = TabWidget(children=[channel_options_wid, figure_options_wid,
@@ -1411,7 +1414,8 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
 
     # format options' widgets
     if n_fitting_results > 1:
-        format_animation_options(image_number_wid, container_padding='6px',
+        format_animation_options(image_number_wid, index_text_width='0.5cm',
+                                 container_padding='6px',
                                  container_margin='6px',
                                  container_border='1px solid black',
                                  toggle_button_font_weight='bold',

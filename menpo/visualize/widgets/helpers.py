@@ -4,6 +4,7 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
                                   ButtonWidget, SelectWidget, FloatTextWidget)
 import numpy as np
+from collections import OrderedDict
 
 
 def figure_options(plot_function, scale_default=1., show_axes_default=True,
@@ -1337,8 +1338,6 @@ def model_parameters(n_params, plot_function=None, params_str='',
     toggle_show_name : `str`, optional
         The name of the toggle button.
     """
-    from collections import OrderedDict
-
     # If only one slider requested, then set mode to multiple
     if n_params == 1:
         mode = 'multiple'
@@ -1530,8 +1529,6 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
     params_str : `str`, optional
         The string that will be used for each parameters name.
     """
-    from collections import OrderedDict
-
     if model_parameters_wid.mode == 'multiple':
         # get the number of enabled parameters (number of sliders)
         enabled_params = len(model_parameters_wid.children[1].children[0].children)
@@ -1850,7 +1847,7 @@ def update_final_result_options(final_result_wid, group_keys, plot_function):
                 w.on_trait_change(plot_function, 'value')
 
 
-def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
+def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                               plot_function=None, plot_errors_function=None,
                               plot_displacements_function=None,
                               iter_str='iter_', title='Iterations Result',
@@ -1861,9 +1858,10 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     r"""
     Creates a widget with Iterations Result Options. Specifically, it has:
         1) Two radio buttons that select an options mode, depending on whether
-           the user wants to visualize a "Single" or "Multiple" iterations.
-        2) If mode is "Single", an iteration number is selected by one slider.
-           If mode is "Multiple", the iterations range is selected by two
+           the user wants to visualize iterations in "Animation" or "Static"
+           mode.
+        2) If mode is "Animation", an animation options widget appears.
+           If mode is "Static", the iterations range is selected by two
            sliders.
         3) A checkbox that controls the visibility of the image.
         4) A set of radio buttons that define whether subplots are enabled.
@@ -1880,7 +1878,7 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
                                           options]
         iterations_mode_and_sliders.children = [iterations_mode_radio_buttons,
                                                 all_sliders]
-        all_sliders.children = [first_slider, second_slider]
+        all_sliders.children = [animation_slider, first_slider, second_slider]
         options.children = [plot_mode_radio_buttons, show_image_checkbox,
                             show_legend_checkbox, plot_errors_button,
                             plot_displacements]
@@ -1899,6 +1897,9 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
 
     To fix the alignment within this widget please refer to
     `format_iterations_result_options()` function.
+
+    To update the state of this widget, please refer to
+    `update_iterations_result_options()` function.
 
     Parameters
     ----------
@@ -1950,19 +1951,29 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    from collections import OrderedDict
-
     # Create all necessary widgets
     but = ToggleButtonWidget(description=title, value=toggle_show_default,
                              visible=toggle_show_visible)
-    iterations_mode = RadioButtonsWidget(values={'Single': 0, 'Multiple': 1},
+    iterations_mode = RadioButtonsWidget(values={'Animation': 0, 'Static': 1},
                                          value=0,
                                          description='Iterations mode:',
                                          visible=toggle_show_default)
+    # Don't assign the plot function to the animation_wid at this point.
+    # We first need to assign the get_groups function and then the
+    # plot_function() for synchronization reasons.
+    animation_wid = animation_options(index_min_val=0, index_max_val=n_iters-1,
+                                      plot_function=None,
+                                      update_function=None,
+                                      index_step=1, index_default=0,
+                                      index_description='Iteration',
+                                      index_style='slider',
+                                      loop_default=False, interval_default=0.2,
+                                      toggle_show_default=toggle_show_default,
+                                      toggle_show_visible=False)
     first_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
-                                       value=0, description='Iteration',
-                                       visible=toggle_show_default)
-    second_slider_wid = IntSliderWidget(min=1, max=n_iters-1, step=1,
+                                       value=0, description='From',
+                                       visible=False)
+    second_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
                                         value=n_iters-1, description='To',
                                         visible=False)
     show_image = CheckboxWidget(description='Show image',
@@ -1975,7 +1986,6 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     dropdown_menu['max'] = 'max'
     dropdown_menu['min'] = 'min'
     for p in range(n_points):
-        #dropdown_menu.append("point {}".format(p+1))
         dropdown_menu["point {}".format(p+1)] = p
     plot_displacements_menu = SelectWidget(values=dropdown_menu, value='mean')
     plot_mode = RadioButtonsWidget(description='Plot mode:',
@@ -1984,18 +1994,26 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
 
-    # if single iteration, disable multiple options
+    # if just one iteration, disable multiple options
     if n_iters == 1:
         iterations_mode.value = 0
         iterations_mode.disabled = True
         first_slider_wid.disabled = True
+        animation_wid.children[1].children[0].children[2].disabled = True
+        animation_wid.children[1].children[1].children[0].children[0].\
+            disabled = True
+        animation_wid.children[1].children[1].children[0].children[1].\
+            disabled = True
+        animation_wid.children[1].children[1].children[0].children[2].\
+            disabled = True
         second_slider_wid.disabled = True
         plot_errors_button.disabled = True
         plot_displacements_button.disabled = True
         plot_displacements_menu.disabled = True
 
     # Group widgets
-    sliders = ContainerWidget(children=[first_slider_wid, second_slider_wid])
+    sliders = ContainerWidget(children=[animation_wid, first_slider_wid,
+                                        second_slider_wid])
     iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
                                                             sliders])
     plot_displacements = ContainerWidget(children=[plot_displacements_button,
@@ -2020,40 +2038,56 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     # Define iterations mode visibility
     def iterations_mode_selection(name, value):
         if value == 0:
-            first_slider_wid.description = 'Iteration'
-            first_slider_wid.min = 0
-            first_slider_wid.max = iterations_result_wid.n_iters - 1
+            val = first_slider_wid.value
+            animation_wid.children[1].children[0].children[2].value = val
+            animation_wid.selected_index = val
+            animation_wid.visible = True
+            first_slider_wid.visible = False
             second_slider_wid.visible = False
+            #first_slider_wid.value = 0
+            #second_slider_wid.value = n_iters - 1
         else:
-            first_slider_wid.description = 'From'
-            first_slider_wid.min = 0
-            first_slider_wid.max = iterations_result_wid.n_iters - 1
-            second_slider_wid.min = 0
-            second_slider_wid.max = iterations_result_wid.n_iters - 1
-            second_slider_wid.value = first_slider_wid.value
+            val = animation_wid.selected_index
+            for t in range(2):
+                if t == 0:
+                    second_slider_wid.value = val
+                else:
+                    first_slider_wid.value = second_slider_wid.value
+            #animation_wid.children[1].children[0].children[2].value = 0
+            #animation_wid.selected_index = 0
+            animation_wid.visible = False
+            first_slider_wid.visible = True
             second_slider_wid.visible = True
     iterations_mode.on_trait_change(iterations_mode_selection, 'value')
 
-    # Define multiple channels sliders functionality
+    # Check first slider's value
     def first_slider_val(name, value):
-        if iterations_mode.value == 1 and value > second_slider_wid.value:
+        if value > second_slider_wid.value:
             first_slider_wid.value = second_slider_wid.value
 
+    # Check second slider's value
     def second_slider_val(name, value):
-        if iterations_mode.value == 1 and value < first_slider_wid.value:
+        if value < first_slider_wid.value:
             second_slider_wid.value = first_slider_wid.value
 
+    # Convert slider values to groups
     def get_groups(name, value):
         if iterations_mode.value == 0:
             iterations_result_wid.groups = _convert_iterations_to_groups(
-                first_slider_wid.value, first_slider_wid.value, iter_str)
+                animation_wid.selected_index,
+                animation_wid.selected_index, iter_str)
         else:
             iterations_result_wid.groups = _convert_iterations_to_groups(
                 first_slider_wid.value, second_slider_wid.value, iter_str)
+
+    # Assign functions to sliders
     first_slider_wid.on_trait_change(first_slider_val, 'value')
     second_slider_wid.on_trait_change(second_slider_val, 'value')
     first_slider_wid.on_trait_change(get_groups, 'value')
     second_slider_wid.on_trait_change(get_groups, 'value')
+    # assign get_groups() to the slider of animation_wid
+    animation_wid.children[1].children[0].children[2].on_trait_change(
+        get_groups, 'value')
     iterations_mode.on_trait_change(get_groups, 'value')
 
     # Show image function
@@ -2090,11 +2124,12 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
             plot_displacements.visible = False
         if value:
             if iterations_mode.value == 0:
-                first_slider_wid.visible = True
+                animation_wid.visible = True
             else:
                 first_slider_wid.visible = True
                 second_slider_wid.visible = True
         else:
+            animation_wid.visible = False
             first_slider_wid.visible = False
             second_slider_wid.visible = False
     show_options('', toggle_show_default)
@@ -2104,6 +2139,10 @@ def iterations_result_options(n_iters, image_has_gt_shape,  n_points,
     if plot_function is not None:
         first_slider_wid.on_trait_change(plot_function, 'value')
         second_slider_wid.on_trait_change(plot_function, 'value')
+        # Here we assign plot_function() to the slider of animation_wid, as
+        # we didn't do it at its creation.
+        animation_wid.children[1].children[0].children[2].on_trait_change(
+            plot_function, 'value')
         iterations_mode.on_trait_change(plot_function, 'value')
         show_image.on_trait_change(plot_function, 'value')
         plot_mode.on_trait_change(plot_function, 'value')
@@ -2154,7 +2193,15 @@ def format_iterations_result_options(iterations_result_wid,
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
     """
-    # align displacement button and dropdown menu
+    # format animations options
+    format_animation_options(
+        iterations_result_wid.children[1].children[1].children[0],
+        index_text_width='0.5cm', container_padding=container_padding,
+        container_margin=container_margin, container_border=container_border,
+        toggle_button_font_weight=toggle_button_font_weight,
+        border_visible=False)
+
+    # align displacement button and drop down menu
     iterations_result_wid.children[2].children[4].add_class('align-center')
     iterations_result_wid.children[2].children[4].children[1].set_css('width',
                                                                       '2.5cm')
@@ -2207,6 +2254,9 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
 
     Parameters
     ----------
+    iterations_result_wid :
+        The widget generated by `iterations_result_options()` function.
+
     n_iters : `int`
         The number of iterations.
 
@@ -2222,8 +2272,6 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         E.g. if iter_str == "iter_" then the group label of iteration i has the
         form "{}{}".format(iter_str, i)
     """
-    from collections import OrderedDict
-
     # if image_has_gt_shape flag has actually changed from the previous value
     if image_has_gt_shape != iterations_result_wid.image_has_gt_shape:
         # set the plot buttons visibility
@@ -2255,39 +2303,92 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         iterations_result_wid.n_iters = n_iters
         iterations_result_wid.groups = _convert_iterations_to_groups(0, 0,
                                                                      iter_str)
+
+        animation_options_wid = \
+            iterations_result_wid.children[1].children[1].children[0]
         # set the iterations options state
         if n_iters == 1:
-            # set sliders max and min values
-            iterations_result_wid.children[1].children[1].children[0].max = 1
-            iterations_result_wid.children[1].children[1].children[1].max = 1
-            iterations_result_wid.children[1].children[1].children[0].min = 0
-            iterations_result_wid.children[1].children[1].children[1].min = 0
-            # set sliders state
-            iterations_result_wid.children[1].children[1].children[0].disabled = True
-            iterations_result_wid.children[1].children[1].children[1].visible = False
-            # set mode state
-            iterations_result_wid.children[1].children[0].disabled = True
+            # set sliders values and visibility
+            for t in range(4):
+                if t == 0:
+                    # first slider
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        value = 0
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        max = 0
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        visible = False
+                elif t == 1:
+                    # second slider
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        value = 0
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        max = 0
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        visible = False
+                elif t == 2:
+                    # animation slider
+                    animation_options_wid.selected_index = 0
+                    animation_options_wid.index_max = 0
+                    animation_options_wid.children[1].children[0].children[2].\
+                        value = 0
+                    animation_options_wid.children[1].children[0].children[2].\
+                        max = 0
+                    animation_options_wid.children[1].children[0].children[2].\
+                        disabled = True
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[0].disabled = True
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[1].disabled = True
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[2].disabled = True
+                else:
+                    # iterations mode
+                    iterations_result_wid.children[1].children[0].value = 0
+                    iterations_result_wid.groups = [iter_str + "0"]
+                    iterations_result_wid.children[1].children[0].\
+                        disabled = True
         else:
             # set sliders max and min values
-            iterations_result_wid.children[1].children[1].children[0].max = \
-                n_iters - 1
-            iterations_result_wid.children[1].children[1].children[1].max = \
-                n_iters - 1
-            iterations_result_wid.children[1].children[1].children[0].min = 0
-            iterations_result_wid.children[1].children[1].children[1].min = 0
-            # set sliders state
-            iterations_result_wid.children[1].children[1].children[0].disabled = False
-            iterations_result_wid.children[1].children[1].children[1].visible = False
-            # set mode state
-            iterations_result_wid.children[1].children[0].disabled = False
-        # set mode and sliders values
-        for k in range(3):
-            if k == 0:
-                iterations_result_wid.children[1].children[0].value = 0
-            elif k == 1:
-                iterations_result_wid.children[1].children[1].children[0].value = 0
-            else:
-                iterations_result_wid.children[1].children[1].children[1].value = 0
+            for t in range(4):
+                if t == 0:
+                    # first slider
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        value = 0
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        max = n_iters - 1
+                    iterations_result_wid.children[1].children[1].children[1].\
+                        visible = False
+                elif t == 1:
+                    # second slider
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        value = n_iters - 1
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        max = n_iters - 1
+                    iterations_result_wid.children[1].children[1].children[2].\
+                        visible = False
+                elif t == 2:
+                    # animation slider
+                    animation_options_wid.children[1].children[0].children[2].\
+                        value = 0
+                    animation_options_wid.children[1].children[0].children[2].\
+                        max = n_iters - 1
+                    animation_options_wid.selected_index = 0
+                    animation_options_wid.index_max = n_iters - 1
+                    animation_options_wid.children[1].children[0].children[2].\
+                        disabled = False
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[0].disabled = False
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[1].disabled = True
+                    animation_options_wid.children[1].children[1].children[0].\
+                        children[2].disabled = False
+                else:
+                    # iterations mode
+                    iterations_result_wid.children[1].children[0].value = 0
+                    iterations_result_wid.groups = [iter_str + "0"]
+                    iterations_result_wid.children[1].children[0].\
+                        disabled = False
 
 
 def index_selection_slider(index_min_val, index_max_val, plot_function=None,
@@ -2604,13 +2705,13 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
                       index_description='Image Number',
                       index_minus_description='-', index_plus_description='+',
                       index_style='buttons', index_text_editable=True,
-                      loop_default=False, interval_default=1.,
+                      loop_default=False, interval_default=0.5,
                       toggle_show_title='Image Options',
                       toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget for selecting an index and creating animations.
     Specifically, it has:
-        1) An index selection widget.
+        1) An index selection widget. It can either be a slider or +/- buttons.
         2) A play toggle button.
         3) A stop toggle button.
         4) An options toggle button.
@@ -2621,20 +2722,32 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     The structure of the widget is the following:
         animation_options_wid.children = [toggle_button, options]
         options.children = [index_selection, animation]
-        animation.children = [buttons, animation_options])
+        if index_style == 'buttons':
+            index_selection.children = [title, minus_button, index_text,
+                                        plus_button]
+        elif index_style == 'slider':
+            index_selection.children = [temp, temp, index_slider]
+        animation.children = [buttons, animation_options]
         buttons.children = [play_button, stop_button, play_options_button]
         animation_options.children = [interval_text, loop_checkbox]
 
     The returned widget saves the selected values in the following fields:
-        animation_options_wid.interval
-        animation_options_wid.loop
+        animation_options_wid.selected_index
+        animation_options_wid.index_min
+        animation_options_wid.index_max
+        animation_options_wid.index_step
         animation_options_wid.index_style
 
-    The actual index value can be retrieved as:
-        animation_options_wid.children[1].children[0].index
+    The actual index value can either be retrieved by:
+        animation_options_wid.selected_index
+    or:
+        animation_options_wid.children[1].children[0].children[2].value
 
     To fix the alignment within this widget please refer to
     `format_animation_options()` function.
+
+    To update the state of this widget, please refer to
+    `update_animation_options()` function.
 
     Parameters
     ----------
@@ -2697,25 +2810,31 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     # traits changes are passed during a while-loop
     kernel = get_ipython().kernel
 
-    # Create widgets
+    # Check default value
+    if index_default is None:
+        index_default = index_min_val
+
+    # Create index widget
+    if index_style == 'slider':
+        val = IntSliderWidget(min=index_min_val, max=index_max_val,
+                              value=index_default, step=index_step,
+                              description=index_description)
+        fake_wid = LatexWidget(visible=False)
+        index_wid = ContainerWidget(children=[fake_wid, fake_wid, val])
+    elif index_style == 'buttons':
+        tlt = LatexWidget(value=index_description)
+        but_minus = ButtonWidget(description=index_minus_description)
+        but_plus = ButtonWidget(description=index_plus_description)
+        if index_text_editable:
+            val = IntTextWidget(value=index_default)
+        else:
+            val = IntTextWidget(value=index_default, disabled=True)
+        index_wid = ContainerWidget(children=[tlt, but_minus, val, but_plus])
+
+    # Create other widgets
     but = ToggleButtonWidget(description=toggle_show_title,
                              value=toggle_show_default,
                              visible=toggle_show_visible)
-    if index_style == 'buttons':
-        index_wid = index_selection_buttons(
-            index_min_val=index_min_val, index_max_val=index_max_val,
-            plot_function=plot_function, update_function=update_function,
-            index_step=index_step, index_default=index_default,
-            description=index_description,
-            minus_description=index_minus_description,
-            plus_description=index_plus_description, loop=True,
-            text_editable=index_text_editable)
-    else:
-        index_wid = index_selection_slider(
-            index_min_val=index_min_val, index_max_val=index_max_val,
-            plot_function=plot_function, update_function=update_function,
-            index_step=index_step, index_default=index_default,
-            description=index_description)
     play_but = ToggleButtonWidget(description='Play >', value=False)
     stop_but = ToggleButtonWidget(description='Stop', value=True, disabled=True)
     play_options = ToggleButtonWidget(description='Options', value=False)
@@ -2731,34 +2850,133 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     animation_options_wid = ContainerWidget(children=[but, cont])
 
     # Initialize variables
-    animation_options_wid.interval = interval_default
-    animation_options_wid.loop = loop_default
+    animation_options_wid.selected_index = index_default
+    animation_options_wid.index_min = index_min_val
+    animation_options_wid.index_max = index_max_val
+    animation_options_wid.index_step = index_step
     animation_options_wid.index_style = index_style
 
-    # Play pressed
+    # When index value changes
+    if index_style == 'slider':
+        def value_changed(name, value):
+            animation_options_wid.selected_index = value
+        val.on_trait_change(value_changed, 'value')
+    elif index_style == 'buttons':
+        # plus button pressed
+        def change_value_plus(name):
+            tmp_val = int(val.value) + animation_options_wid.index_step
+            if tmp_val > animation_options_wid.index_max:
+                if loop.value:
+                    val.value = str(animation_options_wid.index_min)
+                else:
+                    val.value = str(animation_options_wid.index_max)
+            else:
+                val.value = str(tmp_val)
+        but_plus.on_click(change_value_plus)
+
+        # minus button pressed
+        def change_value_minus(name):
+            tmp_val = int(val.value) - animation_options_wid.index_step
+            if tmp_val < animation_options_wid.index_min:
+                if loop.value:
+                    val.value = str(animation_options_wid.index_max)
+                else:
+                    val.value = str(animation_options_wid.index_min)
+            else:
+                val.value = str(tmp_val)
+        but_minus.on_click(change_value_minus)
+
+        def value_changed(name, old_value, value):
+            # check value
+            tmp_val = int(value)
+            if (tmp_val > animation_options_wid.index_max or
+                    tmp_val < animation_options_wid.index_min):
+                val.value = old_value
+            animation_options_wid.selected_index = tmp_val
+        val.on_trait_change(value_changed, 'value')
+
+    # assign given update_function
+    if update_function is not None:
+        val.on_trait_change(update_function, 'value')
+
+    # assign given plot_function
+    if plot_function is not None:
+        val.on_trait_change(plot_function, 'value')
+
+    # Play button pressed
     def play_press(name, value):
         stop_but.value = not value
         play_but.disabled = value
         play_options.disabled = value
-        loop.disabled = value
-        interval.disabled = value
+        if value:
+            play_options.value = False
     play_but.on_trait_change(play_press, 'value')
 
-    # Stop pressed
+    # Stop button pressed
     def stop_press(name, value):
         play_but.value = not value
         stop_but.disabled = value
         play_options.disabled = not value
-        loop.disabled = not value
-        interval.disabled = not value
     stop_but.on_trait_change(stop_press, 'value')
+
+    # show animation options checkbox function
+    def play_options_fun(name, value):
+        interval.visible = value
+        loop.visible = value
+    play_options.on_trait_change(play_options_fun, 'value')
+
+    # animation function
+    def play_fun(name, value):
+        if loop.value:
+            # loop is enabled
+            i = animation_options_wid.selected_index
+            if i < animation_options_wid.index_max:
+                i += animation_options_wid.index_step
+            else:
+                i = animation_options_wid.index_min
+            while i <= animation_options_wid.index_max and not stop_but.value:
+                # update index value
+                animation_options_wid.children[1].children[0].children[2].value = i
+
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking. This
+                # will allow widget messages and callbacks to be processed.
+                kernel.do_one_iteration()
+
+                # update counter
+                if i < animation_options_wid.index_max:
+                    i += animation_options_wid.index_step
+                else:
+                    i = animation_options_wid.index_min
+
+                # wait
+                sleep(interval.value)
+        else:
+            # loop is disabled
+            i = animation_options_wid.selected_index
+            i += animation_options_wid.index_step
+            while i <= animation_options_wid.index_max and not stop_but.value:
+                # update value
+                animation_options_wid.children[1].children[0].children[2].value = i
+
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking. This
+                # will allow widget messages and callbacks to be processed.
+                kernel.do_one_iteration()
+
+                # update counter
+                i += animation_options_wid.index_step
+
+                # wait
+                sleep(interval.value)
+            if i > index_max_val:
+                stop_but.value = True
+    play_but.on_trait_change(play_fun, 'value')
 
     # Toggle button function
     def show_options(name, value):
         index_wid.visible = value
-        play_but.visible = value
-        stop_but.visible = value
-        play_options.visible = value
+        buttons.visible = value
         interval.visible = False
         loop.visible = False
         if value:
@@ -2766,85 +2984,17 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     show_options('', toggle_show_default)
     but.on_trait_change(show_options, 'value')
 
-    # show animation options checkbox function
-    def play_options_fun(name, value):
-        interval.visible = value
-        loop.visible = value
-        animation_options_wid.interval = interval.value
-        animation_options_wid.loop = loop.value
-    play_options.on_trait_change(play_options_fun, 'value')
-
-    # interval text function
-    def interval_fun(name, value):
-        animation_options_wid.interval = value
-    interval.on_trait_change(interval_fun, 'value')
-
-    # loop checkbox function
-    def loop_fun(name, value):
-        animation_options_wid.loop = value
-    loop.on_trait_change(loop_fun, 'value')
-
-    def set_index_value(value):
-        index_wid.index = value
-        if index_style == 'buttons':
-            index_wid.children[2].value = str(value)
-        else:
-            index_wid.value = value
-
-    # start/stop buttons
-    def play_fun(name, value):
-        if animation_options_wid.loop:
-            # loop is enabled
-            i = index_wid.index
-            while i <= index_max_val and not stop_but.value:
-                # update index
-                set_index_value(i)
-
-                # Run IPython iteration.
-                # This is the code that makes this operation non-blocking. This
-                # will allow widget messages and callbacks to be processed.
-                kernel.do_one_iteration()
-
-                # update counter
-                if i < index_max_val:
-                    i += index_step
-                else:
-                    i = index_min_val
-
-                # wait
-                sleep(animation_options_wid.interval)
-        else:
-            # loop is disabled
-            i = index_wid.index
-            while i <= index_max_val and not stop_but.value:
-                # update index
-                set_index_value(i)
-
-                # Run IPython iteration.
-                # This is the code that makes this operation non-blocking. This
-                # will allow widget messages and callbacks to be processed.
-                kernel.do_one_iteration()
-
-                # update counter
-                i += index_step
-
-                # wait
-                sleep(animation_options_wid.interval)
-            if i > index_max_val:
-                stop_but.value = True
-    play_but.on_trait_change(play_fun, 'value')
-
     return animation_options_wid
 
 
-def format_animation_options(animation_options_wid, container_padding='6px',
-                             container_margin='6px',
+def format_animation_options(animation_options_wid, index_text_width='0.5cm',
+                             container_padding='6px', container_margin='6px',
                              container_border='1px solid black',
                              toggle_button_font_weight='bold',
                              border_visible=True):
     r"""
-    Function that corrects the align (style format) of a given
-    animation_options widget. Usage example:
+    Function that corrects the align (style format) of a given animation_options
+    widget. Usage example:
         animation_options_wid = animation_options()
         display(animation_options_wid)
         format_animation_options(animation_options_wid)
@@ -2854,6 +3004,9 @@ def format_animation_options(animation_options_wid, container_padding='6px',
     animation_options_wid :
         The widget object generated by the `animation_options()`
         function.
+
+    index_text_width : `str`, optional
+        The width of the index value text area.
 
     container_padding : `str`, optional
         The padding around the widget, e.g. '6px'
@@ -2871,15 +3024,31 @@ def format_animation_options(animation_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # format index widget
-    format_index_selection(animation_options_wid.children[1].children[0])
+    animation_options_wid.children[1].children[0].remove_class('vbox')
+    animation_options_wid.children[1].children[0].add_class('hbox')
+    animation_options_wid.children[1].children[0].add_class('align-center')
+    if not isinstance(animation_options_wid.children[1].children[0].children[2],
+                      IntSliderWidget):
+        # set text width
+        animation_options_wid.children[1].children[0].children[2].set_css(
+            'width', index_text_width)
+        animation_options_wid.children[1].children[0].children[2].add_class(
+            'center')
+
+        # set margin
+        animation_options_wid.children[1].children[0].children[0].set_css(
+            'margin-right', '6px')
 
     # align play/stop button with animation options button
-    animation_options_wid.children[1].children[1].children[0].remove_class('vbox')
-    animation_options_wid.children[1].children[1].children[0].add_class('hbox')
+    animation_options_wid.children[1].children[1].children[0].remove_class(
+        'vbox')
+    animation_options_wid.children[1].children[1].children[0].add_class(
+        'hbox')
     animation_options_wid.children[1].children[1].add_class('align-end')
 
     # add margin on the right of the play button
-    animation_options_wid.children[1].children[1].children[0].children[1].set_css('margin-right', container_margin)
+    animation_options_wid.children[1].children[1].children[0].children[1].\
+        set_css('margin-right', container_margin)
 
     if animation_options_wid.index_style == 'slider':
         # align animation on the right of slider
@@ -2889,10 +3058,12 @@ def format_animation_options(animation_options_wid, container_padding='6px',
         animation_options_wid.children[1].remove_class('vbox')
         animation_options_wid.children[1].add_class('hbox')
         animation_options_wid.children[1].add_class('align-center')
-        animation_options_wid.children[1].children[0].set_css('margin-right', '1cm')
+        animation_options_wid.children[1].children[0].set_css('margin-right',
+                                                              '1cm')
 
     # set interval width
-    animation_options_wid.children[1].children[1].children[1].children[0].set_css('width', '20px')
+    animation_options_wid.children[1].children[1].children[1].children[0].\
+        set_css('width', '20px')
 
     # set toggle button font bold
     animation_options_wid.children[0].set_css('font-weight',
@@ -2905,9 +3076,10 @@ def format_animation_options(animation_options_wid, container_padding='6px',
         animation_options_wid.set_css('border', container_border)
 
 
-def update_animation_options(animation_options_wid, index_min_val, index_max_val,
-                             plot_function=None, update_function=None,
-                             index_step=1, index_default=None):
+def update_animation_options(animation_options_wid, index_min_val,
+                             index_max_val, plot_function=None,
+                             update_function=None, index_step=1,
+                             index_default=None):
     r"""
     Function that updates the state of a given animation_options widget if the
     index bounds have changed. Usage example:
@@ -2944,12 +3116,43 @@ def update_animation_options(animation_options_wid, index_min_val, index_max_val
     index_default : `int`, optional
         The default index value.
     """
-    update_index_selection(animation_options_wid.children[1].children[0],
-                           index_min_val=index_min_val,
-                           index_max_val=index_max_val,
-                           plot_function=plot_function,
-                           update_function=update_function,
-                           index_step=index_step, index_default=index_default)
+    # check if update is required
+    if not (index_min_val == animation_options_wid.index_min and
+            index_max_val == animation_options_wid.index_max and
+            index_step == animation_options_wid.index_step):
+        # update outputs
+        animation_options_wid.index_max = index_max_val
+        animation_options_wid.index_min = index_min_val
+        animation_options_wid.index_step = index_step
+        animation_options_wid.selected_index = index_default
+
+        # Check default value
+        if index_default is None:
+            index_default = index_min_val
+
+        # if the index selector is a slider
+        if isinstance(animation_options_wid.children[1].children[0].children[2],
+                      IntSliderWidget):
+            animation_options_wid.children[1].children[0].children[2].min = \
+                index_min_val
+            animation_options_wid.children[1].children[0].children[2].max = \
+                index_max_val
+            animation_options_wid.children[1].children[0].children[2].step = \
+                index_step
+
+        # update index selector value
+        animation_options_wid.children[1].children[0].children[2].value = \
+            index_default
+
+        # assign given update_function
+        if update_function is not None:
+            animation_options_wid.children[1].children[0].children[2].\
+                on_trait_change(update_function, 'value')
+
+        # assign given plot_function
+        if plot_function is not None:
+            animation_options_wid.children[1].children[0].children[2].\
+                on_trait_change(plot_function, 'value')
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
