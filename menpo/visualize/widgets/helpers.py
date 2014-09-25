@@ -2044,17 +2044,14 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
             animation_wid.visible = True
             first_slider_wid.visible = False
             second_slider_wid.visible = False
-            #first_slider_wid.value = 0
-            #second_slider_wid.value = n_iters - 1
+            first_slider_wid.value = 0
+            second_slider_wid.value = n_iters - 1
         else:
             val = animation_wid.selected_index
-            for t in range(2):
-                if t == 0:
-                    second_slider_wid.value = val
-                else:
-                    first_slider_wid.value = second_slider_wid.value
-            #animation_wid.children[1].children[0].children[2].value = 0
-            #animation_wid.selected_index = 0
+            second_slider_wid.value = val
+            first_slider_wid.value = second_slider_wid.value
+            animation_wid.children[1].children[0].children[2].value = 0
+            animation_wid.selected_index = 0
             animation_wid.visible = False
             first_slider_wid.visible = True
             second_slider_wid.visible = True
