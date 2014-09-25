@@ -57,7 +57,6 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # get selected image number
         im = 0
         if n_images > 1:
-            #im = image_number_wid.value
             im = image_number_wid.children[1].children[0].index
 
         # update info text widget
@@ -168,7 +167,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             index_step=1, index_default=0,
             index_description='Image Number', index_minus_description='<',
             index_plus_description='>', index_style='buttons',
-            index_text_editable=True, loop_default=True, interval_default=0.1,
+            index_text_editable=True, loop_default=True, interval_default=0.3,
             toggle_show_title='Image Options', toggle_show_default=True,
             toggle_show_visible=False)
 
@@ -1145,7 +1144,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.value
+            im = image_number_wid.children[1].children[0].index
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1170,7 +1169,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.value
+            im = image_number_wid.children[1].children[0].index
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1192,7 +1191,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.value
+            im = image_number_wid.children[1].children[0].index
 
         # selected mode: final or iterations
         final_enabled = False
@@ -1265,7 +1264,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # get selected image
         im = 0
         if n_fitting_results > 1:
-            im = image_number_wid.value
+            im = image_number_wid.children[1].children[0].index
 
         # create output str
         txt = "$\\bullet~\\texttt{Initial error: " + \
@@ -1346,18 +1345,31 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             fitting_results[value].fitted_image.landmarks['final'].lms.n_points,
             iter_str=iter_str)
 
+    # define function that combines the results' tab widget with the animation
+    # If animation is activated and the user selects the iterations tab, then
+    # the animation stops.
+    def results_tab_fun(name, value):
+        if value == 1 and \
+                image_number_wid.children[1].children[1].children[0].children[0].value:
+            image_number_wid.children[1].children[1].children[0].children[1].value = True
+
     # Create final widget
     options_wid = TabWidget(children=[channel_options_wid, figure_options_wid,
                                       error_rype_wid])
     result_wid = TabWidget(children=[final_result_wid, iterations_wid])
+    result_wid.on_trait_change(results_tab_fun, 'selected_index')
     result_wid.on_trait_change(plot_function, 'selected_index')
     if n_fitting_results > 1:
         # image selection slider
-        image_number_wid = IntSliderWidget(min=0, max=n_fitting_results-1,
-                                           step=1, value=0,
-                                           description='Image Number')
-        image_number_wid.on_trait_change(update_widgets, 'value')
-        image_number_wid.on_trait_change(plot_function, 'value')
+        image_number_wid = animation_options(
+            index_min_val=0, index_max_val=n_fitting_results-1,
+            plot_function=plot_function, update_function=update_widgets,
+            index_step=1, index_default=0,
+            index_description='Image Number', index_minus_description='<',
+            index_plus_description='>', index_style='buttons',
+            index_text_editable=True, loop_default=True, interval_default=0.3,
+            toggle_show_title='Image Options', toggle_show_default=True,
+            toggle_show_visible=False)
 
         # final widget
         tab_wid = TabWidget(children=[info_wid, result_wid, options_wid])
@@ -1398,6 +1410,12 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     options_wid.set_title(2, 'Error Type')
 
     # format options' widgets
+    if n_fitting_results > 1:
+        format_animation_options(image_number_wid, container_padding='6px',
+                                 container_margin='6px',
+                                 container_border='1px solid black',
+                                 toggle_button_font_weight='bold',
+                                 border_visible=False)
     format_channel_options(channel_options_wid, container_padding='6px',
                            container_margin='6px',
                            container_border='1px solid black',
