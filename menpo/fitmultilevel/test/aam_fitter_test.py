@@ -418,54 +418,51 @@ def aam_helper(aam, algorithm, im_number, max_iters, initial_error,
 
 @attr('fuzzy')
 def test_alternating_ic():
-    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.09062, 0.05607,
+    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.09062, 0.05606,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_adaptive_ic():
-    aam_helper(aam, AdaptiveInverseCompositional, 1, 5, 6.6848, 2.04229,
-               'me')
+    aam_helper(aam, AdaptiveInverseCompositional, 1, 5, 6.6848, 2.0408, 'me')
 
 
 @attr('fuzzy')
 def test_simultaneous_ic():
-    aam_helper(aam, SimultaneousInverseCompositional, 2, 7, 14.29074, 12.51036,
+    aam_helper(aam, SimultaneousInverseCompositional, 2, 7, 14.29074, 11.80914,
                'rmse')
 
 
 @attr('fuzzy')
 def test_projectout_ic():
-    aam_helper(aam, ProjectOutInverseCompositional, 3, 6, 1.46431, 1.74012,
+    aam_helper(aam, ProjectOutInverseCompositional, 3, 6, 1.46431, 1.76187,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_alternating_fa():
-    aam_helper(aam, AlternatingForwardAdditive, 0, 8, 33.13639, 26.41936,
-               'me')
+    aam_helper(aam, AlternatingForwardAdditive, 0, 8, 33.13639, 25.78991, 'me')
 
 
 @attr('fuzzy')
 def test_adaptive_fa():
-    aam_helper(aam, AdaptiveForwardAdditive, 1, 6, 5.65039, 3.66387, 'rmse')
+    aam_helper(aam, AdaptiveForwardAdditive, 1, 6, 5.65039, 3.6905, 'rmse')
 
 
 @attr('fuzzy')
 def test_simultaneous_fa():
-    aam_helper(aam, SimultaneousForwardAdditive, 2, 5, 0.12273, 0.10755,
+    aam_helper(aam, SimultaneousForwardAdditive, 2, 5, 0.12273, 0.11485,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_projectout_fa():
-    aam_helper(aam, ProjectOutForwardAdditive, 3, 6, 134.29103, 177.78284,
-               'me')
+    aam_helper(aam, ProjectOutForwardAdditive, 3, 6, 134.29103, 174.47549, 'me')
 
 
 @attr('fuzzy')
 def test_alternating_fc():
-    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 27.56395, 22.25398,
+    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 27.56395, 22.16998,
                'rmse')
 
 
@@ -477,29 +474,29 @@ def test_adaptive_fc():
 
 @attr('fuzzy')
 def test_simultaneous_fc():
-    aam_helper(aam, SimultaneousForwardCompositional, 2, 5, 18.63744, 16.43035,
+    aam_helper(aam, SimultaneousForwardCompositional, 2, 5, 18.63744, 17.00309,
                'me')
 
 
 @attr('fuzzy')
 def test_projectout_fc():
-    aam_helper(aam, ProjectOutForwardCompositional, 3, 6, 98.84173, 178.31154,
+    aam_helper(aam, ProjectOutForwardCompositional, 3, 6, 98.84173, 183.71083,
                'rmse')
 
 
 @attr('fuzzy')
 def test_probabilistic_ic():
-    aam_helper(aam2, ProbabilisticInverseCompositional, 0, 6, 0.08605, 0.08924,
+    aam_helper(aam2, ProbabilisticInverseCompositional, 0, 6, 0.08605, 0.08923,
                'me_norm')
 
 
 @attr('fuzzy')
 def test_probabilistic_fa():
-    aam_helper(aam2, ProbabilisticForwardAdditive, 1, 7, 7.95891, 7.63713,
+    aam_helper(aam2, ProbabilisticForwardAdditive, 1, 7, 7.95891, 7.67012,
                'me')
 
 
 @attr('fuzzy')
-def test_probabilistic_fa():
+def test_probabilistic_fc():
     aam_helper(aam2, ProbabilisticForwardCompositional, 2, 6, 13.71297,
-               13.76367, 'rmse')
+               13.76918, 'rmse')
