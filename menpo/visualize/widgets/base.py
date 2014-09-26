@@ -1151,8 +1151,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
                  fitting_results[im].errors(), '-bo')
-        plt.axis([0, len(fitting_results[im].errors())-1,
-                  0, np.max(fitting_results[im].errors())])
+        plt.gca().set_xlim(0, len(fitting_results[im].errors())-1)
         plt.xlabel('Iteration')
         plt.ylabel('Fitting Error')
         plt.title("Fitting error evolution of Image {}".format(im))
@@ -1176,8 +1175,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
                  fitting_results[im].errors(), '-bo')
-        plt.axis([0, len(fitting_results[im].errors())-1,
-                  0, np.max(fitting_results[im].errors())])
+        plt.gca().set_xlim(0, len(fitting_results[im].errors())-1)
         plt.xlabel('Iteration')
         plt.ylabel('Fitting Error')
         plt.title("Fitting error evolution of Image {}".format(im))

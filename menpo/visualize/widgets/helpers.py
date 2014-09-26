@@ -1858,11 +1858,10 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     r"""
     Creates a widget with Iterations Result Options. Specifically, it has:
         1) Two radio buttons that select an options mode, depending on whether
-           the user wants to visualize iterations in "Animation" or "Static"
-           mode.
+           the user wants to visualize iterations in "Animation" or "Static" mode.
         2) If mode is "Animation", an animation options widget appears.
            If mode is "Static", the iterations range is selected by two
-           sliders.
+           sliders and there is an update plot button.
         3) A checkbox that controls the visibility of the image.
         4) A set of radio buttons that define whether subplots are enabled.
         5) A checkbox that controls the legend's visibility.
@@ -1878,7 +1877,8 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                                           options]
         iterations_mode_and_sliders.children = [iterations_mode_radio_buttons,
                                                 all_sliders]
-        all_sliders.children = [animation_slider, first_slider, second_slider]
+        all_sliders.children = [animation_slider, first_slider, second_slider,
+                                update_button]
         options.children = [plot_mode_radio_buttons, show_image_checkbox,
                             show_legend_checkbox, plot_errors_button,
                             plot_displacements]
@@ -1958,9 +1958,9 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                                          value=0,
                                          description='Iterations mode:',
                                          visible=toggle_show_default)
-    # Don't assign the plot function to the animation_wid at this point.
-    # We first need to assign the get_groups function and then the
-    # plot_function() for synchronization reasons.
+    # Don't assign the plot function to the animation_wid at this point. We
+    # first need to assign the get_groups function and then the plot_function()
+    # for synchronization reasons.
     animation_wid = animation_options(index_min_val=0, index_max_val=n_iters-1,
                                       plot_function=None,
                                       update_function=None,
@@ -1976,6 +1976,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     second_slider_wid = IntSliderWidget(min=0, max=n_iters-1, step=1,
                                         value=n_iters-1, description='To',
                                         visible=False)
+    update_but = ButtonWidget(description='Update Plot', visible=False)
     show_image = CheckboxWidget(description='Show image',
                                 value=show_image_default)
     plot_errors_button = ButtonWidget(description='Plot Errors')
@@ -2013,7 +2014,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
 
     # Group widgets
     sliders = ContainerWidget(children=[animation_wid, first_slider_wid,
-                                        second_slider_wid])
+                                        second_slider_wid, update_but])
     iterations_mode_and_sliders = ContainerWidget(children=[iterations_mode,
                                                             sliders])
     plot_displacements = ContainerWidget(children=[plot_displacements_button,
@@ -2038,34 +2039,44 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     # Define iterations mode visibility
     def iterations_mode_selection(name, value):
         if value == 0:
+            # get val that needs to be assigned
             val = first_slider_wid.value
-            animation_wid.children[1].children[0].children[2].value = val
-            animation_wid.selected_index = val
+            # update visibility
             animation_wid.visible = True
             first_slider_wid.visible = False
             second_slider_wid.visible = False
+            update_but.visible = False
+            # set correct values
+            animation_wid.children[1].children[0].children[2].value = val
+            animation_wid.selected_index = val
             first_slider_wid.value = 0
             second_slider_wid.value = n_iters - 1
         else:
+            # get val that needs to be assigned
             val = animation_wid.selected_index
-            second_slider_wid.value = val
-            first_slider_wid.value = second_slider_wid.value
-            animation_wid.children[1].children[0].children[2].value = 0
-            animation_wid.selected_index = 0
+            # update visibility
             animation_wid.visible = False
             first_slider_wid.visible = True
             second_slider_wid.visible = True
+            update_but.visible = True
+            # set correct values
+            second_slider_wid.value = val
+            first_slider_wid.value = val
+            animation_wid.children[1].children[0].children[2].value = 0
+            animation_wid.selected_index = 0
     iterations_mode.on_trait_change(iterations_mode_selection, 'value')
 
     # Check first slider's value
     def first_slider_val(name, value):
         if value > second_slider_wid.value:
             first_slider_wid.value = second_slider_wid.value
+    first_slider_wid.on_trait_change(first_slider_val, 'value')
 
     # Check second slider's value
     def second_slider_val(name, value):
         if value < first_slider_wid.value:
             second_slider_wid.value = first_slider_wid.value
+    second_slider_wid.on_trait_change(second_slider_val, 'value')
 
     # Convert slider values to groups
     def get_groups(name, value):
@@ -2076,16 +2087,12 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         else:
             iterations_result_wid.groups = _convert_iterations_to_groups(
                 first_slider_wid.value, second_slider_wid.value, iter_str)
-
-    # Assign functions to sliders
-    first_slider_wid.on_trait_change(first_slider_val, 'value')
-    second_slider_wid.on_trait_change(second_slider_val, 'value')
     first_slider_wid.on_trait_change(get_groups, 'value')
     second_slider_wid.on_trait_change(get_groups, 'value')
+
     # assign get_groups() to the slider of animation_wid
-    animation_wid.children[1].children[0].children[2].on_trait_change(
-        get_groups, 'value')
-    iterations_mode.on_trait_change(get_groups, 'value')
+    animation_wid.children[1].children[0].children[2].\
+        on_trait_change(get_groups, 'value')
 
     # Show image function
     def show_image_fun(name, value):
@@ -2134,13 +2141,13 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
 
     # assign general plot_function
     if plot_function is not None:
-        first_slider_wid.on_trait_change(plot_function, 'value')
-        second_slider_wid.on_trait_change(plot_function, 'value')
+        def plot_function_but(name):
+            plot_function(name, 0)
+        update_but.on_click(plot_function_but)
         # Here we assign plot_function() to the slider of animation_wid, as
         # we didn't do it at its creation.
         animation_wid.children[1].children[0].children[2].on_trait_change(
             plot_function, 'value')
-        iterations_mode.on_trait_change(plot_function, 'value')
         show_image.on_trait_change(plot_function, 'value')
         plot_mode.on_trait_change(plot_function, 'value')
         show_legend.on_trait_change(plot_function, 'value')
@@ -2217,6 +2224,11 @@ def format_iterations_result_options(iterations_result_wid,
                                                           '20px')
     iterations_result_wid.children[2].children[3].set_css('margin-right',
                                                           '10px')
+
+    # align sliders
+    iterations_result_wid.children[1].children[1].add_class('align-end')
+    iterations_result_wid.children[1].children[1].set_css('margin-bottom',
+                                                          '20px')
 
     # align sliders and iterations_mode
     iterations_result_wid.children[1].remove_class('vbox')
