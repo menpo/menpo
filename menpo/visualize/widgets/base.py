@@ -1452,7 +1452,9 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     figure_options_wid.children[2].value = False
 
 
-def plot_ced(errors, figure_size=(9, 5), popup=False):
+def plot_ced(errors, figure_size=(9, 5), popup=False,
+             save_options_visible=True, error_type='me_norm',
+             error_range=None):
     r"""
     Widget for visualizing the cumulative error curves of the provided errors.
     The generated figures can be saved to files.
@@ -1467,6 +1469,22 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
 
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
+
+    save_options_visible : `boolean`, optional
+        Determines whether a Save Figure tab will also be created.
+
+    error_type : `str` ``{'me_norm', 'me', 'rmse'}``, optional
+        Specifies the type of the provided errors.
+
+    error_range : `list` of `float` with length 3, optional
+        Specifies the horizontal axis range, i.e.
+        error_range[0] = min_error
+        error_range[1] = max_error
+        error_range[2] = error_step
+        If None, then
+        error_range = [0., 0.101, 0.005] for error_type = 'me_norm'
+        error_range = [0., 20., 1.] for error_type = 'me'
+        error_range = [0., 20., 1.] for error_type = 'rmse'
     """
     from menpo.fitmultilevel.functions import compute_cumulative_error
 
@@ -1477,8 +1495,22 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
     # find number of curves
     n_curves = len(errors)
 
+    # get horizontal axis errors
+    if error_range is None:
+        if error_type == 'me_norm':
+            error_range = [0., 0.101, 0.005]
+            x_axis_limit_initial_value = 0.05
+            x_label_initial_value = 'Normalized Point-to-Point Error'
+        elif error_type == 'me' or error_type == 'rmse':
+            error_range = [0., 20., 0.5]
+            x_axis_limit_initial_value = 5.
+            x_label_initial_value = 'Point-to-Point Error'
+    else:
+        x_axis_limit_initial_value = (error_range[1] + error_range[0]) / 2
+        x_label_initial_value = 'Error'
+    x_axis = np.arange(error_range[0], error_range[1], error_range[2])
+
     # compute cumulative error curves
-    x_axis = np.arange(0, 0.101, 0.005)
     ceds = [compute_cumulative_error(e, x_axis) for e in errors]
     x_axis = [x_axis] * len(ceds)
 
@@ -1525,7 +1557,8 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
 
     # create options widgets
     # x label, y label, title container
-    x_label = TextWidget(description='Horizontal axis label', value='Error')
+    x_label = TextWidget(description='Horizontal axis label',
+                         value=x_label_initial_value)
     y_label = TextWidget(description='Vertical axis label',
                          value='Images Proportion')
     title = TextWidget(description='Figure title',
@@ -1572,8 +1605,11 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
     # axis limits
     y_axis_limit = FloatSliderWidget(min=0., max=1.1, step=0.1,
                                      description='Y axis limit', value=1.)
-    x_axis_limit = FloatSliderWidget(min=0.01, max=0.1, step=0.005,
-                                     description='X axis limit', value=0.05)
+    x_axis_limit = FloatSliderWidget(min=error_range[0] + error_range[2],
+                                     max=error_range[1],
+                                     step=error_range[2],
+                                     description='X axis limit',
+                                     value=x_axis_limit_initial_value)
     axis_limits_wid = ContainerWidget(children=[x_axis_limit, y_axis_limit])
 
     # accordion widget
@@ -1589,10 +1625,6 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
                                     toggle_show_visible=False,
                                     toggle_show_default=True)
 
-    # save figure options
-    save_figure_wid = save_figure_options(figure_id, toggle_show_default=True,
-                                          toggle_show_visible=False)
-
     # assign plot function
     x_label.on_trait_change(plot_function, 'value')
     y_label.on_trait_change(plot_function, 'value')
@@ -1606,7 +1638,18 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
     axes_fontsize.on_trait_change(plot_function, 'value')
 
     # create final widget
-    wid = TabWidget(children=[figure_wid, plot_options_wid, save_figure_wid])
+    if save_options_visible:
+        # save figure options widget
+        save_figure_wid = save_figure_options(figure_id,
+                                              toggle_show_default=True,
+                                              toggle_show_visible=False)
+
+        wid = TabWidget(children=[figure_wid, plot_options_wid,
+                                  save_figure_wid])
+        tab_titles = ['Figure options', 'Per Curve options', 'Save figure']
+    else:
+        wid = TabWidget(children=[figure_wid, plot_options_wid])
+        tab_titles = ['Figure options', 'Per Curve options']
     # create popup widget if asked
     if popup:
         wid = PopupWidget(children=[wid], button_text='CED Menu')
@@ -1615,7 +1658,6 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
     display(wid)
 
     # set final tab titles
-    tab_titles = ['Figure options', 'Per Curve options', 'Save figure']
     if n_curves == 1:
         tab_titles[1] = 'Curve options'
     if popup:
@@ -1643,12 +1685,13 @@ def plot_ced(errors, figure_size=(9, 5), popup=False):
                                      container_border='1px solid black',
                                      toggle_button_font_weight='bold',
                                      border_visible=False)
-    format_save_figure_options(save_figure_wid, container_padding='6px',
-                               container_margin='6px',
-                               container_border='1px solid black',
-                               toggle_button_font_weight='bold',
-                               tab_top_margin='0cm',
-                               border_visible=False)
+    if save_options_visible:
+        format_save_figure_options(save_figure_wid, container_padding='6px',
+                                   container_margin='6px',
+                                   container_border='1px solid black',
+                                   toggle_button_font_weight='bold',
+                                   tab_top_margin='0cm',
+                                   border_visible=False)
 
     # Reset value to trigger initial visualization
     grid_visible.value = True

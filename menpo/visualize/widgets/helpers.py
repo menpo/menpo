@@ -3760,7 +3760,7 @@ def format_plot_options(plot_options_wid, container_padding='6px',
 
 
 def save_figure_options(figure_handle, format_default='png', dpi_default=None,
-                        orientation_default='landscape',
+                        orientation_default='portrait',
                         papertype_default='letter', transparent_default=False,
                         facecolor_default='w', edgecolor_default='w',
                         pad_inches_default=0.5, toggle_show_default=True,
@@ -3899,6 +3899,11 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
 
     # save function
     def save_function(name):
+        # set save button state
+        save_but.description = 'Saving...'
+        save_but.disabled = True
+
+        # save figure
         selected_dpi = dpi_wid.value
         if dpi_wid.value == 0:
             selected_dpi = None
@@ -3913,6 +3918,10 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
                               bbox_inches='tight',
                               pad_inches=pad_inches_wid.value,
                               frameon=None)
+
+        # set save button state
+        save_but.description = 'Save'
+        save_but.disabled = False
     save_but.on_click(save_function)
 
     # Toggle button function
