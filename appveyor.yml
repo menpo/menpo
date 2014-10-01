@@ -12,7 +12,10 @@ environment:
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: 3.4
+    - platform: x86
+      PYTHON_VERSION: 3.4
+    - platform: x64
+      PYTHON_VERSION: 3.4
 
 platform:
 - x86
