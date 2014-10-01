@@ -3344,16 +3344,21 @@ def plot_options(plot_options_default, plot_function=None,
                  toggle_show_visible=True, toggle_show_default=True):
     r"""
     Creates a widget with Plot Options. Specifically, it has:
-        1) A checkbox that controls line's visibility.
-        2) A checkbox that controls markers' visibility.
-        3) Options for line color, style and width.
-        4) Options for markers face color, edge color, size and style.
-        5) A toggle button that controls the visibility of all the above, i.e.
+        1) A drop down menu for curve selection.
+        2) A text area for the legend entry.
+        3) A checkbox that controls line's visibility.
+        4) A checkbox that controls markers' visibility.
+        5) Options for line color, style and width.
+        6) Options for markers face color, edge color, size and style.
+        7) A toggle button that controls the visibility of all the above, i.e.
            the plot options.
 
     The structure of the widgets is the following:
         plot_options_wid.children = [toggle_button, options]
-        options.children = [line_widget, marker_widget]
+        options.children = [curve_menu, per_curve_options_wid]
+        per_curve_options_wid = ContainerWidget(children=[legend_entry,
+                                                          line_marker_wid])
+        line_marker_wid = ContainerWidget(children=[line_widget, marker_widget])
         line_widget.children = [show_line_checkbox, line_options]
         marker_widget.children = [show_marker_checkbox, marker_options]
         line_options.children = [linestyle, linewidth, linecolor]
@@ -3366,22 +3371,32 @@ def plot_options(plot_options_default, plot_function=None,
     To fix the alignment within this widget please refer to
     `format_plot_options()` function.
 
-    To update the state of this widget, please refer to
-    `update_plot_options()` function.
-
     Parameters
     ----------
-    plot_options_default : `dict`
-        A dictionary with the initial selected plot options. Example:
-            plot_options_default={'show_line':True,
-                                  'linewidth':2,
-                                  'linecolor':'r',
-                                  'linestyle':'-',
-                                  'show_marker':True,
-                                  'markersize':20,
-                                  'markerfacecolor':'r',
-                                  'markeredgecolor':'b',
-                                  'markerstyle':'o'}
+    plot_options_default : list of `dict`
+        A list of dictionaries with the initial selected plot options per curve.
+        Example:
+            plot_options_1={'show_line':True,
+                            'linewidth':2,
+                            'linecolor':'r',
+                            'linestyle':'-',
+                            'show_marker':True,
+                            'markersize':20,
+                            'markerfacecolor':'r',
+                            'markeredgecolor':'b',
+                            'markerstyle':'o',
+                            'legend_entry':'final errors'}
+            plot_options_2={'show_line':False,
+                            'linewidth':3,
+                            'linecolor':'r',
+                            'linestyle':'-',
+                            'show_marker':True,
+                            'markersize':60,
+                            'markerfacecolor':[0.1, 0.2, 0.3],
+                            'markeredgecolor':'k',
+                            'markerstyle':'x',
+                            'legend_entry':'initial errors'}
+            plot_options_default = [plot_options_1, plot_options_2]
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -3393,23 +3408,43 @@ def plot_options(plot_options_default, plot_function=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
+    # make sure that plot_options_default is a list even with one member
+    if not isinstance(plot_options_default, list):
+        plot_options_default = [plot_options_default]
+
+    # find number of curves
+    n_curves = len(plot_options_default)
+
     #Create widgets
     # toggle button
     but = ToggleButtonWidget(description='Plot Options',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
+    # select curve drop down menu
+    curves_dict = OrderedDict()
+    for k in range(n_curves):
+        curves_dict['Curve ' + str(k)] = k
+    curve_selection = DropdownWidget(values=curves_dict,
+                                     value=0,
+                                     description='Select curve',
+                                     visible=n_curves > 1)
+
+    # legend entry
+    legend_entry = TextWidget(description='Legend entry',
+                              value=plot_options_default[0]['legend_entry'])
+
     # show line, show markers checkboxes
     show_line = CheckboxWidget(description='Show line',
-                               value=plot_options_default['show_line'])
+                               value=plot_options_default[0]['show_line'])
     show_marker = CheckboxWidget(description='Show markers',
-                                  value=plot_options_default['show_marker'])
+                                 value=plot_options_default[0]['show_marker'])
 
     # linewidth, markersize
     linewidth = FloatTextWidget(description='Width',
-                                value=plot_options_default['linewidth'])
+                                value=plot_options_default[0]['linewidth'])
     markersize = IntTextWidget(description='Size',
-                               value=plot_options_default['markersize'])
+                               value=plot_options_default[0]['markersize'])
 
     # markerstyle
     markerstyle_dict = OrderedDict()
@@ -3435,7 +3470,7 @@ def plot_options(plot_options_default, plot_function=None,
     markerstyle_dict['diamond'] = 'D'
     markerstyle_dict['thin diamond'] = 'd'
     markerstyle = DropdownWidget(values=markerstyle_dict,
-                                 value=plot_options_default['markerstyle'],
+                                 value=plot_options_default[0]['markerstyle'],
                                  description='Style')
 
     # linestyle
@@ -3445,17 +3480,17 @@ def plot_options(plot_options_default, plot_function=None,
     linestyle_dict['dash-dot'] = '-.'
     linestyle_dict['dotted'] = ':'
     linestyle = DropdownWidget(values=linestyle_dict,
-                               value=plot_options_default['linestyle'],
+                               value=plot_options_default[0]['linestyle'],
                                description='Style')
 
     # colors
-    # do not assign the plo_function here
-    linecolor = color_selection(plot_options_default['linecolor'],
+    # do not assign the plot_function here
+    linecolor = color_selection(plot_options_default[0]['linecolor'],
                                 title='Color')
-    markerfacecolor = color_selection(plot_options_default['markerfacecolor'],
-                                title='Face Color')
-    markeredgecolor = color_selection(plot_options_default['markeredgecolor'],
-                                title='Edge Color')
+    markerfacecolor = color_selection(plot_options_default[0]['markerfacecolor'],
+                                      title='Face Color')
+    markeredgecolor = color_selection(plot_options_default[0]['markeredgecolor'],
+                                      title='Edge Color')
 
     # Group widgets
     line_options = ContainerWidget(children=[linestyle, linewidth, linecolor])
@@ -3464,8 +3499,12 @@ def plot_options(plot_options_default, plot_function=None,
                                                markeredgecolor])
     line_wid = ContainerWidget(children=[show_line, line_options])
     marker_wid = ContainerWidget(children=[show_marker, marker_options])
-    options_wid = ContainerWidget(children=[line_wid, marker_wid])
-    plot_options_wid = ContainerWidget(children=[but, options_wid])
+    line_options_options_wid = ContainerWidget(children=[line_wid, marker_wid])
+    options_wid = ContainerWidget(children=[legend_entry,
+                                            line_options_options_wid])
+    options_and_curve_wid = ContainerWidget(children=[curve_selection,
+                                                      options_wid])
+    plot_options_wid = ContainerWidget(children=[but, options_and_curve_wid])
 
     # initialize output
     plot_options_wid.selected_options = plot_options_default
@@ -3503,50 +3542,112 @@ def plot_options(plot_options_default, plot_function=None,
         else:
             return color_wid.children[0].value
 
-    # get values
-    def get_values(name, value):
-        plot_options_wid.selected_options['show_line'] = show_line.value
-        plot_options_wid.selected_options['show_marker'] = show_marker.value
-        plot_options_wid.selected_options['linewidth'] = float(linewidth.value)
-        plot_options_wid.selected_options['linestyle'] = linestyle.value
-        plot_options_wid.selected_options['markersize'] = int(markersize.value)
-        plot_options_wid.selected_options['markerstyle'] = markerstyle.value
-        plot_options_wid.selected_options['linecolor'] = get_color(linecolor)
-        plot_options_wid.selected_options['markerfacecolor'] = \
-            get_color(markerfacecolor)
-        plot_options_wid.selected_options['markeredgecolor'] = \
-            get_color(markeredgecolor)
+    # assign options
+    def save_legend_entry(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['legend_entry'] = str(value)
+    legend_entry.on_trait_change(save_legend_entry, 'value')
 
-    show_line.on_trait_change(get_values, 'value')
-    linestyle.on_trait_change(get_values, 'value')
-    linewidth.on_trait_change(get_values, 'value')
-    linecolor.children[0].on_trait_change(get_values, 'value')
-    linecolor.children[1].children[0].on_trait_change(get_values, 'value')
-    linecolor.children[1].children[1].on_trait_change(get_values, 'value')
-    linecolor.children[1].children[2].on_trait_change(get_values, 'value')
-    show_marker.on_trait_change(get_values, 'value')
-    markerstyle.on_trait_change(get_values, 'value')
-    markersize.on_trait_change(get_values, 'value')
-    markerfacecolor.children[0].on_trait_change(get_values, 'value')
-    markerfacecolor.children[1].children[0].on_trait_change(get_values, 'value')
-    markerfacecolor.children[1].children[1].on_trait_change(get_values, 'value')
-    markerfacecolor.children[1].children[2].on_trait_change(get_values, 'value')
-    markeredgecolor.children[0].on_trait_change(get_values, 'value')
-    markeredgecolor.children[1].children[0].on_trait_change(get_values, 'value')
-    markeredgecolor.children[1].children[1].on_trait_change(get_values, 'value')
-    markeredgecolor.children[1].children[2].on_trait_change(get_values, 'value')
+    def save_show_line(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['show_line'] = value
+    show_line.on_trait_change(save_show_line, 'value')
+
+    def save_show_marker(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['show_marker'] = value
+    show_marker.on_trait_change(save_show_marker, 'value')
+
+    def save_linewidth(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['linewidth'] = float(value)
+    linewidth.on_trait_change(save_linewidth, 'value')
+
+    def save_linestyle(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['linestyle'] = value
+    linestyle.on_trait_change(save_linestyle, 'value')
+
+    def save_markersize(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['markersize'] = int(value)
+    markersize.on_trait_change(save_markersize, 'value')
+
+    def save_markerstyle(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['markerstyle'] = value
+    markerstyle.on_trait_change(save_markerstyle, 'value')
+
+    def save_linecolor(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['linecolor'] = get_color(linecolor)
+    linecolor.children[0].on_trait_change(save_linecolor, 'value')
+    linecolor.children[1].children[0].on_trait_change(save_linecolor, 'value')
+    linecolor.children[1].children[1].on_trait_change(save_linecolor, 'value')
+    linecolor.children[1].children[2].on_trait_change(save_linecolor, 'value')
+
+    def save_markerfacecolor(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['markerfacecolor'] = get_color(markerfacecolor)
+    markerfacecolor.children[0].on_trait_change(save_markerfacecolor, 'value')
+    markerfacecolor.children[1].children[0].on_trait_change(
+        save_markerfacecolor, 'value')
+    markerfacecolor.children[1].children[1].on_trait_change(
+        save_markerfacecolor, 'value')
+    markerfacecolor.children[1].children[2].on_trait_change(
+        save_markerfacecolor, 'value')
+
+    def save_markeredgecolor(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['markeredgecolor'] = get_color(markeredgecolor)
+    markeredgecolor.children[0].on_trait_change(save_markeredgecolor, 'value')
+    markeredgecolor.children[1].children[0].on_trait_change(
+        save_markeredgecolor, 'value')
+    markeredgecolor.children[1].children[1].on_trait_change(
+        save_markeredgecolor, 'value')
+    markeredgecolor.children[1].children[2].on_trait_change(
+        save_markeredgecolor, 'value')
+
+    # set correct value to slider when drop down menu value changes
+    def set_options(name, value):
+        legend_entry.value = plot_options_wid.selected_options[value]['legend_entry']
+        show_line.value = plot_options_wid.selected_options[value]['show_line']
+        show_marker.value = plot_options_wid.selected_options[value]['show_marker']
+        linewidth.value = plot_options_wid.selected_options[value]['linewidth']
+        linestyle.value = plot_options_wid.selected_options[value]['linestyle']
+        markersize.value = plot_options_wid.selected_options[value]['markersize']
+        markerstyle.value = plot_options_wid.selected_options[value]['markerstyle']
+        default_color = plot_options_wid.selected_options[value]['linecolor']
+        if not isinstance(default_color, str):
+            r_val = default_color[0]
+            g_val = default_color[1]
+            b_val = default_color[2]
+            default_color = 'custom'
+            linecolor.children[1].children[0].value = r_val
+            linecolor.children[1].children[1].value = g_val
+            linecolor.children[1].children[2].value = b_val
+        linecolor.children[0].value = default_color
+        default_color = plot_options_wid.selected_options[value]['markerfacecolor']
+        if not isinstance(default_color, str):
+            r_val = default_color[0]
+            g_val = default_color[1]
+            b_val = default_color[2]
+            default_color = 'custom'
+            markerfacecolor.children[1].children[0].value = r_val
+            markerfacecolor.children[1].children[1].value = g_val
+            markerfacecolor.children[1].children[2].value = b_val
+        markerfacecolor.children[0].value = default_color
+        default_color = plot_options_wid.selected_options[value]['markeredgecolor']
+        if not isinstance(default_color, str):
+            r_val = default_color[0]
+            g_val = default_color[1]
+            b_val = default_color[2]
+            default_color = 'custom'
+            markeredgecolor.children[1].children[0].value = r_val
+            markeredgecolor.children[1].children[1].value = g_val
+            markeredgecolor.children[1].children[2].value = b_val
+        markeredgecolor.children[0].value = default_color
+    curve_selection.on_trait_change(set_options, 'value')
 
     # Toggle button function
     def toggle_fun(name, value):
-        show_line.visible = value
-        show_marker.visible = value
-        line_options.visible = value
-        marker_options.visible = value
+        options_and_curve_wid.visible = value
     toggle_fun('', toggle_show_default)
     but.on_trait_change(toggle_fun, 'value')
 
     # assign plot_function
     if plot_function is not None:
+        legend_entry.on_trait_change(plot_function, 'value')
         show_line.on_trait_change(plot_function, 'value')
         linestyle.on_trait_change(plot_function, 'value')
         linewidth.on_trait_change(plot_function, 'value')
@@ -3581,7 +3682,8 @@ def plot_options(plot_options_default, plot_function=None,
 def format_plot_options(plot_options_wid, container_padding='6px',
                         container_margin='6px',
                         container_border='1px solid black',
-                        toggle_button_font_weight='bold', border_visible=True):
+                        toggle_button_font_weight='bold', border_visible=True,
+                        suboptions_border_visible=True):
     r"""
     Function that corrects the align (style format) of a given figure_options
     widget. Usage example:
@@ -3608,30 +3710,43 @@ def format_plot_options(plot_options_wid, container_padding='6px',
 
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
+
+    suboptions_border_visible : `boolean`, optional
+        Defines whether to draw the border line around the per curve options.
     """
     # align line options with checkbox
-    plot_options_wid.children[1].children[0].add_class('align-end')
+    plot_options_wid.children[1].children[1].children[1].children[0].\
+        add_class('align-end')
 
     # align marker options with checkbox
-    plot_options_wid.children[1].children[1].add_class('align-end')
+    plot_options_wid.children[1].children[1].children[1].children[1].\
+        add_class('align-end')
 
     # set text boxes width
-    plot_options_wid.children[1].children[0].children[1].children[1].\
+    plot_options_wid.children[1].children[1].children[1].children[0].children[1].children[1].\
         set_css('width', '1cm')
-    plot_options_wid.children[1].children[1].children[1].children[1].\
+    plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].\
         set_css('width', '1cm')
 
     # align line and marker options
-    plot_options_wid.children[1].remove_class('vbox')
-    plot_options_wid.children[1].add_class('hbox')
+    plot_options_wid.children[1].children[1].children[1].remove_class('vbox')
+    plot_options_wid.children[1].children[1].children[1].add_class('hbox')
+    if suboptions_border_visible:
+        plot_options_wid.children[1].children[1].set_css('margin',
+                                                         container_margin)
+        plot_options_wid.children[1].children[1].set_css('border',
+                                                         container_border)
+
+    # align curve selection with line and marker options
+    plot_options_wid.children[1].add_class('align-start')
 
     # format color options
     format_color_selection(
-        plot_options_wid.children[1].children[0].children[1].children[2])
+        plot_options_wid.children[1].children[1].children[1].children[0].children[1].children[2])
     format_color_selection(
-        plot_options_wid.children[1].children[1].children[1].children[2])
+        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[2])
     format_color_selection(
-        plot_options_wid.children[1].children[1].children[1].children[3])
+        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[3])
 
     # set toggle button font bold
     plot_options_wid.children[0].set_css('font-weight',
@@ -3642,55 +3757,6 @@ def format_plot_options(plot_options_wid, container_padding='6px',
     plot_options_wid.set_css('margin', container_margin)
     if border_visible:
         plot_options_wid.set_css('border', container_border)
-
-
-def update_plot_options(plot_options_wid, plot_options_dict):
-    r"""
-    Function that updates the state of a given plot_options widget. Usage
-    example:
-        plot_options_wid = plot_options(plot_options)
-        display(plot_options_wid)
-        format_plot_options(plot_options_wid)
-        update_plot_options(plot_options_wid, plot_options=plot_options)
-
-    Parameters
-    ----------
-    plot_options_wid :
-        The widget object generated by the `plot_options()` function.
-
-    plot_options_dict : `dict`
-        A dictionary with the initial selected plot options. Example:
-            plot_options_default={'show_line':True,
-                                  'linewidth':2,
-                                  'linecolor':'r',
-                                  'linestyle':'-',
-                                  'show_marker':True,
-                                  'markersize':20,
-                                  'markerfacecolor':'r',
-                                  'markeredgecolor':'b',
-                                  'markerstyle':'o'}
-    """
-    plot_options_wid.children[1].children[0].children[0].value = \
-        plot_options_dict['show_line']
-    plot_options_wid.children[1].children[0].children[1].children[0].value = \
-        plot_options_dict['linestyle']
-    plot_options_wid.children[1].children[0].children[1].children[1].value = \
-        plot_options_dict['linewidth']
-    update_color_selection(
-        plot_options_wid.children[1].children[0].children[1].children[2],
-        plot_options_dict['linecolor'])
-    plot_options_wid.children[1].children[1].children[0].value = \
-        plot_options_dict['show_marker']
-    plot_options_wid.children[1].children[1].children[1].children[0].value = \
-        plot_options_dict['markerstyle']
-    plot_options_wid.children[1].children[1].children[1].children[1].value = \
-        plot_options_dict['markersize']
-    update_color_selection(
-        plot_options_wid.children[1].children[1].children[1].children[2],
-        plot_options_dict['markerfacecolor'])
-    update_color_selection(
-        plot_options_wid.children[1].children[1].children[1].children[3],
-        plot_options_dict['markeredgecolor'])
 
 
 def save_figure_options(figure_handle, format_default='png', dpi_default=None,
@@ -3860,10 +3926,11 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
 
 
 def format_save_figure_options(save_figure_wid, container_padding='6px',
-                           container_margin='6px',
-                           container_border='1px solid black',
-                           toggle_button_font_weight='bold',
-                           border_visible=True):
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0.3cm',
+                               border_visible=True):
     r"""
     Function that corrects the align (style format) of a given
     save_figure_options widget. Usage example:
@@ -3882,6 +3949,9 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
     container_margin : `str`, optional
         The margin around the widget, e.g. '6px'
 
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
     container_border : `str`, optional
         The border around the widget, e.g. '1px solid black'
 
@@ -3892,7 +3962,7 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
     """
     # add margin on top of tabs widget
-    save_figure_wid.children[1].set_css('margin-top', '0.3cm')
+    save_figure_wid.children[1].set_css('margin-top', tab_top_margin)
 
     # set final tab titles
     tab_titles = ['Path', 'Page setup', 'Image color']
