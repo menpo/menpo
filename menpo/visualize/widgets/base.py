@@ -1,4 +1,6 @@
-from .helpers import (figure_options, format_figure_options, channel_options,
+from .helpers import (figure_options, format_figure_options,
+                      figure_options_two_scales,
+                      format_figure_options_two_scales, channel_options,
                       format_channel_options, update_channel_options,
                       landmark_options, format_landmark_options,
                       update_landmark_options, info_print, format_info_print,
@@ -11,9 +13,10 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       format_animation_options, plot_options,
                       format_plot_options, save_figure_options,
                       format_save_figure_options)
-from IPython.html.widgets import (interact, IntSliderWidget, PopupWidget,
-                                  ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, CheckboxWidget)
+from IPython.html.widgets import (FloatTextWidget, TextWidget, PopupWidget,
+                                  ContainerWidget, TabWidget, FloatSliderWidget,
+                                  RadioButtonsWidget, CheckboxWidget,
+                                  DropdownWidget, AccordionWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
@@ -1449,149 +1452,206 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     figure_options_wid.children[2].value = False
 
 
-def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
-             x_label=None, y_label=None, legend=None, colors=None,
-             markers=None, plot_size=(14, 7)):
+def plot_ced(errors, figure_size=(9, 5), popup=False):
     r"""
-    Plots the Cumulative Error Distribution (CED) graph given a list of
-    final fitting errors, or a list of lists containing final fitting errors.
+    Widget for visualizing the cumulative error curves of the provided errors.
+    The generated figures can be saved to files.
 
     Parameters
     -----------
-    final_errors : `list` of `floats` or `list` of `list` of `floats`
-        The list of final errors or a list containing a list of
-        final fitting errors.
-
-        .. note::
-        Using Menpo's fitting framework, the typical way to obtain a
-        list of final errors is to append calls to the method
-        ``final_error()`` on several fitting result objects:
-
-            ``final_errors = [fr.final_error() for fr in fitting_results]``
-
-        where ``fitting_results`` is a `list` of :map:`FittingResult`
-        objects.
-
-    x_axis : `list` of `float`, optional
-        The x axis to be used.
-
-    initial_errors : `list` of `floats`, optional.
-        The list of initial fitting errors.
-
-        .. note::
-        Using Menpo's fitting framework, the typical way to obtain a
-        list of initial errors is to append calls to the method
-        ``initial_error()`` on several fitting result objects:
-
-            ``initial_errors = [fr.initial_error() for fr in fitting_results]``
-
-        where ``fitting_results`` is a `list` of :map:`FittingResult`
-        objects.
-
-    title : `str`, optional
-        The figure title.
-
-    x_label : `str`, optional
-        The label associated to the x axis.
-
-    y_label : `str`, optional
-        The label associated to the y axis.
-
-    legend : `str` or `list` of `str`, optional
-
-    colors : `matplotlib color` or `list` of `matplotlib color`, optional
-        The color of the line to be plotted.
-
-    markers : `matplotlib marker` or `list` of `matplotlib marker`, optional
-        The marker of the line to be plotted.
+    errors : `list` of `list` of `float`
+        The list of errors to be used.
 
     figure_size : (`int`, `int`), optional
-        The size of the plotted figures.
+        The initial size of the plotted figures.
 
-    figure_scales : (`float`, `float`), optional
-        The range of scales that can be optionally applied to the figure.
-
-    kwargs : `dict`, optional
-        Passed through to the viewer.
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
     """
     from menpo.fitmultilevel.functions import compute_cumulative_error
 
-    if type(final_errors[0]) != list:
-        # if final_errors is not a list of lists, turn it into list of lists
-        final_errors = [final_errors]
+    # make sure that images is a list even with one image member
+    if not isinstance(errors[0], list):
+        errors = [errors]
 
-    if title is None:
-        title = 'Cumulative error distribution'
-    if x_label is None:
-        x_label = 'Error'
-    if y_label is None:
-        y_label = 'Proportion of images'
+    # find number of curves
+    n_curves = len(errors)
 
-    if colors is None:
-        # color are chosen at random
-        colors = [np.random.random((3,)) for _ in range(len(final_errors))]
-    elif len(colors) == 1 and len(final_errors) > 1:
-        colors = [colors[0] for _ in range(len(final_errors))]
-    elif len(colors) != len(final_errors):
-        raise ValueError('colors must be...'.format())
+    # compute cumulative error curves
+    x_axis = np.arange(0, 0.101, 0.005)
+    ceds = [compute_cumulative_error(e, x_axis) for e in errors]
+    x_axis = [x_axis] * len(ceds)
 
-    if markers is None:
-        # markers default to square
-        markers = ['s' for _ in range(len(final_errors))]
-    elif len(markers) == 1 and len(final_errors) > 1:
-        markers = [markers[0] for _ in range(len(final_errors))]
-    elif len(markers) != len(final_errors):
-        raise ValueError('markers must be...'.format())
+    # initialize plot options dictionaries and legend entries
+    colors = [np.random.random((3,)) for _ in range(n_curves)]
+    plot_options_list = []
+    legend_entries_list = []
+    for k in range(n_curves):
+        plot_options_list.append({'show_line':True,
+                                  'linewidth':2,
+                                  'linecolor':colors[k],
+                                  'linestyle':'-',
+                                  'show_marker':True,
+                                  'markersize':10,
+                                  'markerfacecolor':'w',
+                                  'markeredgecolor':colors[k],
+                                  'markerstyle':'s',
+                                  'legend_entry':"Curve {}".format(k)})
+        legend_entries_list.append("Curve " + str(k))
 
-    if legend is None:
-        length = len(final_errors)
-        if initial_errors:
-            length += 1
-        # number based legend
-        legend = [str(j) for j in range(length)]
+    # create figure
+    figure_id = plt.figure()
+
+    # define plot function
+    def plot_function(name, value):
+        clear_output(wait=True)
+        _plot_graph(figure_id,
+                    horizontal_axis_values=x_axis,
+                    vertical_axis_values=ceds,
+                    plot_options_list=plot_options_wid.selected_options,
+                    legend_visible=legend_visible.value,
+                    grid_visible=grid_visible.value,
+                    gridlinestyle=gridlinestyle.value,
+                    x_limit=x_axis_limit.value,
+                    y_limit=y_axis_limit.value,
+                    title=title.value,
+                    x_label=x_label.value,
+                    y_label=y_label.value,
+                    x_scale=fig.x_scale,
+                    y_scale=fig.y_scale,
+                    figure_size=figure_size,
+                    axes_fontsize=axes_fontsize.value,
+                    labels_fontsize=labels_fontsize.value)
+
+    # create options widgets
+    # x label, y label, title container
+    x_label = TextWidget(description='Horizontal axis label', value='Error')
+    y_label = TextWidget(description='Vertical axis label',
+                         value='Images Proportion')
+    title = TextWidget(description='Figure title',
+                       value='Cumulative error ditribution')
+    labels_wid = ContainerWidget(children=[x_label, y_label, title])
+
+    # figure size
+    fig = figure_options_two_scales(plot_function, x_scale_default=1.,
+                                    y_scale_default=1., coupled_default=False,
+                                    show_axes_default=True,
+                                    toggle_show_default=True,
+                                    figure_scales_bounds=(0.1, 2),
+                                    figure_scales_step=0.1,
+                                    figure_scales_visible=True,
+                                    show_axes_visible=False,
+                                    toggle_show_visible=False)
+    # fontsizes
+    labels_fontsize = FloatTextWidget(description='Labels fontsize', value=12.)
+    axes_fontsize = FloatTextWidget(description='Axes fontsize', value=12.)
+    fontsize_wid = ContainerWidget(children=[labels_fontsize, axes_fontsize])
+
+    # checkboxes
+    grid_visible = CheckboxWidget(description='Grid visible', value=False)
+    gridlinestyle_dict = OrderedDict()
+    gridlinestyle_dict['solid'] = '-'
+    gridlinestyle_dict['dashed'] = '--'
+    gridlinestyle_dict['dash-dot'] = '-.'
+    gridlinestyle_dict['dotted'] = ':'
+    gridlinestyle = DropdownWidget(values=gridlinestyle_dict,
+                                   value=':',
+                                   description='Grid style', disabled=False)
+
+    def gridlinestyle_visibility(name, value):
+        gridlinestyle.disabled = not value
+    grid_visible.on_trait_change(gridlinestyle_visibility, 'value')
+    legend_visible = CheckboxWidget(description='Legend visible', value=True)
+    checkbox_wid = ContainerWidget(children=[grid_visible, gridlinestyle,
+                                             legend_visible])
+
+    # container of various options
+    tmp_various_wid = ContainerWidget(children=[fontsize_wid, checkbox_wid])
+    various_wid = ContainerWidget(children=[fig, tmp_various_wid])
+
+    # axis limits
+    y_axis_limit = FloatSliderWidget(min=0., max=1.1, step=0.1,
+                                     description='Y axis limit', value=1.)
+    x_axis_limit = FloatSliderWidget(min=0.01, max=0.1, step=0.005,
+                                     description='X axis limit', value=0.05)
+    axis_limits_wid = ContainerWidget(children=[x_axis_limit, y_axis_limit])
+
+    # accordion widget
+    figure_wid = AccordionWidget(children=[axis_limits_wid, labels_wid,
+                                           various_wid])
+    figure_wid.set_title(0, 'Axes Limits')
+    figure_wid.set_title(1, 'Labels and Title')
+    figure_wid.set_title(2, 'Figure Size, Grid and Legend')
+
+    # per curve options
+    plot_options_wid = plot_options(plot_options_list,
+                                    plot_function=plot_function,
+                                    toggle_show_visible=False,
+                                    toggle_show_default=True)
+
+    # save figure options
+    save_figure_wid = save_figure_options(figure_id, toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # assign plot function
+    x_label.on_trait_change(plot_function, 'value')
+    y_label.on_trait_change(plot_function, 'value')
+    title.on_trait_change(plot_function, 'value')
+    grid_visible.on_trait_change(plot_function, 'value')
+    gridlinestyle.on_trait_change(plot_function, 'value')
+    legend_visible.on_trait_change(plot_function, 'value')
+    y_axis_limit.on_trait_change(plot_function, 'value')
+    x_axis_limit.on_trait_change(plot_function, 'value')
+    labels_fontsize.on_trait_change(plot_function, 'value')
+    axes_fontsize.on_trait_change(plot_function, 'value')
+
+    # create final widget
+    wid = TabWidget(children=[figure_wid, plot_options_wid, save_figure_wid])
+    # create popup widget if asked
+    if popup:
+        wid = PopupWidget(children=[wid], button_text='CED Menu')
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    tab_titles = ['Figure options', 'Per Curve options', 'Save figure']
+    if n_curves == 1:
+        tab_titles[1] = 'Curve options'
+    if popup:
+        for (k, tl) in enumerate(tab_titles):
+            wid.children[0].set_title(k, tl)
     else:
-        if initial_errors:
-            if len(legend) != len(final_errors)+1:
-                raise ValueError('legend must be...'.format())
-        else:
-            if len(legend) != len(final_errors):
-                raise ValueError('legend must be...'.format())
+        for (k, tl) in enumerate(tab_titles):
+            wid.set_title(k, tl)
 
-    if x_axis is None:
-        # assume final_errors are computed using norm_me
-        x_axis = np.arange(0, 0.101, 0.005)
+    # format options' widgets
+    labels_wid.add_class('align-end')
+    axis_limits_wid.add_class('align-start')
+    fontsize_wid.add_class('align-end')
+    fontsize_wid.set_css('margin-right', '1cm')
+    checkbox_wid.add_class('align-end')
+    tmp_various_wid.remove_class('vbox')
+    tmp_various_wid.add_class('hbox')
+    format_plot_options(plot_options_wid, container_padding='1px',
+                        container_margin='1px',
+                        container_border='1px solid black',
+                        toggle_button_font_weight='bold', border_visible=False,
+                        suboptions_border_visible=True)
+    format_figure_options_two_scales(fig, container_padding='6px',
+                                     container_margin='6px',
+                                     container_border='1px solid black',
+                                     toggle_button_font_weight='bold',
+                                     border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm',
+                               border_visible=False)
 
-    if initial_errors:
-        # compute cumulative error for the initial errors
-        initial_cumulative_error = compute_cumulative_error(initial_errors,
-                                                            x_axis)
-
-    # compute cumulative errors
-    final_cumulative_errors = [compute_cumulative_error(e, x_axis)
-                               for e in final_errors]
-
-    def plot_graph(x_limit):
-
-        if initial_errors:
-            plt.plot(x_axis, initial_cumulative_error,
-                     color='black',  marker='*')
-
-        for fce, c, m in zip(final_cumulative_errors, colors, markers):
-            plt.plot(x_axis, fce, color=c,  marker=m)
-
-        plt.grid(True)
-        ax = plt.gca()
-
-        plt.title(title)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        plt.legend(legend, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-        plt.xlim([0, x_limit])
-
-        plt.gcf().set_size_inches(plot_size)
-
-    interact(plot_graph, x_limit=(0.0, x_axis[-1], 0.001))
+    # Reset value to trigger initial visualization
+    grid_visible.value = True
 
 
 def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
@@ -1808,6 +1868,140 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
     # turn axis on/off
     if not axes_visible:
         plt.axis('off')
+
+    # show plot
+    plt.show()
+
+
+def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
+                plot_options_list, legend_visible, grid_visible, gridlinestyle,
+                x_limit, y_limit, title, x_label, y_label, x_scale, y_scale,
+                figure_size, axes_fontsize, labels_fontsize):
+    r"""
+    Helper function that plots a graph given a set of selected options. It
+    supports plotting of multiple curves.
+
+    Parameters
+    -----------
+    figure_id :
+        The handle of the figure to be saved.
+
+    horizontal_axis_values : `list` of `list`
+        The horizontal axis values of each curve.
+
+    vertical_axis_values : `list` of `list`
+        The horizontal axis values of each curve.
+
+    plot_options_list : `list` of `dict`
+        The plot options for each curve. A typical plot options dictionary has
+        the following elements:
+            {'show_line':True,
+             'linewidth':2,
+             'linecolor':'r',
+             'linestyle':'-',
+             'show_marker':True,
+             'markersize':20,
+             'markerfacecolor':'r',
+             'markeredgecolor':'b',
+             'markerstyle':'o',
+             'legend_entry':'final errors'}
+
+    legend_visible : `boolean`
+        Flag that determines whether to show the legend of the plot.
+
+    grid_visible : `boolean`
+        Flag that determines whether to show the grid of the plot.
+
+    gridlinestyle : `str`
+        The style of the grid lines.
+
+    x_limit : `float`
+        The limit of the horizontal axis.
+
+    y_limit : `float`
+        The limit of the vertical axis.
+
+    title : `str`
+        The title of the figure.
+
+    x_label : `str`
+        The label of the horizontal axis.
+
+    y_label : `str`
+        The label of the vertical axis.
+
+    x_scale : `float`
+        The scale of horizontal axis.
+
+    y_scale : `float`
+        The scale of vertical axis.
+
+    figure_size : (`int`, `int`)
+        The size of the plotted figure.
+
+    axes_fontsize : `float`
+        The fontsize of the axes' markers.
+
+    labels_fontsize : `float`
+        The fontsize of the title, x_label, y_label and legend.
+    """
+    # select figure
+    plt.figure(figure_id.number)
+
+    # plot all curves with the provided plot options
+    for x_vals, y_vals, options in zip(horizontal_axis_values,
+                                       vertical_axis_values, plot_options_list):
+        # check if line is enabled
+        linestyle = options['linestyle']
+        if not options['show_line']:
+            linestyle = 'None'
+        # check if markers are enabled
+        markerstyle = options['markerstyle']
+        if not options['show_marker']:
+            markerstyle = 'None'
+        # plot
+        plt.plot(x_vals, y_vals,
+                 linestyle=linestyle,
+                 marker=markerstyle,
+                 color=options['linecolor'],
+                 linewidth=options['linewidth'],
+                 markersize=options['markersize'],
+                 markerfacecolor=options['markerfacecolor'],
+                 markeredgecolor=options['markeredgecolor'],
+                 label=options['legend_entry'])
+        plt.hold(True)
+
+    # turn hold off
+    plt.hold(False)
+
+    # turn grid on/off
+    if grid_visible:
+        plt.grid(grid_visible, linestyle=gridlinestyle)
+
+    # set title, x_label, y_label
+    plt.title(title, fontsize=labels_fontsize)
+    plt.gca().set_xlabel(x_label, fontsize=labels_fontsize)
+    plt.gca().set_ylabel(y_label, fontsize=labels_fontsize)
+
+    # set axes fontsize
+    for l in (plt.gca().get_xticklabels() + plt.gca().get_yticklabels()):
+        l.set_fontsize(axes_fontsize)
+
+    # create legend if asked
+    if legend_visible:
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.,
+                   fontsize=labels_fontsize)
+
+    # set figure size and aspect ratio
+    size = [x_scale, y_scale] * np.asarray(figure_size)
+    plt.gcf().set_size_inches(size)
+    aspect = size[1] / size[0]
+    aspect *= x_limit / y_limit
+    plt.gca().set(adjustable='box', aspect=aspect)
+
+    # set axes limits
+    plt.xlim([0., x_limit])
+    plt.ylim([0., y_limit])
 
     # show plot
     plt.show()
