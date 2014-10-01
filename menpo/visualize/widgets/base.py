@@ -16,7 +16,7 @@ from .helpers import (figure_options, format_figure_options,
 from IPython.html.widgets import (FloatTextWidget, TextWidget, PopupWidget,
                                   ContainerWidget, TabWidget, FloatSliderWidget,
                                   RadioButtonsWidget, CheckboxWidget,
-                                  DropdownWidget, AccordionWidget)
+                                  DropdownWidget, AccordionWidget, ButtonWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
@@ -1470,6 +1470,8 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                         value='me_norm',
                                         description='Error type')
     error_type_wid.on_trait_change(update_info, 'value')
+    plot_ced_but = ButtonWidget(description='Plot CED')
+    error_wid = ContainerWidget(children=[error_type_wid, plot_ced_but])
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -1509,8 +1511,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 value = True
 
     # Create final widget
-    options_wid = TabWidget(children=[channel_options_wid, figure_options_wid,
-                                      error_type_wid])
+    options_wid = TabWidget(children=[channel_options_wid, figure_options_wid])
     result_wid = TabWidget(children=[final_result_wid, iterations_wid])
     result_wid.on_trait_change(results_tab_fun, 'selected_index')
     result_wid.on_trait_change(plot_function, 'selected_index')
@@ -1528,21 +1529,62 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
 
         # final widget
         tab_wid = TabWidget(children=[info_wid, result_wid, options_wid,
-                                      save_figure_wid])
+                                      error_wid, save_figure_wid])
         tab_wid.on_trait_change(save_fig_tab_fun, 'selected_index')
         wid = ContainerWidget(children=[image_number_wid, tab_wid])
-        tab_titles = ['Info', 'Result', 'Options', 'Save figure']
+        tab_titles = ['Info', 'Result', 'Options', 'CED', 'Save figure']
         button_title = 'Fitting Results Menu'
     else:
         # final widget
-        wid = TabWidget(children=[info_wid, result_wid, options_wid,
+        wid = TabWidget(children=[info_wid, result_wid, options_wid, error_wid,
                                   save_figure_wid])
         wid.on_trait_change(save_fig_tab_fun, 'selected_index')
-        tab_titles = ['Image info', 'Result', 'Options', 'Save figure']
+        tab_titles = ['Image info', 'Result', 'Options', 'CED', 'Save figure']
         button_title = 'Fitting Result Menu'
     # create popup widget if asked
     if popup:
         wid = PopupWidget(children=[wid], button_text=button_title)
+
+    # invoke plot_ced widget
+    def plot_ced_fun(name):
+        # Make button invisible, so that it cannot be pressed again until
+        # widget closes
+        plot_ced_but.visible = False
+
+        # get error type
+        error_type = error_type_wid.value
+
+        # create errors list
+        fit_errors = [f.final_error(error_type=error_type)
+                      for f in fitting_results]
+        initial_errors = [f.initial_error(error_type=error_type)
+                          for f in fitting_results]
+        errors = [fit_errors, initial_errors]
+
+        # call plot_ced
+        plot_ced_widget = plot_ced(errors, figure_size=(9, 5), popup=True,
+                                   error_type=error_type, error_range=None)
+
+        # If another tab is selected, then close the widget.
+        def close_plot_ced_fun(name, value):
+            if value != 3:
+                plot_ced_widget.close()
+                plot_ced_but.visible = True
+        if n_fitting_results > 1:
+            tab_wid.on_trait_change(close_plot_ced_fun, 'selected_index')
+        else:
+            if popup:
+                wid.children[0].on_trait_change(close_plot_ced_fun,
+                                                'selected_index')
+            else:
+                wid.on_trait_change(close_plot_ced_fun, 'selected_index')
+
+        # If another error type, then close the widget
+        def close_plot_ced_fun_2(name, value):
+            plot_ced_widget.close()
+            plot_ced_but.visible = True
+        error_type_wid.on_trait_change(close_plot_ced_fun_2, 'value')
+    plot_ced_but.on_click(plot_ced_fun)
 
     # display final widget
     display(wid)
@@ -1566,7 +1608,6 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     result_wid.set_title(1, 'Iterations')
     options_wid.set_title(0, 'Channels')
     options_wid.set_title(1, 'Figure')
-    options_wid.set_title(2, 'Error Type')
 
     # format options' widgets
     if n_fitting_results > 1:
@@ -1848,6 +1889,8 @@ def plot_ced(errors, figure_size=(9, 5), popup=False, error_type='me_norm',
 
     # Reset value to trigger initial visualization
     grid_visible.value = True
+
+    return wid
 
 
 def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
@@ -2173,9 +2216,6 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
                  label=options['legend_entry'])
         plt.hold(True)
 
-    # turn hold off
-    plt.hold(False)
-
     # turn grid on/off
     if grid_visible:
         plt.grid(grid_visible, linestyle=gridlinestyle)
@@ -2199,7 +2239,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
     plt.gcf().set_size_inches(size)
     aspect = size[1] / size[0]
     aspect *= x_limit / y_limit
-    plt.gca().set(adjustable='box', aspect=aspect)
+    plt.gca().set(adjustable='box', aspect=float(aspect))
 
     # set axes limits
     plt.xlim([0., x_limit])
