@@ -18,8 +18,7 @@ requirements:
     - scipy 0.14.0
     - matplotlib 1.4.0
     - scikit-learn 0.15.2
-    - imaging 1.1.7 # [not py3k]
-    - pillow  2.5.1 # [py3k]
+    - pillow  2.5.1
     - mayavi  4.3.1 # [not py3k]
 
     # Menpo Project
