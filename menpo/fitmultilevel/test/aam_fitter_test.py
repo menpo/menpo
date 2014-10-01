@@ -4,6 +4,7 @@ from nose.plugins.attrib import attr
 import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
+import platform
 
 import menpo.io as mio
 from menpo.feature import igo
@@ -439,9 +440,11 @@ def test_projectout_ic():
                'me_norm')
 
 
-@attr('fuzzy')
-def test_alternating_fa():
-    aam_helper(aam, AlternatingForwardAdditive, 0, 8, 33.13639, 25.78991, 'me')
+if platform.system() != 'Windows':
+    # https://github.com/menpo/menpo/issues/450
+    @attr('fuzzy')
+    def test_alternating_fa():
+        aam_helper(aam, AlternatingForwardAdditive, 0, 8, 33.13639, 25.78991, 'me')
 
 
 @attr('fuzzy')
@@ -459,12 +462,12 @@ def test_simultaneous_fa():
 def test_projectout_fa():
     aam_helper(aam, ProjectOutForwardAdditive, 3, 6, 134.29103, 174.47549, 'me')
 
-
-@attr('fuzzy')
-def test_alternating_fc():
-    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 27.56395, 22.16998,
-               'rmse')
-
+if platform.system() != 'Windows':
+    # https://github.com/menpo/menpo/issues/450
+    @attr('fuzzy')
+    def test_alternating_fc():
+        aam_helper(aam, AlternatingForwardCompositional, 0, 6, 27.56395, 22.16998,
+                   'rmse')
 
 @attr('fuzzy')
 def test_adaptive_fc():
