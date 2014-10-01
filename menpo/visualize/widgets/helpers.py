@@ -2,7 +2,8 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   IntSliderWidget, CheckboxWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
-                                  ButtonWidget, SelectWidget, FloatTextWidget)
+                                  ButtonWidget, SelectWidget, FloatTextWidget,
+                                  TextWidget, TabWidget)
 import numpy as np
 from collections import OrderedDict
 
@@ -3690,6 +3691,226 @@ def update_plot_options(plot_options_wid, plot_options_dict):
     update_color_selection(
         plot_options_wid.children[1].children[1].children[1].children[3],
         plot_options_dict['markeredgecolor'])
+
+
+def save_figure_options(figure_handle, format_default='png', dpi_default=None,
+                        orientation_default='landscape',
+                        papertype_default='letter', transparent_default=False,
+                        facecolor_default='w', edgecolor_default='w',
+                        pad_inches_default=0.5, toggle_show_default=True,
+                        toggle_show_visible=True):
+    r"""
+    Creates a widget with Save Figure Options.
+
+    The structure of the widgets is the following:
+        save_figure_wid.children = [toggle_button, options, save_button]
+        options.children = [path, page_setup, image_color]
+        path.children = [filename, format, papertype]
+        page_setup.children = [orientation, dpi, pad_inches]
+        image_color.children = [facecolor, edgecolor, transparent]
+
+    To fix the alignment within this widget please refer to
+    `format_save_figure_options()` function.
+
+    Parameters
+    ----------
+    figure_handle : `float`
+        The handle of the figure to be saved.
+
+    format_default : `str`, optional
+        The default value of the format.
+
+    dpi_default : `float`, optional
+        The default value of the dpi.
+
+    orientation_default : `str`, optional
+        The default value of the orientation. 'portrait' or 'landscape'.
+
+    papertype_default : `str`, optional
+        The default value of the papertype.
+
+    transparent_default : `boolean`, optional
+        The default value of the transparency flag.
+
+    facecolor_default : `str` or `list` of `float`, optional
+        The default value of the facecolor.
+
+    edgecolor_default : `str` or `list` of `float`, optional
+        The default value of the edgecolor.
+
+    pad_inches_default : `float`, optional
+        The default value of the figure padding in inches.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    from os import getcwd
+    from os.path import join, splitext
+
+    # create widgets
+    but = ToggleButtonWidget(description='Save Figure',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+    format_dict = OrderedDict()
+    format_dict['png'] = 'png'
+    format_dict['jpg'] = 'jpg'
+    format_dict['pdf'] = 'pdf'
+    format_dict['eps'] = 'eps'
+    format_dict['postscript'] = 'ps'
+    format_dict['svg'] = 'svg'
+    format_wid = SelectWidget(values=format_dict, value=format_default,
+                              description='Format')
+
+    def papertype_visibility(name, value):
+        papertype_wid.disabled = not value == 'ps'
+    format_wid.on_trait_change(papertype_visibility, 'value')
+
+    def set_extension(name, value):
+        fileName, fileExtension = splitext(filename.value)
+        filename.value = fileName + '.' + value
+    format_wid.on_trait_change(set_extension, 'value')
+    if dpi_default is None:
+        dpi_default = 0
+    dpi_wid = FloatTextWidget(description='DPI', value=dpi_default)
+    orientation_dict = OrderedDict()
+    orientation_dict['portrait'] = 'portrait'
+    orientation_dict['landscape'] = 'landscape'
+    orientation_wid = DropdownWidget(values=orientation_dict,
+                                     value=orientation_default,
+                                     description='Orientation')
+    papertype_dict = OrderedDict()
+    papertype_dict['letter'] = 'letter'
+    papertype_dict['legal'] = 'legal'
+    papertype_dict['executive'] = 'executive'
+    papertype_dict['ledger'] = 'ledger'
+    papertype_dict['a0'] = 'a0'
+    papertype_dict['a1'] = 'a1'
+    papertype_dict['a2'] = 'a2'
+    papertype_dict['a3'] = 'a3'
+    papertype_dict['a4'] = 'a4'
+    papertype_dict['a5'] = 'a5'
+    papertype_dict['a6'] = 'a6'
+    papertype_dict['a7'] = 'a7'
+    papertype_dict['a8'] = 'a8'
+    papertype_dict['a9'] = 'a9'
+    papertype_dict['a10'] = 'a10'
+    papertype_dict['b0'] = 'b0'
+    papertype_dict['b1'] = 'b1'
+    papertype_dict['b2'] = 'b2'
+    papertype_dict['b3'] = 'b3'
+    papertype_dict['b4'] = 'b4'
+    papertype_dict['b5'] = 'b5'
+    papertype_dict['b6'] = 'b6'
+    papertype_dict['b7'] = 'b7'
+    papertype_dict['b8'] = 'b8'
+    papertype_dict['b9'] = 'b9'
+    papertype_dict['b10'] = 'b10'
+    papertype_wid = DropdownWidget(values=papertype_dict,
+                                   value=papertype_default,
+                                   description='Papertype',
+                                   disabled=not format_default == 'ps')
+    transparent_wid = CheckboxWidget(description='Transparent',
+                                     value=transparent_default)
+    facecolor_wid = color_selection(facecolor_default, title='Facecolor')
+    edgecolor_wid = color_selection(edgecolor_default, title='Edgecolor')
+    pad_inches_wid = FloatTextWidget(description='Pad (inch)',
+                                     value=pad_inches_default)
+    filename = TextWidget(description='Path',
+                          value=join(getcwd(), 'Untitled.' + format_default))
+    save_but = ButtonWidget(description='Save')
+
+    # create final widget
+    path_wid = ContainerWidget(children=[filename, format_wid, papertype_wid])
+    page_wid = ContainerWidget(children=[orientation_wid, dpi_wid,
+                                         pad_inches_wid])
+    color_wid = ContainerWidget(children=[facecolor_wid, edgecolor_wid,
+                                          transparent_wid])
+    options_wid = TabWidget(children=[path_wid, page_wid, color_wid])
+    save_figure_wid = ContainerWidget(children=[but, options_wid, save_but])
+
+    # save function
+    def save_function(name):
+        selected_dpi = dpi_wid.value
+        if dpi_wid.value == 0:
+            selected_dpi = None
+        figure_handle.savefig(filename.value,
+                              dpi=selected_dpi,
+                              facecolor=facecolor_wid.selected_color,
+                              edgecolor=edgecolor_wid.selected_color,
+                              orientation=orientation_wid.value,
+                              papertype=papertype_wid.value,
+                              format=format_wid.value,
+                              transparent=transparent_wid.value,
+                              bbox_inches='tight',
+                              pad_inches=pad_inches_wid.value,
+                              frameon=None)
+    save_but.on_click(save_function)
+
+    # Toggle button function
+    def show_options(name, value):
+        options_wid.visible = value
+        save_but.visible = value
+    show_options('', toggle_show_default)
+    but.on_trait_change(show_options, 'value')
+
+    return save_figure_wid
+
+
+def format_save_figure_options(save_figure_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold',
+                           border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given
+    save_figure_options widget. Usage example:
+        save_figure_wid = save_figure_options()
+        display(save_figure_wid)
+        format_save_figure_options(save_figure_wid)
+
+    Parameters
+    ----------
+    save_figure_wid :
+        The widget object generated by the `save_figure_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # add margin on top of tabs widget
+    save_figure_wid.children[1].set_css('margin-top', '0.3cm')
+
+    # set final tab titles
+    tab_titles = ['Path', 'Page setup', 'Image color']
+    for (k, tl) in enumerate(tab_titles):
+        save_figure_wid.children[1].set_title(k, tl)
+
+    format_color_selection(save_figure_wid.children[1].children[2].children[0])
+    format_color_selection(save_figure_wid.children[1].children[2].children[1])
+
+    # set toggle button font bold
+    save_figure_wid.children[0].set_css('font-weight',
+                                        toggle_button_font_weight)
+
+    # margin and border around container widget
+    save_figure_wid.set_css('padding', container_padding)
+    save_figure_wid.set_css('margin', container_margin)
+    if border_visible:
+        save_figure_wid.set_css('border', container_border)
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
