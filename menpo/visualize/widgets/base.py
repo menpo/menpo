@@ -59,6 +59,10 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get selected image number
         im = 0
         if n_images > 1:
@@ -69,29 +73,32 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                     channel_options_wid.image_is_masked,
                     landmark_options_wid.group)
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show image with selected options
-        _plot_figure(image=images[im],
-                     image_enabled=True,
-                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
-                     image_is_masked=channel_options_wid.image_is_masked,
-                     masked_enabled=channel_options_wid.masked_enabled,
-                     channels=channel_options_wid.channels,
-                     glyph_enabled=channel_options_wid.glyph_enabled,
-                     glyph_block_size=channel_options_wid.glyph_block_size,
-                     glyph_use_negative=channel_options_wid.glyph_use_negative,
-                     sum_enabled=channel_options_wid.sum_enabled,
-                     groups=[landmark_options_wid.group],
-                     with_labels=[landmark_options_wid.with_labels],
-                     groups_colours=dict(),
-                     subplots_enabled=False,
-                     subplots_titles=dict(),
-                     image_axes_mode=True,
-                     legend_enabled=landmark_options_wid.legend_enabled,
-                     x_scale=figure_options_wid.x_scale,
-                     y_scale=figure_options_wid.x_scale,
-                     axes_visible=figure_options_wid.axes_visible,
-                     figure_size=figure_size,
-                     **kwargs)
+        new_figure_id = _plot_figure(
+            image=images[im], figure_id=figure_id, image_enabled=True,
+            landmarks_enabled=landmark_options_wid.landmarks_enabled,
+            image_is_masked=channel_options_wid.image_is_masked,
+            masked_enabled=channel_options_wid.masked_enabled,
+            channels=channel_options_wid.channels,
+            glyph_enabled=channel_options_wid.glyph_enabled,
+            glyph_block_size=channel_options_wid.glyph_block_size,
+            glyph_use_negative=channel_options_wid.glyph_use_negative,
+            sum_enabled=channel_options_wid.sum_enabled,
+            groups=[landmark_options_wid.group],
+            with_labels=[landmark_options_wid.with_labels],
+            groups_colours=dict(), subplots_enabled=False,
+            subplots_titles=dict(), image_axes_mode=True,
+            legend_enabled=landmark_options_wid.legend_enabled,
+            x_scale=figure_options_wid.x_scale,
+            y_scale=figure_options_wid.x_scale,
+            axes_visible=figure_options_wid.axes_visible,
+            figure_size=figure_size, **kwargs)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # define function that updates info text
     def update_info(image, image_is_masked, group):
@@ -145,6 +152,10 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                         toggle_show_visible=False)
     info_wid = info_print(toggle_show_default=True,
                           toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -179,13 +190,14 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # final widget
         cont_wid = TabWidget(children=[info_wid, channel_options_wid,
                                        landmark_options_wid,
-                                       figure_options_wid])
+                                       figure_options_wid, save_figure_wid])
         wid = ContainerWidget(children=[image_number_wid, cont_wid])
         button_title = 'Images Menu'
     else:
         # final widget
         wid = TabWidget(children=[info_wid, channel_options_wid,
-                                  landmark_options_wid, figure_options_wid])
+                                  landmark_options_wid, figure_options_wid,
+                                  save_figure_wid])
         button_title = 'Image Menu'
     # create popup widget if asked
     if popup:
@@ -196,7 +208,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # set final tab titles
     tab_titles = ['Image info', 'Channels options', 'Landmarks options',
-                  'Figure options']
+                  'Figure options', 'Save figure']
     if popup:
         if n_images > 1:
             for (k, tl) in enumerate(tab_titles):
@@ -243,6 +255,11 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                       container_margin='6px',
                       container_border='1px solid black',
                       toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
 
     # update widgets' state for image number 0
     update_widgets('', 0)
@@ -304,6 +321,10 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
     # Define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get params
         level = 0
         if n_levels > 1:
@@ -318,8 +339,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
         # compute weights
         weights = parameters_values * shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5
 
-        # clear current figure
-        clear_output(wait=True)
+        # select figure
+        figure_id = plt.figure(save_figure_wid.figure_id.number)
 
         # invert axis if image mode is enabled
         if axis_mode == 1:
@@ -377,6 +398,9 @@ def visualize_shape_model(shape_models, n_parameters=5,
             plt.axis('off')
         plt.show()
 
+        # save the current figure id
+        save_figure_wid.figure_id = figure_id
+
         # change info_wid info
         txt = "$\\bullet~\\texttt{Level: " + "{}".format(level+1) + \
               " out of " + "{}".format(n_levels) + \
@@ -396,15 +420,26 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show eigenvalues plots
-        _plot_eigenvalues(shape_models[level], figure_size,
-                          figure_options_wid.x_scale,
-                          figure_options_wid.y_scale)
+        new_figure_id = _plot_eigenvalues(figure_id, shape_models[level],
+                                          figure_size,
+                                          figure_options_wid.x_scale,
+                                          figure_options_wid.y_scale)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # create options widgets
     mode_dict = OrderedDict()
@@ -442,6 +477,10 @@ def visualize_shape_model(shape_models, n_parameters=5,
     ch.insert(3, axes_mode_wid)
     figure_options_wid.children = ch
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -467,7 +506,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
         radio_children = [mode_wid, mean_wid]
     radio_wids = ContainerWidget(children=radio_children)
     tmp_wid = ContainerWidget(children=[radio_wids, model_parameters_wid])
-    wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid])
+    wid = TabWidget(children=[tmp_wid, figure_options_wid, info_wid,
+                              save_figure_wid])
     if popup:
         wid = PopupWidget(children=[wid], button_text='Shape Model Menu')
 
@@ -475,7 +515,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
     display(wid)
 
     # set final tab titles
-    tab_titles = ['Shape parameters', 'Figure options', 'Model info']
+    tab_titles = ['Shape parameters', 'Figure options', 'Model info',
+                  'Save figure']
     if popup:
         for (k, tl) in enumerate(tab_titles):
             wid.children[0].set_title(k, tl)
@@ -500,6 +541,11 @@ def visualize_shape_model(shape_models, n_parameters=5,
                       container_margin='6px',
                       container_border='1px solid black',
                       toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
 
     # update widgets' state for image number 0
     update_widgets('', 0)
@@ -565,6 +611,10 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
 
     # define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get selected level
         level = 0
         if n_levels > 1:
@@ -577,29 +627,32 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
         weights = parameters_values * appearance_models[level].eigenvalues[:len(parameters_values)] ** 0.5
         instance = appearance_models[level].instance(weights)
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show image with selected options
-        _plot_figure(image=instance,
-                     image_enabled=True,
-                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
-                     image_is_masked=channel_options_wid.image_is_masked,
-                     masked_enabled=channel_options_wid.masked_enabled,
-                     channels=channel_options_wid.channels,
-                     glyph_enabled=channel_options_wid.glyph_enabled,
-                     glyph_block_size=channel_options_wid.glyph_block_size,
-                     glyph_use_negative=channel_options_wid.glyph_use_negative,
-                     sum_enabled=channel_options_wid.sum_enabled,
-                     groups=[landmark_options_wid.group],
-                     with_labels=[landmark_options_wid.with_labels],
-                     groups_colours=dict(),
-                     subplots_enabled=False,
-                     subplots_titles=dict(),
-                     image_axes_mode=True,
-                     legend_enabled=landmark_options_wid.legend_enabled,
-                     x_scale=figure_options_wid.x_scale,
-                     y_scale=figure_options_wid.y_scale,
-                     axes_visible=figure_options_wid.axes_visible,
-                     figure_size=figure_size,
-                     **kwargs)
+        new_figure_id = _plot_figure(
+            image=instance, figure_id=figure_id, image_enabled=True,
+            landmarks_enabled=landmark_options_wid.landmarks_enabled,
+            image_is_masked=channel_options_wid.image_is_masked,
+            masked_enabled=channel_options_wid.masked_enabled,
+            channels=channel_options_wid.channels,
+            glyph_enabled=channel_options_wid.glyph_enabled,
+            glyph_block_size=channel_options_wid.glyph_block_size,
+            glyph_use_negative=channel_options_wid.glyph_use_negative,
+            sum_enabled=channel_options_wid.sum_enabled,
+            groups=[landmark_options_wid.group],
+            with_labels=[landmark_options_wid.with_labels],
+            groups_colours=dict(), subplots_enabled=False,
+            subplots_titles=dict(), image_axes_mode=True,
+            legend_enabled=landmark_options_wid.legend_enabled,
+            x_scale=figure_options_wid.x_scale,
+            y_scale=figure_options_wid.y_scale,
+            axes_visible=figure_options_wid.axes_visible,
+            figure_size=figure_size, **kwargs)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
         # update info text widget
         update_info(instance, level, landmark_options_wid.group)
@@ -637,15 +690,26 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show eigenvalues plots
-        _plot_eigenvalues(appearance_models[level], figure_size,
-                          figure_options_wid.x_scale,
-                          figure_options_wid.y_scale)
+        new_figure_id = _plot_eigenvalues(figure_id, appearance_models[level],
+                                          figure_size,
+                                          figure_options_wid.x_scale,
+                                          figure_options_wid.y_scale)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # create options widgets
     model_parameters_wid = model_parameters(n_parameters[0], plot_function,
@@ -674,6 +738,10 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                         toggle_show_default=True,
                                         toggle_show_visible=False)
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -705,7 +773,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
     tmp_wid = ContainerWidget(children=tmp_children)
     wid = TabWidget(children=[tmp_wid, channel_options_wid,
                               landmark_options_wid, figure_options_wid,
-                              info_wid])
+                              info_wid, save_figure_wid])
     if popup:
         wid = PopupWidget(children=[wid], button_text='Appearance Model Menu')
 
@@ -714,7 +782,8 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
 
     # set final tab titles
     tab_titles = ['Appearance parameters', 'Channels options',
-                  'Landmarks options', 'Figure options', 'Model info']
+                  'Landmarks options', 'Figure options', 'Model info',
+                  'Save figure']
     if popup:
         for (k, tl) in enumerate(tab_titles):
             wid.children[0].set_title(k, tl)
@@ -749,6 +818,11 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                       container_margin='6px',
                       container_border='1px solid black',
                       toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
 
     # update widgets' state for level 0
     update_widgets('', 0)
@@ -821,6 +895,10 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get selected level
         level = 0
         if n_levels > 1:
@@ -832,29 +910,32 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         instance = aam.instance(level=level, shape_weights=shape_weights,
                                 appearance_weights=appearance_weights)
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show image with selected options
-        _plot_figure(image=instance,
-                     image_enabled=True,
-                     landmarks_enabled=landmark_options_wid.landmarks_enabled,
-                     image_is_masked=channel_options_wid.image_is_masked,
-                     masked_enabled=channel_options_wid.masked_enabled,
-                     channels=channel_options_wid.channels,
-                     glyph_enabled=channel_options_wid.glyph_enabled,
-                     glyph_block_size=channel_options_wid.glyph_block_size,
-                     glyph_use_negative=channel_options_wid.glyph_use_negative,
-                     sum_enabled=channel_options_wid.sum_enabled,
-                     groups=[landmark_options_wid.group],
-                     with_labels=[landmark_options_wid.with_labels],
-                     groups_colours=dict(),
-                     subplots_enabled=False,
-                     subplots_titles=dict(),
-                     image_axes_mode=True,
-                     legend_enabled=landmark_options_wid.legend_enabled,
-                     x_scale=figure_options_wid.x_scale,
-                     y_scale=figure_options_wid.y_scale,
-                     axes_visible=figure_options_wid.axes_visible,
-                     figure_size=figure_size,
-                     **kwargs)
+        new_figure_id = _plot_figure(
+            image=instance, figure_id=figure_id, image_enabled=True,
+            landmarks_enabled=landmark_options_wid.landmarks_enabled,
+            image_is_masked=channel_options_wid.image_is_masked,
+            masked_enabled=channel_options_wid.masked_enabled,
+            channels=channel_options_wid.channels,
+            glyph_enabled=channel_options_wid.glyph_enabled,
+            glyph_block_size=channel_options_wid.glyph_block_size,
+            glyph_use_negative=channel_options_wid.glyph_use_negative,
+            sum_enabled=channel_options_wid.sum_enabled,
+            groups=[landmark_options_wid.group],
+            with_labels=[landmark_options_wid.with_labels],
+            groups_colours=dict(), subplots_enabled=False,
+            subplots_titles=dict(), image_axes_mode=True,
+            legend_enabled=landmark_options_wid.legend_enabled,
+            x_scale=figure_options_wid.x_scale,
+            y_scale=figure_options_wid.y_scale,
+            axes_visible=figure_options_wid.axes_visible,
+            figure_size=figure_size, **kwargs)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
         # update info text widget
         update_info(aam, instance, level, landmark_options_wid.group)
@@ -955,27 +1036,50 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Plot shape eigenvalues function
     def plot_shape_eigenvalues(name):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show eigenvalues plots
-        _plot_eigenvalues(aam.shape_models[level], figure_size,
-                          figure_options_wid.x_scale,
-                          figure_options_wid.y_scale)
+        new_figure_id = _plot_eigenvalues(figure_id, aam.shape_models[level],
+                                          figure_size,
+                                          figure_options_wid.x_scale,
+                                          figure_options_wid.y_scale)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # Plot appearance eigenvalues function
     def plot_appearance_eigenvalues(name):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get parameters
         level = 0
         if n_levels > 1:
             level = level_wid.value
 
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
         # show eigenvalues plots
-        _plot_eigenvalues(aam.appearance_models[level], figure_size,
-                          figure_options_wid.x_scale,
-                          figure_options_wid.y_scale)
+        new_figure_id = _plot_eigenvalues(figure_id,
+                                          aam.appearance_models[level],
+                                          figure_size,
+                                          figure_options_wid.x_scale,
+                                          figure_options_wid.y_scale)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # create options widgets
     shape_model_parameters_wid = model_parameters(
@@ -1006,6 +1110,10 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                         toggle_show_default=True,
                                         toggle_show_visible=False)
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -1044,7 +1152,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     tmp_wid = ContainerWidget(children=tmp_children)
     wid = TabWidget(children=[tmp_wid, channel_options_wid,
                               landmark_options_wid, figure_options_wid,
-                              info_wid])
+                              info_wid, save_figure_wid])
     if popup:
         wid = PopupWidget(children=[wid], button_text='AAM Menu')
 
@@ -1053,7 +1161,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # set final tab titles
     tab_titles = ['AAM parameters', 'Channels options', 'Landmarks options',
-                  'Figure options', 'Model info']
+                  'Figure options', 'Model info', 'Save figure']
     if popup:
         for (k, tl) in enumerate(tab_titles):
             wid.children[0].set_title(k, tl)
@@ -1094,6 +1202,11 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                       container_margin='6px',
                       container_border='1px solid black',
                       toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
 
     # update widgets' state for level 0
     update_widgets('', 0)
@@ -1145,13 +1258,17 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
 
     # define function that plots errors curve
     def plot_errors_function(name):
-        # clear current figure
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
         clear_output(wait=True)
 
         # get selected image
         im = 0
         if n_fitting_results > 1:
             im = image_number_wid.selected_index
+
+        # select figure
+        figure_id = plt.figure(save_figure_wid.figure_id.number)
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1166,16 +1283,26 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         x_scale = figure_options_wid.x_scale
         y_scale = figure_options_wid.y_scale
         plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+        # show figure
+        plt.show()
+
+        # save the current figure id
+        save_figure_wid.figure_id = figure_id
 
     # define function that plots displacements curve
     def plot_displacements_function(name):
-        # clear current figure
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
         clear_output(wait=True)
 
         # get selected image
         im = 0
         if n_fitting_results > 1:
             im = image_number_wid.selected_index
+
+        # select figure
+        figure_id = plt.figure(save_figure_wid.figure_id.number)
 
         # plot errors curve
         plt.plot(range(len(fitting_results[im].errors())),
@@ -1191,8 +1318,18 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         y_scale = figure_options_wid.y_scale
         plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
 
+        # show figure
+        plt.show()
+
+        # save the current figure id
+        save_figure_wid.figure_id = figure_id
+
     # define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
         # get selected image
         im = 0
         if n_fitting_results > 1:
@@ -1204,32 +1341,32 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             final_enabled = True
 
         # update info text widget
-        update_info('', error_rype_wid.value)
+        update_info('', error_type_wid.value)
+
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
 
         # call helper _plot_figure
         if final_enabled:
-            _plot_figure(image=fitting_results[im].fitted_image,
-                         image_enabled=final_result_wid.show_image,
-                         landmarks_enabled=True,
-                         image_is_masked=False,
-                         masked_enabled=False,
-                         channels=channel_options_wid.channels,
-                         glyph_enabled=channel_options_wid.glyph_enabled,
-                         glyph_block_size=channel_options_wid.glyph_block_size,
-                         glyph_use_negative=channel_options_wid.glyph_use_negative,
-                         sum_enabled=channel_options_wid.sum_enabled,
-                         groups=final_result_wid.groups,
-                         with_labels=[None] * len(final_result_wid.groups),
-                         groups_colours=colour_final_dict,
-                         subplots_enabled=final_result_wid.subplots_enabled,
-                         subplots_titles=groups_final_dict,
-                         image_axes_mode=True,
-                         legend_enabled=final_result_wid.legend_enabled,
-                         x_scale=figure_options_wid.x_scale,
-                         y_scale=figure_options_wid.y_scale,
-                         axes_visible=figure_options_wid.axes_visible,
-                         figure_size=figure_size,
-                         **kwargs)
+            new_figure_id = _plot_figure(
+                image=fitting_results[im].fitted_image, figure_id=figure_id,
+                image_enabled=final_result_wid.show_image,
+                landmarks_enabled=True, image_is_masked=False,
+                masked_enabled=False, channels=channel_options_wid.channels,
+                glyph_enabled=channel_options_wid.glyph_enabled,
+                glyph_block_size=channel_options_wid.glyph_block_size,
+                glyph_use_negative=channel_options_wid.glyph_use_negative,
+                sum_enabled=channel_options_wid.sum_enabled,
+                groups=final_result_wid.groups,
+                with_labels=[None] * len(final_result_wid.groups),
+                groups_colours=colour_final_dict,
+                subplots_enabled=final_result_wid.subplots_enabled,
+                subplots_titles=groups_final_dict, image_axes_mode=True,
+                legend_enabled=final_result_wid.legend_enabled,
+                x_scale=figure_options_wid.x_scale,
+                y_scale=figure_options_wid.y_scale,
+                axes_visible=figure_options_wid.axes_visible,
+                figure_size=figure_size, **kwargs)
         else:
             # create subplot titles dict and colours dict
             groups_dict = dict()
@@ -1241,28 +1378,28 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 colour_dict[iter_str + iter_num] = cols[:, i]
 
             # plot
-            _plot_figure(image=fitting_results[im].iter_image,
-                         image_enabled=iterations_wid.show_image,
-                         landmarks_enabled=True,
-                         image_is_masked=False,
-                         masked_enabled=False,
-                         channels=channel_options_wid.channels,
-                         glyph_enabled=channel_options_wid.glyph_enabled,
-                         glyph_block_size=channel_options_wid.glyph_block_size,
-                         glyph_use_negative=channel_options_wid.glyph_use_negative,
-                         sum_enabled=channel_options_wid.sum_enabled,
-                         groups=iterations_wid.groups,
-                         with_labels=[None] * len(iterations_wid.groups),
-                         groups_colours=colour_dict,
-                         subplots_enabled=iterations_wid.subplots_enabled,
-                         subplots_titles=groups_dict,
-                         image_axes_mode=True,
-                         legend_enabled=iterations_wid.legend_enabled,
-                         x_scale=figure_options_wid.x_scale,
-                         y_scale=figure_options_wid.y_scale,
-                         axes_visible=figure_options_wid.axes_visible,
-                         figure_size=figure_size,
-                         **kwargs)
+            new_figure_id = _plot_figure(
+                image=fitting_results[im].iter_image, figure_id=figure_id,
+                image_enabled=iterations_wid.show_image, landmarks_enabled=True,
+                image_is_masked=False, masked_enabled=False,
+                channels=channel_options_wid.channels,
+                glyph_enabled=channel_options_wid.glyph_enabled,
+                glyph_block_size=channel_options_wid.glyph_block_size,
+                glyph_use_negative=channel_options_wid.glyph_use_negative,
+                sum_enabled=channel_options_wid.sum_enabled,
+                groups=iterations_wid.groups,
+                with_labels=[None] * len(iterations_wid.groups),
+                groups_colours=colour_dict,
+                subplots_enabled=iterations_wid.subplots_enabled,
+                subplots_titles=groups_dict, image_axes_mode=True,
+                legend_enabled=iterations_wid.legend_enabled,
+                x_scale=figure_options_wid.x_scale,
+                y_scale=figure_options_wid.y_scale,
+                axes_visible=figure_options_wid.axes_visible,
+                figure_size=figure_size, **kwargs)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # define function that updates info text
     def update_info(name, value):
@@ -1298,6 +1435,10 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                         toggle_show_default=True,
                                         toggle_show_visible=False)
     info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
 
     # Create landmark groups checkboxes
     all_groups_keys, all_labels_keys = _extract_groups_labels(
@@ -1325,10 +1466,10 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     error_type_values['Point-to-point Normalized Mean Error'] = 'me_norm'
     error_type_values['Point-to-point Mean Error'] = 'me'
     error_type_values['RMS Error'] = 'rmse'
-    error_rype_wid = RadioButtonsWidget(values=error_type_values,
+    error_type_wid = RadioButtonsWidget(values=error_type_values,
                                         value='me_norm',
                                         description='Error type')
-    error_rype_wid.on_trait_change(update_info, 'value')
+    error_type_wid.on_trait_change(update_info, 'value')
 
     # define function that updates options' widgets state
     def update_widgets(name, value):
@@ -1359,9 +1500,17 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             image_number_wid.children[1].children[1].children[0].children[1].\
                 value = True
 
+    # If animation is activated and the user selects the save figure tab, then
+    # the animation stops.
+    def save_fig_tab_fun(name, value):
+        if (value == 3 and
+                image_number_wid.children[1].children[1].children[0].children[0].value):
+            image_number_wid.children[1].children[1].children[0].children[1].\
+                value = True
+
     # Create final widget
     options_wid = TabWidget(children=[channel_options_wid, figure_options_wid,
-                                      error_rype_wid])
+                                      error_type_wid])
     result_wid = TabWidget(children=[final_result_wid, iterations_wid])
     result_wid.on_trait_change(results_tab_fun, 'selected_index')
     result_wid.on_trait_change(plot_function, 'selected_index')
@@ -1378,14 +1527,18 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             toggle_show_visible=False)
 
         # final widget
-        tab_wid = TabWidget(children=[info_wid, result_wid, options_wid])
+        tab_wid = TabWidget(children=[info_wid, result_wid, options_wid,
+                                      save_figure_wid])
+        tab_wid.on_trait_change(save_fig_tab_fun, 'selected_index')
         wid = ContainerWidget(children=[image_number_wid, tab_wid])
-        tab_titles = ['Info', 'Result', 'Options']
+        tab_titles = ['Info', 'Result', 'Options', 'Save figure']
         button_title = 'Fitting Results Menu'
     else:
         # final widget
-        wid = TabWidget(children=[info_wid, result_wid, options_wid])
-        tab_titles = ['Image info', 'Result', 'Options']
+        wid = TabWidget(children=[info_wid, result_wid, options_wid,
+                                  save_figure_wid])
+        wid.on_trait_change(save_fig_tab_fun, 'selected_index')
+        tab_titles = ['Image info', 'Result', 'Options', 'Save figure']
         button_title = 'Fitting Result Menu'
     # create popup widget if asked
     if popup:
@@ -1447,13 +1600,17 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                      container_border='1px solid black',
                                      toggle_button_font_weight='bold',
                                      border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
 
     # Reset value to enable initial visualization
     figure_options_wid.children[2].value = False
 
 
-def plot_ced(errors, figure_size=(9, 5), popup=False,
-             save_options_visible=True, error_type='me_norm',
+def plot_ced(errors, figure_size=(9, 5), popup=False, error_type='me_norm',
              error_range=None):
     r"""
     Widget for visualizing the cumulative error curves of the provided errors.
@@ -1469,9 +1626,6 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
 
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
-
-    save_options_visible : `boolean`, optional
-        Determines whether a Save Figure tab will also be created.
 
     error_type : `str` ``{'me_norm', 'me', 'rmse'}``, optional
         Specifies the type of the provided errors.
@@ -1496,6 +1650,8 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
     n_curves = len(errors)
 
     # get horizontal axis errors
+    x_label_initial_value = 'Error'
+    x_axis_limit_initial_value = 0
     if error_range is None:
         if error_type == 'me_norm':
             error_range = [0., 0.101, 0.005]
@@ -1507,7 +1663,6 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
             x_label_initial_value = 'Point-to-Point Error'
     else:
         x_axis_limit_initial_value = (error_range[1] + error_range[0]) / 2
-        x_label_initial_value = 'Error'
     x_axis = np.arange(error_range[0], error_range[1], error_range[2])
 
     # compute cumulative error curves
@@ -1531,29 +1686,29 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
                                   'legend_entry':"Curve {}".format(k)})
         legend_entries_list.append("Curve " + str(k))
 
-    # create figure
-    figure_id = plt.figure()
-
     # define plot function
     def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
         clear_output(wait=True)
-        _plot_graph(figure_id,
-                    horizontal_axis_values=x_axis,
-                    vertical_axis_values=ceds,
-                    plot_options_list=plot_options_wid.selected_options,
-                    legend_visible=legend_visible.value,
-                    grid_visible=grid_visible.value,
-                    gridlinestyle=gridlinestyle.value,
-                    x_limit=x_axis_limit.value,
-                    y_limit=y_axis_limit.value,
-                    title=title.value,
-                    x_label=x_label.value,
-                    y_label=y_label.value,
-                    x_scale=fig.x_scale,
-                    y_scale=fig.y_scale,
-                    figure_size=figure_size,
-                    axes_fontsize=axes_fontsize.value,
-                    labels_fontsize=labels_fontsize.value)
+
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
+        # plot the graph with the selected options
+        new_figure_id = _plot_graph(
+            figure_id, horizontal_axis_values=x_axis, vertical_axis_values=ceds,
+            plot_options_list=plot_options_wid.selected_options,
+            legend_visible=legend_visible.value,
+            grid_visible=grid_visible.value, gridlinestyle=gridlinestyle.value,
+            x_limit=x_axis_limit.value, y_limit=y_axis_limit.value,
+            title=title.value, x_label=x_label.value, y_label=y_label.value,
+            x_scale=fig.x_scale, y_scale=fig.y_scale, figure_size=figure_size,
+            axes_fontsize=axes_fontsize.value,
+            labels_fontsize=labels_fontsize.value)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
 
     # create options widgets
     # x label, y label, title container
@@ -1625,6 +1780,13 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
                                     toggle_show_visible=False,
                                     toggle_show_default=True)
 
+    # save figure options widget
+    # create figure and store its id
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
     # assign plot function
     x_label.on_trait_change(plot_function, 'value')
     y_label.on_trait_change(plot_function, 'value')
@@ -1638,18 +1800,9 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
     axes_fontsize.on_trait_change(plot_function, 'value')
 
     # create final widget
-    if save_options_visible:
-        # save figure options widget
-        save_figure_wid = save_figure_options(figure_id,
-                                              toggle_show_default=True,
-                                              toggle_show_visible=False)
+    wid = TabWidget(children=[figure_wid, plot_options_wid,
+                              save_figure_wid])
 
-        wid = TabWidget(children=[figure_wid, plot_options_wid,
-                                  save_figure_wid])
-        tab_titles = ['Figure options', 'Per Curve options', 'Save figure']
-    else:
-        wid = TabWidget(children=[figure_wid, plot_options_wid])
-        tab_titles = ['Figure options', 'Per Curve options']
     # create popup widget if asked
     if popup:
         wid = PopupWidget(children=[wid], button_text='CED Menu')
@@ -1658,6 +1811,7 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
     display(wid)
 
     # set final tab titles
+    tab_titles = ['Figure options', 'Per Curve options', 'Save figure']
     if n_curves == 1:
         tab_titles[1] = 'Curve options'
     if popup:
@@ -1685,22 +1839,21 @@ def plot_ced(errors, figure_size=(9, 5), popup=False,
                                      container_border='1px solid black',
                                      toggle_button_font_weight='bold',
                                      border_visible=False)
-    if save_options_visible:
-        format_save_figure_options(save_figure_wid, container_padding='6px',
-                                   container_margin='6px',
-                                   container_border='1px solid black',
-                                   toggle_button_font_weight='bold',
-                                   tab_top_margin='0cm',
-                                   border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm',
+                               border_visible=False)
 
     # Reset value to trigger initial visualization
     grid_visible.value = True
 
 
-def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
-                 masked_enabled, channels, glyph_enabled, glyph_block_size,
-                 glyph_use_negative, sum_enabled, groups, with_labels,
-                 groups_colours, subplots_enabled, subplots_titles,
+def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
+                 image_is_masked, masked_enabled, channels, glyph_enabled,
+                 glyph_block_size, glyph_use_negative, sum_enabled, groups,
+                 with_labels, groups_colours, subplots_enabled, subplots_titles,
                  image_axes_mode, legend_enabled, x_scale, y_scale,
                  axes_visible, figure_size, **kwargs):
     r"""
@@ -1710,6 +1863,9 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
     -----------
     image : :map:`Image` or subclass
        The image to be displayed.
+
+    figure_id : matplotlib.pyplot.Figure instance
+        The handle of the figure to be saved.
 
     image_enabled : `boolean`
         Flag that determines whether to display the image.
@@ -1787,9 +1943,9 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
     global glyph
     if glyph is None:
         from menpo.visualize.image import glyph
-    # clear current figure, but wait until the new date to be displayed are
-    # generated
-    clear_output(wait=True)
+
+    # select figure
+    figure_id = plt.figure(figure_id.number)
 
     # plot
     if image_enabled:
@@ -1894,7 +2050,8 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
                         # set axes mode to image
                         plt.gca().invert_yaxis()
                 image.landmarks[group].lms.view(image_view=image_axes_mode,
-                                                colour_array=groups_colours[group], **kwargs)
+                                                colour_array=groups_colours[group],
+                                                **kwargs)
             if not subplots_enabled:
                 # set axes to equal spacing
                 plt.gca().axis('equal')
@@ -1915,6 +2072,8 @@ def _plot_figure(image, image_enabled, landmarks_enabled, image_is_masked,
     # show plot
     plt.show()
 
+    return figure_id
+
 
 def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
                 plot_options_list, legend_visible, grid_visible, gridlinestyle,
@@ -1926,7 +2085,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
 
     Parameters
     -----------
-    figure_id :
+    figure_id : matplotlib.pyplot.Figure instance
         The handle of the figure to be saved.
 
     horizontal_axis_values : `list` of `list`
@@ -1989,7 +2148,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
         The fontsize of the title, x_label, y_label and legend.
     """
     # select figure
-    plt.figure(figure_id.number)
+    figure_id = plt.figure(figure_id.number)
 
     # plot all curves with the provided plot options
     for x_vals, y_vals, options in zip(horizontal_axis_values,
@@ -2049,13 +2208,18 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
     # show plot
     plt.show()
 
+    return figure_id
 
-def _plot_eigenvalues(model, figure_size, x_scale, y_scale):
+
+def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
     r"""
     Helper function that plots a model's eigenvalues.
 
     Parameters
     -----------
+    figure_id : matplotlib.pyplot.Figure instance
+        The handle of the figure to be saved.
+
     model : :map:`PCAModel` or subclass
        The model to be used.
 
@@ -2068,8 +2232,8 @@ def _plot_eigenvalues(model, figure_size, x_scale, y_scale):
     y_scale : `float`
         The scale of y axis.
     """
-    # clear current figure
-    clear_output(wait=True)
+    # select figure
+    figure_id = plt.figure(figure_id.number)
 
     # plot eigenvalues ratio
     plt.subplot(211)
@@ -2091,8 +2255,12 @@ def _plot_eigenvalues(model, figure_size, x_scale, y_scale):
     plt.grid("on")
 
     # set figure size
-    plt.gcf().tight_layout()
+    #plt.gcf().tight_layout()
     plt.gcf().set_size_inches([x_scale, y_scale] * np.asarray(figure_size))
+
+    plt.show()
+
+    return figure_id
 
 
 def _extract_groups_labels(image):

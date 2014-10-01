@@ -3759,7 +3759,7 @@ def format_plot_options(plot_options_wid, container_padding='6px',
         plot_options_wid.set_css('border', container_border)
 
 
-def save_figure_options(figure_handle, format_default='png', dpi_default=None,
+def save_figure_options(figure_id, format_default='png', dpi_default=None,
                         orientation_default='portrait',
                         papertype_default='letter', transparent_default=False,
                         facecolor_default='w', edgecolor_default='w',
@@ -3780,7 +3780,7 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
 
     Parameters
     ----------
-    figure_handle : `float`
+    figure_id : matplotlib.pyplot.Figure instance
         The handle of the figure to be saved.
 
     format_default : `str`, optional
@@ -3897,6 +3897,9 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
     options_wid = TabWidget(children=[path_wid, page_wid, color_wid])
     save_figure_wid = ContainerWidget(children=[but, options_wid, save_but])
 
+    # store figure_handle
+    save_figure_wid.figure_id = figure_id
+
     # save function
     def save_function(name):
         # set save button state
@@ -3907,17 +3910,13 @@ def save_figure_options(figure_handle, format_default='png', dpi_default=None,
         selected_dpi = dpi_wid.value
         if dpi_wid.value == 0:
             selected_dpi = None
-        figure_handle.savefig(filename.value,
-                              dpi=selected_dpi,
-                              facecolor=facecolor_wid.selected_color,
-                              edgecolor=edgecolor_wid.selected_color,
-                              orientation=orientation_wid.value,
-                              papertype=papertype_wid.value,
-                              format=format_wid.value,
-                              transparent=transparent_wid.value,
-                              bbox_inches='tight',
-                              pad_inches=pad_inches_wid.value,
-                              frameon=None)
+        save_figure_wid.figure_id.savefig(
+            filename.value, dpi=selected_dpi,
+            facecolor=facecolor_wid.selected_color,
+            edgecolor=edgecolor_wid.selected_color,
+            orientation=orientation_wid.value, papertype=papertype_wid.value,
+            format=format_wid.value, transparent=transparent_wid.value,
+            pad_inches=pad_inches_wid.value, bbox_inches='tight', frameon=None)
 
         # set save button state
         save_but.description = 'Save'
