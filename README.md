@@ -46,4 +46,3 @@ We use [nosetests](https://nose.readthedocs.org/en/latest/) for unit tests. You 
     >> nosetests
 
 from the top of the repository is all this is required.
-

@@ -1,0 +1,35 @@
+build: false
+
+environment:
+  global:
+    BINSTAR_USER: menpo
+    BINSTAR_KEY:
+      secure: mw1Fz5a5C0lT4CXzsOCADoo/Xa9YymZI3yjVZNR8f5GwYrVAOC2YXxyEG6NaSWZY
+  matrix:
+    - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3.4
+
+
+matrix:
+  allow_failures:
+    - platform: x86
+      PYTHON_VERSION: 3.4
+    - platform: x64
+      PYTHON_VERSION: 3.4
+
+platform:
+- x86
+- x64
+
+init:
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py' C:\\condaci.py; echo "Done"
+- cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
+
+install:
+- cmd: C:\\Miniconda\\python C:\\condaci.py auto ./conda --binstaruser %BINSTAR_USER% --binstarkey %BINSTAR_KEY%
+
+notifications:
+  - provider: Slack
+    auth_token:
+      secure: Jyd2NTPkBrrwBnl1C0mkNp5sUPGXzKrDgpZVDvPj72OUJtovXsO3795UsvktLucG
+    channel: general
