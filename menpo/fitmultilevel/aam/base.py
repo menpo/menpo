@@ -198,8 +198,9 @@ class AAM(DeformableModel, HDF5able):
         """
         return 'Active Appearance Model'
 
-    def view(self, n_shape_parameters=5, n_appearance_parameters=5,
-             parameters_bounds=(-3.0, 3.0), mode='multiple', popup=False):
+    def view_widget(self, n_shape_parameters=5, n_appearance_parameters=5,
+                    parameters_bounds=(-3.0, 3.0), mode='multiple',
+                    popup=False):
         r"""
         Visualizes the AAM object using the
         menpo.visualize.widgets.visualize_aam widget.

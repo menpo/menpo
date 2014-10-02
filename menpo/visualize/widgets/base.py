@@ -1493,27 +1493,9 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             fitting_results[value].fitted_image.landmarks['final'].lms.n_points,
             iter_str=iter_str)
 
-    # define function that combines the results' tab widget with the animation
-    # If animation is activated and the user selects the iterations tab, then
-    # the animation stops.
-    def results_tab_fun(name, value):
-        if (value == 1 and
-                image_number_wid.children[1].children[1].children[0].children[0].value):
-            image_number_wid.children[1].children[1].children[0].children[1].\
-                value = True
-
-    # If animation is activated and the user selects the save figure tab, then
-    # the animation stops.
-    def save_fig_tab_fun(name, value):
-        if (value == 3 and
-                image_number_wid.children[1].children[1].children[0].children[0].value):
-            image_number_wid.children[1].children[1].children[0].children[1].\
-                value = True
-
     # Create final widget
     options_wid = TabWidget(children=[channel_options_wid, figure_options_wid])
     result_wid = TabWidget(children=[final_result_wid, iterations_wid])
-    result_wid.on_trait_change(results_tab_fun, 'selected_index')
     result_wid.on_trait_change(plot_function, 'selected_index')
     if n_fitting_results > 1:
         # image selection slider
@@ -1527,6 +1509,23 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             toggle_show_title='Image Options', toggle_show_default=True,
             toggle_show_visible=False)
 
+        # define function that combines the results' tab widget with the
+        # animation
+        # If animation is activated and the user selects the iterations tab,
+        # then the animation stops.
+        def results_tab_fun(name, value):
+            if (value == 1 and
+                    image_number_wid.children[1].children[1].children[0].children[0].value):
+                image_number_wid.children[1].children[1].children[0].children[1].value = True
+        result_wid.on_trait_change(results_tab_fun, 'selected_index')
+
+        # If animation is activated and the user selects the save figure tab,
+        # then the animation stops.
+        def save_fig_tab_fun(name, value):
+            if (value == 3 and
+                    image_number_wid.children[1].children[1].children[0].children[0].value):
+                image_number_wid.children[1].children[1].children[0].children[1].value = True
+
         # final widget
         tab_wid = TabWidget(children=[info_wid, result_wid, options_wid,
                                       error_wid, save_figure_wid])
@@ -1535,11 +1534,14 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         tab_titles = ['Info', 'Result', 'Options', 'CED', 'Save figure']
         button_title = 'Fitting Results Menu'
     else:
+        # do not show the plot ced button
+        plot_ced_but.visible = False
+
         # final widget
         wid = TabWidget(children=[info_wid, result_wid, options_wid, error_wid,
                                   save_figure_wid])
-        wid.on_trait_change(save_fig_tab_fun, 'selected_index')
-        tab_titles = ['Image info', 'Result', 'Options', 'CED', 'Save figure']
+        tab_titles = ['Image info', 'Result', 'Options', 'Error type',
+                      'Save figure']
         button_title = 'Fitting Result Menu'
     # create popup widget if asked
     if popup:

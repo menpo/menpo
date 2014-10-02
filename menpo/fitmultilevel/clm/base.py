@@ -200,8 +200,8 @@ class CLM(DeformableModel):
         """
         return 'Constrained Local Model'
 
-    def view(self, n_parameters=5, parameters_bounds=(-3.0, 3.0),
-             mode='multiple', popup=False):
+    def view_widget(self, n_parameters=5, parameters_bounds=(-3.0, 3.0),
+                    mode='multiple', popup=False):
         r"""
         Visualizes the shape models of the CLM object using the
         menpo.visualize.widgets.visualize_shape_model widget.

@@ -137,6 +137,19 @@ class MultilevelFittingResult(FittingResult):
               self.n_levels, self.n_iters, feat_str)
         return out
 
+    def view_widget(self, popup=False):
+        r"""
+        Visualizes the multilevel fitting result object using the
+        menpo.visualize.widgets.visualize_fitting_results widget.
+
+        Parameters
+        -----------
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
+        """
+        from menpo.visualize import visualize_fitting_results
+        visualize_fitting_results(self, figure_size=(7, 7), popup=popup)
+
     def as_serializable(self):
         r""""
         Returns a serializable version of the fitting result. This is a much

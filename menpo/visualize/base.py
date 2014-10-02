@@ -188,7 +188,6 @@ from menpo.visualize.viewmatplotlib import (
     MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
     MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
     MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
-    MatplotlibFittingViewer2d, MatplotlibFittingSubplotsViewer2d,
     MatplotlibPointGraphViewer2d)
 
 # Default importer types
@@ -209,8 +208,6 @@ AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
-FittingViewer2d = MatplotlibFittingViewer2d
-FittingSubplotsViewer2d = MatplotlibFittingSubplotsViewer2d
 
 
 class LandmarkViewer(object):

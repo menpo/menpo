@@ -7,7 +7,7 @@ from menpo.image import Image
 from menpo.fitmultilevel.functions import compute_error
 
 
-class FittingResult():
+class FittingResult(object):
     r"""
     Object that holds the state of a single fitting object, during and after it
     has fitted a particular image.
