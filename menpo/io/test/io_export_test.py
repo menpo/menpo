@@ -1,8 +1,11 @@
-from nose.tools import raises
-import numpy as np
-import menpo.io as mio
-from mock import patch, PropertyMock
+from tempfile import mkstemp
 from collections import OrderedDict
+
+import numpy as np
+from mock import patch, PropertyMock
+from nose.tools import raises
+
+import menpo.io as mio
 from menpo.landmark import LandmarkGroup
 from menpo.shape import PointCloud
 from menpo.image import Image
@@ -162,8 +165,9 @@ def test_export_file_handle_file_non_file_buffer(mock_open, exists,
 @patch('{}.open'.format(__name__), create=True)
 def test_export_landmark_ljson(mock_open, exists, json_dump):
     exists.return_value = False
-    with open('/tmp/test.ljson') as f:
-        type(f).name = PropertyMock(return_value='/tmp/test.ljson')
+    _, filepath = mkstemp(suffix='.ljson')
+    with open(filepath) as f:
+        type(f).name = PropertyMock(return_value=filepath)
         mio.export_landmark_file(f, test_lg, extension='ljson')
     json_dump.assert_called_once()
 
@@ -173,8 +177,9 @@ def test_export_landmark_ljson(mock_open, exists, json_dump):
 @patch('{}.open'.format(__name__), create=True)
 def test_export_landmark_pts(mock_open, exists, save_txt):
     exists.return_value = False
-    with open('/tmp/test.pts') as f:
-        type(f).name = PropertyMock(return_value='/tmp/test.pts')
+    _, filepath = mkstemp(suffix='.pts')
+    with open(filepath) as f:
+        type(f).name = PropertyMock(return_value=filepath)
         mio.export_landmark_file(f, test_lg, extension='pts')
     save_txt.assert_called_once()
 
@@ -184,8 +189,9 @@ def test_export_landmark_pts(mock_open, exists, save_txt):
 @patch('{}.open'.format(__name__), create=True)
 def test_export_image_jpg(mock_open, exists, PILImage):
     exists.return_value = False
-    with open('/tmp/test.jpg') as f:
-        type(f).name = PropertyMock(return_value='/tmp/test.jpg')
+    _, filepath = mkstemp(suffix='.jpg')
+    with open(filepath) as f:
+        type(f).name = PropertyMock(return_value=filepath)
         mio.export_image(f, test_img, extension='jpg')
     PILImage.save.assert_called_once()
 
@@ -194,8 +200,9 @@ def test_export_image_jpg(mock_open, exists, PILImage):
 @patch('{}.open'.format(__name__), create=True)
 def test_export_obj_untextured(mock_open, exists):
     exists.return_value = False
-    with open('/tmp/test.obj') as f:
-        type(f).name = PropertyMock(return_value='/tmp/test.obj')
+    _, filepath = mkstemp(suffix='.obj')
+    with open(filepath) as f:
+        type(f).name = PropertyMock(return_value=filepath)
         mio.export_mesh(f, test_obj, extension='obj')
 
 
@@ -204,5 +211,6 @@ def test_export_obj_untextured(mock_open, exists):
 @patch('{}.open'.format(__name__), create=True)
 def test_export_obj_textured(mock_open, exists, PILImage):
     exists.return_value = False
-    mio.export_textured_mesh('/tmp/test.obj', test_obj, extension='obj')
+    _, filepath = mkstemp(suffix='.obj')
+    mio.export_textured_mesh(filepath, test_obj, extension='obj')
     PILImage.save.assert_called_once()
