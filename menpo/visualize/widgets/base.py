@@ -1417,11 +1417,16 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                                                value)) + \
               "}\\\\ \\bullet~\\texttt{" + \
               "{}".format(fitting_results[im].n_iters) + \
-              " iterations.}\\\\ \\bullet~\\texttt{" + \
-              "{0} levels with downscale of {1:.1f}".format(
-                  fitting_results[im].n_levels,
-                  fitting_results[im].downscale) + \
-              "}.$"
+              " iterations.}"
+        if (hasattr(fitting_results[im], 'n_levels') and
+                hasattr(fitting_results[im], 'downscale')):
+            txt += "\\\\ \\bullet~\\texttt{" + \
+                   "{0} levels with downscale of {1:.1f}".format(
+                    fitting_results[im].n_levels,
+                    fitting_results[im].downscale) + \
+                   ".}"
+        txt += "$"
+
         info_wid.children[1].value = txt
 
     # Create options widgets
