@@ -38,51 +38,42 @@ class FittingResult(Viewable):
         :type: `list` of :map:`PointCloud`
         """
 
-    def displacements(self, displacement_type='mean'):
+    def displacements(self):
         r"""
         A list containing the displacement between the shape of each iteration
         and the shape of the previous one.
 
+        :type: `list` of ndarray
+        """
+        return [np.linalg.norm(s1.points - s2.points, axis=1)
+                for s1, s2 in zip(self.shapes, self.shapes[1:])]
+
+    def displacements_stats(self, stat_type='mean'):
+        r"""
+        A list containing the a statistical metric on the displacement between
+        the shape of each iteration and the shape of the previous one.
+
         Parameters
         -----------
-        displacement_type : `str` ``{'mean', 'median', 'min',
-                                     'max', 'point %d'}``, optional
-            Specifies the way in which the displacement is to be computed.
-            'mean' returns the mean point-to-point Euclidean distance.
-            'median' returns the median point-to-point Euclidean distance.
-            'max' returns the maximum point-to-point Euclidean distance.
-            'min' returns the minimum point-to-point Euclidean distance.
-            'point %d' returns the Euclidean distance of the specified landmark
-            point, e.g. 'point 10'.
+        stat_type : `str` ``{'mean', 'median', 'min', 'max'}``, optional
+            Specifies a statistic metric to be extracted from the displacements.
 
         Returns
         -------
-        displacements : `list` of `float`
-            The displacement at each iteration of the fitting process.
+        :type: `list` of `float`
+            The statistical metric on the points displacements for each
+            iteration.
         """
-        error_str = "displacement_type must be 'mean', 'median', 'min', " \
-                    "'max' or a point str, e.g. 'point 10'"
-        shapes = self.shapes
-        # compute norm (euclidean distance) between all consecutive shapes pairs
-        diffs = [np.linalg.norm(s1.points - s2.points, axis=1)
-                 for s1, s2 in zip(shapes, shapes[1:])]
-        if displacement_type == 'mean':
-            return [np.mean(d) for d in diffs]
-        elif displacement_type == 'median':
-            return [np.median(d) for d in diffs]
-        elif displacement_type == 'max':
-            return [np.max(d) for d in diffs]
-        elif displacement_type == 'min':
-            return [np.min(d) for d in diffs]
-        elif displacement_type[:6] == 'point ':
-            # find and check the selected landmark point
-            p = int(displacement_type[6::])
-            if p > shapes[0].n_points - 1 or p < 0:
-                raise ValueError(error_str)
-            return [np.linalg.norm(s1.points[p, :] - s2.points[p, :], axis=1)
-                    for s1, s2 in zip(shapes, shapes[1:])]
+        if stat_type == 'mean':
+            return [np.mean(d) for d in self.displacements()]
+        elif stat_type == 'median':
+            return [np.median(d) for d in self.displacements()]
+        elif stat_type == 'max':
+            return [np.max(d) for d in self.displacements()]
+        elif stat_type == 'min':
+            return [np.min(d) for d in self.displacements()]
         else:
-            raise ValueError(error_str)
+            raise ValueError("type must be 'mean', 'median', 'min' or 'max'")
 
     @abc.abstractproperty
     def final_shape(self):
