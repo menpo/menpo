@@ -79,6 +79,11 @@ class MultilevelFittingResult(FittingResult):
 
     @property
     def shapes(self):
+        r"""
+        A list containing the shapes obtained at each fitting iteration.
+
+        :type: `list` of :map:`PointCloud`
+        """
         return _rescale_shapes_to_reference(self.fitting_results, self.n_levels,
                                             self.downscale,
                                             self._affine_correction)

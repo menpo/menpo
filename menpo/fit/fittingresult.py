@@ -1,6 +1,7 @@
 from __future__ import division
 import abc
 from hdf5able import HDF5able
+import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
@@ -36,6 +37,43 @@ class FittingResult(Viewable):
 
         :type: `list` of :map:`PointCloud`
         """
+
+    def displacements(self):
+        r"""
+        A list containing the displacement between the shape of each iteration
+        and the shape of the previous one.
+
+        :type: `list` of ndarray
+        """
+        return [np.linalg.norm(s1.points - s2.points, axis=1)
+                for s1, s2 in zip(self.shapes, self.shapes[1:])]
+
+    def displacements_stats(self, stat_type='mean'):
+        r"""
+        A list containing the a statistical metric on the displacement between
+        the shape of each iteration and the shape of the previous one.
+
+        Parameters
+        -----------
+        stat_type : `str` ``{'mean', 'median', 'min', 'max'}``, optional
+            Specifies a statistic metric to be extracted from the displacements.
+
+        Returns
+        -------
+        :type: `list` of `float`
+            The statistical metric on the points displacements for each
+            iteration.
+        """
+        if stat_type == 'mean':
+            return [np.mean(d) for d in self.displacements()]
+        elif stat_type == 'median':
+            return [np.median(d) for d in self.displacements()]
+        elif stat_type == 'max':
+            return [np.max(d) for d in self.displacements()]
+        elif stat_type == 'min':
+            return [np.min(d) for d in self.displacements()]
+        else:
+            raise ValueError("type must be 'mean', 'median', 'min' or 'max'")
 
     @abc.abstractproperty
     def final_shape(self):
