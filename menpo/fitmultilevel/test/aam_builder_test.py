@@ -3,6 +3,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
 from StringIO import StringIO
+import platform
 
 import menpo.io as mio
 from menpo.landmark import labeller, ibug_face_68_trimesh
@@ -191,5 +192,7 @@ def test_aam_4():
                     for j in range(aam4.n_levels)]))
     assert (np.all([aam4.appearance_models[j].template_instance.n_channels == 4
                     for j in range(aam4.n_levels)]))
-    assert_allclose([aam4.appearance_models[j].components.shape[1]
-                     for j in range(aam4.n_levels)], (23656, 25988))
+    if platform.system() != 'Windows':
+        # https://github.com/menpo/menpo/issues/450
+        assert_allclose([aam4.appearance_models[j].components.shape[1]
+                         for j in range(aam4.n_levels)], (23656, 25988))

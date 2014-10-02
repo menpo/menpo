@@ -24,31 +24,31 @@ else:
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
     install_requires = [# Core
-                        'numpy>=1.8.0',
-                        'scipy>=0.14.0',
-                        'Cython>=0.20.1',
-                        'pathlib>=1.0',
-                        'wrapt>=1.9.0',
+                        'numpy==1.9.0',
+                        'scipy==0.14.0',
+                        'Cython==0.21',
+                        'wrapt==1.9.0',
 
                         # Image
-                        'Pillow>=2.0.0',
+                        'Pillow==2.5.1',
 
                         # ML
-                        'scikit-learn>=0.14.1',
+                        'scikit-learn==0.15.2',
 
                         # 3D import
                         'menpo-pyvrml97==2.3.0a4',
-                        'cyassimp>=0.1.3',
+                        'cyassimp==0.2.0',
 
                         # Rasterization
-                        'cyrasterize>=0.1.5',
+                        'cyrasterize==0.2.0',
+                        'hdf5able==0.3.3',
 
                         # Visualization
-                        'matplotlib>=1.2.1',
-                        'mayavi>=4.3.0']
+                        'matplotlib==1.4.0',
+                        'mayavi==4.3.1']
 
     if sys.version_info.major == 2:
-        install_requires.append('pathlib>=1.0')
+        install_requires.append('pathlib==1.0')
 
 # Versioneer allows us to automatically generate versioning from
 # our git tagging system which makes releases simpler.
@@ -69,5 +69,5 @@ setup(name='menpo',
       packages=find_packages(),
       install_requires=install_requires,
       package_data={'menpo': ['data/*']},
-      tests_require=['nose>=1.3.0', 'mock>=1.0.1']
+      tests_require=['nose==1.3.4', 'mock==1.0.1']
 )
