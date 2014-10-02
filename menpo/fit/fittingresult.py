@@ -5,10 +5,9 @@ from hdf5able import HDF5able
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
 from menpo.fitmultilevel.functions import compute_error
-from menpo.visualize.base import Viewable, FittingViewer
 
 
-class FittingResult(Viewable):
+class FittingResult():
     r"""
     Object that holds the state of a single fitting object, during and after it
     has fitted a particular image.
@@ -158,15 +157,6 @@ class FittingResult(Viewable):
         else:
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
-
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
-        r"""
-        Displays the whole fitting procedure.
-        """
-        pixels = self.image.pixels
-        targets = [s.points for s in self.shapes]
-        return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
-                             targets).render(**kwargs)
 
     def as_serializable(self):
         r""""

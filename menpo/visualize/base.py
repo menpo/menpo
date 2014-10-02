@@ -593,26 +593,3 @@ class MultipleImageViewer(ImageViewer):
                                           self.pixels_list).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")
-
-
-class FittingViewer(ImageViewer):
-
-    def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 target_list, channels=None, mask=None):
-        super(FittingViewer, self).__init__(
-            figure_id, new_figure, dimensions, pixels,
-            channels=channels, mask=mask)
-        self.target_list = target_list
-
-    def render(self, **kwargs):
-        if self.dimensions == 2:
-            if self.use_subplots:
-                FittingSubplotsViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
-            else:
-                return FittingViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
-        else:
-            raise ValueError("Only 2D images are currently supported")
