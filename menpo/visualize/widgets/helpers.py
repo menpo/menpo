@@ -3349,7 +3349,8 @@ def plot_options(plot_options_default, plot_function=None,
         3) A checkbox that controls line's visibility.
         4) A checkbox that controls markers' visibility.
         5) Options for line color, style and width.
-        6) Options for markers face color, edge color, size and style.
+        6) Options for markers face color, edge color, size, edge width and
+           style.
         7) A toggle button that controls the visibility of all the above, i.e.
            the plot options.
 
@@ -3362,8 +3363,8 @@ def plot_options(plot_options_default, plot_function=None,
         line_widget.children = [show_line_checkbox, line_options]
         marker_widget.children = [show_marker_checkbox, marker_options]
         line_options.children = [linestyle, linewidth, linecolor]
-        marker_options.children = [markerstyle, markersize, markerfacecolor,
-                                   markeredgecolor]
+        marker_options.children = [markerstyle, markersize, markeredgewidth,
+                                   markerfacecolor, markeredgecolor]
 
     The returned widget saves the selected values in the following dictionary:
         plot_options_wid.selected_options
@@ -3385,6 +3386,7 @@ def plot_options(plot_options_default, plot_function=None,
                             'markerfacecolor':'r',
                             'markeredgecolor':'b',
                             'markerstyle':'o',
+                            'markeredgewidth':1,
                             'legend_entry':'final errors'}
             plot_options_2={'show_line':False,
                             'linewidth':3,
@@ -3395,6 +3397,7 @@ def plot_options(plot_options_default, plot_function=None,
                             'markerfacecolor':[0.1, 0.2, 0.3],
                             'markeredgecolor':'k',
                             'markerstyle':'x',
+                            'markeredgewidth':1,
                             'legend_entry':'initial errors'}
             plot_options_default = [plot_options_1, plot_options_2]
 
@@ -3445,6 +3448,9 @@ def plot_options(plot_options_default, plot_function=None,
                                 value=plot_options_default[0]['linewidth'])
     markersize = IntTextWidget(description='Size',
                                value=plot_options_default[0]['markersize'])
+    markeredgewidth = FloatTextWidget(
+        description='Edge width',
+        value=plot_options_default[0]['markeredgewidth'])
 
     # markerstyle
     markerstyle_dict = OrderedDict()
@@ -3495,6 +3501,7 @@ def plot_options(plot_options_default, plot_function=None,
     # Group widgets
     line_options = ContainerWidget(children=[linestyle, linewidth, linecolor])
     marker_options = ContainerWidget(children=[markerstyle, markersize,
+                                               markeredgewidth,
                                                markerfacecolor,
                                                markeredgecolor])
     line_wid = ContainerWidget(children=[show_line, line_options])
@@ -3523,6 +3530,7 @@ def plot_options(plot_options_default, plot_function=None,
     def marker_options_visible(name, value):
         markerstyle.disabled = not value
         markersize.disabled = not value
+        markeredgewidth.disabled = not value
         markerfacecolor.children[0].disabled = not value
         markerfacecolor.children[1].children[0].disabled = not value
         markerfacecolor.children[1].children[1].disabled = not value
@@ -3567,6 +3575,10 @@ def plot_options(plot_options_default, plot_function=None,
         plot_options_wid.selected_options[curve_selection.value]['markersize'] = int(value)
     markersize.on_trait_change(save_markersize, 'value')
 
+    def save_markeredgewidth(name, value):
+        plot_options_wid.selected_options[curve_selection.value]['markeredgewidth'] = float(value)
+    markeredgewidth.on_trait_change(save_markeredgewidth, 'value')
+
     def save_markerstyle(name, value):
         plot_options_wid.selected_options[curve_selection.value]['markerstyle'] = value
     markerstyle.on_trait_change(save_markerstyle, 'value')
@@ -3607,6 +3619,7 @@ def plot_options(plot_options_default, plot_function=None,
         linestyle.value = plot_options_wid.selected_options[value]['linestyle']
         markersize.value = plot_options_wid.selected_options[value]['markersize']
         markerstyle.value = plot_options_wid.selected_options[value]['markerstyle']
+        markeredgewidth.value = plot_options_wid.selected_options[value]['markeredgewidth']
         default_color = plot_options_wid.selected_options[value]['linecolor']
         if not isinstance(default_color, str):
             r_val = default_color[0]
@@ -3653,6 +3666,7 @@ def plot_options(plot_options_default, plot_function=None,
         linewidth.on_trait_change(plot_function, 'value')
         show_marker.on_trait_change(plot_function, 'value')
         markerstyle.on_trait_change(plot_function, 'value')
+        markeredgewidth.on_trait_change(plot_function, 'value')
         markersize.on_trait_change(plot_function, 'value')
         linecolor.children[0].on_trait_change(plot_function, 'value')
         linecolor.children[1].children[0].on_trait_change(plot_function,
@@ -3727,6 +3741,8 @@ def format_plot_options(plot_options_wid, container_padding='6px',
         set_css('width', '1cm')
     plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].\
         set_css('width', '1cm')
+    plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[2].\
+        set_css('width', '1cm')
 
     # align line and marker options
     plot_options_wid.children[1].children[1].children[1].remove_class('vbox')
@@ -3744,9 +3760,9 @@ def format_plot_options(plot_options_wid, container_padding='6px',
     format_color_selection(
         plot_options_wid.children[1].children[1].children[1].children[0].children[1].children[2])
     format_color_selection(
-        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[2])
-    format_color_selection(
         plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[3])
+    format_color_selection(
+        plot_options_wid.children[1].children[1].children[1].children[1].children[1].children[4])
 
     # set toggle button font bold
     plot_options_wid.children[0].set_css('font-weight',

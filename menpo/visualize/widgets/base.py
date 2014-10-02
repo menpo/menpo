@@ -1724,6 +1724,7 @@ def plot_ced(errors, figure_size=(9, 5), popup=False, error_type='me_norm',
                                   'markerfacecolor':'w',
                                   'markeredgecolor':colors[k],
                                   'markerstyle':'s',
+                                  'markeredgewidth':1,
                                   'legend_entry':"Curve {}".format(k)})
         legend_entries_list.append("Curve " + str(k))
 
@@ -2149,6 +2150,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
              'markerfacecolor':'r',
              'markeredgecolor':'b',
              'markerstyle':'o',
+             'markeredgewidth':1,
              'legend_entry':'final errors'}
 
     legend_visible : `boolean`
@@ -2213,6 +2215,7 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
                  markersize=options['markersize'],
                  markerfacecolor=options['markerfacecolor'],
                  markeredgecolor=options['markeredgecolor'],
+                 markeredgewidth=options['markeredgewidth'],
                  label=options['legend_entry'])
         plt.hold(True)
 
