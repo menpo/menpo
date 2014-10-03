@@ -19,6 +19,11 @@ class MayaviViewer(Renderer):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, figure_id, new_figure):
+        try:
+            import mayavi
+        except ImportError:
+            raise ImportError("mayavi is required for viewing 3D objects "
+                              "(consider 'conda/pip install mayavi')")
         super(MayaviViewer, self).__init__(figure_id, new_figure)
 
     def get_figure(self):

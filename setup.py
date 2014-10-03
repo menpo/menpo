@@ -44,8 +44,7 @@ else:
                         'hdf5able==0.3.3',
 
                         # Visualization
-                        'matplotlib==1.4.0',
-                        'mayavi==4.3.1']
+                        'matplotlib==1.4.0']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')

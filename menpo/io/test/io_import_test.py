@@ -65,8 +65,8 @@ def test_json_landmarks_bunny():
 def test_custom_landmark_logic_bunny():
     def f(mesh):
         return {
-            'no_nose': os.path.join(mesh.ioinfo.dir, 'bunny_no_nose.ljson'),
-            'full_set': os.path.join(mesh.ioinfo.dir, 'bunny.ljson')
+            'no_nose': mesh.path.with_name('bunny_no_nose.ljson'),
+            'full_set': mesh.path.with_name('bunny.ljson')
         }
     mesh = mio.import_mesh(mio.data_path_to('bunny.obj'), landmark_resolver=f)
     assert('no_nose' in mesh.landmarks.group_labels)
@@ -132,14 +132,15 @@ def test_lenna_import():
     assert(img.landmarks['PTS'].n_landmarks == 68)
 
 
-def test_ioinfo():
+def test_path():
     # choose a random asset (all should have it!)
     img = mio.import_builtin_asset('einstein.jpg')
     path = mio.data_path_to('einstein.jpg')
-    assert(img.ioinfo.filepath == path)
-    assert(img.ioinfo.filename == 'einstein')
-    assert(img.ioinfo.extension == '.jpg')
-    assert(img.ioinfo.dir == mio.data_dir_path())
+    assert(str(img.path) == path)
+    assert(img.path.stem == 'einstein')
+    assert(img.path.suffix == '.jpg')
+    assert(str(img.path.parent) == mio.data_dir_path())
+    assert(img.path.name == 'einstein.jpg')
 
 
 def test_import_image():
@@ -155,7 +156,7 @@ def test_import_mesh():
 def test_import_images():
     imgs_glob = os.path.join(mio.data_dir_path(), '*')
     imgs = list(mio.import_images(imgs_glob))
-    imgs_filenames = set(i.ioinfo.filename for i in imgs)
+    imgs_filenames = set(i.path.stem for i in imgs)
     exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna'}
     assert(len(exp_imgs_filenames - imgs_filenames) == 0)
 
