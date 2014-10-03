@@ -10,6 +10,44 @@ from menpo.visualize import print_dynamic, progress_bar_str
 from .base import is_pyramid_on_features
 
 
+def compute_reference_shape(shapes, normalization_diagonal, verbose=False):
+    r"""
+    Function that computes the reference shape as the mean shape of the provided
+    shapes.
+
+    Parameters
+    ----------
+    shapes : list of :map:`PointCloud`
+        The set of shapes from which to build the reference shape.
+
+    normalization_diagonal : `int`
+        If int, it ensures that the mean shape is scaled so that the
+        diagonal of the bounding box containing it matches the
+        normalization_diagonal value.
+        If None, the mean shape is not rescaled.
+
+    verbose : `bool`, Optional
+        Flag that controls information and progress printing.
+
+    Returns
+    -------
+    reference_shape : :map:`PointCloud`
+        The reference shape.
+    """
+    # the reference_shape is the mean shape of the images' landmarks
+    if verbose:
+        print_dynamic('- Computing reference shape')
+    reference_shape = mean_pointcloud(shapes)
+
+    # fix the reference_shape's diagonal length if asked
+    if normalization_diagonal:
+        x, y = reference_shape.range()
+        scale = normalization_diagonal / np.sqrt(x**2 + y**2)
+        Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
+
+    return reference_shape
+
+
 def normalization_wrt_reference_shape(images, group, label,
                                       normalization_diagonal, verbose=False):
     r"""
@@ -26,21 +64,18 @@ def normalization_wrt_reference_shape(images, group, label,
 
     Parameters
     ----------
-    images: list of :class:`menpo.image.MaskedImage`
-        The set of landmarked images from which to build the model.
+    images : list of :class:`menpo.image.MaskedImage`
+        The set of landmarked images to normalize.
 
-    group : string
+    group : `str`
         The key of the landmark set that should be used. If None,
         and if there is only one set of landmarks, this set will be used.
 
-    label: string
+    label : `str`
         The label of of the landmark manager that you wish to use. If no
         label is passed, the convex hull of all landmarks is used.
 
-    normalization_diagonal: int
-        During building an AAM, all images are rescaled to ensure that the
-        scale of their landmarks matches the scale of the mean shape.
-
+    normalization_diagonal: `int`
         If int, it ensures that the mean shape is scaled so that the
         diagonal of the bounding box containing it matches the
         normalization_diagonal value.
@@ -51,10 +86,8 @@ def normalization_wrt_reference_shape(images, group, label,
         reference frame (provided that features computation does not change
         the image size).
 
-    verbose: bool, Optional
+    verbose : `bool`, Optional
         Flag that controls information and progress printing.
-
-        Default: False
 
     Returns
     -------
@@ -64,17 +97,12 @@ def normalization_wrt_reference_shape(images, group, label,
     normalized_images : :map:`MaskedImage` list
         A list with the normalized images.
     """
-    # the reference_shape is the mean shape of the images' landmarks
-    if verbose:
-        print_dynamic('- Computing reference shape')
+    # get shapes
     shapes = [i.landmarks[group][label] for i in images]
-    reference_shape = mean_pointcloud(shapes)
 
-    # fix the reference_shape's diagonal length if asked
-    if normalization_diagonal:
-        x, y = reference_shape.range()
-        scale = normalization_diagonal / np.sqrt(x**2 + y**2)
-        Scale(scale, reference_shape.n_dims).apply_inplace(reference_shape)
+    # compute the reference shape and fix its diagonal length
+    reference_shape = compute_reference_shape(shapes, normalization_diagonal,
+                                              verbose=verbose)
 
     # normalize the scaling of all images wrt the reference_shape size
     normalized_images = []
