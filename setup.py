@@ -26,7 +26,7 @@ else:
     install_requires = [# Scientific Python Stack
                         'numpy==1.9.0',
                         'scipy==0.14.0',
-                        'matplotlib==1.4.0'
+                        'matplotlib==1.4.0',
                         'scikit-learn==0.15.2',
                         'pillow==2.5.1',
 
