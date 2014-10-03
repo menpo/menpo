@@ -117,7 +117,7 @@ class TexturedTriMesh(TriMesh, Rasterizable):
         Note that textures are best transmitted in a native format like jpeg
         rather that in a JSON format. For this reason the texture itself is
         not encoded. Consumers of this method (e.g. a web server serving
-        Menpo TexturedTriMeshes) could use the ioinfo property to locate the
+        Menpo TexturedTriMeshes) could use the path property to locate the
         original texture on disk for clients and serve this directly.
         """
         json_dict = TriMesh.tojson(self)

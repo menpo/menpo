@@ -590,7 +590,7 @@ def load_database(database_path, bounding_boxes=None,
         # the image the bounding box belongs to.
         landmark_group_label = None
         if bounding_boxes is not None:
-            fname = i.ioinfo.filename + i.ioinfo.extension
+            fname = i.path.name
             landmark_group_label = 'bbox'
             i.landmarks[landmark_group_label] = bounding_boxes[fname].detector
 
