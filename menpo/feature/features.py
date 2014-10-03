@@ -392,7 +392,7 @@ def es(image_data, verbose=False):
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
     es_pixels = np.empty((image_data.shape[0], image_data.shape[1],
-                        image_data.shape[-1] * feat_channels))
+                          image_data.shape[-1] * feat_channels))
     es_pixels[..., ::feat_channels] = grad[..., ::2] / grad_abs
     es_pixels[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
     # print information
