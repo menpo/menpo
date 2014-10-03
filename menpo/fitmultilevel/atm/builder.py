@@ -9,7 +9,7 @@ from menpo.fitmultilevel.base import create_pyramid
 from menpo.transform.thinplatesplines import ThinPlateSplines
 from menpo.model import PCAModel
 from menpo.fitmultilevel.builder import (DeformableModelBuilder,
-                                         normalization_wrt_reference_shape,
+                                         compute_reference_shape,
                                          build_shape_model)
 from menpo.fitmultilevel import checks
 from menpo.visualize import print_dynamic, progress_bar_str
@@ -145,28 +145,28 @@ class AAMBuilder(DeformableModelBuilder):
         self.max_shape_components = max_shape_components
         self.boundary = boundary
 
-    def build(self, pointclouds, template, group=None, label=None,
-              verbose=False):
+    def build(self, shapes, template, group=None, label=None, verbose=False):
         r"""
-        Builds a Multilevel Active Template Model given a list of point clouds
-        and a template image.
+        Builds a Multilevel Active Template Model given a list of shapes and a
+        template image.
 
         Parameters
         ----------
-        pointclouds : list of :map:`PointCloud`
-            The set of point clouds from which to build the shape model of the
-            ATM.
+        shapes : list of :map:`PointCloud`
+            The set of shapes from which to build the shape model of the ATM.
 
         template : :map:`Image` or subclass
             The image to be used as template.
 
         group : `string`, optional
-            The key of the landmark set that should be used. If ``None``,
-            and if there is only one set of landmarks, this set will be used.
+            The key of the landmark set of the template that should be used. If
+            ``None``, and if there is only one set of landmarks, this set will
+            be used.
 
         label : `string`, optional
-            The label of of the landmark manager that you wish to use. If no
-            label is passed, the convex hull of all landmarks is used.
+            The label of the landmark manager of the template that you wish to
+            use. If ``None`` is passed, the convex hull of all landmarks is
+            used.
 
         verbose : `boolean`, optional
             Flag that controls information and progress printing.
@@ -177,14 +177,18 @@ class AAMBuilder(DeformableModelBuilder):
             The AAM object. Shape and appearance models are stored from lowest
             to highest level
         """
-        # compute reference_shape and normalize images size
-        self.reference_shape, normalized_images = \
-            normalization_wrt_reference_shape(images, group, label,
-                                              self.normalization_diagonal,
-                                              verbose=verbose)
+        # compute reference_shape
+        self.reference_shape = compute_reference_shape(
+            shapes, self.normalization_diagonal, verbose=verbose)
+
+        # normalize the template size using the reference_shape scaling
+        if verbose:
+            print_dynamic('- Normalizing template size')
+        normalized_template = template.rescale_to_reference_shape(
+            self.reference_shape, group=group, label=label)
 
         # create pyramid
-        generators = create_pyramid(normalized_images, self.n_levels,
+        generators = create_pyramid([normalized_template], self.n_levels,
                                     self.downscale, self.features)
 
         # build the model at each pyramid level
