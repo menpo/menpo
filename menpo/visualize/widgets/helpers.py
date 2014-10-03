@@ -1988,7 +1988,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     dropdown_menu['max'] = 'max'
     dropdown_menu['min'] = 'min'
     for p in range(n_points):
-        dropdown_menu["point {}".format(p+1)] = p
+        dropdown_menu["point {}".format(p)] = p
     plot_displacements_menu = SelectWidget(values=dropdown_menu, value='mean')
     plot_mode = RadioButtonsWidget(description='Plot mode:',
                                    values={'Single': False, 'Multiple': True})

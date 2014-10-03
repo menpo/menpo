@@ -1304,14 +1304,37 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         # select figure
         figure_id = plt.figure(save_figure_wid.figure_id.number)
 
-        # plot errors curve
-        plt.plot(range(len(fitting_results[im].errors())),
-                 fitting_results[im].errors(), '-bo')
-        plt.gca().set_xlim(0, len(fitting_results[im].errors())-1)
-        plt.xlabel('Iteration')
-        plt.ylabel('Fitting Error')
-        plt.title("Fitting error evolution of Image {}".format(im))
+        # plot displacements curve
+        d_type = iterations_wid.displacement_type
+        if (d_type == 'max' or d_type == 'min' or d_type == 'mean' or
+                d_type == 'median'):
+            d_curve = fitting_results[im].displacements_stats(stat_type=d_type)
+        else:
+            all_displacements = fitting_results[im].displacements()
+            d_curve = [iteration_displacements[d_type]
+                       for iteration_displacements in all_displacements]
+        plt.plot(range(len(d_curve)), d_curve, '-bo')
+        plt.gca().set_xlim(0, len(d_curve)-1)
         plt.grid("on")
+        plt.xlabel('Iteration')
+
+        # set labels
+        if d_type == 'max':
+            plt.ylabel('Maximum Displacement')
+            plt.title("Maximum displacement evolution of Image {}".format(im))
+        elif d_type == 'min':
+            plt.ylabel('Minimum Displacement')
+            plt.title("Minimum displacement evolution of Image {}".format(im))
+        elif d_type == 'mean':
+            plt.ylabel('Mean Displacement')
+            plt.title("Mean displacement evolution of Image {}".format(im))
+        elif d_type == 'median':
+            plt.ylabel('Median Displacement')
+            plt.title("Median displacement evolution of Image {}".format(im))
+        else:
+            plt.ylabel("Displacement of Point {}".format(d_type))
+            plt.title("Point {} displacement evolution of Image {}".format(
+                d_type, im))
 
         # set figure size
         x_scale = figure_options_wid.x_scale
