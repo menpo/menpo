@@ -441,8 +441,6 @@ def test_projectout_ic():
                'me_norm')
 
 
-#if platform.system() != 'Windows':
-#    # https://github.com/menpo/menpo/issues/450
 @attr('fuzzy')
 def test_alternating_fa():
     aam_helper(aam, AlternatingForwardAdditive, 0, 8, 0.09062, 0.07053,
@@ -465,8 +463,7 @@ def test_projectout_fa():
     aam_helper(aam, ProjectOutForwardAdditive, 3, 6, 0.10303, 0.09202,
                'me_norm')
 
-#if platform.system() != 'Windows':
-#    # https://github.com/menpo/menpo/issues/450
+
 @attr('fuzzy')
 def test_alternating_fc():
     aam_helper(aam, AlternatingForwardCompositional, 0, 6, 0.09062, 0.07109,
