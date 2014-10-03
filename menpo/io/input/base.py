@@ -73,7 +73,7 @@ def same_name(asset):
     the same stem as the asset.
     """
     # pattern finding all landmarks with the same stem
-    pattern = os.path.join(asset.ioinfo.dir, asset.ioinfo.filename + '.*')
+    pattern = asset.path.with_suffix('.*')
     # find all the landmarks we can with this name. Key is ext (without '.')
     return {os.path.splitext(p)[-1][1:].upper(): p
             for p in landmark_file_paths(pattern)}
@@ -453,8 +453,9 @@ def _import(filepath, extensions_map, keep_importer=False,
         `keep_importers` is `True` then the importer is returned.
     """
     filepath = _norm_path(filepath)
-    if not os.path.isfile(filepath):
-        raise ValueError("{} is not a file".format(filepath))
+    path = Path(filepath)
+    if not path.is_file():
+        raise ValueError("{} is not a file".format(path))
     # below could raise ValueError as well...
     importer = map_filepath_to_importer(filepath, extensions_map,
                                         importer_kwargs=importer_kwargs)
@@ -463,14 +464,13 @@ def _import(filepath, extensions_map, keep_importer=False,
     else:
         built_objects = importer.build()
     # landmarks are iterable so check for list precisely
-    ioinfo = importer.build_ioinfo()
     # enforce a list to make processing consistent
     if not isinstance(built_objects, list):
         built_objects = [built_objects]
 
-    # attach ioinfo
+    # attach path
     for x in built_objects:
-        x.ioinfo = ioinfo
+        x.path = path
 
     # handle landmarks
     if has_landmarks:
@@ -813,44 +813,8 @@ class Importer(object):
         """
         pass
 
-    def build_ioinfo(self):
-        return IOInfo(self.filepath)
-
 
 # Avoid circular imports
 from menpo.io.input.extensions import (mesh_types, all_image_types,
                                        all_mesh_and_image_types,
                                        all_landmark_types)
-
-
-class IOInfo(hdf5able.HDF5able):
-    r"""
-    Simple state object for recording IO information.
-    """
-    def __init__(self, filepath):
-        self._path = Path(os.path.abspath(os.path.expanduser(filepath)))
-
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def filepath(self):
-        return str(self._path)
-
-    @property
-    def filename(self):
-        return self._path.stem
-
-    @property
-    def dir(self):
-        return str(self._path.parent)
-
-    @property
-    def extension(self):
-        return ''.join(self._path.suffixes)
-
-    def __str__(self):
-        return 'filename: {}\nextension: {}\ndir: {}\nfilepath: {}'.format(
-            self.filename, self.extension, self.dir, self.filepath
-        )
