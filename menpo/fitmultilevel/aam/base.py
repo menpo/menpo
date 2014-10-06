@@ -1,14 +1,14 @@
 from __future__ import division
 
 import numpy as np
-from hdf5able import HDF5able, SerializableCallable
+from hdf5able import SerializableCallable
 
 from menpo.shape import TriMesh
 from menpo.fitmultilevel.base import DeformableModel, name_of_callable
 from .builder import build_patch_reference_frame, build_reference_frame
 
 
-class AAM(DeformableModel, HDF5able):
+class AAM(DeformableModel):
     r"""
     Active Appearance Model class.
 
@@ -73,7 +73,7 @@ class AAM(DeformableModel, HDF5able):
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
 
-    def h5_dict_to_serializable_dict(self):
+    def __getstate__(self):
         import menpo.transform
         d = self.__dict__.copy()
         transform = d.pop('transform')
@@ -88,6 +88,13 @@ class AAM(DeformableModel, HDF5able):
             d['features'] = [SerializableCallable(f, [menpo.feature])
                              for f in features]
         return d
+
+    def __setstate__(self, state):
+        try:
+            state['features'] = state['features'].callable
+        except AttributeError:
+            state['features'] = [f.callable for f in state['features']]
+        self.__dict__.update(state)
 
     @property
     def n_levels(self):

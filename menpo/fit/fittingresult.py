@@ -424,7 +424,7 @@ class ParametricFittingResult(SemiParametricFittingResult):
         return error_images
 
 
-class SerializableFittingResult(HDF5able, FittingResult):
+class SerializableFittingResult(FittingResult):
     r"""
     Designed to allow the fitting results to be easily serializable. In
     comparison to the other fitting result objects, the serializable fitting
