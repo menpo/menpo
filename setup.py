@@ -23,28 +23,19 @@ else:
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
-    install_requires = [# Core
+    install_requires = [# Scientific Python Stack
                         'numpy==1.9.0',
                         'scipy==0.14.0',
+                        'matplotlib==1.4.0',
+                        'scikit-learn==0.15.2',
+                        'pillow==2.5.1',
+
                         'Cython==0.21',
                         'wrapt==1.9.0',
 
-                        # Image
-                        'Pillow==2.5.1',
-
-                        # ML
-                        'scikit-learn==0.15.2',
-
-                        # 3D import
                         'menpo-pyvrml97==2.3.0a4',
                         'cyassimp==0.2.0',
-
-                        # Rasterization
-                        'cyrasterize==0.2.0',
-                        'hdf5able==0.3.3',
-
-                        # Visualization
-                        'matplotlib==1.4.0']
+                        'hdf5able==0.3.3']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')

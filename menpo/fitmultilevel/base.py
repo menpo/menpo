@@ -1,4 +1,5 @@
 from __future__ import division
+from menpo.visualize import progress_bar_str, print_dynamic
 
 
 def name_of_callable(c):
@@ -17,7 +18,7 @@ def is_pyramid_on_features(features):
     return callable(features)
 
 
-def create_pyramid(images, n_levels, downscale, features):
+def create_pyramid(images, n_levels, downscale, features, verbose=False):
     r"""
     Function that creates a generator function for Gaussian pyramid. The
     pyramid can be created either on the feature space or the original
@@ -47,8 +48,17 @@ def create_pyramid(images, n_levels, downscale, features):
         The generator function of the Gaussian pyramid.
 
     """
-    return [pyramid_of_feature_images(n_levels, downscale, features, i)
-            for i in images]
+    will_take_a_while = is_pyramid_on_features(features)
+    pyramids = []
+    for i, img in enumerate(images):
+        if will_take_a_while and verbose:
+            print_dynamic(
+                'Computing top level feature space - {}'.format(
+                    progress_bar_str((i + 1.) / len(images),
+                                     show_bar=False)))
+        pyramids.append(pyramid_of_feature_images(n_levels, downscale,
+                                                  features, img))
+    return pyramids
 
 
 def pyramid_of_feature_images(n_levels, downscale, features, image):

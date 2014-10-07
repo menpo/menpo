@@ -224,7 +224,8 @@ class SDTrainer(DeformableModel):
 
         # create pyramid
         generators = create_pyramid(normalized_images, self.n_levels,
-                                    self.downscale, self.features)
+                                    self.downscale, self.features,
+                                    verbose=verbose)
 
         # get feature images of all levels
         images = apply_pyramid_on_images(generators, self.n_levels,

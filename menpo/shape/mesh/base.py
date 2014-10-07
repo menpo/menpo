@@ -5,13 +5,12 @@ Delaunay = None  # expensive, from scipy.spatial
 
 from .. import PointCloud
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
-from menpo.rasterize import Rasterizable, ColourRasterInfo
 from menpo.visualize import TriMeshViewer
 
 from .normals import compute_normals
 
 
-class TriMesh(PointCloud, Rasterizable):
+class TriMesh(PointCloud):
     r"""
     A pointcloud with a connectivity defined by a triangle list. These are
     designed to be explicitly 2D or 3D.
@@ -49,13 +48,6 @@ class TriMesh(PointCloud, Rasterizable):
         else:
             trilist = np.array(trilist, copy=True, order='C')
         self.trilist = trilist
-
-    @property
-    def _rasterize_type_texture(self):
-        return False
-
-    def _rasterize_generate_color_mesh(self):
-        return ColourRasterInfo(self.points, self.trilist, self.points)
 
     def __str__(self):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
