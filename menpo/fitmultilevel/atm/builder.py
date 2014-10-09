@@ -1,9 +1,10 @@
 from __future__ import division
 import numpy as np
 
+from menpo.fitmultilevel.aam.builder import build_reference_frame
 from menpo.shape import TriMesh
 from menpo.image import MaskedImage
-from menpo.transform import Translation
+from menpo.transform import Translation, Scale
 from menpo.transform.piecewiseaffine import PiecewiseAffine
 from menpo.fitmultilevel.base import create_pyramid
 from menpo.transform.thinplatesplines import ThinPlateSplines
@@ -16,7 +17,7 @@ from menpo.visualize import print_dynamic, progress_bar_str
 from menpo.feature import igo
 
 
-class AAMBuilder(DeformableModelBuilder):
+class ATMBuilder(DeformableModelBuilder):
     r"""
     Class that builds Multilevel Active Template Models.
 
@@ -173,9 +174,9 @@ class AAMBuilder(DeformableModelBuilder):
 
         Returns
         -------
-        aam : :map:`AAM`
-            The AAM object. Shape and appearance models are stored from lowest
-            to highest level
+        atm : :map:`ATM`
+            The ATM object. Shape and appearance models are stored from lowest
+            to highest level.
         """
         # compute reference_shape
         self.reference_shape = compute_reference_shape(
@@ -187,9 +188,9 @@ class AAMBuilder(DeformableModelBuilder):
         normalized_template = template.rescale_to_reference_shape(
             self.reference_shape, group=group, label=label)
 
-        # create pyramid
-        generators = create_pyramid([normalized_template], self.n_levels,
-                                    self.downscale, self.features)
+        # create pyramid for template image
+        generator = create_pyramid([normalized_template], self.n_levels,
+                                   self.downscale, self.features)
 
         # build the model at each pyramid level
         if verbose:
@@ -200,7 +201,7 @@ class AAMBuilder(DeformableModelBuilder):
                 print_dynamic('- Building model\n')
 
         shape_models = []
-        appearance_models = []
+        warped_templates = []
         # for each pyramid level (high --> low)
         for j in range(self.n_levels):
             # since models are built from highest to lowest level, the
@@ -212,72 +213,38 @@ class AAMBuilder(DeformableModelBuilder):
                 if self.n_levels > 1:
                     level_str = '  - Level {}: '.format(j + 1)
 
-            # get feature images of current level
-            feature_images = []
-            for c, g in enumerate(generators):
-                if verbose:
-                    print_dynamic(
-                        '{}Computing feature space/rescaling - {}'.format(
-                        level_str,
-                        progress_bar_str((c + 1.) / len(generators),
-                                         show_bar=False)))
-                feature_images.append(next(g))
-
-            # extract potentially rescaled shapes
-            shapes = [i.landmarks[group][label] for i in feature_images]
-
-            # define shapes that will be used for training
-            if j == 0:
-                original_shapes = shapes
-                train_shapes = shapes
-            else:
-                if self.scaled_shape_models:
-                    train_shapes = shapes
-                else:
-                    train_shapes = original_shapes
+            # rescale shapes if required
+            if j > 0 and self.scaled_shape_models:
+                scale_transform = Scale(scale_factor=1.0 / self.downscale,
+                                        n_dims=2)
+                shapes = [scale_transform.apply(s) for s in shapes]
 
             # train shape model and find reference frame
             if verbose:
                 print_dynamic('{}Building shape model'.format(level_str))
-            shape_model = build_shape_model(
-                train_shapes, self.max_shape_components[rj])
+            shape_model = build_shape_model(shapes,
+                                            self.max_shape_components[rj])
             reference_frame = self._build_reference_frame(shape_model.mean)
 
             # add shape model to the list
             shape_models.append(shape_model)
 
-            # compute transforms
+            # get template's feature image of current level
             if verbose:
-                print_dynamic('{}Computing transforms'.format(level_str))
-            transforms = [self.transform(reference_frame.landmarks['source'].lms,
-                                         i.landmarks[group][label])
-                          for i in feature_images]
+                print_dynamic('{}Warping template'.format(level_str))
+            feature_template = next(generator)
 
-            # warp images to reference frame
-            warped_images = []
-            for c, (i, t) in enumerate(zip(feature_images, transforms)):
-                if verbose:
-                    print_dynamic('{}Warping images - {}'.format(
-                        level_str,
-                        progress_bar_str(float(c + 1) / len(feature_images),
-                                         show_bar=False)))
-                warped_images.append(i.warp_to_mask(reference_frame.mask, t))
+            # compute transform
+            transform = self.transform(reference_frame.landmarks['source'].lms,
+                                       feature_template.landmarks[group][label])
 
-            # attach reference_frame to images' source shape
-            for i in warped_images:
-                i.landmarks['source'] = reference_frame.landmarks['source']
+            # warp template to reference frame
+            warped_templates.append(
+                feature_template.warp_to_mask(reference_frame.mask, transform))
 
-            # build appearance model
-            if verbose:
-                print_dynamic('{}Building appearance model'.format(level_str))
-            appearance_model = PCAModel(warped_images)
-            # trim appearance model if required
-            if self.max_appearance_components[rj] is not None:
-                appearance_model.trim_components(
-                    self.max_appearance_components[rj])
-
-            # add appearance model to the list
-            appearance_models.append(appearance_model)
+            # attach reference_frame to template's source shape
+            warped_templates[j].landmarks['source'] = \
+                reference_frame.landmarks['source']
 
             if verbose:
                 print_dynamic('{}Done\n'.format(level_str))
@@ -285,11 +252,11 @@ class AAMBuilder(DeformableModelBuilder):
         # reverse the list of shape and appearance models so that they are
         # ordered from lower to higher resolution
         shape_models.reverse()
-        appearance_models.reverse()
-        n_training_images = len(images)
+        warped_templates.reverse()
+        n_training_shapes = len(shapes)
 
-        return self._build_aam(shape_models, appearance_models,
-                               n_training_images)
+        return self._build_atm(shape_models, warped_templates,
+                               n_training_shapes)
 
     def _build_reference_frame(self, mean_shape):
         r"""
@@ -308,27 +275,27 @@ class AAMBuilder(DeformableModelBuilder):
         return build_reference_frame(mean_shape, boundary=self.boundary,
                                      trilist=self.trilist)
 
-    def _build_aam(self, shape_models, appearance_models, n_training_images):
+    def _build_atm(self, shape_models, warped_templates, n_training_shapes):
         r"""
-        Returns an AAM object.
+        Returns an ATM object.
 
         Parameters
         ----------
-        shape_models : :map:`PCAModel`
+        shape_models : `list` of :map:`PCAModel`
             The trained multilevel shape models.
 
-        appearance_models : :map:`PCAModel`
-            The trained multilevel appearance models.
+        warped_templates : `list` of :map:`MaskedImage`
+            The warped multilevel templates.
 
-        n_training_images : `int`
-            The number of training images.
+        n_training_shapes : `int`
+            The number of training shapes.
 
         Returns
         -------
-        aam : :map:`AAM`
-            The trained AAM object.
+        atm : :map:`ATM`
+            The trained ATM object.
         """
-        from .base import AAM
-        return AAM(shape_models, appearance_models, n_training_images,
+        from .base import ATM
+        return ATM(shape_models, warped_templates, n_training_shapes,
                    self.transform, self.features, self.reference_shape,
                    self.downscale, self.scaled_shape_models)
