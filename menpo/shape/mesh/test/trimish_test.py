@@ -179,5 +179,5 @@ def test_trimesh_vertex_normals():
                                  [0, 0, 1],
                                  [-0.32505758,  -0.32505758, 0.88807383]])
     trimesh = TriMesh(points, trilist)
-    vertex_normals = trimesh.vertex_normals
+    vertex_normals = trimesh.vertex_normals()
     assert_allclose(vertex_normals, expected_normals)

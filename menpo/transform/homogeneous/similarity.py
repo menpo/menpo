@@ -321,8 +321,8 @@ def procrustes_alignment(source, target, rotation=True):
     from .translation import Translation
     from .scale import UniformScale
     # Compute the transforms we need - centering translations...
-    tgt_t = Translation(-target.centre, skip_checks=True)
-    src_t = Translation(-source.centre, skip_checks=True)
+    tgt_t = Translation(-target.centre(), skip_checks=True)
+    src_t = Translation(-source.centre(), skip_checks=True)
     # and a scale that matches the norm of the source to the norm of the target
     src_s = UniformScale(target.norm() / source.norm(), source.n_dims,
                          skip_checks=True)

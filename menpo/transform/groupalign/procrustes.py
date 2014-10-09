@@ -63,7 +63,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
 
         s = UniformScale(self.initial_target_scale / new_tgt.norm(),
                          self.n_dims, skip_checks=True)
-        t = Translation(-new_tgt.centre, skip_checks=True)
+        t = Translation(-new_tgt.centre(), skip_checks=True)
         rescale.compose_before_inplace(t)
         rescale.compose_before_inplace(s)
         rescale.compose_before_inplace(t.pseudoinverse)

@@ -122,15 +122,15 @@ class TriMesh(PointCloud):
         pg.landmarks = self.landmarks
         return pg
 
-    @property
     def vertex_normals(self):
         r"""
-        Normal at each point.
-
-        :type: (`n_points`, 3) ndarray
-
         Compute the per-vertex normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
+
+        Returns
+        -------
+        normals : (`n_points`, 3) ndarray
+            Normal at each point.
 
         Raises
         ------

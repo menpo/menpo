@@ -111,7 +111,7 @@ def build_shape_model(shapes, max_components):
         The PCA shape model.
     """
     # centralize shapes
-    centered_shapes = [Translation(-s.centre).apply(s) for s in shapes]
+    centered_shapes = [Translation(-s.centre()).apply(s) for s in shapes]
     # align centralized shape using Procrustes Analysis
     gpa = GeneralizedProcrustesAnalysis(centered_shapes)
     aligned_shapes = [s.aligned_source for s in gpa.transforms]
