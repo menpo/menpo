@@ -225,7 +225,7 @@ class LucasKanadeATMFitter(ATMFitter):
             else:
                 raise ValueError('n_shape can be an integer or a float or None '
                                  'or a list containing 1 or {} of '
-                                 'those'.format(self.aam.n_levels))
+                                 'those'.format(self.atm.n_levels))
 
         self._fitters = []
         for j, (t, sm) in enumerate(zip(self.atm.warped_templates,
@@ -318,7 +318,7 @@ class LucasKanadeATMFitter(ATMFitter):
                 if not self.pyramid_on_features:
                     out = "{}     {}{} {} per image.\n".format(
                         out, feat_str[i], n_channels[i], ch_str[i])
-                if (self.aam.scaled_shape_models or
+                if (self.atm.scaled_shape_models or
                         (not self.pyramid_on_features)):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
