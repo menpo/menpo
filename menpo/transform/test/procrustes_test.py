@@ -23,7 +23,7 @@ def test_procrustes_no_target():
     assert(gpa.n_iterations == 5)
     assert(gpa.n_sources == 3)
     assert(np.round(gpa.initial_target_scale * 100) == 195.)
-    assert(np.round(gpa.av_alignment_error() * 10) == 4.)
+    assert(np.round(gpa.mean_alignment_error() * 10) == 4.)
     assert_allclose(np.around(aligned_1.points, decimals=1),
                     np.around(aligned_2.points, decimals=1))
     res_3 = np.array([[0.7, -0.3], [2.6, -0.4], [2.7, -1.0], [0.9, -0.9]])
@@ -48,7 +48,7 @@ def test_procrustes_with_target():
     assert(gpa.n_iterations == 2)
     assert(gpa.n_sources == 2)
     assert(gpa.initial_target_scale == 4.)
-    assert(np.round(gpa.av_alignment_error() * 100) == 93.)
+    assert(np.round(gpa.mean_alignment_error() * 100) == 93.)
     assert_allclose(np.around(aligned_1.points, decimals=1),
                     np.around(src_trg.points, decimals=1))
     res_2 = np.array([[2.0, -0.9], [4.9, 1.6], [6.0, 0.9], [3.1, -1.6]])

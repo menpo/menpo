@@ -90,7 +90,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         return PointCloud(np.mean([t.target.points for t in self.transforms],
                                   axis=0))
 
-    def av_alignment_error(self):
+    def mean_alignment_error(self):
         r"""
         Returns the average error of the recursive procrustes alignment.
 
@@ -102,7 +102,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
     def __str__(self):
         if self.converged:
             return ('Converged after %d iterations with av. error %f'
-                    % (self.n_iterations, self.av_alignment_error()))
+                    % (self.n_iterations, self.mean_alignment_error()))
         else:
             return ('Failed to converge after %d iterations with av. error '
-                    '%f' % (self.n_iterations, self.av_alignment_error()))
+                    '%f' % (self.n_iterations, self.mean_alignment_error()))
