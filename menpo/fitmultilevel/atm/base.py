@@ -278,3 +278,89 @@ class ATM(DeformableModel, HDF5able):
                   n_channels[0], self.shape_models[0].n_components,
                   self.shape_models[0].variance_ratio * 100)
         return out
+
+
+class PatchBasedATM(ATM):
+    r"""
+    Patch Based Active Template Model class.
+
+    Parameters
+    -----------
+    shape_models : :map:`PCAModel` list
+        A list containing the shape models of the ATM.
+
+    warped_templates : :map:`MaskedImage` list
+        A list containing the warped templates models of the ATM.
+
+    n_training_shapes: `int`
+        The number of training shapes used to build the ATM.
+
+    patch_shape : tuple of `int`
+        The shape of the patches used to build the Patch Based ATM.
+
+    transform : :map:`PureAlignmentTransform`
+        The transform used to warp the images from which the ATM was
+        constructed.
+
+    features : `callable` or ``[callable]``, optional
+        If list of length ``n_levels``, feature extraction is performed at
+        each level after downscaling of the image.
+        The first element of the list specifies the features to be extracted at
+        the lowest pyramidal level and so on.
+
+        If ``callable`` the specified feature will be applied to the original
+        image and pyramid generation will be performed on top of the feature
+        image. Also see the `pyramid_on_features` property.
+
+        Note that from our experience, this approach of extracting features
+        once and then creating a pyramid on top tends to lead to better
+        performing AAMs.
+
+    reference_shape : :map:`PointCloud`
+        The reference shape that was used to resize all training images to a
+        consistent object size.
+
+    downscale : `float`
+        The downscale factor that was used to create the different pyramidal
+        levels.
+
+    scaled_shape_models : `boolean`, optional
+        If ``True``, the reference frames are the mean shapes of each pyramid
+        level, so the shape models are scaled.
+
+        If ``False``, the reference frames of all levels are the mean shape of
+        the highest level, so the shape models are not scaled; they have the
+        same size.
+
+        Note that from our experience, if ``scaled_shape_models`` is ``False``,
+        AAMs tend to have slightly better performance.
+
+    """
+    def __init__(self, shape_models, warped_templates, n_training_shapes,
+                 patch_shape, transform, features, reference_shape,
+                 downscale, scaled_shape_models):
+        super(PatchBasedATM, self).__init__(
+            shape_models, warped_templates, n_training_shapes, transform,
+            features, reference_shape, downscale, scaled_shape_models)
+        self.patch_shape = patch_shape
+
+    def _build_reference_frame(self, reference_shape, landmarks):
+        return build_patch_reference_frame(
+            reference_shape, patch_shape=self.patch_shape)
+
+    @property
+    def _str_title(self):
+        r"""
+        Returns a string containing name of the model.
+
+        :type: `string`
+        """
+        return 'Patch-Based Active Template Model'
+
+    def __str__(self):
+        out = super(PatchBasedATM, self).__str__()
+        out_splitted = out.splitlines()
+        out_splitted[0] = self._str_title
+        out_splitted.insert(5, "   - Patch size is {}W x {}H.".format(
+            self.patch_shape[1], self.patch_shape[0]))
+        return '\n'.join(out_splitted)
