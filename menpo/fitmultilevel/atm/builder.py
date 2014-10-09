@@ -232,7 +232,7 @@ class ATMBuilder(DeformableModelBuilder):
             # get template's feature image of current level
             if verbose:
                 print_dynamic('{}Warping template'.format(level_str))
-            feature_template = next(generator)
+            feature_template = next(generator[0])
 
             # compute transform
             transform = self.transform(reference_frame.landmarks['source'].lms,

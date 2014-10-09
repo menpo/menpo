@@ -1,1 +1,1 @@
-__author__ = 'ea1812'
+from .builder import ATMBuilder
