@@ -162,10 +162,9 @@ class MultilevelFittingResult(FittingResult):
             self._affine_correction.copy())
 
 
-class AAMMultilevelFittingResult(MultilevelFittingResult):
+class AMMultilevelFittingResult(MultilevelFittingResult):
     r"""
-    Class that holds the state of a :map:`AAMFitter` object before,
-    during and after it has fitted a particular image.
+    Class that holds the state of an Active Model (either AAM or ATM).
     """
     @property
     def costs(self):
@@ -213,17 +212,6 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         return warped_images
 
     @property
-    def appearance_reconstructions(self):
-        r"""
-        The list containing the appearance reconstruction obtained at
-        each fitting iteration.
-
-        :type: `list` of :map:`Image` or subclass
-        """
-        return list(chain(
-            *[f.appearance_reconstructions for f in self.fitting_results]))
-
-    @property
     def error_images(self):
         r"""
         The list containing the error images obtained at each fitting
@@ -233,6 +221,23 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
         """
         return list(chain(
             *[f.error_images for f in self.fitting_results]))
+
+
+class AAMMultilevelFittingResult(AMMultilevelFittingResult):
+    r"""
+    Class that holds the state of a :map:`AAMFitter` object before,
+    during and after it has fitted a particular image.
+    """
+    @property
+    def appearance_reconstructions(self):
+        r"""
+        The list containing the appearance reconstruction obtained at
+        each fitting iteration.
+
+        :type: `list` of :map:`Image` or subclass
+        """
+        return list(chain(
+            *[f.appearance_reconstructions for f in self.fitting_results]))
 
     @property
     def aam_reconstructions(self):
@@ -266,6 +271,33 @@ class AAMMultilevelFittingResult(MultilevelFittingResult):
                         shape_weights=swt, appearance_weights=None,
                         level=level))
         return aam_reconstructions
+
+
+class ATMMultilevelFittingResult(AMMultilevelFittingResult):
+    r"""
+    Class that holds the state of a :map:`ATMFitter` object before,
+    during and after it has fitted a particular image.
+    """
+    @property
+    def atm_reconstructions(self):
+        r"""
+        The list containing the atm reconstruction (i.e. the template warped on
+        the shape instance reconstruction) obtained at each fitting iteration.
+
+        Note that this reconstruction is only tested to work for the
+        :map:`OrthoMDTransform`
+
+        :type: list` of :map:`Image` or subclass
+        """
+        atm_reconstructions = []
+        for level, f in enumerate(self.fitting_results):
+            for shape_w in f.parameters:
+                shape_w = shape_w[4:]
+                sm_level = self.fitter.aam.shape_models[level]
+                swt = shape_w / sm_level.eigenvalues[:len(shape_w)] ** 0.5
+                atm_reconstructions.append(self.fitter.aam.instance(
+                    shape_weights=swt, level=level))
+        return atm_reconstructions
 
 
 class SerializableMultilevelFittingResult(HDF5able, FittingResult):
