@@ -94,7 +94,7 @@ def test_scale_2d_pseudoinverse():
                      [     0,      0, 1]])
 
     tr = NonUniformScale([1/scale1, 1/scale2])
-    assert_almost_equal(tr.pseudoinverse.h_matrix, homo)
+    assert_almost_equal(tr.pseudoinverse().h_matrix, homo)
 
 
 def test_uniformscale3d_from_vector():
@@ -150,7 +150,7 @@ def test_uniformscale_2d_pseudoinverse():
                      [0, 0, 1]])
 
     tr = UniformScale(2, 2)
-    assert_almost_equal(tr.pseudoinverse.h_matrix, homo)
+    assert_almost_equal(tr.pseudoinverse().h_matrix, homo)
 
 
 def test_scale_build_2d_uniform_pass_dim():

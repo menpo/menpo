@@ -16,7 +16,6 @@ class Invertible(object):
         :type: `bool`
         """
 
-    @property
     def pseudoinverse(self):
         r"""
         The pseudoinverse of the transform - that is, the transform that
@@ -58,7 +57,7 @@ class VInvertible(Invertible):
         The vectorized pseudoinverse of a provided vector instance.
         Syntactic sugar for::
 
-            self.from_vector(vector).pseudoinverse.as_vector()
+            self.from_vector(vector).pseudoinverse().as_vector()
 
         Can be much faster than the explict call as object creation can be
         entirely avoided in some cases.
@@ -73,4 +72,4 @@ class VInvertible(Invertible):
         pseudoinverse_vector : ``(n_parameters,)`` `ndarray`
             The pseudoinverse of the vector provided
         """
-        return self.from_vector(vector).pseudoinverse.as_vector()
+        return self.from_vector(vector).pseudoinverse().as_vector()

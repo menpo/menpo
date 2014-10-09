@@ -83,7 +83,7 @@ def compose_tps_after_translation_test():
 def manual_no_op_chain_test():
     points = PointCloud(np.random.random([10, 2]))
     t = Translation([3, 4])
-    chain = TransformChain([t, t.pseudoinverse])
+    chain = TransformChain([t, t.pseudoinverse()])
     points_applied = chain.apply(points)
     assert(np.allclose(points_applied.points, points.points))
 
@@ -163,7 +163,7 @@ def chain_compose_after_inplace_chain_test():
     t = Translation([3, 4])
     s = Scale([4, 2])
     chain_1 = TransformChain([t, s])
-    chain_2 = TransformChain([s.pseudoinverse, t.pseudoinverse])
+    chain_2 = TransformChain([s.pseudoinverse(), t.pseudoinverse()])
     chain_1.compose_before_inplace(chain_2)
 
     points = PointCloud(np.random.random([10, 2]))

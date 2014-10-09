@@ -342,5 +342,5 @@ def procrustes_alignment(source, target, rotation=True):
                      skip_checks=True)
         p.compose_before_inplace(r)
     # finally, translate the target back
-    p.compose_before_inplace(tgt_t.pseudoinverse)
+    p.compose_before_inplace(tgt_t.pseudoinverse())
     return p

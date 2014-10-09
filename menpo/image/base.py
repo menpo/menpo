@@ -863,7 +863,7 @@ class Image(Vectorizable, LandmarkableViewable):
                                                   sampled_pixel_values)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         return warped_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
@@ -945,7 +945,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # warp landmarks if requested.
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         return warped_image
 
     def rescale(self, scale, round='ceil', order=1):
@@ -1015,7 +1015,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # scale factors = max_index_after / current_max_index
         # (note that max_index = length - 1, as 0 based)
         scale_factors = (scale * shape - 1) / (shape - 1)
-        inverse_transform = NonUniformScale(scale_factors).pseudoinverse
+        inverse_transform = NonUniformScale(scale_factors).pseudoinverse()
         # for rescaling we enforce that mode is nearest to avoid num. errors
         return self.warp_to_shape(template_shape, inverse_transform,
                                   warp_landmarks=True, order=order,

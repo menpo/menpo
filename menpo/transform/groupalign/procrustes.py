@@ -7,6 +7,7 @@ mean_pointcloud = None  # to avoid circular imports
 PointCloud = None       # to avoid circular imports
 Similarity = None       # to avoid circular imports
 
+
 class GeneralizedProcrustesAnalysis(MultipleAlignment):
     r"""
     Class for aligning multiple source shapes between them.
@@ -54,7 +55,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
             from menpo.transform import Similarity
         if self.n_iterations > self.max_iterations:
             return False
-        new_tgt = mean_pointcloud([PointCloud(t.aligned_source.points,
+        new_tgt = mean_pointcloud([PointCloud(t.aligned_source().points,
                                               copy=False)
                                    for t in self.transforms])
         # rescale the new_target to be the same size as the original about
@@ -66,7 +67,7 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         t = Translation(-new_tgt.centre(), skip_checks=True)
         rescale.compose_before_inplace(t)
         rescale.compose_before_inplace(s)
-        rescale.compose_before_inplace(t.pseudoinverse)
+        rescale.compose_before_inplace(t.pseudoinverse())
         rescale.apply_inplace(new_tgt)
         # check to see if we have converged yet
         delta_target = np.linalg.norm(self.target.points - new_tgt.points)
@@ -79,7 +80,6 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
             self.target = new_tgt
             return self._recursive_procrustes()
 
-    @property
     def mean_aligned_shape(self):
         r"""
         Returns the mean of the aligned shapes.
@@ -90,20 +90,19 @@ class GeneralizedProcrustesAnalysis(MultipleAlignment):
         return PointCloud(np.mean([t.target.points for t in self.transforms],
                                   axis=0))
 
-    @property
     def av_alignment_error(self):
         r"""
         Returns the average error of the recursive procrustes alignment.
 
         :type: float
         """
-        return sum([t.alignment_error for t in self.transforms])/self.n_sources
+        return sum([t.alignment_error() for t in
+                    self.transforms])/self.n_sources
 
     def __str__(self):
         if self.converged:
             return ('Converged after %d iterations with av. error %f'
-                    % (self.n_iterations, self.av_alignment_error))
+                    % (self.n_iterations, self.av_alignment_error()))
         else:
             return ('Failed to converge after %d iterations with av. error '
-                    '%f' % (self.n_iterations, self.av_alignment_error))
-
+                    '%f' % (self.n_iterations, self.av_alignment_error()))
