@@ -4,7 +4,7 @@ import random
 import math
 
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo
+from menpo.feature import hog, lbp, es, igo, daisy
 import menpo.io as mio
 
 
@@ -189,6 +189,22 @@ def test_es_channels():
         assert_allclose(es_img.n_channels, 2 * channels[i, 0])
 
 
+def test_daisy_channels():
+    n_cases = 3
+    rings = np.random.randint(1, 3, [n_cases, 1])
+    orientations = np.random.randint(1, 7, [n_cases, 1])
+    histograms = np.random.randint(1, 6, [n_cases, 1])
+    channels = np.random.randint(1, 5, [n_cases, 1])
+    for i in range(n_cases):
+        image = Image(np.random.randn(40, 40, channels[i, 0]))
+        daisy_img = daisy(image, rings=rings[i, 0],
+                          orientations=orientations[i, 0],
+                          histograms=histograms[i, 0])
+        assert_allclose(daisy_img.shape, (3, 3))
+        assert_allclose(daisy_img.n_channels,
+                        ((rings[i, 0]*histograms[i, 0]+1)*orientations[i, 0]))
+
+
 def test_igo_values():
     image = Image([[1, 2], [2, 1]])
     igo_img = igo(image)
@@ -206,7 +222,6 @@ def test_igo_values():
 
 def test_es_values():
     image = Image([[1, 2], [2, 1]])
-    print image.shape
     es_img = es(image)
     k = 1 / (2 * (2**0.5))
     res = np.array([[[k, k], [-k, k]], [[k, -k], [-k, -k]]])
@@ -216,6 +231,15 @@ def test_es_values():
     res = np.array([[[np.nan, np.nan], [np.nan, np.nan]],
                     [[np.nan, np.nan], [np.nan, np.nan]]])
     assert_allclose(es_img.pixels, res)
+
+
+def test_daisy_values():
+    image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
+    daisy_img = daisy(image, step=1, rings=2, radius=1)
+    assert_allclose(np.around(daisy_img.pixels[0, 0, 10], 6), 0.000196)
+    assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002842)
+    assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.006205)
+    assert_allclose(np.around(daisy_img.pixels[1, 1, 40], 6), 0.001946)
 
 
 def test_lbp_values():
