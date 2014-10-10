@@ -3,7 +3,7 @@ from warnings import warn
 from scipy.spatial.distance import cdist
 from menpo.visualize import PointCloudViewer
 from menpo.shape.base import Shape
-
+PointGraph = None
 
 class PointCloud(Shape):
     r"""
@@ -83,8 +83,7 @@ class PointCloud(Shape):
         :type: ``n_dims`` `ndarray`
             The centre of the bounds of this PointCloud.
         """
-        min_b, max_b = self.bounds()
-        return (min_b + max_b) / 2
+        return self.bounds().centre
 
     def _as_vector(self):
         r"""
@@ -147,7 +146,7 @@ class PointCloud(Shape):
         """
         min_b = np.min(self.points, axis=0) - boundary
         max_b = np.max(self.points, axis=0) + boundary
-        return min_b, max_b
+        return BoundingBox(np.array((min_b, max_b)))
 
     def range(self, boundary=0):
         r"""
@@ -165,8 +164,8 @@ class PointCloud(Shape):
         range : ``(n_dims,)`` `ndarray`
             The range of the :map:`PointCloud` extent in each dimension.
         """
-        min_b, max_b = self.bounds(boundary)
-        return max_b - min_b
+        bb = self.bounds(boundary)
+        return bb.max() - bb.min()
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return PointCloudViewer(figure_id, new_figure,
@@ -246,3 +245,29 @@ class PointCloud(Shape):
         pc = self.copy()
         pc.points = pc.points[mask, :]
         return pc
+
+
+class BoundingBox(PointCloud):
+
+    def __init__(self, min_max):
+        PointCloud.__init__(self, min_max)
+
+    def min(self):
+        return self.points[0]
+
+    def max(self):
+        return self.points[1]
+
+    def box(self):
+        global PointGraph
+        if PointGraph is None:
+            from .graph import PointGraph
+        p = self.points
+        p2 = [[p[0, 0], p[1, 1]],
+              [p[1, 0], p[0, 1]]]
+        points = np.vstack((p, p2))
+        adj = np.array([[0, 3], [2, 0], [1, 2], [1, 3]])
+        return PointGraph(points, adj)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        return self.box()._view(figure_id=None, new_figure=False, **kwargs)

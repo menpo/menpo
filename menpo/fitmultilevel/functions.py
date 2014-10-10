@@ -184,19 +184,15 @@ def align_shape_with_bb(shape, bounding_box):
     ----------
     shape: :class:`menpo.shape.PointCloud`
         The shape to be aligned.
-    bounding_box: (2, 2) ndarray
-        The bounding box specified as:
-
-            np.array([[x_min, y_min], [x_max, y_max]])
+    bounding_box: :map:`BoundingBox`
+        The bounding box in which the the shape should be placed.
 
     Returns
     -------
-    transform : :class: `menpo.transform.Similarity`
-        The align transform
+    transform : :map:`Similarity`
+        The alignment transform
     """
-    shape_box = PointCloud(shape.bounds())
-    bounding_box = PointCloud(bounding_box)
-    return AlignmentSimilarity(shape_box, bounding_box, rotation=False)
+    return AlignmentSimilarity(shape.bounds(), bounding_box, rotation=False)
 
 
 #TODO: Document me

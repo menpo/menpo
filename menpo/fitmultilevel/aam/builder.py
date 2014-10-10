@@ -643,7 +643,7 @@ def build_patch_reference_frame(landmarks, boundary=3, group='source',
 
 def _build_reference_frame(landmarks, boundary=3, group='source'):
     # translate landmarks to the origin
-    minimum = landmarks.bounds(boundary=boundary)[0]
+    minimum = landmarks.bounds(boundary=boundary).min()
     landmarks = Translation(-minimum).apply(landmarks)
 
     resolution = landmarks.range(boundary=boundary)
