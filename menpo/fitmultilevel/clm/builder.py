@@ -172,7 +172,8 @@ class CLMBuilder(DeformableModelBuilder):
 
         # create pyramid
         generators = create_pyramid(normalized_images, self.n_levels,
-                                    self.downscale, self.features)
+                                    self.downscale, self.features,
+                                    verbose=verbose)
 
         # build the model at each pyramid level
         if verbose:

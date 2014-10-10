@@ -350,20 +350,10 @@ def test_n_shape_2_exception():
     fitter = GradientDescentCLMFitter(clm, n_shape=[10, 20])
 
 
-def test_pertrube_shape():
+def test_perturb_shape():
     fitter = GradientDescentCLMFitter(clm)
     s = fitter.perturb_shape(training_images[0].landmarks['PTS'].lms,
                              noise_std=0.08, rotation=False)
-    assert (s.n_dims == 2)
-    assert (s.n_landmark_groups == 0)
-    assert (s.n_points == 68)
-
-
-def test_obtain_shape_from_bb():
-    fitter = GradientDescentCLMFitter(clm)
-    s = fitter.obtain_shape_from_bb(np.array([[26, 49], [350, 400]]))
-    assert ((np.around(s.points) == np.around(initial_shape[3].points)).
-            all())
     assert (s.n_dims == 2)
     assert (s.n_landmark_groups == 0)
     assert (s.n_points == 68)
@@ -382,15 +372,3 @@ def test_str_mock(mock_stdout):
     fitter = GradientDescentCLMFitter(
         clm, algorithm=RegularizedLandmarkMeanShift)
     print(fitter)
-
-
-#@attr('fuzzy')
-#def test_rlms_0():
-#    fitter = GradientDescentCLMFitter(
-#        clm, algorithm=RegularizedLandmarkMeanShift)
-#    fitting_result = fitter.fit(
-#        training_images[0], initial_shape[0],
-#        gt_shape=training_images[0].landmarks['PTS'].lms,
-#        max_iters=6, error_type='me_norm')
-#    assert (np.around(fitting_result.initial_error, 5) == initial_error)
-#    assert (np.around(fitting_result.final_error, 5) == final_error)

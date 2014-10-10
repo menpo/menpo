@@ -1,13 +1,9 @@
 import numpy as np
-
-from menpo.rasterize import Rasterizable
-from menpo.rasterize.base import ColourRasterInfo
 from menpo.visualize.base import ColouredTriMeshViewer3d
-
 from .base import TriMesh
 
 
-class ColouredTriMesh(TriMesh, Rasterizable):
+class ColouredTriMesh(TriMesh):
     r"""
     Combines a :class:`menpo.shape.mesh.base.TriMesh` with a colour per vertex.
 
@@ -53,13 +49,6 @@ class ColouredTriMesh(TriMesh, Rasterizable):
         if points.shape[0] != colours.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
-
-    @property
-    def _rasterize_type_texture(self):
-        return False
-
-    def _rasterize_generate_color_mesh(self):
-        return ColourRasterInfo(self.points, self.trilist, self.colours)
 
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
