@@ -218,7 +218,7 @@ class GlobalPDM(PDM):
         """
 
         self._update_global_transform(target)
-        projected_target = self.global_transform.pseudoinverse.apply(target)
+        projected_target = self.global_transform.pseudoinverse().apply(target)
         # now we have the target in model space, project it to recover the
         # weights
         new_weights = self.model.project(projected_target)

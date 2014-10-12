@@ -359,8 +359,8 @@ class AlignmentAffine(HomogFamilyAlignment, Affine):
         r"""
         Returns the optimal alignment of source to target.
         """
-        a = source.h_points
-        b = target.h_points
+        a = source.h_points()
+        b = target.h_points()
         return np.linalg.solve(np.dot(a, a.T), np.dot(a, b.T)).T
 
     def set_h_matrix(self, value, copy=True, skip_checks=False):

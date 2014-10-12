@@ -53,6 +53,15 @@ class TriMesh(PointCloud):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
 
+    @property
+    def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
+        return len(self.trilist)
+
     def tojson(self):
         r"""
         Convert this `TriMesh` to a dictionary JSON representation.
@@ -122,15 +131,15 @@ class TriMesh(PointCloud):
         pg.landmarks = self.landmarks
         return pg
 
-    @property
     def vertex_normals(self):
         r"""
-        Normal at each point.
-
-        :type: (`n_points`, 3) ndarray
-
         Compute the per-vertex normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
+
+        Returns
+        -------
+        normals : (`n_points`, 3) ndarray
+            Normal at each point.
 
         Raises
         ------
@@ -141,15 +150,15 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[0]
 
-    @property
     def face_normals(self):
         r"""
-        Normal at each face.
-
-        :type: (`n_tris`, 3) ndarray
-
         Compute the face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
+
+        Returns
+        -------
+        normals : (`n_tris`, 3) ndarray
+            Normal at each face.
 
         Raises
         ------
@@ -159,15 +168,6 @@ class TriMesh(PointCloud):
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
-
-    @property
-    def n_tris(self):
-        r"""
-        The number of triangles in the triangle list.
-
-        :type: int
-        """
-        return len(self.trilist)
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         """

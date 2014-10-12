@@ -75,7 +75,7 @@ def test_3d_rotation_inverse_eye():
                                 [0, a, b],
                                 [0, -b, a]])
     rotation = Rotation(rotation_matrix)
-    transformed = rotation.compose_before(rotation.pseudoinverse)
+    transformed = rotation.compose_before(rotation.pseudoinverse())
     assert_allclose(np.eye(4), transformed.h_matrix, atol=1e-15)
 
 
@@ -770,7 +770,7 @@ def test_homogeneous_inverse():
     e_inv = np.eye(3) * 0.5
     e_inv[2, 2] = 1
     h = Homogeneous(e)
-    assert_allclose(h.pseudoinverse.h_matrix, e_inv)
+    assert_allclose(h.pseudoinverse().h_matrix, e_inv)
 
 
 def test_homogeneous_apply():

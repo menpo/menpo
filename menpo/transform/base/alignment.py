@@ -56,7 +56,6 @@ class Alignment(Targetable, Viewable):
         """
         return self._source
 
-    @property
     def aligned_source(self):
         r"""
         The result of applying ``self`` to :attr:`source`
@@ -66,7 +65,6 @@ class Alignment(Targetable, Viewable):
         # Note that here we have the dependency that we are a Transform
         return self.apply(self.source)
 
-    @property
     def alignment_error(self):
         r"""
         The Frobenius Norm of the difference between the target and
@@ -74,7 +72,8 @@ class Alignment(Targetable, Viewable):
 
         :type: float
         """
-        return np.linalg.norm(self.target.points - self.aligned_source.points)
+        return np.linalg.norm(self.target.points -
+                              self.aligned_source().points)
 
     @property
     def target(self):
@@ -104,7 +103,7 @@ class Alignment(Targetable, Viewable):
         This method should purely return the new target to be set - for all
         :map:`Alignment` instances this is just the aligned source.
         """
-        return self.aligned_source
+        return self.aligned_source()
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
