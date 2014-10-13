@@ -1,7 +1,6 @@
 from __future__ import division
 
 import numpy as np
-from hdf5able import SerializableCallable
 
 from menpo.shape import TriMesh
 from menpo.fitmultilevel.base import DeformableModel, name_of_callable
@@ -72,29 +71,6 @@ class AAM(DeformableModel):
         self.reference_shape = reference_shape
         self.downscale = downscale
         self.scaled_shape_models = scaled_shape_models
-
-    def __getstate__(self):
-        import menpo.transform
-        d = self.__dict__.copy()
-        transform = d.pop('transform')
-        d['transform'] = SerializableCallable(transform, [menpo.transform])
-
-        features = d.pop('features')
-        if self.pyramid_on_features:
-            # features is a single callable
-            d['features'] = SerializableCallable(features, [menpo.feature])
-        else:
-            # features is a list of callables
-            d['features'] = [SerializableCallable(f, [menpo.feature])
-                             for f in features]
-        return d
-
-    def __setstate__(self, state):
-        try:
-            state['features'] = state['features'].callable
-        except AttributeError:
-            state['features'] = [f.callable for f in state['features']]
-        self.__dict__.update(state)
 
     @property
     def n_levels(self):

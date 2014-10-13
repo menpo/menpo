@@ -34,8 +34,7 @@ else:
                         'wrapt==1.9.0',
 
                         'menpo-pyvrml97==2.3.0a4',
-                        'cyassimp==0.2.0',
-                        'hdf5able==0.4.0']
+                        'cyassimp==0.2.0']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')

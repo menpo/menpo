@@ -1,6 +1,5 @@
 from __future__ import division
 import abc
-from hdf5able import HDF5able
 import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
