@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 scipy_gaussian_filter = None  # expensive
-from scipy import sqrt, pi, arctan2, cos, sin, exp
 
 from .base import ndfeature, winitfeature
 from .windowiterator import WindowIterator
@@ -418,7 +417,7 @@ def es(image_data, verbose=False):
 
 
 @ndfeature
-def daisy(pixels, step=4, radius=15, rings=3, histograms=8, orientations=8,
+def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
           normalization='l1', sigmas=None, ring_radii=None, verbose=False):
     r"""
     Computes a 2-dimensional Daisy features image with N*C number of channels,
@@ -487,9 +486,7 @@ def daisy(pixels, step=4, radius=15, rings=3, histograms=8, orientations=8,
     ValueError
         Invalid normalization method.
     """
-    global scipy_gaussian_filter
-    if scipy_gaussian_filter is None:
-        from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
+    from menpo.external.skimage._daisy import _daisy
 
     # Parse options
     if sigmas is not None and ring_radii is not None \
@@ -509,80 +506,11 @@ def daisy(pixels, step=4, radius=15, rings=3, histograms=8, orientations=8,
     if normalization not in ['l1', 'l2', 'daisy', 'off']:
         raise ValueError('Invalid normalization method.')
 
-    # Get number of input image's channels
-    n_channels = pixels.shape[-1]
-
-    # Compute image gradient
-    grad = gradient(pixels)
-
-    # For each pixel, select gradient with highest magnitude
-    tmp_mag = np.zeros(pixels.shape)
-    tmp_ori = np.zeros(pixels.shape)
-    for c in range(n_channels):
-        tmp_mag[..., c] = sqrt(grad[..., 2*c] ** 2 + grad[..., 2*c+1] ** 2)
-        tmp_ori[..., c] = arctan2(grad[..., 2*c+1], grad[..., 2*c])
-    grad_mag_ind = np.argmax(tmp_mag, axis=2)
-
-    # Compute gradient orientation and magnitude and their contribution
-    # to the histograms.
-    b = np.concatenate([(grad_mag_ind == i)[..., None]
-                        for i in xrange(n_channels)], axis=-1)
-    grad_mag = tmp_mag[b].reshape(tmp_mag.shape[:2])
-    grad_ori = tmp_ori[b].reshape(tmp_ori.shape[:2])
-    orientation_kappa = orientations / pi
-    orientation_angles = [2 * o * pi / orientations - pi
-                          for o in range(orientations)]
-    hist = np.empty((orientations,) + pixels.shape[:2], dtype=float)
-    for i, o in enumerate(orientation_angles):
-        # Weigh bin contribution by the circular normal distribution
-        hist[i, :, :] = exp(orientation_kappa * cos(grad_ori - o))
-        # Weigh bin contribution by the gradient magnitude
-        hist[i, :, :] = np.multiply(hist[i, :, :], grad_mag)
-
-    # Smooth orientation histograms for the center and all rings.
-    sigmas = [sigmas[0]] + sigmas
-    hist_smooth = np.empty((rings + 1,) + hist.shape, dtype=float)
-    for i in range(rings + 1):
-        for j in range(orientations):
-            hist_smooth[i, j, :, :] = scipy_gaussian_filter(hist[j, :, :],
-                                                            sigma=sigmas[i])
-
-    # Assemble descriptor grid.
-    theta = [2 * pi * j / histograms for j in range(histograms)]
-    desc_dims = (rings * histograms + 1) * orientations
-    descs = np.empty((desc_dims, pixels.shape[0] - 2 * radius,
-                      pixels.shape[1] - 2 * radius))
-    descs[:orientations, :, :] = hist_smooth[0, :, radius:-radius,
-                                             radius:-radius]
-    idx = orientations
-    for i in range(rings):
-        for j in range(histograms):
-            y_min = radius + int(round(ring_radii[i] * sin(theta[j])))
-            y_max = descs.shape[1] + y_min
-            x_min = radius + int(round(ring_radii[i] * cos(theta[j])))
-            x_max = descs.shape[2] + x_min
-            descs[idx:idx + orientations, :, :] = hist_smooth[i + 1, :,
-                                                              y_min:y_max,
-                                                              x_min:x_max]
-            idx += orientations
-    descs = descs[:, ::step, ::step]
-    descs = descs.swapaxes(0, 1).swapaxes(1, 2)
-
-    # Normalize descriptors.
-    if normalization != 'off':
-        descs += 1e-10
-        if normalization == 'l1':
-            descs /= np.sum(descs, axis=2)[:, :, np.newaxis]
-        elif normalization == 'l2':
-            descs /= sqrt(np.sum(descs ** 2, axis=2))[:, :, np.newaxis]
-        elif normalization == 'daisy':
-            for i in range(0, desc_dims, orientations):
-                norms = sqrt(np.sum(descs[:, :, i:i + orientations] ** 2,
-                                    axis=2))
-                descs[:, :, i:i + orientations] /= norms[:, :, np.newaxis]
-
-    # Change axes so that the channels go to the final axis
-    descs = np.ascontiguousarray(descs)
+    # Compute daisy features
+    daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
+                              histograms=histograms, orientations=orientations,
+                              normalization=normalization, sigmas=sigmas,
+                              ring_radii=ring_radii, visualize=False)
 
     # print information
     if verbose:
@@ -592,17 +520,18 @@ def daisy(pixels, step=4, radius=15, rings=3, histograms=8, orientations=8,
         info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
         info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
                    "with {} orientations.\n".format(
-            info_str, radius, rings, histograms, orientations)
+                   info_str, radius, rings, histograms, orientations)
         if not normalization == 'off':
             info_str = "{}  - Using {} normalization.\n".format(info_str,
                                                                 normalization)
         else:
             info_str = "{}  - No normalization emplyed.\n".format(info_str)
         info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, descs.shape[1], descs.shape[0], descs.shape[2])
+            info_str, daisy_descriptor.shape[1], daisy_descriptor.shape[0],
+            daisy_descriptor.shape[2])
         print(info_str)
 
-    return descs
+    return daisy_descriptor
 
 
 @winitfeature

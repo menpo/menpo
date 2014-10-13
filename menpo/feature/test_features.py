@@ -197,7 +197,7 @@ def test_daisy_channels():
     channels = np.random.randint(1, 5, [n_cases, 1])
     for i in range(n_cases):
         image = Image(np.random.randn(40, 40, channels[i, 0]))
-        daisy_img = daisy(image, rings=rings[i, 0],
+        daisy_img = daisy(image, step=4, rings=rings[i, 0],
                           orientations=orientations[i, 0],
                           histograms=histograms[i, 0])
         assert_allclose(daisy_img.shape, (3, 3))
@@ -235,7 +235,8 @@ def test_es_values():
 
 def test_daisy_values():
     image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
-    daisy_img = daisy(image, step=1, rings=2, radius=1)
+    daisy_img = daisy(image, step=1, rings=2, radius=1, orientations=8,
+                      histograms=8)
     assert_allclose(np.around(daisy_img.pixels[0, 0, 10], 6), 0.000196)
     assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002842)
     assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.006205)
