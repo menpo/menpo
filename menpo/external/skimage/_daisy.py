@@ -1,8 +1,6 @@
 import numpy as np
 from scipy import sqrt, pi, arctan2, cos, sin, exp
 from scipy.ndimage import gaussian_filter
-import skimage.color
-from skimage import draw
 
 from menpo.feature import gradient
 
@@ -170,47 +168,4 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
     # Change axes so that the channels go to the final axis
     descs = np.ascontiguousarray(descs)
 
-    if visualize:
-        descs_img = skimage.color.gray2rgb(img)
-        for i in range(descs.shape[0]):
-            for j in range(descs.shape[1]):
-                # Draw center histogram sigma
-                color = (1, 0, 0)
-                desc_y = i * step + radius
-                desc_x = j * step + radius
-                coords = draw.circle_perimeter(desc_y, desc_x, int(sigmas[0]))
-                draw.set_color(descs_img, coords, color)
-                max_bin = np.max(descs[i, j, :])
-                for o_num, o in enumerate(orientation_angles):
-                    # Draw center histogram bins
-                    bin_size = descs[i, j, o_num] / max_bin
-                    dy = sigmas[0] * bin_size * sin(o)
-                    dx = sigmas[0] * bin_size * cos(o)
-                    coords = draw.line(desc_y, desc_x, int(desc_y + dy),
-                                       int(desc_x + dx))
-                    draw.set_color(descs_img, coords, color)
-                for r_num, r in enumerate(ring_radii):
-                    color_offset = float(1 + r_num) / rings
-                    color = (1 - color_offset, 1, color_offset)
-                    for t_num, t in enumerate(theta):
-                        # Draw ring histogram sigmas
-                        hist_y = desc_y + int(round(r * sin(t)))
-                        hist_x = desc_x + int(round(r * cos(t)))
-                        coords = draw.circle_perimeter(hist_y, hist_x,
-                                                       int(sigmas[r_num + 1]))
-                        draw.set_color(descs_img, coords, color)
-                        for o_num, o in enumerate(orientation_angles):
-                            # Draw histogram bins
-                            bin_size = descs[i, j, orientations + r_num *
-                                             histograms * orientations +
-                                             t_num * orientations + o_num]
-                            bin_size /= max_bin
-                            dy = sigmas[r_num + 1] * bin_size * sin(o)
-                            dx = sigmas[r_num + 1] * bin_size * cos(o)
-                            coords = draw.line(hist_y, hist_x,
-                                               int(hist_y + dy),
-                                               int(hist_x + dx))
-                            draw.set_color(descs_img, coords, color)
-        return descs, descs_img
-    else:
-        return descs
+    return descs

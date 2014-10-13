@@ -510,7 +510,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
                               histograms=histograms, orientations=orientations,
                               normalization=normalization, sigmas=sigmas,
-                              ring_radii=ring_radii, visualize=False)
+                              ring_radii=ring_radii)
 
     # print information
     if verbose:
