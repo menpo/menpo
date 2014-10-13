@@ -29,7 +29,7 @@ class MockedVInvertable(VInvertible, Vectorizable):
 
 def vinertable_pseudoinverse_test():
     v = MockedVInvertable()
-    inv = v.pseudoinverse
+    inv = v.pseudoinverse()
     assert_allclose(inv.vector, -ones_vector)
 
 

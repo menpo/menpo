@@ -328,5 +328,5 @@ def test_affine_pseudoinverse():
     s = NonUniformScale([4, 3])
     inv_man = NonUniformScale([1./4, 1./3])
     b = Affine(s.h_matrix)
-    i = b.pseudoinverse
+    i = b.pseudoinverse()
     assert_allclose(i.h_matrix, inv_man.h_matrix)
