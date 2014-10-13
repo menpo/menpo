@@ -21,7 +21,6 @@ requirements:
     - pillow  2.5.1
 
     # Menpo Project
-    - h5it 0.3.3
     - cyassimp 0.2.0
     - menpo-pyvrml97 2.3.0a4  # [not py3k]
 
