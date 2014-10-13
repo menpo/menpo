@@ -1,5 +1,7 @@
 import numpy as np
 from menpo.visualize.base import ColouredTriMeshViewer3d
+
+from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
 
 
@@ -49,6 +51,41 @@ class ColouredTriMesh(TriMesh):
         if points.shape[0] != colours.shape[0]:
             raise ValueError('Must provide a colour per-vertex.')
         self.colours = colours_handle
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the ColouredTriMesh. This is then broadcast across the
+        dimensions of the mesh and returns a new mesh containing only those
+        points that were ``True`` in the mask.
+
+        Parameters
+        ----------
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
+
+        Returns
+        -------
+        mesh : :map:`ColouredTriMesh`
+            A new mesh that has been masked.
+        """
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this '
+                             'ColouredTriMesh.')
+
+        ctm = self.copy()
+        if np.all(mask):  # Fast path for all true
+            return ctm
+        else:
+            # Recalculate the mask to remove isolated vertices
+            isolated_mask = self._isolated_mask(mask)
+            # Recreate the adjacency array with the updated mask
+            masked_adj = mask_adjacency_array(isolated_mask, self.trilist)
+            ctm.trilist = reindex_adjacency_array(masked_adj)
+            ctm.points = ctm.points[isolated_mask, :]
+            ctm.colours = ctm.colours[isolated_mask, :]
+            return ctm
 
     def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""

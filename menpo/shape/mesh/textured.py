@@ -4,6 +4,7 @@ from menpo.shape import PointCloud
 from menpo.transform import Scale
 from menpo.visualize import TexturedTriMeshViewer3d
 
+from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
 
 
@@ -94,6 +95,41 @@ class TexturedTriMesh(TriMesh):
         return TexturedTriMesh(flattened.reshape([-1, self.n_dims]),
                                self.tcoords.points, self.texture,
                                trilist=self.trilist)
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the TexturedTriMesh. This is then broadcast across the
+        dimensions of the mesh and returns a new mesh containing only those
+        points that were ``True`` in the mask.
+
+        Parameters
+        ----------
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
+
+        Returns
+        -------
+        mesh : :map:`TexturedTriMesh`
+            A new mesh that has been masked.
+        """
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this '
+                             'TexturedTriMesh.')
+
+        ttm = self.copy()
+        if np.all(mask):  # Fast path for all true
+            return ttm
+        else:
+            # Recalculate the mask to remove isolated vertices
+            isolated_mask = self._isolated_mask(mask)
+            # Recreate the adjacency array with the updated mask
+            masked_adj = mask_adjacency_array(isolated_mask, self.trilist)
+            ttm.trilist = reindex_adjacency_array(masked_adj)
+            ttm.points = ttm.points[isolated_mask, :]
+            ttm.tcoords.points = ttm.tcoords.points[isolated_mask, :]
+            return ttm
 
     def tojson(self):
         r"""
