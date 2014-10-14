@@ -13,7 +13,7 @@ from menpo.fitmultilevel.builder import (DeformableModelBuilder,
                                          build_shape_model)
 from menpo.fitmultilevel import checks
 from menpo.visualize import print_dynamic, progress_bar_str
-from menpo.feature import igo, hog
+from menpo.feature import igo
 
 
 class AAMBuilder(DeformableModelBuilder):
@@ -476,7 +476,7 @@ class PatchBasedAAMBuilder(AAMBuilder):
         ``pyramid_on_features`` is enabled so ``features`` must be a
         `string` or a `function` or a list containing one of those
     """
-    def __init__(self, features=hog, patch_shape=(16, 16),
+    def __init__(self, features=igo, patch_shape=(16, 16),
                  normalization_diagonal=None, n_levels=3, downscale=2,
                  scaled_shape_models=True, max_shape_components=None,
                  max_appearance_components=None, boundary=3):
