@@ -1320,6 +1320,59 @@ class Image(Vectorizable, LandmarkableViewable):
                     l.lms.points[:, k] = tmp
                 self.landmarks[l_group] = l
 
+    def normalize_std_inplace(self, mode='all', **kwargs):
+        r"""
+        Normalizes this image such that its pixel values have zero mean and
+        unit variance.
+
+        Parameters
+        ----------
+
+        mode : {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+        """
+        self._normalize_inplace(np.std, mode=mode)
+
+    def normalize_norm_inplace(self, mode='all', **kwargs):
+        r"""
+        Normalizes this image such that its pixel values have zero mean and
+        its norm equals 1.
+
+        Parameters
+        ----------
+
+        mode : {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+        """
+
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        self._normalize_inplace(scale_func, mode=mode)
+
+    def _normalize_inplace(self, scale_func, mode='all'):
+        pixels = self.as_vector(keep_channels=True)
+        if mode == 'all':
+            centered_pixels = pixels - np.mean(pixels)
+            scale_factor = scale_func(centered_pixels)
+
+        elif mode == 'per_channel':
+            centered_pixels = pixels - np.mean(pixels, axis=0)
+            scale_factor = scale_func(centered_pixels, axis=0)
+        else:
+            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
+                             "was provided instead".format(mode))
+
+        if np.any(scale_factor == 0):
+            raise ValueError("Image has 0 variance - can't be "
+                             "normalized")
+        else:
+            self.from_vector_inplace(centered_pixels / scale_factor)
+
 
 def _create_feature_glyph(feature, vbs):
     r"""
