@@ -173,7 +173,7 @@ class Residual(object):
         return gradient
 
 
-class LSIntensity(Residual):
+class SSD(Residual):
 
     type = 'SSD'
 

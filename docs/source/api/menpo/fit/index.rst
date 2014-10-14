@@ -90,7 +90,7 @@ Residuals
    lucaskanade/residual/GaborFourier
    lucaskanade/residual/GradientCorrelation
    lucaskanade/residual/GradientImages
-   lucaskanade/residual/LSIntensity
+   lucaskanade/residual/SSD
 
 Regression
 ----------
