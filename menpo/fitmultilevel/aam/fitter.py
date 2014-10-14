@@ -2,7 +2,7 @@ from __future__ import division
 
 from menpo.transform import AlignmentSimilarity
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
-from menpo.fit.lucaskanade.residual import LSIntensity
+from menpo.fit.lucaskanade.residual import SSD
 from menpo.fit.lucaskanade.appearance import AlternatingInverseCompositional
 from menpo.fitmultilevel.base import name_of_callable
 from menpo.fitmultilevel.fitter import MultilevelFitter
@@ -108,10 +108,8 @@ class LucasKanadeAAMFitter(AAMFitter):
         The Active Appearance Model to be used.
     algorithm : subclass of :map:`AppearanceLucasKanade`, optional
         The Appearance Lucas-Kanade class to be used.
-
     md_transform : :map:`ModelDrivenTransform` or subclass, optional
         The model driven transform class to be used.
-
     global_transform : subclass of :map:`HomogFamilyAlignment`, optional
         The global transform class to be used by the previous pdm.
 
@@ -122,7 +120,6 @@ class LucasKanadeAAMFitter(AAMFitter):
 
             ``global_transform`` has no effect when ``md_transform`` is
             specifically set to map:`MDTransform`
-
     n_shape : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
         previous or ``None``, optional
         The number of shape components or amount of shape variance to be
@@ -140,7 +137,6 @@ class LucasKanadeAAMFitter(AAMFitter):
         lowest pyramidal level and so on.
         If not a `list` or a `list` of length 1, then the specified number of
         components will be used for all levels.
-
     n_appearance : `int` ``> 1``, ``0. <=`` `float` ``<= 1.``, `list` of the
         previous or ``None``, optional
         The number of appearance components or amount of appearance variance
@@ -164,9 +160,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                  global_transform=AlignmentSimilarity, n_shape=None,
                  n_appearance=None, **kwargs):
         super(LucasKanadeAAMFitter, self).__init__(aam)
-        # TODO: Add residual as parameter, when residuals are properly defined
-        residual = LSIntensity
-        self._set_up(algorithm=algorithm, residual=residual,
+        self._set_up(algorithm=algorithm,
                      md_transform=md_transform,
                      global_transform=global_transform, n_shape=n_shape,
                      n_appearance=n_appearance, **kwargs)
@@ -181,7 +175,7 @@ class LucasKanadeAAMFitter(AAMFitter):
         return 'LK-AAM-' + self._fitters[0].algorithm
 
     def _set_up(self, algorithm=AlternatingInverseCompositional,
-                residual=LSIntensity, md_transform=OrthoMDTransform,
+                md_transform=OrthoMDTransform,
                 global_transform=AlignmentSimilarity, n_shape=None,
                 n_appearance=None, **kwargs):
         r"""
@@ -295,8 +289,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                 md_trans = md_transform(
                     sm, self.aam.transform,
                     source=am.mean.landmarks['source'].lms)
-            self._fitters.append(algorithm(am, residual(), md_trans,
-                                           **kwargs))
+            self._fitters.append(algorithm(am, md_trans, **kwargs))
 
     def __str__(self):
         out = "{0} Fitter\n" \

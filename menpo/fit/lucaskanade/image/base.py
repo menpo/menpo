@@ -6,10 +6,8 @@ from menpo.fit.lucaskanade.base import LucasKanade
 
 class ImageLucasKanade(LucasKanade):
 
-    def __init__(self, template, residual, transform,
-                 optimisation=('GN',), eps=10 ** -6):
-        super(ImageLucasKanade, self).__init__(
-            residual, transform, optimisation=optimisation, eps=eps)
+    def __init__(self, template, residual, transform, eps=10 ** -6):
+        super(ImageLucasKanade, self).__init__(residual, transform, eps=eps)
         # in image alignment, we align a template image to the target image
         self.template = template
         # pre-compute

@@ -1,11 +1,11 @@
-.. _menpo-fit-lucaskanade-residual-lsintensity:
+.. _menpo-fit-lucaskanade-residual-ssd:
 
 .. currentmodule:: menpo.fit.lucaskanade.residual
 
-LSIntensity
-===========
+SSD
+===
 
-.. autoclass:: LSIntensity
+.. autoclass:: SSD
   :members:
   :inherited-members:
   :show-inheritance:
