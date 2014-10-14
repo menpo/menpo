@@ -1,31 +1,11 @@
 import abc
 import os
 from glob import glob
-
 from pathlib import Path
-import hdf5able
 
 from ..utils import _norm_path
 from menpo import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
-
-
-def load(path):
-    r"""
-    Load a given HDF5 file of serialized Menpo objects or base types.
-
-    Parameters
-    ----------
-    path : `str`
-        A path to a HDF5 file that conforms to the hdf5able specification.
-
-    Returns
-    -------
-    hdf5able :
-        Any collection of HDF5able objects.
-
-    """
-    return hdf5able.load(_norm_path(path))
 
 
 def data_dir_path():

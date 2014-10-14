@@ -81,14 +81,14 @@ class AlignmentTranslation(HomogFamilyAlignment, Translation):
 
     def __init__(self, source, target):
         HomogFamilyAlignment.__init__(self, source, target)
-        Translation.__init__(self, target.centre - source.centre)
+        Translation.__init__(self, target.centre() - source.centre())
 
     def from_vector_inplace(self, p):
         Translation.from_vector_inplace(self, p)
         self._sync_target_from_state()
 
     def _sync_state_from_target(self):
-        translation = self.target.centre - self.source.centre
+        translation = self.target.centre() - self.source.centre()
         self.h_matrix[:-1, -1] = translation
 
     def as_non_alignment(self):
