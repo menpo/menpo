@@ -8,7 +8,7 @@ import platform
 
 import menpo.io as mio
 from menpo.feature import igo
-from menpo.shape.pointcloud import PointCloud
+from menpo.shape import PointCloud, BoundingBox
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine
 from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
@@ -376,8 +376,9 @@ def test_pertrurb_shape():
 
 def test_obtain_shape_from_bb():
     fitter = LucasKanadeAAMFitter(aam)
-    s = fitter.obtain_shape_from_bb(np.array([[53.916, 1.853],
-                                              [408.469, 339.471]]))
+    bb = BoundingBox(np.array([[53.916, 1.853],
+                               [408.469, 339.471]]))
+    s = fitter.obtain_shape_from_bb(bb)
     assert ((np.around(s.points) == np.around(initial_shape[0].points)).all())
     assert (s.n_dims == 2)
     assert (s.n_landmark_groups == 0)
