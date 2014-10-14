@@ -832,7 +832,7 @@ class Image(Vectorizable, LandmarkableViewable):
                                                   sampled_pixel_values)
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         return warped_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
@@ -914,7 +914,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # warp landmarks if requested.
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
-            transform.pseudoinverse.apply_inplace(warped_image.landmarks)
+            transform.pseudoinverse().apply_inplace(warped_image.landmarks)
         return warped_image
 
     def rescale(self, scale, round='ceil', order=1):
@@ -984,7 +984,7 @@ class Image(Vectorizable, LandmarkableViewable):
         # scale factors = max_index_after / current_max_index
         # (note that max_index = length - 1, as 0 based)
         scale_factors = (scale * shape - 1) / (shape - 1)
-        inverse_transform = NonUniformScale(scale_factors).pseudoinverse
+        inverse_transform = NonUniformScale(scale_factors).pseudoinverse()
         # for rescaling we enforce that mode is nearest to avoid num. errors
         return self.warp_to_shape(template_shape, inverse_transform,
                                   warp_landmarks=True, order=order,
@@ -1288,6 +1288,60 @@ class Image(Vectorizable, LandmarkableViewable):
                     tmp[tmp > self.shape[k] - 1] = self.shape[k] - 1
                     l.lms.points[:, k] = tmp
                 self.landmarks[l_group] = l
+
+    def normalize_std_inplace(self, mode='all', **kwargs):
+        r"""
+        Normalizes this image such that its pixel values have zero mean and
+        unit variance.
+
+        Parameters
+        ----------
+
+        mode : {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+        """
+        self._normalize_inplace(np.std, mode=mode)
+
+    def normalize_norm_inplace(self, mode='all', **kwargs):
+        r"""
+        Normalizes this image such that its pixel values have zero mean and
+        its norm equals 1.
+
+        Parameters
+        ----------
+
+        mode : {'all', 'per_channel'}
+            If 'all', the normalization is over all channels. If
+            'per_channel', each channel individually is mean centred and
+            normalized in variance.
+        """
+
+        def scale_func(pixels, axis=None):
+            return np.linalg.norm(pixels, axis=axis, **kwargs)
+
+        self._normalize_inplace(scale_func, mode=mode)
+
+    def _normalize_inplace(self, scale_func, mode='all'):
+        pixels = self.as_vector(keep_channels=True)
+        if mode == 'all':
+            centered_pixels = pixels - np.mean(pixels)
+            scale_factor = scale_func(centered_pixels)
+
+        elif mode == 'per_channel':
+            centered_pixels = pixels - np.mean(pixels, axis=0)
+            scale_factor = scale_func(centered_pixels, axis=0)
+        else:
+            raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
+                             "was provided instead".format(mode))
+
+        if np.any(scale_factor == 0):
+            raise ValueError("Image has 0 variance - can't be "
+                             "normalized")
+        else:
+            self.from_vector_inplace(centered_pixels / scale_factor)
+
 
 def round_image_shape(shape, round):
     if round not in ['ceil', 'round', 'floor']:

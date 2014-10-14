@@ -61,12 +61,12 @@ def alignment_target_test():
 
 def alignment_aligned_source_test():
     al = MockedAlignment(source, target)
-    assert (al.aligned_source is source)
+    assert (al.aligned_source() is source)
 
 
 def alignment_alignment_error_test():
     al = MockedAlignment(source, target)
-    error = al.alignment_error
+    error = al.alignment_error()
     assert_equal(error, np.linalg.norm(al.source.points - al.target.points))
 
 

@@ -42,7 +42,7 @@ def test_tps_n_dims():
 
 def test_tps_build_pseudoinverse():
     tps = ThinPlateSplines(src, tgt)
-    tps_pinv = tps.pseudoinverse
+    tps_pinv = tps.pseudoinverse()
 
     assert (tps.source == tps_pinv.target)
     assert (tps.target == tps_pinv.source)

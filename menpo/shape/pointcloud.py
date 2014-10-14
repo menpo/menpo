@@ -39,13 +39,6 @@ class PointCloud(Shape):
         self.points = points
 
     @property
-    def h_points(self):
-        r"""
-        homogeneous points of shape (``n_dims + 1``, ``n_points``)
-        """
-        return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
-
-    @property
     def n_points(self):
         r"""
         The number of points in the pointcloud.
@@ -63,24 +56,32 @@ class PointCloud(Shape):
         """
         return self.points.shape[1]
 
-    @property
+    def h_points(self):
+        r"""
+        homogeneous points of shape (``n_dims + 1``, ``n_points``)
+        """
+        return np.concatenate((self.points.T, np.ones(self.n_points)[None, :]))
+
     def centre(self):
         r"""
         The mean of all the points in this PointCloud (in the centre of mass
         sense)
 
-        :type: ``(n_dims)`` `ndarray`
+        Returns
+        -------
+        centre : ``(n_dims)`` `ndarray`
             The mean of this PointCloud's points.
         """
         return np.mean(self.points, axis=0)
 
-    @property
     def centre_of_bounds(self):
         r"""
         The centre of the absolute bounds of this PointCloud. Contrast with
         centre, which is the mean point position.
 
-        :type: ``n_dims`` `ndarray`
+        Returns
+        -------
+        centre : ``n_dims`` `ndarray`
             The centre of the bounds of this PointCloud.
         """
         min_b, max_b = self.bounds()
@@ -216,7 +217,7 @@ class PointCloud(Shape):
         norm : `float`
             The norm of this :map:`PointCloud`
         """
-        return np.linalg.norm(self.points - self.centre, **kwargs)
+        return np.linalg.norm(self.points - self.centre(), **kwargs)
 
     def from_mask(self, mask):
         """
