@@ -412,7 +412,7 @@ class DirectedGraph(Graph):
         self._check_vertex(vertex)
         return len(self.children(vertex))
 
-    def parents(self, vertex):
+    def parent(self, vertex):
         r"""
         Returns the parents of the selected vertex.
 
@@ -423,7 +423,7 @@ class DirectedGraph(Graph):
 
         Returns
         -------
-        parents : `list`
+        parent : `list`
             The list of parents.
 
         Raises
@@ -435,7 +435,7 @@ class DirectedGraph(Graph):
         adj = self.get_adjacency_matrix()
         return list(np.where(adj[:, vertex])[0])
 
-    def n_parents(self, vertex):
+    def n_parent(self, vertex):
         r"""
         Returns the number of parents of the selected vertex.
 
@@ -446,7 +446,7 @@ class DirectedGraph(Graph):
 
         Returns
         -------
-        n_parents : `int`
+        n_parent : `int`
             The number of parents.
 
         Raises
@@ -455,7 +455,7 @@ class DirectedGraph(Graph):
             The vertex must be between 0 and {n_vertices-1}.
         """
         self._check_vertex(vertex)
-        return len(self.parents(vertex))
+        return len(self.parent(vertex))
 
 
 class Tree(DirectedGraph):
@@ -619,6 +619,7 @@ class Tree(DirectedGraph):
         self._check_vertex(vertex)
         return len(self.children(vertex)) == 0
 
+    @property
     def leaves(self):
         r"""
         Returns a list with the all leaves of the tree.
@@ -631,6 +632,7 @@ class Tree(DirectedGraph):
                 leaves.append(v)
         return leaves
 
+    @property
     def n_leaves(self):
         r"""
         Returns the number of leaves of the tree.
@@ -642,6 +644,28 @@ class Tree(DirectedGraph):
             if self.is_leaf(v):
                 n_leaves += 1
         return n_leaves
+
+    def parent(self, vertex):
+        r"""
+        Returns the parent of the selected vertex.
+
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        parent : `int`
+            The parent vertex.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex)
+        return self.predecessors_list[vertex]
 
 
 class PointGraph(UndirectedGraph, PointCloud):
