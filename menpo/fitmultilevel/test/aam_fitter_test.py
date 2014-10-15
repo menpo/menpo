@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
 
+
 import menpo.io as mio
 from menpo.feature import igo
 from menpo.shape.pointcloud import PointCloud

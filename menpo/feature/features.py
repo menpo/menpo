@@ -165,7 +165,6 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         Vertical window step must be > 0
     ValueError
         Window step unit must be either pixels or cells
-
     """
     # Parse options
     if mode not in ['dense', 'sparse']:
@@ -356,6 +355,7 @@ def igo(pixels, double_angles=False, verbose=False):
     #                             'original_image_channels':
     #                                 self._image.pixels.shape[2]}
 
+
 @ndfeature
 def es(image_data, verbose=False):
     r"""
@@ -414,6 +414,124 @@ def es(image_data, verbose=False):
     #                               self._image.pixels.shape[1],
     #                           'original_image_channels':
     #                               self._image.pixels.shape[2]}
+
+
+@ndfeature
+def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
+          normalization='l1', sigmas=None, ring_radii=None, verbose=False):
+    r"""
+    Computes a 2-dimensional Daisy features image with N*C number of channels,
+    where N is the number of channels of the original image and C is the
+    feature channels determined by the input options. Specifically,
+    C = (rings * histograms + 1) * orientations.
+
+    Parameters
+    ----------
+    pixels :  ndarray
+        The pixel data for the image, where the last axis represents the
+        number of channels.
+
+    step : `int`, Optional
+        The sampling step that defines the density of the output image.
+
+    radius : `int`, Optional
+        The radius (in pixels) of the outermost ring.
+
+    rings : `int`, Optional
+        The number of rings to be used.
+
+    histograms : `int`, Optional
+        The number of histograms sampled per ring.
+
+    orientations : `int`, Optional
+        The number of orientations (bins) per histogram.
+
+    normalization : [ 'l1', 'l2', 'daisy', None ], Optional
+        It defines how to normalize the descriptors
+        If 'l1' then L1-normalization is applied at each descriptor.
+        If 'l2' then L2-normalization is applied at each descriptor.
+        If 'daisy' then L2-normalization is applied at individual histograms.
+        If None then no normalization is employed.
+
+    sigmas : 1D array of `float`, Optional
+        Standard deviation of spatial Gaussian smoothing for the center
+        histogram and for each ring of histograms. The array of sigmas should
+        be sorted from the center and out. I.e. the first sigma value defines
+        the spatial smoothing of the center histogram and the last sigma value
+        defines the spatial smoothing of the outermost ring. Specifying sigmas
+        overrides the following parameter.
+
+            ``rings = len(sigmas) - 1``
+
+    ring_radii : 1D array of `int`, Optional
+        Radius (in pixels) for each ring. Specifying ring_radii overrides the
+        following two parameters.
+
+            ``rings = len(ring_radii)``
+            ``radius = ring_radii[-1]``
+
+        If both sigmas and ring_radii are given, they must satisfy the
+        following predicate since no radius is needed for the center
+        histogram.
+
+            ``len(ring_radii) == len(sigmas) + 1``
+
+    verbose : `bool`
+        Flag to print Daisy related information.
+
+    Raises
+    -------
+    ValueError
+        `len(sigmas)-1 != len(ring_radii)`
+    ValueError
+        Invalid normalization method.
+    """
+    from menpo.external.skimage._daisy import _daisy
+
+    # Parse options
+    if sigmas is not None and ring_radii is not None \
+            and len(sigmas) - 1 != len(ring_radii):
+        raise ValueError('`len(sigmas)-1 != len(ring_radii)`')
+    if ring_radii is not None:
+        rings = len(ring_radii)
+        radius = ring_radii[-1]
+    if sigmas is not None:
+        rings = len(sigmas) - 1
+    if sigmas is None:
+        sigmas = [radius * (i + 1) / float(2 * rings) for i in range(rings)]
+    if ring_radii is None:
+        ring_radii = [radius * (i + 1) / float(rings) for i in range(rings)]
+    if normalization is None:
+        normalization = 'off'
+    if normalization not in ['l1', 'l2', 'daisy', 'off']:
+        raise ValueError('Invalid normalization method.')
+
+    # Compute daisy features
+    daisy_descriptor = _daisy(pixels, step=step, radius=radius, rings=rings,
+                              histograms=histograms, orientations=orientations,
+                              normalization=normalization, sigmas=sigmas,
+                              ring_radii=ring_radii)
+
+    # print information
+    if verbose:
+        info_str = "Daisy Features:\n"
+        info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
+            info_str, pixels.shape[1], pixels.shape[0], pixels.shape[2])
+        info_str = "{}  - Sampling step is {}.\n".format(info_str, step)
+        info_str = "{}  - Radius of {} pixels, {} rings and {} histograms " \
+                   "with {} orientations.\n".format(
+                   info_str, radius, rings, histograms, orientations)
+        if not normalization == 'off':
+            info_str = "{}  - Using {} normalization.\n".format(info_str,
+                                                                normalization)
+        else:
+            info_str = "{}  - No normalization emplyed.\n".format(info_str)
+        info_str = "{}Output image size {}W x {}H x {}.".format(
+            info_str, daisy_descriptor.shape[1], daisy_descriptor.shape[0],
+            daisy_descriptor.shape[2])
+        print(info_str)
+
+    return daisy_descriptor
 
 
 @winitfeature
@@ -589,6 +707,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     #                                 self._image.pixels.shape[1],
     #                             'original_image_channels':
     #                                 self._image.pixels.shape[2]}
+
 
 @ndfeature
 def no_op(image_data):

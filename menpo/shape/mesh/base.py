@@ -53,6 +53,15 @@ class TriMesh(PointCloud):
         return '{}, n_tris: {}'.format(PointCloud.__str__(self),
                                        self.n_tris)
 
+    @property
+    def n_tris(self):
+        r"""
+        The number of triangles in the triangle list.
+
+        :type: int
+        """
+        return len(self.trilist)
+
     def tojson(self):
         r"""
         Convert this `TriMesh` to a dictionary JSON representation.
@@ -69,8 +78,8 @@ class TriMesh(PointCloud):
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
-        points in the pointcloud. This is then broadcast across the dimensions
-        of the pointcloud and returns a new pointcloud containing only those
+        points in the TriMesh. This is then broadcast across the dimensions
+        of the mesh and returns a new mesh containing only those
         points that were ``True`` in the mask.
 
         Parameters
@@ -80,8 +89,8 @@ class TriMesh(PointCloud):
 
         Returns
         -------
-        pointcloud : :map:`PointCloud`
-            A new pointcloud that has been masked.
+        mesh : :map:`TriMesh`
+            A new mesh that has been masked.
         """
         if mask.shape[0] != self.n_points:
             raise ValueError('Mask must be a 1D boolean array of the same '
@@ -91,21 +100,26 @@ class TriMesh(PointCloud):
         if np.all(mask):  # Fast path for all true
             return tm
         else:
-            # Find the triangles we need to keep
-            masked_adj = mask_adjacency_array(mask, self.trilist)
-            # Find isolated vertices (vertices that don't exist in valid
-            # triangles)
-            isolated_indices = np.setdiff1d(np.nonzero(mask)[0], masked_adj)
-
-            # Create a 'new mask' that contains the points the use asked
-            # for MINUS the points that we can't create triangles for
-            new_mask = mask.copy()
-            new_mask[isolated_indices] = False
+            # Recalculate the mask to remove isolated vertices
+            isolated_mask = self._isolated_mask(mask)
             # Recreate the adjacency array with the updated mask
-            masked_adj = mask_adjacency_array(new_mask, self.trilist)
+            masked_adj = mask_adjacency_array(isolated_mask, self.trilist)
             tm.trilist = reindex_adjacency_array(masked_adj)
-            tm.points = tm.points[new_mask, :]
+            tm.points = tm.points[isolated_mask, :]
             return tm
+
+    def _isolated_mask(self, mask):
+        # Find the triangles we need to keep
+        masked_adj = mask_adjacency_array(mask, self.trilist)
+        # Find isolated vertices (vertices that don't exist in valid
+        # triangles)
+        isolated_indices = np.setdiff1d(np.nonzero(mask)[0], masked_adj)
+
+        # Create a 'new mask' that contains the points the use asked
+        # for MINUS the points that we can't create triangles for
+        new_mask = mask.copy()
+        new_mask[isolated_indices] = False
+        return new_mask
 
     def as_pointgraph(self, copy=True):
         from .. import PointGraph
@@ -122,15 +136,15 @@ class TriMesh(PointCloud):
         pg.landmarks = self.landmarks
         return pg
 
-    @property
     def vertex_normals(self):
         r"""
-        Normal at each point.
-
-        :type: (`n_points`, 3) ndarray
-
         Compute the per-vertex normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
+
+        Returns
+        -------
+        normals : (`n_points`, 3) ndarray
+            Normal at each point.
 
         Raises
         ------
@@ -141,15 +155,15 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[0]
 
-    @property
     def face_normals(self):
         r"""
-        Normal at each face.
-
-        :type: (`n_tris`, 3) ndarray
-
         Compute the face normals from the current set of points and
         triangle list. Only valid for 3D dimensional meshes.
+
+        Returns
+        -------
+        normals : (`n_tris`, 3) ndarray
+            Normal at each face.
 
         Raises
         ------
@@ -159,15 +173,6 @@ class TriMesh(PointCloud):
         if self.n_dims != 3:
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
-
-    @property
-    def n_tris(self):
-        r"""
-        The number of triangles in the triangle list.
-
-        :type: int
-        """
-        return len(self.trilist)
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         """

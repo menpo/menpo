@@ -1,6 +1,5 @@
 from __future__ import division
 import abc
-from hdf5able import HDF5able
 import numpy as np
 
 from menpo.shape.pointcloud import PointCloud
@@ -424,7 +423,7 @@ class ParametricFittingResult(SemiParametricFittingResult):
         return error_images
 
 
-class SerializableFittingResult(HDF5able, FittingResult):
+class SerializableFittingResult(FittingResult):
     r"""
     Designed to allow the fitting results to be easily serializable. In
     comparison to the other fitting result objects, the serializable fitting

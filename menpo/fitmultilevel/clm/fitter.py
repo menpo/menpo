@@ -112,7 +112,6 @@ class GradientDescentCLMFitter(CLMFitter):
                  pdm_transform=OrthoPDM, global_transform=AlignmentSimilarity,
                  n_shape=None, **kwargs):
         super(GradientDescentCLMFitter, self).__init__(clm)
-        # TODO: Add residual as parameter, when residuals are properly defined
         self._set_up(algorithm=algorithm, pdm_transform=pdm_transform,
                      global_transform=global_transform, n_shape=n_shape,
                      **kwargs)

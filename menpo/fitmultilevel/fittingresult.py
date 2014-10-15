@@ -1,7 +1,6 @@
 from __future__ import division
 
 from itertools import chain
-from hdf5able import HDF5able
 
 from menpo.transform import Scale
 from menpo.fit.fittingresult import FittingResult
@@ -300,7 +299,7 @@ class ATMMultilevelFittingResult(AMMultilevelFittingResult):
         return atm_reconstructions
 
 
-class SerializableMultilevelFittingResult(HDF5able, FittingResult):
+class SerializableMultilevelFittingResult(FittingResult):
     r"""
     Designed to allow the fitting results to be easily serializable. In
     comparison to the other fitting result objects, the serializable fitting

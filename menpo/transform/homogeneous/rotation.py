@@ -227,7 +227,6 @@ class Rotation(DiscreteAffine, Similarity):
     def composes_inplace_with(self):
         return Rotation
 
-    @property
     def pseudoinverse(self):
         r"""
         The inverse rotation matrix.
