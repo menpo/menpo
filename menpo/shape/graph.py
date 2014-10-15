@@ -55,10 +55,14 @@ class Graph(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, adjacency_array, copy=True):
+        # check that adjacency_array has expected shape
         if adjacency_array.shape[1] != 2:
             raise ValueError('Adjacency list must contain the sets of '
                              'connected edges and thus must have shape '
                              '(n_edges, 2).')
+
+        # remove unique rows of adjacency_array
+        adjacency_array = _unique_array_rows(adjacency_array)
 
         if copy:
             self.adjacency_array = adjacency_array.copy()
@@ -111,7 +115,18 @@ class Graph(object):
         Returns a list with the first path (without cycles) found from start
         vertex to end vertex.
 
-        :type: `list`
+        Parameters
+        ----------
+        start : `int`
+            The vertex from which the path starts.
+
+        end : `int`
+            The vertex from which the path ends.
+
+        Returns
+        -------
+        path : `list`
+            The path's vertices.
         """
         path = path + [start]
         if start == end:
@@ -130,7 +145,18 @@ class Graph(object):
         Returns a list of lists with all the paths (without cycles) found from
         start vertex to end vertex.
 
-        :type: `list` of `list`
+        Parameters
+        ----------
+        start : `int`
+            The vertex from which the paths start.
+
+        end : `int`
+            The vertex from which the paths end.
+
+        Returns
+        -------
+        paths : `list` of `list`
+            The list containing all the paths from start to end.
         """
         path = path + [start]
         if start == end:
@@ -150,7 +176,18 @@ class Graph(object):
         Returns the number of all the paths (without cycles) existing from
         start vertex to end vertex.
 
-        :type: `int`
+        Parameters
+        ----------
+        start : `int`
+            The vertex from which the paths start.
+
+        end : `int`
+            The vertex from which the paths end.
+
+        Returns
+        -------
+        paths : `int`
+            The paths' numbers.
         """
         return len(self.find_all_paths(start, end))
 
@@ -159,7 +196,18 @@ class Graph(object):
         Returns a list with the shortest path (without cycles) found from start
         vertex to end vertex.
 
-        :type: `list`
+        Parameters
+        ----------
+        start : `int`
+            The vertex from which the path starts.
+
+        end : `int`
+            The vertex from which the path ends.
+
+        Returns
+        -------
+        path : `list`
+            The shortest path's vertices.
         """
         path = path + [start]
         if start == end:
@@ -174,6 +222,19 @@ class Graph(object):
                     if not shortest or len(newpath) < len(shortest):
                         shortest = newpath
         return shortest
+
+    def _check_vertex(self, vertex):
+        r"""
+        Checks that a given vertex is valid.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        if vertex > self.n_vertices - 1 or vertex < 0:
+            raise ValueError('The vertex must be between '
+                             '0 and {}.'.format(self.n_vertices-1))
 
     def tojson(self):
         r"""
@@ -215,9 +276,75 @@ class UndirectedGraph(Graph):
         r"""
         Returns the neighbours of the selected vertex.
 
-        :type: `list`
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        neighbours : `list`
+            The list of neighbours.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
         """
+        self._check_vertex(vertex)
         return self.adjacency_list[vertex]
+
+    def n_neighbours(self, vertex):
+        r"""
+        Returns the number of neighbours of the selected vertex.
+
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        n_neighbours : `int`
+            The number of neighbours.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex)
+        return len(self.neighbours(vertex))
+
+    def minimum_spanning_tree(self, weights, root_vertex):
+        r"""
+        Returns the minimum spanning tree given weights to the graph's edges
+        using Kruskal's algorithm.
+
+        Parameter
+        ---------
+        weights : ``(n_vertices, n_vertices, )`` `ndarray`
+            A matrix of the same size as the adjacency matrix that attaches a
+            weight to each edge of the undirected graph.
+
+        root_vertex : `int`
+            The vertex that will be set as root in the output MST.
+
+        Returns
+        -------
+        mst : :class:`menpo.shape.Tree`
+            The computed minimum spanning tree.
+
+        Raises
+        ------
+        ValueError
+            Provided graph is not an UndirectedGraph.
+        ValueError
+            Assymetric weights provided.
+        """
+        from menpo.external.PADS.MinimumSpanningTree import MinimumSpanningTree
+        tree_edges = MinimumSpanningTree(self, weights)
+        return Tree(np.array(tree_edges), root_vertex)
 
 
 class DirectedGraph(Graph):
@@ -228,26 +355,107 @@ class DirectedGraph(Graph):
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
         for e in range(self.n_edges):
-            father = self.adjacency_array[e, 0]
+            parent = self.adjacency_array[e, 0]
             child = self.adjacency_array[e, 1]
-            adjacency_mat[father, child] = True
+            adjacency_mat[parent, child] = True
         return adjacency_mat
 
     def _get_adjacency_list(self):
         adjacency_list = [[] for _ in range(self.n_vertices)]
         for e in range(self.n_edges):
-            v1 = self.adjacency_array[e, 0]
-            v2 = self.adjacency_array[e, 1]
-            adjacency_list[v1].append(v2)
+            parent = self.adjacency_array[e, 0]
+            child = self.adjacency_array[e, 1]
+            adjacency_list[parent].append(child)
         return adjacency_list
 
     def children(self, vertex):
         r"""
         Returns the children of the selected vertex.
 
-        :type: `list`
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        children : `list`
+            The list of children.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
         """
+        self._check_vertex(vertex)
         return self.adjacency_list[vertex]
+
+    def n_children(self, vertex):
+        r"""
+        Returns the number of children of the selected vertex.
+
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        n_children : `int`
+            The number of children.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex)
+        return len(self.children(vertex))
+
+    def parents(self, vertex):
+        r"""
+        Returns the parents of the selected vertex.
+
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        parents : `list`
+            The list of parents.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex)
+        adj = self.get_adjacency_matrix()
+        return list(np.where(adj[:, vertex])[0])
+
+    def n_parents(self, vertex):
+        r"""
+        Returns the number of parents of the selected vertex.
+
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        n_parents : `int`
+            The number of parents.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex)
+        return len(self.parents(vertex))
 
 
 class Tree(DirectedGraph):
@@ -292,9 +500,7 @@ class Tree(DirectedGraph):
         super(Tree, self).__init__(adjacency_array, copy=copy)
         if not self.n_edges == self.n_vertices - 1:
             raise ValueError('The provided edges do not represent a tree.')
-        if root_vertex > self.n_vertices - 1 or root_vertex < 0:
-            raise ValueError('The root_vertex must be between '
-                             '0 and {}.'.format(self.n_vertices-1))
+        self._check_vertex(root_vertex)
         self.root_vertex = root_vertex
         self.predecessors_list = self._get_predecessors_list()
 
@@ -308,17 +514,31 @@ class Tree(DirectedGraph):
         """
         predecessors_list = [None] * self.n_vertices
         for e in range(self.n_edges):
-            v1 = self.adjacency_array[e, 0]
-            v2 = self.adjacency_array[e, 1]
-            predecessors_list[v2] = v1
+            parent = self.adjacency_array[e, 0]
+            child = self.adjacency_array[e, 1]
+            predecessors_list[child] = parent
         return predecessors_list
 
     def depth_of_vertex(self, vertex):
         r"""
         Returns the depth of the specified vertex.
 
-        :type: `int`
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        depth : `int`
+            The depth of the selected vertex.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
         """
+        self._check_vertex(vertex)
         parent = vertex
         depth = 0
         while not parent == self.root_vertex:
@@ -334,16 +554,22 @@ class Tree(DirectedGraph):
 
         :type: `int`
         """
-        max_depth = -1
-        for v in range(self.n_vertices):
-            max_depth = max([max_depth, self.depth_of_vertex(v)])
-        return max_depth
+        all_depths = [self.depth_of_vertex(v) for v in range(self.n_vertices)]
+        return np.max(all_depths)
 
     def vertices_at_depth(self, depth):
         r"""
         Returns a list of vertices at the specified depth.
 
-        :type: `list` of `int`
+        Parameter
+        ---------
+        depth : `int`
+            The selected depth.
+
+        Returns
+        -------
+        vertices : `list`
+            The vertices that lie in the specified depth.
         """
         ver = []
         for v in range(self.n_vertices):
@@ -355,7 +581,15 @@ class Tree(DirectedGraph):
         r"""
         Returns the number of vertices at the specified depth.
 
-        :type: `int`
+        Parameter
+        ---------
+        depth : `int`
+            The selected depth.
+
+        Returns
+        -------
+        n_vertices : `int`
+            The number of vertices that lie in the specified depth.
         """
         n_ver = 0
         for v in range(self.n_vertices):
@@ -367,33 +601,47 @@ class Tree(DirectedGraph):
         r"""
         Returns whether the vertex is a leaf.
 
-        :type: `bool`
+        Parameter
+        ---------
+        vertex : `int`
+            The selected vertex.
+
+        Returns
+        -------
+        is_leaf : `bool`
+            If True, then selected vertex is a leaf.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
         """
+        self._check_vertex(vertex)
         return len(self.children(vertex)) == 0
 
-    def leafs(self):
+    def leaves(self):
         r"""
-        Returns a list with the leafs of the tree.
+        Returns a list with the all leaves of the tree.
+
+        :type: `list`
+        """
+        leaves = []
+        for v in range(self.n_vertices):
+            if self.is_leaf(v):
+                leaves.append(v)
+        return leaves
+
+    def n_leaves(self):
+        r"""
+        Returns the number of leaves of the tree.
 
         :type: `int`
         """
-        leafs = []
+        n_leaves = 0
         for v in range(self.n_vertices):
             if self.is_leaf(v):
-                leafs.append(v)
-        return leafs
-
-    def n_leafs(self):
-        r"""
-        Returns the number of leafs of the tree.
-
-        :type: `int`
-        """
-        n_leafs = 0
-        for v in range(self.n_vertices):
-            if self.is_leaf(v):
-                n_leafs += 1
-        return n_leafs
+                n_leaves += 1
+        return n_leaves
 
 
 class PointGraph(UndirectedGraph, PointCloud):
@@ -454,3 +702,15 @@ class PointGraph(UndirectedGraph, PointCloud):
         return PointGraphViewer(figure_id, new_figure,
                                 self.points,
                                 self.adjacency_array).render(**kwargs)
+
+
+def _unique_array_rows(array):
+    r"""
+    Returns the unique rows of the given 2D ndarray.
+
+    :type: `ndarray`
+    """
+    tmp = array.ravel().view(np.dtype((np.void,
+                                       array.dtype.itemsize * array.shape[1])))
+    _, unique_idx = np.unique(tmp, return_index=True)
+    return array[np.sort(unique_idx)]
