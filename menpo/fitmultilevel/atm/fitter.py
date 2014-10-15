@@ -2,7 +2,7 @@ from __future__ import division
 
 from menpo.transform import AlignmentSimilarity
 from menpo.transform.modeldriven import OrthoMDTransform, ModelDrivenTransform
-from menpo.fit.lucaskanade.residual import LSIntensity
+from menpo.fit.lucaskanade.residual import SSD
 from menpo.fit.lucaskanade.image import ImageInverseCompositional
 from menpo.fitmultilevel.base import name_of_callable
 from menpo.fitmultilevel.fitter import MultilevelFitter
@@ -147,7 +147,7 @@ class LucasKanadeATMFitter(ATMFitter):
                  global_transform=AlignmentSimilarity, n_shape=None, **kwargs):
         super(LucasKanadeATMFitter, self).__init__(atm)
         # TODO: Add residual as parameter, when residuals are properly defined
-        residual = LSIntensity
+        residual = SSD
         self._set_up(algorithm=algorithm, residual=residual,
                      md_transform=md_transform,
                      global_transform=global_transform, n_shape=n_shape,
@@ -163,7 +163,7 @@ class LucasKanadeATMFitter(ATMFitter):
         return 'LK-ATM-' + self._fitters[0].algorithm
 
     def _set_up(self, algorithm=ImageInverseCompositional,
-                residual=LSIntensity, md_transform=OrthoMDTransform,
+                residual=SSD, md_transform=OrthoMDTransform,
                 global_transform=AlignmentSimilarity, n_shape=None, **kwargs):
         r"""
         Sets up the Lucas-Kanade fitter object.
