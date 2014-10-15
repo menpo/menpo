@@ -346,6 +346,10 @@ class UndirectedGraph(Graph):
         tree_edges = MinimumSpanningTree(self, weights)
         return Tree(np.array(tree_edges), root_vertex)
 
+    def __str__(self):
+        return "Undirected graph of {} vertices and {} edges.".format(
+            self.n_vertices, self.n_edges)
+
 
 class DirectedGraph(Graph):
     r"""
@@ -457,6 +461,10 @@ class DirectedGraph(Graph):
         self._check_vertex(vertex)
         return len(self.parent(vertex))
 
+    def __str__(self):
+        return "Directed graph of {} vertices and {} edges.".format(
+            self.n_vertices, self.n_edges)
+
 
 class Tree(DirectedGraph):
     r"""
@@ -465,7 +473,7 @@ class Tree(DirectedGraph):
     Parameters
     -----------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
-        The Adjacency Array of the graph, i.e. an array containing the sets of
+        The Adjacency Array of the tree, i.e. an array containing the sets of
         the tree's edges. The numbering of vertices is assumed to start from 0.
 
         We assume that the vertices in the first column of the adjacency_array
@@ -667,9 +675,37 @@ class Tree(DirectedGraph):
         self._check_vertex(vertex)
         return self.predecessors_list[vertex]
 
+    def __str__(self):
+        return "Tree of depth {} with {} vertices and {} leaves.".format(
+            self.maximum_depth, self.n_vertices, self.n_leaves)
+
 
 class PointGraph(UndirectedGraph, PointCloud):
+    r"""
+    Class for defining an Undirected Graph with geometry.
 
+    Parameters
+    -----------
+    points : `ndarray`
+        The array of point locations.
+
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+        For example:
+               |---0---|        adjacency_array = ndarray([[0, 1],
+               |       |                                   [0, 2],
+               |       |                                   [1, 2],
+               1-------2                                   [1, 3],
+               |       |                                   [2, 4],
+               |       |                                   [3, 4],
+               3-------4                                   [3, 5]])
+               |
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+    """
     def __init__(self, points, adjacency_array, copy=True):
         UndirectedGraph.__init__(self, adjacency_array, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
@@ -719,7 +755,99 @@ class PointGraph(UndirectedGraph, PointCloud):
         suitable or use in the by the `json` standard library package.
         """
         json_dict = PointCloud.tojson(self)
-        json_dict.update(Graph.tojson(self))
+        json_dict.update(UndirectedGraph.tojson(self))
+        return json_dict
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        return PointGraphViewer(figure_id, new_figure,
+                                self.points,
+                                self.adjacency_array).render(**kwargs)
+
+
+class PointTree(Tree, PointCloud):
+    r"""
+    Class for defining a Tree with geometry.
+
+    Parameters
+    -----------
+    points : `ndarray`
+        The array of point locations.
+
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the tree, i.e. an array containing the sets of
+        the tree's edges. The numbering of vertices is assumed to start from 0.
+
+        We assume that the vertices in the first column of the adjacency_array
+        are the fathers and the vertices in the second column of the
+        adjacency_array are the children, for example:
+
+                   0            adjacency_array = ndarray([[0, 1],
+                   |                                       [0, 2],
+                ___|___                                    [1, 3],
+               1       2                                   [1, 4],
+               |       |                                   [2, 5],
+              _|_      |                                   [3, 6],
+             3   4     5                                   [4, 7],
+             |   |     |                                   [5, 8]])
+             |   |     |
+             6   7     8
+
+    root_vertex : `int`
+        The root vertex of the tree.
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+    """
+    def __init__(self, points, adjacency_array, root_vertex, copy=True):
+        Tree.__init__(self, adjacency_array, root_vertex, copy=copy)
+        PointCloud.__init__(self, points, copy=copy)
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the PointTree. This is then broadcast across the dimensions
+        of the PointTree and returns a new PointTree containing only those
+        points that were ``True`` in the mask.
+
+        Parameters
+        ----------
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
+
+        Returns
+        -------
+        pointtree : :map:`PointTree`
+            A new pointtree that has been masked.
+
+        Raises
+        ------
+        ValueError
+            Mask must have same number of points as pointtree.
+        """
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this PointTree.')
+
+        pt = self.copy()
+        if np.all(mask):  # Shortcut for all true masks
+            return pt
+        else:
+            masked_adj = mask_adjacency_array(mask, pt.adjacency_array)
+            pt.adjacency_array = reindex_adjacency_array(masked_adj)
+            pt.points = pt.points[mask, :]
+            return pt
+
+    def tojson(self):
+        r"""
+        Convert this `PointGraph` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'points' and 'adjacency_array' keys. Both are lists
+        suitable or use in the by the `json` standard library package.
+        """
+        json_dict = PointCloud.tojson(self)
+        json_dict.update(UndirectedGraph.tojson(self))
         return json_dict
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
