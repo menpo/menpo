@@ -3,7 +3,8 @@ import abc
 import numpy as np
 
 from . import PointCloud
-from .adjacency import mask_adjacency_array, reindex_adjacency_array
+from .adjacency import (mask_adjacency_array, mask_adjacency_array_tree,
+                        reindex_adjacency_array)
 from menpo.visualize import PointGraphViewer
 
 
@@ -49,19 +50,28 @@ class Graph(object):
     Raises
     ------
     ValueError
+        You must provide at least one edge.
+    ValueError
         Adjacency list must contain the sets of connected edges and thus must
         have shape (n_edges, 2).
+    ValueError
+        The vertices must be numbered starting from 0.
     """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, adjacency_array, copy=True):
         # check that adjacency_array has expected shape
+        if adjacency_array.size == 0:
+            raise ValueError('You must provide at least one edge.')
         if adjacency_array.shape[1] != 2:
             raise ValueError('Adjacency list must contain the sets of '
                              'connected edges and thus must have shape '
                              '(n_edges, 2).')
+        # check that numbering of vertices is zero-based
+        if adjacency_array.min() != 0:
+            raise ValueError('The vertices must be numbered starting from 0.')
 
-        # remove unique rows of adjacency_array
+        # keep unique rows of adjacency_array
         adjacency_array = _unique_array_rows(adjacency_array)
 
         if copy:
@@ -705,8 +715,15 @@ class PointGraph(UndirectedGraph, PointCloud):
 
     copy : `bool`, optional
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        A point for each graph vertex needs to be passed. Got {n_points} points
+        instead of {n_vertices}.
     """
     def __init__(self, points, adjacency_array, copy=True):
+        _check_n_points(points, adjacency_array)
         UndirectedGraph.__init__(self, adjacency_array, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
 
@@ -741,7 +758,10 @@ class PointGraph(UndirectedGraph, PointCloud):
             return pg
         else:
             masked_adj = mask_adjacency_array(mask, pg.adjacency_array)
+            if len(masked_adj) == 0:
+                raise ValueError('The provided mask deletes all edges.')
             pg.adjacency_array = reindex_adjacency_array(masked_adj)
+            pg.adjacency_list = pg._get_adjacency_list()
             pg.points = pg.points[mask, :]
             return pg
 
@@ -799,6 +819,7 @@ class PointTree(Tree, PointCloud):
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
     """
     def __init__(self, points, adjacency_array, root_vertex, copy=True):
+        _check_n_points(points, adjacency_array)
         Tree.__init__(self, adjacency_array, root_vertex, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
 
@@ -832,9 +853,15 @@ class PointTree(Tree, PointCloud):
         if np.all(mask):  # Shortcut for all true masks
             return pt
         else:
-            masked_adj = mask_adjacency_array(mask, pt.adjacency_array)
+            masked_adj = mask_adjacency_array_tree(
+                mask, pt.adjacency_array, pt.adjacency_list,
+                pt.predecessors_list, pt.root_vertex)
+            if len(masked_adj) == 0:
+                raise ValueError('The provided mask deletes all edges.')
             pt.adjacency_array = reindex_adjacency_array(masked_adj)
             pt.points = pt.points[mask, :]
+            pt.adjacency_list = pt._get_adjacency_list()
+            pt.predecessors_list = pt._get_predecessors_list()
             return pt
 
     def tojson(self):
@@ -866,3 +893,10 @@ def _unique_array_rows(array):
                                        array.dtype.itemsize * array.shape[1])))
     _, unique_idx = np.unique(tmp, return_index=True)
     return array[np.sort(unique_idx)]
+
+
+def _check_n_points(points, adjacency_array):
+    if not points.shape[0] == adjacency_array.max() + 1:
+        raise ValueError('A point for each graph vertex needs to be '
+                         'passed. Got {} points instead of {}'.format(
+                         points.shape[0], adjacency_array.max() + 1))
