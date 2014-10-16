@@ -5,22 +5,15 @@ import numpy as np
 from numpy.testing import assert_allclose
 from nose.tools import raises
 
-
 import menpo.io as mio
 from menpo.feature import igo
-from menpo.shape import PointCloud, BoundingBox
+from menpo.shape.pointcloud import PointCloud
 from menpo.landmark import labeller, ibug_face_68_trimesh
 from menpo.transform import PiecewiseAffine
-from menpo.fitmultilevel.aam import AAMBuilder, LucasKanadeAAMFitter
-from menpo.fit.lucaskanade.appearance import (
-    AlternatingForwardAdditive, AlternatingForwardCompositional,
-    AlternatingInverseCompositional, AdaptiveForwardAdditive,
-    AdaptiveForwardCompositional, AdaptiveInverseCompositional,
-    SimultaneousForwardAdditive, SimultaneousForwardCompositional,
-    SimultaneousInverseCompositional, ProjectOutForwardAdditive,
-    ProjectOutForwardCompositional, ProjectOutInverseCompositional,
-    ProbabilisticForwardAdditive, ProbabilisticForwardCompositional,
-    ProbabilisticInverseCompositional)
+from menpo.fitmultilevel.atm import ATMBuilder, LucasKanadeATMFitter
+from menpo.fit.lucaskanade.image import (ImageInverseCompositional,
+                                         ImageForwardAdditive,
+                                         ImageForwardCompositional)
 
 
 initial_shape = []
@@ -302,72 +295,83 @@ initial_shape.append(PointCloud(np.array([[29.30459178, 27.24534074],
 
 # load images
 filenames = ['breakingbad.jpg', 'takeo.ppm', 'lenna.png', 'einstein.jpg']
-training_images = []
+training_shapes = []
+templates = []
 for i in range(4):
     im = mio.import_builtin_asset(filenames[i])
     im.crop_to_landmarks_proportion_inplace(0.1)
-    labeller(im, 'PTS', ibug_face_68_trimesh)
     if im.n_channels == 3:
         im = im.as_greyscale(mode='luminosity')
-    training_images.append(im)
+    training_shapes.append(im.landmarks['PTS']['all'])
+    templates.append(im)
 
-# build aam
-aam = AAMBuilder(features=igo,
-                 transform=PiecewiseAffine,
-                 trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
-                 lms.trilist,
-                 normalization_diagonal=150,
-                 n_levels=3,
-                 downscale=2,
-                 scaled_shape_models=True,
-                 max_shape_components=[1, 2, 3],
-                 max_appearance_components=[3, 2, 1],
-                 boundary=3).build(training_images, group='PTS')
 
-aam2 = AAMBuilder(features=igo,
+# build atm
+atm1 = ATMBuilder(features=igo,
                   transform=PiecewiseAffine,
-                  trilist=training_images[0].landmarks['ibug_face_68_trimesh'].
-                  lms.trilist,
+                  normalization_diagonal=150,
+                  n_levels=3,
+                  downscale=2,
+                  scaled_shape_models=True,
+                  max_shape_components=[1, 2, 3],
+                  boundary=3).build(training_shapes, templates[0], group='PTS')
+
+atm2 = ATMBuilder(features=igo,
+                  transform=PiecewiseAffine,
                   normalization_diagonal=150,
                   n_levels=1,
                   downscale=2,
                   scaled_shape_models=True,
                   max_shape_components=[1],
-                  max_appearance_components=[1],
-                  boundary=3).build(training_images, group='PTS')
+                  boundary=3).build(training_shapes, templates[1], group='PTS')
+
+atm3 = ATMBuilder(features=igo,
+                  transform=PiecewiseAffine,
+                  normalization_diagonal=150,
+                  n_levels=3,
+                  downscale=2,
+                  scaled_shape_models=True,
+                  max_shape_components=[1, 2, 3],
+                  boundary=3).build(training_shapes, templates[2], group='PTS')
+
+atm4 = ATMBuilder(features=igo,
+                  transform=PiecewiseAffine,
+                  normalization_diagonal=150,
+                  n_levels=1,
+                  downscale=2,
+                  scaled_shape_models=True,
+                  max_shape_components=[1],
+                  boundary=3).build(training_shapes, templates[3], group='PTS')
 
 
-def test_aam():
-    assert (aam.n_training_images == 4)
-    assert (aam.n_levels == 3)
-    assert (aam.downscale == 2)
-    #assert (aam.features[0] == igo and len(aam.features) == 1)
-    assert_allclose(np.around(aam.reference_shape.range()), (109., 103.))
-    assert aam.scaled_shape_models
-    assert aam.pyramid_on_features
-    assert_allclose([aam.shape_models[j].n_components
-                     for j in range(aam.n_levels)], (1, 2, 3))
-    assert_allclose([aam.appearance_models[j].n_components
-                     for j in range(aam.n_levels)], (3, 2, 1))
-    assert_allclose([aam.appearance_models[j].template_instance.n_channels
-                     for j in range(aam.n_levels)], (2, 2, 2))
-    assert_allclose([aam.appearance_models[j].components.shape[1]
-                     for j in range(aam.n_levels)], (884, 3652, 14892))
+def test_atm1():
+    assert (atm1.n_training_shapes == 4)
+    assert (atm1.n_levels == 3)
+    assert (atm1.downscale == 2)
+    assert_allclose(np.around(atm1.reference_shape.range()), (109., 103.))
+    assert atm1.scaled_shape_models
+    assert atm1.pyramid_on_features
+    assert_allclose([atm1.shape_models[j].n_components
+                     for j in range(atm1.n_levels)], (1, 2, 3))
+    assert_allclose([atm1.warped_templates[j].n_channels
+                     for j in range(atm1.n_levels)], (2, 2, 2))
+    assert_allclose([atm1.warped_templates[j].shape[1]
+                     for j in range(atm1.n_levels)], (46, 85, 164))
 
 
 @raises(ValueError)
 def test_n_shape_exception():
-    fitter = LucasKanadeAAMFitter(aam, n_shape=[3, 6, 'a'])
+    fitter = LucasKanadeATMFitter(atm1, n_shape=[3, 6, 'a'])
 
 
 @raises(ValueError)
-def test_n_appearance_exception():
-    fitter = LucasKanadeAAMFitter(aam, n_appearance=[10, 20])
+def test_n_shape_exception_2():
+    fitter = LucasKanadeATMFitter(atm1, n_shape=[10, 20])
 
 
 def test_pertrurb_shape():
-    fitter = LucasKanadeAAMFitter(aam)
-    s = fitter.perturb_shape(training_images[0].landmarks['PTS'].lms,
+    fitter = LucasKanadeATMFitter(atm1)
+    s = fitter.perturb_shape(templates[0].landmarks['PTS'].lms,
                              noise_std=0.08, rotation=False)
     assert (s.n_dims == 2)
     assert (s.n_landmark_groups == 0)
@@ -375,10 +379,9 @@ def test_pertrurb_shape():
 
 
 def test_obtain_shape_from_bb():
-    fitter = LucasKanadeAAMFitter(aam)
-    bb = BoundingBox(np.array([[53.916, 1.853],
-                               [408.469, 339.471]]))
-    s = fitter.obtain_shape_from_bb(bb)
+    fitter = LucasKanadeATMFitter(atm1)
+    s = fitter.obtain_shape_from_bb(np.array([[53.916, 1.853],
+                                              [408.469, 339.471]]))
     assert ((np.around(s.points) == np.around(initial_shape[0].points)).all())
     assert (s.n_dims == 2)
     assert (s.n_landmark_groups == 0)
@@ -387,30 +390,29 @@ def test_obtain_shape_from_bb():
 
 @raises(ValueError)
 def test_max_iters_exception():
-    fitter = LucasKanadeAAMFitter(aam,
-                                  algorithm=AlternatingInverseCompositional)
-    fitter.fit(training_images[0], initial_shape[0],
-               max_iters=[10, 20, 30, 40])
+    fitter = LucasKanadeATMFitter(atm1,
+                                  algorithm=ImageInverseCompositional)
+    fitter.fit(templates[0], initial_shape[0], max_iters=[10, 20, 30, 40])
 
 
 @patch('sys.stdout', new_callable=StringIO)
 def test_str_mock(mock_stdout):
-    print(aam)
-    fitter = LucasKanadeAAMFitter(aam,
-                                  algorithm=AlternatingInverseCompositional)
+    print(atm1)
+    fitter = LucasKanadeATMFitter(atm1,
+                                  algorithm=ImageInverseCompositional)
     print(fitter)
-    print(aam2)
-    fitter = LucasKanadeAAMFitter(aam2,
-                                  algorithm=ProbabilisticForwardAdditive)
+    print(atm2)
+    fitter = LucasKanadeATMFitter(atm2,
+                                  algorithm=ImageForwardAdditive)
     print(fitter)
 
 
-def aam_helper(aam, algorithm, im_number, max_iters, initial_error,
+def atm_helper(atm, algorithm, im_number, max_iters, initial_error,
                final_error, error_type):
-    fitter = LucasKanadeAAMFitter(aam, algorithm=algorithm)
+    fitter = LucasKanadeATMFitter(atm, algorithm=algorithm)
     fitting_result = fitter.fit(
-        training_images[im_number], initial_shape[im_number],
-        gt_shape=training_images[im_number].landmarks['PTS'].lms,
+        templates[im_number], initial_shape[im_number],
+        gt_shape=templates[im_number].landmarks['PTS'].lms,
         max_iters=max_iters)
     assert (np.around(fitting_result.initial_error(error_type=error_type),
                       5) == initial_error)
@@ -419,88 +421,22 @@ def aam_helper(aam, algorithm, im_number, max_iters, initial_error,
 
 
 @attr('fuzzy')
-def test_alternating_ic():
-    aam_helper(aam, AlternatingInverseCompositional, 0, 6, 0.09062, 0.05606,
+def test_ic():
+    atm_helper(atm1, ImageInverseCompositional, 0, 6, 0.09062, 0.06783,
                'me_norm')
 
 
 @attr('fuzzy')
-def test_adaptive_ic():
-    aam_helper(aam, AdaptiveInverseCompositional, 1, 5, 0.07373, 0.02251,
-               'me_norm')
+def test_fa():
+    atm_helper(atm2, ImageForwardAdditive, 1, 8, 0.08778, 0.08072, 'me_norm')
 
 
 @attr('fuzzy')
-def test_simultaneous_ic():
-    aam_helper(aam, SimultaneousInverseCompositional, 2, 7, 0.12273, 0.10145,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_projectout_ic():
-    aam_helper(aam, ProjectOutInverseCompositional, 3, 6, 0.10303, 0.06499,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_alternating_fa():
-    aam_helper(aam, AlternatingForwardAdditive, 0, 8, 0.09062, 0.07053,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_adaptive_fa():
-    aam_helper(aam, AdaptiveForwardAdditive, 1, 6, 0.07373, 0.04518, 'me_norm')
-
-
-@attr('fuzzy')
-def test_simultaneous_fa():
-    aam_helper(aam, SimultaneousForwardAdditive, 2, 5, 0.12273, 0.11485,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_projectout_fa():
-    aam_helper(aam, ProjectOutForwardAdditive, 3, 6, 0.10303, 0.09202,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_alternating_fc():
-    aam_helper(aam, AlternatingForwardCompositional, 0, 6, 0.09062, 0.07109,
+def test_fc():
+    atm_helper(atm3, ImageForwardCompositional, 2, 6, 0.12273, 0.06854,
                'me_norm')
 
 @attr('fuzzy')
-def test_adaptive_fc():
-    aam_helper(aam, AdaptiveForwardCompositional, 1, 6, 0.07373, 0.04371,
+def test_ic_2():
+    atm_helper(atm4, ImageInverseCompositional, 3, 7, 0.09137, 0.08881,
                'me_norm')
-
-
-@attr('fuzzy')
-def test_simultaneous_fc():
-    aam_helper(aam, SimultaneousForwardCompositional, 2, 5, 0.12273, 0.11197,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_projectout_fc():
-    aam_helper(aam, ProjectOutForwardCompositional, 3, 6, 0.10303, 0.07696,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_probabilistic_ic():
-    aam_helper(aam2, ProbabilisticInverseCompositional, 0, 6, 0.08605, 0.08923,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_probabilistic_fa():
-    aam_helper(aam2, ProbabilisticForwardAdditive, 1, 7, 0.08778, 0.0846,
-               'me_norm')
-
-
-@attr('fuzzy')
-def test_probabilistic_fc():
-    aam_helper(aam2, ProbabilisticForwardCompositional, 2, 6, 0.11328,
-               0.11321, 'me_norm')

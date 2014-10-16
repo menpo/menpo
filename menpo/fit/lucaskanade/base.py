@@ -32,13 +32,6 @@ class LucasKanade(Fitter):
         reference frame. This is used by the warping function to calculate
         sub-pixel coordinates of the input image in the reference frame.
 
-    optimisation : ('GN',), optional
-        A tuple containing the optimisation technique used to calculate the
-        Hessian approximation. The first element is the string identifier and
-        the remaining elements are any parameters for the technique.
-
-        Default: ('GN',)
-
     eps : float, optional
         The convergence value. When calculating the level of convergence, if
         the norm of the delta parameter updates is less than `eps`, the
@@ -70,46 +63,16 @@ class LucasKanade(Fitter):
        "An iterative image registration technique with an application to
        stereo vision." IJCAI. Vol. 81. 1981.
     """
-    def __init__(self, residual, transform, optimisation=('GN',), eps=10**-10):
+    def __init__(self, residual, transform, eps=10**-10):
         # set basic state for all Lucas Kanade algorithms
         self.transform = transform
         self.residual = residual
         self.eps = eps
-        # select the optimisation approach and warp function
-        self._calculate_delta_p = self._select_optimisation(optimisation)
-
-    def _select_optimisation(self, optimisation):
-        if optimisation[0] == 'GD':
-            self.update_step = optimisation[1]
-            self.__e_lm = 0
-            return self._gradient_descent
-        if optimisation[0] == 'GN':
-            return self._gauss_newton_update
-        elif optimisation[0] == 'GN_lp':
-            self.lp = optimisation[1]
-            return self._gauss_newton_lp_update
-        elif optimisation[0] == 'LM':
-            self.update_step = optimisation[1]
-            self.__e_lm = 0
-            return self._levenberg_marquardt_update
-        else:
-            raise ValueError('Unknown optimisation string selected. Valid'
-                             'options are: GN, GN_lp, LM')
-
-    def _gradient_descent(self, sd_delta_p):
-        raise NotImplementedError("Gradient descent optimization not "
-                                  "implemented yet")
+        # setup the optimisation approach
+        self._calculate_delta_p = self._gauss_newton_update
 
     def _gauss_newton_update(self, sd_delta_p):
         return np.linalg.solve(self._H, sd_delta_p)
-
-    def _gauss_newton_lp_update(self, sd_delta_p):
-        raise NotImplementedError("Gauss-Newton lp-norm optimization not "
-                                  "implemented yet")
-
-    def _levenberg_marquardt_update(self, sd_delta_p):
-        raise NotImplementedError("Levenberg Marquardt optimization not "
-                                  "implemented yet")
 
     def _set_up(self, **kwargs):
         pass
