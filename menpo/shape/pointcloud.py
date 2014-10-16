@@ -84,7 +84,7 @@ class PointCloud(Shape):
         centre : ``n_dims`` `ndarray`
             The centre of the bounds of this PointCloud.
         """
-        return self.bounds().centre
+        return self.bounds().centre()
 
     def _as_vector(self):
         r"""
