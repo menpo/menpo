@@ -169,7 +169,7 @@ class PointCloud(Shape):
             The range of the :map:`PointCloud` extent in each dimension.
         """
         bb = self.bounds(boundary)
-        return bb.max() - bb.min()
+        return bb.max - bb.min
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return PointCloudViewer(figure_id, new_figure,
@@ -252,7 +252,25 @@ class PointCloud(Shape):
 
 
 class BoundingBox(PointCloud):
+    r"""
+    An N-dimensional bounding box built from 2 points - the minimum point of
+    the box, and the maximum of the box. Only the two points are stored, but
+    the a full :map:`PointGraph` representation of the box (four points in the
+    case of 2D) can be retrieved using the `.box()` method.
 
+
+    Parameters
+    ----------
+    min_max : ``(2, n_dims)`` `ndarray`
+        The array representing the minimum and maximum points defining the
+        bounding box
+
+    skip_checks : `boolean`, optional
+        If ``False``, we will check if only 2 points were provided. If ``True``
+        this skip will be checked - only useful if you are generating
+        :map:`BoundingBox` instances in a tight loop.
+
+    """
     def __init__(self, min_max, skip_checks=False):
         PointCloud.__init__(self, min_max)
         if not skip_checks:
@@ -264,16 +282,39 @@ class BoundingBox(PointCloud):
 
     def __str__(self):
         return ('{}: min: {}, '
-                'max: {}, n_dims: {}'.format(type(self).__name__, self.min(),
-                                             self.max(), self.n_dims))
+                'max: {}, n_dims: {}'.format(type(self).__name__, self.min,
+                                             self.max, self.n_dims))
 
+    @property
     def min(self):
+        r"""
+        The minimum of the bounding box extent.
+
+        :type: `ndarray shape (n_dims,)`
+        """
         return self.points[0]
 
+    @property
     def max(self):
+        r"""
+        The maximum of the bounding box extent.
+
+        :type: `ndarray shape (n_dims,)`
+        """
         return self.points[1]
 
     def box(self):
+        r"""
+        Generate a full box :map:`PointGraph` representation of this
+        :map:`BoundingBox`. Will have 4 points in the case of 2D. Other
+        dimensions are not yet supported.
+
+        Returns
+        -------
+        pointgraph : :map:`PointGraph`
+            A 'complete' representation of this :map:`BoundingBox`
+
+        """
         global PointGraph
         if PointGraph is None:
             from .graph import PointGraph

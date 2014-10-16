@@ -92,14 +92,14 @@ def test_bounding_box_min():
     points = np.array([[0, 0],
                        [1, 1]])
     bb = BoundingBox(points)
-    assert np.all(bb.min() == np.array([0, 0]))
+    assert np.all(bb.min == np.array([0, 0]))
 
 
 def test_bounding_box_max():
     points = np.array([[0, 0],
                        [1, 1]])
     bb = BoundingBox(points)
-    assert np.all(bb.max() == np.array([1, 1]))
+    assert np.all(bb.max == np.array([1, 1]))
 
 
 def test_bounding_box_box():

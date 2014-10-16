@@ -711,7 +711,7 @@ class Image(Vectorizable, LandmarkableViewable):
         """
         pc = self.landmarks[group][label]
         bb = pc.bounds(boundary=boundary)
-        return self.crop_inplace(bb.min(), bb.max(),
+        return self.crop_inplace(bb.min, bb.max,
                                  constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
