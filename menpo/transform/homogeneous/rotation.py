@@ -52,6 +52,14 @@ class Rotation(DiscreteAffine, Similarity):
         self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
+    def from_2D_angle(cls, theta, degrees=True):
+        if degrees:
+            # convert to radians
+            theta = theta * np.pi / 180.0
+        return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
+                                  [np.sin(theta),  np.cos(theta)]]))
+
+    @classmethod
     def identity(cls, n_dims):
         return Rotation(np.eye(n_dims))
 
