@@ -315,14 +315,14 @@ class CLMBuilder(DeformableModelBuilder):
 def get_pos_neg_grid_positions(sampling_grid, positive_grid_size=(1, 1)):
     r"""
     Divides a sampling grid in positive and negative pixel positions. By
-    default only the center of the grid is considered to be positive.
+    default only the centre of the grid is considered to be positive.
     """
     positive_grid_size = np.array(positive_grid_size)
     mask = np.zeros(sampling_grid.shape[:-1], dtype=np.bool)
-    center = np.round(np.array(mask.shape) / 2).astype(int)
+    centre = np.round(np.array(mask.shape) / 2).astype(int)
     positive_grid_size -= [1, 1]
-    start = center - positive_grid_size
-    end = center + positive_grid_size + 1
+    start = centre - positive_grid_size
+    end = centre + positive_grid_size + 1
     mask[start[0]:end[0], start[1]:end[1]] = True
     positive = sampling_grid[mask]
     negative = sampling_grid[~mask]

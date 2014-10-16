@@ -55,11 +55,11 @@ eigenvalues_no_centre_biased_f = np.array([40.39823163, 0.22176837])
 eigenvalues_centered_no_bias_f = np.array([0.51])
 
 
-# whiten,center,bias (samples)
+# whiten,centre,bias (samples)
 # 000
 def pcd_samples_nowhiten_nocentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               center=False, whiten=False,
+                                               centre=False, whiten=False,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -71,7 +71,7 @@ def pcd_samples_nowhiten_nocentre_nobias_test():
 # 001
 def pcd_samples_nowhiten_nocentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               center=False, bias=True,
+                                               centre=False, bias=True,
                                                whiten=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -83,7 +83,7 @@ def pcd_samples_nowhiten_nocentre_yesbias_test():
 # 010
 def pcd_samples_nowhiten_yescentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               whiten=False, center=True,
+                                               whiten=False, centre=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -95,7 +95,7 @@ def pcd_samples_nowhiten_yescentre_nobias_test():
 # 011
 def pcd_samples_nowhiten_yescentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               bias=True, center=True,
+                                               bias=True, centre=True,
                                                whiten=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -107,7 +107,7 @@ def pcd_samples_nowhiten_yescentre_yesbias_test():
 # 100
 def pcd_samples_yeswhiten_nocentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               center=False, whiten=True,
+                                               centre=False, whiten=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -120,7 +120,7 @@ def pcd_samples_yeswhiten_nocentre_nobias_test():
 # 101
 def pcd_samples_yeswhiten_nocentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               bias=True, center=False,
+                                               bias=True, centre=False,
                                                whiten=True)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -133,7 +133,7 @@ def pcd_samples_yeswhiten_nocentre_yesbias_test():
 # 110
 def pcd_samples_yeswhiten_yescentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               whiten=True, center=True,
+                                               whiten=True, centre=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -146,7 +146,7 @@ def pcd_samples_yeswhiten_yescentre_nobias_test():
 # 111
 def pcd_samples_yeswhiten_yescentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix,
-                                               whiten=True, center=True,
+                                               whiten=True, centre=True,
                                                bias=True)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -156,11 +156,11 @@ def pcd_samples_yeswhiten_yescentre_yesbias_test():
     assert_almost_equal(mean_vector, mean_vector_s)
 
 
-# whiten,center,bias (features)
+# whiten,centre,bias (features)
 # 000
 def pcd_features_nowhiten_nocentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               center=False, whiten=False,
+                                               centre=False, whiten=False,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -172,7 +172,7 @@ def pcd_features_nowhiten_nocentre_nobias_test():
 # 001
 def pcd_features_nowhiten_nocentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               center=False, bias=True,
+                                               centre=False, bias=True,
                                                whiten=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -184,7 +184,7 @@ def pcd_features_nowhiten_nocentre_yesbias_test():
 # 010
 def pcd_features_nowhiten_yescentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               whiten=False, center=True,
+                                               whiten=False, centre=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -196,7 +196,7 @@ def pcd_features_nowhiten_yescentre_nobias_test():
 # 011
 def pcd_features_nowhiten_yescentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               bias=True, center=True,
+                                               bias=True, centre=True,
                                                whiten=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -208,7 +208,7 @@ def pcd_features_nowhiten_yescentre_yesbias_test():
 # 100
 def pcd_features_yeswhiten_nocentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               center=False, whiten=True,
+                                               centre=False, whiten=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -221,7 +221,7 @@ def pcd_features_yeswhiten_nocentre_nobias_test():
 # 101
 def pcd_features_yeswhiten_nocentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               bias=True, center=False,
+                                               bias=True, centre=False,
                                                whiten=True)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -233,7 +233,7 @@ def pcd_features_yeswhiten_nocentre_yesbias_test():
 # 110
 def pcd_features_yeswhiten_yescentre_nobias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               whiten=True, center=True,
+                                               whiten=True, centre=True,
                                                bias=False)
     eigenvectors, eigenvalues, mean_vector = output
 
@@ -245,7 +245,7 @@ def pcd_features_yeswhiten_yescentre_nobias_test():
 # 111
 def pcd_features_yeswhiten_yescentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
-                                               whiten=True, center=True,
+                                               whiten=True, centre=True,
                                                bias=True)
     eigenvectors, eigenvalues, mean_vector = output
 

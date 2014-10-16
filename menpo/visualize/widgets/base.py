@@ -349,7 +349,7 @@ def browse_iter_images(iter_images, figure_size=(7, 7),
 
 
 def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
-             x_label=None, y_label=None, legend=None, colors=None,
+             x_label=None, y_label=None, legend=None, colours=None,
              markers=None, plot_size=(14, 7)):
     r"""
     Plots the Cumulative Error Distribution (CED) graph given a list of
@@ -370,10 +370,8 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
 
         where ``fitting_results`` is a `list` of :map:`FittingResult`
         objects.
-
     x_axis : `list` of `float`, optional
         The x axis to be used.
-
     initial_errors : `list` of `floats`, optional.
         The list of initial fitting errors.
 
@@ -386,30 +384,21 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
 
         where ``fitting_results`` is a `list` of :map:`FittingResult`
         objects.
-
     title : `str`, optional
         The figure title.
-
     x_label : `str`, optional
         The label associated to the x axis.
-
     y_label : `str`, optional
         The label associated to the y axis.
-
     legend : `str` or `list` of `str`, optional
-
-    colors : `matplotlib color` or `list` of `matplotlib color`, optional
-        The color of the line to be plotted.
-
+    colours : `matplotlib colour` or `list` of `matplotlib colour`, optional
+        The colour of the line to be plotted.
     markers : `matplotlib marker` or `list` of `matplotlib marker`, optional
         The marker of the line to be plotted.
-
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-
     figure_scales : (`float`, `float`), optional
         The range of scales that can be optionally applied to the figure.
-
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
@@ -427,12 +416,12 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
     if y_label is None:
         y_label = 'Proportion of images'
 
-    if colors is None:
+    if colours is None:
         # color are chosen at random
-        colors = [np.random.random((3,)) for _ in range(len(final_errors))]
-    elif len(colors) == 1 and len(final_errors) > 1:
-        colors = [colors[0] for _ in range(len(final_errors))]
-    elif len(colors) != len(final_errors):
+        colours = [np.random.random((3,)) for _ in range(len(final_errors))]
+    elif len(colours) == 1 and len(final_errors) > 1:
+        colours = [colours[0] for _ in range(len(final_errors))]
+    elif len(colours) != len(final_errors):
         raise ValueError('colors must be...'.format())
 
     if markers is None:
@@ -476,7 +465,7 @@ def plot_ced(final_errors, x_axis=None, initial_errors=None, title=None,
             plt.plot(x_axis, initial_cumulative_error,
                      color='black',  marker='*')
 
-        for fce, c, m in zip(final_cumulative_errors, colors, markers):
+        for fce, c, m in zip(final_cumulative_errors, colours, markers):
             plt.plot(x_axis, fce, color=c,  marker=m)
 
         plt.grid(True)
