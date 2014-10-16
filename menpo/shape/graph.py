@@ -326,6 +326,33 @@ class UndirectedGraph(Graph):
         self._check_vertex(vertex)
         return len(self.neighbours(vertex))
 
+    def is_edge(self, vertex_1, vertex_2):
+        r"""
+        Returns whether there is an edge between the provided vertices.
+
+        Parameters
+        ----------
+        vertex_1 : `int`
+            The first selected vertex.
+
+        vertex_2 : `int`
+            The second selected vertex.
+
+        Returns
+        -------
+        is_edge : `bool`
+            True if there is an edge.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(vertex_1)
+        self._check_vertex(vertex_2)
+        return (vertex_1 in self.adjacency_list[vertex_2] or
+                vertex_2 in self.adjacency_list[vertex_1])
+
     def minimum_spanning_tree(self, weights, root_vertex):
         r"""
         Returns the minimum spanning tree given weights to the graph's edges
@@ -470,6 +497,32 @@ class DirectedGraph(Graph):
         """
         self._check_vertex(vertex)
         return len(self.parent(vertex))
+
+    def is_edge(self, parent, child):
+        r"""
+        Returns whether there is an edge between the provided vertices.
+
+        Parameters
+        ----------
+        parent : `int`
+            The first selected vertex which is considered as the parent.
+
+        child : `int`
+            The second selected vertex which is considered as the child.
+
+        Returns
+        -------
+        is_edge : `bool`
+            True if there is an edge.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        self._check_vertex(parent)
+        self._check_vertex(child)
+        return child in self.adjacency_list[parent]
 
     def __str__(self):
         return "Directed graph of {} vertices and {} edges.".format(
@@ -876,6 +929,69 @@ class PointTree(Tree, PointCloud):
         json_dict = PointCloud.tojson(self)
         json_dict.update(UndirectedGraph.tojson(self))
         return json_dict
+
+    def relative_location_edge(self, parent, child):
+        r"""
+        Returns the relative location between the provided vertices. That is
+        if vertex j is the parent and vertex i is its child and vector l
+        denotes the coordinates of a vertex, then:
+
+                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                              = [[x_i - x_j], [y_i - y_j]]
+
+        Parameters
+        ----------
+        parent : `int`
+            The first selected vertex which is considered as the parent.
+
+        child : `int`
+            The second selected vertex which is considered as the child.
+
+        Returns
+        -------
+        relative_location : `ndarray`
+            The relative location vector.
+
+        Raises
+        ------
+        ValueError
+            Vertices {parent} and {child} are not connected with an edge.
+        """
+        if not self.is_edge(parent, child):
+            raise ValueError('Vertices {} and {} are not connected '
+                             'with an edge.'.format(parent, child))
+        return self.points[child, ...] - self.points[parent, ...]
+
+    def relative_locations(self):
+        r"""
+        Returns the relative location between the vertices of each edge. If
+        vertex j is the parent and vertex i is its child and vector l denotes
+        the coordinates of a vertex, then:
+
+                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                              = [[x_i - x_j], [y_i - y_j]]
+
+        Parameters
+        ----------
+        parent : `int`
+            The first selected vertex which is considered as the parent.
+
+        child : `int`
+            The second selected vertex which is considered as the child.
+
+        Returns
+        -------
+        is_edge : `bool`
+            True if there is an edge.
+
+        Raises
+        ------
+        ValueError
+            The vertex must be between 0 and {n_vertices-1}.
+        """
+        parents = [p[0] for p in self.adjacency_array]
+        children = [p[1] for p in self.adjacency_array]
+        return self.points[children, ...] - self.points[parents, ...]
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return PointGraphViewer(figure_id, new_figure,

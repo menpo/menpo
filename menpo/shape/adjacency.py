@@ -27,9 +27,10 @@ def mask_adjacency_array_tree(mask, adjacency_array, adjacency_list,
         edges_to_be_removed.append([predecessors_list[v], v])
         _remove_tree_edge(adjacency_list, v, edges_to_be_removed)
     # Return ndarray of edges to keep, i.e. new adjacency_array
-    s1 = set(tuple(r) for r in adjacency_array)
-    s2 = set(tuple(r) for r in edges_to_be_removed)
-    return np.array([i for i in s1 - s2])
+    return np.array(list_diff(adjacency_array.tolist(), edges_to_be_removed))
+
+
+list_diff = lambda l1, l2: [x for x in l1 if x not in l2]
 
 
 def _remove_tree_edge(adjacency_list, vertex, edges_to_be_removed):

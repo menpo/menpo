@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
+from numpy.testing import assert_allclose
 from nose.tools import raises
 
 from menpo.shape import UndirectedGraph, DirectedGraph, Tree
@@ -178,3 +178,17 @@ def test_minimum_spanning_tree():
                               [False, False, False, True],
                               [False, False, False, False]]))
     assert t.predecessors_list == [None, 0, None, 0]
+
+
+def test_is_edge():
+    assert g_directed.is_edge(2, 4)
+    assert not g_directed.is_edge(3, 1)
+    assert not g_directed.is_edge(5, 0)
+
+    assert g_undirected.is_edge(2, 1)
+    assert g_undirected.is_edge(1, 2)
+    assert not g_undirected.is_edge(5, 0)
+
+    assert g_tree.is_edge(4, 7)
+    assert not g_tree.is_edge(6, 3)
+    assert not g_tree.is_edge(8, 1)
