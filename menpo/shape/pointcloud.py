@@ -5,6 +5,9 @@ from menpo.visualize import PointCloudViewer
 from menpo.shape.base import Shape
 PointGraph = None
 
+_bounding_box_adj = np.array([[0, 3], [2, 0], [1, 2], [1, 3]])
+
+
 class PointCloud(Shape):
     r"""
     An N-dimensional point cloud. This is internally represented as an ndarray
@@ -250,8 +253,19 @@ class PointCloud(Shape):
 
 class BoundingBox(PointCloud):
 
-    def __init__(self, min_max):
+    def __init__(self, min_max, skip_checks=False):
         PointCloud.__init__(self, min_max)
+        if not skip_checks:
+            if self.n_points != 2:
+                raise ValueError(
+                    'Bounding box should be built from just the '
+                    'min and max points (so a numpy array of shape '
+                    '(2, n_dims)')
+
+    def __str__(self):
+        return ('{}: min: {}, '
+                'max: {}, n_dims: {}'.format(type(self).__name__, self.min(),
+                                             self.max(), self.n_dims))
 
     def min(self):
         return self.points[0]
@@ -263,12 +277,14 @@ class BoundingBox(PointCloud):
         global PointGraph
         if PointGraph is None:
             from .graph import PointGraph
+        if self.n_dims != 2:
+            raise ValueError('BoundingBox.box() does not support dimensions '
+                             'other than 2 (yet)')
         p = self.points
         p2 = [[p[0, 0], p[1, 1]],
               [p[1, 0], p[0, 1]]]
         points = np.vstack((p, p2))
-        adj = np.array([[0, 3], [2, 0], [1, 2], [1, 3]])
-        return PointGraph(points, adj)
+        return PointGraph(points, _bounding_box_adj.copy(), copy=False)
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return self.box()._view(figure_id=None, new_figure=False, **kwargs)
