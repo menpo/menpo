@@ -3,9 +3,7 @@ import abc
 import numpy as np
 
 from menpo.image import Image
-from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid,
-                                           extract_local_patches_fast,
-                                           extract_local_patches)
+from menpo.fitmultilevel.functions import (noisy_align, build_sampling_grid)
 from menpo.feature import sparse_hog
 from menpo.fit.fittingresult import (NonParametricFittingResult,
                                      SemiParametricFittingResult,
@@ -321,14 +319,12 @@ class NonParametricRegressorTrainer(RegressorTrainer):
             The current shape.
         """
         # extract patches
-        patches = extract_local_patches_fast(image, shape, self.patch_shape)
+        patches = image.extract_patches(shape, patch_size=self.patch_shape)
 
         features = np.zeros((shape.n_points, self._feature_patch_length))
         for j, patch in enumerate(patches):
-            # build patch image
-            patch_img = Image(patch, copy=False)
             # compute features
-            features[j, ...] = self.regression_features(patch_img).as_vector()
+            features[j, ...] = self.regression_features(patch).as_vector()
 
         return np.hstack((features.ravel(), 1))
 
@@ -670,8 +666,7 @@ class SemiParametricClassifierBasedRegressorTrainer(
         shape : :map:`PointCloud`
             The current shape.
         """
-        # TODO: in the future this should be extract_local_patches_fast
-        patches = extract_local_patches(image, shape, self.sampling_grid)
-        features = [clf(np.reshape(patch, (-1, patch.shape[-1])))
+        patches = image.extract_patches(shape, patch_size=self.patch_shape)
+        features = [clf(patch.as_vector(keep_channels=True))
                     for (clf, patch) in zip(self.classifiers, patches)]
         return np.hstack((np.asarray(features).ravel(), 1))

@@ -13,6 +13,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine)
 from menpo.visualize.base import ImageViewer
 from .interpolation import scipy_interpolation, cython_interpolation
+from .extract_patches import extract_patches_cython
 
 
 class ImageBoundaryError(ValueError):
@@ -797,8 +798,113 @@ class Image(Vectorizable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
+    def extract_patches(self, patch_centers, patch_size=(16, 16),
+                        sample_offsets=None, as_single_array=False):
+        r"""
+        Extract a set of patches from an image. Given a set of patch centers and
+        a patch size, patches are extracted from within the image, centred
+        on the given coordinates. Sample offsets denote a set of offsets to
+        extract from within a patch. This is very useful if you want to extract
+        a dense set of features around a set of landmarks and simply sample the
+        same grid of patches around the landmarks.
+
+        If sample offsets are used, to access the offsets for each patch you
+        need to slice the resulting list. So for 2 offsets, the first centers
+        offset patches would be ``patches[:2]``.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patch_centers : :map:`PointCloud`
+            The centers to extract patches around.
+        patch_size : tuple or ndarray, optional
+            The size of the patch to extract
+        sample_offsets : :map:`PointCloud`, optional
+            The offsets to sample from within a patch. So (0,0) is the centre
+            of the patch (no offset) and (1, 0) would be sampling the patch
+            from 1 pixel up the first axis away from the centre.
+        as_single_array : (n_center * n_offset, self.shape...) ndarray, optional
+            If ``True``, a single numpy array is returned containing each patch.
+            If ``False``, a list of images is returned representing each patch.
+
+        Returns
+        -------
+        patches : list or ndarray
+            Returns the extracted patches. Returns a list if ``as_single_array``
+            is ``True`` and an ndarray if ``as_single_array`` is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        """
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch extraction is '
+                             'currently supported.')
+
+        if sample_offsets is None:
+            sample_offsets_arr = np.zeros([1, 2], dtype=np.int64)
+        else:
+            sample_offsets_arr = np.require(sample_offsets.points,
+                                            dtype=np.int64)
+
+        single_array = extract_patches_cython(self.pixels,
+                                              patch_centers.points,
+                                              np.asarray(patch_size,
+                                                         dtype=np.int64),
+                                              sample_offsets_arr)
+
+        if as_single_array:
+            return single_array
+        else:
+            return [Image(p, copy=False) for p in single_array]
+
+    def extract_patches_around_landmarks(
+            self, group=None, label=None, patch_size=(16, 16),
+            sample_offsets=None, as_single_array=False):
+        r"""
+        Extract patches around landmarks existing on this image. Provided the
+        group label and optionally the landmark label extract a set of patches.
+
+        See `extract_patches` for more information.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        group : `str` or `None`, optional
+            The landmark group to use as patch centres.
+        label : `str` or `None`, optional
+            The landmark label within the group to use as centres.
+        patch_size : tuple or ndarray, optional
+            The size of the patch to extract
+        sample_offsets : :map:`PointCloud`, optional
+            The offsets to sample from within a patch. So (0,0) is the centre
+            of the patch (no offset) and (1, 0) would be sampling the patch
+            from 1 pixel up the first axis away from the centre.
+        as_single_array : (n_center * n_offset, self.shape...) ndarray, optional
+            If ``True``, a single numpy array is returned containing each patch.
+            If ``False``, a list of images is returned representing each patch.
+
+        Returns
+        -------
+        patches : list or ndarray
+            Returns the extracted patches. Returns a list if ``as_single_array``
+            is ``True`` and an ndarray if ``as_single_array`` is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        """
+        return self.extract_patches(self.landmarks[group][label],
+                                    patch_size=patch_size,
+                                    sample_offsets=sample_offsets,
+                                    as_single_array=as_single_array)
+
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+             order=1, mode='constant', cval=0.):
         r"""
         Return a copy of this image warped into a different reference space.
 

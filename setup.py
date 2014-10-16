@@ -16,10 +16,11 @@ else:
     import numpy as np
 
     # ---- C/C++ EXTENSIONS ---- #
-    cython_modules = ["menpo/shape/mesh/normals.pyx",
-                      "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/feature/windowiterator.pyx",
-                      "menpo/external/skimage/_warps_cy.pyx"]
+    cython_modules = ['menpo/shape/mesh/normals.pyx',
+                      'menpo/transform/piecewiseaffine/fastpwa.pyx',
+                      'menpo/feature/windowiterator.pyx',
+                      'menpo/external/skimage/_warps_cy.pyx',
+                      'menpo/image/extract_patches.pyx']
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
