@@ -427,7 +427,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
             Default: `True`
         bins : 'unique', positive int or sequence of scalars, optional
-            If set equal to 'unique', the bins of the histograms are centered
+            If set equal to 'unique', the bins of the histograms are centred
             on the unique values of each channel. If set equal to a positive
             integer, then this is the number of bins. If set equal to a
             sequence of scalars, these will be used as bins centres.
@@ -447,8 +447,8 @@ class Image(Vectorizable, LandmarkableViewable):
                 for k in range(len(hist)):
                     plt.subplot(1,len(hist),k)
                     width = 0.7 * (bin_edges[k][1] - bin_edges[k][0])
-                    center = (bin_edges[k][:-1] + bin_edges[k][1:]) / 2
-                    plt.bar(center, hist[k], align='center', width=width)
+                    centre = (bin_edges[k][:-1] + bin_edges[k][1:]) / 2
+                    plt.bar(centre, hist[k], align='center', width=width)
 
         Raises
         ------
@@ -780,16 +780,13 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-
-        points: (d,) ndarray
+        points : (d,) ndarray
             points to be snapped to the image boundaries
 
         Returns
         -------
-
-        bounded_points: (d,) ndarray
+        bounded_points : (d,) ndarray
             points snapped to not stray outside the image edges
-
         """
         bounded_points = points.copy()
         # check we don't stray under any edges
@@ -886,7 +883,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        template_shape : (n_dims, ) tuple or ndarray
+        template_shape : tuple or ndarray
             Defines the shape of the result, and what pixel indices should be
             sampled (all of them).
 
@@ -1048,21 +1045,17 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        reference_shape: :class:`menpo.shape.pointcloud`
+        reference_shape: :map:`PointCloud`
             The reference shape to which the landmarks scale will be matched
             against.
-
         group : `str`, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
-
-        label: `str`, optional
+        label : `str`, optional
             The label of of the landmark manager that you wish to use. If
             `None` all landmarks in the group are used.
-
-        round: {'ceil', 'floor', 'round'}, optional
+        round : {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -1348,7 +1341,6 @@ class Image(Vectorizable, LandmarkableViewable):
             'per_channel', each channel individually is mean centred and
             normalized in variance.
         """
-
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
