@@ -1,5 +1,4 @@
 import numpy as np
-from menpo.visualize.base import ColouredTriMeshViewer3d
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
@@ -111,9 +110,14 @@ class ColouredTriMesh(TriMesh):
         """
         if coloured:
             if self.n_dims == 3:
-                return ColouredTriMeshViewer3d(
-                    figure_id, new_figure, self.points,
-                    self.trilist, self.colours).render(**kwargs)
+                try:
+                    from menpo3d.visualize import ColouredTriMeshViewer3d
+                    return ColouredTriMeshViewer3d(
+                        figure_id, new_figure, self.points,
+                        self.trilist, self.colours).render(**kwargs)
+                except ImportError:
+                    from menpo.visualize import Menpo3dError
+                    raise Menpo3dError()
             else:
                 raise ValueError("Only viewing of 3D coloured meshes "
                                  "is currently supported.")
