@@ -180,8 +180,8 @@ class TexturedTriMesh(TriMesh):
                         self.trilist, self.texture,
                         self.tcoords.points).render(**kwargs)
                 except ImportError:
-                    from menpo.visualize import Menpo3dError
-                    raise Menpo3dError()
+                    from menpo.visualize import Menpo3dErrorMessage
+                    raise ImportError(Menpo3dErrorMessage)
             else:
                 raise ValueError("Only viewing of 3D textured meshes"
                                  "is currently supported.")

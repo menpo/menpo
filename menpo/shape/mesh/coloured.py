@@ -116,8 +116,8 @@ class ColouredTriMesh(TriMesh):
                         figure_id, new_figure, self.points,
                         self.trilist, self.colours).render(**kwargs)
                 except ImportError:
-                    from menpo.visualize import Menpo3dError
-                    raise Menpo3dError()
+                    from menpo.visualize import Menpo3dErrorMessage
+                    raise ImportError(Menpo3dErrorMessage)
             else:
                 raise ValueError("Only viewing of 3D coloured meshes "
                                  "is currently supported.")

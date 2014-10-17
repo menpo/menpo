@@ -5,11 +5,9 @@ from collections import Iterable
 import numpy as np
 
 
-class Menpo3dError(Exception):
-    message = ("In order to keep menpo's dependencies simple, menpo does not "
-               "contain 3D importing and visualization code. Please install "
-               "menpo3d to view 3D meshes.")
-
+Menpo3dErrorMessage = ("In order to keep menpo's dependencies simple, menpo "
+                       "does not contain 3D importing and visualization code. "
+                       "Please install menpo3d to view 3D meshes.")
 
 
 class Renderer(object):
@@ -287,7 +285,7 @@ class LandmarkViewer(object):
                                         self.group_label, self.pointcloud,
                                         self.labels_to_masks).render(**kwargs)
             except ImportError:
-                raise Menpo3dError()
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D landmarks are "
                              "currently supported")
@@ -342,7 +340,7 @@ class PointCloudViewer(object):
                 return PointCloudViewer3d(self.figure_id, self.new_figure,
                                           self.points).render(**kwargs)
             except ImportError:
-                raise Menpo3dError()
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D pointclouds are "
                              "currently supported")
@@ -576,7 +574,7 @@ class TriMeshViewer(object):
                 return TriMeshViewer3d(self.figure_id, self.new_figure,
                                        self.points, self.trilist).render(**kwargs)
             except ImportError:
-                raise Menpo3dError()
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D TriMeshes "
                              "are currently supported")

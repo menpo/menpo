@@ -1,5 +1,5 @@
 from .base import (
-    Viewable, Menpo3dError,
+    Viewable, Menpo3dErrorMessage,
     PointCloudViewer, PointCloudViewer2d, PointGraphViewer, TriMeshViewer,
     TriMeshViewer2d, LandmarkViewer, LandmarkViewer2d, ImageViewer2d,
     AlignmentViewer2d)
