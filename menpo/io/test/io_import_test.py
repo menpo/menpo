@@ -55,7 +55,6 @@ def test_import_image():
 def test_import_landmark_file():
     lm_path = os.path.join(mio.data_dir_path(), 'einstein.pts')
     mio.import_landmark_file(lm_path)
-    assert 1
 
 
 def test_import_images():
