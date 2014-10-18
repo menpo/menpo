@@ -1466,7 +1466,9 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             Initial error: {:.4f}
             Final error: {:.4f}
             {} iterations
-        """
+        """.format(fitting_results[im].initial_error(error_type=value),
+                   fitting_results[im].final_error(error_type=value),
+                   fitting_results[im].n_iters)
         if hasattr(fitting_results[im], 'n_levels'):  # Multilevel result
             info_txt += r"""
                 {} levels with downscale of {:.1f}
