@@ -1009,8 +1009,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         else:
             txt = "$\\bullet~\\texttt{" + "{}".format(aam.n_training_images) + \
                   " training images.}\\\\ \\bullet~\\texttt{Warp using " + \
-                  aam.transform.__name__ + " transform with '" + \
-                  aam.interpolator + "' interpolation.}" + \
+                  aam.transform.__name__ + " transform}" + \
                   "\\\\ \\bullet~\\texttt{" + tmp_feat + \
                   "}\\\\ \\bullet~\\texttt{Reference frame of length " + \
                   "{} ({} x {}C, {} x {}C).".format(
