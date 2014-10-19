@@ -135,7 +135,7 @@ def project_out(appearance_model, warped_image):
     warped_image: :class:`menpo.image.masked`
         The warped image.
     """
-    diff = warped_image.as_vector() - appearance_model.mean.as_vector()
+    diff = warped_image.as_vector() - appearance_model.mean().as_vector()
     return appearance_model.distance_to_subspace_vector(diff).ravel()
 
 
@@ -152,7 +152,7 @@ def probabilistic(appearance_model, warped_image):
     warped_image: :class:`menpo.image.masked`
         The warped image.
     """
-    diff = warped_image.as_vector() - appearance_model.mean.as_vector()
+    diff = warped_image.as_vector() - appearance_model.mean().as_vector()
     po = appearance_model.distance_to_subspace_vector(diff).ravel()
     return po + appearance_model.project_whitened_vector(diff).ravel()
 

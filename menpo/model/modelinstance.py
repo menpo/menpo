@@ -162,7 +162,8 @@ class GlobalPDM(PDM):
     def __init__(self, model, global_transform_cls):
         # Start the global_transform as an identity (first call to
         # from_vector_inplace() or set_target() will update this)
-        self.global_transform = global_transform_cls(model.mean, model.mean)
+        mean = model.mean()
+        self.global_transform = global_transform_cls(mean, mean)
         super(GlobalPDM, self).__init__(model)
 
     @property
@@ -262,7 +263,7 @@ class GlobalPDM(PDM):
 
     def d_dp(self, points):
         # d_dp is always evaluated at the mean shape
-        points = self.model.mean.points
+        points = self.model.mean().points
 
         # compute dX/dp
 
@@ -294,11 +295,12 @@ class OrthoPDM(GlobalPDM):
     """
     def __init__(self, model, global_transform_cls):
         # 1. Construct similarity model from the mean of the model
-        self.similarity_model = Similarity2dInstanceModel(model.mean)
+        self.similarity_model = Similarity2dInstanceModel(model.mean())
         # 2. Orthonormalize model and similarity model
         model_cpy = model.copy()
         model_cpy.orthonormalize_against_inplace(self.similarity_model)
-        self.similarity_weights = self.similarity_model.project(model_cpy.mean)
+        self.similarity_weights = self.similarity_model.project(
+            model_cpy.mean())
         super(OrthoPDM, self).__init__(model_cpy, global_transform_cls)
 
     @property

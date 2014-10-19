@@ -284,11 +284,11 @@ class LucasKanadeAAMFitter(AAMFitter):
             if md_transform is not ModelDrivenTransform:
                 md_trans = md_transform(
                     sm, self.aam.transform, global_transform,
-                    source=am.mean.landmarks['source'].lms)
+                    source=am.mean().landmarks['source'].lms)
             else:
                 md_trans = md_transform(
                     sm, self.aam.transform,
-                    source=am.mean.landmarks['source'].lms)
+                    source=am.mean().landmarks['source'].lms)
             self._fitters.append(algorithm(am, md_trans, **kwargs))
 
     def __str__(self):

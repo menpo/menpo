@@ -15,6 +15,6 @@ class AppearanceLucasKanade(LucasKanade):
         # in appearance alignment, target image is aligned to appearance model
         self.appearance_model = model
         # by default, template is assigned to mean appearance
-        self.template = model.mean
+        self.template = model.mean()
         # pre-compute
         self._set_up()

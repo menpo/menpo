@@ -520,7 +520,7 @@ class ParametricRegressorTrainer(RegressorTrainer):
             regression_features=regression_features, noise_std=noise_std,
             rotation=rotation, n_perturbations=n_perturbations)
         self.appearance_model = appearance_model
-        self.template = appearance_model.mean
+        self.template = appearance_model.mean()
         self.regression_features = regression_features
         self.transform = transform
         self.update = update
