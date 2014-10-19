@@ -15,7 +15,6 @@ env:
 matrix:
   allow_failures:
     - env: PYTHON_VERSION=3.4
-    - os: osx  # waiting for OS X builds of cyrasterize, cyassimp
 
 install:
 - wget https://raw.githubusercontent.com/jabooth/condaci/v0.2.0/condaci.py -O condaci.py
