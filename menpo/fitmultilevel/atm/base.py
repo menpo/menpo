@@ -245,7 +245,7 @@ class ATM(DeformableModel):
                 out = "{0}     - {1} shape components ({2:.2f}% of " \
                       "variance)\n".format(
                       out, self.shape_models[i].n_components,
-                      self.shape_models[i].variance_ratio * 100)
+                      self.shape_models[i].variance_ratio() * 100)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -259,7 +259,7 @@ class ATM(DeformableModel):
                   n_channels[0],
                   self.warped_templates[0]._str_shape,
                   n_channels[0], self.shape_models[0].n_components,
-                  self.shape_models[0].variance_ratio * 100)
+                  self.shape_models[0].variance_ratio() * 100)
         return out
 
 

@@ -119,7 +119,7 @@ class RegularizedLandmarkMeanShift(GradientDescent):
         self._sampling_grid = build_sampling_grid(self.patch_shape)
         # Define the 2-dimensional gaussian distribution
         mean = np.zeros(self.transform.n_dims)
-        covariance = self.scale * self.transform.model.noise_variance
+        covariance = self.scale * self.transform.model.noise_variance()
         mvn = multivariate_normal(mean=mean, cov=covariance)
         # Compute Gaussian-KDE grid
         self._kernel_grid = mvn.pdf(self._sampling_grid)

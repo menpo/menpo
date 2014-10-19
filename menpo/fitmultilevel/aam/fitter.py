@@ -379,7 +379,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                       "variance)\n".format(
                     out, self._fitters[i].transform.n_parameters,
                     self._fitters[i].appearance_model.n_active_components,
-                    self._fitters[i].appearance_model.variance_ratio * 100)
+                    self._fitters[i].appearance_model.variance_ratio() * 100)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -394,5 +394,5 @@ class LucasKanadeAAMFitter(AAMFitter):
                 n_channels[0], self._fitters[0].template._str_shape,
                 n_channels[0], self._fitters[0].transform.n_parameters,
                 self._fitters[0].appearance_model.n_active_components,
-                self._fitters[0].appearance_model.variance_ratio * 100)
+                self._fitters[0].appearance_model.variance_ratio() * 100)
         return out
