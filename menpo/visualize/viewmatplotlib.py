@@ -245,7 +245,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
             kwargs['colour_array'] = colours[:, i]
-            kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
+            kwargs['label'] = '{0}: {1}'.format(self.group, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
             ax = plt.gca()
