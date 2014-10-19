@@ -2072,7 +2072,7 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                               use_negative=glyph_use_negative,
                               channels=channels).\
                             view_landmarks(masked=masked_enabled,
-                                           group_label=group,
+                                           group=group,
                                            with_labels=with_labels[k],
                                            render_labels=(legend_enabled and
                                                           not subplots_enabled),
@@ -2080,7 +2080,7 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                     else:
                         # image, landmarks, masked, not glyph
                         image.view_landmarks(masked=masked_enabled,
-                                             group_label=group,
+                                             group=group,
                                              with_labels=with_labels[k],
                                              render_labels=(legend_enabled and
                                                             not subplots_enabled),
@@ -2091,14 +2091,14 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                         glyph(image, vectors_block_size=glyph_block_size,
                               use_negative=glyph_use_negative,
                               channels=channels).\
-                            view_landmarks(group_label=group,
+                            view_landmarks(group=group,
                                            with_labels=with_labels[k],
                                            render_labels=(legend_enabled and
                                                           not subplots_enabled),
                                            **kwargs)
                     else:
                         # image, landmarks, not masked, not glyph
-                        image.view_landmarks(group_label=group,
+                        image.view_landmarks(group=group,
                                              with_labels=with_labels[k],
                                              render_labels=(legend_enabled and
                                                             not subplots_enabled),

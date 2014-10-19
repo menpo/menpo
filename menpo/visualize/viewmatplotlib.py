@@ -208,10 +208,10 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
-        self.group_label = group_label
+        self.group = group
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
@@ -264,10 +264,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2dImage, self).__init__(
-            figure_id, new_figure, group_label, pointcloud, labels_to_masks)
+            figure_id, new_figure, group, pointcloud, labels_to_masks)
 
     def _render(self, render_labels=True, render_legend=True, **kwargs):
         self._plot_landmarks(render_labels, render_legend, True, **kwargs)
