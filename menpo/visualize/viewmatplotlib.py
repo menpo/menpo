@@ -208,19 +208,27 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
-        self.group_label = group_label
+        self.group = group
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, render_labels, image_view, **kwargs):
+    def _plot_landmarks(self, render_numbering, render_legend,
+                        image_view, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
-        colours = kwargs.get(
-            'colours', np.random.random([3, len(self.labels_to_masks)]))
+        # We may get passed either no colours (in which case we generate
+        # random colours) or a single colour to colour all the labels with
+        n_labels = len(self.labels_to_masks)
+        colours = kwargs.get('colours', np.random.random([3, n_labels]))
+        if colours.shape[1] == 1:
+            colours = np.tile(colours, [1, n_labels])
+        elif colours.shape[1] != n_labels:
+            raise ValueError('Must pass a (3 x n_labels) array of colours or a '
+                             'single (3 x 1) colour for all labels.')
         halign = kwargs.get('halign', 'center')
         valign = kwargs.get('valign', 'bottom')
         size = kwargs.get('size', 10)
@@ -237,16 +245,17 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
             kwargs['colour_array'] = colours[:, i]
-            kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
+            kwargs['label'] = '{0}: {1}'.format(self.group, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
-            if render_labels:
-                ax = plt.gca()
+            ax = plt.gca()
+            if render_numbering:
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=halign,
                                 verticalalignment=valign, size=size)
+            if render_legend:
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
 
     def _build_sub_pointclouds(self):
@@ -256,19 +265,19 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
 
-    def _render(self, render_labels=True, **kwargs):
-        self._plot_landmarks(render_labels, False, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, False, **kwargs)
         return self
 
 
 class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2dImage, self).__init__(
-            figure_id, new_figure, group_label, pointcloud, labels_to_masks)
+            figure_id, new_figure, group, pointcloud, labels_to_masks)
 
-    def _render(self, render_labels=True, **kwargs):
-        self._plot_landmarks(render_labels, True, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, True, **kwargs)
         return self
 
 

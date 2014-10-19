@@ -220,7 +220,7 @@ class LandmarkViewer(object):
     new_figure : `bool`
         Whether the rendering engine should create a new figure.
 
-    group_label : `str`
+    group : `str`
         The main label of the landmark set.
 
     pointcloud : :map:`PointCloud`
@@ -234,10 +234,10 @@ class LandmarkViewer(object):
         The parent object that we are drawing the landmarks for.
 
     """
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks, targettype=None):
         self.pointcloud = pointcloud
-        self.group_label = group_label
+        self.group = group
         self.labels_to_masks = labels_to_masks
         self.figure_id = figure_id
         self.new_figure = new_figure
@@ -269,17 +269,17 @@ class LandmarkViewer(object):
                     issubclass(self.targettype, Image)):
                 return LandmarkViewer2dImage(
                     self.figure_id, self.new_figure,
-                    self.group_label, self.pointcloud,
+                    self.group, self.pointcloud,
                     self.labels_to_masks).render(**kwargs)
             else:
                 return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                        self.group_label, self.pointcloud,
+                                        self.group, self.pointcloud,
                                         self.labels_to_masks).render(**kwargs)
         elif self.pointcloud.n_dims == 3:
             try:
                 from menpo3d.visualize import LandmarkViewer3d
                 return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                        self.group_label, self.pointcloud,
+                                        self.group, self.pointcloud,
                                         self.labels_to_masks).render(**kwargs)
             except ImportError:
                 raise ImportError(Menpo3dErrorMessage)

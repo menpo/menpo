@@ -50,15 +50,15 @@ def _mask_from_range(range_tuple, n_points):
     return mask
 
 
-def _build_labelling_error_msg(group_label, n_expected_points,
+def _build_labelling_error_msg(group, n_expected_points,
                                n_actual_points):
     return '{} mark-up expects exactly {} ' \
            'points. However, the given landmark group ' \
-           'has {} points'.format(group_label, n_expected_points,
+           'has {} points'.format(group, n_expected_points,
                                   n_actual_points)
 
 
-def _validate_input(landmark_group, n_expected_points, group_label):
+def _validate_input(landmark_group, n_expected_points, group):
     r"""
     Ensure that the input matches the number of expected points.
 
@@ -68,7 +68,7 @@ def _validate_input(landmark_group, n_expected_points, group_label):
         Landmark group to validate
     n_expected_points : `int`
         Number of expected points
-    group_label : `str`
+    group : `str`
         Group label for error message
 
     Raises
@@ -79,7 +79,7 @@ def _validate_input(landmark_group, n_expected_points, group_label):
     """
     n_points = landmark_group.lms.n_points
     if n_points != n_expected_points:
-        raise LabellingError(_build_labelling_error_msg(group_label,
+        raise LabellingError(_build_labelling_error_msg(group,
                                                         n_expected_points,
                                                         n_points))
 
@@ -157,7 +157,7 @@ def ibug_face_68(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_68'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -173,9 +173,9 @@ def ibug_face_68(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_face_68'
+    group = 'ibug_face_68'
     n_points = 68
-    _validate_input(landmark_group, 68, group_label)
+    _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -221,7 +221,7 @@ def ibug_face_68(landmark_group):
 
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_face_66(landmark_group):
@@ -249,7 +249,7 @@ def ibug_face_66(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_66'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -265,9 +265,9 @@ def ibug_face_66(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_face_66'
+    group = 'ibug_face_66'
     n_points = 66
-    _validate_input(landmark_group, 68, group_label)
+    _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -317,7 +317,7 @@ def ibug_face_66(landmark_group):
 
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_face_51(landmark_group):
@@ -344,7 +344,7 @@ def ibug_face_51(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_51'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -360,9 +360,9 @@ def ibug_face_51(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_face_51'
+    group = 'ibug_face_51'
     n_points = 51
-    _validate_input(landmark_group, 68, group_label)
+    _validate_input(landmark_group, 68, group)
 
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
@@ -406,7 +406,7 @@ def ibug_face_51(landmark_group):
 
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_face_49(landmark_group):
@@ -434,7 +434,7 @@ def ibug_face_49(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_49'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -450,9 +450,9 @@ def ibug_face_49(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_face_49'
+    group = 'ibug_face_49'
     n_points = 49
-    _validate_input(landmark_group, 68, group_label)
+    _validate_input(landmark_group, 68, group)
 
     lbrow_indices = np.arange(0, 5)
     rbrow_indices = np.arange(5, 10)
@@ -496,7 +496,7 @@ def ibug_face_49(landmark_group):
 
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_face_68_trimesh(landmark_group):
@@ -517,7 +517,7 @@ def ibug_face_68_trimesh(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_68_trimesh'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -533,11 +533,11 @@ def ibug_face_68_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
-    group_label = 'ibug_face_68_trimesh'
+    group = 'ibug_face_68_trimesh'
     n_expected_points = 68
     n_points = landmark_group.lms.n_points
 
-    _validate_input(landmark_group, n_expected_points, group_label)
+    _validate_input(landmark_group, n_expected_points, group)
 
     tri_list = np.array([[47, 29, 28], [44, 43, 23], [38, 20, 21], [47, 28,42],
                         [49, 61, 60], [40, 41, 37], [37, 19, 20], [28, 40, 39],
@@ -570,7 +570,7 @@ def ibug_face_68_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_face_65_closed_mouth(landmark_group):
@@ -599,7 +599,7 @@ def ibug_face_65_closed_mouth(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_face_65_closed_mouth'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -615,9 +615,9 @@ def ibug_face_65_closed_mouth(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_face_65_closed_mouth'
+    group = 'ibug_face_65_closed_mouth'
     n_points = 65
-    _validate_input(landmark_group, 68, group_label)
+    _validate_input(landmark_group, 68, group)
 
     jaw_indices = np.arange(0, 17)
     lbrow_indices = np.arange(17, 22)
@@ -663,7 +663,7 @@ def ibug_face_65_closed_mouth(landmark_group):
                                              inner_mouth_indices])
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def imm_face(landmark_group):
@@ -690,7 +690,7 @@ def imm_face(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'imm_face'
     landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         New landmark group
@@ -704,8 +704,8 @@ def imm_face(landmark_group):
     -----------
     .. [1] http://www2.imm.dtu.dk/~aam/
     """
-    group_label = 'imm_face'
-    _validate_input(landmark_group, 58, group_label)
+    group = 'imm_face'
+    _validate_input(landmark_group, 58, group)
     labels = OrderedDict([
         ('jaw', (0, 13, False)),
         ('left_eye', (13, 21, True)),
@@ -715,7 +715,7 @@ def imm_face(landmark_group):
         ('mouth', (39, 47, True)),
         ('nose', (47, 58, False))
     ])
-    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
+    return group, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def lfpw_face(landmark_group):
@@ -742,7 +742,7 @@ def lfpw_face(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'lfpw_face'
     landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
         New landmark group
@@ -758,9 +758,9 @@ def lfpw_face(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'lfpw_face'
+    group = 'lfpw_face'
     n_points = 29
-    _validate_input(landmark_group, 29, group_label)
+    _validate_input(landmark_group, 29, group)
 
     chin_indices = np.array([28])
     outer_leye_indices = np.array([8, 12, 10, 13])
@@ -811,7 +811,7 @@ def lfpw_face(landmark_group):
     new_landmark_group['nose'] = nose_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def _build_upper_eyelid():
@@ -849,7 +849,7 @@ def ibug_open_eye(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_open_eye'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -861,11 +861,11 @@ def ibug_open_eye(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_open_eye'
+    group = 'ibug_open_eye'
     n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    _validate_input(landmark_group, n_expected_points, group_label)
+    _validate_input(landmark_group, n_expected_points, group)
 
     upper_el_indices, upper_el_connectivity = _build_upper_eyelid()
 
@@ -907,7 +907,7 @@ def ibug_open_eye(landmark_group):
     new_landmark_group['sclera'] = sclera_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_close_eye_points(landmark_group):
@@ -929,7 +929,7 @@ def ibug_close_eye_points(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_close_eye'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -941,10 +941,10 @@ def ibug_close_eye_points(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_close_eye'
+    group = 'ibug_close_eye'
     n_expected_points = 17
     n_points = landmark_group.lms.n_points
-    _validate_input(landmark_group, n_expected_points, group_label)
+    _validate_input(landmark_group, n_expected_points, group)
 
     upper_indices, upper_connectivity = _build_upper_eyelid()
 
@@ -965,7 +965,7 @@ def ibug_close_eye_points(landmark_group):
     new_landmark_group['lower_eyelid'] = lower_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_open_eye_trimesh(landmark_group):
@@ -986,7 +986,7 @@ def ibug_open_eye_trimesh(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_open_eye_trimesh'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -998,11 +998,11 @@ def ibug_open_eye_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
-    group_label = 'ibug_open_eye_trimesh'
+    group = 'ibug_open_eye_trimesh'
     n_expected_points = 38
     n_points = landmark_group.lms.n_points
 
-    _validate_input(landmark_group, n_expected_points, group_label)
+    _validate_input(landmark_group, n_expected_points, group)
 
     tri_list = np.array([[29, 36, 28], [22, 13, 23], [12,  1,  2],
                          [29, 30, 37], [13,  3, 14], [13, 12,  2],
@@ -1030,7 +1030,7 @@ def ibug_open_eye_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_close_eye_trimesh(landmark_group):
@@ -1051,7 +1051,7 @@ def ibug_close_eye_trimesh(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_close_eye_trimesh'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1063,11 +1063,11 @@ def ibug_close_eye_trimesh(landmark_group):
     """
     from menpo.shape import TriMesh
 
-    group_label = 'ibug_close_eye_trimesh'
+    group = 'ibug_close_eye_trimesh'
     n_expected_points = 17
     n_points = landmark_group.lms.n_points
 
-    _validate_input(landmark_group, n_expected_points, group_label)
+    _validate_input(landmark_group, n_expected_points, group)
 
     tri_list = np.array([[10, 11, 13], [ 3, 13,  2], [ 4, 14,  3],
                          [15,  5, 16], [12, 11,  0], [13, 14, 10],
@@ -1081,7 +1081,7 @@ def ibug_close_eye_trimesh(landmark_group):
         TriMesh(landmark_group.lms.points, tri_list, copy=False),
         OrderedDict([('tri', np.ones(n_points, dtype=np.bool))]))
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def ibug_tongue(landmark_group):
@@ -1103,7 +1103,7 @@ def ibug_tongue(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_tongue'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1113,13 +1113,13 @@ def ibug_tongue(landmark_group):
     :class:`menpo.landmark.exceptions.LabellingError`
         If the given landmark group contains less than 19 points
     """
-    group_label = 'ibug_tongue'
-    _validate_input(landmark_group, 19, group_label)
+    group = 'ibug_tongue'
+    _validate_input(landmark_group, 19, group)
     labels = OrderedDict([
         ('outline', (0, 13, False)),
         ('bisector', (13, 19, False))
     ])
-    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
+    return group, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def ibug_hand(landmark_group):
@@ -1144,7 +1144,7 @@ def ibug_hand(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'ibug_hand'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1156,9 +1156,9 @@ def ibug_hand(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'ibug_hand'
+    group = 'ibug_hand'
     n_points = landmark_group.lms.n_points
-    _validate_input(landmark_group, 39, group_label)
+    _validate_input(landmark_group, 39, group)
 
     thumb_indices = np.arange(0, 5)
     index_indices = np.arange(5, 12)
@@ -1197,7 +1197,7 @@ def ibug_hand(landmark_group):
     new_landmark_group['palm'] = palm_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def stickmen_pose(landmark_group):
@@ -1223,7 +1223,7 @@ def stickmen_pose(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'stickmen_pose'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1237,8 +1237,8 @@ def stickmen_pose(landmark_group):
     -----------
     .. [1] http://www.robots.ox.ac.uk/~vgg/data/stickmen/
     """
-    group_label = 'stickmen_pose'
-    _validate_input(landmark_group, 12, group_label)
+    group = 'stickmen_pose'
+    _validate_input(landmark_group, 12, group)
     labels = OrderedDict([
         ('torso', (0, 2, False)),
         ('right_upper arm', (2, 4, False)),
@@ -1247,7 +1247,7 @@ def stickmen_pose(landmark_group):
         ('left_lower_arm', (8, 10, False)),
         ('head', (10, 12, False))
     ])
-    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
+    return group, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def lsp_pose(landmark_group):
@@ -1272,7 +1272,7 @@ def lsp_pose(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'lsp_pose'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1288,9 +1288,9 @@ def lsp_pose(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'lsp_pose'
+    group = 'lsp_pose'
     n_points = landmark_group.lms.n_points
-    _validate_input(landmark_group, 14, group_label)
+    _validate_input(landmark_group, 14, group)
 
     left_leg_indices = np.arange(0, 3)
     right_leg_indices = np.arange(3, 6)
@@ -1322,7 +1322,7 @@ def lsp_pose(landmark_group):
 
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def flic_pose(landmark_group):
@@ -1346,7 +1346,7 @@ def flic_pose(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'flic_pose'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1360,15 +1360,15 @@ def flic_pose(landmark_group):
     -----------
     .. [1] http://vision.grasp.upenn.edu/cgi-bin/index.php?n=VideoLearning.FLIC
     """
-    group_label = 'flic_pose'
-    _validate_input(landmark_group, 11, group_label)
+    group = 'flic_pose'
+    _validate_input(landmark_group, 11, group)
     labels = OrderedDict([
         ('left_arm', (0, 3, False)),
         ('right_arm', (3, 6, False)),
         ('hips', (6, 8, False)),
         ('face', (8, 11, True))])
 
-    return group_label, _relabel_group_from_dict(landmark_group.lms, labels)
+    return group, _relabel_group_from_dict(landmark_group.lms, labels)
 
 
 def streetscene_car_view_0(landmark_group):
@@ -1391,7 +1391,7 @@ def streetscene_car_view_0(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_0'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1407,9 +1407,9 @@ def streetscene_car_view_0(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_0'
+    group = 'streetscene_car_view_0'
     n_points = 8
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -1435,7 +1435,7 @@ def streetscene_car_view_0(landmark_group):
     new_landmark_group['windshield'] = windshield_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_1(landmark_group):
@@ -1459,7 +1459,7 @@ def streetscene_car_view_1(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_1'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1475,9 +1475,9 @@ def streetscene_car_view_1(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_1'
+    group = 'streetscene_car_view_1'
     n_points = 14
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -1507,7 +1507,7 @@ def streetscene_car_view_1(landmark_group):
     new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_2(landmark_group):
@@ -1528,7 +1528,7 @@ def streetscene_car_view_2(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_2'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1544,9 +1544,9 @@ def streetscene_car_view_2(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_2'
+    group = 'streetscene_car_view_2'
     n_points = 10
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
@@ -1563,7 +1563,7 @@ def streetscene_car_view_2(landmark_group):
     new_landmark_group['left_side'] = left_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_3(landmark_group):
@@ -1587,7 +1587,7 @@ def streetscene_car_view_3(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_3'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1603,9 +1603,9 @@ def streetscene_car_view_3(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_3'
+    group = 'streetscene_car_view_3'
     n_points = 14
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     left_side_indices = np.array([0, 1, 2, 3, 4, 6, 8, 10, 13, 12])
     rear_windshield_indices = np.array([4, 5, 7, 6])
@@ -1635,7 +1635,7 @@ def streetscene_car_view_3(landmark_group):
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_4(landmark_group):
@@ -1659,7 +1659,7 @@ def streetscene_car_view_4(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_4'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1675,9 +1675,9 @@ def streetscene_car_view_4(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_4'
+    group = 'streetscene_car_view_4'
     n_points = 14
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     front_indices = np.array([0, 1, 3, 2])
     bonnet_indices = np.array([2, 3, 5, 4])
@@ -1708,7 +1708,7 @@ def streetscene_car_view_4(landmark_group):
     new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_5(landmark_group):
@@ -1729,7 +1729,7 @@ def streetscene_car_view_5(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_5'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1745,9 +1745,9 @@ def streetscene_car_view_5(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_5'
+    group = 'streetscene_car_view_5'
     n_points = 10
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     right_side_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 9, 8])
 
@@ -1764,7 +1764,7 @@ def streetscene_car_view_5(landmark_group):
     new_landmark_group['right_side'] = right_side_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_6(landmark_group):
@@ -1788,7 +1788,7 @@ def streetscene_car_view_6(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_3'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1804,9 +1804,9 @@ def streetscene_car_view_6(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_6'
+    group = 'streetscene_car_view_6'
     n_points = 14
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     right_side_indices = np.array([0, 1, 2, 3, 5, 7, 9, 11, 13, 12])
     rear_windshield_indices = np.array([4, 5, 7, 6])
@@ -1836,7 +1836,7 @@ def streetscene_car_view_6(landmark_group):
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
 def streetscene_car_view_7(landmark_group):
@@ -1859,7 +1859,7 @@ def streetscene_car_view_7(landmark_group):
 
     Returns
     -------
-    group_label : `str`
+    group : `str`
         The group label: 'streetscene_car_view_7'
     landmark_group : :map:`LandmarkGroup`
         New landmark group.
@@ -1875,9 +1875,9 @@ def streetscene_car_view_7(landmark_group):
     """
     from menpo.shape import PointGraph
 
-    group_label = 'streetscene_car_view_7'
+    group = 'streetscene_car_view_7'
     n_points = 8
-    _validate_input(landmark_group, 20, group_label)
+    _validate_input(landmark_group, 20, group)
 
     rear_windshield_indices = np.array([0, 1, 3, 2])
     trunk_indices = np.array([2, 3, 5, 4])
@@ -1902,10 +1902,10 @@ def streetscene_car_view_7(landmark_group):
     new_landmark_group['rear'] = rear_indices
     del new_landmark_group['all']  # Remove pointless all group
 
-    return group_label, new_landmark_group
+    return group, new_landmark_group
 
 
-def labeller(landmarkable, group_label, label_func):
+def labeller(landmarkable, group, label_func):
     """
     Takes a landmarkable object and a group label indicating which
     set of landmarks should have semantic meaning attached to them.
@@ -1916,7 +1916,7 @@ def labeller(landmarkable, group_label, label_func):
     ----------
     landmarkable: :class:`menpo.landmark.base.Landmarkable`
         Landmarkable object
-    group_label: string
+    group: string
         The group label of the landmark group to apply semantic labels to.
     label_func: func
         A labelling function taken from this module. `func` should take a
@@ -1930,6 +1930,6 @@ def labeller(landmarkable, group_label, label_func):
         landmarkable with label (this is just for convenience,
         the object will actually be modified in place)
     """
-    group_label, group = label_func(landmarkable.landmarks[group_label])
-    landmarkable.landmarks[group_label] = group
+    new_group, lmark_group = label_func(landmarkable.landmarks[group])
+    landmarkable.landmarks[new_group] = lmark_group
     return landmarkable
