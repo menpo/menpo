@@ -484,7 +484,8 @@ class ImageViewer(object):
             If mask is None, then the initial pixels are returned.
         """
         if mask is not None:
-            pixels[~mask] = np.nanmax(pixels) + 1
+            nanmax = np.nanmax(pixels)
+            pixels[~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
