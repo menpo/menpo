@@ -156,7 +156,7 @@ class ModelDrivenTransform(Transform, Targetable, Vectorizable,
                Fitting", CVPR08
         """
         # the incremental warp is always evaluated at p=0, ie the mean shape
-        points = self.pdm.model.mean.points
+        points = self.pdm.model.mean().points
 
         # compute:
         #   - dW/dp when p=0
@@ -343,7 +343,7 @@ class GlobalMDTransform(ModelDrivenTransform):
                Fitting", CVPR08
         """
         # the incremental warp is always evaluated at p=0, ie the mean shape
-        points = self.pdm.model.mean.points
+        points = self.pdm.model.mean().points
 
         # compute:
         #   - dW/dp when p=0

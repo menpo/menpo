@@ -424,8 +424,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
             # plot
             if mean_wid.value:
-                shape_models[level].mean.view(image_view=axis_mode == 1,
-                                              colour_array='y', **kwargs)
+                shape_models[level].mean().view(image_view=axis_mode == 1,
+                                                colour_array='y', **kwargs)
                 plt.hold = True
             instance.view(image_view=axis_mode == 1, **kwargs)
 
@@ -438,11 +438,12 @@ def visualize_shape_model(shape_models, n_parameters=5,
             instance_upper = shape_models[level].instance(weights)
 
             # plot
-            shape_models[level].mean.view(image_view=axis_mode == 1, **kwargs)
+            mean = shape_models[level].mean()
+            mean.view(image_view=axis_mode == 1, **kwargs)
             plt.hold = True
-            for p in range(shape_models[level].mean.n_points):
-                xm = shape_models[level].mean.points[p, 0]
-                ym = shape_models[level].mean.points[p, 1]
+            for p in range(mean.n_points):
+                xm = mean.points[p, 0]
+                ym = mean.points[p, 1]
                 xl = instance_lower.points[p, 0]
                 yl = instance_lower.points[p, 1]
                 xu = instance_upper.points[p, 0]
@@ -457,7 +458,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
                     plt.plot([xm, xu], [ym, yu], 'g-', lw=2)
 
             # instance range
-            tmp_range = shape_models[level].mean.range()
+            tmp_range = mean.range()
 
         plt.hold = False
         plt.gca().axis('equal')
@@ -482,7 +483,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
         """.format(level + 1, n_levels, shape_models[level].n_components,
                    shape_models[level].n_active_components,
                    shape_models[level].variance_ratio * 100, tmp_range[0],
-                   tmp_range[1], shape_models[level].mean.n_points,
+                   tmp_range[1], mean.n_points,
                    shape_models[level].n_features)
 
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
@@ -780,14 +781,13 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                             toggle_show_visible=False,
                                             plot_eig_visible=True,
                                             plot_eig_function=plot_eigenvalues)
-    channel_options_wid = channel_options(appearance_models[0].mean.n_channels,
-                                          isinstance(appearance_models[0].mean,
-                                                     MaskedImage),
-                                          plot_function, masked_default=True,
-                                          toggle_show_default=True,
-                                          toggle_show_visible=False)
-    all_groups_keys, all_labels_keys = \
-        _extract_groups_labels(appearance_models[0].mean)
+    channel_options_wid = channel_options(
+        appearance_models[0].mean().n_channels,
+        isinstance(appearance_models[0].mean(), MaskedImage), plot_function,
+        masked_default=True, toggle_show_default=True,
+        toggle_show_visible=False)
+    all_groups_keys, all_labels_keys = _extract_groups_labels(
+        appearance_models[0].mean())
     landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
                                             plot_function,
                                             toggle_show_default=True,
@@ -811,8 +811,8 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                 plot_function, params_str='param ')
         # update channel options
         update_channel_options(channel_options_wid,
-                               appearance_models[value].mean.n_channels,
-                               isinstance(appearance_models[0].mean,
+                               appearance_models[value].mean().n_channels,
+                               isinstance(appearance_models[0].mean(),
                                           MaskedImage))
 
     # create final widget
@@ -1008,7 +1008,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
         lvl_app_mod = aam.appearance_models[level]
         lvl_shape_mod = aam.shape_models[level]
-        aam_mean = lvl_app_mod.mean
+        aam_mean = lvl_app_mod.mean()
         n_channels = aam_mean.n_channels
         tmplt_inst = lvl_app_mod.template_instance
         feat = (aam.features if aam.pyramid_on_features
@@ -1123,12 +1123,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         toggle_show_visible=True, toggle_show_name='Appearance Parameters',
         plot_eig_visible=True, plot_eig_function=plot_appearance_eigenvalues)
     channel_options_wid = channel_options(
-        aam.appearance_models[0].mean.n_channels,
-        isinstance(aam.appearance_models[0].mean, MaskedImage), plot_function,
+        aam.appearance_models[0].mean().n_channels,
+        isinstance(aam.appearance_models[0].mean(), MaskedImage), plot_function,
         masked_default=True, toggle_show_default=True,
         toggle_show_visible=False)
     all_groups_keys, all_labels_keys = \
-        _extract_groups_labels(aam.appearance_models[0].mean)
+        _extract_groups_labels(aam.appearance_models[0].mean())
     landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
                                             plot_function,
                                             toggle_show_default=True,
@@ -1157,8 +1157,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                 plot_function, params_str='param ')
         # update channel options
         update_channel_options(channel_options_wid,
-                               aam.appearance_models[value].mean.n_channels,
-                               isinstance(aam.appearance_models[0].mean,
+                               aam.appearance_models[value].mean().n_channels,
+                               isinstance(aam.appearance_models[0].mean(),
                                           MaskedImage))
 
     # create final widget

@@ -224,7 +224,7 @@ class ATMBuilder(DeformableModelBuilder):
                 print_dynamic('{}Building shape model'.format(level_str))
             shape_model = build_shape_model(shapes,
                                             self.max_shape_components[rj])
-            reference_frame = self._build_reference_frame(shape_model.mean)
+            reference_frame = self._build_reference_frame(shape_model.mean())
 
             # add shape model to the list
             shape_models.append(shape_model)

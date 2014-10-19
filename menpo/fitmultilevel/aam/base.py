@@ -152,7 +152,7 @@ class AAM(DeformableModel):
         return self._instance(level, shape_instance, appearance_instance)
 
     def _instance(self, level, shape_instance, appearance_instance):
-        template = self.appearance_models[level].mean
+        template = self.appearance_models[level].mean()
         landmarks = template.landmarks['source'].lms
 
         reference_frame = self._build_reference_frame(

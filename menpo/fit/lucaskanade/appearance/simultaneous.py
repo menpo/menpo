@@ -164,7 +164,7 @@ class SimultaneousInverseCompositional(AppearanceLucasKanade):
     def _set_up(self):
         # Compute the Jacobian of the warp
         self._dW_dp = self.transform.d_dp(
-            self.appearance_model.mean.mask.true_indices)
+            self.appearance_model.mean().mask.true_indices)
 
     def _fit(self, fitting_result, max_iters=20, project=True):
         # Initial error > eps

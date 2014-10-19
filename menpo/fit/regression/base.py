@@ -269,7 +269,7 @@ class ParametricRegressor(SemiParametricRegressor):
         super(ParametricRegressor, self).__init__(
             regressor, features, transform, update=update)
         self.appearance_model = appearance_model
-        self.template = appearance_model.mean
+        self.template = appearance_model.mean()
 
     @property
     def algorithm(self):

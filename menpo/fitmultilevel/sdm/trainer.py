@@ -817,11 +817,11 @@ class SDAAMTrainer(SDTrainer):
         if self.md_transform is not ModelDrivenTransform:
             md_transform = self.md_transform(
                 sm, self.aam.transform, self.global_transform,
-                source=am.mean.landmarks['source'].lms)
+                source=am.mean().landmarks['source'].lms)
         else:
             md_transform = self.md_transform(
                 sm, self.aam.transform,
-                source=am.mean.landmarks['source'].lms)
+                source=am.mean().landmarks['source'].lms)
 
         return ParametricRegressorTrainer(
             am, md_transform, self.reference_shape,
