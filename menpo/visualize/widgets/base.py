@@ -1422,7 +1422,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 subplots_enabled=final_result_wid.subplots_enabled,
                 subplots_titles=groups_final_dict, image_axes_mode=True,
                 legend_enabled=final_result_wid.legend_enabled,
-                numbering_enabled=landmark_options_wid.numbering_enabled,
+                numbering_enabled=final_result_wid.numbering_enabled,
                 x_scale=figure_options_wid.x_scale,
                 y_scale=figure_options_wid.y_scale,
                 axes_visible=figure_options_wid.axes_visible,
@@ -1453,7 +1453,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 subplots_enabled=iterations_wid.subplots_enabled,
                 subplots_titles=groups_dict, image_axes_mode=True,
                 legend_enabled=iterations_wid.legend_enabled,
-                numbering_enabled=landmark_options_wid.numbering_enabled,
+                numbering_enabled=iterations_wid.numbering_enabled,
                 x_scale=figure_options_wid.x_scale,
                 y_scale=figure_options_wid.y_scale,
                 axes_visible=figure_options_wid.axes_visible,
@@ -1509,6 +1509,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                             show_image_default=True,
                                             subplots_enabled_default=True,
                                             legend_default=True,
+                                            numbering_default=False,
                                             toggle_show_default=True,
                                             toggle_show_visible=False)
     iterations_wid = iterations_result_options(
@@ -1517,9 +1518,10 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
         plot_function, plot_errors_function, plot_displacements_function,
         iter_str=iter_str, title='Iterations', show_image_default=True,
         subplots_enabled_default=False, legend_default=True,
-        toggle_show_default=True, toggle_show_visible=False)
-    iterations_wid.children[2].children[3].on_click(plot_errors_function)
-    iterations_wid.children[2].children[4].children[0].on_click(
+        numbering_default=False, toggle_show_default=True,
+        toggle_show_visible=False)
+    iterations_wid.children[2].children[4].on_click(plot_errors_function)
+    iterations_wid.children[2].children[5].children[0].on_click(
         plot_displacements_function)
 
     # Create error type radio buttons
@@ -2058,22 +2060,22 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                         glyph(image, vectors_block_size=glyph_block_size,
                               use_negative=glyph_use_negative,
                               channels=channels).\
-                            view_landmarks(masked=masked_enabled,
-                                           group=group,
+                            view_landmarks(group=group,
                                            with_labels=with_labels[k],
                                            render_legend=(legend_enabled
                                                           and not subplots_enabled),
                                            render_numbering=numbering_enabled,
+                                           obj_view_kwargs={'masked':masked_enabled},
                                            lmark_view_kwargs=kwargs)
                     else:
                         # image, landmarks, masked, not glyph
-                        image.view_landmarks(masked=masked_enabled,
-                                             group=group,
+                        image.view_landmarks(group=group,
                                              with_labels=with_labels[k],
                                              render_legend=(legend_enabled
                                                             and not subplots_enabled),
                                              render_numbering=numbering_enabled,
-                                             obj_view_kwargs={'channels':channels},
+                                             obj_view_kwargs={'channels':channels,
+                                                              'masked': masked_enabled},
                                              lmark_view_kwargs=kwargs)
                 else:
                     if glyph_enabled or sum_enabled:
