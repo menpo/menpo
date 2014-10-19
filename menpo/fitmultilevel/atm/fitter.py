@@ -305,8 +305,9 @@ class LucasKanadeATMFitter(ATMFitter):
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out,
-                          self._fitters[0].template.n_true_pixels * n_channels[0],
-                          self._fitters[0].template.n_true_pixels,
+                          self._fitters[0].template.n_true_pixels() *
+                                                                   n_channels[0],
+                          self._fitters[0].template.n_true_pixels(),
                           n_channels[0], self._fitters[0].template._str_shape,
                           n_channels[0])
             else:
@@ -323,8 +324,9 @@ class LucasKanadeATMFitter(ATMFitter):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out,
-                          self._fitters[i].template.n_true_pixels * n_channels[i],
-                          self._fitters[i].template.n_true_pixels,
+                          self._fitters[i].template.n_true_pixels() *
+                                                                   n_channels[i],
+                          self._fitters[i].template.n_true_pixels(),
                           n_channels[i], self._fitters[i].template._str_shape,
                           n_channels[i])
                 out = "{0}     - {1} motion components\n\n".format(
@@ -336,8 +338,8 @@ class LucasKanadeATMFitter(ATMFitter):
                   "   - Reference frame of length {4} ({5} x {6}C, " \
                   "{7} x {8}C)\n   - {9} motion parameters\n".format(
                   out, feat_str[0], n_channels[0], ch_str[0],
-                  self._fitters[0].template.n_true_pixels * n_channels[0],
-                  self._fitters[0].template.n_true_pixels,
+                  self._fitters[0].template.n_true_pixels() * n_channels[0],
+                  self._fitters[0].template.n_true_pixels(),
                   n_channels[0], self._fitters[0].template._str_shape,
                   n_channels[0], self._fitters[0].transform.n_parameters)
         return out

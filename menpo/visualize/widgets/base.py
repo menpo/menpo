@@ -180,7 +180,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Display masked pixels if image is masked
-        masked_pixels_str = (r'{} masked pixels.'.format(image.n_true_pixels)
+        masked_pixels_str = (r'{} masked pixels.'.format(image.n_true_pixels())
                              if image_is_masked else '')
 
         # Create info string
@@ -1053,7 +1053,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                        level + 1,
                        aam.n_levels, aam.downscale, tmp_shape_models,
                        tmp_pyramid, tmp_feat, lvl_app_mod.n_features,
-                       tmplt_inst.n_true_pixels, n_channels,
+                       tmplt_inst.n_true_pixels(), n_channels,
                        tmplt_inst._str_shape, n_channels,
                        lvl_shape_mod.n_components,
                        lvl_shape_mod.variance_ratio * 100,

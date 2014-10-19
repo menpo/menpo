@@ -218,8 +218,9 @@ class ATM(DeformableModel):
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out,
-                          self.warped_templates[0].n_true_pixels * n_channels[0],
-                          self.warped_templates[0].n_true_pixels,
+                          self.warped_templates[0].n_true_pixels() *
+                          n_channels[0],
+                          self.warped_templates[0].n_true_pixels(),
                           n_channels[0],
                           self.warped_templates[0]._str_shape,
                           n_channels[0])
@@ -237,8 +238,9 @@ class ATM(DeformableModel):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                           out,
-                          self.warped_templates[i].n_true_pixels * n_channels[i],
-                          self.warped_templates[i].n_true_pixels,
+                          self.warped_templates[i].n_true_pixels() *
+                                                                  n_channels[i],
+                          self.warped_templates[i].n_true_pixels(),
                           n_channels[i],
                           self.warped_templates[i]._str_shape,
                           n_channels[i])
@@ -254,8 +256,8 @@ class ATM(DeformableModel):
                   "{7} x {8}C)\n   - {9} shape components ({10:.2f}% of " \
                   "variance)\n".format(
                   out, feat_str[0], n_channels[0], ch_str[0],
-                  self.warped_templates[0].n_true_pixels * n_channels[0],
-                  self.warped_templates[0].n_true_pixels,
+                  self.warped_templates[0].n_true_pixels() * n_channels[0],
+                  self.warped_templates[0].n_true_pixels(),
                   n_channels[0],
                   self.warped_templates[0]._str_shape,
                   n_channels[0], self.shape_models[0].n_components,

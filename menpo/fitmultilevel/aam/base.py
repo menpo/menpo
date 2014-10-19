@@ -275,8 +275,9 @@ class AAM(DeformableModel):
                 if not self.scaled_shape_models:
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
-                        out, self.appearance_models[0].n_features,
-                        self.appearance_models[0].template_instance.n_true_pixels,
+                        out,
+                        self.appearance_models[0].n_features,
+                        self.appearance_models[0].template_instance.n_true_pixels(),
                         n_channels[0],
                         self.appearance_models[0].template_instance._str_shape,
                         n_channels[0])
@@ -294,7 +295,7 @@ class AAM(DeformableModel):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                         out, self.appearance_models[i].n_features,
-                        self.appearance_models[i].template_instance.n_true_pixels,
+                        self.appearance_models[i].template_instance.n_true_pixels(),
                         n_channels[i],
                         self.appearance_models[i].template_instance._str_shape,
                         n_channels[i])
@@ -315,7 +316,7 @@ class AAM(DeformableModel):
                   "variance)\n".format(
                 out, feat_str[0], n_channels[0], ch_str[0],
                 self.appearance_models[0].n_features,
-                self.appearance_models[0].template_instance.n_true_pixels,
+                self.appearance_models[0].template_instance.n_true_pixels(),
                 n_channels[0],
                 self.appearance_models[0].template_instance._str_shape,
                 n_channels[0], self.shape_models[0].n_components,

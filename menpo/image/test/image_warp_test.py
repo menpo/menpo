@@ -82,7 +82,7 @@ def test_warp_to_mask_masked_image():
     result[:5, :5, :] = 2.5
     result_mask = BooleanImage.blank((10, 10), fill=False).pixels
     result_mask[:2, :5] = True
-    assert(warped_img.n_true_pixels == 10)
+    assert(warped_img.n_true_pixels() == 10)
     assert(np.all(result == warped_img.pixels))
     assert(np.all(result_mask == warped_img.mask.pixels))
 
