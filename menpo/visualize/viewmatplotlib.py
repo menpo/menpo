@@ -220,8 +220,15 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
-        colours = kwargs.get(
-            'colours', np.random.random([3, len(self.labels_to_masks)]))
+        # We may get passed either no colours (in which case we generate
+        # random colours) or a single colour to colour all the groups with
+        n_labels = len(self.labels_to_masks)
+        colours = kwargs.get('colours', np.random.random([3, n_labels]))
+        if colours.shape[1] == 1:
+            colours = np.tile(colours, [1, n_labels])
+        elif colours.shape[1] != n_labels:
+            raise ValueError('Must pass a (3 x n_labels) array of colours or a '
+                             'single (3 x 1) colour for all labels.')
         halign = kwargs.get('halign', 'center')
         valign = kwargs.get('valign', 'bottom')
         size = kwargs.get('size', 10)
