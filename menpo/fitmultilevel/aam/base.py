@@ -303,9 +303,9 @@ class AAM(DeformableModel):
                       "variance)\n     - {3} appearance components " \
                       "({4:.2f}% of variance)\n".format(
                     out, self.shape_models[i].n_components,
-                    self.shape_models[i].variance_ratio * 100,
+                    self.shape_models[i].variance_ratio() * 100,
                     self.appearance_models[i].n_components,
-                    self.appearance_models[i].variance_ratio * 100)
+                    self.appearance_models[i].variance_ratio() * 100)
         else:
             if self.pyramid_on_features:
                 feat_str = [feat_str]
@@ -320,9 +320,9 @@ class AAM(DeformableModel):
                 n_channels[0],
                 self.appearance_models[0].template_instance._str_shape,
                 n_channels[0], self.shape_models[0].n_components,
-                self.shape_models[0].variance_ratio * 100,
+                self.shape_models[0].variance_ratio() * 100,
                 self.appearance_models[0].n_components,
-                self.appearance_models[0].variance_ratio * 100)
+                self.appearance_models[0].variance_ratio() * 100)
         return out
 
 

@@ -301,7 +301,7 @@ class CLM(DeformableModel):
                 out = "{0}     - {1} shape components ({2:.2f}% of " \
                       "variance)\n     - {3} {4} classifiers.\n".format(
                     out, self.shape_models[i].n_components,
-                    self.shape_models[i].variance_ratio * 100,
+                    self.shape_models[i].variance_ratio() * 100,
                     self.n_classifiers_per_level[i],
                     name_of_callable(self.classifiers[i][0]))
         else:
@@ -312,7 +312,7 @@ class CLM(DeformableModel):
                   "variance)\n   - {6} {7} classifiers.".format(
                 out, feat_str[0], n_channels[0], ch_str[0],
                 self.shape_models[0].n_components,
-                self.shape_models[0].variance_ratio * 100,
+                self.shape_models[0].variance_ratio() * 100,
                 self.n_classifiers_per_level[0],
                 name_of_callable(self.classifiers[0][0]))
         return out
