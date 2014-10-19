@@ -16,7 +16,7 @@ class PCAModel(MeanInstanceLinearModel):
     ----------
     samples : list of :map:`Vectorizable`
         List of samples to build the model from.
-    center : bool, optional
+    centre : bool, optional
         When True (True by default) PCA is performed after mean centering the
         data. If False the data is assumed to be centred, and the mean will
         be 0.
@@ -35,7 +35,7 @@ class PCAModel(MeanInstanceLinearModel):
     :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
 
     """
-    def __init__(self, samples, center=True, bias=False):
+    def __init__(self, samples, centre=True, bias=False):
         # build data matrix
         n_samples = len(samples)
         n_features = samples[0].n_parameters
@@ -46,10 +46,10 @@ class PCAModel(MeanInstanceLinearModel):
         # compute pca
         eigenvectors, eigenvalues, mean_vector = \
             principal_component_decomposition(data, whiten=False,
-                                              center=center, bias=bias)
+                                              centre=centre, bias=bias)
 
         super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
-        self.centered = center
+        self.centred = centre
         self.biased = bias
         self._eigenvalues = eigenvalues
         self._n_components = self.n_components
@@ -526,11 +526,11 @@ class PCAModel(MeanInstanceLinearModel):
     def __str__(self):
         str_out = 'PCA Model \n'
         str_out = str_out + \
-            ' - centered:             {}\n' \
+            ' - centred:             {}\n' \
             ' - biased:               {}\n' \
             ' - # features:           {}\n' \
             ' - # active components:  {}\n'.format(
-            self.centered, self.biased, self.n_features,
+            self.centred, self.biased, self.n_features,
             self.n_active_components)
         str_out = str_out + \
             ' - kept variance:        {:.2}  {:.1%}\n' \

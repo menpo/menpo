@@ -16,10 +16,11 @@ else:
     import numpy as np
 
     # ---- C/C++ EXTENSIONS ---- #
-    cython_modules = ["menpo/shape/mesh/normals.pyx",
-                      "menpo/transform/piecewiseaffine/fastpwa.pyx",
-                      "menpo/feature/windowiterator.pyx",
-                      "menpo/external/skimage/_warps_cy.pyx"]
+    cython_modules = ['menpo/shape/mesh/normals.pyx',
+                      'menpo/transform/piecewiseaffine/fastpwa.pyx',
+                      'menpo/feature/windowiterator.pyx',
+                      'menpo/external/skimage/_warps_cy.pyx',
+                      'menpo/image/extract_patches.pyx']
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
@@ -31,11 +32,7 @@ else:
                         'pillow==2.5.1',
 
                         'Cython==0.21',
-                        'wrapt==1.9.0',
-
-                        'menpo-pyvrml97==2.3.0a4',
-                        'cyassimp==0.2.0',
-                        'hdf5able==0.3.3']
+                        'wrapt==1.9.0']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')

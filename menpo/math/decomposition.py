@@ -38,7 +38,7 @@ def eigenvalue_decomposition(S, eps=10**-10):
     return pos_eigenvectors, pos_eigenvalues
 
 
-def principal_component_decomposition(X, whiten=False, center=True,
+def principal_component_decomposition(X, whiten=False, centre=True,
                                       bias=False, inplace=False):
     r"""
     Apply PCA on the data matrix X. In the case where the data matrix is very
@@ -53,8 +53,8 @@ def principal_component_decomposition(X, whiten=False, center=True,
         Normalise the eigenvectors to have unit magnitude
 
         Default: `False`
-    center : bool, optional
-        Whether to center the data matrix. If `False`, zero will be subtracted.
+    centre : bool, optional
+        Whether to centre the data matrix. If `False`, zero will be subtracted.
 
         Default: `True`
     bias : bool, optional
@@ -84,8 +84,8 @@ def principal_component_decomposition(X, whiten=False, center=True,
     else:
         N = n_samples - 1.0
 
-    if center:
-        # center data
+    if centre:
+        # centre data
         mean_vector = np.mean(X, axis=0)
     else:
         mean_vector = np.zeros(n_features)

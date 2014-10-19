@@ -1,7 +1,13 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
-import numpy as np
 from collections import Iterable
+
+import numpy as np
+
+
+Menpo3dErrorMessage = ("In order to keep menpo's dependencies simple, menpo "
+                       "does not contain 3D importing and visualization code. "
+                       "Please install menpo3d to view 3D meshes.")
 
 
 class Renderer(object):
@@ -178,10 +184,6 @@ class Viewable(object):
         pass
 
 
-from menpo.visualize.viewmayavi import (
-    MayaviPointCloudViewer3d, MayaviTriMeshViewer3d,
-    MayaviTexturedTriMeshViewer3d, MayaviLandmarkViewer3d,
-    MayaviVectorViewer3d, MayaviColouredTriMeshViewer3d)
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
@@ -193,17 +195,12 @@ from menpo.visualize.viewmatplotlib import (
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
-PointCloudViewer3d = MayaviPointCloudViewer3d
 TriMeshViewer2d = MatplotlibTriMeshViewer2d
-TriMeshViewer3d = MayaviTriMeshViewer3d
-TexturedTriMeshViewer3d = MayaviTexturedTriMeshViewer3d
-ColouredTriMeshViewer3d = MayaviColouredTriMeshViewer3d
-LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
-VectorViewer3d = MayaviVectorViewer3d
+
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
@@ -279,9 +276,13 @@ class LandmarkViewer(object):
                                         self.group_label, self.pointcloud,
                                         self.labels_to_masks).render(**kwargs)
         elif self.pointcloud.n_dims == 3:
-            return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                    self.group_label, self.pointcloud,
-                                    self.labels_to_masks).render(**kwargs)
+            try:
+                from menpo3d.visualize import LandmarkViewer3d
+                return LandmarkViewer3d(self.figure_id, self.new_figure,
+                                        self.group_label, self.pointcloud,
+                                        self.labels_to_masks).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D landmarks are "
                              "currently supported")
@@ -331,8 +332,12 @@ class PointCloudViewer(object):
             return PointCloudViewer2d(self.figure_id, self.new_figure,
                                       self.points).render(**kwargs)
         elif self.points.shape[1] == 3:
-            return PointCloudViewer3d(self.figure_id, self.new_figure,
-                                      self.points).render(**kwargs)
+            try:
+                from menpo3d.visualize import PointCloudViewer3d
+                return PointCloudViewer3d(self.figure_id, self.new_figure,
+                                          self.points).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D pointclouds are "
                              "currently supported")
@@ -561,8 +566,12 @@ class TriMeshViewer(object):
                                    self.points, self.trilist).render(**kwargs)
 
         elif self.points.shape[1] == 3:
-            return TriMeshViewer3d(self.figure_id, self.new_figure,
-                                   self.points, self.trilist).render(**kwargs)
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+                return TriMeshViewer3d(self.figure_id, self.new_figure,
+                                       self.points, self.trilist).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D TriMeshes "
                              "are currently supported")

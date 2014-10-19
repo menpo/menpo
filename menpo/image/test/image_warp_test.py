@@ -82,20 +82,6 @@ def test_warp_to_mask_masked_image():
     result[:5, :5, :] = 2.5
     result_mask = BooleanImage.blank((10, 10), fill=False).pixels
     result_mask[:2, :5] = True
-    print('Input pixels:')
-    print(img.pixels[..., 0])
-    print('Input mask:')
-    print(img.mask.pixels[..., 0])
-    print('Template:')
-    print(template_mask.pixels[..., 0])
-    print('Resulting pixels should be:')
-    print(result[..., 0])
-    print('Pixels are:')
-    print(warped_img.pixels[..., 0])
-    print('Resulting Mask should be:')
-    print(result_mask[..., 0])
-    print('Mask is:')
-    print warped_img.mask.pixels[..., 0]
     assert(warped_img.n_true_pixels == 10)
     assert(np.all(result == warped_img.pixels))
     assert(np.all(result_mask == warped_img.mask.pixels))

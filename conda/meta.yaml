@@ -11,7 +11,7 @@ requirements:
 
   run:
     - python
-    - pathlib 1.0 # [not py3k]
+    - pathlib 1.0  # [py2k]
 
     # Scientific Python Stack
     - numpy 1.9.0
@@ -19,11 +19,6 @@ requirements:
     - matplotlib 1.4.0
     - scikit-learn 0.15.2
     - pillow  2.5.1
-
-    # Menpo Project
-    - hdf5able 0.3.3
-    - cyassimp 0.2.0
-    - menpo-pyvrml97 2.3.0a4  # [not py3k]
 
     # Other
     - wrapt 1.9.0

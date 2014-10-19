@@ -1,2 +1,2 @@
-from .residual import (LSIntensity, ECC, GaborFourier, GradientImages,
+from .residual import (SSD, ECC, GaborFourier, GradientImages,
                        GradientCorrelation)
