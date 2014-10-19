@@ -68,7 +68,9 @@ class LandmarkableViewable(Landmarkable, Viewable):
 
     def view_landmarks(self, figure_id=None, new_figure=False,
                        group_label=None, render_labels=True,
-                       with_labels=None, without_labels=None, **kwargs):
+                       render_legend=True,
+                       with_labels=None, without_labels=None,
+                       lmark_view_kwargs=None, obj_view_kwargs=None):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
@@ -99,16 +101,22 @@ class LandmarkableViewable(Landmarkable, Viewable):
         ValueError
             If the landmark manager doesn't contain the provided group label.
         """
+        # Can't expand None so need a dict by default, but don't want
+        # a mutual default kwarg
+        obj_view_kwargs = obj_view_kwargs or {}
+        lmark_view_kwargs = lmark_view_kwargs or {}
+
         self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              **kwargs)
+                              **obj_view_kwargs)
         landmark_view = self.landmarks.view(figure_id=self_view.figure_id,
                                             new_figure=False,
                                             group_label=group_label,
                                             targettype=type(self),
                                             render_labels=render_labels,
+                                            render_legend=render_legend,
                                             with_labels=with_labels,
-                                            without_labels=without_labels
-                                            )
+                                            without_labels=without_labels,
+                                            **lmark_view_kwargs)
         return landmark_view
 
 
