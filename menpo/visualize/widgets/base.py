@@ -482,7 +482,7 @@ def visualize_shape_model(shape_models, n_parameters=5,
             {} landmark points, {} features.
         """.format(level + 1, n_levels, shape_models[level].n_components,
                    shape_models[level].n_active_components,
-                   shape_models[level].variance_ratio * 100, tmp_range[0],
+                   shape_models[level].variance_ratio() * 100, tmp_range[0],
                    tmp_range[1], mean.n_points,
                    shape_models[level].n_features)
 
@@ -742,7 +742,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
             Instance: min={:.3f}, max={:.3f}
         """.format(level + 1, n_levels, lvl_app_mod.n_components,
                    lvl_app_mod.n_active_components,
-                   lvl_app_mod.variance_ratio * 100, image._str_shape,
+                   lvl_app_mod.variance_ratio() * 100, image._str_shape,
                    image.n_channels, 's' * (image.n_channels > 1),
                    lvl_app_mod.n_features, image.landmarks[group].lms.n_points,
                    image.pixels.min(), image.pixels.max())
@@ -1056,9 +1056,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                        tmplt_inst.n_true_pixels, n_channels,
                        tmplt_inst._str_shape, n_channels,
                        lvl_shape_mod.n_components,
-                       lvl_shape_mod.variance_ratio * 100,
+                       lvl_shape_mod.variance_ratio() * 100,
                        lvl_app_mod.n_components,
-                       lvl_app_mod.variance_ratio * 100,
+                       lvl_app_mod.variance_ratio() * 100,
                        instance.landmarks[group].lms.n_points,
                        instance.pixels.min(), instance.pixels.max())
 
@@ -2335,8 +2335,8 @@ def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
 
     # plot eigenvalues ratio
     plt.subplot(211)
-    plt.bar(range(len(model.eigenvalues_ratio)),
-            model.eigenvalues_ratio)
+    plt.bar(range(len(model.eigenvalues_ratio())),
+            model.eigenvalues_ratio())
     plt.ylabel('Variance Ratio')
     plt.xlabel('Component Number')
     plt.title('Variance Ratio per Eigenvector')
@@ -2344,8 +2344,8 @@ def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
 
     # plot eigenvalues cumulative ratio
     plt.subplot(212)
-    plt.bar(range(len(model.eigenvalues_cumulative_ratio)),
-            model.eigenvalues_cumulative_ratio)
+    plt.bar(range(len(model.eigenvalues_cumulative_ratio())),
+            model.eigenvalues_cumulative_ratio())
     plt.ylim((0., 1.))
     plt.ylabel('Cumulative Variance Ratio')
     plt.xlabel('Component Number')
