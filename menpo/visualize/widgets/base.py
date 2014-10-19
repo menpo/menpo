@@ -28,6 +28,81 @@ from collections import OrderedDict
 glyph = None
 
 
+def _bullet_text(line):
+    r"""
+    Take a single line and wrap it in a latex bullet string.
+
+    Parameters
+    ----------
+    line : `str`
+        Single line of text
+
+    Returns
+    -------
+    bullet_line : `str`
+        Text wrapped in a bullet latex and verbatim.
+    """
+    return r'\bullet~\texttt{{{}}}'.format(line)
+
+
+def _split_wall_of_text(wall):
+    r""""
+    Take a raw string of text and split it in to a list of lines split on the
+    new line symbol. Discards any lines that are empty strings (strips white
+    space from the left and right before discarding).
+
+    Parameters
+    ----------
+    wall : `str`
+        A multiline raw string.
+
+    Returns
+    -------
+    lines : `list` of `str`
+        List of strings not including empty strings
+    """
+    return filter(lambda x: x.strip(), wall.split('\n'))
+
+
+def _join_bullets_as_latex_math(bullets):
+    r""""
+    Take a list of lines (wrapped in math mode latex commands) and re-join then
+    using the latex new line command (wrapped in math mode).
+
+    Parameters
+    ----------
+    bullets : `list` of `str`
+        List of lines containing latex math commands
+
+    Returns
+    -------
+    latex_string : `str`
+        Single string wrapped in latex math mode '$...$'
+    """
+    return r'${}$'.format(r'\\'.join(bullets))
+
+
+def _raw_info_string_to_latex(raw):
+    r""""
+    A raw string of multiple lines converted into a single math latex command
+    containing multiple bullet points.
+
+    Parameters
+    ----------
+    raw : `str`
+        Multiline raw string
+
+    Returns
+    -------
+    info_str : `str`
+        Latex math mode string containing multiple bullet points. Each new line
+        is converted to a bullet point.
+    """
+    lines = _split_wall_of_text(raw)
+    bullets = map(lambda x: _bullet_text(x), lines)
+    return _join_bullets_as_latex_math(bullets)
+
+
 def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     r"""
     Widget that allows browsing through a list of images.
@@ -102,32 +177,26 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # define function that updates info text
     def update_info(image, image_is_masked, group):
-        # prepare masked (or non-masked) str
-        masked_str = "Image"
-        if image_is_masked:
-            masked_str = "Masked image"
+        # Prepare masked (or non-masked) string
+        masked_str = 'Masked Image' if image_is_masked else 'Image'
+        # Display masked pixels if image is masked
+        masked_pixels_str = (r'{} masked pixels.'.format(image.n_true_pixels)
+                             if image_is_masked else '')
 
-        # prepare channels str
-        ch_str = 'channels'
-        if image.n_channels == 1:
-            ch_str = 'channel'
-
-        # create info str
-        txt = "$\\bullet~\\texttt{" + \
-              "{} of size {} with {} {}".format(masked_str, image._str_shape,
-                                                image.n_channels, ch_str) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(image.landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ "
-        if image_is_masked:
-            txt += "\\bullet~\\texttt{" + \
-                   "{} masked pixels.".format(image.n_true_pixels) + "}\\\\ "
-        txt += "\\bullet~\\texttt{min=" + \
-               "{0:.3f}".format(image.pixels.min()) + ", max=" + \
-               "{0:.3f}".format(image.pixels.max()) + "}$"
+        # Create info string
+        info_txt = r"""
+             {} of size {} with {} channel{}
+             {} landmark points.
+             {}
+             min={:.3f}, max={:.3f}
+        """.format(masked_str, image._str_shape, image.n_channels,
+                   's' * (image.n_channels > 1),
+                   image.landmarks[group].lms.n_points,
+                   masked_pixels_str,
+                   image.pixels.min(), image.pixels.max())
 
         # update info widget text
-        info_wid.children[1].value = txt
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # create options widgets
     channel_options_wid = channel_options(images[0].n_channels,
@@ -337,7 +406,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
         axes_visible = figure_options_wid.axes_visible
 
         # compute weights
-        weights = parameters_values * shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5
+        weights = (parameters_values *
+                   shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5)
 
         # select figure
         figure_id = plt.figure(save_figure_wid.figure_id.number)
@@ -401,22 +471,21 @@ def visualize_shape_model(shape_models, n_parameters=5,
         # save the current figure id
         save_figure_wid.figure_id = figure_id
 
-        # change info_wid info
-        txt = "$\\bullet~\\texttt{Level: " + "{}".format(level+1) + \
-              " out of " + "{}".format(n_levels) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(shape_models[level].n_components) + \
-              " components in total.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(shape_models[level].n_active_components) + \
-              " active components.}\\\\ \\bullet~\\texttt{" + \
-              "{0:.1f}".format(shape_models[level].variance_ratio*100) + \
-              "% variance kept.}\\\\ \\bullet~\\texttt{Instance range: " + \
-              "{0:.1f} x {1:.1f}".format(tmp_range[0], tmp_range[1]) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(shape_models[level].mean.n_points) + \
-              " landmark points, " + \
-              "{}".format(shape_models[level].n_features) + " features.}$"
-        info_wid.children[1].value = txt
+        # info_wid string
+        info_txt = r"""
+            Level: {} out of   {}.
+            {} components in total.
+            {} active components.
+            {:.1f} % variance kept.
+            Instance range: {:.1f} x {:.1f}.
+            {} landmark points, {} features.
+        """.format(level + 1, n_levels, shape_models[level].n_components,
+                   shape_models[level].n_active_components,
+                   shape_models[level].variance_ratio * 100, tmp_range[0],
+                   tmp_range[1], shape_models[level].mean.n_points,
+                   shape_models[level].n_features)
+
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
@@ -659,34 +728,26 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
 
     # define function that updates info text
     def update_info(image, level, group):
-        # prepare channels str
-        ch_str = 'channels'
-        if image.n_channels == 1:
-            ch_str = 'channel'
+        lvl_app_mod = appearance_models[level]
 
-        # create info str
-        txt = "$\\bullet~\\texttt{Level: " + "{}".format(level+1) + \
-              " out of " + "{}".format(n_levels) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(appearance_models[level].n_components) + \
-              " components in total.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(appearance_models[level].n_active_components) + \
-              " active components.}\\\\ \\bullet~\\texttt{" + \
-              "{0:.1f}".format(appearance_models[level].variance_ratio*100) + \
-              "% variance kept.}\\\\ " \
-              "\\bullet~\\texttt{Reference shape of size " + \
-              image._str_shape + " with " + \
-              "{} {}".format(image.n_channels, ch_str) + \
-              ".}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(appearance_models[level].n_features) + \
-              " features.}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(image.landmarks[group].lms.n_points) + \
-              " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
-              "{0:.3f}".format(image.pixels.min()) + \
-              ", max=" + "{0:.3f}".format(image.pixels.max()) + "}$"
+        info_txt = r"""
+            Level: {} out of {}.
+            {} components in total.
+            {} active components.
+            {:.1f}% variance kept.
+            Reference shape of size {} with {} channel{}.
+            {} features.
+            {} landmark points.
+            Instance: min={:.3f}, max={:.3f}
+        """.format(level + 1, n_levels, lvl_app_mod.n_components,
+                   lvl_app_mod.n_active_components,
+                   lvl_app_mod.variance_ratio * 100, image._str_shape,
+                   image.n_channels, 's' * (image.n_channels > 1),
+                   lvl_app_mod.n_features, image.landmarks[group].lms.n_points,
+                   image.pixels.min(), image.pixels.max())
 
         # update info widget text
-        info_wid.children[1].value = txt
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # Plot eigenvalues function
     def plot_eigenvalues(name):
@@ -944,24 +1005,24 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     def update_info(aam, instance, level, group):
         # features info
         from menpo.fitmultilevel.base import name_of_callable
-        if aam.appearance_models[level].mean.n_channels == 1:
-            if aam.pyramid_on_features:
-                tmp_feat = "Feature is {} with 1 channel.".\
-                    format(name_of_callable(aam.features))
-            else:
-                tmp_feat = "Feature is {} with 1 channel.".\
-                    format(name_of_callable(aam.features[level]))
-        else:
-            if aam.pyramid_on_features:
-                tmp_feat = "Feature is {} with {} channel.".\
-                    format(name_of_callable(aam.features),
-                           aam.appearance_models[level].mean.n_channels)
-            else:
-                tmp_feat = "Feature is {} with {} channel.".\
-                    format(name_of_callable(aam.features[level]),
-                           aam.appearance_models[level].mean.n_channels)
+
+        lvl_app_mod = aam.appearance_models[level]
+        lvl_shape_mod = aam.shape_models[level]
+        aam_mean = lvl_app_mod.mean
+        n_channels = aam_mean.n_channels
+        tmplt_inst = lvl_app_mod.template_instance
+        feat = (aam.features if aam.pyramid_on_features
+                else aam.features[level])
+
+        # Feature string
+        tmp_feat = 'Feature is {} with {} channel{}.'.format(
+            name_of_callable(feat), n_channels, 's' * (n_channels > 1))
+
         # create info str
-        if n_levels > 1:
+        if n_levels == 1:
+            tmp_shape_models = ''
+            tmp_pyramid = ''
+        else:  # n_levels > 1
             # shape models info
             if aam.scaled_shape_models:
                 tmp_shape_models = "Each level has a scaled shape model " \
@@ -969,70 +1030,39 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             else:
                 tmp_shape_models = "Shape models (reference frames) are " \
                                    "not scaled."
-
             # pyramid info
             if aam.pyramid_on_features:
                 tmp_pyramid = "Pyramid was applied on feature space."
             else:
                 tmp_pyramid = "Features were extracted at each pyramid level."
 
-            txt = "$\\bullet~\\texttt{" + "{}".format(aam.n_training_images) + \
-                  " training images.}" + \
-                  "\\\\ \\bullet~\\texttt{Warp using " + \
-                  aam.transform.__name__ + \
-                  " transform.} \\\\ \\bullet~\\texttt{Level " + \
-                  "{}/{}".format(level+1, aam.n_levels) + " (downscale=" + \
-                  "{0:.1f}".format(aam.downscale) + ").}" + \
-                  "\\\\ \\bullet~\\texttt{" + tmp_shape_models + "}" + \
-                  "\\\\ \\bullet~\\texttt{" + tmp_pyramid + \
-                  "}\\\\ \\bullet~\\texttt{" + tmp_feat + \
-                  "}\\\\ \\bullet~\\texttt{Reference frame of length " + \
-                  "{} ({} x {}C, {} x {}C).".format(
-                      aam.appearance_models[level].n_features,
-                      aam.appearance_models[level].template_instance.n_true_pixels,
-                      aam.appearance_models[level].mean.n_channels,
-                      aam.appearance_models[level].template_instance._str_shape,
-                      aam.appearance_models[level].mean.n_channels) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{0} shape components ({1:.2f}% of variance).".format(
-                      aam.shape_models[level].n_components,
-                      aam.shape_models[level].variance_ratio * 100) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{0} appearance components ({1:.2f}% of variance).".format(
-                      aam.appearance_models[level].n_components,
-                      aam.appearance_models[level].variance_ratio * 100) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{}".format(instance.landmarks[group].lms.n_points) + \
-                  " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
-                  "{0:.3f}".format(instance.pixels.min()) + ", max=" + \
-                  "{0:.3f}".format(instance.pixels.max()) + "}$"
-        else:
-            txt = "$\\bullet~\\texttt{" + "{}".format(aam.n_training_images) + \
-                  " training images.}\\\\ \\bullet~\\texttt{Warp using " + \
-                  aam.transform.__name__ + " transform with '" + \
-                  aam.interpolator + "' interpolation.}" + \
-                  "\\\\ \\bullet~\\texttt{" + tmp_feat + \
-                  "}\\\\ \\bullet~\\texttt{Reference frame of length " + \
-                  "{} ({} x {}C, {} x {}C).".format(
-                      aam.appearance_models[level].n_features,
-                      aam.appearance_models[level].template_instance.n_true_pixels,
-                      aam.appearance_models[level].mean.n_channels,
-                      aam.appearance_models[level].template_instance._str_shape,
-                      aam.appearance_models[level].mean.n_channels) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{0} shape components ({1:.2f}% of variance).".format(
-                      aam.shape_models[level].n_components,
-                      aam.shape_models[level].variance_ratio * 100) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{0} appearance components ({1:.2f}% of variance).".format(
-                      aam.appearance_models[level].n_components,
-                      aam.appearance_models[level].variance_ratio * 100) + \
-                  "}\\\\ \\bullet~\\texttt{" + \
-                  "{}".format(instance.landmarks[group].lms.n_points) + \
-                  " landmark points.}\\\\ \\bullet~\\texttt{Instance: min=" + \
-                  "{0:.3f}".format(instance.pixels.min()) + ", max=" + \
-                  "{0:.3f}".format(instance.pixels.max()) + "}$"
-        info_wid.children[1].value = txt
+        # Formatting is a bit ugly but this is MUCH easier to read.
+        info_txt = r"""
+            {} training images.
+            Warp using {} transform.
+            Level {}/{}  (downscale={:.1f}).
+            {}
+            {}
+            {}
+            Reference frame of length {} ({} x {}C, {} x {}C).
+            {} shape components ({:.2f}% of variance)
+            {} appearance components ({:.2f}% of variance)
+            {} landmark points.
+            Instance: min={:.3f} , max={:.3f}
+            """.format(aam.n_training_images, aam.transform.__name__,
+                       level + 1,
+                       aam.n_levels, aam.downscale, tmp_shape_models,
+                       tmp_pyramid, tmp_feat, lvl_app_mod.n_features,
+                       tmplt_inst.n_true_pixels, n_channels,
+                       tmplt_inst._str_shape, n_channels,
+                       lvl_shape_mod.n_components,
+                       lvl_shape_mod.variance_ratio * 100,
+                       lvl_app_mod.n_components,
+                       lvl_app_mod.variance_ratio * 100,
+                       instance.landmarks[group].lms.n_points,
+                       instance.pixels.min(), instance.pixels.max())
+
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # Plot shape eigenvalues function
     def plot_shape_eigenvalues(name):
@@ -1432,25 +1462,20 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             im = image_number_wid.selected_index
 
         # create output str
-        txt = "$\\bullet~\\texttt{Initial error: " + \
-              "{0:.4f}".format(fitting_results[im].initial_error(error_type=
-                                                                 value)) + \
-              "}\\\\ \\bullet~\\texttt{Final error: " + \
-              "{0:.4f}".format(fitting_results[im].final_error(error_type=
-                                                               value)) + \
-              "}\\\\ \\bullet~\\texttt{" + \
-              "{}".format(fitting_results[im].n_iters) + \
-              " iterations.}"
-        if (hasattr(fitting_results[im], 'n_levels') and
-                hasattr(fitting_results[im], 'downscale')):
-            txt += "\\\\ \\bullet~\\texttt{" + \
-                   "{0} levels with downscale of {1:.1f}".format(
-                    fitting_results[im].n_levels,
-                    fitting_results[im].downscale) + \
-                   ".}"
-        txt += "$"
+        info_txt = r"""
+            Initial error: {:.4f}
+            Final error: {:.4f}
+            {} iterations
+        """.format(fitting_results[im].initial_error(error_type=value),
+                   fitting_results[im].final_error(error_type=value),
+                   fitting_results[im].n_iters)
+        if hasattr(fitting_results[im], 'n_levels'):  # Multilevel result
+            info_txt += r"""
+                {} levels with downscale of {:.1f}
+            """.format(fitting_results[im].n_levels,
+                       fitting_results[im].downscale)
 
-        info_wid.children[1].value = txt
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
     # Create options widgets
     channel_options_wid = channel_options(
