@@ -221,7 +221,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         import matplotlib.cm as cm
 
         # We may get passed either no colours (in which case we generate
-        # random colours) or a single colour to colour all the groups with
+        # random colours) or a single colour to colour all the labels with
         n_labels = len(self.labels_to_masks)
         colours = kwargs.get('colours', np.random.random([3, n_labels]))
         if colours.shape[1] == 1:
