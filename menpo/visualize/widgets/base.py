@@ -167,6 +167,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             groups_colours=dict(), subplots_enabled=False,
             subplots_titles=dict(), image_axes_mode=True,
             legend_enabled=landmark_options_wid.legend_enabled,
+            numbering_enabled=landmark_options_wid.numbering_enabled,
             x_scale=figure_options_wid.x_scale,
             y_scale=figure_options_wid.x_scale,
             axes_visible=figure_options_wid.axes_visible,
@@ -211,6 +212,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                             toggle_show_default=True,
                                             landmarks_default=True,
                                             legend_default=True,
+                                            numbering_default=False,
                                             toggle_show_visible=False)
     figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=False,
@@ -715,6 +717,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
             groups_colours=dict(), subplots_enabled=False,
             subplots_titles=dict(), image_axes_mode=True,
             legend_enabled=landmark_options_wid.legend_enabled,
+            numbering_enabled=landmark_options_wid.numbering_enabled,
             x_scale=figure_options_wid.x_scale,
             y_scale=figure_options_wid.y_scale,
             axes_visible=figure_options_wid.axes_visible,
@@ -793,6 +796,7 @@ def visualize_appearance_model(appearance_models, n_parameters=5,
                                             toggle_show_default=True,
                                             landmarks_default=True,
                                             legend_default=False,
+                                            numbering_default=False,
                                             toggle_show_visible=False)
     figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=True,
@@ -990,6 +994,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             groups_colours=dict(), subplots_enabled=False,
             subplots_titles=dict(), image_axes_mode=True,
             legend_enabled=landmark_options_wid.legend_enabled,
+            numbering_enabled=landmark_options_wid.numbering_enabled,
             x_scale=figure_options_wid.x_scale,
             y_scale=figure_options_wid.y_scale,
             axes_visible=figure_options_wid.axes_visible,
@@ -1134,6 +1139,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                             toggle_show_default=True,
                                             landmarks_default=True,
                                             legend_default=False,
+                                            numbering_default=False,
                                             toggle_show_visible=False)
     figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=True,
@@ -1416,6 +1422,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 subplots_enabled=final_result_wid.subplots_enabled,
                 subplots_titles=groups_final_dict, image_axes_mode=True,
                 legend_enabled=final_result_wid.legend_enabled,
+                numbering_enabled=landmark_options_wid.numbering_enabled,
                 x_scale=figure_options_wid.x_scale,
                 y_scale=figure_options_wid.y_scale,
                 axes_visible=figure_options_wid.axes_visible,
@@ -1446,6 +1453,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                 subplots_enabled=iterations_wid.subplots_enabled,
                 subplots_titles=groups_dict, image_axes_mode=True,
                 legend_enabled=iterations_wid.legend_enabled,
+                numbering_enabled=landmark_options_wid.numbering_enabled,
                 x_scale=figure_options_wid.x_scale,
                 y_scale=figure_options_wid.y_scale,
                 axes_visible=figure_options_wid.axes_visible,
@@ -1953,8 +1961,8 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                  image_is_masked, masked_enabled, channels, glyph_enabled,
                  glyph_block_size, glyph_use_negative, sum_enabled, groups,
                  with_labels, groups_colours, subplots_enabled, subplots_titles,
-                 image_axes_mode, legend_enabled, x_scale, y_scale,
-                 axes_visible, figure_size, **kwargs):
+                 image_axes_mode, legend_enabled, numbering_enabled,
+                 x_scale, y_scale, axes_visible, figure_size, **kwargs):
     r"""
     Helper function that plots an object given a set of selected options.
 
@@ -1962,80 +1970,59 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
     -----------
     image : :map:`Image` or subclass
        The image to be displayed.
-
     figure_id : matplotlib.pyplot.Figure instance
         The handle of the figure to be saved.
-
-    image_enabled : `boolean`
+    image_enabled : `bool`
         Flag that determines whether to display the image.
-
-    landmarks_enabled : `boolean`
+    landmarks_enabled : `bool`
         Flag that determines whether to display the landmarks.
-
-    image_is_masked : `boolean`
+    image_is_masked : `bool`
         If True, image is an instance of :map:`MaskedImage`.
         If False, image is an instance of :map:`Image`.
-
-    masked_enabled : `boolean`
+    masked_enabled : `bool`
         If True and the image is an instance of :map:`MaskedImage`, then only
         the masked pixels will be displayed.
-
     channels : `int` or `list` of `int`
         The image channels to be displayed.
-
-    glyph_enabled : `boolean`
+    glyph_enabled : `bool`
         Defines whether to display the image as glyph or not.
-
     glyph_block_size : `int`
         The size of the glyph's blocks.
-
-    glyph_use_negative : `boolean`
+    glyph_use_negative : `bool`
         Whether to use the negative hist values.
-
-    sum_enabled : `boolean`
+    sum_enabled : `bool`
         If true, the image will be displayed as glyph with glyph_block_size=1,
         thus the sum of the image's selected channels.
-
     groups : `list` of `str`
         A list of the landmark groups to be displayed.
-
     with_labels : `list` of `list` of `str`
         The labels to be displayed for each group in groups.
-
     groups_colours : `dict` of `str`
         A dictionary that defines a colour for each of the groups, e.g.
         subplots_titles[groups[0]] = 'b'
         subplots_titles[groups[1]] = 'r'
-
-    subplots_enabled : `boolean`
+    subplots_enabled : `bool`
         Flag that determines whether to plot all selected landmark groups in a
         single axes object or in subplots.
-
     subplots_titles : `dict` of `str`
         A dictionary that defines a subplot title for each of the groups, e.g.
         subplots_titles[groups[0]] = 'first group'
         subplots_titles[groups[1]] = 'second group'
-
-    image_axes_mode : `boolean`
+    image_axes_mode : `bool`
         If True, then the point clouds are plotted with the axes in the image
         mode.
-
-    legend_enabled : `boolean`
+    legend_enabled : `bool`
         Flag that determines whether to show the legend for the landmarks.
-        If True, it also prints the landmark points' numbers.
-
+    numbering_enabled : `bool`
+        Flag that determines whether to show the numbering for the landmarks.
     x_scale : `float`
         The scale of x axis.
-
     y_scale : `float`
         The scale of y axis.
-
-    axes_visible : `boolean`
+    axes_visible : `bool`
         If False, the figure's axes will be invisible.
-
     figure_size : (`int`, `int`)
         The size of the plotted figures.
-
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
@@ -2074,17 +2061,20 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                             view_landmarks(masked=masked_enabled,
                                            group=group,
                                            with_labels=with_labels[k],
-                                           render_labels=(legend_enabled and
-                                                          not subplots_enabled),
-                                           **kwargs)
+                                           render_legend=(legend_enabled
+                                                          and not subplots_enabled),
+                                           render_numbering=numbering_enabled,
+                                           lmark_view_kwargs=kwargs)
                     else:
                         # image, landmarks, masked, not glyph
                         image.view_landmarks(masked=masked_enabled,
                                              group=group,
                                              with_labels=with_labels[k],
-                                             render_labels=(legend_enabled and
-                                                            not subplots_enabled),
-                                             channels=channels, **kwargs)
+                                             render_legend=(legend_enabled
+                                                            and not subplots_enabled),
+                                             render_numbering=numbering_enabled,
+                                             obj_view_kwargs={'channels':channels},
+                                             lmark_view_kwargs=kwargs)
                 else:
                     if glyph_enabled or sum_enabled:
                         # image, landmarks, not masked, glyph
@@ -2093,16 +2083,19 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                               channels=channels).\
                             view_landmarks(group=group,
                                            with_labels=with_labels[k],
-                                           render_labels=(legend_enabled and
-                                                          not subplots_enabled),
-                                           **kwargs)
+                                           render_legend=(legend_enabled
+                                                          and not subplots_enabled),
+                                           render_numbering=numbering_enabled,
+                                           lmark_view_kwargs=kwargs)
                     else:
                         # image, landmarks, not masked, not glyph
                         image.view_landmarks(group=group,
                                              with_labels=with_labels[k],
-                                             render_labels=(legend_enabled and
-                                                            not subplots_enabled),
-                                             channels=channels, **kwargs)
+                                             render_legend=(legend_enabled
+                                                            and not subplots_enabled),
+                                             render_numbering=numbering_enabled,
+                                             obj_view_kwargs={'channels':channels},
+                                             lmark_view_kwargs=kwargs)
         else:
             # either there are not any landmark groups selected or they won't
             # be displayed

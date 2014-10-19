@@ -215,7 +215,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, render_labels, render_legend,
+    def _plot_landmarks(self, render_numbering, render_legend,
                         image_view, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
@@ -249,7 +249,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
             ax = plt.gca()
-            if render_labels:
+            if render_numbering:
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
@@ -265,8 +265,8 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
 
-    def _render(self, render_labels=True, render_legend=True, **kwargs):
-        self._plot_landmarks(render_labels, render_legend, False, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, False, **kwargs)
         return self
 
 
@@ -276,8 +276,8 @@ class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
         super(MatplotlibLandmarkViewer2dImage, self).__init__(
             figure_id, new_figure, group, pointcloud, labels_to_masks)
 
-    def _render(self, render_labels=True, render_legend=True, **kwargs):
-        self._plot_landmarks(render_labels, render_legend, True, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, True, **kwargs)
         return self
 
 

@@ -832,19 +832,21 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked,
 
 def landmark_options(group_keys, labels_keys, plot_function=None,
                      landmarks_default=True, legend_default=True,
-                     toggle_show_default=True, toggle_show_visible=True):
+                     numbering_default=True, toggle_show_default=True,
+                     toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
         2) A drop down menu with the available landmark groups.
         3) Several toggle buttons with the group's available labels.
         4) A checkbox that controls the legend's visibility.
-        5) A toggle button that controls the visibility of all the above, i.e.
+        5) A checkbox that toggles the numbering visibility.
+        6) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
 
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, checkboxes, groups]
-        checkboxes.children = [landmarks_checkbox, legend_checkbox]
+        checkboxes.children = [landmarks_checkbox, legend_checkbox, numbering_checkbox]
         groups.children = [group_drop_down_menu, labels]
         labels.children = [labels_text, labels_toggle_buttons]
 
@@ -854,6 +856,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.labels_toggles
         landmark_options_wid.landmarks_enabled
         landmark_options_wid.legend_enabled
+        landmark_options_wid.numbering_enabled
         landmark_options_wid.group
         landmark_options_wid.with_labels
 
@@ -867,24 +870,20 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     ----------
     group_keys : `list` of `str`
         A list of the available landmark groups.
-
     labels_keys : `list` of `list` of `str`
         A list of lists of each landmark group's labels.
-
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
-    landmarks_default : `boolean`, optional
+    landmarks_default : `bool`, optional
         The initial value of the landmarks visibility checkbox.
-
-    legend_default : `boolean`, optional
+    legend_default : `bool`, optional
         The initial value of the legend's visibility checkbox.
-
-    toggle_show_default : `boolean`, optional
+    numbering_default : `bool`, optional
+        The initial value of the render numbering visibility checkbox.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
     # Create all necessary widgets
@@ -894,6 +893,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     legend = CheckboxWidget(description='Show legend', value=legend_default)
+    numbering = CheckboxWidget(description='Show Numbering',
+                               value=numbering_default)
     group = DropdownWidget(values=group_keys, description='Group')
     labels_toggles = [[ToggleButtonWidget(description=k, value=True)
                        for k in s_keys] for s_keys in labels_keys]
@@ -901,7 +902,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     labels = ContainerWidget(children=labels_toggles[0])
 
     # Group widgets
-    checkboxes_wid = ContainerWidget(children=[landmarks, legend])
+    checkboxes_wid = ContainerWidget(children=[landmarks, legend,
+                                               numbering])
     labels_and_text = ContainerWidget(children=[labels_text, labels])
     group_wid = ContainerWidget(children=[group, labels_and_text])
 
@@ -915,6 +917,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmark_options_wid.labels_toggles = labels_toggles
     landmark_options_wid.landmarks_enabled = landmarks_default
     landmark_options_wid.legend_enabled = legend_default
+    landmark_options_wid.numbering_enabled = numbering_default
     landmark_options_wid.group = group_keys[0]
     landmark_options_wid.with_labels = labels_keys[0]
 
@@ -924,6 +927,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.landmarks_enabled = value
         # disable legend checkbox and group drop down menu
         legend.disabled = not value
+        numbering.disabled = not value
         group.disabled = not value
         # disable all labels toggles
         for s_keys in landmark_options_wid.labels_toggles:
@@ -977,6 +981,11 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.legend_enabled = value
     legend.on_trait_change(legend_fun, 'value')
 
+    # Render Labels function
+    def numbering_fun(name, value):
+        landmark_options_wid.numbering_enabled = value
+    numbering.on_trait_change(numbering_fun, 'value')
+
     # Toggle button function
     def show_options(name, value):
         group_wid.visible = value
@@ -990,6 +999,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         # checkbox and group drop down menu
         landmarks.on_trait_change(plot_function, 'value')
         legend.on_trait_change(plot_function, 'value')
+        numbering.on_trait_change(plot_function, 'value')
         group.on_trait_change(plot_function, 'value')
         # assign plot_function to all currently active labels toggles
         for w in labels.children:
