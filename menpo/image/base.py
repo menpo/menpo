@@ -482,7 +482,7 @@ class Image(Vectorizable, LandmarkableViewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def _view(self, figure_id=None, new_figure=False, channels=None,
+    def view(self, figure_id=None, new_figure=False, channels=None,
               **kwargs):
         r"""
         View the image using the default image viewer. Currently only

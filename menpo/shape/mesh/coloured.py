@@ -86,7 +86,7 @@ class ColouredTriMesh(TriMesh):
             ctm.colours = ctm.colours[isolated_mask, :]
             return ctm
 
-    def _view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
+    def view(self, figure_id=None, new_figure=False, coloured=True, **kwargs):
         r"""
         Visualize the :class:`ColouredTriMesh`. Only 3D objects are currently
         supported.
@@ -122,6 +122,6 @@ class ColouredTriMesh(TriMesh):
                 raise ValueError("Only viewing of 3D coloured meshes "
                                  "is currently supported.")
         else:
-            return super(ColouredTriMesh, self)._view(figure_id=figure_id,
-                                                      new_figure=new_figure,
-                                                      **kwargs)
+            return super(ColouredTriMesh, self).view(figure_id=figure_id,
+                                                     new_figure=new_figure,
+                                                     **kwargs)

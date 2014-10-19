@@ -121,7 +121,7 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(figure_id=figure_id, **kwargs)
+        return self.view(figure_id=figure_id, **kwargs)
 
     def view_new(self, **kwargs):
         r"""
@@ -137,8 +137,9 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(new_figure=True, **kwargs)
+        return self.view(new_figure=True, **kwargs)
 
+    @abc.abstractmethod
     def view(self, **kwargs):
         r"""
         View the object using the default rendering engine figure handling.
@@ -155,33 +156,6 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(**kwargs)
-
-    @abc.abstractmethod
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
-        r"""
-        Abstract method to be overridden by viewable objects. This will
-        instantiate a specific visualisation implementation
-
-        Parameters
-        ----------
-        figure_id : object, optional
-            A unique identifier for a figure.
-
-            Default: `None`
-        new_figure : bool, optional
-            Whether the rendering engine should create a new figure.
-
-            Default: `False`
-        kwargs : dict
-            Passed through to specific rendering engine.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The renderer instantiated.
-        """
-        pass
 
 
 from menpo.visualize.viewmatplotlib import (

@@ -278,8 +278,7 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
             group.lms._transform_inplace(transform)
         return self
 
-    def _view(self, figure_id=None, new_figure=False, group=None,
-              **kwargs):
+    def view(self, figure_id=None, new_figure=False, group=None, **kwargs):
         """
         View all landmarks groups on the current manager.
 
@@ -310,14 +309,14 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         if group is None:
             viewers = []
             for g_label in self._landmark_groups:
-                v = self._landmark_groups[g_label]._view(figure_id=figure_id,
-                                                         new_figure=new_figure,
-                                                         group=g_label,
-                                                         **kwargs)
+                v = self._landmark_groups[g_label].view(figure_id=figure_id,
+                                                        new_figure=new_figure,
+                                                        group=g_label,
+                                                        **kwargs)
                 viewers.append(v)
             return viewers
         elif group in self._landmark_groups:
-            return self._landmark_groups[group]._view(
+            return self._landmark_groups[group].view(
                 figure_id=figure_id, new_figure=new_figure,
                 group=group, **kwargs)
         else:
@@ -657,7 +656,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                            'landmarks': landmarks})
         return {'groups': groups}
 
-    def _view(self, figure_id=None, new_figure=False, targettype=None,
+    def view(self, figure_id=None, new_figure=False, targettype=None,
               render_numbering=True, render_legend=True, group='group',
               with_labels=None, without_labels=None, **kwargs):
         """

@@ -84,7 +84,7 @@ def aam_fastest_alternating_noise(training_db_path, fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -159,7 +159,7 @@ def aam_fastest_alternating_bbox(training_db_path, fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -231,7 +231,7 @@ def aam_best_performance_alternating_noise(training_db_path, fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -307,7 +307,7 @@ def aam_best_performance_alternating_bbox(training_db_path, fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -379,7 +379,7 @@ def clm_basic_noise(training_db_path,  fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -455,7 +455,7 @@ def clm_basic_bbox(training_db_path,  fitting_db_path, fitting_bboxes_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -518,7 +518,7 @@ def sdm_fastest_bbox(training_db_path, fitting_db_path,
         legend = ['Fitting', 'Initialization']
         plot_fitting_curves(error_bins, y_axis, title, new_figure=True,
                             x_limit=max_error_bin, legend=legend,
-                            color_list=['r', 'b'], marker_list=['o', 'x'])
+                            colour_list=['r', 'b'], marker_list=['o', 'x'])
     return fitting_results, final_error_curve, initial_error_curve, error_bins
 
 
@@ -637,10 +637,10 @@ def aam_params_combinations_noise(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "AAMs using Alternating IC"
-        color_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
+        colour_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
         marker_list = ['o', 'x', 'v', 'd'] * n_experiments
         plot_fitting_curves(error_bins, curves_to_plot, title, new_figure=True,
-                            x_limit=max_error_bin,  color_list=color_list,
+                            x_limit=max_error_bin,  colour_list=colour_list,
                             marker_list=marker_list)
     return all_fitting_results
 
@@ -764,9 +764,9 @@ def clm_params_combinations_noise(training_db_path, fitting_db_path,
     # plot results
     if plot:
         title = "CLMs using RLMS"
-        color_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
+        colour_list = ['r', 'b', 'g', 'y', 'c'] * n_experiments
         marker_list = ['o', 'x', 'v', 'd'] * n_experiments
         plot_fitting_curves(error_bins, curves_to_plot, title, new_figure=True,
-                            x_limit=max_error_bin,  color_list=color_list,
+                            x_limit=max_error_bin,  colour_list=colour_list,
                             marker_list=marker_list)
     return all_fitting_results

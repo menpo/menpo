@@ -831,7 +831,7 @@ class PointGraph(UndirectedGraph, PointCloud):
         json_dict.update(UndirectedGraph.tojson(self))
         return json_dict
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         return PointGraphViewer(figure_id, new_figure,
                                 self.points,
                                 self.adjacency_array).render(**kwargs)
@@ -993,7 +993,7 @@ class PointTree(Tree, PointCloud):
         children = [p[1] for p in self.adjacency_array]
         return self.points[children, ...] - self.points[parents, ...]
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         return PointGraphViewer(figure_id, new_figure,
                                 self.points,
                                 self.adjacency_array).render(**kwargs)

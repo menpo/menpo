@@ -105,7 +105,7 @@ class Alignment(Targetable, Viewable):
         """
         return self.aligned_source()
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         r"""
         Plots the source points and vectors that represent the shift from
         source to target.

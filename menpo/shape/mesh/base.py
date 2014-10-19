@@ -174,7 +174,7 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         """
         Visualize the TriMesh.
 
