@@ -16,7 +16,6 @@ class MeanInstanceLinearModel(MeanLinearModel, InstanceBackedModel):
         MeanLinearModel.__init__(self, components, mean_vector)
         InstanceBackedModel.__init__(self, template_instance)
 
-    @property
     def mean(self):
         return self.template_instance.from_vector(self.mean_vector)
 
