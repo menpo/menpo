@@ -832,19 +832,21 @@ def update_channel_options(channel_options_wid, n_channels, image_is_masked,
 
 def landmark_options(group_keys, labels_keys, plot_function=None,
                      landmarks_default=True, legend_default=True,
-                     toggle_show_default=True, toggle_show_visible=True):
+                     numbering_default=True, toggle_show_default=True,
+                     toggle_show_visible=True):
     r"""
     Creates a widget with Landmark Options. Specifically, it has:
         1) A checkbox that controls the landmarks' visibility.
         2) A drop down menu with the available landmark groups.
         3) Several toggle buttons with the group's available labels.
         4) A checkbox that controls the legend's visibility.
-        5) A toggle button that controls the visibility of all the above, i.e.
+        5) A checkbox that toggles the numbering visibility.
+        6) A toggle button that controls the visibility of all the above, i.e.
            the landmark options.
 
     The structure of the widgets is the following:
         landmark_options_wid.children = [toggle_button, checkboxes, groups]
-        checkboxes.children = [landmarks_checkbox, legend_checkbox]
+        checkboxes.children = [landmarks_checkbox, legend_checkbox, numbering_checkbox]
         groups.children = [group_drop_down_menu, labels]
         labels.children = [labels_text, labels_toggle_buttons]
 
@@ -854,6 +856,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.labels_toggles
         landmark_options_wid.landmarks_enabled
         landmark_options_wid.legend_enabled
+        landmark_options_wid.numbering_enabled
         landmark_options_wid.group
         landmark_options_wid.with_labels
 
@@ -867,24 +870,20 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     ----------
     group_keys : `list` of `str`
         A list of the available landmark groups.
-
     labels_keys : `list` of `list` of `str`
         A list of lists of each landmark group's labels.
-
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
-    landmarks_default : `boolean`, optional
+    landmarks_default : `bool`, optional
         The initial value of the landmarks visibility checkbox.
-
-    legend_default : `boolean`, optional
+    legend_default : `bool`, optional
         The initial value of the legend's visibility checkbox.
-
-    toggle_show_default : `boolean`, optional
+    numbering_default : `bool`, optional
+        The initial value of the render numbering visibility checkbox.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
     # Create all necessary widgets
@@ -894,6 +893,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     legend = CheckboxWidget(description='Show legend', value=legend_default)
+    numbering = CheckboxWidget(description='Show Numbering',
+                               value=numbering_default)
     group = DropdownWidget(values=group_keys, description='Group')
     labels_toggles = [[ToggleButtonWidget(description=k, value=True)
                        for k in s_keys] for s_keys in labels_keys]
@@ -901,7 +902,8 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     labels = ContainerWidget(children=labels_toggles[0])
 
     # Group widgets
-    checkboxes_wid = ContainerWidget(children=[landmarks, legend])
+    checkboxes_wid = ContainerWidget(children=[landmarks, legend,
+                                               numbering])
     labels_and_text = ContainerWidget(children=[labels_text, labels])
     group_wid = ContainerWidget(children=[group, labels_and_text])
 
@@ -915,6 +917,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmark_options_wid.labels_toggles = labels_toggles
     landmark_options_wid.landmarks_enabled = landmarks_default
     landmark_options_wid.legend_enabled = legend_default
+    landmark_options_wid.numbering_enabled = numbering_default
     landmark_options_wid.group = group_keys[0]
     landmark_options_wid.with_labels = labels_keys[0]
 
@@ -924,6 +927,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.landmarks_enabled = value
         # disable legend checkbox and group drop down menu
         legend.disabled = not value
+        numbering.disabled = not value
         group.disabled = not value
         # disable all labels toggles
         for s_keys in landmark_options_wid.labels_toggles:
@@ -977,6 +981,11 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         landmark_options_wid.legend_enabled = value
     legend.on_trait_change(legend_fun, 'value')
 
+    # Render Labels function
+    def numbering_fun(name, value):
+        landmark_options_wid.numbering_enabled = value
+    numbering.on_trait_change(numbering_fun, 'value')
+
     # Toggle button function
     def show_options(name, value):
         group_wid.visible = value
@@ -990,6 +999,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
         # checkbox and group drop down menu
         landmarks.on_trait_change(plot_function, 'value')
         legend.on_trait_change(plot_function, 'value')
+        numbering.on_trait_change(plot_function, 'value')
         group.on_trait_change(plot_function, 'value')
         # assign plot_function to all currently active labels toggles
         for w in labels.children:
@@ -1589,6 +1599,7 @@ def update_model_parameters(model_parameters_wid, n_params, plot_function=None,
 def final_result_options(group_keys, plot_function=None, title='Final Result',
                          show_image_default=True,
                          subplots_enabled_default=False, legend_default=True,
+                         numbering_default=True,
                          toggle_show_default=True, toggle_show_visible=True):
     r"""
     Creates a widget with Final Result Options. Specifically, it has:
@@ -1597,13 +1608,15 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
         2) A checkbox that controls the visibility of the image.
         3) A set of radio buttons that define whether subplots are enabled.
         4) A checkbox that controls the legend's visibility.
-        5) A toggle button that controls the visibility of all the above, i.e.
+        5) A checkbox that controls the numbering visibility.
+        6) A toggle button that controls the visibility of all the above, i.e.
            the final result options.
 
     The structure of the widgets is the following:
         final_result_wid.children = [toggle_button, shapes_toggle_buttons,
                                      show_image_checkbox, options]
-        options.children = [plot_mode_radio_buttons, legend_checkbox]
+        options.children = [plot_mode_radio_buttons, legend_checkbox,
+                            numbering_checkbox]
 
     The returned widget saves the selected values in the following fields:
         final_result_wid.all_group_keys
@@ -1611,6 +1624,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
         final_result_wid.show_image
         final_result_wid.subplots_enabled
         final_result_wid.legend_enabled
+        final_result_wid.numbering_enabled
 
     To fix the alignment within this widget please refer to
     `format_final_result_options()` function.
@@ -1619,28 +1633,23 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     ----------
     group_keys : `list` of `str`
         A list of the available landmark groups.
-
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
     title : `str`, optional
         The title of the widget printed at the toggle button.
-
-    show_image_default : `boolean`, optional
+    show_image_default : `bool`, optional
         The initial value of the image's visibility checkbox.
-
-    subplots_enabled_default : `boolean`, optional
+    subplots_enabled_default : `bool`, optional
         The initial value of the plot options' radio buttons that determine
         whether a single plot or subplots will be used.
-
-    legend_default : `boolean`, optional
+    legend_default : `bool`, optional
         The initial value of the legend's visibility checkbox.
-
-    toggle_show_default : `boolean`, optional
+    numbering_default : `bool`, optional
+        The initial value of the numbering visibility checkbox.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
     # Toggle button that controls options' visibility
@@ -1662,10 +1671,12 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
+    show_numbering = CheckboxWidget(description='Show Numbering',
+                                    value=numbering_default)
 
     # Group widgets
     shapes_wid = ContainerWidget(children=shapes_checkboxes)
-    opts = ContainerWidget(children=[mode, show_legend])
+    opts = ContainerWidget(children=[mode, show_legend, show_numbering])
 
     # Widget container
     final_result_wid = ContainerWidget(children=[but, shapes_wid, show_image,
@@ -1677,6 +1688,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     final_result_wid.show_image = show_image_default
     final_result_wid.subplots_enabled = subplots_enabled_default
     final_result_wid.legend_enabled = legend_default
+    final_result_wid.numbering_enabled = numbering_default
 
     # Groups function
     def groups_fun(name, value):
@@ -1702,6 +1714,11 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
         final_result_wid.legend_enabled = value
     show_legend.on_trait_change(legend_fun, 'value')
 
+    # Numbering function
+    def numbering_fun(name, value):
+        final_result_wid.numbering_enabled = value
+    show_numbering.on_trait_change(numbering_fun, 'value')
+
     # Toggle button function
     def show_options(name, value):
         shapes_wid.visible = value
@@ -1715,6 +1732,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
         show_image.on_trait_change(plot_function, 'value')
         mode.on_trait_change(plot_function, 'value')
         show_legend.on_trait_change(plot_function, 'value')
+        show_numbering.on_trait_change(plot_function, 'value')
         for w in shapes_wid.children[1::]:
             w.on_trait_change(plot_function, 'value')
 
@@ -1854,6 +1872,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                               iter_str='iter_', title='Iterations Result',
                               show_image_default=True,
                               subplots_enabled_default=False,
+                              numbering_default=False,
                               legend_default=True, toggle_show_default=True,
                               toggle_show_visible=True):
     r"""
@@ -1866,10 +1885,11 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         3) A checkbox that controls the visibility of the image.
         4) A set of radio buttons that define whether subplots are enabled.
         5) A checkbox that controls the legend's visibility.
-        6) A button to plot the error evolution.
-        7) A button to plot the landmark points' displacement.
-        8) A drop down menu to select which displacement to plot.
-        9) A toggle button that controls the visibility of all the above, i.e.
+        6) A checkbox that controls the numbering visibility.
+        7) A button to plot the error evolution.
+        8) A button to plot the landmark points' displacement.
+        9) A drop down menu to select which displacement to plot.
+        10) A toggle button that controls the visibility of all the above, i.e.
            the final result options.
 
     The structure of the widgets is the following:
@@ -1882,7 +1902,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
                                 update_button]
         options.children = [plot_mode_radio_buttons, show_image_checkbox,
                             show_legend_checkbox, plot_errors_button,
-                            plot_displacements]
+                            plot_displacements, show_numbering_checkbox]
         plot_displacements.children = [plot_displacements_button,
                                        plot_displacements_drop_down_menu]
 
@@ -1894,6 +1914,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         iterations_result_wid.show_image
         iterations_result_wid.subplots_enabled
         iterations_result_wid.legend_enabled
+        iterations_result_wid.numbering_enabled
         iterations_result_wid.displacement_type
 
     To fix the alignment within this widget please refer to
@@ -1906,50 +1927,40 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     ----------
     n_iters : `int`
         The number of iterations.
-
-    image_has_gt_shape : `boolean`
+    image_has_gt_shape : `bool`
         Flag that defines whether the fitted image has a ground shape attached.
-
     n_points : `int`
         The number of the object's  landmark points. It is required by the
         displacement dorp down menu.
-
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
-
     plot_errors_function : `function` or None, optional
         The plot function that is executed when the 'Plot Errors' button is
         pressed.
         If None, then nothing is assigned.
-
     plot_displacements_function : `function` or None, optional
         The plot function that is executed when the 'Plot Displacements' button
         is pressed.
         If None, then nothing is assigned.
-
     iter_str : `str`, optional
         The str that is used in the landmark groups shapes.
         E.g. if iter_str == "iter_" then the group label of iteration i has the
         form "{}{}".format(iter_str, i)
-
     title : `str`, optional
         The title of the widget printed at the toggle button.
-
-    show_image_default : `boolean`, optional
+    show_image_default : `bool`, optional
         The initial value of the image's visibility checkbox.
-
-    subplots_enabled_default : `boolean`, optional
+    subplots_enabled_default : `bool`, optional
         The initial value of the plot options' radio buttons that determine
         whether a single plot or subplots will be used.
-
-    legend_default : `boolean`, optional
+    legend_default : `bool`, optional
         The initial value of the legend's visibility checkbox.
-
-    toggle_show_default : `boolean`, optional
+    numbering_default : `bool`, optional
+        The initial value of the numbering visibility checkbox.
+    toggle_show_default : `bool`, optional
         Defines whether the options will be visible upon construction.
-
-    toggle_show_visible : `boolean`, optional
+    toggle_show_visible : `bool`, optional
         The visibility of the toggle button.
     """
     # Create all necessary widgets
@@ -1995,7 +2006,8 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     plot_mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
-
+    show_numbering = CheckboxWidget(description='Show Numbering',
+                                    value=numbering_default)
     # if just one iteration, disable multiple options
     if n_iters == 1:
         iterations_mode.value = 0
@@ -2021,7 +2033,8 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     plot_displacements = ContainerWidget(children=[plot_displacements_button,
                                                    plot_displacements_menu])
     opts = ContainerWidget(children=[plot_mode, show_image, show_legend,
-                                     plot_errors_button, plot_displacements])
+                                     show_numbering, plot_errors_button,
+                                     plot_displacements])
 
     # Widget container
     iterations_result_wid = ContainerWidget(children=[
@@ -2035,6 +2048,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     iterations_result_wid.show_image = show_image_default
     iterations_result_wid.subplots_enabled = subplots_enabled_default
     iterations_result_wid.legend_enabled = legend_default
+    iterations_result_wid.numbering_enabled = numbering_default
     iterations_result_wid.displacement_type = 'mean'
 
     # Define iterations mode visibility
@@ -2110,6 +2124,11 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         iterations_result_wid.legend_enabled = value
     show_legend.on_trait_change(legend_fun, 'value')
 
+    # Numbering function
+    def numbering_fun(name, value):
+        iterations_result_wid.numbering_enabled = value
+    show_numbering.on_trait_change(numbering_fun, 'value')
+
     # Displacement type function
     def displacement_type_fun(name, value):
         iterations_result_wid.displacement_type = value
@@ -2121,6 +2140,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         plot_mode.visible = value
         show_image.visible = value
         show_legend.visible = value
+        show_numbering.visible = value
         if image_has_gt_shape and value:
             plot_errors_button.visible = True
             plot_displacements.visible = True
@@ -2152,6 +2172,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         show_image.on_trait_change(plot_function, 'value')
         plot_mode.on_trait_change(plot_function, 'value')
         show_legend.on_trait_change(plot_function, 'value')
+        show_numbering.on_trait_change(plot_function, 'value')
 
     # assign plot function of errors button
     if plot_errors_function is not None:
@@ -2182,20 +2203,15 @@ def format_iterations_result_options(iterations_result_wid,
     iterations_result_wid :
         The widget object generated by the `iterations_result_options()`
         function.
-
     container_padding : `str`, optional
         The padding around the widget, e.g. '6px'
-
     container_margin : `str`, optional
         The margin around the widget, e.g. '6px'
-
     container_border : `str`, optional
         The border around the widget, e.g. '1px solid black'
-
     toggle_button_font_weight : `str`
         The font weight of the toggle button, e.g. 'bold'
-
-    border_visible : `boolean`, optional
+    border_visible : `bool`, optional
         Defines whether to draw the border line around the widget.
     """
     # format animations options
@@ -2207,10 +2223,10 @@ def format_iterations_result_options(iterations_result_wid,
         border_visible=False)
 
     # align displacement button and drop down menu
-    iterations_result_wid.children[2].children[4].add_class('align-center')
-    iterations_result_wid.children[2].children[4].children[1].set_css('width',
+    iterations_result_wid.children[2].children[5].add_class('align-center')
+    iterations_result_wid.children[2].children[5].children[1].set_css('width',
                                                                       '2.5cm')
-    iterations_result_wid.children[2].children[4].children[1].set_css('height',
+    iterations_result_wid.children[2].children[5].children[1].set_css('height',
                                                                       '2cm')
 
     # align options
@@ -2224,6 +2240,8 @@ def format_iterations_result_options(iterations_result_wid,
     iterations_result_wid.children[2].children[2].set_css('margin-right',
                                                           '20px')
     iterations_result_wid.children[2].children[3].set_css('margin-right',
+                                                          '20px')
+    iterations_result_wid.children[2].children[4].set_css('margin-right',
                                                           '10px')
 
     # align sliders
@@ -2285,9 +2303,9 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
     # if image_has_gt_shape flag has actually changed from the previous value
     if image_has_gt_shape != iterations_result_wid.image_has_gt_shape:
         # set the plot buttons visibility
-        iterations_result_wid.children[2].children[3].visible = \
-            iterations_result_wid.children[0].value and image_has_gt_shape
         iterations_result_wid.children[2].children[4].visible = \
+            iterations_result_wid.children[0].value and image_has_gt_shape
+        iterations_result_wid.children[2].children[5].visible = \
             iterations_result_wid.children[0].value and image_has_gt_shape
         # store the flag
         iterations_result_wid.image_has_gt_shape = image_has_gt_shape
@@ -2302,7 +2320,7 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         select_menu['min'] = 'min'
         for p in range(n_points):
             select_menu["point {}".format(p+1)] = p
-        iterations_result_wid.children[2].children[4].children[1].values = \
+        iterations_result_wid.children[2].children[5].children[1].values = \
             select_menu
         # store the number of points
         iterations_result_wid.n_points = n_points
