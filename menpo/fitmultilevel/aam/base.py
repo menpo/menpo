@@ -162,7 +162,7 @@ class AAM(DeformableModel):
             reference_frame.landmarks['source'].lms, landmarks)
 
         return appearance_instance.warp_to_mask(reference_frame.mask,
-                                                transform)
+                                                transform, warp_landmarks=True)
 
     def _build_reference_frame(self, reference_shape, landmarks):
         if type(landmarks) == TriMesh:
@@ -180,6 +180,48 @@ class AAM(DeformableModel):
         :type: `string`
         """
         return 'Active Appearance Model'
+
+    def view_widget(self, n_shape_parameters=5, n_appearance_parameters=5,
+                    parameters_bounds=(-3.0, 3.0), mode='multiple',
+                    popup=False):
+        r"""
+        Visualizes the AAM object using the
+        menpo.visualize.widgets.visualize_aam widget.
+
+        Parameters
+        -----------
+        n_shape_parameters : `int` or `list` of `int` or None, optional
+            The number of shape principal components to be used for the
+            parameters sliders.
+            If int, then the number of sliders per level is the minimum between
+            n_parameters and the number of active components per level.
+            If list of int, then a number of sliders is defined per level.
+            If None, all the active components per level will have a slider.
+
+        n_appearance_parameters : `int` or `list` of `int` or None, optional
+            The number of appearance principal components to be used for the
+            parameters sliders.
+            If int, then the number of sliders per level is the minimum between
+            n_parameters and the number of active components per level.
+            If list of int, then a number of sliders is defined per level.
+            If None, all the active components per level will have a slider.
+
+        parameters_bounds : (`float`, `float`), optional
+            The minimum and maximum bounds, in std units, for the sliders.
+
+        mode : 'single' or 'multiple', optional
+            If single, only a single slider is constructed along with a drop down
+            menu.
+            If multiple, a slider is constructed for each parameter.
+
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
+        """
+        from menpo.visualize import visualize_aam
+        visualize_aam(self, n_shape_parameters=n_shape_parameters,
+                      n_appearance_parameters=n_appearance_parameters,
+                      parameters_bounds=parameters_bounds, figure_size=(7, 7),
+                      mode=mode, popup=popup)
 
     def __str__(self):
         out = "{}\n - {} training images.\n".format(self._str_title,

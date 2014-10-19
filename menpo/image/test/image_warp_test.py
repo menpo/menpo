@@ -93,3 +93,8 @@ def test_warp_to_shape_equal_warp_to_mask():
     m_shape = b.warp_to_shape((540, 960), r)
     m_mask = b.warp_to_mask(menpo.image.BooleanImage.blank((540, 960)), r)
     assert_allclose(m_shape.pixels, m_mask.pixels)
+
+
+def test_rescale_boolean():
+    mask = BooleanImage.blank((100, 100))
+    mask.resize((10, 10))

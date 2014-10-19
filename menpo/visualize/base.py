@@ -190,7 +190,6 @@ from menpo.visualize.viewmatplotlib import (
     MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
     MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
     MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
-    MatplotlibFittingViewer2d, MatplotlibFittingSubplotsViewer2d,
     MatplotlibPointGraphViewer2d)
 
 # Default importer types
@@ -206,8 +205,6 @@ AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
-FittingViewer2d = MatplotlibFittingViewer2d
-FittingSubplotsViewer2d = MatplotlibFittingSubplotsViewer2d
 
 
 class LandmarkViewer(object):
@@ -487,7 +484,8 @@ class ImageViewer(object):
             If mask is None, then the initial pixels are returned.
         """
         if mask is not None:
-            pixels[~mask] = np.nanmax(pixels) + 1
+            nanmax = np.nanmax(pixels)
+            pixels[~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
@@ -600,28 +598,5 @@ class MultipleImageViewer(ImageViewer):
             else:
                 return MultiImageViewer2d(self.figure_id, self.new_figure,
                                           self.pixels_list).render(**kwargs)
-        else:
-            raise ValueError("Only 2D images are currently supported")
-
-
-class FittingViewer(ImageViewer):
-
-    def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 target_list, channels=None, mask=None):
-        super(FittingViewer, self).__init__(
-            figure_id, new_figure, dimensions, pixels,
-            channels=channels, mask=mask)
-        self.target_list = target_list
-
-    def render(self, **kwargs):
-        if self.dimensions == 2:
-            if self.use_subplots:
-                FittingSubplotsViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
-            else:
-                return FittingViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")

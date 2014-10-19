@@ -333,7 +333,7 @@ class SerializableMultilevelFittingResult(FittingResult):
 
     @property
     def n_iters(self):
-        return self.n_iters
+        return self._n_iters
 
     @property
     def final_shape(self):

@@ -1,2 +1,3 @@
-from .base import (browse_images, visualize_aam, browse_fitted_images,
-                   browse_iter_images, plot_ced)
+from .base import (visualize_images, visualize_shape_model,
+                   visualize_appearance_model, visualize_aam,
+                   visualize_fitting_results, plot_ced)

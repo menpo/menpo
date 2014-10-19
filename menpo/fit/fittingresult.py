@@ -5,10 +5,9 @@ import numpy as np
 from menpo.shape.pointcloud import PointCloud
 from menpo.image import Image
 from menpo.fitmultilevel.functions import compute_error
-from menpo.visualize.base import Viewable, FittingViewer
 
 
-class FittingResult(Viewable):
+class FittingResult(object):
     r"""
     Object that holds the state of a single fitting object, during and after it
     has fitted a particular image.
@@ -196,14 +195,18 @@ class FittingResult(Viewable):
             raise ValueError('Ground truth has not been set, final error '
                              'cannot be computed')
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view_widget(self, popup=False):
         r"""
-        Displays the whole fitting procedure.
+        Visualizes the multilevel fitting result object using the
+        menpo.visualize.widgets.visualize_fitting_results widget.
+
+        Parameters
+        -----------
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
         """
-        pixels = self.image.pixels
-        targets = [s.points for s in self.shapes]
-        return FittingViewer(figure_id, new_figure, self.image.n_dims, pixels,
-                             targets).render(**kwargs)
+        from menpo.visualize import visualize_fitting_results
+        visualize_fitting_results(self, figure_size=(7, 7), popup=popup)
 
     def as_serializable(self):
         r""""
