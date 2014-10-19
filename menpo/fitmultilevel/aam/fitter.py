@@ -354,7 +354,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                     out = "{}   - Reference frames of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                         out, self._fitters[0].appearance_model.n_features,
-                        self._fitters[0].template.n_true_pixels,
+                        self._fitters[0].template.n_true_pixels(),
                         n_channels[0], self._fitters[0].template._str_shape,
                         n_channels[0])
             else:
@@ -371,7 +371,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                     out = "{}     - Reference frame of length {} " \
                           "({} x {}C, {} x {}C)\n".format(
                         out, self._fitters[i].appearance_model.n_features,
-                        self._fitters[i].template.n_true_pixels,
+                        self._fitters[i].template.n_true_pixels(),
                         n_channels[i], self._fitters[i].template._str_shape,
                         n_channels[i])
                 out = "{0}     - {1} motion components\n     - {2} active " \
@@ -390,7 +390,7 @@ class LucasKanadeAAMFitter(AAMFitter):
                   "variance)\n".format(
                 out, feat_str[0], n_channels[0], ch_str[0],
                 self._fitters[0].appearance_model.n_features,
-                self._fitters[0].template.n_true_pixels,
+                self._fitters[0].template.n_true_pixels(),
                 n_channels[0], self._fitters[0].template._str_shape,
                 n_channels[0], self._fitters[0].transform.n_parameters,
                 self._fitters[0].appearance_model.n_active_components,

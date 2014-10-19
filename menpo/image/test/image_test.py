@@ -149,27 +149,27 @@ def test_boolean_image_wrong_round():
 def test_boolean_image_proportion_true():
     image = BooleanImage.blank((10, 10))
     image.pixels[:7] = False
-    assert(image.proportion_true == 0.3)
+    assert(image.proportion_true() == 0.3)
 
 
 def test_boolean_image_proportion_false():
     image = BooleanImage.blank((10, 10))
     image.pixels[:7] = False
-    assert(image.proportion_false == 0.7)
+    assert(image.proportion_false() == 0.7)
 
 
 def test_boolean_image_proportion_sums():
     image = BooleanImage.blank((10, 10))
     image.pixels[:7] = False
-    assert(image.proportion_true + image.proportion_false == 1)
+    assert(image.proportion_true() + image.proportion_false() == 1)
 
 
 def test_boolean_image_false_indices():
     image = BooleanImage.blank((2, 3))
     image.pixels[0, 1] = False
     image.pixels[1, 2] = False
-    assert(np.all(image.false_indices == np.array([[0, 1],
-                                                   [1, 2]])))
+    assert(np.all(image.false_indices() == np.array([[0, 1],
+                                                     [1, 2]])))
 
 
 def test_boolean_image_false_indices():
@@ -318,19 +318,19 @@ def test_mask_blank_false_fill():
 
 def test_mask_n_true_n_false():
     mask = BooleanImage.blank((64, 14), fill=False)
-    assert_equal(mask.n_true, 0)
-    assert_equal(mask.n_false, 64 * 14)
+    assert_equal(mask.n_true(), 0)
+    assert_equal(mask.n_false(), 64 * 14)
     mask.mask[0, 0] = True
     mask.mask[9, 13] = True
-    assert_equal(mask.n_true, 2)
-    assert_equal(mask.n_false, 64 * 14 - 2)
+    assert_equal(mask.n_true(), 2)
+    assert_equal(mask.n_false(), 64 * 14 - 2)
 
 
 def test_mask_true_indices():
     mask = BooleanImage.blank((64, 14, 51), fill=False)
     mask.mask[0, 2, 5] = True
     mask.mask[5, 13, 4] = True
-    true_indices = mask.true_indices
+    true_indices = mask.true_indices()
     true_indices_test = np.array([[0, 2, 5], [5, 13, 4]])
     assert_equal(true_indices, true_indices_test)
 
@@ -339,7 +339,7 @@ def test_mask_false_indices():
     mask = BooleanImage.blank((64, 14, 51), fill=True)
     mask.mask[0, 2, 5] = False
     mask.mask[5, 13, 4] = False
-    false_indices = mask.false_indices
+    false_indices = mask.false_indices()
     false_indices_test = np.array([[0, 2, 5], [5, 13, 4]])
     assert_equal(false_indices, false_indices_test)
 
@@ -566,7 +566,7 @@ def test_rescale_boundaries_interpolation():
     image = MaskedImage(np.random.randn(60, 60, 3))
     for i in [x * 0.1 for x in range(1, 31)]:
         image_rescaled = image.rescale(i)
-        assert_allclose(image_rescaled.mask.proportion_true, 1.0)
+        assert_allclose(image_rescaled.mask.proportion_true(), 1.0)
 
 
 def test_resize():

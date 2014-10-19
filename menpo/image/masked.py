@@ -138,23 +138,18 @@ class MaskedImage(Image):
             pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
-    @property
     def n_true_pixels(self):
-        return self.mask.n_true
+        return self.mask.n_true()
 
-    @property
     def n_false_pixels(self):
-        return self.mask.n_false
+        return self.mask.n_false()
 
-    @property
     def n_true_elements(self):
-        return self.n_true_pixels * self.n_channels
+        return self.n_true_pixels() * self.n_channels
 
-    @property
     def n_false_elements(self):
-        return self.n_false_pixels * self.n_channels
+        return self.n_false_pixels() * self.n_channels
 
-    @property
     def indices(self):
         r"""
         Return the indices of all true pixels in this image.
@@ -162,16 +157,15 @@ class MaskedImage(Image):
         :type: (`n_dims`, `n_true_pixels`) ndarray
 
         """
-        return self.mask.true_indices
+        return self.mask.true_indices()
 
-    @property
     def masked_pixels(self):
         r"""
         Get the pixels covered by the `True` values in the mask.
 
         :type: (`mask.n_true`, `n_channels`) ndarray
         """
-        if self.mask.all_true:
+        if self.mask.all_true():
             return self.pixels
         return self.pixels[self.mask.mask]
 
@@ -194,7 +188,7 @@ class MaskedImage(Image):
         Warning : If the copy=False flag cannot be honored.
 
         """
-        if self.mask.all_true:
+        if self.mask.all_true():
             # reshape the vector into the image again
             pixels = pixels.reshape(self.shape + (self.n_channels,))
             if not copy:
@@ -219,7 +213,7 @@ class MaskedImage(Image):
         return ('{} {}D MaskedImage with {} channels. '
                 'Attached mask {:.1%} true'.format(
             self._str_shape, self.n_dims, self.n_channels,
-            self.mask.proportion_true))
+            self.mask.proportion_true()))
 
     def _as_vector(self, keep_channels=False):
         r"""
@@ -245,9 +239,9 @@ class MaskedImage(Image):
             Vectorized image
         """
         if keep_channels:
-            return self.masked_pixels.reshape([-1, self.n_channels])
+            return self.masked_pixels().reshape([-1, self.n_channels])
         else:
-            return self.masked_pixels.ravel()
+            return self.masked_pixels().ravel()
 
     def from_vector(self, vector, n_channels=None):
         r"""
@@ -285,7 +279,7 @@ class MaskedImage(Image):
         # but maintain the shape. For example, when calculating the gradient
         n_channels = self.n_channels if n_channels is None else n_channels
         # Creates zeros of size (M x N x ... x n_channels)
-        if self.mask.all_true:
+        if self.mask.all_true():
             # we can just reshape the array!
             image_data = vector.reshape((self.shape + (n_channels,)))
         else:

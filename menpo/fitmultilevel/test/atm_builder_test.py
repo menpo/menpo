@@ -83,7 +83,7 @@ def test_downscale_exception():
 def test_normalization_diagonal_exception():
     atm = ATMBuilder(normalization_diagonal=100).build(training, templates[3],
                                                        group='PTS')
-    assert (atm.warped_templates[0].n_true_pixels == 1246)
+    assert (atm.warped_templates[0].n_true_pixels() == 1246)
     ATMBuilder(normalization_diagonal=10).build(training, templates[3])
 
 

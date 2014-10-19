@@ -272,7 +272,6 @@ class Image(Vectorizable, LandmarkableViewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
-    @property
     def indices(self):
         r"""
         Return the indices of all pixels in this image.
@@ -922,7 +921,7 @@ class Image(Vectorizable, LandmarkableViewable):
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
-        template_points = template_mask.true_indices
+        template_points = template_mask.true_indices()
         points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of
         # sampled pixels. Store those in a (n_pixels, n_channels) array.

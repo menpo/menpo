@@ -89,7 +89,6 @@ class BooleanImage(Image):
         """
         return self.pixels[..., 0]
 
-    @property
     def n_true(self):
         r"""
         The number of `True` values in the mask
@@ -98,16 +97,14 @@ class BooleanImage(Image):
         """
         return np.sum(self.pixels)
 
-    @property
     def n_false(self):
         r"""
         The number of `False` values in the mask
 
         :type: int
         """
-        return self.n_pixels - self.n_true
+        return self.n_pixels - self.n_true()
 
-    @property
     def all_true(self):
         r"""
         True iff every element of the mask is True.
@@ -116,38 +113,34 @@ class BooleanImage(Image):
         """
         return np.all(self.pixels)
 
-    @property
     def proportion_true(self):
         r"""
         The proportion of the mask which is `True`
 
         :type: double
         """
-        return (self.n_true * 1.0) / self.n_pixels
+        return (self.n_true() * 1.0) / self.n_pixels
 
-    @property
     def proportion_false(self):
         r"""
         The proportion of the mask which is `False`
 
         :type: double
         """
-        return (self.n_false * 1.0) / self.n_pixels
+        return (self.n_false() * 1.0) / self.n_pixels
 
-    @property
     def true_indices(self):
         r"""
         The indices of pixels that are true.
 
         :type: (`n_dims`, `n_true`) ndarray
         """
-        if self.all_true:
-            return self.indices
+        if self.all_true():
+            return self.indices()
         else:
             # Ignore the channel axis
             return np.vstack(np.nonzero(self.pixels[..., 0])).T
 
-    @property
     def false_indices(self):
         r"""
         The indices of pixels that are false.
@@ -160,7 +153,7 @@ class BooleanImage(Image):
     def __str__(self):
         return ('{} {}D mask, {:.1%} '
                 'of which is True'.format(self._str_shape, self.n_dims,
-                                          self.proportion_true))
+                                          self.proportion_true()))
 
     def from_vector(self, vector, copy=True):
         r"""
@@ -251,7 +244,7 @@ class BooleanImage(Image):
             along each dimension. If constrain_to_bounds was True,
             is clipped to legal image bounds.
         """
-        mpi = self.true_indices
+        mpi = self.true_indices()
         maxes = np.max(mpi, axis=0) + boundary
         mins = np.min(mpi, axis=0) - boundary
         if constrain_to_bounds:
@@ -397,7 +390,7 @@ class BooleanImage(Image):
         """
         # start from a copy of the template_mask
         warped_img = template_mask.copy()
-        if warped_img.all_true:
+        if warped_img.all_true():
             # great, just reshape the sampled_pixel_values
             warped_img.pixels = sampled_pixel_values.reshape(
                 warped_img.shape + (1,))
@@ -463,6 +456,6 @@ class BooleanImage(Image):
 
         pwa = PiecewiseAffine(pointcloud, pointcloud)
         try:
-            pwa.apply(self.indices)
+            pwa.apply(self.indices())
         except TriangleContainmentError as e:
             self.from_vector_inplace(~e.points_outside_source_domain)
