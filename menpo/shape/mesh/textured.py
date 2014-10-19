@@ -2,7 +2,6 @@ import numpy as np
 
 from menpo.shape import PointCloud
 from menpo.transform import Scale
-from menpo.visualize import TexturedTriMeshViewer3d
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
@@ -174,10 +173,15 @@ class TexturedTriMesh(TriMesh):
         """
         if textured:
             if self.n_dims == 3:
-                return TexturedTriMeshViewer3d(
-                    figure_id, new_figure, self.points,
-                    self.trilist, self.texture,
-                    self.tcoords.points).render(**kwargs)
+                try:
+                    from menpo3d.visualize import TexturedTriMeshViewer3d
+                    return TexturedTriMeshViewer3d(
+                        figure_id, new_figure, self.points,
+                        self.trilist, self.texture,
+                        self.tcoords.points).render(**kwargs)
+                except ImportError:
+                    from menpo.visualize import Menpo3dErrorMessage
+                    raise ImportError(Menpo3dErrorMessage)
             else:
                 raise ValueError("Only viewing of 3D textured meshes"
                                  "is currently supported.")

@@ -86,44 +86,8 @@ def import_image(filepath, landmark_resolver=same_name):
         An instantiated :map:`Image` or subclass thereof
 
     """
-    return _import(filepath, all_image_types, has_landmarks=True,
+    return _import(filepath, image_types, has_landmarks=True,
                    landmark_resolver=landmark_resolver)
-
-
-def import_mesh(filepath, landmark_resolver=same_name, texture=True):
-    r"""Single mesh (and associated landmarks and texture) importer.
-
-    Iff an mesh file is found at `filepath`, returns a :class:`menpo.shape
-    .TriMesh` representing it. Landmark files sharing the same filename
-    will be imported and attached too. If texture coordinates and a suitable
-    texture are found the object returned will be a :class:`menpo.shape
-    .TexturedTriMesh`.
-
-    Parameters
-    ----------
-    filepath : `str`
-        A relative or absolute filepath to an image file.
-
-    landmark_resolver : `function`, optional
-        This function will be used to find landmarks for the
-        mesh. The function should take one argument (the mesh itself) and
-        return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
-        Default finds landmarks with the same name as the mesh file.
-
-    texture : `bool`, optional
-        If False, don't search for textures.
-
-        Default: ``True``
-
-    Returns
-    -------
-    :map:`TriMesh`
-        An instantiated :map:`TriMesh` (or subclass thereof)
-
-    """
-    kwargs = {'texture': texture}
-    return _import(filepath, mesh_types, has_landmarks=True,
-                   landmark_resolver=landmark_resolver, importer_kwargs=kwargs)
 
 
 def import_landmark_file(filepath, asset=None):
@@ -143,7 +107,7 @@ def import_landmark_file(filepath, asset=None):
         The :map:`LandmarkGroup` that the file format represents.
 
     """
-    return _import(filepath, all_landmark_types, has_landmarks=False,
+    return _import(filepath, image_landmark_types, has_landmarks=False,
                    asset=asset)
 
 
@@ -197,67 +161,10 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
         >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
         >>>    images.append(im)
     """
-    for asset in _import_glob_generator(pattern, all_image_types,
+    for asset in _import_glob_generator(pattern, image_types,
                                         max_assets=max_images,
                                         has_landmarks=True,
                                         landmark_resolver=landmark_resolver,
-                                        verbose=verbose):
-        yield asset
-
-
-def import_meshes(pattern, max_meshes=None, landmark_resolver=same_name,
-                  textures=True, verbose=False):
-    r"""Multiple mesh import generator.
-
-    Makes it's best effort to import and attach relevant related
-    information such as landmarks. It searches the directory for files that
-    begin with the same filename and end in a supported extension.
-
-    If texture coordinates and a suitable texture are found the object
-    returned will be a :map:`TexturedTriMesh`.
-
-    Note that this is a generator function. This allows for pre-processing
-    of data to take place as data is imported (e.g. cleaning meshes
-    as they are imported for memory efficiency).
-
-    Parameters
-    ----------
-    pattern : `str`
-        The glob path pattern to search for textures and meshes.
-
-    max_meshes : positive `int`, optional
-        If not ``None``, only import the first ``max_meshes`` meshes found.
-        Else, import all.
-
-    landmark_resolver : `function`, optional
-        This function will be used to find landmarks for the
-        mesh. The function should take one argument (the mesh itself) and
-        return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
-        Default finds landmarks with the same name as the mesh file.
-
-    texture : `bool`, optional
-        If ``False``, don't search for textures.
-
-    verbose : `bool`, optional
-        If ``True`` progress of the importing will be dynamically reported.
-
-    Yields
-    ------
-    :map:`TriMesh` or :map:`TexturedTriMesh`
-        Meshes found to match the glob pattern provided.
-
-    Raises
-    ------
-    ValueError
-        If no meshes are found at the provided glob.
-
-    """
-    kwargs = {'texture': textures}
-    for asset in _import_glob_generator(pattern, mesh_types,
-                                        max_assets=max_meshes,
-                                        has_landmarks=True,
-                                        landmark_resolver=landmark_resolver,
-                                        importer_kwargs=kwargs,
                                         verbose=verbose):
         yield asset
 
@@ -290,7 +197,7 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
         If no landmarks are found at the provided glob.
 
     """
-    for asset in _import_glob_generator(pattern, all_landmark_types,
+    for asset in _import_glob_generator(pattern, image_landmark_types,
                                         max_assets=max_landmarks,
                                         has_landmarks=False,
                                         verbose=verbose):
@@ -316,7 +223,7 @@ def _import_builtin_asset(asset_name):
 
     """
     asset_path = data_path_to(asset_name)
-    return _import(asset_path, all_mesh_and_image_types, has_landmarks=True)
+    return _import(asset_path, image_types, has_landmarks=True)
 
 
 def ls_builtin_assets():
@@ -350,18 +257,11 @@ for asset in ls_builtin_assets():
     setattr(import_builtin_asset, asset.replace('.', '_'), import_builtin(asset))
 
 
-def mesh_paths(pattern):
-    r"""
-    Return mesh filepaths that Menpo can import that match the glob pattern.
-    """
-    return glob_with_suffix(pattern, mesh_types)
-
-
 def image_paths(pattern):
     r"""
     Return image filepaths that Menpo can import that match the glob pattern.
     """
-    return glob_with_suffix(pattern, all_image_types)
+    return glob_with_suffix(pattern, image_types)
 
 
 def landmark_file_paths(pattern):
@@ -369,7 +269,7 @@ def landmark_file_paths(pattern):
     Return landmark file filepaths that Menpo can import that match the glob
     pattern.
     """
-    return glob_with_suffix(pattern, all_landmark_types)
+    return glob_with_suffix(pattern, image_landmark_types)
 
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
@@ -795,6 +695,4 @@ class Importer(object):
 
 
 # Avoid circular imports
-from menpo.io.input.extensions import (mesh_types, all_image_types,
-                                       all_mesh_and_image_types,
-                                       all_landmark_types)
+from menpo.io.input.extensions import image_landmark_types, image_types
