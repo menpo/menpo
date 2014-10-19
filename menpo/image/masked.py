@@ -316,7 +316,7 @@ class MaskedImage(Image):
         self.set_masked_pixels(vector.reshape((-1, self.n_channels)),
                                copy=copy)
 
-    def _view(self, figure_id=None, new_figure=False, channels=None,
+    def view(self, figure_id=None, new_figure=False, channels=None,
               masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Currently only

@@ -268,8 +268,8 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
             group.lms._transform_inplace(transform)
         return self
 
-    def _view(self, figure_id=None, new_figure=False, group_label=None,
-              **kwargs):
+    def view(self, figure_id=None, new_figure=False, group_label=None,
+             **kwargs):
         """
         View all landmarks groups on the current manager.
 
@@ -301,14 +301,14 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         if group_label is None:
             viewers = []
             for label in self._landmark_groups:
-                v = self._landmark_groups[label]._view(figure_id=figure_id,
-                                                       new_figure=new_figure,
-                                                       group_label=label,
-                                                       **kwargs)
+                v = self._landmark_groups[label].view(figure_id=figure_id,
+                                                      new_figure=new_figure,
+                                                      group_label=label,
+                                                      **kwargs)
                 viewers.append(v)
             return viewers
         elif group_label in self._landmark_groups:
-            return self._landmark_groups[group_label]._view(
+            return self._landmark_groups[group_label].view(
                 figure_id=figure_id, new_figure=new_figure,
                 group_label=group_label, **kwargs)
         else:
@@ -648,9 +648,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                            'landmarks': landmarks})
         return {'groups': groups}
 
-    def _view(self, figure_id=None, new_figure=False, targettype=None,
-              render_labels=True, group_label='group', with_labels=None,
-              without_labels=None, **kwargs):
+    def view(self, figure_id=None, new_figure=False, targettype=None,
+            render_labels=True, group_label='group', with_labels=None,
+            without_labels=None, **kwargs):
         """
         View all landmarks. Kwargs passed in here will be passed through
         to the shapes view method.

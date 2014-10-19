@@ -149,7 +149,7 @@ class TexturedTriMesh(TriMesh):
         json_dict['tcoords'] = self.tcoords.tojson()['points']
         return json_dict
 
-    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
         r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
@@ -186,9 +186,9 @@ class TexturedTriMesh(TriMesh):
                 raise ValueError("Only viewing of 3D textured meshes"
                                  "is currently supported.")
         else:
-            return super(TexturedTriMesh, self)._view(figure_id=figure_id,
-                                                      new_figure=new_figure,
-                                                      **kwargs)
+            return super(TexturedTriMesh, self).view(figure_id=figure_id,
+                                                     new_figure=new_figure,
+                                                     **kwargs)
 
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(

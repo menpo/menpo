@@ -350,13 +350,13 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.y_label = y_label
         self.axis_limits = axis_limits
 
-    def _render(self, color_list=None, marker_list=None, **kwargs):
+    def _render(self, colour_list=None, marker_list=None, **kwargs):
         import matplotlib.pyplot as plt
 
         ax = plt.gca()
         ax.set_xlabel(self.x_label)
         ax.set_ylabel(self.y_label)
-        for y, c, m in zip(self.y_axis, color_list, marker_list):
+        for y, c, m in zip(self.y_axis, colour_list, marker_list):
             plt.plot(self.x_axis, y, color=c, marker=m, **kwargs)
         if self.axis_limits is not None:
             plt.axis(self.axis_limits)

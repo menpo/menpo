@@ -409,6 +409,9 @@ def visualize_shape_model(shape_models, n_parameters=5,
         weights = (parameters_values *
                    shape_models[level].eigenvalues[:len(parameters_values)] ** 0.5)
 
+        # compute the mean
+        mean = shape_models[level].mean()
+
         # select figure
         figure_id = plt.figure(save_figure_wid.figure_id.number)
 
@@ -424,8 +427,8 @@ def visualize_shape_model(shape_models, n_parameters=5,
 
             # plot
             if mean_wid.value:
-                shape_models[level].mean().view(image_view=axis_mode == 1,
-                                                colour_array='y', **kwargs)
+                mean.view(image_view=axis_mode == 1, colour_array='y',
+                          **kwargs)
                 plt.hold = True
             instance.view(image_view=axis_mode == 1, **kwargs)
 
@@ -438,7 +441,6 @@ def visualize_shape_model(shape_models, n_parameters=5,
             instance_upper = shape_models[level].instance(weights)
 
             # plot
-            mean = shape_models[level].mean()
             mean.view(image_view=axis_mode == 1, **kwargs)
             plt.hold = True
             for p in range(mean.n_points):
