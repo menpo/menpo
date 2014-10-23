@@ -1302,6 +1302,9 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
     if not isinstance(fitting_results, list):
         fitting_results = [fitting_results]
 
+    # check if all fitting_results have gt_shape in order to show the ced button
+    show_ced = all(not f.gt_shape is None for f in fitting_results)
+
     # find number of fitting_results
     n_fitting_results = len(fitting_results)
 
@@ -1494,13 +1497,18 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
             im = image_number_wid.selected_index
 
         # create output str
-        info_txt = r"""
-            Initial error: {:.4f}
-            Final error: {:.4f}
-            {} iterations
-        """.format(fitting_results[im].initial_error(error_type=value),
-                   fitting_results[im].final_error(error_type=value),
-                   fitting_results[im].n_iters)
+        if fitting_results[im].gt_shape is not None:
+            info_txt = r"""
+                Initial error: {:.4f}
+                Final error: {:.4f}
+                {} iterations
+            """.format(fitting_results[im].initial_error(error_type=value),
+                       fitting_results[im].final_error(error_type=value),
+                       fitting_results[im].n_iters)
+        else:
+            info_txt = r"""
+                {} iterations
+            """.format(fitting_results[im].n_iters)
         if hasattr(fitting_results[im], 'n_levels'):  # Multilevel result
             info_txt += r"""
                 {} levels with downscale of {:.1f}
@@ -1557,7 +1565,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                         value='me_norm',
                                         description='Error type')
     error_type_wid.on_trait_change(update_info, 'value')
-    plot_ced_but = ButtonWidget(description='Plot CED')
+    plot_ced_but = ButtonWidget(description='Plot CED', visible=show_ced)
     error_wid = ContainerWidget(children=[error_type_wid, plot_ced_but])
 
     # define function that updates options' widgets state
@@ -1618,7 +1626,11 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                                       error_wid, save_figure_wid])
         tab_wid.on_trait_change(save_fig_tab_fun, 'selected_index')
         wid = ContainerWidget(children=[image_number_wid, tab_wid])
-        tab_titles = ['Info', 'Result', 'Options', 'CED', 'Save figure']
+        if show_ced:
+            tab_titles = ['Info', 'Result', 'Options', 'CED', 'Save figure']
+        else:
+            tab_titles = ['Info', 'Result', 'Options', 'Error type',
+                          'Save figure']
         button_title = 'Fitting Results Menu'
     else:
         # do not show the plot ced button

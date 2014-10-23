@@ -893,7 +893,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     legend = CheckboxWidget(description='Show legend', value=legend_default)
-    numbering = CheckboxWidget(description='Show Numbering',
+    numbering = CheckboxWidget(description='Show numbering',
                                value=numbering_default)
     group = DropdownWidget(values=group_keys, description='Group')
     labels_toggles = [[ToggleButtonWidget(description=k, value=True)
@@ -1704,7 +1704,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
-    show_numbering = CheckboxWidget(description='Show Numbering',
+    show_numbering = CheckboxWidget(description='Show numbering',
                                     value=numbering_default)
 
     # Group widgets
@@ -2039,7 +2039,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     plot_mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
-    show_numbering = CheckboxWidget(description='Show Numbering',
+    show_numbering = CheckboxWidget(description='Show numbering',
                                     value=numbering_default)
     # if just one iteration, disable multiple options
     if n_iters == 1:
@@ -2174,12 +2174,8 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         show_image.visible = value
         show_legend.visible = value
         show_numbering.visible = value
-        if image_has_gt_shape and value:
-            plot_errors_button.visible = True
-            plot_displacements.visible = True
-        else:
-            plot_errors_button.visible = False
-            plot_displacements.visible = False
+        plot_errors_button.visible = image_has_gt_shape and value
+        plot_displacements.visible = value
         if value:
             if iterations_mode.value == 0:
                 animation_wid.visible = True
@@ -2339,7 +2335,7 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         iterations_result_wid.children[2].children[4].visible = \
             iterations_result_wid.children[0].value and image_has_gt_shape
         iterations_result_wid.children[2].children[5].visible = \
-            iterations_result_wid.children[0].value and image_has_gt_shape
+            iterations_result_wid.children[0].value
         # store the flag
         iterations_result_wid.image_has_gt_shape = image_has_gt_shape
 
