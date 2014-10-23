@@ -132,6 +132,15 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     # find number of images
     n_images = len(images)
 
+    # find initial groups and labels that will be passed to the landmark options
+    # widget creation
+    if images[0].has_landmarks:
+        initial_groups_keys, initial_labels_keys = \
+            _extract_groups_labels(images[0])
+    else:
+        initial_groups_keys = [' ']
+        initial_labels_keys = [[' ']]
+
     # define plot function
     def plot_function(name, value):
         # clear current figure, but wait until the new data to be displayed are
@@ -144,8 +153,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             im = image_number_wid.selected_index
 
         # update info text widget
-        update_info(images[im],
-                    channel_options_wid.image_is_masked,
+        image_has_landmarks = images[im].landmarks.n_groups != 0
+        image_is_masked = isinstance(images[im], MaskedImage)
+        update_info(images[im], image_is_masked, image_has_landmarks,
                     landmark_options_wid.group)
 
         # get the current figure id
@@ -156,7 +166,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             image=images[im], figure_id=figure_id, image_enabled=True,
             landmarks_enabled=landmark_options_wid.landmarks_enabled,
             image_is_masked=channel_options_wid.image_is_masked,
-            masked_enabled=channel_options_wid.masked_enabled,
+            masked_enabled=channel_options_wid.masked_enabled and image_is_masked,
             channels=channel_options_wid.channels,
             glyph_enabled=channel_options_wid.glyph_enabled,
             glyph_block_size=channel_options_wid.glyph_block_size,
@@ -177,24 +187,26 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         save_figure_wid.figure_id = new_figure_id
 
     # define function that updates info text
-    def update_info(image, image_is_masked, group):
+    def update_info(image, image_is_masked, image_has_landmarks, group):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Display masked pixels if image is masked
         masked_pixels_str = (r'{} masked pixels.'.format(image.n_true_pixels())
                              if image_is_masked else '')
+        # Display number of landmarks if image is landmarked
+        landmarks_str = (r'{} landmark points.'.
+                         format(image.landmarks[group].lms.n_points)
+                         if image_has_landmarks else '')
 
         # Create info string
         info_txt = r"""
              {} of size {} with {} channel{}
-             {} landmark points.
              {}
              min={:.3f}, max={:.3f}
+             {}
         """.format(masked_str, image._str_shape, image.n_channels,
-                   's' * (image.n_channels > 1),
-                   image.landmarks[group].lms.n_points,
-                   masked_pixels_str,
-                   image.pixels.min(), image.pixels.max())
+                   's' * (image.n_channels > 1), masked_pixels_str,
+                   image.pixels.min(), image.pixels.max(), landmarks_str)
 
         # update info widget text
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
@@ -206,14 +218,23 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                           masked_default=False,
                                           toggle_show_default=True,
                                           toggle_show_visible=False)
-    all_groups_keys, all_labels_keys = _extract_groups_labels(images[0])
-    landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
+    # if only a single image is passed in and it doesn't have landmarks, then
+    # landmarks checkbox default should be False
+    landmarks_default = True
+    if len(images) == 1 and not images[0].has_landmarks:
+        landmarks_default = False
+    landmark_options_wid = landmark_options(initial_groups_keys,
+                                            initial_labels_keys,
                                             plot_function,
                                             toggle_show_default=True,
-                                            landmarks_default=True,
+                                            landmarks_default=landmarks_default,
                                             legend_default=True,
                                             numbering_default=False,
                                             toggle_show_visible=False)
+    # if only a single image is passed in and it doesn't have landmarks, then
+    # landmarks checkbox should be disabled
+    landmark_options_wid.children[1].children[0].disabled = \
+        len(images) == 1 and not images[0].has_landmarks
     figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=False,
                                         toggle_show_default=True,
@@ -232,13 +253,14 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     def update_widgets(name, value):
         # get new groups and labels, update landmark options and format them
         group_keys, labels_keys = _extract_groups_labels(images[value])
-        update_landmark_options(landmark_options_wid, group_keys, labels_keys,
-                                plot_function)
+        update_landmark_options(landmark_options_wid, group_keys,
+                                labels_keys, plot_function)
         format_landmark_options(landmark_options_wid, container_padding='6px',
                                 container_margin='6px',
                                 container_border='1px solid black',
                                 toggle_button_font_weight='bold',
                                 border_visible=False)
+
         # update channel options
         update_channel_options(channel_options_wid,
                                n_channels=images[value].n_channels,
@@ -2376,7 +2398,11 @@ def _extract_groups_labels(image):
         The list of lists of each landmark group's labels.
     """
     groups_keys = image.landmarks.keys()
-    labels_keys = [image.landmarks[g].keys() for g in groups_keys]
+    if len(groups_keys) == 0:
+        groups_keys = [' ']
+        labels_keys = [[' ']]
+    else:
+        labels_keys = [image.landmarks[g].keys() for g in groups_keys]
     return groups_keys, labels_keys
 
 
