@@ -893,7 +893,7 @@ def landmark_options(group_keys, labels_keys, plot_function=None,
     landmarks = CheckboxWidget(description='Show landmarks',
                                value=landmarks_default)
     legend = CheckboxWidget(description='Show legend', value=legend_default)
-    numbering = CheckboxWidget(description='Show Numbering',
+    numbering = CheckboxWidget(description='Show numbering',
                                value=numbering_default)
     group = DropdownWidget(values=group_keys, description='Group')
     labels_toggles = [[ToggleButtonWidget(description=k, value=True)
@@ -1105,7 +1105,8 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         The plot function that is executed when a widgets' value changes.
         If None, then nothing is assigned.
     """
-    # check if the new group_keys and labels_keys are the same as the old ones
+    # check if the new group_keys and labels_keys are the same as the old
+    # ones
     if not _compare_groups_and_labels(group_keys, labels_keys,
                                       landmark_options_wid.group_keys,
                                       landmark_options_wid.labels_keys):
@@ -1115,12 +1116,13 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
                            for k in s_keys] for s_keys in labels_keys]
 
         # Group widgets
-        landmark_options_wid.children[2].children[1].children[1].children = \
-            labels_toggles[0]
+        landmark_options_wid.children[2].children[1].children[1].\
+            children = labels_toggles[0]
         labels = landmark_options_wid.children[2].children[1]
         cont = ContainerWidget(children=[group, labels])
         landmark_options_wid.children = [landmark_options_wid.children[0],
-                                         landmark_options_wid.children[1], cont]
+                                         landmark_options_wid.children[1],
+                                         cont]
 
         # Initialize output variables
         landmark_options_wid.group_keys = group_keys
@@ -1130,24 +1132,41 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         landmark_options_wid.with_labels = labels_keys[0]
 
         # Disability control
-        group.disabled = not landmark_options_wid.landmarks_enabled
-        # disable all labels toggles
-        for s_keys in labels_toggles:
-            for k in s_keys:
-                k.disabled = not landmark_options_wid.landmarks_enabled
+        # Disability control
+        def landmarks_fun(name, value):
+            # get landmarks_enabled value
+            landmark_options_wid.landmarks_enabled = value
+            # disable legend checkbox and group drop down menu
+            landmark_options_wid.children[1].children[1].disabled = not value
+            landmark_options_wid.children[1].children[2].disabled = not value
+            group.disabled = not value
+            # disable all labels toggles
+            for s_keys in landmark_options_wid.labels_toggles:
+                for k in s_keys:
+                    k.disabled = not value
+            # if all currently selected labels toggles are False, set them all
+            # to True
+            all_values = [ww.value for ww in landmark_options_wid.children[2].children[1].children[1].children]
+            if all(item is False for item in all_values):
+                for ww in landmark_options_wid.children[2].children[1].children[1].children:
+                    ww.value = True
+        landmark_options_wid.children[1].children[0].on_trait_change(landmarks_fun, 'value')
+        landmarks_fun('', landmark_options_wid.landmarks_enabled)
 
         # Group drop down method
         def group_fun(name, value):
             # get group value
             landmark_options_wid.group = value
             # assign the correct children to the labels toggles
-            landmark_options_wid.children[2].children[1].children[1].children = \
-                landmark_options_wid.labels_toggles[landmark_options_wid.group_keys.index(value)]
+            landmark_options_wid.children[2].children[1].children[1].\
+                children = landmark_options_wid.labels_toggles[
+                    landmark_options_wid.group_keys.index(value)]
             # get with_labels value
             landmark_options_wid.with_labels = []
             for ww in landmark_options_wid.children[2].children[1].children[1].children:
                 if ww.value:
-                    landmark_options_wid.with_labels.append(str(ww.description))
+                    landmark_options_wid.with_labels.append(
+                        str(ww.description))
             # assign plot_function to all enabled labels
             if plot_function is not None:
                 for w in landmark_options_wid.children[2].children[1].children[1].children:
@@ -1158,14 +1177,17 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
         # Labels function
         def labels_fun(name, value):
             # if all labels toggles are False, set landmarks checkbox to False
-            all_values = [ww.value for ww in landmark_options_wid.children[2].children[1].children[1].children]
+            all_values = [ww.value
+                          for ww in landmark_options_wid.children[2].children[1].children[1].children]
             if all(item is False for item in all_values):
                 landmark_options_wid.children[1].children[0].value = False
             # get with_labels value
             landmark_options_wid.with_labels = []
-            for ww in landmark_options_wid.children[2].children[1].children[1].children:
+            for ww in landmark_options_wid.children[2].children[1].children[1].\
+                    children:
                 if ww.value:
-                    landmark_options_wid.with_labels.append(str(ww.description))
+                    landmark_options_wid.with_labels.append(
+                        str(ww.description))
         # assign labels_fun to all labels toggles (even hidden ones)
         for s_group in labels_toggles:
             for w in s_group:
@@ -1186,6 +1208,17 @@ def update_landmark_options(landmark_options_wid, group_keys, labels_keys,
             landmark_options_wid.children[2].visible = value
         show_options('', landmark_options_wid.children[0].value)
         landmark_options_wid.children[0].on_trait_change(show_options, 'value')
+
+        # If there is only one group with value ' ', this means that the image
+        # didn't have any landmarks. So disable the show_landmarks checkbox.
+        if len(group_keys) == 1 and group_keys[0] == ' ':
+            # No landmarks are provided. So disable the show landmarks checkbox
+            landmark_options_wid.children[1].children[0].value = False
+            landmark_options_wid.children[1].children[0].disabled = True
+        else:
+            if landmark_options_wid.children[1].children[0].disabled:
+                landmark_options_wid.children[1].children[0].disabled = False
+                landmark_options_wid.children[1].children[0].value = True
 
 
 def info_print(toggle_show_default=True, toggle_show_visible=True):
@@ -1671,7 +1704,7 @@ def final_result_options(group_keys, plot_function=None, title='Final Result',
     mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
-    show_numbering = CheckboxWidget(description='Show Numbering',
+    show_numbering = CheckboxWidget(description='Show numbering',
                                     value=numbering_default)
 
     # Group widgets
@@ -2006,7 +2039,7 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
     plot_mode.value = subplots_enabled_default
     show_legend = CheckboxWidget(description='Show legend',
                                  value=legend_default)
-    show_numbering = CheckboxWidget(description='Show Numbering',
+    show_numbering = CheckboxWidget(description='Show numbering',
                                     value=numbering_default)
     # if just one iteration, disable multiple options
     if n_iters == 1:
@@ -2141,12 +2174,8 @@ def iterations_result_options(n_iters, image_has_gt_shape, n_points,
         show_image.visible = value
         show_legend.visible = value
         show_numbering.visible = value
-        if image_has_gt_shape and value:
-            plot_errors_button.visible = True
-            plot_displacements.visible = True
-        else:
-            plot_errors_button.visible = False
-            plot_displacements.visible = False
+        plot_errors_button.visible = image_has_gt_shape and value
+        plot_displacements.visible = value
         if value:
             if iterations_mode.value == 0:
                 animation_wid.visible = True
@@ -2306,7 +2335,7 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
         iterations_result_wid.children[2].children[4].visible = \
             iterations_result_wid.children[0].value and image_has_gt_shape
         iterations_result_wid.children[2].children[5].visible = \
-            iterations_result_wid.children[0].value and image_has_gt_shape
+            iterations_result_wid.children[0].value
         # store the flag
         iterations_result_wid.image_has_gt_shape = image_has_gt_shape
 
