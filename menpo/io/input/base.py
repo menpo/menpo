@@ -59,35 +59,36 @@ def same_name(asset):
             for p in landmark_file_paths(pattern)}
 
 
-def import_image(filepath, landmark_resolver=same_name):
-    r"""Single image (and associated landmarks) importer.
+def import_image(filepath, landmark_resolver=same_name, normalise=True):
+    r"""
+    Single image (and associated landmarks) importer.
 
-    Iff an image file is found at `filepath`, returns a :class:`menpo.image
-    .MaskedImage` representing it. Landmark files sharing the same filename
+    Iff an image file is found at `filepath`, returns a :map:`Image` or subclass
+    representing it. Landmark files sharing the same filename
     will be imported and attached too. If the image defines a mask,
     this mask will be imported.
-
-    This method is valid for both traditional images and spatial image types.
 
     Parameters
     ----------
     filepath : `str`
         A relative or absolute filepath to an image file.
-
     landmark_resolver : `function`, optional
         This function will be used to find landmarks for the
         image. The function should take one argument (the image itself) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
+    normalise : `bool`, optional
+        If ``True``, normalise the image pixels between 0 and 1 and convert
+        to floating point.
 
     Returns
     -------
-    :map:`Image`
-        An instantiated :map:`Image` or subclass thereof
-
+    images : :map:`Image` or list of
+        An instantiated :map:`Image` or subclass thereof or a list of images.
     """
+    kwargs = {'normalise': normalise}
     return _import(filepath, image_types, has_landmarks=True,
-                   landmark_resolver=landmark_resolver)
+                   landmark_resolver=landmark_resolver, importer_kwargs=kwargs)
 
 
 def import_landmark_file(filepath, asset=None):
@@ -112,8 +113,9 @@ def import_landmark_file(filepath, asset=None):
 
 
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
-                  verbose=False):
-    r"""Multiple image import generator.
+                  normalise=True, verbose=False):
+    r"""
+    Multiple image import generator.
 
     Makes it's best effort to import and attach relevant related
     information such as landmarks. It searches the directory for files that
@@ -123,22 +125,21 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
     of data to take place as data is imported (e.g. cropping images to
     landmarks as they are imported for memory efficiency).
 
-
     Parameters
     ----------
     pattern : `str`
         The glob path pattern to search for images.
-
     max_images : positive `int`, optional
         If not ``None``, only import the first ``max_images`` found. Else,
         import all.
-
     landmark_resolver : `function`, optional
         This function will be used to find landmarks for the
         image. The function should take one argument (the image itself) and
         return a dictionary of the form ``{'group_name': 'landmark_filepath'}``
         Default finds landmarks with the same name as the image file.
-
+    normalise : `bool`, optional
+        If ``True``, normalise the images between 0.0 and 1.0 and convert
+        to ``np.float``.
     verbose : `bool`, optional
         If ``True`` progress of the importing will be dynamically reported.
 
@@ -161,11 +162,13 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
         >>>    im.crop_inplace((0, 0), (100, 100))  # crop to a sensible size as we go
         >>>    images.append(im)
     """
+    kwargs = {'normalise': normalise}
     for asset in _import_glob_generator(pattern, image_types,
                                         max_assets=max_images,
                                         has_landmarks=True,
                                         landmark_resolver=landmark_resolver,
-                                        verbose=verbose):
+                                        verbose=verbose,
+                                        importer_kwargs=kwargs):
         yield asset
 
 
