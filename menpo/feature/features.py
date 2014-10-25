@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 scipy_gaussian_filter = None  # expensive
-cyvlfeat_dsift = None
 
 from .base import ndfeature, winitfeature
 from .windowiterator import WindowIterator
