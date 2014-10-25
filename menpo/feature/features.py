@@ -710,63 +710,6 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     #                                 self._image.pixels.shape[2]}
 
 
-@winitfeature
-def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
-         num_bins_horizontal=2, num_bins_vertical=2,
-         num_or_bins=9, bin_size_horizontal=6, bin_size_vertical=6, fast=False,
-         window_size=2, padding=False, verbose=False):
-    global cyvlfeat_dsift
-    if cyvlfeat_dsift is None:
-        from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
-
-    # If norm is set to True, then the centers array will have a third column
-    # with descriptor norm, or energy, before contrast normalization.
-    # This information can be used to suppress low contrast descriptors.
-    f, d = cyvlfeat_dsift(pixels[..., -1],
-                          step=[window_step_vertical, window_step_horizontal],
-                          size=[bin_size_vertical, bin_size_horizontal],
-                          bounds=None, window_size=window_size, norm=False,
-                          fast=fast, float_descriptors=True,
-                          geometry=(num_bins_horizontal, num_bins_vertical,
-                                    num_or_bins), verbose=False)
-
-    # Convert descriptors to desired output
-    d_height = np.unique(f[0, ]).shape[0]
-    d_width = np.unique(f[1, ]).shape[0]
-    n_channels = d.shape[0]
-    descriptors = np.reshape(d.T, (d_height, d_width, n_channels), order='F')
-    windows_centers = np.reshape(f.T, (d_height, d_width, 2), order='F')
-
-    if padding:
-        descriptors = _pad_array(pixels.shape, descriptors,
-                                 window_step_horizontal, window_step_vertical,
-                                 ((0, 0), (0, 0), (0, 0)))
-        windows_centers = _pad_array(
-            pixels.shape, windows_centers, window_step_horizontal,
-            window_step_vertical,
-            ((0, pixels.shape[0]-1), (0, pixels.shape[1]-1), (0, 0)))
-
-    # print information
-    if verbose:
-        info_str = "SIFT features:\n" \
-                   "  - Input image is {}W x {}H with {} channels.\n" \
-                   "  - Sampling step of ({}W,{}H) and window of size {}.\n" \
-                   "  - {}W x {}H spatial bins and {} orientation bins.\n" \
-                   "  - Bins size of {}W x {}H pixels.\n".format(
-                   pixels.shape[1], pixels.shape[0], pixels.shape[2],
-                   window_step_horizontal, window_step_vertical, window_size,
-                   num_bins_horizontal, num_bins_vertical, num_or_bins,
-                   bin_size_horizontal, bin_size_vertical)
-        if fast:
-            info_str += "  - Fast mode is enabled.\n"
-        info_str += "Output image size {}W x {}H x {}.".format(
-            descriptors.shape[1], descriptors.shape[0], descriptors.shape[2])
-        print(info_str)
-
-    return (np.require(descriptors, requirements='C', dtype=np.double),
-            np.require(windows_centers, requirements='C', dtype=np.int))
-
-
 @ndfeature
 def no_op(image_data):
     r"""
@@ -774,23 +717,3 @@ def no_op(image_data):
     passed in.
     """
     return image_data.copy()
-
-
-def _pad_array(input_shape, array, horizontal_step, vertical_step,
-               constant_values):
-    output_height = input_shape[0] / vertical_step
-    dif1 = output_height - array.shape[0]
-    before_1 = dif1 / 2
-    after_1 = dif1 - before_1
-
-    output_width = input_shape[1] / horizontal_step
-    dif2 = output_width - array.shape[1]
-    before_2 = dif2 / 2
-    after_2 = dif2 - before_2
-
-    pad_width = ((before_1, after_1), (before_2, after_2), (0, 0))
-    if len(array.shape) == 2:
-        pad_width = ((before_1, after_1), (before_2, after_2))
-
-    return np.pad(array, pad_width=pad_width, mode='constant',
-                  constant_values=constant_values)
