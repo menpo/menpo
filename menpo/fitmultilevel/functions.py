@@ -17,53 +17,6 @@ def build_sampling_grid(patch_shape):
     return sampling_grid.swapaxes(0, 2).swapaxes(0, 1)
 
 
-# TODO: document me
-def extract_local_patches(image, centres, sampling_grid):
-    r"""
-    Extract square patches from an image about centres.
-
-    Parameters
-    ----------
-    image : :map:`Image`
-        The image to extract patches from
-
-    centres : :map:`PointCloud`
-        The centres around which the patches should be extracted
-
-    sampling_grid : `ndarray` of shape: ``(patch_shape[0]+1, patch_shape[1]+1,
-    n_dims)``
-        The size of the patch in each dimension
-
-    Returns
-    -------
-    patches : ndarray` of shape: ``n_centres, + patch_shape + n_channels,``
-        The patches as a single numpy array.
-    """
-    max_x = image.shape[0] - 1
-    max_y = image.shape[1] - 1
-
-    pixels = image.pixels
-
-    patch_grid = (sampling_grid[None, ...] +
-                  np.round(centres.points[:, None, None, ...]).astype(int))
-
-    X = patch_grid[:, :, :, 0]
-    Y = patch_grid[:, :, :, 1]
-
-    # deal with boundaries
-    X[X > max_x] = max_x
-    Y[Y > max_y] = max_y
-    X[X < 0] = 0
-    Y[Y < 0] = 0
-
-    patches = np.empty(
-        (centres.n_points,) + sampling_grid.shape[:-1] + (image.n_channels,))
-    for j, (x, y) in enumerate(zip(X, Y)):
-        patches[j, ...] = pixels[x, y, :]
-
-    return patches
-
-
 # TODO: Should this be a method on Similarity? AlignableTransforms?
 def noisy_align(source, target, noise_std=0.04, rotation=False):
     r"""
