@@ -23,14 +23,6 @@ features on images, you should use ``image.features.FEATURE_NAME``.
 
    ImageFeatures
 
-Interpolation
--------------
-
-.. toctree::
-   :maxdepth: 1
-
-   scipy_interpolation
-
 Exceptions
 ----------
 
