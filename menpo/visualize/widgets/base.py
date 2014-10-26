@@ -134,8 +134,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # find initial groups and labels that will be passed to the landmark options
     # widget creation
-    landmarks_default = images[0].has_landmarks
-    if images[0].has_landmarks:
+    first_has_landmarks = images[0].landmarks.n_groups != 0
+    if first_has_landmarks:
         initial_groups_keys, initial_labels_keys = \
             _extract_groups_labels(images[0])
     else:
@@ -167,7 +167,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             image=images[im], figure_id=figure_id, image_enabled=True,
             landmarks_enabled=landmark_options_wid.landmarks_enabled,
             image_is_masked=channel_options_wid.image_is_masked,
-            masked_enabled=channel_options_wid.masked_enabled and image_is_masked,
+            masked_enabled=(channel_options_wid.masked_enabled and
+                            image_is_masked),
             channels=channel_options_wid.channels,
             glyph_enabled=channel_options_wid.glyph_enabled,
             glyph_block_size=channel_options_wid.glyph_block_size,
@@ -221,18 +222,14 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                           toggle_show_visible=False)
     # The landmarks checkbox default value if the first image doesn't have
     # landmarks
-    landmark_options_wid = landmark_options(initial_groups_keys,
-                                            initial_labels_keys,
-                                            plot_function,
-                                            toggle_show_default=True,
-                                            landmarks_default=landmarks_default,
-                                            legend_default=True,
-                                            numbering_default=False,
-                                            toggle_show_visible=False)
+    landmark_options_wid = landmark_options(
+        initial_groups_keys, initial_labels_keys, plot_function,
+        toggle_show_default=True, landmarks_default=first_has_landmarks,
+        legend_default=True, numbering_default=False, toggle_show_visible=False)
     # if only a single image is passed in and it doesn't have landmarks, then
     # landmarks checkbox should be disabled
     landmark_options_wid.children[1].children[0].disabled = \
-        len(images) == 1 and not images[0].has_landmarks
+        not first_has_landmarks
     figure_options_wid = figure_options(plot_function, scale_default=1.,
                                         show_axes_default=False,
                                         toggle_show_default=True,
@@ -1997,8 +1994,8 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
                  image_is_masked, masked_enabled, channels, glyph_enabled,
                  glyph_block_size, glyph_use_negative, sum_enabled, groups,
                  with_labels, groups_colours, subplots_enabled, subplots_titles,
-                 image_axes_mode, legend_enabled, numbering_enabled,
-                 x_scale, y_scale, axes_visible, figure_size, **kwargs):
+                 image_axes_mode, legend_enabled, numbering_enabled, x_scale,
+                 y_scale, axes_visible, figure_size, **kwargs):
     r"""
     Helper function that plots an object given a set of selected options.
 
