@@ -134,6 +134,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # find initial groups and labels that will be passed to the landmark options
     # widget creation
+    landmarks_default = images[0].has_landmarks
     if images[0].has_landmarks:
         initial_groups_keys, initial_labels_keys = \
             _extract_groups_labels(images[0])
@@ -218,11 +219,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
                                           masked_default=False,
                                           toggle_show_default=True,
                                           toggle_show_visible=False)
-    # if only a single image is passed in and it doesn't have landmarks, then
-    # landmarks checkbox default should be False
-    landmarks_default = True
-    if len(images) == 1 and not images[0].has_landmarks:
-        landmarks_default = False
+    # The landmarks checkbox default value if the first image doesn't have
+    # landmarks
     landmark_options_wid = landmark_options(initial_groups_keys,
                                             initial_labels_keys,
                                             plot_function,
