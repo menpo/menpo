@@ -1270,6 +1270,303 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     figure_options_wid.children[2].value = False
 
 
+def visualize_atm(atm, n_shape_parameters=5, parameters_bounds=(-3.0, 3.0),
+                  figure_size=(7, 7), mode='multiple', popup=False, **kwargs):
+    r"""
+    Allows the dynamic visualization of a multilevel ATM.
+
+    Parameters
+    -----------
+    atm : :map:`ATM` or subclass
+        The multilevel ATM to be displayed. Note that each level can have
+        different attributes, e.g. number of active components, feature type,
+        number of channels.
+
+    n_shape_parameters : `int` or `list` of `int` or None, optional
+        The number of shape principal components to be used for the parameters
+        sliders.
+        If int, then the number of sliders per level is the minimum between
+        n_parameters and the number of active components per level.
+        If list of int, then a number of sliders is defined per level.
+        If None, all the active components per level will have a slider.
+
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+
+    mode : 'single' or 'multiple', optional
+        If single, only a single slider is constructed along with a drop down
+        menu.
+        If multiple, a slider is constructed for each parameter.
+
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    kwargs : `dict`, optional
+        Passed through to the viewer.
+    """
+    from menpo.image import MaskedImage
+
+    # find number of levels
+    n_levels = atm.n_levels
+
+    # find maximum number of components per level
+    max_n_shape = [sp.n_active_components for sp in atm.shape_models]
+
+    # check given n_parameters
+    # the returned n_parameters is a list of len n_levels
+    n_shape_parameters = _check_n_parameters(n_shape_parameters, n_levels,
+                                             max_n_shape)
+
+    # define plot function
+    def plot_function(name, value):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
+        # get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # get weights and compute instance
+        shape_weights = shape_model_parameters_wid.parameters_values
+        instance = atm.instance(level=level, shape_weights=shape_weights)
+
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
+        # show image with selected options
+        new_figure_id = _plot_figure(
+            image=instance, figure_id=figure_id, image_enabled=True,
+            landmarks_enabled=landmark_options_wid.landmarks_enabled,
+            image_is_masked=channel_options_wid.image_is_masked,
+            masked_enabled=channel_options_wid.masked_enabled,
+            channels=channel_options_wid.channels,
+            glyph_enabled=channel_options_wid.glyph_enabled,
+            glyph_block_size=channel_options_wid.glyph_block_size,
+            glyph_use_negative=channel_options_wid.glyph_use_negative,
+            sum_enabled=channel_options_wid.sum_enabled,
+            groups=[landmark_options_wid.group],
+            with_labels=[landmark_options_wid.with_labels],
+            groups_colours=dict(), subplots_enabled=False,
+            subplots_titles=dict(), image_axes_mode=True,
+            legend_enabled=landmark_options_wid.legend_enabled,
+            numbering_enabled=landmark_options_wid.numbering_enabled,
+            x_scale=figure_options_wid.x_scale,
+            y_scale=figure_options_wid.y_scale,
+            axes_visible=figure_options_wid.axes_visible,
+            figure_size=figure_size, **kwargs)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
+
+        # update info text widget
+        update_info(atm, instance, level, landmark_options_wid.group)
+
+    # define function that updates info text
+    def update_info(atm, instance, level, group):
+        # features info
+        from menpo.fitmultilevel.base import name_of_callable
+
+        lvl_shape_mod = atm.shape_models[level]
+        tmplt_inst = atm.warped_templates[level]
+        n_channels = tmplt_inst.n_channels
+        feat = (atm.features if atm.pyramid_on_features
+                else atm.features[level])
+
+        # Feature string
+        tmp_feat = 'Feature is {} with {} channel{}.'.format(
+            name_of_callable(feat), n_channels, 's' * (n_channels > 1))
+
+        # create info str
+        if n_levels == 1:
+            tmp_shape_models = ''
+            tmp_pyramid = ''
+        else:  # n_levels > 1
+            # shape models info
+            if atm.scaled_shape_models:
+                tmp_shape_models = "Each level has a scaled shape model " \
+                                   "(reference frame)."
+            else:
+                tmp_shape_models = "Shape models (reference frames) are " \
+                                   "not scaled."
+            # pyramid info
+            if atm.pyramid_on_features:
+                tmp_pyramid = "Pyramid was applied on feature space."
+            else:
+                tmp_pyramid = "Features were extracted at each pyramid level."
+
+        # Formatting is a bit ugly but this is MUCH easier to read.
+        info_txt = r"""
+            {} training shapes.
+            Warp using {} transform.
+            Level {}/{}  (downscale={:.1f}).
+            {}
+            {}
+            {}
+            Reference frame of length {} ({} x {}C, {} x {}C).
+            {} shape components ({:.2f}% of variance)
+            {} landmark points.
+            Instance: min={:.3f} , max={:.3f}
+            """.format(atm.n_training_shapes, atm.transform.__name__,
+                       level + 1,
+                       atm.n_levels, atm.downscale, tmp_shape_models,
+                       tmp_pyramid, tmp_feat,
+                       tmplt_inst.n_true_pixels() * n_channels,
+                       tmplt_inst.n_true_pixels(), n_channels,
+                       tmplt_inst._str_shape, n_channels,
+                       lvl_shape_mod.n_components,
+                       lvl_shape_mod.variance_ratio() * 100,
+                       instance.landmarks[group].lms.n_points,
+                       instance.pixels.min(), instance.pixels.max())
+
+        info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
+
+    # Plot shape eigenvalues function
+    def plot_shape_eigenvalues(name):
+        # clear current figure, but wait until the new data to be displayed are
+        # generated
+        clear_output(wait=True)
+
+        # get parameters
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # get the current figure id
+        figure_id = save_figure_wid.figure_id
+
+        # show eigenvalues plots
+        new_figure_id = _plot_eigenvalues(figure_id, atm.shape_models[level],
+                                          figure_size,
+                                          figure_options_wid.x_scale,
+                                          figure_options_wid.y_scale)
+
+        # save the current figure id
+        save_figure_wid.figure_id = new_figure_id
+
+    # create options widgets
+    shape_model_parameters_wid = model_parameters(
+        n_shape_parameters[0], plot_function, params_str='param ', mode=mode,
+        params_bounds=parameters_bounds, toggle_show_default=True,
+        toggle_show_visible=False, toggle_show_name='Shape Parameters',
+        plot_eig_visible=True, plot_eig_function=plot_shape_eigenvalues)
+    channel_options_wid = channel_options(
+        atm.warped_templates[0].n_channels,
+        isinstance(atm.warped_templates[0], MaskedImage),
+        plot_function, masked_default=True, toggle_show_default=True,
+        toggle_show_visible=False)
+    all_groups_keys, all_labels_keys = \
+        _extract_groups_labels(atm.warped_templates[0])
+    landmark_options_wid = landmark_options(all_groups_keys, all_labels_keys,
+                                            plot_function,
+                                            toggle_show_default=True,
+                                            landmarks_default=True,
+                                            legend_default=False,
+                                            numbering_default=False,
+                                            toggle_show_visible=False)
+    figure_options_wid = figure_options(plot_function, scale_default=1.,
+                                        show_axes_default=True,
+                                        toggle_show_default=True,
+                                        toggle_show_visible=False)
+    info_wid = info_print(toggle_show_default=True, toggle_show_visible=False)
+    initial_figure_id = plt.figure()
+    save_figure_wid = save_figure_options(initial_figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # define function that updates options' widgets state
+    def update_widgets(name, value):
+        # update shape model parameters
+        update_model_parameters(shape_model_parameters_wid,
+                                n_shape_parameters[value],
+                                plot_function, params_str='param ')
+        # update channel options
+        update_channel_options(channel_options_wid,
+                               atm.warped_templates[value].n_channels,
+                               isinstance(atm.warped_templates[value],
+                                          MaskedImage))
+
+    # create final widget
+    tmp_children = [shape_model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = RadioButtonsWidget(values=radio_str,
+                                       description='Pyramid:', value=0)
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(plot_function, 'value')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ContainerWidget(children=tmp_children)
+    wid = TabWidget(children=[tmp_wid, channel_options_wid,
+                              landmark_options_wid, figure_options_wid,
+                              info_wid, save_figure_wid])
+    if popup:
+        wid = PopupWidget(children=[wid], button_text='ATM Menu')
+
+    # display final widget
+    display(wid)
+
+    # set final tab titles
+    tab_titles = ['Shape parameters', 'Channels options', 'Landmarks options',
+                  'Figure options', 'Model info', 'Save figure']
+    if popup:
+        for (k, tl) in enumerate(tab_titles):
+            wid.children[0].set_title(k, tl)
+    else:
+        for (k, tl) in enumerate(tab_titles):
+            wid.set_title(k, tl)
+
+    # align widgets
+    if n_levels > 1:
+        tmp_wid.remove_class('vbox')
+        tmp_wid.add_class('hbox')
+    format_model_parameters(shape_model_parameters_wid,
+                            container_padding='6px', container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold',
+                            border_visible=False)
+    format_channel_options(channel_options_wid, container_padding='6px',
+                           container_margin='6px',
+                           container_border='1px solid black',
+                           toggle_button_font_weight='bold',
+                           border_visible=False)
+    format_landmark_options(landmark_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold',
+                            border_visible=False)
+    format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False)
+    format_info_print(info_wid, font_size_in_pt='9pt', container_padding='6px',
+                      container_margin='6px',
+                      container_border='1px solid black',
+                      toggle_button_font_weight='bold', border_visible=False)
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=False)
+
+    # update widgets' state for level 0
+    update_widgets('', 0)
+
+    # Reset value to enable initial visualization
+    figure_options_wid.children[2].value = False
+
+
 def visualize_fitting_results(fitting_results, figure_size=(7, 7), popup=False,
                               **kwargs):
     r"""
