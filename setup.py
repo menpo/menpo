@@ -30,6 +30,7 @@ else:
                         'matplotlib==1.4.0',
                         'scikit-learn==0.15.2',
                         'pillow==2.5.1',
+                        'cyvlfeat==0.2',
 
                         'Cython==0.21',
                         'wrapt==1.9.0']
