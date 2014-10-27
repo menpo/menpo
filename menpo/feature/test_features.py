@@ -4,7 +4,7 @@ import random
 import math
 
 from menpo.image import Image, MaskedImage
-from menpo.feature import hog, lbp, es, igo, daisy
+from menpo.feature import hog, lbp, es, igo, daisy, sift
 import menpo.io as mio
 
 
@@ -152,6 +152,27 @@ def test_hog_channels_zhuramanan():
         assert_allclose(hog_img.n_channels, n_channels)
 
 
+def test_sift_channels():
+    n_cases = 3
+    num_bins_horizontal = np.random.randint(1, 3, [n_cases, 1])
+    num_bins_vertical = np.random.randint(1, 3, [n_cases, 1])
+    num_or_bins = np.random.randint(7, 9, [n_cases, 1])
+    cell_size_horizontal = np.random.randint(1, 10, [n_cases, 1])
+    cell_size_vertical = np.random.randint(1, 10, [n_cases, 1])
+    for i in range(n_cases):
+        image = MaskedImage(np.random.randn(40, 40, 1))
+        sift_img = sift(image, window_step_horizontal=3, window_step_vertical=3,
+                        num_bins_horizontal=num_bins_horizontal[i, 0],
+                        num_bins_vertical=num_bins_vertical[i, 0],
+                        num_or_bins=num_or_bins[i, 0],
+                        cell_size_horizontal=cell_size_horizontal[i, 0],
+                        cell_size_vertical=cell_size_vertical[i, 0],
+                        window_size=2)
+        n_channels = num_bins_horizontal[i, 0] * num_bins_vertical[i, 0] * \
+                     num_or_bins[i, 0]
+        assert_allclose(sift_img.n_channels, n_channels)
+
+
 def test_lbp_channels():
     n_cases = 3
     n_combs = np.random.randint(1, 6, [n_cases, 1])
@@ -241,6 +262,15 @@ def test_daisy_values():
     assert_allclose(np.around(daisy_img.pixels[0, 1, 20], 6), 0.002842)
     assert_allclose(np.around(daisy_img.pixels[1, 0, 30], 6), 0.006205)
     assert_allclose(np.around(daisy_img.pixels[1, 1, 40], 6), 0.001946)
+
+
+def test_sift_values():
+    image = Image([[1, 2, 3, 4], [2, 1, 3, 4], [1, 2, 3, 4], [2, 1, 3, 4]])
+    sift_img = sift(image, cell_size_horizontal=2, cell_size_vertical=2)
+    assert_allclose(np.around(sift_img.pixels[0, 0, 0], 6), 76.002098)
+    assert_allclose(np.around(sift_img.pixels[0, 1, 1], 6), 139.767334)
+    assert_allclose(np.around(sift_img.pixels[1, 0, 0], 6), 155.952972)
+    assert_allclose(np.around(sift_img.pixels[1, 1, 5], 6), 18.307358)
 
 
 def test_lbp_values():

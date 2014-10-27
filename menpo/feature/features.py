@@ -673,7 +673,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
          num_bins_horizontal=2, num_bins_vertical=2, num_or_bins=9,
          cell_size_horizontal=6, cell_size_vertical=6, window_size=2,
-         fast=False, verbose=False):
+         fast=True, verbose=False):
     r"""
     Computes a 2-dimensional dense SIFT features image with k number of
     channels, of size `(M, N, C)` and data type `np.float`.
@@ -775,7 +775,7 @@ def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
 
     # return SIFT and centers in the correct form
     return (np.require(descriptors, requirements='C', dtype=np.float64),
-            np.require(windows_centers, requirements='C', dtype=np.float32))
+            np.require(windows_centers, requirements='C', dtype=np.int))
 
 
 @ndfeature
