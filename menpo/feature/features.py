@@ -23,13 +23,12 @@ def gradient(pixels):
 
     Returns
     -------
-    gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
+    gradient : `ndarray`, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
         The gradient over each axis over each channel. Therefore, the
         last axis of the gradient of a 2D, single channel image, will have
         length `2`. The last axis of the gradient of a 2D, 3-channel image,
         will have length `6`, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
         Bd_x, Bd_y].
-
     """
     grad_per_dim_per_channel = [np.gradient(g) for g in
                                 np.rollaxis(pixels, -1)]
@@ -44,6 +43,25 @@ def gradient(pixels):
 
 @ndfeature
 def gaussian_filter(pixels, sigma):
+    r"""
+    Applies a Gaussian filter on all the channels of the input image. The image
+    is assumed to have channel information on the last axis.
+
+    Parameters
+    ----------
+    pixels : `ndarray`, shape (X, Y, ..., Z, C)
+        An array where the last dimension is interpreted as channels. This
+        means an N-dimensional image is represented by an N+1 dimensional
+        array.
+
+    sigma : `float`, Optional
+
+    Returns
+    -------
+    gaussian_filter : `ndarray`, shape (X, Y, ..., Z, C)
+        The result of the Gaussian filter over all channels. The output has the
+        same dimensions as the input image.
+    """
     global scipy_gaussian_filter
     if scipy_gaussian_filter is None:
         from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
@@ -65,7 +83,12 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
 
     Parameters
     ----------
-    mode : 'dense' or 'sparse'
+    pixels : `ndarray`, shape (X, Y, ..., Z, C)
+        An array where the last dimension is interpreted as channels. This
+        means an N-dimensional image is represented by an N+1 dimensional
+        array.
+
+    mode : ``'dense'`` or ``'sparse'``, Optional
         The 'sparse' case refers to the traditional usage of HOGs, so default
         parameters values are passed to the ImageWindowIterator.
         The sparse case of 'dalaltriggs' algorithm sets the window height
@@ -78,66 +101,62 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         window_step_horizontal, window_step_unit, and padding to completely
         customize the HOG calculation.
 
-    window_height : float
+    window_height : `int`, Optional
         Defines the height of the window for the ImageWindowIterator
         object. The metric unit is defined by window_unit.
 
-    window_width : float
+    window_width : `int`, Optional
         Defines the width of the window for the ImageWindowIterator object.
         The metric unit is defined by window_unit.
 
-    window_unit : 'blocks' or 'pixels'
+    window_unit : ``'blocks'`` or ``'pixels'``, Optional
         Defines the metric unit of the window_height and window_width
         parameters for the ImageWindowIterator object.
 
-    window_step_vertical : float
+    window_step_vertical : `int`, Optional
         Defines the vertical step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
 
-    window_step_horizontal : float
+    window_step_horizontal : `int`, Optional
         Defines the horizontal step by which the window is moved, thus it
         controls the features density. The metric unit is defined by
         window_step_unit.
 
-    window_step_unit : 'pixels' or 'cells'
+    window_step_unit : ``'pixels'`` or ``'cells'``, Optional
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters.
 
-    padding : bool
+    padding : `bool`, Optional
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled,
         the out-of-boundary pixels are set to zero.
 
-    algorithm : 'dalaltriggs' or 'zhuramanan'
+    algorithm : ``'dalaltriggs'`` or ``'zhuramanan'``, Optional
         Specifies the algorithm used to compute HOGs.
 
-    cell_size : float
+    cell_size : `int`, Optional
         Defines the cell size in pixels. This value is set to both the width
         and height of the cell. This option is valid for both algorithms.
 
-    block_size : float
+    block_size : `int`, Optional
         Defines the block size in cells. This value is set to both the width
         and height of the block. This option is valid only for the
         'dalaltriggs' algorithm.
 
-    num_bins : float
+    num_bins : `int`, Optional
         Defines the number of orientation histogram bins. This option is
         valid only for the 'dalaltriggs' algorithm.
 
-    signed_gradient : bool
+    signed_gradient : `bool`, Optional
         Flag that defines whether we use signed or unsigned gradient angles.
         This option is valid only for the 'dalaltriggs' algorithm.
 
-    l2_norm_clip : float
+    l2_norm_clip : `float`, Optional
         Defines the clipping value of the gradients' L2-norm. This option is
         valid only for the 'dalaltriggs' algorithm.
 
-    constrain_landmarks : bool
-        Flag that if enabled, it constrains landmarks that ended up outside of
-        the features image bounds.
-
-    verbose : bool
+    verbose : `bool`, Optional
         Flag to print HOG related information.
 
     Raises
@@ -255,30 +274,6 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     return iterator.HOG(algorithm, num_bins, cell_size, block_size,
                         signed_gradient, l2_norm_clip, verbose)
 
-    # store parameters
-    # hog_image.hog_parameters = {'mode': mode, 'algorithm': algorithm,
-    #                             'num_bins': num_bins,
-    #                             'cell_size': cell_size,
-    #                             'block_size': block_size,
-    #                             'signed_gradient': signed_gradient,
-    #                             'l2_norm_clip': l2_norm_clip,
-    #
-    #                             'window_height': window_height,
-    #                             'window_width': window_width,
-    #                             'window_unit': window_unit,
-    #                             'window_step_vertical': window_step_vertical,
-    #                             'window_step_horizontal':
-    #                                 window_step_horizontal,
-    #                             'window_step_unit': window_step_unit,
-    #                             'padding': padding,
-    #
-    #                             'original_image_height':
-    #                                 self._image.pixels.shape[0],
-    #                             'original_image_width':
-    #                                 self._image.pixels.shape[1],
-    #                             'original_image_channels':
-    #                                 self._image.pixels.shape[2]}
-
 
 @ndfeature
 def igo(pixels, double_angles=False, verbose=False):
@@ -289,18 +284,18 @@ def igo(pixels, double_angles=False, verbose=False):
 
     Parameters
     ----------
-    pixels :  ndarray
+    pixels :  `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
 
-    double_angles : bool
+    double_angles : `bool`, Optional
         Assume that phi represents the gradient orientations. If this flag
         is disabled, the features image is the concatenation of cos(phi)
         and sin(phi), thus 2 channels. If it is enabled, the features image
         is the concatenation of cos(phi), sin(phi), cos(2*phi), sin(2*phi),
         thus 4 channels.
 
-    verbose : bool
+    verbose : `bool`, Optional
         Flag to print IGO related information.
 
     Raises
@@ -346,16 +341,6 @@ def igo(pixels, double_angles=False, verbose=False):
         print(info_str)
     return igo_pixels
 
-    # store parameters
-    # igo_image.igo_parameters = {'double_angles': double_angles,
-    #
-    #                             'original_image_height':
-    #                                 self._image.pixels.shape[0],
-    #                             'original_image_width':
-    #                                 self._image.pixels.shape[1],
-    #                             'original_image_channels':
-    #                                 self._image.pixels.shape[2]}
-
 
 @ndfeature
 def es(image_data, verbose=False):
@@ -367,13 +352,12 @@ def es(image_data, verbose=False):
 
     Parameters
     ----------
-    image_data :  ndarray
+    image_data : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
-    verbose : bool
-        Flag to print ES related information.
 
-        Default: False
+    verbose : `bool`, Optional
+        Flag to print ES related information.
 
     Raises
     -------
@@ -408,14 +392,6 @@ def es(image_data, verbose=False):
         print(info_str)
     return es_pixels
 
-    # store parameters
-    # es_image.es_parameters = {'original_image_height':
-    #                               self._image.pixels.shape[0],
-    #                           'original_image_width':
-    #                               self._image.pixels.shape[1],
-    #                           'original_image_channels':
-    #                               self._image.pixels.shape[2]}
-
 
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
@@ -428,7 +404,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
 
     Parameters
     ----------
-    pixels :  ndarray
+    pixels : `ndarray`
         The pixel data for the image, where the last axis represents the
         number of channels.
 
@@ -447,7 +423,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     orientations : `int`, Optional
         The number of orientations (bins) per histogram.
 
-    normalization : [ 'l1', 'l2', 'daisy', None ], Optional
+    normalization : ``'l1'`` or ``'l2'`` or ``'daisy'`` or ``'None``, Optional
         It defines how to normalize the descriptors
         If 'l1' then L1-normalization is applied at each descriptor.
         If 'l2' then L2-normalization is applied at each descriptor.
@@ -477,7 +453,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
 
             ``len(ring_radii) == len(sigmas) + 1``
 
-    verbose : `bool`
+    verbose : `bool`, Optional
         Flag to print Daisy related information.
 
     Raises
@@ -551,7 +527,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         The pixel data for the image, where the last axis represents the
         number of channels.
 
-    radius : `int` or `list` of `int`
+    radius : `int` or `list` of `int`, Optional
         It defines the radius of the circle (or circles) at which the sampling
         points will be extracted. The radius (or radii) values must be greater
         than zero. There must be a radius value for each samples value, thus
@@ -559,7 +535,7 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
 
         Default: None = [1, 2, 3, 4]
 
-    samples : `int` or `list` of `int`
+    samples : `int` or `list` of `int`, Optional
         It defines the number of sampling points that will be extracted at each
         circle. The samples value (or values) must be greater than zero. There
         must be a samples value for each radius value, thus they both need to
@@ -573,12 +549,12 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         rotation-invariant mapping and 'none' to use no mapping nd only the
         decimal values instead.
 
-    window_step_vertical : float
+    window_step_vertical : `float`, Optional
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
 
-    window_step_horizontal : float
+    window_step_horizontal : `float`, Optional
         Defines the horizontal step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
@@ -587,16 +563,17 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters for the ImageWindowIterator object.
 
-    padding : bool
+    padding : `bool`, Optional
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled, the
         out-of-boundary pixels are set to zero.
 
-    verbose : `bool`, optional
+    verbose : `bool`, Optional
         Flag to print LBP related information.
 
-    skip_checks : `bool`, optional
-        If True
+    skip_checks : `bool`, Optional
+        If True, the checks of the input parameters won't be performed.
+
     Raises
     -------
     ValueError
@@ -691,30 +668,72 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
     # Compute LBP
     return iterator.LBP(radius, samples, mapping_type, verbose)
 
-    # # store parameters
-    # lbp_image.lbp_parameters = {'radius': radius, 'samples': samples,
-    #                             'mapping_type': mapping_type,
-    #
-    #                             'window_step_vertical':
-    #                                 window_step_vertical,
-    #                             'window_step_horizontal':
-    #                                 window_step_horizontal,
-    #                             'window_step_unit': window_step_unit,
-    #                             'padding': padding,
-    #
-    #                             'original_image_height':
-    #                                 self._image.pixels.shape[0],
-    #                             'original_image_width':
-    #                                 self._image.pixels.shape[1],
-    #                             'original_image_channels':
-    #                                 self._image.pixels.shape[2]}
-
 
 @winitfeature
 def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
-         num_bins_horizontal=2, num_bins_vertical=2,
-         num_or_bins=9, bin_size_horizontal=6, bin_size_vertical=6, fast=False,
-         window_size=2, padding=False, verbose=False):
+         num_bins_horizontal=2, num_bins_vertical=2, num_or_bins=9,
+         cell_size_horizontal=6, cell_size_vertical=6, window_size=2,
+         fast=False, verbose=False):
+    r"""
+    Computes a 2-dimensional dense SIFT features image with k number of
+    channels, of size `(M, N, C)` and data type `np.float`.
+
+    Parameters
+    ----------
+    pixels : `ndarray`, shape (X, Y, ..., Z, 1)
+        An array where the last dimension is 1. This means that it represents a
+        greyscale image.
+
+    window_step_horizontal : `int`, Optional
+        Defines the horizontal step by which the window is moved, thus it
+        controls the features density. The metric unit is pixels.
+
+    window_step_vertical : `int`, Optional
+        Defines the vertical step by which the window is moved, thus it
+        controls the features density. The metric unit is pixels.
+
+    num_bins_horizontal : `int`, Optional
+        Defines the number of histogram bins in the X direction.
+
+    num_bins_vertical : `int`, Optional
+        Defines the number of histogram bins in the Y direction.
+
+    num_or_bins : `int`, Optional
+        Defines the number of orientation histogram bins.
+
+    cell_size_horizontal : `int`, Optional
+        Defines cell width in pixels. The cell is the region that is covered by
+        a spatial bin.
+
+    cell_size_vertical : `int`, Optional
+        Defines cell height in pixels. The cell is the region that is covered by
+        a spatial bin.
+
+    window_size : `int`, Optional
+        Defines the size of the window.
+
+    fast : `bool`, Optional
+        If True, then the windowing function is a piecewise-flat, rather than
+        Gaussian. While this breaks exact SIFT equivalence, in practice it is
+        much faster to compute.
+
+    verbose : `bool`, Optional
+        Flag to print SIFT related information.
+
+    Raises
+    -------
+    ValueError
+        Only 2D arrays are supported
+    ValueError
+        Size must only contain positive integers.
+    ValueError
+        Step must only contain positive integers.
+    ValueError
+        Window size must be a positive integer.
+    ValueError
+        Geometry must only contain positive integers.
+    """
+    # import cyvlfeat if it's not already imported
     global cyvlfeat_dsift
     if cyvlfeat_dsift is None:
         from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
@@ -724,7 +743,7 @@ def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
     # This information can be used to suppress low contrast descriptors.
     f, d = cyvlfeat_dsift(pixels[..., -1],
                           step=[window_step_vertical, window_step_horizontal],
-                          size=[bin_size_vertical, bin_size_horizontal],
+                          size=[cell_size_vertical, cell_size_horizontal],
                           bounds=None, window_size=window_size, norm=False,
                           fast=fast, float_descriptors=True,
                           geometry=(num_bins_horizontal, num_bins_vertical,
@@ -737,34 +756,26 @@ def sift(pixels, window_step_horizontal=1, window_step_vertical=1,
     descriptors = np.reshape(d.T, (d_height, d_width, n_channels), order='F')
     windows_centers = np.reshape(f.T, (d_height, d_width, 2), order='F')
 
-    if padding:
-        descriptors = _pad_array(pixels.shape, descriptors,
-                                 window_step_horizontal, window_step_vertical,
-                                 ((0, 0), (0, 0), (0, 0)))
-        windows_centers = _pad_array(
-            pixels.shape, windows_centers, window_step_horizontal,
-            window_step_vertical,
-            ((0, pixels.shape[0]-1), (0, pixels.shape[1]-1), (0, 0)))
-
     # print information
     if verbose:
         info_str = "SIFT features:\n" \
                    "  - Input image is {}W x {}H with {} channels.\n" \
                    "  - Sampling step of ({}W,{}H) and window of size {}.\n" \
                    "  - {}W x {}H spatial bins and {} orientation bins.\n" \
-                   "  - Bins size of {}W x {}H pixels.\n".format(
+                   "  - Cell size of {}W x {}H pixels.\n".format(
                    pixels.shape[1], pixels.shape[0], pixels.shape[2],
                    window_step_horizontal, window_step_vertical, window_size,
                    num_bins_horizontal, num_bins_vertical, num_or_bins,
-                   bin_size_horizontal, bin_size_vertical)
+                   cell_size_horizontal, cell_size_vertical)
         if fast:
             info_str += "  - Fast mode is enabled.\n"
         info_str += "Output image size {}W x {}H x {}.".format(
             descriptors.shape[1], descriptors.shape[0], descriptors.shape[2])
         print(info_str)
 
-    return (np.require(descriptors, requirements='C', dtype=np.double),
-            np.require(windows_centers, requirements='C', dtype=np.int))
+    # return SIFT and centers in the correct form
+    return (np.require(descriptors, requirements='C', dtype=np.float64),
+            np.require(windows_centers, requirements='C', dtype=np.float32))
 
 
 @ndfeature
@@ -774,23 +785,3 @@ def no_op(image_data):
     passed in.
     """
     return image_data.copy()
-
-
-def _pad_array(input_shape, array, horizontal_step, vertical_step,
-               constant_values):
-    output_height = input_shape[0] / vertical_step
-    dif1 = output_height - array.shape[0]
-    before_1 = dif1 / 2
-    after_1 = dif1 - before_1
-
-    output_width = input_shape[1] / horizontal_step
-    dif2 = output_width - array.shape[1]
-    before_2 = dif2 / 2
-    after_2 = dif2 - before_2
-
-    pad_width = ((before_1, after_1), (before_2, after_2), (0, 0))
-    if len(array.shape) == 2:
-        pad_width = ((before_1, after_1), (before_2, after_2))
-
-    return np.pad(array, pad_width=pad_width, mode='constant',
-                  constant_values=constant_values)
