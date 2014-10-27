@@ -96,7 +96,7 @@ class Graph(object):
 
         :type: `int`
         """
-        return np.int(self.adjacency_array.max() + 1)
+        return self.adjacency_array.max() + 1
 
     @abc.abstractmethod
     def get_adjacency_matrix(self):
