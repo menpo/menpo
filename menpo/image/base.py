@@ -1350,7 +1350,7 @@ class Image(Vectorizable, LandmarkableViewable):
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
-                self.n_channels, self.ndims))
+                self.n_channels, self.n_dims))
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
         return PILImage.fromarray((pixels * 255).astype(np.uint8))
