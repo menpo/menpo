@@ -379,8 +379,14 @@ class UndirectedGraph(Graph):
         ValueError
             Assymetric weights provided.
         """
+        # compute the edges of the minimum spanning tree
         from menpo.external.PADS.MinimumSpanningTree import MinimumSpanningTree
         tree_edges = MinimumSpanningTree(self, weights)
+
+        # Correct the tree edges so that they have the correct format
+        # (i.e. ndarray of pairs in the form (parent, child)) using BFS
+        tree_edges = _correct_tree_edges(tree_edges, root_vertex)
+
         return Tree(np.array(tree_edges), root_vertex)
 
     def __str__(self):
@@ -1016,3 +1022,38 @@ def _check_n_points(points, adjacency_array):
         raise ValueError('A point for each graph vertex needs to be '
                          'passed. Got {} points instead of {}'.format(
                          points.shape[0], adjacency_array.max() + 1))
+
+
+def _correct_tree_edges(edges, root_vertex):
+    def _get_children(p, e):
+        c = []
+        for m in e:
+            if m.index(p) == 0:
+                c.append(m[1])
+            else:
+                c.append(m[0])
+        return c
+
+    output_edges = []
+    vertices_to_visit = [root_vertex]
+    while len(vertices_to_visit) > 0:
+        # get first vertex of list and remove it
+        current_vertex = vertices_to_visit.pop(0)
+
+        # find the edges containing the vertex
+        current_edges = [item for item in edges if current_vertex in item]
+
+        # remove the edges from the edges list
+        for e in current_edges:
+            edges.remove(e)
+
+        # get the list of children of the vertex
+        children = _get_children(current_vertex, current_edges)
+
+        for child in children:
+            # append the edge
+            output_edges.append((current_vertex, child))
+
+            # append the child
+            vertices_to_visit.append(child)
+    return output_edges
