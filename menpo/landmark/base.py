@@ -322,6 +322,19 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         else:
             raise ValueError('Unknown label {}'.format(group))
 
+    def view_widget(self, popup=False):
+        r"""
+        Visualizes the landmark manager object using the
+        menpo.visualize.widgets.visualize_shapes widget.
+
+        Parameters
+        -----------
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
+        """
+        from menpo.visualize import visualize_shapes
+        visualize_shapes(self, figure_size=(7, 7), popup=popup)
+
     def __str__(self):
         out_string = '{}: n_groups: {}'.format(type(self).__name__,
                                                self.n_groups)
@@ -658,7 +671,8 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
     def view(self, figure_id=None, new_figure=False, targettype=None,
               render_numbering=True, render_legend=True, group='group',
-              with_labels=None, without_labels=None, **kwargs):
+              with_labels=None, without_labels=None, image_view=True,
+              **kwargs):
         """
         View all landmarks. Kwargs passed in here will be passed through
         to the shapes view method.
@@ -702,10 +716,10 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
 
         landmark_viewer = LandmarkViewer(figure_id, new_figure,
                                          group, lmark_group._pointcloud,
-                                         lmark_group._labels_to_masks,
-                                         targettype=targettype)
+                                         lmark_group._labels_to_masks)
         return landmark_viewer.render(render_numbering=render_numbering,
-                                      render_legend=render_legend, **kwargs)
+                                      render_legend=render_legend,
+                                      image_view=image_view, **kwargs)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(

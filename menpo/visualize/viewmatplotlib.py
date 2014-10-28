@@ -265,19 +265,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
 
-    def _render(self, render_numbering=True, render_legend=True, **kwargs):
-        self._plot_landmarks(render_numbering, render_legend, False, **kwargs)
-        return self
-
-
-class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
-    def __init__(self, figure_id, new_figure, group, pointcloud,
-                 labels_to_masks):
-        super(MatplotlibLandmarkViewer2dImage, self).__init__(
-            figure_id, new_figure, group, pointcloud, labels_to_masks)
-
-    def _render(self, render_numbering=True, render_legend=True, **kwargs):
-        self._plot_landmarks(render_numbering, render_legend, True, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True,
+                image_view=False, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, image_view,
+                             **kwargs)
         return self
 
 

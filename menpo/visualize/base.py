@@ -161,7 +161,7 @@ class Viewable(object):
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
+    MatplotlibTriMeshViewer2d,
     MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
     MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
     MatplotlibPointGraphViewer2d)
@@ -171,7 +171,6 @@ PointGraphViewer2d = MatplotlibPointGraphViewer2d
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
 TriMeshViewer2d = MatplotlibTriMeshViewer2d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
-LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
 
@@ -209,13 +208,12 @@ class LandmarkViewer(object):
 
     """
     def __init__(self, figure_id, new_figure, group, pointcloud,
-                 labels_to_masks, targettype=None):
+                 labels_to_masks):
         self.pointcloud = pointcloud
         self.group = group
         self.labels_to_masks = labels_to_masks
         self.figure_id = figure_id
         self.new_figure = new_figure
-        self.targettype = targettype
 
     def render(self, **kwargs):
         r"""
@@ -237,18 +235,9 @@ class LandmarkViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.pointcloud.n_dims == 2:
-            from menpo.image.base import Image
-
-            if (self.targettype is not None and
-                    issubclass(self.targettype, Image)):
-                return LandmarkViewer2dImage(
-                    self.figure_id, self.new_figure,
-                    self.group, self.pointcloud,
-                    self.labels_to_masks).render(**kwargs)
-            else:
-                return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                        self.group, self.pointcloud,
-                                        self.labels_to_masks).render(**kwargs)
+            return LandmarkViewer2d(self.figure_id, self.new_figure,
+                                    self.group, self.pointcloud,
+                                    self.labels_to_masks).render(**kwargs)
         elif self.pointcloud.n_dims == 3:
             try:
                 from menpo3d.visualize import LandmarkViewer3d
