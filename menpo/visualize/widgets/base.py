@@ -412,7 +412,8 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
         figure_id = plt.figure(save_figure_wid.figure_id.number)
 
         # plot
-        if landmark_options_wid.landmarks_enabled:
+        if (landmark_options_wid.landmarks_enabled and
+                    landmark_options_wid.group != ' '):
             # invert axis if image mode is enabled
             if axis_mode == 1:
                 plt.gca().invert_yaxis()
@@ -439,17 +440,20 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
         save_figure_wid.figure_id = figure_id
 
         # info_wid string
-        info_txt = r"""
-            {} landmark points.
-            Shape range: {:.1f} x {:.1f}.
-            Shape centre: {:.1f} x {:.1f}.
-            Shape norm is {:.2f}.
-        """.format(shapes[s][landmark_options_wid.group][None].n_points,
-                   shapes[s][landmark_options_wid.group][None].range()[0],
-                   shapes[s][landmark_options_wid.group][None].range()[1],
-                   shapes[s][landmark_options_wid.group][None].centre()[0],
-                   shapes[s][landmark_options_wid.group][None].centre()[1],
-                   shapes[s][landmark_options_wid.group][None].norm())
+        if landmark_options_wid.group != ' ':
+            info_txt = r"""
+                {} landmark points.
+                Shape range: {:.1f} x {:.1f}.
+                Shape centre: {:.1f} x {:.1f}.
+                Shape norm is {:.2f}.
+            """.format(shapes[s][landmark_options_wid.group][None].n_points,
+                       shapes[s][landmark_options_wid.group][None].range()[0],
+                       shapes[s][landmark_options_wid.group][None].range()[1],
+                       shapes[s][landmark_options_wid.group][None].centre()[0],
+                       shapes[s][landmark_options_wid.group][None].centre()[1],
+                       shapes[s][landmark_options_wid.group][None].norm())
+        else:
+            info_txt = "There are no landmarks."
 
         info_wid.children[1].value = _raw_info_string_to_latex(info_txt)
 
