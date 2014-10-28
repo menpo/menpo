@@ -40,7 +40,7 @@ class Similarity(Affine):
 
     @classmethod
     def identity(cls, n_dims):
-        return Similarity(np.eye(n_dims + 1), copy=False, skip_checks=True)
+        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     @property
     def n_parameters(self):

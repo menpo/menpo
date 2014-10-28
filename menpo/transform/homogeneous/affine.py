@@ -28,7 +28,7 @@ class Affine(Homogeneous):
 
     @classmethod
     def identity(cls, n_dims):
-        return Affine(np.eye(n_dims + 1))
+        return cls(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
@@ -212,8 +212,8 @@ class Affine(Homogeneous):
 
     def _build_pseudoinverse(self):
         # Skip the checks as we know inverse of a homogeneous is a homogeneous
-        return Affine(np.linalg.inv(self.h_matrix), copy=False,
-                      skip_checks=True)
+        return self.__class__(np.linalg.inv(self.h_matrix), copy=False,
+                              skip_checks=True)
 
 
 class AlignmentAffine(HomogFamilyAlignment, Affine):
