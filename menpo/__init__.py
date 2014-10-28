@@ -1,5 +1,4 @@
 from .base import menpo_src_dir_path, Vectorizable, Targetable
-from .base import DP, DX, DL
 
 from . import feature
 from . import image

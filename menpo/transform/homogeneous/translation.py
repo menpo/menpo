@@ -72,10 +72,6 @@ class Translation(DiscreteAffine, Similarity):
         """
         return Translation(-self.translation_component, skip_checks=True)
 
-    def d_dp(self, points):
-        # TODO implement d_dp for Translation
-        return NotImplementedError("d_dp is not implemented for Translation")
-
 
 class AlignmentTranslation(HomogFamilyAlignment, Translation):
 
