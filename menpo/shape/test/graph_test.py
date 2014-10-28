@@ -170,14 +170,14 @@ def test_minimum_spanning_tree():
     g = UndirectedGraph(adjacency_array)
     t = g.minimum_spanning_tree(weights, root_vertex=0)
     assert t.n_edges == 3
-    assert_allclose(t.adjacency_array, np.array([[2, 3], [0, 1], [0, 3]]))
-    assert t.adjacency_list == [[1, 3], [], [3], []]
+    assert_allclose(t.adjacency_array, np.array([[0, 1], [0, 3], [3, 2]]))
+    assert t.adjacency_list == [[1, 3], [], [], [2]]
     assert_allclose(t.get_adjacency_matrix(),
                     np.array([[False, True, False, True],
                               [False, False, False, False],
-                              [False, False, False, True],
-                              [False, False, False, False]]))
-    assert t.predecessors_list == [None, 0, None, 0]
+                              [False, False, False, False],
+                              [False, False, True, False]]))
+    assert t.predecessors_list == [None, 0, 3, 0]
 
 
 def test_is_edge():
