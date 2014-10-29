@@ -156,10 +156,6 @@ class Similarity(Affine):
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
 
-    def _build_pseudoinverse(self):
-        return Similarity(np.linalg.inv(self.h_matrix), copy=False,
-                          skip_checks=True)
-
 
 class AlignmentSimilarity(HomogFamilyAlignment, Similarity):
     """

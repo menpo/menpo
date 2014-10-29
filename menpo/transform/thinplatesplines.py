@@ -98,5 +98,5 @@ class ThinPlateSplines(Alignment, Transform, Invertible):
     def has_true_inverse(self):
         return False
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         return ThinPlateSplines(self.target, self.source, kernel=self.kernel)

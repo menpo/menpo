@@ -153,7 +153,7 @@ class NonUniformScale(DiscreteAffine, Affine):
     def composes_inplace_with(self):
         return (NonUniformScale, UniformScale)
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         """
         The inverse scale.
 

@@ -44,6 +44,23 @@ class HomogFamilyAlignment(Alignment):
         new._h_matrix = new._h_matrix.copy()
         return new
 
+    def pseudoinverse(self):
+        r"""
+        The pseudoinverse of the transform - that is, the transform that
+        results from swapping source and target, or more formally, negating
+        the transforms parameters. If the transform has a true inverse this
+        is returned instead.
+
+        :type: ``type(self)``
+        """
+        self_copy = self.copy()
+        self_copy._h_matrix = self._h_matrix_pseudoinverse()
+        temp = self_copy.target
+        self_copy._source = temp
+        self_copy._target = self_copy.source
+
+        return self_copy
+
 
 class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     r"""
@@ -355,9 +372,13 @@ class Homogeneous(ComposableTransform, Vectorizable, VComposable, VInvertible):
     def has_true_inverse(self):
         return True
 
-    def _build_pseudoinverse(self):
-        return Homogeneous(np.linalg.inv(self.h_matrix), copy=False,
-                           skip_checks=True)
+    def pseudoinverse(self):
+        # Skip the checks as we know inverse of a homogeneous is a homogeneous
+        return self.__class__(self._h_matrix_pseudoinverse(), copy=False,
+                              skip_checks=True)
+
+    def _h_matrix_pseudoinverse(self):
+        return np.linalg.inv(self.h_matrix)
 
 from .affine import Affine
 from .similarity import Similarity
