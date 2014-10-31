@@ -210,11 +210,6 @@ class Affine(Homogeneous):
     def composes_inplace_with(self):
         return Affine
 
-    def _build_pseudoinverse(self):
-        # Skip the checks as we know inverse of a homogeneous is a homogeneous
-        return self.__class__(np.linalg.inv(self.h_matrix), copy=False,
-                              skip_checks=True)
-
 
 class AlignmentAffine(HomogFamilyAlignment, Affine):
     r"""

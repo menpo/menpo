@@ -332,7 +332,7 @@ class AbstractPWA(Alignment, Transform, Invertible):
     def has_true_inverse(self):
         return True
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         from menpo.shape import PointCloud, TriMesh  # to avoid circular import
         new_source = TriMesh(self.target.points, self.source.trilist)
         new_target = PointCloud(self.source.points)

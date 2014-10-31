@@ -64,7 +64,7 @@ class Translation(DiscreteAffine, Similarity):
     def from_vector_inplace(self, p):
         self.h_matrix[:-1, -1] = p
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         r"""
         The inverse translation (negated).
 

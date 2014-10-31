@@ -25,22 +25,6 @@ class Invertible(object):
 
         :type: ``type(self)``
         """
-        return self._build_pseudoinverse()
-
-    @abc.abstractmethod
-    def _build_pseudoinverse(self):
-        r"""
-        Returns this transform's inverse if it has one. If not,
-        the pseduoinverse is given.
-
-        This method is called by the pseudoinverse property and **must** be
-        overridden.
-
-        Returns
-        -------
-        pseudoinverse : ``type(self)``
-            The object representing the pseudoinverse of this object.
-        """
 
 
 class VInvertible(Invertible):
