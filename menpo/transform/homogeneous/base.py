@@ -55,10 +55,7 @@ class HomogFamilyAlignment(Alignment):
         """
         self_copy = self.copy()
         self_copy._h_matrix = self._h_matrix_pseudoinverse()
-        temp = self_copy.target
-        self_copy._source = temp
-        self_copy._target = self_copy.source
-
+        self_copy._source, self_copy._target = self_copy._target, self_copy._source
         return self_copy
 
 
