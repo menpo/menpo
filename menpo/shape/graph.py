@@ -233,6 +233,18 @@ class Graph(object):
                         shortest = newpath
         return shortest
 
+    def has_cycles(self):
+        r"""
+        Checks if the graph has at least one cycle.
+        """
+        pass
+
+    def is_tree(self):
+        r"""
+        Checks if the graph is tree.
+        """
+        return not self.has_cycles() and self.n_edges == self.n_vertices - 1
+
     def _check_vertex(self, vertex):
         r"""
         Checks that a given vertex is valid.
@@ -353,6 +365,17 @@ class UndirectedGraph(Graph):
         return (vertex_1 in self.adjacency_list[vertex_2] or
                 vertex_2 in self.adjacency_list[vertex_1])
 
+    def has_cycles(self):
+        r"""
+        Whether the graph has at least on cycle.
+
+        Returns
+        -------
+        has_cycles : `bool`
+            True if it has at least one cycle.
+        """
+        return _has_cycles(self.adjacency_list, False)
+
     def minimum_spanning_tree(self, weights, root_vertex):
         r"""
         Returns the minimum spanning tree given weights to the graph's edges
@@ -407,12 +430,6 @@ class DirectedGraph(Graph):
             child = self.adjacency_array[e, 1]
             adjacency_mat[parent, child] = True
         return adjacency_mat
-
-    def is_tree(self):
-        r"""
-        Function that checks if the `PointDirectedGraph` is a tree.
-        """
-        return _is_tree(self.adjacency_list)
 
     def _get_adjacency_list(self):
         adjacency_list = [[] for _ in range(self.n_vertices)]
@@ -536,6 +553,17 @@ class DirectedGraph(Graph):
         self._check_vertex(parent)
         self._check_vertex(child)
         return child in self.adjacency_list[parent]
+
+    def has_cycles(self):
+        r"""
+        Whether the graph has at least on cycle.
+
+        Returns
+        -------
+        has_cycles : `bool`
+            True if it has at least one cycle.
+        """
+        return _has_cycles(self.adjacency_list, True)
 
     def __str__(self):
         return "Directed graph of {} vertices and {} edges.".format(
@@ -1194,25 +1222,32 @@ def _correct_tree_edges(edges, root_vertex):
     return output_edges
 
 
-def _is_tree(adjacency_list):
+def _has_cycles(adjacency_list, directed):
     r"""
-    Function that checks if the provided directed graph is a tree.
+    Function that checks if the provided directed graph has cycles.
 
     Parameter
     ---------
     adjacency_array : ``(n_edges, 2, )`` `ndarray`
         The adjacency array of the directed graph.
+
+    directed : `boolean`
+        Defines if the provided graph is directed or not.
     """
-    n = len(adjacency_list)
-    visited = [False] * n
-
-    def is_edge(parent, child):
-        return child in adjacency_list[parent]
-
-    def dfs_tree(u, v):
-        visited[v] = True
-
-        return all(w == u or not visited[w] and dfs_tree(v, w)
-                   for w in range(n) if is_edge(v, w))
-
-    return dfs_tree(0, 0) and all(visited)
+    def dfs(node, entered, exited, tree_edges, back_edges):
+        if node not in entered:
+            entered.add(node)
+            for y in adjacency_list[node]:
+                if y not in entered:
+                    tree_edges[y] = node
+                elif (not directed and tree_edges.get(node, None) != y
+                      or directed and y not in exited):
+                    back_edges.setdefault(y, set()).add(node)
+                dfs(y, entered, exited, tree_edges, back_edges)
+            exited.add(node)
+        return tree_edges, back_edges
+    for x in range(len(adjacency_list)):
+        if dfs(x, entered=set(), exited=set(), tree_edges={}, back_edges={})[1]:
+            return True
+    else:
+        return False
