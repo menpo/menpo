@@ -650,7 +650,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         containing the label, spatial points and connectivity information.
         Suitable or use in the by the `json` standard library package.
         """
-        from ..shape import TriMesh, PointGraph
+        from ..shape import TriMesh, PointUndirectedGraph
 
         groups = []
         for label in self:
@@ -658,7 +658,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             if isinstance(pcloud, TriMesh):
                 connectivity = [t.tolist()
                                 for t in pcloud.as_pointgraph().adjacency_array]
-            elif isinstance(pcloud, PointGraph):
+            elif isinstance(pcloud, PointUndirectedGraph):
                 connectivity = [t.tolist()
                                 for t in pcloud.adjacency_array]
             else:

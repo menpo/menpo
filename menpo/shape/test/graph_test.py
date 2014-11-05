@@ -192,3 +192,8 @@ def test_is_edge():
     assert g_tree.is_edge(4, 7)
     assert not g_tree.is_edge(6, 3)
     assert not g_tree.is_edge(8, 1)
+
+
+def test_is_tree():
+    assert not g_directed.is_tree
+    assert g_tree.is_tree
