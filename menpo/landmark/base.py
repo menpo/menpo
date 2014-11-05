@@ -650,7 +650,7 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         containing the label, spatial points and connectivity information.
         Suitable or use in the by the `json` standard library package.
         """
-        from ..shape import TriMesh, PointUndirectedGraph
+        from menpo.shape import TriMesh, PointUndirectedGraph
 
         groups = []
         for label in self:

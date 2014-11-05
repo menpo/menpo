@@ -408,7 +408,6 @@ class DirectedGraph(Graph):
             adjacency_mat[parent, child] = True
         return adjacency_mat
 
-    @property
     def is_tree(self):
         r"""
         Function that checks if the `PointDirectedGraph` is a tree.
@@ -584,7 +583,7 @@ class Tree(DirectedGraph):
     def __init__(self, adjacency_array, root_vertex, copy=True):
         super(Tree, self).__init__(adjacency_array, copy=copy)
         # check if provided adjacency_array represents a tree
-        if not (self.is_tree and self.n_edges == self.n_vertices - 1):
+        if not (self.is_tree() and self.n_edges == self.n_vertices - 1):
             raise ValueError('The provided edges do not represent a tree.')
         # check if root_vertex is valid
         self._check_vertex(root_vertex)
@@ -985,7 +984,7 @@ class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
         """
         parents = [p[0] for p in self.adjacency_array]
         children = [p[1] for p in self.adjacency_array]
-        return self.points[children, ...] - self.points[parents, ...]
+        return self.points[children] - self.points[parents]
 
     def from_mask(self, mask):
         """
