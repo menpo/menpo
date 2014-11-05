@@ -243,7 +243,7 @@ class Graph(object):
         r"""
         Checks if the graph is tree.
         """
-        return not self.has_cycles()
+        return not self.has_cycles() and self.n_edges == self.n_vertices - 1
 
     def _check_vertex(self, vertex):
         r"""
@@ -374,7 +374,7 @@ class UndirectedGraph(Graph):
         has_cycles : `bool`
             True if it has at least one cycle.
         """
-        return _has_cycle(self.adjacency_list, False)
+        return _has_cycles(self.adjacency_list, False)
 
     def minimum_spanning_tree(self, weights, root_vertex):
         r"""
@@ -563,7 +563,7 @@ class DirectedGraph(Graph):
         has_cycles : `bool`
             True if it has at least one cycle.
         """
-        return _has_cycle(self.adjacency_list, True)
+        return _has_cycles(self.adjacency_list, True)
 
     def __str__(self):
         return "Directed graph of {} vertices and {} edges.".format(
@@ -1222,7 +1222,7 @@ def _correct_tree_edges(edges, root_vertex):
     return output_edges
 
 
-def _has_cycle(adjacency_list, directed):
+def _has_cycles(adjacency_list, directed):
     r"""
     Function that checks if the provided directed graph has cycles.
 
