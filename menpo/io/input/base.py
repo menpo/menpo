@@ -88,7 +88,9 @@ def import_image(filepath, landmark_resolver=same_name, normalise=True):
     """
     kwargs = {'normalise': normalise}
     return _import(filepath, image_types, has_landmarks=True,
-                   landmark_resolver=landmark_resolver, importer_kwargs=kwargs)
+                   landmark_resolver=landmark_resolver,
+                   importer_kwargs=kwargs,
+                   landmark_ext_map=image_landmark_types)
 
 
 def import_landmark_file(filepath, asset=None):
@@ -167,6 +169,7 @@ def import_images(pattern, max_images=None, landmark_resolver=same_name,
                                         max_assets=max_images,
                                         has_landmarks=True,
                                         landmark_resolver=landmark_resolver,
+                                        landmark_ext_map=image_landmark_types,
                                         verbose=verbose,
                                         importer_kwargs=kwargs):
         yield asset
@@ -226,7 +229,8 @@ def _import_builtin_asset(asset_name):
 
     """
     asset_path = data_path_to(asset_name)
-    return _import(asset_path, image_types, has_landmarks=True)
+    return _import(asset_path, image_types, has_landmarks=True,
+                   landmark_ext_map=image_landmark_types)
 
 
 def ls_builtin_assets():
@@ -277,7 +281,8 @@ def landmark_file_paths(pattern):
 
 def _import_glob_generator(pattern, extension_map, max_assets=None,
                            has_landmarks=False, landmark_resolver=same_name,
-                           importer_kwargs=None, verbose=False):
+                           landmark_ext_map=None, importer_kwargs=None,
+                           verbose=False):
     filepaths = list(glob_with_suffix(pattern, extension_map))
     if max_assets:
         filepaths = filepaths[:max_assets]
@@ -287,6 +292,7 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
     for i, asset in enumerate(_multi_import_generator(filepaths, extension_map,
                                          has_landmarks=has_landmarks,
                                          landmark_resolver=landmark_resolver,
+                                         landmark_ext_map=landmark_ext_map,
                                          importer_kwargs=importer_kwargs)):
         if verbose:
             print_dynamic('- Loading {} assets: {}'.format(
@@ -297,7 +303,7 @@ def _import_glob_generator(pattern, extension_map, max_assets=None,
 
 def _import(filepath, extensions_map, keep_importer=False,
             has_landmarks=True, landmark_resolver=same_name,
-            asset=None, importer_kwargs=None):
+            landmark_ext_map=None, asset=None, importer_kwargs=None):
     r"""
     Creates an importer for the filepath passed in, and then calls build on
     it, returning a list of assets or a single asset, depending on the
@@ -363,7 +369,8 @@ def _import(filepath, extensions_map, keep_importer=False,
             if lm_paths is None:
                 continue
             for group_name, lm_path in lm_paths.iteritems():
-                lms = import_landmark_file(lm_path, asset=x)
+                lms = _import(lm_path, landmark_ext_map,
+                              has_landmarks=False, asset=x)
                 if x.n_dims == lms.n_dims:
                     x.landmarks[group_name] = lms
 
@@ -379,7 +386,7 @@ def _import(filepath, extensions_map, keep_importer=False,
 
 def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
                             has_landmarks=False, landmark_resolver=same_name,
-                            importer_kwargs=None):
+                            landmark_ext_map=None, importer_kwargs=None):
     r"""
     Generator yielding assets from the filepaths provided.
 
@@ -420,6 +427,7 @@ def _multi_import_generator(filepaths, extensions_map, keep_importers=False,
         imported = _import(f, extensions_map, keep_importer=keep_importers,
                            has_landmarks=has_landmarks,
                            landmark_resolver=landmark_resolver,
+                           landmark_ext_map=landmark_ext_map,
                            importer_kwargs=importer_kwargs)
         if keep_importers:
             assets, importer = imported
