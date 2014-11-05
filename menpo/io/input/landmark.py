@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 from menpo.landmark.base import LandmarkGroup
-from menpo.shape import PointCloud, PointGraph
+from menpo.shape import PointCloud, PointUndirectedGraph
 from menpo.transform import Scale
 from .base import Importer
 
@@ -327,12 +327,12 @@ class LJSONImporter(LandmarkImporter):
                 all_points.append(p['point'])
             offset += len(lms)
 
-        # Don't create a PointGraph with no connectivity
+        # Don't create a PointUndirectedGraph with no connectivity
         points = np.array(all_points)
         if len(connectivity) == 0:
             self.pointcloud = PointCloud(points)
         else:
-            self.pointcloud = PointGraph(points, np.vstack(connectivity))
+            self.pointcloud = PointUndirectedGraph(points, np.vstack(connectivity))
         self.labels_to_masks = OrderedDict()
         # go through each label and build the appropriate boolean array
         for label, l_slice in zip(labels, labels_slices):

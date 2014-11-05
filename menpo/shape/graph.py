@@ -398,6 +398,7 @@ class DirectedGraph(Graph):
     r"""
     Class for Directed Graph definition and manipulation.
     """
+
     def get_adjacency_matrix(self):
         adjacency_mat = np.zeros((self.n_vertices, self.n_vertices),
                                  dtype=np.bool)
@@ -406,6 +407,12 @@ class DirectedGraph(Graph):
             child = self.adjacency_array[e, 1]
             adjacency_mat[parent, child] = True
         return adjacency_mat
+
+    def is_tree(self):
+        r"""
+        Function that checks if the `PointDirectedGraph` is a tree.
+        """
+        return _is_tree(self.adjacency_list)
 
     def _get_adjacency_list(self):
         adjacency_list = [[] for _ in range(self.n_vertices)]
@@ -575,9 +582,12 @@ class Tree(DirectedGraph):
     """
     def __init__(self, adjacency_array, root_vertex, copy=True):
         super(Tree, self).__init__(adjacency_array, copy=copy)
-        if not self.n_edges == self.n_vertices - 1:
+        # check if provided adjacency_array represents a tree
+        if not (self.is_tree() and self.n_edges == self.n_vertices - 1):
             raise ValueError('The provided edges do not represent a tree.')
+        # check if root_vertex is valid
         self._check_vertex(root_vertex)
+
         self.root_vertex = root_vertex
         self.predecessors_list = self._get_predecessors_list()
 
@@ -749,7 +759,55 @@ class Tree(DirectedGraph):
             self.maximum_depth, self.n_vertices, self.n_leaves)
 
 
-class PointGraph(UndirectedGraph, PointCloud):
+class PointGraph(object):
+    r"""
+    Class for defining a graph with geometry.
+
+    Parameters
+    -----------
+    points : `ndarray`
+        The array of point locations.
+
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+
+        For an undirected graph, the order of an edge's vertices doesn't matter,
+        for example:
+               |---0---|        adjacency_array = ndarray([[0, 1],
+               |       |                                   [0, 2],
+               |       |                                   [1, 2],
+               1-------2                                   [1, 3],
+               |       |                                   [2, 4],
+               |       |                                   [3, 4],
+               3-------4                                   [3, 5]])
+               |
+               5
+
+        For a directed graph, we assume that the vertices in the first column of
+        the adjacency_array are the fathers and the vertices in the second
+        column of the adjacency_array are the children, for example:
+               |-->0<--|        adjacency_array = ndarray([[1, 0],
+               |       |                                   [2, 0],
+               |       |                                   [1, 2],
+               1<----->2                                   [2, 1],
+               |       |                                   [1, 3],
+               v       v                                   [2, 4],
+               3------>4                                   [3, 4],
+               |                                           [3, 5]])
+               v
+               5
+    """
+    def __init__(self, points, adjacency_array):
+        _check_n_points(points, adjacency_array)
+
+    def view(self, figure_id=None, new_figure=False, **kwargs):
+        return PointGraphViewer(figure_id, new_figure,
+                                self.points,
+                                self.adjacency_array).render(**kwargs)
+
+
+class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):
     r"""
     Class for defining an Undirected Graph with geometry.
 
@@ -782,16 +840,17 @@ class PointGraph(UndirectedGraph, PointCloud):
         instead of {n_vertices}.
     """
     def __init__(self, points, adjacency_array, copy=True):
-        _check_n_points(points, adjacency_array)
+        super(PointUndirectedGraph, self).__init__(points, adjacency_array)
         UndirectedGraph.__init__(self, adjacency_array, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
 
     def from_mask(self, mask):
         """
         A 1D boolean array with the same number of elements as the number of
-        points in the PointGraph. This is then broadcast across the dimensions
-        of the PointGraph and returns a new PointGraph containing only those
-        points that were ``True`` in the mask.
+        points in the PointUndirectedGraph. This is then broadcast across the
+        dimensions of the PointUndirectedGraph and returns a new
+        PointUndirectedGraph containing only those points that were ``True`` in
+        the mask.
 
         Parameters
         ----------
@@ -800,7 +859,7 @@ class PointGraph(UndirectedGraph, PointCloud):
 
         Returns
         -------
-        pointgraph : :map:`PointGraph`
+        pointgraph : :map:`PointUndirectedGraph`
             A new pointgraph that has been masked.
 
         Raises
@@ -810,7 +869,8 @@ class PointGraph(UndirectedGraph, PointCloud):
         """
         if mask.shape[0] != self.n_points:
             raise ValueError('Mask must be a 1D boolean array of the same '
-                             'number of entries as points in this PointGraph.')
+                             'number of entries as points in this '
+                             'PointUndirectedGraph.')
 
         pg = self.copy()
         if np.all(mask):  # Shortcut for all true masks
@@ -826,7 +886,7 @@ class PointGraph(UndirectedGraph, PointCloud):
 
     def tojson(self):
         r"""
-        Convert this `PointGraph` to a dictionary JSON representation.
+        Convert this `PointUndirectedGraph` to a dictionary JSON representation.
 
         Returns
         -------
@@ -837,13 +897,152 @@ class PointGraph(UndirectedGraph, PointCloud):
         json_dict.update(UndirectedGraph.tojson(self))
         return json_dict
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointGraphViewer(figure_id, new_figure,
-                                self.points,
-                                self.adjacency_array).render(**kwargs)
+
+class PointDirectedGraph(PointGraph, DirectedGraph, PointCloud):
+    r"""
+    Class for defining a Directed Graph with geometry.
+
+    Parameters
+    -----------
+    points : `ndarray`
+        The array of point locations.
+
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The Adjacency Array of the graph, i.e. an array containing the sets of
+        the graph's edges. The numbering of vertices is assumed to start from 0.
+        For example:
+               |-->0<--|        adjacency_array = ndarray([[1, 0],
+               |       |                                   [2, 0],
+               |       |                                   [1, 2],
+               1<----->2                                   [2, 1],
+               |       |                                   [1, 3],
+               v       v                                   [2, 4],
+               3------>4                                   [3, 4],
+               |                                           [3, 5]])
+               v
+               5
+
+    copy : `bool`, optional
+        If ``False``, the ``adjacency_list`` will not be copied on assignment.
+
+    Raises
+    ------
+    ValueError
+        A point for each graph vertex needs to be passed. Got {n_points} points
+        instead of {n_vertices}.
+    """
+    def __init__(self, points, adjacency_array, copy=True):
+        super(PointDirectedGraph, self).__init__(points, adjacency_array)
+        DirectedGraph.__init__(self, adjacency_array, copy=copy)
+        PointCloud.__init__(self, points, copy=copy)
+
+    def relative_location_edge(self, parent, child):
+        r"""
+        Returns the relative location between the provided vertices. That is
+        if vertex j is the parent and vertex i is its child and vector l
+        denotes the coordinates of a vertex, then:
+
+                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                              = [[x_i - x_j], [y_i - y_j]]
+
+        Parameters
+        ----------
+        parent : `int`
+            The first selected vertex which is considered as the parent.
+
+        child : `int`
+            The second selected vertex which is considered as the child.
+
+        Returns
+        -------
+        relative_location : `ndarray`
+            The relative location vector.
+
+        Raises
+        ------
+        ValueError
+            Vertices {parent} and {child} are not connected with an edge.
+        """
+        if not self.is_edge(parent, child):
+            raise ValueError('Vertices {} and {} are not connected '
+                             'with an edge.'.format(parent, child))
+        return self.points[child, ...] - self.points[parent, ...]
+
+    def relative_locations(self):
+        r"""
+        Returns the relative location between the vertices of each edge. If
+        vertex j is the parent and vertex i is its child and vector l denotes
+        the coordinates of a vertex, then:
+
+                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
+                              = [[x_i - x_j], [y_i - y_j]]
+
+        Returns
+        -------
+        relative_locations : `ndarray`
+            The relative locations vector.
+        """
+        parents = [p[0] for p in self.adjacency_array]
+        children = [p[1] for p in self.adjacency_array]
+        return self.points[children] - self.points[parents]
+
+    def from_mask(self, mask):
+        """
+        A 1D boolean array with the same number of elements as the number of
+        points in the PointDirectedGraph. This is then broadcast across the
+        dimensions of the PointDirectedGraph and returns a new
+        PointDirectedGraph containing only those points that were ``True`` in
+        the mask.
+
+        Parameters
+        ----------
+        mask : ``(n_points,)`` `ndarray`
+            1D array of booleans
+
+        Returns
+        -------
+        pointgraph : :map:`PointDirectedGraph`
+            A new pointgraph that has been masked.
+
+        Raises
+        ------
+        ValueError
+            Mask must have same number of points as pointgraph.
+        """
+        if mask.shape[0] != self.n_points:
+            raise ValueError('Mask must be a 1D boolean array of the same '
+                             'number of entries as points in this PointTree.')
+
+        pt = self.copy()
+        if np.all(mask):  # Shortcut for all true masks
+            return pt
+        else:
+            masked_adj = mask_adjacency_array_tree(
+                mask, pt.adjacency_array, pt.adjacency_list,
+                pt.predecessors_list, pt.root_vertex)
+            if len(masked_adj) == 0:
+                raise ValueError('The provided mask deletes all edges.')
+            pt.adjacency_array = reindex_adjacency_array(masked_adj)
+            pt.points = pt.points[mask, :]
+            pt.adjacency_list = pt._get_adjacency_list()
+            pt.predecessors_list = pt._get_predecessors_list()
+            return pt
+
+    def tojson(self):
+        r"""
+        Convert this `PointDirectedGraph` to a dictionary JSON representation.
+
+        Returns
+        -------
+        dictionary with 'points' and 'adjacency_array' keys. Both are lists
+        suitable or use in the by the `json` standard library package.
+        """
+        json_dict = PointCloud.tojson(self)
+        json_dict.update(DirectedGraph.tojson(self))
+        return json_dict
 
 
-class PointTree(Tree, PointCloud):
+class PointTree(PointDirectedGraph, Tree, PointCloud):
     r"""
     Class for defining a Tree with geometry.
 
@@ -878,7 +1077,7 @@ class PointTree(Tree, PointCloud):
         If ``False``, the ``adjacency_list`` will not be copied on assignment.
     """
     def __init__(self, points, adjacency_array, root_vertex, copy=True):
-        _check_n_points(points, adjacency_array)
+        super(PointDirectedGraph, self).__init__(points, adjacency_array)
         Tree.__init__(self, adjacency_array, root_vertex, copy=copy)
         PointCloud.__init__(self, points, copy=copy)
 
@@ -925,7 +1124,7 @@ class PointTree(Tree, PointCloud):
 
     def tojson(self):
         r"""
-        Convert this `PointGraph` to a dictionary JSON representation.
+        Convert this `PointUndirectedGraph` to a dictionary JSON representation.
 
         Returns
         -------
@@ -935,74 +1134,6 @@ class PointTree(Tree, PointCloud):
         json_dict = PointCloud.tojson(self)
         json_dict.update(UndirectedGraph.tojson(self))
         return json_dict
-
-    def relative_location_edge(self, parent, child):
-        r"""
-        Returns the relative location between the provided vertices. That is
-        if vertex j is the parent and vertex i is its child and vector l
-        denotes the coordinates of a vertex, then:
-
-                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
-                              = [[x_i - x_j], [y_i - y_j]]
-
-        Parameters
-        ----------
-        parent : `int`
-            The first selected vertex which is considered as the parent.
-
-        child : `int`
-            The second selected vertex which is considered as the child.
-
-        Returns
-        -------
-        relative_location : `ndarray`
-            The relative location vector.
-
-        Raises
-        ------
-        ValueError
-            Vertices {parent} and {child} are not connected with an edge.
-        """
-        if not self.is_edge(parent, child):
-            raise ValueError('Vertices {} and {} are not connected '
-                             'with an edge.'.format(parent, child))
-        return self.points[child, ...] - self.points[parent, ...]
-
-    def relative_locations(self):
-        r"""
-        Returns the relative location between the vertices of each edge. If
-        vertex j is the parent and vertex i is its child and vector l denotes
-        the coordinates of a vertex, then:
-
-                    l_i - l_j = [[x_i], [y_i]] - [[x_j], [y_j]] =
-                              = [[x_i - x_j], [y_i - y_j]]
-
-        Parameters
-        ----------
-        parent : `int`
-            The first selected vertex which is considered as the parent.
-
-        child : `int`
-            The second selected vertex which is considered as the child.
-
-        Returns
-        -------
-        is_edge : `bool`
-            True if there is an edge.
-
-        Raises
-        ------
-        ValueError
-            The vertex must be between 0 and {n_vertices-1}.
-        """
-        parents = [p[0] for p in self.adjacency_array]
-        children = [p[1] for p in self.adjacency_array]
-        return self.points[children, ...] - self.points[parents, ...]
-
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointGraphViewer(figure_id, new_figure,
-                                self.points,
-                                self.adjacency_array).render(**kwargs)
 
 
 def _unique_array_rows(array):
@@ -1018,6 +1149,10 @@ def _unique_array_rows(array):
 
 
 def _check_n_points(points, adjacency_array):
+    r"""
+    Checks whether the points array and the adjacency_array have the same number
+    of points.
+    """
     if not points.shape[0] == adjacency_array.max() + 1:
         raise ValueError('A point for each graph vertex needs to be '
                          'passed. Got {} points instead of {}'.format(
@@ -1057,3 +1192,27 @@ def _correct_tree_edges(edges, root_vertex):
             # append the child
             vertices_to_visit.append(child)
     return output_edges
+
+
+def _is_tree(adjacency_list):
+    r"""
+    Function that checks if the provided directed graph is a tree.
+
+    Parameter
+    ---------
+    adjacency_array : ``(n_edges, 2, )`` `ndarray`
+        The adjacency array of the directed graph.
+    """
+    n = len(adjacency_list)
+    visited = [False] * n
+
+    def is_edge(parent, child):
+        return child in adjacency_list[parent]
+
+    def dfs_tree(u, v):
+        visited[v] = True
+
+        return all(w == u or not visited[w] and dfs_tree(v, w)
+                   for w in range(n) if is_edge(v, w))
+
+    return dfs_tree(0, 0) and all(visited)
