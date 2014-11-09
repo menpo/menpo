@@ -52,7 +52,8 @@ class PCAModel(MeanInstanceLinearModel):
         self.centred = centre
         self.biased = bias
         self._eigenvalues = eigenvalues
-        self._n_components = self.n_components
+        # start the active components as all the components
+        self._n_active_components = int(self.n_components)
         self._trimmed_eigenvalues = None
 
     @property
@@ -60,7 +61,7 @@ class PCAModel(MeanInstanceLinearModel):
         r"""
         The number of components currently in use on this model.
         """
-        return self._n_components
+        return self._n_active_components
 
     @n_active_components.setter
     def n_active_components(self, value):
@@ -94,9 +95,8 @@ class PCAModel(MeanInstanceLinearModel):
                     # if the previous is false and value bigger than the
                     # total number of components, do nothing
                     return
-
         if 0 < value <= self.n_components:
-            self._n_components = value
+            self._n_active_components = int(value)
         else:
             raise ValueError(err_str)
 
