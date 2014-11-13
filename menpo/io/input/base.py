@@ -486,9 +486,9 @@ def _pathlib_glob_for_pattern(pattern):
         # the glob pattern is in the middle of a path segment. pair back
         # to the nearest dir and add the reminder to the pattern
         preglob, pattern_prefix = os.path.split(preglob)
-        pattern  = pattern_prefix + pattern
+        pattern = pattern_prefix + pattern
     p = Path(preglob)
-    return p.glob(str(pattern))
+    return sorted(p.glob(str(pattern)))
 
 
 def glob_with_suffix(pattern, extensions_map):
