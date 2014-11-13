@@ -208,19 +208,27 @@ class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
-        self.group_label = group_label
+        self.group = group
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, render_labels, image_view, **kwargs):
+    def _plot_landmarks(self, render_numbering, render_legend,
+                        image_view, **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
-        colours = kwargs.get(
-            'colours', np.random.random([3, len(self.labels_to_masks)]))
+        # We may get passed either no colours (in which case we generate
+        # random colours) or a single colour to colour all the labels with
+        n_labels = len(self.labels_to_masks)
+        colours = kwargs.get('colours', np.random.random([3, n_labels]))
+        if colours.shape[1] == 1:
+            colours = np.tile(colours, [1, n_labels])
+        elif colours.shape[1] != n_labels:
+            raise ValueError('Must pass a (3 x n_labels) array of colours or a '
+                             'single (3 x 1) colour for all labels.')
         halign = kwargs.get('halign', 'center')
         valign = kwargs.get('valign', 'bottom')
         size = kwargs.get('size', 10)
@@ -237,16 +245,17 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
             kwargs['colour_array'] = colours[:, i]
-            kwargs['label'] = '{0}_{1}'.format(self.group_label, label)
+            kwargs['label'] = '{0}: {1}'.format(self.group, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
-            if render_labels:
-                ax = plt.gca()
+            ax = plt.gca()
+            if render_numbering:
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=halign,
                                 verticalalignment=valign, size=size)
+            if render_legend:
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
 
     def _build_sub_pointclouds(self):
@@ -256,19 +265,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
 
-    def _render(self, render_labels=True, **kwargs):
-        self._plot_landmarks(render_labels, False, **kwargs)
-        return self
-
-
-class MatplotlibLandmarkViewer2dImage(MatplotlibLandmarkViewer2d):
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
-                 labels_to_masks):
-        super(MatplotlibLandmarkViewer2dImage, self).__init__(
-            figure_id, new_figure, group_label, pointcloud, labels_to_masks)
-
-    def _render(self, render_labels=True, **kwargs):
-        self._plot_landmarks(render_labels, True, **kwargs)
+    def _render(self, render_numbering=True, render_legend=True,
+                image_view=False, **kwargs):
+        self._plot_landmarks(render_numbering, render_legend, image_view,
+                             **kwargs)
         return self
 
 
@@ -350,13 +350,13 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.y_label = y_label
         self.axis_limits = axis_limits
 
-    def _render(self, color_list=None, marker_list=None, **kwargs):
+    def _render(self, colour_list=None, marker_list=None, **kwargs):
         import matplotlib.pyplot as plt
 
         ax = plt.gca()
         ax.set_xlabel(self.x_label)
         ax.set_ylabel(self.y_label)
-        for y, c, m in zip(self.y_axis, color_list, marker_list):
+        for y, c, m in zip(self.y_axis, colour_list, marker_list):
             plt.plot(self.x_axis, y, color=c, marker=m, **kwargs)
         if self.axis_limits is not None:
             plt.axis(self.axis_limits)
@@ -434,84 +434,5 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
         self._ani = animation.FuncAnimation(self.figure, animate,
                                             init_func=init,
                                             frames=len(self.image_list),
-                                            interval=interval, blit=True)
-        return self
-
-
-class MatplotlibFittingViewer2d(MatplotlibImageViewer2d):
-    def __init__(self, figure_id, new_figure, image, target_list):
-        super(MatplotlibFittingViewer2d, self).__init__(figure_id,
-                                                        new_figure, image)
-        self.target_list = target_list
-
-    def _render(self, interval=50,  marker='s', color='r',
-                markersize=3, **kwargs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        import matplotlib.animation as animation
-
-        _ax = plt.axes()
-        _ax.axis('off')
-
-        if len(self.image.shape) == 2:
-            # Single channels are viewed in Gray
-            _ax.imshow(self.image, cmap=cm.Greys_r)
-        else:
-            _ax.imshow(self.image)
-
-        _line, = _ax.plot([], [], linestyle=' ', marker=marker, color=color,
-                          markersize=markersize, **kwargs)
-
-        def init():
-            return _line,
-
-        def animate(j):
-            _line.set_data(self.target_list[j][:, 1],
-                           self.target_list[j][:, 0])
-            return _line,
-
-        self._ani = animation.FuncAnimation(self.figure, animate,
-                                            init_func=init,
-                                            frames=len(self.target_list),
-                                            interval=interval, blit=True)
-        return self
-
-
-class MatplotlibFittingSubplotsViewer2d(MatplotlibImageSubplotsViewer2d):
-    def __init__(self, figure_id, new_figure, image, target_list):
-        super(MatplotlibFittingSubplotsViewer2d, self).__init__(
-            figure_id, new_figure, image)
-        self.target_list = target_list
-
-    def _render(self, interval=50, marker='s', color='r',
-                markersize=3, **kwargs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        import matplotlib.animation as animation
-
-        p = self.plot_layout
-        _lines = []
-        for j in range(self.image.shape[2]):
-            plt.subplot(p[0], p[1], 1 + j)
-            _ax = plt.axes()
-            # Hide the x and y labels
-            _ax.axis('off')
-            _ax.imshow(self.image[:, :, j], cmap=cm.Greys_r)
-            _line, = _ax.plot([], [], linestyle=' ', marker=marker,
-                              color=color, markersize=markersize, **kwargs)
-            _lines.append(_line)
-
-        def init():
-            return _lines
-
-        def animate(j):
-            for _line in enumerate(_lines):
-                _line.set_data(self.target_list[j][:, 1],
-                               self.target_list[j][:, 0])
-            return _lines
-
-        self._ani = animation.FuncAnimation(self.figure, animate,
-                                            init_func=init,
-                                            frames=len(self.target_list),
                                             interval=interval, blit=True)
         return self

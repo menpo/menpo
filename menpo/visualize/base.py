@@ -1,7 +1,13 @@
 # This has to go above the default importers to prevent cyclical importing
 import abc
-import numpy as np
 from collections import Iterable
+
+import numpy as np
+
+
+Menpo3dErrorMessage = ("In order to keep menpo's dependencies simple, menpo "
+                       "does not contain 3D importing and visualization code. "
+                       "Please install menpo3d to view 3D meshes.")
 
 
 class Renderer(object):
@@ -115,7 +121,7 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(figure_id=figure_id, **kwargs)
+        return self.view(figure_id=figure_id, **kwargs)
 
     def view_new(self, **kwargs):
         r"""
@@ -131,8 +137,9 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(new_figure=True, **kwargs)
+        return self.view(new_figure=True, **kwargs)
 
+    @abc.abstractmethod
     def view(self, **kwargs):
         r"""
         View the object using the default rendering engine figure handling.
@@ -149,68 +156,28 @@ class Viewable(object):
         viewer : :class:`Renderer`
             The renderer instantiated.
         """
-        return self._view(**kwargs)
-
-    @abc.abstractmethod
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
-        r"""
-        Abstract method to be overridden by viewable objects. This will
-        instantiate a specific visualisation implementation
-
-        Parameters
-        ----------
-        figure_id : object, optional
-            A unique identifier for a figure.
-
-            Default: `None`
-        new_figure : bool, optional
-            Whether the rendering engine should create a new figure.
-
-            Default: `False`
-        kwargs : dict
-            Passed through to specific rendering engine.
-
-        Returns
-        -------
-        viewer : :class:`Renderer`
-            The renderer instantiated.
-        """
-        pass
 
 
-from menpo.visualize.viewmayavi import (
-    MayaviPointCloudViewer3d, MayaviTriMeshViewer3d,
-    MayaviTexturedTriMeshViewer3d, MayaviLandmarkViewer3d,
-    MayaviVectorViewer3d, MayaviColouredTriMeshViewer3d)
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
-    MatplotlibLandmarkViewer2dImage, MatplotlibTriMeshViewer2d,
+    MatplotlibTriMeshViewer2d,
     MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
     MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
-    MatplotlibFittingViewer2d, MatplotlibFittingSubplotsViewer2d,
     MatplotlibPointGraphViewer2d)
 
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
-PointCloudViewer3d = MayaviPointCloudViewer3d
 TriMeshViewer2d = MatplotlibTriMeshViewer2d
-TriMeshViewer3d = MayaviTriMeshViewer3d
-TexturedTriMeshViewer3d = MayaviTexturedTriMeshViewer3d
-ColouredTriMeshViewer3d = MayaviColouredTriMeshViewer3d
-LandmarkViewer3d = MayaviLandmarkViewer3d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
-LandmarkViewer2dImage = MatplotlibLandmarkViewer2dImage
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
-VectorViewer3d = MayaviVectorViewer3d
+
 AlignmentViewer2d = MatplotlibAlignmentViewer2d
 GraphPlotter = MatplotlibGraphPlotter
 MultiImageViewer2d = MatplotlibMultiImageViewer2d
 MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
-FittingViewer2d = MatplotlibFittingViewer2d
-FittingSubplotsViewer2d = MatplotlibFittingSubplotsViewer2d
 
 
 class LandmarkViewer(object):
@@ -226,7 +193,7 @@ class LandmarkViewer(object):
     new_figure : `bool`
         Whether the rendering engine should create a new figure.
 
-    group_label : `str`
+    group : `str`
         The main label of the landmark set.
 
     pointcloud : :map:`PointCloud`
@@ -240,14 +207,13 @@ class LandmarkViewer(object):
         The parent object that we are drawing the landmarks for.
 
     """
-    def __init__(self, figure_id, new_figure, group_label, pointcloud,
-                 labels_to_masks, targettype=None):
+    def __init__(self, figure_id, new_figure, group, pointcloud,
+                 labels_to_masks):
         self.pointcloud = pointcloud
-        self.group_label = group_label
+        self.group = group
         self.labels_to_masks = labels_to_masks
         self.figure_id = figure_id
         self.new_figure = new_figure
-        self.targettype = targettype
 
     def render(self, **kwargs):
         r"""
@@ -269,22 +235,17 @@ class LandmarkViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.pointcloud.n_dims == 2:
-            from menpo.image.base import Image
-
-            if (self.targettype is not None and
-                    issubclass(self.targettype, Image)):
-                return LandmarkViewer2dImage(
-                    self.figure_id, self.new_figure,
-                    self.group_label, self.pointcloud,
-                    self.labels_to_masks).render(**kwargs)
-            else:
-                return LandmarkViewer2d(self.figure_id, self.new_figure,
-                                        self.group_label, self.pointcloud,
-                                        self.labels_to_masks).render(**kwargs)
-        elif self.pointcloud.n_dims == 3:
-            return LandmarkViewer3d(self.figure_id, self.new_figure,
-                                    self.group_label, self.pointcloud,
+            return LandmarkViewer2d(self.figure_id, self.new_figure,
+                                    self.group, self.pointcloud,
                                     self.labels_to_masks).render(**kwargs)
+        elif self.pointcloud.n_dims == 3:
+            try:
+                from menpo3d.visualize import LandmarkViewer3d
+                return LandmarkViewer3d(self.figure_id, self.new_figure,
+                                        self.group, self.pointcloud,
+                                        self.labels_to_masks).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D landmarks are "
                              "currently supported")
@@ -334,8 +295,12 @@ class PointCloudViewer(object):
             return PointCloudViewer2d(self.figure_id, self.new_figure,
                                       self.points).render(**kwargs)
         elif self.points.shape[1] == 3:
-            return PointCloudViewer3d(self.figure_id, self.new_figure,
-                                      self.points).render(**kwargs)
+            try:
+                from menpo3d.visualize import PointCloudViewer3d
+                return PointCloudViewer3d(self.figure_id, self.new_figure,
+                                          self.points).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D pointclouds are "
                              "currently supported")
@@ -482,7 +447,8 @@ class ImageViewer(object):
             If mask is None, then the initial pixels are returned.
         """
         if mask is not None:
-            pixels[~mask] = np.nanmax(pixels) + 1
+            nanmax = np.nanmax(pixels)
+            pixels[~mask] = nanmax + (0.01 * nanmax)
         return pixels
 
     def render(self, **kwargs):
@@ -564,8 +530,12 @@ class TriMeshViewer(object):
                                    self.points, self.trilist).render(**kwargs)
 
         elif self.points.shape[1] == 3:
-            return TriMeshViewer3d(self.figure_id, self.new_figure,
-                                   self.points, self.trilist).render(**kwargs)
+            try:
+                from menpo3d.visualize import TriMeshViewer3d
+                return TriMeshViewer3d(self.figure_id, self.new_figure,
+                                       self.points, self.trilist).render(**kwargs)
+            except ImportError:
+                raise ImportError(Menpo3dErrorMessage)
         else:
             raise ValueError("Only 2D and 3D TriMeshes "
                              "are currently supported")
@@ -591,28 +561,5 @@ class MultipleImageViewer(ImageViewer):
             else:
                 return MultiImageViewer2d(self.figure_id, self.new_figure,
                                           self.pixels_list).render(**kwargs)
-        else:
-            raise ValueError("Only 2D images are currently supported")
-
-
-class FittingViewer(ImageViewer):
-
-    def __init__(self, figure_id, new_figure, dimensions, pixels,
-                 target_list, channels=None, mask=None):
-        super(FittingViewer, self).__init__(
-            figure_id, new_figure, dimensions, pixels,
-            channels=channels, mask=mask)
-        self.target_list = target_list
-
-    def render(self, **kwargs):
-        if self.dimensions == 2:
-            if self.use_subplots:
-                FittingSubplotsViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
-            else:
-                return FittingViewer2d(
-                    self.figure_id, self.new_figure, self.pixels,
-                    self.target_list).render(**kwargs)
         else:
             raise ValueError("Only 2D images are currently supported")

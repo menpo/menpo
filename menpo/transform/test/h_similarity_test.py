@@ -5,32 +5,6 @@ from nose.tools import raises
 from menpo.transform import Similarity
 
 
-sim_jac_solution2d = np.array([[[0., 0.],
-                                [0., 0.],
-                                [1., 0.],
-                                [0., 1.]],
-                               [[0., 1.],
-                                [-1., 0.],
-                                [1., 0.],
-                                [0., 1.]],
-                               [[0., 2.],
-                                [-2., 0.],
-                                [1., 0.],
-                                [0., 1.]],
-                               [[1., 0.],
-                                [0., 1.],
-                                [1., 0.],
-                                [0., 1.]],
-                               [[1., 1.],
-                                [-1., 1.],
-                                [1., 0.],
-                                [0., 1.]],
-                               [[1., 2.],
-                                [-2., 1.],
-                                [1., 0.],
-                                [0., 1.]]])
-
-
 def test_basic_2d_similarity():
     linear_component = np.array([[2, -6],
                                  [6, 2]])
@@ -56,33 +30,6 @@ def test_basic_2d_similarity():
     # check that all copies have been transformed correctly
     for r in results:
         assert_allclose(solution, r)
-
-
-def test_similarity_jacobian_2d():
-    params = np.ones(4)
-    t = Similarity.identity(2).from_vector(params)
-    explicit_pixel_locations = np.array(
-        [[0, 0],
-         [0, 1],
-         [0, 2],
-         [1, 0],
-         [1, 1],
-         [1, 2]])
-    dW_dp = t.d_dp(explicit_pixel_locations)
-    assert_almost_equal(dW_dp, sim_jac_solution2d)
-
-
-@raises(ValueError)
-def test_similarity_jacobian_3d_raises_dimensionalityerror():
-    t = Similarity(np.eye(4))
-    t.d_dp(np.ones([2, 3]))
-
-
-@raises(ValueError)
-def test_similarity_2d_points_raises_dimensionalityerror():
-    params = np.ones(4)
-    t = Similarity.identity(2).from_vector(params)
-    t.d_dp(np.ones([2, 3]))
 
 
 def test_similarity_2d_from_vector():

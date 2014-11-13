@@ -3,7 +3,6 @@ import abc
 from warnings import warn
 
 import numpy as np
-from scipy.misc import imrotate
 import scipy.linalg
 import PIL.Image as PILImage
 
@@ -13,6 +12,7 @@ from menpo.transform import (Translation, NonUniformScale,
                              AlignmentUniformScale, Affine, Rotation)
 from menpo.visualize.base import ImageViewer
 from .interpolation import scipy_interpolation, cython_interpolation
+from .extract_patches import extract_patches_cython
 
 
 class ImageBoundaryError(ValueError):
@@ -272,7 +272,6 @@ class Image(Vectorizable, LandmarkableViewable):
         elif self.n_dims == 2:
             return '{}W x {}H'.format(self.width, self.height)
 
-    @property
     def indices(self):
         r"""
         Return the indices of all pixels in this image.
@@ -427,7 +426,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
             Default: `True`
         bins : 'unique', positive int or sequence of scalars, optional
-            If set equal to 'unique', the bins of the histograms are centered
+            If set equal to 'unique', the bins of the histograms are centred
             on the unique values of each channel. If set equal to a positive
             integer, then this is the number of bins. If set equal to a
             sequence of scalars, these will be used as bins centres.
@@ -447,8 +446,8 @@ class Image(Vectorizable, LandmarkableViewable):
                 for k in range(len(hist)):
                     plt.subplot(1,len(hist),k)
                     width = 0.7 * (bin_edges[k][1] - bin_edges[k][0])
-                    center = (bin_edges[k][:-1] + bin_edges[k][1:]) / 2
-                    plt.bar(center, hist[k], align='center', width=width)
+                    centre = (bin_edges[k][:-1] + bin_edges[k][1:]) / 2
+                    plt.bar(centre, hist[k], align='center', width=width)
 
         Raises
         ------
@@ -483,7 +482,7 @@ class Image(Vectorizable, LandmarkableViewable):
                 bin_edges.append(c_tmp)
         return hist, bin_edges
 
-    def _view(self, figure_id=None, new_figure=False, channels=None,
+    def view(self, figure_id=None, new_figure=False, channels=None,
               **kwargs):
         r"""
         View the image using the default image viewer. Currently only
@@ -503,48 +502,18 @@ class Image(Vectorizable, LandmarkableViewable):
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channels=channels).render(**kwargs)
 
-    def glyph(self, vectors_block_size=10, use_negative=False, channels=None):
+    def view_widget(self, popup=False):
         r"""
-        Create glyph of a feature image. If feature_data has negative values,
-        the use_negative flag controls whether there will be created a glyph of
-        both positive and negative values concatenated the one on top of the
-        other.
+        Visualizes the image object using the
+        menpo.visualize.widgets.visualize_images widget.
 
         Parameters
-        ----------
-        vectors_block_size: int
-            Defines the size of each block with vectors of the glyph image.
-        use_negative: bool
-            Defines whether to take into account possible negative values of
-            feature_data.
+        -----------
+        popup : `boolean`, optional
+            If enabled, the widget will appear as a popup window.
         """
-        # first, choose the appropriate channels
-        if channels is None:
-            pixels = self.pixels[..., :4]
-        elif channels != 'all':
-            pixels = self.pixels[..., channels]
-        else:
-            pixels = self.pixels
-        # compute the glyph
-        negative_weights = -pixels
-        scale = np.maximum(pixels.max(), negative_weights.max())
-        pos = _create_feature_glyph(pixels, vectors_block_size)
-        pos = pos * 255 / scale
-        glyph_image = pos
-        if use_negative and pixels.min() < 0:
-            neg = _create_feature_glyph(negative_weights, vectors_block_size)
-            neg = neg * 255 / scale
-            glyph_image = np.concatenate((pos, neg))
-        glyph = Image(glyph_image)
-        # correct landmarks
-        from menpo.transform import NonUniformScale
-
-        image_shape = np.array(self.shape, dtype=np.double)
-        glyph_shape = np.array(glyph.shape, dtype=np.double)
-        nus = NonUniformScale(glyph_shape / image_shape)
-        glyph.landmarks = self.landmarks
-        nus.apply_inplace(glyph.landmarks)
-        return glyph
+        from menpo.visualize import visualize_images
+        visualize_images(self, figure_size=(7, 7), popup=popup)
 
     def gradient(self, **kwargs):
         r"""
@@ -780,16 +749,13 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-
-        points: (d,) ndarray
+        points : (d,) ndarray
             points to be snapped to the image boundaries
 
         Returns
         -------
-
-        bounded_points: (d,) ndarray
+        bounded_points : (d,) ndarray
             points snapped to not stray outside the image edges
-
         """
         bounded_points = points.copy()
         # check we don't stray under any edges
@@ -800,8 +766,113 @@ class Image(Vectorizable, LandmarkableViewable):
         bounded_points[over_image] = shape[over_image]
         return bounded_points
 
+    def extract_patches(self, patch_centers, patch_size=(16, 16),
+                        sample_offsets=None, as_single_array=False):
+        r"""
+        Extract a set of patches from an image. Given a set of patch centers and
+        a patch size, patches are extracted from within the image, centred
+        on the given coordinates. Sample offsets denote a set of offsets to
+        extract from within a patch. This is very useful if you want to extract
+        a dense set of features around a set of landmarks and simply sample the
+        same grid of patches around the landmarks.
+
+        If sample offsets are used, to access the offsets for each patch you
+        need to slice the resulting list. So for 2 offsets, the first centers
+        offset patches would be ``patches[:2]``.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        patch_centers : :map:`PointCloud`
+            The centers to extract patches around.
+        patch_size : tuple or ndarray, optional
+            The size of the patch to extract
+        sample_offsets : :map:`PointCloud`, optional
+            The offsets to sample from within a patch. So (0,0) is the centre
+            of the patch (no offset) and (1, 0) would be sampling the patch
+            from 1 pixel up the first axis away from the centre.
+        as_single_array : (n_center * n_offset, self.shape...) ndarray, optional
+            If ``True``, a single numpy array is returned containing each patch.
+            If ``False``, a list of images is returned representing each patch.
+
+        Returns
+        -------
+        patches : list or ndarray
+            Returns the extracted patches. Returns a list if ``as_single_array``
+            is ``True`` and an ndarray if ``as_single_array`` is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        """
+        if self.n_dims != 2:
+            raise ValueError('Only two dimensional patch extraction is '
+                             'currently supported.')
+
+        if sample_offsets is None:
+            sample_offsets_arr = np.zeros([1, 2], dtype=np.int64)
+        else:
+            sample_offsets_arr = np.require(sample_offsets.points,
+                                            dtype=np.int64)
+
+        single_array = extract_patches_cython(self.pixels,
+                                              patch_centers.points,
+                                              np.asarray(patch_size,
+                                                         dtype=np.int64),
+                                              sample_offsets_arr)
+
+        if as_single_array:
+            return single_array
+        else:
+            return [Image(p, copy=False) for p in single_array]
+
+    def extract_patches_around_landmarks(
+            self, group=None, label=None, patch_size=(16, 16),
+            sample_offsets=None, as_single_array=False):
+        r"""
+        Extract patches around landmarks existing on this image. Provided the
+        group label and optionally the landmark label extract a set of patches.
+
+        See `extract_patches` for more information.
+
+        Currently only 2D images are supported.
+
+        Parameters
+        ----------
+        group : `str` or `None`, optional
+            The landmark group to use as patch centres.
+        label : `str` or `None`, optional
+            The landmark label within the group to use as centres.
+        patch_size : tuple or ndarray, optional
+            The size of the patch to extract
+        sample_offsets : :map:`PointCloud`, optional
+            The offsets to sample from within a patch. So (0,0) is the centre
+            of the patch (no offset) and (1, 0) would be sampling the patch
+            from 1 pixel up the first axis away from the centre.
+        as_single_array : (n_center * n_offset, self.shape...) ndarray, optional
+            If ``True``, a single numpy array is returned containing each patch.
+            If ``False``, a list of images is returned representing each patch.
+
+        Returns
+        -------
+        patches : list or ndarray
+            Returns the extracted patches. Returns a list if ``as_single_array``
+            is ``True`` and an ndarray if ``as_single_array`` is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If image is not 2D
+        """
+        return self.extract_patches(self.landmarks[group][label],
+                                    patch_size=patch_size,
+                                    sample_offsets=sample_offsets,
+                                    as_single_array=as_single_array)
+
     def warp_to_mask(self, template_mask, transform, warp_landmarks=False,
-                     order=1, mode='constant', cval=0.):
+             order=1, mode='constant', cval=0.):
         r"""
         Return a copy of this image warped into a different reference space.
 
@@ -850,7 +921,7 @@ class Image(Vectorizable, LandmarkableViewable):
             raise ValueError(
                 "Trying to warp a {}D image with a {}D transform "
                 "(they must match)".format(self.n_dims, transform.n_dims))
-        template_points = template_mask.true_indices
+        template_points = template_mask.true_indices()
         points_to_sample = transform.apply(template_points)
         # we want to sample each channel in turn, returning a vector of
         # sampled pixels. Store those in a (n_pixels, n_channels) array.
@@ -864,6 +935,8 @@ class Image(Vectorizable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+        if hasattr(self, 'path'):
+            warped_image.path = self.path
         return warped_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
@@ -886,7 +959,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        template_shape : (n_dims, ) tuple or ndarray
+        template_shape : tuple or ndarray
             Defines the shape of the result, and what pixel indices should be
             sampled (all of them).
 
@@ -946,6 +1019,8 @@ class Image(Vectorizable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+        if hasattr(self, 'path'):
+            warped_image.path = self.path
         return warped_image
 
     def rescale(self, scale, round='ceil', order=1):
@@ -1048,21 +1123,17 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        reference_shape: :class:`menpo.shape.pointcloud`
+        reference_shape: :map:`PointCloud`
             The reference shape to which the landmarks scale will be matched
             against.
-
         group : `str`, optional
             The key of the landmark set that should be used. If None,
             and if there is only one set of landmarks, this set will be used.
-
-        label: `str`, optional
+        label : `str`, optional
             The label of of the landmark manager that you wish to use. If
             `None` all landmarks in the group are used.
-
-        round: {'ceil', 'floor', 'round'}, optional
+        round : {'ceil', 'floor', 'round'}, optional
             Rounding function to be applied to floating point shapes.
-
         order : `int`, optional
             The order of interpolation. The order has to be in the range 0-5:
             * 0: Nearest-neighbor
@@ -1294,7 +1365,7 @@ class Image(Vectorizable, LandmarkableViewable):
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
-                self.n_channels, self.ndims))
+                self.n_channels, self.n_dims))
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
         return PILImage.fromarray((pixels * 255).astype(np.uint8))
@@ -1359,7 +1430,6 @@ class Image(Vectorizable, LandmarkableViewable):
             'per_channel', each channel individually is mean centred and
             normalized in variance.
         """
-
         def scale_func(pixels, axis=None):
             return np.linalg.norm(pixels, axis=axis, **kwargs)
 
@@ -1383,40 +1453,6 @@ class Image(Vectorizable, LandmarkableViewable):
                              "normalized")
         else:
             self.from_vector_inplace(centered_pixels / scale_factor)
-
-
-def _create_feature_glyph(feature, vbs):
-    r"""
-    Create glyph of feature pixels.
-
-    Parameters
-    ----------
-    feature : (N, D) ndarray
-        The feature pixels to use.
-    vbs: int
-        Defines the size of each block with vectors of the glyph image.
-    """
-    # vbs = Vector block size
-    num_bins = feature.shape[2]
-    # construct a "glyph" for each orientation
-    block_image_temp = np.zeros((vbs, vbs))
-    # Create a vertical line of ones, to be the first vector
-    block_image_temp[:, round(vbs / 2) - 1:round(vbs / 2) + 1] = 1
-    block_im = np.zeros((block_image_temp.shape[0],
-                         block_image_temp.shape[1],
-                         num_bins))
-    # First vector as calculated above
-    block_im[:, :, 0] = block_image_temp
-    # Number of bins rotations to create an 'asterisk' shape
-    for i in range(1, num_bins):
-        block_im[:, :, i] = imrotate(block_image_temp, -i * vbs)
-
-    # make pictures of positive feature_data by adding up weighted glyphs
-    feature[feature < 0] = 0
-    glyph_im = np.sum(block_im[None, None, :, :, :] *
-                      feature[:, :, None, None, :], axis=-1)
-    glyph_im = np.bmat(glyph_im.tolist())
-    return glyph_im
 
 
 def round_image_shape(shape, round):

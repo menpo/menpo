@@ -134,7 +134,7 @@ def log_gabor(image, **kwargs):
     center_sigma : double, optional
         Ratio of the standard deviation of the Gaussian describing the Log
         Gabor filter's transfer function in the frequency domain to the filter
-        center frequency.
+        centre frequency.
 
         ========== ==
         Default 2D 0.65

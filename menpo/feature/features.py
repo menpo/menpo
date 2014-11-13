@@ -454,10 +454,10 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
         If None then no normalization is employed.
 
     sigmas : 1D array of `float`, Optional
-        Standard deviation of spatial Gaussian smoothing for the center
+        Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
-        be sorted from the center and out. I.e. the first sigma value defines
-        the spatial smoothing of the center histogram and the last sigma value
+        be sorted from the centre and out. I.e. the first sigma value defines
+        the spatial smoothing of the centre histogram and the last sigma value
         defines the spatial smoothing of the outermost ring. Specifying sigmas
         overrides the following parameter.
 
@@ -471,7 +471,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
             ``radius = ring_radii[-1]``
 
         If both sigmas and ring_radii are given, they must satisfy the
-        following predicate since no radius is needed for the center
+        following predicate since no radius is needed for the centre
         histogram.
 
             ``len(ring_radii) == len(sigmas) + 1``
