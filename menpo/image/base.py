@@ -935,6 +935,8 @@ class Image(Vectorizable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+        if hasattr(self, 'path'):
+            warped_image.path = self.path
         return warped_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values):
@@ -1017,6 +1019,8 @@ class Image(Vectorizable, LandmarkableViewable):
         if warp_landmarks and self.has_landmarks:
             warped_image.landmarks = self.landmarks
             transform.pseudoinverse().apply_inplace(warped_image.landmarks)
+        if hasattr(self, 'path'):
+            warped_image.path = self.path
         return warped_image
 
     def rescale(self, scale, round='ceil', order=1):

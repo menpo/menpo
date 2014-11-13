@@ -381,6 +381,8 @@ class BooleanImage(Image):
         boolean_image = BooleanImage(warped.pixels.reshape(template_shape))
         if warped.has_landmarks:
             boolean_image.landmarks = warped.landmarks
+        if hasattr(warped, 'path'):
+            boolean_image.path = warped.path
         return boolean_image
 
     def _build_warped_to_mask(self, template_mask, sampled_pixel_values,
