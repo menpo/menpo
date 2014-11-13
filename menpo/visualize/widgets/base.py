@@ -181,7 +181,9 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Display masked pixels if image is masked
-        masked_pixels_str = (r'{} masked pixels.'.format(image.n_true_pixels())
+        masked_pixels_str = (r'{} masked pixels (attached mask {:.1%} true)'.
+                             format(image.n_true_pixels(),
+                                    image.mask.proportion_true())
                              if image_is_masked else '')
         # Display number of landmarks if image is landmarked
         landmarks_str = (r'{} landmark points.'.
