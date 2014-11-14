@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import wrapt
 from menpo.image import Image, MaskedImage, BooleanImage
@@ -49,12 +50,27 @@ def sample_mask_for_centres(mask, centres):
 
 
 def rebuild_feature_image(image, f_pixels):
+    shape_changed = f_pixels.shape[:-1] != image.shape
     if hasattr(image, 'mask'):
-        new_image = MaskedImage(f_pixels, mask=image.mask.copy(), copy=False)
+        # original image had a mask. Did the feature generate an image of the
+        # same size?
+        if shape_changed:
+            # feature is of a different size - best we can do is rescale the
+            # mask
+            mask = image.mask.resize(f_pixels.shape[:-1])
+        else:
+            # feature is same size as input
+            mask = image.mask.copy()
+        new_image = MaskedImage(f_pixels, mask=mask, copy=False)
     else:
         new_image = Image(f_pixels, copy=False)
     if image.has_landmarks:
-        new_image.landmarks = image.landmarks
+        if shape_changed:
+            # need to adjust the landmarks
+            sf = np.array(f_pixels.shape[:-1]) / np.array(image.shape)
+            new_image.landmarks = NonUniformScale(sf).apply(image.landmarks)
+        else:
+            new_image.landmarks = image.landmarks
     return new_image
 
 

@@ -122,7 +122,7 @@ class TriMesh(PointCloud):
         return new_mask
 
     def as_pointgraph(self, copy=True):
-        from .. import PointGraph
+        from .. import PointUndirectedGraph
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
         wrap_around_adj = np.hstack([self.trilist[:, -1][..., None],
@@ -131,7 +131,7 @@ class TriMesh(PointCloud):
         adjacency_array = np.concatenate([self.trilist[:, :2],
                                           self.trilist[:, 1:],
                                           wrap_around_adj])
-        pg = PointGraph(self.points, adjacency_array, copy=copy)
+        pg = PointUndirectedGraph(self.points, adjacency_array, copy=copy)
         # This is always a copy
         pg.landmarks = self.landmarks
         return pg
@@ -174,7 +174,7 @@ class TriMesh(PointCloud):
             raise ValueError("Normals are only valid for 3D meshes")
         return compute_normals(self.points, self.trilist)[1]
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         """
         Visualize the TriMesh.
 

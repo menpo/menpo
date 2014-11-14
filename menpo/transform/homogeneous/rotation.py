@@ -235,10 +235,6 @@ class Rotation(DiscreteAffine, Similarity):
         """
         return Rotation(np.linalg.inv(self.rotation_matrix), skip_checks=True)
 
-    def d_dp(self, points):
-        raise NotImplementedError("vectorizable (and hence d_dp) is not "
-                                  "implemented for Rotation")
-
 
 class AlignmentRotation(HomogFamilyAlignment, Rotation):
 

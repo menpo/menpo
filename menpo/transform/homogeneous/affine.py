@@ -1,13 +1,11 @@
 import abc
-import copy
 import numpy as np
 
-from menpo.base import DX, DP
 from .base import Homogeneous, HomogFamilyAlignment
 from functools import reduce
 
 
-class Affine(Homogeneous, DP, DX):
+class Affine(Homogeneous):
     r"""Base class for all n-dimensional affine transformations. Provides
     methods to break the transform down into it's constituent
     scale/rotation/translation, to view the homogeneous matrix equivalent,
@@ -30,7 +28,7 @@ class Affine(Homogeneous, DP, DX):
 
     @classmethod
     def identity(cls, n_dims):
-        return Affine(np.eye(n_dims + 1))
+        return cls(np.eye(n_dims + 1))
 
     @property
     def h_matrix(self):
@@ -211,106 +209,6 @@ class Affine(Homogeneous, DP, DX):
     @property
     def composes_inplace_with(self):
         return Affine
-
-    def _build_pseudoinverse(self):
-        # Skip the checks as we know inverse of a homogeneous is a homogeneous
-        return Affine(np.linalg.inv(self.h_matrix), copy=False,
-                      skip_checks=True)
-
-    def d_dp(self, points):
-        r"""The first order derivative of this Affine transform wrt parameter
-        changes evaluated at points.
-
-        The Jacobian generated (for 2D) is of the form::
-
-            x 0 y 0 1 0
-            0 x 0 y 0 1
-
-        This maintains a parameter order of::
-
-          W(x;p) = [1 + p1  p3      p5] [x]
-                   [p2      1 + p4  p6] [y]
-                                        [1]
-
-        Parameters
-        ----------
-        points : (n_points, n_dims) ndarray
-            The set of points to calculate the jacobian for.
-
-
-        Returns
-        -------
-        (n_points, n_params, n_dims) ndarray
-            The jacobian wrt parametrization
-
-        """
-        n_points, points_n_dim = points.shape
-        if points_n_dim != self.n_dims:
-            raise ValueError(
-                "Trying to sample jacobian in incorrect dimensions "
-                "(transform is {0}D, sampling at {1}D)".format(
-                    self.n_dims, points_n_dim))
-        # prealloc the jacobian
-        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
-        # a mask that we can apply at each iteration
-        dim_mask = np.eye(self.n_dims, dtype=np.bool)
-
-        for i, s in enumerate(
-                range(0, self.n_dims * self.n_dims, self.n_dims)):
-            # i is current axis
-            # s is slicing offset
-            # make a mask for a single points jacobian
-            full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=bool)
-            # fill the mask in for the ith axis
-            full_mask[slice(s, s + self.n_dims)] = dim_mask
-            # assign the ith axis points to this mask, broadcasting over all
-            # points
-            jac[:, full_mask] = points[:, i][..., None]
-            # finally, just repeat the same but for the ones at the end
-        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=bool)
-        full_mask[slice(s + self.n_dims, s + 2 * self.n_dims)] = dim_mask
-        jac[:, full_mask] = 1
-        return jac
-
-    def d_dx(self, points):
-        r"""
-        The first order derivative of this Affine transform wrt spatial changes
-        evaluated at points.
-
-        The Jacobian for a given point (for 2D) is of the form::
-
-            Jx = [(1 + a),     -b  ]
-            Jy = [   b,     (1 + a)]
-            J =  [Jx, Jy] = [[(1 + a), -b], [b, (1 + a)]]
-
-        where a and b come from:
-
-            W(x;p) = [1 + a   -b      tx] [x]
-                     [b       1 + a   ty] [y]
-                                          [1]
-        Hence it is simply the linear component of the transform.
-
-        Parameters
-        ----------
-
-        points: ndarray shape (n_points, n_dims)
-            The spatial points at which the derivative should be evaluated.
-
-        Returns
-        -------
-
-        d_dx: (1, n_dims, n_dims) ndarray
-            The jacobian wrt spatial changes.
-
-            d_dx[0, j, k] is the scalar differential change that the
-            j'th dimension of the i'th point experiences due to a first order
-            change in the k'th dimension.
-
-            Note that because the jacobian is constant across space the first
-            axis is length 1 to allow for broadcasting.
-
-        """
-        return self.linear_component[None, ...]
 
 
 class AlignmentAffine(HomogFamilyAlignment, Affine):

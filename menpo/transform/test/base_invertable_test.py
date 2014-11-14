@@ -18,7 +18,7 @@ class MockedVInvertable(VInvertible, Vectorizable):
     def _as_vector(self):
         return self.vector
 
-    def _build_pseudoinverse(self):
+    def pseudoinverse(self):
         m = MockedVInvertable()
         m.vector = -self.vector
         return m

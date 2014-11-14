@@ -263,8 +263,8 @@ def test_lbp_values():
 def test_constrain_landmarks():
     breaking_bad = mio.import_builtin_asset('breakingbad.jpg').as_masked()
     breaking_bad.crop_to_landmarks_inplace(boundary=20)
-    breaking_bad.constrain_mask_to_landmarks()
     breaking_bad = breaking_bad.resize([50, 50])
+    breaking_bad.constrain_mask_to_landmarks()
     hog_b = hog(breaking_bad, mode='sparse')
     x = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[1] - 1)
     y = np.where(hog_b.landmarks['PTS'].lms.points[:, 0] > hog_b.shape[0] - 1)

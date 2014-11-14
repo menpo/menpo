@@ -40,7 +40,7 @@ class Similarity(Affine):
 
     @classmethod
     def identity(cls, n_dims):
-        return Similarity(np.eye(n_dims + 1), copy=False, skip_checks=True)
+        return cls(np.eye(n_dims + 1), copy=False, skip_checks=True)
 
     @property
     def n_parameters(self):
@@ -155,72 +155,6 @@ class Similarity(Affine):
         else:
             raise ValueError("Only 2D and 3D Similarity transforms "
                              "are currently supported.")
-
-    def _build_pseudoinverse(self):
-        return Similarity(np.linalg.inv(self.h_matrix), copy=False,
-                          skip_checks=True)
-
-    def d_dp(self, points):
-        r"""
-        Computes the Jacobian of the transform w.r.t the parameters.
-
-        The Jacobian generated (for 2D) is of the form::
-
-            x -y 1 0
-            y  x 0 1
-
-        This maintains a parameter order of::
-
-          W(x;p) = [1 + a  -b   ] [x] + tx
-                   [b      1 + a] [y] + ty
-
-        Parameters
-        ----------
-        points : (n_points, n_dims) ndarray
-            The set of points to calculate the jacobian for.
-
-        Returns
-        -------
-        (n_points, n_params, n_dims) ndarray
-            The jacobian wrt parametrization
-
-        Raises
-        ------
-        DimensionalityError
-            `points.n_dims != self.n_dims` or transform is not 2D
-
-        """
-        n_points, points_n_dim = points.shape
-        if points_n_dim != self.n_dims:
-            raise ValueError('Trying to sample jacobian in incorrect '
-                             'dimensions (transform is {0}D, sampling '
-                             'at {1}D)'.format(self.n_dims, points_n_dim))
-        elif self.n_dims != 2:
-            # TODO: implement 3D Jacobian
-            raise ValueError("Only the Jacobian of a 2D similarity "
-                             "transform is currently supported.")
-
-        # prealloc the jacobian
-        jac = np.zeros((n_points, self.n_parameters, self.n_dims))
-        ones = np.ones_like(points)
-
-        # Build a mask and apply it to the points to build the jacobian
-        # Do this for each parameter - [a, b, tx, ty] respectively
-        self._apply_jacobian_mask(jac, np.array([1, 1]), 0, points)
-        self._apply_jacobian_mask(jac, np.array([-1, 1]), 1, points[:, ::-1])
-        self._apply_jacobian_mask(jac, np.array([1, 0]), 2, ones)
-        self._apply_jacobian_mask(jac, np.array([0, 1]), 3, ones)
-
-        return jac
-
-    def _apply_jacobian_mask(self, jac, param_mask, row_index, points):
-        # make a mask for a single points jacobian
-        full_mask = np.zeros((self.n_parameters, self.n_dims), dtype=np.bool)
-        # fill the mask in for the ith axis
-        full_mask[row_index] = [True, True]
-        # assign the ith axis points to this mask, broadcasting over all
-        # points
-        jac[:, full_mask] = points * param_mask
 
 
 class AlignmentSimilarity(HomogFamilyAlignment, Similarity):

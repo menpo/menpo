@@ -21,7 +21,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
       * The sigma values of the spatial Gaussian smoothing in this code do not
         match the sigma values in the original code by Tola et al. [2]_. In
         their code, spatial smoothing is applied to both the input image and
-        the center histogram. However, this smoothing is not documented in [1]_
+        the centre histogram. However, this smoothing is not documented in [1]_
         and, therefore, it is omitted.
 
     Parameters
@@ -47,10 +47,10 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
           * 'off': Disable normalization.
 
     sigmas : 1D array of float, optional
-        Standard deviation of spatial Gaussian smoothing for the center
+        Standard deviation of spatial Gaussian smoothing for the centre
         histogram and for each ring of histograms. The array of sigmas should
-        be sorted from the center and out. I.e. the first sigma value defines
-        the spatial smoothing of the center histogram and the last sigma value
+        be sorted from the centre and out. I.e. the first sigma value defines
+        the spatial smoothing of the centre histogram and the last sigma value
         defines the spatial smoothing of the outermost ring. Specifying sigmas
         overrides the following parameter.
 
@@ -64,7 +64,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
             ``radius = ring_radii[-1]``
 
         If both sigmas and ring_radii are given, they must satisfy the
-        following predicate since no radius is needed for the center
+        following predicate since no radius is needed for the centre
         histogram.
 
             ``len(ring_radii) == len(sigmas) + 1``
@@ -123,7 +123,7 @@ def _daisy(img, step=4, radius=15, rings=3, histograms=8, orientations=8,
         # Weigh bin contribution by the gradient magnitude
         hist[i, :, :] = np.multiply(hist[i, :, :], grad_mag)
 
-    # Smooth orientation histograms for the center and all rings.
+    # Smooth orientation histograms for the centre and all rings.
     sigmas = [sigmas[0]] + sigmas
     hist_smooth = np.empty((rings + 1,) + hist.shape, dtype=float)
     for i in range(rings + 1):

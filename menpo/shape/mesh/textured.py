@@ -2,7 +2,6 @@ import numpy as np
 
 from menpo.shape import PointCloud
 from menpo.transform import Scale
-from menpo.visualize import TexturedTriMeshViewer3d
 
 from ..adjacency import mask_adjacency_array, reindex_adjacency_array
 from .base import TriMesh
@@ -150,7 +149,7 @@ class TexturedTriMesh(TriMesh):
         json_dict['tcoords'] = self.tcoords.tojson()['points']
         return json_dict
 
-    def _view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
+    def view(self, figure_id=None, new_figure=False, textured=True, **kwargs):
         r"""
         Visualize the :class:`TexturedTriMesh`. Only 3D objects are currently
         supported.
@@ -174,17 +173,22 @@ class TexturedTriMesh(TriMesh):
         """
         if textured:
             if self.n_dims == 3:
-                return TexturedTriMeshViewer3d(
-                    figure_id, new_figure, self.points,
-                    self.trilist, self.texture,
-                    self.tcoords.points).render(**kwargs)
+                try:
+                    from menpo3d.visualize import TexturedTriMeshViewer3d
+                    return TexturedTriMeshViewer3d(
+                        figure_id, new_figure, self.points,
+                        self.trilist, self.texture,
+                        self.tcoords.points).render(**kwargs)
+                except ImportError:
+                    from menpo.visualize import Menpo3dErrorMessage
+                    raise ImportError(Menpo3dErrorMessage)
             else:
                 raise ValueError("Only viewing of 3D textured meshes"
                                  "is currently supported.")
         else:
-            return super(TexturedTriMesh, self)._view(figure_id=figure_id,
-                                                      new_figure=new_figure,
-                                                      **kwargs)
+            return super(TexturedTriMesh, self).view(figure_id=figure_id,
+                                                     new_figure=new_figure,
+                                                     **kwargs)
 
     def __str__(self):
         return '{}\ntexture_shape: {}, n_texture_channels: {}'.format(

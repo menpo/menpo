@@ -171,7 +171,7 @@ class PointCloud(Shape):
         bb = self.bounds(boundary)
         return bb.max - bb.min
 
-    def _view(self, figure_id=None, new_figure=False, **kwargs):
+    def view(self, figure_id=None, new_figure=False, **kwargs):
         return PointCloudViewer(figure_id, new_figure,
                                 self.points).render(**kwargs)
 
