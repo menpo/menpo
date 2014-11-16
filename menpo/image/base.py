@@ -9,7 +9,7 @@ import PIL.Image as PILImage
 from menpo.base import Vectorizable
 from menpo.landmark import LandmarkableViewable
 from menpo.transform import (Translation, NonUniformScale,
-                             AlignmentUniformScale, Affine)
+                             AlignmentUniformScale, Affine, Rotation)
 from menpo.visualize.base import ImageViewer
 from .interpolation import scipy_interpolation, cython_interpolation
 from .extract_patches import extract_patches_cython
@@ -1237,6 +1237,30 @@ class Image(Vectorizable, LandmarkableViewable):
         # we get (250, 250) even if the number we obtain is 250 to some
         # floating point inaccuracy.
         return self.rescale(scales, round='round', order=order)
+
+    def rotate_ccw_about_centre(self, theta, degrees=True, cval=0):
+        r"""
+        Return a rotation of this image clockwise about it's centre.
+
+        Parameters
+        ----------
+        theta : ``float``
+            The angle of rotation about the origin
+        degrees : ``bool``, optional
+            If true theta is interpreted as a degree. If False, theta is
+            interpreted as radians.
+        cval : ``float``, optional
+            The value to be set outside the rotated image boundaries
+        """
+        if self.n_dims != 2:
+            raise ValueError('Image rotation is presently only supported on '
+                             '2D images')
+        # create a translation that moves the centre of the image to the origin
+        t = Translation(self.centre)
+        r = Rotation.from_2d_ccw_angle(theta, degrees=degrees)
+        r_about_centre = t.pseudoinverse().compose_before(r).compose_before(t)
+        return self.warp_to_shape(self.shape, r_about_centre.pseudoinverse(),
+                                  warp_landmarks=True, cval=cval)
 
     def pyramid(self, n_levels=3, downscale=2):
         image = self
