@@ -1,5 +1,6 @@
 import abc
 from collections import OrderedDict, MutableMapping
+import fnmatch
 
 import numpy as np
 
@@ -58,6 +59,9 @@ class Landmarkable(Copyable):
         :type: `int`
         """
         return self.landmarks.n_groups
+
+    def remove_all_landmarks(self):
+        self._landmarks = None
 
 
 class LandmarkableViewable(Landmarkable, Viewable):
@@ -272,6 +276,14 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         :type: list of `string`
         """
         return self._landmark_groups.keys()
+
+    def keys_matching(self, glob_pattern):
+        return fnmatch.filter(self.keys(), glob_pattern)
+
+    def items_matching(self, glob_pattern):
+        for k, v in self.items():
+            if fnmatch.fnmatch(k, glob_pattern):
+                yield k, v
 
     def _transform_inplace(self, transform):
         for group in self._landmark_groups.values():
