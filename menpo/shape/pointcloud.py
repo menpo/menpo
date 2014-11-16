@@ -255,8 +255,8 @@ class BoundingBox(PointCloud):
     r"""
     An N-dimensional bounding box built from 2 points - the minimum point of
     the box, and the maximum of the box. Only the two points are stored, but
-    the a full :map:`PointGraph` representation of the box (four points in the
-    case of 2D) can be retrieved using the `.box()` method.
+    the a full :map:`PointDirectedGraph` representation of the box
+    (four points in the case of 2D) can be retrieved using the `.box()` method.
 
 
     Parameters
@@ -305,13 +305,13 @@ class BoundingBox(PointCloud):
 
     def box(self):
         r"""
-        Generate a full box :map:`PointGraph` representation of this
+        Generate a full box :map:`PointDirectedGraph` representation of this
         :map:`BoundingBox`. Will have 4 points in the case of 2D. Other
         dimensions are not yet supported.
 
         Returns
         -------
-        pointgraph : :map:`PointGraph`
+        pointgraph : :map:`PointDirectedGraph`
             A 'complete' representation of this :map:`BoundingBox`
 
         """

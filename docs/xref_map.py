@@ -46,7 +46,7 @@ xref_map = {
 'PCAModel': ('class', 'menpo.model.pca.PCAModel'),
 'PDM': ('class', 'menpo.model.modelinstance.PDM'),
 'PointCloud': ('class', 'menpo.shape.pointcloud.PointCloud'),
-'PointGraph': ('class', 'menpo.shape.graph.PointGraph'),
+'PointDirectedGraph': ('class', 'menpo.shape.graph.PointDirectedGraph'),
 'principal_component_decomposition': ('function', 'menpo.math.decomposition.principal_component_decomposition'),
 'Shape': ('class', 'menpo.shape.base.Shape'),
 'Similarity': ('class', 'menpo.transform.homogeneous.similarity.Similarity'),
