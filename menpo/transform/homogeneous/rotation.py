@@ -52,6 +52,30 @@ class Rotation(DiscreteAffine, Similarity):
         self.set_rotation_matrix(rotation_matrix, skip_checks=skip_checks)
 
     @classmethod
+    def from_2d_ccw_angle(cls, theta, degrees=True):
+        r"""
+        Convenience constructor for 2D CCW rotations about the origin
+
+        Parameters
+        ----------
+        theta : float
+            The angle of rotation about the origin
+        degrees : bool, optional
+            If true theta is interpreted as a degree. If False, theta is
+            interpreted as radians.
+
+        Returns
+        -------
+        rotation : :map:`Rotation`
+            A 2D rotation transform.
+        """
+        if degrees:
+            # convert to radians
+            theta = theta * np.pi / 180.0
+        return Rotation(np.array([[np.cos(theta), -np.sin(theta)],
+                                  [np.sin(theta),  np.cos(theta)]]))
+
+    @classmethod
     def identity(cls, n_dims):
         return Rotation(np.eye(n_dims))
 
