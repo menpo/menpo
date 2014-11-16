@@ -3,7 +3,7 @@ from warnings import warn
 from scipy.spatial.distance import cdist
 from menpo.visualize import PointCloudViewer
 from menpo.shape.base import Shape
-PointGraph = None
+PointDirectedGraph = None
 
 _bounding_box_adj = np.array([[0, 3], [2, 0], [1, 2], [1, 3]])
 
@@ -315,9 +315,9 @@ class BoundingBox(PointCloud):
             A 'complete' representation of this :map:`BoundingBox`
 
         """
-        global PointGraph
-        if PointGraph is None:
-            from .graph import PointGraph
+        global PointDirectedGraph
+        if PointDirectedGraph is None:
+            from .graph import PointDirectedGraph
         if self.n_dims != 2:
             raise ValueError('BoundingBox.box() does not support dimensions '
                              'other than 2 (yet)')
@@ -325,7 +325,7 @@ class BoundingBox(PointCloud):
         p2 = [[p[0, 0], p[1, 1]],
               [p[1, 0], p[0, 1]]]
         points = np.vstack((p, p2))
-        return PointGraph(points, _bounding_box_adj.copy(), copy=False)
+        return PointDirectedGraph(points, _bounding_box_adj.copy(), copy=False)
 
     def _view(self, figure_id=None, new_figure=False, **kwargs):
         return self.box()._view(figure_id=None, new_figure=False, **kwargs)
