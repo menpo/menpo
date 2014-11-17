@@ -1381,7 +1381,11 @@ class Image(Vectorizable, LandmarkableViewable):
                 self.n_channels, self.n_dims))
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
-        return PILImage.fromarray((pixels * 255).astype(np.uint8))
+        
+        if self._is_normalized():
+	        pixels *= 255
+
+        return PILImage.fromarray(pixels.astype(np.uint8))
 
     def __str__(self):
         return ('{} {}D Image with {} channels'.format(
@@ -1467,6 +1471,8 @@ class Image(Vectorizable, LandmarkableViewable):
         else:
             self.from_vector_inplace(centered_pixels / scale_factor)
 
+    def _is_normalized(self):
+    	return self.pixels.max() <= 1.0
 
 def round_image_shape(shape, round):
     if round not in ['ceil', 'round', 'floor']:
