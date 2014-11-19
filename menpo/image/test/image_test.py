@@ -607,14 +607,41 @@ def test_as_greyscale_channels():
 
 
 def test_as_pil_image_1channel():
-    im = MaskedImage(np.random.randn(120, 120, 1))
+    im = MaskedImage(np.ones((120, 120, 1)))
     new_im = im.as_PILImage()
     assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
                     (im.pixels * 255).astype(np.uint8))
 
 
+@raises(ValueError)
+def test_as_pil_image_bad_range():
+    im = MaskedImage(np.random.randn(120, 120, 1))
+    im.as_PILImage()
+
+
+def test_as_pil_image_float32():
+    im = MaskedImage(np.ones((120, 120, 1)).astype(np.float32))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    (im.pixels * 255).astype(np.uint8))
+
+
+def test_as_pil_image_bool():
+    im = BooleanImage(np.ones((120, 120), dtype=np.bool))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    im.pixels.astype(np.uint8) * 255)
+
+
+def test_as_pil_image_uint8():
+    im = Image(np.ones((120, 120), dtype=np.uint8))
+    new_im = im.as_PILImage()
+    assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
+                    im.pixels)
+
+
 def test_as_pil_image_3channels():
-    im = MaskedImage(np.random.randn(120, 120, 3))
+    im = MaskedImage(np.ones((120, 120, 3)))
     new_im = im.as_PILImage()
     assert_allclose(np.asarray(new_im.getdata()).reshape(im.pixels.shape),
                     (im.pixels * 255).astype(np.uint8))
