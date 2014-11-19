@@ -189,15 +189,17 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         landmarks_str = (r'{} landmark points.'.
                          format(image.landmarks[group].lms.n_points)
                          if image_has_landmarks else '')
+        path_str = image.path if hasattr(image, 'path') else 'NO PATH'
 
         # Create info string
         info_txt = r"""
              {} of size {} with {} channel{}
              {}
+             {}
              min={:.3f}, max={:.3f}
              {}
         """.format(masked_str, image._str_shape, image.n_channels,
-                   's' * (image.n_channels > 1), masked_pixels_str,
+                   's' * (image.n_channels > 1), path_str, masked_pixels_str,
                    image.pixels.min(), image.pixels.max(), landmarks_str)
 
         # update info widget text
