@@ -1414,7 +1414,7 @@ class Image(Vectorizable, LandmarkableViewable):
     def __str__(self):
         return ('{} {}D Image with {} channel{}'.format(
             self._str_shape, self.n_dims, self.n_channels,
-            's' * self.n_channels))
+            's' * (self.n_channels > 1)))
 
     @property
     def has_landmarks_outside_bounds(self):
