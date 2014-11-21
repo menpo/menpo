@@ -1,6 +1,5 @@
 from __future__ import division
 import numpy as np
-from scipy.linalg.blas import dgemm
 
 
 def eigenvalue_decomposition(S, eps=10**-10):
@@ -99,7 +98,7 @@ def principal_component_decomposition(X, whiten=False, centre=True,
     if n_features < n_samples:
         # compute covariance matrix
         # S:  n_features  x  n_features
-        S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_b=True) / N
+        S = np.dot(X.T, X) / N
         # S should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex
         # eigenvectors from eigendecomposition
@@ -118,7 +117,7 @@ def principal_component_decomposition(X, whiten=False, centre=True,
         # n_features > n_samples
         # compute covariance matrix
         # S:  n_samples  x  n_samples
-        S = dgemm(alpha=1.0, a=X.T, b=X.T, trans_a=True) / N
+        S = np.dot(X, X.T) / N
         # S should be perfectly symmetrical, but numerical error can creep
         # in. Enforce symmetry here to avoid creating complex
         # eigenvectors from eigendecomposition
@@ -135,8 +134,7 @@ def principal_component_decomposition(X, whiten=False, centre=True,
             w = (N * eigenvalues) ** -1.0
         else:
             w = np.sqrt(1.0 / (N * eigenvalues))
-        eigenvectors = w * dgemm(alpha=1.0, a=X.T, b=eigenvectors.T,
-                                 trans_b=True)
+        eigenvectors = w * np.dot(X.T, eigenvectors)
 
     # transpose eigenvectors
     # eigenvectors:  n_samples  x  n_features
