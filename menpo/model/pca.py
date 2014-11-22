@@ -37,7 +37,8 @@ class PCAModel(MeanInstanceLinearModel):
     def __init__(self, samples, centre=True, bias=False):
         # build data matrix
         n_samples = len(samples)
-        n_features = samples[0].n_parameters
+        template = samples[0]
+        n_features = template.n_parameters
         data = np.zeros((n_samples, n_features))
         for i, sample in enumerate(samples):
             data[i] = sample.as_vector()
@@ -47,7 +48,7 @@ class PCAModel(MeanInstanceLinearModel):
             principal_component_decomposition(data, whiten=False,
                                               centre=centre, bias=bias)
 
-        super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        super(PCAModel, self).__init__(eigenvectors, mean_vector, template)
         self.centred = centre
         self.biased = bias
         self._eigenvalues = eigenvalues
