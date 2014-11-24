@@ -154,7 +154,7 @@ class LinearModel(Copyable):
             The matrix of optimal linear weights
 
         """
-        return np.dot(vectors, self.components)
+        return np.dot(vectors, self.components.T)
 
     def reconstruct_vector(self, vector):
         """
