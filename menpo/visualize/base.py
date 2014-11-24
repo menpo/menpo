@@ -161,7 +161,6 @@ class Viewable(object):
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
     MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
-    MatplotlibTriMeshViewer2d,
     MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
     MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
     MatplotlibPointGraphViewer2d)
@@ -169,7 +168,6 @@ from menpo.visualize.viewmatplotlib import (
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
 PointCloudViewer2d = MatplotlibPointCloudViewer2d
-TriMeshViewer2d = MatplotlibTriMeshViewer2d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
@@ -526,9 +524,10 @@ class TriMeshViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.points.shape[1] == 2:
-            return TriMeshViewer2d(self.figure_id, self.new_figure,
-                                   self.points, self.trilist).render(**kwargs)
-
+            from menpo.shape.mesh.base import trilist_to_adjacency_array
+            return PointGraphViewer2d(
+                self.figure_id, self.new_figure, self.points,
+                trilist_to_adjacency_array(self.trilist)).render(**kwargs)
         elif self.points.shape[1] == 3:
             try:
                 from menpo3d.visualize import TriMeshViewer3d
