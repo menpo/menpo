@@ -1362,30 +1362,59 @@ class Image(Vectorizable, LandmarkableViewable):
 
     def as_PILImage(self):
         r"""
-        Return a PIL copy of the image. Scales the image by `255` and
-        converts to `np.uint8`. Image must only have 1 or 3 channels and
-        be two dimensional.
+        Return a PIL copy of the image. Depending on the image data type,
+        different operations are performed:
+
+        ========= ===========================================
+        dtype     Processing
+        ========= ===========================================
+        uint8     No processing, directly converted to PIL
+        bool      Scale by 255, convert to uint8
+        float32   Scale by 255, convert to uint8
+        float64   Scale by 255, convert to uint8
+        OTHER     Raise ValueError
+        ========= ===========================================
+
+        Image must only have 1 or 3 channels and be 2 dimensional.
+        Non `uint8` images must be in the rage ``[0, 1]`` to be converted.
 
         Returns
         -------
         pil_image : `PILImage`
-            PIL copy of image as `np.uint8`
+            PIL copy of image
 
         Raises
         ------
-        ValueError if image is not 2D and 1 channel or 3 channels.
+        ValueError
+            If image is not 2D and 1 channel or 3 channels.
+        ValueError
+            If pixels data type is not float32, float64, bool or uint8
+        ValueError
+            If pixels data type is float32 or float64 and the pixel
+            range is outside of ``[0, 1]``
         """
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
                 self.n_channels, self.n_dims))
+
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
-        return PILImage.fromarray((pixels * 255).astype(np.uint8))
+        if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
+            if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
+                raise ValueError('Pixel values are outside the range '
+                                 '[0, 1] - ({}, {}).'.format(self.pixels.min(),
+                                                             self.pixels.max()))
+            else:
+                pixels = (pixels * 255).astype(np.uint8)
+        if pixels.dtype != np.uint8:
+            raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
+        return PILImage.fromarray(pixels)
 
     def __str__(self):
-        return ('{} {}D Image with {} channels'.format(
-            self._str_shape, self.n_dims, self.n_channels))
+        return ('{} {}D Image with {} channel{}'.format(
+            self._str_shape, self.n_dims, self.n_channels,
+            's' * (self.n_channels > 1)))
 
     @property
     def has_landmarks_outside_bounds(self):
