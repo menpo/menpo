@@ -1,6 +1,5 @@
 from __future__ import division
 import numpy as np
-from scipy.linalg.blas import dgemm
 from menpo.math import principal_component_decomposition
 from menpo.model.base import MeanInstanceLinearModel
 from menpo.visualize import print_dynamic, progress_bar_str
@@ -487,10 +486,8 @@ class PCAModel(MeanInstanceLinearModel):
             A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components()
-        weights = dgemm(alpha=1.0, a=vector_instance.T,
-                        b=whitened_components.T, trans_a=True)
-        return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
-                     trans_a=True, trans_b=True)
+        weights = np.dot(vector_instance, whitened_components.T)
+        return np.dot(weights, whitened_components)
 
     def orthonormalize_against_inplace(self, linear_model):
         r"""

@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.linalg.blas import dgemm
 from menpo.base import Copyable
 
 
@@ -121,8 +120,7 @@ class LinearModel(Copyable):
 
     # TODO check this is right
     def _instance_vectors_for_full_weights(self, full_weights):
-        return dgemm(alpha=1.0, a=full_weights.T, b=self.components.T,
-                     trans_a=True, trans_b=True)
+        return np.dot(full_weights, self.components)
 
     def project_vector(self, vector):
         """
@@ -156,8 +154,7 @@ class LinearModel(Copyable):
             The matrix of optimal linear weights
 
         """
-        return dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
-                     trans_a=True)
+        return np.dot(vectors, self.components.T)
 
     def reconstruct_vector(self, vector):
         """
@@ -227,11 +224,8 @@ class LinearModel(Copyable):
             A copy of `vectors` with all basis of the model
             projected out.
         """
-        weights = dgemm(alpha=1.0, a=vectors.T, b=self.components.T,
-                        trans_a=True)
-        return (vectors -
-                dgemm(alpha=1.0, a=weights.T, b=self.components.T,
-                      trans_a=True, trans_b=True))
+        weights = np.dot(vectors, self.components.T)
+        return vectors - np.dot(weights, self.components)
 
     def orthonormalize_inplace(self):
         r"""
@@ -328,7 +322,7 @@ class MeanLinearModel(LinearModel):
 
         """
         X = vectors - self.mean_vector
-        return dgemm(alpha=1.0, a=X.T, b=self.components.T, trans_a=True)
+        return np.dot(X, self.components.T)
 
     def _instance_vectors_for_full_weights(self, full_weights):
         x = LinearModel._instance_vectors_for_full_weights(self, full_weights)
