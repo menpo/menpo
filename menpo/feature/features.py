@@ -550,52 +550,49 @@ def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         The pixel data for the image, where the last axis represents the
         number of channels.
 
-    radius : `int` or `list` of `int`
+    radius : `int` or `list` of `int`, Optional
         It defines the radius of the circle (or circles) at which the sampling
         points will be extracted. The radius (or radii) values must be greater
         than zero. There must be a radius value for each samples value, thus
         they both need to have the same length.
 
-        Default: None = [1, 2, 3, 4]
-
-    samples : `int` or `list` of `int`
+    samples : `int` or `list` of `int`, Optional
         It defines the number of sampling points that will be extracted at each
         circle. The samples value (or values) must be greater than zero. There
         must be a samples value for each radius value, thus they both need to
         have the same length.
 
-        Default: None = [8, 8, 8, 8]
-
-    mapping_type : ``'u2'`` or ``'ri'`` or ``'riu2'`` or ``'none'``
+    mapping_type : ``'u2'`` or ``'ri'`` or ``'riu2'`` or ``'none'``, Optional
         It defines the mapping type of the LBP codes. Select 'u2' for uniform-2
         mapping, 'ri' for rotation-invariant mapping, 'riu2' for uniform-2 and
         rotation-invariant mapping and 'none' to use no mapping nd only the
         decimal values instead.
 
-    window_step_vertical : float
+    window_step_vertical : `float`, Optional
         Defines the vertical step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
 
-    window_step_horizontal : float
+    window_step_horizontal : `float`, Optional
         Defines the horizontal step by which the window in the
         ImageWindowIterator is moved, thus it controls the features density.
         The metric unit is defined by window_step_unit.
 
-    window_step_unit : ``'pixels'`` or ``'window'``
+    window_step_unit : ``'pixels'`` or ``'window'``, Optional
         Defines the metric unit of the window_step_vertical and
         window_step_horizontal parameters for the ImageWindowIterator object.
 
-    padding : bool
+    padding : `bool`, Optional
         Enables/disables padding for the close-to-boundary windows in the
         ImageWindowIterator object. When padding is enabled, the
         out-of-boundary pixels are set to zero.
 
-    verbose : `bool`, optional
+    verbose : `bool`, Optional
         Flag to print LBP related information.
 
-    skip_checks : `bool`, optional
-        If True
+    skip_checks : `bool`, Optional
+        If True, the parameters' checks are not performed.
+
     Raises
     -------
     ValueError
