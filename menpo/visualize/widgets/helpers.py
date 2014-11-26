@@ -4079,6 +4079,327 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
         save_figure_wid.set_css('border', container_border)
 
 
+def hog_options(toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with HOG Features Options.
+
+    The structure of the widgets is the following:
+        hog_options_wid.children = [toggle_button, options]
+        options.children = [window_wid, algorithm_wid]
+        window_wid.children = [mode_wid, window_opts_wid]
+        mode_wid.children = [mode_radiobuttons, padding_checkbox]
+        window_opts_wid.children = [window_size_wid, window_step_wid]
+        window_size_wid.children = [window_height, window_width,
+                                    window_size_unit]
+        window_step_wid.children = [window_vertical, window_horizontal,
+                                    window_step_unit]
+        algorithm_wid.children = [algorithm_radiobuttons, algorithm_options]
+        algorithm_options.children = [algorithm_sizes, algorithm_other]
+        algorithm_sizes.children = [cell_size, block_size, num_bins]
+        algorithm_other.children = [signed_gradient, l2_norm_clipping]
+
+    To fix the alignment within this widget please refer to
+    `format_hog_options()` function.
+
+    Parameters
+    ----------
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='HOG Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # window related options
+    tmp = OrderedDict()
+    tmp['Dense'] = 'dense'
+    tmp['Sparse'] = 'sparse'
+    mode = RadioButtonsWidget(values=tmp, description='Mode')
+    padding = CheckboxWidget(value=True, description='Padding')
+    mode_wid = ContainerWidget(children=[mode, padding])
+    window_height = IntTextWidget(value='1', description='Height')
+    window_width = IntTextWidget(value='1', description='Width')
+    tmp = OrderedDict()
+    tmp['Blocks'] = 'blocks'
+    tmp['Pixels'] = 'pixels'
+    window_size_unit = RadioButtonsWidget(values=tmp, description=' Size unit')
+    window_size_wid = ContainerWidget(children=[window_height, window_width,
+                                                window_size_unit])
+    window_vertical = IntTextWidget(value='1', description='Step Y')
+    window_horizontal = IntTextWidget(value='1', description='Step X')
+    tmp = OrderedDict()
+    tmp['Pixels'] = 'pixels'
+    tmp['Cells'] = 'cells'
+    window_step_unit = RadioButtonsWidget(values=tmp, description='Step unit')
+    window_step_wid = ContainerWidget(children=[window_vertical,
+                                                window_horizontal,
+                                                window_step_unit])
+    window_wid = ContainerWidget(children=[window_size_wid, window_step_wid])
+    window_wid = ContainerWidget(children=[mode_wid, window_wid])
+
+    # algorithm related options
+    tmp = OrderedDict()
+    tmp['Dalal & Triggs'] = 'dalaltriggs'
+    tmp['Zhu & Ramanan'] = 'zhuramanan'
+    algorithm = RadioButtonsWidget(values=tmp, value='dalaltriggs',
+                                   description='Algorithm')
+    cell_size = IntTextWidget(value='8', description='Cell size (in pixels)')
+    block_size = IntTextWidget(value='2', description='Block size (in cells)')
+    num_bins = IntTextWidget(value='9', description='Orientation bins')
+    algorithm_sizes = ContainerWidget(children=[cell_size, block_size,
+                                                num_bins])
+    signed_gradient = CheckboxWidget(value=True, description='Signed gradients')
+    l2_norm_clipping = FloatTextWidget(value='0.2',
+                                       description='L2 norm clipping')
+    algorithm_other = ContainerWidget(children=[signed_gradient,
+                                                l2_norm_clipping])
+    algorithm_options = ContainerWidget(children=[algorithm_sizes,
+                                                  algorithm_other])
+    algorithm_wid = ContainerWidget(children=[algorithm, algorithm_options])
+
+    # options tab widget
+    all_options = TabWidget(children=[window_wid, algorithm_wid])
+
+    # Widget container
+    hog_options_wid = ContainerWidget(children=[but, all_options])
+
+    # Initialize output dictionary
+    hog_options_wid.options = {'mode': 'dense', 'algorithm': 'dalaltriggs',
+                               'num_bins': 9, 'cell_size': 8, 'block_size': 2,
+                               'signed_gradient': True, 'l2_norm_clip': 0.2,
+                               'window_height': 1, 'window_width': 1,
+                               'window_unit': 'blocks',
+                               'window_step_vertical': 1,
+                               'window_step_horizontal': 1,
+                               'window_step_unit': 'pixels', 'padding': True,
+                               'verbose': False}
+
+    # mode function
+    def window_mode(name, value):
+        window_horizontal.disabled = value == 'sparse'
+        window_vertical.disabled = value == 'sparse'
+        window_step_unit.disabled = value == 'sparse'
+        window_height.disabled = value == 'sparse'
+        window_width.disabled = value == 'sparse'
+        window_size_unit.disabled = value == 'sparse'
+    mode.on_trait_change(window_mode, 'value')
+
+    # algorithm function
+    def algorithm_mode(name, value):
+        l2_norm_clipping.disabled = value == 'zhuramanan'
+        signed_gradient.disabled = value == 'zhuramanan'
+        block_size.disabled = value == 'zhuramanan'
+        num_bins.disabled = value == 'zhuramanan'
+    algorithm.on_trait_change(algorithm_mode, 'value')
+
+    # check options
+    def check_window_height(name, old_value, value):
+        if value < 1:
+            window_height.value = old_value
+    window_height.on_trait_change(check_window_height, 'value')
+
+    def check_window_width(name, old_value, value):
+        if value < 1:
+            window_width.value = old_value
+    window_width.on_trait_change(check_window_width, 'value')
+
+    def check_window_vertical(name, old_value, value):
+        if value < 1:
+            window_vertical.value = old_value
+    window_vertical.on_trait_change(check_window_vertical, 'value')
+
+    def check_window_horizontal(name, old_value, value):
+        if value < 1:
+            window_horizontal.value = old_value
+    window_horizontal.on_trait_change(check_window_horizontal, 'value')
+
+    def check_num_bins(name, old_value, value):
+        if value < 1:
+            num_bins.value = old_value
+    num_bins.on_trait_change(check_num_bins, 'value')
+
+    def check_cell_size(name, old_value, value):
+        if value < 1:
+            cell_size.value = old_value
+    cell_size.on_trait_change(check_cell_size, 'value')
+
+    def check_block_size(name, old_value, value):
+        if value < 1:
+            block_size.value = old_value
+    block_size.on_trait_change(check_block_size, 'value')
+
+    # get options
+    def get_mode(name, value):
+        hog_options_wid.options['mode'] = value
+    mode.on_trait_change(get_mode, 'value')
+
+    def get_padding(name, value):
+        hog_options_wid.options['padding'] = value
+    padding.on_trait_change(get_padding, 'value')
+
+    def get_window_height(name, value):
+        hog_options_wid.options['window_height'] = value
+    window_height.on_trait_change(get_window_height, 'value')
+
+    def get_window_width(name, value):
+        hog_options_wid.options['window_width'] = value
+    window_width.on_trait_change(get_window_width, 'value')
+
+    def get_window_size_unit(name, value):
+        hog_options_wid.options['window_unit'] = value
+    window_size_unit.on_trait_change(get_window_size_unit, 'value')
+
+    def get_window_step_vertical(name, value):
+        hog_options_wid.options['window_step_vertical'] = value
+    window_vertical.on_trait_change(get_window_step_vertical, 'value')
+
+    def get_window_step_horizontal(name, value):
+        hog_options_wid.options['window_step_horizontal'] = value
+    window_horizontal.on_trait_change(get_window_step_horizontal, 'value')
+
+    def get_window_step_unit(name, value):
+        hog_options_wid.options['window_step_unit'] = value
+    window_step_unit.on_trait_change(get_window_step_unit, 'value')
+
+    def get_algorithm(name, value):
+        hog_options_wid.options['algorithm'] = value
+    algorithm.on_trait_change(get_algorithm, 'value')
+
+    def get_num_bins(name, value):
+        hog_options_wid.options['num_bins'] = value
+    num_bins.on_trait_change(get_num_bins, 'value')
+
+    def get_cell_size(name, value):
+        hog_options_wid.options['cell_size'] = value
+    cell_size.on_trait_change(get_cell_size, 'value')
+
+    def get_block_size(name, value):
+        hog_options_wid.options['block_size'] = value
+    block_size.on_trait_change(get_block_size, 'value')
+
+    def get_signed_gradient(name, value):
+        hog_options_wid.options['signed_gradient'] = value
+    signed_gradient.on_trait_change(get_signed_gradient, 'value')
+
+    def get_l2_norm_clip(name, value):
+        hog_options_wid.options['l2_norm_clip'] = value
+    l2_norm_clipping.on_trait_change(get_l2_norm_clip, 'value')
+
+    # Toggle button function
+    def toggle_options(name, value):
+        all_options.visible = value
+    but.on_trait_change(toggle_options, 'value')
+
+    return hog_options_wid
+
+
+def format_hog_options(hog_options_wid, container_padding='6px',
+                       container_margin='6px',
+                       container_border='1px solid black',
+                       toggle_button_font_weight='bold',
+                       border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given hog_options
+    widget. Usage example:
+        hog_options_wid = hog_options()
+        display(hog_options_wid)
+        format_hog_options(hog_options_wid)
+
+    Parameters
+    ----------
+    hog_options_wid :
+        The widget object generated by the `hog_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align window options
+    hog_options_wid.children[1].children[0].children[1].remove_class('vbox')
+    hog_options_wid.children[1].children[0].children[1].add_class('hbox')
+
+    # set width of height, width, step x , step y textboxes
+    hog_options_wid.children[1].children[0].children[1].children[0].children[0].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[0].children[1].children[0].children[1].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[0].children[1].children[1].children[0].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[0].children[1].children[1].children[1].\
+        set_css('width', '40px')
+
+    # set margin and border around the window size and step options
+    hog_options_wid.children[1].children[0].children[1].children[0].set_css(
+        'margin', container_margin)
+    hog_options_wid.children[1].children[0].children[1].children[1].set_css(
+        'margin', container_margin)
+    hog_options_wid.children[1].children[0].children[1].children[0].set_css(
+        'border', '1px solid gray')
+    hog_options_wid.children[1].children[0].children[1].children[1].set_css(
+        'border', '1px solid gray')
+
+    # align mode and padding
+    hog_options_wid.children[1].children[0].children[0].remove_class('vbox')
+    hog_options_wid.children[1].children[0].children[0].add_class('hbox')
+
+    # set width of algorithm textboxes
+    hog_options_wid.children[1].children[1].children[1].children[0].children[0].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[1].children[1].children[0].children[1].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[1].children[1].children[0].children[2].\
+        set_css('width', '40px')
+    hog_options_wid.children[1].children[1].children[1].children[1].children[1].\
+        set_css('width', '40px')
+
+    # align algorithm options
+    hog_options_wid.children[1].children[1].children[1].remove_class('vbox')
+    hog_options_wid.children[1].children[1].children[1].add_class('hbox')
+
+    # set margin and border around the algorithm options
+    hog_options_wid.children[1].children[1].children[1].set_css(
+        'margin', container_margin)
+    hog_options_wid.children[1].children[1].children[1].set_css(
+        'border', '1px solid gray')
+
+    hog_options_wid.children[1].set_css('margin-top', '6px')
+    hog_options_wid.children[1].children[0].add_class('align-center')
+    hog_options_wid.children[1].children[1].add_class('align-center')
+
+    # set final tab titles
+    tab_titles = ['Window', 'Algorithm']
+    for (k, tl) in enumerate(tab_titles):
+        hog_options_wid.children[1].set_title(k, tl)
+
+    # set toggle button font bold
+    hog_options_wid.children[0].set_css('font-weight',
+                                        toggle_button_font_weight)
+
+    # margin and border around container widget
+    hog_options_wid.set_css('padding', container_padding)
+    hog_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        hog_options_wid.set_css('border', container_border)
+
+
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
     r"""
     Function that compares two sets of landmarks groups and labels and returns
