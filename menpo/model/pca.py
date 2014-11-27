@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.linalg.blas import dgemm
 from menpo.math import principal_component_decomposition
 from menpo.model.base import MeanInstanceLinearModel
 
@@ -38,7 +37,8 @@ class PCAModel(MeanInstanceLinearModel):
     def __init__(self, samples, centre=True, bias=False):
         # build data matrix
         n_samples = len(samples)
-        n_features = samples[0].n_parameters
+        template = samples[0]
+        n_features = template.n_parameters
         data = np.zeros((n_samples, n_features))
         for i, sample in enumerate(samples):
             data[i] = sample.as_vector()
@@ -48,7 +48,7 @@ class PCAModel(MeanInstanceLinearModel):
             principal_component_decomposition(data, whiten=False,
                                               centre=centre, bias=bias)
 
-        super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        super(PCAModel, self).__init__(eigenvectors, mean_vector, template)
         self.centred = centre
         self.biased = bias
         self._eigenvalues = eigenvalues
@@ -457,10 +457,8 @@ class PCAModel(MeanInstanceLinearModel):
             A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components()
-        weights = dgemm(alpha=1.0, a=vector_instance.T,
-                        b=whitened_components.T, trans_a=True)
-        return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
-                     trans_a=True, trans_b=True)
+        weights = np.dot(vector_instance, whitened_components.T)
+        return np.dot(weights, whitened_components)
 
     def orthonormalize_against_inplace(self, linear_model):
         r"""
