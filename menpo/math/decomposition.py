@@ -113,6 +113,10 @@ def principal_component_decomposition(X, whiten=False, centre=True,
             # whiten eigenvectors
             eigenvectors *= np.sqrt(1.0 / eigenvalues)
 
+        # transpose eigenvectors
+        # eigenvectors:  n_samples  x  n_features
+        eigenvectors = eigenvectors.T
+
     else:
         # n_features > n_samples
         # compute covariance matrix
@@ -134,10 +138,6 @@ def principal_component_decomposition(X, whiten=False, centre=True,
             w = (N * eigenvalues) ** -1.0
         else:
             w = np.sqrt(1.0 / (N * eigenvalues))
-        eigenvectors = w * np.dot(X.T, eigenvectors)
-
-    # transpose eigenvectors
-    # eigenvectors:  n_samples  x  n_features
-    eigenvectors = eigenvectors.T
+        eigenvectors = w[:, None] * np.dot(eigenvectors.T, X)
 
     return eigenvectors, eigenvalues, mean_vector
