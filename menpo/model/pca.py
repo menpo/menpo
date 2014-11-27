@@ -26,8 +26,8 @@ class PCAModel(MeanInstanceLinearModel):
         When True (False by default) a biased estimator of the covariance
         matrix is used. See notes.
     n_samples : int, optional
-        If provided then ``samples`` is permitted to be a generator (with
-        length set to n_samples). If not provided then samples has to be a
+        If provided then ``samples``  must be an iterator  that yields
+        ``n_samples``. If not provided then samples has to be a
         list (so we know how large the data matrix needs to be).
 
     ..notes:
