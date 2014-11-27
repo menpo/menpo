@@ -1,6 +1,6 @@
 from nose.tools import raises
 import numpy as np
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_allclose
 from menpo.math import dot_inplace_left, dot_inplace_right
 n_big = 9182
 k = 100
@@ -20,7 +20,7 @@ def test_dot_inplace_left():
     a_l_tmp = a_l.copy()
     b_l_tmp = b_l.copy()
     left_result = dot_inplace_left(a_l_tmp, b_l_tmp)
-    assert_equal(left_result, gt_l)
+    assert_allclose(left_result, gt_l)
     assert_equal(left_result, a_l_tmp[:, :n_small])
     assert_equal(b_l_tmp, b_l)
 
@@ -29,7 +29,7 @@ def test_dot_inplace_right():
     a_r_tmp = a_r.copy()
     b_r_tmp = b_r.copy()
     right_result = dot_inplace_right(a_r_tmp, b_r_tmp)
-    assert_equal(right_result, gt_r)
+    assert_allclose(right_result, gt_r)
     assert_equal(right_result, b_r_tmp[:n_small])
     assert_equal(a_r_tmp, a_r)
 
