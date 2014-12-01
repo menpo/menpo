@@ -24,14 +24,11 @@ else:
 
     cython_exts = cythonize(cython_modules, quiet=True)
     include_dirs = [np.get_include()]
-    install_requires = [# Scientific Python Stack
-                        'numpy==1.9.0',
+    install_requires = ['numpy==1.9.0',
                         'scipy==0.14.0',
                         'matplotlib==1.4.0',
                         'pillow==2.5.1',
-
-                        'Cython==0.21',
-                        'wrapt==1.9.0']
+                        'Cython==0.21']
 
     if sys.version_info.major == 2:
         install_requires.append('pathlib==1.0')
