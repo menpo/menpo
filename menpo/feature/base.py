@@ -1,6 +1,6 @@
 from __future__ import division
+from functools import wraps
 import numpy as np
-import wrapt
 from menpo.image import Image, MaskedImage, BooleanImage
 from menpo.transform import Translation, NonUniformScale
 
@@ -85,9 +85,11 @@ def rebuild_feature_image_with_centres(image, f_pixels, centres):
         new_image.landmarks = t.apply(image.landmarks)
     return new_image
 
-@wrapt.decorator
-def imgfeature(wrapped, instance, args, kwargs):
-    def _execute(image, *args, **kwargs):
+
+def imgfeature(wrapped):
+
+    @wraps(wrapped)
+    def wrapper(image, *args, **kwargs):
         if isinstance(image, np.ndarray):
             # ndarray supplied to Image feature - build a
             # temp image for it and just return the pixels
@@ -95,12 +97,13 @@ def imgfeature(wrapped, instance, args, kwargs):
             return wrapped(image, *args, **kwargs).pixels
         else:
             return wrapped(image, *args, **kwargs)
-    return _execute(*args, **kwargs)
+    return wrapper
 
 
-@wrapt.decorator
-def ndfeature(wrapped, instance, args, kwargs):
-    def _execute(image, *args, **kwargs):
+def ndfeature(wrapped):
+
+    @wraps(wrapped)
+    def wrapper(image, *args, **kwargs):
         if not isinstance(image, np.ndarray):
             # Image supplied to ndarray feature -
             # extract pixels and go
@@ -108,12 +111,13 @@ def ndfeature(wrapped, instance, args, kwargs):
             return rebuild_feature_image(image, feature)
         else:
             return wrapped(image, *args, **kwargs)
-    return _execute(*args, **kwargs)
+    return wrapper
 
 
-@wrapt.decorator
-def winitfeature(wrapped, instance, args, kwargs):
-    def _execute(image, *args, **kwargs):
+def winitfeature(wrapped):
+
+    @wraps(wrapped)
+    def wrapper(image, *args, **kwargs):
         if not isinstance(image, np.ndarray):
             # Image supplied to ndarray feature -
             # extract pixels and go
@@ -123,4 +127,4 @@ def winitfeature(wrapped, instance, args, kwargs):
             # user just supplied ndarray - give them ndarray back
             return wrapped(image, *args, **kwargs)[0]
 
-    return _execute(*args, **kwargs)
+    return wrapper
