@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from .linalg import dot_inplace_right
 
 
 def eigenvalue_decomposition(S, eps=10**-10):
@@ -113,6 +114,10 @@ def principal_component_decomposition(X, whiten=False, centre=True,
             # whiten eigenvectors
             eigenvectors *= np.sqrt(1.0 / eigenvalues)
 
+        # transpose eigenvectors
+        # eigenvectors:  n_samples  x  n_features
+        eigenvectors = eigenvectors.T
+
     else:
         # n_features > n_samples
         # compute covariance matrix
@@ -126,7 +131,7 @@ def principal_component_decomposition(X, whiten=False, centre=True,
         # perform eigenvalue decomposition
         # eigenvectors:  n_samples  x  n_samples
         # eigenvalues:   n_samples
-        eigenvectors, eigenvalues = eigenvalue_decomposition(S)
+        eigenvectors_s, eigenvalues = eigenvalue_decomposition(S)
 
         # compute final eigenvectors
         # eigenvectors:  n_samples  x  n_features
@@ -134,10 +139,11 @@ def principal_component_decomposition(X, whiten=False, centre=True,
             w = (N * eigenvalues) ** -1.0
         else:
             w = np.sqrt(1.0 / (N * eigenvalues))
-        eigenvectors = w * np.dot(X.T, eigenvectors)
 
-    # transpose eigenvectors
-    # eigenvectors:  n_samples  x  n_features
-    eigenvectors = eigenvectors.T
+        dot = dot_inplace_right if inplace else np.dot
+        eigenvectors = dot(eigenvectors_s.T, X)
+
+        # whiten, and we are done.
+        eigenvectors *= w[:, None]
 
     return eigenvectors, eigenvalues, mean_vector

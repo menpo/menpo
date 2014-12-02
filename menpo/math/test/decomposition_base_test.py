@@ -169,6 +169,19 @@ def pcd_features_nowhiten_nocentre_nobias_test():
     assert_almost_equal(mean_vector, np.zeros(10))
 
 
+def pcd_features_nowhiten_nocentre_nobias_inplace_test():
+    # important to copy as this will now destructively effect the input data
+    # matrix (due to inplace)
+    output = principal_component_decomposition(large_samples_data_matrix.T.copy(),
+                                               centre=False, whiten=False,
+                                               bias=False, inplace=True)
+    eigenvectors, eigenvalues, mean_vector = output
+
+    assert_almost_equal(eigenvalues, eigenvalues_no_centre_no_bias_f)
+    assert_almost_equal(eigenvectors, non_centered_eigenvectors_f)
+    assert_almost_equal(mean_vector, np.zeros(10))
+
+
 # 001
 def pcd_features_nowhiten_nocentre_yesbias_test():
     output = principal_component_decomposition(large_samples_data_matrix.T,
