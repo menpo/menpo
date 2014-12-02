@@ -1,7 +1,12 @@
+import gzip
+from functools import partial
 from pathlib import Path
 
-from .extensions import landmark_types, image_types
+from .extensions import landmark_types, image_types, pickle_types
 from ..utils import _norm_path
+
+# an open file handle that uses a small fast level of compression
+gzip_open = partial(gzip.open, compresslevel=3)
 
 
 def export_landmark_file(fp, landmark_group, extension=None,
@@ -86,6 +91,38 @@ def export_image(fp, image, extension=None, overwrite=False):
     _export(fp, image, image_types, extension, overwrite)
 
 
+def export_pickle(fp, obj, overwrite=False):
+    r"""
+    Exports a given collection of Python objects with Pickle.
+
+    The ``fp`` argument can be either a `str` or any Python type that acts like
+    a file.
+    If a `str` filepath is provided, then the export type is calculated based
+    on the filepath extension.
+
+    Parameters
+    ----------
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
+    obj : ``object``
+        The object to export.
+    overwrite : `bool`, optional
+        Whether or not to overwrite a file if it already exists.
+
+    Raises
+    ------
+    ValueError
+        File already exists and ``overwrite`` != ``True``
+    ValueError
+        ``fp`` is a `file`-like object and ``extension`` is
+        ``None``
+    ValueError
+        The provided extension does not match to an existing exporter type
+        (the output type is not supported).
+    """
+    _export(fp, obj, pickle_types, '.pkl', overwrite)
+
+
 def _normalise_extension(extension):
     # Account for the fact the user may only have passed the extension
     # without the proceeding period
@@ -109,7 +146,8 @@ def _validate_filepath(fp, extension, overwrite):
         raise ValueError('File already exists. Please set the overwrite '
                          'kwarg if you wish to overwrite the file.')
     if extension is not None:
-        filepath_suffix = path_filepath.suffix
+        # use .suffixes[0] to handle compression suffixes correctly (see below)
+        filepath_suffix = path_filepath.suffixes[0]
         if _normalise_extension(extension) != filepath_suffix:
             raise ValueError('The file path extension must match the '
                              'requested file extension.')
@@ -120,10 +158,16 @@ def _export(fp, obj, extensions_map, extension=None, overwrite=False):
     if isinstance(fp, basestring):
         path_filepath = _validate_filepath(fp, extension, overwrite)
 
+        # use .suffixes[0] to ensure we handle compression suffixes correctly
+        # 'foo.pkl.gz' : .suffixes[0] == '.pkl', .suffix == '.gz'
+        # 'foo.pkl'    : .suffixes[0] == '.pkl', .suffix == '.pkl'
         export_function = _extension_to_export_function(
-            path_filepath.suffix, extensions_map)
+            path_filepath.suffixes[0], extensions_map)
 
-        with path_filepath.open('wb') as file_handle:
+        # if the last suffix is '.gz' enable gzip compression
+        o = gzip_open if path_filepath.suffix == '.gz' else open
+
+        with o(str(path_filepath), 'wb') as file_handle:
             export_function(file_handle, obj)
     else:
         # You MUST provide an extension if a file handle is given
