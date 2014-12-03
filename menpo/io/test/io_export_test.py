@@ -202,17 +202,6 @@ def test_export_pickle(mock_open, exists, pickle_dump):
 
 @patch('menpo.io.output.pickle.pickle.dump')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.gzip_open')
-def test_export_pickle_with_gz_path_uses_gzip(mock_open, exists, pickle_dump):
-    exists.return_value = False
-    fake_path = '/fake/fake.pkl.gz'
-    mio.export_pickle(test_lg, fake_path)
-    pickle_dump.assert_called_once()
-    mock_open.assert_called_once_with(fake_path, 'wb')
-
-
-@patch('menpo.io.output.pickle.pickle.dump')
-@patch('menpo.io.output.base.Path.exists')
 @patch('__builtin__.open')
 def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
     exists.return_value = False
