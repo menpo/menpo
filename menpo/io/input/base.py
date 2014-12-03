@@ -1,6 +1,5 @@
 import abc
 import os
-from glob import glob
 from pathlib import Path
 
 from ..utils import _norm_path
@@ -13,15 +12,16 @@ def data_dir_path():
 
     Returns
     -------
-    string
+    ``pathlib.Path``
         The path to the local Menpo ./data folder
 
     """
-    return os.path.join(menpo_src_dir_path(), 'data')
+    return menpo_src_dir_path() / 'data'
 
 
 def data_path_to(asset_filename):
-    r"""The path to a builtin asset in the ./data folder on this machine.
+    r"""
+    The path to a builtin asset in the ./data folder on this machine.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def data_path_to(asset_filename):
 
     Returns
     -------
-    data_path : `str`
+    data_path : `pathlib.Path`
         The path to a given asset in the ./data folder
 
     Raises
@@ -40,8 +40,8 @@ def data_path_to(asset_filename):
         If the asset_filename doesn't exist in the `data` folder.
 
     """
-    asset_path = os.path.join(data_dir_path(), asset_filename)
-    if not os.path.isfile(asset_path):
+    asset_path = data_dir_path() / asset_filename
+    if not asset_path.is_file():
         raise ValueError("{} is not a builtin asset: {}".format(
             asset_filename, ls_builtin_assets()))
     return asset_path
@@ -55,8 +55,7 @@ def same_name(asset):
     # pattern finding all landmarks with the same stem
     pattern = asset.path.with_suffix('.*')
     # find all the landmarks we can with this name. Key is ext (without '.')
-    return {os.path.splitext(p)[-1][1:].upper(): p
-            for p in landmark_file_paths(pattern)}
+    return {p.suffix[1:].upper(): p for p in landmark_file_paths(pattern)}
 
 
 def import_image(filepath, landmark_resolver=same_name, normalise=True):
@@ -111,6 +110,23 @@ def import_landmark_file(filepath, asset=None):
 
     """
     return _import(filepath, image_landmark_types, asset=asset)
+
+
+def import_pickle(filepath):
+    r"""Import a pickle file.
+
+    Parameters
+    ----------
+    filepath : `str`
+        A relative or absolute filepath to an .pkl or .pkl.gz file.
+
+    Returns
+    -------
+    `object`
+        Whatever Python objects are present in the Pickle file
+
+    """
+    return _import(filepath, pickle_types)
 
 
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
@@ -207,6 +223,40 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
         yield asset
 
 
+def import_pickles(pattern, max_pickles=None, verbose=False):
+    r"""Multiple pickle file import generator.
+
+    Note that this is a generator function.
+
+    Parameters
+    ----------
+    pattern : `str`
+        The glob path pattern to search for pickles.
+
+    max_pickles : positive `int`, optional
+        If not ``None``, only import the first ``max_pickles`` found.
+        Else, import all.
+
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported.
+
+    Yields
+    ------
+    `object`
+        Whatever Python objects are present in the Pickle file
+
+    Raises
+    ------
+    ValueError
+        If no pickles are found at the provided glob.
+
+    """
+    for asset in _import_glob_generator(pattern, pickle_types,
+                                        max_assets=max_pickles,
+                                        verbose=verbose):
+        yield asset
+
+
 def _import_builtin_asset(asset_name):
     r"""Single builtin asset (mesh or image) importer.
 
@@ -239,7 +289,7 @@ def ls_builtin_assets():
         Filenames of all assets in the data directory shipped with Menpo
 
     """
-    return os.listdir(data_dir_path())
+    return [p.name for p in data_dir_path().glob('*')]
 
 
 def import_builtin(x):
@@ -339,13 +389,12 @@ def _import(filepath, extensions_map, keep_importer=False,
         The asset or list of assets found in the filepath. If
         `keep_importers` is `True` then the importer is returned.
     """
-    filepath = _norm_path(filepath)
-    path = Path(filepath)
+    path = Path(_norm_path(filepath))
     if not path.is_file():
         raise ValueError("{} is not a file".format(path))
     # below could raise ValueError as well...
-    importer = map_filepath_to_importer(filepath, extensions_map,
-                                        importer_kwargs=importer_kwargs)
+    importer = importer_for_filepath(path, extensions_map,
+                                     importer_kwargs=importer_kwargs)
     if asset is not None:
         built_objects = importer.build(asset=asset)
     else:
@@ -511,18 +560,21 @@ def glob_with_suffix(pattern, extensions_map):
         The list of filepaths that have valid extensions.
     """
     for path in _pathlib_glob_for_pattern(pattern):
-        if path.suffix in extensions_map:
-            yield str(path)
+        # we want to extract '.pkl.gz' as an extension - for this we need to
+        # use suffixes and join.
+        # .suffix only takes
+        if ''.join(path.suffixes) in extensions_map:
+            yield path
 
 
-def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
+def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     r"""
     Given a filepath, return the appropriate importer as mapped by the
     extension map.
 
     Parameters
     ----------
-    filepath : string
+    filepath : `pathlib.Path`
         The filepath to get importers for
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
@@ -538,130 +590,15 @@ def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
         filepath provided.
 
     """
-    ext = os.path.splitext(filepath)[1]
-    importer_type = extensions_map.get(ext)
+    suffix = ''.join(filepath.suffixes)
+    importer_type = extensions_map.get(suffix)
     if importer_type is None:
-        raise ValueError("{} does not have a suitable importer.".format(ext))
+        raise ValueError("{} does not have a "
+                         "suitable importer.".format(suffix))
     if importer_kwargs is not None:
-        return importer_type(filepath, **importer_kwargs)
+        return importer_type(str(filepath), **importer_kwargs)
     else:
-        return importer_type(filepath)
-
-
-def find_extensions_from_basename(filepath):
-    r"""
-    Given a filepath, find all the files that share the same name.
-
-    Can be used to find all potential matching images and landmark files for a
-    given mesh for instance.
-
-    Parameters
-    ----------
-    filepath : string
-        An absolute filepath
-
-    Returns
-    -------
-    files : list of strings
-        A list of absolute filepaths to files that share the same basename
-        as filepath. These files are found using `glob`.
-
-    """
-    basename = os.path.splitext(os.path.basename(filepath))[0] + '.*'
-    basepath = os.path.join(os.path.dirname(filepath), basename)
-    return glob(basepath)
-
-
-def filter_extensions(filepaths, extensions_map):
-    r"""
-    Given a set of filepaths, filter the files who's extensions are in the
-    given map. This is used to find images and landmarks from a given basename.
-
-    Parameters
-    ----------
-    filepaths : list of strings
-        A list of absolute filepaths
-    extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. `.obj`.
-
-    Returns
-    -------
-    basenames : list of strings
-        A list of basenames
-    """
-    extensions = extensions_map.keys()
-    return [os.path.basename(f) for f in filepaths
-            if os.path.splitext(f)[1] in extensions]
-
-
-def find_alternative_files(file_type, filepath, extensions_map):
-    r"""
-    Given a filepath, search for files with the same basename that match
-    a given extension type, eg images. If more than one file is found, an error
-    is printed and the first such basename is returned.
-
-    Parameters
-    ----------
-    file_type : string
-        The type of file being found. Used for the error outputs.
-    filepath : string
-        An absolute filepath
-    extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. `.obj`.
-
-    Returns
-    -------
-    base_name : string
-        The basename of the file that was found eg `mesh.bmp`. Only **one**
-        file is ever returned. If more than one is found, the first is taken.
-
-    Raises
-    ------
-    ImportError
-        If no alternative file is found
-    """
-    try:
-        all_paths = find_extensions_from_basename(filepath)
-        base_names = filter_extensions(all_paths, extensions_map)
-        if len(base_names) > 1:
-            print("Warning: More than one {0} was found: "
-                  "{1}. Taking the first by default".format(
-                  file_type, base_names))
-        return base_names[0]
-    except Exception as e:
-        raise ImportError("Failed to find a {0} for {1} from types {2}. "
-                          "Reason: {3}".format(file_type, filepath,
-                                               extensions_map, e))
-
-
-def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
-    r"""
-    Find the set of images that do not correspond to textures for the given
-    meshes.
-
-    Parameters
-    ----------
-    image_paths : list of strings
-        List of absolute filepaths to images
-    mesh_texture_paths : list of strings
-        List of absolute filepaths to mesh textures
-
-    Returns
-    -------
-    images : list of strings
-        List of absolute filepaths to images that are unrelated to meshes.
-    """
-    image_filenames = [os.path.splitext(f)[0] for f in image_paths]
-    mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
-    images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
-    image_name_to_path = {}
-    for k, v in zip(image_filenames, image_paths):
-        image_name_to_path[k] = v
-    return [image_name_to_path[i] for i in images_unrelated_to_mesh]
+        return importer_type(str(filepath))
 
 
 class Importer(object):
@@ -704,4 +641,5 @@ class Importer(object):
 
 
 # Avoid circular imports
-from menpo.io.input.extensions import image_landmark_types, image_types
+from menpo.io.input.extensions import (image_landmark_types, image_types,
+                                       pickle_types)

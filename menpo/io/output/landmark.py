@@ -2,7 +2,7 @@ import json
 import numpy as np
 
 
-def LJSONExporter(file_handle, landmark_group):
+def LJSONExporter(landmark_group, file_handle):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the landmark data. No value is returned.
@@ -14,10 +14,10 @@ def LJSONExporter(file_handle, landmark_group):
 
     Parameters
     ----------
-    file_handle : `file`-like object
-        The file to write in to
     landmark_group : map:`LandmarkGroup`
         The landmark group to write out.
+    file_handle : `file`-like object
+        The file to write in to
     """
     lg_json = landmark_group.tojson()
     # Add version string
@@ -25,7 +25,7 @@ def LJSONExporter(file_handle, landmark_group):
     return json.dump(lg_json, file_handle)
 
 
-def PTSExporter(file_handle, landmark_group):
+def PTSExporter(landmark_group, file_handle):
     r"""
     Given a file handle to write in to (which should act like a Python `file`
     object), write out the landmark data. No value is returned.
@@ -37,10 +37,10 @@ def PTSExporter(file_handle, landmark_group):
 
     Parameters
     ----------
-    file_handle : `file`-like object
-        The file to write in to
     landmark_group : map:`LandmarkGroup`
         The landmark group to write out.
+    file_handle : `file`-like object
+        The file to write in to
     """
     pts = landmark_group.lms.points
     # Swap the x and y axis and add 1 to undo our processing

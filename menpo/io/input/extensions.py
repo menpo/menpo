@@ -2,7 +2,7 @@
 from .landmark import LM2Importer, LJSONImporter
 from .image import PILImporter, PILGIFImporter
 from .landmark_image import ImageASFImporter, ImagePTSImporter
-
+from .pickle import PickleImporter, GZipPickleImporter
 
 image_types = {'.bmp': PILImporter,
                '.dib': PILImporter,
@@ -34,3 +34,6 @@ image_landmark_types = {'.asf': ImageASFImporter,
                         '.pts': ImagePTSImporter,
                         '.ptsx': ImagePTSImporter,
                         '.ljson': LJSONImporter}
+
+pickle_types = {'.pkl': PickleImporter,
+                '.pkl.gz': GZipPickleImporter}
