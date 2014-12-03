@@ -3,6 +3,9 @@ from warnings import warn
 from scipy.spatial.distance import cdist
 from menpo.visualize import PointCloudViewer
 from menpo.shape.base import Shape
+PointDirectedGraph = None
+
+_bounding_box_adj = np.array([[0, 3], [2, 0], [1, 2], [1, 3]])
 
 
 class PointCloud(Shape):
@@ -84,8 +87,7 @@ class PointCloud(Shape):
         centre : ``n_dims`` `ndarray`
             The centre of the bounds of this PointCloud.
         """
-        min_b, max_b = self.bounds()
-        return (min_b + max_b) / 2
+        return self.bounds().centre()
 
     def _as_vector(self):
         r"""
@@ -148,7 +150,7 @@ class PointCloud(Shape):
         """
         min_b = np.min(self.points, axis=0) - boundary
         max_b = np.max(self.points, axis=0) + boundary
-        return min_b, max_b
+        return BoundingBox(np.array((min_b, max_b)))
 
     def range(self, boundary=0):
         r"""
@@ -166,8 +168,8 @@ class PointCloud(Shape):
         range : ``(n_dims,)`` `ndarray`
             The range of the :map:`PointCloud` extent in each dimension.
         """
-        min_b, max_b = self.bounds(boundary)
-        return max_b - min_b
+        bb = self.bounds(boundary)
+        return bb.max - bb.min
 
     def view(self, figure_id=None, new_figure=False, **kwargs):
         return PointCloudViewer(figure_id, new_figure,
@@ -247,3 +249,83 @@ class PointCloud(Shape):
         pc = self.copy()
         pc.points = pc.points[mask, :]
         return pc
+
+
+class BoundingBox(PointCloud):
+    r"""
+    An N-dimensional bounding box built from 2 points - the minimum point of
+    the box, and the maximum of the box. Only the two points are stored, but
+    the a full :map:`PointDirectedGraph` representation of the box
+    (four points in the case of 2D) can be retrieved using the `.box()` method.
+
+
+    Parameters
+    ----------
+    min_max : ``(2, n_dims)`` `ndarray`
+        The array representing the minimum and maximum points defining the
+        bounding box
+
+    skip_checks : `boolean`, optional
+        If ``False``, we will check if only 2 points were provided. If ``True``
+        this skip will be checked - only useful if you are generating
+        :map:`BoundingBox` instances in a tight loop.
+
+    """
+    def __init__(self, min_max, skip_checks=False):
+        PointCloud.__init__(self, min_max)
+        if not skip_checks:
+            if self.n_points != 2:
+                raise ValueError(
+                    'Bounding box should be built from just the '
+                    'min and max points (so a numpy array of shape '
+                    '(2, n_dims)')
+
+    def __str__(self):
+        return ('{}: min: {}, '
+                'max: {}, n_dims: {}'.format(type(self).__name__, self.min,
+                                             self.max, self.n_dims))
+
+    @property
+    def min(self):
+        r"""
+        The minimum of the bounding box extent.
+
+        :type: `ndarray shape (n_dims,)`
+        """
+        return self.points[0]
+
+    @property
+    def max(self):
+        r"""
+        The maximum of the bounding box extent.
+
+        :type: `ndarray shape (n_dims,)`
+        """
+        return self.points[1]
+
+    def box(self):
+        r"""
+        Generate a full box :map:`PointDirectedGraph` representation of this
+        :map:`BoundingBox`. Will have 4 points in the case of 2D. Other
+        dimensions are not yet supported.
+
+        Returns
+        -------
+        pointgraph : :map:`PointDirectedGraph`
+            A 'complete' representation of this :map:`BoundingBox`
+
+        """
+        global PointDirectedGraph
+        if PointDirectedGraph is None:
+            from .graph import PointDirectedGraph
+        if self.n_dims != 2:
+            raise ValueError('BoundingBox.box() does not support dimensions '
+                             'other than 2 (yet)')
+        p = self.points
+        p2 = [[p[0, 0], p[1, 1]],
+              [p[1, 0], p[0, 1]]]
+        points = np.vstack((p, p2))
+        return PointDirectedGraph(points, _bounding_box_adj.copy(), copy=False)
+
+    def _view(self, figure_id=None, new_figure=False, **kwargs):
+        return self.box()._view(figure_id=None, new_figure=False, **kwargs)

@@ -669,8 +669,8 @@ class Image(Vectorizable, LandmarkableViewable):
             to crop the image in a way that violates the image bounds.
         """
         pc = self.landmarks[group][label]
-        min_indices, max_indices = pc.bounds(boundary=boundary)
-        return self.crop_inplace(min_indices, max_indices,
+        bb = pc.bounds(boundary=boundary)
+        return self.crop_inplace(bb.min, bb.max,
                                  constrain_to_boundary=constrain_to_boundary)
 
     def crop_to_landmarks_proportion_inplace(self, boundary_proportion,
