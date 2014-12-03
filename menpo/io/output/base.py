@@ -9,8 +9,7 @@ from ..utils import _norm_path
 gzip_open = partial(gzip.open, compresslevel=3)
 
 
-def export_landmark_file(fp, landmark_group, extension=None,
-                         overwrite=False):
+def export_landmark_file(landmark_group, fp, extension=None, overwrite=False):
     r"""
     Exports a given landmark group. The ``fp`` argument can be either
     or a `str` or any Python type that acts like a file. If a file is provided,
@@ -23,10 +22,10 @@ def export_landmark_file(fp, landmark_group, extension=None,
 
     Parameters
     ----------
-    fp : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
     landmark_group : :map:`LandmarkGroup`
         The landmark group to export.
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
     extension : `str` or None, optional
         The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
@@ -47,10 +46,10 @@ def export_landmark_file(fp, landmark_group, extension=None,
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(fp, landmark_group, landmark_types, extension, overwrite)
+    _export(landmark_group, fp, landmark_types, extension, overwrite)
 
 
-def export_image(fp, image, extension=None, overwrite=False):
+def export_image(image, fp, extension=None, overwrite=False):
     r"""
     Exports a given image. The ``fp`` argument can be either
     a `str` or any Python type that acts like a file. If a file is provided,
@@ -63,10 +62,10 @@ def export_image(fp, image, extension=None, overwrite=False):
 
     Parameters
     ----------
-    fp : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
     image : :map:`Image`
         The image to export.
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
     extension : `str` or None, optional
         The extension to use, this must match the file path if the file
         path is a string. Determines the type of exporter that is used.
@@ -87,10 +86,10 @@ def export_image(fp, image, extension=None, overwrite=False):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(fp, image, image_types, extension, overwrite)
+    _export(image, fp, image_types, extension, overwrite)
 
 
-def export_pickle(fp, obj, overwrite=False):
+def export_pickle(obj, fp, overwrite=False):
     r"""
     Exports a given collection of Python objects with Pickle.
 
@@ -103,10 +102,10 @@ def export_pickle(fp, obj, overwrite=False):
 
     Parameters
     ----------
-    fp : `str` or `file`-like object
-        The string path or file-like object to save the object at/into.
     obj : ``object``
         The object to export.
+    fp : `str` or `file`-like object
+        The string path or file-like object to save the object at/into.
     overwrite : `bool`, optional
         Whether or not to overwrite a file if it already exists.
 
@@ -128,7 +127,7 @@ def export_pickle(fp, obj, overwrite=False):
         with o(fp, 'wb') as f:
             _export(f, obj, pickle_types, '.pkl', overwrite)
     else:
-        _export(fp, obj, pickle_types, '.pkl', overwrite)
+        _export(obj, fp, pickle_types, '.pkl', overwrite)
 
 
 def _normalise_extension(extension):
@@ -162,7 +161,7 @@ def _validate_filepath(fp, extension, overwrite):
     return path_filepath
 
 
-def _export(fp, obj, extensions_map, extension, overwrite):
+def _export(obj, fp, extensions_map, extension, overwrite):
     if isinstance(fp, basestring):
         path_filepath = _validate_filepath(fp, extension, overwrite)
 
@@ -170,7 +169,7 @@ def _export(fp, obj, extensions_map, extension, overwrite):
             path_filepath.suffix, extensions_map)
 
         with path_filepath.open('wb') as file_handle:
-            export_function(file_handle, obj)
+            export_function(obj, file_handle)
     else:
         # You MUST provide an extension if a file handle is given
         if extension is None:
@@ -189,4 +188,4 @@ def _export(fp, obj, extensions_map, extension, overwrite):
             pass
         export_function = _extension_to_export_function(
             _normalise_extension(extension), extensions_map)
-        export_function(fp, obj)
+        export_function(obj, fp)
