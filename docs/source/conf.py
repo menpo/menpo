@@ -31,7 +31,8 @@ if on_rtd:
     MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
                     'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
-                    'scipy.spatial.distance',
+                    'scipy.spatial.distance', 'IPython', 'IPython.display',
+                    'IPython.html', 'IPython.html.widgets',
                     'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',

@@ -7,7 +7,6 @@ from .helpers import (figure_options, format_figure_options, channel_options,
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
                                   RadioButtonsWidget)
 from IPython.display import display, clear_output
-import matplotlib.pylab as plt
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 import numpy as np
 
@@ -112,6 +111,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
         Passed through to the viewer.
     """
     from menpo.image import MaskedImage
+    import matplotlib.pyplot as plt
 
     # make sure that images is a list even with one image member
     if not isinstance(images, list):
@@ -368,6 +368,8 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
+    import matplotlib.pyplot as plt
+
     # make sure that shapes is a list even with one shape member
     if not isinstance(shapes, list):
         shapes = [shapes]
@@ -667,6 +669,8 @@ def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
     kwargs : `dict`, optional
         Passed through to the viewer.
     """
+    import matplotlib.pyplot as plt
+
     global glyph
     if glyph is None:
         from menpo.visualize.image import glyph
@@ -881,6 +885,8 @@ def _plot_graph(figure_id, horizontal_axis_values, vertical_axis_values,
     labels_fontsize : `float`
         The fontsize of the title, x_label, y_label and legend.
     """
+    import matplotlib.pyplot as plt
+
     # select figure
     figure_id = plt.figure(figure_id.number)
 
@@ -964,6 +970,8 @@ def _plot_eigenvalues(figure_id, model, figure_size, x_scale, y_scale):
     y_scale : `float`
         The scale of y axis.
     """
+    import matplotlib.pyplot as plt
+
     # select figure
     figure_id = plt.figure(figure_id.number)
 
