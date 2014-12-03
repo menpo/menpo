@@ -13,11 +13,11 @@ fake_path = '/tmp/test.fake'
 
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.Path.open')
+@patch('__builtin__.open')
 def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
     exists.return_value = True
     mio.export_landmark_file(fake_path, test_lg, overwrite=True)
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_once_with(fake_path, 'wb')
     landmark_types.__getitem__.assert_called_once_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     export_function.assert_called_once()
@@ -25,11 +25,11 @@ def test_export_filepath_overwrite_exists(mock_open, exists, landmark_types):
 
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.Path.open')
+@patch('__builtin__.open')
 def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(fake_path, test_lg)
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_once_with(fake_path, 'wb')
     landmark_types.__getitem__.assert_called_once_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     export_function.assert_called_once()
@@ -38,20 +38,20 @@ def test_export_filepath_no_overwrite(mock_open, exists, landmark_types):
 @raises(ValueError)
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.Path.open')
+@patch('__builtin__.open')
 def test_export_filepath_wrong_extension(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(fake_path, test_lg, extension='pts')
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_once_with(fake_path, 'wb')
 
 
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.Path.open')
+@patch('__builtin__.open')
 def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(fake_path, test_lg, extension='fake')
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_once_with(fake_path, 'wb')
     landmark_types.__getitem__.assert_called_once_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     export_function.assert_called_once()
@@ -59,11 +59,11 @@ def test_export_filepath_explicit_ext_no_dot(mock_open, exists, landmark_types):
 
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-@patch('menpo.io.output.base.Path.open')
+@patch('__builtin__.open')
 def test_export_filepath_explicit_ext_dot(mock_open, exists, landmark_types):
     exists.return_value = False
     mio.export_landmark_file(fake_path, test_lg, extension='.fake')
-    mock_open.assert_called_once_with('wb')
+    mock_open.assert_called_once_with(fake_path, 'wb')
     landmark_types.__getitem__.assert_called_once_with('.fake')
     export_function = landmark_types.__getitem__.return_value
     export_function.assert_called_once()
