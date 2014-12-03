@@ -36,8 +36,10 @@ if on_rtd:
                     'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
-                     'menpo.image.feature.cppimagewindowiterator',
-                     'menpo.shape.mesh.normals']
+                     'menpo.feature.windowiterator',
+                     'menpo.shape.mesh.normals',
+                     'menpo.external.skimage._warps_cy',
+                     'menpo.image.extract_patches']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
