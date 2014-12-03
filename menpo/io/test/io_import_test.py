@@ -43,34 +43,33 @@ def test_path():
     # choose a random asset (all should have it!)
     img = mio.import_builtin_asset('einstein.jpg')
     path = mio.data_path_to('einstein.jpg')
-    assert(str(img.path) == path)
+    assert(img.path == path)
     assert(img.path.stem == 'einstein')
     assert(img.path.suffix == '.jpg')
-    assert(str(img.path.parent) == mio.data_dir_path())
+    assert(img.path.parent == mio.data_dir_path())
     assert(img.path.name == 'einstein.jpg')
 
 
 def test_import_image():
-    img_path = os.path.join(mio.data_dir_path(), 'einstein.jpg')
+    img_path = mio.data_dir_path() / 'einstein.jpg'
     im = mio.import_image(img_path)
     assert im.pixels.dtype == np.float
     assert im.n_channels == 1
 
 
 def test_import_image_no_norm():
-    img_path = os.path.join(mio.data_dir_path(), 'einstein.jpg')
+    img_path = mio.data_dir_path() / 'einstein.jpg'
     im = mio.import_image(img_path, normalise=False)
     assert im.pixels.dtype == np.uint8
 
 
 def test_import_landmark_file():
-    lm_path = os.path.join(mio.data_dir_path(), 'einstein.pts')
+    lm_path = mio.data_dir_path() / 'einstein.pts'
     mio.import_landmark_file(lm_path)
 
 
 def test_import_images():
-    imgs_glob = os.path.join(mio.data_dir_path(), '*')
-    imgs = list(mio.import_images(imgs_glob))
+    imgs = list(mio.import_images(mio.data_dir_path()))
     imgs_filenames = set(i.path.stem for i in imgs)
     exp_imgs_filenames = {'einstein', 'takeo', 'breakingbad', 'lenna'}
     assert(len(exp_imgs_filenames - imgs_filenames) == 0)
@@ -86,7 +85,7 @@ def test_ls_builtin_assets():
 
 
 def test_image_paths():
-    ls = mio.image_paths(os.path.join(mio.data_dir_path(), '*'))
+    ls = mio.image_paths(mio.data_dir_path())
     assert(len(list(ls)) == 5)
 
 

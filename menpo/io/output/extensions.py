@@ -1,5 +1,6 @@
 from .landmark import LJSONExporter, PTSExporter
 from .image import PILExporter
+from .pickle import pickle_export
 
 landmark_types = {
     '.ljson': LJSONExporter,
@@ -30,3 +31,6 @@ image_types = {
     '.xpm': PILExporter
 }
 
+pickle_types = {
+    '.pkl': pickle_export,
+}
