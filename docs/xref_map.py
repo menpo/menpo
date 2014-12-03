@@ -33,6 +33,7 @@ xref_map = {
 'Landmarkable': ('class', 'menpo.landmark.base.Landmarkable'),
 'LandmarkGroup': ('class', 'menpo.landmark.base.LandmarkGroup'),
 'LandmarkManager': ('class', 'menpo.landmark.base.LandmarkManager'),
+'LabellingError': ('class', 'menpo.landmark.exceptions.LabellingError'),
 'MaskedImage': ('class', 'menpo.image.masked.MaskedImage'),
 'ModelDrivenTransform': ('class', 'menpo.transform.modeldriven.ModelDrivenTransform'),
 'MeanInstanceLinearModel': ('class', 'menpo.model.base.MeanInstanceLinearModel'),
