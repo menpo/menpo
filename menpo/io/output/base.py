@@ -127,7 +127,8 @@ def export_pickle(obj, fp, overwrite=False):
         path_filepath = _validate_filepath(fp, '.pkl', overwrite)
         o = gzip_open if path_filepath.suffix == '.gz' else open
         with o(fp, 'wb') as f:
-            _export(obj, f, pickle_types, '.pkl', overwrite)
+            # force overwrite as True we've already done the check above
+            _export(obj, f, pickle_types, '.pkl', True)
     else:
         _export(obj, fp, pickle_types, '.pkl', overwrite)
 
