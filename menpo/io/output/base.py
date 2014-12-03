@@ -96,8 +96,10 @@ def export_pickle(fp, obj, overwrite=False):
 
     The ``fp`` argument can be either a `str` or any Python type that acts like
     a file.
-    If a `str` filepath is provided, then the export type is calculated based
-    on the filepath extension.
+    If ``fp`` is a path, it must have the suffix `.pkl` or `.pkl.gz`. If
+    `.pkl`, the object will be pickled using Pickle protocol 2 without
+    compression. If `.pkl.gz` the object will be pickled using Pickle protocol
+    2 with gzip compression (at a fixed compression level of 3).
 
     Parameters
     ----------
