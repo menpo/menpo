@@ -13,11 +13,11 @@ def data_dir_path():
 
     Returns
     -------
-    string
+    ``pathlib.Path``
         The path to the local Menpo ./data folder
 
     """
-    return os.path.join(menpo_src_dir_path(), 'data')
+    return menpo_src_dir_path() / 'data'
 
 
 def data_path_to(asset_filename):
@@ -40,8 +40,8 @@ def data_path_to(asset_filename):
         If the asset_filename doesn't exist in the `data` folder.
 
     """
-    asset_path = os.path.join(data_dir_path(), asset_filename)
-    if not os.path.isfile(asset_path):
+    asset_path = data_dir_path() / asset_filename
+    if not asset_path.is_file():
         raise ValueError("{} is not a builtin asset: {}".format(
             asset_filename, ls_builtin_assets()))
     return asset_path
@@ -55,8 +55,7 @@ def same_name(asset):
     # pattern finding all landmarks with the same stem
     pattern = asset.path.with_suffix('.*')
     # find all the landmarks we can with this name. Key is ext (without '.')
-    return {os.path.splitext(p)[-1][1:].upper(): p
-            for p in landmark_file_paths(pattern)}
+    return {p.suffix[1:].upper(): p for p in landmark_file_paths(pattern)}
 
 
 def import_image(filepath, landmark_resolver=same_name, normalise=True):
@@ -239,7 +238,7 @@ def ls_builtin_assets():
         Filenames of all assets in the data directory shipped with Menpo
 
     """
-    return os.listdir(data_dir_path())
+    return [p.name for p in data_dir_path().glob('*')]
 
 
 def import_builtin(x):
@@ -339,13 +338,12 @@ def _import(filepath, extensions_map, keep_importer=False,
         The asset or list of assets found in the filepath. If
         `keep_importers` is `True` then the importer is returned.
     """
-    filepath = _norm_path(filepath)
-    path = Path(filepath)
+    path = Path(_norm_path(filepath))
     if not path.is_file():
         raise ValueError("{} is not a file".format(path))
     # below could raise ValueError as well...
-    importer = map_filepath_to_importer(filepath, extensions_map,
-                                        importer_kwargs=importer_kwargs)
+    importer = importer_for_filepath(path, extensions_map,
+                                     importer_kwargs=importer_kwargs)
     if asset is not None:
         built_objects = importer.build(asset=asset)
     else:
@@ -511,18 +509,21 @@ def glob_with_suffix(pattern, extensions_map):
         The list of filepaths that have valid extensions.
     """
     for path in _pathlib_glob_for_pattern(pattern):
-        if path.suffix in extensions_map:
-            yield str(path)
+        # we want to extract '.pkl.gz' as an extension - for this we need to
+        # use suffixes and join.
+        # .suffix only takes
+        if ''.join(path.suffixes) in extensions_map:
+            yield path
 
 
-def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
+def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
     r"""
     Given a filepath, return the appropriate importer as mapped by the
     extension map.
 
     Parameters
     ----------
-    filepath : string
+    filepath : `pathlib.Path`
         The filepath to get importers for
     extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
         A map from extensions to importers. The importers are expected to be
@@ -538,38 +539,35 @@ def map_filepath_to_importer(filepath, extensions_map, importer_kwargs=None):
         filepath provided.
 
     """
-    ext = os.path.splitext(filepath)[1]
-    importer_type = extensions_map.get(ext)
+    importer_type = extensions_map.get(filepath.suffix)
     if importer_type is None:
-        raise ValueError("{} does not have a suitable importer.".format(ext))
+        raise ValueError("{} does not have a "
+                         "suitable importer.".format(filepath.suffix))
     if importer_kwargs is not None:
-        return importer_type(filepath, **importer_kwargs)
+        return importer_type(str(filepath), **importer_kwargs)
     else:
-        return importer_type(filepath)
+        return importer_type(str(filepath))
 
 
-def find_extensions_from_basename(filepath):
+def files_with_matching_stem(filepath):
     r"""
-    Given a filepath, find all the files that share the same name.
+    Given a filepath, find all the files that share the same stem.
 
-    Can be used to find all potential matching images and landmark files for a
-    given mesh for instance.
+    Can be used to find all landmark files for a given image for instance.
 
     Parameters
     ----------
-    filepath : string
-        An absolute filepath
+    filepath : `pathlib.Path`
+        The filepath to be matched against
 
-    Returns
-    -------
-    files : list of strings
-        A list of absolute filepaths to files that share the same basename
-        as filepath. These files are found using `glob`.
+    Yields
+    ------
+    path : `pathlib.Path`
+        A list of absolute filepaths to files that share the same stem
+        as filepath.
 
     """
-    basename = os.path.splitext(os.path.basename(filepath))[0] + '.*'
-    basepath = os.path.join(os.path.dirname(filepath), basename)
-    return glob(basepath)
+    return filepath.parent.glob('{}.*'.format(filepath.stem))
 
 
 def filter_extensions(filepaths, extensions_map):
@@ -592,8 +590,7 @@ def filter_extensions(filepaths, extensions_map):
         A list of basenames
     """
     extensions = extensions_map.keys()
-    return [os.path.basename(f) for f in filepaths
-            if os.path.splitext(f)[1] in extensions]
+    return [f.stem for f in filepaths if f.suffix in extensions]
 
 
 def find_alternative_files(file_type, filepath, extensions_map):
@@ -625,7 +622,7 @@ def find_alternative_files(file_type, filepath, extensions_map):
         If no alternative file is found
     """
     try:
-        all_paths = find_extensions_from_basename(filepath)
+        all_paths = files_with_matching_stem(filepath)
         base_names = filter_extensions(all_paths, extensions_map)
         if len(base_names) > 1:
             print("Warning: More than one {0} was found: "
