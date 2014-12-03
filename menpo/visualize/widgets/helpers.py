@@ -4469,6 +4469,26 @@ def daisy_options(toggle_show_default=True, toggle_show_visible=True):
             step.value = old_value
     step.on_trait_change(check_step, 'value')
 
+    def check_radius(name, old_value, value):
+        if value < 1:
+            radius.value = old_value
+    radius.on_trait_change(check_radius, 'value')
+
+    def check_rings(name, old_value, value):
+        if value < 1:
+            rings.value = old_value
+    rings.on_trait_change(check_rings, 'value')
+
+    def check_histograms(name, old_value, value):
+        if value < 1:
+            histograms.value = old_value
+    histograms.on_trait_change(check_histograms, 'value')
+
+    def check_orientations(name, old_value, value):
+        if value < 1:
+            orientations.value = old_value
+    orientations.on_trait_change(check_orientations, 'value')
+
     # get options
     def get_step(name, value):
         daisy_options_wid.options['step'] = value
@@ -4574,6 +4594,186 @@ def format_daisy_options(daisy_options_wid, container_padding='6px',
     daisy_options_wid.set_css('margin', container_margin)
     if border_visible:
         daisy_options_wid.set_css('border', container_border)
+        
+
+def lbp_options(toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with LBP Features Options.
+
+    The structure of the widgets is the following:
+        lbp_options_wid.children = [toggle_button, options]
+        options.children = [window_wid, algorithm_wid]
+        window_wid.children = [window_vertical, window_horizontal,
+                               window_step_unit, padding]
+        algorithm_wid.children = [mapping_type, radius, samples]
+
+    To fix the alignment within this widget please refer to
+    `format_lbp_options()` function.
+
+    Parameters
+    ----------
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='LBP Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # method related options
+    tmp = OrderedDict()
+    tmp['Uniform-2'] = 'u2'
+    tmp['Rotation-Invariant'] = 'ri'
+    tmp['Both'] = 'riu2'
+    tmp['None'] = 'none'
+    mapping_type = DropdownWidget(value='u2', values=tmp,
+                                  description='Mapping')
+    radius = TextWidget(value='1, 2, 3, 4', description='Radius')
+    samples = TextWidget(value='8, 8, 8, 8', description='Samples')
+    algorithm_wid = ContainerWidget(children=[radius,
+                                              samples,
+                                              mapping_type])
+
+    # window related options
+    window_vertical = IntTextWidget(value='1', description='Step Y')
+    window_horizontal = IntTextWidget(value='1', description='Step X')
+    tmp = OrderedDict()
+    tmp['Pixels'] = 'pixels'
+    tmp['Windows'] = 'cells'
+    window_step_unit = RadioButtonsWidget(values=tmp, description='Step unit')
+    padding = CheckboxWidget(value=True, description='Padding')
+    window_wid = ContainerWidget(children=[window_vertical,
+                                           window_horizontal,
+                                           window_step_unit,
+                                           padding])
+
+    # options widget
+    options = ContainerWidget(children=[window_wid, algorithm_wid])
+
+    # Widget container
+    lbp_options_wid = ContainerWidget(children=[but, options])
+
+    # Initialize output dictionary
+    lbp_options_wid.options = {'radius': range(1, 5), 'samples': [8]*4,
+                               'mapping_type': 'u2',
+                               'window_step_vertical': 1,
+                               'window_step_horizontal': 1,
+                               'window_step_unit': 'pixels', 'padding': True,
+                               'verbose': False, 'skip_checks': False}
+
+    # check options
+    def check_window_vertical(name, old_value, value):
+        if value < 1:
+            window_vertical.value = old_value
+    window_vertical.on_trait_change(check_window_vertical, 'value')
+
+    def check_window_horizontal(name, old_value, value):
+        if value < 1:
+            window_horizontal.value = old_value
+    window_horizontal.on_trait_change(check_window_horizontal, 'value')
+
+    # get options
+    def get_mapping_type(name, value):
+        lbp_options_wid.options['mapping_type'] = value
+    mapping_type.on_trait_change(get_mapping_type, 'value')
+
+    def get_window_vertical(name, value):
+        lbp_options_wid.options['window_step_vertical'] = value
+    window_vertical.on_trait_change(get_window_vertical, 'value')
+
+    def get_window_horizontal(name, value):
+        lbp_options_wid.options['window_step_horizontal'] = value
+    window_horizontal.on_trait_change(get_window_horizontal, 'value')
+
+    def get_window_step_unit(name, value):
+        lbp_options_wid.options['window_step_unit'] = value
+    window_step_unit.on_trait_change(get_window_step_unit, 'value')
+
+    def get_padding(name, value):
+        lbp_options_wid.options['padding'] = value
+    padding.on_trait_change(get_padding, 'value')
+
+    def get_padding(name, value):
+        lbp_options_wid.options['padding'] = value
+    padding.on_trait_change(get_padding, 'value')
+
+    def get_radius(name, value):
+        lbp_options_wid.options['radius'] = _convert_str_to_list_int(str(value))
+    radius.on_trait_change(get_radius, 'value')
+
+    def get_samples(name, value):
+        lbp_options_wid.options['samples'] = _convert_str_to_list_int(str(value))
+    samples.on_trait_change(get_samples, 'value')
+
+    # Toggle button function
+    def toggle_options(name, value):
+        options.visible = value
+    but.on_trait_change(toggle_options, 'value')
+
+    return lbp_options_wid
+
+
+def format_lbp_options(lbp_options_wid, container_padding='6px',
+                       container_margin='6px',
+                       container_border='1px solid black',
+                       toggle_button_font_weight='bold',
+                       border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given lbp_options
+    widget. Usage example:
+        lbp_options_wid = lbp_options()
+        display(lbp_options_wid)
+        format_lbp_options(lbp_options_wid)
+
+    Parameters
+    ----------
+    lbp_options_wid :
+        The widget object generated by the `lbp_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align window options
+    lbp_options_wid.children[1].remove_class('vbox')
+    lbp_options_wid.children[1].add_class('hbox')
+
+    # set textboxes length
+    lbp_options_wid.children[1].children[0].children[0].set_css('width',
+                                                                '40px')
+    lbp_options_wid.children[1].children[0].children[1].set_css('width',
+                                                                '40px')
+    lbp_options_wid.children[1].children[1].children[0].set_css('width',
+                                                                '80px')
+    lbp_options_wid.children[1].children[1].children[1].set_css('width',
+                                                                '80px')
+
+    # set toggle button font bold
+    lbp_options_wid.children[0].set_css('font-weight',
+                                        toggle_button_font_weight)
+
+    # margin and border around container widget
+    lbp_options_wid.set_css('padding', container_padding)
+    lbp_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        lbp_options_wid.set_css('border', container_border)
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
