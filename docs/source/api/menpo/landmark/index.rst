@@ -20,7 +20,7 @@ Functions
 .. toctree::
    :maxdepth: 1
 
-   imm_58_points
+   imm_face
    ibug_68_points
    ibug_68_contour
    ibug_68_trimesh
@@ -29,3 +29,12 @@ Functions
    ibug_51_points
    ibug_49_points
    labeller
+
+
+Exceptions
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   LabellingError

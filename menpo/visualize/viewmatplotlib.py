@@ -190,23 +190,6 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         return self
 
 
-class MatplotlibTriMeshViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, trilist):
-        super(MatplotlibTriMeshViewer2d, self).__init__(figure_id, new_figure)
-        self.points = points
-        self.trilist = trilist
-
-    def _render(self, image_view=False, label=None, colour_array='b',
-                **kwargs):
-        import matplotlib.pyplot as plt
-        # Flip x and y for viewing if points are tied to an image
-        points = self.points[:, ::-1] if image_view else self.points
-        plt.triplot(points[:, 0], points[:, 1], self.trilist,
-                    label=label, color=colour_array, marker='.')
-
-        return self
-
-
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
     def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):

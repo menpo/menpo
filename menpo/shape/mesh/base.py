@@ -10,6 +10,15 @@ from menpo.visualize import TriMeshViewer
 from .normals import compute_normals
 
 
+def trilist_to_adjacency_array(trilist):
+    wrap_around_adj = np.hstack([trilist[:, -1][..., None],
+                                 trilist[:, 0][..., None]])
+    # Build the array of all pairs
+    return np.concatenate([trilist[:, :2],
+                           trilist[:, 1:],
+                           wrap_around_adj])
+
+
 class TriMesh(PointCloud):
     r"""
     A pointcloud with a connectivity defined by a triangle list. These are
@@ -125,12 +134,7 @@ class TriMesh(PointCloud):
         from .. import PointUndirectedGraph
         # Since we have triangles we need the last connection
         # that 'completes' the triangle
-        wrap_around_adj = np.hstack([self.trilist[:, -1][..., None],
-                                     self.trilist[:, 0][..., None]])
-        # Build the array of all pairs
-        adjacency_array = np.concatenate([self.trilist[:, :2],
-                                          self.trilist[:, 1:],
-                                          wrap_around_adj])
+        adjacency_array = trilist_to_adjacency_array(self.trilist)
         pg = PointUndirectedGraph(self.points, adjacency_array, copy=copy)
         # This is always a copy
         pg.landmarks = self.landmarks

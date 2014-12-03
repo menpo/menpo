@@ -671,7 +671,7 @@ def imm_face(landmark_group):
     Apply the 58 point semantic labels from the IMM dataset to the
     landmarks in the given landmark group.
 
-    The group label will be 'imm_face'.
+    The group label will be ``imm_face``.
 
     The semantic labels applied are as follows:
 
@@ -685,19 +685,19 @@ def imm_face(landmark_group):
 
     Parameters
     ----------
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+    landmark_group : :map:`LandmarkGroup`
         The landmark group to apply semantic labels to.
 
     Returns
     -------
     group : `str`
-        The group label: 'imm_face'
-    landmark_group: :class:`menpo.landmark.base.LandmarkGroup`
+        The group label: ``imm_face``
+    landmark_group : :map:`LandmarkGroup`
         New landmark group
 
     Raises
     ------
-    :class:`menpo.landmark.exceptions.LabellingError`
+    error : :map:`LabellingError`
         If the given landmark group contains less than 58 points
 
     References

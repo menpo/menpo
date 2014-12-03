@@ -118,9 +118,8 @@ class Image(Vectorizable, LandmarkableViewable):
         ----------
         mask : `ndarray` with shape of ``self.shape`` or :map:`BooleanImage`
             A mask to attach to the newly generated masked image.
-
         copy : `bool`, optional
-            If False, the produced :map:`MaskedImage` will share pixels with
+            If ``False``, the produced :map:`MaskedImage` will share pixels with
             ``self``. Only suggested to be used for performance.
 
         Returns
@@ -140,22 +139,15 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        shape : tuple or list
+        shape : `tuple` or `list`
             The shape of the image. Any floating point values are rounded up
             to the nearest integer.
-
-        n_channels: int, optional
-            The number of channels to create the image with
-
-            Default: 1
-        fill : int, optional
-            The value to fill all pixels with
-
-            Default: 0
-        dtype: numpy data type, optional
+        n_channels : `int`, optional
+            The number of channels to create the image with.
+        fill : `int`, optional
+            The value to fill all pixels with.
+        dtype : numpy data type, optional
             The data type of the image.
-
-            Default: np.float
 
         Returns
         -------
@@ -174,29 +166,29 @@ class Image(Vectorizable, LandmarkableViewable):
     @property
     def n_dims(self):
         r"""
-        The number of dimensions in the image. The minimum possible n_dims is
-        2.
+        The number of dimensions in the image. The minimum possible ``n_dims``
+        is 2.
 
-        :type: int
+        :type: `int`
         """
         return len(self.shape)
 
     @property
     def n_pixels(self):
         r"""
-        Total number of pixels in the image (`prod(shape)`)
+        Total number of pixels in the image (``prod(shape)``,)
 
-        :type: int
+        :type: `int`
         """
         return self.pixels[..., 0].size
 
     @property
     def n_elements(self):
         r"""
-        Total number of data points in the image (`prod(shape) x
-        n_channels`)
+        Total number of data points in the image
+        (``prod(shape)``, ``n_channels``)
 
-        :type: int
+        :type: `int`
         """
         return self.pixels.size
 
@@ -205,7 +197,7 @@ class Image(Vectorizable, LandmarkableViewable):
         """
         The number of channels on each pixel in the image.
 
-        :type: int
+        :type: `int`
         """
         return self.pixels.shape[-1]
 
@@ -229,7 +221,7 @@ class Image(Vectorizable, LandmarkableViewable):
         This is the height according to image semantics, and is thus the size
         of the **first** dimension.
 
-        :type: int
+        :type: `int`
         """
         return self.pixels.shape[0]
 
@@ -237,9 +229,9 @@ class Image(Vectorizable, LandmarkableViewable):
     def shape(self):
         r"""
         The shape of the image
-        (with `n_channel` values at each point).
+        (with ``n_channel`` values at each point).
 
-        :type: tuple
+        :type: `tuple`
         """
         return self.pixels.shape[:-1]
 
@@ -248,7 +240,7 @@ class Image(Vectorizable, LandmarkableViewable):
         r"""
         The diagonal size of this image
 
-        :type: float
+        :type: `float`
         """
         return np.sqrt(np.sum(np.array(self.shape) ** 2))
 
@@ -260,7 +252,7 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Useful for aligning shapes and images.
 
-        :type: (n_dims,) ndarray
+        :type: (``n_dims``,) `ndarray`
         """
         # noinspection PyUnresolvedReferences
         return np.array(self.shape, dtype=np.double) / 2
@@ -276,7 +268,7 @@ class Image(Vectorizable, LandmarkableViewable):
         r"""
         Return the indices of all pixels in this image.
 
-        :type: (`n_dims`, `n_pixels`) ndarray
+        :type: (``n_dims``, ``n_pixels``) ndarray
 
         """
         return indices_for_image_of_shape(self.shape)
@@ -287,20 +279,18 @@ class Image(Vectorizable, LandmarkableViewable):
 
         Parameters
         ----------
-        keep_channels : bool, optional
+        keep_channels : `bool`, optional
 
-            ========== =================================
+            ========== =============================
             Value      Return shape
-            ========== =================================
+            ========== =============================
             `False`    (`n_pixels` * `n_channels`,)
             `True`     (`n_pixels`, `n_channels`)
-            ========== =================================
-
-            Default: `False`
+            ========== =============================
 
         Returns
         -------
-        (shape given by keep_channels) ndarray
+        vec : (shape given by ``keep_channels``) `ndarray`
             Flattened representation of this image, containing all pixel
             and channel information
         """
@@ -1362,30 +1352,59 @@ class Image(Vectorizable, LandmarkableViewable):
 
     def as_PILImage(self):
         r"""
-        Return a PIL copy of the image. Scales the image by `255` and
-        converts to `np.uint8`. Image must only have 1 or 3 channels and
-        be two dimensional.
+        Return a PIL copy of the image. Depending on the image data type,
+        different operations are performed:
+
+        ========= ===========================================
+        dtype     Processing
+        ========= ===========================================
+        uint8     No processing, directly converted to PIL
+        bool      Scale by 255, convert to uint8
+        float32   Scale by 255, convert to uint8
+        float64   Scale by 255, convert to uint8
+        OTHER     Raise ValueError
+        ========= ===========================================
+
+        Image must only have 1 or 3 channels and be 2 dimensional.
+        Non `uint8` images must be in the rage ``[0, 1]`` to be converted.
 
         Returns
         -------
         pil_image : `PILImage`
-            PIL copy of image as `np.uint8`
+            PIL copy of image
 
         Raises
         ------
-        ValueError if image is not 2D and 1 channel or 3 channels.
+        ValueError
+            If image is not 2D and 1 channel or 3 channels.
+        ValueError
+            If pixels data type is not float32, float64, bool or uint8
+        ValueError
+            If pixels data type is float32 or float64 and the pixel
+            range is outside of ``[0, 1]``
         """
         if self.n_dims != 2 or self.n_channels not in [1, 3]:
             raise ValueError('Can only convert greyscale or RGB 2D images. '
                              'Received a {} channel {}D image.'.format(
                 self.n_channels, self.n_dims))
+
         # Slice off the channel for greyscale images
         pixels = self.pixels[..., 0] if self.n_channels == 1 else self.pixels
-        return PILImage.fromarray((pixels * 255).astype(np.uint8))
+        if pixels.dtype in [np.float64, np.float32, np.bool]:  # Type check
+            if np.any((self.pixels < 0) | (self.pixels > 1)):  # Range check
+                raise ValueError('Pixel values are outside the range '
+                                 '[0, 1] - ({}, {}).'.format(self.pixels.min(),
+                                                             self.pixels.max()))
+            else:
+                pixels = (pixels * 255).astype(np.uint8)
+        if pixels.dtype != np.uint8:
+            raise ValueError('Unexpected data type - {}.'.format(pixels.dtype))
+        return PILImage.fromarray(pixels)
 
     def __str__(self):
-        return ('{} {}D Image with {} channels'.format(
-            self._str_shape, self.n_dims, self.n_channels))
+        return ('{} {}D Image with {} channel{}'.format(
+            self._str_shape, self.n_dims, self.n_channels,
+            's' * (self.n_channels > 1)))
 
     @property
     def has_landmarks_outside_bounds(self):

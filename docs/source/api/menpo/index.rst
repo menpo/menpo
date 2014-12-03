@@ -15,17 +15,6 @@ Core interfaces of Menpo.
    Vectorizable
    Targetable
 
-Differentiation
----------------
-Abstract interfaces that govern the taking of derivatives in Menpo.
-
-.. toctree::
-   :maxdepth: 1
-
-   DP
-   DX
-   DL
-
 Convenience
 -----------
 

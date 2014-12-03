@@ -28,19 +28,18 @@ if on_rtd:
             else:
                 return Mock()
 
-    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn', 'skimage',
+    MOCK_MODULES = ['numpy', 'scipy', 'PIL', 'sklearn',
                     'scipy.linalg', 'numpy.stats', 'scipy.misc', 'PIL.Image',
-                    'cyassimp', 'cyrasterize', 'matplotlib', 'mayavi',
-                    'skimage.transform', 'matplotlib.pyplot', 'scipy.spatial',
-                    'skimage.transform.pyramids', 'scipy.spatial.distance',
-                    'numpy.dtype', 'scipy.ndimage',
-                    'cyrasterize.base', 'vrml', 'vrml.vrml97',
-                    'vrml.vrml97.parser', 'vrml.vrml97.basenodes', 'vrml.node',
-                    'scipy.linalg.blas']
+                    'matplotlib', 'matplotlib.pyplot', 'scipy.spatial',
+                    'scipy.spatial.distance', 'IPython', 'IPython.display',
+                    'IPython.html', 'IPython.html.widgets',
+                    'numpy.dtype', 'scipy.ndimage', 'scipy.linalg.blas']
     # Masking our Cython modules
     MOCK_MODULES += ['menpo.transform.piecewiseaffine.fastpwa',
-                     'menpo.image.feature.cppimagewindowiterator',
-                     'menpo.shape.mesh.normals']
+                     'menpo.feature.windowiterator',
+                     'menpo.shape.mesh.normals',
+                     'menpo.external.skimage._warps_cy',
+                     'menpo.image.extract_patches']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
@@ -94,7 +93,7 @@ autodoc_member_order = 'groupwise'
 # General information about the project.
 project = u'Menpo'
 authors = (u'Joan Alabort-i-Medina, Epameinondas Antonakos, James Booth,'
-            ' Patrick Snape, and Stefanos Zafeiriou')
+           u' Patrick Snape, and Stefanos Zafeiriou')
 copyright = u'2014, ' + authors
 
 # The version info for the project you're documenting, acts as replacement for
@@ -290,7 +289,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'Menpo', u'Menpo Documentation',
      authors,
-     'Menpo', 'One line description of project.',
+     'Menpo', 'Python framework for manipulating annotated data.',
      'Miscellaneous'),
 ]
 
