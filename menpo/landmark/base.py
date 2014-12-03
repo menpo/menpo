@@ -60,9 +60,6 @@ class Landmarkable(Copyable):
         """
         return self.landmarks.n_groups
 
-    def remove_all_landmarks(self):
-        self._landmarks = None
-
 
 class LandmarkableViewable(Landmarkable, Viewable):
     r"""
@@ -278,9 +275,36 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         return self._landmark_groups.keys()
 
     def keys_matching(self, glob_pattern):
-        return fnmatch.filter(self.keys(), glob_pattern)
+        r"""
+        Yield only landmark group names (keys) matching a given glob.
+
+        Parameters
+        ----------
+        glob_pattern : `str`
+            A glob pattern e.g. 'frontal_face_*'
+
+        Yields
+        ------
+        keys: group labels that match the glob pattern
+        """
+        for key in fnmatch.filter(self.keys(), glob_pattern):
+            yield key
 
     def items_matching(self, glob_pattern):
+        r"""
+        Yield only items ``(group, LandmarkGroup)`` where the key matches a
+        given glob.
+
+        Parameters
+        ----------
+        glob_pattern : `str`
+            A glob pattern e.g. 'frontal_face_*'
+
+        Yields
+        ------
+        item : ``(group, LandmarkGroup)``
+            Tuple of group, LandmarkGroup where the group matches the glob
+        """
         for k, v in self.items():
             if fnmatch.fnmatch(k, glob_pattern):
                 yield k, v
