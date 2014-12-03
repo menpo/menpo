@@ -172,7 +172,9 @@ class PointCloud(Shape):
     def bounding_box(self):
         r"""
         Return the bounding box of this PointCloud as a directed graph.
-        The ordering of the vertices is always:
+        The the first point (0) will be nearest the origin for an axis aligned
+        Pointcloud.
+        In the case of an image, this ordering would appear as:
 
         ::
 
@@ -180,9 +182,6 @@ class PointCloud(Shape):
             |   |
             |   |
             1-->2
-
-        where the first point (0) will be nearest the origin for an axis aligned
-        Pointcloud.
 
         Returns
         -------
