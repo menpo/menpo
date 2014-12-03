@@ -43,6 +43,13 @@ class IntListTextWidget():
         """
         return self.text_wid.description
 
+    @property
+    def model_id(self):
+        r"""
+        The id of the widget.
+        """
+        return self.text_wid.model_id
+
 
 class FloatListTextWidget(IntListTextWidget):
     r"""

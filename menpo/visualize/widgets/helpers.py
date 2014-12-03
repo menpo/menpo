@@ -7,6 +7,9 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
 import numpy as np
 from collections import OrderedDict
 
+from .utils import (_convert_list_to_str, _convert_str_to_list_float,
+                    _convert_str_to_list_int)
+
 
 def figure_options(plot_function, scale_default=1., show_axes_default=True,
                    toggle_show_default=True, figure_scale_bounds=(0.1, 2),
@@ -4398,6 +4401,179 @@ def format_hog_options(hog_options_wid, container_padding='6px',
     hog_options_wid.set_css('margin', container_margin)
     if border_visible:
         hog_options_wid.set_css('border', container_border)
+
+
+def daisy_options(toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with Daisy Features Options.
+
+    The structure of the widgets is the following:
+        daisy_options_wid.children = [toggle_button, options]
+        options.children = [options1, options2]
+        options1.children = [step_int, radius_int, rings_int, histograms_int]
+        options2.children = [orientations_int, normalization_dropdown,
+                             sigmas_list, ring_radii_list]
+
+    To fix the alignment within this widget please refer to
+    `format_daisy_options()` function.
+
+    Parameters
+    ----------
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='Daisy Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # options widgets
+    step = IntTextWidget(value='1', description='Step')
+    radius = IntTextWidget(value='15', description='Radius')
+    rings = IntTextWidget(value='2', description='Rings')
+    histograms = IntTextWidget(value='2', description='Histograms')
+    orientations = IntTextWidget(value='8', description='Orientations')
+    tmp = OrderedDict()
+    tmp['L1'] = 'l1'
+    tmp['L2'] = 'l2'
+    tmp['Daisy'] = 'daisy'
+    tmp['None'] = None
+    normalization = DropdownWidget(value='l1', values=tmp,
+                                   description='Normalization')
+    sigmas = TextWidget(description='Sigmas')
+    ring_radii = TextWidget(description='Ring radii')
+
+    # group widgets
+    cont1 = ContainerWidget(children=[step, radius, rings, histograms])
+    cont2 = ContainerWidget(children=[orientations, normalization, sigmas,
+                                      ring_radii])
+    options = ContainerWidget(children=[cont1, cont2])
+
+    # Widget container
+    daisy_options_wid = ContainerWidget(children=[but, options])
+
+    # Initialize output dictionary
+    daisy_options_wid.options = {'step': 1, 'radius': 15,
+                                 'rings': 2, 'histograms': 2,
+                                 'orientations': 8,
+                                 'normalization': 'l1',
+                                 'sigmas': None,
+                                 'ring_radii': None}
+
+    # check options
+    def check_step(name, old_value, value):
+        if value < 1:
+            step.value = old_value
+    step.on_trait_change(check_step, 'value')
+
+    # get options
+    def get_step(name, value):
+        daisy_options_wid.options['step'] = value
+    step.on_trait_change(get_step, 'value')
+
+    def get_radius(name, value):
+        daisy_options_wid.options['radius'] = value
+    radius.on_trait_change(get_radius, 'value')
+
+    def get_rings(name, value):
+        daisy_options_wid.options['rings'] = value
+    rings.on_trait_change(get_rings, 'value')
+
+    def get_histograms(name, value):
+        daisy_options_wid.options['histograms'] = value
+    histograms.on_trait_change(get_histograms, 'value')
+
+    def get_orientations(name, value):
+        daisy_options_wid.options['orientations'] = value
+    orientations.on_trait_change(get_orientations, 'value')
+
+    def get_normalization(name, value):
+        daisy_options_wid.options['normalization'] = value
+    normalization.on_trait_change(get_normalization, 'value')
+
+    def get_sigmas(name, value):
+        daisy_options_wid.options['sigmas'] = _convert_str_to_list_int(str(value))
+    sigmas.on_trait_change(get_sigmas, 'value')
+
+    def get_ring_radii(name, value):
+        daisy_options_wid.options['ring_radii'] = _convert_str_to_list_float(str(value))
+    ring_radii.on_trait_change(get_ring_radii, 'value')
+
+    # Toggle button function
+    def toggle_options(name, value):
+        options.visible = value
+    but.on_trait_change(toggle_options, 'value')
+
+    return daisy_options_wid
+
+
+def format_daisy_options(daisy_options_wid, container_padding='6px',
+                         container_margin='6px',
+                         container_border='1px solid black',
+                         toggle_button_font_weight='bold',
+                         border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given daisy_options
+    widget. Usage example:
+        daisy_options_wid = daisy_options()
+        display(daisy_options_wid)
+        format_daisy_options(daisy_options_wid)
+
+    Parameters
+    ----------
+    daisy_options_wid :
+        The widget object generated by the `daisy_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align window options
+    daisy_options_wid.children[1].remove_class('vbox')
+    daisy_options_wid.children[1].add_class('hbox')
+
+    # set textboxes length
+    daisy_options_wid.children[1].children[0].children[0].set_css('width',
+                                                                  '40px')
+    daisy_options_wid.children[1].children[0].children[1].set_css('width',
+                                                                  '40px')
+    daisy_options_wid.children[1].children[0].children[2].set_css('width',
+                                                                  '40px')
+    daisy_options_wid.children[1].children[0].children[3].set_css('width',
+                                                                  '40px')
+    daisy_options_wid.children[1].children[1].children[0].set_css('width',
+                                                                  '40px')
+    daisy_options_wid.children[1].children[1].children[2].set_css('width',
+                                                                  '80px')
+    daisy_options_wid.children[1].children[1].children[3].set_css('width',
+                                                                  '80px')
+
+    # set toggle button font bold
+    daisy_options_wid.children[0].set_css('font-weight',
+                                          toggle_button_font_weight)
+
+    # margin and border around container widget
+    daisy_options_wid.set_css('padding', container_padding)
+    daisy_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        daisy_options_wid.set_css('border', container_border)
 
 
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
