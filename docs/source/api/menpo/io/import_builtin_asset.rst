@@ -1,6 +1,6 @@
 .. _menpo-io-import_builtin_asset:
 
-.. currentmodule:: menpo.io.base
+.. currentmodule:: menpo.io.input.base
 
 import_builtin_asset
 ====================

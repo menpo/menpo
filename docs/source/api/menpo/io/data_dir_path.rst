@@ -1,6 +1,6 @@
 .. _menpo-io-data_dir_path:
 
-.. currentmodule:: menpo.io.base
+.. currentmodule:: menpo.io.input.base
 
 data_dir_path
 =============
