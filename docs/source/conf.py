@@ -286,7 +286,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'Menpo', u'Menpo Documentation',
      authors,
-     'Menpo', 'Deformable model fitting package.',
+     'Menpo', 'Python framework for manipulating annotated data.',
      'Miscellaneous'),
 ]
 

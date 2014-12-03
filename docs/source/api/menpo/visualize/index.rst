@@ -14,7 +14,5 @@ Classes
    LandmarkViewer2d
    LandmarkViewer
    ImageViewer2d
-   TriMeshViewer2d
    PointCloudViewer
-   TriMeshViewer
    AlignmentViewer2d

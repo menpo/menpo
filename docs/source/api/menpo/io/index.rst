@@ -1,10 +1,10 @@
 .. _api-io-index:
 
 :mod:`menpo.io`
-=================
+===============
 
-Functions
----------
+Input
+-----
 
 .. toctree::
    :maxdepth: 1
@@ -17,3 +17,6 @@ Functions
    data_path_to
    data_dir_path
    ls_builtin_assets
+
+Output
+------
