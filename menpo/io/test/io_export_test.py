@@ -79,7 +79,7 @@ def test_export_filepath_no_overwrite_exists(exists):
 @raises(ValueError)
 @patch('menpo.io.output.base.landmark_types')
 @patch('menpo.io.output.base.Path.exists')
-def test_export_unspported_extension(exists, landmark_types):
+def test_export_unsupported_extension(exists, landmark_types):
     exists.return_value = False
     landmark_types.__getitem__.side_effect = KeyError
     mio.export_landmark_file(test_lg, fake_path)
@@ -186,3 +186,37 @@ def test_export_image_jpg(mock_open, exists, PILImage):
         type(f).name = PropertyMock(return_value=fake_path)
         mio.export_image(test_img, f, extension='jpg')
     PILImage.save.assert_called_once()
+
+
+@patch('menpo.io.output.pickle.pickle.dump')
+@patch('menpo.io.output.base.Path.exists')
+@patch('{}.open'.format(__name__), create=True)
+def test_export_pickle(mock_open, exists, pickle_dump):
+    exists.return_value = False
+    fake_path = '/fake/fake.pkl'
+    with open(fake_path) as f:
+        type(f).name = PropertyMock(return_value=fake_path)
+        mio.export_pickle(test_lg, f)
+    pickle_dump.assert_called_once()
+
+
+@patch('menpo.io.output.pickle.pickle.dump')
+@patch('menpo.io.output.base.Path.exists')
+@patch('menpo.io.output.base.gzip_open')
+def test_export_pickle_with_gz_path_uses_gzip(mock_open, exists, pickle_dump):
+    exists.return_value = False
+    fake_path = '/fake/fake.pkl.gz'
+    mio.export_pickle(test_lg, fake_path)
+    pickle_dump.assert_called_once()
+    mock_open.assert_called_once_with(fake_path, 'wb')
+
+
+@patch('menpo.io.output.pickle.pickle.dump')
+@patch('menpo.io.output.base.Path.exists')
+@patch('__builtin__.open')
+def test_export_pickle_with_path_uses_open(mock_open, exists, pickle_dump):
+    exists.return_value = False
+    fake_path = '/fake/fake.pkl.gz'
+    mio.export_pickle(test_lg, fake_path)
+    pickle_dump.assert_called_once()
+    mock_open.assert_called_once_with(fake_path, 'wb')
