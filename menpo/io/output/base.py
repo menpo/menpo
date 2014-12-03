@@ -120,12 +120,14 @@ def export_pickle(obj, fp, overwrite=False):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
+    if isinstance(fp, Path):
+        fp = str(fp)  # cheeky conversion to string to reuse existing code
     if isinstance(fp, basestring):
         # user provided a path - if it ended .gz we will compress
         path_filepath = _validate_filepath(fp, '.pkl', overwrite)
         o = gzip_open if path_filepath.suffix == '.gz' else open
         with o(fp, 'wb') as f:
-            _export(f, obj, pickle_types, '.pkl', overwrite)
+            _export(obj, f, pickle_types, '.pkl', overwrite)
     else:
         _export(obj, fp, pickle_types, '.pkl', overwrite)
 
@@ -162,6 +164,8 @@ def _validate_filepath(fp, extension, overwrite):
 
 
 def _export(obj, fp, extensions_map, extension, overwrite):
+    if isinstance(fp, Path):
+        fp = str(fp)  # cheeky conversion to string to reuse existing code
     if isinstance(fp, basestring):
         path_filepath = _validate_filepath(fp, extension, overwrite)
 
