@@ -112,6 +112,23 @@ def import_landmark_file(filepath, asset=None):
     return _import(filepath, image_landmark_types, asset=asset)
 
 
+def import_pickle(filepath):
+    r"""Import a pickle file.
+
+    Parameters
+    ----------
+    filepath : `str`
+        A relative or absolute filepath to an .pkl or .pkl.gz file.
+
+    Returns
+    -------
+    `object`
+        Whatever Python objects are present in the Pickle file
+
+    """
+    return _import(filepath, pickle_types)
+
+
 def import_images(pattern, max_images=None, landmark_resolver=same_name,
                   normalise=True, verbose=False):
     r"""
@@ -202,6 +219,40 @@ def import_landmark_files(pattern, max_landmarks=None, verbose=False):
     """
     for asset in _import_glob_generator(pattern, image_landmark_types,
                                         max_assets=max_landmarks,
+                                        verbose=verbose):
+        yield asset
+
+
+def import_pickles(pattern, max_pickles=None, verbose=False):
+    r"""Multiple pickle file import generator.
+
+    Note that this is a generator function.
+
+    Parameters
+    ----------
+    pattern : `str`
+        The glob path pattern to search for pickles.
+
+    max_pickles : positive `int`, optional
+        If not ``None``, only import the first ``max_pickles`` found.
+        Else, import all.
+
+    verbose : `bool`, optional
+        If ``True`` progress of the importing will be dynamically reported.
+
+    Yields
+    ------
+    `object`
+        Whatever Python objects are present in the Pickle file
+
+    Raises
+    ------
+    ValueError
+        If no pickles are found at the provided glob.
+
+    """
+    for asset in _import_glob_generator(pattern, pickle_types,
+                                        max_assets=max_pickles,
                                         verbose=verbose):
         yield asset
 
@@ -539,10 +590,11 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
         filepath provided.
 
     """
-    importer_type = extensions_map.get(filepath.suffix)
+    suffix = ''.join(filepath.suffixes)
+    importer_type = extensions_map.get(suffix)
     if importer_type is None:
         raise ValueError("{} does not have a "
-                         "suitable importer.".format(filepath.suffix))
+                         "suitable importer.".format(suffix))
     if importer_kwargs is not None:
         return importer_type(str(filepath), **importer_kwargs)
     else:
@@ -589,4 +641,5 @@ class Importer(object):
 
 
 # Avoid circular imports
-from menpo.io.input.extensions import image_landmark_types, image_types
+from menpo.io.input.extensions import (image_landmark_types, image_types,
+                                       pickle_types)

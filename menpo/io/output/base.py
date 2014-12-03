@@ -47,8 +47,7 @@ def export_landmark_file(fp, landmark_group, extension=None,
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(fp, landmark_group, landmark_types, extension,
-            overwrite)
+    _export(fp, landmark_group, landmark_types, extension, overwrite)
 
 
 def export_image(fp, image, extension=None, overwrite=False):
@@ -120,7 +119,14 @@ def export_pickle(fp, obj, overwrite=False):
         The provided extension does not match to an existing exporter type
         (the output type is not supported).
     """
-    _export(fp, obj, pickle_types, '.pkl', overwrite)
+    if isinstance(fp, basestring):
+        # user provided a path - if it ended .gz we will compress
+        path_filepath = _validate_filepath(fp, '.pkl', overwrite)
+        o = gzip_open if path_filepath.suffix == '.gz' else open
+        with o(fp, 'wb') as f:
+            _export(f, obj, pickle_types, '.pkl', overwrite)
+    else:
+        _export(fp, obj, pickle_types, '.pkl', overwrite)
 
 
 def _normalise_extension(extension):
@@ -154,20 +160,14 @@ def _validate_filepath(fp, extension, overwrite):
     return path_filepath
 
 
-def _export(fp, obj, extensions_map, extension=None, overwrite=False):
+def _export(fp, obj, extensions_map, extension, overwrite):
     if isinstance(fp, basestring):
         path_filepath = _validate_filepath(fp, extension, overwrite)
 
-        # use .suffixes[0] to ensure we handle compression suffixes correctly
-        # 'foo.pkl.gz' : .suffixes[0] == '.pkl', .suffix == '.gz'
-        # 'foo.pkl'    : .suffixes[0] == '.pkl', .suffix == '.pkl'
         export_function = _extension_to_export_function(
-            path_filepath.suffixes[0], extensions_map)
+            path_filepath.suffix, extensions_map)
 
-        # if the last suffix is '.gz' enable gzip compression
-        o = gzip_open if path_filepath.suffix == '.gz' else open
-
-        with o(str(path_filepath), 'wb') as file_handle:
+        with path_filepath.open('wb') as file_handle:
             export_function(file_handle, obj)
     else:
         # You MUST provide an extension if a file handle is given
