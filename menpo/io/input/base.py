@@ -1,6 +1,5 @@
 import abc
 import os
-from glob import glob
 from pathlib import Path
 
 from ..utils import _norm_path
@@ -21,7 +20,8 @@ def data_dir_path():
 
 
 def data_path_to(asset_filename):
-    r"""The path to a builtin asset in the ./data folder on this machine.
+    r"""
+    The path to a builtin asset in the ./data folder on this machine.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def data_path_to(asset_filename):
 
     Returns
     -------
-    data_path : `str`
+    data_path : `pathlib.Path`
         The path to a given asset in the ./data folder
 
     Raises
@@ -547,118 +547,6 @@ def importer_for_filepath(filepath, extensions_map, importer_kwargs=None):
         return importer_type(str(filepath), **importer_kwargs)
     else:
         return importer_type(str(filepath))
-
-
-def files_with_matching_stem(filepath):
-    r"""
-    Given a filepath, find all the files that share the same stem.
-
-    Can be used to find all landmark files for a given image for instance.
-
-    Parameters
-    ----------
-    filepath : `pathlib.Path`
-        The filepath to be matched against
-
-    Yields
-    ------
-    path : `pathlib.Path`
-        A list of absolute filepaths to files that share the same stem
-        as filepath.
-
-    """
-    return filepath.parent.glob('{}.*'.format(filepath.stem))
-
-
-def filter_extensions(filepaths, extensions_map):
-    r"""
-    Given a set of filepaths, filter the files who's extensions are in the
-    given map. This is used to find images and landmarks from a given basename.
-
-    Parameters
-    ----------
-    filepaths : list of strings
-        A list of absolute filepaths
-    extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. `.obj`.
-
-    Returns
-    -------
-    basenames : list of strings
-        A list of basenames
-    """
-    extensions = extensions_map.keys()
-    return [f.stem for f in filepaths if f.suffix in extensions]
-
-
-def find_alternative_files(file_type, filepath, extensions_map):
-    r"""
-    Given a filepath, search for files with the same basename that match
-    a given extension type, eg images. If more than one file is found, an error
-    is printed and the first such basename is returned.
-
-    Parameters
-    ----------
-    file_type : string
-        The type of file being found. Used for the error outputs.
-    filepath : string
-        An absolute filepath
-    extensions_map : dictionary (String, :class:`menpo.io.base.Importer`)
-        A map from extensions to importers. The importers are expected to be
-        non-instantiated classes. The extensions are expected to
-        contain the leading period eg. `.obj`.
-
-    Returns
-    -------
-    base_name : string
-        The basename of the file that was found eg `mesh.bmp`. Only **one**
-        file is ever returned. If more than one is found, the first is taken.
-
-    Raises
-    ------
-    ImportError
-        If no alternative file is found
-    """
-    try:
-        all_paths = files_with_matching_stem(filepath)
-        base_names = filter_extensions(all_paths, extensions_map)
-        if len(base_names) > 1:
-            print("Warning: More than one {0} was found: "
-                  "{1}. Taking the first by default".format(
-                  file_type, base_names))
-        return base_names[0]
-    except Exception as e:
-        raise ImportError("Failed to find a {0} for {1} from types {2}. "
-                          "Reason: {3}".format(file_type, filepath,
-                                               extensions_map, e))
-
-
-def _images_unrelated_to_meshes(image_paths, mesh_texture_paths):
-    r"""
-    Find the set of images that do not correspond to textures for the given
-    meshes.
-
-    Parameters
-    ----------
-    image_paths : list of strings
-        List of absolute filepaths to images
-    mesh_texture_paths : list of strings
-        List of absolute filepaths to mesh textures
-
-    Returns
-    -------
-    images : list of strings
-        List of absolute filepaths to images that are unrelated to meshes.
-    """
-    image_filenames = [os.path.splitext(f)[0] for f in image_paths]
-    mesh_filenames = [os.path.splitext(f)[0] for f in mesh_texture_paths]
-    images_unrelated_to_mesh = set(image_filenames) - set(mesh_filenames)
-    image_name_to_path = {}
-    for k, v in zip(image_filenames, image_paths):
-        image_name_to_path[k] = v
-    return [image_name_to_path[i] for i in images_unrelated_to_mesh]
 
 
 class Importer(object):
