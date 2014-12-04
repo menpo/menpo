@@ -190,8 +190,8 @@ class PointCloud(Shape):
         """
         from .graph import PointDirectedGraph
         min_p, max_p = self.bounds()
-        return PointDirectedGraph(np.array([min_p, [min_p[0], max_p[1]],
-                                            max_p, [max_p[0], min_p[1]]]),
+        return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
+                                            max_p, [min_p[0], max_p[1]]]),
                                   np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
                                   copy=False)
 
