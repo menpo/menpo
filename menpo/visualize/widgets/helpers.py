@@ -3,9 +3,12 @@ from IPython.html.widgets import (FloatSliderWidget, ContainerWidget,
                                   ToggleButtonWidget, RadioButtonsWidget,
                                   IntTextWidget, DropdownWidget, LatexWidget,
                                   ButtonWidget, SelectWidget, FloatTextWidget,
-                                  TextWidget, TabWidget)
+                                  TextWidget, TabWidget, BoundedIntTextWidget,
+                                  BoundedFloatTextWidget, TextareaWidget)
 import numpy as np
 from collections import OrderedDict
+from functools import partial
+from StringIO import StringIO
 
 from .utils import (_convert_list_to_str, _convert_str_to_list_float,
                     _convert_str_to_list_int)
@@ -4124,16 +4127,18 @@ def hog_options(toggle_show_default=True, toggle_show_visible=True):
     mode = RadioButtonsWidget(values=tmp, description='Mode')
     padding = CheckboxWidget(value=True, description='Padding')
     mode_wid = ContainerWidget(children=[mode, padding])
-    window_height = IntTextWidget(value='1', description='Height')
-    window_width = IntTextWidget(value='1', description='Width')
+    window_height = BoundedIntTextWidget(value='1', description='Height', min=1)
+    window_width = BoundedIntTextWidget(value='1', description='Width', min=1)
     tmp = OrderedDict()
     tmp['Blocks'] = 'blocks'
     tmp['Pixels'] = 'pixels'
     window_size_unit = RadioButtonsWidget(values=tmp, description=' Size unit')
     window_size_wid = ContainerWidget(children=[window_height, window_width,
                                                 window_size_unit])
-    window_vertical = IntTextWidget(value='1', description='Step Y')
-    window_horizontal = IntTextWidget(value='1', description='Step X')
+    window_vertical = BoundedIntTextWidget(value='1', description='Step Y',
+                                           min=1)
+    window_horizontal = BoundedIntTextWidget(value='1', description='Step X',
+                                             min=1)
     tmp = OrderedDict()
     tmp['Pixels'] = 'pixels'
     tmp['Cells'] = 'cells'
@@ -4150,14 +4155,19 @@ def hog_options(toggle_show_default=True, toggle_show_visible=True):
     tmp['Zhu & Ramanan'] = 'zhuramanan'
     algorithm = RadioButtonsWidget(values=tmp, value='dalaltriggs',
                                    description='Algorithm')
-    cell_size = IntTextWidget(value='8', description='Cell size (in pixels)')
-    block_size = IntTextWidget(value='2', description='Block size (in cells)')
-    num_bins = IntTextWidget(value='9', description='Orientation bins')
+    cell_size = BoundedIntTextWidget(value='8',
+                                     description='Cell size (in pixels)', min=1)
+    block_size = BoundedIntTextWidget(value='2',
+                                      description='Block size (in cells)',
+                                      min=1)
+    num_bins = BoundedIntTextWidget(value='9', description='Orientation bins',
+                                    min=1)
     algorithm_sizes = ContainerWidget(children=[cell_size, block_size,
                                                 num_bins])
     signed_gradient = CheckboxWidget(value=True, description='Signed gradients')
-    l2_norm_clipping = FloatTextWidget(value='0.2',
-                                       description='L2 norm clipping')
+    l2_norm_clipping = BoundedFloatTextWidget(value='0.2',
+                                              description='L2 norm clipping',
+                                              min=0.)
     algorithm_other = ContainerWidget(children=[signed_gradient,
                                                 l2_norm_clipping])
     algorithm_options = ContainerWidget(children=[algorithm_sizes,
@@ -4198,42 +4208,6 @@ def hog_options(toggle_show_default=True, toggle_show_visible=True):
         block_size.disabled = value == 'zhuramanan'
         num_bins.disabled = value == 'zhuramanan'
     algorithm.on_trait_change(algorithm_mode, 'value')
-
-    # check options
-    def check_window_height(name, old_value, value):
-        if value < 1:
-            window_height.value = old_value
-    window_height.on_trait_change(check_window_height, 'value')
-
-    def check_window_width(name, old_value, value):
-        if value < 1:
-            window_width.value = old_value
-    window_width.on_trait_change(check_window_width, 'value')
-
-    def check_window_vertical(name, old_value, value):
-        if value < 1:
-            window_vertical.value = old_value
-    window_vertical.on_trait_change(check_window_vertical, 'value')
-
-    def check_window_horizontal(name, old_value, value):
-        if value < 1:
-            window_horizontal.value = old_value
-    window_horizontal.on_trait_change(check_window_horizontal, 'value')
-
-    def check_num_bins(name, old_value, value):
-        if value < 1:
-            num_bins.value = old_value
-    num_bins.on_trait_change(check_num_bins, 'value')
-
-    def check_cell_size(name, old_value, value):
-        if value < 1:
-            cell_size.value = old_value
-    cell_size.on_trait_change(check_cell_size, 'value')
-
-    def check_block_size(name, old_value, value):
-        if value < 1:
-            block_size.value = old_value
-    block_size.on_trait_change(check_block_size, 'value')
 
     # get options
     def get_mode(name, value):
@@ -4431,11 +4405,13 @@ def daisy_options(toggle_show_default=True, toggle_show_visible=True):
                              visible=toggle_show_visible)
 
     # options widgets
-    step = IntTextWidget(value='1', description='Step')
-    radius = IntTextWidget(value='15', description='Radius')
-    rings = IntTextWidget(value='2', description='Rings')
-    histograms = IntTextWidget(value='2', description='Histograms')
-    orientations = IntTextWidget(value='8', description='Orientations')
+    step = BoundedIntTextWidget(value='1', description='Step', min=1)
+    radius = BoundedIntTextWidget(value='15', description='Radius', min=1)
+    rings = BoundedIntTextWidget(value='2', description='Rings', min=1)
+    histograms = BoundedIntTextWidget(value='2', description='Histograms',
+                                      min=1)
+    orientations = BoundedIntTextWidget(value='8', description='Orientations',
+                                        min=1)
     tmp = OrderedDict()
     tmp['L1'] = 'l1'
     tmp['L2'] = 'l2'
@@ -4462,32 +4438,6 @@ def daisy_options(toggle_show_default=True, toggle_show_visible=True):
                                  'normalization': 'l1',
                                  'sigmas': None,
                                  'ring_radii': None}
-
-    # check options
-    def check_step(name, old_value, value):
-        if value < 1:
-            step.value = old_value
-    step.on_trait_change(check_step, 'value')
-
-    def check_radius(name, old_value, value):
-        if value < 1:
-            radius.value = old_value
-    radius.on_trait_change(check_radius, 'value')
-
-    def check_rings(name, old_value, value):
-        if value < 1:
-            rings.value = old_value
-    rings.on_trait_change(check_rings, 'value')
-
-    def check_histograms(name, old_value, value):
-        if value < 1:
-            histograms.value = old_value
-    histograms.on_trait_change(check_histograms, 'value')
-
-    def check_orientations(name, old_value, value):
-        if value < 1:
-            orientations.value = old_value
-    orientations.on_trait_change(check_orientations, 'value')
 
     # get options
     def get_step(name, value):
@@ -4638,8 +4588,10 @@ def lbp_options(toggle_show_default=True, toggle_show_visible=True):
                                               mapping_type])
 
     # window related options
-    window_vertical = IntTextWidget(value='1', description='Step Y')
-    window_horizontal = IntTextWidget(value='1', description='Step X')
+    window_vertical = BoundedIntTextWidget(value='1', description='Step Y',
+                                           min=1)
+    window_horizontal = BoundedIntTextWidget(value='1', description='Step X',
+                                             min=1)
     tmp = OrderedDict()
     tmp['Pixels'] = 'pixels'
     tmp['Windows'] = 'cells'
@@ -4663,17 +4615,6 @@ def lbp_options(toggle_show_default=True, toggle_show_visible=True):
                                'window_step_horizontal': 1,
                                'window_step_unit': 'pixels', 'padding': True,
                                'verbose': False, 'skip_checks': False}
-
-    # check options
-    def check_window_vertical(name, old_value, value):
-        if value < 1:
-            window_vertical.value = old_value
-    window_vertical.on_trait_change(check_window_vertical, 'value')
-
-    def check_window_horizontal(name, old_value, value):
-        if value < 1:
-            window_horizontal.value = old_value
-    window_horizontal.on_trait_change(check_window_horizontal, 'value')
 
     # get options
     def get_mapping_type(name, value):
@@ -4863,6 +4804,317 @@ def format_igo_options(igo_options_wid, container_padding='6px',
         igo_options_wid.set_css('border', container_border)
 
 
+def function_definition(default_function='def my_function():\n    pass',
+                        toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget for Function Definition.
+
+    The structure of the widgets is the following:
+        function_definition_wid.children = [toggle_button, options]
+        options.children = [code_textarea, define]
+        define.children = [message_text, define_button]
+
+    To fix the alignment within this widget please refer to
+    `format_function_definition()` function.
+
+    Parameters
+    ----------
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='Features Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # code widget
+    code = TextareaWidget(value=default_function)
+    define_but = ButtonWidget(description='Define')
+    msg_wid = LatexWidget(value='')
+    define_wid = ContainerWidget(children=[msg_wid, define_but])
+
+    # options widget
+    all_options = ContainerWidget(children=[code, define_wid])
+
+    # Widget container
+    function_definition_wid = ContainerWidget(children=[but, all_options])
+
+    # Initialize output dictionary
+    f, msg = _get_function_handle_from_string(default_function)
+    function_definition_wid.function = f
+
+    # get code
+    def get_code(name):
+        function_handle, msg = _get_function_handle_from_string(code.value)
+        if function_handle is not None:
+            function_definition_wid.function = function_handle
+            msg_wid.value = ''
+        else:
+            f, _ = _get_function_handle_from_string(default_function)
+            function_definition_wid.function = f
+            msg_wid.value = msg
+    define_but.on_click(get_code)
+
+    # Toggle button function
+    def toggle_options(name, value):
+        all_options.visible = value
+    but.on_trait_change(toggle_options, 'value')
+
+    return function_definition_wid
+
+
+def format_function_definition(function_definition_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given features_options
+    widget. Usage example:
+        function_definition_wid = function_definition()
+        display(function_definition_wid)
+        format_function_definition(function_definition_wid)
+
+    Parameters
+    ----------
+    function_definition_wid :
+        The widget object generated by the `function_definition()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align message text and button horizontally
+    function_definition_wid.children[1].children[1].remove_class('vbox')
+    function_definition_wid.children[1].children[1].add_class('hbox')
+
+    # set margin between message and button
+    function_definition_wid.children[1].children[1].children[0].set_css(
+        'margin-right', '0.5cm')
+
+    # align code textarea and button to the right
+    function_definition_wid.children[1].add_class('align-end')
+
+    # set error message background to red
+    function_definition_wid.children[1].children[1].children[0].set_css(
+        'background', 'red')
+
+    # set toggle button font bold
+    function_definition_wid.children[0].set_css('font-weight',
+                                                toggle_button_font_weight)
+
+    # margin and border around container widget
+    function_definition_wid.set_css('padding', container_padding)
+    function_definition_wid.set_css('margin', container_margin)
+    if border_visible:
+        function_definition_wid.set_css('border', container_border)
+
+
+def features_options(toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with Features Options.
+
+    The structure of the widgets is the following:
+        features_options_wid.children = [toggle_button, tab_options]
+        tab_options.children = [features_radiobuttons, per_feature_options]
+        per_feature_options.children = [hog_options, igo_options, lbp_options,
+                                        daisy_options, no_options]
+
+    To fix the alignment within this widget please refer to
+    `format_features_options()` function.
+
+    Parameters
+    ----------
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    from menpo.feature.features import hog, lbp, igo, es, daisy, gradient, no_op
+
+    # Toggle button that controls options' visibility
+    but = ToggleButtonWidget(description='Features Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # feature type
+    tmp = OrderedDict()
+    tmp['HOG'] = hog
+    tmp['IGO'] = igo
+    tmp['ES'] = es
+    tmp['Daisy'] = daisy
+    tmp['LBP'] = lbp
+    tmp['Gradient'] = gradient
+    tmp['None'] = no_op
+    feature = RadioButtonsWidget(value=no_op, values=tmp,
+                                 description='Feature type:')
+
+    # feature-related options
+    hog_options_wid = hog_options(toggle_show_default=True,
+                                  toggle_show_visible=False)
+    igo_options_wid = igo_options(toggle_show_default=True,
+                                  toggle_show_visible=False)
+    lbp_options_wid = lbp_options(toggle_show_default=True,
+                                  toggle_show_visible=False)
+    daisy_options_wid = daisy_options(toggle_show_default=True,
+                                      toggle_show_visible=False)
+    no_options_wid = LatexWidget(value='No options available.')
+
+    # options tab widget
+    per_feature_options = ContainerWidget(children=[hog_options_wid,
+                                                    igo_options_wid,
+                                                    lbp_options_wid,
+                                                    daisy_options_wid,
+                                                    no_options_wid])
+    all_options = TabWidget(children=[feature, per_feature_options])
+
+    # Widget container
+    features_options_wid = ContainerWidget(children=[but, all_options])
+
+    # Initialize output dictionary
+    features_options_wid.function = partial(no_op, {})
+    features_options_wid.options = {}
+
+    # options visibility
+    def per_feature_options_visibility(name, value):
+        if value == hog:
+            igo_options_wid.visible = False
+            lbp_options_wid.visible = False
+            daisy_options_wid.visible = False
+            no_options_wid.visible = False
+            hog_options_wid.visible = True
+        elif value == igo:
+            hog_options_wid.visible = False
+            lbp_options_wid.visible = False
+            daisy_options_wid.visible = False
+            no_options_wid.visible = False
+            igo_options_wid.visible = True
+        elif value == lbp:
+            hog_options_wid.visible = False
+            igo_options_wid.visible = False
+            daisy_options_wid.visible = False
+            no_options_wid.visible = False
+            lbp_options_wid.visible = True
+        elif value == daisy:
+            hog_options_wid.visible = False
+            igo_options_wid.visible = False
+            lbp_options_wid.visible = False
+            no_options_wid.visible = False
+            daisy_options_wid.visible = True
+        else:
+            hog_options_wid.visible = False
+            igo_options_wid.visible = False
+            lbp_options_wid.visible = False
+            daisy_options_wid.visible = False
+            no_options_wid.visible = True
+    feature.on_trait_change(per_feature_options_visibility, 'value')
+    per_feature_options_visibility('', no_op)
+
+    # get function
+    def get_function(name, value):
+        if value == hog:
+            options = hog_options_wid.options
+        elif value == igo:
+            options = igo_options_wid.options
+        elif value == lbp:
+            options = lbp_options_wid.options
+        elif value == daisy:
+            options = daisy_options_wid.options
+        else:
+            options = {}
+        features_options_wid.function = partial(value, **options)
+    feature.on_trait_change(get_function, 'value')
+
+    # Toggle button function
+    def toggle_options(name, value):
+        all_options.visible = value
+    but.on_trait_change(toggle_options, 'value')
+
+    return features_options_wid
+
+
+def format_features_options(features_options_wid, container_padding='6px',
+                            container_margin='6px',
+                            container_border='1px solid black',
+                            toggle_button_font_weight='bold',
+                            border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given features_options
+    widget. Usage example:
+        features_options_wid = features_options()
+        display(features_options_wid)
+        format_features_options(features_options_wid)
+
+    Parameters
+    ----------
+    features_options_wid :
+        The widget object generated by the `features_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    tab_top_margin : `str`, optional
+        The margin around the tab options' widget, e.g. '0.3cm'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # format per feature options
+    format_hog_options(features_options_wid.children[1].children[1].children[0],
+                       border_visible=False)
+    format_igo_options(features_options_wid.children[1].children[1].children[1],
+                       border_visible=False)
+    format_lbp_options(features_options_wid.children[1].children[1].children[2],
+                       border_visible=False)
+    format_daisy_options(features_options_wid.children[1].children[1].children[3],
+                         border_visible=False)
+
+    # set final tab titles
+    tab_titles = ['Feature', 'Options']
+    for (k, tl) in enumerate(tab_titles):
+        features_options_wid.children[1].set_title(k, tl)
+
+    # set margin above tab widget
+    features_options_wid.children[1].set_css('margin', '10px')
+
+    # set toggle button font bold
+    features_options_wid.children[0].set_css('font-weight',
+                                             toggle_button_font_weight)
+
+    # margin and border around container widget
+    features_options_wid.set_css('padding', container_padding)
+    features_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        features_options_wid.set_css('border', container_border)
+
+
 def _compare_groups_and_labels(groups1, labels1, groups2, labels2):
     r"""
     Function that compares two sets of landmarks groups and labels and returns
@@ -4904,3 +5156,26 @@ def _convert_iterations_to_groups(from_iter, to_iter, iter_str):
     the str to be used.
     """
     return ["{}{}".format(iter_str, i) for i in range(from_iter, to_iter+1)]
+
+
+def _get_function_handle_from_string(s):
+    r"""
+    Function that returns a function handle given the function code as a string.
+    """
+    try:
+        exec(s)
+        function_name = s[4:s.find('(')]
+        return eval(function_name), None
+    except:
+        return None, 'Invalid syntax!'
+
+
+def _convert_image_to_bytes(image):
+    r"""
+    Function that given a menpo.Image object, it converts it to the correct
+    bytes format that can be used by IPython.html.widgets.ImageWidget().
+    """
+    fp = StringIO()
+    image.as_PILImage().save(fp, format='png')
+    fp.seek(0)
+    return fp.read()
