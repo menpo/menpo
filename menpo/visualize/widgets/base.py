@@ -1,3 +1,4 @@
+from collections import Sized
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, update_channel_options,
                       landmark_options, format_landmark_options,
@@ -114,7 +115,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     import matplotlib.pyplot as plt
 
     # make sure that images is a list even with one image member
-    if not isinstance(images, list):
+    if not isinstance(images, Sized):
         images = [images]
 
     # find number of images
