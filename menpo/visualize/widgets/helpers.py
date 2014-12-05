@@ -10,8 +10,7 @@ from collections import OrderedDict
 from functools import partial
 from StringIO import StringIO
 
-from .utils import (_convert_list_to_str, _convert_str_to_list_float,
-                    _convert_str_to_list_int)
+from .utils import _convert_str_to_list_float, _convert_str_to_list_int
 
 
 def figure_options(plot_function, scale_default=1., show_axes_default=True,
