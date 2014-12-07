@@ -713,3 +713,18 @@ def no_op(image_data):
     passed in.
     """
     return image_data.copy()
+
+
+def features_selection_widget(popup=True):
+    r"""
+    Function that creates a widget that allows for easy selection of a features
+    function and its options.
+
+    Parameters
+    -----------
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+    """
+    from menpo.visualize.widgets import features_selection
+
+    return features_selection(popup=popup)

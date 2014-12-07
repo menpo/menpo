@@ -14,7 +14,7 @@ from StringIO import StringIO
 from .utils import _convert_str_to_list_float, _convert_str_to_list_int
 
 
-def logo(scale=0.2):
+def logo(scale=0.3):
     r"""
     Creates a widget with Menpo Logo Image.
 
@@ -30,6 +30,7 @@ def logo(scale=0.2):
         Defines the scale that will be applied to the logo image
         (data/menpo_thumbnail.jpg).
     """
+    import menpo.io as mio
     image = mio.import_builtin_asset.menpo_thumbnail_jpg()
     image = image.rescale(scale)
     logo_wid = ImageWidget(value=_convert_image_to_bytes(image))
@@ -5062,6 +5063,8 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
     # Initialize output dictionary
     options = {}
     features_options_wid.function = partial(no_op, **options)
+    features_options_wid.features_function = no_op
+    features_options_wid.features_options = options
 
     # options visibility
     def per_feature_options_visibility(name, value):
@@ -5115,6 +5118,8 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
         func = partial(feature.value, **opts)
         # store function
         features_options_wid.function = func
+        features_options_wid.features_function = value
+        features_options_wid.features_options = opts
     feature.on_trait_change(get_function, 'value')
     all_options.on_trait_change(get_function, 'selected_index')
 

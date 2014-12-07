@@ -3,9 +3,11 @@ from .helpers import (figure_options, format_figure_options, channel_options,
                       landmark_options, format_landmark_options,
                       update_landmark_options, info_print, format_info_print,
                       animation_options, format_animation_options,
-                      save_figure_options, format_save_figure_options)
+                      save_figure_options, format_save_figure_options,
+                      features_options, format_features_options, logo,
+                      format_logo)
 from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget)
+                                  RadioButtonsWidget, ButtonWidget)
 from IPython.display import display, clear_output
 import matplotlib.pylab as plt
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
@@ -573,6 +575,65 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
 
     # Reset value to trigger initial visualization
     landmark_options_wid.children[1].children[1].value = False
+
+
+def features_selection(popup=True):
+    r"""
+    Widget that allows selecting a features function and its options. The
+    widget supports all features from `menpo.feature` and has a preview tab.
+    It returns a list of length one with the selected features function closure.
+
+    Parameters
+    -----------
+    popup : `boolean`, optional
+        If enabled, the widget will appear as a popup window.
+
+    Returns
+    -------
+    features_function : `list` of length 1
+        The function closure of the features function using `functools.partial`.
+    """
+    # Create sub-widgets
+    logo_wid = logo()
+    features_options_wid = features_options(toggle_show_default=True,
+                                            toggle_show_visible=False)
+    features_wid = ContainerWidget(children=[logo_wid, features_options_wid])
+    select_but = ButtonWidget(description='Select')
+
+    # Create final widget
+    if popup:
+        wid = PopupWidget(children=[features_wid, select_but],
+                          button_text='Features Selection')
+    else:
+        wid = ContainerWidget(children=[features_wid, select_but])
+
+    # function for select button
+    def select_function(name):
+        wid.close()
+        output.pop(0)
+        output.append(features_options_wid.function)
+    select_but.on_click(select_function)
+
+    # Display widget
+    display(wid)
+
+    # Format widgets
+    format_features_options(features_options_wid, border_visible=True)
+    format_logo(logo_wid, border_visible=False)
+    # set popup width
+    if popup:
+        wid.set_css({
+            'width': '13cm'}, selector='modal')
+    # align logo at the end
+    features_wid.add_class('align-end')
+    # align select button at the centre
+    wid.add_class('align-center')
+
+    # Initialize output with empty list. It needs to be a list so that
+    # it's mutable and synchronizes with frontend.
+    output = [features_options_wid.function]
+
+    return output
 
 
 def _plot_figure(image, figure_id, image_enabled, landmarks_enabled,
