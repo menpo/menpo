@@ -430,7 +430,7 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False,
                 render_legend=landmark_options_wid.legend_enabled,
                 render_numbering=landmark_options_wid.numbering_enabled,
                 **kwargs)
-            plt.hold(False)
+            # axis visibility
             plt.gca().axis('equal')
             # set figure size
             plt.gcf().set_size_inches([x_scale, y_scale] *
