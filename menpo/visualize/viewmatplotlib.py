@@ -155,13 +155,20 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
                                                            new_figure)
         self.points = points
 
-    def _render(self, image_view=False, cmap=None,
-                colour_array='b', label=None, **kwargs):
+    def _render(self, image_view=False, cmap=None, marker_colours='b',
+                marker_styles='o', marker_sizes=20, line_widths=1,
+                edge_colours=None, face_colours=None, label=None, **kwargs):
         import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
-        plt.scatter(points[:, 0], points[:, 1], cmap=cmap,
-                    c=colour_array, label=label)
+        # The provided options (marker_colours, marker_styles, marker_sizes,
+        # line_widths, edge_colours, face_colours) can also be lists of
+        # different values that will be applied in a repetitive manner over the
+        # provided number of points
+        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=marker_colours,
+                    s=marker_sizes, marker=marker_styles,
+                    linewidths=line_widths, edgecolors=edge_colours,
+                    facecolors=face_colours, label=label, **kwargs)
         return self
 
 
@@ -172,8 +179,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         self.points = points
         self.adjacency_list = adjacency_list
 
-    def _render(self, image_view=False, cmap=None,
-                colour_array='b', label=None, **kwargs):
+    def _render(self, image_view=False, cmap=None, line_colours='b',
+                line_styles='solid', line_widths=1,
+                marker_styles='None', marker_colours='b', marker_sizes=20,
+                edge_colours=None, face_colours=None, label=None, **kwargs):
         import matplotlib.pyplot as plt
         from matplotlib import collections as mc
 
@@ -182,9 +191,17 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         lines = zip(points[self.adjacency_list[:, 0], :],
                     points[self.adjacency_list[:, 1], :])
 
+        # The provided options (line_colours, line_styles, line_widths) can also
+        # be lists of different values that will be applied in a repetitive
+        # manner over the labels
         ax = plt.gca()
-        lc = mc.LineCollection(lines, colors=colour_array, linewidths=1,
-                               label=label)
+        lc = mc.LineCollection(lines, colors=line_colours,
+                               linestyles=line_styles, linewidths=line_widths,
+                               label=label, **kwargs)
+        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=marker_colours,
+                    s=marker_sizes, marker=marker_styles,
+                    linewidths=line_widths, edgecolors=edge_colours,
+                    facecolors=face_colours, label=label)
         ax.add_collection(lc)
         ax.autoscale()
         return self
