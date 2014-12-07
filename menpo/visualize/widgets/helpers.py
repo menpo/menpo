@@ -5098,6 +5098,10 @@ def features_options(toggle_show_default=True, toggle_show_visible=True):
             lbp_options_wid.visible = False
             daisy_options_wid.visible = False
             no_options_wid.visible = True
+            for name, f in tmp.iteritems():
+                if f == value:
+                    no_options_wid.value = "{}: No available " \
+                                           "options.".format(name)
     feature.on_trait_change(per_feature_options_visibility, 'value')
     per_feature_options_visibility('', no_op)
 

@@ -93,7 +93,8 @@ def _raw_info_string_to_latex(raw):
     return _join_bullets_as_latex_math(bullets)
 
 
-def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
+def visualize_images(images, figure_size=(7, 7), popup=False,
+                     images_browser_style='buttons', **kwargs):
     r"""
     Widget that allows browsing through a list of images.
 
@@ -109,6 +110,10 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
+
+    images_browser_style : ``buttons`` or ``slider``, optional
+        It defines whether the selector of the images will have the form of
+        plus/minus buttons or a slider.
 
     kwargs : `dict`, optional
         Passed through to the viewer.
@@ -264,7 +269,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
             plot_function=plot_function, update_function=update_widgets,
             index_step=1, index_default=0,
             index_description='Image Number', index_minus_description='<',
-            index_plus_description='>', index_style='buttons',
+            index_plus_description='>', index_style=images_browser_style,
             index_text_editable=True, loop_default=True, interval_default=0.3,
             toggle_show_title='Image Options', toggle_show_default=True,
             toggle_show_visible=False)
@@ -312,7 +317,7 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
 
     # format options' widgets
     if n_images > 1:
-        format_animation_options(image_number_wid, index_text_width='0.5cm',
+        format_animation_options(image_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
                                  container_border='1px solid black',
@@ -350,7 +355,8 @@ def visualize_images(images, figure_size=(7, 7), popup=False, **kwargs):
     landmark_options_wid.children[1].children[1].value = False
 
 
-def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
+def visualize_shapes(shapes, figure_size=(7, 7), popup=False,
+                     images_browser_style='buttons', **kwargs):
     r"""
     Widget that allows browsing through a list of shapes.
 
@@ -366,6 +372,10 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
 
     popup : `boolean`, optional
         If enabled, the widget will appear as a popup window.
+
+    images_browser_style : ``buttons`` or ``slider``, optional
+        It defines whether the selector of the images will have the form of
+        plus/minus buttons or a slider.
 
     kwargs : `dict`, optional
         Passed through to the viewer.
@@ -498,7 +508,7 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
             plot_function=plot_function, update_function=update_widgets,
             index_step=1, index_default=0,
             index_description='Shape Number', index_minus_description='<',
-            index_plus_description='>', index_style='buttons',
+            index_plus_description='>', index_style=images_browser_style,
             index_text_editable=True, loop_default=True, interval_default=0.3,
             toggle_show_title='Shape Options', toggle_show_default=True,
             toggle_show_visible=False)
@@ -544,7 +554,7 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False, **kwargs):
 
     # format options' widgets
     if n_shapes > 1:
-        format_animation_options(image_number_wid, index_text_width='0.5cm',
+        format_animation_options(image_number_wid, index_text_width='1.0cm',
                                  container_padding='6px',
                                  container_margin='6px',
                                  container_border='1px solid black',
