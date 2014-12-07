@@ -66,9 +66,8 @@ class LandmarkableViewable(Landmarkable, Viewable):
     single helper method for viewing Landmarks and slf on the same figure.
     """
 
-    def view_landmarks(self, figure_id=None, new_figure=False,
-                       group=None, render_numbering=True,
-                       render_legend=True,
+    def view_landmarks(self, figure_id=None, new_figure=False, group=None,
+                       render_numbering=True, render_legend=True,
                        with_labels=None, without_labels=None,
                        lmark_view_kwargs=None, obj_view_kwargs=None):
         """
@@ -92,7 +91,17 @@ class LandmarkableViewable(Landmarkable, Viewable):
             If not ``None``, show all except the given label(s). Should **not**
             be used with the ``with_labels`` kwarg.
         lmark_view_kwargs : `dict`, optional
-            Passed through to the landmark viewer.
+            Passed through to the landmark viewer. An example for 3 labels:
+                lmark_view_kwargs = {'labels_colours': ['r', 'g', 'b'],
+                                     'marker_sizes': 20,
+                                     'marker_styles': 'o',
+                                     'edge_colours': 'k',
+                                     'face_colours': 'b',
+                                     'line_styles': 'solid',
+                                     'line_widths': 1,
+                                     'halign': 'center',
+                                     'valign': 'bottom',
+                                     'font_size': 10}
         obj_view_kwargs : `dict`, optional
             Passed through to this object's viewer.
 

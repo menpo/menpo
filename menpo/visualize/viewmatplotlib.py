@@ -155,20 +155,24 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
                                                            new_figure)
         self.points = points
 
-    def _render(self, image_view=False, cmap=None, marker_colours='b',
-                marker_styles='o', marker_sizes=20, line_widths=1,
-                edge_colours=None, face_colours=None, label=None, **kwargs):
+    def _render(self, image_view=False, label=None, **kwargs):
         import matplotlib.pyplot as plt
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
-        # The provided options (marker_colours, marker_styles, marker_sizes,
-        # line_widths, edge_colours, face_colours) can also be lists of
-        # different values that will be applied in a repetitive manner over the
-        # provided number of points
-        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=marker_colours,
-                    s=marker_sizes, marker=marker_styles,
-                    linewidths=line_widths, edgecolors=edge_colours,
-                    facecolors=face_colours, label=label, **kwargs)
+
+        # Get options values or define the defaults
+        c = kwargs.get('marker_colours', 'b')
+        s = kwargs.get('marker_sizes', 20)
+        marker = kwargs.get('marker_styles', 'o')
+        linewidths = kwargs.get('line_widths', 1)
+        edgecolors = kwargs.get('edge_colours', None)
+        facecolors = kwargs.get('face_colours', None)
+        cmap = kwargs.get('colourmap', None)
+
+        # Scatter using the options
+        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=c, s=s,
+                    marker=marker, linewidths=linewidths, edgecolors=edgecolors,
+                    facecolors=facecolors, label=label)
         return self
 
 
@@ -179,10 +183,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         self.points = points
         self.adjacency_list = adjacency_list
 
-    def _render(self, image_view=False, cmap=None, line_colours='b',
-                line_styles='solid', line_widths=1,
-                marker_styles='None', marker_colours='b', marker_sizes=20,
-                edge_colours=None, face_colours=None, label=None, **kwargs):
+    def _render(self, image_view=False, label=None, **kwargs):
         import matplotlib.pyplot as plt
         from matplotlib import collections as mc
 
@@ -191,17 +192,18 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         lines = zip(points[self.adjacency_list[:, 0], :],
                     points[self.adjacency_list[:, 1], :])
 
-        # The provided options (line_colours, line_styles, line_widths) can also
-        # be lists of different values that will be applied in a repetitive
-        # manner over the labels
         ax = plt.gca()
-        lc = mc.LineCollection(lines, colors=line_colours,
-                               linestyles=line_styles, linewidths=line_widths,
-                               label=label, **kwargs)
-        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=marker_colours,
-                    s=marker_sizes, marker=marker_styles,
-                    linewidths=line_widths, edgecolors=edge_colours,
-                    facecolors=face_colours, label=label)
+
+        # Get options values or define the defaults
+        colors = kwargs.get('line_colours', 'b')
+        linestyles = kwargs.get('line_styles', 'solid')
+        linewidths = kwargs.get('line_widths', 1)
+        cmap = kwargs.get('colourmap', None)
+
+        # Draw line objects
+        lc = mc.LineCollection(lines, colors=colors, linestyles=linestyles,
+                               linewidths=linewidths, cmap=cmap, label=label)
+
         ax.add_collection(lc)
         ax.autoscale()
         return self
@@ -215,23 +217,28 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, render_numbering, render_legend,
-                        image_view, **kwargs):
+    def _plot_landmarks(self, render_numbering, render_legend, image_view,
+                        **kwargs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
-        # We may get passed either no colours (in which case we generate
-        # random colours) or a single colour to colour all the labels with
+        # Regarding the labels colours, we may get passed either no colours (in
+        # which case we generate random colours) or a single colour to colour
+        # all the labels with
         n_labels = len(self.labels_to_masks)
-        colours = kwargs.get('colours', np.random.random([3, n_labels]))
-        if colours.shape[1] == 1:
-            colours = np.tile(colours, [1, n_labels])
-        elif colours.shape[1] != n_labels:
-            raise ValueError('Must pass a (3 x n_labels) array of colours or a '
-                             'single (3 x 1) colour for all labels.')
+        labels_colours = kwargs.get('labels_colours',
+                                    [np.random.random([3, ])
+                                     for _ in range(n_labels)])
+        if len(labels_colours) == 1:
+            labels_colours *= n_labels
+        elif len(labels_colours) != n_labels:
+            raise ValueError('Must pass a list of n_labels colours or a single '
+                             'colour for all labels.')
+
+        # Options related to numbers' annotations
         halign = kwargs.get('halign', 'center')
         valign = kwargs.get('valign', 'bottom')
-        size = kwargs.get('size', 10)
+        font_size = kwargs.get('font_size', 10)
 
         # TODO: Should we enforce viewing landmarks with Matplotlib? How
         # do we do this?
@@ -244,7 +251,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            kwargs['colour_array'] = colours[:, i]
+            kwargs['line_colours'] = labels_colours[i]
             kwargs['label'] = '{0}: {1}'.format(self.group, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
@@ -254,7 +261,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=halign,
-                                verticalalignment=valign, size=size)
+                                verticalalignment=valign, size=font_size)
             if render_legend:
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
 
