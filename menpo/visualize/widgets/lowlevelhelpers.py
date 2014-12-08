@@ -613,6 +613,7 @@ def line_options(line_options_default, plot_function=None,
         linecolour.children[1].children[0].disabled = not value
         linecolour.children[1].children[1].disabled = not value
         linecolour.children[1].children[2].disabled = not value
+    options_visible('', line_options_default['show_line'])
     show_line.on_trait_change(options_visible, 'value')
 
     # get options functions
@@ -822,7 +823,7 @@ def marker_options(marker_options_default, plot_function=None,
     show_checkbox_title : `str`, optional
         The description of the show marker checkbox.
     """
-    #Create widgets
+    # Create widgets
     # toggle button
     but = ToggleButtonWidget(description=toggle_title,
                              value=toggle_show_default,
@@ -892,6 +893,7 @@ def marker_options(marker_options_default, plot_function=None,
         markeredgecolour.children[1].children[0].disabled = not value
         markeredgecolour.children[1].children[1].disabled = not value
         markeredgecolour.children[1].children[2].disabled = not value
+    options_visible('', marker_options_default['show_marker'])
     show_marker.on_trait_change(options_visible, 'value')
 
     # get options functions
@@ -1206,6 +1208,7 @@ def font_options(font_options_default, plot_function=None,
         fontcolour.children[1].children[0].disabled = not value
         fontcolour.children[1].children[1].disabled = not value
         fontcolour.children[1].children[2].disabled = not value
+    options_visible('', font_options_default['show_font'])
     show_font.on_trait_change(options_visible, 'value')
 
     # get options functions
@@ -1518,6 +1521,9 @@ def format_figure_options(figure_options_wid, container_padding='6px',
     border_visible : `boolean`, optional
         Defines whether to draw the border line around the widget.
     """
+    # fix figure scale slider width
+    figure_options_wid.children[1].set_css('width', '3cm')
+
     # set toggle button font bold
     figure_options_wid.children[0].set_css('font-weight',
                                            toggle_button_font_weight)
@@ -1666,6 +1672,7 @@ def figure_options_two_scales(figure_options_default, plot_function=None,
     # Coupled sliders function
     def coupled_sliders(name, value):
         y_scale.disabled = value
+    coupled_sliders('', coupled_default)
     coupled.on_trait_change(coupled_sliders, 'value')
 
     # get options functions

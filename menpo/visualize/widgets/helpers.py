@@ -17,7 +17,11 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               update_line_options, marker_options,
                               format_marker_options, update_marker_options,
                               font_options, format_font_options,
-                              update_font_options)
+                              update_font_options, figure_options,
+                              format_figure_options, update_figure_options,
+                              figure_options_two_scales,
+                              format_figure_options_two_scales,
+                              update_figure_options_two_scales)
 
 
 def channel_options(n_channels, image_is_masked, plot_function=None,
@@ -2526,70 +2530,80 @@ def update_animation_options(animation_options_wid, index_min_val,
                 on_trait_change(plot_function, 'value')
 
 
-def plot_landmarks_options(plot_landmarks_options_default, groups_names=None,
-                           plot_function=None, toggle_show_visible=True,
-                           toggle_show_default=True):
+def viewer_options(viewer_options_default, options_tabs, objects_names=None,
+                   plot_function=None, toggle_show_visible=True,
+                   toggle_show_default=True):
     r"""
-    Creates a widget with Plot Landmarks Options. Specifically, it has:
-        1) A drop down menu for group selection.
-        2) A tab widget with line, marker and numbers options
+    Creates a widget with Viewer Options. Specifically, it has:
+        1) A drop down menu for object selection.
+        2) A tab widget with any of line, marker, numbers and feature options
         3) A toggle button that controls the visibility of all the above, i.e.
-           the plot landmarks options.
+           the viewer options.
 
     The structure of the widgets is the following:
-        plot_landmarks_options_wid.children = [toggle_button, options]
-        options.children = [groups_menu, per_group_options]
-        per_group_options.children = [line_options, marker_options,
-                                      numbers_options]
+        viewer_options_wid.children = [toggle_button, options]
+        options.children = [selection_menu, tab_options]
+        tab_options.children = [line_options, marker_options,
+                                numbers_options, figure_options]
 
     The returned widget saves the selected values in the following dictionary:
-        plot_landmarks_options_wid.selected_values
+        viewer_options_wid.selected_values
 
     To fix the alignment within this widget please refer to
-    `format_plot_landmarks_options()` function.
+    `format_viewer_options()` function.
 
     Parameters
     ----------
-    plot_landmarks_options_default : list of `dict`
-        A list of dictionaries with the initial selected plot options per group.
-        Example:
-            plot_options_1={'show_line':True,
-                            'linewidth':10,
-                            'linecolour':['r'],
-                            'linestyle':'-',
-                            'show_marker':False,
-                            'markersize':20,
-                            'markerfacecolour':['r'],
-                            'markeredgecolour':['b'],
-                            'markerstyle':'o',
-                            'markeredgewidth':1,
-                            'show_font':True,
-                            'fontname':'serif',
-                            'fontsize':14,
-                            'fontstyle':'italic',
-                            'fontweight':'bold',
-                            'fontcolour':[[1., 1., 1.]]}
-            plot_options_2={'show_line':False,
-                            'linewidth':100,
-                            'linecolour':[[0.1, 0.2, 0.3]],
-                            'linestyle':'--',
-                            'show_marker':True,
-                            'markersize':60,
-                            'markerfacecolour':[[0., 0., 0.]],
-                            'markeredgecolour':['k'],
-                            'markerstyle':'x',
-                            'markeredgewidth':20,
-                            'show_font':True,
-                            'fontname':'fantasy',
-                            'fontsize':80,
-                            'fontstyle':'oblique',
-                            'fontweight':'ultralight',
-                            'fontcolour':['k']}
-            plot_options_default = [plot_options_1, plot_options_2]
+    viewer_options_default : list of `dict`
+        A list of dictionaries with the initial selected viewer options per
+        object. Example:
+            viewer_options_1={'show_line':True, # line-related
+                              'linewidth':10,
+                              'linecolour':['r'],
+                              'linestyle':'-',
+                              'show_marker':False, # marker-related
+                              'markersize':20,
+                              'markerfacecolour':['r'],
+                              'markeredgecolour':['b'],
+                              'markerstyle':'o',
+                              'markeredgewidth':1,
+                              'show_font':True, # number-related
+                              'fontname':'serif',
+                              'fontsize':14,
+                              'fontstyle':'italic',
+                              'fontweight':'bold',
+                              'fontcolour':[[1., 1., 1.]],
+                              'x_scale': 1., # figure-related
+                              'y_scale': 1.,
+                              'show_axes': True}
+            viewer_options_2={'show_line':True, # line-related
+                              'linewidth':10,
+                              'linecolour':['r'],
+                              'linestyle':'-',
+                              'show_marker':False, # marker-related
+                              'markersize':20,
+                              'markerfacecolour':['r'],
+                              'markeredgecolour':['b'],
+                              'markerstyle':'o',
+                              'markeredgewidth':1,
+                              'show_font':True, # number-related
+                              'fontname':'serif',
+                              'fontsize':14,
+                              'fontstyle':'italic',
+                              'fontweight':'bold',
+                              'fontcolour':[[1., 1., 1.]],
+                              'x_scale': 1., # figure-related
+                              'y_scale': 1.,
+                              'show_axes': True}
+            viewer_options_default = [viewer_options_1, viewer_options_2]
 
-    groups_names : `list` of `str`, optional
-        A list with the names of the groups that will be used in the selection
-        dropdown menu. If None, then the names will have th form ``Group %d``.
+    options_tabs : `list` of `str`
+        List that defines the ordering of the options tabs. It can take one of
+        {``lines``, ``markers``, ``numbers``, ``figure_one``, ``figure_two``}
+
+    objects_names : `list` of `str`, optional
+        A list with the names of the objects that will be used in the selection
+        dropdown menu. If None, then the names will have the form ``%d``.
 
     plot_function : `function` or None, optional
         The plot function that is executed when a widgets' value changes.
@@ -2601,121 +2615,192 @@ def plot_landmarks_options(plot_landmarks_options_default, groups_names=None,
     toggle_show_visible : `boolean`, optional
         The visibility of the toggle button.
     """
-    # make sure that plot_landmarks_options_default is list even with one member
-    if not isinstance(plot_landmarks_options_default, list):
-        plot_landmarks_options_default = [plot_landmarks_options_default]
+    # make sure that viewer_options_default is list even with one member
+    if not isinstance(viewer_options_default, list):
+        viewer_options_default = [viewer_options_default]
 
-    # find number of groups
-    n_groups = len(plot_landmarks_options_default)
+    # find number of objects
+    n_objects = len(viewer_options_default)
 
-    #Create widgets
+    # Create widgets
     # toggle button
-    but = ToggleButtonWidget(description='Plot Options',
+    but = ToggleButtonWidget(description='Viewer Options',
                              value=toggle_show_default,
                              visible=toggle_show_visible)
 
-    # select group drop down menu
-    groups_dict = OrderedDict()
-    if groups_names is None:
-        for k in range(n_groups):
-            groups_dict['Group ' + str(k)] = k
+    # select object drop down menu
+    objects_dict = OrderedDict()
+    if objects_names is None:
+        for k in range(n_objects):
+            objects_dict[str(k)] = k
     else:
-        for k, g in enumerate(groups_names):
-            groups_dict[g] = k
-    group_selection = DropdownWidget(values=groups_dict,
-                                     value=0,
-                                     description='Select group',
-                                     visible=n_groups > 1)
+        for k, g in enumerate(objects_names):
+            objects_dict[g] = k
+    selection = DropdownWidget(values=objects_dict, value=0,
+                               description='Select', visible=n_objects > 1)
 
     # options widgets
-    line_options_wid = line_options(plot_landmarks_options_default[0],
-                                    toggle_show_visible=False,
-                                    toggle_show_default=True,
-                                    plot_function=plot_function,
-                                    toggle_title='Line Object',
-                                    show_checkbox_title='Show lines')
-    marker_options_wid = marker_options(plot_landmarks_options_default[0],
-                                        toggle_show_visible=False,
-                                        toggle_show_default=True,
-                                        plot_function=plot_function,
-                                        toggle_title='Marker Object',
-                                        show_checkbox_title='Show markers')
-    font_options_wid = font_options(plot_landmarks_options_default[0],
-                                    toggle_show_visible=False,
-                                    toggle_show_default=True,
-                                    plot_function=plot_function,
-                                    toggle_title='Annotation Object',
-                                    show_checkbox_title='Show numbering')
+    options_widgets = []
+    tab_titles = []
+    for o in options_tabs:
+        if o == 'lines':
+            options_widgets.append(
+                line_options(viewer_options_default[0],
+                             toggle_show_visible=False,
+                             toggle_show_default=True,
+                             plot_function=plot_function, toggle_title='Lines',
+                             show_checkbox_title='Show lines'))
+            tab_titles.append('Lines')
+        elif o == 'markers':
+            options_widgets.append(
+                marker_options(viewer_options_default[0],
+                               toggle_show_visible=False,
+                               toggle_show_default=True,
+                               plot_function=plot_function,
+                               toggle_title='Markers',
+                               show_checkbox_title='Show markers'))
+            tab_titles.append('Markers')
+        elif o == 'numbers':
+            options_widgets.append(
+                font_options(viewer_options_default[0],
+                             toggle_show_visible=False,
+                             toggle_show_default=True,
+                             plot_function=plot_function,
+                             toggle_title='Numbers',
+                             show_checkbox_title='Show numbers'))
+            tab_titles.append('Numbers')
+        elif o == 'figure_one':
+            options_widgets.append(
+                figure_options(viewer_options_default[0],
+                               plot_function=plot_function,
+                               figure_scale_bounds=(0.1, 2),
+                               figure_scale_step=0.1, figure_scale_visible=True,
+                               show_axes_visible=True, toggle_show_default=True,
+                               toggle_show_visible=False))
+            tab_titles.append('Figure')
+        elif o == 'figure_two':
+            options_widgets.append(
+                figure_options_two_scales(viewer_options_default[0],
+                                          plot_function=plot_function,
+                                          coupled_default=False,
+                                          figure_scales_bounds=(0.1, 2),
+                                          figure_scales_step=0.1,
+                                          figure_scales_visible=True,
+                                          show_axes_visible=True,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False))
+            tab_titles.append('Figure')
+    options = TabWidget(children=options_widgets)
 
     # Final widget
-    options = TabWidget(children=[line_options_wid, marker_options_wid,
-                                  font_options_wid])
-    all_options = ContainerWidget(children=[group_selection, options])
-    plot_landmark_options_wid = ContainerWidget(children=[but, all_options])
+    all_options = ContainerWidget(children=[selection, options])
+    viewer_options_wid = ContainerWidget(children=[but, all_options])
+
+    # save tab titles and options str to widget in order to be passed to the
+    # format function
+    viewer_options_wid.tab_titles = tab_titles
+    viewer_options_wid.options_tabs = options_tabs
 
     # Assign output list of dicts
-    plot_landmark_options_wid.selected_values = plot_landmarks_options_default
+    viewer_options_wid.selected_values = viewer_options_default
 
     # Update widgets' state
     def update_widgets(name, value):
-        update_line_options(line_options_wid,
-                            plot_landmarks_options_default[value])
-        update_marker_options(marker_options_wid,
-                              plot_landmarks_options_default[value])
-        update_font_options(font_options_wid,
-                            plot_landmarks_options_default[value])
-    group_selection.on_trait_change(update_widgets, 'value')
+        for k, o in enumerate(options_tabs):
+            if o == 'lines':
+                update_line_options(options_widgets[k],
+                                    viewer_options_default[value])
+            elif o == 'markers':
+                update_marker_options(options_widgets[k],
+                                      viewer_options_default[value])
+            elif o == 'numbers':
+                update_font_options(options_widgets[k],
+                                    viewer_options_default[value])
+            elif o == 'figure_one':
+                update_figure_options(options_widgets[k],
+                                      viewer_options_default[value])
+            elif o == 'figure_two':
+                update_figure_options_two_scales(options_widgets[k],
+                                                 viewer_options_default[value])
+    selection.on_trait_change(update_widgets, 'value')
 
-    return plot_landmark_options_wid
+    return viewer_options_wid
 
 
-def format_plot_landmark_options(plot_landmark_options_wid,
-                                 container_padding='6px',
-                                 container_margin='6px',
-                                 container_border='1px solid black',
-                                 toggle_button_font_weight='bold',
-                                 border_visible=False,
-                                 suboptions_border_visible=True):
+def format_viewer_options(viewer_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=False, suboptions_border_visible=True):
     r"""
     Function that corrects the align (style format) of a given
-    plot_landmarks_options widget. Usage example:
-        plot_landmark_options_wid = plot_landmarks_options(default_options)
-        display(plot_landmark_options_wid)
-        format_plot_landmark_options(plot_landmark_options_wid)
+    viewer_options widget. Usage example:
+        viewer_options_wid = viewer_options(default_options)
+        display(viewer_options_wid)
+        format_viewer_options(viewer_options_wid)
 
     Parameters
     ----------
-    plot_landmark_options_wid :
-        The widget object generated by the `plot_landmarks_options()` function.
+    viewer_options_wid :
+        The widget object generated by the `viewer_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+
+    suboptions_border_visible : `boolean`, optional
+        Defines whether to draw the border line around each of the sub options.
     """
     # format widgets
-    format_line_options(
-        plot_landmark_options_wid.children[1].children[1].children[0],
-        suboptions_border_visible=suboptions_border_visible,
-        border_visible=False)
-    format_marker_options(
-        plot_landmark_options_wid.children[1].children[1].children[1],
-        suboptions_border_visible=suboptions_border_visible,
-        border_visible=False)
-    format_font_options(
-        plot_landmark_options_wid.children[1].children[1].children[2],
-        suboptions_border_visible=suboptions_border_visible,
-        border_visible=False)
+    for k, o in enumerate(viewer_options_wid.options_tabs):
+        if o == 'lines':
+            format_line_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                suboptions_border_visible=suboptions_border_visible,
+                border_visible=False)
+        elif o == 'markers':
+            format_marker_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                suboptions_border_visible=suboptions_border_visible,
+                border_visible=False)
+        elif o == 'numbers':
+            format_font_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                suboptions_border_visible=suboptions_border_visible,
+                border_visible=False)
+        elif o == 'figure_one':
+            format_figure_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                border_visible=False)
+        elif o == 'figure_two':
+            format_figure_options_two_scales(
+                viewer_options_wid.children[1].children[1].children[k],
+                border_visible=False)
 
     # set titles
-    tab_titles = ['Lines', 'Markers', 'Numbers']
-    for (k, tl) in enumerate(tab_titles):
-        plot_landmark_options_wid.children[1].children[1].set_title(k, tl)
+    for (k, tl) in enumerate(viewer_options_wid.tab_titles):
+        viewer_options_wid.children[1].children[1].set_title(k, tl)
 
     # set toggle button font bold
-    plot_landmark_options_wid.children[0].set_css('font-weight',
-                                                  toggle_button_font_weight)
+    viewer_options_wid.children[0].set_css('font-weight',
+                                           toggle_button_font_weight)
 
     # margin and border around container widget
-    plot_landmark_options_wid.set_css('padding', container_padding)
-    plot_landmark_options_wid.set_css('margin', container_margin)
+    viewer_options_wid.set_css('padding', container_padding)
+    viewer_options_wid.set_css('margin', container_margin)
     if border_visible:
-        plot_landmark_options_wid.set_css('border', container_border)
+        viewer_options_wid.set_css('border', container_border)
 
 
 def plot_options(plot_options_default, plot_function=None,
