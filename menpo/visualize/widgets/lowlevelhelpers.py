@@ -509,6 +509,7 @@ def update_colour_selection(colour_selection_wid, default_colour_list):
         If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
         If `list`, it defines an RGB value and must have length 3.
     """
+    colour_selection_wid.selected_values = default_colour_list
     default_colour = default_colour_list[0]
     if not isinstance(default_colour, str):
         r_val = default_colour[0]
@@ -740,6 +741,9 @@ def update_line_options(line_options_wid, line_options_dict):
                                'linecolour':['r'],
                                'linestyle':'-'}
     """
+    # Assign new options dict to selected_values
+    line_options_wid.selected_values = line_options_dict
+
     # update show line checkbox
     if 'show_line' in line_options_dict.keys():
         line_options_wid.children[1].children[0].value = \
@@ -895,15 +899,15 @@ def marker_options(marker_options_default, plot_function=None,
     show_marker.on_trait_change(save_show_marker, 'value')
 
     def save_markersize(name, value):
-        marker_options_wid.selected_options['markersize'] = int(value)
+        marker_options_wid.selected_values['markersize'] = int(value)
     markersize.on_trait_change(save_markersize, 'value')
 
     def save_markeredgewidth(name, value):
-        marker_options_wid.selected_options['markeredgewidth'] = float(value)
+        marker_options_wid.selected_values['markeredgewidth'] = float(value)
     markeredgewidth.on_trait_change(save_markeredgewidth, 'value')
 
     def save_markerstyle(name, value):
-        marker_options_wid.selected_options['markerstyle'] = value
+        marker_options_wid.selected_values['markerstyle'] = value
     markerstyle.on_trait_change(save_markerstyle, 'value')
 
     marker_options_wid.selected_values['markeredgecolour'] = \
@@ -1041,6 +1045,9 @@ def update_marker_options(marker_options_wid, marker_options_dict):
                                  'markerstyle':'o',
                                  'markeredgewidth':1}
     """
+    # Assign new options dict to selected_values
+    marker_options_wid.selected_values = marker_options_dict
+
     # update show marker checkbox
     if 'show_marker' in marker_options_dict.keys():
         marker_options_wid.children[1].children[0].value = \
@@ -1342,6 +1349,9 @@ def update_font_options(font_options_wid, font_options_dict):
                                'fontweight': 'normal',
                                'fontcolour': ['k']}
     """
+    # Assign new options dict to selected_values
+    font_options_wid.selected_values = font_options_dict
+
     # update show font checkbox
     if 'show_font' in font_options_dict.keys():
         font_options_wid.children[1].children[0].value = \

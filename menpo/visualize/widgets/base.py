@@ -1,17 +1,19 @@
+from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
+                                  RadioButtonsWidget, ButtonWidget)
+from IPython.display import display, clear_output
+import matplotlib.pylab as plt
+import numpy as np
+
+from menpo.visualize.viewmatplotlib import MatplotlibSubplots
+
 from .helpers import (figure_options, format_figure_options, channel_options,
                       format_channel_options, update_channel_options,
                       landmark_options, format_landmark_options,
                       update_landmark_options, info_print, format_info_print,
                       animation_options, format_animation_options,
                       save_figure_options, format_save_figure_options,
-                      features_options, format_features_options, logo,
-                      format_logo)
-from IPython.html.widgets import (PopupWidget, ContainerWidget, TabWidget,
-                                  RadioButtonsWidget, ButtonWidget)
-from IPython.display import display, clear_output
-import matplotlib.pylab as plt
-from menpo.visualize.viewmatplotlib import MatplotlibSubplots
-import numpy as np
+                      features_options, format_features_options)
+from .lowlevelhelpers import logo, format_logo
 
 # This glyph import is called frequently during visualisation, so we ensure
 # that we only import it once
