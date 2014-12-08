@@ -1,8 +1,11 @@
+from __future__ import division
 import itertools
 import numpy as np
+from cyvlfeat.sift.dsift import dsift as cyvlfeat_dsift
 scipy_gaussian_filter = None  # expensive
 
 from .base import ndfeature, winitfeature
+from .gradient import gradient_cython
 from .windowiterator import WindowIterator
 
 
@@ -10,35 +13,65 @@ from .windowiterator import WindowIterator
 def gradient(pixels):
     r"""
     Calculates the gradient of an input image. The image is assumed to have
-    channel information on the last axis. In the case of multiple channels,
-    it returns the gradient over each axis over each channel as the last axis.
+    channel information on the first axis. In the case of multiple channels,
+    it returns the gradient over each axis over each channel as the first axis.
 
     Parameters
     ----------
-    pixels : `ndarray`, shape (X, Y, ..., Z, C)
-        An array where the last dimension is interpreted as channels. This
+    pixels : `ndarray`, shape (C, X, Y, ..., Z)
+        An array where the first dimension is interpreted as channels. This
         means an N-dimensional image is represented by an N+1 dimensional
         array.
 
     Returns
     -------
-    gradient : ndarray, shape (X, Y, ..., Z, C * length([X, Y, ..., Z]))
+    gradient : ndarray, shape (C * length([X, Y, ..., Z], X, Y, ..., Z))
         The gradient over each axis over each channel. Therefore, the
-        last axis of the gradient of a 2D, single channel image, will have
-        length `2`. The last axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, he ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
+        first axis of the gradient of a 2D, single channel image, will have
+        length `2`. The first axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, the ordering being [Rd_x, Rd_y, Gd_x, Gd_y,
         Bd_x, Bd_y].
 
     """
-    grad_per_dim_per_channel = [np.gradient(g) for g in
-                                np.rollaxis(pixels, -1)]
+    grad_per_dim_per_channel = [np.gradient(g) for g in pixels]
     # Flatten out the separate dims
     grad_per_channel = list(itertools.chain.from_iterable(
         grad_per_dim_per_channel))
     # Add a channel axis for broadcasting
-    grad_per_channel = [g[..., None] for g in grad_per_channel]
+    grad_per_channel = [g[None, ...] for g in grad_per_channel]
     # Concatenate gradient list into an array (the new_image)
-    return np.concatenate(grad_per_channel, axis=-1)
+    return np.concatenate(grad_per_channel, axis=0)
+
+
+# TODO: This returns slightly different results than gradient
+@ndfeature
+def fast_gradient(pixels):
+    r"""
+    Calculates the gradient of an input image. The image is assumed to have
+    channel information on the first axis. In the case of multiple channels,
+    it returns the gradient over each axis over each channel as the first axis.
+
+    Note that only 2D multiple channel images (ie of shape C x H x W) are
+    supported.
+
+    Parameters
+    ----------
+    pixels : `ndarray`, shape (C, H, W)
+        An array where the first dimension is interpreted as channels. This
+        means an 2-dimensional image is represented by an 3 dimensional
+        array.
+
+    Returns
+    -------
+    gradient : ndarray, shape (2 * C), H, W)
+        The gradient over each axis over each channel. Therefore, the
+        first axis of the gradient of a 2D, single channel image, will have
+        length `2`. The last axis of the gradient of a 2D, 3-channel image,
+        will have length `6`, the ordering being [Rd_h, Rd_w, Gd_h, Gd_w,
+        Bd_h, Bd_w].
+
+    """
+    return gradient_cython(pixels)
 
 
 @ndfeature
@@ -47,11 +80,29 @@ def gaussian_filter(pixels, sigma):
     if scipy_gaussian_filter is None:
         from scipy.ndimage import gaussian_filter as scipy_gaussian_filter
     output = np.empty(pixels.shape)
-    for dim in range(pixels.shape[2]):
-        scipy_gaussian_filter(pixels[..., dim], sigma, output=output[..., dim])
+    for dim in range(pixels.shape[0]):
+        scipy_gaussian_filter(pixels[dim, ...], sigma, output=output[dim, ...])
     return output
 
 
+# TODO: Nontas might want to make this nicer ...
+@winitfeature
+def dsift(pixels, step=1, size=3, bounds=None, window_size=2, norm=True,
+          fast=False, float_descriptors=True, geometry=(4, 4, 8)):
+    centers, output = cyvlfeat_dsift(np.rot90(pixels[0, ..., ::-1]),
+                                     step=step, size=size, bounds=bounds,
+                                     window_size=window_size, norm=norm,
+                                     fast=fast,
+                                     float_descriptors=float_descriptors,
+                                     geometry=geometry)
+    shape = pixels.shape[1:] - 2 * centers[:2, 0]
+    return (np.require(output.reshape((-1, shape[0], shape[1])),
+                       dtype=np.double),
+            np.require(centers[:2, ...].T[..., ::-1].reshape(
+                (shape[0], shape[1], 2)), dtype=np.int))
+
+
+# TODO: Needs fixing ...
 @winitfeature
 def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
         cell_size=8, block_size=2, signed_gradient=True, l2_norm_clip=0.2,
@@ -279,6 +330,7 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     #                                 self._image.pixels.shape[2]}
 
 
+# TODO: Should this use fast gradient?
 @ndfeature
 def igo(pixels, double_angles=False, verbose=False):
     r"""
@@ -311,7 +363,7 @@ def igo(pixels, double_angles=False, verbose=False):
     # check number of dimensions
     if len(pixels.shape) != 3:
         raise ValueError('IGOs only work on 2D images. Expects image data '
-                         'to be 3D, shape + channels.')
+                         'to be 3D, channels + shape.')
     # feature channels per image channel
     feat_channels = 2
     if double_angles:
@@ -319,29 +371,29 @@ def igo(pixels, double_angles=False, verbose=False):
     # compute gradients
     grad = gradient(pixels)
     # compute angles
-    grad_orient = np.angle(grad[..., ::2] + 1j * grad[..., 1::2])
+    grad_orient = np.angle(grad[1::2, ...] + 1j * grad[::2, ...])
     # compute igo image
-    igo_pixels = np.empty((pixels.shape[0], pixels.shape[1],
-                           pixels.shape[-1] * feat_channels))
-    igo_pixels[..., ::feat_channels] = np.cos(grad_orient)
-    igo_pixels[..., 1::feat_channels] = np.sin(grad_orient)
+    igo_pixels = np.empty((pixels.shape[0] * feat_channels,
+                           pixels.shape[1], pixels.shape[2]))
+    igo_pixels[::feat_channels, ...] = np.cos(grad_orient)
+    igo_pixels[1::feat_channels, ...] = np.sin(grad_orient)
     if double_angles:
-        igo_pixels[..., 2::feat_channels] = np.cos(2 * grad_orient)
-        igo_pixels[..., 3::feat_channels] = np.sin(2 * grad_orient)
+        igo_pixels[2::feat_channels, ...] = np.cos(2 * grad_orient)
+        igo_pixels[3::feat_channels, ...] = np.sin(2 * grad_orient)
 
     # print information
     if verbose:
         info_str = "IGO Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, pixels.shape[1], pixels.shape[0],
-            pixels.shape[2])
+            info_str, pixels.shape[2], pixels.shape[1],
+            pixels.shape[0])
         if double_angles:
             info_str = "{}  - Double angles are enabled.\n".format(info_str)
         else:
             info_str = "{}  - Double angles are disabled.\n".format(info_str)
-        info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, igo_pixels.shape[1], igo_pixels.shape[0],
-            igo_pixels.shape[2])
+        info_str = "{}Output image size {}W x {}H with {} channels.".format(
+            info_str, igo_pixels.shape[2], igo_pixels.shape[1],
+            igo_pixels.shape[0])
         print(info_str)
     return igo_pixels
 
@@ -356,6 +408,7 @@ def igo(pixels, double_angles=False, verbose=False):
     #                                 self._image.pixels.shape[2]}
 
 
+# TODO: Should this use fast gradient?
 @ndfeature
 def es(image_data, verbose=False):
     r"""
@@ -382,28 +435,28 @@ def es(image_data, verbose=False):
     # check number of dimensions
     if len(image_data.shape) != 3:
         raise ValueError('ES features only work on 2D images. Expects '
-                         'image data to be 3D, shape + channels.')
+                         'image data to be 3D, channels + shape.')
     # feature channels per image channel
     feat_channels = 2
     # compute gradients
     grad = gradient(image_data)
     # compute magnitude
-    grad_abs = np.abs(grad[..., ::2] + 1j * grad[..., 1::2])
+    grad_abs = np.abs(grad[::2, ...] + 1j * grad[1::2, ...])
     # compute es image
     grad_abs = grad_abs + np.median(grad_abs)
-    es_pixels = np.empty((image_data.shape[0], image_data.shape[1],
-                          image_data.shape[-1] * feat_channels))
-    es_pixels[..., ::feat_channels] = grad[..., ::2] / grad_abs
-    es_pixels[..., 1::feat_channels] = grad[..., 1::2] / grad_abs
+    es_pixels = np.empty((image_data.shape[0] * feat_channels,
+                          image_data.shape[1], image_data.shape[2]))
+    es_pixels[::feat_channels, ...] = grad[::2, ...] / grad_abs
+    es_pixels[1::feat_channels, ...] = grad[1::2, ...] / grad_abs
     # print information
     if verbose:
         info_str = "ES Features:\n"
         info_str = "{}  - Input image is {}W x {}H with {} channels.\n".format(
-            info_str, image_data.shape[1], image_data.shape[0],
-            image_data.shape[2])
-        info_str = "{}Output image size {}W x {}H x {}.".format(
-            info_str, es_pixels.shape[1], es_pixels.shape[0],
-            es_pixels.shape[2])
+            info_str, image_data.shape[2], image_data.shape[1],
+            image_data.shape[0])
+        info_str = "{}Output image size {}W x {}H with {} channels.".format(
+            info_str, es_pixels.shape[2], es_pixels.shape[1],
+            es_pixels.shape[0])
         print(info_str)
     return es_pixels
 
@@ -416,6 +469,7 @@ def es(image_data, verbose=False):
     #                               self._image.pixels.shape[2]}
 
 
+# TODO: Needs fixing ...
 @ndfeature
 def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
           normalization='l1', sigmas=None, ring_radii=None, verbose=False):
@@ -534,6 +588,7 @@ def daisy(pixels, step=1, radius=15, rings=2, histograms=2, orientations=8,
     return daisy_descriptor
 
 
+# TODO: Needs fixing ...
 @winitfeature
 def lbp(pixels, radius=None, samples=None, mapping_type='riu2',
         window_step_vertical=1, window_step_horizontal=1,

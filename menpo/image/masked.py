@@ -133,9 +133,9 @@ class MaskedImage(Image):
         # Ensure that the '+' operator means concatenate tuples
         shape = tuple(np.ceil(shape).astype(np.int))
         if fill == 0:
-            pixels = np.zeros(shape + (n_channels,), dtype=dtype)
+            pixels = np.zeros((n_channels,) + shape, dtype=dtype)
         else:
-            pixels = np.ones(shape + (n_channels,), dtype=dtype) * fill
+            pixels = np.ones((n_channels,) + shape, dtype=dtype) * fill
         return cls(pixels, copy=False, mask=mask)
 
     def n_true_pixels(self):
@@ -167,7 +167,7 @@ class MaskedImage(Image):
         """
         if self.mask.all_true():
             return self.pixels
-        return self.pixels[self.mask.mask]
+        return self.pixels[..., self.mask.mask]
 
     def set_masked_pixels(self, pixels, copy=True):
         r"""Update the masked pixels only to new values.
@@ -190,7 +190,7 @@ class MaskedImage(Image):
         """
         if self.mask.all_true():
             # reshape the vector into the image again
-            pixels = pixels.reshape(self.shape + (self.n_channels,))
+            pixels = pixels.reshape((self.n_channels,) + self.shape)
             if not copy:
                 if not pixels.flags.c_contiguous:
                     warn('The copy flag was NOT honoured. A copy HAS been '
@@ -202,12 +202,12 @@ class MaskedImage(Image):
                 pixels = pixels.copy()
             self.pixels = pixels
         else:
-            self.pixels[self.mask.mask] = pixels
+            self.pixels[..., self.mask.mask] = pixels
             # oh dear, couldn't avoid a copy. Did the user try to?
             if not copy:
                 warn('The copy flag was NOT honoured. A copy HAS been made. '
-                    'copy can only be avoided if MaskedImage has an all_true'
-                    'mask.')
+                     'copy can only be avoided if MaskedImage has an all_true'
+                     'mask.')
 
     def __str__(self):
         return ('{} {}D MaskedImage with {} channels. '
@@ -239,7 +239,7 @@ class MaskedImage(Image):
             Vectorized image
         """
         if keep_channels:
-            return self.masked_pixels().reshape([-1, self.n_channels])
+            return self.masked_pixels().reshape([self.n_channels, -1])
         else:
             return self.masked_pixels().ravel()
 
@@ -278,14 +278,14 @@ class MaskedImage(Image):
         # This is useful for when we want to add an extra channel to an image
         # but maintain the shape. For example, when calculating the gradient
         n_channels = self.n_channels if n_channels is None else n_channels
-        # Creates zeros of size (M x N x ... x n_channels)
+        # Creates zeros of size (n_channels x M x N x ...)
         if self.mask.all_true():
             # we can just reshape the array!
-            image_data = vector.reshape((self.shape + (n_channels,)))
+            image_data = vector.reshape(((n_channels,) + self.shape))
         else:
-            image_data = np.zeros(self.shape + (n_channels,))
-            pixels_per_channel = vector.reshape((-1, n_channels))
-            image_data[self.mask.mask] = pixels_per_channel
+            image_data = np.zeros((n_channels,) + self.shape)
+            pixels_per_channel = vector.reshape((n_channels, -1))
+            image_data[..., self.mask.mask] = pixels_per_channel
         new_image = MaskedImage(image_data, mask=self.mask)
         new_image.landmarks = self.landmarks
         return new_image
@@ -313,7 +313,7 @@ class MaskedImage(Image):
         Warning : If copy=False cannot be honored.
 
         """
-        self.set_masked_pixels(vector.reshape((-1, self.n_channels)),
+        self.set_masked_pixels(vector.reshape((self.n_channels, -1)),
                                copy=copy)
 
     def view(self, figure_id=None, new_figure=False, channels=None,
@@ -333,7 +333,7 @@ class MaskedImage(Image):
             If Image is not 2D
         """
         mask = self.mask.mask if masked else None
-        pixels_to_view = self.pixels
+        pixels_to_view = np.rollaxis(self.pixels, 0, self.n_dims+1)
         return ImageViewer(figure_id, new_figure, self.n_dims,
                            pixels_to_view, channels=channels,
                            mask=mask).render(**kwargs)
@@ -576,6 +576,7 @@ class MaskedImage(Image):
         self._normalize_inplace(scale_func, mode=mode,
                                 limit_to_mask=limit_to_mask)
 
+    # TODO: Revise
     def _normalize_inplace(self, scale_func, mode='all', limit_to_mask=True):
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
@@ -584,10 +585,9 @@ class MaskedImage(Image):
         if mode == 'all':
             centered_pixels = pixels - np.mean(pixels)
             scale_factor = scale_func(centered_pixels)
-
         elif mode == 'per_channel':
-            centered_pixels = pixels - np.mean(pixels, axis=0)
-            scale_factor = scale_func(centered_pixels, axis=0)
+            centered_pixels = pixels - np.mean(pixels, axis=1)[..., None]
+            scale_factor = scale_func(centered_pixels, axis=1)[..., None]
         else:
             raise ValueError("mode has to be 'all' or 'per_channel' - '{}' "
                              "was provided instead".format(mode))
@@ -642,7 +642,7 @@ class MaskedImage(Image):
             # masks. This is only true in the region we want to nullify.
             np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
             # nullify all the boundary values in the grad image
-            grad_image.pixels[eroded_mask] = 0.0
+            grad_image.pixels[..., eroded_mask] = 0.0
         return grad_image
 
     def constrain_mask_to_landmarks(self, group=None, label=None,

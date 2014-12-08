@@ -68,6 +68,8 @@ class PILImporter(Importer):
         dtype = np.float if normalise else None
         p = self._pil_image.convert(convert) if convert else self._pil_image
         np_pixels = np.array(p, dtype=dtype, copy=True)
+        if len(np_pixels.shape) is 3:
+            np_pixels = np.rollaxis(np_pixels, -1)
         return np_pixels / 255.0 if normalise else np_pixels
 
 

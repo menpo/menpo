@@ -1,93 +1,35 @@
 # distutils: language = c++
+
 import numpy as np
 cimport numpy as np
 cimport cython
-
+from libc.stdlib cimport malloc, free
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void calc_augmented_centres(const double[:, :] centres,
-                                 const np.int64_t[:, :] sample_offsets,
-                                 np.int64_t[:, :] augmented_centres):
-    r"""
-    For each centre that was given (centre of a patch), generate another
-    patch that is an offset away from that centre. This is useful for generating
-    a dense set of patch based features around a given point.
-
-    Parameters (Inputs)
-    -------------------
-    centres : double[:, :] (n_points, 2)
-        The centres of each patch.
-    sample_offsets : np.int64_t[:, :] (n_sample_offsets, 2)
-        The 2D offsets to sample extra patches around
-
-    Parameters (Outputs)
-    --------------------
-    augmented_centres : np.int64_t[:, :] (n_points * n_sample_offsets, 2)
-        The output buffer
-    """
-    cdef:
-        np.int64_t total_index = 0, i = 0, j = 0
-
+cdef void calc_augmented_centers(double[:,:] centres, long[:,:] offsets, long[:,:] augmented_centers):
+    cdef long total_index = 0
     for i in range(centres.shape[0]):
-        for j in range(sample_offsets.shape[0]):
-            augmented_centres[total_index, 0] = <np.int64_t> (centres[i, 0] + sample_offsets[j, 0])
-            augmented_centres[total_index, 1] = <np.int64_t> (centres[i, 1] + sample_offsets[j, 1])
+        for j in range(offsets.shape[0]):
+            augmented_centers[total_index, 0] = <long> (centres[i, 0] + offsets[j, 0])
+            augmented_centers[total_index, 1] = <long> (centres[i, 1] + offsets[j, 1])
             total_index += 1
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void calc_slices(const np.int64_t[:, :] centres,
-                      np.int64_t image_shape0,
-                      np.int64_t image_shape1,
-                      np.int64_t patch_shape0,
-                      np.int64_t patch_shape1,
-                      np.int64_t[:, :] ext_s_min,
-                      np.int64_t[:, :] ext_s_max,
-                      np.int64_t[:, :] ins_s_min,
-                      np.int64_t[:, :] ins_s_max):
-    r"""
-    For each centre that was given (centre of a patch), generate a slice in to
-    the original image that represents the bounds of the patch. This method
-    also handles ensuring that all patches have a correct set of bounds. Patches
-    that would lie outside that bounds of the image are truncated back inside
-    the image.
-
-    Parameters (Inputs)
-    -------------------
-    centres : double[:, :] (n_points, 2)
-        The centres of each patch.
-    image_shape0 : np.int64_t
-        The size of the first dimension of the image (height)
-    image_shape1 : np.int64_t
-        The size of the second dimension of the image (width)
-    patch_shape0 : np.int64_t
-        The size of the first dimension of the patch (height)
-    patch_shape1 : np.int64_t
-        The size of the second dimension of the patch (width)
-
-    Parameters (Outputs)
-    --------------------
-    ext_s_min : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice minimum indices. This is in the image domain, one
-        for each slice.
-    ext_s_max : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice maximum indices. This is in the image domain, one
-        for each slice.
-    ins_s_min : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice minimum indices. This is in the patch domain, one
-        for each slice.
-    ins_s_max : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice maximum indices. This is in the patch domain, one
-        for each slice.
-    """
-    cdef:
-        np.int64_t c_min_new0 = 0, c_min_new1 = 0, c_max_new0 = 0, c_max_new1 = 0, i = 0
-        np.int64_t half_patch_shape0 = patch_shape0 / 2
-        np.int64_t half_patch_shape1 = patch_shape1 / 2
-        np.int64_t add_to_patch0 = patch_shape0 % 2
-        np.int64_t add_to_patch1 = patch_shape1 % 2
-
+cdef void calc_slices(long[:, :] centres,
+                      long image_shape0,
+                      long image_shape1,
+                      long patch_shape0,
+                      long patch_shape1,
+                      long half_patch_shape0,
+                      long half_patch_shape1,
+                      long add_to_patch0,
+                      long add_to_patch1,
+                      long[:, :] ext_s_min,
+                      long[:, :] ext_s_max,
+                      long[:, :] ins_s_min,
+                      long[:, :] ins_s_max):
     for i in range(centres.shape[0]):
         c_min_new0 = centres[i, 0] - half_patch_shape0
         c_min_new1 = centres[i, 1] - half_patch_shape1
@@ -130,135 +72,81 @@ cdef void calc_slices(const np.int64_t[:, :] centres,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void slice_image(const double[:, :, :] image,
-                      const np.int64_t n_centres,
-                      const np.int64_t n_sample_offsets,
-                      const np.int64_t[:, :] ext_s_min,
-                      const np.int64_t[:, :] ext_s_max,
-                      const np.int64_t[:, :] ins_s_min,
-                      const np.int64_t[:, :] ins_s_max,
-                      double[:, :, :, :] patches):
-    r"""
-    Extract all the patches from the image. The patch extents have already been
-    calculated and so this function simply slices appropriately in to the image
-    to extract the pixels.
+cdef void slice_image(double[:, :, :] image,
+                      long n_channels,
+                      long n_centres,
+                      long n_offsets,
+                      long[:, :] ext_s_min,
+                      long[:, :] ext_s_max,
+                      long[:, :] ins_s_min,
+                      long[:, :] ins_s_max,
+                      double[:, :, :, :, :] patches):
+    cdef long total_index = 0
 
-    Parameters (Inputs)
-    -------------------
-    image : double[:, :, :] (height, width, n_channels)
-        The image to extract patches from.
-    n_centres : np.int64_t
-        The number of centres given.
-    n_sample_offsets : np.int64_t
-        The number of sample offsets given.
-    ext_s_min : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice minimum indices. This is in the image domain, one
-        for each slice.
-    ext_s_max : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice maximum indices. This is in the image domain, one
-        for each slice.
-    ins_s_min : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice minimum indices. This is in the patch domain, one
-        for each slice.
-    ins_s_max : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice maximum indices. This is in the patch domain, one
-        for each slice.
-
-    Parameters (Outputs)
-    --------------------
-    patches : np.int64_t[:, :, :, :] (n_centres * n_sample_offsets, height, width, channels)
-        The set of patches that have been extracted.
-    """
-    cdef np.int64_t i = 0
-    for i in range(n_centres * n_sample_offsets):
+    for i in range(n_centres):
+        for j in range(n_offsets):
             patches[i,
-                    ins_s_min[i, 0]:ins_s_max[i, 0],
-                    ins_s_min[i, 1]:ins_s_max[i, 1]] = \
-            image[ext_s_min[i, 0]:ext_s_max[i, 0],
-                  ext_s_min[i, 1]:ext_s_max[i, 1]]
+                    j,
+                    :,
+                    ins_s_min[total_index, 0]:ins_s_max[total_index, 0],
+                    ins_s_min[total_index, 1]:ins_s_max[total_index, 1]
+            ] = \
+            image[:,
+                  ext_s_min[total_index, 0]:ext_s_max[total_index, 0],
+                  ext_s_min[total_index, 1]:ext_s_max[total_index, 1]]
+            total_index += 1
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef extract_patches_cython(double[:, :, :] image, double[:, :] centres,
-                             np.int64_t[:] patch_size, np.int64_t[:, :] sample_offsets):
-    r"""
-    Extract a set of patches from an image. Given a set of patch centres and
-    a patch size, patches are extracted from within the image centreed
-    on the given coordinates. Sample offsets denote a set of offsets to extract
-    from within a patch. This is very useful if you want to extract a dense
-    set of features around a set of landmarks and simply sample the same grid
-    of patches around the landmarks.
-
-    Parameters
-    ----------
-    image : double[:, :, :] (height, width, n_channels)
-        The image to extract patches from.
-    n_centres : np.int64_t
-        The number of centres given.
-    n_sample_offsets : np.int64_t
-        The number of sample offsets given.
-    ext_s_min : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice minimum indices. This is in the image domain, one
-        for each slice.
-    ext_s_max : np.int64_t[:, :] (n_centres, 2)
-        The extraction slice maximum indices. This is in the image domain, one
-        for each slice.
-    ins_s_min : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice minimum indices. This is in the patch domain, one
-        for each slice.
-    ins_s_max : np.int64_t[:, :] (n_centres, 2)
-        The insertion slice maximum indices. This is in the patch domain, one
-        for each slice.
-
-    Returns
-    -------
-    patches : double[:, :, :, :] (n_centres * n_sample_offsets, height, width, n_channels)
-        Returns a matrix containing the set of patches. The last 3 dimensions
-        are the patches and the first dimension is each centre. If multiple
-        sample offsets were provided, then they are all concatenated together
-        to return (n_centres * n_sample_offsets) patches.
-    """
+cpdef extract_patches(double[:,:,:] image, double[:,:] centres, long[:] patch_shape, long[:,:] offsets):
     cdef:
-        np.int64_t n_centres = centres.shape[0]
-        np.int64_t n_sample_offsets = sample_offsets.shape[0]
-        np.int64_t n_augmented_centres = n_centres * n_sample_offsets
+        long n_centres = centres.shape[0]
+        long n_offsets = offsets.shape[0]
+        long n_augmented_centres = n_centres * n_offsets
 
-        np.int64_t[:, :] augmented_centres = np.empty([n_augmented_centres, 2],
-                                                dtype=np.int64)
+        long[:, :] augmented_centers = np.empty([n_augmented_centres, 2], dtype=int)
 
-        np.int64_t patch_shape0 = patch_size[0]
-        np.int64_t patch_shape1 = patch_size[1]
-        np.int64_t image_shape0 = image.shape[0]
-        np.int64_t image_shape1 = image.shape[1]
-        np.int64_t n_channels = image.shape[2]
+        long half_patch_shape0 = patch_shape[0] / 2
+        long half_patch_shape1 = patch_shape[1] / 2
+        long add_to_patch0 = patch_shape[0] % 2
+        long add_to_patch1 = patch_shape[1] % 2
+        long patch_shape0 = patch_shape[0]
+        long patch_shape1 = patch_shape[1]
+        long image_shape0 = image.shape[1]
+        long image_shape1 = image.shape[2]
+        long n_channels = image.shape[0]
 
         # This could be faster with malloc
-        np.int64_t[:,:] ext_s_max = np.empty([n_augmented_centres, 2], dtype=np.int64)
-        np.int64_t[:,:] ext_s_min = np.empty([n_augmented_centres, 2], dtype=np.int64)
-        np.int64_t[:,:] ins_s_max = np.empty([n_augmented_centres, 2], dtype=np.int64)
-        np.int64_t[:,:] ins_s_min = np.empty([n_augmented_centres, 2], dtype=np.int64)
+        long[:,:] ext_s_max = np.empty([n_augmented_centres, 2], dtype=int)
+        long[:,:] ext_s_min = np.empty([n_augmented_centres, 2], dtype=int)
+        long[:,:] ins_s_max = np.empty([n_augmented_centres, 2], dtype=int)
+        long[:,:] ins_s_min = np.empty([n_augmented_centres, 2], dtype=int)
 
-        # It is important this array is zeros and not empty due to truncating
-        # out of bounds patches.
-        np.ndarray[double, ndim=4] patches = np.zeros(
-            [n_centres * n_sample_offsets, patch_shape0, patch_shape1,
-             n_channels])
+        np.ndarray[double, ndim=5] patches = np.zeros([n_centres,
+                                                       n_offsets,
+                                                       n_channels,
+                                                       patch_shape0,
+                                                       patch_shape1])
 
-    calc_augmented_centres(centres, sample_offsets, augmented_centres)
-    calc_slices(augmented_centres,
+    calc_augmented_centers(centres, offsets, augmented_centers)
+    calc_slices(augmented_centers,
                 image_shape0,
                 image_shape1,
                 patch_shape0,
                 patch_shape1,
+                half_patch_shape0,
+                half_patch_shape1,
+                add_to_patch0,
+                add_to_patch1,
                 ext_s_min,
                 ext_s_max,
                 ins_s_min,
                 ins_s_max)
-
     slice_image(image,
+                n_channels,
                 n_centres,
-                n_sample_offsets,
+                n_offsets,
                 ext_s_min,
                 ext_s_max,
                 ins_s_min,

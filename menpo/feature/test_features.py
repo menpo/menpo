@@ -170,7 +170,7 @@ def test_igo_channels():
     n_cases = 3
     channels = np.random.randint(1, 10, [n_cases, 1])
     for i in range(n_cases):
-        image = Image(np.random.randn(40, 40, channels[i, 0]))
+        image = Image(np.random.randn(channels[i, 0], 40, 40))
         igo_img = igo(image)
         igo2_img = igo(image, double_angles=True)
         assert_allclose(igo_img.shape, image.shape)
@@ -183,7 +183,7 @@ def test_es_channels():
     n_cases = 3
     channels = np.random.randint(1, 10, [n_cases, 1])
     for i in range(n_cases):
-        image = Image(np.random.randn(40, 40, channels[i, 0]))
+        image = Image(np.random.randn(channels[i, 0], 40, 40))
         es_img = es(image)
         assert_allclose(es_img.shape, image.shape)
         assert_allclose(es_img.n_channels, 2 * channels[i, 0])
