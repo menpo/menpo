@@ -235,11 +235,6 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             raise ValueError('Must pass a list of n_labels colours or a single '
                              'colour for all labels.')
 
-        # Options related to numbers' annotations
-        halign = kwargs.get('halign', 'center')
-        valign = kwargs.get('valign', 'bottom')
-        font_size = kwargs.get('font_size', 10)
-
         # TODO: Should we enforce viewing landmarks with Matplotlib? How
         # do we do this?
         # Set the default colormap, assuming that the pointclouds are
@@ -257,11 +252,22 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
 
             ax = plt.gca()
             if render_numbering:
+                # Options related to numbers' annotations
+                halign = kwargs.get('halign', 'center')
+                valign = kwargs.get('valign', 'bottom')
+                family = kwargs.get('fontname', 'serif')
+                size = kwargs.get('fontsize', 10)
+                fontstyle = kwargs.get('fontstyle', 'normal')
+                fontweight = kwargs.get('fontweight', 'normal')
+                color = kwargs.get('fontcolour', 'k')
+
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
                                 horizontalalignment=halign,
-                                verticalalignment=valign, size=font_size)
+                                verticalalignment=valign, size=size,
+                                family=family, fontstyle=fontstyle,
+                                fontweight=fontweight, color=color)
             if render_legend:
                 ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
 
