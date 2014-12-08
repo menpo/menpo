@@ -21,7 +21,9 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               format_figure_options, update_figure_options,
                               figure_options_two_scales,
                               format_figure_options_two_scales,
-                              update_figure_options_two_scales)
+                              update_figure_options_two_scales,
+                              index_selection_slider, index_selection_buttons,
+                              format_index_selection, update_index_selection)
 
 
 def channel_options(n_channels, image_is_masked, plot_function=None,
@@ -2075,9 +2077,8 @@ def update_iterations_result_options(iterations_result_wid, n_iters,
                         disabled = False
 
 
-def animation_options(index_min_val, index_max_val, plot_function=None,
-                      update_function=None, index_step=1, index_default=None,
-                      index_description='Image Number',
+def animation_options(index_selection_default, plot_function=None,
+                      update_function=None, index_description='Image Number',
                       index_minus_description='-', index_plus_description='+',
                       index_style='buttons', index_text_editable=True,
                       loop_default=False, interval_default=0.5,
@@ -2099,24 +2100,16 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
         options.children = [index_selection, animation]
         if index_style == 'buttons':
             index_selection.children = [title, minus_button, index_text,
-                                        plus_button]
+                                        plus_button] (index_selection_buttons())
         elif index_style == 'slider':
-            index_selection.children = [temp, temp, index_slider]
+            index_selection = index_slider (index_selection_slider())
         animation.children = [buttons, animation_options]
         buttons.children = [play_button, stop_button, play_options_button]
         animation_options.children = [interval_text, loop_checkbox]
 
-    The returned widget saves the selected values in the following fields:
-        animation_options_wid.selected_index
-        animation_options_wid.index_min
-        animation_options_wid.index_max
-        animation_options_wid.index_step
+    The returned widget saves the selected values in the following dictionary:
+        animation_options_wid.selected_values
         animation_options_wid.index_style
-
-    The actual index value can either be retrieved by:
-        animation_options_wid.selected_index
-    or:
-        animation_options_wid.children[1].children[0].children[2].value
 
     To fix the alignment within this widget please refer to
     `format_animation_options()` function.
@@ -2126,11 +2119,12 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
 
     Parameters
     ----------
-    index_min_val : `int`
-        The minimum index value.
-
-    index_max_val : `int`
-        The maximum index value.
+    index_selection_default : `dict`
+        The dictionary with the default options. For example:
+            index_selection_default = {'min':0,
+                                       'max':100,
+                                       'step':1,
+                                       'index':10}
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
@@ -2139,12 +2133,6 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     update_function : `function` or None, optional
         The update function that is executed when the index value changes.
         If None, then nothing is assigned.
-
-    index_step : `int`, optional
-        The step of the index slider.
-
-    index_default : `int`, optional
-        The default index value.
 
     index_description : `str`, optional
         The title of the index widget.
@@ -2155,7 +2143,7 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     index_plus_description : `str`, optional
         The title of the button that increases the index.
 
-    index_style : {'buttons' or 'slider'}, optional
+    index_style : {``buttons`` or ``slider``}, optional
         If 'buttons', then 'index_selection_buttons()' is called.
         If 'slider', then 'index_selection_slider()' is called.
 
@@ -2185,26 +2173,19 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     # traits changes are passed during a while-loop
     kernel = get_ipython().kernel
 
-    # Check default value
-    if index_default is None:
-        index_default = index_min_val
-
     # Create index widget
     if index_style == 'slider':
-        val = IntSliderWidget(min=index_min_val, max=index_max_val,
-                              value=index_default, step=index_step,
-                              description=index_description)
-        fake_wid = LatexWidget(visible=False)
-        index_wid = ContainerWidget(children=[fake_wid, fake_wid, val])
+        index_wid = index_selection_slider(index_selection_default,
+                                           plot_function=plot_function,
+                                           update_function=update_function,
+                                           description=index_description)
     elif index_style == 'buttons':
-        tlt = LatexWidget(value=index_description)
-        but_minus = ButtonWidget(description=index_minus_description)
-        but_plus = ButtonWidget(description=index_plus_description)
-        if index_text_editable:
-            val = IntTextWidget(value=index_default)
-        else:
-            val = IntTextWidget(value=index_default, disabled=True)
-        index_wid = ContainerWidget(children=[tlt, but_minus, val, but_plus])
+        index_wid = index_selection_buttons(
+            index_selection_default, plot_function=plot_function,
+            update_function=update_function, description=index_description,
+            minus_description=index_minus_description,
+            plus_description=index_plus_description, loop=loop_default,
+            text_editable=index_text_editable)
 
     # Create other widgets
     but = ToggleButtonWidget(description=toggle_show_title,
@@ -2225,58 +2206,8 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     animation_options_wid = ContainerWidget(children=[but, cont])
 
     # Initialize variables
-    animation_options_wid.selected_index = index_default
-    animation_options_wid.index_min = index_min_val
-    animation_options_wid.index_max = index_max_val
-    animation_options_wid.index_step = index_step
+    animation_options_wid.selected_values = index_selection_default
     animation_options_wid.index_style = index_style
-
-    # When index value changes
-    if index_style == 'slider':
-        def value_changed(name, value):
-            animation_options_wid.selected_index = value
-        val.on_trait_change(value_changed, 'value')
-    elif index_style == 'buttons':
-        # plus button pressed
-        def change_value_plus(name):
-            tmp_val = int(val.value) + animation_options_wid.index_step
-            if tmp_val > animation_options_wid.index_max:
-                if loop.value:
-                    val.value = str(animation_options_wid.index_min)
-                else:
-                    val.value = str(animation_options_wid.index_max)
-            else:
-                val.value = str(tmp_val)
-        but_plus.on_click(change_value_plus)
-
-        # minus button pressed
-        def change_value_minus(name):
-            tmp_val = int(val.value) - animation_options_wid.index_step
-            if tmp_val < animation_options_wid.index_min:
-                if loop.value:
-                    val.value = str(animation_options_wid.index_max)
-                else:
-                    val.value = str(animation_options_wid.index_min)
-            else:
-                val.value = str(tmp_val)
-        but_minus.on_click(change_value_minus)
-
-        def value_changed(name, old_value, value):
-            # check value
-            tmp_val = int(value)
-            if (tmp_val > animation_options_wid.index_max or
-                    tmp_val < animation_options_wid.index_min):
-                val.value = old_value
-            animation_options_wid.selected_index = tmp_val
-        val.on_trait_change(value_changed, 'value')
-
-    # assign given update_function
-    if update_function is not None:
-        val.on_trait_change(update_function, 'value')
-
-    # assign given plot_function
-    if plot_function is not None:
-        val.on_trait_change(plot_function, 'value')
 
     # Play button pressed
     def play_press(name, value):
@@ -2304,14 +2235,18 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
     def play_fun(name, value):
         if loop.value:
             # loop is enabled
-            i = animation_options_wid.selected_index
-            if i < animation_options_wid.index_max:
-                i += animation_options_wid.index_step
+            i = animation_options_wid.selected_values['index']
+            if i < animation_options_wid.selected_values['max']:
+                i += animation_options_wid.selected_values['step']
             else:
-                i = animation_options_wid.index_min
-            while i <= animation_options_wid.index_max and not stop_but.value:
+                i = animation_options_wid.selected_values['min']
+            while (i <= animation_options_wid.selected_values['max'] and
+                   not stop_but.value):
                 # update index value
-                animation_options_wid.children[1].children[0].children[2].value = i
+                if index_style == 'slider':
+                    index_wid.value = i
+                else:
+                    index_wid.children[2].value = i
 
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking. This
@@ -2319,20 +2254,24 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
                 kernel.do_one_iteration()
 
                 # update counter
-                if i < animation_options_wid.index_max:
-                    i += animation_options_wid.index_step
+                if i < animation_options_wid.selected_values['max']:
+                    i += animation_options_wid.selected_values['step']
                 else:
-                    i = animation_options_wid.index_min
+                    i = animation_options_wid.selected_values['min']
 
                 # wait
                 sleep(interval.value)
         else:
             # loop is disabled
-            i = animation_options_wid.selected_index
-            i += animation_options_wid.index_step
-            while i <= animation_options_wid.index_max and not stop_but.value:
+            i = animation_options_wid.selected_values['index']
+            i += animation_options_wid.selected_values['step']
+            while (i <= animation_options_wid.selected_values['max'] and
+                   not stop_but.value):
                 # update value
-                animation_options_wid.children[1].children[0].children[2].value = i
+                if index_style == 'slider':
+                    index_wid.value = i
+                else:
+                    index_wid.children[2].value = i
 
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking. This
@@ -2340,11 +2279,11 @@ def animation_options(index_min_val, index_max_val, plot_function=None,
                 kernel.do_one_iteration()
 
                 # update counter
-                i += animation_options_wid.index_step
+                i += animation_options_wid.selected_values['step']
 
                 # wait
                 sleep(interval.value)
-            if i > index_max_val:
+            if i > index_selection_default['max']:
                 stop_but.value = True
     play_but.on_trait_change(play_fun, 'value')
 
@@ -2399,26 +2338,13 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
         Defines whether to draw the border line around the widget.
     """
     # format index widget
-    animation_options_wid.children[1].children[0].remove_class('vbox')
-    animation_options_wid.children[1].children[0].add_class('hbox')
-    animation_options_wid.children[1].children[0].add_class('align-center')
-    if not isinstance(animation_options_wid.children[1].children[0].children[2],
-                      IntSliderWidget):
-        # set text width
-        animation_options_wid.children[1].children[0].children[2].set_css(
-            'width', index_text_width)
-        animation_options_wid.children[1].children[0].children[2].add_class(
-            'center')
-
-        # set margin
-        animation_options_wid.children[1].children[0].children[0].set_css(
-            'margin-right', '6px')
+    format_index_selection(animation_options_wid.children[1].children[0],
+                           text_width=index_text_width)
 
     # align play/stop button with animation options button
     animation_options_wid.children[1].children[1].children[0].remove_class(
         'vbox')
-    animation_options_wid.children[1].children[1].children[0].add_class(
-        'hbox')
+    animation_options_wid.children[1].children[1].children[0].add_class('hbox')
     animation_options_wid.children[1].children[1].add_class('align-end')
 
     # add margin on the right of the play button
@@ -2451,19 +2377,23 @@ def format_animation_options(animation_options_wid, index_text_width='0.5cm',
         animation_options_wid.set_css('border', container_border)
 
 
-def update_animation_options(animation_options_wid, index_min_val,
-                             index_max_val, plot_function=None,
-                             update_function=None, index_step=1,
-                             index_default=None):
+def update_animation_options(animation_options_wid, index_selection_default,
+                             plot_function=None, update_function=None):
     r"""
     Function that updates the state of a given animation_options widget if the
     index bounds have changed. Usage example:
-        animation_options_wid = animation_options(index_min_val=0,
-                                                  index_max_val=10)
+        index_selection_default = {'min':0,
+                                   'max':100,
+                                   'step':1,
+                                   'index':10}
+        animation_options_wid = animation_options(index_selection_default)
         display(animation_options_wid)
         format_animation_options(animation_options_wid)
-        update_animation_options(animation_options_wid, index_min_val=0,
-                                 index_max_val=50)
+        index_selection_default = {'min':0,
+                                   'max':10,
+                                   'step':5,
+                                   'index':5}
+        update_animation_options(animation_options_wid, index_selection_default)
 
     Parameters
     ----------
@@ -2471,11 +2401,12 @@ def update_animation_options(animation_options_wid, index_min_val,
         The widget object generated by either the `animation_options()`
         function.
 
-    index_min_val : `int`
-        The minimum index value.
-
-    index_max_val : `int`
-        The maximum index value.
+    index_selection_default : `dict`
+        The dictionary with the default options. For example:
+            index_selection_default = {'min':0,
+                                       'max':100,
+                                       'step':1,
+                                       'index':10}
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
@@ -2484,50 +2415,11 @@ def update_animation_options(animation_options_wid, index_min_val,
     update_function : `function` or None, optional
         The update function that is executed when the index value changes.
         If None, then nothing is assigned.
-
-    index_step : `int`, optional
-        The step of the index slider.
-
-    index_default : `int`, optional
-        The default index value.
     """
-    # check if update is required
-    if not (index_min_val == animation_options_wid.index_min and
-            index_max_val == animation_options_wid.index_max and
-            index_step == animation_options_wid.index_step):
-        # update outputs
-        animation_options_wid.index_max = index_max_val
-        animation_options_wid.index_min = index_min_val
-        animation_options_wid.index_step = index_step
-        animation_options_wid.selected_index = index_default
-
-        # Check default value
-        if index_default is None:
-            index_default = index_min_val
-
-        # if the index selector is a slider
-        if isinstance(animation_options_wid.children[1].children[0].children[2],
-                      IntSliderWidget):
-            animation_options_wid.children[1].children[0].children[2].min = \
-                index_min_val
-            animation_options_wid.children[1].children[0].children[2].max = \
-                index_max_val
-            animation_options_wid.children[1].children[0].children[2].step = \
-                index_step
-
-        # update index selector value
-        animation_options_wid.children[1].children[0].children[2].value = \
-            index_default
-
-        # assign given update_function
-        if update_function is not None:
-            animation_options_wid.children[1].children[0].children[2].\
-                on_trait_change(update_function, 'value')
-
-        # assign given plot_function
-        if plot_function is not None:
-            animation_options_wid.children[1].children[0].children[2].\
-                on_trait_change(plot_function, 'value')
+    update_index_selection(animation_options_wid.children[1].children[0],
+                           index_selection_default,
+                           plot_function=plot_function,
+                           update_function=update_function)
 
 
 def viewer_options(viewer_options_default, options_tabs, objects_names=None,

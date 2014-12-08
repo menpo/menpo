@@ -58,9 +58,8 @@ def format_logo(logo_wid, container_border='1px solid black',
         logo_wid.set_css('border', container_border)
 
 
-def index_selection_slider(index_min_val, index_max_val, plot_function=None,
-                           update_function=None, index_step=1,
-                           index_default=None, description='Image Number:'):
+def index_selection_slider(index_selection_default, plot_function=None,
+                           update_function=None, description='Image Number:'):
     r"""
     Creates a widget for selecting an index. Specifically, it has:
         1) A slider.
@@ -68,22 +67,20 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
     The structure of the widget is the following:
         index_wid = slider
 
-    The returned widget saves the selected values in the following fields:
-        index_wid.index
-        index_wid.selected_min
-        index_wid.selected_max
-        index_wid.selected_step
+    The returned widget saves the selected values in the following dictionary:
+        index_wid.selected_values
 
     To fix the alignment within this widget please refer to
     `format_index_selection()` function.
 
     Parameters
     ----------
-    index_min_val : `int`
-        The minimum index value.
-
-    index_max_val : `int`
-        The maximum index value.
+    index_selection_default : `dict`
+        The dictionary with the default options. For example:
+            index_selection_default = {'min':0,
+                                       'max':100,
+                                       'step':1,
+                                       'index':10}
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
@@ -93,34 +90,23 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
         The update function that is executed when the index value changes.
         If None, then nothing is assigned.
 
-    index_step : `int`, optional
-        The step of the index slider.
-
-    index_default : `int`, optional
-        The default index value.
-
     description : `str`, optional
         The title of the widget.
     """
-    # Check default value
-    if index_default is None:
-        index_default = index_min_val
-
     # Create widget
-    index_wid = IntSliderWidget(min=index_min_val, max=index_max_val,
-                                value=index_default, step=index_step,
+    index_wid = IntSliderWidget(min=index_selection_default['min'],
+                                max=index_selection_default['max'],
+                                value=index_selection_default['index'],
+                                step=index_selection_default['step'],
                                 description=description)
 
-    # Initialize output
-    index_wid.index = index_default
-    index_wid.selected_min = index_min_val
-    index_wid.selected_max = index_max_val
-    index_wid.selected_step = index_step
+    # Assign output
+    index_wid.selected_values = index_selection_default
 
-    # When value changes
-    def value_changed(name, old_value, value):
-        index_wid.index = value
-    index_wid.on_trait_change(value_changed, 'value')
+    # Save index
+    def save_index(name, value):
+        index_wid.selected_values['index'] = value
+    index_wid.on_trait_change(save_index, 'value')
 
     # assign given update_function
     if update_function is not None:
@@ -133,9 +119,8 @@ def index_selection_slider(index_min_val, index_max_val, plot_function=None,
     return index_wid
 
 
-def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
-                            update_function=None, index_step=1,
-                            index_default=None, description='Image Number:',
+def index_selection_buttons(index_selection_default, plot_function=None,
+                            update_function=None, description='Image Number:',
                             minus_description='-', plus_description='+',
                             loop=True, text_editable=True):
     r"""
@@ -147,22 +132,20 @@ def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
     The structure of the widget is the following:
         index_wid = [title, minus_button, text, plus_button]
 
-    The returned widget saves the selected values in the following fields:
-        index_wid.index
-        index_wid.selected_min
-        index_wid.selected_max
-        index_wid.selected_step
+    The returned widget saves the selected values in the following dictionary:
+        index_wid.selected_values
 
     To fix the alignment within this widget please refer to
     `format_index_selection()` function.
 
     Parameters
     ----------
-    index_min_val : `int`
-        The minimum index value.
-
-    index_max_val : `int`
-        The maximum index value.
+    index_selection_default : `dict`
+        The dictionary with the default options. For example:
+            index_selection_default = {'min':0,
+                                       'max':100,
+                                       'step':1,
+                                       'index':10}
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
@@ -171,12 +154,6 @@ def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
     update_function : `function` or None, optional
         The update function that is executed when the index value changes.
         If None, then nothing is assigned.
-
-    index_step : `int`, optional
-        The step of the index slider.
-
-    index_default : `int`, optional
-        The default index value.
 
     description : `str`, optional
         The title of the widget.
@@ -195,58 +172,49 @@ def index_selection_buttons(index_min_val, index_max_val, plot_function=None,
     text_editable : `boolean`, optional
         Flag that determines whether the index text will be editable.
     """
-    # Check default value
-    if index_default is None:
-        index_default = index_min_val
-
     # Create widgets
     tlt = LatexWidget(value=description)
     but_minus = ButtonWidget(description=minus_description)
     but_plus = ButtonWidget(description=plus_description)
-    if text_editable:
-        val = IntTextWidget(value=index_default)
-    else:
-        val = IntTextWidget(value=index_default, disabled=True)
+    val = IntTextWidget(value=index_selection_default['index'],
+                        disabled=not text_editable)
     index_wid = ContainerWidget(children=[tlt, but_minus, val, but_plus])
 
-    # Initialize output
-    index_wid.index = index_default
-    index_wid.selected_min = index_min_val
-    index_wid.selected_max = index_max_val
-    index_wid.selected_step = index_step
+    # Assign output
+    index_wid.selected_values = index_selection_default
 
     # plus button pressed
     def change_value_plus(name):
-        tmp_val = int(val.value) + index_wid.selected_step
-        if tmp_val > index_wid.selected_max:
+        tmp_val = int(val.value) + index_wid.selected_values['step']
+        if tmp_val > index_wid.selected_values['max']:
             if loop:
-                val.value = str(index_wid.selected_min)
+                val.value = str(index_wid.selected_values['min'])
             else:
-                val.value = str(index_wid.selected_max)
+                val.value = str(index_wid.selected_values['max'])
         else:
             val.value = str(tmp_val)
     but_plus.on_click(change_value_plus)
 
     # minus button pressed
     def change_value_minus(name):
-        tmp_val = int(val.value) - index_wid.selected_step
-        if tmp_val < index_wid.selected_min:
+        tmp_val = int(val.value) - index_wid.selected_values['step']
+        if tmp_val < index_wid.selected_values['min']:
             if loop:
-                val.value = str(index_wid.selected_max)
+                val.value = str(index_wid.selected_values['max'])
             else:
-                val.value = str(index_wid.selected_min)
+                val.value = str(index_wid.selected_values['min'])
         else:
             val.value = str(tmp_val)
     but_minus.on_click(change_value_minus)
 
-    # When value changes
-    def value_changed(name, old_value, value):
-        # check value
+    # Save index
+    def save_index(name, old_value, value):
         tmp_val = int(value)
-        if tmp_val > index_wid.selected_max or tmp_val < index_wid.selected_min:
+        if (tmp_val > index_wid.selected_values['max'] or
+                tmp_val < index_wid.selected_values['min']):
             val.value = int(old_value)
-        index_wid.index = tmp_val
-    val.on_trait_change(value_changed, 'value')
+        index_wid.selected_values['index'] = tmp_val
+    val.on_trait_change(save_index, 'value')
 
     # assign given update_function
     if update_function is not None:
@@ -292,18 +260,25 @@ def format_index_selection(index_wid, text_width='0.5cm'):
         index_wid.children[0].set_css('margin-right', '6px')
 
 
-def update_index_selection(index_wid, index_min_val, index_max_val,
-                           plot_function=None, update_function=None,
-                           index_step=1, index_default=None):
+def update_index_selection(index_wid, index_selection_default,
+                           plot_function=None, update_function=None):
     r"""
     Function that updates the state of a given index_selection widget if the
     index bounds have changed. It can be used with both
     `index_selection_buttons()` and `index_selection_slider()` functions. Usage
     example:
-        index_wid = index_selection_buttons(index_min_val=0, index_max_val=10)
+        index_selection_default = {'min':0,
+                                   'max':100,
+                                   'step':1,
+                                   'index':10}
+        index_wid = index_selection_buttons(index_selection_default)
         display(index_wid)
         format_index_selection(index_wid)
-        update_index_selection(index_wid, index_min_val=0, index_max_val=50)
+        index_selection_default = {'min':0,
+                                   'max':10,
+                                   'step':5,
+                                   'index':5}
+        update_index_selection(index_wid, index_selection_default)
 
     Parameters
     ----------
@@ -311,11 +286,12 @@ def update_index_selection(index_wid, index_min_val, index_max_val,
         The widget object generated by either the `index_selection_buttons()`
         or the `index_selection_slider()` function.
 
-    index_min_val : `int`
-        The minimum index value.
-
-    index_max_val : `int`
-        The maximum index value.
+    index_selection_default : `dict`
+        The dictionary with the default options. For example:
+            index_selection_default = {'min':0,
+                                       'max':100,
+                                       'step':1,
+                                       'index':10}
 
     plot_function : `function` or None, optional
         The plot function that is executed when the index value changes.
@@ -324,32 +300,18 @@ def update_index_selection(index_wid, index_min_val, index_max_val,
     update_function : `function` or None, optional
         The update function that is executed when the index value changes.
         If None, then nothing is assigned.
-
-    index_step : `int`, optional
-        The step of the index slider.
-
-    index_default : `int`, optional
-        The default index value.
     """
     # check if update is required
-    if not (index_min_val == index_wid.selected_min or
-            index_max_val == index_wid.selected_max or
-            index_step == index_wid.selected_step):
-        # update outputs
-        index_wid.selected_min = index_min_val
-        index_wid.selected_max = index_max_val
-        index_wid.selected_step = index_step
-
-        # Check default value
-        if index_default is None:
-            index_default = index_min_val
-
+    if not (index_selection_default['min'] == index_wid.selected_values['min'] and
+            index_selection_default['max'] == index_wid.selected_values['max'] and
+            index_selection_default['step'] == index_wid.selected_values['step'] and
+            index_selection_default['index'] == index_wid.selected_values['index']):
         if isinstance(index_wid, IntSliderWidget):
             # created by `index_selection_slider()` function
-            index_wid.min = index_min_val
-            index_wid.max = index_max_val
-            index_wid.step = index_step
-            index_wid.value = index_default
+            index_wid.min = index_selection_default['min']
+            index_wid.max = index_selection_default['max']
+            index_wid.step = index_selection_default['step']
+            index_wid.value = index_selection_default['index']
             # assign given update_function
             if update_function is not None:
                 index_wid.on_trait_change(update_function, 'value')
@@ -358,13 +320,16 @@ def update_index_selection(index_wid, index_min_val, index_max_val,
                 index_wid.on_trait_change(plot_function, 'value')
         else:
             # created by `index_selection_buttons()` function
-            index_wid.children[2].value = str(index_default)
+            index_wid.children[2].value = str(index_selection_default['index'])
             # assign given update_function
             if update_function is not None:
                 index_wid.children[2].on_trait_change(update_function, 'value')
             # assign given plot_function
             if plot_function is not None:
                 index_wid.children[2].on_trait_change(plot_function, 'value')
+
+    # Assign new options dict to selected_values
+    index_wid.selected_values = index_selection_default
 
 
 def colour_selection(default_colour_list, plot_function=None, title='Colour'):
