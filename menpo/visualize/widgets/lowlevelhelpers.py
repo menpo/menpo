@@ -4,7 +4,7 @@ from IPython.html.widgets import (ContainerWidget, IntSliderWidget,
                                   DropdownWidget, LatexWidget, ButtonWidget,
                                   TextWidget, TabWidget, BoundedIntTextWidget,
                                   BoundedFloatTextWidget, TextareaWidget,
-                                  ImageWidget)
+                                  ImageWidget, FloatSliderWidget)
 from collections import OrderedDict
 from StringIO import StringIO
 
@@ -34,7 +34,8 @@ def logo(scale=0.3):
     return ContainerWidget(children=[logo_wid])
 
 
-def format_logo(logo_wid, container_border='1px solid black', border_visible=True):
+def format_logo(logo_wid, container_border='1px solid black',
+                border_visible=True):
     r"""
     Function that adds an optional border line arounf the logo widget. Usage
     example:
@@ -571,7 +572,7 @@ def line_options(line_options_default, plot_function=None,
     show_checkbox_title : `str`, optional
         The description of the show line checkbox.
     """
-    #Create widgets
+    # Create widgets
     # toggle button
     but = ToggleButtonWidget(description=toggle_title,
                              value=toggle_show_default,
@@ -1382,6 +1383,429 @@ def update_font_options(font_options_wid, font_options_dict):
         update_colour_selection(
             font_options_wid.children[1].children[1].children[4],
             font_options_dict['fontcolour'])
+
+
+def figure_options(figure_options_default, plot_function=None,
+                   figure_scale_bounds=(0.1, 2), figure_scale_step=0.1,
+                   figure_scale_visible=True, show_axes_visible=True,
+                   toggle_show_default=True, toggle_show_visible=True):
+    r"""
+    Creates a widget with Figure Options. Specifically, it has:
+        1) A slider that controls the scaling of the figure.
+        2) A checkbox that controls the visibility of the figure's axes.
+        3) A toggle button that controls the visibility of all the above, i.e.
+           the figure options.
+
+    The structure of the widgets is the following:
+        figure_options_wid.children = [toggle_button, figure_scale_slider,
+                                       show_axes_checkbox]
+
+    The returned widget saves the selected values in the following dictionary:
+        figure_options_wid.selected_values
+
+    To fix the alignment within this widget please refer to
+    `format_figure_options()` function.
+
+    Parameters
+    ----------
+    figure_options_default : `dict`
+        The initial selected figure options.
+        Example:
+            figure_options_default = {'x_scale': 1.,
+                                      'y_scale': 1.,
+                                      'show_axes': True}
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    figure_scale_bounds : (`float`, `float`), optional
+        The range of scales that can be optionally applied to the figure.
+
+    figure_scale_step : `float`, optional
+        The step of the scale sliders.
+
+    figure_scale_visible : `boolean`, optional
+        The visibility of the figure scales sliders.
+
+    show_axes_visible : `boolean`, optional
+        The visibility of the axes checkbox.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Create widgets
+    # toggle button
+    but = ToggleButtonWidget(description='Figure Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # figure_scale, show_axes
+    figure_scale = FloatSliderWidget(description='Figure scale:',
+                                     value=figure_options_default['x_scale'],
+                                     min=figure_scale_bounds[0],
+                                     max=figure_scale_bounds[1],
+                                     step=figure_scale_step,
+                                     visible=figure_scale_visible)
+    show_axes = CheckboxWidget(description='Show axes',
+                               value=figure_options_default['show_axes'],
+                               visible=show_axes_visible)
+
+    # Final widget
+    figure_options_wid = ContainerWidget(children=[but, figure_scale,
+                                                   show_axes])
+
+    # Assign output
+    figure_options_wid.selected_values = figure_options_default
+
+    # get options functions
+    def save_show_axes(name, value):
+        figure_options_wid.selected_values['show_axes'] = value
+    show_axes.on_trait_change(save_show_axes, 'value')
+
+    def save_scale(name, value):
+        figure_options_wid.selected_values['x_scale'] = value
+        figure_options_wid.selected_values['y_scale'] = value
+    figure_scale.on_trait_change(save_scale, 'value')
+
+    # Toggle button function
+    def toggle_fun(name, value):
+        figure_scale.visible = value
+        show_axes.visible = value
+    toggle_fun('', toggle_show_default)
+    but.on_trait_change(toggle_fun, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        figure_scale.on_trait_change(plot_function, 'value')
+        show_axes.on_trait_change(plot_function, 'value')
+
+    return figure_options_wid
+
+
+def format_figure_options(figure_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given figure_options
+    widget. Usage example:
+        figure_options_wid = figure_options()
+        display(figure_options_wid)
+        format_figure_options(figure_options_wid)
+
+    Parameters
+    ----------
+    figure_options_wid :
+        The widget object generated by the `figure_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # set toggle button font bold
+    figure_options_wid.children[0].set_css('font-weight',
+                                           toggle_button_font_weight)
+
+    # margin and border around container widget
+    figure_options_wid.set_css('padding', container_padding)
+    figure_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        figure_options_wid.set_css('border', container_border)
+
+
+def update_figure_options(figure_options_wid, figure_options_dict):
+    r"""
+    Function that updates the state of a given figure_options widget. Usage
+    example:
+        default_figure_options={'x_scale':1.,
+                                'y_scale':1.,
+                                'show_axes':True}
+        figure_options_wid = figure_options(default_figure_options)
+        display(figure_options_wid)
+        format_figure_options(figure_options_wid)
+        default_figure_options={'x_scale':0.5,
+                                'y_scale':0.5,
+                                'show_axes':False}
+        update_figure_options(figure_options_wid, default_figure_options)
+
+    Parameters
+    ----------
+    figure_options_wid :
+        The widget object generated by the `figure_options()` function.
+
+    figure_options_dict : `dict`
+        The new set of options. For example:
+            figure_options_dict={'x_scale':1.,
+                                 'y_scale':1.,
+                                 'show_axes':True}
+    """
+    # Assign new options dict to selected_values
+    figure_options_wid.selected_values = figure_options_dict
+
+    # update show axes checkbox
+    if 'show_axes' in figure_options_dict.keys():
+        figure_options_wid.children[2].value = figure_options_dict['show_axes']
+
+    # update scale slider
+    if 'x_scale' in figure_options_dict.keys():
+        figure_options_wid.children[1].value = figure_options_dict['x_scale']
+    elif 'y_scale' in figure_options_dict.keys():
+        figure_options_wid.children[1].value = figure_options_dict['y_scale']
+
+
+def figure_options_two_scales(figure_options_default, plot_function=None,
+                              coupled_default=False,
+                              figure_scales_bounds=(0.1, 2),
+                              figure_scales_step=0.1,
+                              figure_scales_visible=True,
+                              show_axes_visible=True, toggle_show_default=True,
+                              toggle_show_visible=True):
+    r"""
+    Creates a widget with Figure Options. Specifically, it has:
+        1) Two sliders that control the horizontal and vertical scaling of the
+           figure.
+        2) A checkbox that couples/decouples the above sliders.
+        3) A checkbox that controls the visibility of the figure's axes.
+        4) A toggle button that controls the visibility of all the above, i.e.
+           the figure options.
+
+    The structure of the widgets is the following:
+        figure_options_wid.children = [toggle_button, figure_scale,
+                                       show_axes_checkbox]
+        figure_scale.children = [X_scale_slider, Y_scale_slider,
+                                 coupled_checkbox]
+
+    The returned widget saves the selected values in the following dictionary:
+        figure_options_wid.selected_values
+
+    To fix the alignment within this widget please refer to
+    `format_figure_options_two_scales()` function.
+
+    Parameters
+    ----------
+    figure_options_default : `dict`
+        The initial selected figure options.
+        Example:
+            figure_options_default = {'x_scale': 0.5,
+                                      'y_scale': 1.0,
+                                      'show_axes': True}
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    coupled_default : `boolean`, optional
+        The initial value of the coupled checkbox.
+
+    figure_scale_bounds : (`float`, `float`), optional
+        The range of scales that can be optionally applied to the figure.
+
+    figure_scale_step : `float`, optional
+        The step of the scale sliders.
+
+    figure_scale_visible : `boolean`, optional
+        The visibility of the figure scales sliders.
+
+    show_axes_visible : `boolean`, optional
+        The visibility of the axes checkbox.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+    """
+    # Create widgets
+    # toggle button
+    but = ToggleButtonWidget(description='Figure Options',
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # figure_scale, show_axes
+    x_scale = FloatSliderWidget(description='Figure size: X scale',
+                                value=figure_options_default['x_scale'],
+                                min=figure_scales_bounds[0],
+                                max=figure_scales_bounds[1],
+                                step=figure_scales_step)
+    y_scale = FloatSliderWidget(description='Y scale',
+                                value=figure_options_default['y_scale'],
+                                min=figure_scales_bounds[0],
+                                max=figure_scales_bounds[1],
+                                step=figure_scales_step,
+                                disabled=coupled_default)
+    coupled = CheckboxWidget(description='Coupled', value=coupled_default)
+    show_axes = CheckboxWidget(description='Show axes',
+                               value=figure_options_default['show_axes'],
+                               visible=show_axes_visible)
+
+    # Final widget
+    figure_scale = ContainerWidget(children=[x_scale, y_scale, coupled],
+                                   visible=figure_scales_visible)
+    figure_options_wid = ContainerWidget(children=[but, figure_scale,
+                                                   show_axes])
+
+    # Assign output
+    figure_options_wid.selected_values = figure_options_default
+
+    # Coupled sliders function
+    def coupled_sliders(name, value):
+        y_scale.disabled = value
+    coupled.on_trait_change(coupled_sliders, 'value')
+
+    # get options functions
+    def save_show_axes(name, value):
+        figure_options_wid.selected_values['show_axes'] = value
+    show_axes.on_trait_change(save_show_axes, 'value')
+
+    def save_x_scale(name, old_value, value):
+        figure_options_wid.selected_values['x_scale'] = value
+        if coupled.value:
+            y_scale.value += value - old_value
+    x_scale.on_trait_change(save_x_scale, 'value')
+
+    def save_y_scale(name, value):
+        figure_options_wid.selected_values['y_scale'] = value
+    y_scale.on_trait_change(save_y_scale, 'value')
+
+    # Toggle button function
+    def toggle_fun(name, value):
+        figure_scale.visible = value
+        show_axes.visible = value
+    toggle_fun('', toggle_show_default)
+    but.on_trait_change(toggle_fun, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        x_scale.on_trait_change(plot_function, 'value')
+        y_scale.on_trait_change(plot_function, 'value')
+        show_axes.on_trait_change(plot_function, 'value')
+
+    return figure_options_wid
+
+
+def format_figure_options_two_scales(figure_options_wid,
+                                     container_padding='6px',
+                                     container_margin='6px',
+                                     container_border='1px solid black',
+                                     toggle_button_font_weight='bold',
+                                     border_visible=True):
+    r"""
+    Function that corrects the align (style format) of a given
+    figure_options_two_scales widget. Usage example:
+        figure_options_wid = figure_options_two_scales()
+        display(figure_options_wid)
+        format_figure_options_two_scales(figure_options_wid)
+
+    Parameters
+    ----------
+    figure_options_wid :
+        The widget object generated by the `figure_options_two_scales()`
+        function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+    """
+    # align figure scale sliders and checkbox
+    figure_options_wid.children[1].remove_class('vbox')
+    figure_options_wid.children[1].add_class('hbox')
+
+    # fix figure scale sliders width
+    figure_options_wid.children[1].children[0].set_css('width', '3cm')
+    figure_options_wid.children[1].children[1].set_css('width', '3cm')
+
+    # set toggle button font bold
+    figure_options_wid.children[0].set_css('font-weight',
+                                           toggle_button_font_weight)
+
+    # margin and border around container widget
+    figure_options_wid.set_css('padding', container_padding)
+    figure_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        figure_options_wid.set_css('border', container_border)
+
+
+def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
+    r"""
+    Function that updates the state of a given figure_options_two_scales widget.
+    Usage example:
+        default_figure_options={'x_scale':1.,
+                                'y_scale':1.,
+                                'show_axes':True}
+        figure_options_wid = figure_options_two_scales(default_figure_options)
+        display(figure_options_wid)
+        format_figure_options_two_scales(figure_options_wid)
+        default_figure_options={'x_scale':0.8,
+                                'y_scale':0.2,
+                                'show_axes':False}
+        update_figure_options_two_scales(figure_options_wid,
+                                         default_figure_options)
+
+    Parameters
+    ----------
+    figure_options_wid :
+        The widget object generated by the `figure_options_two_scales()`
+        function.
+
+    figure_options_dict : `dict`
+        The new set of options. For example:
+            figure_options_dict={'x_scale':1.,
+                                 'y_scale':1.,
+                                 'show_axes':True}
+    """
+    # Assign new options dict to selected_values
+    figure_options_wid.selected_values = figure_options_dict
+
+    # update show axes checkbox
+    if 'show_axes' in figure_options_dict.keys():
+        figure_options_wid.children[2].value = figure_options_dict['show_axes']
+
+    # update scale slider
+    if ('x_scale' in figure_options_dict.keys() and
+            'y_scale' not in figure_options_dict.keys()):
+        figure_options_wid.children[1].children[0].value = \
+            figure_options_dict['x_scale']
+        figure_options_wid.children[1].children[2].value = False
+    elif ('x_scale' not in figure_options_dict.keys() and
+            'y_scale' in figure_options_dict.keys()):
+        figure_options_wid.children[1].children[1].value = \
+            figure_options_dict['y_scale']
+        figure_options_wid.children[1].children[2].value = False
+    elif ('x_scale' in figure_options_dict.keys() and
+            'y_scale' in figure_options_dict.keys()):
+        figure_options_wid.children[1].children[0].value = \
+            figure_options_dict['x_scale']
+        figure_options_wid.children[1].children[1].value = \
+            figure_options_dict['y_scale']
+        figure_options_wid.children[1].children[2].value = \
+            figure_options_dict['x_scale'] == figure_options_dict['y_scale']
 
 
 def hog_options(toggle_show_default=True, toggle_show_visible=True):
