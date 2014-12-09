@@ -10,7 +10,7 @@ from .windowiterator import WindowIterator
 
 
 @ndfeature
-def gradient(pixels):
+def gradient(pixels, fast2d=True):
     r"""
     Calculates the gradient of an input image. The image is assumed to have
     channel information on the first axis. In the case of multiple channels,
@@ -23,6 +23,10 @@ def gradient(pixels):
         means an N-dimensional image is represented by an N+1 dimensional
         array.
 
+    fast2d : bool, optional
+        Enables faster gradient computation for 2-dimensional
+        multichannel image.
+
     Returns
     -------
     gradient : ndarray, shape (C * length([X, Y, ..., Z], X, Y, ..., Z))
@@ -33,45 +37,17 @@ def gradient(pixels):
         Bd_x, Bd_y].
 
     """
-    grad_per_dim_per_channel = [np.gradient(g) for g in pixels]
-    # Flatten out the separate dims
-    grad_per_channel = list(itertools.chain.from_iterable(
-        grad_per_dim_per_channel))
-    # Add a channel axis for broadcasting
-    grad_per_channel = [g[None, ...] for g in grad_per_channel]
-    # Concatenate gradient list into an array (the new_image)
-    return np.concatenate(grad_per_channel, axis=0)
-
-
-# TODO: This returns slightly different results than gradient
-@ndfeature
-def fast_gradient(pixels):
-    r"""
-    Calculates the gradient of an input image. The image is assumed to have
-    channel information on the first axis. In the case of multiple channels,
-    it returns the gradient over each axis over each channel as the first axis.
-
-    Note that only 2D multiple channel images (ie of shape C x H x W) are
-    supported.
-
-    Parameters
-    ----------
-    pixels : `ndarray`, shape (C, H, W)
-        An array where the first dimension is interpreted as channels. This
-        means an 2-dimensional image is represented by an 3 dimensional
-        array.
-
-    Returns
-    -------
-    gradient : ndarray, shape (2 * C), H, W)
-        The gradient over each axis over each channel. Therefore, the
-        first axis of the gradient of a 2D, single channel image, will have
-        length `2`. The last axis of the gradient of a 2D, 3-channel image,
-        will have length `6`, the ordering being [Rd_h, Rd_w, Gd_h, Gd_w,
-        Bd_h, Bd_w].
-
-    """
-    return gradient_cython(pixels)
+    if fast2d and len(pixels.shape) is 3:
+        return gradient_cython(pixels)
+    else:
+        grad_per_dim_per_channel = [np.gradient(g) for g in pixels]
+        # Flatten out the separate dims
+        grad_per_channel = list(itertools.chain.from_iterable(
+            grad_per_dim_per_channel))
+        # Add a channel axis for broadcasting
+        grad_per_channel = [g[None, ...] for g in grad_per_channel]
+        # Concatenate gradient list into an array (the new_image)
+        return np.concatenate(grad_per_channel, axis=0)
 
 
 @ndfeature
@@ -330,7 +306,6 @@ def hog(pixels, mode='dense', algorithm='dalaltriggs', num_bins=9,
     #                                 self._image.pixels.shape[2]}
 
 
-# TODO: Should this use fast gradient?
 @ndfeature
 def igo(pixels, double_angles=False, verbose=False):
     r"""
@@ -375,11 +350,11 @@ def igo(pixels, double_angles=False, verbose=False):
     # compute igo image
     igo_pixels = np.empty((pixels.shape[0] * feat_channels,
                            pixels.shape[1], pixels.shape[2]))
-    igo_pixels[::feat_channels, ...] = np.cos(grad_orient)
-    igo_pixels[1::feat_channels, ...] = np.sin(grad_orient)
+    igo_pixels[1::feat_channels, ...] = np.cos(grad_orient)
+    igo_pixels[::feat_channels, ...] = np.sin(grad_orient)
     if double_angles:
-        igo_pixels[2::feat_channels, ...] = np.cos(2 * grad_orient)
-        igo_pixels[3::feat_channels, ...] = np.sin(2 * grad_orient)
+        igo_pixels[3::feat_channels, ...] = np.cos(2 * grad_orient)
+        igo_pixels[2::feat_channels, ...] = np.sin(2 * grad_orient)
 
     # print information
     if verbose:
@@ -408,7 +383,6 @@ def igo(pixels, double_angles=False, verbose=False):
     #                                 self._image.pixels.shape[2]}
 
 
-# TODO: Should this use fast gradient?
 @ndfeature
 def es(image_data, verbose=False):
     r"""
