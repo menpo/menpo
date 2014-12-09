@@ -169,9 +169,52 @@ class PointCloud(Shape):
         min_b, max_b = self.bounds(boundary)
         return max_b - min_b
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointCloudViewer(figure_id, new_figure,
-                                self.points).render(**kwargs)
+    def view(self, figure_id=None, new_figure=False, image_view=False,
+             marker_style='o', marker_size=20, marker_face_colour='b',
+             marker_edge_colour='k', marker_edge_width=1.):
+        r"""
+        Visualization of the :map:`PointCloud`.
+
+        Parameters
+        ----------
+        figure_id : optional
+            The id of the figure to be used.
+
+        new_figure : `boolean`, optional
+            If ``True``, a new figure is created.
+
+        image_view : `boolean`, optional
+            If ``True``, the x and y axes are flipped.
+
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+
+        Returns
+        -------
+        viewer : :map:`PointCloudViewer`
+            The viewer object.
+        """
+        return PointCloudViewer(figure_id, new_figure, self.points).render(
+            image_view=image_view, marker_style=marker_style,
+            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width)
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)

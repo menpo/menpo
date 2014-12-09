@@ -155,24 +155,20 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
                                                            new_figure)
         self.points = points
 
-    def _render(self, image_view=False, label=None, **kwargs):
+    def _render(self, image_view=False, marker_style='o', marker_size=20,
+                marker_face_colour='b', marker_edge_colour='k',
+                marker_edge_width=1):
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
 
-        # Get options values or define the defaults
-        c = kwargs.get('markercolour', 'b')
-        s = kwargs.get('markersize', 20)
-        marker = kwargs.get('markerstyle', 'o')
-        linewidths = kwargs.get('markeredgewidth', 1)
-        edgecolors = kwargs.get('markeredgecolour', 'k')
-        facecolors = kwargs.get('markerfacecolour', 'b')
-        cmap = kwargs.get('colourmap', None)
-
-        # Scatter using the options
-        plt.scatter(points[:, 0], points[:, 1], cmap=cmap, c=c, s=s,
-                    marker=marker, linewidths=linewidths, edgecolors=edgecolors,
-                    facecolors=facecolors, label=label)
+        # Scatter
+        plt.scatter(points[:, 0], points[:, 1], cmap=cm.jet,
+                    c=marker_face_colour, s=marker_size, marker=marker_style,
+                    linewidths=marker_edge_width, edgecolors=marker_edge_colour,
+                    facecolors=marker_face_colour)
         return self
 
 
@@ -183,7 +179,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         self.points = points
         self.adjacency_list = adjacency_list
 
-    def _render(self, image_view=False, label=None, **kwargs):
+    def _render(self, image_view=False, line_colour='b', line_style='-',
+                line_width=1, marker_style='o', marker_size=20,
+                marker_face_colour='b', marker_edge_colour='k',
+                marker_edge_width=1, colour_map=None):
         import matplotlib.pyplot as plt
         from matplotlib import collections as mc
 
@@ -194,15 +193,15 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         ax = plt.gca()
 
-        # Get options values or define the defaults
-        colors = kwargs.get('linecolour', 'b')
-        linestyles = kwargs.get('linestyle', 'solid')
-        linewidths = kwargs.get('linewidth', 1)
-        cmap = kwargs.get('colourmap', None)
-
         # Draw line objects
-        lc = mc.LineCollection(lines, colors=colors, linestyles=linestyles,
-                               linewidths=linewidths, cmap=cmap, label=label)
+        lc = mc.LineCollection(lines, colors=line_colour, linestyles=line_style,
+                               linewidths=line_width, cmap=colour_map)
+
+        # Scatter
+        plt.scatter(points[:, 0], points[:, 1], cmap=colour_map,
+                    c=marker_face_colour, s=marker_size, marker=marker_style,
+                    linewidths=marker_edge_width, edgecolors=marker_edge_colour,
+                    facecolors=marker_face_colour, label=label)
 
         ax.add_collection(lc)
         ax.autoscale()
