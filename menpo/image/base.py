@@ -403,7 +403,6 @@ class Image(Vectorizable, LandmarkableViewable):
         copy.pixels = self.pixels[channels, ...]
         return copy
 
-    # TODO: Needs to be updated for channels at front!
     def as_histogram(self, keep_channels=True, bins='unique'):
         r"""
         Histogram binning of the values of this image.
@@ -457,7 +456,7 @@ class Image(Vectorizable, LandmarkableViewable):
                              "sequence of scalars.")
         # compute histogram
         vec = self.as_vector(keep_channels=keep_channels)
-        if len(vec.shape) == 1 or vec.shape[1] == 1:
+        if len(vec.shape) == 1 or vec.shape[0] == 1:
             if bins == 0:
                 bins = np.unique(vec)
             hist, bin_edges = np.histogram(vec, bins=bins)
@@ -465,10 +464,10 @@ class Image(Vectorizable, LandmarkableViewable):
             hist = []
             bin_edges = []
             num_bins = bins
-            for ch in range(vec.shape[1]):
+            for ch in range(vec.shape[0]):
                 if bins == 0:
-                    num_bins = np.unique(vec[:, ch])
-                h_tmp, c_tmp = np.histogram(vec[:, ch], bins=num_bins)
+                    num_bins = np.unique(vec[ch, :])
+                h_tmp, c_tmp = np.histogram(vec[ch, :], bins=num_bins)
                 hist.append(h_tmp)
                 bin_edges.append(c_tmp)
         return hist, bin_edges
@@ -521,27 +520,6 @@ class Image(Vectorizable, LandmarkableViewable):
         """
         from menpo.feature import gradient
         return gradient(self)
-
-    def fast_gradient(self):
-        r"""
-        Returns an :map:`Image` which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
-        each channel as a flat list.
-
-        Returns
-        -------
-        gradient : :map:`Image`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        from menpo.feature import fast_gradient
-        if self.n_dims is not 2:
-            raise ValueError(
-                "Only 2 dimensional multichannel images are currently "
-                "supported. This image is {} dimensional"
-                .format(self.n_dims))
-        return fast_gradient(self)
 
     def crop_inplace(self, min_indices, max_indices,
                      constrain_to_boundary=True):
@@ -1493,7 +1471,6 @@ class Image(Vectorizable, LandmarkableViewable):
 
         self._normalize_inplace(scale_func, mode=mode)
 
-    # TODO: revise this method!
     def _normalize_inplace(self, scale_func, mode='all'):
         pixels = self.as_vector(keep_channels=True)
         if mode == 'all':

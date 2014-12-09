@@ -211,7 +211,6 @@ class BooleanImage(Image):
         inverse.invert_inplace()
         return inverse
 
-    # TODO: Revise
     def bounds_true(self, boundary=0, constrain_to_bounds=True):
         r"""
         Returns the minimum to maximum indices along all dimensions that the

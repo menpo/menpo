@@ -576,7 +576,6 @@ class MaskedImage(Image):
         self._normalize_inplace(scale_func, mode=mode,
                                 limit_to_mask=limit_to_mask)
 
-    # TODO: Revise
     def _normalize_inplace(self, scale_func, mode='all', limit_to_mask=True):
         if limit_to_mask:
             pixels = self.as_vector(keep_channels=True)
