@@ -226,9 +226,12 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # which case we generate random colours) or a single colour to colour
         # all the labels with
         n_labels = len(self.labels_to_masks)
-        labels_colours = kwargs.get('labelscolours',
-                                    [np.random.random([3, ])
-                                     for _ in range(n_labels)])
+        ldms_dict = kwargs.get('landmarks_options',
+                               {'labelscolours': [np.random.random([3, ])
+                                                  for _ in range(n_labels)]})
+        labels_colours = ldms_dict.get('labelscolours',
+                                       [np.random.random([3, ])
+                                        for _ in range(n_labels)])
         if len(labels_colours) == 1:
             labels_colours *= n_labels
         elif len(labels_colours) != n_labels:
@@ -239,27 +242,31 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # do we do this?
         # Set the default colormap, assuming that the pointclouds are
         # also viewed using Matplotlib
-        kwargs.setdefault('cmap', cm.jet)
 
         sub_pointclouds = self._build_sub_pointclouds()
 
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            kwargs['linecolour'] = labels_colours[i]
-            kwargs['label'] = '{0}: {1}'.format(self.group, label)
-            pc.view_on(self.figure_id, image_view=image_view, **kwargs)
+            ldms_dict.setdefault('colourmap', cm.jet)
+            ldms_dict['linecolour'] = labels_colours[i]
+            ldms_dict['label'] = '{0}: {1}'.format(self.group, label)
+            pc.view_on(self.figure_id, image_view=image_view, **ldms_dict)
 
             ax = plt.gca()
             if render_numbering:
                 # Options related to numbers' annotations
-                halign = kwargs.get('halign', 'center')
-                valign = kwargs.get('valign', 'bottom')
-                family = kwargs.get('fontname', 'serif')
-                size = kwargs.get('fontsize', 10)
-                fontstyle = kwargs.get('fontstyle', 'normal')
-                fontweight = kwargs.get('fontweight', 'normal')
-                color = kwargs.get('fontcolour', 'k')
+                numbers_dict = kwargs.get('numbering_options',
+                                          {'halign': 'center',
+                                           'valign': 'bottom',
+                                           'fontname': 'sans-serif'})
+                halign = numbers_dict.get('halign', 'center')
+                valign = numbers_dict.get('valign', 'bottom')
+                family = numbers_dict.get('fontname', 'sans-serif')
+                size = numbers_dict.get('fontsize', 10)
+                fontstyle = numbers_dict.get('fontstyle', 'normal')
+                fontweight = numbers_dict.get('fontweight', 'normal')
+                color = numbers_dict.get('fontcolour', 'k')
 
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
@@ -269,7 +276,36 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                                 family=family, fontstyle=fontstyle,
                                 fontweight=fontweight, color=color)
             if render_legend:
-                ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
+                # Options related to legend
+                legend_dict = kwargs.get('legend_options',
+                                         {'bbox_to_anchor': (1.05, 1),
+                                          'location': 2, 'borderaxespad': 0})
+                title = legend_dict.get('title', '')
+                family = legend_dict.get('fontname', 'sans-serif')
+                size = legend_dict.get('fontsize', 10)
+                style = legend_dict.get('fontstyle', 'normal')
+                weight = legend_dict.get('fontweight', 'normal')
+                prop = {'family': family, 'size': size, 'style': style,
+                        'weight': weight}
+                markerscale = legend_dict.get('markerscale', None)
+                loc = legend_dict.get('location', 2)
+                bbox_to_anchor = legend_dict.get('bbox_to_anchor', None)
+                borderaxespad = legend_dict.get('borderaxespad', 0)
+                ncol = legend_dict.get('n_columns', 1)
+                columnspacing = legend_dict.get('horizontal_spacing', None)
+                labelspacing = legend_dict.get('vertical_spacing', None)
+                frameon = legend_dict.get('draw_border', None)
+                borderpad = legend_dict.get('border_padding', None)
+                shadow = legend_dict.get('draw_shadow', None)
+                fancybox = legend_dict.get('fancy_corners', None)
+
+                ax.legend(title=title, prop=prop, loc=loc,
+                          bbox_to_anchor=bbox_to_anchor,
+                          borderaxespad=borderaxespad, ncol=ncol,
+                          columnspacing=columnspacing,
+                          labelspacing=labelspacing, frameon=frameon,
+                          borderpad=borderpad, shadow=shadow, fancybox=fancybox,
+                          markerscale=markerscale)
 
     def _build_sub_pointclouds(self):
         sub_pointclouds = []

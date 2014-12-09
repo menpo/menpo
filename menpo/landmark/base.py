@@ -679,9 +679,9 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         return {'groups': groups}
 
     def view(self, figure_id=None, new_figure=False, targettype=None,
-              render_numbering=True, render_legend=True, group='group',
-              with_labels=None, without_labels=None, image_view=True,
-              **kwargs):
+             render_numbering=True, render_legend=True, group='group',
+             with_labels=None, without_labels=None, image_view=True,
+             **kwargs):
         """
         View all landmarks. Kwargs passed in here will be passed through
         to the shapes view method.
