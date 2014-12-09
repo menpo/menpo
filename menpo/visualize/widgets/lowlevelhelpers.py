@@ -1914,12 +1914,20 @@ def legend_options(legend_options_default, plot_function=None,
     location = DropdownWidget(values=location_dict,
                               value=legend_options_default['location'],
                               description='Predefined location')
-    bbox_to_anchor_x = FloatTextWidget(
-        value=legend_options_default['bbox_to_anchor'][0],
-        description='Arbitrary location')
-    bbox_to_anchor_y = FloatTextWidget(
-        value=legend_options_default['bbox_to_anchor'][1], description='')
-    bbox_to_anchor = ContainerWidget(children=[bbox_to_anchor_x,
+    if legend_options_default['bbox_to_anchor'] is None:
+        tmp1 = False
+        tmp2 = 0.
+        tmp3 = 0.
+    else:
+        tmp1 = True
+        tmp2 = legend_options_default['bbox_to_anchor'][0]
+        tmp3 = legend_options_default['bbox_to_anchor'][1]
+    bbox_to_anchor_enable = CheckboxWidget(value=tmp1,
+                                           description='Arbitrary location')
+    bbox_to_anchor_x = FloatTextWidget(value=tmp2, description='')
+    bbox_to_anchor_y = FloatTextWidget(value=tmp3, description='')
+    bbox_to_anchor = ContainerWidget(children=[bbox_to_anchor_enable,
+                                               bbox_to_anchor_x,
                                                bbox_to_anchor_y])
     borderaxespad = BoundedFloatTextWidget(
         value=legend_options_default['borderaxespad'],
@@ -1930,15 +1938,19 @@ def legend_options(legend_options_default, plot_function=None,
     # formatting-related
     n_columns = BoundedIntTextWidget(value=legend_options_default['n_columns'],
                                      description='Columns', min=0)
+    markerscale = BoundedFloatTextWidget(
+        value=legend_options_default['markerscale'],
+        description='Marker scale', min=0.)
     horizontal_spacing = BoundedFloatTextWidget(
         value=legend_options_default['horizontal_spacing'],
         description='Horizontal space', min=0.)
     vertical_spacing = BoundedFloatTextWidget(
         value=legend_options_default['vertical_spacing'],
         description='Vertical space', min=0.)
-    spacing_tmp = ContainerWidget(children=[horizontal_spacing,
-                                            vertical_spacing])
-    spacing = ContainerWidget(children=[n_columns, spacing_tmp])
+    spacing = ContainerWidget(
+        children=[ContainerWidget(children=[n_columns, markerscale]),
+                  ContainerWidget(children=[horizontal_spacing,
+                                            vertical_spacing])])
     draw_border = CheckboxWidget(description='Border',
                                  value=legend_options_default['draw_border'])
     border_padding = BoundedFloatTextWidget(
@@ -1973,10 +1985,12 @@ def legend_options(legend_options_default, plot_function=None,
         fontstyle.disabled = not value
         fontweight.disabled = not value
         location.disabled = not value
-        bbox_to_anchor_x.disabled = not value
-        bbox_to_anchor_y.disabled = not value
+        bbox_to_anchor_enable.disabled = not value
+        bbox_to_anchor_x.disabled = not value or not bbox_to_anchor_enable.value
+        bbox_to_anchor_y.disabled = not value or not bbox_to_anchor_enable.value
         borderaxespad.disabled = not value
         n_columns.disabled = not value
+        markerscale.disabled = not value
         horizontal_spacing.disabled = not value
         vertical_spacing.disabled = not value
         draw_border.disabled = not value
@@ -1990,6 +2004,11 @@ def legend_options(legend_options_default, plot_function=None,
     def border_pad_disable(name, value):
         border_padding.disabled = not value
     draw_border.on_trait_change(border_pad_disable, 'value')
+
+    def bbox_to_anchor_disable(name, value):
+        bbox_to_anchor_x.disabled = not value
+        bbox_to_anchor_y.disabled = not value
+    bbox_to_anchor_enable.on_trait_change(bbox_to_anchor_disable, 'value')
 
     def save_show_legend(name, value):
         legend_options_wid.selected_values['show_legend'] = value
@@ -2020,8 +2039,12 @@ def legend_options(legend_options_default, plot_function=None,
     location.on_trait_change(save_location, 'value')
 
     def save_bbox_to_anchor(name, value):
-        legend_options_wid.selected_values['bbox_to_anchor'] = \
-            (bbox_to_anchor_x.value, bbox_to_anchor_y.value)
+        if bbox_to_anchor_enable.value:
+            legend_options_wid.selected_values['bbox_to_anchor'] = \
+                (bbox_to_anchor_x.value, bbox_to_anchor_y.value)
+        else:
+            legend_options_wid.selected_values['bbox_to_anchor'] = None
+    bbox_to_anchor_enable.on_trait_change(save_bbox_to_anchor, 'value')
     bbox_to_anchor_x.on_trait_change(save_bbox_to_anchor, 'value')
     bbox_to_anchor_y.on_trait_change(save_bbox_to_anchor, 'value')
 
@@ -2032,6 +2055,10 @@ def legend_options(legend_options_default, plot_function=None,
     def save_n_columns(name, value):
         legend_options_wid.selected_values['n_columns'] = int(value)
     n_columns.on_trait_change(save_n_columns, 'value')
+
+    def save_markerscale(name, value):
+        legend_options_wid.selected_values['markerscale'] = float(value)
+    markerscale.on_trait_change(save_markerscale, 'value')
 
     def save_horizontal_spacing(name, value):
         legend_options_wid.selected_values['horizontal_spacing'] = float(value)
@@ -2072,10 +2099,12 @@ def legend_options(legend_options_default, plot_function=None,
         fontsize.on_trait_change(plot_function, 'value')
         fontweight.on_trait_change(plot_function, 'value')
         location.on_trait_change(plot_function, 'value')
+        bbox_to_anchor_enable.on_trait_change(plot_function, 'value')
         bbox_to_anchor_x.on_trait_change(plot_function, 'value')
         bbox_to_anchor_y.on_trait_change(plot_function, 'value')
         borderaxespad.on_trait_change(plot_function, 'value')
         n_columns.on_trait_change(plot_function, 'value')
+        markerscale.on_trait_change(plot_function, 'value')
         horizontal_spacing.on_trait_change(plot_function, 'value')
         vertical_spacing.on_trait_change(plot_function, 'value')
         draw_border.on_trait_change(plot_function, 'value')
@@ -2141,9 +2170,9 @@ def format_legend_options(legend_options_wid, container_padding='6px',
         remove_class('vbox')
     legend_options_wid.children[1].children[1].children[0].children[1].\
         add_class('hbox')
-    legend_options_wid.children[1].children[1].children[0].children[1].children[0].\
-        set_css('width', '1cm')
     legend_options_wid.children[1].children[1].children[0].children[1].children[1].\
+        set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[0].children[1].children[2].\
         set_css('width', '1cm')
 
     # set distance to axes (borderaxespad) text box width
@@ -2172,12 +2201,17 @@ def format_legend_options(legend_options_wid, container_padding='6px',
     legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[0].set_css('width', '1cm')
     legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[1].set_css('width', '1cm')
 
-    # align n_columns with spacing and set width
+    # set width of n_columns and markerspace
+    legend_options_wid.children[1].children[1].children[2].children[0].children[0].\
+        add_class('align-end')
+    legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[0].set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[1].set_css('width', '1cm')
+
+    # align n_columns with spacing
     legend_options_wid.children[1].children[1].children[2].children[0].\
         remove_class('vbox')
     legend_options_wid.children[1].children[1].children[2].children[0].\
         add_class('hbox')
-    legend_options_wid.children[1].children[1].children[2].children[0].children[0].set_css('width', '1cm')
 
     # border around options
     if suboptions_border_visible:
@@ -2300,10 +2334,17 @@ def update_legend_options(legend_options_wid, legend_options_dict):
 
     # update bbox_to_anchor
     if 'bbox_to_anchor' in legend_options_dict.keys():
-        legend_options_wid.children[1].children[1].children[0].children[1].children[0].value = \
-            float(legend_options_dict['bbox_to_anchor'][0])
-        legend_options_wid.children[1].children[1].children[0].children[1].children[1].value = \
-            float(legend_options_dict['bbox_to_anchor'][1])
+        if legend_options_dict['bbox_to_anchor'] is None:
+            tmp1 = False
+            tmp2 = 0.
+            tmp3 = 0.
+        else:
+            tmp1 = True
+            tmp2 = legend_options_dict['bbox_to_anchor'][0]
+            tmp3 = legend_options_dict['bbox_to_anchor'][1]
+        legend_options_wid.children[1].children[1].children[0].children[1].children[0].value = tmp1
+        legend_options_wid.children[1].children[1].children[0].children[1].children[1].value = tmp2
+        legend_options_wid.children[1].children[1].children[0].children[1].children[2].value = tmp3
 
     # update borderaxespad
     if 'borderaxespad' in legend_options_dict.keys():
@@ -2312,8 +2353,13 @@ def update_legend_options(legend_options_wid, legend_options_dict):
 
     # update n_columns text box
     if 'n_columns' in legend_options_dict.keys():
-        legend_options_wid.children[1].children[1].children[2].children[0].children[0].value = \
+        legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[0].value = \
             int(legend_options_dict['n_columns'])
+
+    # update markerspace text box
+    if 'markerspace' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[0].children[0].children[1].value = \
+            float(legend_options_dict['markerspace'])
 
     # update horizontal_spacing text box
     if 'horizontal_spacing' in legend_options_dict.keys():
