@@ -333,7 +333,8 @@ def update_index_selection(index_wid, index_selection_default,
     index_wid.selected_values = index_selection_default
 
 
-def colour_selection(default_colour_list, plot_function=None, title='Colour'):
+def colour_selection(default_colour_list, plot_function=None,
+                     title='Colour', labels=None):
     r"""
     Creates a widget with Colour Selection Options. Specifically, it has:
         1) A drop down menu with predefined colours and a 'custom' entry.
@@ -366,6 +367,10 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour'):
     title : `str`, optional
         The description of the drop down menu.
     """
+    # check if multiple mode should be enabled
+    n_labels = len(default_colour_list)
+    multiple = n_labels > 1
+
     # colours dictionary
     colour_dict = OrderedDict()
     colour_dict['blue'] = 'b'
@@ -378,14 +383,30 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour'):
     colour_dict['white'] = 'w'
     colour_dict['custom'] = 'custom'
 
+    # Labels dropdown menu
+    if multiple:
+        labels_dict = OrderedDict()
+        if labels is None:
+            for k in range(n_labels):
+                labels_dict[str(k)] = k
+        else:
+            for k, l in enumerate(labels):
+                labels_dict[l] = k
+        selection = DropdownWidget(values=labels_dict, value=0,
+                                   description=title)
+        apply_to_all = ButtonWidget(description='apply to all labels')
+
     # find default values
-    default_colour = default_colour_list[0]
-    r_val = g_val = b_val = 0.
-    if not isinstance(default_colour, str):
-        r_val = default_colour[0]
-        g_val = default_colour[1]
-        b_val = default_colour[2]
-        default_colour = 'custom'
+    def decode_colour(colour):
+        r_val = g_val = b_val = 0.
+        if not isinstance(colour, str):
+            r_val = colour[0]
+            g_val = colour[1]
+            b_val = colour[2]
+            colour = 'custom'
+        return colour, r_val, g_val, b_val
+
+    default_colour, r_val, g_val, b_val = decode_colour(default_colour_list[0])
 
     # create widgets
     r_wid = BoundedFloatTextWidget(value=r_val, description='RGB', min=0.0,
@@ -393,9 +414,22 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour'):
     g_wid = BoundedFloatTextWidget(value=g_val, min=0.0, max=1.0)
     b_wid = BoundedFloatTextWidget(value=b_val, min=0.0, max=1.0)
     menu = DropdownWidget(values=colour_dict, value=default_colour,
-                          description=title)
+                          description='')
+    if not multiple:
+        menu.description = title
     rgb = ContainerWidget(children=[r_wid, g_wid, b_wid])
-    colour_selection_wid = ContainerWidget(children=[menu, rgb])
+
+    # Final widget
+    if multiple:
+        colour_selection_wid = ContainerWidget(children=[selection,
+                                                         apply_to_all,
+                                                         menu, rgb])
+    else:
+        colour_selection_wid = ContainerWidget(children=[menu, rgb])
+
+    # Assign output
+    colour_selection_wid.selected_values = default_colour_list
+    colour_selection_wid.multiple = multiple
 
     # control visibility
     def show_rgb(name, value):
@@ -406,15 +440,36 @@ def colour_selection(default_colour_list, plot_function=None, title='Colour'):
     show_rgb('', default_colour)
     menu.on_trait_change(show_rgb, 'value')
 
-    # get colour
-    colour_selection_wid.selected_values = default_colour_list
+    # functions in case of multiple
+    if multiple:
+        def apply_to_all_function(name):
+            if menu.value == 'custom':
+                tmp = [r_wid.value, g_wid.value, b_wid.value]
+            else:
+                tmp = menu.value
+            for idx in range(len(colour_selection_wid.selected_values)):
+                colour_selection_wid.selected_values[idx] = tmp
+        apply_to_all.on_click(apply_to_all_function)
 
+        def selection_function(name, value):
+            colour, r_val, g_val, b_val = decode_colour(colour_selection_wid.selected_values[value])
+            menu.value = colour
+            r_wid.value = r_val
+            g_wid.value = g_val
+            b_wid.value = b_val
+        selection.on_trait_change(selection_function, 'value')
+
+    # save colour
     def get_colour(name, value):
+        idx = 0
+        if multiple:
+            idx = selection.value
         if menu.value == 'custom':
-            colour_selection_wid.selected_values[0] = [r_wid.value, g_wid.value,
-                                                       b_wid.value]
+            colour_selection_wid.selected_values[idx] = [r_wid.value,
+                                                         g_wid.value,
+                                                         b_wid.value]
         else:
-            colour_selection_wid.selected_values[0] = value
+            colour_selection_wid.selected_values[idx] = menu.value
     menu.on_trait_change(get_colour, 'value')
     r_wid.on_trait_change(get_colour, 'value')
     g_wid.on_trait_change(get_colour, 'value')
@@ -443,15 +498,19 @@ def format_colour_selection(colour_selection_wid):
     colour_selection_wid :
         The widget object generated by the `colour_selection()` function.
     """
+    k = 1
+    if colour_selection_wid.multiple:
+        k = 3
+
     # align r, g, b values
-    colour_selection_wid.children[1].remove_class('vbox')
-    colour_selection_wid.children[1].add_class('hbox')
-    colour_selection_wid.children[1].add_class('align-start')
+    colour_selection_wid.children[k].remove_class('vbox')
+    colour_selection_wid.children[k].add_class('hbox')
+    colour_selection_wid.children[k].add_class('align-start')
 
     # set width of r, g, b
-    colour_selection_wid.children[1].children[0].set_css('width', '0.5cm')
-    colour_selection_wid.children[1].children[1].set_css('width', '0.5cm')
-    colour_selection_wid.children[1].children[2].set_css('width', '0.5cm')
+    colour_selection_wid.children[k].children[0].set_css('width', '0.5cm')
+    colour_selection_wid.children[k].children[1].set_css('width', '0.5cm')
+    colour_selection_wid.children[k].children[2].set_css('width', '0.5cm')
 
     # align drop down menu with r, g, b values
     colour_selection_wid.add_class('align-end')
@@ -476,22 +535,41 @@ def update_colour_selection(colour_selection_wid, default_colour_list):
         If `str`, it must be one of {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}.
         If `list`, it defines an RGB value and must have length 3.
     """
-    colour_selection_wid.selected_values = default_colour_list
-    default_colour = default_colour_list[0]
-    if not isinstance(default_colour, str):
-        r_val = default_colour[0]
-        g_val = default_colour[1]
-        b_val = default_colour[2]
-        default_colour = 'custom'
-        colour_selection_wid.children[1].children[0].value = r_val
-        colour_selection_wid.children[1].children[1].value = g_val
-        colour_selection_wid.children[1].children[2].value = b_val
-    colour_selection_wid.children[0].value = default_colour
+    if len(colour_selection_wid.selected_values) == len(default_colour_list):
+        # assign colour
+        colour_selection_wid.selected_values = default_colour_list
+
+        if len(colour_selection_wid.children) == 4:
+            # multiple
+            k = colour_selection_wid.children[0].value
+            default_colour = default_colour_list[k]
+            if not isinstance(default_colour, str):
+                r_val = default_colour[0]
+                g_val = default_colour[1]
+                b_val = default_colour[2]
+                default_colour = 'custom'
+                colour_selection_wid.children[3].children[0].value = r_val
+                colour_selection_wid.children[3].children[1].value = g_val
+                colour_selection_wid.children[3].children[2].value = b_val
+            colour_selection_wid.children[2].value = default_colour
+        else:
+            # single
+            default_colour = default_colour_list[0]
+            if not isinstance(default_colour, str):
+                r_val = default_colour[0]
+                g_val = default_colour[1]
+                b_val = default_colour[2]
+                default_colour = 'custom'
+                colour_selection_wid.children[1].children[0].value = r_val
+                colour_selection_wid.children[1].children[1].value = g_val
+                colour_selection_wid.children[1].children[2].value = b_val
+            colour_selection_wid.children[0].value = default_colour
 
 
 def line_options(line_options_default, plot_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
-                 toggle_title='Line Object', show_checkbox_title='Show line'):
+                 toggle_title='Line Object', show_checkbox_title='Show line',
+                 labels=None):
     r"""
     Creates a widget with Line Options. Specifically, it has:
         1) A checkbox that controls line's visibility.
@@ -559,7 +637,8 @@ def line_options(line_options_default, plot_function=None,
                                value=line_options_default['linestyle'],
                                description='Style')
     linecolour = colour_selection(line_options_default['linecolour'],
-                                  title='Colour')
+                                  title='Colour', labels=labels,
+                                  plot_function=plot_function)
 
     # Options widget
     line_options = ContainerWidget(children=[linestyle, linewidth, linecolour])
@@ -575,10 +654,18 @@ def line_options(line_options_default, plot_function=None,
     def options_visible(name, value):
         linestyle.disabled = not value
         linewidth.disabled = not value
-        linecolour.children[0].disabled = not value
-        linecolour.children[1].children[0].disabled = not value
-        linecolour.children[1].children[1].disabled = not value
-        linecolour.children[1].children[2].disabled = not value
+        if len(linecolour.children) == 4:
+            linecolour.children[0].disabled = not value
+            linecolour.children[1].disabled = not value
+            linecolour.children[2].disabled = not value
+            linecolour.children[3].children[0].disabled = not value
+            linecolour.children[3].children[1].disabled = not value
+            linecolour.children[3].children[2].disabled = not value
+        else:
+            linecolour.children[0].disabled = not value
+            linecolour.children[1].children[0].disabled = not value
+            linecolour.children[1].children[1].disabled = not value
+            linecolour.children[1].children[2].disabled = not value
     options_visible('', line_options_default['show_line'])
     show_line.on_trait_change(options_visible, 'value')
 
@@ -608,13 +695,6 @@ def line_options(line_options_default, plot_function=None,
         show_line.on_trait_change(plot_function, 'value')
         linestyle.on_trait_change(plot_function, 'value')
         linewidth.on_trait_change(plot_function, 'value')
-        linecolour.children[0].on_trait_change(plot_function, 'value')
-        linecolour.children[1].children[0].on_trait_change(plot_function,
-                                                           'value')
-        linecolour.children[1].children[1].on_trait_change(plot_function,
-                                                           'value')
-        linecolour.children[1].children[2].on_trait_change(plot_function,
-                                                           'value')
 
     return line_options_wid
 
@@ -829,9 +909,11 @@ def marker_options(marker_options_default, plot_function=None,
                                  value=marker_options_default['markerstyle'],
                                  description='Style')
     markerfacecolour = colour_selection(
-        marker_options_default['markerfacecolour'], title='Face Colour')
+        marker_options_default['markerfacecolour'], title='Face Colour',
+        plot_function=plot_function)
     markeredgecolour = colour_selection(
-        marker_options_default['markeredgecolour'], title='Edge Colour')
+        marker_options_default['markeredgecolour'], title='Edge Colour',
+        plot_function=plot_function)
 
     # Options widget
     marker_options = ContainerWidget(children=[markerstyle, markersize,
@@ -896,20 +978,6 @@ def marker_options(marker_options_default, plot_function=None,
         markerstyle.on_trait_change(plot_function, 'value')
         markeredgewidth.on_trait_change(plot_function, 'value')
         markersize.on_trait_change(plot_function, 'value')
-        markerfacecolour.children[0].on_trait_change(plot_function, 'value')
-        markerfacecolour.children[1].children[0].on_trait_change(plot_function,
-                                                                 'value')
-        markerfacecolour.children[1].children[1].on_trait_change(plot_function,
-                                                                 'value')
-        markerfacecolour.children[1].children[2].on_trait_change(plot_function,
-                                                                 'value')
-        markeredgecolour.children[0].on_trait_change(plot_function, 'value')
-        markeredgecolour.children[1].children[0].on_trait_change(plot_function,
-                                                                 'value')
-        markeredgecolour.children[1].children[1].on_trait_change(plot_function,
-                                                                 'value')
-        markeredgecolour.children[1].children[2].on_trait_change(plot_function,
-                                                                 'value')
 
     return marker_options_wid
 
@@ -1151,7 +1219,7 @@ def font_options(font_options_default, plot_function=None,
                                 value=font_options_default['fontweight'],
                                 description='Weight')
     fontcolour = colour_selection(font_options_default['fontcolour'],
-                                  title='Colour')
+                                  title='Colour', plot_function=plot_function)
 
     # Options widget
     font_options = ContainerWidget(children=[fontname, fontsize, fontstyle,
@@ -1213,13 +1281,6 @@ def font_options(font_options_default, plot_function=None,
         fontstyle.on_trait_change(plot_function, 'value')
         fontsize.on_trait_change(plot_function, 'value')
         fontweight.on_trait_change(plot_function, 'value')
-        fontcolour.children[0].on_trait_change(plot_function, 'value')
-        fontcolour.children[1].children[0].on_trait_change(plot_function,
-                                                           'value')
-        fontcolour.children[1].children[1].on_trait_change(plot_function,
-                                                           'value')
-        fontcolour.children[1].children[2].on_trait_change(plot_function,
-                                                           'value')
 
     return font_options_wid
 

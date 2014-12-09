@@ -227,11 +227,10 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # all the labels with
         n_labels = len(self.labels_to_masks)
         ldms_dict = kwargs.get('landmarks_options',
-                               {'labelscolours': [np.random.random([3, ])
-                                                  for _ in range(n_labels)]})
-        labels_colours = ldms_dict.get('labelscolours',
-                                       [np.random.random([3, ])
-                                        for _ in range(n_labels)])
+                               {'linecolour': [np.random.random([3, ])
+                                               for _ in range(n_labels)]})
+        labels_colours = ldms_dict.get('linecolour', [np.random.random([3, ])
+                                                      for _ in range(n_labels)])
         if len(labels_colours) == 1:
             labels_colours *= n_labels
         elif len(labels_colours) != n_labels:

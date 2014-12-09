@@ -2451,41 +2451,52 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     viewer_options_default : list of `dict`
         A list of dictionaries with the initial selected viewer options per
         object. Example:
-            viewer_options_1={'show_line':True, # line-related
-                              'linewidth':10,
-                              'linecolour':['r'],
-                              'linestyle':'-',
-                              'show_marker':False, # marker-related
-                              'markersize':20,
-                              'markerfacecolour':['r'],
-                              'markeredgecolour':['b'],
-                              'markerstyle':'o',
-                              'markeredgewidth':1,
-                              'show_font':True, # number-related
-                              'fontname':'serif',
-                              'fontsize':14,
-                              'fontstyle':'italic',
-                              'fontweight':'bold',
-                              'fontcolour':[[1., 1., 1.]],
-                              'x_scale': 1., # figure-related
-                              'y_scale': 1.,
-                              'show_axes': True,
-                              'show_legend':True, # legend-related
+
+            landmarks_options = {'show_line':True, # line-related
+                                 'linewidth':10,
+                                 'labels':['eye', 'nose'],
+                                 'linecolour':['r', 'g'],
+                                 'linestyle':'-',
+                                 'show_marker':False, # marker-related
+                                 'markersize':20,
+                                 'markerfacecolour':['r'],
+                                 'markeredgecolour':['b'],
+                                 'markerstyle':'o',
+                                 'markeredgewidth':1}
+
+            numbering_options = {'show_font':True,
+                                 'fontname':'sans-serif',
+                                 'fontsize':10,
+                                 'fontstyle':'italic',
+                                 'fontweight':'bold',
+                                 'fontcolour':[[1., 1., 1.]]}
+
+            legend_options = {'show_legend':True,
                               'title':'',
-                              'fontname':'serif',
+                              'fontname':'sans-serif',
                               'fontstyle':'normal',
                               'fontsize':10,
                               'fontweight':'normal',
+                              'markerscale':2.,
                               'location':2,
                               'bbox_to_anchor':(1.05, 1.),
                               'borderaxespad':1.,
-                              'n_columns':1,
-                              'horizontal_spacing':1.,
-                              'vertical_spacing':1.,
+                              'n_columns':2,
+                              'horizontal_spacing':3.,
+                              'vertical_spacing':10.,
                               'draw_border':True,
-                              'border_padding':0.5,
-                              'draw_shadow':False,
+                              'border_padding':9.5,
+                              'draw_shadow':True,
                               'fancy_corners':True}
+
+            figure_options = {'x_scale':1.,
+                              'y_scale':1.,
+                              'show_axes':True}
+
+            viewer_options_default = {'landmarks_options':landmarks_options,
+                                      'numbering_options':numbering_options,
+                                      'legend_options':legend_options,
+                                      'figure_options': figure_options}
 
     options_tabs : `list` of `str`
         List that defines the ordering of the options tabs. It can take one of
@@ -2536,7 +2547,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     for o in options_tabs:
         if o == 'lines':
             options_widgets.append(
-                line_options(viewer_options_default[0],
+                line_options(viewer_options_default[0]['landmarks_options'],
                              toggle_show_visible=False,
                              toggle_show_default=True,
                              plot_function=plot_function, toggle_title='Lines',
@@ -2544,7 +2555,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             tab_titles.append('Lines')
         elif o == 'markers':
             options_widgets.append(
-                marker_options(viewer_options_default[0],
+                marker_options(viewer_options_default[0]['landmarks_options'],
                                toggle_show_visible=False,
                                toggle_show_default=True,
                                plot_function=plot_function,
@@ -2553,7 +2564,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             tab_titles.append('Markers')
         elif o == 'numbers':
             options_widgets.append(
-                font_options(viewer_options_default[0],
+                font_options(viewer_options_default[0]['numbering_options'],
                              toggle_show_visible=False,
                              toggle_show_default=True,
                              plot_function=plot_function,
@@ -2562,7 +2573,7 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             tab_titles.append('Numbers')
         elif o == 'figure_one':
             options_widgets.append(
-                figure_options(viewer_options_default[0],
+                figure_options(viewer_options_default[0]['figure_options'],
                                plot_function=plot_function,
                                figure_scale_bounds=(0.1, 2),
                                figure_scale_step=0.1, figure_scale_visible=True,
@@ -2571,19 +2582,16 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             tab_titles.append('Figure')
         elif o == 'figure_two':
             options_widgets.append(
-                figure_options_two_scales(viewer_options_default[0],
-                                          plot_function=plot_function,
-                                          coupled_default=False,
-                                          figure_scales_bounds=(0.1, 2),
-                                          figure_scales_step=0.1,
-                                          figure_scales_visible=True,
-                                          show_axes_visible=True,
-                                          toggle_show_default=True,
-                                          toggle_show_visible=False))
+                figure_options_two_scales(
+                    viewer_options_default[0]['figure_options'],
+                    plot_function=plot_function, coupled_default=False,
+                    figure_scales_bounds=(0.1, 2), figure_scales_step=0.1,
+                    figure_scales_visible=True, show_axes_visible=True,
+                    toggle_show_default=True, toggle_show_visible=False))
             tab_titles.append('Figure')
         elif o == 'legend':
             options_widgets.append(
-                legend_options(viewer_options_default[0],
+                legend_options(viewer_options_default[0]['legend_options'],
                                toggle_show_visible=False,
                                toggle_show_default=True,
                                plot_function=plot_function,
@@ -2608,23 +2616,29 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
     def update_widgets(name, value):
         for k, o in enumerate(options_tabs):
             if o == 'lines':
-                update_line_options(options_widgets[k],
-                                    viewer_options_default[value])
+                update_line_options(
+                    options_widgets[k],
+                    viewer_options_default[value]['landmarks_options'])
             elif o == 'markers':
-                update_marker_options(options_widgets[k],
-                                      viewer_options_default[value])
+                update_marker_options(
+                    options_widgets[k],
+                    viewer_options_default[value]['landmarks_options'])
             elif o == 'numbers':
-                update_font_options(options_widgets[k],
-                                    viewer_options_default[value])
+                update_font_options(
+                    options_widgets[k],
+                    viewer_options_default[value]['numbering_options'])
             elif o == 'figure_one':
-                update_figure_options(options_widgets[k],
-                                      viewer_options_default[value])
+                update_figure_options(
+                    options_widgets[k],
+                    viewer_options_default[value]['figure_options'])
             elif o == 'figure_two':
-                update_figure_options_two_scales(options_widgets[k],
-                                                 viewer_options_default[value])
+                update_figure_options_two_scales(
+                    options_widgets[k],
+                    viewer_options_default[value]['figure_options'])
             elif o == 'legend':
-                update_legend_options(options_widgets[k],
-                                      viewer_options_default[value])
+                update_legend_options(
+                    options_widgets[k],
+                    viewer_options_default[value]['legend_options'])
     selection.on_trait_change(update_widgets, 'value')
 
     return viewer_options_wid
