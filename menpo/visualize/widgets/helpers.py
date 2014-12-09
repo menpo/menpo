@@ -23,7 +23,9 @@ from .lowlevelhelpers import (colour_selection, format_colour_selection,
                               format_figure_options_two_scales,
                               update_figure_options_two_scales,
                               index_selection_slider, index_selection_buttons,
-                              format_index_selection, update_index_selection)
+                              format_index_selection, update_index_selection,
+                              legend_options, format_legend_options,
+                              update_legend_options)
 
 
 def channel_options(n_channels, image_is_masked, plot_function=None,
@@ -2467,31 +2469,28 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                               'fontcolour':[[1., 1., 1.]],
                               'x_scale': 1., # figure-related
                               'y_scale': 1.,
-                              'show_axes': True}
-            viewer_options_2={'show_line':True, # line-related
-                              'linewidth':10,
-                              'linecolour':['r'],
-                              'linestyle':'-',
-                              'show_marker':False, # marker-related
-                              'markersize':20,
-                              'markerfacecolour':['r'],
-                              'markeredgecolour':['b'],
-                              'markerstyle':'o',
-                              'markeredgewidth':1,
-                              'show_font':True, # number-related
+                              'show_axes': True,
+                              'show_legend':True, # legend-related
+                              'title':'',
                               'fontname':'serif',
-                              'fontsize':14,
-                              'fontstyle':'italic',
-                              'fontweight':'bold',
-                              'fontcolour':[[1., 1., 1.]],
-                              'x_scale': 1., # figure-related
-                              'y_scale': 1.,
-                              'show_axes': True}
-            viewer_options_default = [viewer_options_1, viewer_options_2]
+                              'fontstyle':'normal',
+                              'fontsize':10,
+                              'fontweight':'normal',
+                              'location':2,
+                              'bbox_to_anchor':(1.05, 1.),
+                              'borderaxespad':1.,
+                              'n_columns':1,
+                              'horizontal_spacing':1.,
+                              'vertical_spacing':1.,
+                              'draw_border':True,
+                              'border_padding':0.5,
+                              'draw_shadow':False,
+                              'fancy_corners':True}
 
     options_tabs : `list` of `str`
         List that defines the ordering of the options tabs. It can take one of
-        {``lines``, ``markers``, ``numbers``, ``figure_one``, ``figure_two``}
+        {``lines``, ``markers``, ``numbers``, ``figure_one``, ``figure_two``,
+        ``legend``}
 
     objects_names : `list` of `str`, optional
         A list with the names of the objects that will be used in the selection
@@ -2582,6 +2581,15 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
                                           toggle_show_default=True,
                                           toggle_show_visible=False))
             tab_titles.append('Figure')
+        elif o == 'legend':
+            options_widgets.append(
+                legend_options(viewer_options_default[0],
+                               toggle_show_visible=False,
+                               toggle_show_default=True,
+                               plot_function=plot_function,
+                               toggle_title='Legend',
+                               show_checkbox_title='Show legend'))
+            tab_titles.append('Legend')
     options = TabWidget(children=options_widgets)
 
     # Final widget
@@ -2614,6 +2622,9 @@ def viewer_options(viewer_options_default, options_tabs, objects_names=None,
             elif o == 'figure_two':
                 update_figure_options_two_scales(options_widgets[k],
                                                  viewer_options_default[value])
+            elif o == 'legend':
+                update_legend_options(options_widgets[k],
+                                      viewer_options_default[value])
     selection.on_trait_change(update_widgets, 'value')
 
     return viewer_options_wid
@@ -2674,10 +2685,15 @@ def format_viewer_options(viewer_options_wid, container_padding='6px',
         elif o == 'figure_one':
             format_figure_options(
                 viewer_options_wid.children[1].children[1].children[k],
-                border_visible=False)
+                border_visible=suboptions_border_visible)
         elif o == 'figure_two':
             format_figure_options_two_scales(
                 viewer_options_wid.children[1].children[1].children[k],
+                border_visible=suboptions_border_visible)
+        elif o == 'legend':
+            format_legend_options(
+                viewer_options_wid.children[1].children[1].children[k],
+                suboptions_border_visible=suboptions_border_visible,
                 border_visible=False)
 
     # set titles

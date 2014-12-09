@@ -4,7 +4,8 @@ from IPython.html.widgets import (ContainerWidget, IntSliderWidget,
                                   DropdownWidget, LatexWidget, ButtonWidget,
                                   TextWidget, TabWidget, BoundedIntTextWidget,
                                   BoundedFloatTextWidget, TextareaWidget,
-                                  ImageWidget, FloatSliderWidget)
+                                  ImageWidget, FloatSliderWidget,
+                                  FloatTextWidget)
 from collections import OrderedDict
 from StringIO import StringIO
 
@@ -1053,7 +1054,7 @@ def font_options(font_options_default, plot_function=None,
                  toggle_show_visible=True, toggle_show_default=True,
                  toggle_title='Font Options', show_checkbox_title='Show text'):
     r"""
-    Creates a widget with Line Options. Specifically, it has:
+    Creates a widget with Font Options. Specifically, it has:
         1) A checkbox that controls text's visibility.
         2) A dropdown menu for font name.
         3) A bounded int text box for font size.
@@ -1208,6 +1209,7 @@ def font_options(font_options_default, plot_function=None,
     # assign plot_function
     if plot_function is not None:
         show_font.on_trait_change(plot_function, 'value')
+        fontname.on_trait_change(plot_function, 'value')
         fontstyle.on_trait_change(plot_function, 'value')
         fontsize.on_trait_change(plot_function, 'value')
         fontweight.on_trait_change(plot_function, 'value')
@@ -1255,8 +1257,8 @@ def format_font_options(font_options_wid, container_padding='6px',
         Defines whether to draw the border line around the widget.
 
     suboptions_border_visible : `boolean`, optional
-        Defines whether to draw the border line around the line options, under
-        the show line checkbox.
+        Defines whether to draw the border line around the font options, under
+        the show font checkbox.
     """
     # align font options with checkbox
     font_options_wid.children[1].add_class('align-end')
@@ -1778,6 +1780,570 @@ def update_figure_options_two_scales(figure_options_wid, figure_options_dict):
             figure_options_dict['y_scale']
         figure_options_wid.children[1].children[2].value = \
             figure_options_dict['x_scale'] == figure_options_dict['y_scale']
+
+
+def legend_options(legend_options_default, plot_function=None,
+                   toggle_show_visible=True, toggle_show_default=True,
+                   toggle_title='Legend Options',
+                   show_checkbox_title='Show legend'):
+    r"""
+    Creates a widget with Legend Options. Specifically, it has:
+        1) A checkbox that controls legend's visibility.
+        2) A tab widget with location, font and formatting options.
+        3) A toggle button that controls the visibility of all the above, i.e.
+           the font options.
+
+    The structure of the widgets is the following:
+        legend_options_wid.children = [toggle_button, options]
+        options.children = [show_legend_checkbox, other_options]
+        other_options.children = [location, font, formatting]
+        ...
+
+    The returned widget saves the selected values in the following dictionary:
+        legend_options_wid.selected_values
+
+    To fix the alignment within this widget please refer to
+    `format_legend_options()` function.
+
+    Parameters
+    ----------
+    legend_options_default : `dict`
+        The initial selected font options.
+        Example:
+            legend_options_default = {'show_legend':True,
+                                      'title':'',
+                                      'fontname':'serif',
+                                      'fontstyle':'normal',
+                                      'fontsize':10,
+                                      'fontweight':'normal',
+                                      'location':2,
+                                      'bbox_to_anchor':(1.05, 1.),
+                                      'borderaxespad':1.,
+                                      'n_columns':1,
+                                      'horizontal_spacing':1.,
+                                      'vertical_spacing':1.,
+                                      'draw_border':True,
+                                      'border_padding':0.5,
+                                      'draw_shadow':False,
+                                      'fancy_corners':True}
+
+    plot_function : `function` or None, optional
+        The plot function that is executed when a widgets' value changes.
+        If None, then nothing is assigned.
+
+    toggle_show_default : `boolean`, optional
+        Defines whether the options will be visible upon construction.
+
+    toggle_show_visible : `boolean`, optional
+        The visibility of the toggle button.
+
+    toggle_title : `str`, optional
+        The title of the toggle button.
+
+    show_checkbox_title : `str`, optional
+        The description of the show text checkbox.
+    """
+    #Create widgets
+    # toggle button
+    but = ToggleButtonWidget(description=toggle_title,
+                             value=toggle_show_default,
+                             visible=toggle_show_visible)
+
+    # show legend
+    show_legend = CheckboxWidget(description=show_checkbox_title,
+                                 value=legend_options_default['show_legend'])
+
+    # font-related
+    fontname_dict = OrderedDict()
+    fontname_dict['serif'] = 'serif'
+    fontname_dict['sans-serif'] = 'sans-serif'
+    fontname_dict['cursive'] = 'cursive'
+    fontname_dict['fantasy'] = 'fantasy'
+    fontname_dict['monospace'] = 'monospace'
+    fontname = DropdownWidget(values=fontname_dict,
+                              value=legend_options_default['fontname'],
+                              description='Font')
+    fontsize = BoundedIntTextWidget(description='Size',
+                                    value=legend_options_default['fontsize'],
+                                    min=2)
+    fontstyle_dict = OrderedDict()
+    fontstyle_dict['normal'] = 'normal'
+    fontstyle_dict['italic'] = 'italic'
+    fontstyle_dict['oblique'] = 'oblique'
+    fontstyle = DropdownWidget(values=fontstyle_dict,
+                               value=legend_options_default['fontstyle'],
+                               description='Style')
+    fontweight_dict = OrderedDict()
+    fontweight_dict['normal'] = 'normal'
+    fontweight_dict['ultralight'] = 'ultralight'
+    fontweight_dict['light'] = 'light'
+    fontweight_dict['regular'] = 'regular'
+    fontweight_dict['book'] = 'book'
+    fontweight_dict['medium'] = 'medium'
+    fontweight_dict['roman'] = 'roman'
+    fontweight_dict['semibold'] = 'semibold'
+    fontweight_dict['demibold'] = 'demibold'
+    fontweight_dict['demi'] = 'demi'
+    fontweight_dict['bold'] = 'bold'
+    fontweight_dict['heavy'] = 'heavy'
+    fontweight_dict['extra bold'] = 'extra bold'
+    fontweight_dict['black'] = 'black'
+    fontweight = DropdownWidget(values=fontweight_dict,
+                                value=legend_options_default['fontweight'],
+                                description='Weight')
+    title = TextWidget(description='Title',
+                       value=legend_options_default['title'])
+    font_cont_tmp = ContainerWidget(
+        children=[ContainerWidget(children=[fontname, fontsize]),
+                  ContainerWidget(children=[fontstyle, fontweight])])
+    font_cont = ContainerWidget(children=[title, font_cont_tmp])
+
+    # location-related
+    location_dict = OrderedDict()
+    location_dict['best'] = 0
+    location_dict['upper right'] = 1
+    location_dict['upper left'] = 2
+    location_dict['lower left'] = 3
+    location_dict['lower right'] = 4
+    location_dict['right'] = 5
+    location_dict['center left'] = 6
+    location_dict['center right'] = 7
+    location_dict['lower center'] = 8
+    location_dict['upper center'] = 9
+    location_dict['center'] = 10
+    location = DropdownWidget(values=location_dict,
+                              value=legend_options_default['location'],
+                              description='Predefined location')
+    bbox_to_anchor_x = FloatTextWidget(
+        value=legend_options_default['bbox_to_anchor'][0],
+        description='Arbitrary location')
+    bbox_to_anchor_y = FloatTextWidget(
+        value=legend_options_default['bbox_to_anchor'][1], description='')
+    bbox_to_anchor = ContainerWidget(children=[bbox_to_anchor_x,
+                                               bbox_to_anchor_y])
+    borderaxespad = BoundedFloatTextWidget(
+        value=legend_options_default['borderaxespad'],
+        description='Distance to axes', min=0.)
+    location_cont = ContainerWidget(children=[location, bbox_to_anchor,
+                                              borderaxespad])
+
+    # formatting-related
+    n_columns = BoundedIntTextWidget(value=legend_options_default['n_columns'],
+                                     description='Columns', min=0)
+    horizontal_spacing = BoundedFloatTextWidget(
+        value=legend_options_default['horizontal_spacing'],
+        description='Horizontal space', min=0.)
+    vertical_spacing = BoundedFloatTextWidget(
+        value=legend_options_default['vertical_spacing'],
+        description='Vertical space', min=0.)
+    spacing_tmp = ContainerWidget(children=[horizontal_spacing,
+                                            vertical_spacing])
+    spacing = ContainerWidget(children=[n_columns, spacing_tmp])
+    draw_border = CheckboxWidget(description='Border',
+                                 value=legend_options_default['draw_border'])
+    border_padding = BoundedFloatTextWidget(
+        value=legend_options_default['border_padding'],
+        description='Border pad', min=0.)
+    border = ContainerWidget(children=[draw_border, border_padding])
+    draw_shadow = CheckboxWidget(description='Shadow',
+                                 value=legend_options_default['draw_shadow'])
+    fancy_corners = CheckboxWidget(
+        description='Rounded corners',
+        value=legend_options_default['fancy_corners'])
+    shadow_fancy = ContainerWidget(children=[draw_shadow, fancy_corners])
+
+    formatting_cont = ContainerWidget(children=[spacing, border, shadow_fancy])
+
+    # Options widget
+    tab_options = TabWidget(children=[location_cont, font_cont,
+                                      formatting_cont])
+    options_wid = ContainerWidget(children=[show_legend, tab_options])
+
+    # Final widget
+    legend_options_wid = ContainerWidget(children=[but, options_wid])
+
+    # Assign output
+    legend_options_wid.selected_values = legend_options_default
+
+    # font options visibility
+    def options_visible(name, value):
+        title.disabled = not value
+        fontname.disabled = not value
+        fontsize.disabled = not value
+        fontstyle.disabled = not value
+        fontweight.disabled = not value
+        location.disabled = not value
+        bbox_to_anchor_x.disabled = not value
+        bbox_to_anchor_y.disabled = not value
+        borderaxespad.disabled = not value
+        n_columns.disabled = not value
+        horizontal_spacing.disabled = not value
+        vertical_spacing.disabled = not value
+        draw_border.disabled = not value
+        border_padding.disabled = not value or not draw_border.value
+        draw_shadow.disabled = not value
+        fancy_corners.disabled = not value
+    options_visible('', legend_options_default['show_legend'])
+    show_legend.on_trait_change(options_visible, 'value')
+
+    # get options functions
+    def border_pad_disable(name, value):
+        border_padding.disabled = not value
+    draw_border.on_trait_change(border_pad_disable, 'value')
+
+    def save_show_legend(name, value):
+        legend_options_wid.selected_values['show_legend'] = value
+    show_legend.on_trait_change(save_show_legend, 'value')
+
+    def save_title(name, value):
+        legend_options_wid.selected_values['title'] = value
+    title.on_trait_change(save_title, 'value')
+
+    def save_fontname(name, value):
+        legend_options_wid.selected_values['fontname'] = value
+    fontname.on_trait_change(save_fontname, 'value')
+
+    def save_fontsize(name, value):
+        legend_options_wid.selected_values['fontsize'] = int(value)
+    fontsize.on_trait_change(save_fontsize, 'value')
+
+    def save_fontstyle(name, value):
+        legend_options_wid.selected_values['fontstyle'] = value
+    fontstyle.on_trait_change(save_fontstyle, 'value')
+
+    def save_fontweight(name, value):
+        legend_options_wid.selected_values['fontweight'] = value
+    fontweight.on_trait_change(save_fontweight, 'value')
+
+    def save_location(name, value):
+        legend_options_wid.selected_values['location'] = value
+    location.on_trait_change(save_location, 'value')
+
+    def save_bbox_to_anchor(name, value):
+        legend_options_wid.selected_values['bbox_to_anchor'] = \
+            (bbox_to_anchor_x.value, bbox_to_anchor_y.value)
+    bbox_to_anchor_x.on_trait_change(save_bbox_to_anchor, 'value')
+    bbox_to_anchor_y.on_trait_change(save_bbox_to_anchor, 'value')
+
+    def save_borderaxespad(name, value):
+        legend_options_wid.selected_values['borderaxespad'] = float(value)
+    borderaxespad.on_trait_change(save_borderaxespad, 'value')
+
+    def save_n_columns(name, value):
+        legend_options_wid.selected_values['n_columns'] = int(value)
+    n_columns.on_trait_change(save_n_columns, 'value')
+
+    def save_horizontal_spacing(name, value):
+        legend_options_wid.selected_values['horizontal_spacing'] = float(value)
+    horizontal_spacing.on_trait_change(save_horizontal_spacing, 'value')
+
+    def save_vertical_spacing(name, value):
+        legend_options_wid.selected_values['vertical_spacing'] = float(value)
+    vertical_spacing.on_trait_change(save_vertical_spacing, 'value')
+
+    def save_draw_border(name, value):
+        legend_options_wid.selected_values['draw_border'] = value
+    draw_border.on_trait_change(save_draw_border, 'value')
+
+    def save_border_padding(name, value):
+        legend_options_wid.selected_values['border_padding'] = float(value)
+    border_padding.on_trait_change(save_border_padding, 'value')
+
+    def save_draw_shadow(name, value):
+        legend_options_wid.selected_values['draw_shadow'] = value
+    draw_shadow.on_trait_change(save_draw_shadow, 'value')
+
+    def save_fancy_corners(name, value):
+        legend_options_wid.selected_values['fancy_corners'] = value
+    fancy_corners.on_trait_change(save_fancy_corners, 'value')
+
+    # Toggle button function
+    def toggle_fun(name, value):
+        options_wid.visible = value
+    toggle_fun('', toggle_show_default)
+    but.on_trait_change(toggle_fun, 'value')
+
+    # assign plot_function
+    if plot_function is not None:
+        show_legend.on_trait_change(plot_function, 'value')
+        title.on_trait_change(plot_function, 'value')
+        fontname.on_trait_change(plot_function, 'value')
+        fontstyle.on_trait_change(plot_function, 'value')
+        fontsize.on_trait_change(plot_function, 'value')
+        fontweight.on_trait_change(plot_function, 'value')
+        location.on_trait_change(plot_function, 'value')
+        bbox_to_anchor_x.on_trait_change(plot_function, 'value')
+        bbox_to_anchor_y.on_trait_change(plot_function, 'value')
+        borderaxespad.on_trait_change(plot_function, 'value')
+        n_columns.on_trait_change(plot_function, 'value')
+        horizontal_spacing.on_trait_change(plot_function, 'value')
+        vertical_spacing.on_trait_change(plot_function, 'value')
+        draw_border.on_trait_change(plot_function, 'value')
+        border_padding.on_trait_change(plot_function, 'value')
+        draw_shadow.on_trait_change(plot_function, 'value')
+        fancy_corners.on_trait_change(plot_function, 'value')
+
+    return legend_options_wid
+
+
+def format_legend_options(legend_options_wid, container_padding='6px',
+                          container_margin='6px',
+                          container_border='1px solid black',
+                          toggle_button_font_weight='bold',
+                          border_visible=True, suboptions_border_visible=False):
+    r"""
+    Function that corrects the align (style format) of a given legend_options
+    widget. Usage example:
+        legend_options_wid = legend_options()
+        display(legend_options_wid)
+        format_legend_options(legend_options_wid)
+
+    Parameters
+    ----------
+    legend_options_wid :
+        The widget object generated by the `legend_options()` function.
+
+    container_padding : `str`, optional
+        The padding around the widget, e.g. '6px'
+
+    container_margin : `str`, optional
+        The margin around the widget, e.g. '6px'
+
+    container_border : `str`, optional
+        The border around the widget, e.g. '1px solid black'
+
+    toggle_button_font_weight : `str`
+        The font weight of the toggle button, e.g. 'bold'
+
+    border_visible : `boolean`, optional
+        Defines whether to draw the border line around the widget.
+
+    suboptions_border_visible : `boolean`, optional
+        Defines whether to draw the border line around the legend options, under
+        the show legend checkbox.
+    """
+    # set tab titles
+    tab_titles = ['Location', 'Font', 'Formatting']
+    for (k, tl) in enumerate(tab_titles):
+        legend_options_wid.children[1].children[1].set_title(k, tl)
+
+    # align font-related options
+    legend_options_wid.children[1].children[1].children[1].children[1].\
+        remove_class('vbox')
+    legend_options_wid.children[1].children[1].children[1].children[1].\
+        add_class('hbox')
+
+    # set fontsize text box width
+    legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[1].set_css('width', '1cm')
+
+    # align and set width of bbox_to_anchor
+    legend_options_wid.children[1].children[1].children[0].children[1].\
+        remove_class('vbox')
+    legend_options_wid.children[1].children[1].children[0].children[1].\
+        add_class('hbox')
+    legend_options_wid.children[1].children[1].children[0].children[1].children[0].\
+        set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[0].children[1].children[1].\
+        set_css('width', '1cm')
+
+    # set distance to axes (borderaxespad) text box width
+    legend_options_wid.children[1].children[1].children[0].children[2].\
+        set_css('width', '1cm')
+
+    # align and set width of border options
+    legend_options_wid.children[1].children[1].children[2].children[1].\
+        remove_class('vbox')
+    legend_options_wid.children[1].children[1].children[2].children[1].\
+        add_class('hbox')
+    legend_options_wid.children[1].children[1].children[2].children[1].children[0].\
+        set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[2].children[1].children[1].\
+        set_css('width', '1cm')
+
+    # align shadow and fancy checkboxes
+    legend_options_wid.children[1].children[1].children[2].children[2].\
+        remove_class('vbox')
+    legend_options_wid.children[1].children[1].children[2].children[2].\
+        add_class('hbox')
+
+    # align and set width of spacing options
+    legend_options_wid.children[1].children[1].children[2].children[0].children[1].\
+        add_class('align-end')
+    legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[0].set_css('width', '1cm')
+    legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[1].set_css('width', '1cm')
+
+    # align n_columns with spacing and set width
+    legend_options_wid.children[1].children[1].children[2].children[0].\
+        remove_class('vbox')
+    legend_options_wid.children[1].children[1].children[2].children[0].\
+        add_class('hbox')
+    legend_options_wid.children[1].children[1].children[2].children[0].children[0].set_css('width', '1cm')
+
+    # border around options
+    if suboptions_border_visible:
+        legend_options_wid.children[1].children[1].set_css('border',
+                                                           container_border)
+
+    # set toggle button font bold
+    legend_options_wid.children[0].set_css('font-weight',
+                                           toggle_button_font_weight)
+
+    # margin and border around container widget
+    legend_options_wid.set_css('padding', container_padding)
+    legend_options_wid.set_css('margin', container_margin)
+    if border_visible:
+        legend_options_wid.set_css('border', container_border)
+
+
+def update_legend_options(legend_options_wid, legend_options_dict):
+    r"""
+    Function that updates the state of a given font_options widget. Usage
+    example:
+        legend_options_default = {'show_legend':True,
+                                  'title':'',
+                                  'fontname':'serif',
+                                  'fontstyle':'normal',
+                                  'fontsize':10,
+                                  'fontweight':'normal',
+                                  'location':2,
+                                  'bbox_to_anchor':(1.05, 1.),
+                                  'borderaxespad':1.,
+                                  'n_columns':1,
+                                  'horizontal_spacing':1.,
+                                  'vertical_spacing':1.,
+                                  'draw_border':True,
+                                  'border_padding':0.5,
+                                  'draw_shadow':False,
+                                  'fancy_corners':True}
+        legend_options_wid = legend_options(legend_options_default)
+        display(legend_options_wid)
+        format_legend_options(legend_options_wid)
+        legend_options_default = {'show_legend':True,
+                                  'title':'',
+                                  'fontname':'serif',
+                                  'fontstyle':'normal',
+                                  'fontsize':10,
+                                  'fontweight':'normal',
+                                  'location':2,
+                                  'bbox_to_anchor':(1.05, 1.),
+                                  'borderaxespad':1.,
+                                  'n_columns':1,
+                                  'horizontal_spacing':1.,
+                                  'vertical_spacing':1.,
+                                  'draw_border':True,
+                                  'border_padding':0.5,
+                                  'draw_shadow':False,
+                                  'fancy_corners':True}
+        update_legend_options(legend_options_wid, legend_options_dict)
+
+    Parameters
+    ----------
+    legend_options_wid :
+        The widget object generated by the `legend_options()` function.
+
+    legend_options_dict : `dict`
+        The new set of options. For example:
+            legend_options_dict = {'show_legend':True,
+                                   'title':'',
+                                   'fontname':'serif',
+                                   'fontstyle':'normal',
+                                   'fontsize':10,
+                                   'fontweight':'normal',
+                                   'location':2,
+                                   'bbox_to_anchor':(1.05, 1.),
+                                   'borderaxespad':1.,
+                                   'n_columns':1,
+                                   'horizontal_spacing':1.,
+                                   'vertical_spacing':1.,
+                                   'draw_border':True,
+                                   'border_padding':0.5,
+                                   'draw_shadow':False,
+                                   'fancy_corners':True}
+    """
+    # Assign new options dict to selected_values
+    legend_options_wid.selected_values = legend_options_dict
+
+    # update show legend checkbox
+    if 'show_legend' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[0].value = \
+            legend_options_dict['show_legend']
+
+    # update title
+    if 'title' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[0].value = \
+            legend_options_dict['title']
+
+    # update fontname dropdown menu
+    if 'fontname' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[0].value = \
+            legend_options_dict['fontname']
+
+    # update fontsize text box
+    if 'fontsize' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[1].children[0].children[1].value = \
+            int(legend_options_dict['fontsize'])
+
+    # update fontstyle dropdown menu
+    if 'fontstyle' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[1].children[1].children[0].value = \
+            legend_options_dict['fontstyle']
+
+    # update fontweight dropdown menu
+    if 'fontweight' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[1].children[1].children[1].children[1].value = \
+            legend_options_dict['fontweight']
+
+    # update location dropdown menu
+    if 'location' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[0].children[0].value = \
+            legend_options_dict['location']
+
+    # update bbox_to_anchor
+    if 'bbox_to_anchor' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[0].children[1].children[0].value = \
+            float(legend_options_dict['bbox_to_anchor'][0])
+        legend_options_wid.children[1].children[1].children[0].children[1].children[1].value = \
+            float(legend_options_dict['bbox_to_anchor'][1])
+
+    # update borderaxespad
+    if 'borderaxespad' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[0].children[2].value = \
+            legend_options_dict['borderaxespad']
+
+    # update n_columns text box
+    if 'n_columns' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[0].children[0].value = \
+            int(legend_options_dict['n_columns'])
+
+    # update horizontal_spacing text box
+    if 'horizontal_spacing' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[0].value = \
+            float(legend_options_dict['horizontal_spacing'])
+
+    # update vertical_spacing text box
+    if 'vertical_spacing' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[0].children[1].children[1].value = \
+            float(legend_options_dict['vertical_spacing'])
+
+    # update draw_border
+    if 'draw_border' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[1].children[0].value = \
+            legend_options_dict['draw_border']
+
+    # update border_padding text box
+    if 'border_padding' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[1].children[1].value = \
+            float(legend_options_dict['border_padding'])
+
+    # update draw_shadow
+    if 'draw_shadow' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[2].children[0].value = \
+            legend_options_dict['draw_shadow']
+
+    # update draw_shadow
+    if 'fancy_corners' in legend_options_dict.keys():
+        legend_options_wid.children[1].children[1].children[2].children[2].children[1].value = \
+            legend_options_dict['fancy_corners']
 
 
 def hog_options(toggle_show_default=True, toggle_show_visible=True):

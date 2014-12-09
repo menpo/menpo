@@ -161,12 +161,12 @@ class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
         points = self.points[:, ::-1] if image_view else self.points
 
         # Get options values or define the defaults
-        c = kwargs.get('marker_colours', 'b')
-        s = kwargs.get('marker_sizes', 20)
-        marker = kwargs.get('marker_styles', 'o')
-        linewidths = kwargs.get('line_widths', 1)
-        edgecolors = kwargs.get('edge_colours', None)
-        facecolors = kwargs.get('face_colours', None)
+        c = kwargs.get('markercolour', 'b')
+        s = kwargs.get('markersize', 20)
+        marker = kwargs.get('markerstyle', 'o')
+        linewidths = kwargs.get('markeredgewidth', 1)
+        edgecolors = kwargs.get('markeredgecolour', 'k')
+        facecolors = kwargs.get('markerfacecolour', 'b')
         cmap = kwargs.get('colourmap', None)
 
         # Scatter using the options
@@ -195,9 +195,9 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         ax = plt.gca()
 
         # Get options values or define the defaults
-        colors = kwargs.get('line_colours', 'b')
-        linestyles = kwargs.get('line_styles', 'solid')
-        linewidths = kwargs.get('line_widths', 1)
+        colors = kwargs.get('linecolour', 'b')
+        linestyles = kwargs.get('linestyle', 'solid')
+        linewidths = kwargs.get('linewidth', 1)
         cmap = kwargs.get('colourmap', None)
 
         # Draw line objects
@@ -226,7 +226,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # which case we generate random colours) or a single colour to colour
         # all the labels with
         n_labels = len(self.labels_to_masks)
-        labels_colours = kwargs.get('labels_colours',
+        labels_colours = kwargs.get('labelscolours',
                                     [np.random.random([3, ])
                                      for _ in range(n_labels)])
         if len(labels_colours) == 1:
@@ -246,7 +246,7 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            kwargs['line_colours'] = labels_colours[i]
+            kwargs['linecolour'] = labels_colours[i]
             kwargs['label'] = '{0}: {1}'.format(self.group, label)
             pc.view_on(self.figure_id, image_view=image_view, **kwargs)
 
