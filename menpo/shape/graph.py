@@ -829,10 +829,66 @@ class PointGraph(object):
     def __init__(self, points, adjacency_array):
         _check_n_points(points, adjacency_array)
 
-    def view(self, figure_id=None, new_figure=False, **kwargs):
-        return PointGraphViewer(figure_id, new_figure,
-                                self.points,
-                                self.adjacency_array).render(**kwargs)
+    def view(self, figure_id=None, new_figure=False, image_view=False,
+             line_colour='r', line_style='-', line_width=1., marker_style='o',
+             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+             marker_edge_width=1.):
+        r"""
+        Visualization of the :map:`PointGraph`.
+
+        Parameters
+        ----------
+        figure_id : optional
+            The id of the figure to be used.
+
+        new_figure : `boolean`, optional
+            If ``True``, a new figure is created.
+
+        image_view : `boolean`, optional
+            If ``True``, the x and y axes are flipped.
+
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+
+        line_width : `float`, optional
+            The width of the lines.
+
+        marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
+                        ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
+                        ``1``, ``2``, ``3``, ``4``, ``8``}, optional
+            The style of the markers.
+
+        marker_size : `int`, optional
+            The size of the markers in points^2.
+
+        marker_face_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The face (filling) colour of the markers.
+
+        marker_edge_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``}
+                             or ``(3, )`` `ndarray`, optional
+            The edge colour of the markers.
+
+        marker_edge_width : `float`, optional
+            The width of the markers' edge.
+
+        Returns
+        -------
+        viewer : :map:`PointGraphViewer`
+            The viewer object.
+        """
+        return PointGraphViewer(figure_id, new_figure, self.points,
+                                self.adjacency_array).render(
+            image_view=image_view, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):

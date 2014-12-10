@@ -1,7 +1,7 @@
 import numpy as np
 from warnings import warn
 from scipy.spatial.distance import cdist
-from menpo.visualize import PointCloudViewer
+from menpo.visualize import PointCloudViewer, PointGraphViewer
 from menpo.shape.base import Shape
 
 
@@ -170,8 +170,9 @@ class PointCloud(Shape):
         return max_b - min_b
 
     def view(self, figure_id=None, new_figure=False, image_view=False,
-             marker_style='o', marker_size=20, marker_face_colour='b',
-             marker_edge_colour='k', marker_edge_width=1.):
+             line_colour='r', line_style='-', line_width=1., marker_style='o',
+             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+             marker_edge_width=1., label=None):
         r"""
         Visualization of the :map:`PointCloud`.
 
@@ -185,6 +186,16 @@ class PointCloud(Shape):
 
         image_view : `boolean`, optional
             If ``True``, the x and y axes are flipped.
+
+        line_colour : {``r``, ``g``, ``b``, ``c``, ``m``, ``k``, ``w``} or
+                      ``(3, )`` `ndarray`, optional
+            The colour of the lines.
+
+        line_style : {``-``, ``--``, ``-.``, ``:``}, optional
+            The style of the lines.
+
+        line_width : `float`, optional
+            The width of the lines.
 
         marker_style : {``.``, ``,``, ``o``, ``v``, ``^``, ``<``, ``>``, ``+``,
                         ``x``, ``D``, ``d``, ``s``, ``p``, ``*``, ``h``, ``H``,
@@ -205,14 +216,19 @@ class PointCloud(Shape):
         marker_edge_width : `float`, optional
             The width of the markers' edge.
 
+        label : `str`, optional
+            The name entry in case of a legend.
+
         Returns
         -------
         viewer : :map:`PointCloudViewer`
             The viewer object.
         """
         return PointCloudViewer(figure_id, new_figure, self.points).render(
-            image_view=image_view, marker_style=marker_style,
-            marker_size=marker_size, marker_face_colour=marker_face_colour,
+            image_view=image_view, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
             marker_edge_width=marker_edge_width)
 

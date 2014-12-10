@@ -149,61 +149,43 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         return self
 
 
-class MatplotlibPointCloudViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points):
-        super(MatplotlibPointCloudViewer2d, self).__init__(figure_id,
+class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
+    def __init__(self, figure_id, new_figure, points, adjacency_array):
+        super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
                                                            new_figure)
         self.points = points
+        self.adjacency_array = adjacency_array
 
-    def _render(self, image_view=False, marker_style='o', marker_size=20,
-                marker_face_colour='b', marker_edge_colour='k',
-                marker_edge_width=1):
+    def _render(self, image_view=False, line_colour='r', line_style='-',
+                line_width=1, marker_style='o', marker_size=20,
+                marker_face_colour='k', marker_edge_colour='k',
+                marker_edge_width=1., label=None):
         import matplotlib.pyplot as plt
+        from matplotlib import collections as mc
         import matplotlib.cm as cm
 
         # Flip x and y for viewing if points are tied to an image
         points = self.points[:, ::-1] if image_view else self.points
 
+        ax = plt.gca()
+
+        # Get edges to be rendered
+        if np.array(self.adjacency_array).shape[0] > 0:
+            lines = zip(points[self.adjacency_array[:, 0], :],
+                        points[self.adjacency_array[:, 1], :])
+
+            # Draw line objects
+            lc = mc.LineCollection(lines, colors=line_colour,
+                                   linestyles=line_style, linewidths=line_width,
+                                   cmap=cm.jet, label=label)
+            ax.add_collection(lc)
+
         # Scatter
         plt.scatter(points[:, 0], points[:, 1], cmap=cm.jet,
                     c=marker_face_colour, s=marker_size, marker=marker_style,
                     linewidths=marker_edge_width, edgecolors=marker_edge_colour,
-                    facecolors=marker_face_colour)
-        return self
-
-
-class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, points, adjacency_list):
-        super(MatplotlibPointGraphViewer2d, self).__init__(figure_id,
-                                                           new_figure)
-        self.points = points
-        self.adjacency_list = adjacency_list
-
-    def _render(self, image_view=False, line_colour='b', line_style='-',
-                line_width=1, marker_style='o', marker_size=20,
-                marker_face_colour='b', marker_edge_colour='k',
-                marker_edge_width=1, colour_map=None):
-        import matplotlib.pyplot as plt
-        from matplotlib import collections as mc
-
-        # Flip x and y for viewing if points are tied to an image
-        points = self.points[:, ::-1] if image_view else self.points
-        lines = zip(points[self.adjacency_list[:, 0], :],
-                    points[self.adjacency_list[:, 1], :])
-
-        ax = plt.gca()
-
-        # Draw line objects
-        lc = mc.LineCollection(lines, colors=line_colour, linestyles=line_style,
-                               linewidths=line_width, cmap=colour_map)
-
-        # Scatter
-        plt.scatter(points[:, 0], points[:, 1], cmap=colour_map,
-                    c=marker_face_colour, s=marker_size, marker=marker_style,
-                    linewidths=marker_edge_width, edgecolors=marker_edge_colour,
                     facecolors=marker_face_colour, label=label)
 
-        ax.add_collection(lc)
         ax.autoscale()
         return self
 
@@ -216,94 +198,87 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _plot_landmarks(self, render_numbering, render_legend, image_view,
-                        **kwargs):
+    def _render(self, image_view=False, line_colour='r', line_style='-',
+                line_width=1, marker_style='o', marker_size=20,
+                marker_face_colour='k', marker_edge_colour='k',
+                marker_edge_width=1., render_numbering=False,
+                numbers_horizontal_align='center',
+                numbers_vertical_align='bottom',
+                numbers_font_name='sans-serif', numbers_font_size=10,
+                numbers_font_style='normal',
+                numbers_font_weight='normal', numbers_font_colour='k',
+                render_legend=True, legend_title='',
+                legend_font_name='sans-serif',
+                legend_font_style='normal', legend_font_size=10,
+                legend_font_weight='normal', legend_marker_scale=2.,
+                legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
+                legend_border_axes_pad=1., legend_n_columns=2,
+                legend_horizontal_spacing=3.,
+                legend_vertical_spacing=10., legend_border=True,
+                legend_border_padding=9.5, legend_shadow=True,
+                legend_rounded_corners=True):
         import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
 
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
         n_labels = len(self.labels_to_masks)
-        ldms_dict = kwargs.get('landmarks_options',
-                               {'linecolour': [np.random.random([3, ])
-                                               for _ in range(n_labels)]})
-        labels_colours = ldms_dict.get('linecolour', [np.random.random([3, ])
-                                                      for _ in range(n_labels)])
-        if len(labels_colours) == 1:
-            labels_colours *= n_labels
-        elif len(labels_colours) != n_labels:
-            raise ValueError('Must pass a list of n_labels colours or a single '
-                             'colour for all labels.')
+        if line_colour is None:
+            line_colour = [np.random.random([3, ]) for _ in range(n_labels)]
+        if len(line_colour) == 1:
+            line_colour *= n_labels
+        elif len(line_colour) != n_labels:
+            raise ValueError('Must pass a list of n_labels line colours or a '
+                             'single line colour for all labels.')
 
-        # TODO: Should we enforce viewing landmarks with Matplotlib? How
-        # do we do this?
-        # Set the default colormap, assuming that the pointclouds are
-        # also viewed using Matplotlib
-
+        # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
+
+        print sub_pointclouds
 
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
-            ldms_dict.setdefault('colourmap', cm.jet)
-            ldms_dict['linecolour'] = labels_colours[i]
-            ldms_dict['label'] = '{0}: {1}'.format(self.group, label)
-            pc.view_on(self.figure_id, image_view=image_view, **ldms_dict)
+            pc.view_on(figure_id=self.figure_id, image_view=image_view,
+                       line_colour=line_colour[i], line_style=line_style,
+                       line_width=line_width, marker_style=marker_style,
+                       marker_size=marker_size,
+                       marker_face_colour=marker_face_colour,
+                       marker_edge_colour=marker_edge_colour,
+                       marker_edge_width=marker_edge_width,
+                       label='{0}: {1}'.format(self.group, label))
 
             ax = plt.gca()
             if render_numbering:
-                # Options related to numbers' annotations
-                numbers_dict = kwargs.get('numbering_options',
-                                          {'halign': 'center',
-                                           'valign': 'bottom',
-                                           'fontname': 'sans-serif'})
-                halign = numbers_dict.get('halign', 'center')
-                valign = numbers_dict.get('valign', 'bottom')
-                family = numbers_dict.get('fontname', 'sans-serif')
-                size = numbers_dict.get('fontsize', 10)
-                fontstyle = numbers_dict.get('fontstyle', 'normal')
-                fontweight = numbers_dict.get('fontweight', 'normal')
-                color = numbers_dict.get('fontcolour', 'k')
-
                 points = pc.points[:, ::-1] if image_view else pc.points
                 for k, p in enumerate(points):
                     ax.annotate(str(k), xy=(p[0], p[1]),
-                                horizontalalignment=halign,
-                                verticalalignment=valign, size=size,
-                                family=family, fontstyle=fontstyle,
-                                fontweight=fontweight, color=color)
-            if render_legend:
-                # Options related to legend
-                legend_dict = kwargs.get('legend_options',
-                                         {'bbox_to_anchor': (1.05, 1),
-                                          'location': 2, 'borderaxespad': 0})
-                title = legend_dict.get('title', '')
-                family = legend_dict.get('fontname', 'sans-serif')
-                size = legend_dict.get('fontsize', 10)
-                style = legend_dict.get('fontstyle', 'normal')
-                weight = legend_dict.get('fontweight', 'normal')
-                prop = {'family': family, 'size': size, 'style': style,
-                        'weight': weight}
-                markerscale = legend_dict.get('markerscale', None)
-                loc = legend_dict.get('location', 2)
-                bbox_to_anchor = legend_dict.get('bbox_to_anchor', None)
-                borderaxespad = legend_dict.get('borderaxespad', 0)
-                ncol = legend_dict.get('n_columns', 1)
-                columnspacing = legend_dict.get('horizontal_spacing', None)
-                labelspacing = legend_dict.get('vertical_spacing', None)
-                frameon = legend_dict.get('draw_border', None)
-                borderpad = legend_dict.get('border_padding', None)
-                shadow = legend_dict.get('draw_shadow', None)
-                fancybox = legend_dict.get('fancy_corners', None)
+                                horizontalalignment=numbers_horizontal_align,
+                                verticalalignment=numbers_vertical_align,
+                                size=numbers_font_size,
+                                family=numbers_font_name,
+                                fontstyle=numbers_font_style,
+                                fontweight=numbers_font_weight,
+                                color=numbers_font_colour)
 
-                ax.legend(title=title, prop=prop, loc=loc,
-                          bbox_to_anchor=bbox_to_anchor,
-                          borderaxespad=borderaxespad, ncol=ncol,
-                          columnspacing=columnspacing,
-                          labelspacing=labelspacing, frameon=frameon,
-                          borderpad=borderpad, shadow=shadow, fancybox=fancybox,
-                          markerscale=markerscale)
+            if render_legend:
+                # Options related to legend's font
+                prop = {'family': legend_font_name, 'size': legend_font_size,
+                        'style': legend_font_style,
+                        'weight': legend_font_weight}
+
+                # Render legend
+                ax.legend(title=legend_title, prop=prop, loc=legend_location,
+                          bbox_to_anchor=legend_bbox_to_anchor,
+                          borderaxespad=legend_border_axes_pad,
+                          ncol=legend_n_columns,
+                          columnspacing=legend_horizontal_spacing,
+                          labelspacing=legend_vertical_spacing,
+                          frameon=legend_border,
+                          borderpad=legend_border_padding, shadow=legend_shadow,
+                          fancybox=legend_rounded_corners,
+                          markerscale=legend_marker_scale)
+        return self
 
     def _build_sub_pointclouds(self):
         sub_pointclouds = []
@@ -311,12 +286,6 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             mask = self.labels_to_masks[label]
             sub_pointclouds.append((label, self.pointcloud.from_mask(mask)))
         return sub_pointclouds
-
-    def _render(self, render_numbering=True, render_legend=True,
-                image_view=False, **kwargs):
-        self._plot_landmarks(render_numbering, render_legend, image_view,
-                             **kwargs)
-        return self
 
 
 class MatplotlibAlignmentViewer2d(MatplotlibRenderer):

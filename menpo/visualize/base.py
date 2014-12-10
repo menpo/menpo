@@ -160,14 +160,12 @@ class Viewable(object):
 
 from menpo.visualize.viewmatplotlib import (
     MatplotlibImageViewer2d, MatplotlibImageSubplotsViewer2d,
-    MatplotlibPointCloudViewer2d, MatplotlibLandmarkViewer2d,
-    MatplotlibAlignmentViewer2d, MatplotlibGraphPlotter,
-    MatplotlibMultiImageViewer2d, MatplotlibMultiImageSubplotsViewer2d,
-    MatplotlibPointGraphViewer2d)
+    MatplotlibLandmarkViewer2d, MatplotlibAlignmentViewer2d,
+    MatplotlibGraphPlotter, MatplotlibMultiImageViewer2d,
+    MatplotlibMultiImageSubplotsViewer2d, MatplotlibPointGraphViewer2d)
 
 # Default importer types
 PointGraphViewer2d = MatplotlibPointGraphViewer2d
-PointCloudViewer2d = MatplotlibPointCloudViewer2d
 LandmarkViewer2d = MatplotlibLandmarkViewer2d
 ImageViewer2d = MatplotlibImageViewer2d
 ImageSubplotsViewer2d = MatplotlibImageSubplotsViewer2d
@@ -253,6 +251,10 @@ class PointCloudViewer(object):
     r"""
     Base PointCloud viewer that abstracts away dimensionality.
 
+    Note that in order to visualize a 2D :map:`PointCloud`, we treat it as a
+    :map:`PointGraph` with an empty adjacency array (no edges) and use the
+    :map:`PointGraphViewer` viewer.
+
     Parameters
     ----------
     figure_id : object
@@ -290,8 +292,11 @@ class PointCloudViewer(object):
             Only 2D and 3D viewers are supported.
         """
         if self.points.shape[1] == 2:
-            return PointCloudViewer2d(self.figure_id, self.new_figure,
-                                      self.points).render(**kwargs)
+            # Create an empty adjacency array
+            adjacency_array = np.empty(0)
+            return PointGraphViewer2d(self.figure_id, self.new_figure,
+                                      self.points,
+                                      adjacency_array).render(**kwargs)
         elif self.points.shape[1] == 3:
             try:
                 from menpo3d.visualize import PointCloudViewer3d
@@ -321,11 +326,11 @@ class PointGraphViewer(object):
         The list of edges to create lines from.
     """
 
-    def __init__(self, figure_id, new_figure, points, adjacency_list):
+    def __init__(self, figure_id, new_figure, points, adjacency_array):
         self.figure_id = figure_id
         self.new_figure = new_figure
         self.points = points
-        self.adjacency_list = adjacency_list
+        self.adjacency_array = adjacency_array
 
     def render(self, **kwargs):
         r"""
@@ -350,7 +355,7 @@ class PointGraphViewer(object):
         if self.points.shape[1] == 2:
             return PointGraphViewer2d(self.figure_id, self.new_figure,
                                       self.points,
-                                      self.adjacency_list).render(**kwargs)
+                                      self.adjacency_array).render(**kwargs)
         else:
             raise ValueError("Only 2D pointgraphs are "
                              "currently supported")
