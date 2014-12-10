@@ -603,47 +603,6 @@ class MaskedImage(Image):
             Image.from_vector_inplace(self,
                                       normalized_pixels.flatten())
 
-    def gradient(self, nullify_values_at_mask_boundaries=False):
-        r"""
-        Returns a :map:`MaskedImage` which is the gradient of this one. In the
-        case of multiple channels, it returns the gradient over each axis over
-        each channel as a flat list.
-
-        Parameters
-        ----------
-        nullify_values_at_mask_boundaries : bool, optional
-            If `True` a one pixel boundary is set to 0 around the edge of
-            the `True` mask region. This is useful in situations where
-            there is absent data in the image which will cause erroneous
-            gradient settings.
-
-        Default: False
-
-        Returns
-        -------
-        gradient : :map:`MaskedImage`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        global binary_erosion, gradient
-        if gradient is None:
-            from menpo.feature import gradient  # avoid circular reference
-        # use the feature to take the gradient as normal
-        grad_image = gradient(self)
-        if nullify_values_at_mask_boundaries:
-            if binary_erosion is None:
-                from scipy.ndimage import binary_erosion  # expensive
-            # Erode the edge of the mask in by one pixel
-            eroded_mask = binary_erosion(self.mask.mask, iterations=1)
-
-            # replace the eroded mask with the diff between the two
-            # masks. This is only true in the region we want to nullify.
-            np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
-            # nullify all the boundary values in the grad image
-            grad_image.pixels[..., eroded_mask] = 0.0
-        return grad_image
-
     def constrain_mask_to_landmarks(self, group=None, label=None,
                                     trilist=None):
         r"""
@@ -714,3 +673,34 @@ class MaskedImage(Image):
             mask[x.flatten(), y.flatten()] = True
 
         self.mask = BooleanImage(mask)
+
+    def set_boundary_pixels(self, iterations=1):
+        r"""
+        Returns a copy of this :map:`MaskedImage` for which n pixels along
+        the its mask boundary have been set to to 0. This is useful in
+        situations where there is absent data in the image which can cause,
+        for example, erroneous computations of gradient or features.
+
+        Parameters
+        ----------
+        n_pixels : int, optional
+            The number of pixels along the mask boundary that will be set to 0.
+
+        Returns
+        -------
+         : :map:`MaskedImage`
+            The gradient over each axis over each channel. Therefore, the
+            gradient of a 2D, single channel image, will have length `2`.
+            The length of a 2D, 3-channel image, will have length `6`.
+        """
+        global binary_erosion
+        if binary_erosion is None:
+            from scipy.ndimage import binary_erosion  # expensive
+        # Erode the edge of the mask in by one pixel
+        eroded_mask = binary_erosion(self.mask.mask, iterations=iterations)
+
+        # replace the eroded mask with the diff between the two
+        # masks. This is only true in the region we want to nullify.
+        np.logical_and(~eroded_mask, self.mask.mask, out=eroded_mask)
+        # nullify all the boundary values in the grad image
+        self.pixels[..., eroded_mask] = 0.0

@@ -505,22 +505,6 @@ class Image(Vectorizable, LandmarkableViewable):
         from menpo.visualize import visualize_images
         visualize_images(self, figure_size=(7, 7), popup=popup)
 
-    def gradient(self, **kwargs):
-        r"""
-        Returns an :map:`Image` which is the gradient of this one. In the case
-        of multiple channels, it returns the gradient over each axis over
-        each channel as a flat list.
-
-        Returns
-        -------
-        gradient : :map:`Image`
-            The gradient over each axis over each channel. Therefore, the
-            gradient of a 2D, single channel image, will have length `2`.
-            The length of a 2D, 3-channel image, will have length `6`.
-        """
-        from menpo.feature import gradient
-        return gradient(self)
-
     def crop_inplace(self, min_indices, max_indices,
                      constrain_to_boundary=True):
         r"""
