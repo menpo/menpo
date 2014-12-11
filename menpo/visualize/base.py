@@ -97,6 +97,13 @@ class Renderer(object):
         """
         pass
 
+    @abc.abstractmethod
+    def save_figure(self):
+        r"""
+        Abstract method for saving the figure using the correct `figure_id`.
+        """
+        pass
+
 
 class Viewable(object):
     r"""

@@ -45,6 +45,15 @@ class MatplotlibRenderer(Renderer):
 
         return self.figure
 
+    def save_figure(self, filename, format='png', dpi=None, face_colour='w',
+                    edge_colour='w', orientation='portrait',
+                    paper_type='letter', transparent=False, pad_inches=0.1):
+        self.figure.savefig(filename, dpi=dpi, facecolour=face_colour,
+                            edgecolour=edge_colour, orientation=orientation,
+                            papertype=paper_type, format=format,
+                            transparent=transparent, pad_inches=pad_inches,
+                            bbox_inches='tight', frameon=None)
+
 
 class MatplotlibSubplots(object):
 
