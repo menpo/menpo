@@ -169,8 +169,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         ax = plt.gca()
 
-        # Get edges to be rendered
+        # Check if graph has edges to be rendered (for example a PointCLoud
+        # won't have any edges)
         if np.array(self.adjacency_array).shape[0] > 0:
+            # Get edges to be rendered
             lines = zip(points[self.adjacency_array[:, 0], :],
                         points[self.adjacency_array[:, 1], :])
 
@@ -179,6 +181,11 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
                                    linestyles=line_style, linewidths=line_width,
                                    cmap=cm.jet, label=label)
             ax.add_collection(lc)
+
+            # If a label is defined, it should only be applied to the lines, of
+            # a PointGraph, which represent each one of the labels, unless a
+            # PointCLoud is passed in.
+            label = None
 
         # Scatter
         plt.scatter(points[:, 0], points[:, 1], cmap=cm.jet,
@@ -191,10 +198,10 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group, pointcloud,
+    def __init__(self, figure_id, new_figure, group_str, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
-        self.group = group
+        self.group_str = group_str
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
@@ -210,13 +217,13 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                 render_legend=True, legend_title='',
                 legend_font_name='sans-serif',
                 legend_font_style='normal', legend_font_size=10,
-                legend_font_weight='normal', legend_marker_scale=2.,
+                legend_font_weight='normal', legend_marker_scale=None,
                 legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
-                legend_border_axes_pad=1., legend_n_columns=2,
-                legend_horizontal_spacing=3.,
-                legend_vertical_spacing=10., legend_border=True,
-                legend_border_padding=9.5, legend_shadow=True,
-                legend_rounded_corners=True):
+                legend_border_axes_pad=None, legend_n_columns=1,
+                legend_horizontal_spacing=None,
+                legend_vertical_spacing=None, legend_border=True,
+                legend_border_padding=None, legend_shadow=False,
+                legend_rounded_corners=False):
         import matplotlib.pyplot as plt
 
         # Regarding the labels colours, we may get passed either no colours (in
@@ -234,8 +241,6 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
 
-        print sub_pointclouds
-
         for i, (label, pc) in enumerate(sub_pointclouds):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
@@ -246,38 +251,39 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                        marker_face_colour=marker_face_colour,
                        marker_edge_colour=marker_edge_colour,
                        marker_edge_width=marker_edge_width,
-                       label='{0}: {1}'.format(self.group, label))
+                       label='{0}: {1}'.format(self.group_str, label))
 
             ax = plt.gca()
-            if render_numbering:
-                points = pc.points[:, ::-1] if image_view else pc.points
-                for k, p in enumerate(points):
-                    ax.annotate(str(k), xy=(p[0], p[1]),
-                                horizontalalignment=numbers_horizontal_align,
-                                verticalalignment=numbers_vertical_align,
-                                size=numbers_font_size,
-                                family=numbers_font_name,
-                                fontstyle=numbers_font_style,
-                                fontweight=numbers_font_weight,
-                                color=numbers_font_colour)
 
-            if render_legend:
-                # Options related to legend's font
-                prop = {'family': legend_font_name, 'size': legend_font_size,
-                        'style': legend_font_style,
-                        'weight': legend_font_weight}
+        if render_numbering:
+            points = pc.points[:, ::-1] if image_view else pc.points
+            for k, p in enumerate(points):
+                ax.annotate(str(k), xy=(p[0], p[1]),
+                            horizontalalignment=numbers_horizontal_align,
+                            verticalalignment=numbers_vertical_align,
+                            size=numbers_font_size,
+                            family=numbers_font_name,
+                            fontstyle=numbers_font_style,
+                            fontweight=numbers_font_weight,
+                            color=numbers_font_colour)
 
-                # Render legend
-                ax.legend(title=legend_title, prop=prop, loc=legend_location,
-                          bbox_to_anchor=legend_bbox_to_anchor,
-                          borderaxespad=legend_border_axes_pad,
-                          ncol=legend_n_columns,
-                          columnspacing=legend_horizontal_spacing,
-                          labelspacing=legend_vertical_spacing,
-                          frameon=legend_border,
-                          borderpad=legend_border_padding, shadow=legend_shadow,
-                          fancybox=legend_rounded_corners,
-                          markerscale=legend_marker_scale)
+        if render_legend:
+            # Options related to legend's font
+            prop = {'family': legend_font_name, 'size': legend_font_size,
+                    'style': legend_font_style,
+                    'weight': legend_font_weight}
+
+            # Render legend
+            ax.legend(title=legend_title, prop=prop, loc=legend_location,
+                      bbox_to_anchor=legend_bbox_to_anchor,
+                      borderaxespad=legend_border_axes_pad,
+                      ncol=legend_n_columns,
+                      columnspacing=legend_horizontal_spacing,
+                      labelspacing=legend_vertical_spacing,
+                      frameon=legend_border,
+                      borderpad=legend_border_padding, shadow=legend_shadow,
+                      fancybox=legend_rounded_corners,
+                      markerscale=legend_marker_scale)
         return self
 
     def _build_sub_pointclouds(self):

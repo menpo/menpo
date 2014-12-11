@@ -230,7 +230,7 @@ class PointCloud(Shape):
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width)
+            marker_edge_width=marker_edge_width, label=label)
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)

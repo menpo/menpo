@@ -832,7 +832,7 @@ class PointGraph(object):
     def view(self, figure_id=None, new_figure=False, image_view=False,
              line_colour='r', line_style='-', line_width=1., marker_style='o',
              marker_size=20, marker_face_colour='k', marker_edge_colour='k',
-             marker_edge_width=1.):
+             marker_edge_width=1., label=None):
         r"""
         Visualization of the :map:`PointGraph`.
 
@@ -876,6 +876,9 @@ class PointGraph(object):
         marker_edge_width : `float`, optional
             The width of the markers' edge.
 
+        label : `str`, optional
+            The name entry in case of a legend.
+
         Returns
         -------
         viewer : :map:`PointGraphViewer`
@@ -888,7 +891,7 @@ class PointGraph(object):
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width)
+            marker_edge_width=marker_edge_width, label=label)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):

@@ -678,13 +678,25 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                            'landmarks': landmarks})
         return {'groups': groups}
 
-    def view(self, figure_id=None, new_figure=False, targettype=None,
-             render_numbering=True, render_legend=True, group='group',
-             with_labels=None, without_labels=None, image_view=True,
-             **kwargs):
+    def view(self, with_labels=None, without_labels=None, group_str='group',
+             figure_id=None, new_figure=False, image_view=False,
+             line_colour='r', line_style='-', line_width=1, marker_style='o',
+             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+             marker_edge_width=1., render_numbering=False,
+             numbers_horizontal_align='center', numbers_vertical_align='bottom',
+             numbers_font_name='sans-serif', numbers_font_size=10,
+             numbers_font_style='normal', numbers_font_weight='normal',
+             numbers_font_colour='k', render_legend=True, legend_title='',
+             legend_font_name='sans-serif', legend_font_style='normal',
+             legend_font_size=10, legend_font_weight='normal',
+             legend_marker_scale=None, legend_location=2,
+             legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
+             legend_n_columns=1, legend_horizontal_spacing=None,
+             legend_vertical_spacing=None, legend_border=True,
+             legend_border_padding=None, legend_shadow=False,
+             legend_rounded_corners=False):
         """
-        View all landmarks. Kwargs passed in here will be passed through
-        to the shapes view method.
+        View all landmarks.
 
         Parameters
         ----------
@@ -723,12 +735,40 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         else:
             lmark_group = self  # Fall through
 
-        landmark_viewer = LandmarkViewer(figure_id, new_figure,
-                                         group, lmark_group._pointcloud,
+        landmark_viewer = LandmarkViewer(figure_id, new_figure, group_str,
+                                         lmark_group._pointcloud,
                                          lmark_group._labels_to_masks)
-        return landmark_viewer.render(render_numbering=render_numbering,
-                                      render_legend=render_legend,
-                                      image_view=image_view, **kwargs)
+        return landmark_viewer.render(
+            image_view=image_view, line_colour=line_colour,
+            line_style=line_style, line_width=line_width,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners)
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(
