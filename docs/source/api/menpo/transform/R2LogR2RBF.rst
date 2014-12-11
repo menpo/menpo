@@ -1,10 +1,9 @@
 .. _menpo-transform-R2LogR2RBF:
 
-.. currentmodule:: menpo.transform.rbf
+.. currentmodule:: menpo.transform
 
 R2LogR2RBF
 ==========
-
 .. autoclass:: R2LogR2RBF
   :members:
   :inherited-members:

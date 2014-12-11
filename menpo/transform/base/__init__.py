@@ -218,7 +218,7 @@ class Transformable(Copyable):
     Interface for objects that know how be transformed by the
     :map:`Transform` interface.
 
-    When :map:`apply_inplace` is called on an object, the
+    When `Transform.apply_inplace` is called on an object, the
     :meth:`_transform_inplace` method is called, passing in the transforms'
     :map:`_apply` function.
 

@@ -1,10 +1,9 @@
 .. _menpo-model-MeanLinearModel:
 
-.. currentmodule:: menpo.model.linear
+.. currentmodule:: menpo.model
 
 MeanLinearModel
 ===============
-
 .. autoclass:: MeanLinearModel
   :members:
   :inherited-members:

@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from menpo import Vectorizable
+from menpo.base import Vectorizable
 from menpo.transform.base import VInvertible
 
 

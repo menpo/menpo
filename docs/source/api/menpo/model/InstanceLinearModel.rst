@@ -1,10 +1,9 @@
 .. _menpo-model-InstanceLinearModel:
 
-.. currentmodule:: menpo.model.base
+.. currentmodule:: menpo.model
 
 InstanceLinearModel
 ===================
-
 .. autoclass:: InstanceLinearModel
   :members:
   :inherited-members:

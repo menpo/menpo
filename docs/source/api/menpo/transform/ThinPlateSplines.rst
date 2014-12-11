@@ -1,10 +1,9 @@
 .. _menpo-transform-ThinPlateSplines:
 
-.. currentmodule:: menpo.transform.thinplatesplines
+.. currentmodule:: menpo.transform
 
 ThinPlateSplines
 ================
-
 .. autoclass:: ThinPlateSplines
   :members:
   :inherited-members:
