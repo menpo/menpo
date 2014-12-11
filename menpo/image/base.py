@@ -473,7 +473,7 @@ class Image(Vectorizable, LandmarkableViewable):
         return hist, bin_edges
 
     def view(self, figure_id=None, new_figure=False, channels=None,
-              **kwargs):
+             **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.

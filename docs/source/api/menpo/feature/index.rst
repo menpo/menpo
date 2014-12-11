@@ -18,3 +18,12 @@
   imgfeature
   daisy
   ndfeature
+
+
+Widget
+------
+
+.. toctree::
+   :maxdepth: 1
+
+  features_selection_widget

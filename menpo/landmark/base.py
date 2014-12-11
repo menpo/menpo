@@ -66,10 +66,32 @@ class LandmarkableViewable(Landmarkable, Viewable):
     single helper method for viewing Landmarks and slf on the same figure.
     """
 
-    def view_landmarks(self, figure_id=None, new_figure=False, group=None,
-                       render_numbering=True, render_legend=True,
+    def view_landmarks(self, channels=None, masked=True, group=None,
                        with_labels=None, without_labels=None,
-                       lmark_view_kwargs=None, obj_view_kwargs=None):
+                       figure_id=None, new_figure=False, render_lines=True,
+                       line_colour='r', line_style='-', line_width=1,
+                       render_markers=True, marker_style='o', marker_size=20,
+                       marker_face_colour='k', marker_edge_colour='k',
+                       marker_edge_width=1., render_numbering=False,
+                       numbers_horizontal_align='center',
+                       numbers_vertical_align='bottom',
+                       numbers_font_name='sans-serif', numbers_font_size=10,
+                       numbers_font_style='normal',
+                       numbers_font_weight='normal', numbers_font_colour='k',
+                       render_legend=True, legend_title='',
+                       legend_font_name='sans-serif',
+                       legend_font_style='normal', legend_font_size=10,
+                       legend_font_weight='normal', legend_marker_scale=None,
+                       legend_location=2, legend_bbox_to_anchor=(1.05, 1.),
+                       legend_border_axes_pad=None, legend_n_columns=1,
+                       legend_horizontal_spacing=None,
+                       legend_vertical_spacing=None, legend_border=True,
+                       legend_border_padding=None, legend_shadow=False,
+                       legend_rounded_corners=False, render_axes=True,
+                       axes_font_name='sans-serif', axes_font_size=10,
+                       axes_font_style='normal', axes_font_weight='normal',
+                       axes_x_limits=None, axes_y_limits=None,
+                       figure_size=(6, 4), obj_view_kwargs=None):
         """
         View all landmarks on the current shape, using the default
         shape view method. Kwargs passed in here will be passed through
@@ -112,22 +134,76 @@ class LandmarkableViewable(Landmarkable, Viewable):
         ValueError
             If the landmark manager doesn't contain the provided group label.
         """
-        # Can't expand None so need a dict by default, but don't want
-        # a mutual default kwarg
-        obj_view_kwargs = obj_view_kwargs or {}
-        lmark_view_kwargs = lmark_view_kwargs or {}
+        import matplotlib.pyplot as plt
 
-        self_view = self.view(figure_id=figure_id, new_figure=new_figure,
-                              **obj_view_kwargs)
-        landmark_view = self.landmarks.view(figure_id=self_view.figure_id,
-                                            new_figure=False,
-                                            group=group,
-                                            targettype=type(self),
-                                            render_numbering=render_numbering,
-                                            render_legend=render_legend,
-                                            with_labels=with_labels,
-                                            without_labels=without_labels,
-                                            **lmark_view_kwargs)
+        # Render self
+        from menpo.image import MaskedImage
+        if isinstance(self, MaskedImage):
+            self_view = self.view(figure_id=figure_id, new_figure=new_figure,
+                                  channels=channels, masked=masked)
+        else:
+            self_view = self.view(figure_id=figure_id, new_figure=new_figure,
+                                  channels=channels)
+
+        # Make sure axes are constrained to the image size
+        if axes_x_limits is None:
+            axes_x_limits = [0, self.width - 1]
+        if axes_y_limits is None:
+            axes_y_limits = [0, self.height - 1]
+
+        # Render landmarks
+        landmark_view = None  # initialize viewer object
+        axes_list = plt.gcf().get_axes()  # get axis objects
+        # useful in order to visualize the legend only for the last axis object
+        render_legend_tmp = False
+        for i, ax in enumerate(axes_list):
+            # set current axis
+            plt.sca(ax)
+
+            # show legend only for the last axis object
+            if i == len(axes_list) - 1:
+                render_legend_tmp = render_legend
+
+            # viewer
+            landmark_view = self.landmarks.view(
+                with_labels=with_labels, without_labels=without_labels,
+                group=group, figure_id=self_view.figure_id, new_figure=False,
+                image_view=True, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_legend=render_legend_tmp, legend_title=legend_title,
+                legend_font_name=legend_font_name,
+                legend_font_style=legend_font_style,
+                legend_font_size=legend_font_size,
+                legend_font_weight=legend_font_weight,
+                legend_marker_scale=legend_marker_scale,
+                legend_location=legend_location,
+                legend_bbox_to_anchor=legend_bbox_to_anchor,
+                legend_border_axes_pad=legend_border_axes_pad,
+                legend_n_columns=legend_n_columns,
+                legend_horizontal_spacing=legend_horizontal_spacing,
+                legend_vertical_spacing=legend_vertical_spacing,
+                legend_border=legend_border,
+                legend_border_padding=legend_border_padding,
+                legend_shadow=legend_shadow,
+                legend_rounded_corners=legend_rounded_corners,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size)
+
         return landmark_view
 
 
@@ -287,7 +363,27 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
             group.lms._transform_inplace(transform)
         return self
 
-    def view(self, figure_id=None, new_figure=False, group=None, **kwargs):
+    def view(self, group=None, with_labels=None, without_labels=None,
+             figure_id=None, new_figure=False, image_view=False,
+             render_lines=True, line_colour='r', line_style='-', line_width=1,
+             render_markers=True, marker_style='o', marker_size=20,
+             marker_face_colour='k', marker_edge_colour='k',
+             marker_edge_width=1., render_numbering=False,
+             numbers_horizontal_align='center', numbers_vertical_align='bottom',
+             numbers_font_name='sans-serif', numbers_font_size=10,
+             numbers_font_style='normal', numbers_font_weight='normal',
+             numbers_font_colour='k', render_legend=True, legend_title='',
+             legend_font_name='sans-serif', legend_font_style='normal',
+             legend_font_size=10, legend_font_weight='normal',
+             legend_marker_scale=None, legend_location=2,
+             legend_bbox_to_anchor=(1.05, 1.), legend_border_axes_pad=None,
+             legend_n_columns=1, legend_horizontal_spacing=None,
+             legend_vertical_spacing=None, legend_border=True,
+             legend_border_padding=None, legend_shadow=False,
+             legend_rounded_corners=False, render_axes=True,
+             axes_font_name='sans-serif', axes_font_size=10,
+             axes_font_style='normal', axes_font_weight='normal',
+             axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         """
         View all landmarks groups on the current manager.
 
@@ -315,21 +411,58 @@ class LandmarkManager(MutableMapping, Transformable, Viewable):
         ValueError
             If the landmark manager doesn't contain the provided group label.
         """
+        # Check that the provided group belongs to the groups dict or is None
+        # and there's only one group available
         if group is None:
-            viewers = []
-            for g_label in self._landmark_groups:
-                v = self._landmark_groups[g_label].view(figure_id=figure_id,
-                                                        new_figure=new_figure,
-                                                        group=g_label,
-                                                        **kwargs)
-                viewers.append(v)
-            return viewers
+            if self.n_groups == 1:
+                g_label = self._landmark_groups.keys()[0]
+            else:
+                raise ValueError('A group must be specified as there are '
+                                 '{} groups in total.'.format(self.n_groups))
         elif group in self._landmark_groups:
-            return self._landmark_groups[group].view(
-                figure_id=figure_id, new_figure=new_figure,
-                group=group, **kwargs)
+            g_label = group
         else:
-            raise ValueError('Unknown label {}'.format(group))
+            raise ValueError('Unknown group {}'.format(group))
+
+        # Render
+        return self._landmark_groups[g_label].view(
+            with_labels=with_labels, without_labels=without_labels,
+            group=g_label, figure_id=figure_id, new_figure=new_figure,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend, legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=figure_size)
 
     def view_widget(self, popup=False):
         r"""
@@ -678,10 +811,11 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
                            'landmarks': landmarks})
         return {'groups': groups}
 
-    def view(self, with_labels=None, without_labels=None, group_str='group',
-             figure_id=None, new_figure=False, image_view=False,
-             line_colour='r', line_style='-', line_width=1, marker_style='o',
-             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
+    def view(self, with_labels=None, without_labels=None, group='group',
+             figure_id=None, new_figure=False, image_view=True,
+             render_lines=True, line_colour=None, line_style='-', line_width=1,
+             render_markers=True, marker_style='o', marker_size=20,
+             marker_face_colour='k', marker_edge_colour='k',
              marker_edge_width=1., render_numbering=False,
              numbers_horizontal_align='center', numbers_vertical_align='bottom',
              numbers_font_name='sans-serif', numbers_font_size=10,
@@ -694,7 +828,10 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
              legend_n_columns=1, legend_horizontal_spacing=None,
              legend_vertical_spacing=None, legend_border=True,
              legend_border_padding=None, legend_shadow=False,
-             legend_rounded_corners=False):
+             legend_rounded_corners=False, render_axes=True,
+             axes_font_name='sans-serif', axes_font_size=10,
+             axes_font_style='normal', axes_font_weight='normal',
+             axes_x_limits=None, axes_y_limits=None, figure_size=None):
         """
         View all landmarks.
 
@@ -735,12 +872,13 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
         else:
             lmark_group = self  # Fall through
 
-        landmark_viewer = LandmarkViewer(figure_id, new_figure, group_str,
+        landmark_viewer = LandmarkViewer(figure_id, new_figure, group,
                                          lmark_group._pointcloud,
                                          lmark_group._labels_to_masks)
         return landmark_viewer.render(
-            image_view=image_view, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
@@ -768,7 +906,11 @@ class LandmarkGroup(MutableMapping, Copyable, Viewable):
             legend_border=legend_border,
             legend_border_padding=legend_border_padding,
             legend_shadow=legend_shadow,
-            legend_rounded_corners=legend_rounded_corners)
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits, figure_size=(6, 4))
 
     def __str__(self):
         return '{}: n_labels: {}, n_points: {}'.format(

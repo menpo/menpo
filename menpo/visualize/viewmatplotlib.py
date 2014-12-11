@@ -1,6 +1,7 @@
 import abc
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from menpo.visualize.base import Renderer
 
@@ -35,8 +36,6 @@ class MatplotlibRenderer(Renderer):
         figure : Matplotlib figure object
             The figure we will be rendering on.
         """
-        import matplotlib.pyplot as plt
-
         if self.new_figure or self.figure_id is not None:
             self.figure = plt.figure(self.figure_id)
         else:
@@ -117,7 +116,6 @@ class MatplotlibImageViewer2d(MatplotlibRenderer):
         self.image = image
 
     def _render(self, **kwargs):
-        import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
         if len(self.image.shape) == 2:  # Single channels are viewed in Gray
@@ -137,7 +135,6 @@ class MatplotlibImageSubplotsViewer2d(MatplotlibRenderer, MatplotlibSubplots):
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
     def _render(self, **kwargs):
-        import matplotlib.pyplot as plt
         import matplotlib.cm as cm
 
         p = self.plot_layout
@@ -156,11 +153,14 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
         self.points = points
         self.adjacency_array = adjacency_array
 
-    def _render(self, image_view=False, line_colour='r', line_style='-',
-                line_width=1, marker_style='o', marker_size=20,
-                marker_face_colour='k', marker_edge_colour='k',
-                marker_edge_width=1., label=None):
-        import matplotlib.pyplot as plt
+    def _render(self, image_view=False, render_lines=True, line_colour='r',
+                line_style='-', line_width=1, render_markers=True,
+                marker_style='o', marker_size=20, marker_face_colour='k',
+                marker_edge_colour='k', marker_edge_width=1., render_axes=True,
+                axes_font_name='sans-serif', axes_font_size=10,
+                axes_font_style='normal', axes_font_weight='normal',
+                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4),
+                label=None):
         from matplotlib import collections as mc
         import matplotlib.cm as cm
 
@@ -171,7 +171,7 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
 
         # Check if graph has edges to be rendered (for example a PointCLoud
         # won't have any edges)
-        if np.array(self.adjacency_array).shape[0] > 0:
+        if render_lines and np.array(self.adjacency_array).shape[0] > 0:
             # Get edges to be rendered
             lines = zip(points[self.adjacency_array[:, 0], :],
                         points[self.adjacency_array[:, 1], :])
@@ -188,28 +188,58 @@ class MatplotlibPointGraphViewer2d(MatplotlibRenderer):
             label = None
 
         # Scatter
-        plt.scatter(points[:, 0], points[:, 1], cmap=cm.jet,
-                    c=marker_face_colour, s=marker_size, marker=marker_style,
-                    linewidths=marker_edge_width, edgecolors=marker_edge_colour,
-                    facecolors=marker_face_colour, label=label)
+        if render_markers:
+            plt.scatter(points[:, 0], points[:, 1], cmap=cm.jet,
+                        c=marker_face_colour, s=marker_size,
+                        marker=marker_style, linewidths=marker_edge_width,
+                        edgecolors=marker_edge_colour,
+                        facecolors=marker_face_colour, label=label)
 
-        ax.autoscale()
+        # Apply axes options
+        if render_axes:
+            plt.axis('on')
+            # set font options
+            for l in (plt.gca().get_xticklabels() +
+                      plt.gca().get_yticklabels()):
+                l.set_fontsize(axes_font_size)
+                l.set_fontname(axes_font_name)
+                l.set_fontstyle(axes_font_style)
+                l.set_fontweight(axes_font_weight)
+        else:
+            plt.axis('off')
+
+        # Plot on image mode
+        if image_view:
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.gca().invert_yaxis()
+
+        # Set axes limits
+        if axes_x_limits is not None:
+            plt.xlim(axes_x_limits)
+        if axes_y_limits is not None:
+            plt.ylim(axes_y_limits[::-1]) if image_view \
+                else plt.ylim(axes_y_limits)
+
+        # Set figure size
+        if figure_size is not None:
+            plt.gcf().set_size_inches(np.asarray(figure_size))
+
         return self
 
 
 class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
-    def __init__(self, figure_id, new_figure, group_str, pointcloud,
+    def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
         super(MatplotlibLandmarkViewer2d, self).__init__(figure_id, new_figure)
-        self.group_str = group_str
+        self.group = group
         self.pointcloud = pointcloud
         self.labels_to_masks = labels_to_masks
 
-    def _render(self, image_view=False, line_colour='r', line_style='-',
-                line_width=1, marker_style='o', marker_size=20,
-                marker_face_colour='k', marker_edge_colour='k',
-                marker_edge_width=1., render_numbering=False,
-                numbers_horizontal_align='center',
+    def _render(self, image_view=False, render_lines=True, line_colour='r',
+                line_style='-', line_width=1, render_markers=True,
+                marker_style='o', marker_size=20, marker_face_colour='k',
+                marker_edge_colour='k', marker_edge_width=1.,
+                render_numbering=False, numbers_horizontal_align='center',
                 numbers_vertical_align='bottom',
                 numbers_font_name='sans-serif', numbers_font_size=10,
                 numbers_font_style='normal',
@@ -223,20 +253,23 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                 legend_horizontal_spacing=None,
                 legend_vertical_spacing=None, legend_border=True,
                 legend_border_padding=None, legend_shadow=False,
-                legend_rounded_corners=False):
-        import matplotlib.pyplot as plt
-
+                legend_rounded_corners=False, render_axes=True,
+                axes_font_name='sans-serif', axes_font_size=10,
+                axes_font_style='normal', axes_font_weight='normal',
+                axes_x_limits=None, axes_y_limits=None, figure_size=(6, 4)):
         # Regarding the labels colours, we may get passed either no colours (in
         # which case we generate random colours) or a single colour to colour
         # all the labels with
-        n_labels = len(self.labels_to_masks)
-        if line_colour is None:
-            line_colour = [np.random.random([3, ]) for _ in range(n_labels)]
-        if len(line_colour) == 1:
-            line_colour *= n_labels
-        elif len(line_colour) != n_labels:
-            raise ValueError('Must pass a list of n_labels line colours or a '
-                             'single line colour for all labels.')
+        if render_lines:
+            n_labels = len(self.labels_to_masks)
+            if line_colour is None:
+                # sample colours from jet colour map
+                line_colour = sample_colours_from_colourmap(n_labels, 'jet')
+            if len(line_colour) == 1:
+                line_colour *= n_labels
+            elif len(line_colour) != n_labels:
+                raise ValueError('Must pass a list of n_labels line colours '
+                                 'or a single line colour for all labels.')
 
         # Get pointcloud of each label
         sub_pointclouds = self._build_sub_pointclouds()
@@ -245,27 +278,33 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
             # Set kwargs assuming that the pointclouds are viewed using
             # Matplotlib
             pc.view_on(figure_id=self.figure_id, image_view=image_view,
-                       line_colour=line_colour[i], line_style=line_style,
-                       line_width=line_width, marker_style=marker_style,
+                       render_lines=render_lines, line_colour=line_colour[i],
+                       line_style=line_style, line_width=line_width,
+                       render_markers=render_markers, marker_style=marker_style,
                        marker_size=marker_size,
                        marker_face_colour=marker_face_colour,
                        marker_edge_colour=marker_edge_colour,
                        marker_edge_width=marker_edge_width,
-                       label='{0}: {1}'.format(self.group_str, label))
+                       render_axes=render_axes, axes_font_name=axes_font_name,
+                       axes_font_size=axes_font_size,
+                       axes_font_style=axes_font_style,
+                       axes_font_weight=axes_font_weight, axes_x_limits=None,
+                       axes_y_limits=None, figure_size=None,
+                       label='{0}: {1}'.format(self.group, label))
 
             ax = plt.gca()
 
-        if render_numbering:
-            points = pc.points[:, ::-1] if image_view else pc.points
-            for k, p in enumerate(points):
-                ax.annotate(str(k), xy=(p[0], p[1]),
-                            horizontalalignment=numbers_horizontal_align,
-                            verticalalignment=numbers_vertical_align,
-                            size=numbers_font_size,
-                            family=numbers_font_name,
-                            fontstyle=numbers_font_style,
-                            fontweight=numbers_font_weight,
-                            color=numbers_font_colour)
+            if render_numbering:
+                points = pc.points[:, ::-1] if image_view else pc.points
+                for k, p in enumerate(points):
+                    ax.annotate(str(k), xy=(p[0], p[1]),
+                                horizontalalignment=numbers_horizontal_align,
+                                verticalalignment=numbers_vertical_align,
+                                size=numbers_font_size,
+                                family=numbers_font_name,
+                                fontstyle=numbers_font_style,
+                                fontweight=numbers_font_weight,
+                                color=numbers_font_colour)
 
         if render_legend:
             # Options related to legend's font
@@ -284,6 +323,31 @@ class MatplotlibLandmarkViewer2d(MatplotlibRenderer):
                       borderpad=legend_border_padding, shadow=legend_shadow,
                       fancybox=legend_rounded_corners,
                       markerscale=legend_marker_scale)
+
+        # Apply axes options
+        if render_axes:
+            plt.axis('on')
+            # set font options
+            for l in (plt.gca().get_xticklabels() +
+                      plt.gca().get_yticklabels()):
+                l.set_fontsize(axes_font_size)
+                l.set_fontname(axes_font_name)
+                l.set_fontstyle(axes_font_style)
+                l.set_fontweight(axes_font_weight)
+        else:
+            plt.axis('off')
+
+        # Set axes limits
+        if axes_x_limits is not None:
+            plt.xlim(axes_x_limits)
+        if axes_y_limits is not None:
+            plt.ylim(axes_y_limits[::-1]) if image_view \
+                else plt.ylim(axes_y_limits)
+
+        # Set figure size
+        if figure_size is not None:
+            plt.gcf().set_size_inches(np.asarray(figure_size))
+
         return self
 
     def _build_sub_pointclouds(self):
@@ -304,8 +368,6 @@ class MatplotlibAlignmentViewer2d(MatplotlibRenderer):
         r"""
         Visualize how points are affected by the warp in 2 dimensions.
         """
-        import matplotlib.pyplot as plt
-
         source = self.alignment_transform.source.points
         target = self.alignment_transform.target.points
         # a factor by which the minimum and maximum x and y values of the warp
@@ -373,8 +435,6 @@ class MatplotlibGraphPlotter(MatplotlibRenderer):
         self.axis_limits = axis_limits
 
     def _render(self, colour_list=None, marker_list=None, **kwargs):
-        import matplotlib.pyplot as plt
-
         ax = plt.gca()
         ax.set_xlabel(self.x_label)
         ax.set_ylabel(self.y_label)
@@ -397,7 +457,6 @@ class MatplotlibMultiImageViewer2d(MatplotlibRenderer):
         self.image_list = image_list
 
     def _render(self, interval=50, **kwargs):
-        import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
@@ -431,7 +490,6 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
         self.plot_layout = self._subplot_layout(self.num_subplots)
 
     def _render(self, interval=50, **kwargs):
-        import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         import matplotlib.animation as animation
 
@@ -458,3 +516,8 @@ class MatplotlibMultiImageSubplotsViewer2d(MatplotlibRenderer,
                                             frames=len(self.image_list),
                                             interval=interval, blit=True)
         return self
+
+
+def sample_colours_from_colourmap(n_colours, colour_map):
+    cm = plt.get_cmap(colour_map)
+    return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]

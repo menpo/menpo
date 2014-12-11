@@ -829,10 +829,15 @@ class PointGraph(object):
     def __init__(self, points, adjacency_array):
         _check_n_points(points, adjacency_array)
 
-    def view(self, figure_id=None, new_figure=False, image_view=False,
-             line_colour='r', line_style='-', line_width=1., marker_style='o',
-             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
-             marker_edge_width=1., label=None):
+    def view(self, figure_id=None, new_figure=False, image_view=True,
+             render_lines=True, line_colour='r', line_style='-', line_width=1.,
+             render_markers=True, marker_style='o', marker_size=20,
+             marker_face_colour='k', marker_edge_colour='k',
+             marker_edge_width=1., render_axes=True,
+             axes_font_name='sans-serif', axes_font_size=10,
+             axes_font_style='normal', axes_font_weight='normal',
+             axes_x_limits=None, axes_y_limits=None, figure_size=None,
+             label=None):
         r"""
         Visualization of the :map:`PointGraph`.
 
@@ -886,12 +891,17 @@ class PointGraph(object):
         """
         return PointGraphViewer(figure_id, new_figure, self.points,
                                 self.adjacency_array).render(
-            image_view=image_view, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
+            image_view=image_view, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, label=label)
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
 
 
 class PointUndirectedGraph(PointGraph, UndirectedGraph, PointCloud):

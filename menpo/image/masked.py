@@ -317,7 +317,7 @@ class MaskedImage(Image):
                                copy=copy)
 
     def view(self, figure_id=None, new_figure=False, channels=None,
-              masked=True, **kwargs):
+             masked=True, **kwargs):
         r"""
         View the image using the default image viewer. Currently only
         supports the rendering of 2D images.

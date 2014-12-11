@@ -195,10 +195,13 @@ class PointCloud(Shape):
                                   np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
                                   copy=False)
 
-    def view(self, figure_id=None, new_figure=False, image_view=False,
-             line_colour='r', line_style='-', line_width=1., marker_style='o',
-             marker_size=20, marker_face_colour='k', marker_edge_colour='k',
-             marker_edge_width=1., label=None):
+    def view(self, figure_id=None, new_figure=False, image_view=True,
+             marker_style='o', marker_size=20, marker_face_colour='k',
+             marker_edge_colour='k', marker_edge_width=1., render_axes=True,
+             axes_font_name='sans-serif', axes_font_size=10,
+             axes_font_style='normal', axes_font_weight='normal',
+             axes_x_limits=None, axes_y_limits=None, figure_size=None,
+             label=None, **kwargs):
         r"""
         Visualization of the :map:`PointCloud`.
 
@@ -251,12 +254,16 @@ class PointCloud(Shape):
             The viewer object.
         """
         return PointCloudViewer(figure_id, new_figure, self.points).render(
-            image_view=image_view, line_colour=line_colour,
-            line_style=line_style, line_width=line_width,
+            image_view=image_view, render_lines=False, line_colour='b',
+            line_style='-', line_width=1., render_markers=True,
             marker_style=marker_style, marker_size=marker_size,
             marker_face_colour=marker_face_colour,
             marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width, label=label)
+            marker_edge_width=marker_edge_width, render_axes=render_axes,
+            axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style, axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            figure_size=figure_size, label=label)
 
     def _transform_self_inplace(self, transform):
         self.points = transform(self.points)
