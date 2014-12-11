@@ -1,5 +1,6 @@
 import abc
 import os.path
+from pathlib import Path
 
 # To debug the Copyable interface, simply uncomment lines 11-23 below and the
 # four lines in the copy() method.
@@ -292,7 +293,7 @@ def menpo_src_dir_path():
 
     Returns
     -------
-    path : str
+    path : ``pathlib.Path``
         The full path to the top of the Menpo package
     """
-    return os.path.split(os.path.abspath(__file__))[0]
+    return Path(os.path.abspath(__file__)).parent

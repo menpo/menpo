@@ -1,6 +1,6 @@
 .. _menpo-io-ls_builtin_assets:
 
-.. currentmodule:: menpo.io.base
+.. currentmodule:: menpo.io.input.base
 
 ls_builtin_assets
 =================

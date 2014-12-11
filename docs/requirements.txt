@@ -1,0 +1,5 @@
+sphinx==1.2.3
+sphinx_rtd_theme==0.1.6
+sphinxmapxrefrole==0.1.0
+numpydoc==0.5
+pathlib==1.0

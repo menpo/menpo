@@ -9,4 +9,3 @@ Image
   :members:
   :inherited-members:
   :show-inheritance:
-

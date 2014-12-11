@@ -1,11 +1,13 @@
+from __future__ import division
 import numpy as np
-from scipy.linalg.blas import dgemm
 from menpo.math import principal_component_decomposition
 from menpo.model.base import MeanInstanceLinearModel
+from menpo.visualize import print_dynamic, progress_bar_str
 
 
 class PCAModel(MeanInstanceLinearModel):
-    """A :map:`MeanInstanceLinearModel` where components Principal Components.
+    """A :map:`MeanInstanceLinearModel` where components are Principal
+    Components.
 
 
     Principal Component Analysis (PCA) by eigenvalue decomposition of the
@@ -20,9 +22,13 @@ class PCAModel(MeanInstanceLinearModel):
         When True (True by default) PCA is performed after mean centering the
         data. If False the data is assumed to be centred, and the mean will
         be 0.
-    bias: bool, optional
+    bias : bool, optional
         When True (False by default) a biased estimator of the covariance
         matrix is used. See notes.
+    n_samples : int, optional
+        If provided then ``samples``  must be an iterator  that yields
+        ``n_samples``. If not provided then samples has to be a
+        list (so we know how large the data matrix needs to be).
 
     ..notes:
 
@@ -35,23 +41,46 @@ class PCAModel(MeanInstanceLinearModel):
     :math:`\frac{1}{N-1} \sum_i^N \mathbf{x}_i \mathbf{x}_i^T`
 
     """
-    def __init__(self, samples, centre=True, bias=False):
-        # build data matrix
-        n_samples = len(samples)
-        n_features = samples[0].n_parameters
-        data = np.zeros((n_samples, n_features))
-        for i, sample in enumerate(samples):
+    def __init__(self, samples, centre=True, bias=False, verbose=False,
+                 n_samples=None):
+        # get the first element as the template and use it to configure the
+        # data matrix
+        if n_samples is None:
+            # samples is a list
+            n_samples = len(samples)
+            template = samples[0]
+            samples = samples[1:]
+        else:
+            # samples is an iterator
+            template = next(samples)
+        n_features = template.n_parameters
+        template_vector = template.as_vector()
+        data = np.zeros((n_samples, n_features), dtype=template_vector.dtype)
+        # now we can fill in the first element from the template
+        data[0] = template_vector
+        del template_vector
+        if verbose:
+            print('Allocated data matrix {:.2f}'
+                  'GB'.format(data.nbytes / 2 ** 30))
+        # 1-based as we have the template vector set already
+        for i, sample in enumerate(samples, 1):
+            if i >= n_samples:
+                break
+            if verbose:
+                print_dynamic(
+                    'Building data matrix from {} samples - {}'.format(
+                        n_samples,
+                    progress_bar_str(float(i + 1) / n_samples, show_bar=True)))
             data[i] = sample.as_vector()
 
         # compute pca
-        eigenvectors, eigenvalues, mean_vector = \
-            principal_component_decomposition(data, whiten=False,
-                                              centre=centre, bias=bias)
+        e_vectors, e_values, mean = principal_component_decomposition(
+            data, whiten=False,  centre=centre, bias=bias, inplace=True)
 
-        super(PCAModel, self).__init__(eigenvectors, mean_vector, samples[0])
+        super(PCAModel, self).__init__(e_vectors, mean, template)
         self.centred = centre
         self.biased = bias
-        self._eigenvalues = eigenvalues
+        self._eigenvalues = e_values
         # start the active components as all the components
         self._n_active_components = int(self.n_components)
         self._trimmed_eigenvalues = None
@@ -457,10 +486,8 @@ class PCAModel(MeanInstanceLinearModel):
             A sheared (non-orthogonal) reconstruction of `vector_instance`
         """
         whitened_components = self.whitened_components()
-        weights = dgemm(alpha=1.0, a=vector_instance.T,
-                        b=whitened_components.T, trans_a=True)
-        return dgemm(alpha=1.0, a=weights.T, b=whitened_components.T,
-                     trans_a=True, trans_b=True)
+        weights = np.dot(vector_instance, whitened_components.T)
+        return np.dot(weights, whitened_components)
 
     def orthonormalize_against_inplace(self, linear_model):
         r"""

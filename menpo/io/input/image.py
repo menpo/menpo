@@ -11,12 +11,14 @@ class PILImporter(Importer):
     Different image modes cause different importing strategies.
 
     RGB, L, I:
-        Imported as either `float` of `uint8` depending on normalisation flag.
+        Imported as either `float` or `uint8` depending on normalisation flag.
     RGBA:
         Imported as :map:`MaskedImage` if normalise is ``True`` else imported
         as a 4 channel `uint8` image.
     1:
         Imported as a :map:`BooleanImage`. Normalisation is ignored.
+    F:
+        Imported as a floating point image. Normalisation is ignored.
 
     Parameters
     ----------
@@ -60,6 +62,9 @@ class PILImporter(Importer):
         elif mode == 'P':
             # Convert pallete images to RGB
             image = Image(self._pil_to_numpy(self.normalise, convert='RGB'))
+        elif mode == 'F':  # Floating point images
+            # Don't normalise as we don't know the scale
+            image = Image(self._pil_to_numpy(False))
         else:
             raise ValueError('Unexpected mode for PIL: {}'.format(mode))
         return image

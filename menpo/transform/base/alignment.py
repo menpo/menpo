@@ -1,7 +1,7 @@
 import numpy as np
 
 from menpo.base import Targetable
-from menpo.visualize.base import Viewable, AlignmentViewer2d
+from menpo.visualize.base import Viewable
 
 
 class Alignment(Targetable, Viewable):
@@ -117,6 +117,8 @@ class Alignment(Targetable, Viewable):
 
             Default: ``False``
         """
+        from menpo.visualize import AlignmentViewer2d
+
         if self.n_dims == 2:
             return AlignmentViewer2d(figure_id, new_figure, self).render(
                 **kwargs)

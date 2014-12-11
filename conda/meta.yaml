@@ -19,9 +19,6 @@ requirements:
     - matplotlib 1.4.0
     - pillow  2.5.1
 
-    # Other
-    - wrapt 1.9.0
-
     # Convienience dependences (not strictly required)
     - mock
     - nose

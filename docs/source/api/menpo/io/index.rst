@@ -1,19 +1,16 @@
 .. _api-io-index:
 
 :mod:`menpo.io`
-=================
+===============
 
-Functions
----------
+Input
+-----
 
 .. toctree::
    :maxdepth: 1
 
-   import_auto
    import_image
    import_images
-   import_mesh
-   import_meshes
    import_builtin_asset
    import_landmark_file
    import_landmark_files
@@ -21,3 +18,5 @@ Functions
    data_dir_path
    ls_builtin_assets
 
+Output
+------

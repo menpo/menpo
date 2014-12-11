@@ -169,6 +169,32 @@ class PointCloud(Shape):
         min_b, max_b = self.bounds(boundary)
         return max_b - min_b
 
+    def bounding_box(self):
+        r"""
+        Return the bounding box of this PointCloud as a directed graph.
+        The the first point (0) will be nearest the origin for an axis aligned
+        Pointcloud.
+        In the case of an image, this ordering would appear as:
+
+        ::
+
+            0<--3
+            |   |
+            |   |
+            1-->2
+
+        Returns
+        -------
+        bounding_box : :map:`PointDirectedGraph`
+            The axis aligned bounding box of the PointCloud.
+        """
+        from .graph import PointDirectedGraph
+        min_p, max_p = self.bounds()
+        return PointDirectedGraph(np.array([min_p, [max_p[0], min_p[1]],
+                                            max_p, [min_p[0], max_p[1]]]),
+                                  np.array([[0, 1], [1, 2], [2, 3], [3, 0]]),
+                                  copy=False)
+
     def view(self, figure_id=None, new_figure=False, image_view=False,
              line_colour='r', line_style='-', line_width=1., marker_style='o',
              marker_size=20, marker_face_colour='k', marker_edge_colour='k',
