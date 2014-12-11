@@ -1,10 +1,9 @@
 .. _menpo-transform-TransformChain:
 
-.. currentmodule:: menpo.transform.base.composable
+.. currentmodule:: menpo.transform
 
 TransformChain
 ==============
-
 .. autoclass:: TransformChain
   :members:
   :inherited-members:

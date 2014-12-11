@@ -1,10 +1,9 @@
 .. _menpo-transform-AlignmentTranslation:
 
-.. currentmodule:: menpo.transform.homogeneous.translation
+.. currentmodule:: menpo.transform
 
 AlignmentTranslation
 ====================
-
 .. autoclass:: AlignmentTranslation
   :members:
   :inherited-members:

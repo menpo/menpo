@@ -1,10 +1,9 @@
 .. _menpo-transform-AlignmentAffine:
 
-.. currentmodule:: menpo.transform.homogeneous.affine
+.. currentmodule:: menpo.transform
 
 AlignmentAffine
 ===============
-
 .. autoclass:: AlignmentAffine
   :members:
   :inherited-members:

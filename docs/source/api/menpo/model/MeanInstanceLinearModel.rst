@@ -1,10 +1,9 @@
 .. _menpo-model-MeanInstanceLinearModel:
 
-.. currentmodule:: menpo.model.base
+.. currentmodule:: menpo.model
 
 MeanInstanceLinearModel
 =======================
-
 .. autoclass:: MeanInstanceLinearModel
   :members:
   :inherited-members:

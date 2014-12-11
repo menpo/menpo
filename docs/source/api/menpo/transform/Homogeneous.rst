@@ -1,10 +1,9 @@
-.. _menpo-transform-homogeneous:
+.. _menpo-transform-Homogeneous:
 
-.. currentmodule:: menpo.transform.homogeneous
+.. currentmodule:: menpo.transform
 
 Homogeneous
 ===========
-
 .. autoclass:: Homogeneous
   :members:
   :inherited-members:

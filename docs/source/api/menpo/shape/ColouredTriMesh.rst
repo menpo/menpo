@@ -1,10 +1,9 @@
 .. _menpo-shape-ColouredTriMesh:
 
-.. currentmodule:: menpo.shape.mesh
+.. currentmodule:: menpo.shape
 
 ColouredTriMesh
 ===============
-
 .. autoclass:: ColouredTriMesh
   :members:
   :inherited-members:

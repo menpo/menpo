@@ -1,10 +1,9 @@
 .. _menpo-visualize-Viewable:
 
-.. currentmodule:: menpo.visualize.base
+.. currentmodule:: menpo.visualize
 
 Viewable
 ========
-
 .. autoclass:: Viewable
   :members:
   :inherited-members:

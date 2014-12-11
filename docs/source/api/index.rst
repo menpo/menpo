@@ -7,10 +7,10 @@
 .. toctree::
    :maxdepth: 1
 
-   menpo/index
-   menpo/feature/index
-   menpo/image/index
+   menpo/base/index
    menpo/io/index
+   menpo/image/index
+   menpo/feature/index
    menpo/landmark/index
    menpo/math/index
    menpo/model/index

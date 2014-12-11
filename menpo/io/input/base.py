@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from ..utils import _norm_path
-from menpo import menpo_src_dir_path
+from menpo.base import menpo_src_dir_path
 from menpo.visualize import progress_bar_str, print_dynamic
 
 

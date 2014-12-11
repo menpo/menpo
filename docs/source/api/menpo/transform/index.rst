@@ -3,8 +3,8 @@
 :mod:`menpo.transform`
 ======================
 
-Homogeneous Family
-------------------
+Homogeneous Transforms
+----------------------
 
 .. toctree::
    :maxdepth: 1
@@ -60,16 +60,6 @@ Radial Basis Functions
 
    R2LogR2RBF
    R2LogRRBF
-
-
-Unwrappings
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   CylindricalUnwrap
-   optimal_cylindrical_unwrap
 
 
 Abstract Bases
