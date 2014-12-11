@@ -1,10 +1,9 @@
 .. _menpo-transform-GeneralizedProcrustesAnalysis:
 
-.. currentmodule:: menpo.transform.groupalign.procrustes
+.. currentmodule:: menpo.transform
 
 GeneralizedProcrustesAnalysis
 =============================
-
 .. autoclass:: GeneralizedProcrustesAnalysis
   :members:
   :inherited-members:

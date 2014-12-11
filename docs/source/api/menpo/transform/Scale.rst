@@ -1,9 +1,7 @@
 .. _menpo-transform-Scale:
 
-.. currentmodule:: menpo.transform.homogeneous.scale
+.. currentmodule:: menpo.transform
 
 Scale
 =====
-
 .. autofunction:: Scale
-

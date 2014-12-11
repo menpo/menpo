@@ -1,10 +1,9 @@
 .. _menpo-visualize-LandmarkViewer:
 
-.. currentmodule:: menpo.visualize.base
+.. currentmodule:: menpo.visualize
 
 LandmarkViewer
 ==============
-
 .. autoclass:: LandmarkViewer
   :members:
   :inherited-members:

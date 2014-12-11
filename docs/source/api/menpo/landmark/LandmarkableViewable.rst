@@ -1,10 +1,9 @@
 .. _menpo-landmark-LandmarkableViewable:
 
-.. currentmodule:: menpo.landmark.base
+.. currentmodule:: menpo.landmark
 
 LandmarkableViewable
 ====================
-
 .. autoclass:: LandmarkableViewable
   :members:
   :inherited-members:

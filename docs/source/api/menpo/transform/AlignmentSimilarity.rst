@@ -1,10 +1,9 @@
 .. _menpo-transform-AlignmentSimilarity:
 
-.. currentmodule:: menpo.transform.homogeneous.similarity
+.. currentmodule:: menpo.transform
 
 AlignmentSimilarity
 ===================
-
 .. autoclass:: AlignmentSimilarity
   :members:
   :inherited-members:
