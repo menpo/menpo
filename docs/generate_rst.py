@@ -72,12 +72,14 @@ def generate_function_rst(module_name, function_name, module, package_name):
     return breadcrumb + current_module + title + body
 
 
-from pathlib import Path
-import menpo
 
-path = Path(__file__).parent / 'source' / 'api'
+if __name__ == '__main__':
+    from pathlib import Path
+    import menpo
+
+    path = Path(__file__).parent / 'source' / 'api'
 
 
-# Flip generate_index to True to make index.rst files too!
-write_docs_for_module(menpo, path, generate_index=False,
-                      modules_to_skip={'_version'})
+    # Flip generate_index to True to make index.rst files too!
+    write_docs_for_module(menpo, path, generate_index=False,
+                          modules_to_skip={'_version'})
