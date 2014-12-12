@@ -590,6 +590,43 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False,
     landmark_options_wid.children[1].children[1].value = False
 
 
+def save_figure(figure_id, popup=True):
+    r"""
+    Widget that allows to save a figure to file.
+
+    Parameters
+    -----------
+    figure : `object`
+        A figure. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    popup : `bool`, optional
+        If ``True``, the widget will appear as a popup window.
+    """
+    # Create sub-widgets
+    logo_wid = logo()
+    save_figure_wid = save_figure_options(figure_id,
+                                          toggle_show_default=True,
+                                          toggle_show_visible=False)
+
+    # Create final widget
+    if popup:
+        wid = PopupWidget(children=[logo_wid, save_figure_wid],
+                          button_text='Save Figure')
+    else:
+        wid = ContainerWidget(children=[logo_wid, save_figure_wid])
+
+    # Display widget
+    display(wid)
+
+    # Format widgets
+    format_save_figure_options(save_figure_wid, container_padding='6px',
+                               container_margin='6px',
+                               container_border='1px solid black',
+                               toggle_button_font_weight='bold',
+                               tab_top_margin='0cm', border_visible=True)
+    format_logo(logo_wid, border_visible=False)
+
+
 def features_selection(popup=True):
     r"""
     Widget that allows selecting a features function and its options. The

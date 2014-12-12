@@ -54,6 +54,19 @@ class MatplotlibRenderer(Renderer):
                             transparent=transparent, pad_inches=pad_inches,
                             bbox_inches='tight', frameon=None)
 
+    def save_figure_widget(self, popup=True):
+        r"""
+        Method for saving the figure of the current `figure_id` to file using
+        :map:`menpo.visualize.widgets.save_figure` widget.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
+        """
+        from menpo.visualize.widgets import save_figure
+        save_figure(self.figure, popup=popup)
+
 
 class MatplotlibSubplots(object):
 

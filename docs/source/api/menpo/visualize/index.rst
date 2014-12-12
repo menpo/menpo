@@ -6,16 +6,47 @@
 .. toctree::
    :maxdepth: 1
 
-  LandmarkViewer
-  visualize_shapes
-  PointGraphViewer
-  AlignmentViewer2d
-  TriMeshViewer
-  PointCloudViewer
+
+Abstract Classes
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+  Renderer
   Viewable
+
+
+Viewers
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+  PointCloudViewer
+  PointGraphViewer
+  LandmarkViewer
+  TriMeshViewer
   LandmarkViewer2d
-  progress_bar_str
+  AlignmentViewer2d
   ImageViewer2d
+
+
+Widgets
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+  visualize_shapes
   visualize_images
+
+
+Text Utils
+----------
+
+.. toctree::
+   :maxdepth: 1
+
   print_dynamic
-  PointCloudViewer2d
+  progress_bar_str

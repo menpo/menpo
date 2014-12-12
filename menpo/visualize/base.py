@@ -20,16 +20,16 @@ class Renderer(object):
     rendering to Figures. Therefore, the major interface for rendering involves
     providing a `figure_id` or a boolean about whether a new figure should
     be used. If neither are provided then the default state of the rendering
-    engine is assumed to maintained.
+    engine is assumed to be maintained.
 
-    Providing a `figure_id` and `new_figure == True` is not a valid state.
+    Providing both a `figure_id` and `new_figure == True` is not a valid state.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
 
     Raises
@@ -56,7 +56,7 @@ class Renderer(object):
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to specific rendering engine.
 
         Returns
@@ -69,12 +69,12 @@ class Renderer(object):
     @abc.abstractmethod
     def _render(self, **kwargs):
         r"""
-        Abstract method to be overridden the renderer. This will implement the
-        actual rendering code for a given object class.
+        Abstract method to be overridden by the renderer. This will implement
+        the actual rendering code for a given object class.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Options to be set when rendering.
 
         Returns
@@ -92,15 +92,34 @@ class Renderer(object):
 
         Returns
         -------
-        figure : object
+        figure : `object`
             The figure object that the renderer will render on.
         """
         pass
 
     @abc.abstractmethod
-    def save_figure(self):
+    def save_figure(self, **kwargs):
         r"""
-        Abstract method for saving the figure using the correct `figure_id`.
+        Abstract method for saving the figure of the current `figure_id` to
+        file. It needs to be overridden by the renderer.
+
+        Parameters
+        ----------
+        kwargs : `dict`
+            Options to be set when saving the figure to file.
+        """
+        pass
+
+    @abc.abstractmethod
+    def save_figure_widget(self, popup=True):
+        r"""
+        Method for saving the figure of the current `figure_id` to file using
+        a widget. It needs to be overridden by the renderer.
+
+        Parameters
+        ----------
+        popup : `bool`, optional
+            If ``True``, the widget will appear as a popup window.
         """
         pass
 
@@ -118,9 +137,9 @@ class Viewable(object):
 
         Parameters
         ----------
-        figure_id : object
+        figure_id : `object`
             A unique identifier for a figure.
-        kwargs : dict
+        kwargs : `dict`
             Passed through to specific rendering engine.
 
         Returns
@@ -136,7 +155,7 @@ class Viewable(object):
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to specific rendering engine.
 
         Returns
@@ -155,7 +174,7 @@ class Viewable(object):
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to specific rendering engine.
 
         Returns
@@ -185,30 +204,22 @@ MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
 
 class LandmarkViewer(object):
     r"""
-    Base Landmark viewer that abstracts away dimensionality
+    Base Landmark viewer that abstracts away dimensionality.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
     new_figure : `bool`
         Whether the rendering engine should create a new figure.
-
     group : `str`
         The main label of the landmark set.
-
     pointcloud : :map:`PointCloud`
-        The pointcloud representing the landmarks.
-
-    labels_to_masks : `dict(string, ndarray)`
+        The PointCloud representing the landmarks.
+    labels_to_masks : `dict(str, ndarray)`
         A dictionary of labels to masks into the pointcloud that represent
         which points belong to the given label.
-
-    targettype : `type` of :map:`Landmarkable`
-        The parent object that we are drawing the landmarks for.
-
     """
     def __init__(self, figure_id, new_figure, group, pointcloud,
                  labels_to_masks):
@@ -224,7 +235,7 @@ class LandmarkViewer(object):
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to landmark viewer.
 
         Returns
@@ -234,7 +245,7 @@ class LandmarkViewer(object):
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D and 3D viewers are supported.
         """
         if self.pointcloud.n_dims == 2:

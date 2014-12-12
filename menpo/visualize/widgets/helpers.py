@@ -3380,6 +3380,8 @@ def format_save_figure_options(save_figure_wid, container_padding='6px',
 
     format_colour_selection(save_figure_wid.children[1].children[2].children[0])
     format_colour_selection(save_figure_wid.children[1].children[2].children[1])
+    save_figure_wid.children[1].children[0].children[0].set_css('width', '6cm')
+    save_figure_wid.children[1].children[0].children[1].set_css('width', '6cm')
 
     # set toggle button font bold
     save_figure_wid.children[0].set_css('font-weight',
