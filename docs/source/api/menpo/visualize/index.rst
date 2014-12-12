@@ -27,9 +27,7 @@ Viewers
   PointGraphViewer
   LandmarkViewer
   TriMeshViewer
-  LandmarkViewer2d
-  AlignmentViewer2d
-  ImageViewer2d
+  ImageViewer
 
 
 Widgets
@@ -40,6 +38,8 @@ Widgets
 
   visualize_shapes
   visualize_images
+  features_selection
+  save_matplotlib_figure
 
 
 Text Utils

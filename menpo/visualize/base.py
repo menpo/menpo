@@ -61,7 +61,7 @@ class Renderer(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             Pointer to `self`.
         """
         return self._render(**kwargs)
@@ -79,7 +79,7 @@ class Renderer(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             Pointer to `self`.
         """
         pass
@@ -144,7 +144,7 @@ class Viewable(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The renderer instantiated.
         """
         return self.view(figure_id=figure_id, **kwargs)
@@ -160,7 +160,7 @@ class Viewable(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The renderer instantiated.
         """
         return self.view(new_figure=True, **kwargs)
@@ -179,7 +179,7 @@ class Viewable(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The renderer instantiated.
         """
 
@@ -204,7 +204,7 @@ MultiImageSubplotsViewer2d = MatplotlibMultiImageSubplotsViewer2d
 
 class LandmarkViewer(object):
     r"""
-    Base Landmark viewer that abstracts away dimensionality.
+    Base :map:`LandmarkGroup` viewer that abstracts away dimensionality.
 
     Parameters
     ----------
@@ -240,7 +240,7 @@ class LandmarkViewer(object):
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
@@ -267,7 +267,7 @@ class LandmarkViewer(object):
 
 class PointCloudViewer(object):
     r"""
-    Base PointCloud viewer that abstracts away dimensionality.
+    Base :map:`PointCloud` viewer that abstracts away dimensionality.
 
     Note that in order to visualize a 2D :map:`PointCloud`, we treat it as a
     :map:`PointGraph` with an empty adjacency array (no edges) and use the
@@ -275,12 +275,12 @@ class PointCloudViewer(object):
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
+    points : ``(N, D)`` `ndarray`
         The points to render.
     """
 
@@ -296,17 +296,17 @@ class PointCloudViewer(object):
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to pointcloud viewer.
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D and 3D viewers are supported.
         """
         if self.points.shape[1] == 2:
@@ -329,19 +329,19 @@ class PointCloudViewer(object):
 
 class PointGraphViewer(object):
     r"""
-    Base PointGraph viewer that abstracts away dimensionality.
+    Base :map:`PointGraph` viewer that abstracts away dimensionality.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
+    points : ``(N, D)`` `ndarray`
         The points to render.
-    adjacency_array : (N, 2) ndarray
-        The list of edges to create lines from.
+    adjacency_array : ``(N, 2)`` `ndarray`
+        The adjacency array of the graph.
     """
 
     def __init__(self, figure_id, new_figure, points, adjacency_array):
@@ -352,22 +352,22 @@ class PointGraphViewer(object):
 
     def render(self, **kwargs):
         r"""
-        Select the correct type of pointgraph viewer for the given
-        pointgraph dimensionality.
+        Select the correct type of pointgraph viewer for the given pointgraph
+        dimensionality.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to pointgraph viewer.
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D viewers are supported.
         """
         if self.points.shape[1] == 2:
@@ -381,30 +381,29 @@ class PointGraphViewer(object):
 
 class ImageViewer(object):
     r"""
-    Base Image viewer that abstracts away dimensionality. It can visualize
-    multiple channels of an image in subplots.
+    Base :map:`Image` viewer that abstracts away dimensionality. It can
+    visualize multiple channels of an image in subplots.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    dimensions : {2, 3} int
-        The number of dimensions in the image
-    pixels : (N, D) ndarray
+    dimensions : {``2``, ``3``} `int`
+        The number of dimensions in the image.
+    pixels : ``(N, D)`` `ndarray`
         The pixels to render.
-    channels: int or list or 'all' or None
+    channels: `int` or `list` or ``'all'`` or `None`
         A specific selection of channels to render. The user can choose either
-        a single or multiple channels. If all, render all channels in subplot
-        mode. If None and channels are less than 36, render them all. If None
-        and channels are more than 36, render the first 36.
-
-        Default: None
-    mask: (N, D) ndarray
-        A boolean mask to be applied to the image. All points outside the
-        mask are set to 0.
+        a single or multiple channels. If ``'all'``, render all channels in
+        subplot mode. If `None` and image is not greyscale or RGB, render all
+        channels in subplots. If `None` and image is greyscale or RGB, then do
+        not plot channels in different subplots.
+    mask: ``(N, D)`` `ndarray`
+        A `bool` mask to be applied to the image. All points outside the
+        mask are set to ``0``.
     """
 
     def __init__(self, figure_id, new_figure, dimensions, pixels,
@@ -419,20 +418,26 @@ class ImageViewer(object):
 
     def _parse_channels(self, channels, pixels):
         r"""
-        Parse channels parameter. If channels is int or list, keep it as is. If
-        channels is all, return a list of all the image's channels. If channels
-        is None, return the minimum between an upper_limit and the image's
-        number of channels. If image is grayscale or RGB and channels is None,
-        then do not plot channels in different subplots.
+        Parse `channels` parameter. If `channels` is `int` or `list`, keep it as
+        is. If `channels` is ``'all'``, return a `list` of all the image's
+        channels. If `channels` is `None`, return the minimum between an
+        `upper_limit` and the image's number of channels. If image is greyscale
+        or RGB and `channels` is `None`, then do not plot channels in different
+        subplots.
 
         Parameters
         ----------
-        channels: int or list or 'all' or None
+        channels : `int` or `list` or ``'all'`` or `None`
             A specific selection of channels to render.
-        pixels : (N, D) ndarray
+        pixels : ``(N, D)`` `ndarray`
             The image's pixels to render.
-        upper_limit: int
-            The upper limit of subplots for the channels=None case.
+
+        Returns
+        -------
+        pixels : ``(N, D)`` `ndarray`
+            The pixels to be visualized.
+        use_subplots : `bool`
+            Whether to visualize using subplots.
         """
         # Flag to trigger ImageSubplotsViewer2d or ImageViewer2d
         use_subplots = True
@@ -454,18 +459,23 @@ class ImageViewer(object):
 
     def _masked_pixels(self, pixels, mask):
         r"""
-        Return the masked pixels using a given boolean mask. In order to make
+        Return the masked pixels using a given `bool` mask. In order to make
         sure that the non-masked pixels are visualized in white, their value
         is set to the maximum of pixels.
 
         Parameters
         ----------
-        pixels : (N, D) ndarray
+        pixels : ``(N, D)`` `ndarray`
             The image's pixels to render.
-        mask: (N, D) ndarray
-            A boolean mask to be applied to the image. All points outside the
-            mask are set to the image max.
-            If mask is None, then the initial pixels are returned.
+        mask: ``(N, D)`` `ndarray`
+            A `bool` mask to be applied to the image. All points outside the
+            mask are set to the image max. If mask is `None`, then the initial
+            pixels are returned.
+
+        Returns
+        -------
+        masked_pixels : ``(N, D)`` `ndarray`
+            The masked pixels.
         """
         if mask is not None:
             nanmax = np.nanmax(pixels)
@@ -474,22 +484,22 @@ class ImageViewer(object):
 
     def render(self, **kwargs):
         r"""
-        Select the correct type of image viewer for the given
-        image dimensionality.
+        Select the correct type of image viewer for the given image
+        dimensionality.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to image viewer.
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D images are supported.
         """
         if self.dimensions == 2:
@@ -505,18 +515,18 @@ class ImageViewer(object):
 
 class TriMeshViewer(object):
     r"""
-    Base TriMesh viewer that abstracts away dimensionality.
+    Base :map:`TriMesh` viewer that abstracts away dimensionality.
 
     Parameters
     ----------
-    figure_id : object
-        A figure id. Could be any valid object that identifies
-        a figure in a given framework (string, int, etc)
-    new_figure : bool
+    figure_id : `object`
+        A figure id. Could be any valid object that identifies a figure in a
+        given framework (`str`, `int`, `float`, etc.).
+    new_figure : `bool`
         Whether the rendering engine should create a new figure.
-    points : (N, D) ndarray
+    points : ``(N, D)`` `ndarray`
         The points to render.
-    trilist : (M, 3) ndarray
+    trilist : `(M, 3)`` `ndarray`
         The triangulation for the points.
     """
 
@@ -528,22 +538,22 @@ class TriMeshViewer(object):
 
     def render(self, **kwargs):
         r"""
-        Select the correct type of trimesh viewer for the given
-        trimesh dimensionality.
+        Select the correct type of trimesh viewer for the given trimesh
+        dimensionality.
 
         Parameters
         ----------
-        kwargs : dict
+        kwargs : `dict`
             Passed through to trimesh viewer.
 
         Returns
         -------
-        viewer : :class:`Renderer`
+        viewer : :map:`Renderer`
             The rendering object.
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             Only 2D and 3D viewers are supported.
         """
         if self.points.shape[1] == 2:

@@ -590,28 +590,28 @@ def visualize_shapes(shapes, figure_size=(7, 7), popup=False,
     landmark_options_wid.children[1].children[1].value = False
 
 
-def save_figure(figure_id, popup=True):
+def save_matplotlib_figure(renderer, popup=True):
     r"""
-    Widget that allows to save a figure to file.
+    Widget that allows to save a figure generated with Matplotlib to file.
 
     Parameters
     -----------
-    figure : `object`
-        A figure. Could be any valid object that identifies a figure in a
-        given framework (`str`, `int`, `float`, etc.).
+    renderer : :map:`MatplotlibRenderer`
+        The Matplotlib renderer object.
     popup : `bool`, optional
         If ``True``, the widget will appear as a popup window.
     """
     # Create sub-widgets
     logo_wid = logo()
-    save_figure_wid = save_figure_options(figure_id,
-                                          toggle_show_default=True,
+    save_figure_wid = save_figure_options(renderer, toggle_show_default=True,
                                           toggle_show_visible=False)
 
     # Create final widget
     if popup:
         wid = PopupWidget(children=[logo_wid, save_figure_wid],
                           button_text='Save Figure')
+        # set width of popup widget
+        wid.set_css({'width': '11cm'}, selector='modal')
     else:
         wid = ContainerWidget(children=[logo_wid, save_figure_wid])
 
@@ -630,13 +630,14 @@ def save_figure(figure_id, popup=True):
 def features_selection(popup=True):
     r"""
     Widget that allows selecting a features function and its options. The
-    widget supports all features from `menpo.feature` and has a preview tab.
-    It returns a list of length one with the selected features function closure.
+    widget supports all features from :ref:`api-feature-index` and has a
+    preview tab. It returns a list of length one with the selected features
+    function closure.
 
     Parameters
     -----------
-    popup : `boolean`, optional
-        If enabled, the widget will appear as a popup window.
+    popup : `bool`, optional
+        If ``True``, the widget will appear as a popup window.
 
     Returns
     -------

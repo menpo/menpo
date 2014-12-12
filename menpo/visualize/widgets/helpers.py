@@ -3160,7 +3160,7 @@ def format_plot_options(plot_options_wid, container_padding='6px',
         plot_options_wid.set_css('border', container_border)
 
 
-def save_figure_options(figure_id, format_default='png', dpi_default=None,
+def save_figure_options(renderer, format_default='png', dpi_default=None,
                         orientation_default='portrait',
                         papertype_default='letter', transparent_default=False,
                         facecolour_default='w', edgecolour_default='w',
@@ -3277,12 +3277,12 @@ def save_figure_options(figure_id, format_default='png', dpi_default=None,
     papertype_dict['b10'] = 'b10'
     papertype_wid = DropdownWidget(values=papertype_dict,
                                    value=papertype_default,
-                                   description='Papertype',
+                                   description='Paper type',
                                    disabled=not format_default == 'ps')
     transparent_wid = CheckboxWidget(description='Transparent',
                                      value=transparent_default)
-    facecolour_wid = colour_selection(facecolour_default, title='Facecolour')
-    edgecolour_wid = colour_selection(edgecolour_default, title='Edgecolour')
+    facecolour_wid = colour_selection([facecolour_default], title='Face colour')
+    edgecolour_wid = colour_selection([edgecolour_default], title='Edge colour')
     pad_inches_wid = FloatTextWidget(description='Pad (inch)',
                                      value=pad_inches_default)
     filename = TextWidget(description='Path',
@@ -3294,12 +3294,9 @@ def save_figure_options(figure_id, format_default='png', dpi_default=None,
     page_wid = ContainerWidget(children=[orientation_wid, dpi_wid,
                                          pad_inches_wid])
     colour_wid = ContainerWidget(children=[facecolour_wid, edgecolour_wid,
-                                          transparent_wid])
+                                           transparent_wid])
     options_wid = TabWidget(children=[path_wid, page_wid, colour_wid])
     save_figure_wid = ContainerWidget(children=[but, options_wid, save_but])
-
-    # store figure_handle
-    save_figure_wid.figure_id = figure_id
 
     # save function
     def save_function(name):
@@ -3311,13 +3308,15 @@ def save_figure_options(figure_id, format_default='png', dpi_default=None,
         selected_dpi = dpi_wid.value
         if dpi_wid.value == 0:
             selected_dpi = None
-        save_figure_wid.figure_id.savefig(
-            filename.value, dpi=selected_dpi,
-            facecolour=facecolour_wid.selected_colour,
-            edgecolour=edgecolour_wid.selected_colour,
-            orientation=orientation_wid.value, papertype=papertype_wid.value,
-            format=format_wid.value, transparent=transparent_wid.value,
-            pad_inches=pad_inches_wid.value, bbox_inches='tight', frameon=None)
+        print facecolour_wid.selected_values[0]
+        renderer.save_figure(filename=filename.value, dpi=selected_dpi,
+                             face_colour=facecolour_wid.selected_values[0],
+                             edge_colour=edgecolour_wid.selected_values[0],
+                             orientation=orientation_wid.value,
+                             paper_type=papertype_wid.value,
+                             format=format_wid.value,
+                             transparent=transparent_wid.value,
+                             pad_inches=pad_inches_wid.value)
 
         # set save button state
         save_but.description = 'Save'

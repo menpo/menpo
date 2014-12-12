@@ -17,6 +17,7 @@ Graphs & PointGraphs
 
   UndirectedGraph
   DirectedGraph
+  PointGraph
   PointUndirectedGraph
   PointDirectedGraph
 
